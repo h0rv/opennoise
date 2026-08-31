@@ -71,7 +71,6 @@ class _Counters:
 @dataclass(slots=True)
 class _AggregationState:
     current_window: int | None = None
-    last_listened_at: int | None = None
     output_ordinal: int = -1
     user_artists: dict[int, set[str]] = field(default_factory=dict)
     distinct_artists: set[str] = field(default_factory=set)
@@ -274,15 +273,14 @@ class ListenBrainzIncrementalAdapter:
         *,
         start_after: int,
     ) -> Iterator[ParsedSourceRecord]:
-        if state.last_listened_at is not None and listen.listened_at > state.last_listened_at:
-            raise ListenBrainzSourceError("listens are not ordered newest_first")
-        state.last_listened_at = listen.listened_at
         self._update_timestamp_coverage(counters, listen.listened_at)
         artist_ids = _source_artist_ids(listen)
         if not artist_ids:
             return
         counters.listens_with_artist_mbid += 1
         window_start = listen.listened_at // self.config.window_seconds * self.config.window_seconds
+        if state.current_window is not None and window_start > state.current_window:
+            raise ListenBrainzSourceError("listen windows are not ordered newest_first")
         if state.current_window is not None and window_start < state.current_window:
             yield from self._flush_window(state, counters, start_after=start_after)
         state.current_window = window_start

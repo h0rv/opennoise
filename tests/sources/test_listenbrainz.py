@@ -129,7 +129,7 @@ class ListenBrainzIncrementalAdapterTests(unittest.TestCase):
             (
                 "ordering",
                 (_listen(1, 1, [ARTIST_A]), _listen(1, 2, [ARTIST_B])),
-                ListenBrainzAggregationConfig(),
+                ListenBrainzAggregationConfig(window_seconds=1),
                 SourceLimits(),
             ),
             (
