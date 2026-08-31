@@ -38,6 +38,16 @@ async def _stream_to_partial(
         elif resumed_from and response.status_code != httpx.codes.PARTIAL_CONTENT:
             raise SourceManifestError("upstream did not honor the requested byte range")
         response.raise_for_status()
+        media_type = response.headers.get("content-type", "").partition(";")[0].strip()
+        if media_type != source.expected_content_type:
+            expected = source.expected_content_type
+            raise SourceManifestError(
+                f"upstream content type is {media_type!r}; expected {expected!r}"
+            )
+        if resumed_from:
+            content_range = response.headers.get("content-range", "")
+            if not content_range.startswith(f"bytes {resumed_from}-"):
+                raise SourceManifestError("upstream returned an invalid Content-Range")
         mode = "ab" if resumed_from else "xb"
         with partial.open(mode) as stream:
             async for chunk in response.aiter_bytes(DOWNLOAD_CHUNK_BYTES):

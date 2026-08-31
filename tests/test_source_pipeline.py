@@ -111,7 +111,14 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
         async def handler(request: httpx.Request) -> httpx.Response:
             requests.append(request)
             offset = int(request.headers["range"].removeprefix("bytes=").removesuffix("-"))
-            return httpx.Response(206, content=payload[offset:])
+            return httpx.Response(
+                206,
+                content=payload[offset:],
+                headers={
+                    "Content-Type": "application/octet-stream",
+                    "Content-Range": f"bytes {offset}-{len(payload) - 1}/{len(payload)}",
+                },
+            )
 
         with tempfile.TemporaryDirectory() as directory:
             vault = Path(directory)

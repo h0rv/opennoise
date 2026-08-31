@@ -17,14 +17,6 @@ from musix.models.sources import DownloadResult, DownloadSource
 from musix.sources.registry import AdapterRegistry, SourceAdapter
 
 PIPELINE_VERSION = "source-pipeline-v1"
-USE_FIELDS = {
-    "normalize": "normalize",
-    "local_search": "local_search",
-    "display": "display",
-    "embed": "embed",
-    "train": "train",
-    "export": "export_metadata",
-}
 
 
 class _FrozenModel(BaseModel):
@@ -125,8 +117,15 @@ def _policy_id(connection: sqlite3.Connection, source: DownloadSource) -> int:
         "SELECT 1 FROM rights_policy_seals WHERE policy_id = ?", (policy_id,)
     ).fetchone()
     if sealed is None:
-        for use_kind, field_name in USE_FIELDS.items():
-            allowed = bool(getattr(source, field_name))
+        permissions = {
+            "normalize": source.normalize,
+            "local_search": source.local_search,
+            "display": source.display,
+            "embed": source.embed,
+            "train": source.train,
+            "export": source.export_metadata,
+        }
+        for use_kind, allowed in permissions.items():
             connection.execute(
                 """INSERT INTO rights_policy_permissions
                    (policy_id, use_kind, decision, reason) VALUES (?, ?, ?, ?)""",
@@ -565,7 +564,9 @@ async def run_source_pipeline(
     projectors: ProjectorRegistry,
     options: PipelineOptions,
 ) -> PipelineSummary:
-    """Download asynchronously, then stream sync parsing behind a thread boundary."""
+    """Download asynchronously, then stream sync parsing inside the caller's job boundary."""
+    if source.id != options.source_id:
+        raise ValueError("pipeline source_id does not match the parsed source")
     if source.expected_bytes > options.limits.max_archive_bytes:
         raise ValueError("source expected_bytes exceeds max_archive_bytes")
     adapter = registry.resolve(source)
