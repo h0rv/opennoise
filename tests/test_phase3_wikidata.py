@@ -96,6 +96,7 @@ class Phase3WikidataTests(unittest.TestCase):
         self.assertIn("FILTER(?otherMusicbrainzId != ?musicbrainzId)", query)
         self.assertIn("LIMIT 20000", query)
         self.assertIn("wikibase:DeprecatedRank", query)
+        self.assertIn("STRSTARTS(STR(?genre), STR(wd:Q))", query)
         self.assertNotIn("CONTAINS", query)
         self.assertNotIn("LCASE", query)
 
@@ -104,6 +105,7 @@ class Phase3WikidataTests(unittest.TestCase):
         self.assertIn("LIMIT 100", media)
         self.assertIn("REGEX(STR(?musicbrainzId)", media)
         self.assertIn("wikibase:DeprecatedRank", media)
+        self.assertIn("STRSTARTS(STR(?genre), STR(wd:Q))", media)
         self.assertNotIn("CONTAINS", media)
 
         details = render_detail_query(
@@ -119,6 +121,7 @@ class Phase3WikidataTests(unittest.TestCase):
         self.assertIn("VALUES ?entity { wd:Q100 }", details)
         self.assertIn("wdt:P4404 ?musicbrainzId", details)
         self.assertIn("wikibase:DeprecatedRank", details)
+        self.assertIn("STRSTARTS(STR(?genre), STR(wd:Q))", details)
         self.assertIn("LIMIT 20000", details)
         self.assertNotIn("CONTAINS", details)
 

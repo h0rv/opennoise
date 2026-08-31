@@ -155,6 +155,7 @@ WHERE {{
     {{ ?entity p:P136 ?statement.
        ?statement ps:P136 ?genre;
                   wikibase:rank ?rank.
+       FILTER(STRSTARTS(STR(?genre), STR(wd:Q)))
        FILTER(?rank != wikibase:DeprecatedRank)
        OPTIONAL {{
          ?statement prov:wasDerivedFrom ?reference.
@@ -200,6 +201,7 @@ WHERE {{
     "^[0-9a-f]{{8}}-[0-9a-f]{{4}}-[0-9a-f]{{4}}-[0-9a-f]{{4}}-[0-9a-f]{{12}}$"))
   ?statement ps:P136 ?genre;
              wikibase:rank ?rank.
+  FILTER(STRSTARTS(STR(?genre), STR(wd:Q)))
   FILTER(?rank != wikibase:DeprecatedRank)
   FILTER NOT EXISTS {{
     ?otherEntity wdt:{identifier_property} ?musicbrainzId.
