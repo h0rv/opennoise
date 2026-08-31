@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.prepare_phase3_genre_enrichment import GenreTarget, render_genre_query
 from scripts.prepare_phase3_media_details import (
     MediaIdentity,
     load_discovery,
@@ -129,3 +130,12 @@ class Phase3WikidataTests(unittest.TestCase):
         source = inspect.getsource(load_discovery)
 
         self.assertIn("SELECT DISTINCT entity.entity_kind", source)
+
+    def test_genre_query_uses_exact_qids_and_direct_ranked_p279(self) -> None:
+        query = render_genre_query((GenreTarget(qid="Q100"),))
+
+        self.assertIn("VALUES ?entity { wd:Q100 }", query)
+        self.assertIn("ps:P279 ?parent", query)
+        self.assertIn("wikibase:DeprecatedRank", query)
+        self.assertIn("STRSTARTS(STR(?parent), STR(wd:Q))", query)
+        self.assertNotIn("CONTAINS", query)
