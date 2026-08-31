@@ -158,9 +158,7 @@ class Phase3WikidataTests(unittest.TestCase):
         self.assertIn("?entity p:P31 ?statement", query)
         self.assertIn(f"?statement ps:P31 wd:{MUSIC_GENRE_ROOT_QID}", query)
         self.assertIn("FILTER(?rank != wikibase:DeprecatedRank)", query)
-        self.assertIn(
-            'BIND("Q188451|1|P31|P279:nondeprecated:Q25379"', query
-        )
+        self.assertIn('BIND("Q188451|1|P31|P279:nondeprecated:Q25379"', query)
         self.assertIn("VALUES ?excludedParent { wd:Q25379 }", query)
         self.assertIn("?entity p:P279 ?excludedStatement", query)
         self.assertIn("ps:P279 ?excludedParent", query)

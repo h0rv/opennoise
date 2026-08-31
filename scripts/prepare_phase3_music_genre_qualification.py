@@ -12,9 +12,7 @@ from scripts.prepare_phase3_genre_enrichment import GenreTarget, load_targets
 
 MUSIC_GENRE_ROOT_QID = "Q188451"
 EXCLUDED_DIRECT_PARENT_QIDS = ("Q25379",)
-EXCLUSION_PROFILE = ",".join(
-    f"P279:nondeprecated:{qid}" for qid in EXCLUDED_DIRECT_PARENT_QIDS
-)
+EXCLUSION_PROFILE = ",".join(f"P279:nondeprecated:{qid}" for qid in EXCLUDED_DIRECT_PARENT_QIDS)
 MAX_ANCESTRY_DEPTH = 1
 QUALIFICATION_SHARD_SIZE = 100
 
@@ -39,9 +37,7 @@ class MusicGenreQualificationSelection(FrozenModel):
 def render_qualification_query(targets: tuple[GenreTarget, ...]) -> str:
     """Render the canonical Wikidata music-genre P31 qualification."""
     qids = " ".join(f"wd:{target.qid}" for target in targets)
-    excluded_parents = " ".join(
-        f"wd:{qid}" for qid in EXCLUDED_DIRECT_PARENT_QIDS
-    )
+    excluded_parents = " ".join(f"wd:{qid}" for qid in EXCLUDED_DIRECT_PARENT_QIDS)
     branches = [
         f"""{{ ?entity p:P31 ?statement.
       ?statement ps:P31 wd:{MUSIC_GENRE_ROOT_QID};
