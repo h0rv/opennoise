@@ -26,11 +26,16 @@ separate profiles, and every inferred result lists its direct seed and ListenBra
 Third, the model computes weighted Jaccard and cosine neighbors from sparse artist profiles.
 It keeps a fixed number of neighbors per genre. The result includes the shared artist count.
 
-Fourth, the model computes two graph coordinates from a declared direct or one-hop weighted
-Jaccard graph. The public validation run uses the one-hop graph. It uses the normalized graph
-Laplacian and a sparse eigenvalue solver. Fixed input order, solver
-settings, axis signs, component order, and rounding make repeated builds stable. The axes do not
-claim to measure a music property.
+Fourth, the model publishes four separate layout lenses. `public` uses the one-hop weighted
+Jaccard graph and is the default. `public-direct` uses direct memberships only.
+`public-community` finds bounded communities in the one-hop graph, then lays out each community
+with the same sparse spectral method. `public-taxonomy` uses only Wikidata subclass links. The
+taxonomy links never change membership or similarity scores.
+
+Each lens records its method and version, input kind, metric, seed, input and output hashes,
+coordinates, unplaced reasons, quality checks, repeat stability, elapsed time, and peak memory.
+Fixed input order, solver settings, axis signs, component order, and rounding make repeated builds
+stable. The axes do not claim to measure a music property.
 
 Artist, album, and track rankings use direct metadata evidence only. The first source slice has
 artist and album facts. It publishes no track ranking when no public track evidence exists.
@@ -44,7 +49,7 @@ catalog and ListenBrainz databases.
 uv run poe build-public-model -- \
   --catalog-db data/public-catalog.sqlite \
   --listenbrainz-db data/listenbrainz.sqlite \
-  --output data/model/public-model-v1.json
+  --output data/model/public-model-v2.json
 ```
 
 The command opens both databases in read only mode. It writes the result through a temporary
@@ -67,7 +72,8 @@ when both policies allow the model to use them. Historical Every Noise data can 
 after the result hash has been fixed. It is not part of this build command.
 
 The seven day event-time split, map checks, hierarchy check, and community experiment are documented
-in [`GRAPH_VALIDATION.md`](GRAPH_VALIDATION.md).
+in [`GRAPH_VALIDATION.md`](GRAPH_VALIDATION.md). The measured four-lens run is documented in
+[`reports/LAYOUT_LENSES_20260831.md`](reports/LAYOUT_LENSES_20260831.md).
 
 ## Publish and serve
 
@@ -75,7 +81,7 @@ Publish a completed artifact into a catalog whose selected policy allows display
 
 ```sh
 uv run poe publish-public-model -- \
-  data/model/public-model-v1.json \
+  data/model/public-model-v2.json \
   --database data/public-catalog.sqlite \
   --policy-id 1
 
@@ -85,10 +91,15 @@ uv run musix serve --database data/public-catalog.sqlite
 Publication opens the artifact once, enforces a 32 MiB limit, verifies both its file hash and
 logical output hash, and resolves every declared input to an exact source artifact and provenance
 record whose policies allow export. It resolves every genre by one exact Wikidata QID or
-MusicBrainz ID, then commits the derived output, model, coordinates, representatives, input
-lineage, and current selection in one SQLite transaction. Repeating the same publication is
-idempotent and does not alter the selection timestamp. The generated map is available as the
-`public` layout while existing historical layouts remain available.
+MusicBrainz ID, then commits the derived output, model, four layouts, representatives, input
+lineage, and current selections in one SQLite transaction. Repeating the same publication is
+idempotent and does not alter the selection timestamp. A layout can be selected only when it
+belongs to the current public model. The default is `public`. Direct, community, and taxonomy
+lenses remain independently selectable.
+
+Every lens accounts for every genre in the artifact. A genre is either placed or has a bounded
+reason key such as `no_similarity_edges` or `no_hierarchy_edges`. Serving views expose points and
+unplaced reasons only for the current model and selected layout.
 
 The public model's own genre names take precedence over local display names. Local catalog
 artists, albums, and recordings never act as serving fallbacks because their display permission

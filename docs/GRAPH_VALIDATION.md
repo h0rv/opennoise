@@ -27,7 +27,8 @@ Run the validation job with this command:
 uv run poe validate-public-graph -- \
   --catalog-db data/public-catalog.sqlite \
   --vault data/vault \
-  --output data/model/public-graph-validation-v1.json
+  --output data/model/public-graph-validation-v1.json \
+  --model-output data/model/public-model-v2.json
 ```
 
 The job has fixed row, archive, record, time, user, artist, window, pair, and genre bounds. It
@@ -59,21 +60,26 @@ The public build currently has Wikidata P136 only, so the report marks source ho
 MusicBrainz tags can take part in a local research run only when the local policy allows embedding.
 Any such result remains local when an input policy denies export.
 
-## Community experiment
+## Community lens
 
-The job runs weighted label propagation with three fixed seeds. Communities are experiment output,
-not genre names. The report records convergence, modularity, assignments, and agreement between
-the three seeds. The algorithm uses the learned genre neighbor graph and keeps hierarchy links out
-of community discovery.
+The job runs weighted label propagation with fixed seeds. Communities are layout groups, not genre
+names. The report records convergence, modularity, assignments, and agreement between validation
+seeds. The public community lens uses one declared seed, removes links between communities for
+placement, and reports quality against the full one-hop graph. Hierarchy links stay out of
+community discovery.
 
 ## Layout choice
 
-The validation layout uses the one-hop learned genre profile and the deterministic sparse spectral
-method. The first public graph has
-about one hundred placed genres, so adding UMAP or another compiled dependency would increase setup
-and caching costs before there is evidence that it improves local neighbor preservation. A second
-layout should be added only after the report shows a measured spectral problem. The comparison must
-use the same frozen graph and the same validation measures.
+The default layout uses the one-hop learned genre profile and the deterministic sparse spectral
+method. On the frozen seven-day run, it preserved 0.5173 of the learned top-10 neighbors. The
+direct lens preserved 0.4077 against the same one-hop reference. This supports the one-hop lens as
+the default while keeping the direct lens for explanation.
+
+The community lens preserved 0.5510 against the same reference and produced different coordinates
+for all 104 placed genres. It remains a separate lens because its groups are learned rather than
+named facts. The taxonomy lens is separate because its edges mean subclass, not listening
+similarity. No UMAP or other compiled layout dependency was added. The sparse methods complete in
+milliseconds on this graph.
 
 Historical Every Noise data may be compared after the public result hash has been fixed. It cannot
 enter the build command, tune parameters, select a layout, or decide which result to publish.

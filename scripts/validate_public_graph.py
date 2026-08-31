@@ -10,8 +10,9 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 from musix.clients.downloads import download_verified
+from musix.ml.public_graph import build_public_model
 from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
-from musix.ml.validation import build_graph_validation
+from musix.ml.validation import build_graph_validation, build_temporal_public_input
 from musix.ml.validation_repository import GraphValidationRepository, ValidationLoadSettings
 from musix.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
 from musix.models.listenbrainz import JointListenArtifact, ListenBrainzAggregationConfig
@@ -41,6 +42,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument(
         "--output", type=Path, default=Path("data/model/public-graph-validation-v1.json")
     )
+    parser.add_argument("--model-output", type=Path)
     parser.add_argument("--max-direct-memberships", type=int, default=100_000)
     parser.add_argument("--max-metadata-candidates", type=int, default=100_000)
     parser.add_argument("--neighbors-per-genre", type=int, default=10)
@@ -205,20 +207,28 @@ def main() -> None:
     with _read_only(arguments.catalog_db) as catalog:
         base_inputs = PublicModelRepository(catalog).load_catalog_only(load_settings)
         hierarchy = GraphValidationRepository(catalog).hierarchy_edges(ValidationLoadSettings())
+    source_artifacts = _public_artifacts(sources, results)
+    validation_input = GraphValidationInput(
+        base_inputs=base_inputs,
+        source_artifacts=source_artifacts,
+        event_windows=windows,
+        corpus_run=corpus_run,
+        hierarchy=hierarchy,
+        input_database_bytes=arguments.catalog_db.stat().st_size,
+        input_artifact_bytes=sum(result.byte_size for result in results),
+    )
     artifact = build_graph_validation(
-        GraphValidationInput(
-            base_inputs=base_inputs,
-            source_artifacts=_public_artifacts(sources, results),
-            event_windows=windows,
-            corpus_run=corpus_run,
-            hierarchy=hierarchy,
-            input_database_bytes=arguments.catalog_db.stat().st_size,
-            input_artifact_bytes=sum(result.byte_size for result in results),
-        ),
+        validation_input,
         model_settings,
         validation_settings,
     )
     _write_atomic(arguments.output, artifact.model_dump_json(indent=2))
+    if arguments.model_output is not None:
+        model = build_public_model(
+            build_temporal_public_input(base_inputs, source_artifacts, windows),
+            model_settings,
+        )
+        _write_atomic(arguments.model_output, model.model_dump_json(indent=2))
     summary = artifact.model_dump_json(
         include={
             "output_sha256",

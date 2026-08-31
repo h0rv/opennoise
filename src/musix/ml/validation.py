@@ -79,11 +79,12 @@ def _aggregate_pairs(windows: tuple[TemporalPairWindow, ...]) -> tuple[ArtistPai
     )
 
 
-def _stage_input(
+def build_temporal_public_input(
     base: PublicModelInput,
     source_artifacts: tuple[PublicArtifact, ...],
     windows: tuple[TemporalPairWindow, ...],
 ) -> PublicModelInput:
+    """Build one cumulative model input from disjoint privacy-safe event windows."""
     artifacts = tuple(artifact for artifact in base.artifacts if artifact.source != "listenbrainz")
     return PublicModelInput(
         artifacts=tuple(
@@ -370,12 +371,14 @@ def build_graph_validation(
     train_windows = windows[:-2]
     validation_windows = windows[:-1]
     train = build_public_model(
-        _stage_input(base_inputs, source_artifacts, train_windows), model_settings
+        build_temporal_public_input(base_inputs, source_artifacts, train_windows),
+        model_settings,
     )
     validation = build_public_model(
-        _stage_input(base_inputs, source_artifacts, validation_windows), model_settings
+        build_temporal_public_input(base_inputs, source_artifacts, validation_windows),
+        model_settings,
     )
-    test_input = _stage_input(base_inputs, source_artifacts, windows)
+    test_input = build_temporal_public_input(base_inputs, source_artifacts, windows)
     test = build_public_model(test_input, model_settings)
     repeated = build_public_model(test_input, model_settings)
     experiments = tuple(

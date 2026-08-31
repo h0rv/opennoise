@@ -7,6 +7,7 @@ import resource
 import time
 from collections import defaultdict
 from collections.abc import Mapping
+from dataclasses import dataclass
 
 import numpy as np
 from scipy import sparse
@@ -40,6 +41,14 @@ _MINIMUM_NEIGHBOR_SET = 2
 _SPECTRAL_SEED = 0
 
 type EdgeWeights = dict[tuple[str, str], float]
+
+
+@dataclass(frozen=True, slots=True)
+class _QualityContext:
+    layout_weights: Mapping[tuple[str, str], float]
+    input_weights: Mapping[tuple[str, str], float]
+    neighbors_per_genre: int
+    one_hop_weights: Mapping[tuple[str, str], float] | None
 
 
 def _edge_key(left: str, right: str) -> tuple[str, str]:
@@ -211,27 +220,37 @@ def _coordinate_neighbors(
 def _quality(
     coordinates: tuple[GenreCoordinate, ...],
     unplaced: tuple[UnplacedGenre, ...],
-    weights: Mapping[tuple[str, str], float],
-    neighbors_per_genre: int,
+    context: _QualityContext,
 ) -> LayoutQuality:
     genres = tuple(item.genre_id for item in coordinates)
-    source = _source_neighbors(genres, weights, neighbors_per_genre)
-    embedded = _coordinate_neighbors(coordinates, neighbors_per_genre)
-    preservation: list[float] = []
-    for genre in genres:
-        denominator = min(neighbors_per_genre, len(source[genre]), len(embedded[genre]))
-        if denominator:
-            preservation.append(len(set(source[genre]) & set(embedded[genre])) / denominator)
+    embedded = _coordinate_neighbors(coordinates, context.neighbors_per_genre)
+
+    def preservation(weights: Mapping[tuple[str, str], float]) -> float:
+        source = _source_neighbors(genres, weights, context.neighbors_per_genre)
+        values: list[float] = []
+        for genre in genres:
+            denominator = min(
+                context.neighbors_per_genre,
+                len(source[genre]),
+                len(embedded[genre]),
+            )
+            if denominator:
+                values.append(len(set(source[genre]) & set(embedded[genre])) / denominator)
+        return round(sum(values) / len(values), 12) if values else 0.0
+
+    source = _source_neighbors(genres, context.input_weights, context.neighbors_per_genre)
     directed = {(genre, neighbor) for genre, values in source.items() for neighbor in values}
     mutual = sum((right, left) in directed for left, right in directed)
     return LayoutQuality(
-        neighbors_per_genre=neighbors_per_genre,
-        source_graph_edges=len(weights),
+        neighbors_per_genre=context.neighbors_per_genre,
+        layout_graph_edges=len(context.layout_weights),
+        input_graph_edges=len(context.input_weights),
         placed_genres=len(coordinates),
         unplaced_genres=len(unplaced),
-        mean_knn_preservation=round(sum(preservation) / len(preservation), 12)
-        if preservation
-        else 0.0,
+        mean_knn_preservation=preservation(context.input_weights),
+        one_hop_reference_knn_preservation=preservation(context.one_hop_weights)
+        if context.one_hop_weights is not None
+        else None,
         mutual_neighbor_fraction=round(mutual / len(directed), 12) if directed else 0.0,
     )
 
@@ -328,6 +347,7 @@ def _lens(  # noqa: PLR0913
     weights: EdgeWeights,
     neighbors_per_genre: int,
     quality_weights: EdgeWeights | None = None,
+    one_hop_weights: EdgeWeights | None = None,
     community: CommunityLayoutResult | None = None,
 ) -> LayoutLens:
     started = time.monotonic()
@@ -350,8 +370,12 @@ def _lens(  # noqa: PLR0913
     quality = _quality(
         coordinates,
         unplaced,
-        measured_weights,
-        neighbors_per_genre,
+        _QualityContext(
+            layout_weights=weights,
+            input_weights=measured_weights,
+            neighbors_per_genre=neighbors_per_genre,
+            one_hop_weights=one_hop_weights,
+        ),
     )
     stability = LayoutStability(
         exact_rerun=coordinates == repeated,
@@ -434,6 +458,7 @@ def build_layout_lenses(
             unplaced_reason="no_direct_membership",
             weights=learned_edges,
             neighbors_per_genre=count,
+            one_hop_weights=learned_edges,
         ),
         _lens(
             layout_key="public-direct",
@@ -446,6 +471,7 @@ def build_layout_lenses(
             unplaced_reason="no_direct_membership",
             weights=direct_edges,
             neighbors_per_genre=count,
+            one_hop_weights=learned_edges,
         ),
         _lens(
             layout_key="public-community",
@@ -459,6 +485,7 @@ def build_layout_lenses(
             weights=community_edges,
             neighbors_per_genre=count,
             quality_weights=learned_edges,
+            one_hop_weights=learned_edges,
             community=community,
         ),
         _lens(

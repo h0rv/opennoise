@@ -194,6 +194,11 @@ class PublicGraphTests(unittest.TestCase):
         )
         self.assertTrue(all(item.stability.exact_rerun for item in first.layouts))
         self.assertTrue(all(item.stability.aligned_coordinate_rms == 0.0 for item in first.layouts))
+        quality = {item.layout_key: item.quality for item in first.layouts}
+        self.assertIsNotNone(quality["public"].one_hop_reference_knn_preservation)
+        self.assertIsNotNone(quality["public-direct"].one_hop_reference_knn_preservation)
+        self.assertIsNotNone(quality["public-community"].one_hop_reference_knn_preservation)
+        self.assertIsNone(quality["public-taxonomy"].one_hop_reference_knn_preservation)
         self.assertEqual(first.coverage.input_artists, 6)
         self.assertEqual(first.coverage.input_genres, 4)
         self.assertEqual(first.coverage.direct_observations, 9)

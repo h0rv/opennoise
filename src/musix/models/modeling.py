@@ -248,10 +248,12 @@ class LayoutQuality(FrozenModel):
     """Record comparable graph and coordinate quality for one lens."""
 
     neighbors_per_genre: int = Field(gt=0)
-    source_graph_edges: int = Field(ge=0)
+    layout_graph_edges: int = Field(ge=0)
+    input_graph_edges: int = Field(ge=0)
     placed_genres: int = Field(ge=0)
     unplaced_genres: int = Field(ge=0)
     mean_knn_preservation: FiniteFloat = Field(ge=0.0, le=1.0)
+    one_hop_reference_knn_preservation: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
     mutual_neighbor_fraction: FiniteFloat = Field(ge=0.0, le=1.0)
 
 
