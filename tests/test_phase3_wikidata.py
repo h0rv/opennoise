@@ -139,3 +139,9 @@ class Phase3WikidataTests(unittest.TestCase):
         self.assertIn("wikibase:DeprecatedRank", query)
         self.assertIn("STRSTARTS(STR(?parent), STR(wd:Q))", query)
         self.assertNotIn("CONTAINS", query)
+
+    def test_label_only_query_cannot_create_parent_placeholders(self) -> None:
+        query = render_genre_query((GenreTarget(qid="Q100"),), include_hierarchy=False)
+
+        self.assertIn("VALUES ?entity { wd:Q100 }", query)
+        self.assertNotIn("ps:P279", query)

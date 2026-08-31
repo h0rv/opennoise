@@ -28,10 +28,13 @@ class GenreEnrichmentSelection(FrozenModel):
     schema_version: Literal[1] = 1
     input_artifacts: tuple[str, ...]
     targets: tuple[GenreTarget, ...]
+    query_mode: Literal["discover_direct_parents", "labels_only"]
     shard_size: int = GENRE_SHARD_SIZE
 
 
-def load_targets(database: Path) -> GenreEnrichmentSelection:
+def load_targets(
+    database: Path, query_mode: Literal["discover_direct_parents", "labels_only"]
+) -> GenreEnrichmentSelection:
     """Load exact QIDs referenced by direct memberships or known hierarchy."""
     with sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True) as connection:
         rows = connection.execute(
@@ -65,12 +68,29 @@ def load_targets(database: Path) -> GenreEnrichmentSelection:
     return GenreEnrichmentSelection(
         input_artifacts=tuple(str(row[0]) for row in artifacts),
         targets=targets,
+        query_mode=query_mode,
     )
 
 
-def render_genre_query(targets: tuple[GenreTarget, ...]) -> str:
+def render_genre_query(targets: tuple[GenreTarget, ...], *, include_hierarchy: bool = True) -> str:
     """Render labels, aliases, and referenced non-deprecated direct P279 facts."""
     qids = " ".join(f"wd:{target.qid}" for target in targets)
+    hierarchy = (
+        ""
+        if not include_hierarchy
+        else """
+    UNION
+    { ?entity p:P279 ?parentStatement.
+      ?parentStatement ps:P279 ?parent;
+                       wikibase:rank ?parentRank.
+      FILTER(STRSTARTS(STR(?parent), STR(wd:Q)))
+      FILTER(?parentRank != wikibase:DeprecatedRank)
+      OPTIONAL {
+        ?parentStatement prov:wasDerivedFrom ?parentReference.
+        OPTIONAL { ?parentReference pr:P854 ?parentReferenceUrl. }
+      }
+    }"""
+    )
     return f"""PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -91,17 +111,7 @@ WHERE {{
     UNION
     {{ ?entity skos:altLabel ?alias.
        FILTER(LANG(?alias) IN ("en", "es", "fr", "de", "pt", "ja", "ko", "zh", "ar", "hi")) }}
-    UNION
-    {{ ?entity p:P279 ?parentStatement.
-       ?parentStatement ps:P279 ?parent;
-                        wikibase:rank ?parentRank.
-       FILTER(STRSTARTS(STR(?parent), STR(wd:Q)))
-       FILTER(?parentRank != wikibase:DeprecatedRank)
-       OPTIONAL {{
-         ?parentStatement prov:wasDerivedFrom ?parentReference.
-         OPTIONAL {{ ?parentReference pr:P854 ?parentReferenceUrl. }}
-       }}
-    }}
+    {hierarchy}
   }}
 }}
 ORDER BY ?entity ?label ?alias ?parentStatement ?parent ?parentReference
@@ -115,9 +125,12 @@ def _write(path: Path, payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def prepare(database: Path, output: Path) -> dict[str, object]:
+def prepare(database: Path, output: Path, *, labels_only: bool = False) -> dict[str, object]:
     """Write a hashed selection manifest and deterministic query shards."""
-    selection = load_targets(database)
+    query_mode: Literal["discover_direct_parents", "labels_only"] = (
+        "labels_only" if labels_only else "discover_direct_parents"
+    )
+    selection = load_targets(database, query_mode)
     manifest_sha256 = _write(
         output / "genre-selection.json",
         selection.model_dump_json(indent=2).encode(),
@@ -126,7 +139,10 @@ def prepare(database: Path, output: Path) -> dict[str, object]:
     for offset in range(0, len(selection.targets), selection.shard_size):
         ordinal = offset // selection.shard_size
         path = output / f"genres-{ordinal:02d}.rq"
-        query = render_genre_query(selection.targets[offset : offset + selection.shard_size])
+        query = render_genre_query(
+            selection.targets[offset : offset + selection.shard_size],
+            include_hierarchy=not labels_only,
+        )
         query_hashes[path.name] = _write(path, query.encode())
     return {
         "input_artifacts": len(selection.input_artifacts),
@@ -142,10 +158,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("database", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--labels-only", action="store_true")
     args = parser.parse_args()
-    sys.stdout.write(
-        f"{json.dumps(prepare(args.database, args.output), indent=2, sort_keys=True)}\n"
-    )
+    result = prepare(args.database, args.output, labels_only=args.labels_only)
+    sys.stdout.write(f"{json.dumps(result, indent=2, sort_keys=True)}\n")
     return 0
 
 
