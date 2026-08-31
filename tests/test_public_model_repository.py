@@ -158,9 +158,7 @@ class PublicModelRepositoryTests(unittest.TestCase):
         self.assertEqual(len(result.artist_pairs), 1)
         self.assertEqual(result.artist_pairs[0].right_artist_id, _ARTIST_B)
         self.assertEqual(len(result.metadata_candidates), 2)
-        self.assertFalse(
-            any(item.name in {"Q300", "Q400"} for item in result.metadata_candidates)
-        )
+        self.assertFalse(any(item.name in {"Q300", "Q400"} for item in result.metadata_candidates))
         self.assertIn("Q300 Deluxe", {item.name for item in result.metadata_candidates})
         self.assertEqual(result.hierarchy, ())
         self.assertEqual(
