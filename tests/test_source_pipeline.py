@@ -126,6 +126,50 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(research_source.export_metadata)
         self.assertEqual(research_source.checksum, public_source.checksum)
 
+    async def test_restarts_an_empty_partial_left_by_a_failed_stream(self) -> None:
+        payload = b"verified source bytes"
+        digest = hashlib.sha256(payload).hexdigest()
+        source = DownloadSource(
+            id="fixture",
+            adapter="fixture_v1",
+            snapshot="1",
+            url=HttpUrl("https://example.test/source.bin"),
+            discovery_url=HttpUrl("https://example.test/"),
+            expected_content_type="application/octet-stream",
+            compression="none",
+            expected_bytes=len(payload),
+            checksum_algorithm="sha256",
+            checksum=digest,
+            data_license="CC0",
+            license_url="https://creativecommons.org/publicdomain/zero/1.0/",
+            rights_classification="public_domain",
+            local_only=False,
+            normalize=True,
+            local_search=True,
+            display=True,
+            embed=True,
+            train=True,
+            export_metadata=True,
+        )
+
+        async def handler(_request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                content=payload,
+                headers={"Content-Type": "application/octet-stream"},
+            )
+
+        with tempfile.TemporaryDirectory() as directory:
+            vault = Path(directory)
+            partial = vault / "downloads" / f"{source.id}.{digest}.part"
+            partial.parent.mkdir(parents=True)
+            partial.touch()
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                result = await download_verified(source, vault, client=client)
+
+            self.assertEqual(result.path.read_bytes(), payload)
+            self.assertEqual(result.resumed_from, 0)
+
     async def test_resumes_and_verifies_into_content_addressed_vault(self) -> None:
         payload = b"verified source bytes"
         digest = hashlib.sha256(payload).hexdigest()
