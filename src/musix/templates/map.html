@@ -1,11 +1,16 @@
 <main id="map" aria-label="Music map" tabindex="0">
-<svg id="plot" role="img" aria-label="Genre and artist map" viewBox="{{ map.view_box }}">
+<svg id="plot" role="img" aria-label="Genre and artist map"
+     viewBox="{{ map.view_box }}" width="{{ map.view_width }}" height="{{ map.view_height }}"
+     preserveAspectRatio="xMinYMin meet">
 {% if map.points %}
   {% for point in map.points %}
   <a class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
-     href="{% if point.entity_kind == 'genre' %}/fragments/genres/{{ point.entity_id }}{% else %}/fragments/map?focus={{ point.entity_id }}{% endif %}"
+     href="{% if point.entity_kind == 'genre' %}/genres/{{ point.entity_id }}{% else %}/fragments/map?focus={{ point.entity_id }}{% endif %}"
      aria-label="{{ point.name }}"
-     hx-get="/fragments/map?focus={{ point.entity_id }}" hx-target="#map" hx-swap="outerHTML">
+     {% if point.entity_kind == 'genre' %}aria-current="{% if point.entity_id == map.focused_entity_id %}true{% else %}false{% endif %}"
+     hx-get="/fragments/workspace?focus={{ point.entity_id }}" hx-target="#workspace"
+     hx-swap="outerHTML" hx-push-url="/genres/{{ point.entity_id }}"
+     hx-sync="#search:abort"{% endif %}>
     <circle cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"
             fill="{{ point.color_hex or '#77776f' }}"></circle>
     {% if map.show_labels %}
@@ -18,6 +23,3 @@
 {% endif %}
 </svg>
 </main>
-{% if map.focused_entity_id is not none %}
-<aside id="results" hx-swap-oob="innerHTML"></aside>
-{% endif %}

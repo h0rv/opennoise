@@ -82,6 +82,8 @@ class MapView(FrozenModel):
 
     points: tuple[MapPoint, ...]
     view_box: str
+    view_width: float
+    view_height: float
     focused_entity_id: int | None = None
     show_labels: bool = True
 
@@ -94,35 +96,22 @@ def map_view(
     show_labels: bool = True,
 ) -> MapView:
     """Compute padded SVG bounds for a sequence of map points."""
+    if view_box is not None:
+        _, _, view_width, view_height = (float(value) for value in view_box.split())
+        return MapView(
+            points=tuple(points),
+            view_box=view_box,
+            view_width=view_width,
+            view_height=view_height,
+            focused_entity_id=focused_entity_id,
+            show_labels=show_labels,
+        )
     if not points:
         return MapView(
             points=(),
-            view_box=view_box or "0 0 100 100",
-            focused_entity_id=focused_entity_id,
-            show_labels=show_labels,
-        )
-    if view_box is not None:
-        return MapView(
-            points=tuple(points),
-            view_box=view_box,
-            focused_entity_id=focused_entity_id,
-            show_labels=show_labels,
-        )
-    focused_point = next(
-        (point for point in points if point.entity_id == focused_entity_id),
-        None,
-    )
-    if focused_point is not None:
-        focus_width = 600.0
-        focus_height = 800.0
-        view_box = (
-            f"{focused_point.x - focus_width / 2} "
-            f"{focused_point.y - focus_height / 2} "
-            f"{focus_width} {focus_height}"
-        )
-        return MapView(
-            points=tuple(points),
-            view_box=view_box,
+            view_box="0 0 100 100",
+            view_width=100.0,
+            view_height=100.0,
             focused_entity_id=focused_entity_id,
             show_labels=show_labels,
         )
@@ -141,6 +130,8 @@ def map_view(
     return MapView(
         points=tuple(points),
         view_box=view_box,
+        view_width=span_x + padding_x * 2,
+        view_height=span_y + padding_y * 2,
         focused_entity_id=focused_entity_id,
         show_labels=show_labels,
     )

@@ -34,7 +34,20 @@ class CoreController(Controller):
     async def index(self, database: NamedDependency[AsyncDatabase]) -> Template:
         """Render the current full map."""
         view = map_view(await database.map_points())
-        return Template(template_name="index.html", context={"map": view})
+        return Template(template_name="index.html", context={"genre": None, "map": view})
+
+    @get("/genres/{genre_id:int}")
+    async def selected_genre(
+        self,
+        database: NamedDependency[AsyncDatabase],
+        genre_id: FromPath[int],
+    ) -> Template:
+        """Render a shareable genre selection with the complete app shell."""
+        genre = await database.genre_detail(genre_id)
+        if genre is None:
+            raise NotFoundException(detail="genre not found")
+        view = map_view(await database.map_points(), genre_id)
+        return Template(template_name="index.html", context={"genre": genre, "map": view})
 
     @get("/api/health", media_type=MediaType.TEXT)
     async def health(self, database: NamedDependency[AsyncDatabase]) -> str:
@@ -167,6 +180,24 @@ class MapController(Controller):
             show_labels=query.level_of_detail is LevelOfDetail.LABELS,
         )
         return Template(template_name="map.html", context={"map": view})
+
+    @get("/fragments/workspace")
+    async def workspace_fragment(
+        self,
+        database: NamedDependency[AsyncDatabase],
+        focus: FromQuery[int | None] = None,
+    ) -> Template:
+        """Render one coherent map selection and detail fragment."""
+        genre = None
+        if focus is not None:
+            genre = await database.genre_detail(focus)
+            if genre is None:
+                raise NotFoundException(detail="genre not found")
+        view = map_view(await database.map_points(), focus)
+        return Template(
+            template_name="workspace.html",
+            context={"clear_results": True, "genre": genre, "map": view},
+        )
 
 
 class SearchController(Controller):

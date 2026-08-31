@@ -82,6 +82,22 @@ class ProvenanceEvidence(FrozenModel):
     is_primary: bool
 
 
+class GenreDiscoveryItem(FrozenModel):
+    """One evidence-backed item available to a future genre discovery view."""
+
+    entity_id: int
+    name: str
+    evidence_refs: tuple[int, ...] = ()
+
+
+class GenreExternalLink(FrozenModel):
+    """One policy-safe external or playable destination for a genre."""
+
+    label: str
+    url: str
+    evidence_refs: tuple[int, ...] = ()
+
+
 class GenreDetail(FrozenModel):
     """A genre and the source evidence available for its fields."""
 
@@ -90,6 +106,11 @@ class GenreDetail(FrozenModel):
     name: str
     description: str | None
     evidence: tuple[ProvenanceEvidence, ...]
+    representative_artists: tuple[GenreDiscoveryItem, ...] = ()
+    defining_albums: tuple[GenreDiscoveryItem, ...] = ()
+    defining_tracks: tuple[GenreDiscoveryItem, ...] = ()
+    playable_links: tuple[GenreExternalLink, ...] = ()
+    neighbors: tuple[GenreDiscoveryItem, ...] = ()
 
 
 class ProvenanceResponse(FrozenModel):

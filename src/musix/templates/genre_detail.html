@@ -1,12 +1,8 @@
-<section id="genre-detail" aria-labelledby="genre-detail-name">
+<aside id="genre-detail" aria-labelledby="genre-detail-name">
 <h2 id="genre-detail-name">{{ genre.name }}</h2>
-{% if genre.description %}<p>{{ genre.description }}</p>{% endif %}
-<dl>
-  {% for item in genre.evidence %}
-  <div>
-    <dt>{{ item.source_name }}</dt>
-    <dd><time datetime="{{ item.observed_at.isoformat() }}">{{ item.observed_at.date() }}</time></dd>
-  </div>
-  {% endfor %}
-</dl>
-</section>
+{% if genre.representative_artists %}<section aria-label="Artists"><h3>Artists</h3>{% for item in genre.representative_artists %}<a href="/entities/{{ item.entity_id }}">{{ item.name }}</a>{% endfor %}</section>{% endif %}
+{% if genre.defining_albums %}<section aria-label="Albums"><h3>Albums</h3>{% for item in genre.defining_albums %}<a href="/entities/{{ item.entity_id }}">{{ item.name }}</a>{% endfor %}</section>{% endif %}
+{% if genre.defining_tracks %}<section aria-label="Tracks"><h3>Tracks</h3>{% for item in genre.defining_tracks %}<a href="/entities/{{ item.entity_id }}">{{ item.name }}</a>{% endfor %}</section>{% endif %}
+{% if genre.playable_links %}<section aria-label="Listen"><h3>Listen</h3>{% for item in genre.playable_links %}<a href="{{ item.url }}">{{ item.label }}</a>{% endfor %}</section>{% endif %}
+{% if genre.neighbors %}<section aria-label="Nearby"><h3>Nearby</h3>{% for item in genre.neighbors %}<a href="/entities/{{ item.entity_id }}">{{ item.name }}</a>{% endfor %}</section>{% endif %}
+</aside>

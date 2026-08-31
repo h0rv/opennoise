@@ -1,4 +1,8 @@
 {% for hit in hits %}
-<button class="result" type="button" hx-get="/fragments/map?focus={{ hit.entity_id }}"
-        hx-target="#map" hx-swap="outerHTML">{{ hit.name }}</button>
+{% if hit.entity_kind == 'genre' %}
+<a class="result" href="/genres/{{ hit.entity_id }}"
+   hx-get="/fragments/workspace?focus={{ hit.entity_id }}" hx-target="#workspace"
+   hx-swap="outerHTML" hx-push-url="/genres/{{ hit.entity_id }}"
+   hx-sync="#search:abort">{{ hit.name }}</a>
+{% endif %}
 {% endfor %}

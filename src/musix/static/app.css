@@ -20,8 +20,14 @@ button, input { font: inherit; }
   border: 0;
 }
 
-#map { position: fixed; inset: 0; overflow: auto; background: #f3f3f0; outline: none; }
-#plot { display: block; width: 100%; height: auto; min-height: 100%; }
+#workspace, #map { position: fixed; inset: 0; }
+#map { overflow: auto; background: #f3f3f0; outline: none; }
+#plot {
+  display: block;
+  width: max(100%, 56rem);
+  height: auto;
+  max-width: none;
+}
 
 #search {
   position: fixed;
@@ -44,15 +50,6 @@ button, input { font: inherit; }
 }
 
 #query:focus { border-color: #222; }
-
-#count {
-  position: fixed;
-  z-index: 2;
-  top: 26px;
-  right: 16px;
-  color: #66665f;
-  font-size: 12px;
-}
 
 #results {
   position: fixed;
@@ -80,6 +77,7 @@ button, input { font: inherit; }
   background: transparent;
   cursor: pointer;
   text-align: left;
+  text-decoration: none;
 }
 
 .result:last-child { border-bottom: 0; }
@@ -90,12 +88,51 @@ button, input { font: inherit; }
 .point text { fill: #34342f; font-size: 11px; paint-order: stroke; stroke: #f3f3f0; stroke-width: 3px; stroke-linejoin: round; }
 .point.artist circle { stroke: #242420; stroke-width: 2; }
 .point.selected circle { stroke: #111; stroke-width: 4; }
+.point.selected text { fill: #000; font-weight: 700; }
+
+#genre-detail {
+  position: fixed;
+  z-index: 2;
+  top: 46px;
+  right: 14px;
+  width: min(280px, calc(100vw - 28px));
+  max-height: min(42vh, 320px);
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid #aaa9a2;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 3px 12px rgb(0 0 0 / 8%);
+}
+
+#genre-detail h2 { margin: 0; font-size: 17px; line-height: 1.25; }
+#genre-detail h3 { margin: 10px 0 4px; font-size: 12px; }
+#genre-detail section a { display: block; color: inherit; font-size: 12px; }
+#selection-clear {
+  position: fixed;
+  z-index: 4;
+  top: 17px;
+  right: 18px;
+  color: #202020;
+  font-size: 22px;
+  line-height: 1;
+  text-decoration: none;
+}
+#selection-clear:focus-visible { outline: 2px solid #222; outline-offset: 3px; }
 
 .empty { fill: #b5b4ad; font-size: 28px; font-weight: 300; }
 
 @media (max-width: 520px) {
   #search { top: 10px; left: 10px; width: calc(100vw - 68px); }
   #results { top: 54px; left: 10px; width: calc(100vw - 20px); }
-  #count { top: 24px; right: 11px; }
+  #plot { width: max(100%, 44rem); }
+  #genre-detail {
+    top: auto;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    width: auto;
+    max-height: 34vh;
+  }
   .point text { font-size: 10px; }
 }
