@@ -315,6 +315,32 @@ def _genres(
             )
           GROUP BY evidence.genre_id
           UNION
+          SELECT evidence.genre_id,
+                 'catalog:recording-genre:' || min(evidence.id) AS evidence_ref
+          FROM normalizable_recording_genre_memberships AS evidence
+          JOIN active_rights_policy_permissions AS embed_permission
+            ON embed_permission.policy_id = evidence.policy_id
+           AND embed_permission.use_kind = 'embed'
+           AND embed_permission.decision = 'allow'
+          WHERE evidence.evidence_kind IN (
+            'musicbrainz_recording_genre', 'wikidata_p136'
+          )
+            AND NOT EXISTS (
+              SELECT 1 FROM active_suppressions AS suppression
+              WHERE suppression.use_kind IN ('all', 'embed') AND (
+                (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+                  CAST(evidence.recording_id AS TEXT), CAST(evidence.genre_id AS TEXT)
+                ))
+                OR (suppression.target_kind = 'provenance'
+                    AND suppression.target_ref = CAST(evidence.provenance_id AS TEXT))
+                OR (suppression.target_kind = 'source' AND suppression.target_ref = CAST((
+                      SELECT source_id FROM provenance_records
+                      WHERE id = evidence.provenance_id
+                    ) AS TEXT))
+              )
+            )
+          GROUP BY evidence.genre_id
+          UNION
           SELECT endpoint.genre_id,
                  'catalog:genre-hierarchy:' || min(endpoint.relation_id) AS evidence_ref
           FROM (

@@ -31,6 +31,9 @@
         "entityKind": {"type": "literal", "value": "recording"},
         "label": {"xml:lang": "en", "type": "literal", "value": "Example Recording"},
         "musicbrainzId": {"type": "literal", "value": "33333333-3333-4333-8333-333333333333"},
+        "genre": {"type": "uri", "value": "http://www.wikidata.org/entity/Q500"},
+        "statement": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/Q300-genre"},
+        "rank": {"type": "uri", "value": "http://wikiba.se/ontology#NormalRank"},
         "publicationDate": {"datatype": "http://www.w3.org/2001/XMLSchema#dateTime", "type": "literal", "value": "2020-02-02T00:00:00Z"}
       },
       {

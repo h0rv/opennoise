@@ -369,6 +369,25 @@ def _persist_genre_evidence(
                 fingerprint,
             ),
         )
+    elif projection.entity_kind == "recording":
+        connection.execute(
+            """INSERT OR IGNORE INTO recording_genre_membership_observations
+               (recording_id, genre_id, evidence_kind, source_family,
+                source_record_id, source_genre_name, method_key, method_version,
+                observed_at, provenance_id, policy_id, record_fingerprint)
+               VALUES (?, ?, 'wikidata_p136', 'wikidata', ?, ?,
+                       'direct_wikidata_p136', '1', ?, ?, ?, ?)""",
+            (
+                context.entity_id,
+                context.genre_id,
+                source_record_id,
+                claim.target.value,
+                _now(),
+                context.provenance_id,
+                context.policy_id,
+                fingerprint,
+            ),
+        )
 
 
 class EntityProjector:

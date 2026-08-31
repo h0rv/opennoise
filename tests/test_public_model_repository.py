@@ -31,7 +31,8 @@ def _catalog() -> sqlite3.Connection:
         );
         CREATE TABLE normalizable_recording_genre_memberships (
           id INTEGER, recording_id INTEGER, genre_id INTEGER,
-          source_count INTEGER, policy_id INTEGER, provenance_id INTEGER
+          evidence_kind TEXT, source_family TEXT, source_count INTEGER,
+          policy_id INTEGER, provenance_id INTEGER
         );
         CREATE TABLE entity_identifiers (
           id INTEGER, entity_id INTEGER, namespace TEXT, normalized_value TEXT
@@ -84,7 +85,7 @@ def _catalog() -> sqlite3.Connection:
         INSERT INTO normalizable_album_genre_memberships VALUES
           (1, 30, 20, 'wikidata_p136', NULL, 'wikidata', 1, 1);
         INSERT INTO normalizable_recording_genre_memberships VALUES
-          (1, 40, 20, 7, 1, 1);
+          (1, 40, 20, 'wikidata_p136', 'wikidata', 7, 1, 1);
         INSERT INTO active_suppressions VALUES ('entity', '12', 'embed');
         """
     )

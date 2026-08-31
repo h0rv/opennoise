@@ -79,6 +79,11 @@ class WikidataPipelineTests(unittest.IsolatedAsyncioTestCase):
                             "SELECT count(*) FROM album_genre_membership_observations"
                         ).fetchone()[0]
                     ),
+                    int(
+                        connection.execute(
+                            "SELECT count(*) FROM recording_genre_membership_observations"
+                        ).fetchone()[0]
+                    ),
                     int(connection.execute("SELECT count(*) FROM entity_relations").fetchone()[0]),
                     int(connection.execute("SELECT count(*) FROM quarantine_events").fetchone()[0]),
                 )
@@ -101,7 +106,7 @@ class WikidataPipelineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual((summary.raw, summary.accepted, summary.quarantined), (6, 6, 0))
         self.assertTrue(replay.reused_attempt)
-        self.assertEqual(counts, (7, 6, 1, 1, 1, 0))
+        self.assertEqual(counts, (7, 7, 1, 1, 1, 1, 0))
         self.assertEqual(named_target, ("Named Target Genre",))
         self.assertEqual(
             target_names, [("alias", "Target Alias"), ("primary", "Named Target Genre")]
