@@ -6,6 +6,7 @@ from musix.ml.public_graph import PublicModelLimitError, build_public_model
 from musix.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
+    GenreIdentity,
     MetadataCandidate,
     PublicArtifact,
     PublicModelInput,
@@ -20,9 +21,35 @@ _SHA_C = "c" * 64
 def _input() -> PublicModelInput:
     return PublicModelInput(
         artifacts=(
-            PublicArtifact(source="listenbrainz", snapshot="2026-08-30", content_sha256=_SHA_A),
-            PublicArtifact(source="musicbrainz", snapshot="2026-08-29", content_sha256=_SHA_B),
-            PublicArtifact(source="wikidata", snapshot="2026-08-31", content_sha256=_SHA_C),
+            PublicArtifact(
+                source="listenbrainz",
+                snapshot="2026-08-30",
+                artifact_key="incremental.tar.zst",
+                content_sha256=_SHA_A,
+                export_allowed=True,
+            ),
+            PublicArtifact(
+                source="musicbrainz",
+                snapshot="2026-08-29",
+                artifact_key="artist.tar.xz",
+                content_sha256=_SHA_B,
+                export_allowed=False,
+            ),
+            PublicArtifact(
+                source="wikidata",
+                snapshot="2026-08-31",
+                artifact_key="music-slice.json",
+                content_sha256=_SHA_C,
+                export_allowed=True,
+            ),
+        ),
+        genres=tuple(
+            GenreIdentity(
+                genre_id=f"genre:{name}",
+                name=name.title(),
+                evidence_refs=(f"wd:genre:{name}",),
+            )
+            for name in ("jazz", "punk", "rock", "soul")
         ),
         direct_memberships=(
             DirectMembershipEvidence(
@@ -139,9 +166,11 @@ class PublicGraphTests(unittest.TestCase):
         self.assertEqual(first.input_sha256, second.input_sha256)
         self.assertEqual(first.settings_sha256, second.settings_sha256)
         self.assertEqual(first.output_sha256, second.output_sha256)
+        self.assertFalse(first.export_allowed)
         self.assertEqual(first.coordinates, second.coordinates)
         self.assertEqual(first.coverage.input_artists, 6)
         self.assertEqual(first.coverage.input_genres, 4)
+        self.assertEqual(first.coverage.direct_observations, 9)
         self.assertEqual(first.coverage.direct_memberships, 8)
         self.assertEqual(first.coverage.inferred_memberships, 4)
         self.assertEqual(first.coverage.coordinate_genres, 4)
@@ -191,6 +220,7 @@ class PublicGraphTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             PublicModelInput(
                 artifacts=base.artifacts,
+                genres=base.genres,
                 direct_memberships=base.direct_memberships,
                 artist_pairs=(base.artist_pairs[0], base.artist_pairs[0]),
             )
@@ -210,7 +240,17 @@ class PublicGraphTests(unittest.TestCase):
     def test_places_genres_without_shared_memberships(self) -> None:
         inputs = PublicModelInput(
             artifacts=(
-                PublicArtifact(source="musicbrainz", snapshot="isolated", content_sha256=_SHA_A),
+                PublicArtifact(
+                    source="musicbrainz",
+                    snapshot="isolated",
+                    artifact_key="artists.json",
+                    content_sha256=_SHA_A,
+                    export_allowed=True,
+                ),
+            ),
+            genres=(
+                GenreIdentity(genre_id="genre:a", name="A", evidence_refs=("wd:a",)),
+                GenreIdentity(genre_id="genre:b", name="B", evidence_refs=("wd:b",)),
             ),
             direct_memberships=(
                 DirectMembershipEvidence(
@@ -233,6 +273,7 @@ class PublicGraphTests(unittest.TestCase):
         artifact = build_public_model(inputs, PublicModelSettings())
 
         self.assertEqual(len(artifact.neighbors), 0)
+        self.assertEqual(artifact.coverage.direct_observations, 2)
         self.assertEqual(len(artifact.coordinates), 2)
         self.assertEqual({item.component for item in artifact.coordinates}, {0, 1})
 

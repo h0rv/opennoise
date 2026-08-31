@@ -84,6 +84,7 @@ ingest-musicbrainz-artists = "musix ingest-source musicbrainz_json_artist_202608
 ingest-musicbrainz-research = "musix ingest-source musicbrainz_json_artist_research_20260829 --partition-prefix 0 --max-record-bytes 67108864"
 ingest-wikidata = "python scripts/ingest_wikidata.py"
 ingest-listenbrainz = "musix ingest-source listenbrainz_incremental_20260830 --max-archive-bytes 300000000 --max-records 6000000 --checkpoint-every 5000"
+build-public-model = "python scripts/build_public_model.py"
 
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]

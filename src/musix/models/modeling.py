@@ -12,6 +12,7 @@ type MembershipFacet = Literal["musicbrainz_tag", "wikidata_p136"]
 type ProfileKind = Literal["direct", "one_hop"]
 type SimilarityMetric = Literal["weighted_jaccard", "cosine"]
 type MetadataKind = Literal["artist", "release_group", "recording"]
+type MembershipComponentKind = MembershipFacet | Literal["listenbrainz_one_hop"]
 
 
 class PublicArtifact(FrozenModel):
@@ -19,7 +20,9 @@ class PublicArtifact(FrozenModel):
 
     source: PublicSource
     snapshot: str = Field(min_length=1, max_length=200)
+    artifact_key: str = Field(min_length=1, max_length=300)
     content_sha256: Sha256
+    export_allowed: bool
 
 
 class DirectMembershipEvidence(FrozenModel):
@@ -30,6 +33,14 @@ class DirectMembershipEvidence(FrozenModel):
     facet: MembershipFacet
     value: FiniteFloat = Field(gt=0.0)
     evidence_ref: str = Field(min_length=1, max_length=500)
+
+
+class GenreIdentity(FrozenModel):
+    """Name one public genre concept without historical vocabulary input."""
+
+    genre_id: str = Field(min_length=1, max_length=200)
+    name: str = Field(min_length=1, max_length=500)
+    evidence_refs: tuple[str, ...] = Field(min_length=1, max_length=32)
 
 
 class ArtistPairEvidence(FrozenModel):
@@ -76,6 +87,7 @@ class PublicModelInput(FrozenModel):
     """Bound all public-only observations accepted by the model core."""
 
     artifacts: tuple[PublicArtifact, ...] = Field(min_length=1, max_length=64)
+    genres: tuple[GenreIdentity, ...] = Field(min_length=1, max_length=20_000)
     direct_memberships: tuple[DirectMembershipEvidence, ...] = Field(
         min_length=1, max_length=1_000_000
     )
@@ -85,7 +97,7 @@ class PublicModelInput(FrozenModel):
     @model_validator(mode="after")
     def require_unique_inputs(self) -> "PublicModelInput":
         """Reject duplicates that would otherwise silently change model weight."""
-        artifacts = {(item.source, item.snapshot) for item in self.artifacts}
+        artifacts = {(item.source, item.snapshot, item.artifact_key) for item in self.artifacts}
         if len(artifacts) != len(self.artifacts):
             raise ValueError("public input artifacts must be unique")
         memberships = {
@@ -94,6 +106,13 @@ class PublicModelInput(FrozenModel):
         }
         if len(memberships) != len(self.direct_memberships):
             raise ValueError("direct membership observations must be unique")
+        genre_ids = {item.genre_id for item in self.genres}
+        if len(genre_ids) != len(self.genres):
+            raise ValueError("genre identities must be unique")
+        referenced_genres = {item.genre_id for item in self.direct_memberships}
+        referenced_genres.update(item.genre_id for item in self.metadata_candidates)
+        if not referenced_genres <= genre_ids:
+            raise ValueError("every referenced genre needs a public identity")
         pairs = {(item.left_artist_id, item.right_artist_id) for item in self.artist_pairs}
         if len(pairs) != len(self.artist_pairs):
             raise ValueError("artist pairs must already be aggregated")
@@ -123,6 +142,15 @@ class PublicModelSettings(FrozenModel):
     max_similarity_pair_visits: int = Field(default=20_000_000, gt=0)
 
 
+class MembershipComponent(FrozenModel):
+    """Keep one direct facet or graph contribution visible in a score."""
+
+    component_kind: MembershipComponentKind
+    raw_value: FiniteFloat = Field(gt=0.0)
+    normalized_value: FiniteFloat = Field(gt=0.0, le=1.0)
+    evidence_refs: tuple[str, ...] = Field(min_length=1)
+
+
 class MembershipScore(FrozenModel):
     """Publish a normalized score without hiding its evidence facet."""
 
@@ -131,6 +159,7 @@ class MembershipScore(FrozenModel):
     profile_kind: ProfileKind
     score: FiniteFloat = Field(gt=0.0, le=1.0)
     evidence_refs: tuple[str, ...] = Field(min_length=1)
+    components: tuple[MembershipComponent, ...] = Field(min_length=1)
 
 
 class GenreProfile(FrozenModel):
@@ -192,6 +221,7 @@ class ModelCoverage(FrozenModel):
 
     input_artists: int = Field(ge=0)
     input_genres: int = Field(ge=0)
+    direct_observations: int = Field(ge=0)
     direct_memberships: int = Field(ge=0)
     eligible_artist_pairs: int = Field(ge=0)
     inferred_memberships: int = Field(ge=0)
@@ -215,6 +245,8 @@ class PublicModelArtifact(FrozenModel):
     input_sha256: Sha256
     settings_sha256: Sha256
     output_sha256: Sha256
+    export_allowed: bool
+    genres: tuple[GenreIdentity, ...]
     profiles: tuple[GenreProfile, ...]
     neighbors: tuple[GenreNeighbor, ...]
     coordinates: tuple[GenreCoordinate, ...]

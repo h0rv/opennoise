@@ -24,6 +24,7 @@ from musix.models.modeling import (
     GenreCoordinate,
     GenreNeighbor,
     GenreProfile,
+    MembershipComponent,
     MembershipFacet,
     MembershipScore,
     MetadataCandidate,
@@ -106,11 +107,11 @@ def _direct_scores(
     artist_count = len({item.artist_id for item in rows})
     genre_artists: dict[tuple[MembershipFacet, str], set[str]] = defaultdict(set)
     raw: dict[tuple[str, str, MembershipFacet], float] = defaultdict(float)
-    refs: dict[tuple[str, str], set[str]] = defaultdict(set)
+    refs: dict[tuple[str, str, MembershipFacet], set[str]] = defaultdict(set)
     for item in rows:
         genre_artists[(item.facet, item.genre_id)].add(item.artist_id)
         raw[(item.artist_id, item.genre_id, item.facet)] += float(item.value)
-        refs[(item.artist_id, item.genre_id)].add(item.evidence_ref)
+        refs[(item.artist_id, item.genre_id, item.facet)].add(item.evidence_ref)
     facet_scores: dict[tuple[str, str, MembershipFacet], float] = {}
     maxima: dict[tuple[MembershipFacet, str], float] = defaultdict(float)
     for key, value in raw.items():
@@ -120,16 +121,35 @@ def _direct_scores(
         facet_scores[key] = score
         maxima[(facet, genre_id)] = max(maxima[(facet, genre_id)], score)
     combined: dict[tuple[str, str], float] = defaultdict(float)
+    components: dict[tuple[str, str], list[MembershipComponent]] = defaultdict(list)
     for (artist_id, genre_id, facet), value in facet_scores.items():
         maximum = maxima[(facet, genre_id)]
-        combined[(artist_id, genre_id)] = max(combined[(artist_id, genre_id)], value / maximum)
+        normalized = value / maximum
+        combined[(artist_id, genre_id)] = max(combined[(artist_id, genre_id)], normalized)
+        components[(artist_id, genre_id)].append(
+            MembershipComponent(
+                component_kind=facet,
+                raw_value=raw[(artist_id, genre_id, facet)],
+                normalized_value=round(normalized, 12),
+                evidence_refs=tuple(sorted(refs[(artist_id, genre_id, facet)])),
+            )
+        )
     return tuple(
         MembershipScore(
             artist_id=artist_id,
             genre_id=genre_id,
             profile_kind="direct",
             score=round(score, 12),
-            evidence_refs=tuple(sorted(refs[(artist_id, genre_id)])),
+            evidence_refs=tuple(
+                sorted(
+                    evidence_ref
+                    for component in components[(artist_id, genre_id)]
+                    for evidence_ref in component.evidence_refs
+                )
+            ),
+            components=tuple(
+                sorted(components[(artist_id, genre_id)], key=lambda item: item.component_kind)
+            ),
         )
         for (artist_id, genre_id), score in sorted(combined.items())
     )
@@ -191,6 +211,14 @@ def _one_hop_scores(
                 profile_kind="one_hop",
                 score=round(score, 12),
                 evidence_refs=tuple(sorted(refs[(artist, genre)])),
+                components=(
+                    MembershipComponent(
+                        component_kind="listenbrainz_one_hop",
+                        raw_value=score * maxima[genre],
+                        normalized_value=round(score, 12),
+                        evidence_refs=tuple(sorted(refs[(artist, genre)])),
+                    ),
+                ),
             )
             for artist, score in ordered
             if score > 0.0
@@ -471,8 +499,8 @@ def _facet_agreement(evidence: Iterable[DirectMembershipEvidence]) -> tuple[Face
             intersection_count=len(intersection),
             union_count=len(union),
             jaccard=len(intersection) / len(union) if union else 1.0,
-            left_recall_from_right=len(intersection) / len(left) if left else 1.0,
-            right_recall_from_left=len(intersection) / len(right) if right else 1.0,
+            left_recall_from_right=len(intersection) / len(left) if left else 0.0,
+            right_recall_from_left=len(intersection) / len(right) if right else 0.0,
         ),
     )
 
@@ -491,6 +519,7 @@ def build_public_model(
     coordinates = _coordinates(genres, neighbors)
     representatives = _representatives(inputs.metadata_candidates, settings)
     agreement = _facet_agreement(inputs.direct_memberships)
+    export_allowed = all(artifact.export_allowed for artifact in inputs.artifacts)
     coordinate_genres = {item.genre_id for item in coordinates}
     neighbor_genres = {item.genre_id for item in neighbors}
     coverage = ModelCoverage(
@@ -502,13 +531,16 @@ def build_public_model(
                 for artist in (pair.left_artist_id, pair.right_artist_id)
             }
         ),
-        input_genres=len(genres),
+        input_genres=len(inputs.genres),
+        direct_observations=len(inputs.direct_memberships),
         direct_memberships=len(direct),
         eligible_artist_pairs=sum(_eligible_pair(pair, settings) for pair in inputs.artist_pairs),
         inferred_memberships=len(inferred),
         neighbor_genres=len(neighbor_genres),
         coordinate_genres=len(coordinate_genres),
-        unplaced_genres=tuple(sorted(set(genres) - coordinate_genres)),
+        unplaced_genres=tuple(
+            sorted({item.genre_id for item in inputs.genres} - coordinate_genres)
+        ),
         representative_items=len(representatives),
     )
     payload = {
@@ -518,11 +550,15 @@ def build_public_model(
         "representatives": [item.model_dump(mode="json") for item in representatives],
         "facet_agreement": [item.model_dump(mode="json") for item in agreement],
         "coverage": coverage.model_dump(mode="json"),
+        "export_allowed": export_allowed,
+        "genres": [item.model_dump(mode="json") for item in inputs.genres],
     }
     return PublicModelArtifact(
         input_sha256=_sha256(inputs),
         settings_sha256=_sha256(settings),
         output_sha256=_sha256(payload),
+        export_allowed=export_allowed,
+        genres=inputs.genres,
         profiles=profiles,
         neighbors=neighbors,
         coordinates=coordinates,
