@@ -337,6 +337,53 @@ def _event(
     )
 
 
+def register_verified_run(
+    connection: sqlite3.Connection,
+    source: DownloadSource,
+    download: DownloadResult,
+    adapter: SourceAdapter,
+    options: PipelineOptions,
+) -> _RunContext:
+    """Register one verified artifact for a shared or multi-artifact lifecycle."""
+    return _register_run(connection, source, download, adapter, options)
+
+
+def record_pipeline_event(  # noqa: PLR0913
+    connection: sqlite3.Connection,
+    attempt_id: int,
+    counters: dict[str, int],
+    *,
+    stage: str,
+    kind: str,
+    error_code: str | None = None,
+    error_text: str | None = None,
+) -> None:
+    """Append one typed lifecycle event without exposing the internal event model."""
+    _event(
+        connection,
+        attempt_id,
+        counters,
+        _EventSpec(
+            stage=stage,
+            kind=kind,
+            error_code=error_code,
+            error_text=error_text,
+        ),
+    )
+
+
+def empty_pipeline_counters() -> dict[str, int]:
+    """Return the complete zero-record lifecycle counter shape."""
+    return {
+        "raw": 0,
+        "selected": 0,
+        "accepted": 0,
+        "quarantined": 0,
+        "duplicates": 0,
+        "last_ordinal": -1,
+    }
+
+
 def _insert_rejection(
     connection: sqlite3.Connection,
     context: _RunContext,
@@ -481,6 +528,20 @@ def _insert_projection(
         ),
     )
     return result.duplicate
+
+
+def persist_pipeline_record(
+    connection: sqlite3.Connection,
+    source: DownloadSource,
+    context: _RunContext,
+    record: ParsedSourceRecord | RejectedSourceRecord,
+    projectors: ProjectorRegistry,
+) -> bool:
+    """Stage and persist one aggregate record through the shared projection boundary."""
+    if isinstance(record, RejectedSourceRecord):
+        _insert_rejection(connection, context, record)
+        return False
+    return _insert_projection(connection, source, context, record, projectors)
 
 
 class _Completion(_FrozenModel):

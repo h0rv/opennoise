@@ -87,9 +87,20 @@ ingest-musicbrainz-recordings = "musix ingest-source musicbrainz_json_recording_
 ingest-wikidata = "python scripts/ingest_wikidata.py"
 enrich-wikidata-public-genres = "python scripts/ingest_wikidata.py --query config/wikidata_public_genres_20260831.rq --source-id wikidata_public_genres_20260831 --max-records 50000"
 ingest-listenbrainz = "musix ingest-source listenbrainz_incremental_20260830 --max-archive-bytes 300000000 --max-records 6000000 --checkpoint-every 5000"
+ingest-listenbrainz-joint = "python scripts/ingest_joint_listenbrainz.py"
 build-public-model = "python scripts/build_public_model.py"
 publish-public-model = "musix publish-public-model"
 validate-public-graph = "python scripts/validate_public_graph.py"
+
+[tool.poe.tasks.build-public-release]
+sequence = [
+    { cmd = "python scripts/require_fresh_public_database.py data/public.sqlite" },
+    { cmd = "python scripts/ingest_wikidata.py --query config/wikidata_music_slice.rq --source-id wikidata_music_sparql_slice --database data/public.sqlite --vault data/vault" },
+    { cmd = "python scripts/ingest_wikidata.py --query config/wikidata_public_genres_20260831.rq --source-id wikidata_public_genres_20260831 --database data/public.sqlite --vault data/vault --max-records 50000" },
+    { cmd = "python scripts/ingest_joint_listenbrainz.py --database data/public.sqlite --vault data/vault" },
+    { cmd = "python scripts/build_public_model.py --catalog-db data/public.sqlite --listenbrainz-db data/public.sqlite --output data/model/public-model-v1.json" },
+    { cmd = "musix publish-public-model data/model/public-model-v1.json --database data/public.sqlite --policy-id 2" },
+]
 
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]
