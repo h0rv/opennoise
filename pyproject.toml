@@ -7,7 +7,7 @@ name = "musix"
 version = "0.1.0"
 description = "A local map of music genres and artists"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13,<3.14"
 license = "MIT"
 dependencies = [
     "httpx>=0.28.1",
@@ -85,6 +85,7 @@ ingest-musicbrainz-research = "musix ingest-source musicbrainz_json_artist_resea
 ingest-wikidata = "python scripts/ingest_wikidata.py"
 ingest-listenbrainz = "musix ingest-source listenbrainz_incremental_20260830 --max-archive-bytes 300000000 --max-records 6000000 --checkpoint-every 5000"
 build-public-model = "python scripts/build_public_model.py"
+publish-public-model = "musix publish-public-model"
 
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]

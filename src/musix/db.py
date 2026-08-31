@@ -26,7 +26,7 @@ from musix.layouts import (
 )
 from musix.models import MapPoint, SearchHit
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 DEFAULT_DATABASE_PATH = Path("data/musix.sqlite")
 DEFAULT_MIGRATION_PATH = Path("migrations/0001_initial.sql")
 DEFAULT_MIGRATION_PATHS = (
@@ -35,6 +35,7 @@ DEFAULT_MIGRATION_PATHS = (
     Path("migrations/0003_genre_discovery.sql"),
     Path("migrations/0004_artist_genre_membership.sql"),
     Path("migrations/0005_artist_co_listen_evidence.sql"),
+    Path("migrations/0006_public_model_serving.sql"),
 )
 MAX_FTS_TERMS = 8
 FIELD_SET_ADAPTER = TypeAdapter(tuple[str, ...])
@@ -393,10 +394,23 @@ class Database:
         with self.connect() as connection:
             row = connection.execute(
                 """
-                SELECT genre.id, genre.slug, name.name, genre.description
+                WITH public_name AS (
+                    SELECT name.genre_id, name.display_name
+                    FROM current_public_models AS current
+                    JOIN public_model_runs AS run ON run.id = current.model_run_id
+                    JOIN active_rights_policy_permissions AS permission
+                      ON permission.policy_id = run.policy_id
+                     AND permission.use_kind = 'display'
+                     AND permission.decision = 'allow'
+                    JOIN public_genre_names AS name ON name.model_run_id = run.id
+                )
+                SELECT genre.id, genre.slug,
+                       coalesce(name.name, public_name.display_name), genre.description
                 FROM genres AS genre
-                JOIN displayable_entity_names AS name ON name.entity_id = genre.id
+                LEFT JOIN displayable_entity_names AS name ON name.entity_id = genre.id
+                LEFT JOIN public_name ON public_name.genre_id = genre.id
                 WHERE genre.id = ?
+                  AND coalesce(name.name, public_name.display_name) IS NOT NULL
                 ORDER BY (name.name_kind = 'primary') DESC, name.is_preferred DESC,
                          (name.language_tag = 'und') DESC, name.id
                 LIMIT 1
