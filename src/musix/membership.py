@@ -12,8 +12,8 @@ from typing import Annotated, Literal
 
 from pydantic import Field, FiniteFloat, JsonValue, TypeAdapter, field_validator, model_validator
 
-from musix.adapters.musicbrainz import ArtistGenreRelationship
 from musix.models import FrozenModel
+from musix.sources.musicbrainz import ArtistGenreRelationship
 
 type Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 type EvidenceKind = Literal["direct_source_claim", "release_group_propagation"]

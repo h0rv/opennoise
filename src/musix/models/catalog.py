@@ -81,8 +81,8 @@ class EntityProjection(_FrozenModel):
 
     @property
     def external_id(self) -> ExternalId:
-        """Expose the source-local identity for shared lifecycle partitioning."""
-        return self.source_identity.value
+        """Return a stable namespace-qualified ID for shared pipeline partitioning."""
+        return f"{self.source_identity.namespace}:{self.source_identity.value}"
 
 
 class ArtistProjection(_FrozenModel):

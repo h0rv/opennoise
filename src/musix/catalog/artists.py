@@ -46,7 +46,7 @@ class ArtistProjector:
     ) -> ProjectionResult:
         """Persist artist claims idempotently without source lifecycle writes."""
         if not isinstance(projection, ArtistProjection):
-            raise TypeError("ArtistProjector requires ArtistProjection")
+            raise TypeError("artist projector requires ArtistProjection")
         source_identifier = projection.identifiers[0]
         connection.execute(
             "INSERT OR IGNORE INTO identifier_types (type_key, name) VALUES (?, ?)",

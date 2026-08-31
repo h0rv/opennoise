@@ -233,6 +233,7 @@ priority = 200
 enabled_by_default = true
 adapter = "wikidata_sparql_genres_v1"
 role = "cc0_genre_alias_hierarchy_origin_and_crosswalk_seed"
+bounded_music_query_file = "config/wikidata_music_slice.rq"
 snapshot = "query_result_must_store_retrieval_time_and_sha256"
 url = "https://query.wikidata.org/sparql"
 discovery_url = "https://www.wikidata.org/wiki/Wikidata:Data_access"

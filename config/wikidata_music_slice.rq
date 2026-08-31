@@ -1,0 +1,72 @@
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX pr: <http://www.wikidata.org/prop/reference/>
+
+# Deliberately bounded and stable. Entity kinds are established by dedicated
+# MusicBrainz identifier properties, never guessed from labels. Genre coverage
+# also includes direct instances of Wikidata's music genre class.
+SELECT ?entity ?entityKind ?label ?alias ?musicbrainzId ?genre ?statement
+       ?rank ?reference ?referenceUrl ?parent ?inception ?publicationDate
+WHERE {
+  {
+    { SELECT DISTINCT ?entity ?musicbrainzId WHERE {
+        { ?entity wdt:P31 wd:Q188451. }
+        UNION { ?entity wdt:P8052 ?musicbrainzId. }
+      } ORDER BY ?entity LIMIT 50 }
+    BIND("genre" AS ?entityKind)
+  }
+  UNION {
+    { SELECT DISTINCT ?entity ?musicbrainzId WHERE {
+        ?entity wdt:P434 ?musicbrainzId.
+      } ORDER BY ?entity LIMIT 50 }
+    BIND("artist" AS ?entityKind)
+  }
+  UNION {
+    { SELECT DISTINCT ?entity ?musicbrainzId WHERE {
+        ?entity wdt:P436 ?musicbrainzId.
+      } ORDER BY ?entity LIMIT 50 }
+    BIND("release_group" AS ?entityKind)
+  }
+  UNION {
+    { SELECT DISTINCT ?entity ?musicbrainzId WHERE {
+        ?entity wdt:P4404 ?musicbrainzId.
+      } ORDER BY ?entity LIMIT 50 }
+    BIND("recording" AS ?entityKind)
+  }
+  UNION {
+    { SELECT DISTINCT ?entity ?musicbrainzId WHERE {
+        ?entity wdt:P435 ?musicbrainzId.
+      } ORDER BY ?entity LIMIT 50 }
+    BIND("work" AS ?entityKind)
+  }
+  OPTIONAL {
+    ?entity rdfs:label ?label.
+    FILTER(LANG(?label) IN ("en", "es", "fr", "de", "pt", "ja", "ko", "zh", "ar", "hi"))
+  }
+  OPTIONAL {
+    ?entity skos:altLabel ?alias.
+    FILTER(LANG(?alias) IN ("en", "es", "fr", "de", "pt", "ja", "ko", "zh", "ar", "hi"))
+  }
+  OPTIONAL { ?entity wdt:P279 ?parent. }
+  OPTIONAL { ?entity wdt:P571 ?inception. }
+  OPTIONAL { ?entity wdt:P577 ?publicationDate. }
+  OPTIONAL {
+    ?entity p:P136 ?statement.
+    ?statement ps:P136 ?genre;
+               wikibase:rank ?rank.
+    OPTIONAL {
+      ?statement prov:wasDerivedFrom ?reference.
+      OPTIONAL { ?reference pr:P854 ?referenceUrl. }
+    }
+  }
+}
+ORDER BY ?entityKind ?entity ?label ?alias ?statement ?genre ?reference
+LIMIT 20000

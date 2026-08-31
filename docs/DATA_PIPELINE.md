@@ -1,5 +1,10 @@
 # Data pipeline
 
+The first Wikidata music slice is documented in
+[`WIKIDATA_INGESTION.md`](WIKIDATA_INGESTION.md). Source adapters only parse and project verified
+artifacts. The shared runner owns source snapshots, attempts, checkpoints, quarantine, policies,
+transactions, provenance, and idempotency. Catalog projectors own direct SQLite normalization.
+
 Musix uses one SQLite database at `data/musix.sqlite`. The schema is in
 `migrations/0001_initial.sql`. The database stores source metadata, import
 history, normalized music data, search text, and map layouts.
