@@ -285,11 +285,9 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/fragments/search", params={"q": "idm"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('<a class="result" href="/genres/1?layout=default&amp;q=idm"', response.text)
-        self.assertIn(
-            'hx-get="/fragments/workspace?focus=1&amp;layout=default&amp;q=idm"', response.text
-        )
-        self.assertIn('hx-push-url="/genres/1?layout=default&amp;q=idm"', response.text)
+        self.assertIn('<a class="result" href="/genres/1?layout=default"', response.text)
+        self.assertIn('hx-get="/fragments/workspace?focus=1&amp;layout=default"', response.text)
+        self.assertIn('hx-push-url="/genres/1?layout=default"', response.text)
         self.assertNotIn("<button", response.text)
 
     def test_search_and_genre_entry_preserve_selected_layout(self) -> None:
@@ -298,7 +296,7 @@ class PopulatedAppTests(unittest.TestCase):
             "/fragments/workspace", params={"focus": "1", "layout": "classic"}
         )
 
-        self.assertIn('href="/genres/1?layout=classic&amp;q=idm"', search.text)
+        self.assertIn('href="/genres/1?layout=classic"', search.text)
         self.assertIn('data-layout="classic"', selected.text)
         self.assertIn('href="/?layout=classic" aria-label="Close IDM"', selected.text)
 

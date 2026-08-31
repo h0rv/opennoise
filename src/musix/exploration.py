@@ -90,7 +90,7 @@ class ProvenanceEvidence(FrozenModel):
 class GenreDiscoveryItem(FrozenModel):
     """One evidence-backed item available to a future genre discovery view."""
 
-    entity_id: int | None = None
+    entity_id: int
     name: str
     href: str | None = None
     evidence_refs: tuple[int, ...] = ()

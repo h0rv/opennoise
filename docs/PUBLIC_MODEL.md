@@ -64,31 +64,3 @@ Each result records all input artifact hashes, a settings hash, a logical output
 and local resource use. Source agreement compares MusicBrainz tag pairs with Wikidata P136 pairs
 when both policies allow the model to use them. Historical Every Noise data can be compared only
 after the result hash has been fixed. It is not part of this build command.
-
-## Publish and serve
-
-Publish a completed artifact into a catalog whose selected policy allows display and export:
-
-```sh
-uv run poe publish-public-model -- \
-  data/model/public-model-v1.json \
-  --database data/public-catalog.sqlite \
-  --policy-id 1
-
-uv run musix serve --database data/public-catalog.sqlite
-```
-
-Publication verifies the artifact's logical output hash, resolves every genre by one exact
-Wikidata QID or MusicBrainz ID, and commits the model, coordinates, representatives, and current
-selection in one SQLite transaction. Repeating the same publication is idempotent. The generated
-map is available as the `public` layout while existing historical layouts remain available.
-
-Genre pages show at most six representative artists, release groups, and recordings. Links are
-derived at render time only from exact MusicBrainz or Wikidata identifiers and lead to ordinary
-metadata pages. Empty sections are omitted. The serving model contains no audio, preview, image,
-player, or waveform fields.
-
-The project is pinned to Python 3.13.14 through mise, uv's Python range, and `.python-version`.
-Cross-thread event-loop wakeups used by Litestar's test client can hang under the restricted test
-sandbox on both Python 3.13 and 3.14; the same checks pass outside that isolation boundary. This is
-an environment limitation rather than an application or Python-version incompatibility.
