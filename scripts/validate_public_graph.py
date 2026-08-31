@@ -99,7 +99,7 @@ def _aggregate_joint_corpus(
             minimum_distinct_users=_MINIMUM_DISTINCT_USERS,
             max_users_per_window=500_000,
             max_distinct_artists=500_000,
-            max_pairs_per_window=1_000_000,
+            max_pairs_per_window=2_000_000,
             max_active_windows=7,
             max_total_user_windows=3_500_000,
             minimum_window_start=int(_FIRST_WINDOW.timestamp()),
@@ -194,6 +194,7 @@ def main() -> None:
     )
     model_settings = PublicModelSettings(
         neighbors_per_genre=max(arguments.neighbors_per_genre, 25),
+        layout_profile="one_hop",
         max_genres=2_000,
         max_artists=250_000,
         max_direct_memberships=arguments.max_direct_memberships,

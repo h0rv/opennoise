@@ -26,8 +26,9 @@ separate profiles, and every inferred result lists its direct seed and ListenBra
 Third, the model computes weighted Jaccard and cosine neighbors from sparse artist profiles.
 It keeps a fixed number of neighbors per genre. The result includes the shared artist count.
 
-Fourth, the model computes two graph coordinates from the direct weighted Jaccard graph. It
-uses the normalized graph Laplacian and a sparse eigenvalue solver. Fixed input order, solver
+Fourth, the model computes two graph coordinates from a declared direct or one-hop weighted
+Jaccard graph. The public validation run uses the one-hop graph. It uses the normalized graph
+Laplacian and a sparse eigenvalue solver. Fixed input order, solver
 settings, axis signs, component order, and rounding make repeated builds stable. The axes do not
 claim to measure a music property.
 

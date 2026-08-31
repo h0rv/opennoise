@@ -403,7 +403,9 @@ def build_graph_validation(
         "base": base_inputs.model_dump(mode="json"),
         "source_artifacts": [artifact.model_dump(mode="json") for artifact in source_artifacts],
         "event_windows": [window.model_dump(mode="json") for window in windows],
-        "corpus_run": inputs.corpus_run.model_dump(mode="json"),
+        "corpus_run": inputs.corpus_run.model_dump(
+            mode="json", exclude={"elapsed_ms", "peak_rss_bytes"}
+        ),
         "hierarchy": [edge.model_dump(mode="json") for edge in hierarchy],
     }
     output_payload: dict[str, object] = {

@@ -132,6 +132,7 @@ class PublicModelSettings(FrozenModel):
     minimum_pair_windows: int = Field(default=1, gt=0)
     minimum_shared_artists: int = Field(default=1, gt=0)
     neighbors_per_genre: int = Field(default=25, ge=1, le=100)
+    layout_profile: ProfileKind = "direct"
     representatives_per_kind: int = Field(default=10, ge=1, le=100)
     inferred_memberships_per_genre: int = Field(default=100, ge=1, le=1_000)
     max_artists: int = Field(default=250_000, gt=0)

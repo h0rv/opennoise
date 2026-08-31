@@ -45,7 +45,6 @@ from musix.types import Sha256
 _DENSE_EIGEN_LIMIT = 64
 _PAIR_COMPONENT_SIZE = 2
 _LAYOUT_METRIC: SimilarityMetric = "weighted_jaccard"
-_LAYOUT_PROFILE: ProfileKind = "direct"
 
 
 class PublicModelLimitError(RuntimeError):
@@ -441,12 +440,14 @@ def _component_coordinates(adjacency: sparse.csr_matrix) -> tuple[np.ndarray, np
 
 
 def _coordinates(
-    genres: tuple[str, ...], neighbors: tuple[GenreNeighbor, ...]
+    genres: tuple[str, ...],
+    neighbors: tuple[GenreNeighbor, ...],
+    profile_kind: ProfileKind,
 ) -> tuple[GenreCoordinate, ...]:
     index = {genre: position for position, genre in enumerate(genres)}
     weights: dict[tuple[int, int], float] = defaultdict(float)
     for item in neighbors:
-        if item.profile_kind != _LAYOUT_PROFILE or item.metric != _LAYOUT_METRIC:
+        if item.profile_kind != profile_kind or item.metric != _LAYOUT_METRIC:
             continue
         left = index[item.genre_id]
         right = index[item.neighbor_genre_id]
@@ -562,7 +563,7 @@ def build_public_model(
     profiles = _profiles(direct, inferred)
     neighbors = _neighbor_rows(profiles, settings)
     genres = tuple(sorted({item.genre_id for item in direct}))
-    coordinates = _coordinates(genres, neighbors)
+    coordinates = _coordinates(genres, neighbors, settings.layout_profile)
     representatives = _representatives(inputs.metadata_candidates, settings)
     agreement = _facet_agreement(inputs.direct_memberships)
     export_allowed = all(artifact.export_allowed for artifact in inputs.artifacts)

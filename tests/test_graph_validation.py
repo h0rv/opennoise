@@ -148,14 +148,26 @@ def _validation_input() -> GraphValidationInput:
 class GraphValidationTests(unittest.TestCase):
     def test_builds_deterministic_event_time_and_hierarchy_report(self) -> None:
         inputs = _validation_input()
-        model_settings = PublicModelSettings(neighbors_per_genre=3)
+        model_settings = PublicModelSettings(neighbors_per_genre=3, layout_profile="one_hop")
         validation_settings = GraphValidationSettings(neighbors_per_genre=2)
 
         first = build_graph_validation(inputs, model_settings, validation_settings)
         second = build_graph_validation(inputs, model_settings, validation_settings)
+        changed_resources = inputs.model_copy(
+            update={
+                "corpus_run": inputs.corpus_run.model_copy(
+                    update={"elapsed_ms": 999, "peak_rss_bytes": 999}
+                )
+            }
+        )
+        resource_repeat = build_graph_validation(
+            changed_resources, model_settings, validation_settings
+        )
 
         self.assertEqual(first.input_sha256, second.input_sha256)
+        self.assertEqual(first.input_sha256, resource_repeat.input_sha256)
         self.assertEqual(first.output_sha256, second.output_sha256)
+        self.assertEqual(first.output_sha256, resource_repeat.output_sha256)
         self.assertTrue(first.deterministic_rerun)
         self.assertTrue(first.export_allowed)
         self.assertEqual(len(first.source_artifacts), 7)
@@ -212,7 +224,7 @@ class GraphValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "quadratic-work"):
             build_graph_validation(
                 _validation_input(),
-                PublicModelSettings(neighbors_per_genre=3),
+                PublicModelSettings(neighbors_per_genre=3, layout_profile="one_hop"),
                 GraphValidationSettings(neighbors_per_genre=2, maximum_validation_genres=3),
             )
 

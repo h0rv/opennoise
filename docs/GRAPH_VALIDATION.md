@@ -30,7 +30,8 @@ uv run poe validate-public-graph -- \
   --output data/model/public-graph-validation-v1.json
 ```
 
-The job has fixed row, archive, record, time, user, artist, window, pair, and genre bounds. Verified
+The job has fixed row, archive, record, time, user, artist, window, pair, and genre bounds. It
+allows at most two million transient candidate pairs in one event day. Verified
 compressed files stay in the content addressed vault, so a later run does not download them again.
 The manifest denies raw export and redistribution for these listener-bearing archives. The report
 contains aggregate graph measurements and does not publish daily pair tables or intermediate models.
@@ -67,7 +68,8 @@ of community discovery.
 
 ## Layout choice
 
-The current layout stays with the deterministic sparse spectral method. The first public graph has
+The validation layout uses the one-hop learned genre profile and the deterministic sparse spectral
+method. The first public graph has
 about one hundred placed genres, so adding UMAP or another compiled dependency would increase setup
 and caching costs before there is evidence that it improves local neighbor preservation. A second
 layout should be added only after the report shows a measured spectral problem. The comparison must
