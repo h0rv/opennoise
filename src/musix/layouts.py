@@ -66,6 +66,14 @@ class LayoutArtifactMetadata(FrozenModel):
     coordinate_space: CoordinateSpace
 
 
+class PublishedLayout(FrozenModel):
+    """One selectable layout backed by a currently published run."""
+
+    layout_key: str = Field(min_length=1, max_length=100)
+    point_count: int = Field(gt=0)
+    coordinate_space: CoordinateSpace
+
+
 class LayoutArtifact(FrozenModel):
     """A complete strategy output before it is stored or published."""
 

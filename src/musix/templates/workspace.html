@@ -1,12 +1,19 @@
 <section id="workspace">
+{% if layouts|length > 1 %}
+<nav id="layout-lenses" aria-label="Map layout">
+{% for lens in layouts %}
+<a href="/?layout={{ lens.layout_key }}"
+   data-coordinate-kind="{{ lens.coordinate_space.coordinate_kind }}"
+   {% if lens.layout_key == layout_key %}aria-current="page"{% endif %}
+   hx-get="/fragments/workspace?layout={{ lens.layout_key }}" hx-target="#workspace"
+   hx-swap="outerHTML" hx-push-url="/?layout={{ lens.layout_key }}"
+   hx-sync="#search:abort">{{ lens.layout_key | replace('_', ' ') | replace('-', ' ') }}<small>{% if lens.coordinate_space.coordinate_kind == 'historic_source' %}source{% else %}generated{% endif %}</small></a>
+{% endfor %}
+</nav>
+{% endif %}
 {% include "map.html" %}
 {% if genre %}
-<a id="selection-clear" href="/" aria-label="Clear {{ genre.name }} selection"
-   hx-get="/fragments/workspace" hx-target="#workspace" hx-swap="outerHTML"
-   hx-push-url="/" hx-sync="#search:abort">×</a>
-{% if genre.historical_representative or genre.defining_albums or genre.defining_tracks or genre.playable_links or genre.neighbors %}
 {% include "genre_detail.html" %}
-{% endif %}
 {% endif %}
 </section>
 {% if clear_results %}<aside id="results" hx-swap-oob="innerHTML"></aside>{% endif %}

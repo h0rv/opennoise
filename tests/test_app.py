@@ -31,7 +31,7 @@ class AppTests(unittest.TestCase):
         self.assertIn('<main id="map"', response.text)
         self.assertNotIn("<h1", response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=4", response.text)
+        self.assertIn("/static/app.css?v=5", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertNotIn("6291", response.text)
 
@@ -119,6 +119,19 @@ class PopulatedAppTests(unittest.TestCase):
                 ) SELECT 2, entity_id, x, y, display_weight, color_hex
                   FROM layout_points WHERE layout_run_id = 1;
                 INSERT INTO current_layouts (layout_key, layout_run_id) VALUES ('default', 2);
+                INSERT INTO layout_runs (
+                    id, layout_key, revision, algorithm_key, algorithm_revision,
+                    input_fingerprint, status, policy_id, completed_at
+                ) VALUES (
+                    3, 'classic', 1, 'source_coordinates', '1',
+                    '4343434343434343434343434343434343434343434343434343434343434343',
+                    'complete', 1, '2026-01-01T00:00:00Z'
+                );
+                INSERT INTO layout_points (
+                    layout_run_id, entity_id, x, y, display_weight, color_hex
+                ) SELECT 3, entity_id, x + 10, y + 20, display_weight, color_hex
+                  FROM layout_points WHERE layout_run_id = 1;
+                INSERT INTO current_layouts (layout_key, layout_run_id) VALUES ('classic', 3);
                 INSERT INTO search_documents (
                     entity_id, field_kind, search_text, input_fingerprint,
                     provenance_id, policy_id
@@ -195,12 +208,33 @@ class PopulatedAppTests(unittest.TestCase):
     def test_genre_links_have_one_canonical_selection_contract(self) -> None:
         response = self.client.get("/")
 
-        self.assertIn('href="/genres/1"', response.text)
-        self.assertIn('hx-get="/fragments/workspace?focus=1"', response.text)
+        self.assertIn('href="/genres/1?layout=default"', response.text)
+        self.assertIn('hx-get="/fragments/workspace?focus=1&amp;layout=default"', response.text)
         self.assertIn('hx-target="#workspace"', response.text)
-        self.assertIn('hx-push-url="/genres/1"', response.text)
-        self.assertIn('preserveAspectRatio="xMinYMin meet"', response.text)
+        self.assertIn('hx-push-url="/genres/1?layout=default"', response.text)
+        self.assertIn('preserveAspectRatio="xMidYMid meet"', response.text)
         self.assertNotIn('id="count"', response.text)
+
+    def test_published_layout_lenses_keep_source_and_generated_contracts_distinct(self) -> None:
+        response = self.client.get("/", params={"layout": "classic"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id="layout-lenses"', response.text)
+        self.assertIn('data-coordinate-kind="historic_source"', response.text)
+        self.assertIn('aria-current="page"', response.text)
+        self.assertIn('data-coordinate-kind="derived"', response.text)
+        self.assertIn('data-layout="classic" data-coordinate-kind="historic_source"', response.text)
+        self.assertIn('href="/genres/1?layout=classic"', response.text)
+        self.assertNotIn("<audio", response.text)
+        self.assertNotIn("player", response.text.casefold())
+        self.assertNotIn("preview", response.text.casefold())
+        self.assertNotIn("waveform", response.text.casefold())
+        self.assertNotIn(">Listen<", response.text)
+
+    def test_unknown_layout_is_not_silently_replaced(self) -> None:
+        response = self.client.get("/", params={"layout": "missing"})
+
+        self.assertEqual(response.status_code, 404)
 
     def test_canonical_genre_url_is_a_complete_fallback(self) -> None:
         response = self.client.get("/genres/1")
@@ -209,7 +243,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn('class="point genre selected"', response.text)
         self.assertIn('aria-current="true"', response.text)
         self.assertIn('id="selection-clear"', response.text)
-        self.assertIn('href="/" aria-label="Clear IDM selection"', response.text)
+        self.assertIn('href="/?layout=default" aria-label="Close IDM"', response.text)
         self.assertIn('id="genre-detail"', response.text)
         self.assertIn("Autechre", response.text)
         self.assertIn("Bike", response.text)
@@ -236,7 +270,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn("Autechre", selected.text)
         self.assertIn("Bike", selected.text)
         self.assertNotIn("Every Noise legacy genre map", selected.text)
-        self.assertIn('hx-push-url="/"', selected.text)
+        self.assertIn('hx-push-url="/?layout=default"', selected.text)
         self.assertNotIn("600.0 800.0", selected.text)
 
         self.assertEqual(reset.status_code, 200)
@@ -249,10 +283,20 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/fragments/search", params={"q": "idm"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('<a class="result" href="/genres/1"', response.text)
-        self.assertIn('hx-get="/fragments/workspace?focus=1"', response.text)
-        self.assertIn('hx-push-url="/genres/1"', response.text)
+        self.assertIn('<a class="result" href="/genres/1?layout=default"', response.text)
+        self.assertIn('hx-get="/fragments/workspace?focus=1&amp;layout=default"', response.text)
+        self.assertIn('hx-push-url="/genres/1?layout=default"', response.text)
         self.assertNotIn("<button", response.text)
+
+    def test_search_and_genre_entry_preserve_selected_layout(self) -> None:
+        search = self.client.get("/fragments/search", params={"q": "idm", "layout": "classic"})
+        selected = self.client.get(
+            "/fragments/workspace", params={"focus": "1", "layout": "classic"}
+        )
+
+        self.assertIn('href="/genres/1?layout=classic"', search.text)
+        self.assertIn('data-layout="classic"', selected.text)
+        self.assertIn('href="/?layout=classic" aria-label="Close IDM"', selected.text)
 
     def test_genre_api_returns_one_historical_representative(self) -> None:
         response = self.client.get("/api/genres/1")

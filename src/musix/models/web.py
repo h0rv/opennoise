@@ -121,8 +121,8 @@ def map_view(
     maximum_y = max(point.y for point in points)
     span_x = max(maximum_x - minimum_x, 1.0)
     span_y = max(maximum_y - minimum_y, 1.0)
-    padding_x = span_x * 0.03
-    padding_y = span_y * 0.005
+    padding_x = max(span_x * 0.08, 80.0)
+    padding_y = max(span_y * 0.05, 28.0)
     view_box = (
         f"{minimum_x - padding_x} {minimum_y - padding_y} "
         f"{span_x + padding_x * 2} {span_y + padding_y * 2}"

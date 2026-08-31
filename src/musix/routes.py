@@ -32,10 +32,15 @@ class CoreController(Controller):
     """Render the app shell and health response."""
 
     @get("/")
-    async def index(self, database: NamedDependency[AsyncDatabase]) -> Template:
+    async def index(
+        self,
+        database: NamedDependency[AsyncDatabase],
+        genre_entries: NamedDependency[GenreEntryRepository],
+        layout: FromQuery[str] = "default",
+    ) -> Template:
         """Render the current full map."""
-        view = map_view(await database.map_points())
-        return Template(template_name="index.html", context={"genre": None, "map": view})
+        context = await workspace_context(database, genre_entries, layout=layout, focus=None)
+        return Template(template_name="index.html", context=context)
 
     @get("/genres/{genre_id:int}")
     async def selected_genre(
@@ -43,14 +48,11 @@ class CoreController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
+        layout: FromQuery[str] = "default",
     ) -> Template:
         """Render a shareable genre selection with the complete app shell."""
-        genre = await database.genre_detail(genre_id)
-        if genre is None:
-            raise NotFoundException(detail="genre not found")
-        genre = await genre_entries.enrich(genre)
-        view = map_view(await database.map_points(), genre_id)
-        return Template(template_name="index.html", context={"genre": genre, "map": view})
+        context = await workspace_context(database, genre_entries, layout=layout, focus=genre_id)
+        return Template(template_name="index.html", context=context)
 
     @get("/api/health", media_type=MediaType.TEXT)
     async def health(self, database: NamedDependency[AsyncDatabase]) -> str:
@@ -176,13 +178,21 @@ class MapController(Controller):
             limit=limit,
         )
         result = await database.query_map(query)
+        active_layout = await database.layout_metadata(query.layout_key)
         view = map_view(
             list(result.points),
             focus,
             view_box=query.viewport.svg_view_box() if query.viewport is not None else None,
             show_labels=query.level_of_detail is LevelOfDetail.LABELS,
         )
-        return Template(template_name="map.html", context={"map": view})
+        return Template(
+            template_name="map.html",
+            context={
+                "active_layout": active_layout,
+                "layout_key": query.layout_key,
+                "map": view,
+            },
+        )
 
     @get("/fragments/workspace")
     async def workspace_fragment(
@@ -190,18 +200,14 @@ class MapController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         focus: FromQuery[int | None] = None,
+        layout: FromQuery[str] = "default",
     ) -> Template:
         """Render one coherent map selection and detail fragment."""
-        genre = None
-        if focus is not None:
-            genre = await database.genre_detail(focus)
-            if genre is None:
-                raise NotFoundException(detail="genre not found")
-            genre = await genre_entries.enrich(genre)
-        view = map_view(await database.map_points(), focus)
+        context = await workspace_context(database, genre_entries, layout=layout, focus=focus)
+        context["clear_results"] = True
         return Template(
             template_name="workspace.html",
-            context={"clear_results": True, "genre": genre, "map": view},
+            context=context,
         )
 
 
@@ -228,10 +234,14 @@ class SearchController(Controller):
         self,
         database: NamedDependency[AsyncDatabase],
         q: FromQuery[str] = "",
+        layout: FromQuery[str] = "default",
     ) -> Template:
         """Render search results for the bounded results region."""
         hits = await database.search(q[:500])
-        return Template(template_name="search_results.html", context={"hits": hits})
+        return Template(
+            template_name="search_results.html",
+            context={"hits": hits, "layout_key": parsed_layout_key(layout)},
+        )
 
 
 class EvidenceController(Controller):
@@ -268,13 +278,17 @@ class EvidenceController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
+        layout: FromQuery[str] = "default",
     ) -> Template:
         """Render one bounded genre detail region."""
         detail = await database.genre_detail(genre_id)
         if detail is None:
             raise NotFoundException(detail="genre not found")
         detail = await genre_entries.enrich(detail)
-        return Template(template_name="genre_detail.html", context={"genre": detail})
+        return Template(
+            template_name="genre_detail.html",
+            context={"genre": detail, "layout_key": parsed_layout_key(layout)},
+        )
 
 
 def map_query(
@@ -303,3 +317,39 @@ def map_query(
         )
     except ValueError as error:
         raise ValidationException(detail=str(error)) from error
+
+
+def parsed_layout_key(value: str) -> str:
+    """Parse an external layout key through the shared map query contract."""
+    try:
+        return MapQuery(layout_key=value).layout_key
+    except ValueError as error:
+        raise ValidationException(detail=str(error)) from error
+
+
+async def workspace_context(
+    database: AsyncDatabase,
+    genre_entries: GenreEntryRepository,
+    *,
+    layout: str,
+    focus: int | None,
+) -> dict[str, object]:
+    """Build one consistent workspace from a published layout and optional genre."""
+    layout_key = parsed_layout_key(layout)
+    layouts = await database.published_layouts()
+    active_layout = next((item for item in layouts if item.layout_key == layout_key), None)
+    if active_layout is None and (layouts or layout_key != "default"):
+        raise NotFoundException(detail="layout not found")
+    genre = None
+    if focus is not None:
+        genre = await database.genre_detail(focus)
+        if genre is None:
+            raise NotFoundException(detail="genre not found")
+        genre = await genre_entries.enrich(genre)
+    return {
+        "active_layout": active_layout,
+        "genre": genre,
+        "layout_key": layout_key,
+        "layouts": layouts,
+        "map": map_view(await database.map_points(layout_key), focus),
+    }

@@ -1,8 +1,8 @@
 {% for hit in hits %}
 {% if hit.entity_kind == 'genre' %}
-<a class="result" href="/genres/{{ hit.entity_id }}"
-   hx-get="/fragments/workspace?focus={{ hit.entity_id }}" hx-target="#workspace"
-   hx-swap="outerHTML" hx-push-url="/genres/{{ hit.entity_id }}"
+<a class="result" href="/genres/{{ hit.entity_id }}?layout={{ layout_key }}"
+   hx-get="/fragments/workspace?focus={{ hit.entity_id }}&amp;layout={{ layout_key }}" hx-target="#workspace"
+   hx-swap="outerHTML" hx-push-url="/genres/{{ hit.entity_id }}?layout={{ layout_key }}"
    hx-sync="#search:abort">{{ hit.name }}</a>
 {% endif %}
 {% endfor %}

@@ -22,6 +22,7 @@ from musix.layouts import (
     HistoricCoordinateSpace,
     LayoutArtifactMetadata,
     LayoutStrategyVersion,
+    PublishedLayout,
 )
 from musix.models import MapPoint, SearchHit
 
@@ -189,6 +190,35 @@ class Database:
             )
             for row in rows
         ]
+
+    def published_layouts(self) -> tuple[PublishedLayout, ...]:
+        """List nonempty published layouts without copying their point data."""
+        sql = """
+            SELECT run.layout_key, run.algorithm_key, run.input_fingerprint,
+                   count(point.entity_id) AS point_count
+            FROM current_layouts AS current
+            JOIN layout_runs AS run ON run.id = current.layout_run_id
+            JOIN displayable_map_points AS point ON point.layout_key = run.layout_key
+            GROUP BY run.id
+            HAVING count(point.entity_id) > 0
+            ORDER BY (run.layout_key = 'default') DESC,
+                     (run.algorithm_key = 'source_coordinates') DESC,
+                     run.layout_key COLLATE NOCASE
+        """
+        with self.connect() as connection:
+            rows = connection.execute(sql).fetchall()
+        return tuple(
+            PublishedLayout(
+                layout_key=str(row[0]),
+                point_count=int(row[3]),
+                coordinate_space=(
+                    HistoricCoordinateSpace(source_ref=str(row[2]), units="source_pixels")
+                    if str(row[1]) == "source_coordinates"
+                    else DerivedCoordinateSpace(units="layout_units")
+                ),
+            )
+            for row in rows
+        )
 
     def query_map(self, query: MapQuery) -> MapQueryResult:
         """Read a bounded layout region with explicit source, time, and lens filters."""
@@ -428,6 +458,10 @@ class AsyncDatabase:
     async def map_points(self, layout_key: str = "default") -> list[MapPoint]:
         """Read one published layout without blocking the event loop."""
         return await self._call(lambda: self._database.map_points(layout_key))
+
+    async def published_layouts(self) -> tuple[PublishedLayout, ...]:
+        """List selectable layouts without blocking the event loop."""
+        return await self._call(self._database.published_layouts)
 
     async def query_map(self, query: MapQuery) -> MapQueryResult:
         """Read one bounded map query without blocking the event loop."""

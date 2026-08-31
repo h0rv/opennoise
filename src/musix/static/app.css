@@ -51,6 +51,33 @@ button, input { font: inherit; }
 
 #query:focus { border-color: #222; }
 
+#layout-lenses {
+  position: fixed;
+  z-index: 3;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #aaa9a2;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 94%);
+}
+
+#layout-lenses a {
+  min-width: 64px;
+  padding: 5px 8px;
+  color: #4c4c47;
+  font-size: 11px;
+  line-height: 1.1;
+  text-align: center;
+  text-decoration: none;
+}
+
+#layout-lenses a[aria-current="page"] { color: #111; background: #e4e3dc; }
+#layout-lenses a:focus-visible { outline: 2px solid #222; outline-offset: 1px; }
+#layout-lenses small { display: block; margin-top: 2px; color: #77776f; font-size: 8px; }
+
 #results {
   position: fixed;
   z-index: 3;
@@ -93,7 +120,7 @@ button, input { font: inherit; }
 #genre-detail {
   position: fixed;
   z-index: 2;
-  top: 46px;
+  top: 64px;
   right: 14px;
   width: min(280px, calc(100vw - 28px));
   max-height: min(42vh, 320px);
@@ -105,6 +132,7 @@ button, input { font: inherit; }
   box-shadow: 0 3px 12px rgb(0 0 0 / 8%);
 }
 
+#genre-detail header { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
 #genre-detail h2 { margin: 0; font-size: 17px; line-height: 1.25; }
 #genre-detail h3 { margin: 10px 0 4px; font-size: 12px; }
 #genre-detail section a, #genre-detail section span {
@@ -112,21 +140,8 @@ button, input { font: inherit; }
   color: inherit;
   font-size: 12px;
 }
-#genre-detail .representative { margin: 12px 0; }
-#genre-detail .representative div { margin-top: 8px; }
-#genre-detail .representative dt {
-  color: #66665f;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-}
-#genre-detail .representative dd { margin: 1px 0 0; font-size: 13px; }
 .external-track { color: inherit; font-size: 12px; }
 #selection-clear {
-  position: fixed;
-  z-index: 4;
-  top: 17px;
-  right: 18px;
   color: #202020;
   font-size: 22px;
   line-height: 1;
@@ -139,6 +154,12 @@ button, input { font: inherit; }
 @media (max-width: 520px) {
   #search { top: 10px; left: 10px; width: calc(100vw - 68px); }
   #results { top: 54px; left: 10px; width: calc(100vw - 20px); }
+  #layout-lenses {
+    top: 56px;
+    right: 10px;
+    max-width: calc(100vw - 20px);
+    overflow-x: auto;
+  }
   #plot { width: max(100%, 44rem); }
   #genre-detail {
     top: auto;

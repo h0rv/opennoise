@@ -50,7 +50,12 @@ class Viewport(FrozenModel):
 class MapQuery(FrozenModel):
     """One bounded, reproducible map query."""
 
-    layout_key: str = Field(default="default", min_length=1, max_length=100)
+    layout_key: str = Field(
+        default="default",
+        min_length=1,
+        max_length=100,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$",
+    )
     lens: CatalogLens = CatalogLens.ALL
     level_of_detail: LevelOfDetail = LevelOfDetail.LABELS
     source_key: str | None = Field(default=None, min_length=1, max_length=100)

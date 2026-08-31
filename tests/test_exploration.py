@@ -60,8 +60,27 @@ class ExplorationTests(unittest.TestCase):
             database.initialize()
             with database.connect() as connection:
                 connection.executescript(FIXTURE.read_text(encoding="utf-8"))
+                connection.executescript(
+                    """
+                    INSERT INTO layout_runs (
+                        id, layout_key, revision, algorithm_key, algorithm_revision,
+                        input_fingerprint, status, policy_id, completed_at
+                    ) VALUES (
+                        2, 'classic', 1, 'source_coordinates', '1',
+                        '3434343434343434343434343434343434343434343434343434343434343434',
+                        'complete', 1, '2026-01-01T00:00:00Z'
+                    );
+                    INSERT INTO layout_points (
+                        layout_run_id, entity_id, x, y, display_weight, color_hex
+                    ) SELECT 2, entity_id, x, y, display_weight, color_hex
+                      FROM layout_points WHERE layout_run_id = 1;
+                    INSERT INTO current_layouts (layout_key, layout_run_id)
+                    VALUES ('classic', 2);
+                    """
+                )
 
             metadata = database.layout_metadata("genres")
+            layouts = database.published_layouts()
             detail = database.genre_detail(1)
 
             self.assertIsNotNone(metadata)
@@ -69,6 +88,9 @@ class ExplorationTests(unittest.TestCase):
                 self.assertEqual(metadata.strategy.key, "fixture")
                 self.assertEqual(metadata.point_count, 1)
                 self.assertEqual(metadata.coordinate_space.coordinate_kind, "derived")
+            self.assertEqual(tuple(layout.layout_key for layout in layouts), ("classic", "genres"))
+            self.assertEqual(layouts[0].coordinate_space.coordinate_kind, "historic_source")
+            self.assertEqual(layouts[1].coordinate_space.coordinate_kind, "derived")
             self.assertIsNotNone(detail)
             if detail is not None:
                 self.assertEqual(detail.name, "IDM")
