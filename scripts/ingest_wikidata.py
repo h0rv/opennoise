@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from pydantic import HttpUrl
+from pydantic import HttpUrl, TypeAdapter
 
 from musix.catalog.entities import EntityProjector
 from musix.catalog.registry import ProjectorRegistry
@@ -17,6 +17,7 @@ from musix.models.sources import DownloadSource
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
 from musix.sources.registry import AdapterRegistry
 from musix.sources.wikidata import WikidataSourceAdapter
+from musix.types import SourceId
 
 
 def _sha256_file(path: Path) -> str:
@@ -40,7 +41,8 @@ def _publish_artifact(staging_path: Path, vault_path: Path, sha256: str) -> Path
 
 
 async def _run(args: argparse.Namespace) -> dict[str, object]:
-    staging_path = args.vault / "staging" / f"{args.source_id}.json"
+    source_id = TypeAdapter(SourceId).validate_python(args.source_id, strict=True)
+    staging_path = args.vault / "staging" / f"{source_id}.json"
     result = await fetch_wikidata_query(
         WikidataQueryRequest(
             query_path=args.query,
@@ -52,7 +54,7 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
     )
     _publish_artifact(result.path, args.vault, result.sha256)
     source = DownloadSource(
-        id=args.source_id,
+        id=source_id,
         adapter="wikidata_music_sparql_slice_v1",
         snapshot=f"query:{result.query_sha256}:artifact:{result.sha256}",
         url=HttpUrl("https://query.wikidata.org/sparql"),

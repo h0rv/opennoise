@@ -10,7 +10,11 @@ from musix.app import create_app
 from musix.db import Database
 from musix.genre_entry import GenreEntryRepository
 from musix.ml.public_graph import build_public_model, public_model_output_sha256
-from musix.ml.publish import PublicModelPublishError, publish_public_model
+from musix.ml.publish import (
+    PublicModelPublishError,
+    publish_public_model,
+    resolve_public_policy_id,
+)
 from musix.models.modeling import (
     DirectMembershipEvidence,
     GenreIdentity,
@@ -112,7 +116,8 @@ class PublicModelPublishTests(unittest.TestCase):
             connection.execute(
                 """INSERT INTO rights_policies
                    (id, policy_key, policy_version, classification, basis)
-                   VALUES (3, 'public-test', 1, 'open_license', 'test')"""
+                   VALUES (3, ?, 1, 'open_license', 'test')""",
+                (f"manifest:wikidata-test:{'a' * 64}",),
             )
             connection.executemany(
                 """INSERT INTO rights_policy_permissions
@@ -169,6 +174,32 @@ class PublicModelPublishTests(unittest.TestCase):
     @override
     def tearDown(self) -> None:
         self.temporary.cleanup()
+
+    def test_resolves_policy_by_exact_public_source_identity(self) -> None:
+        self.assertEqual(resolve_public_policy_id(self.database_path, "wikidata-test"), 3)
+
+    def test_policy_source_lookup_fails_closed(self) -> None:
+        with self.assertRaisesRegex(PublicModelPublishError, "no sealed policy"):
+            resolve_public_policy_id(self.database_path, "missing-source")
+
+        with sqlite3.connect(self.database_path) as connection:
+            connection.execute(
+                """INSERT INTO rights_policies
+                   (id, policy_key, policy_version, classification, basis)
+                   VALUES (4, 'unrelated-policy', 1, 'open_license', 'test')"""
+            )
+            connection.execute(
+                """INSERT INTO rights_policy_seals (policy_id, sealed_at)
+                   VALUES (4, '2026-08-31T00:00:00Z')"""
+            )
+            connection.execute(
+                """INSERT INTO data_sources
+                   (id, source_key, name, acquisition_kind, default_policy_id)
+                   VALUES (4, 'wrong-policy-source', 'Wrong policy', 'public_api', 4)"""
+            )
+
+        with self.assertRaisesRegex(PublicModelPublishError, "does not own"):
+            resolve_public_policy_id(self.database_path, "wrong-policy-source")
 
     def test_publish_is_atomic_idempotent_and_queryable(self) -> None:
         self.assertEqual(GenreEntryRepository(self.database_path)._read(1)[2], ())  # noqa: SLF001

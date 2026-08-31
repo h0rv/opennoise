@@ -14,7 +14,7 @@ from musix.metadata_links import metadata_url
 from musix.ml.public_graph import public_model_output_sha256
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelArtifact
-from musix.types import Sha256
+from musix.types import Sha256, SourceId
 
 MODEL_KEY = "public-graph"
 DEFAULT_LAYOUT_KEY = "public"
@@ -26,6 +26,36 @@ _MBID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 
 class PublicModelPublishError(RuntimeError):
     """Report an artifact, identity, or policy that cannot be published safely."""
+
+
+def resolve_public_policy_id(database_path: Path, source_key: SourceId) -> int:
+    """Resolve one sealed public manifest policy by its exact source identity."""
+    with sqlite3.connect(f"file:{database_path.resolve()}?mode=ro", uri=True) as connection:
+        row = connection.execute(
+            """SELECT source.default_policy_id, source.acquisition_kind,
+                      policy.policy_key, policy.classification, policy.local_only
+               FROM data_sources AS source
+               JOIN rights_policies AS policy ON policy.id = source.default_policy_id
+               JOIN rights_policy_seals AS seal ON seal.policy_id = policy.id
+               WHERE source.source_key = ?""",
+            (source_key,),
+        ).fetchone()
+    if row is None:
+        raise PublicModelPublishError(f"no sealed policy for public source {source_key!r}")
+    policy_id, acquisition_kind, policy_key, classification, local_only = row
+    expected_policy = re.fullmatch(
+        rf"manifest:{re.escape(source_key)}:[0-9a-f]{{64}}", str(policy_key)
+    )
+    if (
+        acquisition_kind not in {"public_download", "public_api"}
+        or classification not in {"public_domain", "open_license"}
+        or int(local_only) != 0
+        or expected_policy is None
+    ):
+        raise PublicModelPublishError(
+            f"source {source_key!r} does not own an eligible public manifest policy"
+        )
+    return int(policy_id)
 
 
 class PublicModelPublishSummary(FrozenModel):

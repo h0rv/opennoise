@@ -32,6 +32,7 @@ from musix.pipeline.runner import (
 )
 from musix.sources.registry import SourceAdapter
 from musix.storage import LocalObjectStore, ObjectKey
+from musix.types import SourceId
 
 type RecordFactory = Callable[[tuple[DownloadResult, ...]], Iterator[SourceRecord]]
 MINIMUM_INPUT_ARTIFACTS = 2
@@ -46,7 +47,7 @@ class MultiArtifactOptions(FrozenModel):
     manifest_path: Path
     database_path: Path
     vault_path: Path
-    aggregate_source_id: str = Field(min_length=1, max_length=200)
+    aggregate_source_id: SourceId
     configuration_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     limits: SourceLimits
 
@@ -77,7 +78,7 @@ async def _download_with_retry(
 class MultiArtifactSummary(FrozenModel):
     """Report one complete or reused multi-input aggregate."""
 
-    aggregate_source_id: str
+    aggregate_source_id: SourceId
     aggregate_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     input_artifacts: int = Field(gt=1)
     accepted: int = Field(ge=0)

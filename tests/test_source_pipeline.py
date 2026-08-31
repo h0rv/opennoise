@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 import httpx
-from pydantic import HttpUrl
+from pydantic import HttpUrl, ValidationError
 
 from musix.catalog.artists import ArtistProjector
 from musix.catalog.registry import ProjectorRegistry
@@ -105,6 +105,23 @@ def _source(path: Path) -> DownloadSource:
 
 
 class DownloadTests(unittest.IsolatedAsyncioTestCase):
+    def test_source_id_rejects_filesystem_separators_traversal_and_controls(self) -> None:
+        source = load_download_source(
+            ROOT / "config" / "data_sources.toml",
+            "musicbrainz_json_artist_20260829",
+        )
+        for invalid in (
+            "../escape",
+            "nested/source",
+            r"nested\source",
+            ".",
+            "..",
+            "bad\nsource",
+            "bad\x00source",
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(ValidationError):
+                DownloadSource.model_validate({**source.model_dump(), "id": invalid})
+
     async def test_musicbrainz_genres_keep_the_restrictive_supplementary_policy(self) -> None:
         public_source = load_download_source(
             ROOT / "config" / "data_sources.toml",

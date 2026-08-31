@@ -8,7 +8,7 @@ from typing import override
 from unittest.mock import AsyncMock, patch
 
 import httpx
-from pydantic import HttpUrl
+from pydantic import HttpUrl, ValidationError
 
 from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
 from musix.catalog.registry import ProjectorRegistry
@@ -139,6 +139,20 @@ class MultiSourcePipelineTests(unittest.IsolatedAsyncioTestCase):
             ),
             1,
         )
+
+    def test_aggregate_source_id_is_a_safe_filesystem_token(self) -> None:
+        payload = self.options.model_dump()
+        for invalid in (
+            "../escape",
+            "nested/source",
+            r"nested\source",
+            ".",
+            "..",
+            "bad\tsource",
+            "bad\x00source",
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(ValidationError):
+                MultiArtifactOptions.model_validate({**payload, "aggregate_source_id": invalid})
 
     async def test_atomic_lineage_and_exact_replay(self) -> None:
         projectors = ProjectorRegistry((ArtistCoListenProjector(), ArtistCoListenRunProjector()))

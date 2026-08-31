@@ -99,7 +99,7 @@ sequence = [
     { cmd = "python scripts/ingest_wikidata.py --query config/wikidata_public_genres_20260831.rq --source-id wikidata_public_genres_20260831 --database data/public.sqlite --vault data/vault --max-records 50000" },
     { cmd = "python scripts/ingest_joint_listenbrainz.py --database data/public.sqlite --vault data/vault" },
     { cmd = "python scripts/build_public_model.py --catalog-db data/public.sqlite --listenbrainz-db data/public.sqlite --output data/model/public-model-v1.json" },
-    { cmd = "musix publish-public-model data/model/public-model-v1.json --database data/public.sqlite --policy-id 2" },
+    { cmd = "musix publish-public-model data/model/public-model-v1.json --database data/public.sqlite --policy-source-key wikidata_public_genres_20260831" },
 ]
 
 [tool.poe.tasks.check]

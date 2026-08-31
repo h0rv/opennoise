@@ -16,7 +16,7 @@ from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunP
 from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.ingest import ImportOptions, import_jsonl
-from musix.ml.publish import publish_public_model
+from musix.ml.publish import publish_public_model, resolve_public_policy_id
 from musix.models import Settings
 from musix.models.pipeline import SourceLimits
 from musix.pipeline.manifest import load_download_source
@@ -113,10 +113,13 @@ def _ingest_source(args: argparse.Namespace) -> int:
 
 
 def _publish_public_model(args: argparse.Namespace) -> int:
+    policy_id = args.policy_id
+    if args.policy_source_key is not None:
+        policy_id = resolve_public_policy_id(args.database, args.policy_source_key)
     summary = publish_public_model(
         args.database,
         args.artifact,
-        policy_id=args.policy_id,
+        policy_id=policy_id,
         layout_key=args.layout_key,
     )
     sys.stdout.write(f"{summary.model_dump_json(indent=2)}\n")
@@ -175,7 +178,9 @@ def parser() -> argparse.ArgumentParser:
     )
     publish_model.add_argument("artifact", type=Path)
     publish_model.add_argument("--database", type=Path, default=settings.database_path)
-    publish_model.add_argument("--policy-id", type=int, required=True)
+    policy = publish_model.add_mutually_exclusive_group(required=True)
+    policy.add_argument("--policy-id", type=int)
+    policy.add_argument("--policy-source-key")
     publish_model.add_argument("--layout-key", default="public")
     publish_model.set_defaults(handler=_publish_public_model)
     return command_parser
