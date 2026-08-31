@@ -94,6 +94,20 @@ def _direct_memberships(
           AND evidence.method_key IN (
             'direct_musicbrainz_artist_genre', 'musicbrainz_artist_genre', 'wikidata_p136'
           )
+          AND NOT EXISTS (
+            SELECT 1 FROM active_suppressions AS suppression
+            WHERE suppression.use_kind IN ('all', 'embed') AND (
+              (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+                CAST(evidence.artist_id AS TEXT), CAST(evidence.genre_id AS TEXT)
+              ))
+              OR (suppression.target_kind = 'provenance'
+                  AND suppression.target_ref = CAST(evidence.provenance_id AS TEXT))
+              OR (suppression.target_kind = 'source' AND suppression.target_ref = CAST((
+                    SELECT source_id FROM provenance_records
+                    WHERE id = evidence.provenance_id
+                  ) AS TEXT))
+            )
+          )
         ORDER BY artist_ref, genre_ref, evidence.method_key, evidence.id
         LIMIT ?
         """,
@@ -139,6 +153,26 @@ def _artist_pairs(
           ON embed_permission.policy_id = artifact.policy_id
          AND embed_permission.use_kind = 'embed'
          AND embed_permission.decision = 'allow'
+        JOIN normalization_exports AS export
+          ON export.staged_record_id = evidence.staged_record_id
+        JOIN provenance_records AS provenance ON provenance.id = export.provenance_id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM active_suppressions AS suppression
+          WHERE suppression.use_kind IN ('all', 'embed') AND (
+            (suppression.target_kind = 'provenance'
+             AND suppression.target_ref = CAST(provenance.id AS TEXT))
+            OR (suppression.target_kind = 'source'
+                AND suppression.target_ref = CAST(provenance.source_id AS TEXT))
+            OR (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+              SELECT CAST(identifier.entity_id AS TEXT)
+              FROM entity_identifiers AS identifier
+              WHERE identifier.namespace = 'musicbrainz'
+                AND ('musicbrainz:artist:' || identifier.normalized_value) IN (
+                  evidence.left_artist_source_id, evidence.right_artist_source_id
+                )
+            ))
+          )
+        )
         GROUP BY evidence.left_artist_source_id, evidence.right_artist_source_id
         HAVING sum(evidence.distinct_user_count) >= ? AND count(*) >= ?
         ORDER BY sum(evidence.distinct_user_count) DESC,
@@ -180,6 +214,20 @@ def _genres(
               'musicbrainz_artist_genre',
               'wikidata_p136'
             )
+            AND NOT EXISTS (
+              SELECT 1 FROM active_suppressions AS suppression
+              WHERE suppression.use_kind IN ('all', 'embed') AND (
+                (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+                  CAST(evidence.artist_id AS TEXT), CAST(evidence.genre_id AS TEXT)
+                ))
+                OR (suppression.target_kind = 'provenance'
+                    AND suppression.target_ref = CAST(evidence.provenance_id AS TEXT))
+                OR (suppression.target_kind = 'source' AND suppression.target_ref = CAST((
+                      SELECT source_id FROM provenance_records
+                      WHERE id = evidence.provenance_id
+                    ) AS TEXT))
+              )
+            )
           GROUP BY evidence.genre_id
           UNION
           SELECT evidence.genre_id, min(evidence.id) AS evidence_id
@@ -191,6 +239,20 @@ def _genres(
           WHERE evidence.evidence_kind IN (
             'musicbrainz_release_group_genre', 'wikidata_p136'
           )
+            AND NOT EXISTS (
+              SELECT 1 FROM active_suppressions AS suppression
+              WHERE suppression.use_kind IN ('all', 'embed') AND (
+                (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+                  CAST(evidence.release_group_id AS TEXT), CAST(evidence.genre_id AS TEXT)
+                ))
+                OR (suppression.target_kind = 'provenance'
+                    AND suppression.target_ref = CAST(evidence.provenance_id AS TEXT))
+                OR (suppression.target_kind = 'source' AND suppression.target_ref = CAST((
+                      SELECT source_id FROM provenance_records
+                      WHERE id = evidence.provenance_id
+                    ) AS TEXT))
+              )
+            )
           GROUP BY evidence.genre_id
         )
         SELECT eligible.genre_id,
@@ -274,6 +336,20 @@ def _metadata_candidates(
           AND evidence.method_key IN (
             'direct_musicbrainz_artist_genre', 'musicbrainz_artist_genre', 'wikidata_p136'
           )
+          AND NOT EXISTS (
+            SELECT 1 FROM active_suppressions AS suppression
+            WHERE suppression.use_kind IN ('all', 'embed') AND (
+              (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+                CAST(evidence.artist_id AS TEXT), CAST(evidence.genre_id AS TEXT)
+              ))
+              OR (suppression.target_kind = 'provenance'
+                  AND suppression.target_ref = CAST(evidence.provenance_id AS TEXT))
+              OR (suppression.target_kind = 'source' AND suppression.target_ref = CAST((
+                    SELECT source_id FROM provenance_records
+                    WHERE id = evidence.provenance_id
+                  ) AS TEXT))
+            )
+          )
         GROUP BY evidence.artist_id, evidence.genre_id
         ORDER BY genre_ref, max(evidence.evidence_value) DESC, entity_ref
         LIMIT ?
@@ -324,6 +400,20 @@ def _metadata_candidates(
         WHERE evidence.evidence_kind IN (
             'musicbrainz_release_group_genre', 'wikidata_p136'
         )
+          AND NOT EXISTS (
+            SELECT 1 FROM active_suppressions AS suppression
+            WHERE suppression.use_kind IN ('all', 'embed') AND (
+              (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+                CAST(evidence.release_group_id AS TEXT), CAST(evidence.genre_id AS TEXT)
+              ))
+              OR (suppression.target_kind = 'provenance'
+                  AND suppression.target_ref = CAST(evidence.provenance_id AS TEXT))
+              OR (suppression.target_kind = 'source' AND suppression.target_ref = CAST((
+                    SELECT source_id FROM provenance_records
+                    WHERE id = evidence.provenance_id
+                  ) AS TEXT))
+            )
+          )
         GROUP BY evidence.release_group_id, evidence.genre_id
         ORDER BY genre_ref, max(COALESCE(evidence.source_count, 1)) DESC, entity_ref
         LIMIT ?
@@ -377,6 +467,15 @@ def _artifacts(connection: sqlite3.Connection) -> tuple[PublicArtifact, ...]:
             lower(source.source_key) LIKE '%listenbrainz%'
             OR lower(source.source_key) LIKE '%musicbrainz%'
             OR lower(source.source_key) LIKE '%wikidata%'
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM active_suppressions AS suppression
+            WHERE suppression.use_kind IN ('all', 'embed') AND (
+              (suppression.target_kind = 'provenance'
+               AND suppression.target_ref = CAST(provenance.id AS TEXT))
+              OR (suppression.target_kind = 'source'
+                  AND suppression.target_ref = CAST(provenance.source_id AS TEXT))
+            )
           )
         ORDER BY source.source_key, provenance.snapshot_ref, provenance.artifact_sha256
         """

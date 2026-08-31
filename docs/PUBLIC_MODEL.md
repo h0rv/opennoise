@@ -50,6 +50,10 @@ The command opens both databases in read only mode. It writes the result through
 file in the output directory and then replaces the target path. The command reports the output
 hash, coverage counts, elapsed time, and peak memory.
 
+The loader checks the embed permission for every source policy. It also removes evidence when an
+active suppression blocks embedding for an entity, provenance record, or source. A normalization
+permission does not grant embedding permission.
+
 ## Limits and validation
 
 The loader applies a row limit to direct memberships, artist pairs, and metadata candidates.
