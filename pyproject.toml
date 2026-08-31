@@ -16,6 +16,7 @@ dependencies = [
     "litestar==2.24.0",
     "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
+    "scipy>=1.18.1",
     "uvicorn==0.52.4",
     "zstandard>=0.25.0",
 ]
