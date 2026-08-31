@@ -13,9 +13,15 @@ from typing import BinaryIO, Literal, Protocol
 from uuid import UUID
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from musix.models.catalog import ArtistProjection, IdentifierClaim, NameClaim
+from musix.models.catalog import (
+    ArtistProjection,
+    ExternalIdentity,
+    GenreMembershipClaim,
+    IdentifierClaim,
+    NameClaim,
+)
 from musix.models.pipeline import (
     ParsedSourceRecord,
     RejectedSourceRecord,
@@ -31,6 +37,7 @@ MUSICBRAINZ_API_BASE = "https://musicbrainz.org/ws/2"
 MUSICBRAINZ_MIN_REQUEST_INTERVAL_SECONDS = 1.0
 YEAR_TEXT_LENGTH = 4
 MAX_YEAR = 9999
+MAX_GENRE_CLAIMS_PER_ARTIST = 128
 
 
 class MusicBrainzAdapterError(SourceAdapterError):
@@ -102,11 +109,19 @@ class MusicBrainzArtist(BaseModel):
     sort_name: str = Field(alias="sort-name", min_length=1)
     disambiguation: str = ""
     aliases: tuple[MusicBrainzAlias, ...] = ()
-    genres: tuple[MusicBrainzGenre, ...] = ()
+    genres: tuple[MusicBrainzGenre, ...] = Field(default=(), max_length=MAX_GENRE_CLAIMS_PER_ARTIST)
     isnis: tuple[str, ...] = ()
     ipis: tuple[str, ...] = ()
     type: str | None = None
     life_span: MusicBrainzLifeSpan | None = Field(default=None, alias="life-span")
+
+    @model_validator(mode="after")
+    def unique_genre_claims(self) -> "MusicBrainzArtist":
+        """Reject conflicting repeated genre identities instead of choosing one count."""
+        identities = tuple(genre.id for genre in self.genres)
+        if len(identities) != len(set(identities)):
+            raise ValueError("MusicBrainz artist repeats a genre identity")
+        return self
 
 
 class MusicBrainzReleaseGroupReference(BaseModel):
@@ -806,6 +821,15 @@ def _artist_projection(artist: MusicBrainzArtist) -> ArtistProjection:
     identifiers.extend(
         IdentifierClaim(type_key="ipi", namespace="ipi", value=value) for value in artist.ipis
     )
+    genre_claims = tuple(
+        GenreMembershipClaim(
+            source_identity=ExternalIdentity(namespace="musicbrainz", value=str(genre.id)),
+            name=genre.name,
+            support_count=genre.count,
+        )
+        for genre in sorted(artist.genres, key=lambda item: str(item.id))
+        if genre.count is not None and genre.count > 0
+    )
     return ArtistProjection(
         external_id=artist_id,
         names=tuple(names),
@@ -814,6 +838,7 @@ def _artist_projection(artist: MusicBrainzArtist) -> ArtistProjection:
         disambiguation=artist.disambiguation or None,
         begin_year=_year(artist.life_span.begin if artist.life_span is not None else None),
         end_year=_year(artist.life_span.end if artist.life_span is not None else None),
+        genre_claims=genre_claims,
     )
 
 
@@ -828,7 +853,7 @@ class MusicBrainzArtistDumpAdapter:
     @property
     def version(self) -> str:
         """Return the immutable projection version."""
-        return "2"
+        return "3"
 
     def supports(self, source: DownloadSource) -> bool:
         """Require the official archive format understood by this adapter."""

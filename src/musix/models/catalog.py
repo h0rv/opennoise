@@ -85,6 +85,14 @@ class EntityProjection(_FrozenModel):
         return f"{self.source_identity.namespace}:{self.source_identity.value}"
 
 
+class GenreMembershipClaim(_FrozenModel):
+    """Represent one positive, source-qualified genre association count."""
+
+    source_identity: ExternalIdentity
+    name: str = Field(min_length=1)
+    support_count: int = Field(gt=0)
+
+
 class ArtistProjection(_FrozenModel):
     """Represent common artist facts projected from an upstream record."""
 
@@ -97,6 +105,7 @@ class ArtistProjection(_FrozenModel):
     disambiguation: str | None = None
     begin_year: int | None = Field(default=None, ge=1, le=9999)
     end_year: int | None = Field(default=None, ge=1, le=9999)
+    genre_claims: tuple[GenreMembershipClaim, ...] = Field(default=(), max_length=128)
 
 
 class ArtistCoListenProjection(_FrozenModel):

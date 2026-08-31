@@ -74,6 +74,18 @@ relationship-heavy upstream records exceed 50 MiB even though only bounded core
 fields are projected. Larger records are hashed, quarantined, and skipped without
 desynchronizing the following JSON line.
 
+Artist records also carry bounded positive official-genre counts. These are
+common catalog claims projected into append-only `artist_genre_evidence`, not a
+source-specific lifecycle table. The hard cap is 128 unique genre UUIDs per
+artist. Counts remain raw and source-qualified; ingestion does not normalize
+them, select membership thresholds, or turn them into similarity.
+
+`poe ingest-musicbrainz-research` reuses the verified artifact under a separate
+local-only policy that permits noncommercial embedding and training while
+denying export. The ordinary MusicBrainz JSON task does not grant those uses.
+Public model builds exclude the research source until output attribution and
+ShareAlike obligations have been explicitly approved.
+
 The ListenBrainz bootstrap uses the pinned daily incremental listen dump:
 
 ```sh

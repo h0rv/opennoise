@@ -1,9 +1,23 @@
 """Direct-SQL repository for common artist projections."""
 
 import hashlib
+import json
+import re
 import sqlite3
+from datetime import UTC, datetime
 
-from musix.models.catalog import ArtistProjection, CatalogProjection, ProjectionResult
+from musix.models.catalog import (
+    ArtistProjection,
+    CatalogProjection,
+    GenreMembershipClaim,
+    ProjectionResult,
+)
+
+GENRE_PARAMETER_MANIFEST = {
+    "association": "official_genre",
+    "count_semantics": "positive_aggregate",
+    "maximum_genres_per_artist": 128,
+}
 
 
 def _hash_parts(*parts: str) -> str:
@@ -26,6 +40,138 @@ def _lastrowid(cursor: sqlite3.Cursor) -> int:
     if row_id is None:
         raise RuntimeError("SQLite insert returned no row ID")
     return row_id
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _identifier_type(connection: sqlite3.Connection, type_key: str) -> int:
+    connection.execute(
+        "INSERT OR IGNORE INTO identifier_types (type_key, name) VALUES (?, ?)",
+        (type_key, type_key.replace("_", " ").title()),
+    )
+    return _one_id(
+        connection,
+        "SELECT id FROM identifier_types WHERE type_key = ?",
+        (type_key,),
+    )
+
+
+def _genre_slug(source_id: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "-", source_id.casefold()).strip("-")
+    return f"musicbrainz-{normalized}"
+
+
+def _ensure_genre(
+    connection: sqlite3.Connection,
+    claim: GenreMembershipClaim,
+    provenance_id: int,
+) -> int:
+    identifier_type_id = _identifier_type(connection, "musicbrainz_genre_id")
+    row = connection.execute(
+        """SELECT entity_id FROM entity_identifiers
+           WHERE identifier_type_id = ? AND namespace = ? AND normalized_value = ?
+           ORDER BY id LIMIT 1""",
+        (identifier_type_id, claim.source_identity.namespace, claim.source_identity.value),
+    ).fetchone()
+    if row is None:
+        cursor = connection.execute("INSERT INTO catalog_entities (entity_kind) VALUES ('genre')")
+        genre_id = _lastrowid(cursor)
+        connection.execute(
+            "INSERT INTO genres (id, slug, name) VALUES (?, ?, ?)",
+            (genre_id, _genre_slug(claim.source_identity.value), claim.name),
+        )
+    else:
+        genre_id = int(row[0])
+        kind = connection.execute(
+            "SELECT entity_kind FROM catalog_entities WHERE id = ?", (genre_id,)
+        ).fetchone()
+        if kind is None or str(kind[0]) != "genre":
+            raise ValueError("MusicBrainz genre identifier resolves to a non-genre entity")
+    connection.execute(
+        """INSERT OR IGNORE INTO entity_identifiers
+           (entity_id, identifier_type_id, namespace, value, normalized_value, provenance_id)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (
+            genre_id,
+            identifier_type_id,
+            claim.source_identity.namespace,
+            claim.source_identity.value,
+            claim.source_identity.value,
+            provenance_id,
+        ),
+    )
+    connection.execute(
+        """INSERT OR IGNORE INTO entity_provenance
+           (entity_id, provenance_id, field_set_json, is_primary)
+           VALUES (?, ?, '["name","musicbrainz_genre_id"]', 0)""",
+        (genre_id, provenance_id),
+    )
+    fingerprint = _hash_parts(str(genre_id), "primary", "und", claim.name)
+    connection.execute(
+        """INSERT OR IGNORE INTO entity_names
+           (entity_id, name_kind, name, language_tag, is_preferred, provenance_id, fingerprint)
+           VALUES (?, 'primary', ?, 'und', 1, ?, ?)""",
+        (genre_id, claim.name, provenance_id, fingerprint),
+    )
+    return genre_id
+
+
+def _source_key(connection: sqlite3.Connection, provenance_id: int) -> str:
+    row = connection.execute(
+        """SELECT source.source_key
+           FROM provenance_records AS provenance
+           JOIN data_sources AS source ON source.id = provenance.source_id
+           WHERE provenance.id = ?""",
+        (provenance_id,),
+    ).fetchone()
+    if row is None:
+        raise RuntimeError("artist provenance source could not be read back")
+    return str(row[0])
+
+
+def _persist_genre_claims(
+    connection: sqlite3.Connection,
+    projection: ArtistProjection,
+    artist_id: int,
+    provenance_id: int,
+    policy_id: int,
+) -> None:
+    source_key = _source_key(connection, provenance_id)
+    parameters = json.dumps(GENRE_PARAMETER_MANIFEST, sort_keys=True, separators=(",", ":"))
+    observed_at = _now()
+    for claim in projection.genre_claims:
+        genre_id = _ensure_genre(connection, claim, provenance_id)
+        source_record_id = (
+            f"musicbrainz:artist:{projection.external_id}:genre:{claim.source_identity.value}"
+        )
+        fingerprint = _hash_parts(
+            source_key,
+            source_record_id,
+            str(claim.support_count),
+            str(provenance_id),
+        )
+        connection.execute(
+            """INSERT OR IGNORE INTO artist_genre_evidence
+               (artist_id, genre_id, evidence_kind, evidence_value, source_key,
+                source_record_id, method_key, method_version, parameter_manifest_json,
+                observed_at, provenance_id, policy_id, record_fingerprint)
+               VALUES (?, ?, 'direct_source_claim', ?, ?, ?,
+                       'musicbrainz_artist_genre', '1', ?, ?, ?, ?, ?)""",
+            (
+                artist_id,
+                genre_id,
+                float(claim.support_count),
+                source_key,
+                source_record_id,
+                parameters,
+                observed_at,
+                provenance_id,
+                policy_id,
+                fingerprint,
+            ),
+        )
 
 
 class ArtistProjector:
@@ -143,6 +289,13 @@ class ArtistProjector:
                 provenance_id,
                 policy_id,
             ),
+        )
+        _persist_genre_claims(
+            connection,
+            projection,
+            entity_id,
+            provenance_id,
+            policy_id,
         )
         return ProjectionResult(
             projection_kind=self.key,

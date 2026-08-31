@@ -80,6 +80,7 @@ dev = "musix serve"
 evaluate-layout = "python scripts/evaluate_layout.py data/musix.sqlite --layout default"
 evaluate-membership = "python scripts/evaluate_membership.py tests/fixtures/membership_evaluation.json"
 ingest-musicbrainz-artists = "musix ingest-source musicbrainz_json_artist_20260829 --partition-prefix 0 --max-record-bytes 67108864"
+ingest-musicbrainz-research = "musix ingest-source musicbrainz_json_artist_research_20260829 --partition-prefix 0 --max-record-bytes 67108864"
 ingest-wikidata = "python scripts/ingest_wikidata.py"
 ingest-listenbrainz = "musix ingest-source listenbrainz_incremental_20260830 --max-archive-bytes 300000000 --max-records 6000000 --checkpoint-every 5000"
 

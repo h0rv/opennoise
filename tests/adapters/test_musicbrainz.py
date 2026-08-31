@@ -7,11 +7,13 @@ from pathlib import Path
 from uuid import UUID
 
 import httpx
+from pydantic import ValidationError
 
 from musix.ingest import parse_catalog_record
 from musix.sources.musicbrainz import (
     AdapterLimits,
     MusicBrainzAdapterError,
+    MusicBrainzArtist,
     MusicBrainzClient,
     iter_artist_archive,
     iter_release_group_jsonl,
@@ -53,6 +55,21 @@ def _write_archive(path: Path, *, schema: str = "1", artist_name: str = "mbdump/
 
 
 class MusicBrainzArchiveTests(unittest.TestCase):
+    def test_artist_genre_claims_are_strictly_bounded_and_unique(self) -> None:
+        payload = _artist_payload()
+        payload["genres"] = [
+            {"id": str(UUID(int=index + 1)), "name": f"Genre {index}", "count": 1}
+            for index in range(129)
+        ]
+        with self.assertRaises(ValidationError):
+            MusicBrainzArtist.model_validate(payload)
+
+        duplicate = _artist_payload()
+        repeated_genre = {"id": GENRE_ID, "name": "Electric blues", "count": 4}
+        duplicate["genres"] = [repeated_genre, repeated_genre]
+        with self.assertRaises(ValidationError):
+            MusicBrainzArtist.model_validate(duplicate)
+
     def test_streams_release_groups_and_editions_with_direct_genres(self) -> None:
         with (
             (FIXTURES / "musicbrainz_release_groups.jsonl").open("rb") as groups_stream,

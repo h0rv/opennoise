@@ -16,10 +16,16 @@ class WikidataSourceAdapterTests(unittest.TestCase):
             WikidataSourceAdapter().iter_records(FIXTURE, SourceLimits(), start_after=-1)
         )
         accepted = [record for record in records if isinstance(record, ParsedSourceRecord)]
+        projections = [
+            record.projection
+            for record in accepted
+            if isinstance(record.projection, EntityProjection)
+        ]
 
         self.assertEqual(len(accepted), 5)
+        self.assertEqual(len(projections), len(accepted))
         self.assertEqual(
-            Counter(record.projection.entity_kind for record in accepted),
+            Counter(projection.entity_kind for projection in projections),
             Counter(dict.fromkeys(("artist", "genre", "recording", "release_group", "work"), 1)),
         )
 

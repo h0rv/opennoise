@@ -14,6 +14,7 @@ from musix.catalog.registry import ProjectorRegistry
 from musix.clients.downloads import download_verified
 from musix.models.pipeline import SourceLimits
 from musix.models.sources import DownloadSource
+from musix.pipeline.manifest import load_download_source
 from musix.pipeline.runner import (
     DeterministicPartition,
     PipelineOptions,
@@ -21,6 +22,8 @@ from musix.pipeline.runner import (
 )
 from musix.sources.musicbrainz import MusicBrainzArtistDumpAdapter
 from musix.sources.registry import AdapterRegistry
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _add_member(archive: tarfile.TarFile, name: str, payload: bytes) -> None:
@@ -39,6 +42,18 @@ def _artist_line() -> bytes:
             "disambiguation": "fixture artist",
             "life-span": {"begin": "1981-02-03", "end": None},
             "aliases": [{"name": "The Blue Guy", "locale": "en"}],
+            "genres": [
+                {
+                    "id": "2f8f4ab6-5f11-4c1c-b3a9-17f0ef4d9cb9",
+                    "name": "Electric blues",
+                    "count": 4,
+                },
+                {
+                    "id": "0c9d31a7-66ef-4b80-8b71-18b33dcce554",
+                    "name": "Ignored negative tag",
+                    "count": -1,
+                },
+            ],
             "isnis": ["0000000121032683"],
             "ipis": ["00123456789"],
         },
@@ -90,6 +105,27 @@ def _source(path: Path) -> DownloadSource:
 
 
 class DownloadTests(unittest.IsolatedAsyncioTestCase):
+    async def test_musicbrainz_genres_keep_the_restrictive_supplementary_policy(self) -> None:
+        public_source = load_download_source(
+            ROOT / "config" / "data_sources.toml",
+            "musicbrainz_json_artist_20260829",
+        )
+        research_source = load_download_source(
+            ROOT / "config" / "data_sources.toml",
+            "musicbrainz_json_artist_research_20260829",
+        )
+
+        self.assertEqual(public_source.rights_classification, "restricted_research")
+        self.assertIn("CC-BY-NC-SA-3.0", public_source.data_license)
+        self.assertFalse(public_source.embed)
+        self.assertFalse(public_source.train)
+        self.assertFalse(public_source.export_metadata)
+        self.assertTrue(research_source.local_only)
+        self.assertTrue(research_source.embed)
+        self.assertTrue(research_source.train)
+        self.assertFalse(research_source.export_metadata)
+        self.assertEqual(research_source.checksum, public_source.checksum)
+
     async def test_resumes_and_verifies_into_content_addressed_vault(self) -> None:
         payload = b"verified source bytes"
         digest = hashlib.sha256(payload).hexdigest()
@@ -246,12 +282,27 @@ class SourcePipelineTests(unittest.IsolatedAsyncioTestCase):
                 names = connection.execute(
                     "SELECT name_kind, name, language_tag FROM entity_names ORDER BY name_kind"
                 ).fetchall()
+                evidence = connection.execute(
+                    """SELECT evidence.evidence_value, evidence.method_key,
+                              evidence.parameter_manifest_json, policy.classification,
+                              permission.decision
+                       FROM artist_genre_evidence AS evidence
+                       JOIN rights_policies AS policy ON policy.id = evidence.policy_id
+                       JOIN rights_policy_permissions AS permission
+                         ON permission.policy_id = evidence.policy_id
+                        AND permission.use_kind = 'train'
+                       ORDER BY evidence.id"""
+                ).fetchall()
                 source_objects = connection.execute(
                     "SELECT count(*) FROM source_objects"
                 ).fetchone()
 
             self.assertEqual(artist, ("Person", "fixture artist", 1981))
-            self.assertEqual(len(names), 3)
+            self.assertEqual(len(names), 4)
+            self.assertEqual(len(evidence), 1)
+            self.assertEqual(evidence[0][0:2], (4.0, "musicbrainz_artist_genre"))
+            self.assertIn('"maximum_genres_per_artist":128', evidence[0][2])
+            self.assertEqual(evidence[0][4], "allow")
             self.assertEqual(source_objects, (1,))
 
 

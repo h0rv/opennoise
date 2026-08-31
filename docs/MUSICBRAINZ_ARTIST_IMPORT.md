@@ -36,3 +36,42 @@ The release group archive is 1,187,679,180 bytes. The release archive is
 recording archive is 33,572,648 bytes, but this branch does not claim support
 for its record shape. The next import should add and test those source adapters
 before it downloads either archive.
+
+## Positive genre evidence
+
+Adapter version 3 also projects positive counts from each artist record's
+official MusicBrainz `genres` array. At most 128 unique genre identities are
+accepted per artist. Repeated identities or a larger array quarantine the whole
+record instead of choosing a count or silently truncating it. Zero, missing, and
+negative counts do not become positive evidence.
+
+Genre entities are resolved only through the MusicBrainz genre UUID. The
+projector records the raw positive count in `artist_genre_evidence` with method
+`musicbrainz_artist_genre`; downstream jobs read the policy-filtered
+`normalizable_artist_genre_evidence` view. The JSON artifact mixes core CC0 data
+with supplementary CC-BY-NC-SA-3.0 fields, so the manifest deliberately applies
+the restrictive `restricted_research` policy to the whole projection.
+
+MusicBrainz identifies tags and genre associations as supplementary data. Its
+official license page permits noncommercial use with attribution and requires
+derivative works to use the same CC-BY-NC-SA-3.0 license. The official download
+page confirms that genre associations require derived data and that
+`mbdump-derived.tar.bz2` uses that license. See the
+[MusicBrainz data license](https://musicbrainz.org/doc/About/Data_License) and
+[official dump license table](https://musicbrainz.org/doc/MusicBrainz_Database/Download).
+
+The manifest therefore exposes two explicit modes. The ordinary mixed-artifact
+source permits normalization and local display but denies embedding, training,
+and export. `musicbrainz_json_artist_research_20260829` permits local
+noncommercial embedding and training, is marked `local_only`, and still denies
+all export and redistribution. Any later publication of an output derived from
+this research mode needs a separate review, MusicBrainz attribution, a
+noncommercial use decision, and CC-BY-NC-SA-3.0 ShareAlike output terms. The
+default public/exportable model must use CC0-compatible inputs such as Wikidata
+and ListenBrainz instead.
+
+The measured 185,779-artist run above used adapter version 2 and therefore
+contains identity data only. It must not be reported as having genre evidence.
+The version 3 fixture run accepts one artist, one positive genre claim with raw
+count 4, and ignores one negative association. A real version 3 partition rerun
+remains pending.

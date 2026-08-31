@@ -173,6 +173,38 @@ export_raw = false
 redistribute = false
 
 [[sources]]
+id = "musicbrainz_json_artist_research_20260829"
+priority = 101
+enabled_by_default = false
+adapter = "musicbrainz_artist_json_dump_v1"
+content_kind = "metadata"
+role = "local_noncommercial_artist_genre_research"
+snapshot = "20260829-001001"
+url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/20260829-001001/artist.tar.xz"
+discovery_url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/LATEST"
+checksum_url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/20260829-001001/SHA256SUMS"
+expected_content_type = "application/octet-stream"
+compression = "tar.xz"
+payload_format = "MusicBrainz JSON records"
+expected_bytes = 1695597804
+checksum_algorithm = "sha256"
+checksum = "396fb476984234dd68650c59219d5e0bd0d900abccd6f4e3fe1a6160918ffe1d"
+update_cadence = "twice weekly"
+data_license = "mixed_by_field: core CC0; tags and genre associations CC-BY-NC-SA-3.0"
+license_url = "https://musicbrainz.org/doc/About/Data_License"
+rights_classification = "restricted_research"
+local_only = true
+retrieval_note = "Local noncommercial research mode. Attribution and ShareAlike apply to derived outputs; export remains denied pending a separate output-license review."
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = false
+export_raw = false
+redistribute = false
+
+[[sources]]
 id = "musicbrainz_postgres_core_20260829"
 priority = 110
 enabled_by_default = false
