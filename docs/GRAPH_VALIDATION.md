@@ -66,7 +66,9 @@ The job runs weighted label propagation with fixed seeds. Communities are layout
 names. The report records convergence, modularity, assignments, and agreement between validation
 seeds. The public community lens uses one declared seed, removes links between communities for
 placement, and reports quality against the full one-hop graph. Hierarchy links stay out of
-community discovery.
+community discovery. Weighted modularity uses the standard undirected community sum. For each
+community, it subtracts the squared share of total degree from the share of internal edge weight.
+This includes the expected contribution from same-community nonedges and node diagonals.
 
 ## Layout choice
 

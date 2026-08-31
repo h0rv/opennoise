@@ -16,6 +16,7 @@ from scipy.sparse.csgraph import connected_components, laplacian
 from scipy.sparse.linalg import eigsh
 from scipy.spatial import KDTree
 
+from musix.ml.graph_metrics import weighted_undirected_modularity
 from musix.models.modeling import (
     CommunityLayoutResult,
     GenreCoordinate,
@@ -301,22 +302,6 @@ def _community_assignments(
     return {genre: canonical[label] for genre, label in labels.items()}, iterations, converged
 
 
-def _modularity(weights: Mapping[tuple[str, str], float], labels: Mapping[str, str]) -> float:
-    total_weight = sum(weights.values())
-    if total_weight <= 0.0:
-        return 0.0
-    degrees: dict[str, float] = defaultdict(float)
-    for (left, right), weight in weights.items():
-        degrees[left] += weight
-        degrees[right] += weight
-    value = sum(
-        weight - degrees[left] * degrees[right] / (2.0 * total_weight)
-        for (left, right), weight in weights.items()
-        if labels[left] == labels[right]
-    )
-    return value / total_weight
-
-
 def _community_edges(
     weights: Mapping[tuple[str, str], float], labels: Mapping[str, str]
 ) -> EdgeWeights:
@@ -441,7 +426,7 @@ def build_layout_lenses(
         community_count=len(set(labels.values())),
         iterations=iterations,
         converged=converged,
-        modularity=round(_modularity(learned_edges, labels), 12),
+        modularity=round(weighted_undirected_modularity(learned_edges, labels), 12),
     )
     taxonomy_edges = _hierarchy_edges(hierarchy)
     taxonomy_genres = tuple(sorted({genre for pair in taxonomy_edges for genre in pair}))

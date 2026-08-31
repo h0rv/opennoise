@@ -11,6 +11,7 @@ from itertools import combinations
 import numpy as np
 from pydantic import BaseModel
 
+from musix.ml.graph_metrics import weighted_undirected_modularity
 from musix.ml.public_graph import build_public_model
 from musix.models.modeling import (
     ArtistPairEvidence,
@@ -124,17 +125,13 @@ def _tie_key(seed: int, label: str) -> tuple[str, str]:
     return digest, label
 
 
-def _modularity(graph: dict[str, dict[str, float]], labels: dict[str, str]) -> float:
-    total_weight = sum(sum(neighbors.values()) for neighbors in graph.values()) / 2.0
-    if total_weight <= 0.0:
-        return 0.0
-    degrees = {genre: sum(neighbors.values()) for genre, neighbors in graph.items()}
-    value = 0.0
-    for left, neighbors in graph.items():
-        for right, weight in neighbors.items():
-            if labels[left] == labels[right]:
-                value += weight - degrees[left] * degrees[right] / (2.0 * total_weight)
-    return value / (2.0 * total_weight)
+def _edge_weights(graph: dict[str, dict[str, float]]) -> dict[tuple[str, str], float]:
+    return {
+        (left, right): weight
+        for left, neighbors in graph.items()
+        for right, weight in neighbors.items()
+        if left < right
+    }
 
 
 def _community_experiment(
@@ -183,7 +180,9 @@ def _community_experiment(
         iterations=iterations,
         converged=converged,
         community_count=len(set(canonical_labels.values())),
-        modularity=round(_modularity(graph, canonical_labels), 12),
+        modularity=round(
+            weighted_undirected_modularity(_edge_weights(graph), canonical_labels), 12
+        ),
         assignments=assignments,
     )
 
