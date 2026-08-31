@@ -11,8 +11,12 @@ from musix.exploration import (
     GenreExternalLink,
     HistoricalGenreRepresentative,
 )
+from musix.metadata_links import metadata_url
+from musix.models.modeling import MetadataKind
 
+ARTIST_LIMIT = 6
 ALBUM_LIMIT = 6
+TRACK_LIMIT = 6
 NEIGHBOR_LIMIT = 8
 
 
@@ -27,7 +31,7 @@ class GenreEntryRepository:
     async def enrich(self, detail: GenreDetail) -> GenreDetail:
         """Attach display-safe discovery fields without blocking the event loop."""
         async with self._calls:
-            representative, albums, neighbors = await asyncio.to_thread(
+            representative, artists, albums, tracks, neighbors = await asyncio.to_thread(
                 self._read,
                 detail.entity_id,
             )
@@ -38,9 +42,9 @@ class GenreEntryRepository:
             description=detail.description,
             evidence=detail.evidence,
             historical_representative=representative,
-            representative_artists=detail.representative_artists,
+            representative_artists=artists,
             defining_albums=albums,
-            defining_tracks=detail.defining_tracks,
+            defining_tracks=tracks,
             playable_links=detail.playable_links,
             neighbors=neighbors,
         )
@@ -50,6 +54,8 @@ class GenreEntryRepository:
         genre_id: int,
     ) -> tuple[
         HistoricalGenreRepresentative | None,
+        tuple[GenreDiscoveryItem, ...],
+        tuple[GenreDiscoveryItem, ...],
         tuple[GenreDiscoveryItem, ...],
         tuple[GenreDiscoveryItem, ...],
     ]:
@@ -66,6 +72,13 @@ class GenreEntryRepository:
                    LIMIT 1""",
                 (genre_id,),
             ).fetchone()
+            public_rows = connection.execute(
+                """SELECT entity_kind, source_entity_ref, display_name
+                   FROM displayable_public_genre_representatives
+                   WHERE genre_id = ? AND rank <= ?
+                   ORDER BY entity_kind, rank, source_entity_ref""",
+                (genre_id, max(ARTIST_LIMIT, ALBUM_LIMIT, TRACK_LIMIT)),
+            ).fetchall()
             album_rows = connection.execute(
                 """WITH album_names AS (
                        SELECT membership.release_group_id,
@@ -107,9 +120,13 @@ class GenreEntryRepository:
                 (genre_id, NEIGHBOR_LIMIT),
             ).fetchall()
         representative = _representative(representative_row)
-        albums = tuple(
-            GenreDiscoveryItem(entity_id=int(row[0]), name=str(row[1])) for row in album_rows
-        )
+        artists = _public_items(public_rows, "artist", ARTIST_LIMIT)
+        albums = _public_items(public_rows, "release_group", ALBUM_LIMIT)
+        if not albums:
+            albums = tuple(
+                GenreDiscoveryItem(entity_id=int(row[0]), name=str(row[1])) for row in album_rows
+            )
+        tracks = _public_items(public_rows, "recording", TRACK_LIMIT)
         neighbors = tuple(
             GenreDiscoveryItem(
                 entity_id=int(row[0]),
@@ -118,7 +135,27 @@ class GenreEntryRepository:
             )
             for row in neighbor_rows
         )
-        return representative, albums, neighbors
+        return representative, artists, albums, tracks, neighbors
+
+
+def _public_items(
+    rows: list[sqlite3.Row],
+    entity_kind: MetadataKind,
+    limit: int,
+) -> tuple[GenreDiscoveryItem, ...]:
+    """Build bounded outbound items only from kind-matched public identifiers."""
+    result: list[GenreDiscoveryItem] = []
+    for row in rows:
+        if str(row[0]) != entity_kind:
+            continue
+        source_ref = str(row[1])
+        href = metadata_url(entity_kind, source_ref)
+        if href is None:
+            continue
+        result.append(GenreDiscoveryItem(name=str(row[2]), href=href))
+        if len(result) == limit:
+            break
+    return tuple(result)
 
 
 def _representative(row: sqlite3.Row | None) -> HistoricalGenreRepresentative | None:
