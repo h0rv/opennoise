@@ -6,11 +6,11 @@
 {% if map.points %}
   {% for point in map.points %}
   <a class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
-     href="{% if point.entity_kind == 'genre' %}/genres/{{ point.entity_id }}?layout={{ layout_key }}{% else %}/fragments/map?focus={{ point.entity_id }}&amp;layout={{ layout_key }}{% endif %}"
+     href="{% if point.entity_kind == 'genre' %}/genres/{{ point.entity_id }}?layout={{ layout_key }}{% else %}/fragments/map?focus={{ point.entity_id }}&amp;layout={{ layout_key }}{% endif %}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
      aria-label="{{ point.name }}"
      {% if point.entity_kind == 'genre' %}aria-current="{% if point.entity_id == map.focused_entity_id %}true{% else %}false{% endif %}"
-     hx-get="/fragments/workspace?focus={{ point.entity_id }}&amp;layout={{ layout_key }}" hx-target="#workspace"
-     hx-swap="outerHTML" hx-push-url="/genres/{{ point.entity_id }}?layout={{ layout_key }}"
+     hx-get="/fragments/workspace?focus={{ point.entity_id }}&amp;layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-target="#workspace"
+     hx-swap="outerHTML" hx-push-url="/genres/{{ point.entity_id }}?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
      hx-sync="#search:abort"{% endif %}>
     <circle cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"
             fill="{{ point.color_hex or '#77776f' }}"></circle>

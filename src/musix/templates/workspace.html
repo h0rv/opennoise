@@ -2,11 +2,11 @@
 {% if layouts|length > 1 %}
 <nav id="layout-lenses" aria-label="Map layout">
 {% for lens in layouts %}
-<a href="/?layout={{ lens.layout_key }}"
+<a href="{% if genre %}/genres/{{ genre.entity_id }}{% else %}/{% endif %}?layout={{ lens.layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
    data-coordinate-kind="{{ lens.coordinate_space.coordinate_kind }}"
    {% if lens.layout_key == layout_key %}aria-current="page"{% endif %}
-   hx-get="/fragments/workspace?layout={{ lens.layout_key }}" hx-target="#workspace"
-   hx-swap="outerHTML" hx-push-url="/?layout={{ lens.layout_key }}"
+   hx-get="/fragments/workspace?layout={{ lens.layout_key }}{% if genre %}&amp;focus={{ genre.entity_id }}{% endif %}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-target="#workspace"
+   hx-swap="outerHTML" hx-push-url="{% if genre %}/genres/{{ genre.entity_id }}{% else %}/{% endif %}?layout={{ lens.layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
    hx-sync="#search:abort">{{ lens.layout_key | replace('_', ' ') | replace('-', ' ') }}<small>{% if lens.coordinate_space.coordinate_kind == 'historic_source' %}source{% else %}generated{% endif %}</small></a>
 {% endfor %}
 </nav>
@@ -15,5 +15,13 @@
 {% if genre %}
 {% include "genre_detail.html" %}
 {% endif %}
+<form id="search" role="search" action="/fragments/search" method="get">
+<label class="sr-only" for="query">Artist or genre</label>
+<input name="layout" type="hidden" value="{{ layout_key }}">
+<input id="query" name="q" type="search" placeholder="Artist or genre" autocomplete="off"
+       value="{{ search_query }}" hx-get="/fragments/search"
+       hx-trigger="input changed delay:160ms" hx-target="#results"
+       hx-swap="innerHTML" hx-sync="this:replace">
+</form>
+<aside id="results" aria-label="Search results">{% include "search_results.html" %}</aside>
 </section>
-{% if clear_results %}<aside id="results" hx-swap-oob="innerHTML"></aside>{% endif %}

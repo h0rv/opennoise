@@ -263,7 +263,8 @@ class PopulatedAppTests(unittest.TestCase):
 
         self.assertEqual(selected.status_code, 200)
         self.assertEqual(selected.text.count('id="workspace"'), 1)
-        self.assertEqual(selected.text.count('hx-swap-oob="innerHTML"'), 1)
+        self.assertEqual(selected.text.count('id="search"'), 1)
+        self.assertEqual(selected.text.count('id="results"'), 1)
         self.assertIn('class="point genre selected"', selected.text)
         self.assertIn('id="selection-clear"', selected.text)
         self.assertIn('id="genre-detail"', selected.text)
@@ -277,7 +278,8 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertNotIn(" selected", reset.text)
         self.assertNotIn('id="genre-detail"', reset.text)
         self.assertNotIn('id="selection-clear"', reset.text)
-        self.assertEqual(reset.text.count('hx-swap-oob="innerHTML"'), 1)
+        self.assertEqual(reset.text.count('id="search"'), 1)
+        self.assertEqual(reset.text.count('id="results"'), 1)
 
     def test_search_results_are_navigable_and_share_selection_history(self) -> None:
         response = self.client.get("/fragments/search", params={"q": "idm"})

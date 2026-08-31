@@ -37,9 +37,12 @@ class CoreController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         layout: FromQuery[str] = "default",
+        q: FromQuery[str] = "",
     ) -> Template:
         """Render the current full map."""
-        context = await workspace_context(database, genre_entries, layout=layout, focus=None)
+        context = await workspace_context(
+            database, genre_entries, layout=layout, focus=None, search_query=q
+        )
         return Template(template_name="index.html", context=context)
 
     @get("/genres/{genre_id:int}")
@@ -49,9 +52,12 @@ class CoreController(Controller):
         genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
         layout: FromQuery[str] = "default",
+        q: FromQuery[str] = "",
     ) -> Template:
         """Render a shareable genre selection with the complete app shell."""
-        context = await workspace_context(database, genre_entries, layout=layout, focus=genre_id)
+        context = await workspace_context(
+            database, genre_entries, layout=layout, focus=genre_id, search_query=q
+        )
         return Template(template_name="index.html", context=context)
 
     @get("/api/health", media_type=MediaType.TEXT)
@@ -201,10 +207,12 @@ class MapController(Controller):
         genre_entries: NamedDependency[GenreEntryRepository],
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
+        q: FromQuery[str] = "",
     ) -> Template:
         """Render one coherent map selection and detail fragment."""
-        context = await workspace_context(database, genre_entries, layout=layout, focus=focus)
-        context["clear_results"] = True
+        context = await workspace_context(
+            database, genre_entries, layout=layout, focus=focus, search_query=q
+        )
         return Template(
             template_name="workspace.html",
             context=context,
@@ -240,7 +248,11 @@ class SearchController(Controller):
         hits = await database.search(q[:500])
         return Template(
             template_name="search_results.html",
-            context={"hits": hits, "layout_key": parsed_layout_key(layout)},
+            context={
+                "hits": hits,
+                "layout_key": parsed_layout_key(layout),
+                "search_query": q[:500],
+            },
         )
 
 
@@ -333,6 +345,7 @@ async def workspace_context(
     *,
     layout: str,
     focus: int | None,
+    search_query: str,
 ) -> dict[str, object]:
     """Build one consistent workspace from a published layout and optional genre."""
     layout_key = parsed_layout_key(layout)
@@ -346,10 +359,13 @@ async def workspace_context(
         if genre is None:
             raise NotFoundException(detail="genre not found")
         genre = await genre_entries.enrich(genre)
+    bounded_search_query = search_query[:500]
     return {
         "active_layout": active_layout,
         "genre": genre,
         "layout_key": layout_key,
         "layouts": layouts,
         "map": map_view(await database.map_points(layout_key), focus),
+        "hits": await database.search(bounded_search_query) if bounded_search_query else (),
+        "search_query": bounded_search_query,
     }

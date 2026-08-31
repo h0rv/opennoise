@@ -1,8 +1,8 @@
 <aside id="genre-detail" aria-labelledby="genre-detail-name">
 <header><h2 id="genre-detail-name">{{ genre.name }}</h2>
-<a id="selection-clear" href="/?layout={{ layout_key }}" aria-label="Close {{ genre.name }}"
-   hx-get="/fragments/workspace?layout={{ layout_key }}" hx-target="#workspace"
-   hx-swap="outerHTML" hx-push-url="/?layout={{ layout_key }}"
+<a id="selection-clear" href="/?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" aria-label="Close {{ genre.name }}"
+   hx-get="/fragments/workspace?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-target="#workspace"
+   hx-swap="outerHTML" hx-push-url="/?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
    hx-sync="#search:abort">×</a></header>
 {% if genre.historical_representative %}
 <section aria-label="Artists"><h3>Artists</h3><span>{{ genre.historical_representative.artist_name }}</span></section>
@@ -11,5 +11,5 @@
 {% if genre.representative_artists %}<section aria-label="Artists"><h3>Artists</h3>{% for item in genre.representative_artists %}{% if item.href %}<a href="{{ item.href }}" target="_blank" rel="noreferrer">{{ item.name }}</a>{% else %}<span>{{ item.name }}</span>{% endif %}{% endfor %}</section>{% endif %}
 {% if genre.defining_albums %}<section aria-label="Albums"><h3>Albums</h3>{% for item in genre.defining_albums %}{% if item.href %}<a href="{{ item.href }}" target="_blank" rel="noreferrer">{{ item.name }}</a>{% else %}<span>{{ item.name }}</span>{% endif %}{% endfor %}</section>{% endif %}
 {% if genre.defining_tracks %}<section aria-label="Tracks"><h3>Tracks</h3>{% for item in genre.defining_tracks %}{% if item.href %}<a href="{{ item.href }}" target="_blank" rel="noreferrer">{{ item.name }}</a>{% else %}<span>{{ item.name }}</span>{% endif %}{% endfor %}</section>{% endif %}
-{% if genre.neighbors %}<section aria-label="Nearby"><h3>Nearby</h3>{% for item in genre.neighbors %}<a href="/genres/{{ item.entity_id }}?layout={{ layout_key }}" hx-get="/fragments/workspace?focus={{ item.entity_id }}&amp;layout={{ layout_key }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="/genres/{{ item.entity_id }}?layout={{ layout_key }}" hx-sync="#search:abort">{{ item.name }}</a>{% endfor %}</section>{% endif %}
+{% if genre.neighbors %}<section aria-label="Nearby"><h3>Nearby</h3>{% for item in genre.neighbors %}<a href="/genres/{{ item.entity_id }}?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-get="/fragments/workspace?focus={{ item.entity_id }}&amp;layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="/genres/{{ item.entity_id }}?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-sync="#search:abort">{{ item.name }}</a>{% endfor %}</section>{% endif %}
 </aside>
