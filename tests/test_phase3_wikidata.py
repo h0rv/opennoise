@@ -1,9 +1,14 @@
+import inspect
 import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.prepare_phase3_media_details import MediaIdentity, render_detail_query
+from scripts.prepare_phase3_media_details import (
+    MediaIdentity,
+    load_discovery,
+    render_detail_query,
+)
 from scripts.prepare_phase3_wikidata import (
     prepare,
     render_artist_query,
@@ -116,3 +121,8 @@ class Phase3WikidataTests(unittest.TestCase):
         self.assertIn("wikibase:DeprecatedRank", details)
         self.assertIn("LIMIT 20000", details)
         self.assertNotIn("CONTAINS", details)
+
+    def test_discovery_identity_query_deduplicates_provenance_rows(self) -> None:
+        source = inspect.getsource(load_discovery)
+
+        self.assertIn("SELECT DISTINCT entity.entity_kind", source)

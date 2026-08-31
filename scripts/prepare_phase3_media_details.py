@@ -41,7 +41,7 @@ def load_discovery(database: Path) -> MediaDetailSelection:
     """Load only identities projected by the bounded Phase 3 discovery sources."""
     with sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True) as connection:
         rows = connection.execute(
-            """SELECT entity.entity_kind,
+            """SELECT DISTINCT entity.entity_kind,
                       qid.normalized_value, mbid.normalized_value
                FROM catalog_entities AS entity
                JOIN entity_identifiers AS qid ON qid.entity_id = entity.id
