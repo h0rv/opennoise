@@ -27,6 +27,7 @@ from musix.models.pipeline import (
     SourceRecord,
 )
 from musix.models.sources import DownloadSource
+from musix.policy import require_metadata_file
 from musix.types import EntityKind, StatementRank
 
 WIKIDATA_ENTITY_PREFIX = "http://www.wikidata.org/entity/"
@@ -336,6 +337,7 @@ class WikidataSourceAdapter:
         start_after: int,
     ) -> Iterator[SourceRecord]:
         """Yield bounded projections after a committed ordinal checkpoint."""
+        require_metadata_file(path)
         if path.stat().st_size > limits.max_archive_bytes:
             raise WikidataSliceError("artifact exceeds max_artifact_bytes")
         adapter_limits = WikidataSliceLimits(

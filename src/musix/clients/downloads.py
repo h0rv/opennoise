@@ -8,6 +8,7 @@ from pathlib import Path
 import httpx
 
 from musix.models.sources import DownloadResult, DownloadSource
+from musix.policy import require_metadata_file, require_metadata_media_type, require_metadata_prefix
 
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024
 
@@ -39,6 +40,7 @@ async def _stream_to_partial(
             raise SourceManifestError("upstream did not honor the requested byte range")
         response.raise_for_status()
         media_type = response.headers.get("content-type", "").partition(";")[0].strip()
+        require_metadata_media_type(media_type)
         if media_type != source.expected_content_type:
             expected = source.expected_content_type
             raise SourceManifestError(
@@ -51,6 +53,8 @@ async def _stream_to_partial(
         mode = "ab" if resumed_from else "xb"
         with partial.open(mode) as stream:
             async for chunk in response.aiter_bytes(DOWNLOAD_CHUNK_BYTES):
+                if stream.tell() == 0:
+                    require_metadata_prefix(chunk[:16])
                 stream.write(chunk)
                 if stream.tell() > source.expected_bytes:
                     raise SourceManifestError("download exceeds declared expected_bytes")
@@ -76,6 +80,7 @@ async def download_verified(
     partial = partial_directory / f"{source.id}.{expected_sha256}.part"
 
     if destination.exists():
+        require_metadata_file(destination)
         size = destination.stat().st_size
         digest = _sha256_file(destination)
         if size != source.expected_bytes or digest != expected_sha256:
@@ -89,6 +94,8 @@ async def download_verified(
         )
 
     resumed_from = partial.stat().st_size if partial.exists() else 0
+    if resumed_from:
+        require_metadata_file(partial)
     if resumed_from > source.expected_bytes:
         raise SourceManifestError("partial artifact is larger than the declared source")
     owns_client = client is None

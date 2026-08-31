@@ -9,6 +9,7 @@ import httpx
 from pydantic import Field, HttpUrl
 
 from musix.models import FrozenModel
+from musix.policy import require_metadata_media_type, require_metadata_prefix
 from musix.types import Sha256
 
 TRANSIENT_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
@@ -70,10 +71,14 @@ async def _fetch_once(
                     response=response,
                 )
             response.raise_for_status()
-            if "json" not in response.headers.get("content-type", "").casefold():
+            media_type = response.headers.get("content-type", "").partition(";")[0].strip()
+            require_metadata_media_type(media_type)
+            if "json" not in media_type.casefold():
                 raise WikidataClientError("Wikidata response is not JSON")
             with temporary.open("xb") as stream:
                 async for chunk in response.aiter_bytes():
+                    if byte_size == 0:
+                        require_metadata_prefix(chunk[:16])
                     byte_size += len(chunk)
                     if byte_size > request.max_response_bytes:
                         raise WikidataClientError("Wikidata response exceeds configured bound")

@@ -1,9 +1,11 @@
 """Strict source manifest and verified artifact models."""
 
 from pathlib import Path
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
+from musix.policy import require_metadata_media_type, require_metadata_url
 from musix.types import Sha256, SourceId
 
 
@@ -18,6 +20,7 @@ class DownloadSource(BaseModel):
 
     id: SourceId
     adapter: str = Field(min_length=1)
+    content_kind: Literal["metadata"] = "metadata"
     snapshot: str = Field(min_length=1)
     url: HttpUrl
     discovery_url: HttpUrl
@@ -36,6 +39,13 @@ class DownloadSource(BaseModel):
     embed: bool
     train: bool
     export_metadata: bool
+
+    @model_validator(mode="after")
+    def metadata_only(self) -> "DownloadSource":
+        """Reject any manifest that asks Musix to acquire media or stream bytes."""
+        require_metadata_url(str(self.url))
+        require_metadata_media_type(self.expected_content_type)
+        return self
 
     def verified_sha256(self) -> Sha256:
         """Return the checksum only for the supported digest algorithm."""

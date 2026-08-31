@@ -23,6 +23,7 @@ from musix.models.pipeline import (
     SourceRecord,
 )
 from musix.models.sources import DownloadSource
+from musix.policy import require_metadata_file, require_metadata_path
 from musix.sources.registry import SourceAdapterError
 
 JSON_DUMP_SCHEMA = "1"
@@ -418,6 +419,7 @@ def _open_regular_member(
     if not member.isfile():
         return None
     member_path = _safe_member_name(member.name)
+    require_metadata_path(member_path)
     if member.size > limits.max_member_bytes:
         raise MusicBrainzAdapterError("MusicBrainz archive member exceeds max_member_bytes")
     stream = archive.extractfile(member)
@@ -485,6 +487,7 @@ def _iter_raw_records(stream: BinaryLineReader, limits: SourceLimits) -> Iterato
 
 
 def _iter_raw_artist_archive(path: Path, limits: SourceLimits) -> Iterator[_RawRecord]:
+    require_metadata_file(path)
     archive_size = path.stat().st_size
     if archive_size > limits.max_archive_bytes:
         raise MusicBrainzAdapterError("MusicBrainz archive exceeds max_archive_bytes")
@@ -554,6 +557,7 @@ def iter_release_jsonl(
 
 def iter_artist_archive(path: Path, limits: AdapterLimits) -> Iterator[AdaptedArtist]:
     """Stream `mbdump/artist` from an official `artist.tar.xz` archive."""
+    require_metadata_file(path)
     archive_size = path.stat().st_size
     if archive_size > limits.max_archive_bytes:
         raise MusicBrainzAdapterError("MusicBrainz archive exceeds max_archive_bytes")
@@ -594,6 +598,7 @@ def _iter_json_archive[T](
     parser: Callable[[BinaryLineReader, AdapterLimits], Iterator[T]],
 ) -> Iterator[T]:
     """Stream one named member from an official MusicBrainz JSON archive."""
+    require_metadata_file(path)
     if path.stat().st_size > limits.max_archive_bytes:
         raise MusicBrainzAdapterError("MusicBrainz archive exceeds max_archive_bytes")
     expected_member = PurePosixPath("mbdump") / member_name

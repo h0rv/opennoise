@@ -24,6 +24,7 @@ from musix.models.pipeline import (
     SourceRecord,
 )
 from musix.models.sources import DownloadSource
+from musix.policy import require_metadata_file, require_metadata_path
 from musix.sources.registry import SourceAdapterError
 
 
@@ -184,6 +185,7 @@ class ListenBrainzIncrementalAdapter:
         listen_members = 0
         for member in archive:
             member_path = _safe_member_path(member.name)
+            require_metadata_path(member_path)
             if not member.isfile() or member_path.suffix != ".listens":
                 continue
             listen_members += 1
@@ -213,6 +215,7 @@ class ListenBrainzIncrementalAdapter:
         *,
         started: float,
     ) -> Iterator[bytes]:
+        require_metadata_file(path)
         archive_bytes = path.stat().st_size
         if archive_bytes > limits.max_archive_bytes:
             raise ListenBrainzSourceError("archive exceeds max_archive_bytes")

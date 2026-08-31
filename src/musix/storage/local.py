@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import BinaryIO
 
+from musix.policy import require_metadata_file
 from musix.storage.base import ObjectKey, ObjectRead, ObjectWrite
 
 COPY_CHUNK_BYTES = 1024 * 1024
@@ -82,6 +83,7 @@ class LocalObjectStore:
     def _push_sync(self, source: Path, key: ObjectKey) -> ObjectWrite:
         if not source.is_file():
             raise ObjectStoreError("push source must be a regular file")
+        require_metadata_file(source)
         destination = self._object_path(key)
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = _temporary_path(destination.parent, destination.name)
@@ -117,6 +119,7 @@ class LocalObjectStore:
         source = self._object_path(key)
         if not source.is_file():
             raise FileNotFoundError(f"object key {key.value!r} does not exist")
+        require_metadata_file(source)
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = _temporary_path(destination.parent, destination.name)
         try:
