@@ -459,18 +459,18 @@ def _iter_raw_records(stream: BinaryLineReader, limits: SourceLimits) -> Iterato
     while first := stream.readline(limits.max_record_bytes + 2):
         digest = hashlib.sha256()
         captured = bytearray(first[: limits.max_record_bytes])
-        byte_length = 0
-        chunk = first
-        while True:
-            has_newline = chunk.endswith(b"\n")
-            record_chunk = chunk[:-1] if has_newline else chunk
-            digest.update(record_chunk)
-            byte_length += len(record_chunk)
-            if has_newline or len(chunk) <= limits.max_record_bytes + 1:
-                break
-            chunk = stream.readline(64 * 1024)
-            if not chunk:
-                break
+        first_has_newline = first.endswith(b"\n")
+        first_record = first[:-1] if first_has_newline else first
+        digest.update(first_record)
+        byte_length = len(first_record)
+        if not first_has_newline:
+            while continuation := stream.readline(64 * 1024):
+                has_newline = continuation.endswith(b"\n")
+                record_chunk = continuation[:-1] if has_newline else continuation
+                digest.update(record_chunk)
+                byte_length += len(record_chunk)
+                if has_newline:
+                    break
         if not byte_length:
             continue
         count += 1
@@ -822,7 +822,7 @@ class MusicBrainzArtistDumpAdapter:
     @property
     def version(self) -> str:
         """Return the immutable projection version."""
-        return "1"
+        return "2"
 
     def supports(self, source: DownloadSource) -> bool:
         """Require the official archive format understood by this adapter."""

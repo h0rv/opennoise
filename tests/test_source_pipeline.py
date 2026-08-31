@@ -12,6 +12,7 @@ from pydantic import HttpUrl
 from musix.catalog.artists import ArtistProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.clients.downloads import download_verified
+from musix.models.pipeline import SourceLimits
 from musix.models.sources import DownloadSource
 from musix.pipeline.runner import (
     DeterministicPartition,
@@ -45,8 +46,16 @@ def _artist_line() -> bytes:
     ).encode()
 
 
-def _archive(path: Path, *, malformed: bool = False, schema: str = "1") -> None:
+def _archive(
+    path: Path,
+    *,
+    malformed: bool = False,
+    oversized: bool = False,
+    schema: str = "1",
+) -> None:
     records = _artist_line() + b"\n"
+    if oversized:
+        records = b'{"oversized":"' + (b"x" * 2048) + b'"}\n' + records
     if malformed:
         records += b'{"id":false}\n'
     with tarfile.open(path, "w:xz") as archive:
@@ -134,6 +143,37 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SourcePipelineTests(unittest.IsolatedAsyncioTestCase):
+    async def test_oversized_record_does_not_desynchronize_following_record(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "artist.tar.xz"
+            _archive(archive, oversized=True)
+            source = _source(archive)
+            vault = root / "vault"
+            object_path = vault / "raw" / "sha256" / source.checksum
+            object_path.parent.mkdir(parents=True)
+            object_path.write_bytes(archive.read_bytes())
+            options = PipelineOptions(
+                manifest_path=root / "manifest.toml",
+                source_id=source.id,
+                database_path=root / "catalog.sqlite",
+                vault_path=vault,
+                partition=DeterministicPartition(sha256_prefix=""),
+                limits=SourceLimits(max_record_bytes=1024),
+            )
+
+            summary = await run_source_pipeline(
+                source,
+                AdapterRegistry((MusicBrainzArtistDumpAdapter(),)),
+                ProjectorRegistry((ArtistProjector(),)),
+                options,
+            )
+
+            self.assertEqual(
+                (summary.raw, summary.accepted, summary.quarantined),
+                (2, 1, 1),
+            )
+
     async def test_rolls_back_uncheckpointed_records_and_records_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
