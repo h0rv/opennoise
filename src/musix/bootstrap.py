@@ -9,10 +9,12 @@ from pydantic import BaseModel, ConfigDict
 
 from musix.adapters.everynoise import (
     AdaptationResult,
+    adapt_quint_historical_representatives,
     adapt_quint_html,
     store_verified_bytes,
 )
 from musix.db import Database
+from musix.genre_discovery import DiscoveryImportSummary, import_historical_representatives
 from musix.ingest import ImportOptions, ImportSummary, import_jsonl
 
 LAYOUT_KEY = "default"
@@ -26,6 +28,7 @@ class BootstrapSummary(BaseModel):
 
     import_summary: ImportSummary
     map_points: int
+    discovery: DiscoveryImportSummary
     source_sha256: str
 
 
@@ -146,8 +149,15 @@ async def bootstrap_everynoise(
             )
         )
     map_points = await asyncio.to_thread(_publish_layout, database_path, adaptation)
+    historical = await asyncio.to_thread(adapt_quint_historical_representatives, raw)
+    discovery = await asyncio.to_thread(
+        import_historical_representatives,
+        database_path,
+        historical,
+    )
     return BootstrapSummary(
         import_summary=import_summary,
         map_points=map_points,
+        discovery=discovery,
         source_sha256=adaptation.source.sha256,
     )

@@ -15,11 +15,14 @@ from collections.abc import Iterable
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Annotated, Literal, override
+from urllib.parse import urlparse
 
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 ITEM_ID_PATTERN = re.compile(r"^item[1-9][0-9]*$")
 COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
+SPOTIFY_RECORDING_PATTERN = re.compile(r'playx\("([A-Za-z0-9]{22})",')
+EXAMPLE_TITLE_PATTERN = re.compile(r'^e\.g\.\s+(.+)\s+"([^"]+)"$')
 StyleName = Literal["x", "y", "color", "font_size"]
 STYLE_PATTERNS: dict[StyleName, re.Pattern[str]] = {
     "x": re.compile(r"(?:^|;)\s*left\s*:\s*([0-9]+)px\s*(?:;|$)", re.IGNORECASE),
@@ -138,6 +141,26 @@ class AdaptedGenre(BaseModel):
     layout: LayoutPointRecord
 
 
+class HistoricalRepresentativeRecord(BaseModel):
+    """A dated source observation retained outside canonical catalog facts."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    genre_external_id: NonEmptyText
+    source_item_id: NonEmptyText
+    source_revision_date: Literal["2023-11-19"] = "2023-11-19"
+    artist_name: NonEmptyText
+    track_title: NonEmptyText
+    recording_provider: Literal["spotify"] = "spotify"
+    recording_source_id: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9]{22}$")]
+    safe_external_url: AnyHttpUrl
+    source_genre_page_url: AnyHttpUrl | None = None
+    legacy_preview_present: bool
+    legacy_preview_url_sha256: Sha256 | None = None
+    source_id: NonEmptyText
+    source_sha256: Sha256
+
+
 class QuarantineRecord(BaseModel):
     """Safe diagnostics for a source row that was not accepted."""
 
@@ -147,6 +170,16 @@ class QuarantineRecord(BaseModel):
     record_number: Annotated[int, Field(gt=0)]
     source_record_id: str | None = None
     reason: NonEmptyText
+
+
+class HistoricalAdaptationResult(BaseModel):
+    """Accepted historical observations plus safe diagnostics."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source: SourceSpec
+    records: tuple[HistoricalRepresentativeRecord, ...]
+    quarantine: tuple[QuarantineRecord, ...]
 
 
 class AdaptationResult(BaseModel):
@@ -187,6 +220,7 @@ class _HtmlCandidate(BaseModel):
     record_number: int
     attributes: dict[str, str]
     direct_text: str
+    nested_links: tuple[str, ...] = ()
 
 
 class _GenreMapParser(HTMLParser):
@@ -197,6 +231,7 @@ class _GenreMapParser(HTMLParser):
         self.candidates: list[_HtmlCandidate] = []
         self._attributes: dict[str, str] | None = None
         self._text_parts: list[str] = []
+        self._nested_links: list[str] = []
         self._nested_depth = 0
         self._record_number = 0
 
@@ -204,6 +239,10 @@ class _GenreMapParser(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         """Begin a genre candidate or track nesting within one."""
         if self._attributes is not None:
+            if tag == "a":
+                nested = {name: value for name, value in attrs if value is not None}
+                if href := nested.get("href"):
+                    self._nested_links.append(href)
             self._nested_depth += 1
             return
         attributes = {name: value for name, value in attrs if value is not None}
@@ -212,6 +251,7 @@ class _GenreMapParser(HTMLParser):
             self._record_number += 1
             self._attributes = attributes
             self._text_parts = []
+            self._nested_links = []
             self._nested_depth = 0
 
     @override
@@ -234,10 +274,105 @@ class _GenreMapParser(HTMLParser):
                     record_number=self._record_number,
                     attributes=self._attributes,
                     direct_text="".join(self._text_parts).strip(),
+                    nested_links=tuple(self._nested_links),
                 )
             )
             self._attributes = None
             self._text_parts = []
+            self._nested_links = []
+
+
+def _safe_https_url(value: str, *, allowed_hosts: frozenset[str]) -> str | None:
+    parsed = urlparse(value)
+    if parsed.scheme != "https" or parsed.hostname not in allowed_hosts:
+        return None
+    try:
+        port = parsed.port
+    except ValueError:
+        return None
+    if port not in {None, 443}:
+        return None
+    if parsed.username is not None or parsed.password is not None:
+        return None
+    return value
+
+
+def _historical_record(
+    candidate: _HtmlCandidate,
+    source: SourceSpec,
+) -> HistoricalRepresentativeRecord:
+    item_id = candidate.attributes.get("id", "")
+    if ITEM_ID_PATTERN.fullmatch(item_id) is None:
+        raise ValueError("id must match item followed by a positive integer")
+    title_match = EXAMPLE_TITLE_PATTERN.fullmatch(candidate.attributes.get("title", ""))
+    if title_match is None:
+        raise ValueError("title does not contain a representative artist and track")
+    recording_match = SPOTIFY_RECORDING_PATTERN.search(candidate.attributes.get("onclick", ""))
+    if recording_match is None:
+        raise ValueError("onclick does not contain a Spotify recording identifier")
+    recording_id = recording_match.group(1)
+    page_url = next(
+        (
+            safe
+            for link in candidate.nested_links
+            if (safe := _safe_https_url(link, allowed_hosts=frozenset({"everynoise.com"})))
+        ),
+        None,
+    )
+    preview_url = candidate.attributes.get("preview_url")
+    preview_hash = hashlib.sha256(preview_url.encode()).hexdigest() if preview_url else None
+    return HistoricalRepresentativeRecord(
+        genre_external_id=f"{source.namespace}:{item_id}",
+        source_item_id=item_id,
+        artist_name=title_match.group(1),
+        track_title=title_match.group(2),
+        recording_source_id=recording_id,
+        safe_external_url=f"https://open.spotify.com/track/{recording_id}",
+        source_genre_page_url=page_url,
+        legacy_preview_present=preview_url is not None,
+        legacy_preview_url_sha256=preview_hash,
+        source_id=source.source_id,
+        source_sha256=source.sha256,
+    )
+
+
+def adapt_quint_historical_representatives(
+    raw: bytes,
+    source: SourceSpec = QUINT_SOURCE,
+) -> HistoricalAdaptationResult:
+    """Retain dated representative metadata while disabling legacy previews."""
+    _verify_bytes(raw, source)
+    try:
+        text = raw.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as error:
+        raise SourceVerificationError("Every Noise HTML is not valid UTF-8") from error
+    parser = _GenreMapParser()
+    parser.feed(text)
+    parser.close()
+    if len(parser.candidates) != source.expected_records:
+        raise SourceVerificationError(
+            f"{source.source_id} exposed {len(parser.candidates)} genre elements; "
+            f"expected {source.expected_records}"
+        )
+    records: list[HistoricalRepresentativeRecord] = []
+    quarantine: list[QuarantineRecord] = []
+    for candidate in parser.candidates:
+        try:
+            records.append(_historical_record(candidate, source))
+        except (TypeError, ValueError) as error:
+            quarantine.append(
+                QuarantineRecord(
+                    source_id=source.source_id,
+                    record_number=candidate.record_number,
+                    source_record_id=candidate.attributes.get("id"),
+                    reason=str(error),
+                )
+            )
+    return HistoricalAdaptationResult(
+        source=source,
+        records=tuple(records),
+        quarantine=tuple(quarantine),
+    )
 
 
 def _slug(name: str) -> str:

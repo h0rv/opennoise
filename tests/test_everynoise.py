@@ -9,6 +9,7 @@ from musix.adapters.everynoise import (
     QUINT_SOURCE,
     SourceSpec,
     SourceVerificationError,
+    adapt_quint_historical_representatives,
     adapt_quint_html,
     adapt_watch_csv,
     store_verified_bytes,
@@ -31,6 +32,45 @@ def _source(*, adapter: str, raw: bytes, records: int = 1) -> SourceSpec:
 
 
 class EveryNoiseAdapterTests(unittest.TestCase):
+    def test_historical_representative_disables_preview_and_keeps_source_id(self) -> None:
+        raw = (
+            b'<div id=item1 preview_url="https://p.scdn.co/mp3-preview/legacy" '
+            b'class="genre scanme" style="color: #ad8907; top: 4997px; left: 783px; '
+            b'font-size: 160%" onclick=\'playx("1V6gIisPpYqgFeWbMLI0bA", "pop", this);\' '
+            b"title='e.g. Demi Lovato \"Heart Attack\"'>pop"
+            b'<a href="https://everynoise.com/engenremap-pop.html">nav</a></div>'
+        )
+        result = adapt_quint_historical_representatives(
+            raw,
+            _source(adapter="enao_html_map_v1", raw=raw),
+        )
+        self.assertEqual(len(result.records), 1)
+        record = result.records[0]
+        self.assertEqual(record.artist_name, "Demi Lovato")
+        self.assertEqual(record.track_title, "Heart Attack")
+        self.assertEqual(record.recording_source_id, "1V6gIisPpYqgFeWbMLI0bA")
+        self.assertEqual(
+            str(record.safe_external_url), "https://open.spotify.com/track/1V6gIisPpYqgFeWbMLI0bA"
+        )
+        self.assertTrue(record.legacy_preview_present)
+        self.assertIsNotNone(record.legacy_preview_url_sha256)
+        self.assertNotIn("p.scdn.co", record.model_dump_json())
+
+    def test_historical_representative_rejects_nonstandard_genre_link_port(self) -> None:
+        raw = (
+            b'<div id=item1 class="genre scanme" '
+            b'onclick=\'playx("1V6gIisPpYqgFeWbMLI0bA", "pop", this);\' '
+            b"title='e.g. Demi Lovato \"Heart Attack\"'>pop"
+            b'<a href="https://everynoise.com:invalid/engenremap-pop.html">nav</a></div>'
+        )
+
+        result = adapt_quint_historical_representatives(
+            raw,
+            _source(adapter="enao_html_map_v1", raw=raw),
+        )
+
+        self.assertIsNone(result.records[0].source_genre_page_url)
+
     def test_html_keeps_only_catalog_and_layout_fields(self) -> None:
         raw = (
             b'<div id=item1 preview_url="https://p.scdn.co/private" '

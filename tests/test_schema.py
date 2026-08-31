@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS = (
     ROOT / "migrations" / "0001_initial.sql",
     ROOT / "migrations" / "0002_album_genres.sql",
+    ROOT / "migrations" / "0003_genre_discovery.sql",
 )
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
 
@@ -31,7 +32,7 @@ class SchemaTests(unittest.TestCase):
         integrity = self.database.execute("PRAGMA integrity_check").fetchone()
         foreign_keys = self.database.execute("PRAGMA foreign_key_check").fetchall()
 
-        self.assertEqual(version, (2,))
+        self.assertEqual(version, (3,))
         self.assertEqual(integrity, ("ok",))
         self.assertEqual(foreign_keys, [])
 
