@@ -42,6 +42,23 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(integrity, ("ok",))
         self.assertEqual(foreign_keys, [])
 
+    def test_recording_genre_evidence_kind_requires_matching_source_family(self) -> None:
+        self.load_fixture()
+        with self.assertRaisesRegex(
+            sqlite3.IntegrityError,
+            "CHECK constraint failed",
+        ):
+            self.database.execute(
+                """INSERT INTO recording_genre_membership_observations
+                   (recording_id, genre_id, evidence_kind, source_family,
+                    source_record_id, source_genre_name, method_key, method_version,
+                    observed_at, provenance_id, policy_id, record_fingerprint)
+                   VALUES (4, 1, 'wikidata_p136', 'musicbrainz',
+                           'invalid-cross-pair', 'genre', 'test', '1',
+                           '2026-08-31T00:00:00Z', 1, 1, ?)""",
+                ("f" * 64,),
+            )
+
     def test_fixture_covers_catalog_ingest_and_map(self) -> None:
         self.load_fixture()
 

@@ -35,6 +35,12 @@ CREATE TABLE recording_genre_membership_observations (
     CHECK (length(trim(method_key)) > 0),
     CHECK (length(trim(method_version)) > 0),
     CHECK (
+        (evidence_kind = 'musicbrainz_recording_genre'
+         AND source_family = 'musicbrainz')
+        OR (evidence_kind = 'wikidata_p136'
+            AND source_family = 'wikidata')
+    ),
+    CHECK (
         length(record_fingerprint) = 64
         AND record_fingerprint = lower(record_fingerprint)
         AND record_fingerprint NOT GLOB '*[^0-9a-f]*'
