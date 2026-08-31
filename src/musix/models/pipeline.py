@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from musix.models.catalog import ArtistProjection
+from musix.models.catalog import CatalogProjection
 from musix.types import Sha256
 
 
@@ -27,7 +27,7 @@ class ParsedSourceRecord(_FrozenModel):
     ordinal: int = Field(ge=0)
     exact_sha256: Sha256
     byte_length: int = Field(ge=0)
-    projection: ArtistProjection
+    projection: CatalogProjection
 
 
 class RejectedSourceRecord(_FrozenModel):
