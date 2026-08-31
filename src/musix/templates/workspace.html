@@ -4,7 +4,7 @@
 <a id="selection-clear" href="/" aria-label="Clear {{ genre.name }} selection"
    hx-get="/fragments/workspace" hx-target="#workspace" hx-swap="outerHTML"
    hx-push-url="/" hx-sync="#search:abort">×</a>
-{% if genre.representative_artists or genre.defining_albums or genre.defining_tracks or genre.playable_links or genre.neighbors %}
+{% if genre.historical_representative or genre.defining_albums or genre.defining_tracks or genre.playable_links or genre.neighbors %}
 {% include "genre_detail.html" %}
 {% endif %}
 {% endif %}

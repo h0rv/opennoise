@@ -17,6 +17,7 @@ from musix.exploration import (
     ProvenanceResponse,
     optional_viewport,
 )
+from musix.genre_entry import GenreEntryRepository
 from musix.layouts import ExploredMap, LayoutArtifactMetadata
 from musix.models import (
     MapPointResponse,
@@ -40,12 +41,14 @@ class CoreController(Controller):
     async def selected_genre(
         self,
         database: NamedDependency[AsyncDatabase],
+        genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
     ) -> Template:
         """Render a shareable genre selection with the complete app shell."""
         genre = await database.genre_detail(genre_id)
         if genre is None:
             raise NotFoundException(detail="genre not found")
+        genre = await genre_entries.enrich(genre)
         view = map_view(await database.map_points(), genre_id)
         return Template(template_name="index.html", context={"genre": genre, "map": view})
 
@@ -185,6 +188,7 @@ class MapController(Controller):
     async def workspace_fragment(
         self,
         database: NamedDependency[AsyncDatabase],
+        genre_entries: NamedDependency[GenreEntryRepository],
         focus: FromQuery[int | None] = None,
     ) -> Template:
         """Render one coherent map selection and detail fragment."""
@@ -193,6 +197,7 @@ class MapController(Controller):
             genre = await database.genre_detail(focus)
             if genre is None:
                 raise NotFoundException(detail="genre not found")
+            genre = await genre_entries.enrich(genre)
         view = map_view(await database.map_points(), focus)
         return Template(
             template_name="workspace.html",
@@ -236,13 +241,14 @@ class EvidenceController(Controller):
     async def genre_detail(
         self,
         database: NamedDependency[AsyncDatabase],
+        genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
     ) -> GenreDetail:
         """Return one genre and its policy-safe evidence."""
         detail = await database.genre_detail(genre_id)
         if detail is None:
             raise NotFoundException(detail="genre not found")
-        return detail
+        return await genre_entries.enrich(detail)
 
     @get("/api/entities/{entity_id:int}/provenance")
     async def entity_provenance(
@@ -260,12 +266,14 @@ class EvidenceController(Controller):
     async def genre_detail_fragment(
         self,
         database: NamedDependency[AsyncDatabase],
+        genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
     ) -> Template:
         """Render one bounded genre detail region."""
         detail = await database.genre_detail(genre_id)
         if detail is None:
             raise NotFoundException(detail="genre not found")
+        detail = await genre_entries.enrich(detail)
         return Template(template_name="genre_detail.html", context={"genre": detail})
 
 

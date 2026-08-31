@@ -107,7 +107,21 @@ button, input { font: inherit; }
 
 #genre-detail h2 { margin: 0; font-size: 17px; line-height: 1.25; }
 #genre-detail h3 { margin: 10px 0 4px; font-size: 12px; }
-#genre-detail section a { display: block; color: inherit; font-size: 12px; }
+#genre-detail section a, #genre-detail section span {
+  display: block;
+  color: inherit;
+  font-size: 12px;
+}
+#genre-detail .representative { margin: 12px 0; }
+#genre-detail .representative div { margin-top: 8px; }
+#genre-detail .representative dt {
+  color: #66665f;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+#genre-detail .representative dd { margin: 1px 0 0; font-size: 13px; }
+.external-track { color: inherit; font-size: 12px; }
 #selection-clear {
   position: fixed;
   z-index: 4;

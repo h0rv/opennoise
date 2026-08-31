@@ -31,7 +31,7 @@ class AppTests(unittest.TestCase):
         self.assertIn('<main id="map"', response.text)
         self.assertNotIn("<h1", response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=3", response.text)
+        self.assertIn("/static/app.css?v=4", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertNotIn("6291", response.text)
 
@@ -127,6 +127,61 @@ class PopulatedAppTests(unittest.TestCase):
                     '3535353535353535353535353535353535353535353535353535353535353535',
                     1, 1
                 );
+                INSERT INTO historical_genre_artist_observations (
+                    id, genre_id, source_artist_name, observation_role, source_local_rank,
+                    source_revision_date, source_artifact_sha256, provenance_id, policy_id,
+                    record_fingerprint
+                ) VALUES (
+                    1, 1, 'Autechre', 'representative', 1, '2023-11-19',
+                    '3636363636363636363636363636363636363636363636363636363636363636',
+                    1, 1,
+                    '3737373737373737373737373737373737373737373737373737373737373737'
+                );
+                INSERT INTO historical_genre_track_observations (
+                    id, genre_id, artist_observation_id, source_track_title,
+                    recording_provider, recording_source_id, safe_external_url,
+                    legacy_preview_state, source_revision_date, source_artifact_sha256,
+                    provenance_id, policy_id, record_fingerprint
+                ) VALUES (
+                    1, 1, 1, 'Bike', 'spotify', '0123456789012345678901',
+                    'https://open.spotify.com/track/0123456789012345678901',
+                    'disabled_legacy', '2023-11-19',
+                    '3636363636363636363636363636363636363636363636363636363636363636',
+                    1, 1,
+                    '3838383838383838383838383838383838383838383838383838383838383838'
+                );
+                INSERT INTO provenance_records (
+                    id, source_id, policy_id, snapshot_ref, artifact_sha256,
+                    record_fingerprint, parser_release_ref, ingest_attempt_ref, observed_at
+                ) VALUES (
+                    2, 2, 2, 'private-snapshot',
+                    '3939393939393939393939393939393939393939393939393939393939393939',
+                    '4040404040404040404040404040404040404040404040404040404040404040',
+                    'private-parser-1', 'private-attempt-1', '2026-01-02T00:00:00Z'
+                );
+                INSERT INTO historical_genre_artist_observations (
+                    id, genre_id, source_artist_name, observation_role, source_local_rank,
+                    source_revision_date, source_artifact_sha256, provenance_id, policy_id,
+                    record_fingerprint
+                ) VALUES (
+                    2, 1, 'Hidden Artist', 'representative', 1, '2026-01-02',
+                    '3939393939393939393939393939393939393939393939393939393939393939',
+                    2, 2,
+                    '4141414141414141414141414141414141414141414141414141414141414141'
+                );
+                INSERT INTO historical_genre_track_observations (
+                    id, genre_id, artist_observation_id, source_track_title,
+                    recording_provider, recording_source_id, safe_external_url,
+                    legacy_preview_state, source_revision_date, source_artifact_sha256,
+                    provenance_id, policy_id, record_fingerprint
+                ) VALUES (
+                    2, 1, 2, 'Hidden Track', 'spotify', '1234567890123456789012',
+                    'https://open.spotify.com/track/1234567890123456789012',
+                    'absent', '2026-01-02',
+                    '3939393939393939393939393939393939393939393939393939393939393939',
+                    2, 2,
+                    '4242424242424242424242424242424242424242424242424242424242424242'
+                );
                 """
             )
         self.client = TestClient(create_app(self.database_path))
@@ -155,7 +210,16 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn('aria-current="true"', response.text)
         self.assertIn('id="selection-clear"', response.text)
         self.assertIn('href="/" aria-label="Clear IDM selection"', response.text)
-        self.assertNotIn('id="genre-detail"', response.text)
+        self.assertIn('id="genre-detail"', response.text)
+        self.assertIn("Autechre", response.text)
+        self.assertIn("Bike", response.text)
+        self.assertIn(
+            'href="https://open.spotify.com/track/0123456789012345678901"',
+            response.text,
+        )
+        self.assertIn('target="_blank" rel="noreferrer"', response.text)
+        self.assertNotIn("Hidden Artist", response.text)
+        self.assertNotIn("Hidden Track", response.text)
         self.assertNotIn("Every Noise legacy genre map", response.text)
         self.assertNotIn("2026-01-01", response.text)
 
@@ -168,7 +232,9 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertEqual(selected.text.count('hx-swap-oob="innerHTML"'), 1)
         self.assertIn('class="point genre selected"', selected.text)
         self.assertIn('id="selection-clear"', selected.text)
-        self.assertNotIn('id="genre-detail"', selected.text)
+        self.assertIn('id="genre-detail"', selected.text)
+        self.assertIn("Autechre", selected.text)
+        self.assertIn("Bike", selected.text)
         self.assertNotIn("Every Noise legacy genre map", selected.text)
         self.assertIn('hx-push-url="/"', selected.text)
         self.assertNotIn("600.0 800.0", selected.text)
@@ -187,6 +253,17 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn('hx-get="/fragments/workspace?focus=1"', response.text)
         self.assertIn('hx-push-url="/genres/1"', response.text)
         self.assertNotIn("<button", response.text)
+
+    def test_genre_api_returns_one_historical_representative(self) -> None:
+        response = self.client.get("/api/genres/1")
+
+        self.assertEqual(response.status_code, 200)
+        representative = response.json()["historical_representative"]
+        self.assertEqual(representative["artist_name"], "Autechre")
+        self.assertEqual(representative["track_title"], "Bike")
+        self.assertEqual(representative["external_link"]["label"], "Spotify")
+        self.assertEqual(response.json()["defining_albums"], [])
+        self.assertEqual(response.json()["neighbors"], [])
 
 
 if __name__ == "__main__":

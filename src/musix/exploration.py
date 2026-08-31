@@ -87,6 +87,7 @@ class GenreDiscoveryItem(FrozenModel):
 
     entity_id: int
     name: str
+    href: str | None = None
     evidence_refs: tuple[int, ...] = ()
 
 
@@ -98,6 +99,14 @@ class GenreExternalLink(FrozenModel):
     evidence_refs: tuple[int, ...] = ()
 
 
+class HistoricalGenreRepresentative(FrozenModel):
+    """One dated artist and track pairing observed in the historical map artifact."""
+
+    artist_name: str
+    track_title: str
+    external_link: GenreExternalLink | None = None
+
+
 class GenreDetail(FrozenModel):
     """A genre and the source evidence available for its fields."""
 
@@ -106,6 +115,7 @@ class GenreDetail(FrozenModel):
     name: str
     description: str | None
     evidence: tuple[ProvenanceEvidence, ...]
+    historical_representative: HistoricalGenreRepresentative | None = None
     representative_artists: tuple[GenreDiscoveryItem, ...] = ()
     defining_albums: tuple[GenreDiscoveryItem, ...] = ()
     defining_tracks: tuple[GenreDiscoveryItem, ...] = ()
