@@ -571,16 +571,19 @@ class PublicModelRepository:
     def __init__(
         self,
         catalog: sqlite3.Connection,
-        listenbrainz: sqlite3.Connection,
+        listenbrainz: sqlite3.Connection | None = None,
     ) -> None:
         """Keep both read-only connection lifetimes with the caller."""
         catalog.row_factory = sqlite3.Row
-        listenbrainz.row_factory = sqlite3.Row
         self._catalog = catalog
+        if listenbrainz is not None:
+            listenbrainz.row_factory = sqlite3.Row
         self._listenbrainz = listenbrainz
 
     def load(self, settings: PublicInputLoadSettings) -> PublicModelInput:
         """Load only policy-safe public evidence under explicit row limits."""
+        if self._listenbrainz is None:
+            raise PublicInputLoadError("artist pair loading requires a ListenBrainz database")
         artifact_values = (*_artifacts(self._catalog), *_artifacts(self._listenbrainz))
         artifacts = tuple(
             sorted(

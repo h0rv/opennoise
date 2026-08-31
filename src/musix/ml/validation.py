@@ -15,6 +15,7 @@ from musix.ml.public_graph import build_public_model
 from musix.models.modeling import (
     ArtistPairEvidence,
     GenreNeighbor,
+    PublicArtifact,
     PublicModelArtifact,
     PublicModelInput,
     PublicModelSettings,
@@ -29,7 +30,7 @@ from musix.models.validation import (
     GraphValidationSettings,
     NeighborhoodValidation,
     SourceHoldoutValidation,
-    TemporalPairSnapshot,
+    TemporalPairWindow,
     TemporalValidation,
     ValidationResources,
 )
@@ -56,22 +57,22 @@ def _peak_rss_bytes() -> int:
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
 
 
-def _aggregate_pairs(snapshots: tuple[TemporalPairSnapshot, ...]) -> tuple[ArtistPairEvidence, ...]:
+def _aggregate_pairs(windows: tuple[TemporalPairWindow, ...]) -> tuple[ArtistPairEvidence, ...]:
     supports: dict[tuple[str, str], int] = defaultdict(int)
-    windows: dict[tuple[str, str], int] = defaultdict(int)
+    window_counts: dict[tuple[str, str], int] = defaultdict(int)
     references: dict[tuple[str, str], set[str]] = defaultdict(set)
-    for snapshot in snapshots:
-        for pair in snapshot.pairs:
+    for window in windows:
+        for pair in window.pairs:
             key = (pair.left_artist_id, pair.right_artist_id)
             supports[key] += pair.listener_day_support
-            windows[key] += pair.supporting_windows
+            window_counts[key] += pair.supporting_windows
             references[key].update(pair.evidence_refs)
     return tuple(
         ArtistPairEvidence(
             left_artist_id=key[0],
             right_artist_id=key[1],
             listener_day_support=supports[key],
-            supporting_windows=windows[key],
+            supporting_windows=window_counts[key],
             evidence_refs=tuple(sorted(references[key])),
         )
         for key in sorted(supports, key=lambda value: (-supports[value], value))
@@ -80,19 +81,20 @@ def _aggregate_pairs(snapshots: tuple[TemporalPairSnapshot, ...]) -> tuple[Artis
 
 def _stage_input(
     base: PublicModelInput,
-    snapshots: tuple[TemporalPairSnapshot, ...],
+    source_artifacts: tuple[PublicArtifact, ...],
+    windows: tuple[TemporalPairWindow, ...],
 ) -> PublicModelInput:
     artifacts = tuple(artifact for artifact in base.artifacts if artifact.source != "listenbrainz")
     return PublicModelInput(
         artifacts=tuple(
             sorted(
-                (*artifacts, *(snapshot.artifact for snapshot in snapshots)),
+                (*artifacts, *source_artifacts),
                 key=lambda artifact: (artifact.source, artifact.snapshot, artifact.artifact_key),
             )
         ),
         genres=base.genres,
         direct_memberships=base.direct_memberships,
-        artist_pairs=_aggregate_pairs(snapshots),
+        artist_pairs=_aggregate_pairs(windows),
         metadata_candidates=base.metadata_candidates,
     )
 
@@ -241,30 +243,6 @@ def _source_neighbors(
     }
 
 
-def _truncated_trustworthiness(
-    source: dict[str, tuple[str, ...]],
-    embedded: dict[str, tuple[str, ...]],
-    k: int,
-) -> float:
-    genres = sorted(source.keys() & embedded.keys())
-    count = len(genres)
-    denominator = count * k * (2 * count - 3 * k - 1)
-    if count <= k or denominator <= 0:
-        return 0.0
-    penalty = 0
-    for genre in genres:
-        source_order = source[genre]
-        ranks = {neighbor: rank for rank, neighbor in enumerate(source_order, start=1)}
-        missing = sorted(set(genres) - {genre} - set(source_order))
-        ranks.update(
-            {neighbor: len(source_order) + rank for rank, neighbor in enumerate(missing, 1)}
-        )
-        for neighbor in set(embedded[genre]) - set(source_order):
-            penalty += ranks[neighbor] - k
-    score = 1.0 - 2.0 * penalty / denominator
-    return min(1.0, max(0.0, score))
-
-
 def _neighborhood_validation(
     artifact: PublicModelArtifact,
     hierarchy: tuple[GenreHierarchyEdge, ...],
@@ -273,9 +251,11 @@ def _neighborhood_validation(
     source = _source_neighbors(artifact, neighbors_per_genre)
     embedded = _euclidean_neighbors(artifact, neighbors_per_genre)
     genres = sorted(source.keys() & embedded.keys())
-    preservation = [
-        len(set(source[genre]) & set(embedded[genre])) / neighbors_per_genre for genre in genres
-    ]
+    preservation: list[float] = []
+    for genre in genres:
+        denominator = min(neighbors_per_genre, len(source[genre]), len(embedded[genre]))
+        if denominator:
+            preservation.append(len(set(source[genre]) & set(embedded[genre])) / denominator)
     directed = {(genre, neighbor) for genre, neighbors in source.items() for neighbor in neighbors}
     mutual = sum((right, left) in directed for left, right in directed)
     evaluated_hierarchy = tuple(
@@ -294,9 +274,6 @@ def _neighborhood_validation(
         mean_knn_preservation=round(sum(preservation) / len(preservation), 12)
         if preservation
         else 0.0,
-        truncated_graph_trustworthiness=round(
-            _truncated_trustworthiness(source, embedded, neighbors_per_genre), 12
-        ),
         mutual_neighbor_fraction=round(mutual / len(directed), 12) if directed else 0.0,
         hierarchy_edges_evaluated=len(evaluated_hierarchy),
         hierarchy_recall_at_k=round(hierarchy_hits / len(evaluated_hierarchy), 12)
@@ -335,15 +312,18 @@ def _aligned_coordinate_rms(
 
 
 def _temporal_validation(
-    left: PublicModelArtifact, right: PublicModelArtifact, left_snapshot: str, right_snapshot: str
+    left: PublicModelArtifact,
+    right: PublicModelArtifact,
+    left_window_end: int,
+    right_window_end: int,
 ) -> TemporalValidation:
     left_edges = _neighbor_edges(left)
     right_edges = _neighbor_edges(right)
     union = left_edges | right_edges
     common_genres, coordinate_rms = _aligned_coordinate_rms(left, right)
     return TemporalValidation(
-        left_snapshot=left_snapshot,
-        right_snapshot=right_snapshot,
+        left_window_end=left_window_end,
+        right_window_end=right_window_end,
         common_genres=common_genres,
         directed_neighbor_jaccard=round(len(left_edges & right_edges) / len(union), 12)
         if union
@@ -381,13 +361,20 @@ def build_graph_validation(
     """Build train/validation/test artifacts and validate the frozen test graph."""
     started = time.monotonic()
     base_inputs = inputs.base_inputs
-    snapshots = inputs.snapshots
+    source_artifacts = inputs.source_artifacts
+    windows = inputs.event_windows
     hierarchy = inputs.hierarchy
-    train_snapshots = snapshots[:-2]
-    validation_snapshots = snapshots[:-1]
-    train = build_public_model(_stage_input(base_inputs, train_snapshots), model_settings)
-    validation = build_public_model(_stage_input(base_inputs, validation_snapshots), model_settings)
-    test_input = _stage_input(base_inputs, snapshots)
+    if len(base_inputs.genres) > validation_settings.maximum_validation_genres:
+        raise ValueError("validation genres exceed the declared quadratic-work limit")
+    train_windows = windows[:-2]
+    validation_windows = windows[:-1]
+    train = build_public_model(
+        _stage_input(base_inputs, source_artifacts, train_windows), model_settings
+    )
+    validation = build_public_model(
+        _stage_input(base_inputs, source_artifacts, validation_windows), model_settings
+    )
+    test_input = _stage_input(base_inputs, source_artifacts, windows)
     test = build_public_model(test_input, model_settings)
     repeated = build_public_model(test_input, model_settings)
     experiments = tuple(
@@ -402,19 +389,21 @@ def build_graph_validation(
         _temporal_validation(
             train,
             validation,
-            train_snapshots[-1].artifact.snapshot,
-            validation_snapshots[-1].artifact.snapshot,
+            train_windows[-1].window_end,
+            validation_windows[-1].window_end,
         ),
         _temporal_validation(
             validation,
             test,
-            validation_snapshots[-1].artifact.snapshot,
-            snapshots[-1].artifact.snapshot,
+            validation_windows[-1].window_end,
+            windows[-1].window_end,
         ),
     )
     input_payload: dict[str, object] = {
         "base": base_inputs.model_dump(mode="json"),
-        "snapshots": [snapshot.model_dump(mode="json") for snapshot in snapshots],
+        "source_artifacts": [artifact.model_dump(mode="json") for artifact in source_artifacts],
+        "event_windows": [window.model_dump(mode="json") for window in windows],
+        "corpus_run": inputs.corpus_run.model_dump(mode="json"),
         "hierarchy": [edge.model_dump(mode="json") for edge in hierarchy],
     }
     output_payload: dict[str, object] = {
@@ -438,7 +427,9 @@ def build_graph_validation(
         ),
         output_sha256=_sha256(output_payload),
         export_allowed=test.export_allowed,
-        snapshots=tuple(snapshot.artifact for snapshot in snapshots),
+        source_artifacts=source_artifacts,
+        event_windows=len(windows),
+        corpus_run=inputs.corpus_run,
         hierarchy_edges=len(hierarchy),
         communities=experiments,
         community_stability=_community_stability(experiments),
@@ -453,5 +444,6 @@ def build_graph_validation(
             elapsed_ms=round((time.monotonic() - started) * 1_000),
             peak_rss_bytes=_peak_rss_bytes(),
             input_database_bytes=inputs.input_database_bytes,
+            input_artifact_bytes=inputs.input_artifact_bytes,
         ),
     )

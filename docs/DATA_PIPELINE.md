@@ -116,6 +116,13 @@ time-windowed aggregate counts. Incomplete attempts are hidden from the
 normalizable evidence view. These counts are evidence only: ingestion does not
 turn them into similarity, normalize them, or choose model weights.
 
+Daily incremental files are publication batches and can contain backfilled listens. Counts from
+separate files must not be added after listener identities have been discarded because the same
+listener and event day can occur in several files. The graph validation job scans its pinned files
+together and deduplicates each listener and artist set before aggregation. It uses disjoint event
+days and a privacy floor of five. Raw listener-bearing archives remain local and cannot be exported
+or redistributed by the project manifest.
+
 First, the importer creates a `source_snapshots` row and one or more
 `source_artifacts` rows. Each artifact records its exact hash, byte count,
 media type, and vault key.

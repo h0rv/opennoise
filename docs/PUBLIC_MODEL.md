@@ -65,6 +65,9 @@ and local resource use. Source agreement compares MusicBrainz tag pairs with Wik
 when both policies allow the model to use them. Historical Every Noise data can be compared only
 after the result hash has been fixed. It is not part of this build command.
 
+The seven day event-time split, map checks, hierarchy check, and community experiment are documented
+in [`GRAPH_VALIDATION.md`](GRAPH_VALIDATION.md).
+
 ## Publish and serve
 
 Publish a completed artifact into a catalog whose selected policy allows display and export:

@@ -5,8 +5,11 @@ from typing import Literal
 from pydantic import Field, FiniteFloat, model_validator
 
 from musix.models import FrozenModel
+from musix.models.catalog import ArtistCoListenRunProjection
 from musix.models.modeling import ArtistPairEvidence, PublicArtifact, PublicModelInput
 from musix.types import Sha256
+
+_MINIMUM_TEMPORAL_PRIVACY_FLOOR = 5
 
 
 class GenreHierarchyEdge(FrozenModel):
@@ -24,25 +27,23 @@ class GenreHierarchyEdge(FrozenModel):
         return self
 
 
-class TemporalPairSnapshot(FrozenModel):
-    """Hold one privacy-safe daily graph snapshot."""
+class TemporalPairWindow(FrozenModel):
+    """Hold one disjoint event-time window from a joint raw aggregation."""
 
-    artifact: PublicArtifact
-    minimum_listened_at: int = Field(ge=0)
-    maximum_listened_at: int = Field(ge=0)
-    listens_seen: int = Field(ge=0)
-    listens_with_artist_mbid: int = Field(ge=0)
-    distinct_artists: int = Field(ge=0)
-    user_windows: int = Field(ge=0)
+    window_start: int = Field(ge=0)
+    window_end: int = Field(gt=0)
     pairs: tuple[ArtistPairEvidence, ...] = Field(max_length=1_000_000)
 
     @model_validator(mode="after")
-    def require_ordered_coverage(self) -> "TemporalPairSnapshot":
-        """Keep temporal coverage and snapshot identity unambiguous."""
-        if self.artifact.source != "listenbrainz":
-            raise ValueError("temporal pair snapshots require ListenBrainz artifacts")
-        if self.minimum_listened_at > self.maximum_listened_at:
-            raise ValueError("snapshot time coverage must be ordered")
+    def require_single_window_evidence(self) -> "TemporalPairWindow":
+        """Reject additive or duplicated pair rows inside one event window."""
+        if self.window_end <= self.window_start:
+            raise ValueError("event-time window must have positive duration")
+        identities = {(pair.left_artist_id, pair.right_artist_id) for pair in self.pairs}
+        if len(identities) != len(self.pairs):
+            raise ValueError("event-time window pairs must be unique")
+        if any(pair.supporting_windows != 1 for pair in self.pairs):
+            raise ValueError("each event-time pair must describe exactly one window")
         return self
 
 
@@ -55,6 +56,7 @@ class GraphValidationSettings(FrozenModel):
         default=(20260830, 20260831, 20260832), min_length=1, max_length=8
     )
     maximum_community_iterations: int = Field(default=100, gt=0, le=1_000)
+    maximum_validation_genres: int = Field(default=2_000, gt=0, le=2_000)
 
     @model_validator(mode="after")
     def require_unique_seeds(self) -> "GraphValidationSettings":
@@ -68,9 +70,39 @@ class GraphValidationInput(FrozenModel):
     """Bundle the bounded evidence accepted by graph validation."""
 
     base_inputs: PublicModelInput
-    snapshots: tuple[TemporalPairSnapshot, ...] = Field(min_length=3, max_length=14)
+    source_artifacts: tuple[PublicArtifact, ...] = Field(min_length=7, max_length=14)
+    event_windows: tuple[TemporalPairWindow, ...] = Field(min_length=7, max_length=14)
+    corpus_run: ArtistCoListenRunProjection
     hierarchy: tuple[GenreHierarchyEdge, ...] = Field(max_length=100_000)
     input_database_bytes: int = Field(ge=0)
+    input_artifact_bytes: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def require_joint_disjoint_corpus(self) -> "GraphValidationInput":
+        """Reject publication-batch counts and ambiguous temporal windows."""
+        if any(artifact.source != "listenbrainz" for artifact in self.source_artifacts):
+            raise ValueError("joint corpus artifacts must all be ListenBrainz sources")
+        snapshots = tuple(artifact.snapshot for artifact in self.source_artifacts)
+        hashes = tuple(artifact.content_sha256 for artifact in self.source_artifacts)
+        if len(snapshots) != len(set(snapshots)) or len(hashes) != len(set(hashes)):
+            raise ValueError("joint corpus snapshots and hashes must be unique")
+        for left, right in zip(self.event_windows, self.event_windows[1:], strict=False):
+            if left.window_end != right.window_start:
+                raise ValueError("event-time windows must be ordered, disjoint, and contiguous")
+        if self.corpus_run.minimum_distinct_users < _MINIMUM_TEMPORAL_PRIVACY_FLOOR:
+            raise ValueError("temporal corpus requires a privacy floor of at least five users")
+        if any(
+            pair.listener_day_support < self.corpus_run.minimum_distinct_users
+            for window in self.event_windows
+            for pair in window.pairs
+        ):
+            raise ValueError("event-time pair falls below the corpus privacy floor")
+        if any(
+            window.window_end - window.window_start != self.corpus_run.window_seconds
+            for window in self.event_windows
+        ):
+            raise ValueError("event-time windows must match the corpus window size")
+        return self
 
 
 class CommunityAssignment(FrozenModel):
@@ -107,7 +139,6 @@ class NeighborhoodValidation(FrozenModel):
     neighbors_per_genre: int = Field(gt=0)
     genres_evaluated: int = Field(ge=0)
     mean_knn_preservation: FiniteFloat = Field(ge=0.0, le=1.0)
-    truncated_graph_trustworthiness: FiniteFloat = Field(ge=0.0, le=1.0)
     mutual_neighbor_fraction: FiniteFloat = Field(ge=0.0, le=1.0)
     hierarchy_edges_evaluated: int = Field(ge=0)
     hierarchy_recall_at_k: FiniteFloat = Field(ge=0.0, le=1.0)
@@ -116,8 +147,8 @@ class NeighborhoodValidation(FrozenModel):
 class TemporalValidation(FrozenModel):
     """Compare cumulative train, validation, and test graph artifacts."""
 
-    left_snapshot: str = Field(min_length=1)
-    right_snapshot: str = Field(min_length=1)
+    left_window_end: int = Field(gt=0)
+    right_window_end: int = Field(gt=0)
     common_genres: int = Field(ge=0)
     directed_neighbor_jaccard: FiniteFloat = Field(ge=0.0, le=1.0)
     aligned_coordinate_rms: FiniteFloat = Field(ge=0.0)
@@ -138,6 +169,7 @@ class ValidationResources(FrozenModel):
     elapsed_ms: int = Field(ge=0)
     peak_rss_bytes: int = Field(ge=0)
     input_database_bytes: int = Field(ge=0)
+    input_artifact_bytes: int = Field(ge=0)
 
 
 class GraphValidationArtifact(FrozenModel):
@@ -148,7 +180,9 @@ class GraphValidationArtifact(FrozenModel):
     settings_sha256: Sha256
     output_sha256: Sha256
     export_allowed: bool
-    snapshots: tuple[PublicArtifact, ...] = Field(min_length=3, max_length=14)
+    source_artifacts: tuple[PublicArtifact, ...] = Field(min_length=7, max_length=14)
+    event_windows: int = Field(ge=7, le=14)
+    corpus_run: ArtistCoListenRunProjection
     hierarchy_edges: int = Field(ge=0)
     communities: tuple[CommunityExperiment, ...] = Field(min_length=1, max_length=8)
     community_stability: CommunityStability
