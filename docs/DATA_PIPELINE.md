@@ -69,6 +69,36 @@ relationship-heavy upstream records exceed 50 MiB even though only bounded core
 fields are projected. Larger records are hashed, quarantined, and skipped without
 desynchronizing the following JSON line.
 
+The ListenBrainz bootstrap uses the pinned daily incremental listen dump:
+
+```sh
+uv run poe ingest-listenbrainz
+```
+
+The source is an official CC0 public dump. The manifest records its exact byte
+count, SHA256, snapshot identifier, retrieval URL, and license URL. The
+so-called 2025 ListenBrainz sample dump was inspected and is not a listen
+fixture: it contains metadata JSONL, popularity CSV, and Spark Parquet only.
+The 205 GB Spark full dump is deliberately disabled for laptop use.
+
+The ListenBrainz adapter scans the complete selected incremental artifact and
+keeps listener identifiers only in bounded in-memory dictionaries. It never
+stages a username, numeric listener ID, track name, or submitted artist name.
+For each fixed UTC day it counts an artist pair at most once per listener, then
+emits only MusicBrainz-qualified artist IDs and a distinct-listener count. A
+configurable minimum listener count is a privacy floor. The official
+incremental can contain backfilled listens, so the adapter uses bounded
+unordered windows and fails if active windows, user-windows, artists, pairs,
+members, records, lines, decompression, or runtime exceed their declared
+limits. A strict newest-first mode remains available for sources that promise
+ordered windows.
+
+`artist_co_listen_runs` records coverage, source and adapter hashes, window
+policy, elapsed time, and peak memory. `artist_co_listen_evidence` stores the
+time-windowed aggregate counts. Incomplete attempts are hidden from the
+normalizable evidence view. These counts are evidence only: ingestion does not
+turn them into similarity, normalize them, or choose model weights.
+
 First, the importer creates a `source_snapshots` row and one or more
 `source_artifacts` rows. Each artifact records its exact hash, byte count,
 media type, and vault key.

@@ -23,6 +23,7 @@ from musix.models.pipeline import (
     SourceRecord,
 )
 from musix.models.sources import DownloadSource
+from musix.sources.registry import SourceAdapterError
 
 JSON_DUMP_SCHEMA = "1"
 MUSICBRAINZ_API_BASE = "https://musicbrainz.org/ws/2"
@@ -31,7 +32,7 @@ YEAR_TEXT_LENGTH = 4
 MAX_YEAR = 9999
 
 
-class MusicBrainzAdapterError(ValueError):
+class MusicBrainzAdapterError(SourceAdapterError):
     """Report an invalid archive, record, or adapter boundary."""
 
 

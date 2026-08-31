@@ -44,7 +44,7 @@ class ListenBrainzAggregationConfig(BaseModel):
 
     model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
 
-    ordering: Literal["newest_first"] = "newest_first"
+    ordering: Literal["newest_first", "unordered_bounded"] = "unordered_bounded"
     window_seconds: int = Field(default=86_400, gt=0)
     minimum_distinct_users: int = Field(default=2, gt=0)
     max_users_per_window: int = Field(default=2_000_000, gt=0)
@@ -52,3 +52,5 @@ class ListenBrainzAggregationConfig(BaseModel):
     max_distinct_artists: int = Field(default=5_000_000, gt=1)
     max_pairs_per_window: int = Field(default=10_000_000, gt=0)
     max_listen_members: int = Field(default=16, gt=0)
+    max_active_windows: int = Field(default=20_000, gt=0)
+    max_total_user_windows: int = Field(default=5_000_000, gt=0)

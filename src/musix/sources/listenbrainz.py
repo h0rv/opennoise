@@ -24,9 +24,10 @@ from musix.models.pipeline import (
     SourceRecord,
 )
 from musix.models.sources import DownloadSource
+from musix.sources.registry import SourceAdapterError
 
 
-class ListenBrainzSourceError(ValueError):
+class ListenBrainzSourceError(SourceAdapterError):
     """Report a source shape, ordering, archive, or bounded-state violation."""
 
 
@@ -73,6 +74,8 @@ class _AggregationState:
     current_window: int | None = None
     output_ordinal: int = -1
     user_artists: dict[int, set[str]] = field(default_factory=dict)
+    unordered_windows: dict[int, dict[int, set[str]]] = field(default_factory=dict)
+    active_user_windows: int = 0
     distinct_artists: set[str] = field(default_factory=set)
 
 
@@ -279,23 +282,60 @@ class ListenBrainzIncrementalAdapter:
             return
         counters.listens_with_artist_mbid += 1
         window_start = listen.listened_at // self.config.window_seconds * self.config.window_seconds
+        if self.config.ordering == "unordered_bounded":
+            user_artists = state.unordered_windows.get(window_start)
+            if user_artists is None:
+                if len(state.unordered_windows) >= self.config.max_active_windows:
+                    raise ListenBrainzSourceError("archive exceeds max_active_windows")
+                user_artists = {}
+                state.unordered_windows[window_start] = user_artists
+            self._add_user_artists(listen, artist_ids, user_artists, state)
+            return
         if state.current_window is not None and window_start > state.current_window:
             raise ListenBrainzSourceError("listen windows are not ordered newest_first")
         if state.current_window is not None and window_start < state.current_window:
             yield from self._flush_window(state, counters, start_after=start_after)
         state.current_window = window_start
-        artists = state.user_artists.get(listen.user_id)
+        self._add_user_artists(listen, artist_ids, state.user_artists, state)
+
+    def _add_user_artists(
+        self,
+        listen: ListenBrainzListen,
+        artist_ids: tuple[str, ...],
+        user_artists: dict[int, set[str]],
+        state: _AggregationState,
+    ) -> None:
+        artists = user_artists.get(listen.user_id)
         if artists is None:
-            if len(state.user_artists) >= self.config.max_users_per_window:
+            if len(user_artists) >= self.config.max_users_per_window:
                 raise ListenBrainzSourceError("window exceeds max_users_per_window")
+            if state.active_user_windows >= self.config.max_total_user_windows:
+                raise ListenBrainzSourceError("archive exceeds max_total_user_windows")
             artists = set()
-            state.user_artists[listen.user_id] = artists
+            user_artists[listen.user_id] = artists
+            state.active_user_windows += 1
         artists.update(artist_ids)
         if len(artists) > self.config.max_artists_per_user_window:
             raise ListenBrainzSourceError("user window exceeds max_artists_per_user_window")
         state.distinct_artists.update(artist_ids)
         if len(state.distinct_artists) > self.config.max_distinct_artists:
             raise ListenBrainzSourceError("archive exceeds max_distinct_artists")
+
+    def _flush_all_windows(
+        self,
+        state: _AggregationState,
+        counters: _Counters,
+        *,
+        start_after: int,
+    ) -> Iterator[ParsedSourceRecord]:
+        if self.config.ordering == "newest_first":
+            yield from self._flush_window(state, counters, start_after=start_after)
+            return
+        for window_start in sorted(state.unordered_windows, reverse=True):
+            state.current_window = window_start
+            state.user_artists = state.unordered_windows[window_start]
+            yield from self._flush_window(state, counters, start_after=start_after)
+        state.unordered_windows.clear()
 
     def _consume_line(
         self,
@@ -383,7 +423,7 @@ class ListenBrainzIncrementalAdapter:
                 limits,
                 start_after=start_after,
             )
-        yield from self._flush_window(state, counters, start_after=start_after)
+        yield from self._flush_all_windows(state, counters, start_after=start_after)
         state.user_artists.clear()
         completion = self._completion_projection(
             state,

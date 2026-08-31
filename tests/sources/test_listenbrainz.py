@@ -1,12 +1,17 @@
+import hashlib
 import io
 import json
+import sqlite3
 import tarfile
 import tempfile
 import unittest
 from pathlib import Path
 
 import zstandard
+from pydantic import HttpUrl
 
+from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
+from musix.catalog.registry import ProjectorRegistry
 from musix.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
 from musix.models.listenbrainz import ListenBrainzAggregationConfig
 from musix.models.pipeline import (
@@ -15,7 +20,10 @@ from musix.models.pipeline import (
     SourceLimits,
     SourceRecord,
 )
+from musix.models.sources import DownloadSource
+from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
 from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter, ListenBrainzSourceError
+from musix.sources.registry import AdapterRegistry
 
 ARTIST_A = "30238ead-59fa-41e2-a7ab-b7f6e6363c4b"
 ARTIST_B = "f59c5520-5f46-4d2c-b2c4-822eabf53419"
@@ -48,6 +56,32 @@ def _archive(
         member.size = len(payload)
         archive.addfile(member, io.BytesIO(payload))
     path.write_bytes(zstandard.ZstdCompressor().compress(tar_bytes.getvalue()))
+
+
+def _pipeline_source(path: Path, source_id: str = "listenbrainz_fixture") -> DownloadSource:
+    payload = path.read_bytes()
+    return DownloadSource(
+        id=source_id,
+        adapter="listenbrainz_incremental_listens_v1",
+        snapshot="fixture-1",
+        url=HttpUrl("https://example.test/listens.tar.zst"),
+        discovery_url=HttpUrl("https://listenbrainz.org/"),
+        expected_content_type="application/octet-stream",
+        compression="tar.zst",
+        expected_bytes=len(payload),
+        checksum_algorithm="sha256",
+        checksum=hashlib.sha256(payload).hexdigest(),
+        data_license="CC0-1.0",
+        license_url="https://creativecommons.org/publicdomain/zero/1.0/",
+        rights_classification="public_domain",
+        local_only=False,
+        normalize=True,
+        local_search=False,
+        display=False,
+        embed=True,
+        train=True,
+        export_metadata=True,
+    )
 
 
 def _records(
@@ -129,7 +163,7 @@ class ListenBrainzIncrementalAdapterTests(unittest.TestCase):
             (
                 "ordering",
                 (_listen(1, 1, [ARTIST_A]), _listen(1, 2, [ARTIST_B])),
-                ListenBrainzAggregationConfig(window_seconds=1),
+                ListenBrainzAggregationConfig(ordering="newest_first", window_seconds=1),
                 SourceLimits(),
             ),
             (
@@ -197,6 +231,121 @@ class ListenBrainzIncrementalAdapterTests(unittest.TestCase):
         resumed_record = resumed[0]
         assert isinstance(resumed_record, ParsedSourceRecord)
         self.assertIsInstance(resumed_record.projection, ArtistCoListenRunProjection)
+
+
+class ListenBrainzPipelineTests(unittest.IsolatedAsyncioTestCase):
+    async def test_ingests_only_aggregate_evidence_and_reuses_complete_attempt(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "listens.tar.zst"
+            _archive(
+                archive,
+                (
+                    b'{"user_name":"private-malformed"}',
+                    _listen(1, 119, [ARTIST_A]),
+                    _listen(1, 118, [ARTIST_B]),
+                    _listen(2, 117, [ARTIST_A]),
+                    _listen(2, 116, [ARTIST_B]),
+                ),
+            )
+            payload = archive.read_bytes()
+            source = _pipeline_source(archive)
+            vault_object = root / "vault" / "raw" / "sha256" / source.checksum
+            vault_object.parent.mkdir(parents=True)
+            vault_object.write_bytes(payload)
+            options = PipelineOptions(
+                manifest_path=root / "manifest.toml",
+                source_id=source.id,
+                database_path=root / "catalog.sqlite",
+                vault_path=root / "vault",
+                partition=DeterministicPartition(sha256_prefix=""),
+                limits=SourceLimits(max_decompression_ratio=1024.0),
+                checkpoint_every=1,
+            )
+            adapters = AdapterRegistry((ListenBrainzIncrementalAdapter(),))
+            projectors = ProjectorRegistry(
+                (ArtistCoListenProjector(), ArtistCoListenRunProjector())
+            )
+
+            summary = await run_source_pipeline(source, adapters, projectors, options)
+            reused = await run_source_pipeline(source, adapters, projectors, options)
+
+            self.assertEqual(
+                (summary.raw, summary.accepted, summary.quarantined),
+                (3, 2, 1),
+            )
+            self.assertTrue(reused.reused_attempt)
+            with sqlite3.connect(options.database_path) as connection:
+                pair = connection.execute(
+                    """SELECT distinct_user_count FROM artist_co_listen_evidence"""
+                ).fetchone()
+                run = connection.execute(
+                    """SELECT listens_seen, listens_with_artist_mbid, distinct_artists,
+                              user_windows, emitted_pairs, quarantined_records
+                       FROM artist_co_listen_runs"""
+                ).fetchone()
+                staged_json = " ".join(
+                    str(row[0])
+                    for row in connection.execute(
+                        "SELECT coalesce(parsed_json, '') FROM staged_records"
+                    )
+                )
+
+        self.assertEqual(pair, (2,))
+        self.assertEqual(run, (5, 4, 2, 2, 1, 1))
+        self.assertNotIn("private", staged_json)
+        self.assertNotIn("user_id", staged_json)
+
+    async def test_fail_closed_error_rolls_back_and_quarantines_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "unordered.tar.zst"
+            _archive(archive, (_listen(1, 1, [ARTIST_A]), _listen(1, 2, [ARTIST_B])))
+            source = _pipeline_source(archive, "listenbrainz_unordered_fixture")
+            vault_object = root / "vault" / "raw" / "sha256" / source.checksum
+            vault_object.parent.mkdir(parents=True)
+            vault_object.write_bytes(archive.read_bytes())
+            options = PipelineOptions(
+                manifest_path=root / "manifest.toml",
+                source_id=source.id,
+                database_path=root / "catalog.sqlite",
+                vault_path=root / "vault",
+                partition=DeterministicPartition(sha256_prefix=""),
+                limits=SourceLimits(max_decompression_ratio=1024.0),
+            )
+            adapters = AdapterRegistry(
+                (
+                    ListenBrainzIncrementalAdapter(
+                        ListenBrainzAggregationConfig(
+                            ordering="newest_first",
+                            window_seconds=1,
+                        )
+                    ),
+                )
+            )
+            projectors = ProjectorRegistry(
+                (ArtistCoListenProjector(), ArtistCoListenRunProjector())
+            )
+
+            with self.assertRaises(ListenBrainzSourceError):
+                await run_source_pipeline(source, adapters, projectors, options)
+
+            with sqlite3.connect(options.database_path) as connection:
+                failed = connection.execute(
+                    """SELECT count(*) FROM ingest_attempt_events
+                       WHERE event_kind = 'failed'"""
+                ).fetchone()
+                quarantine = connection.execute(
+                    """SELECT count(*) FROM quarantine_events
+                       WHERE artifact_id IS NOT NULL AND staged_record_id IS NULL"""
+                ).fetchone()
+                evidence = connection.execute(
+                    "SELECT count(*) FROM artist_co_listen_evidence"
+                ).fetchone()
+
+        self.assertEqual(failed, (1,))
+        self.assertEqual(quarantine, (1,))
+        self.assertEqual(evidence, (0,))
 
 
 if __name__ == "__main__":

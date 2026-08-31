@@ -24,7 +24,8 @@ uv run poe format
 uv run poe check
 ```
 
-Useful tasks are `format`, `format-check`, `lint`, `typecheck`, `test`, `schema`, `import`, `bootstrap`, `dev`, and `check`.
+Useful tasks include `format`, `lint`, `typecheck`, `test`, `schema`, `bootstrap`,
+`ingest-musicbrainz-artists`, `ingest-listenbrainz`, `dev`, and `check`.
 
 The app uses Python 3.13 or newer, Litestar, Jinja, Pydantic, standard library SQLite, and a self-hosted copy of htmx 4.0.0. It uses no ORM, Alpine, or custom JavaScript. The SVG map is rendered on the server, and htmx replaces search and map fragments.
 

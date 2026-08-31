@@ -8,6 +8,10 @@ from musix.models.pipeline import SourceLimits, SourceRecord
 from musix.models.sources import DownloadSource
 
 
+class SourceAdapterError(ValueError):
+    """Report a bounded source parsing or projection failure."""
+
+
 class SourceAdapter(Protocol):
     """Separate source-specific parsing from shared ingestion lifecycle state."""
 

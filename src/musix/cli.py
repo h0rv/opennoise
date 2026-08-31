@@ -12,12 +12,14 @@ import uvicorn
 from musix.adapters.everynoise import QUINT_SOURCE, fetch_verified_source
 from musix.bootstrap import bootstrap_everynoise
 from musix.catalog.artists import ArtistProjector
+from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.ingest import ImportOptions, import_jsonl
 from musix.models import Settings
 from musix.models.pipeline import SourceLimits
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
+from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter
 from musix.sources.musicbrainz import MusicBrainzArtistDumpAdapter
 from musix.sources.registry import AdapterRegistry
 
@@ -63,12 +65,18 @@ def _bootstrap(args: argparse.Namespace) -> int:
 
 def _ingest_source(args: argparse.Namespace) -> int:
     source = load_download_source(args.manifest, args.source_id)
-    registry = AdapterRegistry((MusicBrainzArtistDumpAdapter(),))
+    registry = AdapterRegistry((MusicBrainzArtistDumpAdapter(), ListenBrainzIncrementalAdapter()))
     summary = asyncio.run(
         run_source_pipeline(
             source,
             registry,
-            ProjectorRegistry((ArtistProjector(),)),
+            ProjectorRegistry(
+                (
+                    ArtistProjector(),
+                    ArtistCoListenProjector(),
+                    ArtistCoListenRunProjector(),
+                )
+            ),
             PipelineOptions(
                 manifest_path=args.manifest,
                 source_id=args.source_id,
@@ -128,7 +136,7 @@ def parser() -> argparse.ArgumentParser:
     ingest_source.add_argument("--manifest", type=Path, default=Path("config/data_sources.toml"))
     ingest_source.add_argument("--database", type=Path, default=settings.database_path)
     ingest_source.add_argument("--vault", type=Path, default=settings.vault_path)
-    ingest_source.add_argument("--partition-prefix", default="0")
+    ingest_source.add_argument("--partition-prefix", default="")
     ingest_source.add_argument("--max-archive-bytes", type=int, default=4 * 1024 * 1024 * 1024)
     ingest_source.add_argument("--max-record-bytes", type=int, default=64 * 1024 * 1024)
     ingest_source.add_argument("--max-records", type=int, default=10_000_000)

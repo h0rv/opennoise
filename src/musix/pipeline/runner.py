@@ -609,6 +609,19 @@ def _process_stream(
                 error_text=str(error)[:2000],
             ),
         )
+        connection.execute(
+            """INSERT INTO quarantine_events
+               (artifact_id, reason_code, diagnostic_json, event_kind, event_at)
+               VALUES (?, 'other', ?, 'quarantined', ?)""",
+            (
+                job.context.artifact_id,
+                json.dumps(
+                    {"error_type": type(error).__name__, "error": str(error)[:2000]},
+                    sort_keys=True,
+                ),
+                _now(),
+            ),
+        )
         connection.commit()
         raise
 
