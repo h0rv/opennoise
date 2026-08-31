@@ -29,6 +29,10 @@ def _catalog() -> sqlite3.Connection:
           evidence_kind TEXT, source_count INTEGER, source_family TEXT,
           policy_id INTEGER, provenance_id INTEGER
         );
+        CREATE TABLE normalizable_recording_genre_memberships (
+          id INTEGER, recording_id INTEGER, genre_id INTEGER,
+          source_count INTEGER, policy_id INTEGER, provenance_id INTEGER
+        );
         CREATE TABLE entity_identifiers (
           id INTEGER, entity_id INTEGER, namespace TEXT, normalized_value TEXT
         );
@@ -55,13 +59,16 @@ def _catalog() -> sqlite3.Connection:
           (2, 11, 'musicbrainz', '22222222-2222-4222-8222-222222222222'),
           (3, 20, 'wikidata', 'Q100'),
           (4, 30, 'musicbrainz', '33333333-3333-4333-8333-333333333333'),
-          (5, 12, 'musicbrainz', '44444444-4444-4444-8444-444444444444');
+          (5, 12, 'musicbrainz', '44444444-4444-4444-8444-444444444444'),
+          (6, 40, 'musicbrainz', '55555555-5555-4555-8555-555555555555'),
+          (7, 20, 'musicbrainz', '66666666-6666-4666-8666-666666666666');
         INSERT INTO entity_names VALUES
           (1, 10, 'Allowed Artist', 1),
           (2, 11, 'Denied Artist', 1),
           (3, 30, 'Allowed Album', 1),
           (4, 20, 'Q100', 1),
-          (5, 12, 'Suppressed Artist', 1);
+          (5, 12, 'Suppressed Artist', 1),
+          (6, 40, 'Allowed Recording', 1);
         INSERT INTO genres VALUES (20, 'Q100');
         INSERT INTO normalizable_artist_genre_evidence VALUES
           (1, 10, 20, 'direct_source_claim', 1.0, 'wikidata_music_slice',
@@ -72,6 +79,8 @@ def _catalog() -> sqlite3.Connection:
            'Q12-P136-Q100', 'wikidata_p136', 1, 1);
         INSERT INTO normalizable_album_genre_memberships VALUES
           (1, 30, 20, 'wikidata_p136', NULL, 'wikidata', 1, 1);
+        INSERT INTO normalizable_recording_genre_memberships VALUES
+          (1, 40, 20, 7, 1, 1);
         INSERT INTO active_suppressions VALUES ('entity', '12', 'embed');
         """
     )
@@ -142,10 +151,10 @@ class PublicModelRepositoryTests(unittest.TestCase):
         self.assertEqual(result.direct_memberships[0].genre_id, "wikidata:genre:Q100")
         self.assertEqual(len(result.artist_pairs), 1)
         self.assertEqual(result.artist_pairs[0].right_artist_id, _ARTIST_B)
-        self.assertEqual(len(result.metadata_candidates), 2)
+        self.assertEqual(len(result.metadata_candidates), 3)
         self.assertEqual(
             {item.entity_kind for item in result.metadata_candidates},
-            {"artist", "release_group"},
+            {"artist", "release_group", "recording"},
         )
 
 

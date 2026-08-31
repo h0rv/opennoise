@@ -13,6 +13,7 @@ from musix.adapters.everynoise import QUINT_SOURCE, fetch_verified_source
 from musix.bootstrap import bootstrap_everynoise
 from musix.catalog.artists import ArtistProjector
 from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
+from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.ingest import ImportOptions, import_jsonl
 from musix.models import Settings
@@ -20,7 +21,11 @@ from musix.models.pipeline import SourceLimits
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
 from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter
-from musix.sources.musicbrainz import MusicBrainzArtistDumpAdapter
+from musix.sources.musicbrainz import (
+    MusicBrainzArtistDumpAdapter,
+    MusicBrainzRecordingDumpAdapter,
+    MusicBrainzReleaseGroupDumpAdapter,
+)
 from musix.sources.registry import AdapterRegistry
 
 
@@ -65,7 +70,14 @@ def _bootstrap(args: argparse.Namespace) -> int:
 
 def _ingest_source(args: argparse.Namespace) -> int:
     source = load_download_source(args.manifest, args.source_id)
-    registry = AdapterRegistry((MusicBrainzArtistDumpAdapter(), ListenBrainzIncrementalAdapter()))
+    registry = AdapterRegistry(
+        (
+            MusicBrainzArtistDumpAdapter(),
+            MusicBrainzReleaseGroupDumpAdapter(),
+            MusicBrainzRecordingDumpAdapter(),
+            ListenBrainzIncrementalAdapter(),
+        )
+    )
     summary = asyncio.run(
         run_source_pipeline(
             source,
@@ -73,6 +85,8 @@ def _ingest_source(args: argparse.Namespace) -> int:
             ProjectorRegistry(
                 (
                     ArtistProjector(),
+                    ReleaseGroupProjector(),
+                    RecordingProjector(),
                     ArtistCoListenProjector(),
                     ArtistCoListenRunProjector(),
                 )

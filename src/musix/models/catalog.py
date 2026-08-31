@@ -108,6 +108,44 @@ class ArtistProjection(_FrozenModel):
     genre_claims: tuple[GenreMembershipClaim, ...] = Field(default=(), max_length=128)
 
 
+class ArtistCreditMemberClaim(_FrozenModel):
+    """Identify one ordered credited artist without name-based reconciliation."""
+
+    artist_identity: ExternalIdentity
+    artist_name: str = Field(min_length=1)
+    credited_name: str = Field(min_length=1)
+    join_phrase: str = Field(default="", max_length=100)
+
+
+class ReleaseGroupProjection(_FrozenModel):
+    """Represent the bounded MusicBrainz album-level metadata used by discovery."""
+
+    projection_kind: Literal["release_group"] = "release_group"
+    entity_kind: Literal["release_group"] = "release_group"
+    external_id: ExternalId
+    names: tuple[NameClaim, ...] = Field(min_length=1)
+    identifiers: tuple[IdentifierClaim, ...] = Field(min_length=1)
+    primary_type: str | None = None
+    secondary_types: tuple[str, ...] = Field(default=(), max_length=32)
+    first_release_date: str | None = Field(default=None, max_length=10)
+    artist_credit: tuple[ArtistCreditMemberClaim, ...] = Field(min_length=1, max_length=128)
+    genre_claims: tuple[GenreMembershipClaim, ...] = Field(default=(), max_length=128)
+
+
+class RecordingProjection(_FrozenModel):
+    """Represent MusicBrainz recording identity and discovery metadata, never media."""
+
+    projection_kind: Literal["recording"] = "recording"
+    entity_kind: Literal["recording"] = "recording"
+    external_id: ExternalId
+    names: tuple[NameClaim, ...] = Field(min_length=1)
+    identifiers: tuple[IdentifierClaim, ...] = Field(min_length=1)
+    disambiguation: str | None = None
+    first_release_date: str | None = Field(default=None, max_length=10)
+    artist_credit: tuple[ArtistCreditMemberClaim, ...] = Field(min_length=1, max_length=128)
+    genre_claims: tuple[GenreMembershipClaim, ...] = Field(default=(), max_length=128)
+
+
 class ArtistCoListenProjection(_FrozenModel):
     """Represent source evidence before any similarity function or weighting."""
 
@@ -146,7 +184,12 @@ class ArtistCoListenRunProjection(_FrozenModel):
 
 
 type CatalogProjection = (
-    ArtistProjection | EntityProjection | ArtistCoListenProjection | ArtistCoListenRunProjection
+    ArtistProjection
+    | ReleaseGroupProjection
+    | RecordingProjection
+    | EntityProjection
+    | ArtistCoListenProjection
+    | ArtistCoListenRunProjection
 )
 
 

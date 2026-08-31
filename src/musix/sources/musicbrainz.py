@@ -9,18 +9,21 @@ import unicodedata
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import BinaryIO, Literal, Protocol
+from typing import BinaryIO, Literal, Protocol, override
 from uuid import UUID
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from musix.models.catalog import (
+    ArtistCreditMemberClaim,
     ArtistProjection,
     ExternalIdentity,
     GenreMembershipClaim,
     IdentifierClaim,
     NameClaim,
+    RecordingProjection,
+    ReleaseGroupProjection,
 )
 from musix.models.pipeline import (
     ParsedSourceRecord,
@@ -38,6 +41,8 @@ MUSICBRAINZ_MIN_REQUEST_INTERVAL_SECONDS = 1.0
 YEAR_TEXT_LENGTH = 4
 MAX_YEAR = 9999
 MAX_GENRE_CLAIMS_PER_ARTIST = 128
+MAX_ARTIST_CREDIT_MEMBERS = 128
+MAX_SECONDARY_TYPES = 32
 
 
 class MusicBrainzAdapterError(SourceAdapterError):
@@ -133,6 +138,25 @@ class MusicBrainzReleaseGroupReference(BaseModel):
     title: str = Field(min_length=1)
 
 
+class MusicBrainzCreditArtist(BaseModel):
+    """Parse an exact artist identity nested in an artist credit."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    id: UUID
+    name: str = Field(min_length=1)
+
+
+class MusicBrainzArtistCredit(BaseModel):
+    """Parse one ordered MusicBrainz artist-credit component."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    artist: MusicBrainzCreditArtist
+    name: str = Field(min_length=1)
+    joinphrase: str = Field(default="", max_length=100)
+
+
 class MusicBrainzReleaseGroup(BaseModel):
     """Parse album identity and direct genres from a release group document."""
 
@@ -141,9 +165,30 @@ class MusicBrainzReleaseGroup(BaseModel):
     id: UUID
     title: str = Field(min_length=1)
     primary_type: str | None = Field(default=None, alias="primary-type")
-    secondary_types: tuple[str, ...] = Field(default=(), alias="secondary-types")
+    secondary_types: tuple[str, ...] = Field(
+        default=(), alias="secondary-types", max_length=MAX_SECONDARY_TYPES
+    )
     first_release_date: str | None = Field(default=None, alias="first-release-date")
-    genres: tuple[MusicBrainzGenre, ...] = ()
+    artist_credit: tuple[MusicBrainzArtistCredit, ...] = Field(
+        default=(), alias="artist-credit", max_length=MAX_ARTIST_CREDIT_MEMBERS
+    )
+    genres: tuple[MusicBrainzGenre, ...] = Field(default=(), max_length=128)
+
+
+class MusicBrainzRecording(BaseModel):
+    """Parse only product metadata from an official recording document."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    id: UUID
+    title: str = Field(min_length=1)
+    disambiguation: str = ""
+    first_release_date: str | None = Field(default=None, alias="first-release-date")
+    artist_credit: tuple[MusicBrainzArtistCredit, ...] = Field(
+        default=(), alias="artist-credit", max_length=MAX_ARTIST_CREDIT_MEMBERS
+    )
+    isrcs: tuple[str, ...] = Field(default=(), max_length=256)
+    genres: tuple[MusicBrainzGenre, ...] = Field(default=(), max_length=128)
 
 
 class MusicBrainzRelease(BaseModel):
@@ -501,12 +546,18 @@ def _iter_raw_records(stream: BinaryLineReader, limits: SourceLimits) -> Iterato
         )
 
 
-def _iter_raw_artist_archive(path: Path, limits: SourceLimits) -> Iterator[_RawRecord]:
+def _iter_raw_archive(
+    path: Path,
+    limits: SourceLimits,
+    *,
+    member_name: str,
+) -> Iterator[_RawRecord]:
     require_metadata_file(path)
     archive_size = path.stat().st_size
     if archive_size > limits.max_archive_bytes:
         raise MusicBrainzAdapterError("MusicBrainz archive exceeds max_archive_bytes")
-    found_artist = False
+    expected_member = PurePosixPath("mbdump") / member_name
+    found_member = False
     schema_number: str | None = None
     adapter_limits = AdapterLimits.model_validate(limits.model_dump())
     with tarfile.open(path, mode="r|xz") as archive:
@@ -519,19 +570,25 @@ def _iter_raw_artist_archive(path: Path, limits: SourceLimits) -> Iterator[_RawR
             try:
                 if member_path == PurePosixPath("JSON_DUMPS_SCHEMA_NUMBER"):
                     schema_number = stream.read(32).decode("ascii").strip()
-                elif member_path == PurePosixPath("mbdump/artist"):
-                    if found_artist:
-                        raise MusicBrainzAdapterError("MusicBrainz archive repeats mbdump/artist")
-                    found_artist = True
+                elif member_path == expected_member:
+                    if found_member:
+                        raise MusicBrainzAdapterError(
+                            f"MusicBrainz archive repeats {expected_member}"
+                        )
+                    found_member = True
                     yield from _iter_raw_records(stream, limits)
             finally:
                 stream.close()
-    if not found_artist:
-        raise MusicBrainzAdapterError("MusicBrainz archive has no mbdump/artist member")
+    if not found_member:
+        raise MusicBrainzAdapterError(f"MusicBrainz archive has no {expected_member} member")
     if schema_number != JSON_DUMP_SCHEMA:
         raise MusicBrainzAdapterError(
             f"unsupported MusicBrainz JSON dump schema: {schema_number!r}"
         )
+
+
+def _iter_raw_artist_archive(path: Path, limits: SourceLimits) -> Iterator[_RawRecord]:
+    yield from _iter_raw_archive(path, limits, member_name="artist")
 
 
 def iter_artist_jsonl(stream: BinaryLineReader, limits: AdapterLimits) -> Iterator[AdaptedArtist]:
@@ -821,15 +878,6 @@ def _artist_projection(artist: MusicBrainzArtist) -> ArtistProjection:
     identifiers.extend(
         IdentifierClaim(type_key="ipi", namespace="ipi", value=value) for value in artist.ipis
     )
-    genre_claims = tuple(
-        GenreMembershipClaim(
-            source_identity=ExternalIdentity(namespace="musicbrainz", value=str(genre.id)),
-            name=genre.name,
-            support_count=genre.count,
-        )
-        for genre in sorted(artist.genres, key=lambda item: str(item.id))
-        if genre.count is not None and genre.count > 0
-    )
     return ArtistProjection(
         external_id=artist_id,
         names=tuple(names),
@@ -838,7 +886,77 @@ def _artist_projection(artist: MusicBrainzArtist) -> ArtistProjection:
         disambiguation=artist.disambiguation or None,
         begin_year=_year(artist.life_span.begin if artist.life_span is not None else None),
         end_year=_year(artist.life_span.end if artist.life_span is not None else None),
-        genre_claims=genre_claims,
+        genre_claims=_genre_projection(artist.genres),
+    )
+
+
+def _credit_projection(
+    credit: tuple[MusicBrainzArtistCredit, ...],
+) -> tuple[ArtistCreditMemberClaim, ...]:
+    return tuple(
+        ArtistCreditMemberClaim(
+            artist_identity=ExternalIdentity(namespace="musicbrainz", value=str(member.artist.id)),
+            artist_name=member.artist.name,
+            credited_name=member.name,
+            join_phrase=member.joinphrase,
+        )
+        for member in credit
+    )
+
+
+def _genre_projection(genres: tuple[MusicBrainzGenre, ...]) -> tuple[GenreMembershipClaim, ...]:
+    return tuple(
+        GenreMembershipClaim(
+            source_identity=ExternalIdentity(namespace="musicbrainz", value=str(genre.id)),
+            name=genre.name,
+            support_count=genre.count,
+        )
+        for genre in sorted(genres, key=lambda item: str(item.id))
+        if genre.count is not None and genre.count > 0
+    )
+
+
+def _release_group_projection(release_group: MusicBrainzReleaseGroup) -> ReleaseGroupProjection:
+    source_id = str(release_group.id)
+    return ReleaseGroupProjection(
+        external_id=source_id,
+        names=(NameClaim(kind="primary", value=release_group.title),),
+        identifiers=(
+            IdentifierClaim(
+                type_key="musicbrainz_release_group_id",
+                namespace="musicbrainz",
+                value=source_id,
+            ),
+        ),
+        primary_type=release_group.primary_type,
+        secondary_types=release_group.secondary_types,
+        first_release_date=release_group.first_release_date,
+        artist_credit=_credit_projection(release_group.artist_credit),
+        genre_claims=_genre_projection(release_group.genres),
+    )
+
+
+def _recording_projection(recording: MusicBrainzRecording) -> RecordingProjection:
+    source_id = str(recording.id)
+    identifiers = [
+        IdentifierClaim(
+            type_key="musicbrainz_recording_id",
+            namespace="musicbrainz",
+            value=source_id,
+        )
+    ]
+    identifiers.extend(
+        IdentifierClaim(type_key="isrc", namespace="isrc", value=value)
+        for value in sorted(set(recording.isrcs))
+    )
+    return RecordingProjection(
+        external_id=source_id,
+        names=(NameClaim(kind="primary", value=recording.title),),
+        identifiers=tuple(identifiers),
+        disambiguation=recording.disambiguation or None,
+        first_release_date=recording.first_release_date,
+        artist_credit=_credit_projection(recording.artist_credit),
+        genre_claims=_genre_projection(recording.genres),
     )
 
 
@@ -895,3 +1013,101 @@ class MusicBrainzArtistDumpAdapter:
                     byte_length=raw.byte_length,
                     reason=f"invalid MusicBrainz artist JSON: {error}",
                 )
+
+
+class _MusicBrainzEntityDumpAdapter:
+    member_name: str
+    projection_name: str
+    model: type[MusicBrainzReleaseGroup] | type[MusicBrainzRecording]
+
+    @property
+    def version(self) -> str:
+        return "1"
+
+    def supports(self, source: DownloadSource) -> bool:
+        return source.compression == "tar.xz" and source.expected_content_type == (
+            "application/octet-stream"
+        )
+
+    def _project(
+        self, value: MusicBrainzReleaseGroup | MusicBrainzRecording
+    ) -> ReleaseGroupProjection | RecordingProjection:
+        raise NotImplementedError
+
+    def iter_records(
+        self,
+        path: Path,
+        limits: SourceLimits,
+        *,
+        start_after: int,
+    ) -> Iterator[SourceRecord]:
+        for ordinal, raw in enumerate(
+            _iter_raw_archive(path, limits, member_name=self.member_name)
+        ):
+            if ordinal <= start_after:
+                continue
+            if raw.payload is None:
+                yield RejectedSourceRecord(
+                    ordinal=ordinal,
+                    exact_sha256=raw.sha256,
+                    byte_length=raw.byte_length,
+                    reason=f"MusicBrainz {self.projection_name} record exceeds max_record_bytes",
+                )
+                continue
+            try:
+                value = self.model.model_validate_json(raw.payload)
+                yield ParsedSourceRecord(
+                    ordinal=ordinal,
+                    exact_sha256=raw.sha256,
+                    byte_length=raw.byte_length,
+                    projection=self._project(value),
+                )
+            except ValueError as error:
+                yield RejectedSourceRecord(
+                    ordinal=ordinal,
+                    exact_sha256=raw.sha256,
+                    byte_length=raw.byte_length,
+                    reason=f"invalid MusicBrainz {self.projection_name} JSON: {error}",
+                )
+
+
+class MusicBrainzReleaseGroupDumpAdapter(_MusicBrainzEntityDumpAdapter):
+    """Project official release-group metadata and explicit credits."""
+
+    member_name = "release-group"
+    projection_name = "release group"
+    model = MusicBrainzReleaseGroup
+
+    @property
+    def key(self) -> str:
+        """Return the release-group manifest adapter key."""
+        return "musicbrainz_release_group_json_dump_v1"
+
+    @override
+    def _project(
+        self, value: MusicBrainzReleaseGroup | MusicBrainzRecording
+    ) -> ReleaseGroupProjection:
+        if not isinstance(value, MusicBrainzReleaseGroup):
+            raise TypeError("release-group adapter parsed the wrong model")
+        return _release_group_projection(value)
+
+
+class MusicBrainzRecordingDumpAdapter(_MusicBrainzEntityDumpAdapter):
+    """Project official recording metadata without duration or media fields."""
+
+    member_name = "recording"
+    projection_name = "recording"
+    model = MusicBrainzRecording
+
+    @property
+    def key(self) -> str:
+        """Return the recording manifest adapter key."""
+        return "musicbrainz_recording_json_dump_v1"
+
+    @override
+    def _project(
+        self, value: MusicBrainzReleaseGroup | MusicBrainzRecording
+    ) -> RecordingProjection:
+        if not isinstance(value, MusicBrainzRecording):
+            raise TypeError("recording adapter parsed the wrong model")
+        return _recording_projection(value)
