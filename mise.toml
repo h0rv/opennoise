@@ -1,0 +1,28 @@
+[tools]
+python = "3.14.7"
+uv = "0.12.5"
+
+[env]
+UV_LINK_MODE = "hardlink"
+UV_PROJECT_ENVIRONMENT = ".venv"
+
+[tasks.sync]
+description = "Create or update the locked environment"
+run = "uv sync --locked"
+sources = ["pyproject.toml", "uv.lock"]
+outputs = [".venv/pyvenv.cfg"]
+
+[tasks.dev]
+description = "Run the local demo"
+depends = ["sync"]
+run = "uv run poe dev"
+
+[tasks.check]
+description = "Run all project checks"
+depends = ["sync"]
+run = "uv run poe check"
+
+[tasks.bootstrap]
+description = "Load the pinned Every Noise snapshot"
+depends = ["sync"]
+run = "uv run poe bootstrap"

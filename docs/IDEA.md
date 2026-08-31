@@ -1,52 +1,47 @@
 # Musix
 
-An open reproduction of https://everynoise.com/ built on open data.
+Musix is a local reproduction of the Every Noise genre map. The first demo displays 6,291 microgenres from a pinned and verified snapshot. Search and map focus work without a client application framework.
 
-## Tech Stack
+## Stack
 
-Minimal, grug-brained stack:
+The project uses Python 3.13 or newer and uv. mise pins Python and uv, while Poe runs project tasks.
 
-* System dependency management: mise
-* Language: Rust
-* Web framework: https://github.com/tokio-rs/topcoat - static where possible, HTMX 4.0 for reactivity
-* Databse: SQLite (identify the appropiate, FOSS, and up to date plugins/extensions for AI tooling: vector search, etc.)
+Litestar provides asynchronous routes and application lifecycle. Jinja renders HTML and the SVG map on the server. The app self-hosts exactly htmx 4.0.0 for search and map fragment replacement. It does not use Alpine or custom JavaScript.
 
-Strict static analysis:
+Pydantic parses settings, source records, import options, catalog values, and web response models. Async routes use a small bounded worker boundary around short standard library sqlite3 operations. Each operation owns its connection. The project has no ORM.
 
-* Identify the strictest Rust lint and static analysis tools that catch bugs before they happen, so we can work on the interesting bits and ensure the code just works.
+Ruff enables all rules, with documented exceptions for rules that conflict with its formatter or this project's error policy. ty treats all supported diagnostics as errors.
 
----
+## Storage
 
-## Schemas
+One SQLite database and one baseline migration store the catalog, search index, published layout, rights, provenance, ingest attempts, and quarantine events. Source bytes stay in an external content addressed vault. Raw bytes and local source paths do not enter SQLite.
 
-Let's use open data formats and schemas, that are modern, up to date, and flexible for late 2026.
-
-We should store:
-
-* Genres
-* Subgenres
-* Artists
-* Albums
-* Songs
-
-Each of these, should be able to be broken down into individual embeddings and context.
-
-## Machine Learning
-
-This is the interesting part and requires the most research.
-
-Read up on the author of https://everynoise.com/ blog posts and other resources.
+SQLite uses foreign keys, a five second busy timeout, write ahead logging, and normal synchronous mode. Each web and import operation opens its own short lived connection and completes one whole database operation before the worker returns.
 
 ## Data
 
-Use open data where appropiate. Understand if we can scrape https://everynoise.com/ as a starting point.
+The initial map uses a pinned snapshot of the Every Noise reproduction by Quint T. The adapter verifies the exact byte count and SHA256 before parsing. It keeps genre names, source identifiers, coordinates, colors, and display sizes. It removes preview links, Spotify identifiers, track names, and sample artist names.
 
-Anna's archive also has exceptional music data and metadata to use.
+The source policy is user authorized and local only. It allows normalization, local search, display, embedding, and training. It denies export. Running the bootstrap twice produces the same 6,291 entities and layout points.
 
-Identify other resources too.
+MusicBrainz, Wikidata, and ListenBrainz adapters provide public metadata for later enrichment. Each adapter emits separate typed source claims. Enrichment must not overwrite the historical Every Noise coordinates.
 
-## MVP
+## Pipeline
 
-* Visual, 2D mapping of music genres and subgenres, as detailed as possible.
-* Be able to plugin artist names, to identify where they land on the map, and see similar artists to them (for example: Aphex Twin, Boards of Canada, and Four Tet should be similar)
+The importer hashes every artifact, stores it in the external vault, parses bounded JSONL records, and records each attempt. Limits cover artifact bytes, record bytes, record count, nesting depth, and run time. Invalid records go to quarantine. Accepted records produce normalized entities, names, identifiers, search documents, and provenance links.
 
+The bootstrap then publishes a versioned layout. Building a layout does not change the current map until the run is complete and selected.
+
+## Machine learning
+
+The first demo is metadata first and does not process audio. Later work can use genre relationships, artist links, listening co-occurrence, and text metadata to learn embeddings. Each training choice, split, metric, and evaluation result should be reviewed with the user before it becomes part of the default pipeline.
+
+Small metadata models and embedding experiments are viable on an older laptop. Start with sparse graph methods, truncated singular value decomposition, or small CPU models. Audio models and large end-to-end training are deferred.
+
+## Interface
+
+The main page contains only the map, search, and a small entity count. Jinja renders the SVG points. CSS handles hover, keyboard focus, and the selected point. htmx returns search results and replaces the map fragment when the user selects one.
+
+## Tasks
+
+`uv run poe bootstrap` downloads, verifies, imports, and publishes the initial map. `uv run poe dev` starts the local server. `uv run poe check` runs formatting verification, Ruff, ty, tests, and schema validation.

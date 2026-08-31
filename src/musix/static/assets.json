@@ -1,0 +1,11 @@
+{
+  "htmx": {
+    "version": "4.0.0",
+    "file": "htmx-4.0.0.min.js",
+    "source": "https://unpkg.com/htmx.org@4.0.0/dist/htmx.min.js",
+    "sha256": "a26e451aff90859c68d3873823c1b1982bbcf03b89df2445b3daf663e14d93d6",
+    "bytes": 36717,
+    "source_sha256": "e484d9171a9db30a39c8f16e3d709d4137f3211c659f8e6125816635033d593f",
+    "note": "The vendored file adds one trailing newline to the exact distribution bytes."
+  }
+}

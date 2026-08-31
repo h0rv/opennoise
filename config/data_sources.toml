@@ -1,0 +1,472 @@
+manifest_version = 1
+verified_at = "2026-08-30T23:40:00Z"
+default_user_agent = "musix-data-bootstrap/0.1 (local research; contact required before network ingest)"
+download_root = "data/source-cache"
+adapter_output_root = "data/staging"
+deny_unlisted_uses = true
+
+[use_names]
+normalize = "Create normalized local catalog facts."
+local_search = "Index normalized text for local search."
+display = "Display normalized values in the local application."
+embed = "Create local vectors from the source."
+train = "Train or tune a model locally."
+export_metadata = "Export normalized metadata from this installation."
+export_raw = "Export the retrieved artifact."
+redistribute = "Publish or send either raw or derived source data."
+
+[[sources]]
+id = "enao_quint_legacy_map_2025"
+priority = 10
+enabled_by_default = true
+adapter = "enao_html_map_v1"
+role = "initial_genre_names_and_legacy_display_coordinates"
+snapshot = "git:e80265defc743b307586ac0a7a5c72d2dacdf409"
+url = "https://raw.githubusercontent.com/quint-t/Every-Noise-at-Once/e80265defc743b307586ac0a7a5c72d2dacdf409/index.html"
+discovery_url = "https://github.com/quint-t/Every-Noise-at-Once"
+expected_content_type = "text/plain; charset=utf-8"
+compression = "none"
+expected_bytes = 3789046
+checksum_algorithm = "sha256"
+checksum = "1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180"
+expected_records = 6291
+update_cadence = "frozen; repository last commit 2025-01-13"
+data_license = "no_license_declared"
+license_url = ""
+rights_classification = "user_authorized_local"
+local_only = true
+extract_fields = ["item_id", "genre_name", "left_px", "top_px", "color_hex", "font_size_percent"]
+discard_fields = ["preview_url", "spotify_id", "spotify_url", "sample_artist", "sample_track", "title"]
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = false
+export_raw = false
+redistribute = false
+
+[[sources]]
+id = "enao_watch_coordinates_2021"
+priority = 20
+enabled_by_default = true
+adapter = "enao_watch_csv_v1"
+role = "licensed_coordinate_cross_check_and_fallback"
+snapshot = "git:4d3febe3762a555ac197524eea97a0f2825652de"
+url = "https://raw.githubusercontent.com/AyrtonB/EveryNoise-Watch/4d3febe3762a555ac197524eea97a0f2825652de/data/genre_attrs.csv"
+manifest_url = "https://raw.githubusercontent.com/AyrtonB/EveryNoise-Watch/4d3febe3762a555ac197524eea97a0f2825652de/data/datapackage.json"
+discovery_url = "https://github.com/AyrtonB/EveryNoise-Watch"
+expected_content_type = "text/plain; charset=utf-8"
+compression = "none"
+expected_bytes = 178804
+checksum_algorithm = "sha256"
+checksum = "21d9e576fd3f0ae0ec2db46f72d20043f3aafd1ec84d8c14da35e58ecc5ca367"
+expected_records = 5453
+update_cadence = "frozen; repository last commit 2021-05-21"
+data_license = "CC-BY-SA-4.0 declared in datapackage.json for genre_attrs.csv"
+license_url = "https://creativecommons.org/licenses/by-sa/4.0/"
+rights_classification = "user_authorized_local"
+local_only = true
+extract_fields = ["genre", "x", "y", "hex_colour"]
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = false
+export_raw = false
+redistribute = false
+
+[[sources]]
+id = "enao_scottsdale_names_2026"
+priority = 30
+enabled_by_default = true
+adapter = "enao_names_json_v1"
+role = "name_coverage_cross_check"
+snapshot = "git:e604552252dbebb83a99a3d5a608c72e2886dc49"
+url = "https://raw.githubusercontent.com/Scottsdaaale/List-of-All-Spotify-Genres/e604552252dbebb83a99a3d5a608c72e2886dc49/formats/genres.json"
+discovery_url = "https://github.com/Scottsdaaale/List-of-All-Spotify-Genres"
+expected_content_type = "text/plain; charset=utf-8"
+compression = "none"
+expected_bytes = 120730
+checksum_algorithm = "sha256"
+checksum = "9e9834811bdadfa90f19653a4ad522a4e8b5ac1a3321c1d1ac6b7e2738a73712"
+expected_records = 6043
+update_cadence = "manual; repository last commit 2026-05-02"
+data_license = "no_license_declared"
+license_url = ""
+rights_classification = "user_authorized_local"
+local_only = true
+extract_fields = ["genre_name"]
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = false
+export_raw = false
+redistribute = false
+
+[[sources]]
+id = "enao_official_public_mirror"
+priority = 40
+enabled_by_default = false
+adapter = "enao_html_map_v1"
+role = "manual_compatibility_reference_only"
+snapshot = "historical map through 2023-11-19"
+url = "https://furia.com/everynoise_public/"
+discovery_url = "https://furia.com/everynoise_public/"
+expected_content_type = "text/html"
+compression = "none"
+expected_bytes = 0
+checksum_algorithm = "none"
+checksum = ""
+expected_records = 6291
+update_cadence = "frozen"
+data_license = "no_license_declared"
+license_url = ""
+rights_classification = "user_authorized_local"
+local_only = true
+retrieval_note = "The page was reachable in a browser on 2026-08-30 but returned HTTP 403 to curl. Do not automate around the block."
+normalize = false
+local_search = false
+display = false
+embed = false
+train = false
+export_metadata = false
+export_raw = false
+redistribute = false
+
+[[sources]]
+id = "musicbrainz_json_artist_20260829"
+priority = 100
+enabled_by_default = false
+adapter = "musicbrainz_artist_json_dump_v1"
+role = "artist_identity_alias_relationship_import"
+snapshot = "20260829-001001"
+url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/20260829-001001/artist.tar.xz"
+discovery_url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/LATEST"
+checksum_url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/20260829-001001/SHA256SUMS"
+expected_content_type = "application/octet-stream"
+compression = "tar.xz"
+payload_format = "MusicBrainz JSON records"
+expected_bytes = 1695597804
+checksum_algorithm = "sha256"
+checksum = "396fb476984234dd68650c59219d5e0bd0d900abccd6f4e3fe1a6160918ffe1d"
+update_cadence = "twice weekly"
+data_license = "mixed_by_field: core CC0; tags and other supplementary fields CC-BY-NC-SA-3.0"
+license_url = "https://musicbrainz.org/doc/About/Data_License"
+rights_classification = "restricted_research"
+local_only = false
+normalize = true
+local_search = true
+display = true
+embed = false
+train = false
+export_metadata = false
+export_raw = false
+redistribute = false
+
+[[sources]]
+id = "musicbrainz_postgres_core_20260829"
+priority = 110
+enabled_by_default = false
+adapter = "musicbrainz_postgres_core_v1"
+role = "complete_cc0_identity_backbone"
+snapshot = "20260829-002439"
+url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/20260829-002439/mbdump.tar.bz2"
+discovery_url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/LATEST"
+checksum_url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/20260829-002439/SHA256SUMS"
+expected_content_type = "application/octet-stream"
+compression = "tar.bz2"
+payload_format = "MusicBrainz PostgreSQL table files"
+expected_bytes = 7480013679
+checksum_algorithm = "sha256"
+checksum = "6e6bae8db4f8be39cc29c510b0e55d44cf923fbbb09393024655789b66a76a85"
+update_cadence = "twice weekly"
+data_license = "CC0-1.0"
+license_url = "https://musicbrainz.org/doc/MusicBrainz_Database/Download"
+rights_classification = "public_domain"
+local_only = false
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = true
+export_raw = true
+redistribute = true
+
+[[sources]]
+id = "musicbrainz_postgres_derived_20260829"
+priority = 120
+enabled_by_default = false
+adapter = "musicbrainz_postgres_derived_v1"
+role = "genre_and_tag_associations"
+snapshot = "20260829-002439"
+url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/20260829-002439/mbdump-derived.tar.bz2"
+discovery_url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/LATEST"
+checksum_url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/20260829-002439/SHA256SUMS"
+expected_content_type = "application/octet-stream"
+compression = "tar.bz2"
+payload_format = "MusicBrainz PostgreSQL table files"
+expected_bytes = 513721489
+checksum_algorithm = "sha256"
+checksum = "646d6edadb0ec0bc7fdcb530b8092ab9510c2ad2ec32825849e01a55f7e8cc78"
+update_cadence = "twice weekly"
+data_license = "CC-BY-NC-SA-3.0"
+license_url = "https://musicbrainz.org/doc/MusicBrainz_Database/Download"
+rights_classification = "restricted_research"
+local_only = true
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = false
+export_raw = false
+redistribute = false
+
+[[sources]]
+id = "wikidata_music_genre_sparql"
+priority = 200
+enabled_by_default = true
+adapter = "wikidata_sparql_genres_v1"
+role = "cc0_genre_alias_hierarchy_origin_and_crosswalk_seed"
+snapshot = "query_result_must_store_retrieval_time_and_sha256"
+url = "https://query.wikidata.org/sparql"
+discovery_url = "https://www.wikidata.org/wiki/Wikidata:Data_access"
+entity_data_url_template = "https://www.wikidata.org/wiki/Special:EntityData/{qid}.json"
+expected_content_type = "application/sparql-results+json"
+compression = "none"
+expected_bytes = 0
+checksum_algorithm = "sha256_after_retrieval"
+checksum = ""
+update_cadence = "live service; pin each response locally"
+data_license = "CC0-1.0 for structured data"
+license_url = "https://www.wikidata.org/wiki/Wikidata:Licensing"
+rights_classification = "public_domain"
+local_only = false
+query = '''
+SELECT DISTINCT ?genre ?genreLabel ?genreAltLabel ?parent ?parentLabel
+                ?origin ?originLabel ?inception ?musicbrainzGenreId ?everyNoiseId
+WHERE {
+  ?genre wdt:P31/wdt:P279* wd:Q188451.
+  OPTIONAL { ?genre wdt:P279 ?parent. }
+  OPTIONAL { ?genre wdt:P495 ?origin. }
+  OPTIONAL { ?genre wdt:P571 ?inception. }
+  OPTIONAL { ?genre wdt:P8052 ?musicbrainzGenreId. }
+  OPTIONAL { ?genre wdt:P9881 ?everyNoiseId. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+ORDER BY ?genre
+'''
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = true
+export_raw = true
+redistribute = true
+
+[[sources]]
+id = "wikidata_all_json_20260824"
+priority = 210
+enabled_by_default = false
+adapter = "wikidata_json_dump_v1"
+role = "offline_fallback_for_large_repeatable_imports"
+snapshot = "20260824"
+url = "https://dumps.wikimedia.org/wikidatawiki/entities/20260824/wikidata-20260824-all.json.bz2"
+discovery_url = "https://dumps.wikimedia.org/wikidatawiki/entities/"
+checksum_url = "https://dumps.wikimedia.org/wikidatawiki/entities/20260824/wikidata-20260824-sha1sums.txt"
+expected_content_type = "application/octet-stream"
+compression = "bz2"
+payload_format = "one JSON array containing Wikidata entities"
+expected_bytes = 102835325297
+checksum_algorithm = "sha1"
+checksum = "d951e647609249d1dc2e351ac5590d631d78008e"
+update_cadence = "several times per week; each entity format may finish on a different date"
+data_license = "CC0-1.0 for structured data"
+license_url = "https://www.wikidata.org/wiki/Wikidata:Licensing"
+rights_classification = "public_domain"
+local_only = false
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = true
+export_raw = true
+redistribute = true
+
+[[sources]]
+id = "wikidata_truthy_rdf_20260826"
+priority = 220
+enabled_by_default = false
+adapter = "wikidata_truthy_ntriples_v1"
+role = "smaller_offline_fallback_without_deprecated_or_non_truthy_statements"
+snapshot = "20260826"
+url = "https://dumps.wikimedia.org/wikidatawiki/entities/20260826/wikidata-20260826-truthy-BETA.nt.bz2"
+discovery_url = "https://dumps.wikimedia.org/wikidatawiki/entities/"
+checksum_url = "https://dumps.wikimedia.org/wikidatawiki/entities/20260826/wikidata-20260826-sha1sums.txt"
+expected_content_type = "application/octet-stream"
+compression = "bz2"
+payload_format = "N-Triples truthy RDF"
+expected_bytes = 43329477419
+checksum_algorithm = "sha1"
+checksum = "84766f420cf03af0e307fc48ed466f9a0c25bae9"
+update_cadence = "several times per week; each entity format may finish on a different date"
+data_license = "CC0-1.0 for structured data"
+license_url = "https://www.wikidata.org/wiki/Wikidata:Licensing"
+rights_classification = "public_domain"
+local_only = false
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = true
+export_raw = true
+redistribute = true
+
+[[sources]]
+id = "listenbrainz_sample_20250610"
+priority = 300
+enabled_by_default = false
+adapter = "listenbrainz_sample_v1"
+role = "smallest_official_listen_format_and_cooccurrence_fixture"
+snapshot = "20250610-094311"
+url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/sample/listenbrainz-sample-20250610-094311-full/listenbrainz-sample-dump-20250610-094311.tar.zst"
+discovery_url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/sample/"
+checksum_url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/sample/listenbrainz-sample-20250610-094311-full/listenbrainz-sample-dump-20250610-094311.tar.zst.sha256"
+expected_content_type = "application/octet-stream"
+compression = "tar.zst"
+payload_format = "ListenBrainz sample listen records"
+expected_bytes = 246734240
+checksum_algorithm = "sha256"
+checksum = "509282544c50b324db8dfb4e33a5af4012f514c153da077a0fb07f093956168b"
+update_cadence = "irregular sample; last published 2025-06-10"
+data_license = "CC0-1.0 for public user listen data and text"
+license_url = "https://listenbrainz.org/terms-of-service/"
+rights_classification = "public_domain"
+local_only = false
+normalize = true
+local_search = false
+display = false
+embed = true
+train = true
+export_metadata = true
+export_raw = true
+redistribute = true
+
+[[sources]]
+id = "listenbrainz_full_spark_20260712"
+priority = 310
+enabled_by_default = false
+adapter = "listenbrainz_spark_full_v1"
+role = "full_local_listen_graph_after_sample_validation"
+snapshot = "2593-20260712-000004-full"
+url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/fullexport/listenbrainz-dump-2593-20260712-000004-full/listenbrainz-spark-dump-2593-20260712-000004-full.tar"
+discovery_url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/fullexport/"
+checksum_url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/fullexport/listenbrainz-dump-2593-20260712-000004-full/listenbrainz-spark-dump-2593-20260712-000004-full.tar.sha256"
+expected_content_type = "application/octet-stream"
+compression = "tar"
+payload_format = "monthly JSON files for Spark"
+expected_bytes = 205073162240
+checksum_algorithm = "sha256"
+checksum = "17cf9ec7e528265d84d536bf89a8e58aa01dda2b8834a3a515e54130be8ba52a"
+update_cadence = "normally 1st and 15th; current mirror full dump is 2026-07-12"
+data_license = "CC0-1.0 for public user listen data and text"
+license_url = "https://listenbrainz.org/terms-of-service/"
+rights_classification = "public_domain"
+local_only = false
+normalize = true
+local_search = false
+display = false
+embed = true
+train = true
+export_metadata = true
+export_raw = true
+redistribute = true
+
+[[sources]]
+id = "listenbrainz_incremental_20260830"
+priority = 320
+enabled_by_default = false
+adapter = "listenbrainz_incremental_v1"
+role = "daily_delta_after_a_compatible_full_dump"
+snapshot = "2644-20260830-000003-incremental"
+url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/incremental/listenbrainz-dump-2644-20260830-000003-incremental/listenbrainz-listens-dump-2644-20260830-000003-incremental.tar.zst"
+discovery_url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/incremental/"
+checksum_url = "https://ftp.musicbrainz.org/pub/musicbrainz/listenbrainz/incremental/listenbrainz-dump-2644-20260830-000003-incremental/listenbrainz-listens-dump-2644-20260830-000003-incremental.tar.zst.sha256"
+expected_content_type = "application/octet-stream"
+compression = "tar.zst"
+payload_format = "JSON Lines grouped by year and month"
+expected_bytes = 191259244
+checksum_algorithm = "sha256"
+checksum = "d98da81fd4552521ecda22d8242ddd0b9359afb8c302e2f7b4b24c31a2f41789"
+update_cadence = "daily"
+data_license = "CC0-1.0 for public user listen data and text"
+license_url = "https://listenbrainz.org/terms-of-service/"
+rights_classification = "public_domain"
+local_only = false
+retrieval_note = "Incrementals omit deleted listens. Refresh from a full dump for exact deletion state."
+normalize = true
+local_search = false
+display = false
+embed = true
+train = true
+export_metadata = true
+export_raw = true
+redistribute = true
+
+[evaluation]
+seed = 20260830
+unit = "canonical genre after alias resolution"
+minimum_total_genres = 240
+holdout_fraction = 0.20
+split_group = "canonical genre and all aliases"
+minimum_sources_per_ground_truth_edge = 2
+allow_enao_as_only_ground_truth = false
+
+[[evaluation.axes]]
+name = "genre_family"
+minimum_per_value = 12
+values = ["electronic_dance", "ambient_experimental", "hip_hop_rap", "pop", "rock", "punk_metal", "rnb_soul_funk", "jazz_blues", "classical", "folk_traditional", "country", "latin_caribbean", "african", "south_asian", "east_southeast_asian", "religious_spoken_children"]
+
+[[evaluation.axes]]
+name = "region"
+minimum_per_value = 10
+values = ["north_america", "latin_america_caribbean", "uk_ireland", "western_northern_europe", "central_eastern_europe", "middle_east_north_africa", "west_central_africa", "east_southern_africa", "south_asia", "east_asia", "southeast_asia", "oceania", "transnational_internet"]
+
+[[evaluation.axes]]
+name = "era"
+minimum_per_value = 20
+values = ["pre_1950", "1950_1969", "1970_1989", "1990_2009", "2010_2019", "2020_present", "unknown"]
+
+[[evaluation.slices]]
+name = "head_mid_tail"
+values = ["high_evidence", "medium_evidence", "low_evidence"]
+minimum_per_value = 30
+
+[[evaluation.slices]]
+name = "language_and_script"
+values = ["english_latin", "non_english_latin", "non_latin_script", "multiple_scripts"]
+minimum_per_value = 20
+
+[[evaluation.tasks]]
+name = "search"
+metrics = ["mrr_at_10", "recall_at_10", "zero_result_rate"]
+
+[[evaluation.tasks]]
+name = "genre_neighborhood"
+metrics = ["precision_at_10", "recall_at_10", "source_agreement", "explanation_coverage"]
+
+[[evaluation.tasks]]
+name = "artist_retrieval"
+metrics = ["mrr_at_20", "recall_at_20", "region_gap", "era_gap"]
+
+[[evaluation.tasks]]
+name = "map_layout"
+metrics = ["trustworthiness_at_10", "continuity_at_10", "seed_stability", "component_coverage"]

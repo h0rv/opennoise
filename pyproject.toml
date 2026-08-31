@@ -1,0 +1,78 @@
+[build-system]
+requires = ["uv_build>=0.8.22,<0.9"]
+build-backend = "uv_build"
+
+[project]
+name = "musix"
+version = "0.1.0"
+description = "A local map of music genres and artists"
+readme = "README.md"
+requires-python = ">=3.13"
+license = "MIT"
+dependencies = [
+    "httpx>=0.28.1",
+    "ijson>=3.5.1",
+    "jinja2==3.1.6",
+    "litestar==2.24.0",
+    "pydantic>=2.13.5",
+    "pydantic-settings>=2.15.0",
+    "uvicorn==0.52.4",
+    "zstandard>=0.25.0",
+]
+
+[project.scripts]
+musix = "musix.cli:main"
+
+[dependency-groups]
+dev = [
+    "poethepoet>=0.48.0",
+    "ruff",
+    "ty",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812", # Ruff formatter controls trailing commas.
+    "CPY001", # This personal project has no required copyright header.
+    "D203",   # Incompatible with D211.
+    "D213",   # Incompatible with D212.
+    "EM101",  # Typed boundary errors keep their local, specific messages.
+    "EM102",  # Typed boundary errors keep their local, specific messages.
+    "ISC001", # Ruff formatter can conflict with this rule.
+    "TRY003", # Boundary context belongs at the raise site, not in generic exception classes.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "D100", # Test module names describe their scope.
+    "D101", # Test case names describe their scope.
+    "D102", # Test method names describe behavior.
+    "PT009", # The project deliberately uses stdlib unittest, not pytest.
+    "PT027", # The project deliberately uses stdlib unittest, not pytest.
+    "S101", # Assertions are the test contract.
+]
+
+[tool.ty.environment]
+python-version = "3.13"
+
+[tool.ty.rules]
+all = "error"
+
+[tool.poe.tasks]
+format = "ruff format ."
+format-check = "ruff format --check ."
+lint = "ruff check ."
+typecheck = "ty check"
+test = "python -m unittest discover -s tests -v"
+schema = "python -m unittest tests.test_schema -v"
+"import" = "musix ingest"
+bootstrap = "musix bootstrap-everynoise"
+dev = "musix serve"
+
+[tool.poe.tasks.check]
+sequence = ["format-check", "lint", "typecheck", "test", "schema"]

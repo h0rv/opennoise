@@ -1,0 +1,4 @@
+{% for hit in hits %}
+<button class="result" type="button" hx-get="/fragments/map?focus={{ hit.entity_id }}"
+        hx-target="#map" hx-swap="outerHTML">{{ hit.name }}</button>
+{% endfor %}

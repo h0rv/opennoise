@@ -1,0 +1,20 @@
+<main id="map" aria-label="Music map" tabindex="0">
+<svg id="plot" role="img" aria-label="Genre and artist map" viewBox="{{ map.view_box }}">
+{% if map.points %}
+  {% for point in map.points %}
+  <a class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
+     href="/fragments/map?focus={{ point.entity_id }}" aria-label="{{ point.name }}"
+     hx-get="/fragments/map?focus={{ point.entity_id }}" hx-target="#map" hx-swap="outerHTML">
+    <circle cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"
+            fill="{{ point.color_hex or '#77776f' }}"></circle>
+    <text x="{{ point.x + 8 }}" y="{{ point.y + 3 }}">{{ point.name }}</text>
+  </a>
+  {% endfor %}
+{% else %}
+  <text x="50" y="50" class="empty" text-anchor="middle">∅</text>
+{% endif %}
+</svg>
+</main>
+{% if map.focused_entity_id is not none %}
+<aside id="results" hx-swap-oob="innerHTML"></aside>
+{% endif %}
