@@ -45,13 +45,13 @@ def _artist_line() -> bytes:
     ).encode()
 
 
-def _archive(path: Path, *, malformed: bool = False) -> None:
+def _archive(path: Path, *, malformed: bool = False, schema: str = "1") -> None:
     records = _artist_line() + b"\n"
     if malformed:
         records += b'{"id":false}\n'
     with tarfile.open(path, "w:xz") as archive:
         _add_member(archive, "mbdump/artist", records)
-        _add_member(archive, "JSON_DUMPS_SCHEMA_NUMBER", b"1\n")
+        _add_member(archive, "JSON_DUMPS_SCHEMA_NUMBER", f"{schema}\n".encode())
 
 
 def _source(path: Path) -> DownloadSource:
@@ -134,6 +134,42 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SourcePipelineTests(unittest.IsolatedAsyncioTestCase):
+    async def test_rolls_back_uncheckpointed_records_and_records_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "artist.tar.xz"
+            _archive(archive, schema="unsupported")
+            source = _source(archive)
+            vault = root / "vault"
+            object_path = vault / "raw" / "sha256" / source.checksum
+            object_path.parent.mkdir(parents=True)
+            object_path.write_bytes(archive.read_bytes())
+            options = PipelineOptions(
+                manifest_path=root / "manifest.toml",
+                source_id=source.id,
+                database_path=root / "catalog.sqlite",
+                vault_path=vault,
+                partition=DeterministicPartition(sha256_prefix=""),
+                checkpoint_every=100,
+            )
+
+            with self.assertRaises(ValueError):
+                await run_source_pipeline(
+                    source,
+                    AdapterRegistry((MusicBrainzArtistDumpAdapter(),)),
+                    ProjectorRegistry((ArtistProjector(),)),
+                    options,
+                )
+
+            with __import__("sqlite3").connect(options.database_path) as connection:
+                staged = connection.execute("SELECT count(*) FROM staged_records").fetchone()
+                failed = connection.execute(
+                    """SELECT event_kind, error_code FROM ingest_attempt_events
+                       ORDER BY id DESC LIMIT 1"""
+                ).fetchone()
+            self.assertEqual(staged, (0,))
+            self.assertEqual(failed, ("failed", "MusicBrainzAdapterError"))
+
     async def test_ingests_common_artist_projection_and_reuses_complete_attempt(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

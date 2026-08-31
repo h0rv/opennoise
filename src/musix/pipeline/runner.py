@@ -6,6 +6,7 @@ import sqlite3
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import NamedTuple, Never
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -151,6 +152,13 @@ class _RunContext(_FrozenModel):
     attempt_ref: str
     parser_ref: str
     reused: bool
+
+
+class _EventSpec(_FrozenModel):
+    stage: str
+    kind: str
+    error_code: str | None = None
+    error_text: str | None = None
 
 
 def _register_run(
@@ -309,15 +317,23 @@ def _last_counters(connection: sqlite3.Connection, attempt_id: int) -> dict[str,
 def _event(
     connection: sqlite3.Connection,
     attempt_id: int,
-    stage: str,
-    event_kind: str,
     counters: dict[str, int],
+    event: _EventSpec,
 ) -> None:
     connection.execute(
         """INSERT INTO ingest_attempt_events
-           (ingest_attempt_id, stage, event_kind, event_at, counters_json)
-           VALUES (?, ?, ?, ?, ?)""",
-        (attempt_id, stage, event_kind, _now(), json.dumps(counters, sort_keys=True)),
+           (ingest_attempt_id, stage, event_kind, event_at, counters_json,
+            error_code, error_text)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (
+            attempt_id,
+            event.stage,
+            event.kind,
+            _now(),
+            json.dumps(counters, sort_keys=True),
+            event.error_code,
+            event.error_text,
+        ),
     )
 
 
@@ -496,6 +512,107 @@ def _summary(
     )
 
 
+class _StreamJob(NamedTuple):
+    source: DownloadSource
+    adapter: SourceAdapter
+    projectors: ProjectorRegistry
+    options: PipelineOptions
+    context: _RunContext
+
+
+def _cancel_for_timeout(
+    connection: sqlite3.Connection,
+    context: _RunContext,
+    counters: dict[str, int],
+) -> Never:
+    connection.rollback()
+    _event(
+        connection,
+        context.attempt_id,
+        counters,
+        _EventSpec(
+            stage="parse",
+            kind="cancelled",
+            error_code="timeout",
+            error_text="source ingestion exceeded timeout_seconds",
+        ),
+    )
+    connection.commit()
+    raise TimeoutError("source ingestion exceeded timeout_seconds")
+
+
+def _process_record(
+    connection: sqlite3.Connection,
+    job: _StreamJob,
+    record: ParsedSourceRecord | RejectedSourceRecord,
+    counters: dict[str, int],
+) -> None:
+    counters["raw"] += 1
+    counters["last_ordinal"] = record.ordinal
+    match record:
+        case RejectedSourceRecord():
+            _insert_rejection(connection, job.context, record)
+            counters["quarantined"] += 1
+        case ParsedSourceRecord() if job.options.partition.accepts(record.projection.external_id):
+            counters["selected"] += 1
+            duplicate = _insert_projection(
+                connection,
+                job.source,
+                job.context,
+                record,
+                job.projectors,
+            )
+            counters["accepted"] += 1
+            counters["duplicates"] += int(duplicate)
+        case ParsedSourceRecord():
+            pass
+
+
+def _process_stream(
+    connection: sqlite3.Connection,
+    download: DownloadResult,
+    job: _StreamJob,
+    counters: dict[str, int],
+    started: float,
+) -> None:
+    committed_counters = dict(counters)
+    try:
+        for record in job.adapter.iter_records(
+            download.path,
+            job.options.limits,
+            start_after=counters["last_ordinal"],
+        ):
+            if time.monotonic() - started > job.options.limits.timeout_seconds:
+                _cancel_for_timeout(connection, job.context, committed_counters)
+            _process_record(connection, job, record, counters)
+            if counters["raw"] % job.options.checkpoint_every == 0:
+                _event(
+                    connection,
+                    job.context.attempt_id,
+                    counters,
+                    _EventSpec(stage="normalize", kind="checkpoint"),
+                )
+                connection.commit()
+                committed_counters = dict(counters)
+    except TimeoutError:
+        raise
+    except Exception as error:
+        connection.rollback()
+        _event(
+            connection,
+            job.context.attempt_id,
+            committed_counters,
+            _EventSpec(
+                stage="parse",
+                kind="failed",
+                error_code=type(error).__name__,
+                error_text=str(error)[:2000],
+            ),
+        )
+        connection.commit()
+        raise
+
+
 def _ingest_sync(
     source: DownloadSource,
     download: DownloadResult,
@@ -518,36 +635,26 @@ def _ingest_sync(
                 _Completion(reused=True, elapsed_seconds=time.monotonic() - started),
             )
         if counters["last_ordinal"] < 0:
-            _event(connection, context.attempt_id, "parse", "started", counters)
+            _event(
+                connection,
+                context.attempt_id,
+                counters,
+                _EventSpec(stage="parse", kind="started"),
+            )
             connection.commit()
-        for record in adapter.iter_records(
-            download.path,
-            options.limits,
-            start_after=counters["last_ordinal"],
-        ):
-            if time.monotonic() - started > options.limits.timeout_seconds:
-                _event(connection, context.attempt_id, "parse", "cancelled", counters)
-                connection.commit()
-                raise TimeoutError("source ingestion exceeded timeout_seconds")
-            counters["raw"] += 1
-            counters["last_ordinal"] = record.ordinal
-            match record:
-                case RejectedSourceRecord():
-                    _insert_rejection(connection, context, record)
-                    counters["quarantined"] += 1
-                case ParsedSourceRecord() if options.partition.accepts(
-                    record.projection.external_id
-                ):
-                    counters["selected"] += 1
-                    duplicate = _insert_projection(connection, source, context, record, projectors)
-                    counters["accepted"] += 1
-                    counters["duplicates"] += int(duplicate)
-                case ParsedSourceRecord():
-                    pass
-            if counters["raw"] % options.checkpoint_every == 0:
-                _event(connection, context.attempt_id, "normalize", "checkpoint", counters)
-                connection.commit()
-        _event(connection, context.attempt_id, "complete", "succeeded", counters)
+        _process_stream(
+            connection,
+            download,
+            _StreamJob(source, adapter, projectors, options, context),
+            counters,
+            started,
+        )
+        _event(
+            connection,
+            context.attempt_id,
+            counters,
+            _EventSpec(stage="complete", kind="succeeded"),
+        )
         connection.commit()
     return _summary(
         source,
