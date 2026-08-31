@@ -48,7 +48,7 @@ def load_targets(database: Path) -> GenreEnrichmentSelection:
                  ON identifier.entity_id = referenced.genre_id
                JOIN identifier_types AS kind ON kind.id = identifier.identifier_type_id
                WHERE identifier.namespace = 'wikidata'
-                 AND kind.type_key = 'wikidata_qid'
+                 AND kind.type_key IN ('wikidata_qid', 'wikidata_genre_qid')
                ORDER BY identifier.normalized_value"""
         ).fetchall()
         artifacts = connection.execute(
