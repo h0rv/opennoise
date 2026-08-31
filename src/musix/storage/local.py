@@ -47,6 +47,14 @@ def _temporary_path(parent: Path, name: str) -> Path:
     return Path(raw_path)
 
 
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 class LocalObjectStore:
     """Store immutable objects below one local root without loading them into memory."""
 
@@ -57,12 +65,17 @@ class LocalObjectStore:
 
     def _object_path(self, key: ObjectKey) -> Path:
         path = self._root.joinpath(*key.parts)
+        current = self._root
+        for part in key.parts:
+            current /= part
+            if current.is_symlink():
+                raise ObjectStoreError("object key contains a symbolic link")
         resolved = path.resolve(strict=False)
         if not resolved.is_relative_to(self._root):
             raise ObjectStoreError("object key resolves outside the store root")
         return path
 
-    async def exists(self, key: ObjectKey) -> bool:
+    def exists(self, key: ObjectKey) -> bool:
         """Return whether a regular file exists for the key."""
         return self._object_path(key).is_file()
 
@@ -86,6 +99,7 @@ class LocalObjectStore:
                 reused = True
             else:
                 reused = False
+                _fsync_directory(destination.parent)
             return ObjectWrite(
                 key=key,
                 sha256=source_sha256,
@@ -95,7 +109,7 @@ class LocalObjectStore:
         finally:
             temporary.unlink(missing_ok=True)
 
-    async def push(self, source: Path, key: ObjectKey) -> ObjectWrite:
+    def push(self, source: Path, key: ObjectKey) -> ObjectWrite:
         """Stream and atomically publish one immutable local file."""
         return self._push_sync(source, key)
 
@@ -109,6 +123,7 @@ class LocalObjectStore:
             with source.open("rb") as source_stream, temporary.open("wb") as target_stream:
                 sha256, byte_size = _copy_and_hash(source_stream, target_stream)
             temporary.replace(destination)
+            _fsync_directory(destination.parent)
             return ObjectRead(
                 key=key,
                 destination=destination,
@@ -118,6 +133,6 @@ class LocalObjectStore:
         finally:
             temporary.unlink(missing_ok=True)
 
-    async def pull(self, key: ObjectKey, destination: Path) -> ObjectRead:
+    def pull(self, key: ObjectKey, destination: Path) -> ObjectRead:
         """Stream an object to a temporary file and atomically publish it."""
         return self._pull_sync(key, destination)

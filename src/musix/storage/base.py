@@ -1,4 +1,4 @@
-"""Typed object storage contracts for streamed source artifacts."""
+"""Typed synchronous object storage contracts for streamed source artifacts."""
 
 from pathlib import Path, PurePosixPath
 from typing import Protocol
@@ -54,14 +54,14 @@ class ObjectRead(_FrozenModel):
 class ObjectStore(Protocol):
     """Expose the artifact operations shared by local and future remote stores."""
 
-    async def exists(self, key: ObjectKey) -> bool:
+    def exists(self, key: ObjectKey) -> bool:
         """Return whether an immutable object exists."""
         ...
 
-    async def push(self, source: Path, key: ObjectKey) -> ObjectWrite:
+    def push(self, source: Path, key: ObjectKey) -> ObjectWrite:
         """Publish a local file under an immutable key."""
         ...
 
-    async def pull(self, key: ObjectKey, destination: Path) -> ObjectRead:
+    def pull(self, key: ObjectKey, destination: Path) -> ObjectRead:
         """Copy an object to a local file through atomic publication."""
         ...
