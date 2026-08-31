@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from musix.types import EntityKind, ExternalId, StatementRank
+from musix.types import EntityKind, ExternalId, MusicBrainzArtistId, Sha256, StatementRank
 
 
 class _FrozenModel(BaseModel):
@@ -99,7 +99,46 @@ class ArtistProjection(_FrozenModel):
     end_year: int | None = Field(default=None, ge=1, le=9999)
 
 
-type CatalogProjection = ArtistProjection | EntityProjection
+class ArtistCoListenProjection(_FrozenModel):
+    """Represent source evidence before any similarity function or weighting."""
+
+    projection_kind: Literal["artist_co_listen"] = "artist_co_listen"
+    external_id: ExternalId
+    left_artist_source_id: MusicBrainzArtistId
+    right_artist_source_id: MusicBrainzArtistId
+    window_start: int = Field(ge=0)
+    window_end: int = Field(gt=0)
+    distinct_user_count: int = Field(gt=0)
+
+
+class ArtistCoListenRunProjection(_FrozenModel):
+    """Report complete source coverage after all transient listener state is gone."""
+
+    projection_kind: Literal["artist_co_listen_run"] = "artist_co_listen_run"
+    external_id: ExternalId
+    adapter_key: str = Field(min_length=1)
+    adapter_version: str = Field(min_length=1)
+    adapter_build_sha256: Sha256
+    aggregation_version: str = Field(min_length=1)
+    configuration_sha256: Sha256
+    window_seconds: int = Field(gt=0)
+    minimum_distinct_users: int = Field(gt=0)
+    listens_seen: int = Field(ge=0)
+    listens_with_artist_mbid: int = Field(ge=0)
+    distinct_artists: int = Field(ge=0)
+    user_windows: int = Field(ge=0)
+    candidate_pairs: int = Field(ge=0)
+    emitted_pairs: int = Field(ge=0)
+    quarantined_records: int = Field(ge=0)
+    minimum_listened_at: int | None = Field(default=None, ge=0)
+    maximum_listened_at: int | None = Field(default=None, ge=0)
+    elapsed_ms: int = Field(ge=0)
+    peak_rss_bytes: int = Field(ge=0)
+
+
+type CatalogProjection = (
+    ArtistProjection | EntityProjection | ArtistCoListenProjection | ArtistCoListenRunProjection
+)
 
 
 class ProjectionResult(_FrozenModel):
