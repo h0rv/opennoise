@@ -8,6 +8,7 @@ import time
 from collections.abc import Callable, Iterator
 from pathlib import Path
 
+import httpx
 from pydantic import Field, HttpUrl
 
 from musix.catalog.registry import ProjectorRegistry
@@ -34,6 +35,9 @@ from musix.storage import LocalObjectStore, ObjectKey
 
 type RecordFactory = Callable[[tuple[DownloadResult, ...]], Iterator[SourceRecord]]
 MINIMUM_INPUT_ARTIFACTS = 2
+DOWNLOAD_ATTEMPTS = 3
+HTTP_TOO_MANY_REQUESTS = 429
+HTTP_SERVER_ERROR_MINIMUM = 500
 
 
 class MultiArtifactOptions(FrozenModel):
@@ -45,6 +49,29 @@ class MultiArtifactOptions(FrozenModel):
     aggregate_source_id: str = Field(min_length=1, max_length=200)
     configuration_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     limits: SourceLimits
+
+
+async def _download_with_retry(
+    source: DownloadSource, vault_path: Path, timeout_seconds: float
+) -> DownloadResult:
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        try:
+            return await download_verified(
+                source,
+                vault_path,
+                timeout_seconds=timeout_seconds,
+            )
+        except httpx.HTTPStatusError as error:
+            status = error.response.status_code
+            if status < HTTP_SERVER_ERROR_MINIMUM and status != HTTP_TOO_MANY_REQUESTS:
+                raise
+        except httpx.TransportError:
+            if attempt == DOWNLOAD_ATTEMPTS:
+                raise
+        if attempt == DOWNLOAD_ATTEMPTS:
+            raise RuntimeError(f"verified download failed after retries: {source.id}")
+        await asyncio.sleep(2 ** (attempt - 1))
+    raise AssertionError("download retry loop did not return or raise")
 
 
 class MultiArtifactSummary(FrozenModel):
@@ -287,13 +314,14 @@ async def run_multi_artifact_pipeline(
         raise ValueError("multi-artifact source IDs must be unique")
     if any(source.expected_bytes > options.limits.max_archive_bytes for source in sources):
         raise ValueError("multi-artifact input exceeds max_archive_bytes")
+
     async with asyncio.TaskGroup() as group:
         tasks = tuple(
             group.create_task(
-                download_verified(
+                _download_with_retry(
                     source,
                     options.vault_path,
-                    timeout_seconds=options.limits.timeout_seconds,
+                    options.limits.timeout_seconds,
                 )
             )
             for source in sources

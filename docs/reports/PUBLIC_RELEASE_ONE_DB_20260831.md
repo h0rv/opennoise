@@ -1,9 +1,10 @@
 # One database public release
 
 `poe build-public-release` builds `data/public.sqlite` only from the two bounded Wikidata queries
-and the seven pinned ListenBrainz increments dated 2026-08-24 through 2026-08-30. Run it with an
-absent database for a fresh release. The local MusicBrainz research imports use another database
-and are not part of this task.
+and the seven pinned ListenBrainz increments dated 2026-08-24 through 2026-08-30. Start with an
+absent database for a fresh release. An interrupted run can be resumed only while the database
+contains this task's allowlisted public sources. The local MusicBrainz research imports use
+another database and are rejected by the preflight check.
 
 The Wikidata query runner verifies each response before the shared adapter projects it. The
 ListenBrainz step verifies all seven manifest hashes, totaling 1,514,835,361 bytes, then passes all

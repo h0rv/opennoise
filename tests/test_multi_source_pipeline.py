@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import override
 from unittest.mock import AsyncMock, patch
 
+import httpx
 from pydantic import HttpUrl
 
 from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
@@ -193,3 +194,29 @@ class MultiSourcePipelineTests(unittest.IsolatedAsyncioTestCase):
                 connection.execute("SELECT count(*) FROM artist_co_listen_evidence").fetchone(),
                 (0,),
             )
+
+    async def test_transient_server_error_retries_download(self) -> None:
+        request = httpx.Request("GET", str(self.sources[0].url))
+        response = httpx.Response(503, request=request)
+        downloader = AsyncMock(
+            side_effect=(
+                httpx.HTTPStatusError("unavailable", request=request, response=response),
+                self.downloads[1],
+                self.downloads[0],
+            )
+        )
+        with (
+            patch("musix.pipeline.multi_source.download_verified", downloader),
+            patch("musix.pipeline.multi_source.asyncio.sleep", new=AsyncMock()) as sleep,
+        ):
+            result = await run_multi_artifact_pipeline(
+                self.sources,
+                _Adapter(),
+                ProjectorRegistry((ArtistCoListenProjector(), ArtistCoListenRunProjector())),
+                self._records,
+                self.options,
+            )
+
+        self.assertEqual(result.accepted, 2)
+        self.assertEqual(downloader.await_count, 3)
+        sleep.assert_awaited_once_with(1)
