@@ -395,10 +395,21 @@ class Database:
         with self.connect() as connection:
             row = connection.execute(
                 """
-                WITH public_name AS (
+                WITH has_public_selection AS (
+                    SELECT 1
+                    FROM current_public_models
+                    WHERE model_key = 'public-graph'
+                ),
+                public_name AS (
                     SELECT name.genre_id, name.display_name
                     FROM current_public_models AS current
                     JOIN servable_public_model_runs AS run ON run.id = current.model_run_id
+                    JOIN current_layouts AS current_layout
+                      ON current_layout.layout_key = 'public'
+                    JOIN layout_runs AS layout
+                      ON layout.id = current_layout.layout_run_id
+                     AND layout.algorithm_key = 'public_graph_spectral'
+                     AND layout.input_fingerprint = run.output_sha256
                     JOIN public_genre_names AS name ON name.model_run_id = run.id
                 )
                 SELECT genre.id, genre.slug,
@@ -407,7 +418,13 @@ class Database:
                 LEFT JOIN displayable_entity_names AS name ON name.entity_id = genre.id
                 LEFT JOIN public_name ON public_name.genre_id = genre.id
                 WHERE genre.id = ?
-                  AND coalesce(name.name, public_name.display_name) IS NOT NULL
+                  AND (
+                    public_name.display_name IS NOT NULL
+                    OR (
+                      NOT EXISTS (SELECT 1 FROM has_public_selection)
+                      AND name.name IS NOT NULL
+                    )
+                  )
                 ORDER BY (name.name_kind = 'primary') DESC, name.is_preferred DESC,
                          (name.language_tag = 'und') DESC, name.id
                 LIMIT 1

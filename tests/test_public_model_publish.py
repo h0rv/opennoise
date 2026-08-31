@@ -4,9 +4,12 @@ import unittest
 from pathlib import Path
 from typing import override
 
+from litestar.testing import TestClient
+
+from musix.app import create_app
 from musix.db import Database
 from musix.genre_entry import GenreEntryRepository
-from musix.ml.public_graph import build_public_model
+from musix.ml.public_graph import build_public_model, public_model_output_sha256
 from musix.ml.publish import PublicModelPublishError, publish_public_model
 from musix.models.modeling import (
     DirectMembershipEvidence,
@@ -29,7 +32,7 @@ def _artifact():  # noqa: ANN202
         artifacts=(
             PublicArtifact(
                 source="wikidata",
-                snapshot="test",
+                snapshot="wikidata-test-snapshot",
                 artifact_key=f"wikidata-test:{'a' * 64}",
                 content_sha256="a" * 64,
                 export_allowed=True,
@@ -231,6 +234,7 @@ class PublicModelPublishTests(unittest.TestCase):
             )
             targets = (
                 ("source", "3"),
+                ("snapshot", "2"),
                 ("provenance", "2"),
                 ("artifact", "2"),
                 ("derived_output", str(derived_output_id)),
@@ -254,6 +258,17 @@ class PublicModelPublishTests(unittest.TestCase):
                     ).fetchone(),
                     (0,),
                 )
+                connection.commit()
+                self.assertIsNone(Database(self.database_path).genre_detail(1))
+                if target_kind == "source":
+                    with TestClient(create_app(self.database_path)) as client:
+                        self.assertEqual(client.get("/api/genres/1").status_code, 404)
+                        self.assertEqual(
+                            client.get(
+                                "/fragments/genres/1", params={"layout": "public"}
+                            ).status_code,
+                            404,
+                        )
                 self.assertEqual(
                     connection.execute(
                         "SELECT count(*) FROM displayable_map_points WHERE layout_key = 'public'"
@@ -281,6 +296,43 @@ class PublicModelPublishTests(unittest.TestCase):
                     ),
                     0,
                 )
+                connection.commit()
+                self.assertIsNotNone(Database(self.database_path).genre_detail(1))
+
+    def test_invalidated_derived_output_retracts_public_rows_and_detail(self) -> None:
+        publish_public_model(self.database_path, self.artifact_path, policy_id=3)
+        with sqlite3.connect(self.database_path) as connection:
+            derived_output_id = int(
+                connection.execute("SELECT derived_output_id FROM public_model_runs").fetchone()[0]
+            )
+            connection.execute(
+                """INSERT INTO derived_output_events
+                   (derived_output_id, event_kind, event_at, reason)
+                   VALUES (?, 'invalidated', '2099-08-31T01:00:00Z', 'test')""",
+                (derived_output_id,),
+            )
+            self.assertEqual(
+                connection.execute(
+                    "SELECT count(*) FROM displayable_map_points WHERE layout_key = 'public'"
+                ).fetchone(),
+                (0,),
+            )
+            connection.commit()
+        self.assertIsNone(Database(self.database_path).genre_detail(1))
+
+    def test_rejects_an_input_with_a_false_declared_snapshot(self) -> None:
+        source_artifact = self.artifact.artifacts[0].model_copy(update={"snapshot": "not-real"})
+        changed = self.artifact.model_copy(update={"artifacts": (source_artifact,)})
+        changed = changed.model_copy(update={"output_sha256": public_model_output_sha256(changed)})
+        self.artifact_path.write_text(changed.model_dump_json(), encoding="utf-8")
+
+        with self.assertRaisesRegex(PublicModelPublishError, "exact exportable provenance"):
+            publish_public_model(self.database_path, self.artifact_path, policy_id=3)
+
+        with sqlite3.connect(self.database_path) as connection:
+            self.assertEqual(
+                connection.execute("SELECT count(*) FROM derived_outputs").fetchone(), (0,)
+            )
 
     def test_rejects_a_changed_payload_without_writes(self) -> None:
         changed = self.artifact.model_copy(update={"output_sha256": "f" * 64})

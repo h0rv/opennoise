@@ -8,7 +8,10 @@ Musix should support two separate results.
 
 The historical result reproduces what Every Noise at Once published. It preserves the final map, artist pages, examples, links, ranks, and playlists as dated observations. It does not claim to recreate Spotify's private calculations.
 
-The open result rebuilds the system from public data. It starts with open music identities, tags, relationships, public listening, and optional audio features. Every stage records its inputs, method, version, and output. The open result can be measured against the historical result, but it remains a different map.
+The open result rebuilds the system from public metadata. It starts with open music identities,
+tags, relationships, and privacy-safe public listening aggregates. Musix does not ingest audio or
+audio-derived feature data. Every stage records its inputs, method, version, and output. The open
+result can be measured against the historical result, but it remains a different map.
 
 An exact reproduction of the private model is not possible from the public record. Glenn McDonald disclosed several inputs and design choices, but he did not publish the source code, complete feature vectors, thresholds, weights, or the final layout transform. Musix should show the difference between a disclosed fact and a fitted approximation.
 
@@ -191,25 +194,20 @@ ListenBrainz public listens are CC0 and can supply listener to recording events.
 
 The first graph should contain artist audience counts, artist pair co-listener counts, sequential transition counts, and time bounded genre audience counts. Each aggregate records its population, time window, minimum support, and whether repeat listens were capped per user.
 
-### Stage O4: optional audio features
-
-AcousticBrainz supplies CC0 features for recordings identified by MusicBrainz recording IDs. Its final dump contains repeated submissions and stops in 2022, so the importer must keep extractor versions, deduplicate by an explicit rule, and report coverage. FMA can provide a smaller Creative Commons audio evaluation set with its own genre hierarchy. Sources: [AcousticBrainz](https://acousticbrainz.org/), [AcousticBrainz downloads](https://acousticbrainz.org/download), and [FMA dataset](https://github.com/mdeff/fma).
-
-Audio remains optional. The metadata and listening baselines must run without it.
-
-### Stage O5: genre candidates
+### Stage O4: genre candidates
 
 The first candidate method starts from approved genre labels. It builds artist evidence from direct tags, Wikidata claims, and listener enrichment. A second experiment can find unlabeled communities from the artist co-listener graph.
 
 Every candidate has a review state. A reviewer can accept, reject, merge, split, or rename it. The review record includes reasons and supporting artists. No automatic cluster becomes a published genre without a recorded rule or review.
 
-### Stage O6: artist membership
+### Stage O5: artist membership
 
-The baseline keeps source facets separate. It reports direct tag evidence, hierarchy evidence, listener enrichment, graph proximity, and optional audio fit. It does not hide them in one score.
+The baseline keeps source facets separate. It reports direct tag evidence, hierarchy evidence,
+listener enrichment, and graph proximity. It does not hide them in one score.
 
 A later scored run can combine normalized facets. The run records all weights and missing value behavior. It publishes both the total and every component. An artist can belong to several genres.
 
-### Stage O7: genre similarity
+### Stage O6: genre similarity
 
 Musix should publish two independent neighbor lists before it publishes a blend.
 
@@ -249,7 +247,9 @@ Experiments can narrow the unknowns without claiming to recover private code.
 
 ### Coordinate experiment
 
-First, crosswalk historical genres to open genre evidence. Second, calculate open estimates of the twelve published audio metrics. Third, fit only on a training split and predict historical x and y on held out genres.
+Crosswalk historical genres to open metadata evidence, then fit only on a training split and
+predict historical x and y on held out genres. The experiment may use metadata graph features but
+must not add audio or audio-derived inputs.
 
 Compare monotonic linear regression, spline regression, partial least squares, random forest regression, and a small regularized neural model. Report R squared, mean absolute pixel error, rank correlation for each axis, and neighborhood preservation. A strong result shows that the open features explain the output. It does not prove the original formula.
 
@@ -261,17 +261,25 @@ Measure overlap count, median displacement, maximum displacement, and preserved 
 
 ### Color experiment
 
-Convert the historical RGB value to perceptual Lab and HSV values. Regress each channel against x, y, font size, source order, open audio features, and one dimensional public ranks. Use held out error and permutation importance. A smooth third variable may explain color, but the UI must label it as fitted until a primary source identifies it.
+Convert the historical RGB value to perceptual Lab and HSV values. Regress each channel against x,
+y, font size, source order, and one dimensional public ranks. Use held out error and permutation
+importance. A smooth third variable may explain color, but the UI must label it as fitted until a
+primary source identifies it.
 
 ### Membership experiment
 
-For genres with archived artist pages, fit candidate membership rules from direct tag counts, tag specificity, listener enrichment, artist graph proximity, and optional audio fit. Evaluate artist recall at the historical page size, precision from reviewed samples, rank correlation when rank is available, and stability across source snapshots.
+For genres with archived artist pages, fit candidate membership rules from direct tag counts, tag
+specificity, listener enrichment, and artist graph proximity. Evaluate artist recall at the
+historical page size, precision from reviewed samples, rank correlation when rank is available,
+and stability across source snapshots.
 
 Test cutoffs by genre density rather than one global item count. Compare fixed count, fixed score, score gap, and expected false discovery rate rules.
 
 ### Similarity experiment
 
-Rebuild artist overlap and acoustic neighbor lists independently. Compare each list with historical related genre blocks and local map neighbors. Then search a small grid of blend weights.
+Rebuild artist-overlap and listening-cooccurrence neighbor lists independently. Compare each list
+with historical related genre blocks and local map neighbors. Then search a small grid of blend
+weights.
 
 Report recall at 10, normalized discounted cumulative gain, shared neighbor overlap, and performance by broad family, region, era, and evidence volume. Do not optimize only for the global average.
 
@@ -340,7 +348,8 @@ The first user review set should contain 80 genres. It should include major genr
 
 ## Data requirements
 
-The current catalog schema already covers many identity, relation, provenance, asset, collection, metric, audio feature, and layout needs. The following records still need first class query support or focused tables.
+The current catalog schema already covers many identity, relation, provenance, collection, metric,
+and layout needs. The following records still need first class query support or focused tables.
 
 ### Genre artist membership observations
 
@@ -376,7 +385,8 @@ The detail region follows this order:
 2. The artist row shows representative and edge artists, with the evidence for each membership available on request.
 3. The album row shows defining release groups. Selecting one shows its editions and recordings.
 4. The track row shows representative recordings and playable or external links.
-5. The neighbor row shows cultural and acoustic neighbors separately, with an optional explicit blend.
+5. The neighbor row shows artist-overlap and listening-cooccurrence neighbors separately, with an
+   optional explicit blend.
 
 The browser history stores the selected genre URL. A close action restores the prior viewport. Loading, selected, unavailable media, and stale source states must be visible. HTML links complete the path without JavaScript. HTMX can replace named regions and update browser history, but a detail click must not rerender all map points.
 

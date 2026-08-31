@@ -103,10 +103,18 @@ WHERE NOT EXISTS (
       AND suppression.target_ref = CAST(run.derived_output_id AS TEXT)
       AND suppression.use_kind IN ('all', 'display', 'export')
 )
+AND (
+    SELECT event.event_kind
+    FROM derived_output_events AS event
+    WHERE event.derived_output_id = run.derived_output_id
+    ORDER BY event.event_at DESC, event.id DESC
+    LIMIT 1
+) = 'created'
 AND NOT EXISTS (
     SELECT 1
     FROM public_model_input_provenance AS input
     JOIN provenance_records AS provenance ON provenance.id = input.provenance_id
+    JOIN source_artifacts AS artifact ON artifact.id = input.artifact_id
     JOIN active_suppressions AS suppression
       ON (
         (suppression.target_kind = 'provenance'
@@ -115,6 +123,8 @@ AND NOT EXISTS (
             AND suppression.target_ref = CAST(provenance.source_id AS TEXT))
         OR (suppression.target_kind = 'artifact'
             AND suppression.target_ref = CAST(input.artifact_id AS TEXT))
+        OR (suppression.target_kind = 'snapshot'
+            AND suppression.target_ref = CAST(artifact.snapshot_id AS TEXT))
       )
      AND suppression.use_kind IN ('all', 'display', 'export')
     WHERE input.model_run_id = run.id

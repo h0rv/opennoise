@@ -9,7 +9,6 @@ from pydantic import ValidationError
 from musix.reconstruction import (
     EvidenceStatus,
     GenreArtistEdge,
-    GenreAudioDescriptor,
     HistoricalClaim,
     HistoricalGenrePoint,
     HistoricalNeighborList,
@@ -83,21 +82,6 @@ class ReconstructionBoundaryTests(unittest.TestCase):
             ReconstructionInputs(
                 membership_artifact=ARTIFACT,
                 membership_edges=(duplicate, duplicate),
-            )
-
-    def test_audio_observations_require_versioned_artifact(self) -> None:
-        with self.assertRaises(ValidationError):
-            ReconstructionInputs(
-                membership_artifact=ARTIFACT,
-                membership_edges=(edge("a", "one"),),
-                audio_descriptors=(
-                    GenreAudioDescriptor(
-                        genre_id="a",
-                        descriptor_key="open-audio-v1",
-                        values=(0.5,),
-                        evidence_refs=("fixture:audio",),
-                    ),
-                ),
             )
 
 

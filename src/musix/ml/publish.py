@@ -101,9 +101,11 @@ def _input_provenance(
                  ON artifact_export.policy_id = artifact.policy_id
                 AND artifact_export.use_kind = 'export'
                 AND artifact_export.decision = 'allow'
-               WHERE source.source_key = ? AND provenance.artifact_sha256 = ?
+               WHERE source.source_key = ?
+                 AND snapshot.snapshot_ref = ?
+                 AND provenance.artifact_sha256 = ?
                ORDER BY provenance.id, artifact.id""",
-            (source_key, source_artifact.content_sha256),
+            (source_key, source_artifact.snapshot, source_artifact.content_sha256),
         ).fetchall()
         if not rows:
             raise PublicModelPublishError(

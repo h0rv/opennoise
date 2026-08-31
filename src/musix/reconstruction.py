@@ -100,23 +100,6 @@ class GenreArtistEdge(FrozenModel):
         return evidence_refs
 
 
-class GenreAudioDescriptor(FrozenModel):
-    """Optional genre audio vector retained for later, separate experiments."""
-
-    genre_id: str = Field(min_length=1, max_length=200)
-    descriptor_key: str = Field(min_length=1, max_length=100)
-    values: tuple[FiniteFloat, ...] = Field(min_length=1, max_length=4_096)
-    evidence_refs: tuple[EvidenceRef, ...] = Field(min_length=1, max_length=32)
-
-    @field_validator("evidence_refs")
-    @classmethod
-    def _require_distinct_evidence_refs(
-        cls, evidence_refs: tuple[EvidenceRef, ...]
-    ) -> tuple[EvidenceRef, ...]:
-        _require_unique_evidence_refs(evidence_refs)
-        return evidence_refs
-
-
 class HistoricalGenrePoint(FrozenModel):
     """One observed historical genre coordinate and optional observed color."""
 
@@ -156,8 +139,6 @@ class ReconstructionInputs(FrozenModel):
 
     membership_artifact: VersionedInput
     membership_edges: tuple[GenreArtistEdge, ...] = Field(min_length=1, max_length=MAX_EDGES)
-    audio_artifact: VersionedInput | None = None
-    audio_descriptors: tuple[GenreAudioDescriptor, ...] = Field(default=(), max_length=MAX_GENRES)
     historical_artifact: VersionedInput | None = None
     historical_points: tuple[HistoricalGenrePoint, ...] = Field(default=(), max_length=MAX_GENRES)
     historical_neighbors: tuple[HistoricalNeighborList, ...] = Field(
@@ -176,11 +157,6 @@ class ReconstructionInputs(FrozenModel):
             [item.genre_id for item in self.historical_neighbors],
             "historical neighbor list",
         )
-        descriptor_keys = {(item.genre_id, item.descriptor_key) for item in self.audio_descriptors}
-        if len(descriptor_keys) != len(self.audio_descriptors):
-            raise ValueError("genre audio descriptor keys must be unique")
-        if bool(self.audio_descriptors) != (self.audio_artifact is not None):
-            raise ValueError("audio descriptors and their versioned artifact must appear together")
         has_historical_data = bool(self.historical_points or self.historical_neighbors)
         if has_historical_data != (self.historical_artifact is not None):
             raise ValueError("historical observations and their artifact must appear together")
@@ -331,7 +307,6 @@ class ReconstructionExperimentResult(FrozenModel):
     harness_revision: Literal["reconstruction-v1"]
     claims: tuple[HistoricalClaim, ...]
     membership_artifact: VersionedInput
-    audio_artifact: VersionedInput | None
     historical_artifact: VersionedInput | None
     candidate_artifact: VersionedInput | None
     evaluation_neighbor_count: int = Field(ge=1, le=128)
@@ -564,7 +539,6 @@ def run_reconstruction_experiment(
         harness_revision=manifest.harness_revision,
         claims=manifest.claims,
         membership_artifact=manifest.inputs.membership_artifact,
-        audio_artifact=manifest.inputs.audio_artifact,
         historical_artifact=manifest.inputs.historical_artifact,
         candidate_artifact=manifest.candidate_artifact,
         evaluation_neighbor_count=manifest.evaluation_neighbor_count,
