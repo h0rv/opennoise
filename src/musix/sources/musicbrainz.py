@@ -1,11 +1,13 @@
-"""Stream MusicBrainz artist JSON dumps into bounded typed records."""
+"""Stream MusicBrainz JSON sources into bounded common projections."""
 
 import asyncio
+import hashlib
 import re
 import tarfile
 import time
 import unicodedata
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO, Literal, Protocol
 from uuid import UUID
@@ -13,9 +15,20 @@ from uuid import UUID
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
 
+from musix.models.catalog import ArtistProjection, IdentifierClaim, NameClaim
+from musix.models.pipeline import (
+    ParsedSourceRecord,
+    RejectedSourceRecord,
+    SourceLimits,
+    SourceRecord,
+)
+from musix.models.sources import DownloadSource
+
 JSON_DUMP_SCHEMA = "1"
 MUSICBRAINZ_API_BASE = "https://musicbrainz.org/ws/2"
 MUSICBRAINZ_MIN_REQUEST_INTERVAL_SECONDS = 1.0
+YEAR_TEXT_LENGTH = 4
+MAX_YEAR = 9999
 
 
 class MusicBrainzAdapterError(ValueError):
@@ -42,15 +55,9 @@ class BinaryMemberReader(BinaryLineReader, Protocol):
         ...
 
 
-class AdapterLimits(BaseModel):
+class AdapterLimits(SourceLimits):
     """Bound compressed input, expanded members, records, and lines."""
 
-    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
-
-    max_archive_bytes: int = Field(default=4 * 1024 * 1024 * 1024, gt=0)
-    max_member_bytes: int = Field(default=32 * 1024 * 1024 * 1024, gt=0)
-    max_record_bytes: int = Field(default=2 * 1024 * 1024, gt=0)
-    max_records: int = Field(default=10_000_000, gt=0)
     max_unique_genres: int = Field(default=100_000, gt=0)
 
 
@@ -74,6 +81,15 @@ class MusicBrainzGenre(BaseModel):
     disambiguation: str = ""
 
 
+class MusicBrainzLifeSpan(BaseModel):
+    """Parse the bounded artist lifespan fields used by the catalog."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    begin: str | None = None
+    end: str | None = None
+
+
 class MusicBrainzArtist(BaseModel):
     """Parse the supported fields from one official artist JSON document."""
 
@@ -87,6 +103,8 @@ class MusicBrainzArtist(BaseModel):
     genres: tuple[MusicBrainzGenre, ...] = ()
     isnis: tuple[str, ...] = ()
     ipis: tuple[str, ...] = ()
+    type: str | None = None
+    life_span: MusicBrainzLifeSpan | None = Field(default=None, alias="life-span")
 
 
 class MusicBrainzReleaseGroupReference(BaseModel):
@@ -407,6 +425,11 @@ def _open_regular_member(
     return member_path, stream
 
 
+def _check_expansion(member: tarfile.TarInfo, archive_size: int, limits: AdapterLimits) -> None:
+    if member.size > archive_size * limits.max_decompression_ratio:
+        raise MusicBrainzAdapterError("MusicBrainz archive exceeds max_decompression_ratio")
+
+
 def _iter_bounded_lines(stream: BinaryLineReader, limits: AdapterLimits) -> Iterator[bytes]:
     count = 0
     while line := stream.readline(limits.max_record_bytes + 1):
@@ -422,6 +445,74 @@ def _iter_bounded_lines(stream: BinaryLineReader, limits: AdapterLimits) -> Iter
         if count > limits.max_records:
             raise MusicBrainzAdapterError("MusicBrainz dump exceeds max_records")
         yield record
+
+
+@dataclass(frozen=True, slots=True)
+class _RawRecord:
+    payload: bytes | None
+    byte_length: int
+    sha256: str
+
+
+def _iter_raw_records(stream: BinaryLineReader, limits: SourceLimits) -> Iterator[_RawRecord]:
+    count = 0
+    while first := stream.readline(limits.max_record_bytes + 2):
+        digest = hashlib.sha256()
+        captured = bytearray(first[: limits.max_record_bytes])
+        byte_length = 0
+        chunk = first
+        while True:
+            has_newline = chunk.endswith(b"\n")
+            record_chunk = chunk[:-1] if has_newline else chunk
+            digest.update(record_chunk)
+            byte_length += len(record_chunk)
+            if has_newline or len(chunk) <= limits.max_record_bytes + 1:
+                break
+            chunk = stream.readline(64 * 1024)
+            if not chunk:
+                break
+        if not byte_length:
+            continue
+        count += 1
+        if count > limits.max_records:
+            raise MusicBrainzAdapterError("MusicBrainz dump exceeds max_records")
+        yield _RawRecord(
+            payload=bytes(captured) if byte_length <= limits.max_record_bytes else None,
+            byte_length=byte_length,
+            sha256=digest.hexdigest(),
+        )
+
+
+def _iter_raw_artist_archive(path: Path, limits: SourceLimits) -> Iterator[_RawRecord]:
+    archive_size = path.stat().st_size
+    if archive_size > limits.max_archive_bytes:
+        raise MusicBrainzAdapterError("MusicBrainz archive exceeds max_archive_bytes")
+    found_artist = False
+    schema_number: str | None = None
+    adapter_limits = AdapterLimits.model_validate(limits.model_dump())
+    with tarfile.open(path, mode="r|xz") as archive:
+        for member in archive:
+            _check_expansion(member, archive_size, adapter_limits)
+            opened = _open_regular_member(archive, member, adapter_limits)
+            if opened is None:
+                continue
+            member_path, stream = opened
+            try:
+                if member_path == PurePosixPath("JSON_DUMPS_SCHEMA_NUMBER"):
+                    schema_number = stream.read(32).decode("ascii").strip()
+                elif member_path == PurePosixPath("mbdump/artist"):
+                    if found_artist:
+                        raise MusicBrainzAdapterError("MusicBrainz archive repeats mbdump/artist")
+                    found_artist = True
+                    yield from _iter_raw_records(stream, limits)
+            finally:
+                stream.close()
+    if not found_artist:
+        raise MusicBrainzAdapterError("MusicBrainz archive has no mbdump/artist member")
+    if schema_number != JSON_DUMP_SCHEMA:
+        raise MusicBrainzAdapterError(
+            f"unsupported MusicBrainz JSON dump schema: {schema_number!r}"
+        )
 
 
 def iter_artist_jsonl(stream: BinaryLineReader, limits: AdapterLimits) -> Iterator[AdaptedArtist]:
@@ -470,6 +561,7 @@ def iter_artist_archive(path: Path, limits: AdapterLimits) -> Iterator[AdaptedAr
     schema_number: str | None = None
     with tarfile.open(path, mode="r|xz") as archive:
         for member in archive:
+            _check_expansion(member, archive_size, limits)
             opened = _open_regular_member(archive, member, limits)
             if opened is None:
                 continue
@@ -508,6 +600,7 @@ def _iter_json_archive[T](
     schema_number: str | None = None
     with tarfile.open(path, mode="r|xz") as archive:
         for member in archive:
+            _check_expansion(member, path.stat().st_size, limits)
             opened = _open_regular_member(archive, member, limits)
             if opened is None:
                 continue
@@ -530,6 +623,21 @@ def _iter_json_archive[T](
         raise MusicBrainzAdapterError(
             f"unsupported MusicBrainz JSON dump schema: {schema_number!r}"
         )
+
+
+def iter_json_archive_lines(
+    path: Path,
+    limits: AdapterLimits,
+    *,
+    member_name: str,
+) -> Iterator[bytes]:
+    """Stream bounded raw JSON lines from one verified official archive member."""
+    yield from _iter_json_archive(
+        path,
+        limits,
+        member_name=member_name,
+        parser=_iter_bounded_lines,
+    )
 
 
 def iter_release_group_archive(
@@ -663,3 +771,96 @@ class MusicBrainzClient:
         )
         response.raise_for_status()
         return MusicBrainzRelease.model_validate_json(response.content)
+
+
+def _year(value: str | None) -> int | None:
+    if value is None or len(value) < YEAR_TEXT_LENGTH or not value[:YEAR_TEXT_LENGTH].isdigit():
+        return None
+    parsed = int(value[:YEAR_TEXT_LENGTH])
+    return parsed if 1 <= parsed <= MAX_YEAR else None
+
+
+def _artist_projection(artist: MusicBrainzArtist) -> ArtistProjection:
+    artist_id = str(artist.id)
+    primary_key = artist.name.strip().casefold()
+    names = [NameClaim(kind="primary", value=artist.name)]
+    if artist.sort_name.strip().casefold() != primary_key:
+        names.append(NameClaim(kind="sort", value=artist.sort_name))
+    seen_names = {primary_key, artist.sort_name.strip().casefold()}
+    for alias in artist.aliases:
+        key = alias.name.strip().casefold()
+        if key in seen_names:
+            continue
+        seen_names.add(key)
+        names.append(NameClaim(kind="alias", value=alias.name, language_tag=alias.locale or "und"))
+    identifiers = [IdentifierClaim(type_key="source_id", namespace="musicbrainz", value=artist_id)]
+    identifiers.extend(
+        IdentifierClaim(type_key="isni", namespace="isni", value=value) for value in artist.isnis
+    )
+    identifiers.extend(
+        IdentifierClaim(type_key="ipi", namespace="ipi", value=value) for value in artist.ipis
+    )
+    return ArtistProjection(
+        external_id=artist_id,
+        names=tuple(names),
+        identifiers=tuple(identifiers),
+        artist_kind=artist.type,
+        disambiguation=artist.disambiguation or None,
+        begin_year=_year(artist.life_span.begin if artist.life_span is not None else None),
+        end_year=_year(artist.life_span.end if artist.life_span is not None else None),
+    )
+
+
+class MusicBrainzArtistDumpAdapter:
+    """Project the official artist JSON archive into common source claims."""
+
+    @property
+    def key(self) -> str:
+        """Return the manifest adapter key."""
+        return "musicbrainz_artist_json_dump_v1"
+
+    @property
+    def version(self) -> str:
+        """Return the immutable projection version."""
+        return "1"
+
+    def supports(self, source: DownloadSource) -> bool:
+        """Require the official archive format understood by this adapter."""
+        return source.compression == "tar.xz" and source.expected_content_type == (
+            "application/octet-stream"
+        )
+
+    def iter_records(
+        self,
+        path: Path,
+        limits: SourceLimits,
+        *,
+        start_after: int,
+    ) -> Iterator[SourceRecord]:
+        """Stream all raw records while skipping already committed ordinals."""
+        for ordinal, raw in enumerate(_iter_raw_artist_archive(path, limits)):
+            if ordinal <= start_after:
+                continue
+            if raw.payload is None:
+                yield RejectedSourceRecord(
+                    ordinal=ordinal,
+                    exact_sha256=raw.sha256,
+                    byte_length=raw.byte_length,
+                    reason="MusicBrainz artist record exceeds max_record_bytes",
+                )
+                continue
+            try:
+                artist = MusicBrainzArtist.model_validate_json(raw.payload)
+                yield ParsedSourceRecord(
+                    ordinal=ordinal,
+                    exact_sha256=raw.sha256,
+                    byte_length=raw.byte_length,
+                    projection=_artist_projection(artist),
+                )
+            except ValueError as error:
+                yield RejectedSourceRecord(
+                    ordinal=ordinal,
+                    exact_sha256=raw.sha256,
+                    byte_length=raw.byte_length,
+                    reason=f"invalid MusicBrainz artist JSON: {error}",
+                )

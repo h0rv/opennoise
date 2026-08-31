@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 from musix.types import Sha256, SourceId
 
@@ -48,6 +48,14 @@ class DataSourceManifest(_FrozenModel):
     """Parse the source collection without leaking untyped TOML dictionaries."""
 
     sources: tuple[DownloadSource, ...]
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    @field_validator("sources", mode="before")
+    @classmethod
+    def parse_toml_array(cls, value: object) -> object:
+        """Freeze TOML's mutable array representation at the boundary."""
+        return tuple(value) if isinstance(value, list) else value
 
 
 class DownloadResult(_FrozenModel):

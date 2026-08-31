@@ -11,8 +11,15 @@ import uvicorn
 
 from musix.adapters.everynoise import QUINT_SOURCE, fetch_verified_source
 from musix.bootstrap import bootstrap_everynoise
+from musix.catalog.artists import ArtistProjector
+from musix.catalog.registry import ProjectorRegistry
 from musix.ingest import ImportOptions, import_jsonl
 from musix.models import Settings
+from musix.models.pipeline import SourceLimits
+from musix.pipeline.manifest import load_download_source
+from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
+from musix.sources.musicbrainz import MusicBrainzArtistDumpAdapter
+from musix.sources.registry import AdapterRegistry
 
 
 def _serve(args: argparse.Namespace) -> int:
@@ -54,6 +61,33 @@ def _bootstrap(args: argparse.Namespace) -> int:
     return 0
 
 
+def _ingest_source(args: argparse.Namespace) -> int:
+    source = load_download_source(args.manifest, args.source_id)
+    registry = AdapterRegistry((MusicBrainzArtistDumpAdapter(),))
+    summary = asyncio.run(
+        run_source_pipeline(
+            source,
+            registry,
+            ProjectorRegistry((ArtistProjector(),)),
+            PipelineOptions(
+                manifest_path=args.manifest,
+                source_id=args.source_id,
+                database_path=args.database,
+                vault_path=args.vault,
+                partition=DeterministicPartition(sha256_prefix=args.partition_prefix),
+                limits=SourceLimits(
+                    max_archive_bytes=args.max_archive_bytes,
+                    max_records=args.max_records,
+                    timeout_seconds=args.timeout_seconds,
+                ),
+                checkpoint_every=args.checkpoint_every,
+            ),
+        )
+    )
+    sys.stdout.write(f"{summary.model_dump_json(indent=2)}\n")
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:
     """Build the command line parser."""
     settings = Settings()
@@ -86,6 +120,19 @@ def parser() -> argparse.ArgumentParser:
     bootstrap.add_argument("--database", type=Path, default=settings.database_path)
     bootstrap.add_argument("--vault", type=Path, default=settings.vault_path)
     bootstrap.set_defaults(handler=_bootstrap)
+    ingest_source = commands.add_parser(
+        "ingest-source", help="download and ingest a pinned manifest source"
+    )
+    ingest_source.add_argument("source_id")
+    ingest_source.add_argument("--manifest", type=Path, default=Path("config/data_sources.toml"))
+    ingest_source.add_argument("--database", type=Path, default=settings.database_path)
+    ingest_source.add_argument("--vault", type=Path, default=settings.vault_path)
+    ingest_source.add_argument("--partition-prefix", default="0")
+    ingest_source.add_argument("--max-archive-bytes", type=int, default=4 * 1024 * 1024 * 1024)
+    ingest_source.add_argument("--max-records", type=int, default=10_000_000)
+    ingest_source.add_argument("--timeout-seconds", type=float, default=6 * 60 * 60)
+    ingest_source.add_argument("--checkpoint-every", type=int, default=10_000)
+    ingest_source.set_defaults(handler=_ingest_source)
     return command_parser
 
 
@@ -99,6 +146,8 @@ def main() -> int:
             return _ingest(args)
         case "bootstrap-everynoise":
             return _bootstrap(args)
+        case "ingest-source":
+            return _ingest_source(args)
         case _:
             raise RuntimeError(f"unknown command: {args.command}")
 

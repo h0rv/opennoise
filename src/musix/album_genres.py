@@ -11,7 +11,6 @@ from typing import Annotated, Literal
 
 from pydantic import Field, FiniteFloat, JsonValue, TypeAdapter, model_validator
 
-from musix.adapters.musicbrainz import AlbumGenreEvidenceRecord as MusicBrainzEvidence
 from musix.adapters.wikidata import AlbumGenreEvidenceRecord as WikidataEvidence
 from musix.evidence import (
     AlbumGenreRankingArtifact,
@@ -20,6 +19,7 @@ from musix.evidence import (
     RankingComponent,
 )
 from musix.models import FrozenModel
+from musix.sources.musicbrainz import AlbumGenreEvidenceRecord as MusicBrainzEvidence
 
 type Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 type DirectEvidenceKind = Literal[

@@ -33,6 +33,33 @@ redistribute it. Its policy should use `user_authorized_local` and
 
 ## Import
 
+Source ingestion is split by responsibility:
+
+- `clients/` owns HTTP transport and resumable, checksum-verified vault writes.
+- `sources/` owns explicit adapter registration, bounded parsing, and projection.
+- `pipeline/` owns manifests, policy, snapshots, attempts, checkpoints, quarantine,
+  provenance, idempotency, and transactions.
+- `catalog/` owns direct-SQL repositories for typed catalog projections.
+- Strict shared models live under `models/`; constrained scalar types live in
+  `types.py`. The previous `models.py` imports remain available through
+  `models/__init__.py`.
+
+Adapters never write pipeline lifecycle SQL. Projectors never discover or
+download artifacts. Registries are explicit and do not use reflection. Direct
+SQLite remains the persistence layer; there is no ORM. If an ORM is approved
+later, the project standard is SQLModel rather than SQLAlchemy's declarative ORM.
+
+The laptop-safe MusicBrainz bootstrap is a deterministic SHA256 prefix partition:
+
+```sh
+uv run poe ingest-musicbrainz-artists
+```
+
+The default prefix `0` selects exactly 1/16 of the source-ID hash space while the
+adapter scans and validates every source record. Use an empty prefix for a full
+import. The archive remains content-addressed and ignored under
+`data/source-cache`; reruns reuse verified bytes and completed attempts.
+
 First, the importer creates a `source_snapshots` row and one or more
 `source_artifacts` rows. Each artifact records its exact hash, byte count,
 media type, and vault key.

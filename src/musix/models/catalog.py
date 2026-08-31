@@ -30,6 +30,7 @@ class IdentifierClaim(_FrozenModel):
 class ArtistProjection(_FrozenModel):
     """Represent common artist facts projected from an upstream record."""
 
+    projection_kind: Literal["artist"] = "artist"
     entity_kind: Literal["artist"] = "artist"
     external_id: ExternalId
     names: tuple[NameClaim, ...] = Field(min_length=1)
@@ -38,3 +39,14 @@ class ArtistProjection(_FrozenModel):
     disambiguation: str | None = None
     begin_year: int | None = Field(default=None, ge=1, le=9999)
     end_year: int | None = Field(default=None, ge=1, le=9999)
+
+
+type CatalogProjection = ArtistProjection
+
+
+class ProjectionResult(_FrozenModel):
+    """Report one normalized catalog projection write."""
+
+    projection_kind: str = Field(min_length=1)
+    target_id: int = Field(gt=0)
+    duplicate: bool

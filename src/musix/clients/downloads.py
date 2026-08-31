@@ -67,7 +67,7 @@ async def download_verified(
 
     if destination.exists():
         size = destination.stat().st_size
-        digest = await asyncio.to_thread(_sha256_file, destination)
+        digest = _sha256_file(destination)
         if size != source.expected_bytes or digest != expected_sha256:
             raise SourceManifestError("existing vault object does not match its manifest")
         return DownloadResult(
@@ -96,7 +96,7 @@ async def download_verified(
     byte_size = partial.stat().st_size
     if byte_size != source.expected_bytes:
         raise SourceManifestError(f"downloaded {byte_size} bytes; expected {source.expected_bytes}")
-    digest = await asyncio.to_thread(_sha256_file, partial)
+    digest = _sha256_file(partial)
     if digest != expected_sha256:
         raise SourceManifestError(f"download SHA256 is {digest}; expected {expected_sha256}")
     partial.replace(destination)

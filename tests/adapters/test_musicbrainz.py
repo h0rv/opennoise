@@ -8,7 +8,8 @@ from uuid import UUID
 
 import httpx
 
-from musix.adapters.musicbrainz import (
+from musix.ingest import parse_catalog_record
+from musix.sources.musicbrainz import (
     AdapterLimits,
     MusicBrainzAdapterError,
     MusicBrainzClient,
@@ -17,7 +18,6 @@ from musix.adapters.musicbrainz import (
     iter_release_jsonl,
     write_artist_outputs,
 )
-from musix.ingest import parse_catalog_record
 
 ARTIST_ID = UUID("30238ead-59fa-41e2-a7ab-b7f6e6363c4b")
 GENRE_ID = "2f8f4ab6-5f11-4c1c-b3a9-17f0ef4d9cb9"
