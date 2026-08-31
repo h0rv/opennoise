@@ -68,7 +68,7 @@ def main() -> None:
     ):
         inputs = PublicModelRepository(catalog, listenbrainz).load(load_settings)
     artifact = build_public_model(inputs, model_settings)
-    _write_atomic(arguments.output, artifact.model_dump_json(indent=2))
+    _write_atomic(arguments.output, artifact.model_dump_json())
     summary = artifact.model_dump_json(include={"output_sha256", "coverage", "resources"}, indent=2)
     sys.stdout.write(f"{summary}\n")
 
