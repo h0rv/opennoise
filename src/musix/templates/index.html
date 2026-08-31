@@ -14,7 +14,7 @@
 <label class="sr-only" for="query">Artist or genre</label>
 <input id="query" name="q" type="search" placeholder="Artist or genre" autocomplete="off"
        hx-get="/fragments/search" hx-trigger="input changed delay:160ms" hx-target="#results"
-       hx-swap="innerHTML">
+       hx-swap="innerHTML" hx-sync="this:replace">
 </form>
 <output id="count" aria-live="polite">{{ map.points | length }}</output>
 <aside id="results" aria-label="Search results"></aside>

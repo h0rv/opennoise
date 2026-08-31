@@ -5,6 +5,9 @@ from pathlib import Path
 
 from musix.db import Database, UnsupportedSchemaError, fts_prefix_query
 
+ROOT = Path(__file__).resolve().parents[1]
+INITIAL_MIGRATION = ROOT / "migrations" / "0001_initial.sql"
+
 
 class DatabaseTests(unittest.TestCase):
     def test_initializes_the_schema_once(self) -> None:
@@ -14,7 +17,7 @@ class DatabaseTests(unittest.TestCase):
             database.initialize()
             with database.connect() as connection:
                 version = connection.execute("PRAGMA user_version").fetchone()[0]
-            self.assertEqual(version, 1)
+            self.assertEqual(version, 2)
             self.assertEqual(database.entity_count(), 0)
 
     def test_rejects_an_unknown_schema_version(self) -> None:
@@ -24,6 +27,26 @@ class DatabaseTests(unittest.TestCase):
                 connection.execute("PRAGMA user_version = 99")
             with self.assertRaises(UnsupportedSchemaError):
                 Database(path).initialize()
+
+    def test_upgrades_an_existing_version_one_database(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "catalog.sqlite"
+            with sqlite3.connect(path) as connection:
+                connection.executescript(INITIAL_MIGRATION.read_text(encoding="utf-8"))
+
+            database = Database(path)
+            database.initialize()
+
+            with database.connect() as connection:
+                version = connection.execute("PRAGMA user_version").fetchone()[0]
+                table = connection.execute(
+                    """
+                    SELECT name FROM sqlite_schema
+                    WHERE type = 'table' AND name = 'album_genre_membership_observations'
+                    """
+                ).fetchone()
+            self.assertEqual(version, 2)
+            self.assertIsNotNone(table)
 
     def test_builds_a_bounded_literal_fts_query(self) -> None:
         self.assertEqual(fts_prefix_query("acid-jazz OR *"), '"acidjazz"* AND "OR"*')

@@ -13,12 +13,15 @@ from musix.adapters.musicbrainz import (
     MusicBrainzAdapterError,
     MusicBrainzClient,
     iter_artist_archive,
+    iter_release_group_jsonl,
+    iter_release_jsonl,
     write_artist_outputs,
 )
 from musix.ingest import parse_catalog_record
 
 ARTIST_ID = UUID("30238ead-59fa-41e2-a7ab-b7f6e6363c4b")
 GENRE_ID = "2f8f4ab6-5f11-4c1c-b3a9-17f0ef4d9cb9"
+FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
 
 def _artist_payload() -> dict[str, object]:
@@ -50,6 +53,30 @@ def _write_archive(path: Path, *, schema: str = "1", artist_name: str = "mbdump/
 
 
 class MusicBrainzArchiveTests(unittest.TestCase):
+    def test_streams_release_groups_and_editions_with_direct_genres(self) -> None:
+        with (
+            (FIXTURES / "musicbrainz_release_groups.jsonl").open("rb") as groups_stream,
+            (FIXTURES / "musicbrainz_releases.jsonl").open("rb") as releases_stream,
+        ):
+            groups = list(iter_release_group_jsonl(groups_stream, AdapterLimits()))
+            releases = list(iter_release_jsonl(releases_stream, AdapterLimits()))
+
+        self.assertEqual(
+            [group.release_group.title for group in groups],
+            [
+                "Synthetic Electronic Album",
+                "Synthetic Jazz Album",
+                "Synthetic Hip Hop Album",
+            ],
+        )
+        self.assertEqual(groups[1].evidence[0].source_genre_name, "Jazz")
+        self.assertEqual(groups[1].evidence[0].evidence_level, "release_group")
+        self.assertEqual(releases[0].evidence[0].evidence_level, "release")
+        self.assertEqual(
+            releases[0].release.release_group_source_id,
+            groups[0].release_group.source_id,
+        )
+
     def test_streams_official_archive_shape_into_stable_records(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             archive_path = Path(directory) / "artist.tar.xz"

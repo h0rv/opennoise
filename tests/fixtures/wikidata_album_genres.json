@@ -1,0 +1,30 @@
+[
+  {
+    "id": "Q1001",
+    "type": "item",
+    "labels": {"en": {"language": "en", "value": "Synthetic Electronic Album"}},
+    "claims": {
+      "P436": [{"id": "Q1001$release-group", "rank": "normal", "mainsnak": {"property": "P436", "snaktype": "value", "datavalue": {"value": "10000000-0000-4000-8000-000000000001", "type": "string"}}}],
+      "P136": [{"id": "Q1001$genre", "rank": "normal", "mainsnak": {"property": "P136", "snaktype": "value", "datavalue": {"value": {"entity-type": "item", "id": "Q116705808"}, "type": "wikibase-entityid"}}, "qualifiers": {}, "references": [{"hash": "reference-1", "snaks": {}}]}],
+      "P577": [{"rank": "normal", "mainsnak": {"property": "P577", "snaktype": "value", "datavalue": {"value": {"time": "+2001-02-03T00:00:00Z", "precision": 11}, "type": "time"}}}]
+    }
+  },
+  {
+    "id": "Q1002",
+    "type": "item",
+    "labels": {"en": {"language": "en", "value": "Synthetic Jazz Album"}},
+    "claims": {
+      "P436": [{"rank": "normal", "mainsnak": {"property": "P436", "snaktype": "value", "datavalue": {"value": "10000000-0000-4000-8000-000000000002", "type": "string"}}}],
+      "P136": [{"rank": "preferred", "mainsnak": {"property": "P136", "snaktype": "value", "datavalue": {"value": {"entity-type": "item", "id": "Q8341"}, "type": "wikibase-entityid"}}}]
+    }
+  },
+  {
+    "id": "Q1003",
+    "type": "item",
+    "labels": {"en": {"language": "en", "value": "Synthetic Hip Hop Album"}},
+    "claims": {
+      "P5813": [{"rank": "normal", "mainsnak": {"property": "P5813", "snaktype": "value", "datavalue": {"value": "30000000-0000-4000-8000-000000000003", "type": "string"}}}],
+      "P136": [{"rank": "normal", "mainsnak": {"property": "P136", "snaktype": "value", "datavalue": {"value": {"entity-type": "item", "id": "Q11401"}, "type": "wikibase-entityid"}}}]
+    }
+  }
+]

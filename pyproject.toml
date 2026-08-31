@@ -56,6 +56,10 @@ ignore = [
     "PT027", # The project deliberately uses stdlib unittest, not pytest.
     "S101", # Assertions are the test contract.
 ]
+"src/musix/routes.py" = [
+    "PLR0913", # Route signatures list the public query parameters explicitly.
+    "PLR0917", # Litestar injects route parameters by name rather than positional calls.
+]
 
 [tool.ty.environment]
 python-version = "3.13"
@@ -73,6 +77,7 @@ schema = "python -m unittest tests.test_schema -v"
 "import" = "musix ingest"
 bootstrap = "musix bootstrap-everynoise"
 dev = "musix serve"
+evaluate-layout = "python scripts/evaluate_layout.py data/musix.sqlite --layout default"
 
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]

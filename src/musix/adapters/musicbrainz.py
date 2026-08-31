@@ -89,6 +89,43 @@ class MusicBrainzArtist(BaseModel):
     ipis: tuple[str, ...] = ()
 
 
+class MusicBrainzReleaseGroupReference(BaseModel):
+    """Parse the release group identity nested in a release response."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    id: UUID
+    title: str = Field(min_length=1)
+
+
+class MusicBrainzReleaseGroup(BaseModel):
+    """Parse album identity and direct genres from a release group document."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    id: UUID
+    title: str = Field(min_length=1)
+    primary_type: str | None = Field(default=None, alias="primary-type")
+    secondary_types: tuple[str, ...] = Field(default=(), alias="secondary-types")
+    first_release_date: str | None = Field(default=None, alias="first-release-date")
+    genres: tuple[MusicBrainzGenre, ...] = ()
+
+
+class MusicBrainzRelease(BaseModel):
+    """Parse one concrete edition and any genre claims attached to it."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    id: UUID
+    title: str = Field(min_length=1)
+    release_group: MusicBrainzReleaseGroupReference = Field(alias="release-group")
+    status: str | None = None
+    packaging: str | None = None
+    country: str | None = None
+    date: str | None = None
+    genres: tuple[MusicBrainzGenre, ...] = ()
+
+
 class Identifier(BaseModel):
     """Represent one typed identifier in the local JSONL boundary."""
 
@@ -143,6 +180,71 @@ class AdaptedArtist(BaseModel):
     artist: ArtistRecord
     genres: tuple[GenreRecord, ...]
     relationships: tuple[ArtistGenreRelationship, ...]
+
+
+class ReleaseGroupRecord(BaseModel):
+    """Represent one MusicBrainz album identity at the local adapter boundary."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    type: Literal["release_group"] = "release_group"
+    external_id: str = Field(min_length=1)
+    source_id: UUID
+    title: str = Field(min_length=1)
+    primary_type: str | None = None
+    secondary_types: tuple[str, ...] = ()
+    first_release_date: str | None = None
+
+
+class ReleaseRecord(BaseModel):
+    """Represent one concrete MusicBrainz release or edition."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    type: Literal["release"] = "release"
+    external_id: str = Field(min_length=1)
+    source_id: UUID
+    release_group_external_id: str = Field(min_length=1)
+    release_group_source_id: UUID
+    title: str = Field(min_length=1)
+    status: str | None = None
+    packaging: str | None = None
+    country: str | None = None
+    date: str | None = None
+
+
+class AlbumGenreEvidenceRecord(BaseModel):
+    """Represent one direct MusicBrainz genre claim on an album or edition."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    type: Literal["album_genre_evidence"] = "album_genre_evidence"
+    source_family: Literal["musicbrainz"] = "musicbrainz"
+    evidence_level: Literal["release_group", "release"]
+    release_group_source_id: UUID
+    release_source_id: UUID | None = None
+    genre_source_id: UUID
+    source_genre_name: str = Field(min_length=1)
+    source_count: int | None = Field(default=None, ge=0)
+    source_record_id: str = Field(min_length=1)
+
+
+class AdaptedReleaseGroup(BaseModel):
+    """Keep one album identity and its direct genre evidence together."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    release_group: ReleaseGroupRecord
+    evidence: tuple[AlbumGenreEvidenceRecord, ...]
+
+
+class AdaptedRelease(BaseModel):
+    """Keep one edition and its direct genre evidence together."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    release: ReleaseRecord
+    evidence: tuple[AlbumGenreEvidenceRecord, ...]
 
 
 def _deduplicate(values: Iterator[str]) -> tuple[str, ...]:
@@ -223,6 +325,65 @@ def adapt_artist(artist: MusicBrainzArtist) -> AdaptedArtist:
     )
 
 
+def adapt_release_group(release_group: MusicBrainzReleaseGroup) -> AdaptedReleaseGroup:
+    """Convert one release group and retain only direct official genre claims."""
+    source_id = release_group.id
+    evidence = tuple(
+        AlbumGenreEvidenceRecord(
+            evidence_level="release_group",
+            release_group_source_id=source_id,
+            genre_source_id=genre.id,
+            source_genre_name=genre.name,
+            source_count=genre.count,
+            source_record_id=f"musicbrainz:release-group:{source_id}:genre:{genre.id}",
+        )
+        for genre in release_group.genres
+    )
+    return AdaptedReleaseGroup(
+        release_group=ReleaseGroupRecord(
+            external_id=f"musicbrainz:release-group:{source_id}",
+            source_id=source_id,
+            title=release_group.title,
+            primary_type=release_group.primary_type,
+            secondary_types=release_group.secondary_types,
+            first_release_date=release_group.first_release_date,
+        ),
+        evidence=evidence,
+    )
+
+
+def adapt_release(release: MusicBrainzRelease) -> AdaptedRelease:
+    """Convert one edition and retain its release level genre claims."""
+    source_id = release.id
+    release_group_id = release.release_group.id
+    evidence = tuple(
+        AlbumGenreEvidenceRecord(
+            evidence_level="release",
+            release_group_source_id=release_group_id,
+            release_source_id=source_id,
+            genre_source_id=genre.id,
+            source_genre_name=genre.name,
+            source_count=genre.count,
+            source_record_id=f"musicbrainz:release:{source_id}:genre:{genre.id}",
+        )
+        for genre in release.genres
+    )
+    return AdaptedRelease(
+        release=ReleaseRecord(
+            external_id=f"musicbrainz:release:{source_id}",
+            source_id=source_id,
+            release_group_external_id=f"musicbrainz:release-group:{release_group_id}",
+            release_group_source_id=release_group_id,
+            title=release.title,
+            status=release.status,
+            packaging=release.packaging,
+            country=release.country,
+            date=release.date,
+        ),
+        evidence=evidence,
+    )
+
+
 def _safe_member_name(name: str) -> PurePosixPath:
     path = PurePosixPath(name)
     if path.is_absolute() or ".." in path.parts:
@@ -273,6 +434,32 @@ def iter_artist_jsonl(stream: BinaryLineReader, limits: AdapterLimits) -> Iterat
         yield adapt_artist(artist)
 
 
+def iter_release_group_jsonl(
+    stream: BinaryLineReader,
+    limits: AdapterLimits,
+) -> Iterator[AdaptedReleaseGroup]:
+    """Parse bounded MusicBrainz release group JSON Lines."""
+    for line in _iter_bounded_lines(stream, limits):
+        try:
+            release_group = MusicBrainzReleaseGroup.model_validate_json(line)
+        except ValueError as error:
+            raise MusicBrainzAdapterError("invalid MusicBrainz release group record") from error
+        yield adapt_release_group(release_group)
+
+
+def iter_release_jsonl(
+    stream: BinaryLineReader,
+    limits: AdapterLimits,
+) -> Iterator[AdaptedRelease]:
+    """Parse bounded MusicBrainz release JSON Lines."""
+    for line in _iter_bounded_lines(stream, limits):
+        try:
+            release = MusicBrainzRelease.model_validate_json(line)
+        except ValueError as error:
+            raise MusicBrainzAdapterError("invalid MusicBrainz release record") from error
+        yield adapt_release(release)
+
+
 def iter_artist_archive(path: Path, limits: AdapterLimits) -> Iterator[AdaptedArtist]:
     """Stream `mbdump/artist` from an official `artist.tar.xz` archive."""
     archive_size = path.stat().st_size
@@ -304,6 +491,68 @@ def iter_artist_archive(path: Path, limits: AdapterLimits) -> Iterator[AdaptedAr
         raise MusicBrainzAdapterError(
             f"unsupported MusicBrainz JSON dump schema: {schema_number!r}"
         )
+
+
+def _iter_json_archive[T](
+    path: Path,
+    limits: AdapterLimits,
+    *,
+    member_name: str,
+    parser: Callable[[BinaryLineReader, AdapterLimits], Iterator[T]],
+) -> Iterator[T]:
+    """Stream one named member from an official MusicBrainz JSON archive."""
+    if path.stat().st_size > limits.max_archive_bytes:
+        raise MusicBrainzAdapterError("MusicBrainz archive exceeds max_archive_bytes")
+    expected_member = PurePosixPath("mbdump") / member_name
+    found_member = False
+    schema_number: str | None = None
+    with tarfile.open(path, mode="r|xz") as archive:
+        for member in archive:
+            opened = _open_regular_member(archive, member, limits)
+            if opened is None:
+                continue
+            member_path, stream = opened
+            try:
+                if member_path == PurePosixPath("JSON_DUMPS_SCHEMA_NUMBER"):
+                    schema_number = stream.read(32).decode("ascii").strip()
+                elif member_path == expected_member:
+                    if found_member:
+                        raise MusicBrainzAdapterError(
+                            f"MusicBrainz archive repeats {expected_member}"
+                        )
+                    found_member = True
+                    yield from parser(stream, limits)
+            finally:
+                stream.close()
+    if not found_member:
+        raise MusicBrainzAdapterError(f"MusicBrainz archive has no {expected_member} member")
+    if schema_number != JSON_DUMP_SCHEMA:
+        raise MusicBrainzAdapterError(
+            f"unsupported MusicBrainz JSON dump schema: {schema_number!r}"
+        )
+
+
+def iter_release_group_archive(
+    path: Path,
+    limits: AdapterLimits,
+) -> Iterator[AdaptedReleaseGroup]:
+    """Stream release groups from an official `release-group.tar.xz` archive."""
+    yield from _iter_json_archive(
+        path,
+        limits,
+        member_name="release-group",
+        parser=iter_release_group_jsonl,
+    )
+
+
+def iter_release_archive(path: Path, limits: AdapterLimits) -> Iterator[AdaptedRelease]:
+    """Stream concrete editions from an official `release.tar.xz` archive."""
+    yield from _iter_json_archive(
+        path,
+        limits,
+        member_name="release",
+        parser=iter_release_jsonl,
+    )
 
 
 def _write_line(stream: BinaryIO, model: BaseModel) -> None:
@@ -355,7 +604,7 @@ def write_artist_outputs(
 
 
 class MusicBrainzClient:
-    """Fetch bounded artist records with the required identity and request rate."""
+    """Fetch bounded typed records with the required identity and request rate."""
 
     def __init__(
         self,
@@ -392,3 +641,25 @@ class MusicBrainzClient:
         )
         response.raise_for_status()
         return MusicBrainzArtist.model_validate_json(response.content)
+
+    async def fetch_release_group(self, release_group_id: UUID) -> MusicBrainzReleaseGroup:
+        """Fetch one release group with direct genres."""
+        await self._wait_for_rate_limit()
+        response = await self._client.get(
+            f"{MUSICBRAINZ_API_BASE}/release-group/{release_group_id}",
+            params={"fmt": "json", "inc": "genres"},
+            headers={"User-Agent": self._user_agent, "Accept": "application/json"},
+        )
+        response.raise_for_status()
+        return MusicBrainzReleaseGroup.model_validate_json(response.content)
+
+    async def fetch_release(self, release_id: UUID) -> MusicBrainzRelease:
+        """Fetch one concrete release with its release group and direct genres."""
+        await self._wait_for_rate_limit()
+        response = await self._client.get(
+            f"{MUSICBRAINZ_API_BASE}/release/{release_id}",
+            params={"fmt": "json", "inc": "release-groups+genres"},
+            headers={"User-Agent": self._user_agent, "Accept": "application/json"},
+        )
+        response.raise_for_status()
+        return MusicBrainzRelease.model_validate_json(response.content)

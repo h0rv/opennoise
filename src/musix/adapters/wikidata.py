@@ -6,6 +6,7 @@ import re
 from collections.abc import Iterator
 from pathlib import Path
 from typing import BinaryIO, Literal, Protocol
+from uuid import UUID
 
 import httpx
 import ijson
@@ -80,6 +81,7 @@ class WikidataTime(BaseModel):
 
 
 type DataValueContent = str | int | float | WikibaseEntityId | WikidataTime
+type ActiveClaimRank = Literal["preferred", "normal"]
 
 
 class WikidataDataValue(BaseModel):
@@ -101,13 +103,25 @@ class WikidataSnak(BaseModel):
     datavalue: WikidataDataValue | None = None
 
 
+class WikidataReference(BaseModel):
+    """Parse the source snaks attached to one Wikidata statement."""
+
+    model_config = ConfigDict(frozen=True, strict=False, extra="ignore")
+
+    hash: str | None = None
+    snaks: dict[str, tuple[WikidataSnak, ...]] = Field(default_factory=dict)
+
+
 class WikidataClaim(BaseModel):
     """Parse one ranked Wikidata statement."""
 
-    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+    model_config = ConfigDict(frozen=True, strict=False, extra="ignore")
 
+    id: str | None = None
     mainsnak: WikidataSnak
     rank: Literal["preferred", "normal", "deprecated"]
+    qualifiers: dict[str, tuple[WikidataSnak, ...]] = Field(default_factory=dict)
+    references: tuple[WikidataReference, ...] = ()
 
 
 class WikidataEntity(BaseModel):
@@ -164,6 +178,25 @@ class AdaptedGenre(BaseModel):
     relationships: tuple[GenreRelationship, ...]
     origins: tuple[str, ...] = ()
     inception: tuple[str, ...] = ()
+
+
+class AlbumGenreEvidenceRecord(BaseModel):
+    """Represent one direct Wikidata P136 claim on an album or edition."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    type: Literal["album_genre_evidence"] = "album_genre_evidence"
+    source_family: Literal["wikidata"] = "wikidata"
+    wikidata_item_id: str = Field(pattern=r"^Q[1-9][0-9]*$")
+    evidence_level: Literal["release_group", "release"]
+    musicbrainz_target_id: UUID
+    genre_qid: str = Field(pattern=r"^Q[1-9][0-9]*$")
+    claim_id: str | None = None
+    claim_rank: Literal["preferred", "normal"]
+    qualifier_count: int = Field(ge=0)
+    reference_count: int = Field(ge=0)
+    publication_dates: tuple[str, ...] = ()
+    source_record_id: str = Field(min_length=1)
 
 
 class SparqlBinding(BaseModel):
@@ -330,13 +363,71 @@ def adapt_entity(entity: WikidataEntity) -> AdaptedGenre | None:
     )
 
 
+def _valid_string_claims(
+    entity: WikidataEntity,
+    property_id: str,
+) -> Iterator[tuple[str, WikidataClaim, ActiveClaimRank]]:
+    for claim in entity.claims.get(property_id, ()):
+        if claim.rank == "deprecated" or claim.mainsnak.snaktype != "value":
+            continue
+        data_value = claim.mainsnak.datavalue
+        if data_value is not None and isinstance(data_value.value, str):
+            yield data_value.value, claim, claim.rank
+
+
+def _valid_entity_claims(
+    entity: WikidataEntity,
+    property_id: str,
+) -> Iterator[tuple[str, WikidataClaim, ActiveClaimRank]]:
+    for claim in entity.claims.get(property_id, ()):
+        if claim.rank == "deprecated" or claim.mainsnak.snaktype != "value":
+            continue
+        data_value = claim.mainsnak.datavalue
+        if data_value is not None and isinstance(data_value.value, WikibaseEntityId):
+            yield data_value.value.id, claim, claim.rank
+
+
+def adapt_album_genre_evidence(entity: WikidataEntity) -> tuple[AlbumGenreEvidenceRecord, ...]:
+    """Join direct album P136 claims to typed MusicBrainz target IDs."""
+    genres = tuple(_valid_entity_claims(entity, "P136"))
+    if not genres:
+        return ()
+    publication_dates = _time_values(entity, "P577")
+    targets: list[tuple[Literal["release_group", "release"], UUID]] = []
+    for evidence_level, property_id in (("release_group", "P436"), ("release", "P5813")):
+        for raw_target_id, _claim, _rank in _valid_string_claims(entity, property_id):
+            try:
+                target_id = UUID(raw_target_id)
+            except ValueError:
+                continue
+            targets.append((evidence_level, target_id))
+    evidence: list[AlbumGenreEvidenceRecord] = []
+    for evidence_level, target_id in targets:
+        for position, (genre_qid, claim, claim_rank) in enumerate(genres):
+            claim_ref = claim.id or f"{entity.id}:P136:{position}:{genre_qid}"
+            evidence.append(
+                AlbumGenreEvidenceRecord(
+                    wikidata_item_id=entity.id,
+                    evidence_level=evidence_level,
+                    musicbrainz_target_id=target_id,
+                    genre_qid=genre_qid,
+                    claim_id=claim.id,
+                    claim_rank=claim_rank,
+                    qualifier_count=sum(len(values) for values in claim.qualifiers.values()),
+                    reference_count=len(claim.references),
+                    publication_dates=publication_dates,
+                    source_record_id=f"wikidata:{claim_ref}:{evidence_level}:{target_id}",
+                )
+            )
+    return tuple(evidence)
+
+
 def _check_archive_size(path: Path, limits: AdapterLimits) -> None:
     if path.stat().st_size > limits.max_archive_bytes:
         raise WikidataAdapterError("Wikidata archive exceeds max_archive_bytes")
 
 
-def iter_entity_dump(path: Path, limits: AdapterLimits) -> Iterator[AdaptedGenre]:
-    """Stream relevant entities from an official `all.json.bz2` dump."""
+def _iter_wikidata_entities(path: Path, limits: AdapterLimits) -> Iterator[WikidataEntity]:
     _check_archive_size(path, limits)
     count = 0
     with bz2.open(path, "rb") as compressed:
@@ -349,8 +440,23 @@ def iter_entity_dump(path: Path, limits: AdapterLimits) -> Iterator[AdaptedGenre
                 entity = WikidataEntity.model_validate(raw_entity)
             except ValueError as error:
                 raise WikidataAdapterError("invalid Wikidata entity record") from error
-            if adapted := adapt_entity(entity):
-                yield adapted
+            yield entity
+
+
+def iter_entity_dump(path: Path, limits: AdapterLimits) -> Iterator[AdaptedGenre]:
+    """Stream relevant genre entities from an official `all.json.bz2` dump."""
+    for entity in _iter_wikidata_entities(path, limits):
+        if adapted := adapt_entity(entity):
+            yield adapted
+
+
+def iter_album_genre_evidence_dump(
+    path: Path,
+    limits: AdapterLimits,
+) -> Iterator[AlbumGenreEvidenceRecord]:
+    """Stream direct album P136 claims from an official entity dump."""
+    for entity in _iter_wikidata_entities(path, limits):
+        yield from adapt_album_genre_evidence(entity)
 
 
 def _binding_qid(binding: SparqlBinding) -> str | None:

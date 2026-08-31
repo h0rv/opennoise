@@ -3,11 +3,14 @@
 {% if map.points %}
   {% for point in map.points %}
   <a class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
-     href="/fragments/map?focus={{ point.entity_id }}" aria-label="{{ point.name }}"
+     href="{% if point.entity_kind == 'genre' %}/fragments/genres/{{ point.entity_id }}{% else %}/fragments/map?focus={{ point.entity_id }}{% endif %}"
+     aria-label="{{ point.name }}"
      hx-get="/fragments/map?focus={{ point.entity_id }}" hx-target="#map" hx-swap="outerHTML">
     <circle cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"
             fill="{{ point.color_hex or '#77776f' }}"></circle>
+    {% if map.show_labels %}
     <text x="{{ point.x + 8 }}" y="{{ point.y + 3 }}">{{ point.name }}</text>
+    {% endif %}
   </a>
   {% endfor %}
 {% else %}

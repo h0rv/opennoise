@@ -1,0 +1,12 @@
+<section id="genre-detail" aria-labelledby="genre-detail-name">
+<h2 id="genre-detail-name">{{ genre.name }}</h2>
+{% if genre.description %}<p>{{ genre.description }}</p>{% endif %}
+<dl>
+  {% for item in genre.evidence %}
+  <div>
+    <dt>{{ item.source_name }}</dt>
+    <dd><time datetime="{{ item.observed_at.isoformat() }}">{{ item.observed_at.date() }}</time></dd>
+  </div>
+  {% endfor %}
+</dl>
+</section>

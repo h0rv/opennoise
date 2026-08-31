@@ -4,7 +4,10 @@ from pathlib import Path
 from typing import override
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / "migrations" / "0001_initial.sql"
+MIGRATIONS = (
+    ROOT / "migrations" / "0001_initial.sql",
+    ROOT / "migrations" / "0002_album_genres.sql",
+)
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
 
 
@@ -13,7 +16,8 @@ class SchemaTests(unittest.TestCase):
     def setUp(self) -> None:
         self.database = sqlite3.connect(":memory:")
         self.database.execute("PRAGMA foreign_keys = ON")
-        self.database.executescript(MIGRATION.read_text(encoding="utf-8"))
+        for migration in MIGRATIONS:
+            self.database.executescript(migration.read_text(encoding="utf-8"))
 
     @override
     def tearDown(self) -> None:
@@ -27,7 +31,7 @@ class SchemaTests(unittest.TestCase):
         integrity = self.database.execute("PRAGMA integrity_check").fetchone()
         foreign_keys = self.database.execute("PRAGMA foreign_key_check").fetchall()
 
-        self.assertEqual(version, (1,))
+        self.assertEqual(version, (2,))
         self.assertEqual(integrity, ("ok",))
         self.assertEqual(foreign_keys, [])
 

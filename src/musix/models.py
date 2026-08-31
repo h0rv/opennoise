@@ -83,12 +83,31 @@ class MapView(FrozenModel):
     points: tuple[MapPoint, ...]
     view_box: str
     focused_entity_id: int | None = None
+    show_labels: bool = True
 
 
-def map_view(points: list[MapPoint], focused_entity_id: int | None = None) -> MapView:
+def map_view(
+    points: list[MapPoint],
+    focused_entity_id: int | None = None,
+    *,
+    view_box: str | None = None,
+    show_labels: bool = True,
+) -> MapView:
     """Compute padded SVG bounds for a sequence of map points."""
     if not points:
-        return MapView(points=(), view_box="0 0 100 100", focused_entity_id=focused_entity_id)
+        return MapView(
+            points=(),
+            view_box=view_box or "0 0 100 100",
+            focused_entity_id=focused_entity_id,
+            show_labels=show_labels,
+        )
+    if view_box is not None:
+        return MapView(
+            points=tuple(points),
+            view_box=view_box,
+            focused_entity_id=focused_entity_id,
+            show_labels=show_labels,
+        )
     focused_point = next(
         (point for point in points if point.entity_id == focused_entity_id),
         None,
@@ -105,6 +124,7 @@ def map_view(points: list[MapPoint], focused_entity_id: int | None = None) -> Ma
             points=tuple(points),
             view_box=view_box,
             focused_entity_id=focused_entity_id,
+            show_labels=show_labels,
         )
     minimum_x = min(point.x for point in points)
     maximum_x = max(point.x for point in points)
@@ -118,4 +138,9 @@ def map_view(points: list[MapPoint], focused_entity_id: int | None = None) -> Ma
         f"{minimum_x - padding_x} {minimum_y - padding_y} "
         f"{span_x + padding_x * 2} {span_y + padding_y * 2}"
     )
-    return MapView(points=tuple(points), view_box=view_box, focused_entity_id=focused_entity_id)
+    return MapView(
+        points=tuple(points),
+        view_box=view_box,
+        focused_entity_id=focused_entity_id,
+        show_labels=show_labels,
+    )

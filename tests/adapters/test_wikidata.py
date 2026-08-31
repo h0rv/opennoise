@@ -10,6 +10,7 @@ from musix.adapters.wikidata import (
     AdapterLimits,
     WikidataAdapterError,
     fetch_sparql_snapshot,
+    iter_album_genre_evidence_dump,
     iter_entity_dump,
     iter_sparql_response,
     iter_truthy_dump,
@@ -17,6 +18,8 @@ from musix.adapters.wikidata import (
     write_genre_outputs,
 )
 from musix.ingest import parse_catalog_record
+
+FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
 
 def _claim(property_id: str, value: object, value_type: str) -> dict[str, object]:
@@ -77,6 +80,22 @@ def _genre_entity() -> dict[str, object]:
 
 
 class WikidataDumpTests(unittest.TestCase):
+    def test_streams_album_and_edition_genre_claims_with_typed_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "albums.json.bz2"
+            raw_fixture = (FIXTURES / "wikidata_album_genres.json").read_text(encoding="utf-8")
+            with bz2.open(path, "wt", encoding="utf-8") as stream:
+                stream.write(raw_fixture)
+            records = list(iter_album_genre_evidence_dump(path, AdapterLimits()))
+
+        self.assertEqual(len(records), 3)
+        self.assertEqual(records[0].evidence_level, "release_group")
+        self.assertEqual(records[0].genre_qid, "Q116705808")
+        self.assertEqual(records[0].reference_count, 1)
+        self.assertEqual(records[0].publication_dates, ("+2001-02-03T00:00:00Z",))
+        self.assertEqual(records[1].claim_rank, "preferred")
+        self.assertEqual(records[2].evidence_level, "release")
+
     def test_streams_json_array_without_loading_the_dump(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "wikidata.json.bz2"

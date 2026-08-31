@@ -1,0 +1,3 @@
+{"id":"10000000-0000-4000-8000-000000000001","title":"Synthetic Electronic Album","primary-type":"Album","secondary-types":[],"first-release-date":"2001-02-03","genres":[{"id":"20000000-0000-4000-8000-000000000001","name":"Electronic","count":8}]}
+{"id":"10000000-0000-4000-8000-000000000002","title":"Synthetic Jazz Album","primary-type":"Album","secondary-types":[],"first-release-date":"1961","genres":[{"id":"20000000-0000-4000-8000-000000000002","name":"Jazz","count":5}]}
+{"id":"10000000-0000-4000-8000-000000000003","title":"Synthetic Hip Hop Album","primary-type":"Album","secondary-types":[],"first-release-date":"1994-07","genres":[{"id":"20000000-0000-4000-8000-000000000003","name":"Hip hop","count":11}]}
