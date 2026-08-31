@@ -21,7 +21,7 @@ the selected event days. The transient state covered 79,673 artists and 40,782 l
 formed 8,420,452 candidate pair rows and emitted 30,903 pair days at the privacy floor of five
 distinct listeners. One malformed row was counted and discarded without retaining its payload.
 
-The joint scan took 246.382 seconds and reached 449,683,456 bytes of peak resident memory. The
+The joint scan took 259.717 seconds and reached 449,273,856 bytes of peak resident memory. The
 seven verified source files remain in the local content addressed vault. The source manifest denies
 raw export and redistribution. The validation output does not contain listener identities, daily
 pair tables, or intermediate model artifacts.
@@ -58,12 +58,13 @@ policy.
 The learned-layout run produced these logical hashes:
 
 ```text
+input_sha256         00b0b509d91aae911370433b1e7794fcb63924db05aebe40a7e5c9ec0f56aa43
 settings_sha256      d569f3dd8d9157f61b8935f8d6055ff30a466f6eb943f04c8cffe8bed6f1e16c
 validation_sha256    b846804ce71b41dcf09db6741a71188f0421e5f8bb91b6c26c4c3945956a5e79
 model_output_sha256  cb96ef20924d1f09e98261683704d32040afc429a8f31a0c4560c88720adfb13
 ```
 
-The validation build itself took 4.430 seconds. Peak memory remained 449,683,456 bytes because the
+The validation build itself took 5.287 seconds. Peak memory remained 449,273,856 bytes because the
 process resource counter includes the preceding joint scan. The model checks its final logical
 output twice in one process. A regression test also verifies that scan time and peak memory do not
 change the input or output hash.
