@@ -22,8 +22,13 @@ QUALIFICATION_SHARD_SIZE = 100
 class MusicGenreQualificationSelection(FrozenModel):
     """Freeze the exact subjects, root, depth, and contributing artifacts."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[2] = 2
     root_qids: tuple[str, ...] = (MUSIC_GENRE_ROOT_QID,)
+    exclusion_property: Literal["P279"] = "P279"
+    exclusion_statement_ranks: tuple[Literal["normal", "preferred"], ...] = (
+        "normal",
+        "preferred",
+    )
     excluded_direct_parent_qids: tuple[str, ...] = EXCLUDED_DIRECT_PARENT_QIDS
     max_ancestry_depth: int = MAX_ANCESTRY_DEPTH
     input_artifacts: tuple[str, ...]
@@ -109,6 +114,8 @@ def prepare(database: Path, output: Path) -> dict[str, object]:
         "manifest_sha256": manifest_sha256,
         "max_ancestry_depth": selection.max_ancestry_depth,
         "excluded_direct_parent_qids": selection.excluded_direct_parent_qids,
+        "exclusion_property": selection.exclusion_property,
+        "exclusion_statement_ranks": selection.exclusion_statement_ranks,
         "query_files": len(hashes),
         "query_sha256": hashes,
         "root_qids": selection.root_qids,
