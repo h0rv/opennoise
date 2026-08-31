@@ -88,6 +88,7 @@ def _direct_memberships(
                   ORDER BY identifier.id LIMIT 1)
                ) AS genre_ref
         FROM normalizable_artist_genre_evidence AS evidence
+        JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = evidence.policy_id
          AND embed_permission.use_kind = 'embed'
@@ -207,6 +208,10 @@ def _hierarchy_edges(
                'wikidata:genre:' || child_identifier.normalized_value,
                'wikidata:genre:' || parent_identifier.normalized_value
         FROM genre_hierarchy AS hierarchy
+        JOIN modelable_music_genres AS qualified_child
+          ON qualified_child.genre_id = hierarchy.child_genre_id
+        JOIN modelable_music_genres AS qualified_parent
+          ON qualified_parent.genre_id = hierarchy.parent_genre_id
         JOIN provenance_records AS provenance
           ON provenance.id = hierarchy.provenance_id
         JOIN active_rights_policy_permissions AS permission
@@ -263,6 +268,7 @@ def _genres(
           SELECT evidence.genre_id,
                  'catalog:artist-genre:' || min(evidence.id) AS evidence_ref
           FROM normalizable_artist_genre_evidence AS evidence
+          JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = evidence.policy_id
            AND embed_permission.use_kind = 'embed'
@@ -292,6 +298,7 @@ def _genres(
           SELECT evidence.genre_id,
                  'catalog:album-genre:' || min(evidence.id) AS evidence_ref
           FROM normalizable_album_genre_memberships AS evidence
+          JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = evidence.policy_id
            AND embed_permission.use_kind = 'embed'
@@ -318,6 +325,7 @@ def _genres(
           SELECT evidence.genre_id,
                  'catalog:recording-genre:' || min(evidence.id) AS evidence_ref
           FROM normalizable_recording_genre_memberships AS evidence
+          JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = evidence.policy_id
            AND embed_permission.use_kind = 'embed'
@@ -352,6 +360,7 @@ def _genres(
                    hierarchy.relation_id, hierarchy.provenance_id
             FROM genre_hierarchy AS hierarchy
           ) AS endpoint
+          JOIN modelable_music_genres AS qualified ON qualified.genre_id = endpoint.genre_id
           JOIN provenance_records AS provenance ON provenance.id = endpoint.provenance_id
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = provenance.policy_id
@@ -447,6 +456,7 @@ def _metadata_candidates(
                ) AS genre_ref,
                min(evidence.id)
         FROM normalizable_artist_genre_evidence AS evidence
+        JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = evidence.policy_id
          AND embed_permission.use_kind = 'embed'
@@ -514,6 +524,7 @@ def _metadata_candidates(
                ) AS genre_ref,
                min(evidence.id)
         FROM normalizable_album_genre_memberships AS evidence
+        JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = evidence.policy_id
          AND embed_permission.use_kind = 'embed'
@@ -579,6 +590,7 @@ def _metadata_candidates(
                ) AS genre_ref,
                min(evidence.id)
         FROM normalizable_recording_genre_memberships AS evidence
+        JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = evidence.policy_id
          AND embed_permission.use_kind = 'embed'

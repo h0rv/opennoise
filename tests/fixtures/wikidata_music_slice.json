@@ -1,5 +1,5 @@
 {
-  "head": {"vars": ["entity", "entityKind", "label", "alias", "musicbrainzId", "genre", "statement", "rank", "reference", "referenceUrl", "parent", "inception", "publicationDate"]},
+  "head": {"vars": ["entity", "entityKind", "label", "alias", "musicbrainzId", "genre", "statement", "rank", "reference", "referenceUrl", "parent", "inception", "publicationDate", "musicGenreQualification"]},
   "results": {
     "bindings": [
       {
@@ -50,7 +50,8 @@
         "entity": {"type": "uri", "value": "http://www.wikidata.org/entity/Q500"},
         "entityKind": {"type": "literal", "value": "genre"},
         "label": {"xml:lang": "en", "type": "literal", "value": "Named Target Genre"},
-        "alias": {"xml:lang": "en", "type": "literal", "value": "Target Alias"}
+        "alias": {"xml:lang": "en", "type": "literal", "value": "Target Alias"},
+        "musicGenreQualification": {"type": "literal", "value": "Q188451|1|P31|P279:Q25379"}
       },
       {
         "entity": {"type": "uri", "value": "http://www.wikidata.org/entity/Q600"},

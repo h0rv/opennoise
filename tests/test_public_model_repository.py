@@ -24,6 +24,7 @@ def _catalog() -> sqlite3.Connection:
           evidence_value REAL, source_key TEXT, source_record_id TEXT,
           method_key TEXT, policy_id INTEGER, provenance_id INTEGER
         );
+        CREATE TABLE modelable_music_genres (genre_id INTEGER PRIMARY KEY);
         CREATE TABLE normalizable_album_genre_memberships (
           id INTEGER, release_group_id INTEGER, genre_id INTEGER,
           evidence_kind TEXT, source_count INTEGER, source_family TEXT,
@@ -66,7 +67,8 @@ def _catalog() -> sqlite3.Connection:
           (4, 30, 'musicbrainz', '33333333-3333-4333-8333-333333333333'),
           (5, 12, 'musicbrainz', '44444444-4444-4444-8444-444444444444'),
           (6, 40, 'musicbrainz', '55555555-5555-4555-8555-555555555555'),
-          (7, 20, 'musicbrainz', '66666666-6666-4666-8666-666666666666');
+          (7, 20, 'musicbrainz', '66666666-6666-4666-8666-666666666666'),
+          (8, 21, 'wikidata', 'Q999');
         INSERT INTO entity_names VALUES
           (1, 10, 'Allowed Artist', 1),
           (2, 11, 'Denied Artist', 1),
@@ -75,14 +77,17 @@ def _catalog() -> sqlite3.Connection:
           (5, 12, 'Suppressed Artist', 1),
           (6, 40, 'Q400', 1),
           (7, 30, 'Q300 Deluxe', 1);
-        INSERT INTO genres VALUES (20, 'Q100');
+        INSERT INTO genres VALUES (20, 'Q100'), (21, 'Non-music Genre');
+        INSERT INTO modelable_music_genres VALUES (20);
         INSERT INTO normalizable_artist_genre_evidence VALUES
           (1, 10, 20, 'direct_source_claim', 1.0, 'wikidata_music_slice',
            'Q10-P136-Q100', 'wikidata_p136', 1, 1),
           (2, 11, 20, 'direct_source_claim', 1.0, 'wikidata_music_slice',
            'Q11-P136-Q100', 'wikidata_p136', 2, 1),
           (3, 12, 20, 'direct_source_claim', 1.0, 'wikidata_music_slice',
-           'Q12-P136-Q100', 'wikidata_p136', 1, 1);
+           'Q12-P136-Q100', 'wikidata_p136', 1, 1),
+          (4, 10, 21, 'direct_source_claim', 1.0, 'wikidata_music_slice',
+           'Q10-P136-Q999', 'wikidata_p136', 1, 1);
         INSERT INTO normalizable_album_genre_memberships VALUES
           (1, 30, 20, 'wikidata_p136', NULL, 'wikidata', 1, 1);
         INSERT INTO normalizable_recording_genre_memberships VALUES

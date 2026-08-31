@@ -110,6 +110,9 @@ class WikidataSliceRow(FrozenModel):
     parent_reference_url: SparqlBinding | None = Field(default=None, alias="parentReferenceUrl")
     inception: SparqlBinding | None = None
     publication_date: SparqlBinding | None = Field(default=None, alias="publicationDate")
+    music_genre_qualification: SparqlBinding | None = Field(
+        default=None, alias="musicGenreQualification"
+    )
 
 
 def _parse_row(raw_row: object) -> WikidataSliceRow:
@@ -224,17 +227,25 @@ def _identifiers(
 
 
 def _value_claims(rows: list[WikidataSliceRow]) -> tuple[ValueClaim, ...]:
-    return _unique(
-        [
-            ValueClaim(property_key=property_key, value_kind="time", value=binding.value)
-            for row in rows
-            for property_key, binding in (
-                ("inception", row.inception),
-                ("publication_date", row.publication_date),
-            )
-            if binding is not None
-        ]
+    claims = [
+        ValueClaim(property_key=property_key, value_kind="time", value=binding.value)
+        for row in rows
+        for property_key, binding in (
+            ("inception", row.inception),
+            ("publication_date", row.publication_date),
+        )
+        if binding is not None
+    ]
+    claims.extend(
+        ValueClaim(
+            property_key="music_genre_qualification",
+            value_kind="string",
+            value=row.music_genre_qualification.value,
+        )
+        for row in rows
+        if row.music_genre_qualification is not None
     )
+    return _unique(claims)
 
 
 def _relation_claims(rows: list[WikidataSliceRow]) -> tuple[RelationClaim, ...]:

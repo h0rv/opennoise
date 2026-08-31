@@ -10,6 +10,10 @@ from scripts.prepare_phase3_media_details import (
     load_discovery,
     render_detail_query,
 )
+from scripts.prepare_phase3_music_genre_qualification import (
+    MUSIC_GENRE_ROOT_QID,
+    render_qualification_query,
+)
 from scripts.prepare_phase3_wikidata import (
     prepare,
     render_artist_query,
@@ -145,3 +149,26 @@ class Phase3WikidataTests(unittest.TestCase):
 
         self.assertIn("VALUES ?entity { wd:Q100 }", query)
         self.assertNotIn("ps:P279", query)
+
+    def test_music_genre_gate_uses_only_canonical_wikidata_p31(self) -> None:
+        query = render_qualification_query(
+            (GenreTarget(qid="Q188451"), GenreTarget(qid="Q104830011"))
+        )
+
+        self.assertIn(f"wdt:P31 wd:{MUSIC_GENRE_ROOT_QID}", query)
+        self.assertIn('BIND("Q188451|1|P31|P279:Q25379"', query)
+        self.assertIn("VALUES ?excludedParent { wd:Q25379 }", query)
+        self.assertIn("wdt:P279 ?excludedParent", query)
+        self.assertIn("FILTER NOT EXISTS", query)
+        self.assertNotIn("wdt:P279+", query)
+        self.assertNotIn("wdt:P279*", query)
+        self.assertNotIn("action film", query)
+
+    def test_music_genre_gate_excludes_only_the_declared_direct_parent(self) -> None:
+        query = render_qualification_query((GenreTarget(qid="Q2743"),))
+
+        self.assertNotIn("wdt:P279+", query)
+        self.assertNotIn("wdt:P279*", query)
+        self.assertNotIn("wd:Q7777573", query)
+        self.assertNotIn("wd:Q112248470", query)
+        self.assertNotIn("musical play", query)

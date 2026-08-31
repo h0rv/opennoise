@@ -14,6 +14,7 @@ MIGRATIONS = (
     ROOT / "migrations" / "0007_public_model_serving.sql",
     ROOT / "migrations" / "0008_public_model_layout_lenses.sql",
     ROOT / "migrations" / "0009_wikidata_recording_genres.sql",
+    ROOT / "migrations" / "0010_music_genre_qualification.sql",
 )
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
 
@@ -38,7 +39,7 @@ class SchemaTests(unittest.TestCase):
         integrity = self.database.execute("PRAGMA integrity_check").fetchone()
         foreign_keys = self.database.execute("PRAGMA foreign_key_check").fetchall()
 
-        self.assertEqual(version, (9,))
+        self.assertEqual(version, (10,))
         self.assertEqual(integrity, ("ok",))
         self.assertEqual(foreign_keys, [])
 
@@ -57,6 +58,67 @@ class SchemaTests(unittest.TestCase):
                            'invalid-cross-pair', 'genre', 'test', '1',
                            '2026-08-31T00:00:00Z', 1, 1, ?)""",
                 ("f" * 64,),
+            )
+
+    def test_music_genre_qualification_fails_closed_and_requires_declared_root(self) -> None:
+        self.load_fixture()
+        self.assertEqual(
+            self.database.execute("SELECT count(*) FROM modelable_music_genres").fetchone(),
+            (0,),
+        )
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "CHECK constraint failed"):
+            self.database.execute(
+                """INSERT INTO genre_music_qualification_observations
+                   (genre_id, root_qid, path_depth, path_spec, exclusion_profile, observed_at,
+                    provenance_id, policy_id, record_fingerprint)
+                   VALUES (1, 'Q5', 1, 'P31', 'P279:Q25379',
+                           '2026-08-31T00:00:00Z', 1, 1, ?)""",
+                ("e" * 64,),
+            )
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "CHECK constraint failed"):
+            self.database.execute(
+                """INSERT INTO genre_music_qualification_observations
+                   (genre_id, root_qid, path_depth, path_spec, exclusion_profile,
+                    observed_at, provenance_id, policy_id, record_fingerprint)
+                   VALUES (1, 'Q188451', 1, 'P31', 'Q7777573',
+                           '2026-08-31T00:00:00Z', 1, 1, ?)""",
+                ("a" * 64,),
+            )
+        self.database.execute(
+            """INSERT INTO genre_music_qualification_observations
+               (genre_id, root_qid, path_depth, path_spec, exclusion_profile, observed_at,
+                provenance_id, policy_id, record_fingerprint)
+               VALUES (1, 'Q188451', 1, 'P31', 'P279:Q25379',
+                       '2026-08-31T00:00:00Z', 1, 1, ?)""",
+            ("d" * 64,),
+        )
+        self.assertEqual(
+            self.database.execute("SELECT count(*) FROM modelable_music_genres").fetchone(),
+            (0,),
+        )
+        self.database.execute(
+            """INSERT INTO suppression_events
+               (target_kind, target_ref, use_kind, event_action,
+                reason, effective_at, event_fingerprint)
+               VALUES ('source', '1', 'embed', 'release',
+                       'qualification test', '2026-08-31T00:00:00Z', ?)""",
+            ("c" * 64,),
+        )
+        self.assertEqual(
+            self.database.execute("SELECT count(*) FROM modelable_music_genres").fetchone(),
+            (1,),
+        )
+        with self.assertRaisesRegex(
+            sqlite3.IntegrityError,
+            "music genre qualification policy must match provenance",
+        ):
+            self.database.execute(
+                """INSERT INTO genre_music_qualification_observations
+                   (genre_id, root_qid, path_depth, path_spec, exclusion_profile, observed_at,
+                    provenance_id, policy_id, record_fingerprint)
+                   VALUES (15, 'Q188451', 1, 'P31', 'P279:Q25379',
+                           '2026-08-31T00:00:00Z', 1, 2, ?)""",
+                ("b" * 64,),
             )
 
     def test_fixture_covers_catalog_ingest_and_map(self) -> None:

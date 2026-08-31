@@ -12,8 +12,11 @@ from musix.models.catalog import (
     EntityProjection,
     ProjectionResult,
     RelationClaim,
+    ValueClaim,
 )
 from musix.types import EntityKind
+
+QUALIFICATION_PART_COUNT = 4
 
 
 def _hash_parts(*parts: str) -> str:
@@ -233,6 +236,59 @@ def _persist_claims(
                 claim_hash,
             ),
         )
+        if (
+            projection.entity_kind == "genre"
+            and isinstance(claim, ValueClaim)
+            and claim.property_key == "music_genre_qualification"
+        ):
+            _persist_music_genre_qualification(
+                connection,
+                entity_id=entity_id,
+                value=claim.value,
+                provenance_id=provenance_id,
+                policy_id=policy_id,
+            )
+
+
+def _persist_music_genre_qualification(
+    connection: sqlite3.Connection,
+    *,
+    entity_id: int,
+    value: str,
+    provenance_id: int,
+    policy_id: int,
+) -> None:
+    parts = value.split("|")
+    if (
+        len(parts) != QUALIFICATION_PART_COUNT
+        or parts[0] != "Q188451"
+        or not parts[1].isdigit()
+        or parts[3] != "P279:Q25379"
+    ):
+        raise ValueError("invalid music genre qualification")
+    depth = int(parts[1])
+    path_spec = parts[2]
+    expected_depth = 0 if path_spec == "self" else len(path_spec.split("/"))
+    if depth != expected_depth or depth != 1 or path_spec != "P31":
+        raise ValueError("music genre qualification depth does not match its path")
+    fingerprint = _hash_parts(str(entity_id), value, str(provenance_id))
+    connection.execute(
+        """INSERT OR IGNORE INTO genre_music_qualification_observations
+           (genre_id, root_qid, path_depth, path_spec, exclusion_profile, observed_at,
+            provenance_id, policy_id, record_fingerprint)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            entity_id,
+            parts[0],
+            depth,
+            path_spec,
+            parts[3],
+            _now(),
+            provenance_id,
+            policy_id,
+            fingerprint,
+        ),
+    )
 
 
 def _ensure_target_genre(
