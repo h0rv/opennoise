@@ -9,13 +9,16 @@ CREATE TABLE genre_music_qualification_observations (
     path_depth INTEGER NOT NULL CHECK (path_depth = 1),
     path_spec TEXT NOT NULL,
     exclusion_profile TEXT NOT NULL,
+    statement_id TEXT NOT NULL,
+    statement_rank TEXT NOT NULL CHECK (statement_rank IN ('normal', 'preferred')),
     observed_at TEXT NOT NULL,
     provenance_id INTEGER NOT NULL REFERENCES provenance_records(id) ON DELETE RESTRICT,
     policy_id INTEGER NOT NULL REFERENCES rights_policies(id) ON DELETE RESTRICT,
     record_fingerprint TEXT NOT NULL UNIQUE,
     CHECK (root_qid = 'Q188451'),
     CHECK (path_spec = 'P31'),
-    CHECK (exclusion_profile = 'P279:Q25379'),
+    CHECK (exclusion_profile = 'P279:nondeprecated:Q25379'),
+    CHECK (length(statement_id) > 0),
     CHECK (length(record_fingerprint) = 64
            AND record_fingerprint = lower(record_fingerprint)
            AND record_fingerprint NOT GLOB '*[^0-9a-f]*')

@@ -155,20 +155,28 @@ class Phase3WikidataTests(unittest.TestCase):
             (GenreTarget(qid="Q188451"), GenreTarget(qid="Q104830011"))
         )
 
-        self.assertIn(f"wdt:P31 wd:{MUSIC_GENRE_ROOT_QID}", query)
-        self.assertIn('BIND("Q188451|1|P31|P279:Q25379"', query)
+        self.assertIn("?entity p:P31 ?statement", query)
+        self.assertIn(f"?statement ps:P31 wd:{MUSIC_GENRE_ROOT_QID}", query)
+        self.assertIn("FILTER(?rank != wikibase:DeprecatedRank)", query)
+        self.assertIn(
+            'BIND("Q188451|1|P31|P279:nondeprecated:Q25379"', query
+        )
         self.assertIn("VALUES ?excludedParent { wd:Q25379 }", query)
-        self.assertIn("wdt:P279 ?excludedParent", query)
+        self.assertIn("?entity p:P279 ?excludedStatement", query)
+        self.assertIn("ps:P279 ?excludedParent", query)
+        self.assertIn("wikibase:rank ?excludedRank", query)
+        self.assertIn("FILTER(?excludedRank != wikibase:DeprecatedRank)", query)
         self.assertIn("FILTER NOT EXISTS", query)
-        self.assertNotIn("wdt:P279+", query)
-        self.assertNotIn("wdt:P279*", query)
+        self.assertNotIn("p:P279+", query)
+        self.assertNotIn("p:P279*", query)
         self.assertNotIn("action film", query)
 
     def test_music_genre_gate_excludes_only_the_declared_direct_parent(self) -> None:
         query = render_qualification_query((GenreTarget(qid="Q2743"),))
 
-        self.assertNotIn("wdt:P279+", query)
-        self.assertNotIn("wdt:P279*", query)
+        self.assertNotIn("wdt:P279", query)
+        self.assertNotIn("p:P279+", query)
+        self.assertNotIn("p:P279*", query)
         self.assertNotIn("wd:Q7777573", query)
         self.assertNotIn("wd:Q112248470", query)
         self.assertNotIn("musical play", query)

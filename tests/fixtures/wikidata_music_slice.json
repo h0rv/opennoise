@@ -51,7 +51,9 @@
         "entityKind": {"type": "literal", "value": "genre"},
         "label": {"xml:lang": "en", "type": "literal", "value": "Named Target Genre"},
         "alias": {"xml:lang": "en", "type": "literal", "value": "Target Alias"},
-        "musicGenreQualification": {"type": "literal", "value": "Q188451|1|P31|P279:Q25379"}
+        "musicGenreQualification": {"type": "literal", "value": "Q188451|1|P31|P279:nondeprecated:Q25379"},
+        "statement": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/Q500-music-genre"},
+        "rank": {"type": "uri", "value": "http://wikiba.se/ontology#NormalRank"}
       },
       {
         "entity": {"type": "uri", "value": "http://www.wikidata.org/entity/Q600"},

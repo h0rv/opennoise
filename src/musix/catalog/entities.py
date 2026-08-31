@@ -244,7 +244,7 @@ def _persist_claims(
             _persist_music_genre_qualification(
                 connection,
                 entity_id=entity_id,
-                value=claim.value,
+                claim=claim,
                 provenance_id=provenance_id,
                 policy_id=policy_id,
             )
@@ -254,35 +254,46 @@ def _persist_music_genre_qualification(
     connection: sqlite3.Connection,
     *,
     entity_id: int,
-    value: str,
+    claim: ValueClaim,
     provenance_id: int,
     policy_id: int,
 ) -> None:
-    parts = value.split("|")
+    parts = claim.value.split("|")
     if (
         len(parts) != QUALIFICATION_PART_COUNT
         or parts[0] != "Q188451"
         or not parts[1].isdigit()
-        or parts[3] != "P279:Q25379"
+        or parts[3] != "P279:nondeprecated:Q25379"
     ):
         raise ValueError("invalid music genre qualification")
+    if claim.statement_id is None or claim.statement_id.namespace != "wikidata_statement":
+        raise ValueError("music genre qualification requires a Wikidata statement")
     depth = int(parts[1])
     path_spec = parts[2]
     expected_depth = 0 if path_spec == "self" else len(path_spec.split("/"))
     if depth != expected_depth or depth != 1 or path_spec != "P31":
         raise ValueError("music genre qualification depth does not match its path")
-    fingerprint = _hash_parts(str(entity_id), value, str(provenance_id))
+    fingerprint = _hash_parts(
+        str(entity_id),
+        claim.value,
+        claim.statement_id.value,
+        claim.rank,
+        str(provenance_id),
+    )
     connection.execute(
         """INSERT OR IGNORE INTO genre_music_qualification_observations
-           (genre_id, root_qid, path_depth, path_spec, exclusion_profile, observed_at,
-            provenance_id, policy_id, record_fingerprint)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           (genre_id, root_qid, path_depth, path_spec, exclusion_profile,
+            statement_id, statement_rank, observed_at, provenance_id, policy_id,
+            record_fingerprint)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             entity_id,
             parts[0],
             depth,
             path_spec,
             parts[3],
+            claim.statement_id.value,
+            claim.rank,
             _now(),
             provenance_id,
             policy_id,

@@ -13,7 +13,7 @@ from scripts.prepare_phase3_genre_enrichment import GenreTarget, load_targets
 MUSIC_GENRE_ROOT_QID = "Q188451"
 EXCLUDED_DIRECT_PARENT_QIDS = ("Q25379",)
 EXCLUSION_PROFILE = ",".join(
-    f"P279:{qid}" for qid in EXCLUDED_DIRECT_PARENT_QIDS
+    f"P279:nondeprecated:{qid}" for qid in EXCLUDED_DIRECT_PARENT_QIDS
 )
 MAX_ANCESTRY_DEPTH = 1
 QUALIFICATION_SHARD_SIZE = 100
@@ -38,19 +38,35 @@ def render_qualification_query(targets: tuple[GenreTarget, ...]) -> str:
         f"wd:{qid}" for qid in EXCLUDED_DIRECT_PARENT_QIDS
     )
     branches = [
-        f"""{{ ?entity wdt:P31 wd:{MUSIC_GENRE_ROOT_QID}.
+        f"""{{ ?entity p:P31 ?statement.
+      ?statement ps:P31 wd:{MUSIC_GENRE_ROOT_QID};
+                 wikibase:rank ?rank.
+      FILTER(?rank != wikibase:DeprecatedRank)
       FILTER NOT EXISTS {{
         VALUES ?excludedParent {{ {excluded_parents} }}
-        ?entity wdt:P279 ?excludedParent.
+        ?entity p:P279 ?excludedStatement.
+        ?excludedStatement ps:P279 ?excludedParent;
+                           wikibase:rank ?excludedRank.
+        FILTER(?excludedRank != wikibase:DeprecatedRank)
       }}
       BIND("{MUSIC_GENRE_ROOT_QID}|1|P31|{EXCLUSION_PROFILE}" AS ?musicGenreQualification)
+      OPTIONAL {{
+        ?statement prov:wasDerivedFrom ?reference.
+        OPTIONAL {{ ?reference pr:P854 ?referenceUrl. }}
+      }}
     }}"""
     ]
     union = "\n    UNION\n    ".join(branches)
     return f"""PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX pr: <http://www.wikidata.org/prop/reference/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
 
-SELECT DISTINCT ?entity ?entityKind ?musicGenreQualification
+SELECT DISTINCT ?entity ?entityKind ?musicGenreQualification ?statement
+       ?rank ?reference ?referenceUrl
 WHERE {{
   VALUES ?entity {{ {qids} }}
   BIND("genre" AS ?entityKind)

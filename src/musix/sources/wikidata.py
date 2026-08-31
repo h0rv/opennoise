@@ -241,6 +241,17 @@ def _value_claims(rows: list[WikidataSliceRow]) -> tuple[ValueClaim, ...]:
             property_key="music_genre_qualification",
             value_kind="string",
             value=row.music_genre_qualification.value,
+            statement_id=(
+                _source_identity(
+                    row.statement,
+                    WIKIDATA_STATEMENT_PREFIX,
+                    "wikidata_statement",
+                )
+                if row.statement is not None
+                else None
+            ),
+            rank=_rank(row.rank),
+            references=_statement_reference(row),
         )
         for row in rows
         if row.music_genre_qualification is not None

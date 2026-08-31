@@ -69,9 +69,11 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(sqlite3.IntegrityError, "CHECK constraint failed"):
             self.database.execute(
                 """INSERT INTO genre_music_qualification_observations
-                   (genre_id, root_qid, path_depth, path_spec, exclusion_profile, observed_at,
+                   (genre_id, root_qid, path_depth, path_spec, exclusion_profile,
+                    statement_id, statement_rank, observed_at,
                     provenance_id, policy_id, record_fingerprint)
-                   VALUES (1, 'Q5', 1, 'P31', 'P279:Q25379',
+                   VALUES (1, 'Q5', 1, 'P31', 'P279:nondeprecated:Q25379',
+                           'Q1-test', 'normal',
                            '2026-08-31T00:00:00Z', 1, 1, ?)""",
                 ("e" * 64,),
             )
@@ -79,16 +81,20 @@ class SchemaTests(unittest.TestCase):
             self.database.execute(
                 """INSERT INTO genre_music_qualification_observations
                    (genre_id, root_qid, path_depth, path_spec, exclusion_profile,
+                    statement_id, statement_rank,
                     observed_at, provenance_id, policy_id, record_fingerprint)
                    VALUES (1, 'Q188451', 1, 'P31', 'Q7777573',
+                           'Q1-test', 'normal',
                            '2026-08-31T00:00:00Z', 1, 1, ?)""",
                 ("a" * 64,),
             )
         self.database.execute(
             """INSERT INTO genre_music_qualification_observations
-               (genre_id, root_qid, path_depth, path_spec, exclusion_profile, observed_at,
+               (genre_id, root_qid, path_depth, path_spec, exclusion_profile,
+                statement_id, statement_rank, observed_at,
                 provenance_id, policy_id, record_fingerprint)
-               VALUES (1, 'Q188451', 1, 'P31', 'P279:Q25379',
+               VALUES (1, 'Q188451', 1, 'P31', 'P279:nondeprecated:Q25379',
+                       'Q1-test', 'normal',
                        '2026-08-31T00:00:00Z', 1, 1, ?)""",
             ("d" * 64,),
         )
@@ -114,9 +120,12 @@ class SchemaTests(unittest.TestCase):
         ):
             self.database.execute(
                 """INSERT INTO genre_music_qualification_observations
-                   (genre_id, root_qid, path_depth, path_spec, exclusion_profile, observed_at,
+                   (genre_id, root_qid, path_depth, path_spec, exclusion_profile,
+                    statement_id, statement_rank, observed_at,
                     provenance_id, policy_id, record_fingerprint)
-                   VALUES (15, 'Q188451', 1, 'P31', 'P279:Q25379',
+                   VALUES (15, 'Q188451', 1, 'P31',
+                           'P279:nondeprecated:Q25379',
+                           'Q15-test', 'normal',
                            '2026-08-31T00:00:00Z', 1, 2, ?)""",
                 ("b" * 64,),
             )
