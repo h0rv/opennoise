@@ -77,6 +77,7 @@ def _ingest_source(args: argparse.Namespace) -> int:
                 partition=DeterministicPartition(sha256_prefix=args.partition_prefix),
                 limits=SourceLimits(
                     max_archive_bytes=args.max_archive_bytes,
+                    max_record_bytes=args.max_record_bytes,
                     max_records=args.max_records,
                     timeout_seconds=args.timeout_seconds,
                 ),
@@ -129,6 +130,7 @@ def parser() -> argparse.ArgumentParser:
     ingest_source.add_argument("--vault", type=Path, default=settings.vault_path)
     ingest_source.add_argument("--partition-prefix", default="0")
     ingest_source.add_argument("--max-archive-bytes", type=int, default=4 * 1024 * 1024 * 1024)
+    ingest_source.add_argument("--max-record-bytes", type=int, default=64 * 1024 * 1024)
     ingest_source.add_argument("--max-records", type=int, default=10_000_000)
     ingest_source.add_argument("--timeout-seconds", type=float, default=6 * 60 * 60)
     ingest_source.add_argument("--checkpoint-every", type=int, default=10_000)

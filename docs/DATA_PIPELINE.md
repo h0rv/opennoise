@@ -59,6 +59,10 @@ The default prefix `0` selects exactly 1/16 of the source-ID hash space while th
 adapter scans and validates every source record. Use an empty prefix for a full
 import. The archive remains content-addressed and ignored under
 `data/source-cache`; reruns reuse verified bytes and completed attempts.
+MusicBrainz artist records are capped at 64 MiB because a small number of
+relationship-heavy upstream records exceed 50 MiB even though only bounded core
+fields are projected. Larger records are hashed, quarantined, and skipped without
+desynchronizing the following JSON line.
 
 First, the importer creates a `source_snapshots` row and one or more
 `source_artifacts` rows. Each artifact records its exact hash, byte count,
