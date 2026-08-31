@@ -1,4 +1,4 @@
-"""Validated settings, catalog records, and web response models."""
+"""Validated settings and web response models."""
 
 from pathlib import Path
 
