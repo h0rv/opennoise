@@ -1,0 +1,59 @@
+# Experiments
+
+These modules define small interfaces for product work after the first map. None of them selects a ranking or layout method.
+
+## Map exploration queries
+
+Status: active groundwork.
+
+`src/musix/exploration.py` defines viewport, source, time, lens, and level of detail parameters. `GET /api/explore/map` returns the exact query, the published layout revision and input hash, the effective bounds, stable point fields, and whether the result was cut off by the requested limit. `GET /fragments/map` accepts the same parameters and can return points with or without labels.
+
+Delete path: remove `exploration.py`, `ExploredMap`, the two experimental route paths, and the `Database.query_map` methods. The stable `/api/map` route and the main map do not depend on these query options.
+
+The current database has 6,291 map points. A local full query took about 70 milliseconds, while a viewport containing 833 points took about 28 milliseconds. These measurements do not justify a cache or a spatial index yet. We should measure again after adding more layouts or enough points to make viewport requests slow.
+
+## Layout strategy interface
+
+Status: contract only.
+
+`src/musix/layouts.py` defines a versioned strategy protocol, explicit build inputs, artifact metadata, and a complete artifact output. Every artifact records its strategy revision, parameters, input fingerprint, seed, policy, point count, and bounds. No strategy is registered as the default.
+
+Historical source coordinates and derived coordinates are separate model variants. The historical variant records its source artifact fingerprint and source units. A derived layout records its own units and strategy revision.
+
+Delete path: remove `layouts.py`, the layout metadata route, and the `Database.layout_metadata` methods. Existing layout tables and the main map continue to work.
+
+## Layout evaluation harness
+
+Status: standalone measurement support.
+
+`src/musix/layout_metrics.py` evaluates a versioned point layout without creating a layout, selecting a method, training a model, or writing database state. It accepts typed optional source neighbor lists, label boxes, community memberships and edges, a previous revision, and a repeated result. The evaluator reports neighbor preservation and conservative trustworthiness, bounded label collisions, viewport density and entropy, within-community fragmentation, direct revision movement, coordinate hashes, repeat agreement, and simple SVG and Canvas budgets. `scripts/evaluate_layout.py` loads a published local layout and reports only metrics that need no additional evidence.
+
+Delete path: remove `layout_metrics.py`, `tests/test_layout_metrics.py`, `scripts/evaluate_layout.py`, and the `evaluate-layout` Poe task. The map, routes, schema, and layout strategy interface do not depend on the harness.
+
+## Sparse map presentation
+
+Status: contract only.
+
+`src/musix/map_presentation.py` defines the inputs and outputs for later label selection. The contract records named priority inputs, landmark evidence, measured collision boxes, visible and hidden label decisions, exact density cell counts, and evidence backed edges. An inferred edge must name its method and version. No collision, landmark, density, or edge strategy is selected.
+
+Delete path: remove `map_presentation.py`. No route, database table, or current template imports it.
+
+## Genre detail and provenance
+
+Status: API and fragment groundwork.
+
+`GET /api/genres/{id}` returns a genre with its display-safe source evidence. `GET /api/entities/{id}/provenance` returns the same evidence without assuming the entity is a genre. `GET /fragments/genres/{id}` renders a bounded HTML detail region. The main map does not open this region yet.
+
+Delete path: remove `genre_detail.html`, `EvidenceController`, the provenance models in `exploration.py`, and the matching database methods. No catalog or import tables change.
+
+## Albums within a genre
+
+Status: local vertical slice with synthetic source records.
+
+`src/musix/evidence.py` treats a MusicBrainz release group as the album and keeps edition selection separate. `src/musix/album_genres.py` stores typed membership observations and publishes an unweighted evidence baseline. The baseline sorts eligible albums by independent direct source count, then by direct observation count. It records every component and says that no weights were applied.
+
+The strategy contract also accepts transparent user weights and pairwise user judgments, but neither strategy selects default weights or trains a model. MusicBrainz adapters parse release groups and concrete releases. The Wikidata adapter parses direct P136 claims linked through MusicBrainz release group or release IDs.
+
+Delete path for a database that has not applied migration 0002: remove `album_genres.py`, its focused tests and fixtures, and migration 0002. Restore schema version 1 and the single migration path in `db.py`. `evidence.py` can remain as an unused contract, or it can be removed with `tests/test_experiment_contracts.py`.
+
+Delete path for a database that has applied migration 0002: keep migration 0002 unchanged. Add a new migration that first drops `displayable_album_genre_ranking_items` and `displayable_album_genre_memberships`. It should then drop the ranking evidence links, items, runs, and membership observation tables in that order. Remove `album_genres.py`, its focused tests and fixtures, and the adapter additions. The main map, core importer, and current UI do not read these tables.
