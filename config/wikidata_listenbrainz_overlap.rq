@@ -1,0 +1,87 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX pr: <http://www.wikidata.org/prop/reference/>
+
+# The 40 MusicBrainz artist IDs with greatest summed aggregate co-listen support
+# in ListenBrainz artifact d98da81fd4552521ecda22d8242ddd0b9359afb8c302e2f7b4b24c31a2f41789.
+# Selection is deterministic: sum distinct_user_count over both pair endpoints,
+# then order by total descending and source ID ascending, limit 40.
+SELECT ?entity ?entityKind ?label ?musicbrainzId ?genre ?statement
+       ?rank ?reference ?referenceUrl ?parent ?inception ?publicationDate
+WHERE {
+  {
+    VALUES ?musicbrainzId {
+      "f59c5520-5f46-4d2c-b2c4-822eabf53419"
+      "cc197bad-dc9c-440d-a5b5-d52ba2e14234"
+      "f27ec8db-af05-4f36-916e-3d57f91ecf5e"
+      "0383dadf-2a4e-4d10-a46a-e9e041da8eb3"
+      "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d"
+      "b95ce3ff-3d05-4e87-9e01-c97b66af13d4"
+      "084308bd-1654-436f-ba03-df6697104e19"
+      "056e4f3e-d505-4dad-8ec1-d04f521cbb56"
+      "e21857d5-3256-4547-afb3-4b6ded592596"
+      "c8b03190-306c-4120-bb0b-6f2ebfc06ea9"
+      "afb680f2-b6eb-4cd7-a70b-a63b25c763d5"
+      "20244d07-534f-4eff-b4d4-930878889970"
+      "a74b1b7f-71a5-4011-9441-d0b5e4122711"
+      "8bfac288-ccc5-448d-9573-c33ea2aa5c30"
+      "5b11f4ce-a62d-471e-81fc-a69a8278c7da"
+      "9c9f1380-2516-4fc9-a3e6-f9f61941d090"
+      "bd13909f-1c29-4c27-a874-d4aaf27c5b1a"
+      "650e7db6-b795-4eb5-a702-5ea2fc46c848"
+      "0ab49580-c84f-44d4-875f-d83760ea2cfe"
+      "012151a8-0f9a-44c9-997f-ebd68b5389f9"
+      "302bd7b9-d012-4360-897a-93b00c855680"
+      "f4abc0b5-3f7a-4eff-8f78-ac078dbce533"
+      "381086ea-f511-4aba-bdf9-71c753dc5077"
+      "f4fdbb4c-e4b7-47a0-b83b-d91bbfcfa387"
+      "ada7a83c-e3e1-40f1-93f9-3e73dbc9298a"
+      "b071f9fa-14b0-4217-8e97-eb41da73f598"
+      "6f1a58bf-9b1b-49cf-a44a-6cefad7ae04f"
+      "79239441-bfd5-4981-a70c-55c3f15c1287"
+      "b83bc61f-8451-4a5d-8b8e-7e9ed295e822"
+      "164f0d73-1234-4e2c-8743-d77bf2191051"
+      "5441c29d-3602-4898-b1a1-b77fa23b8e50"
+      "eeb1195b-f213-4ce1-b28c-8565211f8e43"
+      "63aa26c3-d59b-4da4-84ac-716b54f1ef4d"
+      "23a03e33-a603-404e-bcbf-2c00159d7067"
+      "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab"
+      "b8a7c51f-362c-4dcb-a259-bc6e0095f0a6"
+      "66c662b6-6e2f-4930-8610-912e24c63ed1"
+      "67f66c07-6e61-4026-ade5-7e782fad3a5d"
+      "a3cb23fc-acd3-4ce0-8f36-1e5aa6a18432"
+      "83d91898-7763-47d7-b03b-b92132375c47"
+    }
+    ?entity wdt:P434 ?musicbrainzId.
+    BIND("artist" AS ?entityKind)
+  }
+  UNION {
+    { SELECT DISTINCT ?entity ?musicbrainzId WHERE {
+        ?entity wdt:P436 ?musicbrainzId.
+      } ORDER BY ?entity LIMIT 50 }
+    BIND("release_group" AS ?entityKind)
+  }
+  OPTIONAL {
+    ?entity rdfs:label ?label.
+    FILTER(LANG(?label) IN ("en", "es", "fr", "de", "pt", "ja", "ko", "zh", "ar", "hi"))
+  }
+  OPTIONAL { ?entity wdt:P279 ?parent. }
+  OPTIONAL { ?entity wdt:P571 ?inception. }
+  OPTIONAL { ?entity wdt:P577 ?publicationDate. }
+  OPTIONAL {
+    ?entity p:P136 ?statement.
+    ?statement ps:P136 ?genre;
+               wikibase:rank ?rank.
+    OPTIONAL {
+      ?statement prov:wasDerivedFrom ?reference.
+      OPTIONAL { ?reference pr:P854 ?referenceUrl. }
+    }
+  }
+}
+ORDER BY DESC(?entityKind) ?entity ?label ?statement ?genre ?reference
+LIMIT 12000

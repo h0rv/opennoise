@@ -13,6 +13,7 @@ Base: main `719c427`
 | ListenBrainz | `8aa673b` | Privacy-thresholded fixed-window artist co-listen aggregates, coverage records, migration 0005, and a laptop-safe incremental task. |
 | Metadata-only invariant | `1cb190f` | Audio and music bytes fail closed at manifest, transport, local file, archive member, parser, and object-store boundaries. |
 | MusicBrainz genre evidence | `26c4738` | Positive official-genre counts persist as append-only membership evidence with deterministic caps and explicit supplementary-data modes. |
+| Cross-source validation slice | this commit | A deterministic Wikidata query targets the forty strongest MusicBrainz-qualified ListenBrainz endpoints plus fifty bounded release groups. |
 
 ## Reconciliation decisions
 
@@ -73,6 +74,18 @@ inputs unless output attribution and ShareAlike terms receive a separate review.
 - The bounded Wikidata run accepted 230 entities and persisted 39 direct artist
   genre observations, 98 release-group genre observations, and 42 hierarchy
   relations.
+- The cross-source Wikidata validation run used ListenBrainz artifact
+  `d98da81fd4552521ecda22d8242ddd0b9359afb8c302e2f7b4b24c31a2f41789`
+  to select the forty artist MBIDs with greatest summed co-listen support. Its
+  verified Wikidata artifact was 3,268,158 bytes with SHA-256
+  `271f042f11486ff8bce76d9d47f0b2ee3a4f2c299814991df5cd5e43d882492c`.
+  The pipeline accepted all 90 records with no quarantine or duplicates in
+  0.266 seconds. All forty artists intersect the ListenBrainz evidence. The
+  result contains 294 P136 observations across forty artists and 104 genres,
+  plus 98 P136 observations across 45 of fifty release groups and 56 genres.
+  SQLite integrity and foreign-key checks passed. The 2.1 MiB database is
+  `/tmp/musix-wikidata-overlap-v2.sqlite`; it is a local reproducible artifact,
+  not a committed fixture.
 - ListenBrainz ingestion stores only MusicBrainz-qualified aggregate artist pairs.
   It does not retain listener identities or submitted track and artist text, and
   it does not itself choose a similarity function.
