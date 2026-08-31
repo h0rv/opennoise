@@ -70,10 +70,11 @@ def _catalog() -> sqlite3.Connection:
         INSERT INTO entity_names VALUES
           (1, 10, 'Allowed Artist', 1),
           (2, 11, 'Denied Artist', 1),
-          (3, 30, 'Allowed Album', 1),
+          (3, 30, 'Q300', 1),
           (4, 20, 'Q100', 1),
           (5, 12, 'Suppressed Artist', 1),
-          (6, 40, 'Allowed Recording', 1);
+          (6, 40, 'Q400', 1),
+          (7, 30, 'Q300 Deluxe', 1);
         INSERT INTO genres VALUES (20, 'Q100');
         INSERT INTO normalizable_artist_genre_evidence VALUES
           (1, 10, 20, 'direct_source_claim', 1.0, 'wikidata_music_slice',
@@ -156,11 +157,15 @@ class PublicModelRepositoryTests(unittest.TestCase):
         self.assertEqual(result.direct_memberships[0].genre_id, "wikidata:genre:Q100")
         self.assertEqual(len(result.artist_pairs), 1)
         self.assertEqual(result.artist_pairs[0].right_artist_id, _ARTIST_B)
-        self.assertEqual(len(result.metadata_candidates), 3)
+        self.assertEqual(len(result.metadata_candidates), 2)
+        self.assertFalse(
+            any(item.name in {"Q300", "Q400"} for item in result.metadata_candidates)
+        )
+        self.assertIn("Q300 Deluxe", {item.name for item in result.metadata_candidates})
         self.assertEqual(result.hierarchy, ())
         self.assertEqual(
             {item.entity_kind for item in result.metadata_candidates},
-            {"artist", "release_group", "recording"},
+            {"artist", "release_group"},
         )
 
 

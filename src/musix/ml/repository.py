@@ -387,7 +387,9 @@ def _genres(
                  (SELECT name FROM genres WHERE id = eligible.genre_id),
                  (SELECT name FROM entity_names
                   WHERE entity_id = eligible.genre_id
-                  ORDER BY is_preferred DESC, id LIMIT 1)
+                  ORDER BY (substr(name, 1, 1) = 'Q' AND length(name) > 1
+                            AND substr(name, 2) NOT GLOB '*[^0-9]*'),
+                           is_preferred DESC, id LIMIT 1)
                ) AS name,
                min(eligible.evidence_ref)
         FROM eligible_genres AS eligible
@@ -423,7 +425,9 @@ def _metadata_candidates(
                count(DISTINCT evidence.source_key),
                (SELECT name FROM entity_names
                 WHERE entity_id = evidence.artist_id
-                ORDER BY is_preferred DESC, id LIMIT 1) AS name,
+                ORDER BY (substr(name, 1, 1) = 'Q' AND length(name) > 1
+                          AND substr(name, 2) NOT GLOB '*[^0-9]*'),
+                         is_preferred DESC, id LIMIT 1) AS name,
                (SELECT 'musicbrainz:artist:' || identifier.normalized_value
                 FROM entity_identifiers AS identifier
                 WHERE identifier.entity_id = evidence.artist_id
@@ -481,7 +485,9 @@ def _metadata_candidates(
                count(DISTINCT evidence.source_family),
                (SELECT name FROM entity_names
                 WHERE entity_id = evidence.release_group_id
-                ORDER BY is_preferred DESC, id LIMIT 1) AS name,
+                ORDER BY (substr(name, 1, 1) = 'Q' AND length(name) > 1
+                          AND substr(name, 2) NOT GLOB '*[^0-9]*'),
+                         is_preferred DESC, id LIMIT 1) AS name,
                COALESCE(
                  (SELECT 'musicbrainz:release-group:' || identifier.normalized_value
                   FROM entity_identifiers AS identifier
@@ -551,7 +557,9 @@ def _metadata_candidates(
                max(COALESCE(evidence.source_count, 1)), 1,
                (SELECT name FROM entity_names
                 WHERE entity_id = evidence.recording_id
-                ORDER BY is_preferred DESC, id LIMIT 1) AS name,
+                ORDER BY (substr(name, 1, 1) = 'Q' AND length(name) > 1
+                          AND substr(name, 2) NOT GLOB '*[^0-9]*'),
+                         is_preferred DESC, id LIMIT 1) AS name,
                (SELECT 'musicbrainz:recording:' || identifier.normalized_value
                 FROM entity_identifiers AS identifier
                 WHERE identifier.entity_id = evidence.recording_id
@@ -612,6 +620,9 @@ def _candidate_rows(rows: Iterable[sqlite3.Row]) -> tuple[MetadataCandidate, ...
     for index, row in enumerate(rows):
         if row[4] is None or row[5] is None or row[6] is None:
             raise PublicInputLoadError(f"metadata candidate lacks public identity at row {index}")
+        name = str(row[4])
+        if name.startswith("Q") and name[1:].isdigit():
+            continue
         entity_ref = str(row[5])
         if ":release-group:" in entity_ref:
             entity_kind = "release_group"
@@ -624,7 +635,7 @@ def _candidate_rows(rows: Iterable[sqlite3.Row]) -> tuple[MetadataCandidate, ...
                 entity_kind=entity_kind,
                 entity_id=entity_ref,
                 genre_id=str(row[6]),
-                name=str(row[4]),
+                name=name,
                 direct_evidence_value=float(row[2]),
                 source_count=int(row[3]),
                 evidence_refs=(f"catalog:metadata:{int(row[7])}",),
