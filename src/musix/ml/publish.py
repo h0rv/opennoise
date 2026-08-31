@@ -1,5 +1,6 @@
 """Publish a verified public model artifact into the serving catalog."""
 
+import hashlib
 import json
 import re
 import sqlite3
@@ -13,6 +14,7 @@ from musix.metadata_links import metadata_url
 from musix.ml.public_graph import public_model_output_sha256
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelArtifact
+from musix.types import Sha256
 
 MODEL_KEY = "public-graph"
 DEFAULT_LAYOUT_KEY = "public"
@@ -37,24 +39,118 @@ class PublicModelPublishSummary(FrozenModel):
     duplicate: bool
 
 
+class LoadedPublicModel(FrozenModel):
+    """Carry one bounded parse together with its exact file identity."""
+
+    artifact: PublicModelArtifact
+    artifact_sha256: Sha256
+    byte_size: int = Field(gt=0)
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
-def load_public_model(path: Path) -> PublicModelArtifact:
+def load_public_model(path: Path) -> LoadedPublicModel:
     """Parse one bounded JSON artifact and verify its stable logical hash."""
-    size = path.stat().st_size
-    if size > MAX_ARTIFACT_BYTES:
+    with path.open("rb") as stream:
+        payload = stream.read(MAX_ARTIFACT_BYTES + 1)
+    if len(payload) > MAX_ARTIFACT_BYTES:
         raise PublicModelPublishError(
-            f"public model artifact is {size} bytes; limit is {MAX_ARTIFACT_BYTES}"
+            f"public model artifact exceeds the {MAX_ARTIFACT_BYTES} byte limit"
         )
-    artifact = PublicModelArtifact.model_validate_json(path.read_bytes())
+    if not payload:
+        raise PublicModelPublishError("public model artifact is empty")
+    artifact = PublicModelArtifact.model_validate_json(payload)
     calculated = public_model_output_sha256(artifact)
     if calculated != artifact.output_sha256:
         raise PublicModelPublishError("public model logical output hash does not match payload")
     if not artifact.export_allowed:
         raise PublicModelPublishError("public serving requires an exportable model artifact")
-    return artifact
+    return LoadedPublicModel(
+        artifact=artifact,
+        artifact_sha256=hashlib.sha256(payload).hexdigest(),
+        byte_size=len(payload),
+    )
+
+
+def _input_provenance(
+    connection: sqlite3.Connection,
+    artifact: PublicModelArtifact,
+) -> tuple[tuple[int, int], ...]:
+    """Resolve every declared input by exact source key and content hash."""
+    result: list[tuple[int, int]] = []
+    for source_artifact in artifact.artifacts:
+        source_key, separator, declared_hash = source_artifact.artifact_key.rpartition(":")
+        if separator != ":" or declared_hash != source_artifact.content_sha256 or not source_key:
+            raise PublicModelPublishError("public input artifact key must end in its exact SHA256")
+        rows = connection.execute(
+            """SELECT DISTINCT provenance.id, artifact.id
+               FROM provenance_records AS provenance
+               JOIN data_sources AS source ON source.id = provenance.source_id
+               JOIN source_snapshots AS snapshot ON snapshot.source_id = source.id
+                AND snapshot.snapshot_ref = provenance.snapshot_ref
+               JOIN source_artifacts AS artifact
+                 ON artifact.snapshot_id = snapshot.id
+                AND artifact.sha256 = provenance.artifact_sha256
+               JOIN active_rights_policy_permissions AS provenance_export
+                 ON provenance_export.policy_id = provenance.policy_id
+                AND provenance_export.use_kind = 'export'
+                AND provenance_export.decision = 'allow'
+               JOIN active_rights_policy_permissions AS artifact_export
+                 ON artifact_export.policy_id = artifact.policy_id
+                AND artifact_export.use_kind = 'export'
+                AND artifact_export.decision = 'allow'
+               WHERE source.source_key = ? AND provenance.artifact_sha256 = ?
+               ORDER BY provenance.id, artifact.id""",
+            (source_key, source_artifact.content_sha256),
+        ).fetchall()
+        if not rows:
+            raise PublicModelPublishError(
+                f"public input has no exact exportable provenance: {source_artifact.artifact_key}"
+            )
+        result.extend((int(row[0]), int(row[1])) for row in rows)
+    return tuple(dict.fromkeys(result))
+
+
+def _derived_output(
+    connection: sqlite3.Connection,
+    loaded: LoadedPublicModel,
+    policy_id: int,
+    provenance: tuple[tuple[int, int], ...],
+) -> int:
+    artifact = loaded.artifact
+    existing = connection.execute(
+        """SELECT id, content_sha256, policy_id FROM derived_outputs
+           WHERE output_kind = 'public_model' AND output_ref = ?""",
+        (artifact.output_sha256,),
+    ).fetchone()
+    if existing is not None:
+        if str(existing[1]) != loaded.artifact_sha256 or int(existing[2]) != policy_id:
+            raise PublicModelPublishError("existing public model derived output does not match")
+        output_id = int(existing[0])
+    else:
+        cursor = connection.execute(
+            """INSERT INTO derived_outputs
+               (output_kind, output_ref, content_sha256, policy_id, created_at)
+               VALUES ('public_model', ?, ?, ?, ?)""",
+            (artifact.output_sha256, loaded.artifact_sha256, policy_id, _now()),
+        )
+        if cursor.lastrowid is None:
+            raise RuntimeError("derived output insert returned no row ID")
+        output_id = cursor.lastrowid
+        connection.execute(
+            """INSERT INTO derived_output_events
+               (derived_output_id, event_kind, event_at, reason)
+               VALUES (?, 'created', ?, 'verified public model publication')""",
+            (output_id, _now()),
+        )
+    connection.executemany(
+        """INSERT OR IGNORE INTO derivation_edges
+           (parent_kind, parent_ref, child_output_id) VALUES ('provenance', ?, ?)""",
+        ((str(provenance_id), output_id) for provenance_id, _artifact_id in provenance),
+    )
+    return output_id
 
 
 def _genre_reference(value: str) -> tuple[str, str]:
@@ -110,13 +206,20 @@ def _model_run(
     connection: sqlite3.Connection,
     artifact: PublicModelArtifact,
     policy_id: int,
+    artifact_sha256: Sha256,
+    derived_output_id: int,
 ) -> tuple[int, bool]:
     existing = connection.execute(
-        "SELECT id, policy_id FROM public_model_runs WHERE output_sha256 = ?",
+        """SELECT id, policy_id, artifact_sha256, derived_output_id
+           FROM public_model_runs WHERE output_sha256 = ?""",
         (artifact.output_sha256,),
     ).fetchone()
     if existing is not None:
-        if int(existing[1]) != policy_id:
+        if (
+            int(existing[1]) != policy_id
+            or str(existing[2]) != artifact_sha256
+            or int(existing[3]) != derived_output_id
+        ):
             raise PublicModelPublishError(
                 "an existing model output cannot be republished under a different policy"
             )
@@ -130,8 +233,9 @@ def _model_run(
     cursor = connection.execute(
         """INSERT INTO public_model_runs
            (model_key, revision, model_revision, input_sha256, settings_sha256,
-            output_sha256, export_allowed, policy_id, published_at)
-           VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)""",
+            output_sha256, artifact_sha256, export_allowed, policy_id,
+            derived_output_id, published_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)""",
         (
             MODEL_KEY,
             int(revision_row[0]),
@@ -139,7 +243,9 @@ def _model_run(
             artifact.input_sha256,
             artifact.settings_sha256,
             artifact.output_sha256,
+            artifact_sha256,
             policy_id,
+            derived_output_id,
             _now(),
         ),
     )
@@ -229,15 +335,32 @@ def publish_public_model(
     layout_key: str = DEFAULT_LAYOUT_KEY,
 ) -> PublicModelPublishSummary:
     """Verify and atomically select one public model for map and detail serving."""
-    artifact = load_public_model(artifact_path)
+    loaded = load_public_model(artifact_path)
+    artifact = loaded.artifact
     database = Database(database_path)
     database.initialize()
     with database.connect() as connection, connection:
         _policy_allows_public_serving(connection, policy_id)
+        provenance = _input_provenance(connection, artifact)
+        derived_output_id = _derived_output(connection, loaded, policy_id, provenance)
         genre_ids = {
             genre.genre_id: _resolve_genre(connection, genre.genre_id) for genre in artifact.genres
         }
-        model_run_id, duplicate = _model_run(connection, artifact, policy_id)
+        model_run_id, duplicate = _model_run(
+            connection,
+            artifact,
+            policy_id,
+            loaded.artifact_sha256,
+            derived_output_id,
+        )
+        connection.executemany(
+            """INSERT OR IGNORE INTO public_model_input_provenance
+               (model_run_id, provenance_id, artifact_id) VALUES (?, ?, ?)""",
+            (
+                (model_run_id, provenance_id, source_artifact_id)
+                for provenance_id, source_artifact_id in provenance
+            ),
+        )
         connection.executemany(
             """INSERT OR IGNORE INTO public_genre_names
                (model_run_id, genre_id, source_genre_ref, display_name, evidence_refs_json)
@@ -290,7 +413,8 @@ def publish_public_model(
                VALUES (?, ?)
                ON CONFLICT(model_key) DO UPDATE SET
                    model_run_id = excluded.model_run_id,
-                   selected_at = excluded.selected_at""",
+                   selected_at = excluded.selected_at
+               WHERE current_public_models.model_run_id != excluded.model_run_id""",
             (MODEL_KEY, model_run_id),
         )
         connection.execute(
@@ -298,7 +422,8 @@ def publish_public_model(
                VALUES (?, ?)
                ON CONFLICT(layout_key) DO UPDATE SET
                    layout_run_id = excluded.layout_run_id,
-                   selected_at = excluded.selected_at""",
+                   selected_at = excluded.selected_at
+               WHERE current_layouts.layout_run_id != excluded.layout_run_id""",
             (layout_key, layout_run_id),
         )
     return PublicModelPublishSummary(

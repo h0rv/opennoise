@@ -78,10 +78,19 @@ uv run poe publish-public-model -- \
 uv run musix serve --database data/public-catalog.sqlite
 ```
 
-Publication verifies the artifact's logical output hash, resolves every genre by one exact
-Wikidata QID or MusicBrainz ID, and commits the model, coordinates, representatives, and current
-selection in one SQLite transaction. Repeating the same publication is idempotent. The generated
-map is available as the `public` layout while existing historical layouts remain available.
+Publication opens the artifact once, enforces a 32 MiB limit, verifies both its file hash and
+logical output hash, and resolves every declared input to an exact source artifact and provenance
+record whose policies allow export. It resolves every genre by one exact Wikidata QID or
+MusicBrainz ID, then commits the derived output, model, coordinates, representatives, input
+lineage, and current selection in one SQLite transaction. Repeating the same publication is
+idempotent and does not alter the selection timestamp. The generated map is available as the
+`public` layout while existing historical layouts remain available.
+
+The public model's own genre names take precedence over local display names. Local catalog
+artists, albums, and recordings never act as serving fallbacks because their display permission
+does not imply export permission. Active suppression of any contributing source, provenance
+record, source artifact, or derived output immediately retracts its public layout and
+representatives.
 
 Genre pages show at most six representative artists, release groups, and recordings. Links are
 derived at render time only from exact MusicBrainz or Wikidata identifiers and lead to ordinary

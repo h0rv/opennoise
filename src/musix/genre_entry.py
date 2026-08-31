@@ -79,29 +79,6 @@ class GenreEntryRepository:
                    ORDER BY entity_kind, rank, source_entity_ref""",
                 (genre_id, max(ARTIST_LIMIT, ALBUM_LIMIT, TRACK_LIMIT)),
             ).fetchall()
-            album_rows = connection.execute(
-                """WITH album_names AS (
-                       SELECT membership.release_group_id,
-                              name.name,
-                              row_number() OVER (
-                                  PARTITION BY membership.release_group_id
-                                  ORDER BY (name.name_kind = 'primary') DESC,
-                                           name.is_preferred DESC,
-                                           (name.language_tag = 'und') DESC,
-                                           name.id
-                              ) AS name_rank
-                       FROM displayable_album_genre_memberships AS membership
-                       JOIN displayable_entity_names AS name
-                         ON name.entity_id = membership.release_group_id
-                       WHERE membership.genre_id = ?
-                   )
-                   SELECT release_group_id, name
-                   FROM album_names
-                   WHERE name_rank = 1
-                   ORDER BY name COLLATE NOCASE, release_group_id
-                   LIMIT ?""",
-                (genre_id, ALBUM_LIMIT),
-            ).fetchall()
             neighbor_rows = connection.execute(
                 """WITH neighbor_names AS (
                        SELECT relation.related_genre_id,
@@ -122,10 +99,6 @@ class GenreEntryRepository:
         representative = _representative(representative_row)
         artists = _public_items(public_rows, "artist", ARTIST_LIMIT)
         albums = _public_items(public_rows, "release_group", ALBUM_LIMIT)
-        if not albums:
-            albums = tuple(
-                GenreDiscoveryItem(entity_id=int(row[0]), name=str(row[1])) for row in album_rows
-            )
         tracks = _public_items(public_rows, "recording", TRACK_LIMIT)
         neighbors = tuple(
             GenreDiscoveryItem(

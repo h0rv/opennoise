@@ -398,15 +398,11 @@ class Database:
                 WITH public_name AS (
                     SELECT name.genre_id, name.display_name
                     FROM current_public_models AS current
-                    JOIN public_model_runs AS run ON run.id = current.model_run_id
-                    JOIN active_rights_policy_permissions AS permission
-                      ON permission.policy_id = run.policy_id
-                     AND permission.use_kind = 'display'
-                     AND permission.decision = 'allow'
+                    JOIN servable_public_model_runs AS run ON run.id = current.model_run_id
                     JOIN public_genre_names AS name ON name.model_run_id = run.id
                 )
                 SELECT genre.id, genre.slug,
-                       coalesce(name.name, public_name.display_name), genre.description
+                       coalesce(public_name.display_name, name.name), genre.description
                 FROM genres AS genre
                 LEFT JOIN displayable_entity_names AS name ON name.entity_id = genre.id
                 LEFT JOIN public_name ON public_name.genre_id = genre.id

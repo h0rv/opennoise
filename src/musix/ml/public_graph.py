@@ -33,6 +33,7 @@ from musix.models.modeling import (
     ModelCoverage,
     ModelResources,
     ProfileKind,
+    PublicArtifact,
     PublicModelArtifact,
     PublicModelInput,
     PublicModelSettings,
@@ -84,6 +85,7 @@ def _output_payload(  # noqa: PLR0913
     coverage: ModelCoverage,
     export_allowed: bool,
     genres: tuple[GenreIdentity, ...],
+    artifacts: tuple[PublicArtifact, ...],
 ) -> dict[str, object]:
     """Build the stable logical payload covered by the published output hash."""
     return {
@@ -95,6 +97,7 @@ def _output_payload(  # noqa: PLR0913
         "coverage": coverage.model_dump(mode="json"),
         "export_allowed": export_allowed,
         "genres": [item.model_dump(mode="json") for item in genres],
+        "artifacts": [item.model_dump(mode="json") for item in artifacts],
     }
 
 
@@ -110,6 +113,7 @@ def public_model_output_sha256(artifact: PublicModelArtifact) -> Sha256:
             coverage=artifact.coverage,
             export_allowed=artifact.export_allowed,
             genres=artifact.genres,
+            artifacts=artifact.artifacts,
         )
     )
 
@@ -594,12 +598,14 @@ def build_public_model(
         coverage=coverage,
         export_allowed=export_allowed,
         genres=inputs.genres,
+        artifacts=inputs.artifacts,
     )
     return PublicModelArtifact(
         input_sha256=_sha256(inputs),
         settings_sha256=_sha256(settings),
         output_sha256=_sha256(payload),
         export_allowed=export_allowed,
+        artifacts=inputs.artifacts,
         genres=inputs.genres,
         profiles=profiles,
         neighbors=neighbors,

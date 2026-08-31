@@ -246,6 +246,7 @@ class PublicModelArtifact(FrozenModel):
     settings_sha256: Sha256
     output_sha256: Sha256
     export_allowed: bool
+    artifacts: tuple[PublicArtifact, ...] = Field(min_length=1, max_length=64)
     genres: tuple[GenreIdentity, ...]
     profiles: tuple[GenreProfile, ...]
     neighbors: tuple[GenreNeighbor, ...]
