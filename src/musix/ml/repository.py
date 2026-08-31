@@ -269,10 +269,10 @@ def _genres(
                   ORDER BY identifier.id LIMIT 1)
                ) AS genre_ref,
                COALESCE(
+                 (SELECT name FROM genres WHERE id = eligible.genre_id),
                  (SELECT name FROM entity_names
                   WHERE entity_id = eligible.genre_id
-                  ORDER BY is_preferred DESC, id LIMIT 1),
-                 (SELECT name FROM genres WHERE id = eligible.genre_id)
+                  ORDER BY is_preferred DESC, id LIMIT 1)
                ) AS name,
                min(eligible.evidence_id)
         FROM eligible_genres AS eligible

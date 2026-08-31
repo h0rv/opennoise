@@ -82,10 +82,30 @@ class WikidataPipelineTests(unittest.IsolatedAsyncioTestCase):
                     int(connection.execute("SELECT count(*) FROM entity_relations").fetchone()[0]),
                     int(connection.execute("SELECT count(*) FROM quarantine_events").fetchone()[0]),
                 )
+                named_target = connection.execute(
+                    """SELECT genre.name
+                       FROM genres AS genre
+                       JOIN entity_identifiers AS identifier ON identifier.entity_id = genre.id
+                       WHERE identifier.namespace = 'wikidata'
+                         AND identifier.normalized_value = 'Q500'"""
+                ).fetchone()
+                target_names = connection.execute(
+                    """SELECT DISTINCT name_kind, name
+                       FROM entity_names AS name
+                       JOIN entity_identifiers AS identifier
+                         ON identifier.entity_id = name.entity_id
+                       WHERE identifier.namespace = 'wikidata'
+                         AND identifier.normalized_value = 'Q500'
+                       ORDER BY name_kind, name"""
+                ).fetchall()
 
-        self.assertEqual((summary.raw, summary.accepted, summary.quarantined), (5, 5, 0))
+        self.assertEqual((summary.raw, summary.accepted, summary.quarantined), (6, 6, 0))
         self.assertTrue(replay.reused_attempt)
         self.assertEqual(counts, (7, 6, 1, 1, 1, 0))
+        self.assertEqual(named_target, ("Named Target Genre",))
+        self.assertEqual(
+            target_names, [("alias", "Target Alias"), ("primary", "Named Target Genre")]
+        )
 
 
 if __name__ == "__main__":

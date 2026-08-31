@@ -85,6 +85,7 @@ ingest-musicbrainz-research = "musix ingest-source musicbrainz_json_artist_resea
 ingest-musicbrainz-release-groups = "musix ingest-source musicbrainz_json_release_group_research_20260829 --partition-prefix 00 --max-archive-bytes 1250000000 --max-record-bytes 2097152 --checkpoint-every 1000"
 ingest-musicbrainz-recordings = "musix ingest-source musicbrainz_json_recording_research_20260829 --partition-prefix 0 --max-archive-bytes 40000000 --max-record-bytes 2097152 --checkpoint-every 1000"
 ingest-wikidata = "python scripts/ingest_wikidata.py"
+enrich-wikidata-public-genres = "python scripts/ingest_wikidata.py --query config/wikidata_public_genres_20260831.rq --source-id wikidata_public_genres_20260831 --max-records 50000"
 ingest-listenbrainz = "musix ingest-source listenbrainz_incremental_20260830 --max-archive-bytes 300000000 --max-records 6000000 --checkpoint-every 5000"
 build-public-model = "python scripts/build_public_model.py"
 publish-public-model = "musix publish-public-model"

@@ -104,6 +104,10 @@ class WikidataSliceRow(FrozenModel):
     reference: SparqlBinding | None = None
     reference_url: SparqlBinding | None = Field(default=None, alias="referenceUrl")
     parent: SparqlBinding | None = None
+    parent_statement: SparqlBinding | None = Field(default=None, alias="parentStatement")
+    parent_rank: SparqlBinding | None = Field(default=None, alias="parentRank")
+    parent_reference: SparqlBinding | None = Field(default=None, alias="parentReference")
+    parent_reference_url: SparqlBinding | None = Field(default=None, alias="parentReferenceUrl")
     inception: SparqlBinding | None = None
     publication_date: SparqlBinding | None = Field(default=None, alias="publicationDate")
 
@@ -161,18 +165,25 @@ def _rank(binding: SparqlBinding | None) -> StatementRank:
     )
 
 
-def _statement_reference(row: WikidataSliceRow) -> tuple[StatementReference, ...]:
-    if row.reference is None:
+def _reference(
+    identity_binding: SparqlBinding | None,
+    url_binding: SparqlBinding | None,
+) -> tuple[StatementReference, ...]:
+    if identity_binding is None:
         return ()
     identity = _source_identity(
-        row.reference,
+        identity_binding,
         WIKIDATA_REFERENCE_PREFIX,
         "wikidata_reference",
     )
-    url = row.reference_url.value if row.reference_url is not None else None
+    url = url_binding.value if url_binding is not None else None
     if url is not None and urlparse(url).scheme not in {"http", "https"}:
         raise WikidataSliceError("reference URL must use HTTP or HTTPS")
     return (StatementReference(identity=identity, url=url),)
+
+
+def _statement_reference(row: WikidataSliceRow) -> tuple[StatementReference, ...]:
+    return _reference(row.reference, row.reference_url)
 
 
 def _unique[T](items: list[T]) -> tuple[T, ...]:
@@ -229,22 +240,31 @@ def _value_claims(rows: list[WikidataSliceRow]) -> tuple[ValueClaim, ...]:
 def _relation_claims(rows: list[WikidataSliceRow]) -> tuple[RelationClaim, ...]:
     claims: list[RelationClaim] = []
     for row in rows:
-        statement_id = (
-            _source_identity(row.statement, WIKIDATA_STATEMENT_PREFIX, "wikidata_statement")
-            if row.statement is not None
-            else None
-        )
         references = _statement_reference(row)
         for property_key, binding in (("subclass_of", row.parent), ("genre", row.genre)):
             if binding is not None:
+                is_parent = property_key == "subclass_of"
+                statement_binding = row.parent_statement if is_parent else row.statement
                 claims.append(
                     RelationClaim(
                         property_key=property_key,
                         target=ExternalIdentity(namespace="wikidata", value=_qid(binding)),
                         target_kind="genre",
-                        statement_id=statement_id if property_key == "genre" else None,
-                        rank=_rank(row.rank) if property_key == "genre" else "normal",
-                        references=references if property_key == "genre" else (),
+                        statement_id=(
+                            _source_identity(
+                                statement_binding,
+                                WIKIDATA_STATEMENT_PREFIX,
+                                "wikidata_statement",
+                            )
+                            if statement_binding is not None
+                            else None
+                        ),
+                        rank=_rank(row.parent_rank if is_parent else row.rank),
+                        references=(
+                            _reference(row.parent_reference, row.parent_reference_url)
+                            if is_parent
+                            else references
+                        ),
                     )
                 )
     return _unique(claims)

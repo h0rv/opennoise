@@ -20,7 +20,11 @@
         "entityKind": {"type": "literal", "value": "genre"},
         "label": {"xml:lang": "en", "type": "literal", "value": "Example Genre"},
         "musicbrainzId": {"type": "literal", "value": "22222222-2222-4222-8222-222222222222"},
-        "parent": {"type": "uri", "value": "http://www.wikidata.org/entity/Q201"}
+        "parent": {"type": "uri", "value": "http://www.wikidata.org/entity/Q201"},
+        "parentStatement": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/Q200-parent"},
+        "parentRank": {"type": "uri", "value": "http://wikiba.se/ontology#PreferredRank"},
+        "parentReference": {"type": "uri", "value": "http://www.wikidata.org/reference/ref-parent"},
+        "parentReferenceUrl": {"type": "uri", "value": "https://example.test/parent-source"}
       },
       {
         "entity": {"type": "uri", "value": "http://www.wikidata.org/entity/Q300"},
@@ -38,6 +42,12 @@
         "statement": {"type": "uri", "value": "http://www.wikidata.org/entity/statement/Q400-def"},
         "rank": {"type": "uri", "value": "http://wikiba.se/ontology#NormalRank"},
         "publicationDate": {"datatype": "http://www.w3.org/2001/XMLSchema#dateTime", "type": "literal", "value": "2021-03-03T00:00:00Z"}
+      },
+      {
+        "entity": {"type": "uri", "value": "http://www.wikidata.org/entity/Q500"},
+        "entityKind": {"type": "literal", "value": "genre"},
+        "label": {"xml:lang": "en", "type": "literal", "value": "Named Target Genre"},
+        "alias": {"xml:lang": "en", "type": "literal", "value": "Target Alias"}
       },
       {
         "entity": {"type": "uri", "value": "http://www.wikidata.org/entity/Q600"},

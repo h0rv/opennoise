@@ -40,7 +40,7 @@ def _publish_artifact(staging_path: Path, vault_path: Path, sha256: str) -> Path
 
 
 async def _run(args: argparse.Namespace) -> dict[str, object]:
-    staging_path = args.vault / "staging" / "wikidata-music-slice.json"
+    staging_path = args.vault / "staging" / f"{args.source_id}.json"
     result = await fetch_wikidata_query(
         WikidataQueryRequest(
             query_path=args.query,
@@ -52,7 +52,7 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
     )
     _publish_artifact(result.path, args.vault, result.sha256)
     source = DownloadSource(
-        id="wikidata_music_sparql_slice",
+        id=args.source_id,
         adapter="wikidata_music_sparql_slice_v1",
         snapshot=f"query:{result.query_sha256}:artifact:{result.sha256}",
         url=HttpUrl("https://query.wikidata.org/sparql"),
@@ -102,6 +102,7 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--query", type=Path, default=Path("config/wikidata_music_slice.rq"))
+    parser.add_argument("--source-id", default="wikidata_music_sparql_slice")
     parser.add_argument("--database", type=Path, default=Path("data/musix.sqlite"))
     parser.add_argument("--vault", type=Path, default=Path("data/vault"))
     parser.add_argument(

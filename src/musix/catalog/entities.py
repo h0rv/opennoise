@@ -135,6 +135,24 @@ def _preferred_name(projection: EntityProjection) -> str:
     return english or next(claim.value for claim in projection.names if claim.kind == "primary")
 
 
+def _replace_genre_placeholder_name(
+    connection: sqlite3.Connection,
+    projection: EntityProjection,
+    entity_id: int,
+) -> None:
+    """Replace only the exact QID placeholder after its full subject is projected."""
+    if projection.entity_kind != "genre":
+        return
+    qid = projection.source_identity.value
+    preferred_name = _preferred_name(projection)
+    if preferred_name == qid:
+        return
+    connection.execute(
+        "UPDATE genres SET name = ? WHERE id = ? AND name = ?",
+        (preferred_name, entity_id, qid),
+    )
+
+
 def _persist_names(
     connection: sqlite3.Connection,
     projection: EntityProjection,
@@ -388,6 +406,7 @@ class EntityProjector:
         )
         _persist_identifiers(connection, projection, entity_id, provenance_id)
         _persist_names(connection, projection, entity_id, provenance_id)
+        _replace_genre_placeholder_name(connection, projection, entity_id)
         _persist_claims(connection, projection, entity_id, provenance_id, policy_id)
         _persist_relations(connection, projection, entity_id, provenance_id, policy_id)
         search_text = " ".join(claim.value for claim in projection.names)
