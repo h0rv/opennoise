@@ -17,8 +17,8 @@ class WikidataSourceAdapterTests(unittest.TestCase):
         query = QUERY.read_text(encoding="utf-8")
         qids = re.findall(r"wd:(Q[1-9][0-9]*)", query)
 
-        self.assertEqual(len(qids), 127)
-        self.assertEqual(len(set(qids)), 127)
+        self.assertEqual(len(qids), 140)
+        self.assertEqual(len(set(qids)), 140)
         self.assertIn("LIMIT 50000", query)
         self.assertNotIn("wikibase:mwapi", query)
 
