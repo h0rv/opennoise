@@ -91,6 +91,7 @@ ingest-listenbrainz-joint = "python scripts/ingest_joint_listenbrainz.py"
 build-public-model = "python scripts/build_public_model.py"
 publish-public-model = "musix publish-public-model"
 validate-public-graph = "python scripts/validate_public_graph.py"
+ui-qa = "python scripts/render_ui_qa.py"
 
 [tool.poe.tasks.build-public-release]
 sequence = [

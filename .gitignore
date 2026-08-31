@@ -233,3 +233,4 @@ __marimo__/
 /data/quarantine/
 /data/model/
 .worktrees/
+/artifacts/ui-qa/
