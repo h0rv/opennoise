@@ -89,6 +89,7 @@ enrich-wikidata-public-genres = "python scripts/ingest_wikidata.py --query confi
 ingest-listenbrainz = "musix ingest-source listenbrainz_incremental_20260830 --max-archive-bytes 300000000 --max-records 6000000 --checkpoint-every 5000"
 build-public-model = "python scripts/build_public_model.py"
 publish-public-model = "musix publish-public-model"
+validate-public-graph = "python scripts/validate_public_graph.py"
 
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]

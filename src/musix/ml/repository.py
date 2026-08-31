@@ -595,3 +595,12 @@ class PublicModelRepository:
             artist_pairs=_artist_pairs(self._listenbrainz, settings),
             metadata_candidates=_metadata_candidates(self._catalog, settings),
         )
+
+    def load_catalog_only(self, settings: PublicInputLoadSettings) -> PublicModelInput:
+        """Load policy-safe catalog evidence before a temporal graph is selected."""
+        return PublicModelInput(
+            artifacts=_artifacts(self._catalog),
+            genres=_genres(self._catalog, settings),
+            direct_memberships=_direct_memberships(self._catalog, settings),
+            metadata_candidates=_metadata_candidates(self._catalog, settings),
+        )
