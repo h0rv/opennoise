@@ -13,11 +13,10 @@ from musix.db import Database
 from musix.metadata_links import metadata_url
 from musix.ml.public_graph import public_model_output_sha256
 from musix.models import FrozenModel
-from musix.models.modeling import PublicModelArtifact
+from musix.models.modeling import LayoutLens, PublicModelArtifact
 from musix.types import Sha256, SourceId
 
 MODEL_KEY = "public-graph"
-DEFAULT_LAYOUT_KEY = "public"
 MAX_ARTIFACT_BYTES = 32 * 1024 * 1024
 LAYOUT_SCALE = 1_000.0
 _QID = re.compile(r"^Q[1-9][0-9]*$")
@@ -58,13 +57,19 @@ def resolve_public_policy_id(database_path: Path, source_key: SourceId) -> int:
     return int(policy_id)
 
 
-class PublicModelPublishSummary(FrozenModel):
-    """Report the exact serving projection selected by one publish operation."""
+class PublishedLensSummary(FrozenModel):
+    """Report one layout lens selected by a public model publish."""
 
-    output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     layout_key: str
     layout_revision: int = Field(gt=0)
     coordinate_genres: int = Field(ge=0)
+
+
+class PublicModelPublishSummary(FrozenModel):
+    """Report the exact serving projections selected by one publish operation."""
+
+    output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    layouts: tuple[PublishedLensSummary, ...] = Field(min_length=4, max_length=4)
     representative_items: int = Field(ge=0)
     duplicate: bool
 
@@ -289,43 +294,64 @@ def _model_run(
 def _layout_run(
     connection: sqlite3.Connection,
     artifact: PublicModelArtifact,
+    lens: LayoutLens,
     policy_id: int,
-    layout_key: str,
     genre_ids: dict[str, int],
 ) -> tuple[int, int]:
-    existing = connection.execute(
-        """SELECT id, revision FROM layout_runs
-           WHERE layout_key = ? AND algorithm_key = 'public_graph_spectral'
-             AND input_fingerprint = ?""",
-        (layout_key, artifact.output_sha256),
-    ).fetchone()
-    if existing is not None:
-        return int(existing[0]), int(existing[1])
-    revision_row = connection.execute(
-        "SELECT coalesce(max(revision), 0) + 1 FROM layout_runs WHERE layout_key = ?",
-        (layout_key,),
-    ).fetchone()
-    if revision_row is None:
-        raise RuntimeError("layout revision query returned no row")
-    revision = int(revision_row[0])
+    algorithm_key = f"public_graph_{lens.method}"
     parameters = json.dumps(
         {
             "coordinate_scale": LAYOUT_SCALE,
             "semantic_axes": False,
             "source_model_output_sha256": artifact.output_sha256,
+            "lens_input_sha256": lens.input_sha256,
+            "lens_output_sha256": lens.output_sha256,
+            "input_kind": lens.input_kind,
+            "metric": lens.metric,
+            "seed": lens.seed,
+            "quality": lens.quality.model_dump(mode="json"),
+            "stability": lens.stability.model_dump(mode="json"),
+            "community": lens.community.model_dump(mode="json")
+            if lens.community is not None
+            else None,
+            "resources": lens.resources.model_dump(mode="json"),
+            "unplaced": [item.model_dump(mode="json") for item in lens.unplaced],
         },
         separators=(",", ":"),
         sort_keys=True,
     )
+    existing = connection.execute(
+        """SELECT id, revision, algorithm_revision, parameters_json, policy_id
+           FROM layout_runs
+           WHERE layout_key = ? AND algorithm_key = ?
+             AND input_fingerprint = ?""",
+        (lens.layout_key, algorithm_key, artifact.output_sha256),
+    ).fetchone()
+    if existing is not None:
+        if (
+            str(existing[2]) != lens.method_version
+            or str(existing[3]) != parameters
+            or int(existing[4]) != policy_id
+        ):
+            raise PublicModelPublishError("existing public layout run does not match artifact")
+        return int(existing[0]), int(existing[1])
+    revision_row = connection.execute(
+        "SELECT coalesce(max(revision), 0) + 1 FROM layout_runs WHERE layout_key = ?",
+        (lens.layout_key,),
+    ).fetchone()
+    if revision_row is None:
+        raise RuntimeError("layout revision query returned no row")
+    revision = int(revision_row[0])
     cursor = connection.execute(
         """INSERT INTO layout_runs
            (layout_key, revision, algorithm_key, algorithm_revision, parameters_json,
             input_fingerprint, status, policy_id, completed_at)
-           VALUES (?, ?, 'public_graph_spectral', ?, ?, ?, 'complete', ?, ?)""",
+           VALUES (?, ?, ?, ?, ?, ?, 'complete', ?, ?)""",
         (
-            layout_key,
+            lens.layout_key,
             revision,
-            artifact.revision,
+            algorithm_key,
+            lens.method_version,
             parameters,
             artifact.output_sha256,
             policy_id,
@@ -353,10 +379,45 @@ def _layout_run(
                 float(direct_sizes.get(item.genre_id, 1)),
                 json.dumps({"component": item.component}, separators=(",", ":")),
             )
-            for item in artifact.coordinates
+            for item in lens.coordinates
         ),
     )
     return run_id, revision
+
+
+def _link_layout(
+    connection: sqlite3.Connection,
+    model_run_id: int,
+    layout_run_id: int,
+    lens: LayoutLens,
+) -> None:
+    connection.execute(
+        """INSERT OR IGNORE INTO public_model_layouts
+           (model_run_id, lens_key, layout_run_id, lens_input_sha256,
+            lens_output_sha256, is_default)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (
+            model_run_id,
+            lens.layout_key,
+            layout_run_id,
+            lens.input_sha256,
+            lens.output_sha256,
+            int(lens.is_default),
+        ),
+    )
+    row = connection.execute(
+        """SELECT layout_run_id, lens_input_sha256, lens_output_sha256, is_default
+           FROM public_model_layouts WHERE model_run_id = ? AND lens_key = ?""",
+        (model_run_id, lens.layout_key),
+    ).fetchone()
+    expected = (
+        layout_run_id,
+        lens.input_sha256,
+        lens.output_sha256,
+        int(lens.is_default),
+    )
+    if row is None or tuple(row) != expected:
+        raise PublicModelPublishError("existing public model layout does not match artifact")
 
 
 def publish_public_model(
@@ -364,7 +425,6 @@ def publish_public_model(
     artifact_path: Path,
     *,
     policy_id: int,
-    layout_key: str = DEFAULT_LAYOUT_KEY,
 ) -> PublicModelPublishSummary:
     """Verify and atomically select one public model for map and detail serving."""
     loaded = load_public_model(artifact_path)
@@ -408,13 +468,25 @@ def publish_public_model(
                 for item in artifact.genres
             ),
         )
-        layout_run_id, layout_revision = _layout_run(
-            connection,
-            artifact,
-            policy_id,
-            layout_key,
-            genre_ids,
-        )
+        layout_summaries: list[PublishedLensSummary] = []
+        layout_runs: list[tuple[str, int]] = []
+        for lens in artifact.layouts:
+            layout_run_id, layout_revision = _layout_run(
+                connection,
+                artifact,
+                lens,
+                policy_id,
+                genre_ids,
+            )
+            _link_layout(connection, model_run_id, layout_run_id, lens)
+            layout_runs.append((lens.layout_key, layout_run_id))
+            layout_summaries.append(
+                PublishedLensSummary(
+                    layout_key=lens.layout_key,
+                    layout_revision=layout_revision,
+                    coordinate_genres=len(lens.coordinates),
+                )
+            )
         for item in artifact.representatives:
             if metadata_url(item.entity_kind, item.entity_id) is None:
                 raise PublicModelPublishError(
@@ -449,20 +521,18 @@ def publish_public_model(
                WHERE current_public_models.model_run_id != excluded.model_run_id""",
             (MODEL_KEY, model_run_id),
         )
-        connection.execute(
+        connection.executemany(
             """INSERT INTO current_layouts (layout_key, layout_run_id)
                VALUES (?, ?)
                ON CONFLICT(layout_key) DO UPDATE SET
                    layout_run_id = excluded.layout_run_id,
                    selected_at = excluded.selected_at
                WHERE current_layouts.layout_run_id != excluded.layout_run_id""",
-            (layout_key, layout_run_id),
+            layout_runs,
         )
     return PublicModelPublishSummary(
         output_sha256=artifact.output_sha256,
-        layout_key=layout_key,
-        layout_revision=layout_revision,
-        coordinate_genres=len(artifact.coordinates),
+        layouts=tuple(layout_summaries),
         representative_items=len(artifact.representatives),
         duplicate=duplicate,
     )

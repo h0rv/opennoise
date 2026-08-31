@@ -9,6 +9,7 @@ from musix.models import FrozenModel
 from musix.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
+    GenreHierarchyEdge,
     GenreIdentity,
     MembershipFacet,
     MetadataCandidate,
@@ -24,6 +25,7 @@ class PublicInputLoadSettings(FrozenModel):
     max_direct_memberships: int = Field(default=100_000, gt=0, le=1_000_000)
     max_artist_pairs: int = Field(default=250_000, gt=0, le=5_000_000)
     max_metadata_candidates: int = Field(default=100_000, gt=0, le=1_000_000)
+    max_hierarchy_edges: int = Field(default=100_000, gt=0, le=100_000)
     minimum_pair_support: int = Field(default=2, gt=0)
     minimum_pair_windows: int = Field(default=1, gt=0)
 
@@ -195,6 +197,62 @@ def _artist_pairs(
     )
 
 
+def _hierarchy_edges(
+    connection: sqlite3.Connection, settings: PublicInputLoadSettings
+) -> tuple[GenreHierarchyEdge, ...]:
+    rows = _bounded_rows(
+        connection,
+        """
+        SELECT hierarchy.relation_id,
+               'wikidata:genre:' || child_identifier.normalized_value,
+               'wikidata:genre:' || parent_identifier.normalized_value
+        FROM genre_hierarchy AS hierarchy
+        JOIN provenance_records AS provenance
+          ON provenance.id = hierarchy.provenance_id
+        JOIN active_rights_policy_permissions AS permission
+          ON permission.policy_id = provenance.policy_id
+         AND permission.use_kind = 'embed'
+         AND permission.decision = 'allow'
+        JOIN entity_identifiers AS child_identifier
+          ON child_identifier.entity_id = hierarchy.child_genre_id
+         AND child_identifier.namespace = 'wikidata'
+        JOIN entity_identifiers AS parent_identifier
+          ON parent_identifier.entity_id = hierarchy.parent_genre_id
+         AND parent_identifier.namespace = 'wikidata'
+        WHERE NOT EXISTS (
+          SELECT 1 FROM active_suppressions AS suppression
+          WHERE suppression.use_kind IN ('all', 'embed') AND (
+            (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+              CAST(hierarchy.child_genre_id AS TEXT),
+              CAST(hierarchy.parent_genre_id AS TEXT)
+            ))
+            OR (suppression.target_kind = 'provenance'
+                AND suppression.target_ref = CAST(provenance.id AS TEXT))
+            OR (suppression.target_kind = 'source'
+                AND suppression.target_ref = CAST(provenance.source_id AS TEXT))
+          )
+        )
+        ORDER BY 2, 3, hierarchy.relation_id
+        LIMIT ?
+        """,
+        (),
+        settings.max_hierarchy_edges,
+        "genre hierarchy edges",
+    )
+    result: dict[tuple[str, str], GenreHierarchyEdge] = {}
+    for row in rows:
+        key = (str(row[1]), str(row[2]))
+        result.setdefault(
+            key,
+            GenreHierarchyEdge(
+                child_genre_id=key[0],
+                parent_genre_id=key[1],
+                evidence_ref=f"catalog:genre-hierarchy:{int(row[0])}",
+            ),
+        )
+    return tuple(result[key] for key in sorted(result))
+
+
 def _genres(
     connection: sqlite3.Connection, settings: PublicInputLoadSettings
 ) -> tuple[GenreIdentity, ...]:
@@ -202,7 +260,8 @@ def _genres(
         connection,
         """
         WITH eligible_genres AS (
-          SELECT evidence.genre_id, min(evidence.id) AS evidence_id
+          SELECT evidence.genre_id,
+                 'catalog:artist-genre:' || min(evidence.id) AS evidence_ref
           FROM normalizable_artist_genre_evidence AS evidence
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = evidence.policy_id
@@ -230,7 +289,8 @@ def _genres(
             )
           GROUP BY evidence.genre_id
           UNION
-          SELECT evidence.genre_id, min(evidence.id) AS evidence_id
+          SELECT evidence.genre_id,
+                 'catalog:album-genre:' || min(evidence.id) AS evidence_ref
           FROM normalizable_album_genre_memberships AS evidence
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = evidence.policy_id
@@ -254,6 +314,35 @@ def _genres(
               )
             )
           GROUP BY evidence.genre_id
+          UNION
+          SELECT endpoint.genre_id,
+                 'catalog:genre-hierarchy:' || min(endpoint.relation_id) AS evidence_ref
+          FROM (
+            SELECT hierarchy.child_genre_id AS genre_id,
+                   hierarchy.relation_id, hierarchy.provenance_id
+            FROM genre_hierarchy AS hierarchy
+            UNION ALL
+            SELECT hierarchy.parent_genre_id AS genre_id,
+                   hierarchy.relation_id, hierarchy.provenance_id
+            FROM genre_hierarchy AS hierarchy
+          ) AS endpoint
+          JOIN provenance_records AS provenance ON provenance.id = endpoint.provenance_id
+          JOIN active_rights_policy_permissions AS embed_permission
+            ON embed_permission.policy_id = provenance.policy_id
+           AND embed_permission.use_kind = 'embed'
+           AND embed_permission.decision = 'allow'
+          WHERE NOT EXISTS (
+            SELECT 1 FROM active_suppressions AS suppression
+            WHERE suppression.use_kind IN ('all', 'embed') AND (
+              (suppression.target_kind = 'entity'
+               AND suppression.target_ref = CAST(endpoint.genre_id AS TEXT))
+              OR (suppression.target_kind = 'provenance'
+                  AND suppression.target_ref = CAST(provenance.id AS TEXT))
+              OR (suppression.target_kind = 'source'
+                  AND suppression.target_ref = CAST(provenance.source_id AS TEXT))
+            )
+          )
+          GROUP BY endpoint.genre_id
         )
         SELECT eligible.genre_id,
                COALESCE(
@@ -274,7 +363,7 @@ def _genres(
                   WHERE entity_id = eligible.genre_id
                   ORDER BY is_preferred DESC, id LIMIT 1)
                ) AS name,
-               min(eligible.evidence_id)
+               min(eligible.evidence_ref)
         FROM eligible_genres AS eligible
         GROUP BY eligible.genre_id
         ORDER BY genre_ref
@@ -292,7 +381,7 @@ def _genres(
             GenreIdentity(
                 genre_id=str(row[1]),
                 name=str(row[2]),
-                evidence_refs=(f"catalog:genre:{int(row[3])}",),
+                evidence_refs=(str(row[3]),),
             )
         )
     return tuple(result)
@@ -597,6 +686,7 @@ class PublicModelRepository:
             direct_memberships=_direct_memberships(self._catalog, settings),
             artist_pairs=_artist_pairs(self._listenbrainz, settings),
             metadata_candidates=_metadata_candidates(self._catalog, settings),
+            hierarchy=_hierarchy_edges(self._catalog, settings),
         )
 
     def load_catalog_only(self, settings: PublicInputLoadSettings) -> PublicModelInput:
@@ -606,4 +696,5 @@ class PublicModelRepository:
             genres=_genres(self._catalog, settings),
             direct_memberships=_direct_memberships(self._catalog, settings),
             metadata_candidates=_metadata_candidates(self._catalog, settings),
+            hierarchy=_hierarchy_edges(self._catalog, settings),
         )

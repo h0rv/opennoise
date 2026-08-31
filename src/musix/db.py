@@ -26,7 +26,7 @@ from musix.layouts import (
 )
 from musix.models import MapPoint, SearchHit
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 DEFAULT_DATABASE_PATH = Path("data/musix.sqlite")
 DEFAULT_MIGRATION_PATH = Path("migrations/0001_initial.sql")
 DEFAULT_MIGRATION_PATHS = (
@@ -37,6 +37,7 @@ DEFAULT_MIGRATION_PATHS = (
     Path("migrations/0005_artist_co_listen_evidence.sql"),
     Path("migrations/0006_recording_genres.sql"),
     Path("migrations/0007_public_model_serving.sql"),
+    Path("migrations/0008_public_model_layout_lenses.sql"),
 )
 MAX_FTS_TERMS = 8
 FIELD_SET_ADAPTER = TypeAdapter(tuple[str, ...])
@@ -404,11 +405,14 @@ class Database:
                     SELECT name.genre_id, name.display_name
                     FROM current_public_models AS current
                     JOIN servable_public_model_runs AS run ON run.id = current.model_run_id
+                    JOIN public_model_layouts AS public_layout
+                      ON public_layout.model_run_id = run.id
+                     AND public_layout.lens_key = 'public'
                     JOIN current_layouts AS current_layout
                       ON current_layout.layout_key = 'public'
+                     AND current_layout.layout_run_id = public_layout.layout_run_id
                     JOIN layout_runs AS layout
                       ON layout.id = current_layout.layout_run_id
-                     AND layout.algorithm_key = 'public_graph_spectral'
                      AND layout.input_fingerprint = run.output_sha256
                     JOIN public_genre_names AS name ON name.model_run_id = run.id
                 )

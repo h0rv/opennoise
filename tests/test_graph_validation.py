@@ -148,7 +148,7 @@ def _validation_input() -> GraphValidationInput:
 class GraphValidationTests(unittest.TestCase):
     def test_builds_deterministic_event_time_and_hierarchy_report(self) -> None:
         inputs = _validation_input()
-        model_settings = PublicModelSettings(neighbors_per_genre=3, layout_profile="one_hop")
+        model_settings = PublicModelSettings(neighbors_per_genre=3)
         validation_settings = GraphValidationSettings(neighbors_per_genre=2)
 
         first = build_graph_validation(inputs, model_settings, validation_settings)
@@ -224,7 +224,7 @@ class GraphValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "quadratic-work"):
             build_graph_validation(
                 _validation_input(),
-                PublicModelSettings(neighbors_per_genre=3, layout_profile="one_hop"),
+                PublicModelSettings(neighbors_per_genre=3),
                 GraphValidationSettings(neighbors_per_genre=2, maximum_validation_genres=3),
             )
 

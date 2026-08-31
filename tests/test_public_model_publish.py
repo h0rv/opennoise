@@ -17,6 +17,7 @@ from musix.ml.publish import (
 )
 from musix.models.modeling import (
     DirectMembershipEvidence,
+    GenreHierarchyEdge,
     GenreIdentity,
     MetadataCandidate,
     PublicArtifact,
@@ -97,6 +98,13 @@ def _artifact():  # noqa: ANN202
                 direct_evidence_value=1,
                 source_count=1,
                 evidence_refs=("wd:track",),
+            ),
+        ),
+        hierarchy=(
+            GenreHierarchyEdge(
+                child_genre_id="wikidata:genre:Q100",
+                parent_genre_id="wikidata:genre:Q200",
+                evidence_ref="wd:Q100:P279:Q200",
             ),
         ),
     )
@@ -226,7 +234,15 @@ class PublicModelPublishTests(unittest.TestCase):
 
         self.assertFalse(first.duplicate)
         self.assertTrue(second.duplicate)
-        self.assertEqual(first.coordinate_genres, 2)
+        self.assertEqual(
+            {item.layout_key: item.coordinate_genres for item in first.layouts},
+            {
+                "public": 2,
+                "public-community": 2,
+                "public-direct": 2,
+                "public-taxonomy": 2,
+            },
+        )
         self.assertEqual(first.representative_items, 3)
         with sqlite3.connect(self.database_path) as connection:
             selections = connection.execute(
@@ -241,8 +257,16 @@ class PublicModelPublishTests(unittest.TestCase):
         self.assertEqual(selections, [(sentinel,), (sentinel,)])
         self.assertEqual(map_name, ("Public IDM",))
         layouts = {item.layout_key for item in Database(self.database_path).published_layouts()}
-        self.assertIn("public", layouts)
-        self.assertIn("genres", layouts)
+        self.assertTrue(
+            {
+                "genres",
+                "public",
+                "public-community",
+                "public-direct",
+                "public-taxonomy",
+            }
+            <= layouts
+        )
 
         detail = Database(self.database_path).genre_detail(1)
         self.assertIsNotNone(detail)
@@ -351,6 +375,39 @@ class PublicModelPublishTests(unittest.TestCase):
             connection.commit()
         self.assertIsNone(Database(self.database_path).genre_detail(1))
 
+    def test_public_layout_must_belong_to_selected_model(self) -> None:
+        publish_public_model(self.database_path, self.artifact_path, policy_id=3)
+        with sqlite3.connect(self.database_path) as connection:
+            old_layout_id = int(
+                connection.execute(
+                    "SELECT layout_run_id FROM current_layouts WHERE layout_key = 'public'"
+                ).fetchone()[0]
+            )
+
+        changed_genres = (
+            self.artifact.genres[0].model_copy(update={"name": "Changed Public IDM"}),
+            *self.artifact.genres[1:],
+        )
+        changed = self.artifact.model_copy(update={"genres": changed_genres})
+        changed = changed.model_copy(update={"output_sha256": public_model_output_sha256(changed)})
+        self.artifact_path.write_text(changed.model_dump_json(), encoding="utf-8")
+        publish_public_model(self.database_path, self.artifact_path, policy_id=3)
+
+        with sqlite3.connect(self.database_path) as connection:
+            connection.execute(
+                "UPDATE current_layouts SET layout_run_id = ? WHERE layout_key = 'public'",
+                (old_layout_id,),
+            )
+            visible = connection.execute(
+                "SELECT count(*) FROM displayable_map_points WHERE layout_key = 'public'"
+            ).fetchone()
+            unplaced = connection.execute(
+                """SELECT count(*) FROM displayable_public_layout_unplaced
+                   WHERE lens_key = 'public'"""
+            ).fetchone()
+        self.assertEqual(visible, (0,))
+        self.assertEqual(unplaced, (0,))
+
     def test_rejects_an_input_with_a_false_declared_snapshot(self) -> None:
         source_artifact = self.artifact.artifacts[0].model_copy(update={"snapshot": "not-real"})
         changed = self.artifact.model_copy(update={"artifacts": (source_artifact,)})
@@ -375,6 +432,26 @@ class PublicModelPublishTests(unittest.TestCase):
         with sqlite3.connect(self.database_path) as connection:
             count = connection.execute("SELECT count(*) FROM public_model_runs").fetchone()
         self.assertEqual(count, (0,))
+
+    def test_rejects_conflicting_existing_layout_run(self) -> None:
+        with sqlite3.connect(self.database_path) as connection:
+            connection.execute(
+                """INSERT INTO layout_runs
+                   (layout_key, revision, algorithm_key, algorithm_revision,
+                    parameters_json, input_fingerprint, status, policy_id, completed_at)
+                   VALUES ('public', 1, 'public_graph_normalized_laplacian_spectral',
+                           '1', '{}', ?, 'complete', 3, '2026-08-31T00:00:00Z')""",
+                (self.artifact.output_sha256,),
+            )
+
+        with self.assertRaisesRegex(PublicModelPublishError, "layout run does not match"):
+            publish_public_model(self.database_path, self.artifact_path, policy_id=3)
+
+        with sqlite3.connect(self.database_path) as connection:
+            self.assertEqual(
+                connection.execute("SELECT count(*) FROM public_model_runs").fetchone(),
+                (0,),
+            )
 
 
 if __name__ == "__main__":

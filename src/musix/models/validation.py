@@ -6,25 +6,15 @@ from pydantic import Field, FiniteFloat, model_validator
 
 from musix.models import FrozenModel
 from musix.models.catalog import ArtistCoListenRunProjection
-from musix.models.modeling import ArtistPairEvidence, PublicArtifact, PublicModelInput
+from musix.models.modeling import (
+    ArtistPairEvidence,
+    GenreHierarchyEdge,
+    PublicArtifact,
+    PublicModelInput,
+)
 from musix.types import Sha256
 
 _MINIMUM_TEMPORAL_PRIVACY_FLOOR = 5
-
-
-class GenreHierarchyEdge(FrozenModel):
-    """Keep public genre hierarchy evidence separate from learned similarity."""
-
-    child_genre_id: str = Field(min_length=1, max_length=200)
-    parent_genre_id: str = Field(min_length=1, max_length=200)
-    evidence_ref: str = Field(min_length=1, max_length=500)
-
-    @model_validator(mode="after")
-    def require_distinct_genres(self) -> "GenreHierarchyEdge":
-        """Reject hierarchy self loops."""
-        if self.child_genre_id == self.parent_genre_id:
-            raise ValueError("genre hierarchy edges cannot be self loops")
-        return self
 
 
 class TemporalPairWindow(FrozenModel):

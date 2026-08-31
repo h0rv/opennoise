@@ -40,6 +40,10 @@ def _catalog() -> sqlite3.Connection:
           id INTEGER, entity_id INTEGER, name TEXT, is_preferred INTEGER
         );
         CREATE TABLE genres (id INTEGER, name TEXT);
+        CREATE TABLE genre_hierarchy (
+          relation_id INTEGER, child_genre_id INTEGER,
+          parent_genre_id INTEGER, provenance_id INTEGER
+        );
         CREATE TABLE provenance_records (
           id INTEGER, source_id INTEGER, policy_id INTEGER,
           snapshot_ref TEXT, artifact_sha256 TEXT
@@ -152,6 +156,7 @@ class PublicModelRepositoryTests(unittest.TestCase):
         self.assertEqual(len(result.artist_pairs), 1)
         self.assertEqual(result.artist_pairs[0].right_artist_id, _ARTIST_B)
         self.assertEqual(len(result.metadata_candidates), 3)
+        self.assertEqual(result.hierarchy, ())
         self.assertEqual(
             {item.entity_kind for item in result.metadata_candidates},
             {"artist", "release_group", "recording"},

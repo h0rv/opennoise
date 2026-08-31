@@ -6,7 +6,7 @@ from pydantic import Field
 
 from musix.ml.repository import PublicInputLoadError
 from musix.models import FrozenModel
-from musix.models.validation import GenreHierarchyEdge
+from musix.models.modeling import GenreHierarchyEdge
 
 
 class ValidationLoadSettings(FrozenModel):

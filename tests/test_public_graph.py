@@ -2,10 +2,15 @@ import unittest
 
 from pydantic import ValidationError
 
-from musix.ml.public_graph import PublicModelLimitError, build_public_model
+from musix.ml.public_graph import (
+    PublicModelLimitError,
+    build_public_model,
+    public_model_output_sha256,
+)
 from musix.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
+    GenreHierarchyEdge,
     GenreIdentity,
     MetadataCandidate,
     PublicArtifact,
@@ -152,6 +157,18 @@ def _input() -> PublicModelInput:
                 evidence_refs=("wd:release:1:rock",),
             ),
         ),
+        hierarchy=(
+            GenreHierarchyEdge(
+                child_genre_id="genre:punk",
+                parent_genre_id="genre:rock",
+                evidence_ref="wd:punk:P279:rock",
+            ),
+            GenreHierarchyEdge(
+                child_genre_id="genre:soul",
+                parent_genre_id="genre:jazz",
+                evidence_ref="wd:soul:P279:jazz",
+            ),
+        ),
     )
 
 
@@ -168,6 +185,15 @@ class PublicGraphTests(unittest.TestCase):
         self.assertEqual(first.output_sha256, second.output_sha256)
         self.assertFalse(first.export_allowed)
         self.assertEqual(first.coordinates, second.coordinates)
+        self.assertEqual(
+            tuple(item.layout_key for item in first.layouts),
+            ("public", "public-direct", "public-community", "public-taxonomy"),
+        )
+        self.assertEqual(
+            next(item for item in first.layouts if item.is_default).input_kind, "one_hop"
+        )
+        self.assertTrue(all(item.stability.exact_rerun for item in first.layouts))
+        self.assertTrue(all(item.stability.aligned_coordinate_rms == 0.0 for item in first.layouts))
         self.assertEqual(first.coverage.input_artists, 6)
         self.assertEqual(first.coverage.input_genres, 4)
         self.assertEqual(first.coverage.direct_observations, 9)
@@ -203,6 +229,24 @@ class PublicGraphTests(unittest.TestCase):
         self.assertGreater(rock_neighbors[0].score, 0.0)
         self.assertEqual(first.representatives[0].name, "Alpha")
 
+        changed_resources = first.model_copy(
+            update={
+                "layouts": tuple(
+                    item.model_copy(
+                        update={
+                            "resources": item.resources.model_copy(
+                                update={"elapsed_ms": item.resources.elapsed_ms + 1}
+                            )
+                        }
+                    )
+                    for item in first.layouts
+                )
+            }
+        )
+        self.assertEqual(
+            public_model_output_sha256(first), public_model_output_sha256(changed_resources)
+        )
+
         agreement = first.facet_agreement[0]
         self.assertEqual(agreement.intersection_count, 1)
         self.assertEqual(agreement.union_count, 8)
@@ -224,6 +268,19 @@ class PublicGraphTests(unittest.TestCase):
                 direct_memberships=base.direct_memberships,
                 artist_pairs=(base.artist_pairs[0], base.artist_pairs[0]),
             )
+
+    def test_rejects_mislabeled_or_incomplete_layout_artifacts(self) -> None:
+        artifact = build_public_model(_input(), PublicModelSettings())
+        public_lens = artifact.layouts[0]
+        mislabeled = public_lens.model_dump(mode="python")
+        mislabeled["input_kind"] = "genre_hierarchy"
+        with self.assertRaises(ValidationError):
+            type(public_lens).model_validate(mislabeled)
+
+        payload = artifact.model_dump(mode="python")
+        payload["layouts"][0]["coordinates"] = payload["layouts"][0]["coordinates"][1:]
+        with self.assertRaises(ValidationError):
+            type(artifact).model_validate(payload)
 
     def test_fails_closed_on_work_limits(self) -> None:
         with self.assertRaisesRegex(PublicModelLimitError, "propagation visits"):
@@ -276,6 +333,15 @@ class PublicGraphTests(unittest.TestCase):
         self.assertEqual(artifact.coverage.direct_observations, 2)
         self.assertEqual(len(artifact.coordinates), 2)
         self.assertEqual({item.component for item in artifact.coordinates}, {0, 1})
+        taxonomy = next(item for item in artifact.layouts if item.layout_key == "public-taxonomy")
+        self.assertEqual(taxonomy.coordinates, ())
+        self.assertEqual(
+            {(item.genre_id, item.reason) for item in taxonomy.unplaced},
+            {
+                ("genre:a", "no_hierarchy_relation"),
+                ("genre:b", "no_hierarchy_relation"),
+            },
+        )
 
 
 if __name__ == "__main__":

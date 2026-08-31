@@ -17,6 +17,7 @@ from scipy.linalg import eigh
 from scipy.sparse.csgraph import connected_components, laplacian
 from scipy.sparse.linalg import eigsh
 
+from musix.ml.layout_lenses import build_layout_lenses
 from musix.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
@@ -25,6 +26,7 @@ from musix.models.modeling import (
     GenreIdentity,
     GenreNeighbor,
     GenreProfile,
+    LayoutLens,
     MembershipComponent,
     MembershipFacet,
     MembershipScore,
@@ -78,7 +80,7 @@ def _output_payload(  # noqa: PLR0913
     *,
     profiles: tuple[GenreProfile, ...],
     neighbors: tuple[GenreNeighbor, ...],
-    coordinates: tuple[GenreCoordinate, ...],
+    layouts: tuple[LayoutLens, ...],
     representatives: tuple[RepresentativeItem, ...],
     facet_agreement: tuple[FacetAgreement, ...],
     coverage: ModelCoverage,
@@ -90,7 +92,7 @@ def _output_payload(  # noqa: PLR0913
     return {
         "profiles": [item.model_dump(mode="json") for item in profiles],
         "neighbors": [item.model_dump(mode="json") for item in neighbors],
-        "coordinates": [item.model_dump(mode="json") for item in coordinates],
+        "layouts": [item.model_dump(mode="json", exclude={"resources"}) for item in layouts],
         "representatives": [item.model_dump(mode="json") for item in representatives],
         "facet_agreement": [item.model_dump(mode="json") for item in facet_agreement],
         "coverage": coverage.model_dump(mode="json"),
@@ -106,7 +108,7 @@ def public_model_output_sha256(artifact: PublicModelArtifact) -> Sha256:
         _output_payload(
             profiles=artifact.profiles,
             neighbors=artifact.neighbors,
-            coordinates=artifact.coordinates,
+            layouts=artifact.layouts,
             representatives=artifact.representatives,
             facet_agreement=artifact.facet_agreement,
             coverage=artifact.coverage,
@@ -563,11 +565,18 @@ def build_public_model(
     profiles = _profiles(direct, inferred)
     neighbors = _neighbor_rows(profiles, settings)
     genres = tuple(sorted({item.genre_id for item in direct}))
-    coordinates = _coordinates(genres, neighbors, settings.layout_profile)
+    layouts = build_layout_lenses(
+        tuple(sorted(item.genre_id for item in inputs.genres)),
+        genres,
+        neighbors,
+        inputs.hierarchy,
+        settings,
+    )
     representatives = _representatives(inputs.metadata_candidates, settings)
     agreement = _facet_agreement(inputs.direct_memberships)
     export_allowed = all(artifact.export_allowed for artifact in inputs.artifacts)
-    coordinate_genres = {item.genre_id for item in coordinates}
+    default_layout = next(item for item in layouts if item.is_default)
+    coordinate_genres = {item.genre_id for item in default_layout.coordinates}
     neighbor_genres = {item.genre_id for item in neighbors}
     coverage = ModelCoverage(
         input_artists=len(
@@ -593,7 +602,7 @@ def build_public_model(
     payload = _output_payload(
         profiles=profiles,
         neighbors=neighbors,
-        coordinates=coordinates,
+        layouts=layouts,
         representatives=representatives,
         facet_agreement=agreement,
         coverage=coverage,
@@ -610,7 +619,7 @@ def build_public_model(
         genres=inputs.genres,
         profiles=profiles,
         neighbors=neighbors,
-        coordinates=coordinates,
+        layouts=layouts,
         representatives=representatives,
         facet_agreement=agreement,
         coverage=coverage,

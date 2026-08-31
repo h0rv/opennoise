@@ -194,7 +194,6 @@ def main() -> None:
     )
     model_settings = PublicModelSettings(
         neighbors_per_genre=max(arguments.neighbors_per_genre, 25),
-        layout_profile="one_hop",
         max_genres=2_000,
         max_artists=250_000,
         max_direct_memberships=arguments.max_direct_memberships,

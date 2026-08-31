@@ -96,6 +96,7 @@ def _stage_input(
         direct_memberships=base.direct_memberships,
         artist_pairs=_aggregate_pairs(windows),
         metadata_candidates=base.metadata_candidates,
+        hierarchy=base.hierarchy,
     )
 
 

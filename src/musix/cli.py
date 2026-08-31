@@ -120,7 +120,6 @@ def _publish_public_model(args: argparse.Namespace) -> int:
         args.database,
         args.artifact,
         policy_id=policy_id,
-        layout_key=args.layout_key,
     )
     sys.stdout.write(f"{summary.model_dump_json(indent=2)}\n")
     return 0
@@ -181,7 +180,6 @@ def parser() -> argparse.ArgumentParser:
     policy = publish_model.add_mutually_exclusive_group(required=True)
     policy.add_argument("--policy-id", type=int)
     policy.add_argument("--policy-source-key")
-    publish_model.add_argument("--layout-key", default="public")
     publish_model.set_defaults(handler=_publish_public_model)
     return command_parser
 

@@ -13,6 +13,23 @@ type ProfileKind = Literal["direct", "one_hop"]
 type SimilarityMetric = Literal["weighted_jaccard", "cosine"]
 type MetadataKind = Literal["artist", "release_group", "recording"]
 type MembershipComponentKind = MembershipFacet | Literal["listenbrainz_one_hop"]
+type LayoutLensKey = Literal[
+    "public",
+    "public-community",
+    "public-direct",
+    "public-taxonomy",
+]
+type LayoutInputKind = ProfileKind | Literal["genre_hierarchy"]
+type LayoutMethod = Literal[
+    "community_packed_spectral",
+    "normalized_laplacian_spectral",
+    "taxonomy_spectral",
+]
+type LayoutMetric = SimilarityMetric | Literal["hierarchy_adjacency"]
+type UnplacedReason = Literal[
+    "no_direct_membership",
+    "no_hierarchy_relation",
+]
 
 
 class PublicArtifact(FrozenModel):
@@ -83,6 +100,21 @@ class MetadataCandidate(FrozenModel):
         return self
 
 
+class GenreHierarchyEdge(FrozenModel):
+    """Keep one direct taxonomy claim separate from learned similarity."""
+
+    child_genre_id: str = Field(min_length=1, max_length=200)
+    parent_genre_id: str = Field(min_length=1, max_length=200)
+    evidence_ref: str = Field(min_length=1, max_length=500)
+
+    @model_validator(mode="after")
+    def require_distinct_genres(self) -> "GenreHierarchyEdge":
+        """Reject hierarchy self loops."""
+        if self.child_genre_id == self.parent_genre_id:
+            raise ValueError("genre hierarchy edges cannot be self loops")
+        return self
+
+
 class PublicModelInput(FrozenModel):
     """Bound all public-only observations accepted by the model core."""
 
@@ -93,6 +125,7 @@ class PublicModelInput(FrozenModel):
     )
     artist_pairs: tuple[ArtistPairEvidence, ...] = Field(default=(), max_length=5_000_000)
     metadata_candidates: tuple[MetadataCandidate, ...] = Field(default=(), max_length=1_000_000)
+    hierarchy: tuple[GenreHierarchyEdge, ...] = Field(default=(), max_length=100_000)
 
     @model_validator(mode="after")
     def require_unique_inputs(self) -> "PublicModelInput":
@@ -121,18 +154,30 @@ class PublicModelInput(FrozenModel):
         }
         if len(candidates) != len(self.metadata_candidates):
             raise ValueError("metadata candidates must be unique per genre")
+        hierarchy = {(item.child_genre_id, item.parent_genre_id) for item in self.hierarchy}
+        if len(hierarchy) != len(self.hierarchy):
+            raise ValueError("genre hierarchy edges must be unique")
+        hierarchy_genres = {
+            genre_id
+            for item in self.hierarchy
+            for genre_id in (item.child_genre_id, item.parent_genre_id)
+        }
+        if not hierarchy_genres <= genre_ids:
+            raise ValueError("every hierarchy endpoint needs a public genre identity")
         return self
 
 
 class PublicModelSettings(FrozenModel):
     """Declare deterministic algorithms and fail-closed laptop limits."""
 
-    revision: Literal["public-graph-v1"] = "public-graph-v1"
+    revision: Literal["public-graph-v2"] = "public-graph-v2"
     minimum_pair_support: int = Field(default=2, gt=0)
     minimum_pair_windows: int = Field(default=1, gt=0)
     minimum_shared_artists: int = Field(default=1, gt=0)
     neighbors_per_genre: int = Field(default=25, ge=1, le=100)
-    layout_profile: ProfileKind = "direct"
+    layout_neighbors_per_genre: int = Field(default=10, ge=2, le=50)
+    community_seed: int = Field(default=20260831, ge=0)
+    maximum_community_iterations: int = Field(default=100, gt=0, le=1_000)
     representatives_per_kind: int = Field(default=10, ge=1, le=100)
     inferred_memberships_per_genre: int = Field(default=100, ge=1, le=1_000)
     max_artists: int = Field(default=250_000, gt=0)
@@ -192,6 +237,107 @@ class GenreCoordinate(FrozenModel):
     component: int = Field(ge=0)
 
 
+class UnplacedGenre(FrozenModel):
+    """Explain why one named genre is absent from a layout lens."""
+
+    genre_id: str = Field(min_length=1, max_length=200)
+    reason: UnplacedReason
+
+
+class LayoutQuality(FrozenModel):
+    """Record comparable graph and coordinate quality for one lens."""
+
+    neighbors_per_genre: int = Field(gt=0)
+    source_graph_edges: int = Field(ge=0)
+    placed_genres: int = Field(ge=0)
+    unplaced_genres: int = Field(ge=0)
+    mean_knn_preservation: FiniteFloat = Field(ge=0.0, le=1.0)
+    mutual_neighbor_fraction: FiniteFloat = Field(ge=0.0, le=1.0)
+
+
+class LayoutStability(FrozenModel):
+    """Record deterministic repeat behavior for one layout lens."""
+
+    exact_rerun: bool
+    aligned_coordinate_rms: FiniteFloat = Field(ge=0.0)
+
+
+class CommunityLayoutResult(FrozenModel):
+    """Expose the bounded graph partition used by a community lens."""
+
+    algorithm: Literal["seeded_weighted_label_propagation"] = "seeded_weighted_label_propagation"
+    algorithm_version: Literal["1"] = "1"
+    community_count: int = Field(ge=0)
+    iterations: int = Field(ge=0)
+    converged: bool
+    modularity: FiniteFloat = Field(ge=-1.0, le=1.0)
+
+
+class LayoutLens(FrozenModel):
+    """Publish one independently reproducible view of the genre graph."""
+
+    layout_key: LayoutLensKey
+    is_default: bool
+    method: LayoutMethod
+    method_version: Literal["1"] = "1"
+    input_kind: LayoutInputKind
+    metric: LayoutMetric
+    seed: int = Field(ge=0)
+    input_sha256: Sha256
+    output_sha256: Sha256
+    coordinates: tuple[GenreCoordinate, ...]
+    unplaced: tuple[UnplacedGenre, ...]
+    quality: LayoutQuality
+    stability: LayoutStability
+    community: CommunityLayoutResult | None = None
+    resources: "ModelResources"
+
+    @model_validator(mode="after")
+    def require_consistent_lens(self) -> "LayoutLens":
+        """Reject mismatched method, input, and coverage declarations."""
+        expected = {
+            "public": (
+                "normalized_laplacian_spectral",
+                "one_hop",
+                "weighted_jaccard",
+            ),
+            "public-direct": (
+                "normalized_laplacian_spectral",
+                "direct",
+                "weighted_jaccard",
+            ),
+            "public-community": (
+                "community_packed_spectral",
+                "one_hop",
+                "weighted_jaccard",
+            ),
+            "public-taxonomy": (
+                "taxonomy_spectral",
+                "genre_hierarchy",
+                "hierarchy_adjacency",
+            ),
+        }
+        if (self.method, self.input_kind, self.metric) != expected[self.layout_key]:
+            raise ValueError("layout key does not match its declared method and input")
+        if self.is_default != (self.layout_key == "public"):
+            raise ValueError("the public one-hop lens must be the only default")
+        if self.layout_key == "public-community" and self.community is None:
+            raise ValueError("community layout requires community diagnostics")
+        if self.layout_key != "public-community" and self.community is not None:
+            raise ValueError("only the community layout may carry community diagnostics")
+        coordinate_ids = {item.genre_id for item in self.coordinates}
+        unplaced_ids = {item.genre_id for item in self.unplaced}
+        if len(coordinate_ids) != len(self.coordinates) or len(unplaced_ids) != len(self.unplaced):
+            raise ValueError("layout genre entries must be unique")
+        if coordinate_ids & unplaced_ids:
+            raise ValueError("a genre cannot be both placed and unplaced")
+        if self.quality.placed_genres != len(self.coordinates):
+            raise ValueError("placed genre count does not match coordinates")
+        if self.quality.unplaced_genres != len(self.unplaced):
+            raise ValueError("unplaced genre count does not match reasons")
+        return self
+
+
 class RepresentativeItem(FrozenModel):
     """Rank public metadata using direct evidence only."""
 
@@ -242,7 +388,7 @@ class ModelResources(FrozenModel):
 class PublicModelArtifact(FrozenModel):
     """Publish one complete, content-addressed public reconstruction."""
 
-    revision: Literal["public-graph-v1"] = "public-graph-v1"
+    revision: Literal["public-graph-v2"] = "public-graph-v2"
     input_sha256: Sha256
     settings_sha256: Sha256
     output_sha256: Sha256
@@ -251,8 +397,39 @@ class PublicModelArtifact(FrozenModel):
     genres: tuple[GenreIdentity, ...]
     profiles: tuple[GenreProfile, ...]
     neighbors: tuple[GenreNeighbor, ...]
-    coordinates: tuple[GenreCoordinate, ...]
+    layouts: tuple[LayoutLens, ...] = Field(min_length=4, max_length=4)
     representatives: tuple[RepresentativeItem, ...]
     facet_agreement: tuple[FacetAgreement, ...]
     coverage: ModelCoverage
     resources: ModelResources
+
+    @model_validator(mode="after")
+    def require_complete_layout_set(self) -> "PublicModelArtifact":
+        """Require one versioned lens for each declared public map view."""
+        keys = tuple(item.layout_key for item in self.layouts)
+        if len(keys) != len(set(keys)):
+            raise ValueError("public layout keys must be unique")
+        expected = {
+            "public",
+            "public-community",
+            "public-direct",
+            "public-taxonomy",
+        }
+        if set(keys) != expected:
+            raise ValueError(
+                "public model requires direct, one-hop, community, and taxonomy lenses"
+            )
+        if sum(item.is_default for item in self.layouts) != 1:
+            raise ValueError("public model requires exactly one default layout")
+        genre_ids = {item.genre_id for item in self.genres}
+        for lens in self.layouts:
+            covered = {item.genre_id for item in lens.coordinates}
+            covered.update(item.genre_id for item in lens.unplaced)
+            if covered != genre_ids:
+                raise ValueError("every layout must account for every public genre identity")
+        return self
+
+    @property
+    def coordinates(self) -> tuple[GenreCoordinate, ...]:
+        """Expose default coordinates to existing validation callers."""
+        return next(item.coordinates for item in self.layouts if item.is_default)
