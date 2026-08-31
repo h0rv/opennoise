@@ -231,3 +231,4 @@ __marimo__/
 /data/source-cache/
 /data/staging/
 /data/quarantine/
+.worktrees/

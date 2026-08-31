@@ -78,6 +78,7 @@ schema = "python -m unittest tests.test_schema -v"
 bootstrap = "musix bootstrap-everynoise"
 dev = "musix serve"
 evaluate-layout = "python scripts/evaluate_layout.py data/musix.sqlite --layout default"
+evaluate-membership = "python scripts/evaluate_membership.py tests/fixtures/membership_evaluation.json"
 
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]

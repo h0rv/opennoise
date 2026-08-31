@@ -1,0 +1,31 @@
+{
+    "predictions": [
+        {
+            "artist_ref": "musicbrainz:artist:a1",
+            "genre_ref": "genre:hyperpop",
+            "source_keys": ["musicbrainz", "wikidata"]
+        },
+        {
+            "artist_ref": "musicbrainz:artist:a2",
+            "genre_ref": "genre:electropop",
+            "source_keys": ["musicbrainz"]
+        }
+    ],
+    "known_claims": [
+        {"artist_ref": "musicbrainz:artist:a1", "genre_ref": "genre:hyperpop"},
+        {"artist_ref": "musicbrainz:artist:a2", "genre_ref": "genre:hyperpop"}
+    ],
+    "previous_predictions": [
+        {
+            "artist_ref": "musicbrainz:artist:a1",
+            "genre_ref": "genre:hyperpop",
+            "source_keys": ["musicbrainz"]
+        }
+    ],
+    "eligible_artist_refs": [
+        "musicbrainz:artist:a1",
+        "musicbrainz:artist:a2",
+        "musicbrainz:artist:a3"
+    ],
+    "expected_source_keys": ["musicbrainz", "wikidata", "listenbrainz"]
+}

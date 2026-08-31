@@ -9,6 +9,7 @@ database="$audit_dir/musix.sqlite"
 sqlite3 -bail "$database" < "$repo_root/migrations/0001_initial.sql"
 sqlite3 -bail "$database" < "$repo_root/migrations/0002_album_genres.sql"
 sqlite3 -bail "$database" < "$repo_root/migrations/0003_genre_discovery.sql"
+sqlite3 -bail "$database" < "$repo_root/migrations/0004_artist_genre_membership.sql"
 sqlite3 -bail "$database" < "$repo_root/migrations/smoke/fixture.sql"
 
 expect_rejection() {

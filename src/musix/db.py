@@ -25,13 +25,14 @@ from musix.layouts import (
 )
 from musix.models import MapPoint, SearchHit
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 DEFAULT_DATABASE_PATH = Path("data/musix.sqlite")
 DEFAULT_MIGRATION_PATH = Path("migrations/0001_initial.sql")
 DEFAULT_MIGRATION_PATHS = (
     DEFAULT_MIGRATION_PATH,
     Path("migrations/0002_album_genres.sql"),
     Path("migrations/0003_genre_discovery.sql"),
+    Path("migrations/0004_artist_genre_membership.sql"),
 )
 MAX_FTS_TERMS = 8
 FIELD_SET_ADAPTER = TypeAdapter(tuple[str, ...])
