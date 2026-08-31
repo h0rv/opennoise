@@ -14,7 +14,7 @@
      hx-sync="#search:abort"{% endif %}>
     <circle cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"
             fill="{{ point.color_hex or '#77776f' }}"></circle>
-    {% if map.show_labels %}
+    {% if map.show_labels and point.entity_id in map.label_entity_ids %}
     <text x="{{ point.x + 8 }}" y="{{ point.y + 3 }}">{{ point.name }}</text>
     {% endif %}
   </a>

@@ -7,7 +7,7 @@
    {% if lens.layout_key == layout_key %}aria-current="page"{% endif %}
    hx-get="/fragments/workspace?layout={{ lens.layout_key }}{% if genre %}&amp;focus={{ genre.entity_id }}{% endif %}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-target="#workspace"
    hx-swap="outerHTML" hx-push-url="{% if genre %}/genres/{{ genre.entity_id }}{% else %}/{% endif %}?layout={{ lens.layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
-   hx-sync="#search:abort">{{ lens.layout_key | replace('_', ' ') | replace('-', ' ') }}<small>{% if lens.coordinate_space.coordinate_kind == 'historic_source' %}source{% else %}generated{% endif %}</small></a>
+   hx-sync="#search:abort">{{ lens.label }}</a>
 {% endfor %}
 </nav>
 {% endif %}

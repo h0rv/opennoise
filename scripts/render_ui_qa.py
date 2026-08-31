@@ -126,7 +126,7 @@ def fixture_html() -> str:
         search_query="",
     )
     stylesheet = CSS.resolve().as_uri()
-    rendered = rendered.replace("/static/app.css?v=5", stylesheet)
+    rendered = rendered.replace("/static/app.css?v=6", stylesheet)
     return rendered.replace('<script src="/static/htmx-4.0.0.min.js" defer></script>', "")
 
 

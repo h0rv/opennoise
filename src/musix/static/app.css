@@ -76,7 +76,6 @@ button, input { font: inherit; }
 
 #layout-lenses a[aria-current="page"] { color: #111; background: #e4e3dc; }
 #layout-lenses a:focus-visible { outline: 2px solid #222; outline-offset: 1px; }
-#layout-lenses small { display: block; margin-top: 2px; color: #77776f; font-size: 8px; }
 
 #results {
   position: fixed;
@@ -135,6 +134,7 @@ button, input { font: inherit; }
 #genre-detail header { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
 #genre-detail h2 { margin: 0; font-size: 17px; line-height: 1.25; }
 #genre-detail h3 { margin: 10px 0 4px; font-size: 12px; }
+.placement-note { margin: 5px 0 0; color: #686862; font-size: 11px; }
 #genre-detail section a, #genre-detail section span {
   display: block;
   color: inherit;

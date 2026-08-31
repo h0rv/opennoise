@@ -73,6 +73,17 @@ class PublishedLayout(FrozenModel):
     point_count: int = Field(gt=0)
     coordinate_space: CoordinateSpace
 
+    @property
+    def label(self) -> str:
+        """Return a compact product label without exposing an internal method key."""
+        labels = {
+            "public": "Related",
+            "public-direct": "Direct",
+            "public-community": "Communities",
+            "public-taxonomy": "Taxonomy",
+        }
+        return labels.get(self.layout_key, self.layout_key.replace("_", " ").replace("-", " "))
+
 
 class LayoutArtifact(FrozenModel):
     """A complete strategy output before it is stored or published."""

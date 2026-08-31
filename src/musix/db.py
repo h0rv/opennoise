@@ -24,7 +24,7 @@ from musix.layouts import (
     LayoutStrategyVersion,
     PublishedLayout,
 )
-from musix.models import MapPoint, SearchHit
+from musix.models import GenrePlacement, GenrePlacementReason, MapPoint, SearchHit
 
 SCHEMA_VERSION = 8
 DEFAULT_DATABASE_PATH = Path("data/musix.sqlite")
@@ -42,6 +42,7 @@ DEFAULT_MIGRATION_PATHS = (
 MAX_FTS_TERMS = 8
 FIELD_SET_ADAPTER = TypeAdapter(tuple[str, ...])
 PARAMETERS_ADAPTER = TypeAdapter(dict[str, JsonValue])
+UNPLACED_REASON_ADAPTER = TypeAdapter(GenrePlacementReason)
 
 
 class UnsupportedSchemaError(RuntimeError):
@@ -221,6 +222,32 @@ class Database:
                 ),
             )
             for row in rows
+        )
+
+    def genre_placement(self, entity_id: int, layout_key: str) -> GenrePlacement:
+        """Read one selected genre's status in the active, policy-safe layout."""
+        with self.connect() as connection:
+            placed = connection.execute(
+                """SELECT 1 FROM displayable_map_points
+                   WHERE layout_key = ? AND entity_id = ? AND entity_kind = 'genre'
+                   LIMIT 1""",
+                (layout_key, entity_id),
+            ).fetchone()
+            reason = None
+            if placed is None:
+                row = connection.execute(
+                    """SELECT reason_key FROM displayable_public_layout_unplaced
+                       WHERE lens_key = ? AND genre_id = ?
+                       LIMIT 1""",
+                    (layout_key, entity_id),
+                ).fetchone()
+                reason = (
+                    UNPLACED_REASON_ADAPTER.validate_python(row[0]) if row is not None else None
+                )
+        return GenrePlacement(
+            layout_key=layout_key,
+            placed=placed is not None,
+            reason_key=reason,
         )
 
     def query_map(self, query: MapQuery) -> MapQueryResult:
@@ -494,6 +521,10 @@ class AsyncDatabase:
     async def published_layouts(self) -> tuple[PublishedLayout, ...]:
         """List selectable layouts without blocking the event loop."""
         return await self._call(self._database.published_layouts)
+
+    async def genre_placement(self, entity_id: int, layout_key: str) -> GenrePlacement:
+        """Read selected placement without blocking the event loop."""
+        return await self._call(lambda: self._database.genre_placement(entity_id, layout_key))
 
     async def query_map(self, query: MapQuery) -> MapQueryResult:
         """Read one bounded map query without blocking the event loop."""

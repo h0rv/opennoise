@@ -73,6 +73,26 @@ class WorkspaceTemplateTests(unittest.TestCase):
         self.assertEqual(rendered.count('id="results"'), 1)
         self.assertNotIn("<audio", rendered)
 
+    def test_public_layout_keys_have_compact_product_labels(self) -> None:
+        labels = {
+            key: PublishedLayout(
+                layout_key=key,
+                point_count=1,
+                coordinate_space=DerivedCoordinateSpace(units="layout_units"),
+            ).label
+            for key in ("public", "public-direct", "public-community", "public-taxonomy")
+        }
+
+        self.assertEqual(
+            labels,
+            {
+                "public": "Related",
+                "public-direct": "Direct",
+                "public-community": "Communities",
+                "public-taxonomy": "Taxonomy",
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

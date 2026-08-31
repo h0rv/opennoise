@@ -297,9 +297,14 @@ class EvidenceController(Controller):
         if detail is None:
             raise NotFoundException(detail="genre not found")
         detail = await genre_entries.enrich(detail)
+        placement = await database.genre_placement(genre_id, parsed_layout_key(layout))
         return Template(
             template_name="genre_detail.html",
-            context={"genre": detail, "layout_key": parsed_layout_key(layout)},
+            context={
+                "genre": detail,
+                "layout_key": placement.layout_key,
+                "placement": placement,
+            },
         )
 
 
@@ -354,11 +359,13 @@ async def workspace_context(
     if active_layout is None and (layouts or layout_key != "default"):
         raise NotFoundException(detail="layout not found")
     genre = None
+    placement = None
     if focus is not None:
         genre = await database.genre_detail(focus)
         if genre is None:
             raise NotFoundException(detail="genre not found")
         genre = await genre_entries.enrich(genre)
+        placement = await database.genre_placement(focus, layout_key)
     bounded_search_query = search_query[:500]
     return {
         "active_layout": active_layout,
@@ -366,6 +373,7 @@ async def workspace_context(
         "layout_key": layout_key,
         "layouts": layouts,
         "map": map_view(await database.map_points(layout_key), focus),
+        "placement": placement,
         "hits": await database.search(bounded_search_query) if bounded_search_query else (),
         "search_query": bounded_search_query,
     }

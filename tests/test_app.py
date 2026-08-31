@@ -31,7 +31,7 @@ class AppTests(unittest.TestCase):
         self.assertIn('<main id="map"', response.text)
         self.assertNotIn("<h1", response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=5", response.text)
+        self.assertIn("/static/app.css?v=6", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertNotIn("6291", response.text)
 
@@ -93,6 +93,27 @@ class AppTests(unittest.TestCase):
         self.assertEqual(view.view_box, "10 20 300 700")
         self.assertEqual(view.view_width, 300.0)
         self.assertEqual(view.view_height, 700.0)
+
+    def test_dense_map_has_a_stable_label_budget_and_keeps_focus(self) -> None:
+        points = [
+            MapPoint(
+                entity_id=index,
+                entity_kind="genre",
+                name=f"Genre {index}",
+                x=float(index),
+                y=float(index),
+                display_weight=float(100 - index),
+                color_hex=None,
+            )
+            for index in range(100)
+        ]
+
+        view = map_view(points, 99)
+
+        self.assertLessEqual(len(view.label_entity_ids), 49)
+        self.assertGreater(len(view.label_entity_ids), 1)
+        self.assertEqual(view.label_entity_ids[0], 0)
+        self.assertEqual(view.label_entity_ids[-1], 99)
 
 
 class PopulatedAppTests(unittest.TestCase):
@@ -224,6 +245,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn('aria-current="page"', response.text)
         self.assertIn('data-coordinate-kind="derived"', response.text)
         self.assertIn('data-layout="classic" data-coordinate-kind="historic_source"', response.text)
+        self.assertIn(">classic</a>", response.text)
         self.assertIn('href="/genres/1?layout=classic"', response.text)
         self.assertNotIn("<audio", response.text)
         self.assertNotIn("player", response.text.casefold())

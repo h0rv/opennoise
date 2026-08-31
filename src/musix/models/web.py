@@ -1,9 +1,12 @@
 """Validated settings and web response models."""
 
 from pathlib import Path
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+type GenrePlacementReason = Literal["no_direct_membership", "no_hierarchy_relation"]
 
 
 class FrozenModel(BaseModel):
@@ -86,6 +89,63 @@ class MapView(FrozenModel):
     view_height: float
     focused_entity_id: int | None = None
     show_labels: bool = True
+    label_entity_ids: tuple[int, ...] = ()
+
+
+MAP_LABEL_BUDGET = 48
+MAP_LABEL_COLUMNS = 8
+MAP_LABEL_ROWS = 6
+
+
+def _label_entity_ids(
+    points: list[MapPoint], focused_entity_id: int | None, *, show_labels: bool
+) -> tuple[int, ...]:
+    if not show_labels:
+        return ()
+    if len(points) <= MAP_LABEL_BUDGET:
+        return tuple(point.entity_id for point in points)
+    minimum_x = min(point.x for point in points)
+    maximum_x = max(point.x for point in points)
+    minimum_y = min(point.y for point in points)
+    maximum_y = max(point.y for point in points)
+    span_x = max(maximum_x - minimum_x, 1.0)
+    span_y = max(maximum_y - minimum_y, 1.0)
+    occupied: set[tuple[int, int]] = set()
+    selected: list[int] = []
+    for point in points:
+        column = min(
+            int((point.x - minimum_x) / span_x * MAP_LABEL_COLUMNS),
+            MAP_LABEL_COLUMNS - 1,
+        )
+        row = min(
+            int((point.y - minimum_y) / span_y * MAP_LABEL_ROWS),
+            MAP_LABEL_ROWS - 1,
+        )
+        cell = (column, row)
+        if cell in occupied:
+            continue
+        occupied.add(cell)
+        selected.append(point.entity_id)
+        if len(selected) == MAP_LABEL_BUDGET:
+            break
+    if focused_entity_id is not None and focused_entity_id not in selected:
+        selected.append(focused_entity_id)
+    return tuple(selected)
+
+
+class GenrePlacement(FrozenModel):
+    """Describe whether one selected genre appears in the active layout."""
+
+    layout_key: str = Field(min_length=1, max_length=100)
+    placed: bool
+    reason_key: GenrePlacementReason | None = None
+
+    @model_validator(mode="after")
+    def require_reason_only_when_unplaced(self) -> Self:
+        """Keep placement state and an optional model reason consistent."""
+        if self.placed and self.reason_key is not None:
+            raise ValueError("a placed genre cannot have an unplaced reason")
+        return self
 
 
 def map_view(
@@ -105,6 +165,7 @@ def map_view(
             view_height=view_height,
             focused_entity_id=focused_entity_id,
             show_labels=show_labels,
+            label_entity_ids=_label_entity_ids(points, focused_entity_id, show_labels=show_labels),
         )
     if not points:
         return MapView(
@@ -114,6 +175,7 @@ def map_view(
             view_height=100.0,
             focused_entity_id=focused_entity_id,
             show_labels=show_labels,
+            label_entity_ids=(),
         )
     minimum_x = min(point.x for point in points)
     maximum_x = max(point.x for point in points)
@@ -134,4 +196,5 @@ def map_view(
         view_height=span_y + padding_y * 2,
         focused_entity_id=focused_entity_id,
         show_labels=show_labels,
+        label_entity_ids=_label_entity_ids(points, focused_entity_id, show_labels=show_labels),
     )

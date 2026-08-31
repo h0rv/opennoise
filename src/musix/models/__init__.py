@@ -2,6 +2,8 @@
 
 from musix.models.web import (
     FrozenModel,
+    GenrePlacement,
+    GenrePlacementReason,
     MapPoint,
     MapPointResponse,
     MapResponse,
@@ -15,6 +17,8 @@ from musix.models.web import (
 
 __all__ = [
     "FrozenModel",
+    "GenrePlacement",
+    "GenrePlacementReason",
     "MapPoint",
     "MapPointResponse",
     "MapResponse",

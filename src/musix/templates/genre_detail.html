@@ -4,6 +4,7 @@
    hx-get="/fragments/workspace?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-target="#workspace"
    hx-swap="outerHTML" hx-push-url="/?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
    hx-sync="#search:abort">×</a></header>
+{% if placement and not placement.placed %}<p class="placement-note">Not placed{% if placement.reason_key == 'no_direct_membership' %} · no direct artist links{% elif placement.reason_key == 'no_hierarchy_relation' %} · no taxonomy link{% endif %}</p>{% endif %}
 {% if genre.historical_representative %}
 <section aria-label="Artists"><h3>Artists</h3><span>{{ genre.historical_representative.artist_name }}</span></section>
 <section aria-label="Tracks"><h3>Tracks</h3>{% if genre.historical_representative.external_link %}<a class="external-track" href="{{ genre.historical_representative.external_link.url }}" target="_blank" rel="noreferrer">{{ genre.historical_representative.track_title }}</a>{% else %}<span>{{ genre.historical_representative.track_title }}</span>{% endif %}</section>
