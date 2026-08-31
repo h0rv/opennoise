@@ -6,7 +6,16 @@ These modules define small interfaces for product work after the first map. None
 
 Status: standalone experiment support.
 
-`src/musix/reconstruction.py` accepts versioned genre to artist membership observations, optional audio descriptors, candidate coordinates, historical coordinates, colors, and neighbor lists. It records historical claims as disclosed, observed, inferred, or unknown. The first baselines calculate weighted Jaccard or cosine similarity only for genre pairs that share an artist. The evaluator bounds total pair visits, unique candidate pairs, grid runs, aggregate output, and quadratic coordinate neighbor work. It measures direct overlap neighbor recall, two dimensional Procrustes alignment, normalized coordinate error, and axis correlations. Results include the input artifact fingerprints, claims, evaluation settings, and tested parameters. Results always state that they are candidate approximations and do not claim exact recovery of private historical weights.
+`src/musix/reconstruction.py` accepts versioned genre to artist membership observations,
+candidate coordinates, historical coordinates, colors, and neighbor lists. The metadata-only
+boundary intentionally has no audio descriptor or audio artifact contract. It records historical
+claims as disclosed, observed, inferred, or unknown. The first baselines calculate weighted
+Jaccard or cosine similarity only for genre pairs that share an artist. The evaluator bounds total
+pair visits, unique candidate pairs, grid runs, aggregate output, and quadratic coordinate neighbor
+work. It measures direct overlap neighbor recall, two dimensional Procrustes alignment, normalized
+coordinate error, and axis correlations. Results include the input artifact fingerprints, claims,
+evaluation settings, and tested parameters. Results always state that they are candidate
+approximations and do not claim exact recovery of private historical weights.
 
 `scripts/evaluate_reconstruction.py` reads a JSON experiment manifest up to 16 MiB, validates it, and prints a JSON result. It does not read or write application state. Tests use synthetic data only.
 

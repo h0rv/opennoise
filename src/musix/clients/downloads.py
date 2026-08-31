@@ -50,7 +50,9 @@ async def _stream_to_partial(
             content_range = response.headers.get("content-range", "")
             if not content_range.startswith(f"bytes {resumed_from}-"):
                 raise SourceManifestError("upstream returned an invalid Content-Range")
-        mode = "ab" if resumed_from else "xb"
+        # A failed stream can leave its app-owned partial at zero bytes. A retry
+        # must restart that object instead of treating the placeholder as new.
+        mode = "ab" if resumed_from else "wb"
         with partial.open(mode) as stream:
             async for chunk in response.aiter_bytes(DOWNLOAD_CHUNK_BYTES):
                 if stream.tell() == 0:

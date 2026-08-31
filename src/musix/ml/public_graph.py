@@ -22,6 +22,7 @@ from musix.models.modeling import (
     DirectMembershipEvidence,
     FacetAgreement,
     GenreCoordinate,
+    GenreIdentity,
     GenreNeighbor,
     GenreProfile,
     MembershipComponent,
@@ -32,17 +33,18 @@ from musix.models.modeling import (
     ModelCoverage,
     ModelResources,
     ProfileKind,
+    PublicArtifact,
     PublicModelArtifact,
     PublicModelInput,
     PublicModelSettings,
     RepresentativeItem,
     SimilarityMetric,
 )
+from musix.types import Sha256
 
 _DENSE_EIGEN_LIMIT = 64
 _PAIR_COMPONENT_SIZE = 2
 _LAYOUT_METRIC: SimilarityMetric = "weighted_jaccard"
-_LAYOUT_PROFILE: ProfileKind = "direct"
 
 
 class PublicModelLimitError(RuntimeError):
@@ -70,6 +72,49 @@ def _canonical_bytes(value: BaseModel | dict[str, object]) -> bytes:
 
 def _sha256(value: BaseModel | dict[str, object]) -> str:
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
+
+
+def _output_payload(  # noqa: PLR0913
+    *,
+    profiles: tuple[GenreProfile, ...],
+    neighbors: tuple[GenreNeighbor, ...],
+    coordinates: tuple[GenreCoordinate, ...],
+    representatives: tuple[RepresentativeItem, ...],
+    facet_agreement: tuple[FacetAgreement, ...],
+    coverage: ModelCoverage,
+    export_allowed: bool,
+    genres: tuple[GenreIdentity, ...],
+    artifacts: tuple[PublicArtifact, ...],
+) -> dict[str, object]:
+    """Build the stable logical payload covered by the published output hash."""
+    return {
+        "profiles": [item.model_dump(mode="json") for item in profiles],
+        "neighbors": [item.model_dump(mode="json") for item in neighbors],
+        "coordinates": [item.model_dump(mode="json") for item in coordinates],
+        "representatives": [item.model_dump(mode="json") for item in representatives],
+        "facet_agreement": [item.model_dump(mode="json") for item in facet_agreement],
+        "coverage": coverage.model_dump(mode="json"),
+        "export_allowed": export_allowed,
+        "genres": [item.model_dump(mode="json") for item in genres],
+        "artifacts": [item.model_dump(mode="json") for item in artifacts],
+    }
+
+
+def public_model_output_sha256(artifact: PublicModelArtifact) -> Sha256:
+    """Recompute the logical hash of a parsed public model artifact."""
+    return _sha256(
+        _output_payload(
+            profiles=artifact.profiles,
+            neighbors=artifact.neighbors,
+            coordinates=artifact.coordinates,
+            representatives=artifact.representatives,
+            facet_agreement=artifact.facet_agreement,
+            coverage=artifact.coverage,
+            export_allowed=artifact.export_allowed,
+            genres=artifact.genres,
+            artifacts=artifact.artifacts,
+        )
+    )
 
 
 def _peak_rss_bytes() -> int:
@@ -395,12 +440,14 @@ def _component_coordinates(adjacency: sparse.csr_matrix) -> tuple[np.ndarray, np
 
 
 def _coordinates(
-    genres: tuple[str, ...], neighbors: tuple[GenreNeighbor, ...]
+    genres: tuple[str, ...],
+    neighbors: tuple[GenreNeighbor, ...],
+    profile_kind: ProfileKind,
 ) -> tuple[GenreCoordinate, ...]:
     index = {genre: position for position, genre in enumerate(genres)}
     weights: dict[tuple[int, int], float] = defaultdict(float)
     for item in neighbors:
-        if item.profile_kind != _LAYOUT_PROFILE or item.metric != _LAYOUT_METRIC:
+        if item.profile_kind != profile_kind or item.metric != _LAYOUT_METRIC:
             continue
         left = index[item.genre_id]
         right = index[item.neighbor_genre_id]
@@ -516,7 +563,7 @@ def build_public_model(
     profiles = _profiles(direct, inferred)
     neighbors = _neighbor_rows(profiles, settings)
     genres = tuple(sorted({item.genre_id for item in direct}))
-    coordinates = _coordinates(genres, neighbors)
+    coordinates = _coordinates(genres, neighbors, settings.layout_profile)
     representatives = _representatives(inputs.metadata_candidates, settings)
     agreement = _facet_agreement(inputs.direct_memberships)
     export_allowed = all(artifact.export_allowed for artifact in inputs.artifacts)
@@ -543,21 +590,23 @@ def build_public_model(
         ),
         representative_items=len(representatives),
     )
-    payload = {
-        "profiles": [item.model_dump(mode="json") for item in profiles],
-        "neighbors": [item.model_dump(mode="json") for item in neighbors],
-        "coordinates": [item.model_dump(mode="json") for item in coordinates],
-        "representatives": [item.model_dump(mode="json") for item in representatives],
-        "facet_agreement": [item.model_dump(mode="json") for item in agreement],
-        "coverage": coverage.model_dump(mode="json"),
-        "export_allowed": export_allowed,
-        "genres": [item.model_dump(mode="json") for item in inputs.genres],
-    }
+    payload = _output_payload(
+        profiles=profiles,
+        neighbors=neighbors,
+        coordinates=coordinates,
+        representatives=representatives,
+        facet_agreement=agreement,
+        coverage=coverage,
+        export_allowed=export_allowed,
+        genres=inputs.genres,
+        artifacts=inputs.artifacts,
+    )
     return PublicModelArtifact(
         input_sha256=_sha256(inputs),
         settings_sha256=_sha256(settings),
         output_sha256=_sha256(payload),
         export_allowed=export_allowed,
+        artifacts=inputs.artifacts,
         genres=inputs.genres,
         profiles=profiles,
         neighbors=neighbors,

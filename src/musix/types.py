@@ -5,7 +5,10 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 type Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
-type SourceId = Annotated[str, Field(min_length=1)]
+type SourceId = Annotated[
+    str,
+    Field(min_length=1, max_length=200, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"),
+]
 type ExternalId = Annotated[str, Field(min_length=1)]
 type EntityKind = Literal["genre", "artist", "release_group", "recording", "work"]
 type StatementRank = Literal["preferred", "normal"]

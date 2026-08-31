@@ -13,14 +13,20 @@ from musix.adapters.everynoise import QUINT_SOURCE, fetch_verified_source
 from musix.bootstrap import bootstrap_everynoise
 from musix.catalog.artists import ArtistProjector
 from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
+from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.ingest import ImportOptions, import_jsonl
+from musix.ml.publish import publish_public_model, resolve_public_policy_id
 from musix.models import Settings
 from musix.models.pipeline import SourceLimits
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
 from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter
-from musix.sources.musicbrainz import MusicBrainzArtistDumpAdapter
+from musix.sources.musicbrainz import (
+    MusicBrainzArtistDumpAdapter,
+    MusicBrainzRecordingDumpAdapter,
+    MusicBrainzReleaseGroupDumpAdapter,
+)
 from musix.sources.registry import AdapterRegistry
 
 
@@ -65,7 +71,14 @@ def _bootstrap(args: argparse.Namespace) -> int:
 
 def _ingest_source(args: argparse.Namespace) -> int:
     source = load_download_source(args.manifest, args.source_id)
-    registry = AdapterRegistry((MusicBrainzArtistDumpAdapter(), ListenBrainzIncrementalAdapter()))
+    registry = AdapterRegistry(
+        (
+            MusicBrainzArtistDumpAdapter(),
+            MusicBrainzReleaseGroupDumpAdapter(),
+            MusicBrainzRecordingDumpAdapter(),
+            ListenBrainzIncrementalAdapter(),
+        )
+    )
     summary = asyncio.run(
         run_source_pipeline(
             source,
@@ -73,6 +86,8 @@ def _ingest_source(args: argparse.Namespace) -> int:
             ProjectorRegistry(
                 (
                     ArtistProjector(),
+                    ReleaseGroupProjector(),
+                    RecordingProjector(),
                     ArtistCoListenProjector(),
                     ArtistCoListenRunProjector(),
                 )
@@ -92,6 +107,20 @@ def _ingest_source(args: argparse.Namespace) -> int:
                 checkpoint_every=args.checkpoint_every,
             ),
         )
+    )
+    sys.stdout.write(f"{summary.model_dump_json(indent=2)}\n")
+    return 0
+
+
+def _publish_public_model(args: argparse.Namespace) -> int:
+    policy_id = args.policy_id
+    if args.policy_source_key is not None:
+        policy_id = resolve_public_policy_id(args.database, args.policy_source_key)
+    summary = publish_public_model(
+        args.database,
+        args.artifact,
+        policy_id=policy_id,
+        layout_key=args.layout_key,
     )
     sys.stdout.write(f"{summary.model_dump_json(indent=2)}\n")
     return 0
@@ -143,6 +172,17 @@ def parser() -> argparse.ArgumentParser:
     ingest_source.add_argument("--timeout-seconds", type=float, default=6 * 60 * 60)
     ingest_source.add_argument("--checkpoint-every", type=int, default=10_000)
     ingest_source.set_defaults(handler=_ingest_source)
+    publish_model = commands.add_parser(
+        "publish-public-model",
+        help="verify and publish a public graph artifact",
+    )
+    publish_model.add_argument("artifact", type=Path)
+    publish_model.add_argument("--database", type=Path, default=settings.database_path)
+    policy = publish_model.add_mutually_exclusive_group(required=True)
+    policy.add_argument("--policy-id", type=int)
+    policy.add_argument("--policy-source-key")
+    publish_model.add_argument("--layout-key", default="public")
+    publish_model.set_defaults(handler=_publish_public_model)
     return command_parser
 
 
@@ -158,6 +198,8 @@ def main() -> int:
             return _bootstrap(args)
         case "ingest-source":
             return _ingest_source(args)
+        case "publish-public-model":
+            return _publish_public_model(args)
         case _:
             raise RuntimeError(f"unknown command: {args.command}")
 

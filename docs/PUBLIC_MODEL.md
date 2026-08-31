@@ -26,8 +26,9 @@ separate profiles, and every inferred result lists its direct seed and ListenBra
 Third, the model computes weighted Jaccard and cosine neighbors from sparse artist profiles.
 It keeps a fixed number of neighbors per genre. The result includes the shared artist count.
 
-Fourth, the model computes two graph coordinates from the direct weighted Jaccard graph. It
-uses the normalized graph Laplacian and a sparse eigenvalue solver. Fixed input order, solver
+Fourth, the model computes two graph coordinates from a declared direct or one-hop weighted
+Jaccard graph. The public validation run uses the one-hop graph. It uses the normalized graph
+Laplacian and a sparse eigenvalue solver. Fixed input order, solver
 settings, axis signs, component order, and rounding make repeated builds stable. The axes do not
 claim to measure a music property.
 
@@ -64,3 +65,43 @@ Each result records all input artifact hashes, a settings hash, a logical output
 and local resource use. Source agreement compares MusicBrainz tag pairs with Wikidata P136 pairs
 when both policies allow the model to use them. Historical Every Noise data can be compared only
 after the result hash has been fixed. It is not part of this build command.
+
+The seven day event-time split, map checks, hierarchy check, and community experiment are documented
+in [`GRAPH_VALIDATION.md`](GRAPH_VALIDATION.md).
+
+## Publish and serve
+
+Publish a completed artifact into a catalog whose selected policy allows display and export:
+
+```sh
+uv run poe publish-public-model -- \
+  data/model/public-model-v1.json \
+  --database data/public-catalog.sqlite \
+  --policy-id 1
+
+uv run musix serve --database data/public-catalog.sqlite
+```
+
+Publication opens the artifact once, enforces a 32 MiB limit, verifies both its file hash and
+logical output hash, and resolves every declared input to an exact source artifact and provenance
+record whose policies allow export. It resolves every genre by one exact Wikidata QID or
+MusicBrainz ID, then commits the derived output, model, coordinates, representatives, input
+lineage, and current selection in one SQLite transaction. Repeating the same publication is
+idempotent and does not alter the selection timestamp. The generated map is available as the
+`public` layout while existing historical layouts remain available.
+
+The public model's own genre names take precedence over local display names. Local catalog
+artists, albums, and recordings never act as serving fallbacks because their display permission
+does not imply export permission. Active suppression of any contributing source, provenance
+record, source artifact, or derived output immediately retracts its public layout and
+representatives.
+
+Genre pages show at most six representative artists, release groups, and recordings. Links are
+derived at render time only from exact MusicBrainz or Wikidata identifiers and lead to ordinary
+metadata pages. Empty sections are omitted. The serving model contains no audio, preview, image,
+player, or waveform fields.
+
+The project is pinned to Python 3.13.14 through mise, uv's Python range, and `.python-version`.
+Cross-thread event-loop wakeups used by Litestar's test client can hang under the restricted test
+sandbox on both Python 3.13 and 3.14; the same checks pass outside that isolation boundary. This is
+an environment limitation rather than an application or Python-version incompatibility.

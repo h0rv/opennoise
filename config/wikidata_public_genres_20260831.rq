@@ -1,0 +1,62 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX pr: <http://www.wikidata.org/prop/reference/>
+
+# Exact genre QIDs observed across the verified 2026-08-31 public model runs.
+# The VALUES block is the completeness boundary. Names never select or join identity.
+SELECT ?entity ?entityKind ?label ?alias ?parent ?parentStatement ?parentRank
+       ?parentReference ?parentReferenceUrl
+WHERE {
+  VALUES ?entity {
+    wd:Q1344 wd:Q2743 wd:Q3071 wd:Q6010 wd:Q7749 wd:Q8341 wd:Q9730
+    wd:Q9734 wd:Q9759 wd:Q9778 wd:Q9794 wd:Q11365 wd:Q11366 wd:Q11399
+    wd:Q11401 wd:Q11403 wd:Q17723 wd:Q20378 wd:Q20502
+    wd:Q37073 wd:Q38848 wd:Q43343 wd:Q45981 wd:Q49451 wd:Q54365 wd:Q58339
+    wd:Q76092 wd:Q83270 wd:Q83440 wd:Q102932 wd:Q105527 wd:Q130232
+    wd:Q131269 wd:Q131272 wd:Q132438 wd:Q141459 wd:Q164444 wd:Q180268
+    wd:Q183504 wd:Q186472 wd:Q187760 wd:Q188450 wd:Q189045 wd:Q189201
+    wd:Q193207 wd:Q193355 wd:Q202930
+    wd:Q203775 wd:Q205560 wd:Q206159 wd:Q211573 wd:Q211756 wd:Q211781
+    wd:Q213665 wd:Q216961 wd:Q217191 wd:Q217467 wd:Q217597 wd:Q235858
+    wd:Q236913 wd:Q236932 wd:Q251192 wd:Q255406 wd:Q263734 wd:Q316930
+    wd:Q325504 wd:Q378988 wd:Q379671 wd:Q383982 wd:Q429264 wd:Q438476
+    wd:Q438503 wd:Q483352 wd:Q484179 wd:Q484344 wd:Q484641 wd:Q486415
+    wd:Q487914 wd:Q517415 wd:Q542703 wd:Q546264 wd:Q547137 wd:Q592330
+    wd:Q598929 wd:Q602646 wd:Q613408
+    wd:Q627906 wd:Q667659 wd:Q703778 wd:Q719927 wd:Q726239 wd:Q753679
+    wd:Q790188 wd:Q817138 wd:Q828305 wd:Q835891 wd:Q840065 wd:Q842324
+    wd:Q850412 wd:Q851213 wd:Q852767 wd:Q856872 wd:Q861823 wd:Q876171
+    wd:Q877693 wd:Q885561 wd:Q936942 wd:Q959583 wd:Q966564 wd:Q1051843
+    wd:Q1074569 wd:Q1091056 wd:Q1133657 wd:Q1139136 wd:Q1190485
+    wd:Q1298934 wd:Q1443316 wd:Q1455292 wd:Q1583807 wd:Q1606591
+    wd:Q1641839 wd:Q1650296
+    wd:Q1899347 wd:Q1936659 wd:Q2256407 wd:Q2281409 wd:Q2517263
+    wd:Q2572585 wd:Q3408028 wd:Q4045538 wd:Q5612172 wd:Q7118426
+    wd:Q11307326 wd:Q22991878 wd:Q25094849 wd:Q56351111 wd:Q61340552
+    wd:Q95469495 wd:Q105636940 wd:Q107572242
+  }
+  BIND("genre" AS ?entityKind)
+  OPTIONAL {
+    { ?entity rdfs:label ?label.
+      FILTER(LANG(?label) IN ("en", "es", "fr", "de", "pt", "ja", "ko", "zh", "ar", "hi")) }
+    UNION
+    { ?entity skos:altLabel ?alias.
+      FILTER(LANG(?alias) IN ("en", "es", "fr", "de", "pt", "ja", "ko", "zh", "ar", "hi")) }
+    UNION
+    { ?entity p:P279 ?parentStatement.
+      ?parentStatement ps:P279 ?parent;
+                       wikibase:rank ?parentRank.
+      OPTIONAL {
+        ?parentStatement prov:wasDerivedFrom ?parentReference.
+        OPTIONAL { ?parentReference pr:P854 ?parentReferenceUrl. }
+      }
+    }
+  }
+}
+ORDER BY ?entity ?label ?alias ?parentStatement ?parent ?parentReference
+LIMIT 50000

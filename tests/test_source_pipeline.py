@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 import httpx
-from pydantic import HttpUrl
+from pydantic import HttpUrl, ValidationError
 
 from musix.catalog.artists import ArtistProjector
 from musix.catalog.registry import ProjectorRegistry
@@ -105,6 +105,23 @@ def _source(path: Path) -> DownloadSource:
 
 
 class DownloadTests(unittest.IsolatedAsyncioTestCase):
+    def test_source_id_rejects_filesystem_separators_traversal_and_controls(self) -> None:
+        source = load_download_source(
+            ROOT / "config" / "data_sources.toml",
+            "musicbrainz_json_artist_20260829",
+        )
+        for invalid in (
+            "../escape",
+            "nested/source",
+            r"nested\source",
+            ".",
+            "..",
+            "bad\nsource",
+            "bad\x00source",
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(ValidationError):
+                DownloadSource.model_validate({**source.model_dump(), "id": invalid})
+
     async def test_musicbrainz_genres_keep_the_restrictive_supplementary_policy(self) -> None:
         public_source = load_download_source(
             ROOT / "config" / "data_sources.toml",
@@ -125,6 +142,50 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(research_source.train)
         self.assertFalse(research_source.export_metadata)
         self.assertEqual(research_source.checksum, public_source.checksum)
+
+    async def test_restarts_an_empty_partial_left_by_a_failed_stream(self) -> None:
+        payload = b"verified source bytes"
+        digest = hashlib.sha256(payload).hexdigest()
+        source = DownloadSource(
+            id="fixture",
+            adapter="fixture_v1",
+            snapshot="1",
+            url=HttpUrl("https://example.test/source.bin"),
+            discovery_url=HttpUrl("https://example.test/"),
+            expected_content_type="application/octet-stream",
+            compression="none",
+            expected_bytes=len(payload),
+            checksum_algorithm="sha256",
+            checksum=digest,
+            data_license="CC0",
+            license_url="https://creativecommons.org/publicdomain/zero/1.0/",
+            rights_classification="public_domain",
+            local_only=False,
+            normalize=True,
+            local_search=True,
+            display=True,
+            embed=True,
+            train=True,
+            export_metadata=True,
+        )
+
+        async def handler(_request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                content=payload,
+                headers={"Content-Type": "application/octet-stream"},
+            )
+
+        with tempfile.TemporaryDirectory() as directory:
+            vault = Path(directory)
+            partial = vault / "downloads" / f"{source.id}.{digest}.part"
+            partial.parent.mkdir(parents=True)
+            partial.touch()
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                result = await download_verified(source, vault, client=client)
+
+            self.assertEqual(result.path.read_bytes(), payload)
+            self.assertEqual(result.resumed_from, 0)
 
     async def test_resumes_and_verifies_into_content_addressed_vault(self) -> None:
         payload = b"verified source bytes"

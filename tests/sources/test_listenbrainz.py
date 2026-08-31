@@ -5,6 +5,7 @@ import sqlite3
 import tarfile
 import tempfile
 import unittest
+from datetime import date, timedelta
 from pathlib import Path
 
 import zstandard
@@ -13,7 +14,7 @@ from pydantic import HttpUrl
 from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
-from musix.models.listenbrainz import ListenBrainzAggregationConfig
+from musix.models.listenbrainz import JointListenArtifact, ListenBrainzAggregationConfig
 from musix.models.pipeline import (
     ParsedSourceRecord,
     RejectedSourceRecord,
@@ -96,6 +97,75 @@ def _records(
 
 
 class ListenBrainzIncrementalAdapterTests(unittest.TestCase):
+    def test_joint_corpus_deduplicates_users_across_contiguous_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts: list[JointListenArtifact] = []
+            first_date = date(2026, 8, 1)
+            for offset in range(7):
+                path = root / f"{offset}.tar.zst"
+                _archive(
+                    path,
+                    (
+                        _listen(1, 61, [ARTIST_A]),
+                        _listen(1, 62, [ARTIST_B]),
+                        _listen(2, 63, [ARTIST_A]),
+                        _listen(2, 64, [ARTIST_B]),
+                    ),
+                    member_name=f"dump/listens/{offset}.listens",
+                )
+                snapshot_date = first_date + timedelta(days=offset)
+                source = _pipeline_source(path, f"listenbrainz_joint_{offset}").model_copy(
+                    update={
+                        "snapshot": (f"{100 + offset}-{snapshot_date:%Y%m%d}-000003-incremental")
+                    }
+                )
+                artifacts.append(
+                    JointListenArtifact(
+                        source=source,
+                        path=path,
+                        sequence=100 + offset,
+                        snapshot_date=snapshot_date,
+                    )
+                )
+            adapter = ListenBrainzIncrementalAdapter(
+                ListenBrainzAggregationConfig(
+                    window_seconds=60,
+                    minimum_distinct_users=2,
+                    minimum_window_start=60,
+                    maximum_window_start=60,
+                    max_active_windows=1,
+                )
+            )
+            records = list(
+                adapter.iter_joint_records(
+                    tuple(artifacts),
+                    SourceLimits(max_records=100, max_decompression_ratio=1024.0),
+                )
+            )
+
+            pairs = [
+                record.projection
+                for record in records
+                if isinstance(record, ParsedSourceRecord)
+                and isinstance(record.projection, ArtistCoListenProjection)
+            ]
+            run_record = records[-1]
+            assert isinstance(run_record, ParsedSourceRecord)
+            run = run_record.projection
+            assert isinstance(run, ArtistCoListenRunProjection)
+            self.assertEqual(len(pairs), 1)
+            self.assertEqual(pairs[0].distinct_user_count, 2)
+            self.assertEqual(run.listens_seen, 28)
+            self.assertEqual(run.user_windows, 2)
+            with self.assertRaisesRegex(ListenBrainzSourceError, "ordered and contiguous"):
+                list(
+                    adapter.iter_joint_records(
+                        tuple(reversed(artifacts)),
+                        SourceLimits(max_records=100, max_decompression_ratio=1024.0),
+                    )
+                )
+
     def test_counts_each_pair_once_per_user_window_and_emits_no_user_data(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "listens.tar.zst"

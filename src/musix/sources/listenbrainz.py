@@ -3,6 +3,7 @@
 import hashlib
 import io
 import itertools
+import re
 import resource
 import tarfile
 import time
@@ -16,7 +17,11 @@ import zstandard
 from pydantic import ValidationError
 
 from musix.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
-from musix.models.listenbrainz import ListenBrainzAggregationConfig, ListenBrainzListen
+from musix.models.listenbrainz import (
+    JointListenArtifact,
+    ListenBrainzAggregationConfig,
+    ListenBrainzListen,
+)
 from musix.models.pipeline import (
     ParsedSourceRecord,
     RejectedSourceRecord,
@@ -30,6 +35,13 @@ from musix.sources.registry import SourceAdapterError
 
 class ListenBrainzSourceError(SourceAdapterError):
     """Report a source shape, ordering, archive, or bounded-state violation."""
+
+
+_INCREMENTAL_SNAPSHOT = re.compile(
+    r"^(?P<sequence>[0-9]+)-(?P<date>[0-9]{8})-[0-9]{6}-incremental$"
+)
+_MINIMUM_JOINT_ARTIFACTS = 7
+_MAXIMUM_JOINT_ARTIFACTS = 14
 
 
 class _BinaryReader(Protocol):
@@ -279,12 +291,20 @@ class ListenBrainzIncrementalAdapter:
         *,
         start_after: int,
     ) -> Iterator[ParsedSourceRecord]:
+        window_start = listen.listened_at // self.config.window_seconds * self.config.window_seconds
+        if (
+            self.config.minimum_window_start is not None
+            and window_start < self.config.minimum_window_start
+        ) or (
+            self.config.maximum_window_start is not None
+            and window_start > self.config.maximum_window_start
+        ):
+            return
         self._update_timestamp_coverage(counters, listen.listened_at)
         artist_ids = _source_artist_ids(listen)
         if not artist_ids:
             return
         counters.listens_with_artist_mbid += 1
-        window_start = listen.listened_at // self.config.window_seconds * self.config.window_seconds
         if self.config.ordering == "unordered_bounded":
             user_artists = state.unordered_windows.get(window_start)
             if user_artists is None:
@@ -434,5 +454,99 @@ class ListenBrainzIncrementalAdapter:
             started=started,
         )
         record = self._maybe_emit(completion, state, start_after=start_after)
+        if record is not None:
+            yield record
+
+    @staticmethod
+    def _validate_joint_sequence(artifacts: tuple[JointListenArtifact, ...]) -> None:
+        if not _MINIMUM_JOINT_ARTIFACTS <= len(artifacts) <= _MAXIMUM_JOINT_ARTIFACTS:
+            raise ListenBrainzSourceError("joint corpus requires 7 to 14 increments")
+        sequences = tuple(artifact.sequence for artifact in artifacts)
+        if sequences != tuple(range(sequences[0], sequences[0] + len(sequences))):
+            raise ListenBrainzSourceError("joint corpus sequences must be ordered and contiguous")
+        dates = tuple(artifact.snapshot_date.toordinal() for artifact in artifacts)
+        if dates != tuple(range(dates[0], dates[0] + len(dates))):
+            raise ListenBrainzSourceError("joint corpus dates must be ordered and contiguous")
+        identities = tuple(
+            (str(artifact.source.id), artifact.source.snapshot, artifact.source.checksum)
+            for artifact in artifacts
+        )
+        if len(identities) != len(set(identities)):
+            raise ListenBrainzSourceError("joint corpus artifacts must be unique")
+        if len({artifact.source.checksum for artifact in artifacts}) != len(artifacts):
+            raise ListenBrainzSourceError("joint corpus artifact hashes must be unique")
+
+    @staticmethod
+    def _validate_joint_compatibility(artifacts: tuple[JointListenArtifact, ...]) -> None:
+        compatibility = {
+            (
+                artifact.source.adapter,
+                artifact.source.compression,
+                artifact.source.expected_content_type,
+                artifact.source.data_license,
+                artifact.source.rights_classification,
+                artifact.source.local_only,
+                artifact.source.normalize,
+                artifact.source.embed,
+                artifact.source.train,
+                artifact.source.export_metadata,
+            )
+            for artifact in artifacts
+        }
+        if len(compatibility) != 1:
+            raise ListenBrainzSourceError("joint corpus source policies or formats do not match")
+
+    @staticmethod
+    def _validate_joint_file(artifact: JointListenArtifact) -> None:
+        match = _INCREMENTAL_SNAPSHOT.fullmatch(artifact.source.snapshot)
+        if match is None:
+            raise ListenBrainzSourceError("joint corpus has an invalid incremental snapshot")
+        if int(match.group("sequence")) != artifact.sequence:
+            raise ListenBrainzSourceError("joint corpus sequence does not match its snapshot")
+        if match.group("date") != artifact.snapshot_date.strftime("%Y%m%d"):
+            raise ListenBrainzSourceError("joint corpus date does not match its snapshot")
+        if artifact.path.stat().st_size != artifact.source.expected_bytes:
+            raise ListenBrainzSourceError("joint corpus artifact byte size does not match")
+        digest = hashlib.sha256()
+        with artifact.path.open("rb") as stream:
+            while chunk := stream.read(1024 * 1024):
+                digest.update(chunk)
+        if digest.hexdigest() != artifact.source.verified_sha256():
+            raise ListenBrainzSourceError("joint corpus artifact hash does not match")
+
+    @classmethod
+    def _validate_joint_artifacts(cls, artifacts: tuple[JointListenArtifact, ...]) -> None:
+        cls._validate_joint_sequence(artifacts)
+        cls._validate_joint_compatibility(artifacts)
+        for artifact in artifacts:
+            cls._validate_joint_file(artifact)
+
+    def iter_joint_records(
+        self,
+        artifacts: tuple[JointListenArtifact, ...],
+        limits: SourceLimits,
+    ) -> Iterator[SourceRecord]:
+        """Aggregate increments together before discarding listener identities."""
+        if self.config.minimum_window_start is None:
+            raise ListenBrainzSourceError("joint corpus requires explicit event-time windows")
+        self._validate_joint_artifacts(artifacts)
+        started = time.monotonic()
+        counters = _Counters()
+        state = _AggregationState()
+        for artifact in artifacts:
+            if not self.supports(artifact.source):
+                raise ListenBrainzSourceError("joint corpus contains an unsupported source")
+            for line in self._iter_lines(artifact.path, limits, started=started):
+                yield from self._consume_line(
+                    line,
+                    state,
+                    counters,
+                    limits,
+                    start_after=-1,
+                )
+        yield from self._flush_all_windows(state, counters, start_after=-1)
+        state.user_artists.clear()
+        completion = self._completion_projection(state, counters, started=started)
+        record = self._maybe_emit(completion, state, start_after=-1)
         if record is not None:
             yield record

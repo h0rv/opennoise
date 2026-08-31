@@ -269,10 +269,10 @@ def _genres(
                   ORDER BY identifier.id LIMIT 1)
                ) AS genre_ref,
                COALESCE(
+                 (SELECT name FROM genres WHERE id = eligible.genre_id),
                  (SELECT name FROM entity_names
                   WHERE entity_id = eligible.genre_id
-                  ORDER BY is_preferred DESC, id LIMIT 1),
-                 (SELECT name FROM genres WHERE id = eligible.genre_id)
+                  ORDER BY is_preferred DESC, id LIMIT 1)
                ) AS name,
                min(eligible.evidence_id)
         FROM eligible_genres AS eligible
@@ -422,7 +422,74 @@ def _metadata_candidates(
         settings.max_metadata_candidates,
         "album metadata candidates",
     )
-    return _candidate_rows((*artist_rows, *album_rows))
+    has_recording_genres = connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') "
+        "AND name = 'normalizable_recording_genre_memberships'"
+    ).fetchone()
+    recording_rows = (
+        ()
+        if has_recording_genres is None
+        else _bounded_rows(
+            connection,
+            """
+        SELECT evidence.recording_id, evidence.genre_id,
+               max(COALESCE(evidence.source_count, 1)), 1,
+               (SELECT name FROM entity_names
+                WHERE entity_id = evidence.recording_id
+                ORDER BY is_preferred DESC, id LIMIT 1) AS name,
+               (SELECT 'musicbrainz:recording:' || identifier.normalized_value
+                FROM entity_identifiers AS identifier
+                WHERE identifier.entity_id = evidence.recording_id
+                  AND identifier.namespace = 'musicbrainz'
+                ORDER BY identifier.id LIMIT 1) AS entity_ref,
+               COALESCE(
+                 (SELECT 'wikidata:genre:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.genre_id
+                    AND identifier.namespace = 'wikidata'
+                  ORDER BY identifier.id LIMIT 1),
+                 (SELECT 'musicbrainz:genre:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.genre_id
+                    AND identifier.namespace = 'musicbrainz'
+                  ORDER BY identifier.id LIMIT 1)
+               ) AS genre_ref,
+               min(evidence.id)
+        FROM normalizable_recording_genre_memberships AS evidence
+        JOIN active_rights_policy_permissions AS embed_permission
+          ON embed_permission.policy_id = evidence.policy_id
+         AND embed_permission.use_kind = 'embed'
+         AND embed_permission.decision = 'allow'
+        WHERE NOT EXISTS (
+          SELECT 1 FROM active_suppressions AS suppression
+          WHERE suppression.use_kind IN ('all', 'embed') AND (
+            (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+              CAST(evidence.recording_id AS TEXT), CAST(evidence.genre_id AS TEXT)
+            ))
+            OR (suppression.target_kind = 'provenance'
+                AND suppression.target_ref = CAST(evidence.provenance_id AS TEXT))
+            OR (suppression.target_kind = 'source'
+                AND suppression.target_ref = CAST((
+                  SELECT source_id FROM provenance_records
+                  WHERE id = evidence.provenance_id
+                ) AS TEXT))
+          )
+        )
+        GROUP BY evidence.recording_id, evidence.genre_id
+        ORDER BY genre_ref, max(COALESCE(evidence.source_count, 1)) DESC, entity_ref
+        LIMIT ?
+        """,
+            (),
+            settings.max_metadata_candidates,
+            "recording metadata candidates",
+        )
+    )
+    rows = (*artist_rows, *album_rows, *recording_rows)
+    if len(rows) > settings.max_metadata_candidates:
+        raise PublicInputLoadError(
+            f"combined metadata candidates exceed declared limit {settings.max_metadata_candidates}"
+        )
+    return _candidate_rows(rows)
 
 
 def _candidate_rows(rows: Iterable[sqlite3.Row]) -> tuple[MetadataCandidate, ...]:
@@ -431,9 +498,15 @@ def _candidate_rows(rows: Iterable[sqlite3.Row]) -> tuple[MetadataCandidate, ...
         if row[4] is None or row[5] is None or row[6] is None:
             raise PublicInputLoadError(f"metadata candidate lacks public identity at row {index}")
         entity_ref = str(row[5])
+        if ":release-group:" in entity_ref:
+            entity_kind = "release_group"
+        elif ":recording:" in entity_ref:
+            entity_kind = "recording"
+        else:
+            entity_kind = "artist"
         result.append(
             MetadataCandidate(
-                entity_kind=("release_group" if ":release-group:" in entity_ref else "artist"),
+                entity_kind=entity_kind,
                 entity_id=entity_ref,
                 genre_id=str(row[6]),
                 name=str(row[4]),
@@ -498,16 +571,19 @@ class PublicModelRepository:
     def __init__(
         self,
         catalog: sqlite3.Connection,
-        listenbrainz: sqlite3.Connection,
+        listenbrainz: sqlite3.Connection | None = None,
     ) -> None:
         """Keep both read-only connection lifetimes with the caller."""
         catalog.row_factory = sqlite3.Row
-        listenbrainz.row_factory = sqlite3.Row
         self._catalog = catalog
+        if listenbrainz is not None:
+            listenbrainz.row_factory = sqlite3.Row
         self._listenbrainz = listenbrainz
 
     def load(self, settings: PublicInputLoadSettings) -> PublicModelInput:
         """Load only policy-safe public evidence under explicit row limits."""
+        if self._listenbrainz is None:
+            raise PublicInputLoadError("artist pair loading requires a ListenBrainz database")
         artifact_values = (*_artifacts(self._catalog), *_artifacts(self._listenbrainz))
         artifacts = tuple(
             sorted(
@@ -520,5 +596,14 @@ class PublicModelRepository:
             genres=_genres(self._catalog, settings),
             direct_memberships=_direct_memberships(self._catalog, settings),
             artist_pairs=_artist_pairs(self._listenbrainz, settings),
+            metadata_candidates=_metadata_candidates(self._catalog, settings),
+        )
+
+    def load_catalog_only(self, settings: PublicInputLoadSettings) -> PublicModelInput:
+        """Load policy-safe catalog evidence before a temporal graph is selected."""
+        return PublicModelInput(
+            artifacts=_artifacts(self._catalog),
+            genres=_genres(self._catalog, settings),
+            direct_memberships=_direct_memberships(self._catalog, settings),
             metadata_candidates=_metadata_candidates(self._catalog, settings),
         )
