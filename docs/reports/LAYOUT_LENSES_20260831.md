@@ -16,7 +16,7 @@ job wrote the aggregate.
 The public catalog preserved every raw P136 claim, but the model accepted a target only when a
 nondeprecated Wikidata P31 statement classified it as Q188451, music genre. It also rejected a
 target with a nondeprecated direct P279 statement to Q25379, play. The second rule removes the
-cross-domain item Q2743, musical play, while retaining opera, rock opera, musical comedy, and
+cross domain item Q2743, musical play, while retaining opera, rock opera, musical comedy, and
 musical drama. The rule uses exact QIDs and statement ranks, and it does not use names for
 classification.
 
@@ -53,14 +53,15 @@ found 23 groups in six iterations and converged with modularity 0.447594727711.
 
 The final artifact contains 603 named genres and 3,344 representative links. These links cover
 1,975 artists, 871 release groups, and 498 recordings. Every published genre name and every
-representative name was checked, and none is a raw QID. The five reported non-music examples are
-absent from every layout and representative list. They are action film, adventure television
-series, hero shooter, tactical shooter, and musical play.
+representative name was checked, and none is a raw QID. The five reported examples that are not
+music genres are absent from every layout and representative list. They are action film,
+adventure television series, hero shooter, tactical shooter, and musical play.
 
 ## Resources and artifacts
 
 The joint ListenBrainz aggregation took 252.901 seconds and reached 368,578,560 bytes of peak
-resident memory. The final four-lens build took 3,539 milliseconds and reached 367,960,064 bytes.
+resident memory. The final build of four lenses took 3,539 milliseconds and reached 367,960,064
+bytes.
 The individual layout times were 165 milliseconds for the default, 114 for direct, 166 for
 community, and 98 for taxonomy.
 
@@ -74,6 +75,6 @@ integrity `ok`, and no foreign key violations. Repeating publication returned th
 output hash and reported a duplicate instead of creating another model run.
 
 The generated screenshots are `/tmp/musix-phase3-public.png` and
-`/tmp/musix-phase3-taxonomy.png`. They confirm that excluded cross-domain labels are gone. They
+`/tmp/musix-phase3-taxonomy.png`. They confirm that excluded cross domain labels are gone. They
 also show dense label overlap in the largest components, which remains a visualization issue and
 does not change the evidence or layout hashes above.
