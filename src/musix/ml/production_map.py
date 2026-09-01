@@ -43,6 +43,7 @@ _MINIMUM_ORDERABLE_ITEMS = 2
 _LOCAL_LAYOUT_ITERATIONS = 80
 _LOCAL_LAYOUT_STEP = 0.035
 _LOCAL_LAYOUT_REPULSION = 0.00018
+_GLOBAL_LAYOUT_ITERATIONS = 180
 _QA_GRID_COLUMNS = 16
 _QA_GRID_ROWS = 9
 
@@ -449,6 +450,7 @@ def _force_positions(  # noqa: C901
 def _similarity_first_positions(
     source_model: PublicModelArtifact,
     tree: Mapping[str, _TreeNode],
+    similarity: Mapping[EdgeKey, tuple[float, int]],
 ) -> dict[str, tuple[float, float]]:
     """Use the validated global one-hop spectral geometry as the point plane.
 
@@ -461,16 +463,59 @@ def _similarity_first_positions(
         for coordinate in source_layout.coordinates
     }
     unresolved = sorted(set(tree) - positions.keys())
-    columns = math.ceil(math.sqrt(len(unresolved)))
-    rows = math.ceil(len(unresolved) / columns)
-    for index, genre_id in enumerate(unresolved):
-        column = index % columns
-        row = index // columns
-        positions[genre_id] = (
-            0.02 + 0.96 * (column + 0.5) / columns,
-            0.02 + 0.96 * (row + 0.5) / rows,
-        )
-    return positions
+    if unresolved:
+        columns = math.ceil(math.sqrt(len(unresolved)))
+        rows = math.ceil(len(unresolved) / columns)
+        for index, genre_id in enumerate(unresolved):
+            column = index % columns
+            row = index // columns
+            positions[genre_id] = (
+                0.02 + 0.96 * (column + 0.5) / columns,
+                0.02 + 0.96 * (row + 0.5) / rows,
+            )
+    return _global_force_positions(positions, similarity)
+
+
+def _global_force_positions(
+    positions: Mapping[str, tuple[float, float]],
+    similarity: Mapping[EdgeKey, tuple[float, int]],
+) -> dict[str, tuple[float, float]]:
+    """Run a bounded deterministic weighted spring candidate on public affinity."""
+    result = dict(positions)
+    ordered = tuple(sorted(result))
+    for iteration in range(_GLOBAL_LAYOUT_ITERATIONS):
+        forces = {genre_id: [0.0, 0.0] for genre_id in ordered}
+        for (left, right), (weight, _shared) in similarity.items():
+            left_x, left_y = result[left]
+            right_x, right_y = result[right]
+            delta_x = right_x - left_x
+            delta_y = right_y - left_y
+            distance = math.hypot(delta_x, delta_y) + 1e-9
+            scale = weight * distance
+            forces[left][0] += delta_x / distance * scale
+            forces[left][1] += delta_y / distance * scale
+            forces[right][0] -= delta_x / distance * scale
+            forces[right][1] -= delta_y / distance * scale
+        for offset, left in enumerate(ordered):
+            left_x, left_y = result[left]
+            for right in ordered[offset + 1 :]:
+                right_x, right_y = result[right]
+                delta_x = left_x - right_x
+                delta_y = left_y - right_y
+                scale = _LOCAL_LAYOUT_REPULSION / (delta_x * delta_x + delta_y * delta_y + 1e-6)
+                forces[left][0] += delta_x * scale
+                forces[left][1] += delta_y * scale
+                forces[right][0] -= delta_x * scale
+                forces[right][1] -= delta_y * scale
+        step = _LOCAL_LAYOUT_STEP * (1 - iteration / _GLOBAL_LAYOUT_ITERATIONS)
+        for genre_id in ordered:
+            x, y = result[genre_id]
+            force_x, force_y = forces[genre_id]
+            result[genre_id] = (
+                min(0.98, max(0.02, x + force_x * step)),
+                min(0.98, max(0.02, y + force_y * step)),
+            )
+    return result
 
 
 def _structural_lod(tree_node: _TreeNode, settings: ProductionMapSettings) -> tuple[int, str]:
@@ -770,7 +815,7 @@ def _lods(
                 )
             ),
             desktop_labels=_screen_labels(
-                tuple(node for node in nodes if node.lod_min <= level), 1440, 900, budgets[level]
+                tuple(node for node in nodes if node.lod_min <= level), 1366, 768, budgets[level]
             ),
             mobile_labels=_screen_labels(
                 tuple(node for node in nodes if node.lod_min <= level),
@@ -841,7 +886,7 @@ def build_production_map(
     tree, children = _tree(genre_ids, selected)
     communities = _communities(genre_ids, similarity, resolved_settings)
     regions = _regions(tree, children, communities, similarity)
-    positions = _similarity_first_positions(source_model, tree)
+    positions = _similarity_first_positions(source_model, tree, similarity)
     lod_minima, lod_reasons = _lod_assignment(tree, regions, resolved_settings)
     profiles = _profile_summary(source_model, genre_ids)
     nodes: list[ProductionNode] = []
