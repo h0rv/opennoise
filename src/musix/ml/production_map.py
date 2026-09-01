@@ -446,6 +446,33 @@ def _force_positions(  # noqa: C901
     return positions
 
 
+def _similarity_first_positions(
+    source_model: PublicModelArtifact,
+    tree: Mapping[str, _TreeNode],
+) -> dict[str, tuple[float, float]]:
+    """Use the validated global one-hop spectral geometry as the point plane.
+
+    Hierarchy remains a semantic LOD and explanation layer. It must not deform
+    the similarity plane that users use to discover nearby genres.
+    """
+    source_layout = next(layout for layout in source_model.layouts if layout.is_default)
+    positions = {
+        coordinate.genre_id: (float(coordinate.x), float(coordinate.y))
+        for coordinate in source_layout.coordinates
+    }
+    unresolved = sorted(set(tree) - positions.keys())
+    columns = math.ceil(math.sqrt(len(unresolved)))
+    rows = math.ceil(len(unresolved) / columns)
+    for index, genre_id in enumerate(unresolved):
+        column = index % columns
+        row = index // columns
+        positions[genre_id] = (
+            0.02 + 0.96 * (column + 0.5) / columns,
+            0.02 + 0.96 * (row + 0.5) / rows,
+        )
+    return positions
+
+
 def _structural_lod(tree_node: _TreeNode, settings: ProductionMapSettings) -> tuple[int, str]:
     if tree_node.depth == 0 or tree_node.subtree_size >= settings.overview_subtree_minimum:
         return 0, "umbrella_or_large_subtree"
@@ -579,6 +606,7 @@ def _metrics(
     for (left, right), (weight, _shared) in similarity.items():
         source[left].append((right, weight))
         source[right].append((left, weight))
+    reference_genre_ids = set(source)
 
     def preservation(count: int) -> float:
         values: list[float] = []
@@ -592,7 +620,11 @@ def _metrics(
             if not desired:
                 continue
             measured = sorted(
-                (other.genre_id for other in nodes if other.genre_id != node.genre_id),
+                (
+                    other.genre_id
+                    for other in nodes
+                    if other.genre_id != node.genre_id and other.genre_id in reference_genre_ids
+                ),
                 key=lambda genre_id: (
                     (float(node.x) - float(by_id[genre_id].x)) ** 2
                     + (float(node.y) - float(by_id[genre_id].y)) ** 2,
@@ -667,8 +699,6 @@ def _assert_geometry(metrics: ProductionGeometryMetrics, settings: ProductionMap
         failures.append("root packing")
     if metrics.top_10_mean_knn_preservation < settings.minimum_neighbor_preservation:
         failures.append("similarity neighbor preservation")
-    if metrics.hierarchy_containment_fraction != 1.0:
-        failures.append("hierarchy containment")
     if failures:
         raise ProductionMapGeometryError("production geometry gates failed: " + ", ".join(failures))
 
@@ -811,7 +841,7 @@ def build_production_map(
     tree, children = _tree(genre_ids, selected)
     communities = _communities(genre_ids, similarity, resolved_settings)
     regions = _regions(tree, children, communities, similarity)
-    positions = _force_positions(tree, regions, similarity)
+    positions = _similarity_first_positions(source_model, tree)
     lod_minima, lod_reasons = _lod_assignment(tree, regions, resolved_settings)
     profiles = _profile_summary(source_model, genre_ids)
     nodes: list[ProductionNode] = []
@@ -819,7 +849,7 @@ def build_production_map(
     for genre_id in genre_ids:
         item = tree[genre_id]
         region = regions[genre_id]
-        position_region = regions[item.root_id]
+        position_region = ProductionRegion(x0=0.0, y0=0.0, x1=1.0, y1=1.0)
         lod_min = lod_minima[genre_id]
         lod_reason = lod_reasons[genre_id]
         direct_count, _direct_max, propagated_count, _propagated_max, profile_refs = profiles[

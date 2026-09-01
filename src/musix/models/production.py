@@ -17,8 +17,10 @@ class ProductionMapSettings(FrozenModel):
     """Declare the complete deterministic production layout policy."""
 
     revision: Literal["production-map-v1"] = "production-map-v1"
-    method: Literal["community_hierarchy_treemap"] = "community_hierarchy_treemap"
-    method_version: Literal["1"] = "1"
+    method: Literal["similarity_first_spectral_with_hierarchy_lod"] = (
+        "similarity_first_spectral_with_hierarchy_lod"
+    )
+    method_version: Literal["2"] = "2"
     community_seed: int = Field(default=20260831, ge=0)
     maximum_community_iterations: int = Field(default=100, gt=0, le=1_000)
     similarity_neighbors_per_genre: int = Field(default=10, ge=2, le=25)
@@ -273,8 +275,10 @@ class ProductionMapArtifact(FrozenModel):
     """Publish one complete production map independent of benchmark layouts."""
 
     revision: Literal["production-map-v1"] = "production-map-v1"
-    method: Literal["community_hierarchy_treemap"] = "community_hierarchy_treemap"
-    method_version: Literal["1"] = "1"
+    method: Literal["similarity_first_spectral_with_hierarchy_lod"] = (
+        "similarity_first_spectral_with_hierarchy_lod"
+    )
+    method_version: Literal["2"] = "2"
     input_sha256: Sha256
     settings_sha256: Sha256
     output_sha256: Sha256
