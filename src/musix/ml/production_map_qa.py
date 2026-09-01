@@ -1,0 +1,321 @@
+"""Fail-closed acceptance gates for the single production semantic-zoom map."""
+
+from __future__ import annotations
+
+import math
+from collections import Counter
+from dataclasses import dataclass
+from itertools import pairwise
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from musix.models.production_qa import (
+        ProductionMapAcceptanceInput,
+        ProductionMapLabelBox,
+        ProductionMapRegion,
+    )
+
+_DESKTOP = (1366, 768)
+_MOBILE = (390, 844)
+_GRID_COLUMNS = 16
+_GRID_ROWS = 9
+_MIN_CENTRAL_SPAN = 0.45
+_MIN_OCCUPIED_FRACTION = 0.20
+_MAX_DENSEST_CELL_FRACTION = 0.15
+_MAX_ISOLATED_NODE_FRACTION = 0.05
+_MAX_REGION_ESCAPE_FRACTION = 0.02
+_MAX_DESKTOP_LABEL_OVERLAP_FRACTION = 0.02
+_MAX_MOBILE_LABEL_OVERLAP_FRACTION = 0.03
+_MIN_TOP_10_RECALL = 0.30
+_FIFTH_NEIGHBOR_INDEX = 5
+_MAX_FIFTH_NEIGHBOR_DISTANCE = 0.45
+
+
+class ProductionMapAcceptanceError(ValueError):
+    """Raised when a production map has incomplete or failing evidence."""
+
+
+@dataclass(frozen=True, slots=True)
+class LabelCollisionSummary:
+    """Complete collision measurement for one LOD and viewport."""
+
+    label_count: int
+    overlapping_label_count: int
+    overlapping_pair_count: int
+
+    @property
+    def overlap_fraction(self) -> float:
+        """Return the fraction of labels involved in at least one collision."""
+        return self.overlapping_label_count / self.label_count if self.label_count else 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class ProductionMapAcceptanceResult:
+    """Numeric gates plus every rejection reason for a proposed production artifact."""
+
+    accepted: bool
+    failures: tuple[str, ...]
+    central_span_x: float
+    central_span_y: float
+    occupied_cell_fraction: float
+    densest_cell_fraction: float
+    isolated_node_fraction: float
+    minimum_region_containment: float
+    root_region_overlap_count: int
+    desktop_label_collisions: tuple[LabelCollisionSummary, ...]
+    mobile_label_collisions: tuple[LabelCollisionSummary, ...]
+    lod_persistent: bool
+    top_10_recall: float
+    top_25_recall: float
+
+
+def evaluate_production_map(value: ProductionMapAcceptanceInput) -> ProductionMapAcceptanceResult:
+    """Evaluate geometry, LOD, visual evidence, and interaction evidence without a browser."""
+    coordinates = {item.entity_id: (float(item.x), float(item.y)) for item in value.coordinates}
+    failures: list[str] = []
+    span_x = _central_span(point[0] for point in coordinates.values())
+    span_y = _central_span(point[1] for point in coordinates.values())
+    if span_x < _MIN_CENTRAL_SPAN or span_y < _MIN_CENTRAL_SPAN:
+        failures.append(
+            f"central p05-p95 span must be >= {_MIN_CENTRAL_SPAN:.2f} on both axes; "
+            f"got {span_x:.4f}, {span_y:.4f}"
+        )
+    occupied_fraction, densest_fraction = _grid_coverage(tuple(coordinates.values()))
+    if occupied_fraction < _MIN_OCCUPIED_FRACTION:
+        failures.append(
+            f"16x9 viewport occupancy must be >= {_MIN_OCCUPIED_FRACTION:.2f}; "
+            f"got {occupied_fraction:.4f}"
+        )
+    if densest_fraction > _MAX_DENSEST_CELL_FRACTION:
+        failures.append(
+            f"densest 16x9 cell must hold <= {_MAX_DENSEST_CELL_FRACTION:.2f} of nodes; "
+            f"got {densest_fraction:.4f}"
+        )
+    duplicate_count = len(coordinates) - len(set(coordinates.values()))
+    if duplicate_count:
+        failures.append(f"coordinates contain {duplicate_count} duplicate positions")
+    isolated_fraction = _isolated_node_fraction(tuple(coordinates.values()))
+    if isolated_fraction > _MAX_ISOLATED_NODE_FRACTION:
+        failures.append(
+            f"spatial outliers must be <= {_MAX_ISOLATED_NODE_FRACTION:.2f}; "
+            f"got {isolated_fraction:.4f}"
+        )
+
+    _presentation_parent_failures(value, coordinates, failures)
+    minimum_containment = _region_containment(value.regions, coordinates)
+    if value.regions and minimum_containment < 1.0 - _MAX_REGION_ESCAPE_FRACTION:
+        failures.append(
+            "each emitted hierarchy region must contain >= "
+            f"{1.0 - _MAX_REGION_ESCAPE_FRACTION:.2f} "
+            f"of declared nodes; got {minimum_containment:.4f}"
+        )
+    root_overlap_count = _root_region_overlap_count(value.regions)
+    if root_overlap_count:
+        failures.append(f"root hierarchy regions overlap in {root_overlap_count} pair(s)")
+
+    lod_persistent = _lod_failures(value, coordinates, failures)
+    desktop_collisions, mobile_collisions = _label_collision_failures(value, failures)
+    _similarity_failures(value, failures)
+    _screenshot_failures(value, failures)
+    _interaction_failures(value, failures)
+
+    return ProductionMapAcceptanceResult(
+        accepted=not failures,
+        failures=tuple(failures),
+        central_span_x=span_x,
+        central_span_y=span_y,
+        occupied_cell_fraction=occupied_fraction,
+        densest_cell_fraction=densest_fraction,
+        isolated_node_fraction=isolated_fraction,
+        minimum_region_containment=minimum_containment,
+        root_region_overlap_count=root_overlap_count,
+        desktop_label_collisions=desktop_collisions,
+        mobile_label_collisions=mobile_collisions,
+        lod_persistent=lod_persistent,
+        top_10_recall=float(value.similarity.top_10_recall),
+        top_25_recall=float(value.similarity.top_25_recall),
+    )
+
+
+def require_accepted_production_map(
+    value: ProductionMapAcceptanceInput,
+) -> ProductionMapAcceptanceResult:
+    """Return the complete report, or stop publication with every failing gate."""
+    result = evaluate_production_map(value)
+    if not result.accepted:
+        raise ProductionMapAcceptanceError("\n".join(result.failures))
+    return result
+
+
+def _central_span(values: Iterable[float]) -> float:
+    ordered = sorted(values)
+    count = len(ordered)
+    lower = ordered[math.floor((count - 1) * 0.05)]
+    upper = ordered[math.ceil((count - 1) * 0.95)]
+    return upper - lower
+
+
+def _grid_coverage(points: tuple[tuple[float, float], ...]) -> tuple[float, float]:
+    cells: Counter[tuple[int, int]] = Counter()
+    for x, y in points:
+        column = min(_GRID_COLUMNS - 1, int(x * _GRID_COLUMNS))
+        row = min(_GRID_ROWS - 1, int(y * _GRID_ROWS))
+        cells[column, row] += 1
+    return (
+        len(cells) / (_GRID_COLUMNS * _GRID_ROWS),
+        max(cells.values()) / len(points),
+    )
+
+
+def _isolated_node_fraction(points: tuple[tuple[float, float], ...]) -> float:
+    """Count nodes whose fifth spatial neighbor is beyond 45% of map width/height."""
+    if len(points) <= _FIFTH_NEIGHBOR_INDEX:
+        return 1.0
+    distances: list[float] = []
+    for x, y in points:
+        ranked = sorted(math.hypot(x - other_x, y - other_y) for other_x, other_y in points)
+        distances.append(ranked[_FIFTH_NEIGHBOR_INDEX])
+    return sum(distance > _MAX_FIFTH_NEIGHBOR_DISTANCE for distance in distances) / len(distances)
+
+
+def _presentation_parent_failures(
+    value: ProductionMapAcceptanceInput,
+    coordinates: dict[str, tuple[float, float]],
+    failures: list[str],
+) -> None:
+    parents = {item.child_id: item for item in value.presentation_parents}
+    if len(parents) != len(value.presentation_parents):
+        failures.append("presentation-parent choices must be unique per child")
+    missing = sorted(set(coordinates) - set(parents))
+    if missing:
+        failures.append(f"{len(missing)} coordinates lack an explicit presentation-parent choice")
+    taxonomy = set(value.taxonomy_edges)
+    failures.extend(
+        f"taxonomy presentation parent for {parent.child_id} is not in full taxonomy"
+        for parent in value.presentation_parents
+        if parent.relation == "taxonomy" and (parent.child_id, parent.parent_id) not in taxonomy
+    )
+
+
+def _region_containment(
+    regions: tuple[ProductionMapRegion, ...], coordinates: dict[str, tuple[float, float]]
+) -> float:
+    if not regions:
+        return 1.0
+    fractions: list[float] = []
+    for region in regions:
+        contained = sum(
+            region.min_x <= coordinates[entity_id][0] <= region.max_x
+            and region.min_y <= coordinates[entity_id][1] <= region.max_y
+            for entity_id in region.entity_ids
+        )
+        fractions.append(contained / len(region.entity_ids))
+    return min(fractions)
+
+
+def _root_region_overlap_count(regions: tuple[ProductionMapRegion, ...]) -> int:
+    total = 0
+    non_overlapping = [region for region in regions if not region.allow_overlap]
+    for index, first in enumerate(non_overlapping):
+        for second in non_overlapping[index + 1 :]:
+            horizontal_overlap = first.min_x < second.max_x and second.min_x < first.max_x
+            vertical_overlap = first.min_y < second.max_y and second.min_y < first.max_y
+            if horizontal_overlap and vertical_overlap:
+                total += 1
+    return total
+
+
+def _lod_failures(
+    value: ProductionMapAcceptanceInput,
+    coordinates: dict[str, tuple[float, float]],
+    failures: list[str],
+) -> bool:
+    lods = tuple(sorted(value.lods, key=lambda lod: lod.level))
+    expected_levels = tuple(range(len(lods)))
+    if tuple(lod.level for lod in lods) != expected_levels:
+        failures.append("LOD levels must start at zero and be contiguous")
+        return False
+    persistent = all(
+        set(previous.visible_entity_ids).issubset(current.visible_entity_ids)
+        for previous, current in pairwise(lods)
+    )
+    if not persistent:
+        failures.append("semantic-zoom nodes must persist from every LOD into the next")
+    if set(lods[-1].visible_entity_ids) != set(coordinates):
+        failures.append("final semantic-zoom LOD must expose every mapped coordinate")
+    return persistent
+
+
+def _label_collision_failures(
+    value: ProductionMapAcceptanceInput, failures: list[str]
+) -> tuple[tuple[LabelCollisionSummary, ...], tuple[LabelCollisionSummary, ...]]:
+    desktop = tuple(_label_collisions(lod.desktop_labels) for lod in value.lods)
+    mobile = tuple(_label_collisions(lod.mobile_labels) for lod in value.lods)
+    if any(item.overlap_fraction > _MAX_DESKTOP_LABEL_OVERLAP_FRACTION for item in desktop):
+        failures.append(
+            "desktop labels overlap above "
+            f"{_MAX_DESKTOP_LABEL_OVERLAP_FRACTION:.2f} at one or more LODs"
+        )
+    if any(item.overlap_fraction > _MAX_MOBILE_LABEL_OVERLAP_FRACTION for item in mobile):
+        failures.append(
+            "mobile labels overlap above "
+            f"{_MAX_MOBILE_LABEL_OVERLAP_FRACTION:.2f} at one or more LODs"
+        )
+    return desktop, mobile
+
+
+def _label_collisions(labels: tuple[ProductionMapLabelBox, ...]) -> LabelCollisionSummary:
+    active: list[ProductionMapLabelBox] = []
+    overlapping_ids: set[str] = set()
+    pairs = 0
+    for label in sorted(labels, key=lambda item: (item.min_x, item.entity_id)):
+        active = [candidate for candidate in active if candidate.max_x > label.min_x]
+        for candidate in active:
+            if candidate.min_y < label.max_y and label.min_y < candidate.max_y:
+                pairs += 1
+                overlapping_ids.add(candidate.entity_id)
+                overlapping_ids.add(label.entity_id)
+        active.append(label)
+    return LabelCollisionSummary(len(labels), len(overlapping_ids), pairs)
+
+
+def _similarity_failures(value: ProductionMapAcceptanceInput, failures: list[str]) -> None:
+    similarity = value.similarity
+    if similarity.top_10_recall < _MIN_TOP_10_RECALL:
+        failures.append(
+            f"one-hop top-10 neighbor recall must be >= {_MIN_TOP_10_RECALL:.2f}; "
+            f"got {similarity.top_10_recall:.4f}"
+        )
+    if similarity.evaluated_entity_count != len(value.coordinates):
+        failures.append("similarity evidence must cover every coordinate in the production map")
+
+
+def _screenshot_failures(value: ProductionMapAcceptanceInput, failures: list[str]) -> None:
+    expected = {
+        ("desktop", "light", *_DESKTOP),
+        ("desktop", "dark", *_DESKTOP),
+        ("desktop", "system", *_DESKTOP),
+        ("mobile", "light", *_MOBILE),
+        ("mobile", "dark", *_MOBILE),
+        ("mobile", "system", *_MOBILE),
+    }
+    actual = {
+        (item.viewport, item.color_scheme, item.width, item.height) for item in value.screenshots
+    }
+    if not expected.issubset(actual):
+        failures.append(
+            "missing deterministic desktop/mobile light/dark/system screenshot evidence"
+        )
+
+
+def _interaction_failures(value: ProductionMapAcceptanceInput, failures: list[str]) -> None:
+    if value.interactions is None:
+        failures.append("missing deterministic interaction/accessibility evidence")
+        return
+    failed = [
+        name for name, passed in value.interactions.model_dump(mode="python").items() if not passed
+    ]
+    if failed:
+        failures.append(f"failed interaction/accessibility checks: {', '.join(failed)}")
