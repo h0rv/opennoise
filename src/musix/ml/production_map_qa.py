@@ -5,7 +5,9 @@ from __future__ import annotations
 import math
 from collections import Counter
 from dataclasses import dataclass
+from hashlib import sha256
 from itertools import pairwise
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -343,6 +345,16 @@ def _screenshot_failures(value: ProductionMapAcceptanceInput, failures: list[str
         failures.append(
             "missing deterministic desktop/mobile light/dark/system screenshot evidence"
         )
+    for screenshot in value.screenshots:
+        path = Path(screenshot.path)
+        if not path.is_file():
+            failures.append(f"generated screenshot is missing: {path}")
+            continue
+        if path.stat().st_size != screenshot.byte_size:
+            failures.append(f"generated screenshot byte size differs from evidence: {path}")
+        digest = sha256(path.read_bytes()).hexdigest()
+        if digest != screenshot.sha256:
+            failures.append(f"generated screenshot hash differs from evidence: {path}")
 
 
 def _interaction_failures(value: ProductionMapAcceptanceInput, failures: list[str]) -> None:

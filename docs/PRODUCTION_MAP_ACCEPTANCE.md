@@ -26,7 +26,8 @@ and blocks publication.
   model over every mapped genre. Top-10 recall is at least 0.30. Top-25 recall
   is reported for comparison but not substituted for the top-10 gate.
 - The harness records screenshots for 1366 by 768 desktop and 390 by 844 mobile
-  in system, light, and dark appearances.
+  in system, light, and dark appearances. Each screenshot must exist at its
+  recorded path with its recorded byte size and SHA-256.
 - The interaction record passes drag/touch pan, wheel/pinch zoom, click detail,
   search state, browser back, keyboard focus, dark mode, and the no-JavaScript
   SVG fallback.

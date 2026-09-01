@@ -1,4 +1,7 @@
 import unittest
+from hashlib import sha256
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Literal
 
 from musix.ml.production_map_qa import (
@@ -39,20 +42,25 @@ def _screenshot(
     color_scheme: Literal["light", "dark", "system"],
     width: int,
     height: int,
-    character: str,
+    directory: Path,
 ) -> ProductionMapScreenshot:
+    path = directory / f"{viewport}-{color_scheme}.png"
+    payload = f"{viewport}-{color_scheme}".encode()
+    path.write_bytes(payload)
     return ProductionMapScreenshot(
         viewport=viewport,
         color_scheme=color_scheme,
         width=width,
         height=height,
-        path=f"artifacts/{viewport}-{color_scheme}.png",
-        sha256=character * 64,
-        byte_size=1_024,
+        path=str(path),
+        sha256=sha256(payload).hexdigest(),
+        byte_size=len(payload),
     )
 
 
-def _input(*, top_10: float = 0.40, collapse: bool = False) -> ProductionMapAcceptanceInput:
+def _input(
+    *, screenshot_directory: Path, top_10: float = 0.40, collapse: bool = False
+) -> ProductionMapAcceptanceInput:
     ids = tuple(f"genre:{index:02d}" for index in range(30))
     coordinates = tuple(
         ProductionMapCoordinate(
@@ -63,9 +71,9 @@ def _input(*, top_10: float = 0.40, collapse: bool = False) -> ProductionMapAcce
         for index, entity_id in enumerate(ids)
     )
     screenshots = tuple(
-        _screenshot(viewport, scheme, width, height, character)
+        _screenshot(viewport, scheme, width, height, screenshot_directory)
         for viewport, width, height in (("desktop", 1366, 768), ("mobile", 390, 844))
-        for scheme, character in (("light", "a"), ("dark", "b"), ("system", "c"))
+        for scheme in ("light", "dark", "system")
     )
     return ProductionMapAcceptanceInput(
         revision="production-map-v1",
@@ -127,18 +135,21 @@ def _input(*, top_10: float = 0.40, collapse: bool = False) -> ProductionMapAcce
 
 class ProductionMapQaTests(unittest.TestCase):
     def test_accepts_complete_noncollapsed_persistent_map_evidence(self) -> None:
-        result = require_accepted_production_map(_input())
-        self.assertTrue(result.accepted)
-        self.assertEqual(result.root_region_overlap_count, 0)
-        self.assertEqual(result.desktop_label_collisions[-1].overlapping_label_count, 0)
+        with TemporaryDirectory() as temporary:
+            result = require_accepted_production_map(_input(screenshot_directory=Path(temporary)))
+            self.assertTrue(result.accepted)
+            self.assertEqual(result.root_region_overlap_count, 0)
+            self.assertEqual(result.desktop_label_collisions[-1].overlapping_label_count, 0)
 
     def test_rejects_collapsed_or_low_similarity_map(self) -> None:
-        result = evaluate_production_map(_input(top_10=0.15, collapse=True))
-        self.assertFalse(result.accepted)
-        self.assertTrue(any("central p05-p95" in failure for failure in result.failures))
-        self.assertTrue(any("top-10" in failure for failure in result.failures))
-        with self.assertRaises(ProductionMapAcceptanceError):
-            require_accepted_production_map(_input(top_10=0.15, collapse=True))
+        with TemporaryDirectory() as temporary:
+            evidence = _input(screenshot_directory=Path(temporary), top_10=0.15, collapse=True)
+            result = evaluate_production_map(evidence)
+            self.assertFalse(result.accepted)
+            self.assertTrue(any("central p05-p95" in failure for failure in result.failures))
+            self.assertTrue(any("top-10" in failure for failure in result.failures))
+            with self.assertRaises(ProductionMapAcceptanceError):
+                require_accepted_production_map(evidence)
 
 
 if __name__ == "__main__":
