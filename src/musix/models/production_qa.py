@@ -66,6 +66,7 @@ class ProductionMapRegion(FrozenModel):
     min_y: FiniteFloat = Field(ge=0.0, le=1.0)
     max_x: FiniteFloat = Field(ge=0.0, le=1.0)
     max_y: FiniteFloat = Field(ge=0.0, le=1.0)
+    is_root: bool = False
     allow_overlap: bool = False
 
     @model_validator(mode="after")

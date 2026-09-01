@@ -104,6 +104,7 @@ def evaluate_production_map(value: ProductionMapAcceptanceInput) -> ProductionMa
         )
 
     _presentation_parent_failures(value, coordinates, failures)
+    _taxonomy_failures(value, coordinates, failures)
     minimum_containment = _region_containment(value.regions, coordinates)
     if value.regions and minimum_containment < 1.0 - _MAX_REGION_ESCAPE_FRACTION:
         failures.append(
@@ -199,6 +200,40 @@ def _presentation_parent_failures(
     )
 
 
+def _taxonomy_failures(
+    value: ProductionMapAcceptanceInput,
+    coordinates: dict[str, tuple[float, float]],
+    failures: list[str],
+) -> None:
+    edges = set(value.taxonomy_edges)
+    if len(edges) != len(value.taxonomy_edges):
+        failures.append("full taxonomy edges must be unique")
+    unknown = {entity_id for edge in edges for entity_id in edge if entity_id not in coordinates}
+    if unknown:
+        failures.append(
+            f"full taxonomy includes {len(unknown)} nodes without production coordinates"
+        )
+    parents: dict[str, set[str]] = {}
+    for child, parent in edges:
+        parents.setdefault(child, set()).add(parent)
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(entity_id: str) -> bool:
+        if entity_id in visited:
+            return False
+        if entity_id in visiting:
+            return True
+        visiting.add(entity_id)
+        has_cycle = any(visit(parent) for parent in parents.get(entity_id, ()))
+        visiting.remove(entity_id)
+        visited.add(entity_id)
+        return has_cycle
+
+    if any(visit(entity_id) for entity_id in parents):
+        failures.append("full taxonomy contains a directed cycle")
+
+
 def _region_containment(
     regions: tuple[ProductionMapRegion, ...], coordinates: dict[str, tuple[float, float]]
 ) -> float:
@@ -217,7 +252,7 @@ def _region_containment(
 
 def _root_region_overlap_count(regions: tuple[ProductionMapRegion, ...]) -> int:
     total = 0
-    non_overlapping = [region for region in regions if not region.allow_overlap]
+    non_overlapping = [region for region in regions if region.is_root and not region.allow_overlap]
     for index, first in enumerate(non_overlapping):
         for second in non_overlapping[index + 1 :]:
             horizontal_overlap = first.min_x < second.max_x and second.min_x < first.max_x

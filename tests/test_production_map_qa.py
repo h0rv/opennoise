@@ -89,6 +89,7 @@ def _input(*, top_10: float = 0.40, collapse: bool = False) -> ProductionMapAcce
                 min_y=0.0,
                 max_x=1.0,
                 max_y=1.0,
+                is_root=True,
             ),
         ),
         lods=tuple(
