@@ -201,13 +201,15 @@ class Database:
         """List nonempty published layouts without copying their point data."""
         sql = """
             SELECT run.layout_key, run.algorithm_key, run.input_fingerprint,
-                   count(point.entity_id) AS point_count
+                   count(point.entity_id) AS point_count,
+                   coalesce(public_layout.is_default, run.layout_key = 'default') AS is_default
             FROM current_layouts AS current
             JOIN layout_runs AS run ON run.id = current.layout_run_id
             JOIN displayable_map_points AS point ON point.layout_key = run.layout_key
-            GROUP BY run.id
+            LEFT JOIN public_model_layouts AS public_layout ON public_layout.layout_run_id = run.id
+            GROUP BY run.id, public_layout.is_default
             HAVING count(point.entity_id) > 0
-            ORDER BY (run.layout_key = 'default') DESC,
+            ORDER BY is_default DESC,
                      (run.algorithm_key = 'source_coordinates') DESC,
                      run.layout_key COLLATE NOCASE
         """
@@ -222,6 +224,7 @@ class Database:
                     if str(row[1]) == "source_coordinates"
                     else DerivedCoordinateSpace(units="layout_units")
                 ),
+                is_default=bool(row[4]),
             )
             for row in rows
         )

@@ -257,7 +257,8 @@ class PublicModelPublishTests(unittest.TestCase):
         self.assertEqual(selections, [(sentinel,), (sentinel,)])
         self.assertEqual(map_name, ("Public IDM",))
         database = Database(self.database_path)
-        layouts = {item.layout_key for item in database.published_layouts()}
+        published_layouts = database.published_layouts()
+        layouts = {item.layout_key for item in published_layouts}
         self.assertTrue(
             {
                 "genres",
@@ -267,6 +268,9 @@ class PublicModelPublishTests(unittest.TestCase):
                 "public-taxonomy",
             }
             <= layouts
+        )
+        self.assertEqual(
+            [item.layout_key for item in published_layouts if item.is_default], ["public"]
         )
         placement = database.genre_placement(1, "public")
         self.assertTrue(placement.placed)

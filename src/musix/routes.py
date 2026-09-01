@@ -18,7 +18,7 @@ from musix.exploration import (
     optional_viewport,
 )
 from musix.genre_entry import GenreEntryRepository
-from musix.layouts import ExploredMap, LayoutArtifactMetadata
+from musix.layouts import ExploredMap, LayoutArtifactMetadata, PublishedLayout
 from musix.models import (
     MapPointResponse,
     MapResponse,
@@ -77,7 +77,8 @@ class MapController(Controller):
         layout: FromQuery[str] = "default",
     ) -> MapResponse:
         """Return the stable map JSON shape."""
-        points = await database.map_points(layout[:100])
+        layout_key, _ = resolve_layout(layout, await database.published_layouts())
+        points = await database.map_points(layout_key)
         return MapResponse(
             points=tuple(
                 MapPointResponse(
@@ -109,8 +110,9 @@ class MapController(Controller):
         limit: FromQuery[int] = 10_000,
     ) -> ExploredMap:
         """Return a bounded map with its exact selection and layout metadata."""
+        layout_key, _ = resolve_layout(layout, await database.published_layouts())
         query = map_query(
-            layout=layout,
+            layout=layout_key,
             lens=lens,
             level_of_detail=lod,
             source=source,
@@ -171,8 +173,9 @@ class MapController(Controller):
         limit: FromQuery[int] = 10_000,
     ) -> Template:
         """Render a bounded SVG map at the requested level of detail."""
+        layout_key, active_layout = resolve_layout(layout, await database.published_layouts())
         query = map_query(
-            layout=layout,
+            layout=layout_key,
             lens=lens,
             level_of_detail=lod,
             source=source,
@@ -184,7 +187,6 @@ class MapController(Controller):
             limit=limit,
         )
         result = await database.query_map(query)
-        active_layout = await database.layout_metadata(query.layout_key)
         view = map_view(
             list(result.points),
             focus,
@@ -246,11 +248,12 @@ class SearchController(Controller):
     ) -> Template:
         """Render search results for the bounded results region."""
         hits = await database.search(q[:500])
+        layout_key, _ = resolve_layout(layout, await database.published_layouts())
         return Template(
             template_name="search_results.html",
             context={
                 "hits": hits,
-                "layout_key": parsed_layout_key(layout),
+                "layout_key": layout_key,
                 "search_query": q[:500],
             },
         )
@@ -297,7 +300,8 @@ class EvidenceController(Controller):
         if detail is None:
             raise NotFoundException(detail="genre not found")
         detail = await genre_entries.enrich(detail)
-        placement = await database.genre_placement(genre_id, parsed_layout_key(layout))
+        layout_key, _ = resolve_layout(layout, await database.published_layouts())
+        placement = await database.genre_placement(genre_id, layout_key)
         return Template(
             template_name="genre_detail.html",
             context={
@@ -344,6 +348,23 @@ def parsed_layout_key(value: str) -> str:
         raise ValidationException(detail=str(error)) from error
 
 
+def resolve_layout(
+    requested: str, layouts: tuple[PublishedLayout, ...]
+) -> tuple[str, PublishedLayout | None]:
+    """Resolve the stable default sentinel to the published default lens."""
+    layout_key = parsed_layout_key(requested)
+    if layout_key == "default":
+        active = next((item for item in layouts if item.is_default), None)
+        active = active or next((item for item in layouts if item.layout_key == "default"), None)
+    else:
+        active = next((item for item in layouts if item.layout_key == layout_key), None)
+    if active is not None:
+        return active.layout_key, active
+    if layouts or layout_key != "default":
+        raise NotFoundException(detail="layout not found")
+    return layout_key, None
+
+
 async def workspace_context(
     database: AsyncDatabase,
     genre_entries: GenreEntryRepository,
@@ -353,11 +374,8 @@ async def workspace_context(
     search_query: str,
 ) -> dict[str, object]:
     """Build one consistent workspace from a published layout and optional genre."""
-    layout_key = parsed_layout_key(layout)
     layouts = await database.published_layouts()
-    active_layout = next((item for item in layouts if item.layout_key == layout_key), None)
-    if active_layout is None and (layouts or layout_key != "default"):
-        raise NotFoundException(detail="layout not found")
+    layout_key, active_layout = resolve_layout(layout, layouts)
     genre = None
     placement = None
     if focus is not None:
