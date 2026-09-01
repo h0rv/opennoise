@@ -2,17 +2,17 @@
 
 Status: blocked. The primary map is not ready to publish.
 
-The current production-layout candidate uses 603 qualified genres. Its model
-reports top-10 one-hop neighbor recall of `0.158785391387` and top-25 recall of
-`0.168732605067`. The acceptance floor for top-10 is `0.30`, so this candidate
-is rejected even though its central spans (`0.8622`, `0.6524`), 16 by 9
-occupancy (`0.575`), region containment (`1.0`), and root-region overlap (`0`)
-are promising.
+The current production-layout candidate uses 603 qualified genres. The latest
+similarity-first run reports top-10 one-hop neighbor recall of `0.22144` and
+top-25 recall of `0.24318`. The acceptance floor for top-10 is `0.30`, so the
+candidate is rejected. An independent rebuild also failed central-span and
+16-by-9 densest-cell gates. It does not produce a publishable artifact.
 
 A historical one-hop spectral number of `0.5173` was reported, but it does not
-yet have a matching input/reference hash and node scope. It is not evidence of
-acceptance. Re-run it against the qualified 603-node model and publish the
-Pareto table before selecting a production layout.
+have a matching input/reference hash and node scope. It is not evidence of
+acceptance. The comparable sealed 468-node source result is `0.223221508446`.
+Re-run any stronger baseline against the qualified 603-node model and publish
+the Pareto table before selecting a production layout.
 
 The acceptance harness is in `src/musix/ml/production_map_qa.py`. It is
 renderer-neutral so the data model owns coordinates, graph choices, semantic
