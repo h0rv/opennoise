@@ -1,0 +1,35 @@
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX pr: <http://www.wikidata.org/prop/reference/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+
+SELECT DISTINCT ?entity ?entityKind ?musicGenreQualification ?statement
+       ?rank ?reference ?referenceUrl
+WHERE {
+  VALUES ?entity { wd:Q3046632 wd:Q3053954 wd:Q30587784 wd:Q30632022 wd:Q30638997 wd:Q3071 wd:Q30917612 wd:Q3098078 wd:Q3114644 wd:Q3135787 wd:Q3140141 wd:Q316930 wd:Q319221 wd:Q320592 wd:Q3209069 wd:Q32178211 wd:Q3231749 wd:Q325397 wd:Q325504 wd:Q327547 wd:Q3302947 wd:Q33160145 wd:Q3328669 wd:Q3328676 wd:Q3328774 wd:Q3328778 wd:Q3397882 wd:Q339906 wd:Q3408028 wd:Q341364 wd:Q343568 wd:Q3437817 wd:Q343782 wd:Q3437841 wd:Q3470692 wd:Q3535998 wd:Q35874 wd:Q360982 wd:Q3630966 wd:Q3644819 wd:Q3679098 wd:Q3689704 wd:Q369747 wd:Q370515 wd:Q37073 wd:Q3709211 wd:Q372103 wd:Q3724735 wd:Q3724778 wd:Q373342 wd:Q377141 wd:Q377910 wd:Q378988 wd:Q379033 wd:Q379671 wd:Q3807537 wd:Q3827483 wd:Q383982 wd:Q3840596 wd:Q38656 wd:Q386724 wd:Q388296 wd:Q38848 wd:Q388906 wd:Q39052604 wd:Q3908370 wd:Q3930216 wd:Q3963051 wd:Q3990466 wd:Q4045538 wd:Q40831 wd:Q41343 wd:Q4164344 wd:Q4209421 wd:Q42201 wd:Q427183 wd:Q4282636 wd:Q428656 wd:Q429264 wd:Q42998 wd:Q430525 wd:Q43099500 wd:Q43343 wd:Q438476 wd:Q438503 wd:Q44092605 wd:Q4490718 wd:Q4490991 wd:Q458480 wd:Q45981 wd:Q46046 wd:Q460674 wd:Q465978 wd:Q469343 wd:Q47074428 wd:Q474027 wd:Q474090 wd:Q475221 wd:Q476091 wd:Q476983 }
+  BIND("genre" AS ?entityKind)
+  {
+    { ?entity p:P31 ?statement.
+      ?statement ps:P31 wd:Q188451;
+                 wikibase:rank ?rank.
+      FILTER(?rank != wikibase:DeprecatedRank)
+      FILTER NOT EXISTS {
+        VALUES ?excludedParent { wd:Q25379 }
+        ?entity p:P279 ?excludedStatement.
+        ?excludedStatement ps:P279 ?excludedParent;
+                           wikibase:rank ?excludedRank.
+        FILTER(?excludedRank != wikibase:DeprecatedRank)
+      }
+      BIND("Q188451|1|P31|P279:nondeprecated:Q25379" AS ?musicGenreQualification)
+      OPTIONAL {
+        ?statement prov:wasDerivedFrom ?reference.
+        OPTIONAL { ?reference pr:P854 ?referenceUrl. }
+      }
+    }
+  }
+}
+ORDER BY ?entity ?musicGenreQualification
+LIMIT 20000

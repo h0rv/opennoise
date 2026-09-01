@@ -1,0 +1,660 @@
+{
+  "schema_version": 1,
+  "release_id": "phase3-public-20260831-qualified",
+  "catalog_schema_version": 10,
+  "source_of_truth": {
+    "kind": "completed_local_sqlite_audit",
+    "file_sha256": "282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866",
+    "integrity_check": "ok",
+    "artifact_note": "The database remains an ignored, CC0-cache-backed build output. This manifest records the exact checked release boundary."
+  },
+  "qualification": {
+    "reported_unrecoverable_selection_sha256": "0467cab215b4dcfde5c18b99cdfd086b0f1b21eb3328287ec02b61f6932dc974",
+    "canonical_selection_path": "config/releases/phase3-public-20260831/qualification-selection.json",
+    "canonical_selection_sha256": "3eea58195b8b913a0e1daa19f9521739c693bcc926938e6ea63ced7e78115f3d",
+    "policy": {
+      "root_qids": [
+        "Q188451"
+      ],
+      "excluded_direct_parent_qids": [
+        "Q25379"
+      ],
+      "excluded_statement_ranks": [
+        "normal",
+        "preferred"
+      ],
+      "max_ancestry_depth": 1,
+      "selection_targets": 746,
+      "accepted_genres": 603
+    },
+    "reason_for_correction": "No retained payload hashes to the report-only value. The completed schema-10 database records eight v3 qualification query hashes; rebuilding the selection from its exact pre-qualification Wikidata inputs produces this checked-in payload and those hashes."
+  },
+  "content_policy": {
+    "identity_selection": "exact_typed_identifiers_only",
+    "name_matching": "forbidden_for_entity_selection",
+    "audio_or_media_bytes": "forbidden",
+    "wikidata_statement_policy": "direct_nondeprecated_P279; P31=Q188451 qualification; preserve every accepted direct parent edge",
+    "hierarchy_shape": "DAG; multiple parents are preserved; display-parent selection is outside this release contract"
+  },
+  "model": {
+    "input_sha256": "70c5c40f6206eb3895203e61864b62cf361532d02c1c61535281f22ce5fced6e",
+    "settings_sha256": "d27fa893459f5480e663253972191b5b90c3ab616cfaad49facc15c645ee22b0",
+    "logical_output_sha256": "e327045074fc6bb4e3b2e1c14410b3f337b6822e048c6038aa18703a11d2108b",
+    "file_sha256": "ffbe49cb78552ee668bc7d62f829105220e2cd0dc857f72c2e8a2e2d5357416d"
+  },
+  "inputs": [
+    {
+      "source_key": "listenbrainz_incremental_20260824",
+      "snapshot_ref": "listenbrainz_incremental_20260824:2638-20260824-000003-incremental",
+      "source_manifest_sha256": "7bcf80236f36dbb32766b260cadb87ea3f748bd75b5ca61431dd6a713b7ccd70",
+      "artifact_sha256": "690950fabaac58656df2b5e41ebf90f0f007e3e743b321c09c5c02d9e5fa757d",
+      "byte_size": 222909169,
+      "policy_key": "manifest:listenbrainz_incremental_20260824:690950fabaac58656df2b5e41ebf90f0f007e3e743b321c09c5c02d9e5fa757d",
+      "classification": "public_domain"
+    },
+    {
+      "source_key": "listenbrainz_incremental_20260825",
+      "snapshot_ref": "listenbrainz_incremental_20260825:2639-20260825-000002-incremental",
+      "source_manifest_sha256": "d5d74d6fd8d4c65375622d3b03283c10d3aaa28608a4c62036b0528545bdc380",
+      "artifact_sha256": "19c37bbf69f5d6ddffecb16f7577f0f2c8f94463f0ec7176144a704f3f2a02d5",
+      "byte_size": 262360819,
+      "policy_key": "manifest:listenbrainz_incremental_20260825:19c37bbf69f5d6ddffecb16f7577f0f2c8f94463f0ec7176144a704f3f2a02d5",
+      "classification": "public_domain"
+    },
+    {
+      "source_key": "listenbrainz_incremental_20260826",
+      "snapshot_ref": "listenbrainz_incremental_20260826:2640-20260826-000003-incremental",
+      "source_manifest_sha256": "2a8e3efbbe6de3f00668be81bacdc0b4936a7fed2dde6cf4ffc6a564cffe8c69",
+      "artifact_sha256": "459114950070f808547ff059c122bcb8c0395aae320fa41f95bfe903657d19e5",
+      "byte_size": 106435241,
+      "policy_key": "manifest:listenbrainz_incremental_20260826:459114950070f808547ff059c122bcb8c0395aae320fa41f95bfe903657d19e5",
+      "classification": "public_domain"
+    },
+    {
+      "source_key": "listenbrainz_incremental_20260827",
+      "snapshot_ref": "listenbrainz_incremental_20260827:2641-20260827-000003-incremental",
+      "source_manifest_sha256": "fb8709b146ad3e121ef35841a999ea77e9cc148912bb73999cc7c9f28cbf20b6",
+      "artifact_sha256": "e75bf5634ea5633b8a5f921ffa3fb0668281780dce34f03726be0df21fdff8e5",
+      "byte_size": 219573182,
+      "policy_key": "manifest:listenbrainz_incremental_20260827:e75bf5634ea5633b8a5f921ffa3fb0668281780dce34f03726be0df21fdff8e5",
+      "classification": "public_domain"
+    },
+    {
+      "source_key": "listenbrainz_incremental_20260828",
+      "snapshot_ref": "listenbrainz_incremental_20260828:2642-20260828-000002-incremental",
+      "source_manifest_sha256": "0e8e3801512fa94ecb9468bed21049fcb4b55207b171f05c6f4c2c78a0242742",
+      "artifact_sha256": "c3ec9f98661d3e616ee804e73ba2f355e89bea877dea76ecf010783ffffc03bc",
+      "byte_size": 259094677,
+      "policy_key": "manifest:listenbrainz_incremental_20260828:c3ec9f98661d3e616ee804e73ba2f355e89bea877dea76ecf010783ffffc03bc",
+      "classification": "public_domain"
+    },
+    {
+      "source_key": "listenbrainz_incremental_20260829",
+      "snapshot_ref": "listenbrainz_incremental_20260829:2643-20260829-000002-incremental",
+      "source_manifest_sha256": "4a2642b1ee62352129bfe418fba06321cc4b711db5758fa2c426fb6ee9a05899",
+      "artifact_sha256": "a308c0a520a704219633193022bb6d504056d9c909760bd2904ea026c17818e4",
+      "byte_size": 253203029,
+      "policy_key": "manifest:listenbrainz_incremental_20260829:a308c0a520a704219633193022bb6d504056d9c909760bd2904ea026c17818e4",
+      "classification": "public_domain"
+    },
+    {
+      "source_key": "listenbrainz_incremental_20260830",
+      "snapshot_ref": "listenbrainz_incremental_20260830:2644-20260830-000003-incremental",
+      "source_manifest_sha256": "708d04e6c79f8ad2e0e5de23d39fe9b61a6e76350977e969444b67f1d017053a",
+      "artifact_sha256": "d98da81fd4552521ecda22d8242ddd0b9359afb8c302e2f7b4b24c31a2f41789",
+      "byte_size": 191259244,
+      "policy_key": "manifest:listenbrainz_incremental_20260830:d98da81fd4552521ecda22d8242ddd0b9359afb8c302e2f7b4b24c31a2f41789",
+      "classification": "public_domain"
+    },
+    {
+      "source_key": "listenbrainz_joint_20260824_20260830",
+      "snapshot_ref": "listenbrainz_joint_20260824_20260830:joint:6c30524486b47af9fe0fe554830b50639f716ba39e265c7560d60b84124208b7",
+      "source_manifest_sha256": "69bff8be58833a95d56ba34e1c1fdcfe2a051dfaca3deaa78517aedba32a8924",
+      "artifact_sha256": "6c30524486b47af9fe0fe554830b50639f716ba39e265c7560d60b84124208b7",
+      "byte_size": 1534,
+      "policy_key": "manifest:listenbrainz_joint_20260824_20260830:6c30524486b47af9fe0fe554830b50639f716ba39e265c7560d60b84124208b7",
+      "classification": "public_domain"
+    },
+    {
+      "source_key": "wikidata_phase3_artists_00",
+      "snapshot_ref": "wikidata_phase3_artists_00:query:1305d5c9ff06b20026fe8fc1593bae6159090524928372eb1ae9c3b58090d55f:artifact:f4bafe60887de22d39ec45b4c27c3e916a138b2c22b810611209a697d246ab37",
+      "source_manifest_sha256": "66f68bb50e2860c04ca097a79eae35973ba650e2c6e3754445ad430bcba657f4",
+      "artifact_sha256": "f4bafe60887de22d39ec45b4c27c3e916a138b2c22b810611209a697d246ab37",
+      "byte_size": 2365869,
+      "policy_key": "manifest:wikidata_phase3_artists_00:f4bafe60887de22d39ec45b4c27c3e916a138b2c22b810611209a697d246ab37",
+      "classification": "public_domain",
+      "query_sha256": "1305d5c9ff06b20026fe8fc1593bae6159090524928372eb1ae9c3b58090d55f"
+    },
+    {
+      "source_key": "wikidata_phase3_artists_01",
+      "snapshot_ref": "wikidata_phase3_artists_01:query:859145848cdfd22c0b854796c00e72350994bb939dbaeef04d11969842873258:artifact:9119feec8ecd9c7ac596e174ea507f6bf28aa391545453eb2dd0f81e11776aaf",
+      "source_manifest_sha256": "231777128cb1f4998efd5c3eca9575521da9937c8676728ded38a3499a10e5eb",
+      "artifact_sha256": "9119feec8ecd9c7ac596e174ea507f6bf28aa391545453eb2dd0f81e11776aaf",
+      "byte_size": 1826950,
+      "policy_key": "manifest:wikidata_phase3_artists_01:9119feec8ecd9c7ac596e174ea507f6bf28aa391545453eb2dd0f81e11776aaf",
+      "classification": "public_domain",
+      "query_sha256": "859145848cdfd22c0b854796c00e72350994bb939dbaeef04d11969842873258"
+    },
+    {
+      "source_key": "wikidata_phase3_artists_02",
+      "snapshot_ref": "wikidata_phase3_artists_02:query:cd70d6e30d581603bffe2d009188ee3e39a4422f307df5417635752a994c1e5e:artifact:b869dcc1408308b3b0d7d9fefe044c880624e78d9a99e97cefea851544b9fcce",
+      "source_manifest_sha256": "cec26801d0e0cbbc189d1eb98bb33bdc568506d6e2c8b67bff59716d3c702976",
+      "artifact_sha256": "b869dcc1408308b3b0d7d9fefe044c880624e78d9a99e97cefea851544b9fcce",
+      "byte_size": 1685001,
+      "policy_key": "manifest:wikidata_phase3_artists_02:b869dcc1408308b3b0d7d9fefe044c880624e78d9a99e97cefea851544b9fcce",
+      "classification": "public_domain",
+      "query_sha256": "cd70d6e30d581603bffe2d009188ee3e39a4422f307df5417635752a994c1e5e"
+    },
+    {
+      "source_key": "wikidata_phase3_artists_03",
+      "snapshot_ref": "wikidata_phase3_artists_03:query:84854afdff00b20b6ea4f7a65a6aa691421c5773e01f18b9c969dba3e228a63c:artifact:adcc195fde1b86a696a5e76516aa38c4730d9b14bbc21f326a51328a7865cb61",
+      "source_manifest_sha256": "23af83ee0051fd26da04b185e95531e2430f7ef2959e257e8ff07b1b94710751",
+      "artifact_sha256": "adcc195fde1b86a696a5e76516aa38c4730d9b14bbc21f326a51328a7865cb61",
+      "byte_size": 1666589,
+      "policy_key": "manifest:wikidata_phase3_artists_03:adcc195fde1b86a696a5e76516aa38c4730d9b14bbc21f326a51328a7865cb61",
+      "classification": "public_domain",
+      "query_sha256": "84854afdff00b20b6ea4f7a65a6aa691421c5773e01f18b9c969dba3e228a63c"
+    },
+    {
+      "source_key": "wikidata_phase3_artists_04",
+      "snapshot_ref": "wikidata_phase3_artists_04:query:30a920dbf5cc8255436c6b542305f0cef61bba1d73b664b87b13cf580ed8f259:artifact:a746f208b893cfc97a6eb815cc93d30078b81b7bc0e31e7b5680a4498f81f4d8",
+      "source_manifest_sha256": "c49938877e17addb28fc4915991e7afe7f6cee70c544aff46dbbba433eff3e77",
+      "artifact_sha256": "a746f208b893cfc97a6eb815cc93d30078b81b7bc0e31e7b5680a4498f81f4d8",
+      "byte_size": 1596220,
+      "policy_key": "manifest:wikidata_phase3_artists_04:a746f208b893cfc97a6eb815cc93d30078b81b7bc0e31e7b5680a4498f81f4d8",
+      "classification": "public_domain",
+      "query_sha256": "30a920dbf5cc8255436c6b542305f0cef61bba1d73b664b87b13cf580ed8f259"
+    },
+    {
+      "source_key": "wikidata_phase3_artists_05",
+      "snapshot_ref": "wikidata_phase3_artists_05:query:a06d3a03df18ea56cdb9ce09b7dffa3ac20476bffc2a4a6a5e00153c8e7a60e6:artifact:6a14697644fa75ced454ff0d69281e77039e48373f485a6a6924d11beb4865c8",
+      "source_manifest_sha256": "8226d68ab6e4083ad6dc3931b1a19531052b2eabdebb7247619b115230043227",
+      "artifact_sha256": "6a14697644fa75ced454ff0d69281e77039e48373f485a6a6924d11beb4865c8",
+      "byte_size": 1481130,
+      "policy_key": "manifest:wikidata_phase3_artists_05:6a14697644fa75ced454ff0d69281e77039e48373f485a6a6924d11beb4865c8",
+      "classification": "public_domain",
+      "query_sha256": "a06d3a03df18ea56cdb9ce09b7dffa3ac20476bffc2a4a6a5e00153c8e7a60e6"
+    },
+    {
+      "source_key": "wikidata_phase3_artists_06",
+      "snapshot_ref": "wikidata_phase3_artists_06:query:e46f5bd2e22c33e5add929ba20cca7fe0cad6b964613daaf881a7355adcb7bc0:artifact:c476f44e5e6ffbc8ba669b04f00ea7031263e1884100633760228429d8e89765",
+      "source_manifest_sha256": "11c28e2e24bc18081b4d16439d04d8eb609740630244001cda067057b5d05fe6",
+      "artifact_sha256": "c476f44e5e6ffbc8ba669b04f00ea7031263e1884100633760228429d8e89765",
+      "byte_size": 1247034,
+      "policy_key": "manifest:wikidata_phase3_artists_06:c476f44e5e6ffbc8ba669b04f00ea7031263e1884100633760228429d8e89765",
+      "classification": "public_domain",
+      "query_sha256": "e46f5bd2e22c33e5add929ba20cca7fe0cad6b964613daaf881a7355adcb7bc0"
+    },
+    {
+      "source_key": "wikidata_phase3_artists_07",
+      "snapshot_ref": "wikidata_phase3_artists_07:query:80daad83d387ecf547496b8d84421c32607f760d48e04c683eb97f2e2aa26160:artifact:eba7e18764a419d8109d6aceb6d97ce16c392f7115ceab5180ec949b775fe687",
+      "source_manifest_sha256": "125477c90b5b3a147fe12079f52d76486e775ebc727593320fea4f9ebac1b99d",
+      "artifact_sha256": "eba7e18764a419d8109d6aceb6d97ce16c392f7115ceab5180ec949b775fe687",
+      "byte_size": 949755,
+      "policy_key": "manifest:wikidata_phase3_artists_07:eba7e18764a419d8109d6aceb6d97ce16c392f7115ceab5180ec949b775fe687",
+      "classification": "public_domain",
+      "query_sha256": "80daad83d387ecf547496b8d84421c32607f760d48e04c683eb97f2e2aa26160"
+    },
+    {
+      "source_key": "wikidata_phase3_genre_discovery_genres_00",
+      "snapshot_ref": "wikidata_phase3_genre_discovery_genres_00:query:5a62be70706b38cd0409ddb96da7ec3d62b99288f7c247f6c414060f7f386dde:artifact:e2bb09352fea373b85c30d310bdf70b6165b097056ce68c4e57053140707abe3",
+      "source_manifest_sha256": "b1dbb0572a3c5929d9ebd2afdf53841313740aaba0c83c8cc354f41179423064",
+      "artifact_sha256": "e2bb09352fea373b85c30d310bdf70b6165b097056ce68c4e57053140707abe3",
+      "byte_size": 1335237,
+      "policy_key": "manifest:wikidata_phase3_genre_discovery_genres_00:e2bb09352fea373b85c30d310bdf70b6165b097056ce68c4e57053140707abe3",
+      "classification": "public_domain",
+      "query_sha256": "5a62be70706b38cd0409ddb96da7ec3d62b99288f7c247f6c414060f7f386dde"
+    },
+    {
+      "source_key": "wikidata_phase3_genre_discovery_genres_01",
+      "snapshot_ref": "wikidata_phase3_genre_discovery_genres_01:query:d89a4c6b9c3fbe7bb5f2411119cd9675dd596f0b257c6f006db183a11685a397:artifact:d19aa716bab863a2e49d42545db4ab97e4e40258c3261d3262dec797862342c7",
+      "source_manifest_sha256": "2ee8ba648b38defd7c81737ed5324719f742f10140f58a82b8709b8056466340",
+      "artifact_sha256": "d19aa716bab863a2e49d42545db4ab97e4e40258c3261d3262dec797862342c7",
+      "byte_size": 1353215,
+      "policy_key": "manifest:wikidata_phase3_genre_discovery_genres_01:d19aa716bab863a2e49d42545db4ab97e4e40258c3261d3262dec797862342c7",
+      "classification": "public_domain",
+      "query_sha256": "d89a4c6b9c3fbe7bb5f2411119cd9675dd596f0b257c6f006db183a11685a397"
+    },
+    {
+      "source_key": "wikidata_phase3_genre_discovery_genres_02",
+      "snapshot_ref": "wikidata_phase3_genre_discovery_genres_02:query:df2348c7ee7ce0d5cdf1d6f617a4b3a36b9b01cd4a234c44d98e10348862ca99:artifact:0ac2f67cf182e6b14eec0f401d1bd0d6535e474d660f27e14719280bddd98b7b",
+      "source_manifest_sha256": "f40510044e9ac9aee4446281cc8c446d7bdc4d47900fa4271f80a3768f573b30",
+      "artifact_sha256": "0ac2f67cf182e6b14eec0f401d1bd0d6535e474d660f27e14719280bddd98b7b",
+      "byte_size": 1069009,
+      "policy_key": "manifest:wikidata_phase3_genre_discovery_genres_02:0ac2f67cf182e6b14eec0f401d1bd0d6535e474d660f27e14719280bddd98b7b",
+      "classification": "public_domain",
+      "query_sha256": "df2348c7ee7ce0d5cdf1d6f617a4b3a36b9b01cd4a234c44d98e10348862ca99"
+    },
+    {
+      "source_key": "wikidata_phase3_genre_labels_genres_00",
+      "snapshot_ref": "wikidata_phase3_genre_labels_genres_00:query:b92a92d70891a3557bdb01ca79a3e5b0e279ad1678649480ed16f4e59c2b6a45:artifact:84277d5f8eee3e8f44e80a5f4100b3f721f6bc5f8a3176ab24fd6c2aa50f5d4c",
+      "source_manifest_sha256": "c659838ad1cd4c5ce27e7de29d96f4f73df7fbba6424987dcd3508ebbf8349ad",
+      "artifact_sha256": "84277d5f8eee3e8f44e80a5f4100b3f721f6bc5f8a3176ab24fd6c2aa50f5d4c",
+      "byte_size": 958753,
+      "policy_key": "manifest:wikidata_phase3_genre_labels_genres_00:84277d5f8eee3e8f44e80a5f4100b3f721f6bc5f8a3176ab24fd6c2aa50f5d4c",
+      "classification": "public_domain",
+      "query_sha256": "b92a92d70891a3557bdb01ca79a3e5b0e279ad1678649480ed16f4e59c2b6a45"
+    },
+    {
+      "source_key": "wikidata_phase3_genre_labels_genres_01",
+      "snapshot_ref": "wikidata_phase3_genre_labels_genres_01:query:0dccca2e481a735eb388107d3979587ada809f8bacf18c61d18aaa278a455b08:artifact:389e032aa6168e6f42cda9112880bb983d880b3f1b05beb97ec0f4af71fcc581",
+      "source_manifest_sha256": "5e89215ffe142ab1a8bb199ca9de697b2d0e6e0b868c5339ea2c070660f54157",
+      "artifact_sha256": "389e032aa6168e6f42cda9112880bb983d880b3f1b05beb97ec0f4af71fcc581",
+      "byte_size": 1152570,
+      "policy_key": "manifest:wikidata_phase3_genre_labels_genres_01:389e032aa6168e6f42cda9112880bb983d880b3f1b05beb97ec0f4af71fcc581",
+      "classification": "public_domain",
+      "query_sha256": "0dccca2e481a735eb388107d3979587ada809f8bacf18c61d18aaa278a455b08"
+    },
+    {
+      "source_key": "wikidata_phase3_genre_labels_genres_02",
+      "snapshot_ref": "wikidata_phase3_genre_labels_genres_02:query:b1fc251c816a33b228ea9f00006128af8c5987272212b3162fcdb846e8764271:artifact:13672426f14401ebf89ca841569a4e5320e8ffe19985c0cbe57bde8682fe3295",
+      "source_manifest_sha256": "d5a4c9f30b2ad54c640e171830dffec6e9a8186ec263065c1e8c3d6971986adb",
+      "artifact_sha256": "13672426f14401ebf89ca841569a4e5320e8ffe19985c0cbe57bde8682fe3295",
+      "byte_size": 1069131,
+      "policy_key": "manifest:wikidata_phase3_genre_labels_genres_02:13672426f14401ebf89ca841569a4e5320e8ffe19985c0cbe57bde8682fe3295",
+      "classification": "public_domain",
+      "query_sha256": "b1fc251c816a33b228ea9f00006128af8c5987272212b3162fcdb846e8764271"
+    },
+    {
+      "source_key": "wikidata_phase3_genre_labels_genres_03",
+      "snapshot_ref": "wikidata_phase3_genre_labels_genres_03:query:42295edf4eae06d41c174c819554828f12f804e79b887ea23c11373f3f0efb4b:artifact:f12bab51b29af078257c0d71ca0d24f1e82fd611a78d92f7c4f7db9a5374e03f",
+      "source_manifest_sha256": "340738b39d40fdace8f2c85d54af64128e0a6b13a2aec18faf251ff8904150b2",
+      "artifact_sha256": "f12bab51b29af078257c0d71ca0d24f1e82fd611a78d92f7c4f7db9a5374e03f",
+      "byte_size": 798955,
+      "policy_key": "manifest:wikidata_phase3_genre_labels_genres_03:f12bab51b29af078257c0d71ca0d24f1e82fd611a78d92f7c4f7db9a5374e03f",
+      "classification": "public_domain",
+      "query_sha256": "42295edf4eae06d41c174c819554828f12f804e79b887ea23c11373f3f0efb4b"
+    },
+    {
+      "source_key": "wikidata_phase3_music_genre_qualification_v3_00",
+      "snapshot_ref": "wikidata_phase3_music_genre_qualification_v3_00:query:3e8ad7c8d4dfd070d6b7125966fdd3def0a005a7517c65b8ffa31051430484aa:artifact:123cdfecb5e73bb14f1decdba33b3c492abf5157dc71957ad3d7079715df6cc4",
+      "source_manifest_sha256": "1b7d23232f747f85059be754658bec034394388461e4464a459ee94299a1575a",
+      "artifact_sha256": "123cdfecb5e73bb14f1decdba33b3c492abf5157dc71957ad3d7079715df6cc4",
+      "byte_size": 56525,
+      "policy_key": "manifest:wikidata_phase3_music_genre_qualification_v3_00:123cdfecb5e73bb14f1decdba33b3c492abf5157dc71957ad3d7079715df6cc4",
+      "classification": "public_domain",
+      "query_sha256": "3e8ad7c8d4dfd070d6b7125966fdd3def0a005a7517c65b8ffa31051430484aa"
+    },
+    {
+      "source_key": "wikidata_phase3_music_genre_qualification_v3_01",
+      "snapshot_ref": "wikidata_phase3_music_genre_qualification_v3_01:query:34ad3cb6f4a0964326852fb3f00272acdd26380d990b4a7a411ec1eef7d107a2:artifact:8be4e152c8e813c2a68aa772ecf2a474ec935e975f4dfa417868f211faaf466e",
+      "source_manifest_sha256": "7e812cf50d8c0f7c59cb6c80d682ade0a08ca5401ecdf4c490603f98b5ab31ef",
+      "artifact_sha256": "8be4e152c8e813c2a68aa772ecf2a474ec935e975f4dfa417868f211faaf466e",
+      "byte_size": 62086,
+      "policy_key": "manifest:wikidata_phase3_music_genre_qualification_v3_01:8be4e152c8e813c2a68aa772ecf2a474ec935e975f4dfa417868f211faaf466e",
+      "classification": "public_domain",
+      "query_sha256": "34ad3cb6f4a0964326852fb3f00272acdd26380d990b4a7a411ec1eef7d107a2"
+    },
+    {
+      "source_key": "wikidata_phase3_music_genre_qualification_v3_02",
+      "snapshot_ref": "wikidata_phase3_music_genre_qualification_v3_02:query:346e53254f54c869a0fce792dda53af92f7fcbfcf185d2c016b8d4b6bf2c6e73:artifact:9cb5c79840434b22a36288e53aa089559cca9b2dcc4c9d32bc98fb79f3ea431a",
+      "source_manifest_sha256": "8e7d14f10f2153afbd2b8b0abad2e0401a019218e65df23b3b1cee5b9615270e",
+      "artifact_sha256": "9cb5c79840434b22a36288e53aa089559cca9b2dcc4c9d32bc98fb79f3ea431a",
+      "byte_size": 67827,
+      "policy_key": "manifest:wikidata_phase3_music_genre_qualification_v3_02:9cb5c79840434b22a36288e53aa089559cca9b2dcc4c9d32bc98fb79f3ea431a",
+      "classification": "public_domain",
+      "query_sha256": "346e53254f54c869a0fce792dda53af92f7fcbfcf185d2c016b8d4b6bf2c6e73"
+    },
+    {
+      "source_key": "wikidata_phase3_music_genre_qualification_v3_03",
+      "snapshot_ref": "wikidata_phase3_music_genre_qualification_v3_03:query:35d4130ad201432962c7c490d7b5d69ff7e8ad5ea3a1523efc12cfc8b5b4b7fa:artifact:e141d997e5289a5d3a70abc1f90bacb788e9dd26a66a8c858759cc2208b7a1f8",
+      "source_manifest_sha256": "9f24640b2c4cf6ae457d508fcbeb4b1dad100a10cee3d23166948788da6c0b2e",
+      "artifact_sha256": "e141d997e5289a5d3a70abc1f90bacb788e9dd26a66a8c858759cc2208b7a1f8",
+      "byte_size": 68375,
+      "policy_key": "manifest:wikidata_phase3_music_genre_qualification_v3_03:e141d997e5289a5d3a70abc1f90bacb788e9dd26a66a8c858759cc2208b7a1f8",
+      "classification": "public_domain",
+      "query_sha256": "35d4130ad201432962c7c490d7b5d69ff7e8ad5ea3a1523efc12cfc8b5b4b7fa"
+    },
+    {
+      "source_key": "wikidata_phase3_music_genre_qualification_v3_04",
+      "snapshot_ref": "wikidata_phase3_music_genre_qualification_v3_04:query:e3b8aff8326f5c92a57daed9f169e34390e9fba93e787c821d6599187a7b4d5a:artifact:bf6d408205b860d18b4debfe46104cfcf8cf1148ff13a1dae2e5d45f03a3d18a",
+      "source_manifest_sha256": "2273370d50ee9209c8ffb7625d0e3fe6f5a92cbec5c9a8412db9995dcd3aea57",
+      "artifact_sha256": "bf6d408205b860d18b4debfe46104cfcf8cf1148ff13a1dae2e5d45f03a3d18a",
+      "byte_size": 66775,
+      "policy_key": "manifest:wikidata_phase3_music_genre_qualification_v3_04:bf6d408205b860d18b4debfe46104cfcf8cf1148ff13a1dae2e5d45f03a3d18a",
+      "classification": "public_domain",
+      "query_sha256": "e3b8aff8326f5c92a57daed9f169e34390e9fba93e787c821d6599187a7b4d5a"
+    },
+    {
+      "source_key": "wikidata_phase3_music_genre_qualification_v3_05",
+      "snapshot_ref": "wikidata_phase3_music_genre_qualification_v3_05:query:f9c505e6042a59484d80969ad183cf1224566068b51fa4f3063cb80ecb00a98a:artifact:ec3f149be213fbf021d2fe2b0d41197b99a40c008778f942c3bb14879157307f",
+      "source_manifest_sha256": "7183aa7e6a67708f9723a96ce27d32a0f823ec2ed5e2319631c52a541ac8c2e2",
+      "artifact_sha256": "ec3f149be213fbf021d2fe2b0d41197b99a40c008778f942c3bb14879157307f",
+      "byte_size": 66139,
+      "policy_key": "manifest:wikidata_phase3_music_genre_qualification_v3_05:ec3f149be213fbf021d2fe2b0d41197b99a40c008778f942c3bb14879157307f",
+      "classification": "public_domain",
+      "query_sha256": "f9c505e6042a59484d80969ad183cf1224566068b51fa4f3063cb80ecb00a98a"
+    },
+    {
+      "source_key": "wikidata_phase3_music_genre_qualification_v3_06",
+      "snapshot_ref": "wikidata_phase3_music_genre_qualification_v3_06:query:1ca91b890994ee79739d4e44a040c39aafb14ae0f17d9a37acdb8903deb62280:artifact:bac193ffacb85bf83069228c40ccf227f55a81f9d4160df6fe4f6eb06f87e109",
+      "source_manifest_sha256": "dc8a43a0120767152f81d85edb1a3f5bf325063c85c36389252f8513710e05aa",
+      "artifact_sha256": "bac193ffacb85bf83069228c40ccf227f55a81f9d4160df6fe4f6eb06f87e109",
+      "byte_size": 73411,
+      "policy_key": "manifest:wikidata_phase3_music_genre_qualification_v3_06:bac193ffacb85bf83069228c40ccf227f55a81f9d4160df6fe4f6eb06f87e109",
+      "classification": "public_domain",
+      "query_sha256": "1ca91b890994ee79739d4e44a040c39aafb14ae0f17d9a37acdb8903deb62280"
+    },
+    {
+      "source_key": "wikidata_phase3_music_genre_qualification_v3_07",
+      "snapshot_ref": "wikidata_phase3_music_genre_qualification_v3_07:query:84287748ced8f3148ab874e27f0731bc7225722574176cb8415d52013e539706:artifact:5e87514cfd91734d8bec50b2307c040634d194253a65623b4fed985e80aba8de",
+      "source_manifest_sha256": "942b2d9a3d2a4e0c768413f30c24e4df78f9bfaa511ff430b23e5fd3e83d1159",
+      "artifact_sha256": "5e87514cfd91734d8bec50b2307c040634d194253a65623b4fed985e80aba8de",
+      "byte_size": 35750,
+      "policy_key": "manifest:wikidata_phase3_music_genre_qualification_v3_07:5e87514cfd91734d8bec50b2307c040634d194253a65623b4fed985e80aba8de",
+      "classification": "public_domain",
+      "query_sha256": "84287748ced8f3148ab874e27f0731bc7225722574176cb8415d52013e539706"
+    },
+    {
+      "source_key": "wikidata_phase3_recording_details_00",
+      "snapshot_ref": "wikidata_phase3_recording_details_00:query:5b42611f31def4ecff354e7a6782c13d9982d0df711a59a559c0bc24627056a1:artifact:c4f9665210f6598094f84c59d8d4147562132ba9fe0615166101d4b07a622122",
+      "source_manifest_sha256": "06b42e096cd469e19f3c026856252f087ef902f7b976e01efd10be65bfe6b663",
+      "artifact_sha256": "c4f9665210f6598094f84c59d8d4147562132ba9fe0615166101d4b07a622122",
+      "byte_size": 320614,
+      "policy_key": "manifest:wikidata_phase3_recording_details_00:c4f9665210f6598094f84c59d8d4147562132ba9fe0615166101d4b07a622122",
+      "classification": "public_domain",
+      "query_sha256": "5b42611f31def4ecff354e7a6782c13d9982d0df711a59a559c0bc24627056a1"
+    },
+    {
+      "source_key": "wikidata_phase3_recording_details_01",
+      "snapshot_ref": "wikidata_phase3_recording_details_01:query:5e32e427171c90cc61f1d862a36d0867ee72c43820d40c3c24e99f41f354bda1:artifact:56e25bcc218c9e71dbec2a504ac1bc37237e698e53491da0bc041496793c3dd8",
+      "source_manifest_sha256": "2b88c731bdf7994ceddf881fc9a80a17b7ce47b8a52810736eee89e211865ca3",
+      "artifact_sha256": "56e25bcc218c9e71dbec2a504ac1bc37237e698e53491da0bc041496793c3dd8",
+      "byte_size": 336093,
+      "policy_key": "manifest:wikidata_phase3_recording_details_01:56e25bcc218c9e71dbec2a504ac1bc37237e698e53491da0bc041496793c3dd8",
+      "classification": "public_domain",
+      "query_sha256": "5e32e427171c90cc61f1d862a36d0867ee72c43820d40c3c24e99f41f354bda1"
+    },
+    {
+      "source_key": "wikidata_phase3_recording_details_02",
+      "snapshot_ref": "wikidata_phase3_recording_details_02:query:272cc8edeeb7277a077abe37f07d464308904804e8c27e15c3fb39050202a773:artifact:ee4c0ceb65bfd07def34ee5bf7ce80a3b51f89aa061845fb7e273959b26e591c",
+      "source_manifest_sha256": "3923d31e70d1c337f1626f078e11260f5279d072a16d1b2ba4443bfebf53a83a",
+      "artifact_sha256": "ee4c0ceb65bfd07def34ee5bf7ce80a3b51f89aa061845fb7e273959b26e591c",
+      "byte_size": 313132,
+      "policy_key": "manifest:wikidata_phase3_recording_details_02:ee4c0ceb65bfd07def34ee5bf7ce80a3b51f89aa061845fb7e273959b26e591c",
+      "classification": "public_domain",
+      "query_sha256": "272cc8edeeb7277a077abe37f07d464308904804e8c27e15c3fb39050202a773"
+    },
+    {
+      "source_key": "wikidata_phase3_recording_details_03",
+      "snapshot_ref": "wikidata_phase3_recording_details_03:query:32cea9555686bbf5657c832c0a56534c676ea11143b63d23d4d4bf0f48a8ac12:artifact:12d979c65f4f8b30dc13997254e1f6202ffc9ba2f54ecc34565de5404a2804f8",
+      "source_manifest_sha256": "672f2e19f3a4bf5808e1d772104d1c7ef2aa04b2a111d2459e4bc4a40c78cb46",
+      "artifact_sha256": "12d979c65f4f8b30dc13997254e1f6202ffc9ba2f54ecc34565de5404a2804f8",
+      "byte_size": 312988,
+      "policy_key": "manifest:wikidata_phase3_recording_details_03:12d979c65f4f8b30dc13997254e1f6202ffc9ba2f54ecc34565de5404a2804f8",
+      "classification": "public_domain",
+      "query_sha256": "32cea9555686bbf5657c832c0a56534c676ea11143b63d23d4d4bf0f48a8ac12"
+    },
+    {
+      "source_key": "wikidata_phase3_recording_details_04",
+      "snapshot_ref": "wikidata_phase3_recording_details_04:query:e347141a905c56876fd39d7aa64f54f53d5e440dbfc663120ef40df1d7bf6590:artifact:db567de236d044a826df91917e3337ef632da6905d3e8f2d41051d797e8dd128",
+      "source_manifest_sha256": "89615b547c8f6b7d6044a6074cbdd0af29632fbc88524f717a81b721f88f340f",
+      "artifact_sha256": "db567de236d044a826df91917e3337ef632da6905d3e8f2d41051d797e8dd128",
+      "byte_size": 238378,
+      "policy_key": "manifest:wikidata_phase3_recording_details_04:db567de236d044a826df91917e3337ef632da6905d3e8f2d41051d797e8dd128",
+      "classification": "public_domain",
+      "query_sha256": "e347141a905c56876fd39d7aa64f54f53d5e440dbfc663120ef40df1d7bf6590"
+    },
+    {
+      "source_key": "wikidata_phase3_recording_details_05",
+      "snapshot_ref": "wikidata_phase3_recording_details_05:query:11d7cd772dbbf22a66357fb74feae23144de75d68a52007039f31f612fade6fb:artifact:e2909e61362353da61b9018a64139c58e94ea1f50a76bfb8d40941daa6924dae",
+      "source_manifest_sha256": "be133fce3f6931043c555891520bb2efa5b77c710e47cb72cf88a44c80ba8645",
+      "artifact_sha256": "e2909e61362353da61b9018a64139c58e94ea1f50a76bfb8d40941daa6924dae",
+      "byte_size": 338222,
+      "policy_key": "manifest:wikidata_phase3_recording_details_05:e2909e61362353da61b9018a64139c58e94ea1f50a76bfb8d40941daa6924dae",
+      "classification": "public_domain",
+      "query_sha256": "11d7cd772dbbf22a66357fb74feae23144de75d68a52007039f31f612fade6fb"
+    },
+    {
+      "source_key": "wikidata_phase3_recording_details_06",
+      "snapshot_ref": "wikidata_phase3_recording_details_06:query:cb2d3f3213bea20c06abca49fe098f5c443ae270002d61cdb577e4adeed57976:artifact:f7dadf6646d9f26ad83bed498dd5925b7cbd8c9a2abda5fbf5247a5d6ab45ae3",
+      "source_manifest_sha256": "082a6f6535656ce5731d17c9e88f0f6ed84a02400a3d75ccd74a97003b5a3d71",
+      "artifact_sha256": "f7dadf6646d9f26ad83bed498dd5925b7cbd8c9a2abda5fbf5247a5d6ab45ae3",
+      "byte_size": 70828,
+      "policy_key": "manifest:wikidata_phase3_recording_details_06:f7dadf6646d9f26ad83bed498dd5925b7cbd8c9a2abda5fbf5247a5d6ab45ae3",
+      "classification": "public_domain",
+      "query_sha256": "cb2d3f3213bea20c06abca49fe098f5c443ae270002d61cdb577e4adeed57976"
+    },
+    {
+      "source_key": "wikidata_phase3_recordings_discovery_00",
+      "snapshot_ref": "wikidata_phase3_recordings_discovery_00:query:b113ed5721984ee93d8b54f6d6c8d9b116460d680f9e0d9804eb85d7384e8a1e:artifact:e42a523c25a9ddb23644d22ebdb1bbd944f6fedfc19a3bd051243a64e59b5da0",
+      "source_manifest_sha256": "2cf709448d7fc5559bf979fb1f6bbd74fdb5067e2ea018265a08eefad2cb1ebe",
+      "artifact_sha256": "e42a523c25a9ddb23644d22ebdb1bbd944f6fedfc19a3bd051243a64e59b5da0",
+      "byte_size": 33318,
+      "policy_key": "manifest:wikidata_phase3_recordings_discovery_00:e42a523c25a9ddb23644d22ebdb1bbd944f6fedfc19a3bd051243a64e59b5da0",
+      "classification": "public_domain",
+      "query_sha256": "b113ed5721984ee93d8b54f6d6c8d9b116460d680f9e0d9804eb85d7384e8a1e"
+    },
+    {
+      "source_key": "wikidata_phase3_recordings_discovery_01",
+      "snapshot_ref": "wikidata_phase3_recordings_discovery_01:query:4d7378e634299851a00410c16219cef2f6ebf7a67c43df494a8c9c58912e636a:artifact:c173fe2185f4c4e47b42d177dbb30dba9b9de1dc4230295d9428a7ac9f6cd626",
+      "source_manifest_sha256": "a1a5dcd8b26f444f4380ff30f6b80e74472839d521f6f16ec031d2c71b861084",
+      "artifact_sha256": "c173fe2185f4c4e47b42d177dbb30dba9b9de1dc4230295d9428a7ac9f6cd626",
+      "byte_size": 33318,
+      "policy_key": "manifest:wikidata_phase3_recordings_discovery_01:c173fe2185f4c4e47b42d177dbb30dba9b9de1dc4230295d9428a7ac9f6cd626",
+      "classification": "public_domain",
+      "query_sha256": "4d7378e634299851a00410c16219cef2f6ebf7a67c43df494a8c9c58912e636a"
+    },
+    {
+      "source_key": "wikidata_phase3_recordings_discovery_02",
+      "snapshot_ref": "wikidata_phase3_recordings_discovery_02:query:8fdba0f73363d1292795d938ee18f2cb3b7ae8e8803bcf2ad9d4d69d16526e35:artifact:6ab70a4420d2d2d95405f50900c4fee5a8ab1cd199a0b057975620efe6b3dba2",
+      "source_manifest_sha256": "a1b94fd5e56aa9c4d78359eabc0c9f2b6f18bc547bce62b90f205d13e56514e0",
+      "artifact_sha256": "6ab70a4420d2d2d95405f50900c4fee5a8ab1cd199a0b057975620efe6b3dba2",
+      "byte_size": 33286,
+      "policy_key": "manifest:wikidata_phase3_recordings_discovery_02:6ab70a4420d2d2d95405f50900c4fee5a8ab1cd199a0b057975620efe6b3dba2",
+      "classification": "public_domain",
+      "query_sha256": "8fdba0f73363d1292795d938ee18f2cb3b7ae8e8803bcf2ad9d4d69d16526e35"
+    },
+    {
+      "source_key": "wikidata_phase3_recordings_discovery_03",
+      "snapshot_ref": "wikidata_phase3_recordings_discovery_03:query:1a74b1ef4382c8045c723bff64d7cfcab65da3ef737130a540634576baabc6bd:artifact:d0b12107a32f50de34f451c31e0c962e10a4a0c337bf9049d0555dbc4a437af0",
+      "source_manifest_sha256": "bfb5f1f276329990c2bbc05f71f5f7d75640c9113bf13a916b249db2b434fe0c",
+      "artifact_sha256": "d0b12107a32f50de34f451c31e0c962e10a4a0c337bf9049d0555dbc4a437af0",
+      "byte_size": 33298,
+      "policy_key": "manifest:wikidata_phase3_recordings_discovery_03:d0b12107a32f50de34f451c31e0c962e10a4a0c337bf9049d0555dbc4a437af0",
+      "classification": "public_domain",
+      "query_sha256": "1a74b1ef4382c8045c723bff64d7cfcab65da3ef737130a540634576baabc6bd"
+    },
+    {
+      "source_key": "wikidata_phase3_recordings_discovery_04",
+      "snapshot_ref": "wikidata_phase3_recordings_discovery_04:query:83e7b1a15bbbbe30c5866b39f380e11474d451c825c3f11196c140a8a3fbf03d:artifact:867be9c5f77252e179ec202d2c910d6047419cecec95c59206f703c014eadd95",
+      "source_manifest_sha256": "2727a5ca42d092a32bea9181e7682a1d374754bb462f484a7e17d852ba82cd21",
+      "artifact_sha256": "867be9c5f77252e179ec202d2c910d6047419cecec95c59206f703c014eadd95",
+      "byte_size": 25993,
+      "policy_key": "manifest:wikidata_phase3_recordings_discovery_04:867be9c5f77252e179ec202d2c910d6047419cecec95c59206f703c014eadd95",
+      "classification": "public_domain",
+      "query_sha256": "83e7b1a15bbbbe30c5866b39f380e11474d451c825c3f11196c140a8a3fbf03d"
+    },
+    {
+      "source_key": "wikidata_phase3_recordings_discovery_05",
+      "snapshot_ref": "wikidata_phase3_recordings_discovery_05:query:4dae4af3ea133d50c815763e2670dd7c305fff84dde0556c5483933c55df493c:artifact:d47b89aeef4e88ec4c1ddf0764341e3e0efb2bfcf50f2d6589057cc286973f19",
+      "source_manifest_sha256": "ad937ac1c0eaf347d59d70e4a28881393e1ed97692155b75ddf92da0a4e6ef8e",
+      "artifact_sha256": "d47b89aeef4e88ec4c1ddf0764341e3e0efb2bfcf50f2d6589057cc286973f19",
+      "byte_size": 26304,
+      "policy_key": "manifest:wikidata_phase3_recordings_discovery_05:d47b89aeef4e88ec4c1ddf0764341e3e0efb2bfcf50f2d6589057cc286973f19",
+      "classification": "public_domain",
+      "query_sha256": "4dae4af3ea133d50c815763e2670dd7c305fff84dde0556c5483933c55df493c"
+    },
+    {
+      "source_key": "wikidata_phase3_recordings_discovery_06",
+      "snapshot_ref": "wikidata_phase3_recordings_discovery_06:query:baeee9cb9c64ca23e35a574ed110e89dfbc7efe7b4de88a76f540269e33ed219:artifact:00688c4e7f488b38957708d5806cde6f86770f60398e26edbd74c9865844fc45",
+      "source_manifest_sha256": "4c02cde069c04f2c4418462f128e287f86a2a184e1dd0c9da8b7d32f56725917",
+      "artifact_sha256": "00688c4e7f488b38957708d5806cde6f86770f60398e26edbd74c9865844fc45",
+      "byte_size": 18359,
+      "policy_key": "manifest:wikidata_phase3_recordings_discovery_06:00688c4e7f488b38957708d5806cde6f86770f60398e26edbd74c9865844fc45",
+      "classification": "public_domain",
+      "query_sha256": "baeee9cb9c64ca23e35a574ed110e89dfbc7efe7b4de88a76f540269e33ed219"
+    },
+    {
+      "source_key": "wikidata_phase3_recordings_discovery_07",
+      "snapshot_ref": "wikidata_phase3_recordings_discovery_07:query:e343b40293ebf71f0e9d2b4eb5bd440c58a661ab124cda8799fc04b2ce9f5450:artifact:5daf34936b29efd65370d0577e3e4a52475892a49a1dd871435b936dc9ccc4d9",
+      "source_manifest_sha256": "046e203548e22ec85a79be59e6ac102c398246236912b69d8648df23a2816067",
+      "artifact_sha256": "5daf34936b29efd65370d0577e3e4a52475892a49a1dd871435b936dc9ccc4d9",
+      "byte_size": 11066,
+      "policy_key": "manifest:wikidata_phase3_recordings_discovery_07:5daf34936b29efd65370d0577e3e4a52475892a49a1dd871435b936dc9ccc4d9",
+      "classification": "public_domain",
+      "query_sha256": "e343b40293ebf71f0e9d2b4eb5bd440c58a661ab124cda8799fc04b2ce9f5450"
+    },
+    {
+      "source_key": "wikidata_phase3_release_group_details_00",
+      "snapshot_ref": "wikidata_phase3_release_group_details_00:query:4796e161b6cc7638156dd4989638fbb3879785a050a5ba153bb42af104ff54b6:artifact:3489c83b59747b9aaaaceeb2aeecadf34e2eadd7dfd8e6f38332471fe091582b",
+      "source_manifest_sha256": "197541320d8fde465517c2f5dc59946ff32bbd65d677d93dd1431778513044d4",
+      "artifact_sha256": "3489c83b59747b9aaaaceeb2aeecadf34e2eadd7dfd8e6f38332471fe091582b",
+      "byte_size": 494895,
+      "policy_key": "manifest:wikidata_phase3_release_group_details_00:3489c83b59747b9aaaaceeb2aeecadf34e2eadd7dfd8e6f38332471fe091582b",
+      "classification": "public_domain",
+      "query_sha256": "4796e161b6cc7638156dd4989638fbb3879785a050a5ba153bb42af104ff54b6"
+    },
+    {
+      "source_key": "wikidata_phase3_release_group_details_01",
+      "snapshot_ref": "wikidata_phase3_release_group_details_01:query:ee56eee352c82e0fede406c74442d639de278f85964981e8181f8501965610d6:artifact:43d01ac7b021b8699b1f97a25d61831e882dfb1892d6b32282741e47cca3a8fb",
+      "source_manifest_sha256": "04b3d6945075edf4ce87d351cfc374ada530f6d36d5a75286d6042827cd2d13f",
+      "artifact_sha256": "43d01ac7b021b8699b1f97a25d61831e882dfb1892d6b32282741e47cca3a8fb",
+      "byte_size": 508117,
+      "policy_key": "manifest:wikidata_phase3_release_group_details_01:43d01ac7b021b8699b1f97a25d61831e882dfb1892d6b32282741e47cca3a8fb",
+      "classification": "public_domain",
+      "query_sha256": "ee56eee352c82e0fede406c74442d639de278f85964981e8181f8501965610d6"
+    },
+    {
+      "source_key": "wikidata_phase3_release_group_details_02",
+      "snapshot_ref": "wikidata_phase3_release_group_details_02:query:7796f86b654ca3dc6c920586be8db7b02d64d563d50b6f03d1e3bb28165d5831:artifact:90b420b0f652954dd01b3ac1dbcd641c715fed0a214fd0dfea82191ad368aad6",
+      "source_manifest_sha256": "c61d4285933f94243733777057c5cfe90d8d29e32fede9808e3fa96d97c2e263",
+      "artifact_sha256": "90b420b0f652954dd01b3ac1dbcd641c715fed0a214fd0dfea82191ad368aad6",
+      "byte_size": 475366,
+      "policy_key": "manifest:wikidata_phase3_release_group_details_02:90b420b0f652954dd01b3ac1dbcd641c715fed0a214fd0dfea82191ad368aad6",
+      "classification": "public_domain",
+      "query_sha256": "7796f86b654ca3dc6c920586be8db7b02d64d563d50b6f03d1e3bb28165d5831"
+    },
+    {
+      "source_key": "wikidata_phase3_release_group_details_03",
+      "snapshot_ref": "wikidata_phase3_release_group_details_03:query:7467cd2e4cb244c6e8190affa2f31771331b7b1e08e440763951c7dccfc9a5cd:artifact:8b3186efd7a0f6398e7563b1761ef8171187c10d4df3ca0b348bc17f07b558a6",
+      "source_manifest_sha256": "7575dc1fbcfa57ede87be5127763261af58a7522aa0ad3aa59aed4c5fee57890",
+      "artifact_sha256": "8b3186efd7a0f6398e7563b1761ef8171187c10d4df3ca0b348bc17f07b558a6",
+      "byte_size": 438572,
+      "policy_key": "manifest:wikidata_phase3_release_group_details_03:8b3186efd7a0f6398e7563b1761ef8171187c10d4df3ca0b348bc17f07b558a6",
+      "classification": "public_domain",
+      "query_sha256": "7467cd2e4cb244c6e8190affa2f31771331b7b1e08e440763951c7dccfc9a5cd"
+    },
+    {
+      "source_key": "wikidata_phase3_release_group_details_04",
+      "snapshot_ref": "wikidata_phase3_release_group_details_04:query:e759fe92609c9250b7db86da2c61d0106e23058baec78047766330d2f3a4dd04:artifact:8b2e816abb94d7ff70e5fb602fc96cbf67d65dabf83e48254e48d31dec86fab9",
+      "source_manifest_sha256": "d7c5afaeadc870caae169837e734fb7924308dbba9d16a370ebef6fd72058cf6",
+      "artifact_sha256": "8b2e816abb94d7ff70e5fb602fc96cbf67d65dabf83e48254e48d31dec86fab9",
+      "byte_size": 469499,
+      "policy_key": "manifest:wikidata_phase3_release_group_details_04:8b2e816abb94d7ff70e5fb602fc96cbf67d65dabf83e48254e48d31dec86fab9",
+      "classification": "public_domain",
+      "query_sha256": "e759fe92609c9250b7db86da2c61d0106e23058baec78047766330d2f3a4dd04"
+    },
+    {
+      "source_key": "wikidata_phase3_release_group_details_05",
+      "snapshot_ref": "wikidata_phase3_release_group_details_05:query:25de95a5231bfe7c1d92a17b4d2b5765e1eeaf066a98718f2d42a1839940f179:artifact:ecb802117e846ed8b172ee53a840e879170f06a9d599a7db027b426bfa4a1962",
+      "source_manifest_sha256": "771acd50f77ca338919900e291106efa4bcd2c0ddfac0ba594a685617b7f3e48",
+      "artifact_sha256": "ecb802117e846ed8b172ee53a840e879170f06a9d599a7db027b426bfa4a1962",
+      "byte_size": 478972,
+      "policy_key": "manifest:wikidata_phase3_release_group_details_05:ecb802117e846ed8b172ee53a840e879170f06a9d599a7db027b426bfa4a1962",
+      "classification": "public_domain",
+      "query_sha256": "25de95a5231bfe7c1d92a17b4d2b5765e1eeaf066a98718f2d42a1839940f179"
+    },
+    {
+      "source_key": "wikidata_phase3_release_group_details_06",
+      "snapshot_ref": "wikidata_phase3_release_group_details_06:query:92a8cb191f384e4d57ef34f7f0c27d6a576d9396ec82bb443c5e0a3f48dbcdf6:artifact:74907067b8db7598e59d5005afaa3c42a2d4b85d04eb288973ae7b1c042374db",
+      "source_manifest_sha256": "6e60f1af4d4ef358f0060170be30481f08369a4e0e51b1d04080dcf2618a25c9",
+      "artifact_sha256": "74907067b8db7598e59d5005afaa3c42a2d4b85d04eb288973ae7b1c042374db",
+      "byte_size": 424045,
+      "policy_key": "manifest:wikidata_phase3_release_group_details_06:74907067b8db7598e59d5005afaa3c42a2d4b85d04eb288973ae7b1c042374db",
+      "classification": "public_domain",
+      "query_sha256": "92a8cb191f384e4d57ef34f7f0c27d6a576d9396ec82bb443c5e0a3f48dbcdf6"
+    },
+    {
+      "source_key": "wikidata_phase3_release_group_details_07",
+      "snapshot_ref": "wikidata_phase3_release_group_details_07:query:ae310c7ff98798e3d76f32482373f56536a320472f5dd007743bdad78f3965ee:artifact:ff7bafd88de6488e6b625c7351658343c4753f7e91b6a5c6e05b90303ba06bc5",
+      "source_manifest_sha256": "4bf183d90247dfc7fa25f35585fa0f60148a91d7ea2772c8cdf53178fa80a778",
+      "artifact_sha256": "ff7bafd88de6488e6b625c7351658343c4753f7e91b6a5c6e05b90303ba06bc5",
+      "byte_size": 347423,
+      "policy_key": "manifest:wikidata_phase3_release_group_details_07:ff7bafd88de6488e6b625c7351658343c4753f7e91b6a5c6e05b90303ba06bc5",
+      "classification": "public_domain",
+      "query_sha256": "ae310c7ff98798e3d76f32482373f56536a320472f5dd007743bdad78f3965ee"
+    },
+    {
+      "source_key": "wikidata_phase3_release_groups_discovery_00",
+      "snapshot_ref": "wikidata_phase3_release_groups_discovery_00:query:ce99042e811eeb8063b870250787f8e8d2c7b5c2c1a317c14102aa16328391fa:artifact:cbeddc2aae937e71383894f6c8c60e93f983d20ae502524afda3f9ef52a4b9e0",
+      "source_manifest_sha256": "3921904a4546a86c00c2efe172b6fd3f4ed76afc5eb05de564310748a537eded",
+      "artifact_sha256": "cbeddc2aae937e71383894f6c8c60e93f983d20ae502524afda3f9ef52a4b9e0",
+      "byte_size": 33631,
+      "policy_key": "manifest:wikidata_phase3_release_groups_discovery_00:cbeddc2aae937e71383894f6c8c60e93f983d20ae502524afda3f9ef52a4b9e0",
+      "classification": "public_domain",
+      "query_sha256": "ce99042e811eeb8063b870250787f8e8d2c7b5c2c1a317c14102aa16328391fa"
+    },
+    {
+      "source_key": "wikidata_phase3_release_groups_discovery_01",
+      "snapshot_ref": "wikidata_phase3_release_groups_discovery_01:query:dd4638a9a8cc85412a94ae72ce6f2c66f860d233f7c06778475cbdc3ee210d6a:artifact:b74a1f5e0b89d25703448eade491d4c972c717ca05fc25f9b53af8a05279b30f",
+      "source_manifest_sha256": "6b50618f8f726d945b871f57e85186106fda6b42dc7949e618338e0ea03536cb",
+      "artifact_sha256": "b74a1f5e0b89d25703448eade491d4c972c717ca05fc25f9b53af8a05279b30f",
+      "byte_size": 33622,
+      "policy_key": "manifest:wikidata_phase3_release_groups_discovery_01:b74a1f5e0b89d25703448eade491d4c972c717ca05fc25f9b53af8a05279b30f",
+      "classification": "public_domain",
+      "query_sha256": "dd4638a9a8cc85412a94ae72ce6f2c66f860d233f7c06778475cbdc3ee210d6a"
+    },
+    {
+      "source_key": "wikidata_phase3_release_groups_discovery_02",
+      "snapshot_ref": "wikidata_phase3_release_groups_discovery_02:query:9df8404ae6520a48218ef2e986b5b2420b6c6500ee700ee71ad1521652bd4110:artifact:16413d880f10617d38c46d1a948ff9330e34233a619ef97c5e6d990f33f5e3c1",
+      "source_manifest_sha256": "1df5b56f33332505adbcb875b54584a31b6005600f47e7ec6ddb126ecc453875",
+      "artifact_sha256": "16413d880f10617d38c46d1a948ff9330e34233a619ef97c5e6d990f33f5e3c1",
+      "byte_size": 33650,
+      "policy_key": "manifest:wikidata_phase3_release_groups_discovery_02:16413d880f10617d38c46d1a948ff9330e34233a619ef97c5e6d990f33f5e3c1",
+      "classification": "public_domain",
+      "query_sha256": "9df8404ae6520a48218ef2e986b5b2420b6c6500ee700ee71ad1521652bd4110"
+    },
+    {
+      "source_key": "wikidata_phase3_release_groups_discovery_03",
+      "snapshot_ref": "wikidata_phase3_release_groups_discovery_03:query:8f1f7c54f17ba789449cf3354c8a7f023d679284b626561473e1cbfdb1a746c6:artifact:e348364b5742489f61fac423c8e6a30189a5a77f476b5c6d78259cb6d48b9df4",
+      "source_manifest_sha256": "e21c1e427bb620bd3781bd0b3a57fabdf626c12db861c83474a07202630f9484",
+      "artifact_sha256": "e348364b5742489f61fac423c8e6a30189a5a77f476b5c6d78259cb6d48b9df4",
+      "byte_size": 33629,
+      "policy_key": "manifest:wikidata_phase3_release_groups_discovery_03:e348364b5742489f61fac423c8e6a30189a5a77f476b5c6d78259cb6d48b9df4",
+      "classification": "public_domain",
+      "query_sha256": "8f1f7c54f17ba789449cf3354c8a7f023d679284b626561473e1cbfdb1a746c6"
+    },
+    {
+      "source_key": "wikidata_phase3_release_groups_discovery_04",
+      "snapshot_ref": "wikidata_phase3_release_groups_discovery_04:query:c8ac6d6b946862b45dccc3764a26ed33f482287c83ad787c1d177de08eb41403:artifact:6bfaf3c92139cfc911a6c78a8eba9b5496bf1eeeb1433a76c53aa46da1b8558b",
+      "source_manifest_sha256": "9223484d9cc8f151e71786fe7e6f3726eb2f9b783c4a47b059c5bf34e837c5e4",
+      "artifact_sha256": "6bfaf3c92139cfc911a6c78a8eba9b5496bf1eeeb1433a76c53aa46da1b8558b",
+      "byte_size": 33616,
+      "policy_key": "manifest:wikidata_phase3_release_groups_discovery_04:6bfaf3c92139cfc911a6c78a8eba9b5496bf1eeeb1433a76c53aa46da1b8558b",
+      "classification": "public_domain",
+      "query_sha256": "c8ac6d6b946862b45dccc3764a26ed33f482287c83ad787c1d177de08eb41403"
+    },
+    {
+      "source_key": "wikidata_phase3_release_groups_discovery_05",
+      "snapshot_ref": "wikidata_phase3_release_groups_discovery_05:query:deff098a59bfda20a55ecbd5d5d8e1ee1924e0b2814cb4a88ad8fc238e3709ac:artifact:3d00a092d499ecad77b3dfc6dd6be05afa7b71342ac31d189c497cc70996954e",
+      "source_manifest_sha256": "796f7282b0ed2d1a19141f66f99565fde67dc8dccc547cf5363b9a7035188aa9",
+      "artifact_sha256": "3d00a092d499ecad77b3dfc6dd6be05afa7b71342ac31d189c497cc70996954e",
+      "byte_size": 33615,
+      "policy_key": "manifest:wikidata_phase3_release_groups_discovery_05:3d00a092d499ecad77b3dfc6dd6be05afa7b71342ac31d189c497cc70996954e",
+      "classification": "public_domain",
+      "query_sha256": "deff098a59bfda20a55ecbd5d5d8e1ee1924e0b2814cb4a88ad8fc238e3709ac"
+    },
+    {
+      "source_key": "wikidata_phase3_release_groups_discovery_06",
+      "snapshot_ref": "wikidata_phase3_release_groups_discovery_06:query:32db6add97fb816fae39b53f2cc313d982c4cf74afa89ac5411a7dc5244e4612:artifact:7f6656a25cfd2d18ec4bf0f238f01bffd07ea72cfdd0d40947924d0c924acfac",
+      "source_manifest_sha256": "d84929b2cf374e010a41801bfb67078934915afd622807bdf5f7f6fdde24c266",
+      "artifact_sha256": "7f6656a25cfd2d18ec4bf0f238f01bffd07ea72cfdd0d40947924d0c924acfac",
+      "byte_size": 33664,
+      "policy_key": "manifest:wikidata_phase3_release_groups_discovery_06:7f6656a25cfd2d18ec4bf0f238f01bffd07ea72cfdd0d40947924d0c924acfac",
+      "classification": "public_domain",
+      "query_sha256": "32db6add97fb816fae39b53f2cc313d982c4cf74afa89ac5411a7dc5244e4612"
+    },
+    {
+      "source_key": "wikidata_phase3_release_groups_discovery_07",
+      "snapshot_ref": "wikidata_phase3_release_groups_discovery_07:query:7619a90784063660b225c709a9d328189a5adabba2d1fb210868e115165dd2a8:artifact:2a3053e5afcdb5417fb060e63464c5685eda160eef030ca91b57a50d4134c7a6",
+      "source_manifest_sha256": "6ac117e8f371249b5fcacae23eff9d5484d85c1037317ae313a320b17b41303f",
+      "artifact_sha256": "2a3053e5afcdb5417fb060e63464c5685eda160eef030ca91b57a50d4134c7a6",
+      "byte_size": 33638,
+      "policy_key": "manifest:wikidata_phase3_release_groups_discovery_07:2a3053e5afcdb5417fb060e63464c5685eda160eef030ca91b57a50d4134c7a6",
+      "classification": "public_domain",
+      "query_sha256": "7619a90784063660b225c709a9d328189a5adabba2d1fb210868e115165dd2a8"
+    }
+  ]
+}
+

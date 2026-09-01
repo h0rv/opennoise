@@ -1,0 +1,1824 @@
+{
+  "schema_version": 1,
+  "node_count": 603,
+  "direct_edge_count": 712,
+  "root_candidates": [
+    {
+      "qid": "Q373342",
+      "direct_children": 29
+    },
+    {
+      "qid": "Q12326776",
+      "direct_children": 14
+    },
+    {
+      "qid": "Q18345375",
+      "direct_children": 9
+    },
+    {
+      "qid": "Q11787389",
+      "direct_children": 8
+    },
+    {
+      "qid": "Q3135787",
+      "direct_children": 7
+    },
+    {
+      "qid": "Q465978",
+      "direct_children": 7
+    },
+    {
+      "qid": "Q7248857",
+      "direct_children": 7
+    },
+    {
+      "qid": "Q9778",
+      "direct_children": 7
+    },
+    {
+      "qid": "Q114880124",
+      "direct_children": 6
+    },
+    {
+      "qid": "Q116985035",
+      "direct_children": 6
+    },
+    {
+      "qid": "Q1640319",
+      "direct_children": 6
+    },
+    {
+      "qid": "Q107718737",
+      "direct_children": 5
+    },
+    {
+      "qid": "Q42201",
+      "direct_children": 5
+    },
+    {
+      "qid": "Q257533",
+      "direct_children": 4
+    },
+    {
+      "qid": "Q3328676",
+      "direct_children": 4
+    },
+    {
+      "qid": "Q388906",
+      "direct_children": 4
+    },
+    {
+      "qid": "Q5151495",
+      "direct_children": 4
+    },
+    {
+      "qid": "Q6452410",
+      "direct_children": 4
+    },
+    {
+      "qid": "Q65937946",
+      "direct_children": 4
+    },
+    {
+      "qid": "Q672134",
+      "direct_children": 4
+    },
+    {
+      "qid": "Q899215",
+      "direct_children": 4
+    },
+    {
+      "qid": "Q107021951",
+      "direct_children": 3
+    },
+    {
+      "qid": "Q10730335",
+      "direct_children": 3
+    },
+    {
+      "qid": "Q114880130",
+      "direct_children": 3
+    },
+    {
+      "qid": "Q1583807",
+      "direct_children": 3
+    },
+    {
+      "qid": "Q3328778",
+      "direct_children": 3
+    },
+    {
+      "qid": "Q5413526",
+      "direct_children": 3
+    },
+    {
+      "qid": "Q572717",
+      "direct_children": 3
+    },
+    {
+      "qid": "Q106422444",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q110471193",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q117745223",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q12183214",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q12200830",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q140561383",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q2267955",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q26302245",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q2743758",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q316930",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q43343",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q531426",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q645992",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q65937876",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q663519",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q685884",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q6942280",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q6942329",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q98528149",
+      "direct_children": 2
+    },
+    {
+      "qid": "Q1033912",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q1046920",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q105763581",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q106528337",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q106594706",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q107022156",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q107033384",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q10846275",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q108743983",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q110527222",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q116690343",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q116764487",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q122947986",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q123777276",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q132531661",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q1326777",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q13646229",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q1373485",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q141085400",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q141085413",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q17191592",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q1744304",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q185652",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q20102359",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q2064873",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q2587471",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q268673",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q26897135",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q286080",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q29652773",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q3114644",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q3328669",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q3328774",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q3437817",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q3679098",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q372103",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q3963051",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q3990466",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q427183",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q4794612",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q4806789",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q56342556",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q639197",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q65937906",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q65943778",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q6942037",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q6942343",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q757143",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q7777494",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q820049",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q935586",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q959583",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q964987",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q98528192",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q98528267",
+      "direct_children": 1
+    },
+    {
+      "qid": "Q1507298",
+      "direct_children": 0
+    },
+    {
+      "qid": "Q1548170",
+      "direct_children": 0
+    },
+    {
+      "qid": "Q829147",
+      "direct_children": 0
+    },
+    {
+      "qid": "Q9734",
+      "direct_children": 0
+    },
+    {
+      "qid": "Q9748",
+      "direct_children": 0
+    }
+  ],
+  "multi_parent_nodes": [
+    {
+      "qid": "Q10286515",
+      "parent_qids": [
+        "Q117745223",
+        "Q211756"
+      ]
+    },
+    {
+      "qid": "Q1045541",
+      "parent_qids": [
+        "Q164444",
+        "Q753679"
+      ]
+    },
+    {
+      "qid": "Q104695865",
+      "parent_qids": [
+        "Q116985035",
+        "Q25094591"
+      ]
+    },
+    {
+      "qid": "Q105334717",
+      "parent_qids": [
+        "Q131272",
+        "Q7248857"
+      ]
+    },
+    {
+      "qid": "Q1055871",
+      "parent_qids": [
+        "Q11366",
+        "Q257533"
+      ]
+    },
+    {
+      "qid": "Q105627377",
+      "parent_qids": [
+        "Q7248857",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q105636940",
+      "parent_qids": [
+        "Q20502",
+        "Q65937906"
+      ]
+    },
+    {
+      "qid": "Q105757139",
+      "parent_qids": [
+        "Q26302245",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q106298881",
+      "parent_qids": [
+        "Q373342",
+        "Q43343"
+      ]
+    },
+    {
+      "qid": "Q107022182",
+      "parent_qids": [
+        "Q107021951",
+        "Q107022156"
+      ]
+    },
+    {
+      "qid": "Q107572242",
+      "parent_qids": [
+        "Q11401",
+        "Q7248857"
+      ]
+    },
+    {
+      "qid": "Q1077388",
+      "parent_qids": [
+        "Q116690343",
+        "Q373342"
+      ]
+    },
+    {
+      "qid": "Q10926",
+      "parent_qids": [
+        "Q11366",
+        "Q25554481"
+      ]
+    },
+    {
+      "qid": "Q1092837",
+      "parent_qids": [
+        "Q105513",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q109833526",
+      "parent_qids": [
+        "Q110471193",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q110391587",
+      "parent_qids": [
+        "Q257533",
+        "Q851213"
+      ]
+    },
+    {
+      "qid": "Q11307326",
+      "parent_qids": [
+        "Q257533",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q11363",
+      "parent_qids": [
+        "Q10926",
+        "Q377910"
+      ]
+    },
+    {
+      "qid": "Q1136331",
+      "parent_qids": [
+        "Q817138",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q11366",
+      "parent_qids": [
+        "Q11399",
+        "Q1695023"
+      ]
+    },
+    {
+      "qid": "Q1162954",
+      "parent_qids": [
+        "Q37073",
+        "Q672134"
+      ]
+    },
+    {
+      "qid": "Q11660484",
+      "parent_qids": [
+        "Q10846275",
+        "Q131578"
+      ]
+    },
+    {
+      "qid": "Q1166726",
+      "parent_qids": [
+        "Q6010",
+        "Q851213"
+      ]
+    },
+    {
+      "qid": "Q11700058",
+      "parent_qids": [
+        "Q106298881",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q11700065",
+      "parent_qids": [
+        "Q131272",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q1190565",
+      "parent_qids": [
+        "Q11366",
+        "Q484641"
+      ]
+    },
+    {
+      "qid": "Q119889474",
+      "parent_qids": [
+        "Q2913982",
+        "Q850412"
+      ]
+    },
+    {
+      "qid": "Q121667432",
+      "parent_qids": [
+        "Q11401",
+        "Q846119"
+      ]
+    },
+    {
+      "qid": "Q124357128",
+      "parent_qids": [
+        "Q37073",
+        "Q820049"
+      ]
+    },
+    {
+      "qid": "Q124791567",
+      "parent_qids": [
+        "Q188994",
+        "Q325504"
+      ]
+    },
+    {
+      "qid": "Q130392790",
+      "parent_qids": [
+        "Q13646229",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q131535017",
+      "parent_qids": [
+        "Q3827483",
+        "Q645992"
+      ]
+    },
+    {
+      "qid": "Q1317816",
+      "parent_qids": [
+        "Q106298881",
+        "Q42201"
+      ]
+    },
+    {
+      "qid": "Q1323698",
+      "parent_qids": [
+        "Q1583807",
+        "Q98528267"
+      ]
+    },
+    {
+      "qid": "Q1344",
+      "parent_qids": [
+        "Q123777276",
+        "Q7777494",
+        "Q9730"
+      ]
+    },
+    {
+      "qid": "Q135637",
+      "parent_qids": [
+        "Q106422444",
+        "Q19678100"
+      ]
+    },
+    {
+      "qid": "Q138020",
+      "parent_qids": [
+        "Q5413526",
+        "Q672134"
+      ]
+    },
+    {
+      "qid": "Q1391336",
+      "parent_qids": [
+        "Q11399",
+        "Q5151495"
+      ]
+    },
+    {
+      "qid": "Q141459",
+      "parent_qids": [
+        "Q11401",
+        "Q6010",
+        "Q969663"
+      ]
+    },
+    {
+      "qid": "Q1418683",
+      "parent_qids": [
+        "Q257533",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q1432934",
+      "parent_qids": [
+        "Q1190565",
+        "Q122947986",
+        "Q703778"
+      ]
+    },
+    {
+      "qid": "Q1500364",
+      "parent_qids": [
+        "Q106298881",
+        "Q846119"
+      ]
+    },
+    {
+      "qid": "Q1530455",
+      "parent_qids": [
+        "Q685884",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q1541229",
+      "parent_qids": [
+        "Q2267955",
+        "Q235858"
+      ]
+    },
+    {
+      "qid": "Q15697534",
+      "parent_qids": [
+        "Q11401",
+        "Q114880124"
+      ]
+    },
+    {
+      "qid": "Q1585075",
+      "parent_qids": [
+        "Q388906",
+        "Q663519",
+        "Q898709"
+      ]
+    },
+    {
+      "qid": "Q1641839",
+      "parent_qids": [
+        "Q11399",
+        "Q1640319"
+      ]
+    },
+    {
+      "qid": "Q1650296",
+      "parent_qids": [
+        "Q11399",
+        "Q639197"
+      ]
+    },
+    {
+      "qid": "Q17513988",
+      "parent_qids": [
+        "Q108743983",
+        "Q6942037"
+      ]
+    },
+    {
+      "qid": "Q1754592",
+      "parent_qids": [
+        "Q11401",
+        "Q19678100"
+      ]
+    },
+    {
+      "qid": "Q17723",
+      "parent_qids": [
+        "Q3328676",
+        "Q9730"
+      ]
+    },
+    {
+      "qid": "Q181861",
+      "parent_qids": [
+        "Q11399",
+        "Q726239"
+      ]
+    },
+    {
+      "qid": "Q181897",
+      "parent_qids": [
+        "Q185652",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q183504",
+      "parent_qids": [
+        "Q11366",
+        "Q42201"
+      ]
+    },
+    {
+      "qid": "Q183862",
+      "parent_qids": [
+        "Q10922",
+        "Q465978"
+      ]
+    },
+    {
+      "qid": "Q185162",
+      "parent_qids": [
+        "Q11399",
+        "Q18345375"
+      ]
+    },
+    {
+      "qid": "Q188539",
+      "parent_qids": [
+        "Q12326776",
+        "Q65937876",
+        "Q83270"
+      ]
+    },
+    {
+      "qid": "Q189045",
+      "parent_qids": [
+        "Q11366",
+        "Q484641"
+      ]
+    },
+    {
+      "qid": "Q1899347",
+      "parent_qids": [
+        "Q183504",
+        "Q598929"
+      ]
+    },
+    {
+      "qid": "Q1929352",
+      "parent_qids": [
+        "Q11399",
+        "Q2267955"
+      ]
+    },
+    {
+      "qid": "Q1931555",
+      "parent_qids": [
+        "Q141085400",
+        "Q20502"
+      ]
+    },
+    {
+      "qid": "Q193355",
+      "parent_qids": [
+        "Q11399",
+        "Q9759"
+      ]
+    },
+    {
+      "qid": "Q2004156",
+      "parent_qids": [
+        "Q5421158",
+        "Q936942"
+      ]
+    },
+    {
+      "qid": "Q20378",
+      "parent_qids": [
+        "Q12326776",
+        "Q1695023"
+      ]
+    },
+    {
+      "qid": "Q206159",
+      "parent_qids": [
+        "Q11399",
+        "Q846119"
+      ]
+    },
+    {
+      "qid": "Q2064394",
+      "parent_qids": [
+        "Q205049",
+        "Q373342"
+      ]
+    },
+    {
+      "qid": "Q208239",
+      "parent_qids": [
+        "Q316930",
+        "Q3328778"
+      ]
+    },
+    {
+      "qid": "Q2084353",
+      "parent_qids": [
+        "Q183862",
+        "Q377910"
+      ]
+    },
+    {
+      "qid": "Q208494",
+      "parent_qids": [
+        "Q12326776",
+        "Q936942"
+      ]
+    },
+    {
+      "qid": "Q2090023",
+      "parent_qids": [
+        "Q11399",
+        "Q484641"
+      ]
+    },
+    {
+      "qid": "Q211723",
+      "parent_qids": [
+        "Q38848",
+        "Q465978"
+      ]
+    },
+    {
+      "qid": "Q211756",
+      "parent_qids": [
+        "Q11787389",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q2118402",
+      "parent_qids": [
+        "Q2743758",
+        "Q3071"
+      ]
+    },
+    {
+      "qid": "Q213572",
+      "parent_qids": [
+        "Q20378",
+        "Q208494",
+        "Q2743758"
+      ]
+    },
+    {
+      "qid": "Q213665",
+      "parent_qids": [
+        "Q10730335",
+        "Q6942280"
+      ]
+    },
+    {
+      "qid": "Q213714",
+      "parent_qids": [
+        "Q65943778",
+        "Q83440"
+      ]
+    },
+    {
+      "qid": "Q216961",
+      "parent_qids": [
+        "Q3328676",
+        "Q851213"
+      ]
+    },
+    {
+      "qid": "Q2187392",
+      "parent_qids": [
+        "Q11366",
+        "Q11787389"
+      ]
+    },
+    {
+      "qid": "Q2238236",
+      "parent_qids": [
+        "Q11401",
+        "Q6452410"
+      ]
+    },
+    {
+      "qid": "Q2260696",
+      "parent_qids": [
+        "Q12200830",
+        "Q170435"
+      ]
+    },
+    {
+      "qid": "Q2280497",
+      "parent_qids": [
+        "Q37073",
+        "Q83440"
+      ]
+    },
+    {
+      "qid": "Q2281409",
+      "parent_qids": [
+        "Q11399",
+        "Q11787389"
+      ]
+    },
+    {
+      "qid": "Q2296495",
+      "parent_qids": [
+        "Q211573",
+        "Q3071"
+      ]
+    },
+    {
+      "qid": "Q2324411",
+      "parent_qids": [
+        "Q11366",
+        "Q19678100"
+      ]
+    },
+    {
+      "qid": "Q23301960",
+      "parent_qids": [
+        "Q116985035",
+        "Q95469495"
+      ]
+    },
+    {
+      "qid": "Q2426383",
+      "parent_qids": [
+        "Q377910",
+        "Q936573"
+      ]
+    },
+    {
+      "qid": "Q25094591",
+      "parent_qids": [
+        "Q1640319",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q25099840",
+      "parent_qids": [
+        "Q37073",
+        "Q6942329"
+      ]
+    },
+    {
+      "qid": "Q2529400",
+      "parent_qids": [
+        "Q373342",
+        "Q6942343"
+      ]
+    },
+    {
+      "qid": "Q253918",
+      "parent_qids": [
+        "Q140561383",
+        "Q483251"
+      ]
+    },
+    {
+      "qid": "Q2626684",
+      "parent_qids": [
+        "Q373342",
+        "Q9778"
+      ]
+    },
+    {
+      "qid": "Q2631396",
+      "parent_qids": [
+        "Q11399",
+        "Q899215"
+      ]
+    },
+    {
+      "qid": "Q2715398",
+      "parent_qids": [
+        "Q3328778",
+        "Q427183"
+      ]
+    },
+    {
+      "qid": "Q2743435",
+      "parent_qids": [
+        "Q131272",
+        "Q846119"
+      ]
+    },
+    {
+      "qid": "Q2746831",
+      "parent_qids": [
+        "Q105527",
+        "Q217191",
+        "Q37073",
+        "Q3963051",
+        "Q831354",
+        "Q850412"
+      ]
+    },
+    {
+      "qid": "Q284543",
+      "parent_qids": [
+        "Q3840596",
+        "Q598929"
+      ]
+    },
+    {
+      "qid": "Q2913982",
+      "parent_qids": [
+        "Q11401",
+        "Q114880124"
+      ]
+    },
+    {
+      "qid": "Q3046632",
+      "parent_qids": [
+        "Q183862",
+        "Q487914"
+      ]
+    },
+    {
+      "qid": "Q30587784",
+      "parent_qids": [
+        "Q183862",
+        "Q484344"
+      ]
+    },
+    {
+      "qid": "Q3098078",
+      "parent_qids": [
+        "Q1046920",
+        "Q388906"
+      ]
+    },
+    {
+      "qid": "Q325397",
+      "parent_qids": [
+        "Q1695023",
+        "Q42201",
+        "Q817138"
+      ]
+    },
+    {
+      "qid": "Q325504",
+      "parent_qids": [
+        "Q11399",
+        "Q9778"
+      ]
+    },
+    {
+      "qid": "Q3397882",
+      "parent_qids": [
+        "Q37073",
+        "Q7248857"
+      ]
+    },
+    {
+      "qid": "Q341364",
+      "parent_qids": [
+        "Q106528337",
+        "Q20502",
+        "Q898709"
+      ]
+    },
+    {
+      "qid": "Q3437841",
+      "parent_qids": [
+        "Q11399",
+        "Q672134"
+      ]
+    },
+    {
+      "qid": "Q3535998",
+      "parent_qids": [
+        "Q37073",
+        "Q531426"
+      ]
+    },
+    {
+      "qid": "Q3630966",
+      "parent_qids": [
+        "Q1641839",
+        "Q2332751",
+        "Q49451"
+      ]
+    },
+    {
+      "qid": "Q370515",
+      "parent_qids": [
+        "Q116764487",
+        "Q38848"
+      ]
+    },
+    {
+      "qid": "Q3724735",
+      "parent_qids": [
+        "Q10926",
+        "Q11366"
+      ]
+    },
+    {
+      "qid": "Q3724778",
+      "parent_qids": [
+        "Q10926",
+        "Q377910"
+      ]
+    },
+    {
+      "qid": "Q3827483",
+      "parent_qids": [
+        "Q11401",
+        "Q18345375",
+        "Q9048261"
+      ]
+    },
+    {
+      "qid": "Q383982",
+      "parent_qids": [
+        "Q37073",
+        "Q846119"
+      ]
+    },
+    {
+      "qid": "Q38656",
+      "parent_qids": [
+        "Q164444",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q3930216",
+      "parent_qids": [
+        "Q3071",
+        "Q877693"
+      ]
+    },
+    {
+      "qid": "Q4045538",
+      "parent_qids": [
+        "Q58339",
+        "Q851213"
+      ]
+    },
+    {
+      "qid": "Q438476",
+      "parent_qids": [
+        "Q1695023",
+        "Q83440"
+      ]
+    },
+    {
+      "qid": "Q438503",
+      "parent_qids": [
+        "Q11401",
+        "Q1695023",
+        "Q6010"
+      ]
+    },
+    {
+      "qid": "Q4490718",
+      "parent_qids": [
+        "Q140561383",
+        "Q183862"
+      ]
+    },
+    {
+      "qid": "Q4490991",
+      "parent_qids": [
+        "Q7248857",
+        "Q83440"
+      ]
+    },
+    {
+      "qid": "Q460674",
+      "parent_qids": [
+        "Q3071",
+        "Q3990466"
+      ]
+    },
+    {
+      "qid": "Q469343",
+      "parent_qids": [
+        "Q268673",
+        "Q5413526"
+      ]
+    },
+    {
+      "qid": "Q474027",
+      "parent_qids": [
+        "Q572717",
+        "Q9794"
+      ]
+    },
+    {
+      "qid": "Q475221",
+      "parent_qids": [
+        "Q183862",
+        "Q483251"
+      ]
+    },
+    {
+      "qid": "Q476983",
+      "parent_qids": [
+        "Q25554481",
+        "Q325504"
+      ]
+    },
+    {
+      "qid": "Q484344",
+      "parent_qids": [
+        "Q12326776",
+        "Q7248857"
+      ]
+    },
+    {
+      "qid": "Q484641",
+      "parent_qids": [
+        "Q11399",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q485395",
+      "parent_qids": [
+        "Q11366",
+        "Q598929"
+      ]
+    },
+    {
+      "qid": "Q486263",
+      "parent_qids": [
+        "Q373342",
+        "Q899215"
+      ]
+    },
+    {
+      "qid": "Q487914",
+      "parent_qids": [
+        "Q3071",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q48834745",
+      "parent_qids": [
+        "Q3328774",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q492264",
+      "parent_qids": [
+        "Q107021951",
+        "Q29652773"
+      ]
+    },
+    {
+      "qid": "Q49451",
+      "parent_qids": [
+        "Q11399",
+        "Q7248857"
+      ]
+    },
+    {
+      "qid": "Q4949812",
+      "parent_qids": [
+        "Q114880124",
+        "Q1253172"
+      ]
+    },
+    {
+      "qid": "Q5421158",
+      "parent_qids": [
+        "Q11401",
+        "Q1640319"
+      ]
+    },
+    {
+      "qid": "Q54329757",
+      "parent_qids": [
+        "Q2913982",
+        "Q3827483"
+      ]
+    },
+    {
+      "qid": "Q544440",
+      "parent_qids": [
+        "Q107736421",
+        "Q531426"
+      ]
+    },
+    {
+      "qid": "Q546206",
+      "parent_qids": [
+        "Q11401",
+        "Q114880124",
+        "Q11787389"
+      ]
+    },
+    {
+      "qid": "Q5464464",
+      "parent_qids": [
+        "Q106298881",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q547137",
+      "parent_qids": [
+        "Q18345375",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q55644985",
+      "parent_qids": [
+        "Q2913982",
+        "Q966564"
+      ]
+    },
+    {
+      "qid": "Q572901",
+      "parent_qids": [
+        "Q12183214",
+        "Q65937946"
+      ]
+    },
+    {
+      "qid": "Q57392588",
+      "parent_qids": [
+        "Q107718737",
+        "Q316930",
+        "Q373342"
+      ]
+    },
+    {
+      "qid": "Q58339",
+      "parent_qids": [
+        "Q11787389",
+        "Q45981"
+      ]
+    },
+    {
+      "qid": "Q6010117",
+      "parent_qids": [
+        "Q114880124",
+        "Q3135787"
+      ]
+    },
+    {
+      "qid": "Q601235",
+      "parent_qids": [
+        "Q11401",
+        "Q20502",
+        "Q6010"
+      ]
+    },
+    {
+      "qid": "Q602646",
+      "parent_qids": [
+        "Q11401",
+        "Q5151495"
+      ]
+    },
+    {
+      "qid": "Q613408",
+      "parent_qids": [
+        "Q107718737",
+        "Q11399"
+      ]
+    },
+    {
+      "qid": "Q617240",
+      "parent_qids": [
+        "Q83270",
+        "Q846119"
+      ]
+    },
+    {
+      "qid": "Q6431989",
+      "parent_qids": [
+        "Q4806789",
+        "Q6942280"
+      ]
+    },
+    {
+      "qid": "Q646026",
+      "parent_qids": [
+        "Q11399",
+        "Q645992"
+      ]
+    },
+    {
+      "qid": "Q649823",
+      "parent_qids": [
+        "Q1541229",
+        "Q9759"
+      ]
+    },
+    {
+      "qid": "Q650316",
+      "parent_qids": [
+        "Q12183214",
+        "Q1640319"
+      ]
+    },
+    {
+      "qid": "Q65065491",
+      "parent_qids": [
+        "Q20474",
+        "Q20903"
+      ]
+    },
+    {
+      "qid": "Q65089257",
+      "parent_qids": [
+        "Q11401",
+        "Q3071"
+      ]
+    },
+    {
+      "qid": "Q65937845",
+      "parent_qids": [
+        "Q131272",
+        "Q164444"
+      ]
+    },
+    {
+      "qid": "Q667659",
+      "parent_qids": [
+        "Q20378",
+        "Q835891"
+      ]
+    },
+    {
+      "qid": "Q7050752",
+      "parent_qids": [
+        "Q26302245",
+        "Q98528192"
+      ]
+    },
+    {
+      "qid": "Q727781",
+      "parent_qids": [
+        "Q18345375",
+        "Q3328669"
+      ]
+    },
+    {
+      "qid": "Q7308175",
+      "parent_qids": [
+        "Q11399",
+        "Q1606591"
+      ]
+    },
+    {
+      "qid": "Q744417",
+      "parent_qids": [
+        "Q3679098",
+        "Q98528149"
+      ]
+    },
+    {
+      "qid": "Q753520",
+      "parent_qids": [
+        "Q11399",
+        "Q6452410"
+      ]
+    },
+    {
+      "qid": "Q756956",
+      "parent_qids": [
+        "Q193207",
+        "Q936942"
+      ]
+    },
+    {
+      "qid": "Q76092",
+      "parent_qids": [
+        "Q11399",
+        "Q65937876"
+      ]
+    },
+    {
+      "qid": "Q773880",
+      "parent_qids": [
+        "Q106422444",
+        "Q116985035"
+      ]
+    },
+    {
+      "qid": "Q783097",
+      "parent_qids": [
+        "Q11366",
+        "Q183504"
+      ]
+    },
+    {
+      "qid": "Q783243",
+      "parent_qids": [
+        "Q11401",
+        "Q3114644"
+      ]
+    },
+    {
+      "qid": "Q790188",
+      "parent_qids": [
+        "Q2332751",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q815536",
+      "parent_qids": [
+        "Q2587471",
+        "Q5413526"
+      ]
+    },
+    {
+      "qid": "Q822914",
+      "parent_qids": [
+        "Q38848",
+        "Q753520"
+      ]
+    },
+    {
+      "qid": "Q823080",
+      "parent_qids": [
+        "Q1641839",
+        "Q598929"
+      ]
+    },
+    {
+      "qid": "Q823560",
+      "parent_qids": [
+        "Q1326777",
+        "Q65937946"
+      ]
+    },
+    {
+      "qid": "Q83440",
+      "parent_qids": [
+        "Q107718737",
+        "Q373342"
+      ]
+    },
+    {
+      "qid": "Q8361",
+      "parent_qids": [
+        "Q3328676",
+        "Q9730"
+      ]
+    },
+    {
+      "qid": "Q837389",
+      "parent_qids": [
+        "Q18345375",
+        "Q8341"
+      ]
+    },
+    {
+      "qid": "Q842324",
+      "parent_qids": [
+        "Q37073",
+        "Q42201"
+      ]
+    },
+    {
+      "qid": "Q850412",
+      "parent_qids": [
+        "Q37073",
+        "Q45981"
+      ]
+    },
+    {
+      "qid": "Q851213",
+      "parent_qids": [
+        "Q11787389",
+        "Q9778"
+      ]
+    },
+    {
+      "qid": "Q853873",
+      "parent_qids": [
+        "Q1192110",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q856872",
+      "parent_qids": [
+        "Q20378",
+        "Q877693"
+      ]
+    },
+    {
+      "qid": "Q85741139",
+      "parent_qids": [
+        "Q20502",
+        "Q4794612"
+      ]
+    },
+    {
+      "qid": "Q85775929",
+      "parent_qids": [
+        "Q18345375",
+        "Q850412"
+      ]
+    },
+    {
+      "qid": "Q877693",
+      "parent_qids": [
+        "Q11399",
+        "Q11401",
+        "Q6010"
+      ]
+    },
+    {
+      "qid": "Q8812109",
+      "parent_qids": [
+        "Q6452410",
+        "Q935586"
+      ]
+    },
+    {
+      "qid": "Q885561",
+      "parent_qids": [
+        "Q131272",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q89363113",
+      "parent_qids": [
+        "Q286080",
+        "Q373342",
+        "Q685884"
+      ]
+    },
+    {
+      "qid": "Q915152",
+      "parent_qids": [
+        "Q12200830",
+        "Q20502"
+      ]
+    },
+    {
+      "qid": "Q936573",
+      "parent_qids": [
+        "Q11401",
+        "Q114880124"
+      ]
+    },
+    {
+      "qid": "Q95469495",
+      "parent_qids": [
+        "Q1695023",
+        "Q37073"
+      ]
+    },
+    {
+      "qid": "Q965635",
+      "parent_qids": [
+        "Q11401",
+        "Q1373485",
+        "Q42201",
+        "Q6010"
+      ]
+    },
+    {
+      "qid": "Q968730",
+      "parent_qids": [
+        "Q11399",
+        "Q936942"
+      ]
+    },
+    {
+      "qid": "Q969663",
+      "parent_qids": [
+        "Q11401",
+        "Q132531661"
+      ]
+    },
+    {
+      "qid": "Q9759",
+      "parent_qids": [
+        "Q107718737",
+        "Q373342"
+      ]
+    },
+    {
+      "qid": "Q9764",
+      "parent_qids": [
+        "Q18345375",
+        "Q964987"
+      ]
+    },
+    {
+      "qid": "Q98528166",
+      "parent_qids": [
+        "Q18345375",
+        "Q9778"
+      ]
+    }
+  ],
+  "focus": {
+    "qid": "Q9778",
+    "present": true,
+    "closure_node_count": 61,
+    "closure_direct_edge_count": 62
+  },
+  "display_parent_policy": "not_selected; preserve every exact direct Wikidata parent"
+}
