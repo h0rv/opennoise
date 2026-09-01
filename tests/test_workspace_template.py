@@ -14,8 +14,8 @@ TEMPLATE_ROOT = Path(__file__).resolve().parents[1] / "src" / "musix" / "templat
 class WorkspaceTemplateTests(unittest.TestCase):
     """Assert that one workspace render owns all navigable UI state."""
 
-    def test_layout_links_preserve_focus_and_search_state(self) -> None:
-        """Keep the selected genre and query when changing coordinate lenses."""
+    def test_primary_workspace_preserves_the_map_when_opening_details(self) -> None:
+        """Detail and search fragments must not recreate the primary semantic map."""
         environment = Environment(
             loader=FileSystemLoader(TEMPLATE_ROOT),
             autoescape=select_autoescape(enabled_extensions=("html",)),
@@ -62,18 +62,14 @@ class WorkspaceTemplateTests(unittest.TestCase):
             search_query="idm & glitch",
         )
 
-        self.assertIn('href="/genres/7?layout=generated&amp;q=idm%20%26%20glitch"', rendered)
-        self.assertIn(
-            'hx-get="/fragments/workspace?layout=generated&amp;focus=7&amp;q=idm%20%26%20glitch"',
-            rendered,
-        )
-        self.assertIn('name="layout" type="hidden" value="classic"', rendered)
+        self.assertNotIn('id="layout-lenses"', rendered)
+        self.assertIn('id="semantic-map"', rendered)
+        self.assertIn('id="genre-detail-slot"', rendered)
         self.assertIn('value="idm &amp; glitch" hx-get="/fragments/search"', rendered)
-        self.assertIn('href="/genres/7?layout=classic&amp;q=idm%20%26%20glitch"', rendered)
+        self.assertIn('href="/genres/7?q=idm%20%26%20glitch"', rendered)
+        self.assertIn('hx-target="#genre-detail-slot"', rendered)
         self.assertEqual(rendered.count('id="search"'), 1)
         self.assertEqual(rendered.count('id="results"'), 1)
-        self.assertEqual(rendered.count('id="map-zoom"'), 1)
-        self.assertIn('type="radio" checked', rendered)
         self.assertIn('aria-describedby="map-pan-help"', rendered)
         self.assertNotIn("<audio", rendered)
 

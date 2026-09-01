@@ -1,8 +1,8 @@
 {% for hit in hits %}
 {% if hit.entity_kind == 'genre' %}
-<a class="result" href="/genres/{{ hit.entity_id }}?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
-   hx-get="/fragments/workspace?focus={{ hit.entity_id }}&amp;layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-target="#workspace"
-   hx-swap="outerHTML" hx-push-url="/genres/{{ hit.entity_id }}?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
+<a class="result" href="/genres/{{ hit.entity_id }}{% if search_query %}?q={{ search_query | urlencode }}{% endif %}"
+   hx-get="/fragments/genres/{{ hit.entity_id }}" hx-target="#genre-detail-slot"
+   hx-swap="innerHTML" hx-push-url="/genres/{{ hit.entity_id }}{% if search_query %}?q={{ search_query | urlencode }}{% endif %}"
    hx-sync="#search:abort">{{ hit.name }}</a>
 {% endif %}
 {% endfor %}

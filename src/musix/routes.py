@@ -287,6 +287,11 @@ class EvidenceController(Controller):
             evidence=await database.entity_provenance(entity_id),
         )
 
+    @get("/fragments/genre-detail-empty", media_type=MediaType.HTML)
+    async def empty_genre_detail(self) -> str:
+        """Clear the progressive-enhancement detail slot without replacing the map."""
+        return ""
+
     @get("/fragments/genres/{genre_id:int}")
     async def genre_detail_fragment(
         self,

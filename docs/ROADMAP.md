@@ -24,6 +24,7 @@ The following commits are review points. New work should keep its own delete pat
 | Genre entry experience | `/root/python_app` | In review | Remove `src/musix/genre_entry.py`. Revert the related app, route, model, template, style, and app test changes. |
 | Open artist-to-genre membership | `/root/membership_pipeline` | In review | Remove migration 0004, `src/musix/membership.py`, `scripts/evaluate_membership.py`, `tests/test_membership.py`, the membership fixtures, and the Poe evaluation task; then restore schema version 3 and remove migration 0004 from schema tests. |
 | Python review and release checks | `/root/python_final_review` | Active | Remove review notes or focused test additions. Application behavior should not depend on review tools. |
+| Semantic renderer and product map | `/root/renderer_terra` | Active, isolated | Remove the Cytoscape static assets and semantic-map template/script/style changes. The published model and taxonomy DAG remain intact. |
 
 ## Completed research
 
