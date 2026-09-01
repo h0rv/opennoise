@@ -18,10 +18,10 @@ from musix.models import FrozenModel, MapPoint, map_view
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / "src" / "musix" / "templates"
 CSS = ROOT / "src" / "musix" / "static" / "app.css"
-MAX_HTML_BYTES = 64 * 1024
+MAX_HTML_BYTES = 512 * 1024
 MAX_CSS_BYTES = 16 * 1024
-MAX_ELEMENTS = 1_000
-MAX_FOCUSABLE = 200
+MAX_ELEMENTS = 4_000
+MAX_FOCUSABLE = 1_000
 FORBIDDEN_ELEMENTS = frozenset({"audio", "canvas", "iframe", "video"})
 
 
@@ -76,22 +76,32 @@ class _Inspector(HTMLParser):
             self.main_count += 1
         if values.get("role") == "search":
             self.search_count += 1
-        if tag == "svg" and values.get("role") == "img" and values.get("aria-label"):
+        if tag == "svg" and values.get("role") == "group" and values.get("aria-label"):
             self.named_svg_count += 1
         if tag in {"a", "button", "input", "select", "textarea"} or "tabindex" in values:
             self.focusable_count += 1
 
 
-def fixture_html() -> str:
-    """Render one fixed four-lens workspace for repeatable UI checks."""
+def fixture_html(*, zoom_id: str = "zoom-default") -> str:
+    """Render one dense four-lens workspace for repeatable UI checks."""
     layouts = tuple(
         PublishedLayout(
             layout_key=key,
-            point_count=4,
+            point_count=100,
             coordinate_space=DerivedCoordinateSpace(units="layout_units"),
         )
         for key in ("public", "public-direct", "public-community", "public-taxonomy")
     )
+    named_points = [
+        ("An exceptionally long right edge genre name", 1_000.0, 360.0),
+        ("Dense neighboring genre alpha", 105.0, 104.0),
+        ("Dense neighboring genre beta", 109.0, 108.0),
+        ("Distant genre", 30.0, 920.0),
+    ]
+    generated_points = [
+        (f"Genre {index:03d}", 90.0 + (index % 18) * 18.0, 80.0 + (index // 18) * 20.0)
+        for index in range(5, 101)
+    ]
     points = [
         MapPoint(
             entity_id=index,
@@ -99,16 +109,11 @@ def fixture_html() -> str:
             name=name,
             x=x,
             y=y,
-            display_weight=None,
+            display_weight=float(101 - index),
             color_hex=None,
         )
         for index, (name, x, y) in enumerate(
-            (
-                ("Electronic", 100.0, 100.0),
-                ("Hyperpop", 300.0, 180.0),
-                ("Jazz", 180.0, 360.0),
-                ("Soul jazz", 430.0, 420.0),
-            ),
+            (*named_points, *generated_points),
             start=1,
         )
     ]
@@ -126,7 +131,15 @@ def fixture_html() -> str:
         search_query="",
     )
     stylesheet = CSS.resolve().as_uri()
-    rendered = rendered.replace("/static/app.css?v=6", stylesheet)
+    rendered = rendered.replace("/static/app.css?v=7", stylesheet)
+    if zoom_id != "zoom-default":
+        rendered = rendered.replace(
+            'id="zoom-default" name="map-zoom" type="radio" checked',
+            'id="zoom-default" name="map-zoom" type="radio"',
+        ).replace(
+            f'id="{zoom_id}" name="map-zoom" type="radio"',
+            f'id="{zoom_id}" name="map-zoom" type="radio" checked',
+        )
     return rendered.replace('<script src="/static/htmx-4.0.0.min.js" defer></script>', "")
 
 
@@ -141,7 +154,17 @@ def inspect_fixture(html: str) -> UiInspection:
         raise ValueError(f"forbidden UI elements: {', '.join(sorted(parser.forbidden))}")
     if parser.main_count != 1 or parser.search_count != 1 or parser.named_svg_count != 1:
         raise ValueError("fixture requires one main, search landmark, and named SVG")
-    required_ids = ("workspace", "layout-lenses", "map", "plot", "search", "query", "results")
+    required_ids = (
+        "workspace",
+        "layout-lenses",
+        "map-zoom",
+        "map",
+        "map-canvas",
+        "plot",
+        "search",
+        "query",
+        "results",
+    )
     missing = tuple(element_id for element_id in required_ids if element_id not in parser.ids)
     if missing:
         raise ValueError(f"fixture is missing required IDs: {', '.join(missing)}")
@@ -192,9 +215,13 @@ def render(output: Path, chromium: str | None = None) -> UiQaReport:
     inspection = inspect_fixture(html)
     html_path = output / "workspace.html"
     html_path.write_text(html, encoding="utf-8")
+    detail_html_path = output / "workspace-detail.html"
+    detail_html_path.write_text(fixture_html(zoom_id="zoom-detail"), encoding="utf-8")
     screenshots = (
-        _screenshot(browser, html_path, output / "desktop.png", 1440, 900),
-        _screenshot(browser, html_path, output / "mobile.png", 390, 844),
+        _screenshot(browser, html_path, output / "desktop-100.png", 1440, 900),
+        _screenshot(browser, detail_html_path, output / "desktop-200.png", 1440, 900),
+        _screenshot(browser, html_path, output / "mobile-100.png", 390, 844),
+        _screenshot(browser, detail_html_path, output / "mobile-200.png", 390, 844),
     )
     report = UiQaReport(inspection=inspection, chromium=browser, screenshots=screenshots)
     (output / "report.json").write_text(

@@ -1,21 +1,37 @@
-<main id="map" aria-label="Music map" tabindex="0"
+<fieldset id="map-zoom" aria-label="Map zoom">
+  <legend class="sr-only">Map zoom</legend>
+  <input id="zoom-overview" name="map-zoom" type="radio">
+  <label for="zoom-overview" title="Zoom out">−</label>
+  <input id="zoom-default" name="map-zoom" type="radio" checked>
+  <label for="zoom-default">100%</label>
+  <input id="zoom-near" name="map-zoom" type="radio">
+  <label for="zoom-near">150%</label>
+  <input id="zoom-detail" name="map-zoom" type="radio">
+  <label for="zoom-detail">200%</label>
+</fieldset>
+<p id="map-pan-help" class="sr-only">Scroll in two directions to pan the map. When the map is focused, use arrow, Page, Home, and End keys.</p>
+<main id="map" aria-label="Music map" aria-describedby="map-pan-help" tabindex="0"
       data-layout="{{ layout_key }}"{% if active_layout %} data-coordinate-kind="{{ active_layout.coordinate_space.coordinate_kind }}"{% endif %}>
-<svg id="plot" role="img" aria-label="Genre and artist map"
+<div id="map-canvas">
+<svg id="plot" role="group" aria-label="Genre and artist map"
      viewBox="{{ map.view_box }}" width="{{ map.view_width }}" height="{{ map.view_height }}"
-     preserveAspectRatio="xMidYMid meet">
+     preserveAspectRatio="xMinYMin meet">
 {% if map.points %}
   {% for point in map.points %}
-  <a class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
+  <a id="map-point-{{ point.entity_id }}" class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
      href="{% if point.entity_kind == 'genre' %}/genres/{{ point.entity_id }}?layout={{ layout_key }}{% else %}/fragments/map?focus={{ point.entity_id }}&amp;layout={{ layout_key }}{% endif %}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
-     aria-label="{{ point.name }}"
-     {% if point.entity_kind == 'genre' %}aria-current="{% if point.entity_id == map.focused_entity_id %}true{% else %}false{% endif %}"
+     aria-label="{{ point.name }}{% if point.entity_id == map.focused_entity_id %}, details open{% else %}, open details{% endif %}"
+     {% if point.entity_kind == 'genre' %}{% if point.entity_id == map.focused_entity_id %}aria-current="location"{% endif %}
      hx-get="/fragments/workspace?focus={{ point.entity_id }}&amp;layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}" hx-target="#workspace"
      hx-swap="outerHTML" hx-push-url="/genres/{{ point.entity_id }}?layout={{ layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
      hx-sync="#search:abort"{% endif %}>
+    <title>{{ point.name }}</title>
     <circle cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"
             fill="{{ point.color_hex or '#77776f' }}"></circle>
-    {% if map.show_labels and point.entity_id in map.label_entity_ids %}
-    <text x="{{ point.x + 8 }}" y="{{ point.y + 3 }}">{{ point.name }}</text>
+    {% if map.show_labels %}
+    <text class="{% if point.entity_id in map.label_entity_ids %}label-overview{% elif point.entity_id in map.detail_label_entity_ids %}label-detail{% else %}label-all{% endif %}"
+          x="{% if point.x > map.horizontal_midpoint %}{{ point.x - 8 }}{% else %}{{ point.x + 8 }}{% endif %}"
+          y="{{ point.y + 3 }}"{% if point.x > map.horizontal_midpoint %} text-anchor="end"{% endif %}>{{ point.name }}</text>
     {% endif %}
   </a>
   {% endfor %}
@@ -23,4 +39,5 @@
   <text x="50" y="50" class="empty" text-anchor="middle">∅</text>
 {% endif %}
 </svg>
+</div>
 </main>

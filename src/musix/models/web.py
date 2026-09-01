@@ -90,46 +90,61 @@ class MapView(FrozenModel):
     focused_entity_id: int | None = None
     show_labels: bool = True
     label_entity_ids: tuple[int, ...] = ()
+    detail_label_entity_ids: tuple[int, ...] = ()
+    horizontal_midpoint: float = 50.0
 
 
-MAP_LABEL_BUDGET = 48
-MAP_LABEL_COLUMNS = 8
-MAP_LABEL_ROWS = 6
+MAP_LABEL_PROFILE = (48, 11.0)
+MAP_DETAIL_LABEL_PROFILE = (160, 7.0)
 
 
 def _label_entity_ids(
-    points: list[MapPoint], focused_entity_id: int | None, *, show_labels: bool
+    points: list[MapPoint],
+    focused_entity_id: int | None,
+    *,
+    show_labels: bool,
+    profile: tuple[int, float] = MAP_LABEL_PROFILE,
 ) -> tuple[int, ...]:
     if not show_labels:
         return ()
-    if len(points) <= MAP_LABEL_BUDGET:
-        return tuple(point.entity_id for point in points)
-    minimum_x = min(point.x for point in points)
-    maximum_x = max(point.x for point in points)
-    minimum_y = min(point.y for point in points)
-    maximum_y = max(point.y for point in points)
-    span_x = max(maximum_x - minimum_x, 1.0)
-    span_y = max(maximum_y - minimum_y, 1.0)
-    occupied: set[tuple[int, int]] = set()
+    if not points:
+        return ()
+    budget, font_size = profile
+    ordered_points = sorted(
+        points,
+        key=lambda point: (
+            point.entity_id != focused_entity_id,
+            -(point.display_weight or 0.0),
+            point.name.casefold(),
+            point.entity_id,
+        ),
+    )
+    minimum_x = min(point.x for point in ordered_points)
+    maximum_x = max(point.x for point in ordered_points)
+    horizontal_midpoint = minimum_x + (maximum_x - minimum_x) / 2
+    accepted_bounds: list[tuple[float, float, float, float]] = []
     selected: list[int] = []
-    for point in points:
-        column = min(
-            int((point.x - minimum_x) / span_x * MAP_LABEL_COLUMNS),
-            MAP_LABEL_COLUMNS - 1,
+    for point in ordered_points:
+        label_width = max(20.0, min(len(point.name), 42) * font_size * 0.58)
+        label_left = point.x - 8.0 - label_width if point.x > horizontal_midpoint else point.x + 8.0
+        bounds = (
+            label_left - 4.0,
+            point.y - font_size,
+            label_left + label_width + 4.0,
+            point.y + font_size * 0.5,
         )
-        row = min(
-            int((point.y - minimum_y) / span_y * MAP_LABEL_ROWS),
-            MAP_LABEL_ROWS - 1,
-        )
-        cell = (column, row)
-        if cell in occupied:
+        if any(
+            bounds[0] < other[2]
+            and bounds[2] > other[0]
+            and bounds[1] < other[3]
+            and bounds[3] > other[1]
+            for other in accepted_bounds
+        ):
             continue
-        occupied.add(cell)
+        accepted_bounds.append(bounds)
         selected.append(point.entity_id)
-        if len(selected) == MAP_LABEL_BUDGET:
+        if len(selected) == budget:
             break
-    if focused_entity_id is not None and focused_entity_id not in selected:
-        selected.append(focused_entity_id)
     return tuple(selected)
 
 
@@ -156,6 +171,14 @@ def map_view(
     show_labels: bool = True,
 ) -> MapView:
     """Compute padded SVG bounds for a sequence of map points."""
+    overview_labels = _label_entity_ids(points, focused_entity_id, show_labels=show_labels)
+    detail_labels = _label_entity_ids(
+        points,
+        focused_entity_id,
+        show_labels=show_labels,
+        profile=MAP_DETAIL_LABEL_PROFILE,
+    )
+    detail_labels = tuple(dict.fromkeys((*overview_labels, *detail_labels)))
     if view_box is not None:
         _, _, view_width, view_height = (float(value) for value in view_box.split())
         return MapView(
@@ -165,7 +188,9 @@ def map_view(
             view_height=view_height,
             focused_entity_id=focused_entity_id,
             show_labels=show_labels,
-            label_entity_ids=_label_entity_ids(points, focused_entity_id, show_labels=show_labels),
+            label_entity_ids=overview_labels,
+            detail_label_entity_ids=detail_labels,
+            horizontal_midpoint=float(view_box.split()[0]) + view_width / 2,
         )
     if not points:
         return MapView(
@@ -176,6 +201,8 @@ def map_view(
             focused_entity_id=focused_entity_id,
             show_labels=show_labels,
             label_entity_ids=(),
+            detail_label_entity_ids=(),
+            horizontal_midpoint=50.0,
         )
     minimum_x = min(point.x for point in points)
     maximum_x = max(point.x for point in points)
@@ -183,18 +210,21 @@ def map_view(
     maximum_y = max(point.y for point in points)
     span_x = max(maximum_x - minimum_x, 1.0)
     span_y = max(maximum_y - minimum_y, 1.0)
-    padding_x = max(span_x * 0.08, 80.0)
-    padding_y = max(span_y * 0.05, 28.0)
+    padding_left = max(span_x * 0.04, 40.0)
+    padding_right = max(span_x * 0.08, 240.0)
+    padding_y = max(span_y * 0.08, 80.0)
     view_box = (
-        f"{minimum_x - padding_x} {minimum_y - padding_y} "
-        f"{span_x + padding_x * 2} {span_y + padding_y * 2}"
+        f"{minimum_x - padding_left} {minimum_y - padding_y} "
+        f"{span_x + padding_left + padding_right} {span_y + padding_y * 2}"
     )
     return MapView(
         points=tuple(points),
         view_box=view_box,
-        view_width=span_x + padding_x * 2,
+        view_width=span_x + padding_left + padding_right,
         view_height=span_y + padding_y * 2,
         focused_entity_id=focused_entity_id,
         show_labels=show_labels,
-        label_entity_ids=_label_entity_ids(points, focused_entity_id, show_labels=show_labels),
+        label_entity_ids=overview_labels,
+        detail_label_entity_ids=detail_labels,
+        horizontal_midpoint=minimum_x + span_x / 2,
     )

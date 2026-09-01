@@ -71,6 +71,9 @@ class WorkspaceTemplateTests(unittest.TestCase):
         self.assertIn('href="/genres/7?layout=classic&amp;q=idm%20%26%20glitch"', rendered)
         self.assertEqual(rendered.count('id="search"'), 1)
         self.assertEqual(rendered.count('id="results"'), 1)
+        self.assertEqual(rendered.count('id="map-zoom"'), 1)
+        self.assertIn('type="radio" checked', rendered)
+        self.assertIn('aria-describedby="map-pan-help"', rendered)
         self.assertNotIn("<audio", rendered)
 
     def test_public_layout_keys_have_compact_product_labels(self) -> None:

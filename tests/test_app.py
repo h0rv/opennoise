@@ -31,7 +31,7 @@ class AppTests(unittest.TestCase):
         self.assertIn('<main id="map"', response.text)
         self.assertNotIn("<h1", response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=6", response.text)
+        self.assertIn("/static/app.css?v=7", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertNotIn("6291", response.text)
 
@@ -112,8 +112,14 @@ class AppTests(unittest.TestCase):
 
         self.assertLessEqual(len(view.label_entity_ids), 49)
         self.assertGreater(len(view.label_entity_ids), 1)
-        self.assertEqual(view.label_entity_ids[0], 0)
-        self.assertEqual(view.label_entity_ids[-1], 99)
+        self.assertEqual(view.label_entity_ids[0], 99)
+        self.assertGreater(len(view.detail_label_entity_ids), len(view.label_entity_ids))
+        self.assertIn(99, view.detail_label_entity_ids)
+
+        shuffled = map_view(list(reversed(points)), 99)
+        self.assertEqual(shuffled.label_entity_ids, view.label_entity_ids)
+        self.assertEqual(shuffled.detail_label_entity_ids, view.detail_label_entity_ids)
+        self.assertTrue(set(view.label_entity_ids) <= set(view.detail_label_entity_ids))
 
 
 class PopulatedAppTests(unittest.TestCase):
@@ -233,7 +239,14 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn('hx-get="/fragments/workspace?focus=1&amp;layout=default"', response.text)
         self.assertIn('hx-target="#workspace"', response.text)
         self.assertIn('hx-push-url="/genres/1?layout=default"', response.text)
-        self.assertIn('preserveAspectRatio="xMidYMid meet"', response.text)
+        self.assertIn('preserveAspectRatio="xMinYMin meet"', response.text)
+        self.assertIn('id="map-zoom"', response.text)
+        self.assertIn('id="zoom-detail"', response.text)
+        self.assertIn('aria-describedby="map-pan-help"', response.text)
+        self.assertIn('id="map-canvas"', response.text)
+        self.assertIn('class="label-overview"', response.text)
+        self.assertIn('id="map-point-1"', response.text)
+        self.assertIn("<title>IDM</title>", response.text)
         self.assertNotIn('id="count"', response.text)
 
     def test_published_layout_lenses_keep_source_and_generated_contracts_distinct(self) -> None:
@@ -263,7 +276,7 @@ class PopulatedAppTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('class="point genre selected"', response.text)
-        self.assertIn('aria-current="true"', response.text)
+        self.assertIn('aria-current="location"', response.text)
         self.assertIn('id="selection-clear"', response.text)
         self.assertIn('href="/?layout=default" aria-label="Close IDM"', response.text)
         self.assertIn('id="genre-detail"', response.text)
