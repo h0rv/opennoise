@@ -182,6 +182,22 @@ class PopulatedAppTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.database_path = Path(self.temporary.name) / "catalog.sqlite"
+        inputs = production_inputs()
+        source = build_public_model(inputs, PublicModelSettings())
+        artifact = build_production_map(
+            inputs,
+            source,
+            ProductionMapSettings(
+                geometry_grid_size=5,
+                minimum_central_span=0.05,
+                minimum_occupied_cell_ratio=0.01,
+                minimum_desktop_16x9_occupied_cell_ratio=0.01,
+                maximum_desktop_16x9_cell_fraction=1.0,
+                minimum_neighbor_preservation=0.0,
+            ),
+        )
+        production_map_path = Path(self.temporary.name) / "production-map.json"
+        production_map_path.write_text(artifact.model_dump_json(), encoding="utf-8")
         database = Database(self.database_path)
         database.initialize()
         with database.connect() as connection:
@@ -226,7 +242,7 @@ class PopulatedAppTests(unittest.TestCase):
                 VALUES (2, 'wikidata_genre_qid', 'Wikidata Genre Qid');
                 INSERT INTO entity_identifiers (
                     entity_id, identifier_type_id, namespace, value, normalized_value, provenance_id
-                ) VALUES (1, 2, 'wikidata', 'Q9778', 'Q9778', 1);
+                ) VALUES (1, 2, 'wikidata', 'Q1', 'Q1', 1);
                 INSERT INTO historical_genre_artist_observations (
                     id, genre_id, source_artist_name, observation_role, source_local_rank,
                     source_revision_date, source_artifact_sha256, provenance_id, policy_id,
@@ -284,7 +300,7 @@ class PopulatedAppTests(unittest.TestCase):
                 );
                 """
             )
-        self.client = TestClient(create_app(self.database_path))
+        self.client = TestClient(create_app(self.database_path, production_map_path))
         self.client.__enter__()
 
     @override
@@ -295,18 +311,18 @@ class PopulatedAppTests(unittest.TestCase):
     def test_genre_links_have_one_canonical_selection_contract(self) -> None:
         response = self.client.get("/")
 
-        self.assertIn('href="/genres/1"', response.text)
-        self.assertIn('hx-get="/fragments/genres/1"', response.text)
+        detail_href = "/genres/key/wikidata%3Agenre%3AQ1"
+        self.assertIn(f'href="{detail_href}"', response.text)
+        self.assertIn(f'hx-get="{detail_href}"', response.text)
         self.assertIn('hx-target="#genre-detail-slot"', response.text)
-        self.assertIn('hx-push-url="/genres/1"', response.text)
+        self.assertIn(f'hx-push-url="{detail_href}"', response.text)
         self.assertIn('preserveAspectRatio="xMidYMid meet"', response.text)
         self.assertIn('id="semantic-map"', response.text)
         self.assertIn('id="map-controls"', response.text)
         self.assertIn('aria-describedby="map-pan-help"', response.text)
         self.assertNotIn('id="layout-lenses"', response.text)
-        self.assertIn('class="label-overview"', response.text)
-        self.assertIn('id="map-point-1"', response.text)
-        self.assertIn("<title>IDM</title>", response.text)
+        self.assertIn('id="map-point-wikidata:genre:Q1"', response.text)
+        self.assertIn("<title>Electronic music</title>", response.text)
         self.assertNotIn('id="count"', response.text)
 
     def test_published_layout_lenses_keep_source_and_generated_contracts_distinct(self) -> None:
@@ -331,8 +347,7 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/genres/1")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('class="point genre selected"', response.text)
-        self.assertIn('aria-current="location"', response.text)
+        self.assertIn('data-selected-genre="1"', response.text)
         self.assertIn('id="selection-clear"', response.text)
         self.assertIn('href="/" aria-label="Close IDM"', response.text)
         self.assertIn('id="genre-detail"', response.text)
@@ -356,7 +371,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertEqual(selected.text.count('id="workspace"'), 1)
         self.assertEqual(selected.text.count('id="search"'), 1)
         self.assertEqual(selected.text.count('id="results"'), 1)
-        self.assertIn('class="point genre selected"', selected.text)
+        self.assertIn('data-selected-genre="1"', selected.text)
         self.assertIn('id="selection-clear"', selected.text)
         self.assertIn('id="genre-detail"', selected.text)
         self.assertIn("Autechre", selected.text)
@@ -392,7 +407,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn('href="/" aria-label="Close IDM"', selected.text)
 
     def test_stable_public_genre_key_has_full_and_partial_routes(self) -> None:
-        encoded_key = "wikidata%3Agenre%3AQ9778"
+        encoded_key = "wikidata%3Agenre%3AQ1"
 
         full = self.client.get(f"/genres/key/{encoded_key}")
         partial = self.client.get(f"/genres/key/{encoded_key}", headers={"HX-Request": "true"})
