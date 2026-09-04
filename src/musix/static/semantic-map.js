@@ -8,7 +8,7 @@
   // Genre details use an explicit browser history entry. HTMX snapshot history
   // can replace the renderer DOM with an inert cached canvas on Back, so leave
   // this persistent map outside that secondary history mechanism.
-  if (window.htmx) window.htmx.config.historyEnabled = false;
+  if (window.htmx) window.htmx.config.history = false;
   const themeSelect = document.querySelector("#theme-select");
   const themeToggle = document.querySelector("#theme-toggle");
   const query = document.querySelector("#query");
@@ -63,22 +63,20 @@
     return Math.round(minimum + (maximum - minimum) * overviewProminence(members));
   };
 
-  const normalisedPositions = (nodes) => {
-    const xs = nodes.map((node) => Number(node.x)).filter(Number.isFinite);
-    const ys = nodes.map((node) => Number(node.y)).filter(Number.isFinite);
-    const minX = Math.min(...xs, 0); const maxX = Math.max(...xs, 1);
-    const minY = Math.min(...ys, 0); const maxY = Math.max(...ys, 1);
-    const spanX = Math.max(maxX - minX, 0.0001); const spanY = Math.max(maxY - minY, 0.0001);
-    return new Map(nodes.map((node) => [nodeId(node), {
-      x: 180 + ((Number(node.x) - minX) / spanX) * 2200,
-      y: 160 + ((Number(node.y) - minY) / spanY) * 1500,
-    }]));
+  const quantile = (values, fraction) => values[Math.min(values.length - 1, Math.max(0, Math.round((values.length - 1) * fraction)))];
+  const mapPositions = (items, id) => {
+    const axis = (key) => items.map((item) => Number(item[key])).filter(Number.isFinite).sort((a, b) => a - b);
+    const xs = axis("x"); const ys = axis("y");
+    const lowX = quantile(xs, 0.05); const highX = quantile(xs, 0.95);
+    const lowY = quantile(ys, 0.05); const highY = quantile(ys, 0.95);
+    const scale = (value, low, high) => 0.06 + 0.88 * Math.max(0, Math.min(1, (Number(value) - low) / Math.max(high - low, 0.0001)));
+    return new Map(items.map((item) => [id(item), { x: scale(item.x, lowX, highX) * 1600, y: scale(item.y, lowY, highY) * 900 }]));
   };
 
   const elementsFor = (payload) => {
     const nodes = getNodes(payload);
     const communities = getOverviewCommunities(payload);
-    const positions = normalisedPositions(nodes);
+    const overviewPositions = mapPositions(communities, (community) => community.community_id);
     const nodesById = new Map(nodes.map((node) => [node.genre_id ?? node.id, node]));
     const overviewLabel = (community) => {
       const lead = community.member_entity_ids.map((id) => nodesById.get(id)).filter(Boolean).sort(
@@ -105,11 +103,15 @@
         overviewNodeSize: Math.round(42 + 34 * overviewProminence(memberCount)),
         overview: true,
       },
-      position: { x: 180 + Number(community.x) * 2200, y: 160 + Number(community.y) * 1500 },
+      position: overviewPositions.get(community.community_id),
       classes: "overview",
       };
     });
-    elements.push(...nodes.map((node) => {
+    return elements;
+  };
+
+  const nodeElement = (node, payload) => {
+      const positions = mapPositions(getNodes(payload), nodeId);
       const id = nodeId(node);
       return {
         data: {
@@ -119,9 +121,7 @@
           label: node.name,
           detailHref: node.detail_href ?? payload.detail_hrefs?.[node.genre_id ?? node.id] ?? null,
           depth: node.depth ?? 1,
-          // Legacy point responses have no semantic tiers; keep them usable while
-          // production-map-v1 supplies its explicit `lod_min` contract.
-          lodMin: node.lod_min ?? 0,
+          lodMin: node.lod_min ?? 3,
           weight: node.display_weight ?? node.weight ?? 0,
           displayLabel: "",
           labelSize: 13,
@@ -132,14 +132,19 @@
         position: positions.get(id),
         classes: node.display_parent_id === null || node.display_parent_id === undefined ? "umbrella" : "genre",
       };
-    }));
-    for (const edge of getEdges(payload)) {
-      const kind = edge.kind ?? "similarity";
-      const source = `genre-${edge.source_genre_id ?? edge.source}`;
-      const target = `genre-${edge.target_genre_id ?? edge.target}`;
-      elements.push({ data: { id: `${kind}-${source}-${target}`, source, target, kind, weight: edge.weight ?? 0 }, classes: kind });
-    }
-    return elements;
+  };
+
+  const materializeLod = (cy, payload, lod) => {
+    if (lod === 0) return;
+    const descriptor = getLods(payload).find((item) => Number(item.level) === lod);
+    const allowed = new Set(descriptor?.visible_node_ids ?? []);
+    const cap = [0, 96, 280, 720][lod];
+    const candidates = getNodes(payload).filter((node) => allowed.has(node.genre_id ?? node.id)).sort(
+      (left, right) => Number(right.direct_artist_count ?? 0) - Number(left.direct_artist_count ?? 0)
+        || String(left.name).localeCompare(String(right.name)),
+    ).slice(0, cap);
+    const additions = candidates.filter((node) => cy.$id(nodeId(node)).empty()).map((node) => nodeElement(node, payload));
+    if (additions.length) cy.batch(() => cy.add(additions));
   };
 
   const cssValue = (name) => getComputedStyle(root).getPropertyValue(name).trim();
@@ -266,6 +271,7 @@
     currentLod = lod;
     const communities = getOverviewCommunities(payload);
     const showingOverview = lod === 0 && communities.length > 0;
+    materializeLod(cy, payload, lod);
     const descriptor = getLods(payload).find((item) => Number(item.level) === lod);
     const visibleIds = new Set(showingOverview
       ? communities.map((item) => item.community_id)
@@ -334,9 +340,7 @@
       cy.resize();
       // Start at the actual overview level. A later fit-to-overview jump used to
       // skip semantic level zero and make the first view look tiny and sparse.
-      cy.zoom(0.5);
-      updateLod(cy, payload);
-      cy.center(cy.elements(":visible"));
+      cy.fit(cy.nodes(".overview"), 72);
       updateLod(cy, payload);
       cy.on("zoom", () => updateLod(cy, payload));
       cy.on("pan", () => updateLod(cy, payload));
@@ -448,7 +452,7 @@
     })
     .catch(() => say("Interactive map unavailable. The accessible map links remain available."));
 
-  query?.addEventListener("htmx:afterRequest", () => {
+  query?.addEventListener("htmx:after:request", () => {
     // Search updates its own results panel and intentionally does not recreate the map.
   });
 })();

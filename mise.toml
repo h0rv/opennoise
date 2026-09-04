@@ -13,9 +13,14 @@ sources = ["pyproject.toml", "uv.lock"]
 outputs = [".venv/pyvenv.cfg"]
 
 [tasks.dev]
-description = "Run the local demo"
+description = "Run the validated production map"
 depends = ["sync"]
 run = "uv run poe dev"
+
+[tasks.dev-legacy]
+description = "Run the legacy map diagnostic only"
+depends = ["sync"]
+run = "uv run poe dev-legacy"
 
 [tasks.check]
 description = "Run all project checks"

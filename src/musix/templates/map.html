@@ -18,7 +18,7 @@
     {% endif %}
   </a>
   {% endfor %}
-{% elif map.points %}
+{% elif map.points and layout_key != 'default' %}
   {% for point in map.points %}
   <a id="map-point-{{ point.entity_id }}" class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
      data-genre-id="{{ point.entity_id }}"
@@ -39,7 +39,7 @@
   </a>
   {% endfor %}
 {% else %}
-  <text x="50" y="50" class="empty" text-anchor="middle">∅</text>
+  <text x="50" y="50" class="empty" text-anchor="middle">Production map unavailable</text>
 {% endif %}
 </svg>
 <div id="map-controls" aria-label="Map controls">

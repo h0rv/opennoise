@@ -125,7 +125,7 @@ class MapController(Controller):
         production_map: NamedDependency[ProductionMapStore],
         layout: FromQuery[str] = "default",
     ) -> ProductionMapApiResponse | LegacyMapResponse:
-        """Return the configured production graph or the explicit legacy map fallback."""
+        """Return the production graph; never use the legacy map as an interactive graph."""
         if production_map.configured and layout == "default":
             try:
                 response = production_map.response()
@@ -136,6 +136,10 @@ class MapController(Controller):
             if response is None:
                 raise RuntimeError("configured production map store returned no graph")
             return response
+        if layout == "default":
+            raise ServiceUnavailableException(
+                detail="production map artifact is required; run the production map build first"
+            )
         layout_key, _ = resolve_layout(layout, await database.published_layouts())
         points = await database.map_points(layout_key)
         return LegacyMapResponse(

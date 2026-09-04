@@ -48,10 +48,9 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.text, "ok")
 
     def test_empty_map_search_and_fragment(self) -> None:
-        self.assertEqual(
-            self.client.get("/api/map").json(),
-            {"source": "legacy-layout", "fallback": True, "points": []},
-        )
+        response = self.client.get("/api/map")
+        self.assertEqual(response.status_code, 503)
+        self.assertNotIn("legacy-layout", response.text)
         self.assertEqual(self.client.get("/api/search", params={"q": "---"}).json(), {"hits": []})
         fragment = self.client.get("/fragments/search", params={"q": "---"})
         self.assertEqual(fragment.status_code, 200)
