@@ -68,7 +68,7 @@ html.js-map-ready #historical-fallback { display: none; }
 .point text { fill: var(--ink); font-size: 11px; paint-order: stroke; stroke: var(--canvas); stroke-width: 3px; stroke-linejoin: round; }
 .point.selected circle { stroke: var(--focus); stroke-width: 4; }
 
-#map-controls, #map-view-switch, #search, #results, #genre-detail {
+#map-controls, #map-view-switch, #search, #results, #genre-detail, #historical-detail {
   position: fixed; z-index: 4; border: 1px solid var(--line); border-radius: 7px;
   background: var(--panel); box-shadow: 0 4px 20px rgb(0 0 0 / 12%); backdrop-filter: blur(8px);
 }
@@ -94,6 +94,9 @@ html.js-map-ready #historical-fallback { display: none; }
 .result:hover, .result:focus-visible { background: color-mix(in srgb, var(--line) 32%, transparent); outline: none; }
 
 #genre-detail { top: 70px; right: 14px; width: min(310px, calc(100vw - 28px)); max-height: min(60vh, 520px); padding: 14px; overflow: auto; }
+#historical-detail { top: 70px; right: 14px; width: min(310px, calc(100vw - 28px)); max-height: min(60vh, 520px); padding: 14px; overflow: auto; }
+#historical-detail:empty { display: none; }
+#historical-detail ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
 #genre-detail header { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
 #genre-detail h2 { margin: 0; font-size: 18px; line-height: 1.25; }
 #genre-detail h3 { margin: 14px 0 5px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
@@ -121,6 +124,7 @@ html.js-map-ready #historical-fallback { display: none; }
   #map-view-switch a { padding: 5px 6px; font-size: 11px; }
   #map-controls label { display: none; }
   #genre-detail { top: auto; right: 10px; bottom: 54px; left: 10px; width: auto; max-height: 38vh; }
+  #historical-detail { top: auto; right: 10px; bottom: 54px; left: 10px; width: auto; max-height: 38vh; }
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }

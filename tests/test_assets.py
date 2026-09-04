@@ -34,6 +34,10 @@ class AssetTests(unittest.TestCase):
             "/api/historical-signal-map?level=${level}&column=${column}&row=${row}", source
         )
         self.assertIn("/api/historical-signal-map/neighbors/${encodeURIComponent", source)
+        self.assertIn("/api/historical-signal-map/members/${encodeURIComponent", source)
+        self.assertIn("trimTiles();\n              appendNodes(payload.nodes ?? []);", source)
+        self.assertIn("loadedTiles.delete(key);", source)
+        self.assertIn("memberRequest?.abort();", source)
 
     def test_browser_certification_uses_screen_font_size_and_rejects_runtime_errors(self) -> None:
         source = Path("scripts/capture_production_map_browser.mjs").read_text(encoding="utf-8")

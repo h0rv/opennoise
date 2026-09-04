@@ -59,8 +59,9 @@
     const pendingTiles = new Set();
     const tileNodes = new Map();
     const tileOrder = [];
-    const selectedIds = new Set();
     let tileFrame = null;
+    let selectedId = null;
+    let memberRequest = null;
     let cy = null;
     let level = 0;
     const style = () => [
@@ -126,9 +127,9 @@
               const prior = tileOrder.indexOf(key);
               if (prior >= 0) tileOrder.splice(prior, 1);
               tileOrder.push(key);
+              trimTiles();
               appendNodes(payload.nodes ?? []);
               loadedTiles.add(key);
-              trimTiles();
               setHistoricalLabels();
             }
           })
@@ -139,14 +140,30 @@
       const active = new Set(tileRange().map(([column, row]) => `${level}:${column}:${row}`));
       const retained = new Set([...tileOrder.filter((key) => active.has(key)).slice(-3), ...tileOrder.slice(-2)]);
       const keep = new Set();
-      for (const node of cy.nodes()) if (node.data("overview") || selectedIds.has(node.data("genreId"))) keep.add(node.id());
+      for (const node of cy.nodes()) if (node.data("overview") || selectedId === node.data("genreId")) keep.add(node.id());
       for (const key of retained) for (const genreId of tileNodes.get(key) ?? []) keep.add(`historical-${genreId}`);
       const stale = cy.nodes().filter((node) => !keep.has(node.id()));
       if (stale.length) cy.remove(stale);
+      for (const key of [...tileNodes.keys()]) {
+        if (retained.has(key)) continue;
+        tileNodes.delete(key);
+        loadedTiles.delete(key);
+        const index = tileOrder.indexOf(key);
+        if (index >= 0) tileOrder.splice(index, 1);
+      }
       const excess = Math.max(0, cy.nodes().length - 1200);
       if (excess) {
-        const removable = cy.nodes().filter((node) => !node.data("overview") && !selectedIds.has(node.data("genreId"))).sort((left, right) => Number(left.data("weight")) - Number(right.data("weight")));
-        cy.remove(removable.slice(0, excess));
+        const removable = cy.nodes().filter((node) => !node.data("overview") && selectedId !== node.data("genreId")).sort((left, right) => Number(left.data("weight")) - Number(right.data("weight")));
+        const evicted = removable.slice(0, excess);
+        const evictedIds = new Set(evicted.map((node) => node.data("genreId")));
+        cy.remove(evicted);
+        for (const [key, genreIds] of tileNodes) {
+          if (![...genreIds].some((genreId) => evictedIds.has(genreId))) continue;
+          tileNodes.delete(key);
+          loadedTiles.delete(key);
+          const index = tileOrder.indexOf(key);
+          if (index >= 0) tileOrder.splice(index, 1);
+        }
       }
     };
     const scheduleTiles = () => {
@@ -172,6 +189,27 @@
           if (additions.length) cy.add(additions);
         });
     };
+    const loadMembers = (node) => {
+      const detail = document.querySelector("#historical-detail");
+      if (!detail) return;
+      detail.replaceChildren();
+      memberRequest?.abort();
+      const request = new AbortController();
+      memberRequest = request;
+      fetch(`/api/historical-signal-map/members/${encodeURIComponent(node.data("genreId"))}`, { headers: { Accept: "application/json" }, signal: request.signal })
+        .then((response) => response.ok ? response.json() : null)
+        .then((payload) => {
+          if (!payload || memberRequest !== request) return;
+          const list = document.createElement("ul");
+          for (const member of payload.members ?? []) {
+            const item = document.createElement("li");
+            item.textContent = member.source_artist_name ?? member.source_artist_id;
+            list.append(item);
+          }
+          detail.replaceChildren(list);
+        })
+        .catch(() => {});
+    };
     const update = () => {
       const relative = cy.zoom();
       const nextLevel = relative < 1.25 ? 0 : relative < 2 ? 1 : relative < 3 ? 2 : 3;
@@ -194,8 +232,9 @@
         cy.on("tap", "node", (event) => {
           cy.$(":selected").unselect();
           event.target.select();
-          selectedIds.add(event.target.data("genreId"));
+          selectedId = event.target.data("genreId");
           loadNeighbors(event.target);
+          loadMembers(event.target);
         });
         document.addEventListener("click", (event) => {
           const button = event.target.closest("[data-map-action]");

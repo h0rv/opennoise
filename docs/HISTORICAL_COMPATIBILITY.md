@@ -44,6 +44,16 @@ Serve the resulting publication only through the explicit local setting:
 MUSIX_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json poe dev
 ```
 
+Member detail remains independently opt-in. It requires only the separately configured local
+membership database; startup hashes it and checks its sealed source, policy, and aggregate counts.
+It is unavailable rather than inferred when the database setting is absent.
+
+```sh
+MUSIX_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json \
+MUSIX_HISTORICAL_MEMBERSHIP_DATABASE_PATH=path/to/local-memberships.sqlite \
+poe dev
+```
+
 The publisher verifies the pinned source before parsing, writes one immutable JSON artifact to the
 configured object store, and writes an append-only coverage record to SQLite. It retains no audio
 or preview URL. A legacy preview is represented only by `absent` or `disabled_legacy` and, when
