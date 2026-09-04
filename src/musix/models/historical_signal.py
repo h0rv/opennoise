@@ -12,12 +12,14 @@ class HistoricalSignalSettings(FrozenModel):
     """Fixed public-signal configuration; no legacy coordinates are model inputs."""
 
     revision: Literal["historical-signal-v1"] = "historical-signal-v1"
-    method: Literal["idf_membership_knn_diffusion_v1", "idf_membership_knn_spectral_v1"] = (
-        "idf_membership_knn_diffusion_v1"
-    )
-    embedding_method: Literal["anchored_diffusion", "normalized_laplacian_spectral"] = (
-        "anchored_diffusion"
-    )
+    method: Literal[
+        "idf_membership_knn_diffusion_v1",
+        "idf_membership_knn_spectral_v1",
+        "idf_membership_knn_spectral_force_v1",
+    ] = "idf_membership_knn_diffusion_v1"
+    embedding_method: Literal[
+        "anchored_diffusion", "normalized_laplacian_spectral", "spectral_force_refined"
+    ] = "anchored_diffusion"
     neighbors_per_genre: int = Field(default=20, ge=2, le=50)
     maximum_artist_genre_degree: int = Field(default=32, ge=2, le=1_000)
     label_propagation_iterations: int = Field(default=30, ge=1, le=200)
@@ -32,7 +34,11 @@ class HistoricalSignalSettings(FrozenModel):
         expected = (
             "idf_membership_knn_diffusion_v1"
             if self.embedding_method == "anchored_diffusion"
-            else "idf_membership_knn_spectral_v1"
+            else (
+                "idf_membership_knn_spectral_v1"
+                if self.embedding_method == "normalized_laplacian_spectral"
+                else "idf_membership_knn_spectral_force_v1"
+            )
         )
         if self.method != expected:
             raise ValueError("historical signal method must match embedding method")

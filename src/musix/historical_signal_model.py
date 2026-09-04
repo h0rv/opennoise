@@ -352,6 +352,34 @@ def _spectral_embed(
     return positions
 
 
+def _spectral_force_refine(
+    positions: np.ndarray, graph: list[dict[int, float]], seed: int, iterations: int = 45
+) -> np.ndarray:
+    """Apply bounded sparse attraction and deterministic negative-sample repulsion."""
+    generator = np.random.default_rng(seed)
+    negative = generator.integers(0, len(positions), size=(len(positions), 32))
+    current = positions.copy()
+    for _iteration in range(iterations):
+        attractive = np.zeros_like(current)
+        for index, weighted_neighbors in enumerate(graph):
+            if not weighted_neighbors:
+                attractive[index] = current[index]
+                continue
+            total = sum(weighted_neighbors.values())
+            attractive[index] = (
+                sum(
+                    (current[neighbor] * weight for neighbor, weight in weighted_neighbors.items()),
+                    start=np.zeros(2, dtype=np.float64),
+                )
+                / total
+            )
+        delta = current[:, np.newaxis, :] - current[negative]
+        squared = np.sum(np.square(delta), axis=2, keepdims=True) + 1e-4
+        repulsion = np.sum(delta / squared, axis=1) / negative.shape[1]
+        current = np.clip(current + 0.16 * (attractive - current) + 0.0015 * repulsion, 0.0, 1.0)
+    return _normalized_component_positions(current)
+
+
 def _overview_communities(
     graph: list[dict[int, float]], positions: np.ndarray, count: int = 24
 ) -> tuple[list[int], list[int]]:
@@ -569,11 +597,12 @@ def build_historical_signal_model(
     neighbors = _knn(genre_ids, candidates, resolved_settings)
     graph = _weighted_graph(genre_ids, neighbors)
     components = _components(graph)
-    positions = (
-        _embed(genre_ids, graph, resolved_settings)
-        if resolved_settings.embedding_method == "anchored_diffusion"
-        else _spectral_embed(genre_ids, graph, components, resolved_settings.embedding_seed)
-    )
+    if resolved_settings.embedding_method == "anchored_diffusion":
+        positions = _embed(genre_ids, graph, resolved_settings)
+    else:
+        positions = _spectral_embed(genre_ids, graph, components, resolved_settings.embedding_seed)
+        if resolved_settings.embedding_method == "spectral_force_refined":
+            positions = _spectral_force_refine(positions, graph, resolved_settings.embedding_seed)
     seeds, overview = _overview_communities(graph, positions)
     lod_min = _lods(genre_ids, memberships, overview)
     nodes = tuple(

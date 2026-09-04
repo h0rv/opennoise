@@ -24,7 +24,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--h3-artifact-sha256", required=True)
     parser.add_argument(
         "--embedding-method",
-        choices=("anchored_diffusion", "normalized_laplacian_spectral"),
+        choices=("anchored_diffusion", "normalized_laplacian_spectral", "spectral_force_refined"),
         default="anchored_diffusion",
     )
     parser.add_argument("--output", type=Path, required=True)
@@ -64,6 +64,11 @@ def _settings(embedding_method: str) -> HistoricalSignalSettings:
             return HistoricalSignalSettings(
                 method="idf_membership_knn_spectral_v1",
                 embedding_method="normalized_laplacian_spectral",
+            )
+        case "spectral_force_refined":
+            return HistoricalSignalSettings(
+                method="idf_membership_knn_spectral_force_v1",
+                embedding_method="spectral_force_refined",
             )
         case _:
             raise ValueError("unsupported embedding method")
