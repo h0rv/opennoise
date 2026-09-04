@@ -62,9 +62,10 @@ class ProductionMapLod(FrozenModel):
 
 
 class ProductionMapRegion(FrozenModel):
-    """An optional visible hierarchy region emitted by the model, not inferred by UI."""
+    """One visible hierarchy subtree region emitted by the model, never inferred by UI."""
 
     region_id: str = Field(min_length=1, max_length=200)
+    owner_entity_id: str = Field(min_length=1, max_length=200)
     entity_ids: tuple[str, ...] = Field(min_length=1, max_length=20_000)
     min_x: FiniteFloat = Field(ge=0.0, le=1.0)
     min_y: FiniteFloat = Field(ge=0.0, le=1.0)
@@ -212,6 +213,75 @@ class ProductionMapInteractionEvidence(FrozenModel):
     dark_mode_toggle: bool
 
 
+def _validate_hierarchy_regions(
+    regions: tuple[ProductionMapRegion, ...],
+    coordinate_ids: set[str],
+    presentation_parents: tuple[ProductionMapPresentationParent, ...],
+) -> None:
+    """Require one exact subtree region for every presentation-tree node."""
+    children = _validate_region_owners(regions, coordinate_ids, presentation_parents)
+    _validate_region_subtrees(regions, children)
+
+
+def _validate_region_owners(
+    regions: tuple[ProductionMapRegion, ...],
+    coordinate_ids: set[str],
+    presentation_parents: tuple[ProductionMapPresentationParent, ...],
+) -> dict[str, set[str]]:
+    """Validate region identity, owners, roots, and direct display-tree links."""
+    _validate_region_shapes(regions, coordinate_ids)
+    if len({region.region_id for region in regions}) != len(regions):
+        raise ValueError("hierarchy region IDs must be unique")
+    if len({region.owner_entity_id for region in regions}) != len(regions):
+        raise ValueError("every production coordinate needs exactly one hierarchy region")
+    if {region.owner_entity_id for region in regions} != coordinate_ids:
+        raise ValueError("every production coordinate needs one hierarchy region")
+    parent_by_child = {choice.child_id: choice.parent_id for choice in presentation_parents}
+    roots = {child_id for child_id, parent_id in parent_by_child.items() if parent_id is None}
+    root_region_owners = {region.owner_entity_id for region in regions if region.is_root}
+    if root_region_owners != roots:
+        raise ValueError("root hierarchy regions must exactly match presentation-tree roots")
+    children: dict[str, set[str]] = {}
+    for child_id, parent_id in parent_by_child.items():
+        if parent_id is not None and parent_id in coordinate_ids:
+            children.setdefault(parent_id, set()).add(child_id)
+    return children
+
+
+def _validate_region_shapes(
+    regions: tuple[ProductionMapRegion, ...], coordinate_ids: set[str]
+) -> None:
+    """Require region owners and declared members to belong to the map."""
+    for region in regions:
+        if not set(region.entity_ids).issubset(coordinate_ids):
+            raise ValueError("region contains an entity without a coordinate")
+        if region.owner_entity_id not in coordinate_ids:
+            raise ValueError("region owner must have a production coordinate")
+        if region.owner_entity_id not in region.entity_ids:
+            raise ValueError("region must contain its owner entity")
+
+
+def _validate_region_subtrees(
+    regions: tuple[ProductionMapRegion, ...], children: dict[str, set[str]]
+) -> None:
+    """Require each declared region to cover exactly its explicit display subtree."""
+
+    def descendants(owner_entity_id: str) -> set[str]:
+        result: set[str] = set()
+        pending = [owner_entity_id]
+        while pending:
+            current = pending.pop()
+            if current in result:
+                raise ValueError("presentation tree cannot contain a cycle")
+            result.add(current)
+            pending.extend(children.get(current, set()))
+        return result
+
+    for region in regions:
+        if set(region.entity_ids) != descendants(region.owner_entity_id):
+            raise ValueError("hierarchy region must cover exactly its owner's display subtree")
+
+
 class ProductionMapAcceptanceInput(FrozenModel):
     """All evidence needed to accept or reject one production-map artifact."""
 
@@ -220,7 +290,7 @@ class ProductionMapAcceptanceInput(FrozenModel):
     coordinates: tuple[ProductionMapCoordinate, ...] = Field(min_length=26, max_length=20_000)
     taxonomy_edges: tuple[tuple[str, str], ...] = Field(max_length=100_000)
     presentation_parents: tuple[ProductionMapPresentationParent, ...] = Field(max_length=20_000)
-    regions: tuple[ProductionMapRegion, ...] = Field(default=(), max_length=20_000)
+    regions: tuple[ProductionMapRegion, ...] = Field(min_length=1, max_length=20_000)
     lods: tuple[ProductionMapLod, ...] = Field(min_length=1, max_length=11)
     similarity: ProductionMapSimilarityEvidence
     screenshots: tuple[ProductionMapScreenshot, ...] = Field(default=(), max_length=12)
@@ -237,9 +307,7 @@ class ProductionMapAcceptanceInput(FrozenModel):
         for lod in self.lods:
             if not set(lod.visible_entity_ids).issubset(coordinate_ids):
                 raise ValueError("LOD contains an entity without a coordinate")
-        for region in self.regions:
-            if not set(region.entity_ids).issubset(coordinate_ids):
-                raise ValueError("region contains an entity without a coordinate")
+        _validate_hierarchy_regions(self.regions, coordinate_ids, self.presentation_parents)
         if self.similarity.candidate_coordinate_sha256 != self.coordinate_sha256:
             raise ValueError("similarity evidence must name this candidate coordinate artifact")
         similarity_query_ids = {

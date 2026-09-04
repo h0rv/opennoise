@@ -16,8 +16,10 @@ and blocks publication.
 - The full taxonomy remains a DAG. Every node has one explicit rendering-parent
   choice. A taxonomy choice must be a real taxonomy edge. Generated and absent
   parents say so with a reason.
-- Every hierarchy region contains at least 98% of its declared nodes. Root
-  regions do not overlap.
+- Every production coordinate emits one explicit hierarchy region covering
+  exactly its display subtree. Every region contains at least 98% of its
+  declared nodes. Root regions exactly match display-tree roots and do not
+  overlap.
 - Zoom levels start at zero, are contiguous, retain all earlier visible nodes,
   and end with every node visible.
 - Shown label boxes are checked at every zoom level. No more than 2% of desktop

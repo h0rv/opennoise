@@ -93,6 +93,19 @@ def _input(
         for entity_id in ids
     )
     eligible_sets_digest = hash_eligible_sets(eligible_sets)
+    regions = tuple(
+        ProductionMapRegion(
+            region_id=f"region:{entity_id}",
+            owner_entity_id=entity_id,
+            entity_ids=ids if index == 0 else (entity_id,),
+            min_x=0.0 if index == 0 else max(0.0, float(coordinates[index].x) - 0.01),
+            min_y=0.0 if index == 0 else max(0.0, float(coordinates[index].y) - 0.01),
+            max_x=1.0 if index == 0 else min(1.0, float(coordinates[index].x) + 0.01),
+            max_y=1.0 if index == 0 else min(1.0, float(coordinates[index].y) + 0.01),
+            is_root=index == 0,
+        )
+        for index, entity_id in enumerate(ids)
+    )
     return ProductionMapAcceptanceInput(
         revision="production-map-v1",
         coordinate_sha256="d" * 64,
@@ -107,17 +120,7 @@ def _input(
             )
             for index, entity_id in enumerate(ids)
         ),
-        regions=(
-            ProductionMapRegion(
-                region_id=ids[0],
-                entity_ids=ids,
-                min_x=0.0,
-                min_y=0.0,
-                max_x=1.0,
-                max_y=1.0,
-                is_root=True,
-            ),
-        ),
+        regions=regions,
         lods=tuple(
             ProductionMapLod(
                 level=level,
@@ -250,6 +253,19 @@ class ProductionMapQaTests(unittest.TestCase):
                             "candidate_coordinate_sha256": "a" * 64,
                         },
                     }
+                )
+
+    def test_rejects_missing_or_incomplete_hierarchy_region_evidence(self) -> None:
+        with TemporaryDirectory() as temporary:
+            evidence = _input(screenshot_directory=Path(temporary))
+            with self.assertRaises(ValidationError):
+                ProductionMapAcceptanceInput.model_validate(
+                    {**evidence.model_dump(mode="python"), "regions": ()}
+                )
+            incomplete_regions = evidence.regions[:-1]
+            with self.assertRaisesRegex(ValidationError, "every production coordinate"):
+                ProductionMapAcceptanceInput.model_validate(
+                    {**evidence.model_dump(mode="python"), "regions": incomplete_regions}
                 )
 
 
