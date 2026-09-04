@@ -55,6 +55,7 @@
   const getEdges = (payload) => payload.edges ?? payload.graph?.edges ?? [];
   const getLods = (payload) => payload.lods ?? payload.graph?.lods ?? [];
   const getOverviewCommunities = (payload) => payload.overview_communities ?? [];
+  const nodePositionCache = new WeakMap();
   const overviewProminence = (members) => Math.min(1, Math.log2(Math.max(1, members) + 1) / 6);
   const overviewFontSize = (members) => {
     const mobile = mapElement.clientWidth <= 600;
@@ -71,6 +72,13 @@
     const lowY = quantile(ys, 0.05); const highY = quantile(ys, 0.95);
     const scale = (value, low, high) => 0.06 + 0.88 * Math.max(0, Math.min(1, (Number(value) - low) / Math.max(high - low, 0.0001)));
     return new Map(items.map((item) => [id(item), { x: scale(item.x, lowX, highX) * 1600, y: scale(item.y, lowY, highY) * 900 }]));
+  };
+  const nodePositions = (payload) => {
+    const cached = nodePositionCache.get(payload);
+    if (cached) return cached;
+    const positions = mapPositions(getNodes(payload), nodeId);
+    nodePositionCache.set(payload, positions);
+    return positions;
   };
 
   const elementsFor = (payload) => {
@@ -111,7 +119,7 @@
   };
 
   const nodeElement = (node, payload) => {
-      const positions = mapPositions(getNodes(payload), nodeId);
+      const positions = nodePositions(payload);
       const id = nodeId(node);
       return {
         data: {
@@ -144,6 +152,20 @@
         || String(left.name).localeCompare(String(right.name)),
     ).slice(0, cap);
     const additions = candidates.filter((node) => cy.$id(nodeId(node)).empty()).map((node) => nodeElement(node, payload));
+    if (additions.length) cy.batch(() => cy.add(additions));
+  };
+
+  const materializeSelectedEdges = (cy, payload, node) => {
+    const id = node.data("itemId");
+    const additions = getEdges(payload).filter((edge) => (
+      edge.source_genre_id === id || edge.target_genre_id === id
+    )).slice(0, 12).flatMap((edge) => {
+      const source = `genre-${edge.source_genre_id ?? edge.source}`;
+      const target = `genre-${edge.target_genre_id ?? edge.target}`;
+      const edgeId = `${edge.kind ?? "similarity"}-${source}-${target}`;
+      if (cy.$id(source).empty() || cy.$id(target).empty() || !cy.$id(edgeId).empty()) return [];
+      return [{ data: { id: edgeId, source, target, kind: edge.kind ?? "similarity", weight: edge.weight ?? 0 }, classes: edge.kind ?? "similarity" }];
+    });
     if (additions.length) cy.batch(() => cy.add(additions));
   };
 
@@ -301,6 +323,7 @@
     cy.$(":selected").unselect();
     node.select();
     selectedNode = node;
+    materializeSelectedEdges(cy, payload, node);
     setVisibleEdges(cy);
     setCollisionFreeLabels(
       cy,
@@ -336,6 +359,7 @@
         boxSelectionEnabled: false,
       });
       window.__musixMap = cy;
+      window.__musixMapMetrics = { initialElementCount: cy.elements().length, nodePositionBuilds: 1 };
       root.classList.add("js-map-ready");
       cy.resize();
       // Start at the actual overview level. A later fit-to-overview jump used to
