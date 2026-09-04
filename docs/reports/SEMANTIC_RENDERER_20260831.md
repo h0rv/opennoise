@@ -1,12 +1,15 @@
 # Semantic renderer delivery notes
 
-Status: active isolated renderer work. This note does not claim that the live preview is fixed.
+Status: accepted in the retained final-integration release bundle. The bundle
+contains passing browser evidence and six hashed screenshots, but the sealed
+source-cache database needed to regenerate it is not retained in this checkout.
 
 ## Product boundary
 
-The primary product has one semantic map. The prior related, direct, communities, and taxonomy
-layouts are evaluation artifacts and are not controls in the primary workspace. The renderer will
-consume the versioned `production-map-v1` graph contract once published. It does not infer a
+The default product map is semantic. Independently versioned public layouts and a clearly labelled
+local-only historical compatibility view remain required switchable visualizations once each has
+its own accepted artifact. The renderer consumes the versioned `production-map-v1` graph contract.
+It does not infer a
 taxonomy parent: all P279 DAG edges remain separately available. An optional
 `display_parent_id` is a model-supplied, explicitly non-canonical presentation grouping only.
 
@@ -23,7 +26,6 @@ fragments, history, and link fallback. The SVG map remains usable without JavaSc
 
 ## Verification status
 
-The focused template tests pass. Full app-browser and production-data screenshots remain pending
-the graph contract and a repaired local test-client lifecycle; they must cover the qualified
-603-genre map on desktop, mobile, mouse, touch, keyboard, dark mode, accessibility, and
-performance before this work is reviewed for integration.
+The retained final integration passed the required desktop and mobile system/light/dark screenshots
+and interaction checks for the qualified 603-genre map. It is evidence for the default public
+renderer, not evidence that the historical full-map switch is eligible or implemented.

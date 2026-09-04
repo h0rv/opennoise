@@ -41,8 +41,12 @@ Earlier visible context remains available while zooming. The map artifact owns
 coordinates, LOD membership, labels, placement reasons, and evidence hashes.
 The renderer must not infer them.
 
-The historical, direct, community, and taxonomy layouts are research or
-compatibility artifacts. They are not product view switches.
+The historical, direct, community, and taxonomy layouts are independent
+artifacts. An accepted visualization may be offered through a simple product
+switcher only when its exact model input, coordinates, evidence, and release
+acceptance are available. The historical option remains separate from the
+public model and is local-only until its source rights and integration gates
+are satisfied.
 
 ## Publication
 

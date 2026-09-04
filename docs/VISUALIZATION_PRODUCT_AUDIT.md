@@ -2,9 +2,10 @@
 
 ## Product surface
 
-The primary workspace has one map. It has search, a selected-genre detail
-region, simple zoom controls, and system, light, or dark appearance. There is
-no layout selector.
+The default workspace has one public semantic map, search, a selected-genre
+detail region, simple zoom controls, and system, light, or dark appearance.
+It also needs a minimal visualization switcher for accepted independent views;
+the selector must state whether a view is public or local-only historical.
 
 At overview, the map shows named public umbrellas or communities. Zooming adds
 genres and descendants without removing the prior context. A click opens the
@@ -27,7 +28,8 @@ genre detail. It does not merely refocus an unlabeled point.
 - No audio, preview, player, waveform, or media placeholder.
 - No browser-inferred taxonomy parent, geometry, label choice, or score.
 - No historical Every Noise coordinates mixed into the public graph.
-- No direct, community, taxonomy, or historical layout switcher in the product.
+- No unqualified, unversioned, or silent layout switcher. A switch must name
+  the visualization, source/model boundary, and local-only status where applicable.
 
 ## Release evidence
 

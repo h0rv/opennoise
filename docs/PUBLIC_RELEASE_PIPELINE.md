@@ -12,6 +12,13 @@ It requires:
 
 It never fetches a source, reads music or audio files, or calls a live data API.
 
+The manifest is checked in, but the 153,231,360-byte sealed cache database is
+not retained in this checkout. Consequently a fresh checkout cannot run this
+command until an operator supplies the exact cache database whose SHA-256 is
+`282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866`.
+The retained `.cache/release-certify` outputs are runnable evidence, not a
+replacement for that source cache or a full source-to-publication rebuild.
+
 ## Command
 
 ```sh

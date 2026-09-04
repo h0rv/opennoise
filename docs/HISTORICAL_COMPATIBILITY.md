@@ -48,6 +48,22 @@ view only. An independent model produces its own landscape coordinates from safe
 Its 306,136 membership edges remain behind the export-denied SQLite display view; a browser payload
 must build tiles from that contract rather than receive raw rows.
 
+## Historical full-map switch: integration gates
+
+The historical option is not currently eligible for the product switcher. It
+may be integrated only when every gate below passes and its result is recorded
+in a release receipt.
+
+| Gate | Required evidence | Current status |
+| --- | --- | --- |
+| Rights and scope | A sealed policy explicitly permits the requested local display; export remains denied unless separately authorized. | Blocked: the current H3 source-data licence is unspecified; default mode is discovery-only. |
+| Exact input | 6,291 unique H2 IDs, source hash `1ac0…fe180`, source date/status, and an explicit H3 coverage receipt. | Partial: H2 passes; H3 has 306,136 observations over 6,289 matching H2 names, with 145 unmatched source genres. |
+| Data boundary | H3 rows and historical coordinates have no derivation edge into `public-graph`; the browser payload contains only local-display, tiled data. | Designed and tested in isolation; not integrated into the public serving release. |
+| Independent visualization | A versioned full-map artifact declares its own coordinates, LOD/tile membership, labels, and input hashes. It must not call archived coordinates a public embedding. | Partial handoff contract only; no certified switch artifact. |
+| Usable switching | A visible, keyboard-accessible switch names `Public semantic map` and `Historical compatibility`; it preserves normal links and makes local-only status clear. | Missing. |
+| Browser and content QA | Desktop/mobile light/dark/system screenshots plus selection, back, zoom, focus, switch-state, and no-script checks pass. No media URL or audio byte may be fetched, embedded, or exposed. | Missing. |
+| Rebuildability | The exact local source/cache and every derived artifact are retained or separately delivered with hashes; a fresh authorized environment can rerun certification offline. | Missing: the source is not distributable through this checkout and must be operator-supplied. |
+
 ## Independent comparison
 
 The evaluator accepts a typed `public-graph-v2` or `production-map-v1` artifact. It joins only

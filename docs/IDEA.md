@@ -11,9 +11,12 @@ genres. The final 6,291 Every Noise entries are a dated historical reference.
 They can be preserved and evaluated separately. They never become hidden input
 to the public model.
 
-The product has one semantic map. The overview shows umbrella regions. Zooming
-keeps context and reveals genres, subgenres, and deeper descendants. A display
-parent is a map choice. The full taxonomy DAG remains available as data.
+The default product map is semantic: the overview shows umbrella regions.
+Zooming keeps context and reveals genres, subgenres, and deeper descendants.
+A display parent is a map choice. The full taxonomy DAG remains available as
+data. The product also supports simple switching among separately versioned,
+evidence-backed visualizations; a historical compatibility view is always
+labelled, local-only when required, and never becomes input to the public map.
 
 Selecting a genre shows data: artists, albums, tracks, compact membership
 facets, and similarity scores. It does not play samples. Links leave the site

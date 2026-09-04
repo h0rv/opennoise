@@ -176,6 +176,23 @@ map artifact records its source-model hash, topology, display-parent decisions,
 coordinates, LOD choices, label decisions, and quality evidence. A complete
 release becomes visible only after certification selects it.
 
+## Current release reproducibility status
+
+The checked-in Phase 3 manifest verifies 62 declared source artifacts and the
+canonical qualification selection hash
+`3eea58195b8b913a0e1daa19f9521739c693bcc926938e6ea63ced7e78115f3d`.
+It does not contain the source bytes or the sealed Phase 3 cache database.
+The cache-only release command therefore correctly fails closed in a fresh
+checkout until the exact cache database is supplied. Do not describe the
+manifest-only state as a reproducible source-to-publication release.
+
+A retained final-integration output bundle has a valid serving database,
+public-model artifact, production-map artifact, browser evidence, and six
+hashed screenshots. It demonstrates that the current builder and renderer can
+certify the 603-genre release from the sealed cache, but it does not make that
+cache independently recoverable. Distribution or retention of the source cache
+is an open release requirement.
+
 `content_fragments` prepares approved text for later embedding work.
 `embeddable_content_fragments` and `trainable_content_fragments` apply separate
 policy checks. The first schema does not choose an embedding model, vector
