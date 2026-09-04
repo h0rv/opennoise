@@ -150,6 +150,12 @@ class GenreDiscoveryTests(unittest.TestCase):
                 membership,
                 base_source_key=h2_source.source_id,
             )
+            display_enabled = import_historical_genre_memberships(
+                database_path,
+                membership,
+                base_source_key=h2_source.source_id,
+                enable_local_display=True,
+            )
 
             self.assertEqual(first, second)
             self.assertEqual(first.genre_memberships, 1)
@@ -158,6 +164,8 @@ class GenreDiscoveryTests(unittest.TestCase):
             self.assertEqual(first.discarded_preview_metadata_count, 1)
             self.assertEqual(first.discarded_sample_metadata_count, 0)
             self.assertEqual(first.discarded_track_identifier_count, 0)
+            self.assertFalse(first.local_display_enabled)
+            self.assertTrue(display_enabled.local_display_enabled)
             connection = sqlite3.connect(database_path)
             try:
                 policy = connection.execute(
@@ -165,11 +173,19 @@ class GenreDiscoveryTests(unittest.TestCase):
                        FROM rights_policy_permissions AS permission
                        JOIN rights_policies AS policy ON policy.id = permission.policy_id
                        WHERE policy.policy_key = ? AND permission.use_kind = 'display'""",
-                    (f"historical-discovery-local:{h3_source.sha256}",),
+                    (f"historical-membership:discovery-only:{h3_source.sha256}",),
+                ).fetchone()
+                display_policy = connection.execute(
+                    """SELECT permission.decision
+                       FROM rights_policy_permissions AS permission
+                       JOIN rights_policies AS policy ON policy.id = permission.policy_id
+                       WHERE policy.policy_key = ? AND permission.use_kind = 'display'""",
+                    (f"historical-membership:local-display:{h3_source.sha256}",),
                 ).fetchone()
             finally:
                 connection.close()
             self.assertEqual(policy, ("deny",))
+            self.assertEqual(display_policy, ("allow",))
     def test_representative_import_is_idempotent_and_policy_safe(self) -> None:
         raw = (
             b'<div id=item1 preview_url="https://p.scdn.co/mp3-preview/legacy" '

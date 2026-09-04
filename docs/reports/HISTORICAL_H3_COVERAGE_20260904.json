@@ -12,6 +12,7 @@
     "empty_genre_rows": 0,
     "genre_memberships": 306136,
     "genre_name_match_rate": 0.977463,
+    "local_display_enabled": false,
     "matched_genres": 6289,
     "source_genres": 6434,
     "unmatched_genres": 145
@@ -24,7 +25,9 @@
       "track_id"
     ],
     "eligible": false,
-    "reason": "The H3 source policy permits local normalization only."
+    "mode": "discovery-only",
+    "reason": "Use --enable-local-display to permit local historical display.",
+    "source_license_status": "unspecified"
   },
   "research_date": "2026-09-04",
   "schema_version": 1,

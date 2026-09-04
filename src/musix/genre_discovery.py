@@ -41,6 +41,7 @@ class GenreMembershipImportSummary(BaseModel):
     discarded_sample_metadata_count: int = Field(ge=0)
     discarded_track_identifier_count: int = Field(ge=0)
     empty_genre_rows: int = Field(ge=0)
+    local_display_enabled: bool
 
 
 def _now() -> str:
@@ -68,9 +69,19 @@ def _source_context(
     return int(row[0])
 
 
-def _seal_local_discovery_policy(connection: sqlite3.Connection, source_sha256: str) -> int:
-    policy_key = f"historical-discovery-local:{source_sha256}"
-    basis = "Bounded public metadata research approved for local normalization only."
+def _seal_historical_membership_policy(
+    connection: sqlite3.Connection,
+    source_sha256: str,
+    *,
+    enable_local_display: bool,
+) -> tuple[int, str]:
+    mode = "local-display" if enable_local_display else "discovery-only"
+    policy_key = f"historical-membership:{mode}:{source_sha256}"
+    basis = (
+        "Bounded public metadata research approved for local normalization and display."
+        if enable_local_display
+        else "Bounded public metadata research approved for local normalization only."
+    )
     connection.execute(
         """INSERT OR IGNORE INTO rights_policies
            (policy_key, policy_version, classification, local_only, basis, reviewed_at)
@@ -89,35 +100,46 @@ def _seal_local_discovery_policy(connection: sqlite3.Connection, source_sha256: 
     ).fetchone()
     if sealed is None:
         for use_kind in ("normalize", "local_search", "display", "embed", "train", "export"):
-            decision = "allow" if use_kind == "normalize" else "deny"
+            decision = (
+                "allow"
+                if use_kind == "normalize" or (enable_local_display and use_kind == "display")
+                else "deny"
+            )
             connection.execute(
                 """INSERT INTO rights_policy_permissions
                    (policy_id, use_kind, decision, reason) VALUES (?, ?, ?, ?)""",
-                (policy_id, use_kind, decision, "H3 discovery source is normalization-only"),
+                (policy_id, use_kind, decision, f"H3 source project policy is {mode}"),
             )
         connection.execute(
             "INSERT INTO rights_policy_seals (policy_id, sealed_at) VALUES (?, ?)",
             (policy_id, _now()),
         )
-    return policy_id
+    return policy_id, mode
 
 
 def _historical_membership_context(
     connection: sqlite3.Connection,
     adaptation: HistoricalGenreMembershipAdaptationResult,
+    *,
+    enable_local_display: bool,
 ) -> tuple[int, int, int]:
     """Register immutable source metadata for a local-only H3 projection."""
     source = adaptation.source
-    policy_id = _seal_local_discovery_policy(connection, source.sha256)
+    policy_id, mode = _seal_historical_membership_policy(
+        connection,
+        source.sha256,
+        enable_local_display=enable_local_display,
+    )
+    source_key = f"{source.source_id}:{mode}"
     connection.execute(
         """INSERT OR IGNORE INTO data_sources
            (source_key, name, homepage_url, acquisition_kind, default_policy_id)
            VALUES (?, ?, ?, 'public_download', ?)""",
-        (source.source_id, "Every Noise genre artist metadata", str(source.url), policy_id),
+        (source_key, "Every Noise genre artist metadata", str(source.url), policy_id),
     )
-    source_id = _source_context(connection, source.source_id)
+    source_id = _source_context(connection, source_key)
     manifest_sha256 = hashlib.sha256(source.model_dump_json().encode()).hexdigest()
-    snapshot_ref = f"{source.source_id}:{source.snapshot}"
+    snapshot_ref = f"{source_key}:{source.snapshot}"
     connection.execute(
         """INSERT OR IGNORE INTO source_snapshots
            (source_id, snapshot_ref, snapshot_kind, upstream_version, manifest_sha256,
@@ -144,7 +166,7 @@ def _historical_membership_context(
             policy_id,
         ),
     )
-    fingerprint = _fingerprint(source.source_id, source.sha256, "genre-page-member")
+    fingerprint = _fingerprint(source_key, source.sha256, "genre-page-member")
     parser_release_ref = "enao_genre_artist_map_v1"
     attempt_ref = f"historical-discovery:{source.sha256}"
     connection.execute(
@@ -372,6 +394,7 @@ def import_historical_genre_memberships(
     adaptation: HistoricalGenreMembershipAdaptationResult,
     *,
     base_source_key: str = QUINT_SOURCE.source_id,
+    enable_local_display: bool = False,
 ) -> GenreMembershipImportSummary:
     """Project local-only H3 evidence onto genres from a sealed base map.
 
@@ -384,7 +407,11 @@ def import_historical_genre_memberships(
     matched_genres: set[str] = set()
     unmatched_genres: set[str] = set()
     with database.connect() as connection, connection:
-        _, policy_id, provenance_id = _historical_membership_context(connection, adaptation)
+        _, policy_id, provenance_id = _historical_membership_context(
+            connection,
+            adaptation,
+            enable_local_display=enable_local_display,
+        )
         contexts = _genre_name_contexts(connection, base_source_key)
         for record in adaptation.records:
             normalized_name = record.genre_name.casefold()
@@ -416,4 +443,5 @@ def import_historical_genre_memberships(
         discarded_sample_metadata_count=adaptation.discarded_sample_metadata_count,
         discarded_track_identifier_count=adaptation.discarded_track_identifier_count,
         empty_genre_rows=adaptation.empty_genre_rows,
+        local_display_enabled=enable_local_display,
     )

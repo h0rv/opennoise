@@ -24,6 +24,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--database", type=Path, required=True)
     parser.add_argument("--vault", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--enable-local-display", action="store_true")
     return parser
 
 
@@ -44,7 +45,11 @@ def main() -> int:
         source_revision_date="2024-11-16",
     )
     store_verified_bytes(raw, adaptation.source, args.vault / "raw" / "sha256")
-    summary = import_historical_genre_memberships(args.database, adaptation)
+    summary = import_historical_genre_memberships(
+        args.database,
+        adaptation,
+        enable_local_display=args.enable_local_display,
+    )
     total_source_genres = summary.matched_genres + summary.unmatched_genres
     report = {
         "schema_version": 1,
@@ -71,8 +76,14 @@ def main() -> int:
             ),
         },
         "publication": {
-            "eligible": False,
-            "reason": "The H3 source policy permits local normalization only.",
+            "eligible": args.enable_local_display,
+            "mode": "local-display" if args.enable_local_display else "discovery-only",
+            "reason": (
+                "Explicit project flag enabled local historical display."
+                if args.enable_local_display
+                else "Use --enable-local-display to permit local historical display."
+            ),
+            "source_license_status": "unspecified",
             "dropped_fields": ["sample_song", "preview_url", "track_id"],
             "audio_or_media_fetched": False,
         },
