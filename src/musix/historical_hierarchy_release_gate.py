@@ -31,12 +31,12 @@ _MIN_LARGE_TOP_CHILDREN = 2
 _SPOT_FAMILIES = ("Electronic", "Latin", "Hip-hop", "Rock", "Metal", "Jazz", "Classical")
 _FAMILY_TERMS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Electronic", ("electronic", "electro", "house", "techno", "edm", "idm", "trance")),
-    ("Latin", ("latin", "salsa", "reggaeton", "bachata", "merengue", "cumbia", "samba", "bossa")),
     ("Hip-hop", ("hip hop", "rap")),
     ("Rock", ("rock",)),
     ("Metal", ("metal",)),
     ("Jazz", ("jazz", "bebop")),
     ("Classical", ("classical", "classique")),
+    ("Latin", ("latin", "salsa", "reggaeton", "bachata", "merengue", "cumbia", "samba", "bossa")),
 )
 _NON_WORDS = re.compile(r"[^\w]+", re.UNICODE)
 

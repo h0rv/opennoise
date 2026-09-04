@@ -34,6 +34,29 @@ class HistoricalHierarchyReleaseGateTests(unittest.TestCase):
         self.assertEqual(report.lexical_parent_conflicts[0].child_family, "Jazz")
         self.assertEqual(report.lexical_parent_conflicts[0].parent_family, "Electronic")
 
+    def test_explicit_classical_head_precedes_regional_modifier(self) -> None:
+        artifact = _artifact()
+        hierarchy = tuple(
+            item.model_copy(
+                update={
+                    "representative_label": (
+                        "Classical"
+                        if item.hierarchy_id == "u1"
+                        else "latin american classical piano"
+                        if item.hierarchy_id == "s2"
+                        else item.representative_label
+                    )
+                }
+            )
+            for item in artifact.hierarchy
+        )
+
+        report = evaluate_historical_hierarchy_release_gate(
+            artifact.model_copy(update={"hierarchy": hierarchy})
+        )
+
+        self.assertTrue(report.parent_lexical_conflicts_free)
+
     def test_detects_duplicate_assignments_and_large_top_without_two_children(self) -> None:
         artifact = _family_artifact()
         hierarchy = tuple(
