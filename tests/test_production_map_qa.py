@@ -163,6 +163,7 @@ def _input(
             no_javascript_svg_fallback=True,
             keyboard_focus_visible=True,
             dark_mode_toggle=True,
+            overview_focus_reveals_label=True,
         ),
     )
 

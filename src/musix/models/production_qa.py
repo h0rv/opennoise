@@ -11,6 +11,8 @@ from pydantic import Field, FiniteFloat, model_validator
 from musix.models.web import FrozenModel
 
 _RANDOM_NULL_TOLERANCE = 1e-12
+_MIN_DESKTOP_OVERVIEW_LABELS = 18
+_MIN_MOBILE_OVERVIEW_LABELS = 6
 
 
 class ProductionMapCoordinate(FrozenModel):
@@ -254,6 +256,7 @@ class ProductionMapInteractionEvidence(FrozenModel):
     no_javascript_svg_fallback: bool
     keyboard_focus_visible: bool
     dark_mode_toggle: bool
+    overview_focus_reveals_label: bool
 
 
 def _validate_hierarchy_regions(
@@ -360,14 +363,25 @@ def _validate_overview_communities(
     overview = min(lods, key=lambda item: item.level)
     if set(overview.visible_overview_community_ids) != set(community_ids):
         raise ValueError("overview LOD must expose every model-emitted overview community")
-    for viewport, labels in (
-        ("desktop", overview.desktop_labels),
-        ("mobile", overview.mobile_labels),
-    ):
-        if {label.entity_id for label in labels} != set(community_ids):
-            raise ValueError(f"overview LOD must label every {viewport} overview community")
+    _validate_overview_label_coverage(overview, set(community_ids))
     if any(lod.visible_overview_community_ids for lod in lods if lod.level != overview.level):
         raise ValueError("overview communities may only appear at the overview LOD")
+
+
+def _validate_overview_label_coverage(overview: ProductionMapLod, community_ids: set[str]) -> None:
+    """Require useful collision-free overview coverage on each target viewport."""
+    for viewport, labels, minimum in (
+        ("desktop", overview.desktop_labels, _MIN_DESKTOP_OVERVIEW_LABELS),
+        ("mobile", overview.mobile_labels, _MIN_MOBILE_OVERVIEW_LABELS),
+    ):
+        label_ids = {label.entity_id for label in labels}
+        if not label_ids.issubset(community_ids):
+            raise ValueError(f"overview {viewport} labels must identify overview communities")
+        required_count = min(minimum, len(community_ids))
+        if len(label_ids) < required_count:
+            raise ValueError(
+                f"overview LOD must label at least {required_count} {viewport} overview communities"
+            )
 
 
 def _validate_layout_semantics(

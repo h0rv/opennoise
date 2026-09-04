@@ -25,8 +25,11 @@ and blocks publication.
   visible by the final zoom level. The overview is a separate set of at most 24
   model-emitted communities: they partition every mapped node, declare their
   exact members, and place each label at its exact member centroid. They appear
-  only at overview; each has a desktop and mobile label decision; descendants
-  progressively replace them at closer levels.
+  only at overview; every community remains visible and searchable. The live
+  renderer must show collision-free labels for at least 18 overview communities
+  on desktop and 6 on mobile (or all communities when fewer), using a stable
+  priority. An unlabelled overview community must reveal its label on focus or
+  selection; descendants progressively replace communities at closer levels.
 - Zoom levels start at zero, are contiguous, retain all earlier visible nodes,
   and end with every node visible.
 - Shown label boxes are checked at every zoom level. No more than 2% of desktop
@@ -46,8 +49,8 @@ and blocks publication.
   in system, light, and dark appearances. Each screenshot must exist at its
   recorded path with its recorded byte size and SHA-256.
 - The interaction record passes drag/touch pan, wheel/pinch zoom, click detail,
-  search state, browser back, keyboard focus, dark mode, and the no-JavaScript
-  SVG fallback.
+  search state, browser back, keyboard focus, dark mode, overview focus-label
+  reveal, and the no-JavaScript SVG fallback.
 
 The report is intentionally renderer-neutral. The production model emits its
 coordinates, hierarchy choices, LOD label decisions, and similarity evidence.
