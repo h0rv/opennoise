@@ -64,9 +64,8 @@
   const overviewProminence = (members) => Math.min(1, Math.log2(Math.max(1, members) + 1) / 6);
   const overviewFontSize = (members) => {
     const mobile = mapElement.clientWidth <= 600;
-    // Cytoscape scales text with the intentionally capped 0.5 overview zoom.
-    // These values therefore target a rendered 14–20px mobile label, rather
-    // than a nominal 14px label that would paint at an unreadable 7px.
+    // Cytoscape scales text with camera zoom. These generous model sizes keep
+    // the sparse overview readable at its fitted camera scale.
     const minimum = mobile ? 28 : 32;
     const maximum = mobile ? 40 : 48;
     return Math.round(minimum + (maximum - minimum) * overviewProminence(members));
@@ -76,9 +75,8 @@
     const padding = overviewFitPadding();
     const usableWidth = Math.max(1, mapElement.clientWidth - 2 * padding);
     const usableHeight = Math.max(1, mapElement.clientHeight - 2 * padding);
-    // The overview is intentionally capped below the raw-genre threshold.
-    // Doubling the preset coordinate space lets that 0.5 zoom still fill the
-    // usable viewport in either portrait or landscape orientation.
+    // A generous preset space leaves room for collision-free labels before
+    // Cytoscape fits the actual viewport.
     return { width: 2000 * usableWidth / usableHeight, height: 2000 };
   };
 
@@ -144,6 +142,14 @@
         point.x = Math.max(inset, Math.min(dimensions.width - inset, point.x));
         point.y = Math.max(inset, Math.min(dimensions.height - inset, point.y));
       }
+    }
+    if (mapElement.clientWidth > 600) {
+      // Preserve ordinal source placement while spreading the dense left-side
+      // cluster across a usable landscape overview.
+      [...points].sort((left, right) => left.x - right.x || left.id.localeCompare(right.id)).forEach((point, index) => {
+        const target = inset + (dimensions.width - 2 * inset) * index / Math.max(1, points.length - 1);
+        point.x = point.x * 0.25 + target * 0.75;
+      });
     }
     return new Map(points.map((point) => [point.id, { x: point.x, y: point.y }]));
   };
@@ -274,6 +280,12 @@
   ];
 
   const lodForZoom = (zoom) => zoom < 0.58 ? 0 : zoom < 0.95 ? 1 : zoom < 1.55 ? 2 : 3;
+  const fitOverview = (cy) => {
+    const overview = cy.nodes(".overview");
+    cy.fit(overview, overviewFitPadding());
+    cy.zoom(Math.min(cy.zoom(), 0.5));
+    cy.center(overview);
+  };
   const labelBudget = (lod) => (mapElement.clientWidth <= 600
     ? [8, 32, 48, 64][lod]
     : [24, 60, 96, 140][lod]);
@@ -449,27 +461,6 @@
     } else say(statusMessage(payload, lod));
   };
 
-  const refreshViewportGeometry = (cy, payload) => {
-    const positions = mapPositions(getNodes(payload), nodeId);
-    const overviewPositions = spreadOverviewPositions(getOverviewCommunities(payload));
-    nodePositionCache.set(payload, positions);
-    nodePositionBuilds += 1;
-    cy.batch(() => cy.nodes().forEach((node) => {
-      const position = node.data("overview")
-        ? overviewPositions.get(node.data("itemId"))
-        : positions.get(node.id());
-      if (position) node.position(position);
-    }));
-    cy.resize();
-    if (!activeCommunity) {
-      cy.fit(cy.nodes(".overview"), overviewFitPadding());
-      cy.zoom(Math.min(cy.zoom(), 0.5));
-      cy.center(cy.nodes(".overview"));
-      currentLod = -1;
-    }
-    updateLod(cy, payload);
-  };
-
   const focusCommunity = (cy, node, payload) => {
     if (activeCommunity?.id() === node.id()) return;
     cameraTransition = true;
@@ -507,9 +498,7 @@
     activeCommunity = null;
     selectedNode = null;
     cy.$(":selected").unselect();
-    cy.fit(cy.nodes(".overview"), overviewFitPadding());
-    cy.zoom(Math.min(cy.zoom(), 0.5));
-    cy.center(cy.nodes(".overview"));
+    fitOverview(cy);
     currentLod = -1;
     cameraTransition = false;
     updateLod(cy, payload);
@@ -597,21 +586,11 @@
       };
       root.classList.add("js-map-ready");
       cy.resize();
-      // Fit establishes the overview center. Clamp zoom below the first semantic
-      // threshold so a small community set cannot skip straight to raw nodes.
-      cy.fit(cy.nodes(".overview"), overviewFitPadding());
-      cy.zoom(Math.min(cy.zoom(), 0.5));
-      cy.center(cy.nodes(".overview"));
+      // Fit establishes the semantic overview baseline. LOD thresholds are
+      // relative to this fitted zoom, so every viewport starts at overview.
+      fitOverview(cy);
       updateLod(cy, payload);
       bindMapInteractions(cy, payload);
-      let viewportSize = `${mapElement.clientWidth}x${mapElement.clientHeight}`;
-      const resizeObserver = new ResizeObserver(() => {
-        const nextSize = `${mapElement.clientWidth}x${mapElement.clientHeight}`;
-        if (nextSize === viewportSize) return;
-        viewportSize = nextSize;
-        window.requestAnimationFrame(() => refreshViewportGeometry(cy, payload));
-      });
-      resizeObserver.observe(mapElement);
 
       const selected = mapElement.dataset.selectedGenre;
       if (selected) cy.$(`#genre-${selected}`).select();

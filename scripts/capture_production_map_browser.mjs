@@ -458,19 +458,24 @@ async function mobileInteractions(cdp) {
   const overview_focus_reveals_label = await overviewFocusRevealsLabel(cdp, true);
   const initial = await state(cdp);
   await touch(cdp, "touchStart", [[x, y]]);
+  await sleep(45);
   await touch(cdp, "touchMove", [[x + 40, y + 55]]);
+  await sleep(45);
   await touch(cdp, "touchEnd", []);
-  await sleep(120);
+  await sleep(160);
   const afterPan = await state(cdp);
   await touch(cdp, "touchStart", [[x - 42, y], [x + 42, y]]);
+  await sleep(45);
   await touch(cdp, "touchMove", [[x - 78, y], [x + 78, y]]);
+  await sleep(45);
   await touch(cdp, "touchEnd", []);
-  await sleep(180);
+  await sleep(220);
   const afterPinch = await state(cdp);
   return {
     touch_pan: afterPan.pan.x !== initial.pan.x || afterPan.pan.y !== initial.pan.y,
     pinch_zoom: afterPinch.zoom !== afterPan.zoom,
     overview_focus_reveals_label,
+    touch_diagnostics: { initial, after_pan: afterPan, after_pinch: afterPinch },
   };
 }
 
