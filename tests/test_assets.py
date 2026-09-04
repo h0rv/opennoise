@@ -25,6 +25,16 @@ class AssetTests(unittest.TestCase):
         self.assertNotIn("mapPositions(getNodes(payload)", node_element)
         self.assertIn("materializeSelectedEdges", source)
 
+    def test_historical_renderer_uses_only_bounded_overview_tiles_and_neighbors(self) -> None:
+        source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
+        self.assertIn('mapElement.dataset.mapMode === "historical"', source)
+        self.assertIn("payload.initial_edge_count !== 0", source)
+        self.assertIn("(payload.nodes ?? []).length > 24", source)
+        self.assertIn(
+            "/api/historical-signal-map?level=${level}&column=${column}&row=${row}", source
+        )
+        self.assertIn("/api/historical-signal-map/neighbors/${encodeURIComponent", source)
+
     def test_browser_certification_uses_screen_font_size_and_rejects_runtime_errors(self) -> None:
         source = Path("scripts/capture_production_map_browser.mjs").read_text(encoding="utf-8")
         self.assertIn("Number.parseFloat(n.style('font-size')) * zoom", source)

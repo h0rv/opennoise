@@ -54,6 +54,167 @@
     if ((window.localStorage.getItem("musix-theme") || "system") === "system") setTheme("system");
   });
 
+  function initHistoricalMap() {
+    const loadedTiles = new Set();
+    const pendingTiles = new Set();
+    const tileNodes = new Map();
+    const tileOrder = [];
+    const selectedIds = new Set();
+    let tileFrame = null;
+    let cy = null;
+    let level = 0;
+    const style = () => [
+      { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": 12, "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, width: 12, height: 12, "overlay-opacity": 0 } },
+      { selector: "node:selected", style: { "background-color": cssValue("--focus"), "border-width": 3, "border-color": cssValue("--focus") } },
+      { selector: "edge", style: { width: 1.5, "line-color": cssValue("--similarity"), opacity: 0.65 } },
+    ];
+    const element = (node) => ({
+      data: { id: `historical-${node.genre_id}`, genreId: node.genre_id, label: node.name, displayLabel: "", weight: node.membership_count, overview: Number(node.lod_min) === 0 },
+      position: { x: Number(node.x) * 600, y: Number(node.y) * 600 },
+    });
+    const appendNodes = (nodes) => {
+      const available = Math.max(0, 1200 - cy.nodes().length);
+      const additions = nodes.filter((node) => cy.$id(`historical-${node.genre_id}`).empty())
+        .sort((left, right) => Number(right.membership_count) - Number(left.membership_count) || String(left.name).localeCompare(String(right.name)))
+        .slice(0, available).map(element);
+      if (additions.length) cy.add(additions);
+    };
+    const setHistoricalLabels = () => {
+      const budget = mapElement.clientWidth <= 600 ? [24, 40, 64, 80][level] : [48, 80, 128, 180][level];
+      const extent = cy.extent();
+      const candidates = cy.nodes().filter((node) => {
+        const position = node.position();
+        return position.x >= extent.x1 && position.x <= extent.x2 && position.y >= extent.y1 && position.y <= extent.y2;
+      }).sort((left, right) => Number(right.data("weight")) - Number(left.data("weight")) || String(left.data("label")).localeCompare(String(right.data("label"))));
+      const boxes = [];
+      let shown = 0;
+      cy.nodes().forEach((node) => node.data("displayLabel", ""));
+      for (const node of candidates) {
+        if (shown === budget) break;
+        const position = node.renderedPosition();
+        const width = Math.max(40, String(node.data("label")).length * 7);
+        const box = { x1: position.x - width / 2, x2: position.x + width / 2, y1: position.y + 8, y2: position.y + 22 };
+        if (boxes.some((other) => box.x1 < other.x2 && box.x2 > other.x1 && box.y1 < other.y2 && box.y2 > other.y1)) continue;
+        boxes.push(box);
+        node.data("displayLabel", node.data("label"));
+        shown += 1;
+      }
+    };
+    const tileRange = () => {
+      const extent = cy.extent();
+      const lowerColumn = Math.max(0, Math.min(15, Math.floor(extent.x1 / 600 * 16)));
+      const upperColumn = Math.max(0, Math.min(15, Math.floor(extent.x2 / 600 * 16)));
+      const lowerRow = Math.max(0, Math.min(15, Math.floor(extent.y1 / 600 * 16)));
+      const upperRow = Math.max(0, Math.min(15, Math.floor(extent.y2 / 600 * 16)));
+      const result = [];
+      for (let column = lowerColumn; column <= upperColumn; column += 1) {
+        for (let row = lowerRow; row <= upperRow; row += 1) result.push([column, row]);
+      }
+      return result;
+    };
+    const loadVisibleTiles = () => {
+      if (level === 0) return;
+      for (const [column, row] of tileRange()) {
+        const key = `${level}:${column}:${row}`;
+        if (loadedTiles.has(key) || pendingTiles.has(key)) continue;
+        pendingTiles.add(key);
+        fetch(`/api/historical-signal-map?level=${level}&column=${column}&row=${row}`, { headers: { Accept: "application/json" } })
+          .then((response) => response.ok ? response.json() : null)
+          .then((payload) => {
+            if (payload) {
+              tileNodes.set(key, new Set((payload.nodes ?? []).map((node) => node.genre_id)));
+              const prior = tileOrder.indexOf(key);
+              if (prior >= 0) tileOrder.splice(prior, 1);
+              tileOrder.push(key);
+              appendNodes(payload.nodes ?? []);
+              loadedTiles.add(key);
+              trimTiles();
+              setHistoricalLabels();
+            }
+          })
+          .finally(() => pendingTiles.delete(key));
+      }
+    };
+    const trimTiles = () => {
+      const active = new Set(tileRange().map(([column, row]) => `${level}:${column}:${row}`));
+      const retained = new Set([...tileOrder.filter((key) => active.has(key)).slice(-3), ...tileOrder.slice(-2)]);
+      const keep = new Set();
+      for (const node of cy.nodes()) if (node.data("overview") || selectedIds.has(node.data("genreId"))) keep.add(node.id());
+      for (const key of retained) for (const genreId of tileNodes.get(key) ?? []) keep.add(`historical-${genreId}`);
+      const stale = cy.nodes().filter((node) => !keep.has(node.id()));
+      if (stale.length) cy.remove(stale);
+      const excess = Math.max(0, cy.nodes().length - 1200);
+      if (excess) {
+        const removable = cy.nodes().filter((node) => !node.data("overview") && !selectedIds.has(node.data("genreId"))).sort((left, right) => Number(left.data("weight")) - Number(right.data("weight")));
+        cy.remove(removable.slice(0, excess));
+      }
+    };
+    const scheduleTiles = () => {
+      if (tileFrame !== null) return;
+      tileFrame = window.requestAnimationFrame(() => {
+        tileFrame = null;
+        loadVisibleTiles();
+        setHistoricalLabels();
+      });
+    };
+    const loadNeighbors = (node) => {
+      fetch(`/api/historical-signal-map/neighbors/${encodeURIComponent(node.data("genreId"))}`, { headers: { Accept: "application/json" } })
+        .then((response) => response.ok ? response.json() : null)
+        .then((payload) => {
+          if (!payload) return;
+          const additions = (payload.neighbors ?? []).flatMap((edge) => {
+            const source = `historical-${edge.genre_id}`;
+            const target = `historical-${edge.neighbor_genre_id}`;
+            const id = `historical-neighbor-${edge.genre_id}-${edge.neighbor_genre_id}`;
+            if (cy.$id(source).empty() || cy.$id(target).empty() || !cy.$id(id).empty()) return [];
+            return [{ data: { id, source, target } }];
+          });
+          if (additions.length) cy.add(additions);
+        });
+    };
+    const update = () => {
+      const relative = cy.zoom();
+      const nextLevel = relative < 1.25 ? 0 : relative < 2 ? 1 : relative < 3 ? 2 : 3;
+      level = nextLevel;
+      scheduleTiles();
+      setHistoricalLabels();
+      say(`Historical compatibility level ${level}`);
+    };
+    fetch(graphUrl, { headers: { Accept: "application/json" } })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("historical overview unavailable")))
+      .then((payload) => {
+        if (payload.initial_edge_count !== 0 || (payload.nodes ?? []).length > 24) throw new Error("historical overview is not bounded");
+        cy = window.cytoscape({ container: mapElement, elements: payload.nodes.map(element), style: style(), layout: { name: "preset", fit: true, padding: 72 }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false });
+        window.__musixMap = cy;
+        window.__musixMapMetrics = { initialElementCount: cy.elements().length, historical: true };
+        root.classList.add("js-map-ready");
+        mapElement.tabIndex = 0;
+        cy.on("zoom pan", scheduleTiles);
+        cy.on("zoom", update);
+        cy.on("tap", "node", (event) => {
+          cy.$(":selected").unselect();
+          event.target.select();
+          selectedIds.add(event.target.data("genreId"));
+          loadNeighbors(event.target);
+        });
+        document.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-map-action]");
+          if (!button) return;
+          event.preventDefault();
+          if (button.dataset.mapAction === "zoom-in") cy.zoom(cy.zoom() * 1.25);
+          if (button.dataset.mapAction === "zoom-out") cy.zoom(cy.zoom() / 1.25);
+          if (button.dataset.mapAction === "fit") cy.fit(cy.nodes(), 72);
+        }, true);
+        update();
+      })
+      .catch(() => say("Historical compatibility is unavailable."));
+  }
+
+  if (mapElement.dataset.mapMode === "historical") {
+    initHistoricalMap();
+    return;
+  }
+
   const nodeId = (raw) => `genre-${raw.genre_id ?? raw.id}`;
   const getNodes = (payload) => payload.nodes ?? payload.graph?.nodes ?? payload.points ?? [];
   const getEdges = (payload) => payload.edges ?? payload.graph?.edges ?? [];

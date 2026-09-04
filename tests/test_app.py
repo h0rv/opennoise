@@ -41,6 +41,18 @@ class AppTests(unittest.TestCase):
         self.assertIn("semantic-map.js", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertNotIn("6291", response.text)
+        self.assertIn('data-map-view="public"', response.text)
+        self.assertIn('href="/?view=historical"', response.text)
+
+    def test_historical_view_is_addressable_but_never_substitutes_public_data(self) -> None:
+        response = self.client.get("/", params={"view": "historical"})
+        api = self.client.get("/api/historical-signal-map")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('data-map-view="historical"', response.text)
+        self.assertIn("Historical compatibility is unavailable.", response.text)
+        self.assertNotIn('data-graph-url="/api/map"', response.text)
+        self.assertEqual(api.status_code, 503)
 
     def test_health_queries_sqlite(self) -> None:
         response = self.client.get("/api/health")

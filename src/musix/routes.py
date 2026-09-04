@@ -1,6 +1,7 @@
 """Typed Litestar routes for map, search, and evidence fragments."""
 
 from datetime import datetime
+from typing import Literal
 
 from litestar import Controller, MediaType, Request, get
 from litestar.datastructures import State
@@ -49,17 +50,21 @@ class CoreController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         production_map: NamedDependency[ProductionMapStore],
+        historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
+        view: FromQuery[Literal["public", "historical"]] = "public",
     ) -> Template:
         """Render the current full map."""
         context = await workspace_context(
             database,
             genre_entries,
             production_map,
+            historical_signal_map,
             layout=layout,
             focus=None,
             search_query=q,
+            view=view,
         )
         return Template(template_name="index.html", context=context)
 
@@ -69,19 +74,23 @@ class CoreController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         production_map: NamedDependency[ProductionMapStore],
+        historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         genre_id: FromPath[int],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
+        view: FromQuery[Literal["public", "historical"]] = "public",
     ) -> Template:
         """Render a shareable genre selection with the complete app shell."""
         context = await workspace_context(
             database,
             genre_entries,
             production_map,
+            historical_signal_map,
             layout=layout,
             focus=genre_id,
             search_query=q,
+            view=view,
         )
         if request.headers.get("HX-Request") == "true":
             return detail_template(context)
@@ -93,10 +102,12 @@ class CoreController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         production_map: NamedDependency[ProductionMapStore],
+        historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         genre_key: FromPath[str],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
+        view: FromQuery[Literal["public", "historical"]] = "public",
     ) -> Template:
         """Open a stable public key, resolving its current local entity only server-side."""
         genre_id = await database.genre_id_for_public_key(genre_key)
@@ -106,9 +117,11 @@ class CoreController(Controller):
             database,
             genre_entries,
             production_map,
+            historical_signal_map,
             layout=layout,
             focus=genre_id,
             search_query=q,
+            view=view,
         )
         if request.headers.get("HX-Request") == "true":
             return detail_template(context)
@@ -319,18 +332,22 @@ class MapController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         production_map: NamedDependency[ProductionMapStore],
+        historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
+        view: FromQuery[Literal["public", "historical"]] = "public",
     ) -> Template:
         """Render one coherent map selection and detail fragment."""
         context = await workspace_context(
             database,
             genre_entries,
             production_map,
+            historical_signal_map,
             layout=layout,
             focus=focus,
             search_query=q,
+            view=view,
         )
         return Template(
             template_name="workspace.html",
@@ -518,10 +535,12 @@ async def workspace_context(
     database: AsyncDatabase,
     genre_entries: GenreEntryRepository,
     production_map: ProductionMapStore,
+    historical_signal_map: HistoricalSignalMapStore,
     *,
     layout: str,
     focus: int | None,
     search_query: str,
+    view: Literal["public", "historical"],
 ) -> dict[str, object]:
     """Build one consistent workspace from a published layout and optional genre."""
     layouts = await database.published_layouts()
@@ -553,6 +572,8 @@ async def workspace_context(
         "production_graph": production_graph,
         "hits": await database.search(bounded_search_query) if bounded_search_query else (),
         "search_query": bounded_search_query,
+        "map_view_mode": view,
+        "historical_map_configured": historical_signal_map.configured,
     }
 
 

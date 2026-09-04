@@ -17,6 +17,33 @@ their sealed hashes and measured aggregate coverage in the compatibility artifac
 poe build-historical-compatibility --source data/raw/sha256/1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180 --h3-source /local/spotify_genres_artists_map.json --enable-local-display
 ```
 
+## Historical signal build and publication
+
+The full historical map remains an operator-supplied local build. The checkout does not contain
+the H3 database, source manifest, compatibility receipt, or object store. Keep the separate
+build and publish commands available for diagnosis; for the normal cache-friendly sequence, set
+the explicit input and output paths below and run one Poe task.
+
+```sh
+export MUSIX_HISTORICAL_MANIFEST=path/to/historical-compatibility.json
+export MUSIX_HISTORICAL_MEMBERSHIP_DATABASE=path/to/local-memberships.sqlite
+export MUSIX_HISTORICAL_H3_ARTIFACT_SHA256=the-verified-h3-sha256
+export MUSIX_HISTORICAL_COMPATIBILITY_RECEIPT=path/to/compatibility-receipt.json
+export MUSIX_HISTORICAL_SIGNAL_ARTIFACT=path/to/cache/historical-signal.json
+export MUSIX_HISTORICAL_SIGNAL_BUILD_REPORT=path/to/cache/historical-signal.build.json
+export MUSIX_HISTORICAL_SIGNAL_PUBLICATION=path/to/cache/historical-signal.publication.json
+export MUSIX_HISTORICAL_OBJECT_STORE=path/to/local-object-store
+export MUSIX_HISTORICAL_SIGNAL_RECEIPT=path/to/cache/historical-signal.receipt.json
+export MUSIX_HISTORICAL_SIGNAL_PUBLISH_REPORT=path/to/cache/historical-signal.publish.json
+poe historical-signal-release
+```
+
+Serve the resulting publication only through the explicit local setting:
+
+```sh
+MUSIX_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json poe dev
+```
+
 The publisher verifies the pinned source before parsing, writes one immutable JSON artifact to the
 configured object store, and writes an append-only coverage record to SQLite. It retains no audio
 or preview URL. A legacy preview is represented only by `absent` or `disabled_legacy` and, when

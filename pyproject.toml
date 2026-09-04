@@ -108,6 +108,12 @@ evaluate-historical-compatibility = "python scripts/evaluate_historical_compatib
 build-historical-signal-model = "python scripts/build_historical_signal_model.py"
 publish-historical-signal-map = "python scripts/publish_historical_signal_map.py"
 
+[tool.poe.tasks.historical-signal-release]
+sequence = [
+    { cmd = "python scripts/build_historical_signal_model.py --historical-manifest $MUSIX_HISTORICAL_MANIFEST --membership-database $MUSIX_HISTORICAL_MEMBERSHIP_DATABASE --h3-artifact-sha256 $MUSIX_HISTORICAL_H3_ARTIFACT_SHA256 --output $MUSIX_HISTORICAL_SIGNAL_ARTIFACT --report $MUSIX_HISTORICAL_SIGNAL_BUILD_REPORT" },
+    { cmd = "python scripts/publish_historical_signal_map.py --signal-artifact $MUSIX_HISTORICAL_SIGNAL_ARTIFACT --compatibility-receipt $MUSIX_HISTORICAL_COMPATIBILITY_RECEIPT --output $MUSIX_HISTORICAL_SIGNAL_PUBLICATION --object-store $MUSIX_HISTORICAL_OBJECT_STORE --receipt $MUSIX_HISTORICAL_SIGNAL_RECEIPT --report $MUSIX_HISTORICAL_SIGNAL_PUBLISH_REPORT" },
+]
+
 [tool.poe.tasks.build-public-release]
 sequence = [
     { cmd = "python scripts/build_public_release.py" },

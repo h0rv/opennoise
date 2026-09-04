@@ -1,4 +1,25 @@
-<main id="map" aria-label="Music map">
+<main id="map" aria-label="Music map" data-map-view="{{ map_view_mode | default('public') }}">
+<nav id="map-view-switch" aria-label="Map view">
+  <a{% if map_view_mode | default('public') == 'public' %} aria-current="page"{% endif %}
+     href="/?view=public{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Public</a>
+  <a{% if map_view_mode | default('public') == 'historical' %} aria-current="page"{% endif %}
+     href="/?view=historical{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">6,291</a>
+</nav>
+{% if map_view_mode | default('public') == 'historical' %}
+  {% if historical_map_configured %}
+  <div id="semantic-map" role="application" aria-label="Interactive historical compatibility map"
+       data-map-mode="historical" data-graph-url="/api/historical-signal-map?level=0"
+       aria-describedby="map-pan-help"></div>
+  <section id="historical-fallback" class="map-fallback" aria-label="Historical compatibility">
+    <p>Historical compatibility</p>
+    <p><a href="/api/historical-signal-map">Source and provenance</a></p>
+  </section>
+  {% else %}
+  <section id="historical-fallback" class="map-fallback" aria-label="Historical compatibility">
+    <p>Historical compatibility is unavailable.</p>
+  </section>
+  {% endif %}
+{% else %}
 <div id="semantic-map" role="application" aria-label="Interactive semantic music map"
      data-graph-url="/api/map" data-selected-genre="{{ map.focused_entity_id or '' }}"
      aria-describedby="map-pan-help"></div>
@@ -42,6 +63,7 @@
   <text x="50" y="50" class="empty" text-anchor="middle">Production map unavailable</text>
 {% endif %}
 </svg>
+{% endif %}
 <div id="map-controls" aria-label="Map controls">
   <button type="button" data-map-action="zoom-in" aria-label="Zoom in">+</button>
   <button type="button" data-map-action="zoom-out" aria-label="Zoom out">−</button>
