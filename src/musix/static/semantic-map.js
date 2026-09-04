@@ -64,8 +64,11 @@
   const overviewProminence = (members) => Math.min(1, Math.log2(Math.max(1, members) + 1) / 6);
   const overviewFontSize = (members) => {
     const mobile = mapElement.clientWidth <= 600;
-    const minimum = mobile ? 14 : 16;
-    const maximum = mobile ? 20 : 24;
+    // Cytoscape scales text with the intentionally capped 0.5 overview zoom.
+    // These values therefore target a rendered 14–20px mobile label, rather
+    // than a nominal 14px label that would paint at an unreadable 7px.
+    const minimum = mobile ? 28 : 32;
+    const maximum = mobile ? 40 : 48;
     return Math.round(minimum + (maximum - minimum) * overviewProminence(members));
   };
   const overviewFitPadding = () => mapElement.clientWidth <= 600 ? 28 : 72;
@@ -114,7 +117,9 @@
       id: community.community_id,
       ...positions.get(community.community_id),
     }));
-    const inset = Math.min(144, dimensions.width * 0.12, dimensions.height * 0.08);
+    const inset = mapElement.clientWidth <= 600
+      ? Math.min(260, dimensions.width * 0.3, dimensions.height * 0.12)
+      : Math.min(144, dimensions.width * 0.12, dimensions.height * 0.08);
     const minimumDistance = mapElement.clientWidth <= 600 ? 300 : 264;
     // This deterministic display adjustment retains the relative input map as
     // its starting point while separating dense overview anchors for readable labels.
@@ -270,7 +275,7 @@
 
   const lodForZoom = (zoom) => zoom < 0.58 ? 0 : zoom < 0.95 ? 1 : zoom < 1.55 ? 2 : 3;
   const labelBudget = (lod) => (mapElement.clientWidth <= 600
-    ? [6, 32, 48, 64][lod]
+    ? [8, 32, 48, 64][lod]
     : [24, 60, 96, 140][lod]);
 
   const intersects = (first, second) => first.x1 < second.x2 && first.x2 > second.x1
@@ -349,6 +354,10 @@
         { "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 28 },
         { "text-halign": "left", "text-valign": "center", "text-margin-x": 28, "text-margin-y": 0 },
         { "text-halign": "right", "text-valign": "center", "text-margin-x": -28, "text-margin-y": 0 },
+        { "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 52 },
+        { "text-halign": "center", "text-valign": "top", "text-margin-x": 0, "text-margin-y": -52 },
+        { "text-halign": "left", "text-valign": "center", "text-margin-x": 52, "text-margin-y": 0 },
+        { "text-halign": "right", "text-valign": "center", "text-margin-x": -52, "text-margin-y": 0 },
       ]
       : [{ "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 7 }];
     cy.nodes().forEach((node) => {
@@ -367,8 +376,9 @@
         // This is the same live renderer geometry collected by browser QA. It
         // keeps the UI from rendering a label the map cannot actually show.
         const bounds = renderedLabelBounds(cy, node);
-        const inViewport = bounds.x1 >= viewport.left + 4 && bounds.y1 >= viewport.top + 4
-          && bounds.x2 <= viewport.right - 4 && bounds.y2 <= viewport.bottom - 4;
+        const textInset = mapElement.clientWidth <= 600 ? 18 : 8;
+        const inViewport = bounds.x1 >= viewport.left + textInset && bounds.y1 >= viewport.top + textInset
+          && bounds.x2 <= viewport.right - textInset && bounds.y2 <= viewport.bottom - textInset;
         if (!inViewport || acceptedBoxes.some((other) => intersects(bounds, other))) continue;
         acceptedBoxes.push(bounds);
         accepted += 1;
@@ -417,7 +427,7 @@
       for (const memberId of focusedMembers) visibleIds.add(memberId);
       visibleIds.add(activeCommunity.data("itemId"));
     }
-    const labelSize = [12, 14, 13, 12][lod];
+    const labelSize = [12, mapElement.clientWidth <= 600 ? 24 : 14, 13, 12][lod];
     cy.batch(() => {
       cy.nodes().forEach((node) => {
         const visible = visibleIds.has(node.data("itemId"));
