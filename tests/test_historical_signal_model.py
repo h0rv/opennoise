@@ -12,13 +12,13 @@ import numpy as np
 from pydantic import ValidationError
 
 from musix.historical_signal_model import (
-    _HierarchyGroup,
     _family_hierarchy_representative,
     _genre_family_seed,
+    _graph_hierarchy,
+    _HierarchyGroup,
     _idf_candidates,
     _knn,
 )
-from musix.historical_signal_model import _graph_hierarchy
 from musix.models.historical_signal import HistoricalSignalSettings
 
 _MICROGENRE_LEVEL = 2

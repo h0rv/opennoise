@@ -14,6 +14,7 @@ _MIN_COMPONENTS_IN_BUNDLE = 2
 _FULL_NODE_COUNT = 6_291
 _MIN_FULL_UMBRELLAS = 2
 _MAX_FULL_UMBRELLAS = 24
+_MIN_UMBRELLA_CHILDREN = 2
 HISTORICAL_FULL_MAP_NODE_TARGET = _FULL_NODE_COUNT
 
 
@@ -370,11 +371,13 @@ class HistoricalSignalArtifact(FrozenModel):
         hierarchy_by_id = {item.hierarchy_id: item for item in self.hierarchy}
         if any(
             umbrella.member_count > self.settings.hierarchy_subcommunity_max_members
-            and len(umbrella.children_ids) < 2
+            and len(umbrella.children_ids) < _MIN_UMBRELLA_CHILDREN
             for umbrella in hierarchy_by_id.values()
             if umbrella.level == _UMBRELLA_LEVEL
         ):
-            raise ValueError("large historical signal umbrellas must have multiple level-one children")
+            raise ValueError(
+                "large historical signal umbrellas must have multiple level-one children"
+            )
         return self
 
 

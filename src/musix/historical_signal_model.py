@@ -53,6 +53,7 @@ _LEXICAL_TRIGRAM_MIN_WORD_LENGTH = 4
 _LEXICAL_MAX_DOCUMENT_FREQUENCY = 64
 _LEXICAL_SIMILARITY_CUTOFF = 0.02
 _DISPLAY_HEAD_MIN_HITS = 2
+_FAMILY_PROPAGATION_MIN_SUPPORT = 0.60
 
 
 class HistoricalSignalInputError(ValueError):
@@ -429,9 +430,7 @@ def _family_hierarchy_representative(
 ) -> int:
     """Prefer an explicit matching family seed for a level-one display label."""
     seeded_members = tuple(
-        member
-        for member in group.members
-        if _genre_family_seed(names[genre_ids[member]]) == family
+        member for member in group.members if _genre_family_seed(names[genre_ids[member]]) == family
     )
     if not seeded_members:
         return _hierarchy_representative(group, graph, genre_ids)
@@ -757,7 +756,7 @@ def _semantic_umbrellas(
     )
 
 
-def _genre_family_seed(name: str) -> str | None:
+def _genre_family_seed(name: str) -> str | None:  # noqa: PLR0911, PLR0912
     """Return an explicit broad display-family seed from one genre's own name only."""
     value = name.casefold()
     words = set(re.findall(r"[a-z0-9]+", value))
@@ -797,7 +796,7 @@ def _genre_family_seed(name: str) -> str | None:
 def _family_assignments(
     graph: list[dict[int, float]], names: Mapping[str, str], genre_ids: tuple[str, ...]
 ) -> dict[int, str]:
-    """Keep explicit lexical seeds fixed; propagate only unseeded nodes from weighted H3 affinity."""
+    """Keep lexical seeds fixed; propagate unseeded nodes from weighted H3 affinity."""
     assignments = {
         index: seed
         for index, genre_id in enumerate(genre_ids)
@@ -817,7 +816,7 @@ def _family_assignments(
                 continue
             family = min(scores, key=lambda candidate: (-scores[candidate], candidate))
             support = scores[family] / sum(scores.values())
-            if support >= 0.60:
+            if support >= _FAMILY_PROPAGATION_MIN_SUPPORT:
                 additions[index] = family
         if not additions:
             break
@@ -829,7 +828,7 @@ def _graph_hierarchy(
     # The reciprocal graph remains part of the model boundary for compatibility with
     # the persisted artifact contract; display families are seeded from the full graph.
     graph: list[dict[int, float]],
-    reciprocal_graph: list[dict[int, float]],
+    _reciprocal_graph: list[dict[int, float]],
     genre_ids: tuple[str, ...],
     names: Mapping[str, str],
     positions: np.ndarray,
@@ -1413,7 +1412,8 @@ def build_historical_signal_model(
             detail=(
                 "Explicit individual genre-name family seeds assign only level-0 display families; "
                 "unseeded genres may propagate those families over weighted H3 affinity. It never "
-                "changes H3 kNN, similarity weights, layout coordinates, or graph-only lower levels."
+                "changes H3 kNN, similarity weights, layout coordinates, or graph-only lower "
+                "levels."
             ),
         ),
         HistoricalSignalAblation(
