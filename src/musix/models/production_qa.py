@@ -113,11 +113,25 @@ class ProductionMapUmbrellaCentroid(FrozenModel):
         return self
 
 
+class ProductionMapOverviewNaming(FrozenModel):
+    """Explain the public umbrella name assigned to one overview community."""
+
+    method: Literal[
+        "canonical_taxonomy_ancestor_weighted_coverage_v1",
+        "community_centrality_fallback_v1",
+    ]
+    anchor_entity_id: str = Field(min_length=1, max_length=200)
+    weighted_coverage: FiniteFloat = Field(ge=0.0, le=1.0)
+    provenance_refs: tuple[str, ...] = Field(min_length=1, max_length=32)
+
+
 class ProductionMapOverviewCommunity(FrozenModel):
     """One model-emitted overview community with an exact coordinate provenance."""
 
     community_id: str = Field(min_length=1, max_length=200)
     member_entity_ids: tuple[str, ...] = Field(min_length=1, max_length=20_000)
+    name: str = Field(min_length=1, max_length=500)
+    naming: ProductionMapOverviewNaming
     x: FiniteFloat = Field(ge=0.0, le=1.0)
     y: FiniteFloat = Field(ge=0.0, le=1.0)
 

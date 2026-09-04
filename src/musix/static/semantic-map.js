@@ -91,7 +91,7 @@
         id: community.community_id,
         itemId: community.community_id,
         genreId: community.community_id,
-        label: overviewLabel(community),
+        label: community.name ?? overviewLabel(community),
         detailHref: null,
         depth: 0,
         lodMin: 0,

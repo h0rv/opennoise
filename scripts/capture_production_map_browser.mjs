@@ -248,6 +248,34 @@ async function lodMeasurements(cdp) {
   return measurements;
 }
 
+async function overviewFocusRevealsLabel(cdp) {
+  const candidate = await cdp.evaluate(`(() => {
+    const cy = window.__musixMap;
+    const node = cy.nodes('.overview:visible').filter(n => !n.data('displayLabel')).sort(
+      (left, right) => String(left.data('itemId')).localeCompare(String(right.data('itemId'))),
+    )[0];
+    if (!node) throw new Error('no initially unlabeled overview community');
+    const point = node.renderedPosition();
+    return { id: node.id(), x: point.x, y: point.y };
+  })()`, "initially unlabeled overview community");
+  await click(cdp, candidate.x, candidate.y);
+  await sleep(120);
+  return cdp.evaluate(`(() => {
+    const cy = window.__musixMap;
+    const node = cy.$id(${JSON.stringify(candidate.id)});
+    const map = document.querySelector('#semantic-map').getBoundingClientRect();
+    const label = String(node.data('displayLabel') ?? '');
+    node.boundingBox({includeLabels:true});
+    const raw = node[0]._private.labelBounds.main;
+    const pan = cy.pan(); const zoom = cy.zoom();
+    const bounds = { x1:raw.x1 * zoom + pan.x, y1:raw.y1 * zoom + pan.y, x2:raw.x2 * zoom + pan.x, y2:raw.y2 * zoom + pan.y };
+    return node.selected() && label.length > 0
+      && [bounds.x1, bounds.y1, bounds.x2, bounds.y2].every(Number.isFinite)
+      && bounds.x1 >= map.left && bounds.y1 >= map.top
+      && bounds.x2 <= map.right && bounds.y2 <= map.bottom;
+  })()`, "selected overview label is visible in renderer");
+}
+
 async function desktopInteractions(cdp) {
   const map = await box(cdp, "#semantic-map");
   if (!map) throw new Error("map bounding box not found");
@@ -325,6 +353,7 @@ async function mobileInteractions(cdp) {
   if (!map) throw new Error("mobile map bounding box not found");
   const x = map.x + map.width * 0.68;
   const y = map.y + map.height * 0.54;
+  const overview_focus_reveals_label = await overviewFocusRevealsLabel(cdp);
   const initial = await state(cdp);
   await touch(cdp, "touchStart", [[x, y]]);
   await touch(cdp, "touchMove", [[x + 40, y + 55]]);
@@ -336,7 +365,11 @@ async function mobileInteractions(cdp) {
   await touch(cdp, "touchEnd", []);
   await sleep(180);
   const afterPinch = await state(cdp);
-  return { touch_pan: afterPan.pan.x !== initial.pan.x || afterPan.pan.y !== initial.pan.y, pinch_zoom: afterPinch.zoom !== afterPan.zoom };
+  return {
+    touch_pan: afterPan.pan.x !== initial.pan.x || afterPan.pan.y !== initial.pan.y,
+    pinch_zoom: afterPinch.zoom !== afterPan.zoom,
+    overview_focus_reveals_label,
+  };
 }
 
 async function keyboardFocus(cdp) {

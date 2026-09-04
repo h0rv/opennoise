@@ -11,6 +11,7 @@ from musix.models.modeling import (
     PublicModelSettings,
 )
 from musix.models.production import ProductionMapSettings
+from musix.overview import build_overview_communities
 
 
 def _inputs() -> PublicModelInput:
@@ -120,6 +121,21 @@ class ProductionMapTests(unittest.TestCase):
             "wikidata:genre:Q1",
         )
         by_id = {item.genre_id: item for item in first.nodes}
+        overview = build_overview_communities(first)
+        overview_names = [community.name for community in overview]
+        self.assertEqual(len(overview_names), len(set(overview_names)))
+        electronic = next(
+            community
+            for community in overview
+            if "wikidata:genre:Q2" in community.member_entity_ids
+        )
+        self.assertEqual(electronic.naming.anchor_entity_id, "wikidata:genre:Q1")
+        self.assertEqual(
+            electronic.naming.method,
+            "canonical_taxonomy_ancestor_weighted_coverage_v1",
+        )
+        self.assertGreaterEqual(electronic.naming.weighted_coverage, 0.5)
+        self.assertIn("wd:Q1", electronic.naming.provenance_refs)
         for node in first.nodes:
             if node.display_parent_id is None:
                 self.assertEqual(node.lod_min, 0)
