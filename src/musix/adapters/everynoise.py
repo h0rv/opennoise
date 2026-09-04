@@ -85,6 +85,20 @@ WATCH_SOURCE = SourceSpec(
     adapter="enao_watch_csv_v1",
 )
 
+NEROYUKI_H3_SOURCE = SourceSpec(
+    source_id="enao_genre_artist_membership_neroyuki_20241116",
+    namespace="enao-genre-artist-map",
+    snapshot="git:88bd6f6cac0be49cf58af364af5db6f323065375",
+    url=(
+        "https://raw.githubusercontent.com/NeroYuki/everynoise_enhancement_script/"
+        "88bd6f6cac0be49cf58af364af5db6f323065375/spotify_genres_artists_map.json"
+    ),
+    expected_bytes=81_672_845,
+    sha256="863a513a6da89735a69373a46ba58f6975eddb5d065964c577dfcacf18fffe20",
+    expected_records=6_435,
+    adapter="enao_genre_artist_map_v1",
+)
+
 
 class IdentifierRecord(BaseModel):
     """One identifier accepted by the catalog JSONL boundary."""
@@ -181,6 +195,79 @@ class HistoricalAdaptationResult(BaseModel):
     records: tuple[HistoricalRepresentativeRecord, ...]
     quarantine: tuple[QuarantineRecord, ...]
 
+
+class HistoricalGenreMemberRecord(BaseModel):
+    """One source-scoped artist-to-genre observation with media fields removed."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    genre_name: NonEmptyText
+    artist_name: NonEmptyText
+    source_artist_id: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9]{22}$")]
+    source_revision_date: NonEmptyText
+    source_id: NonEmptyText
+    source_sha256: Sha256
+
+
+class HistoricalGenreMembershipAdaptationResult(BaseModel):
+    """Keep bounded genre-page-style membership evidence separate from catalog facts."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source: SourceSpec
+    records: tuple[HistoricalGenreMemberRecord, ...]
+    discarded_preview_metadata_count: Annotated[int, Field(ge=0)]
+    discarded_sample_metadata_count: Annotated[int, Field(ge=0)]
+    discarded_track_identifier_count: Annotated[int, Field(ge=0)]
+    empty_genre_rows: Annotated[int, Field(ge=0)]
+
+
+class _GenreArtistMapArtist(BaseModel):
+    """Parse a known upstream row while deliberately not publishing media metadata."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    artist: NonEmptyText
+    artist_id: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9]{22}$")]
+    sample_song: str | None = None
+    preview_url: str | None = None
+    track_id: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9]{22}$")] | None = None
+
+
+class _GenreArtistMapRow(BaseModel):
+    """Parse one source genre and its artist observations."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    genre: NonEmptyText
+    artists: tuple[_GenreArtistMapArtist, ...]
+
+
+def _discarded_media_metadata(
+    artist: _GenreArtistMapArtist,
+) -> tuple[int, int, int]:
+    return (
+        int(artist.preview_url is not None),
+        int(artist.sample_song is not None),
+        int(artist.track_id is not None),
+    )
+
+
+def _genre_member_record(
+    row: _GenreArtistMapRow,
+    artist: _GenreArtistMapArtist,
+    *,
+    source: SourceSpec,
+    source_revision_date: str,
+) -> HistoricalGenreMemberRecord:
+    return HistoricalGenreMemberRecord(
+        genre_name=row.genre,
+        artist_name=artist.artist,
+        source_artist_id=artist.artist_id,
+        source_revision_date=source_revision_date,
+        source_id=source.source_id,
+        source_sha256=source.sha256,
+    )
 
 class AdaptationResult(BaseModel):
     """Deterministic accepted and quarantined outputs from one adapter run."""
@@ -374,6 +461,71 @@ def adapt_quint_historical_representatives(
         quarantine=tuple(quarantine),
     )
 
+
+def adapt_historical_genre_artist_map(
+    raw: bytes,
+    source: SourceSpec,
+    *,
+    source_revision_date: str,
+) -> HistoricalGenreMembershipAdaptationResult:
+    """Adapt a sealed genre-membership artifact while dropping media metadata.
+
+    This is an H3 discovery adapter. Its output is source-scoped evidence, not
+    canonical membership and not evidence of complete historical coverage.
+    """
+    if source.adapter != "enao_genre_artist_map_v1":
+        raise ValueError("source adapter must be enao_genre_artist_map_v1")
+    _verify_bytes(raw, source)
+    try:
+        decoded = json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise SourceVerificationError("genre artist map is not valid JSON") from error
+    if not isinstance(decoded, list):
+        raise SourceVerificationError("genre artist map root must be a JSON array")
+    if len(decoded) != source.expected_records:
+        raise SourceVerificationError(
+            f"{source.source_id} exposed {len(decoded)} genre rows; "
+            f"expected {source.expected_records}"
+        )
+    try:
+        rows = tuple(_GenreArtistMapRow.model_validate(row) for row in decoded)
+    except (TypeError, ValueError) as error:
+        raise SourceVerificationError("genre artist map fields are invalid") from error
+
+    records: list[HistoricalGenreMemberRecord] = []
+    fingerprints: set[tuple[str, str]] = set()
+    discarded_preview_metadata_count = 0
+    discarded_sample_metadata_count = 0
+    discarded_track_identifier_count = 0
+    empty_genre_rows = 0
+    for row in rows:
+        if not row.artists:
+            empty_genre_rows += 1
+        for artist in row.artists:
+            preview_count, sample_count, track_identifier_count = _discarded_media_metadata(artist)
+            discarded_preview_metadata_count += preview_count
+            discarded_sample_metadata_count += sample_count
+            discarded_track_identifier_count += track_identifier_count
+            fingerprint = (row.genre.casefold(), artist.artist_id)
+            if fingerprint in fingerprints:
+                continue
+            fingerprints.add(fingerprint)
+            records.append(
+                _genre_member_record(
+                    row,
+                    artist,
+                    source=source,
+                    source_revision_date=source_revision_date,
+                )
+            )
+    return HistoricalGenreMembershipAdaptationResult(
+        source=source,
+        records=tuple(records),
+        discarded_preview_metadata_count=discarded_preview_metadata_count,
+        discarded_sample_metadata_count=discarded_sample_metadata_count,
+        discarded_track_identifier_count=discarded_track_identifier_count,
+        empty_genre_rows=empty_genre_rows,
+    )
 
 def _slug(name: str) -> str:
     normalized = unicodedata.normalize("NFKC", name).casefold()

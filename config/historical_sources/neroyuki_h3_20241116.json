@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "source_id": "enao_genre_artist_membership_neroyuki_20241116",
+  "status": "discovery_only",
+  "scope": "H3 genre-to-artist membership evidence only",
+  "source_url": "https://raw.githubusercontent.com/NeroYuki/everynoise_enhancement_script/88bd6f6cac0be49cf58af364af5db6f323065375/spotify_genres_artists_map.json",
+  "repository_url": "https://github.com/NeroYuki/everynoise_enhancement_script",
+  "repository_commit": "88bd6f6cac0be49cf58af364af5db6f323065375",
+  "git_blob_sha1": "f91b03a6bdd736035f40f10b391b4bcf33978aa6",
+  "full_byte_size": 81672845,
+  "full_sha256": "863a513a6da89735a69373a46ba58f6975eddb5d065964c577dfcacf18fffe20",
+  "bounded_range": {
+    "start": 0,
+    "end": 65535,
+    "byte_size": 65536,
+    "sha256": "5e5555f2d5e68546cb599634b7cf4bd7cc5455e5cd06e9c8159e4be11f4648b4"
+  },
+  "safe_projection_fixture": "tests/fixtures/everynoise/neroyuki_h3_pop_sample.json",
+  "safe_projection_sha256": "3ec106419821b7de25bbac2590c71f3d30a3508a467d023523e878b58b5a8551",
+  "coverage_report": "docs/reports/HISTORICAL_H3_COVERAGE_20260904.json",
+  "coverage_report_sha256": "d84c58cc09c60933b5b6e55eb2cd3df8654b1e51f510de257ab14e05edb1d523",
+  "observed_at": "2026-09-04",
+  "license_status": "repository MIT; source-data provenance not independently licensed",
+  "rights_status": "local research only pending source-policy review",
+  "excluded_fields": ["preview_url", "sample_song", "track_id"],
+  "forbidden_actions": ["fetch media", "serve preview URLs", "treat as complete coverage"],
+  "adapter": "enao_genre_artist_map_v1",
+  "coverage": {
+    "historical_stage": "H3",
+    "source_genre_rows": 6435,
+    "source_distinct_genres": 6434,
+    "source_artist_memberships": 313490,
+    "source_distinct_artist_ids": 241160,
+    "base_map_matched_genres": 6289,
+    "base_map_unmatched_genres": 145,
+    "base_map_imported_artist_memberships": 306136,
+    "full_coverage": "sealed local source; coverage refers only to matching H2 names"
+  }
+}

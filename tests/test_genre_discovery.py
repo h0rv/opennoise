@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import json
 import sqlite3
 import tempfile
 import unittest
@@ -7,14 +8,168 @@ from pathlib import Path
 
 from musix.adapters.everynoise import (
     SourceSpec,
+    adapt_historical_genre_artist_map,
     adapt_quint_historical_representatives,
     adapt_quint_html,
 )
-from musix.genre_discovery import import_historical_representatives
+from musix.genre_discovery import (
+    import_historical_genre_memberships,
+    import_historical_representatives,
+)
 from musix.ingest import ImportOptions, import_jsonl
 
 
 class GenreDiscoveryTests(unittest.TestCase):
+    def test_bounded_h3_projection_is_sealed_and_media_free(self) -> None:
+        fixture_path = (
+            Path(__file__).parent / "fixtures" / "everynoise" / "neroyuki_h3_pop_sample.json"
+        )
+        raw = fixture_path.read_bytes()
+        fixture = json.loads(raw)
+
+        self.assertEqual(
+            hashlib.sha256(raw).hexdigest(),
+            "3ec106419821b7de25bbac2590c71f3d30a3508a467d023523e878b58b5a8551",
+        )
+        self.assertEqual(fixture["source"]["status"], "discovery_only")
+        self.assertEqual(fixture["projection"]["dropped_fields"], ["sample_song", "preview_url"])
+        self.assertEqual(fixture["projection"]["artist_memberships"], 3)
+        for record in fixture["records"]:
+            self.assertEqual(set(record), {"genre", "artist", "artist_id"})
+
+    def test_genre_membership_adapter_drops_all_preview_metadata(self) -> None:
+        raw = b"""[
+          {"genre":"pop","artists":[
+            {"artist":"Taylor Swift","artist_id":"06HL4z0CvFAxyc27GXpf02","sample_song":"Cruel Summer","preview_url":"https://p.scdn.co/mp3-preview/never-fetch"},
+            {"artist":"The Weeknd","artist_id":"1Xyo4u8uXC1ZmMpatF05PJ"}
+          ]}
+        ]"""
+        source = SourceSpec.model_validate(
+            {
+                "source_id": "enao-h3-test-source",
+                "namespace": "enao-h3-test",
+                "snapshot": "git:test",
+                "url": "https://example.invalid/genre-artists.json",
+                "expected_bytes": len(raw),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "expected_records": 1,
+                "adapter": "enao_genre_artist_map_v1",
+            }
+        )
+
+        result = adapt_historical_genre_artist_map(
+            raw,
+            source,
+            source_revision_date="2024-11-16",
+        )
+
+        self.assertEqual(result.discarded_preview_metadata_count, 1)
+        self.assertEqual(result.discarded_sample_metadata_count, 1)
+        self.assertEqual(result.discarded_track_identifier_count, 0)
+        self.assertEqual(result.empty_genre_rows, 0)
+        self.assertEqual(
+            [
+                (record.genre_name, record.artist_name, record.source_artist_id)
+                for record in result.records
+            ],
+            [
+                ("pop", "Taylor Swift", "06HL4z0CvFAxyc27GXpf02"),
+                ("pop", "The Weeknd", "1Xyo4u8uXC1ZmMpatF05PJ"),
+            ],
+        )
+        rendered = result.model_dump_json()
+        self.assertNotIn("preview_url", rendered)
+        self.assertNotIn("sample_song", rendered)
+        self.assertNotIn("p.scdn.co", rendered)
+
+    def test_genre_membership_import_is_local_only_and_idempotent(self) -> None:
+        h2_raw = (
+            b'<div id=item1 class="genre scanme" style="color: #ad8907; top: 4997px; '
+            b'left: 783px; font-size: 160%" '
+            b'onclick=\'playx("1V6gIisPpYqgFeWbMLI0bA", "pop", this);\' '
+            b'title=\'e.g. Demi Lovato "Heart Attack"\'>pop</div>'
+        )
+        h2_source = SourceSpec.model_validate(
+            {
+                "source_id": "enao-test-source",
+                "namespace": "enao-test",
+                "snapshot": "final-map:2023-11-19",
+                "url": "https://example.invalid/final-map",
+                "expected_bytes": len(h2_raw),
+                "sha256": hashlib.sha256(h2_raw).hexdigest(),
+                "expected_records": 1,
+                "adapter": "enao_html_map_v1",
+            }
+        )
+        h3_raw = (
+            b'[{"genre":"pop","artists":[{"artist":"Taylor Swift",'
+            b'"artist_id":"06HL4z0CvFAxyc27GXpf02",'
+            b'"preview_url":"https://p.scdn.co/mp3-preview/never-fetch"}]}]'
+        )
+        h3_source = SourceSpec.model_validate(
+            {
+                "source_id": "enao-h3-test-source",
+                "namespace": "enao-h3-test",
+                "snapshot": "git:test",
+                "url": "https://example.invalid/genre-artists.json",
+                "expected_bytes": len(h3_raw),
+                "sha256": hashlib.sha256(h3_raw).hexdigest(),
+                "expected_records": 1,
+                "adapter": "enao_genre_artist_map_v1",
+            }
+        )
+        catalog = adapt_quint_html(h2_raw, h2_source)
+        membership = adapt_historical_genre_artist_map(
+            h3_raw,
+            h3_source,
+            source_revision_date="2024-11-16",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path = root / "catalog.jsonl"
+            catalog_path.write_bytes(catalog.catalog_jsonl())
+            database_path = root / "musix.sqlite"
+            asyncio.run(
+                import_jsonl(
+                    ImportOptions(
+                        input_path=catalog_path,
+                        database_path=database_path,
+                        vault_path=root / "vault",
+                        source_key=h2_source.source_id,
+                        source_name="Every Noise test source",
+                    )
+                )
+            )
+            first = import_historical_genre_memberships(
+                database_path,
+                membership,
+                base_source_key=h2_source.source_id,
+            )
+            second = import_historical_genre_memberships(
+                database_path,
+                membership,
+                base_source_key=h2_source.source_id,
+            )
+
+            self.assertEqual(first, second)
+            self.assertEqual(first.genre_memberships, 1)
+            self.assertEqual(first.matched_genres, 1)
+            self.assertEqual(first.unmatched_genres, 0)
+            self.assertEqual(first.discarded_preview_metadata_count, 1)
+            self.assertEqual(first.discarded_sample_metadata_count, 0)
+            self.assertEqual(first.discarded_track_identifier_count, 0)
+            connection = sqlite3.connect(database_path)
+            try:
+                policy = connection.execute(
+                    """SELECT permission.decision
+                       FROM rights_policy_permissions AS permission
+                       JOIN rights_policies AS policy ON policy.id = permission.policy_id
+                       WHERE policy.policy_key = ? AND permission.use_kind = 'display'""",
+                    (f"historical-discovery-local:{h3_source.sha256}",),
+                ).fetchone()
+            finally:
+                connection.close()
+            self.assertEqual(policy, ("deny",))
     def test_representative_import_is_idempotent_and_policy_safe(self) -> None:
         raw = (
             b'<div id=item1 preview_url="https://p.scdn.co/mp3-preview/legacy" '

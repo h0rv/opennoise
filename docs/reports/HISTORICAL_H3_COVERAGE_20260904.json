@@ -1,0 +1,38 @@
+{
+  "base_map": {
+    "genre_points": 6291,
+    "sha256": "1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180",
+    "source_id": "enao_quint_legacy_map_2025"
+  },
+  "coverage": {
+    "discarded_preview_metadata_count": 313490,
+    "discarded_sample_metadata_count": 313490,
+    "discarded_track_identifier_count": 7445,
+    "distinct_source_artists": 241160,
+    "empty_genre_rows": 0,
+    "genre_memberships": 306136,
+    "genre_name_match_rate": 0.977463,
+    "matched_genres": 6289,
+    "source_genres": 6434,
+    "unmatched_genres": 145
+  },
+  "publication": {
+    "audio_or_media_fetched": false,
+    "dropped_fields": [
+      "sample_song",
+      "preview_url",
+      "track_id"
+    ],
+    "eligible": false,
+    "reason": "The H3 source policy permits local normalization only."
+  },
+  "research_date": "2026-09-04",
+  "schema_version": 1,
+  "source": {
+    "byte_size": 81672845,
+    "expected_genre_rows": 6435,
+    "id": "enao_genre_artist_membership_neroyuki_20241116",
+    "sha256": "863a513a6da89735a69373a46ba58f6975eddb5d065964c577dfcacf18fffe20",
+    "snapshot": "git:88bd6f6cac0be49cf58af364af5db6f323065375"
+  }
+}

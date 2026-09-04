@@ -229,6 +229,7 @@ __marimo__/
 /data/raw/
 /data/vault/
 /data/source-cache/
+/data/historical/
 /data/staging/
 /data/quarantine/
 /data/model/
