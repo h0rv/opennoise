@@ -272,6 +272,16 @@ class ProductionMapInteractionEvidence(FrozenModel):
     dark_mode_toggle: bool
     overview_focus_reveals_label: bool
 
+    @model_validator(mode="after")
+    def require_every_interaction_to_pass(self) -> ProductionMapInteractionEvidence:
+        """Fail closed rather than serializing a browser failure as release evidence."""
+        failed = [name for name, passed in self.model_dump(mode="python").items() if not passed]
+        if failed:
+            raise ValueError(
+                "interaction/accessibility evidence contains failed checks: " + ", ".join(failed)
+            )
+        return self
+
 
 def _validate_hierarchy_regions(
     regions: tuple[ProductionMapRegion, ...],

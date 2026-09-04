@@ -25,6 +25,12 @@ class AssetTests(unittest.TestCase):
         self.assertNotIn("mapPositions(getNodes(payload)", node_element)
         self.assertIn("materializeSelectedEdges", source)
 
+    def test_browser_certification_uses_screen_font_size_and_rejects_runtime_errors(self) -> None:
+        source = Path("scripts/capture_production_map_browser.mjs").read_text(encoding="utf-8")
+        self.assertIn("Number.parseFloat(n.style('font-size')) * zoom", source)
+        self.assertIn("requireNoRuntimeErrors", source)
+        self.assertIn("requirePassingInteractions", source)
+
 
 if __name__ == "__main__":
     unittest.main()

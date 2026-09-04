@@ -183,6 +183,17 @@ async function click(cdp, x, y) {
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", buttons: 0, clickCount: 1 });
 }
 
+function requireNoRuntimeErrors(cdp, context) {
+  if (cdp.runtimeErrors.length) {
+    throw new CdpError(`${context} emitted runtime/console errors`, cdp.runtimeErrors);
+  }
+}
+
+function requirePassingInteractions(interactions) {
+  const failed = Object.entries(interactions).flatMap(([name, passed]) => passed ? [] : [name]);
+  if (failed.length) throw new CdpError("interaction/accessibility checks", failed);
+}
+
 async function drag(cdp, x, y, toX, toY) {
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseMoved", x, y, button: "none" });
   await cdp.command("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
@@ -238,7 +249,9 @@ function renderedLabels(cdp) {
       const pan = cy.pan();
       const zoom = cy.zoom();
       const b = {x1:raw.x1 * zoom + pan.x, y1:raw.y1 * zoom + pan.y, x2:raw.x2 * zoom + pan.x, y2:raw.y2 * zoom + pan.y};
-      const font = Number.parseFloat(n.style('font-size'));
+      // Cytoscape scales labels with camera zoom. Certification must record
+      // the actual screen-space glyph size, not the unzoomed style value.
+      const font = Number.parseFloat(n.style('font-size')) * zoom;
       return {entity_id:String(n.data('itemId')), min_x:b.x1, min_y:b.y1, max_x:b.x2, max_y:b.y2, font_size_px:Number.isFinite(font) ? font : 0};
     });
     const clipped = labels.filter(label => label.min_x < map.left || label.min_y < map.top || label.max_x > map.right || label.max_y > map.bottom);
@@ -515,6 +528,7 @@ async function run() {
     const desktopFocusPage = await createPage();
     await navigate(desktopFocusPage, desktop, "light");
     const desktop_overview_community_drill = await overviewFocusRevealsLabel(desktopFocusPage);
+    requireNoRuntimeErrors(desktopFocusPage, "desktop community drill");
     desktopFocusPage.close();
     const screenshots = [];
     for (const viewport of [desktop, mobile]) {
@@ -523,6 +537,7 @@ async function run() {
         await navigate(page, viewport, appearance);
         const path = resolve(capturesDirectory, `${viewport.name}-${appearance}.png`);
         screenshots.push({ viewport: viewport.name, color_scheme: appearance, width: viewport.width, height: viewport.height, ...(await screenshot(page, path)) });
+        requireNoRuntimeErrors(page, `${viewport.name} ${appearance} capture`);
         if (page !== desktopPage) page.close();
       }
     }
@@ -533,9 +548,11 @@ async function run() {
     // proof so the focus test starts at the real overview level.
     await navigate(mobilePage, mobile, "light");
     const mobileChecks = await mobileInteractions(mobilePage);
+    requireNoRuntimeErrors(mobilePage, "mobile interactions");
     mobilePage.close();
     const fallbackPage = await createPage();
     const no_javascript_svg_fallback = await fallback(fallbackPage);
+    requireNoRuntimeErrors(fallbackPage, "no-JavaScript fallback");
     fallbackPage.close();
     desktopPage.close();
     const measurement = {
@@ -551,6 +568,7 @@ async function run() {
       },
       interaction_diagnostics: diagnostics,
     };
+    requirePassingInteractions(measurement.interactions);
     await writeFile(output, `${JSON.stringify(measurement, null, 2)}\n`);
     if (acceptancePath) await patchAcceptance(acceptancePath, measurement);
     return measurement;

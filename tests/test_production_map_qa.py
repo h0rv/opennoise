@@ -170,6 +170,28 @@ def _input(
 
 
 class ProductionMapQaTests(unittest.TestCase):
+    def test_interaction_evidence_rejects_every_failed_check(self) -> None:
+        """A false browser result is invalid evidence, not a soft warning."""
+        passed = ProductionMapInteractionEvidence(
+            drag_pan=True,
+            touch_pan=True,
+            wheel_zoom=True,
+            pinch_zoom=True,
+            click_opens_detail=True,
+            search_preserves_map_state=True,
+            browser_back_restores_map_state=True,
+            no_javascript_svg_fallback=True,
+            keyboard_focus_visible=True,
+            dark_mode_toggle=True,
+            overview_focus_reveals_label=True,
+        )
+        for check_name in type(passed).model_fields:
+            with self.subTest(check_name=check_name):
+                payload = passed.model_dump(mode="python")
+                payload[check_name] = False
+                with self.assertRaisesRegex(ValidationError, check_name):
+                    ProductionMapInteractionEvidence.model_validate(payload)
+
     def test_global_spring_baseline_passes_complete_production_evidence(self) -> None:
         with TemporaryDirectory() as temporary:
             result = require_accepted_production_map(_input(screenshot_directory=Path(temporary)))
