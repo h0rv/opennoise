@@ -13,6 +13,7 @@ from litestar.template.config import TemplateConfig
 from musix.db import AsyncDatabase
 from musix.genre_entry import GenreEntryRepository
 from musix.models import Settings
+from musix.production_store import ProductionMapStore
 from musix.routes import CoreController, EvidenceController, MapController, SearchController
 
 PACKAGE_ROOT = Path(__file__).parent
@@ -20,11 +21,15 @@ STATIC_ROOT = PACKAGE_ROOT / "static"
 TEMPLATE_ROOT = PACKAGE_ROOT / "templates"
 
 
-def create_app(database_path: Path | None = None) -> Litestar:
+def create_app(
+    database_path: Path | None = None, production_map_path: Path | None = None
+) -> Litestar:
     """Create an app with a separate lifecycle-managed read connection."""
-    selected_path = database_path or Settings().database_path
+    settings = Settings()
+    selected_path = database_path or settings.database_path
     database = AsyncDatabase(selected_path)
     genre_entries = GenreEntryRepository(selected_path)
+    production_map = ProductionMapStore(production_map_path or settings.production_map_path)
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
@@ -40,6 +45,9 @@ def create_app(database_path: Path | None = None) -> Litestar:
     async def provide_genre_entries() -> GenreEntryRepository:
         return genre_entries
 
+    async def provide_production_map() -> ProductionMapStore:
+        return production_map
+
     return Litestar(
         route_handlers=[
             CoreController,
@@ -51,6 +59,7 @@ def create_app(database_path: Path | None = None) -> Litestar:
         dependencies={
             "database": Provide(provide_database),
             "genre_entries": Provide(provide_genre_entries),
+            "production_map": Provide(provide_production_map),
         },
         lifespan=[lifespan],
         template_config=TemplateConfig(directory=TEMPLATE_ROOT, engine=JinjaTemplateEngine),

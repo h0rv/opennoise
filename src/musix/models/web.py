@@ -26,6 +26,9 @@ class Settings(BaseSettings):
         default=Path("data/musix.sqlite"), validation_alias="MUSIX_DATABASE_PATH"
     )
     vault_path: Path = Field(default=Path("data/vault"), validation_alias="MUSIX_VAULT_PATH")
+    production_map_path: Path | None = Field(
+        default=None, validation_alias="MUSIX_PRODUCTION_MAP_PATH"
+    )
 
 
 class SearchHit(FrozenModel):
@@ -77,6 +80,14 @@ class MapPointResponse(FrozenModel):
 class MapResponse(FrozenModel):
     """Validated map API response."""
 
+    points: tuple[MapPointResponse, ...]
+
+
+class LegacyMapResponse(FrozenModel):
+    """Declare that the endpoint is using the legacy SQLite layout fallback."""
+
+    source: Literal["legacy-layout"] = "legacy-layout"
+    fallback: Literal[True] = True
     points: tuple[MapPointResponse, ...]
 
 

@@ -3,8 +3,9 @@
 from datetime import datetime
 
 from litestar import Controller, MediaType, Request, get
+from litestar.datastructures import State
 from litestar.di import NamedDependency
-from litestar.exceptions import NotFoundException, ValidationException
+from litestar.exceptions import NotFoundException, ServiceUnavailableException, ValidationException
 from litestar.params import FromPath, FromQuery
 from litestar.response import Template
 
@@ -20,11 +21,16 @@ from musix.exploration import (
 from musix.genre_entry import GenreEntryRepository
 from musix.layouts import ExploredMap, LayoutArtifactMetadata, PublishedLayout
 from musix.models import (
+    LegacyMapResponse,
     MapPointResponse,
-    MapResponse,
     SearchHitResponse,
     SearchResponse,
     map_view,
+)
+from musix.production_store import (
+    ProductionMapApiResponse,
+    ProductionMapStore,
+    ProductionMapStoreError,
 )
 
 
@@ -51,7 +57,7 @@ class CoreController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
-        request: Request[object, object, object],
+        request: Request[object, object, State],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
     ) -> Template:
@@ -69,7 +75,7 @@ class CoreController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         genre_key: FromPath[str],
-        request: Request[object, object, object],
+        request: Request[object, object, State],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
     ) -> Template:
@@ -98,12 +104,23 @@ class MapController(Controller):
     async def map_data(
         self,
         database: NamedDependency[AsyncDatabase],
+        production_map: NamedDependency[ProductionMapStore],
         layout: FromQuery[str] = "default",
-    ) -> MapResponse:
-        """Return the stable map JSON shape."""
+    ) -> ProductionMapApiResponse | LegacyMapResponse:
+        """Return the configured production graph or the explicit legacy map fallback."""
+        if production_map.configured and layout == "default":
+            try:
+                response = production_map.response()
+            except ProductionMapStoreError as error:
+                raise ServiceUnavailableException(
+                    detail="production map artifact unavailable"
+                ) from error
+            if response is None:
+                raise RuntimeError("configured production map store returned no graph")
+            return response
         layout_key, _ = resolve_layout(layout, await database.published_layouts())
         points = await database.map_points(layout_key)
-        return MapResponse(
+        return LegacyMapResponse(
             points=tuple(
                 MapPointResponse(
                     id=point.entity_id,

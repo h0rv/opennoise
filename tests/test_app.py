@@ -7,7 +7,12 @@ from litestar.testing import TestClient
 
 from musix.app import create_app
 from musix.db import Database
+from musix.ml.production_map import build_production_map
+from musix.ml.public_graph import build_public_model
 from musix.models import MapPoint, map_view
+from musix.models.modeling import PublicModelSettings
+from musix.models.production import ProductionMapSettings
+from tests.test_production_map import _inputs as production_inputs
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
@@ -43,11 +48,60 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.text, "ok")
 
     def test_empty_map_search_and_fragment(self) -> None:
-        self.assertEqual(self.client.get("/api/map").json(), {"points": []})
+        self.assertEqual(
+            self.client.get("/api/map").json(),
+            {"source": "legacy-layout", "fallback": True, "points": []},
+        )
         self.assertEqual(self.client.get("/api/search", params={"q": "---"}).json(), {"hits": []})
         fragment = self.client.get("/fragments/search", params={"q": "---"})
         self.assertEqual(fragment.status_code, 200)
         self.assertEqual(fragment.text.strip(), "")
+
+    def test_configured_production_artifact_has_stable_detail_links(self) -> None:
+        inputs = production_inputs()
+        source = build_public_model(inputs, PublicModelSettings())
+        artifact = build_production_map(
+            inputs,
+            source,
+            ProductionMapSettings(
+                geometry_grid_size=5,
+                minimum_central_span=0.05,
+                minimum_occupied_cell_ratio=0.01,
+                minimum_desktop_16x9_occupied_cell_ratio=0.01,
+                maximum_desktop_16x9_cell_fraction=1.0,
+                minimum_neighbor_preservation=0.0,
+            ),
+        )
+        artifact_path = Path(self.temporary.name) / "production-map.json"
+        artifact_path.write_text(artifact.model_dump_json(), encoding="utf-8")
+        with TestClient(
+            create_app(Path(self.temporary.name) / "production.sqlite", artifact_path)
+        ) as client:
+            response = client.get("/api/map")
+
+        payload = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["source"], "production-artifact")
+        self.assertFalse(payload["fallback"])
+        self.assertEqual(len(payload["graph"]["nodes"]), len(inputs.genres))
+        self.assertEqual(
+            payload["detail_hrefs"]["wikidata:genre:Q1"],
+            "/genres/key/wikidata%3Agenre%3AQ1",
+        )
+
+    def test_missing_or_invalid_configured_production_artifact_returns_503(self) -> None:
+        missing_path = Path(self.temporary.name) / "missing-production-map.json"
+        invalid_path = Path(self.temporary.name) / "invalid-production-map.json"
+        invalid_path.write_text("{}", encoding="utf-8")
+        for artifact_path in (missing_path, invalid_path):
+            with (
+                self.subTest(artifact_path=artifact_path.name),
+                TestClient(
+                    create_app(Path(self.temporary.name) / "production.sqlite", artifact_path)
+                ) as client,
+            ):
+                response = client.get("/api/map")
+            self.assertEqual(response.status_code, 503)
 
     def test_exploration_contract_rejects_partial_viewport(self) -> None:
         empty = self.client.get("/api/explore/map")

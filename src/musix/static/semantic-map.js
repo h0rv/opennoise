@@ -58,7 +58,7 @@
           id,
           genreId: node.genre_id ?? node.id,
           label: node.name,
-          detailHref: node.detail_href ?? null,
+          detailHref: node.detail_href ?? payload.detail_hrefs?.[node.genre_id ?? node.id] ?? null,
           parent: parentId === null || parentId === undefined ? undefined : `genre-${parentId}`,
           depth: node.depth ?? 1,
           // Legacy point responses have no semantic tiers; keep them usable while
