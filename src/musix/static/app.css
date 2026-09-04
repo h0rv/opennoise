@@ -53,6 +53,7 @@ button, input, select { font: inherit; }
 
 #map { position: fixed; inset: 0; background: var(--canvas); }
 #semantic-map { position: absolute; inset: 0; display: none; outline: none; }
+#semantic-map:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 html.js-map-ready #semantic-map { display: block; }
 html.js-map-ready #plot { display: none; }
 

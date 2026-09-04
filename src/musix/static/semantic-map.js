@@ -68,6 +68,7 @@
       data: {
         id: community.community_id,
         itemId: community.community_id,
+        genreId: community.community_id,
         label: overviewLabel(community),
         detailHref: null,
         depth: 0,
@@ -126,7 +127,7 @@
 
   const lodForZoom = (zoom) => zoom < 0.58 ? 0 : zoom < 0.95 ? 1 : zoom < 1.55 ? 2 : 3;
   const fallbackLabelIds = (cy, lod, overview) => {
-    const budget = [16, 48, 128, 280][lod];
+    const budget = (mapElement.clientWidth <= 600 ? [24, 40, 64, 80] : [48, 80, 128, 180])[lod];
     return new Set(cy.nodes().filter((node) => overview
       ? Boolean(node.data("overview"))
       : !node.data("overview") && Number(node.data("lodMin")) <= lod).sort((left, right) => (
@@ -151,7 +152,7 @@
     // a small priority budget, rather than pretending every umbrella can be
     // legible at once on a single viewport.
     const labelIds = fallbackLabelIds(cy, lod, showingOverview);
-    const labelSize = [18, 24, 18, 14][lod];
+    const labelSize = [14, 24, 18, 14][lod];
     cy.batch(() => {
       cy.nodes().forEach((node) => {
         const visible = visibleIds.has(node.data("itemId"));
@@ -202,6 +203,7 @@
         userZoomingEnabled: true,
         boxSelectionEnabled: false,
       });
+      window.__musixMap = cy;
       root.classList.add("js-map-ready");
       cy.resize();
       cy.fit(cy.elements(), 72);

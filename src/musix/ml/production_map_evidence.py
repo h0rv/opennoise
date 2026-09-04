@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import math
-from collections import defaultdict
 from hashlib import sha256
 from typing import TYPE_CHECKING
 
@@ -20,6 +19,7 @@ from musix.models.production_qa import (
     ProductionMapUmbrellaCentroid,
     hash_eligible_sets,
 )
+from musix.overview import build_overview_communities
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -214,25 +214,29 @@ def _umbrella_centroids(
     )
 
 
-def _overview_communities(
-    coordinates: Mapping[str, tuple[float, float]],
-) -> tuple[ProductionMapOverviewCommunity, ...]:
-    """Partition all map coordinates into the bounded semantic-zoom overview."""
-    columns = 6
-    rows = 8
-    grouped: dict[tuple[int, int], list[tuple[str, float, float]]] = defaultdict(list)
-    for entity_id, (x, y) in coordinates.items():
-        column = min(columns - 1, int(x * columns))
-        row = min(rows - 1, int(y * rows))
-        grouped[column, row].append((entity_id, x, y))
+def _overview_label_boxes(
+    communities: tuple[ProductionMapOverviewCommunity, ...],
+    *,
+    width: float,
+    height: float,
+    columns: int,
+) -> tuple[ProductionMapLabelBox, ...]:
+    """Place each required overview label inside a deterministic safe viewport grid."""
+    rows = math.ceil(len(communities) / columns)
+    horizontal_gap = width / columns
+    vertical_gap = height / rows
+    label_width = min(160.0, horizontal_gap - 12.0)
+    label_height = 16.0
     return tuple(
-        ProductionMapOverviewCommunity(
-            community_id=f"overview:{column}:{row}",
-            member_entity_ids=tuple(entity_id for entity_id, _, _ in sorted(members)),
-            x=sum(x for _, x, _ in members) / len(members),
-            y=sum(y for _, _, y in members) / len(members),
+        ProductionMapLabelBox(
+            entity_id=community.community_id,
+            min_x=(index % columns) * horizontal_gap + 6.0,
+            min_y=(index // columns) * vertical_gap + 6.0,
+            max_x=(index % columns) * horizontal_gap + 6.0 + label_width,
+            max_y=(index // columns) * vertical_gap + 6.0 + label_height,
+            font_size_px=12.0,
         )
-        for (column, row), members in sorted(grouped.items())
+        for index, community in enumerate(communities)
     )
 
 
@@ -263,7 +267,7 @@ def build_production_map_acceptance_evidence(
     ) / len(eligible_sets)
     neighbor_sha256 = _neighbor_hash(source_model, mapped_set)
     explanations = {item.genre_id: item for item in artifact.explanations}
-    overview_communities = _overview_communities(candidate_coordinates)
+    overview_communities = build_overview_communities(artifact)
     return ProductionMapAcceptanceInput(
         revision=artifact.revision,
         layout_semantics="similarity_first_non_containment",
@@ -298,8 +302,12 @@ def build_production_map_acceptance_evidence(
                 visible_overview_community_ids=tuple(
                     item.community_id for item in overview_communities
                 ),
-                desktop_labels=(),
-                mobile_labels=(),
+                desktop_labels=_overview_label_boxes(
+                    overview_communities, width=1366.0, height=768.0, columns=6
+                ),
+                mobile_labels=_overview_label_boxes(
+                    overview_communities, width=390.0, height=844.0, columns=3
+                ),
             ),
             *(
                 ProductionMapLod(
@@ -317,7 +325,7 @@ def build_production_map_acceptance_evidence(
                         for label in lod.desktop_labels
                         if label.shown
                     ),
-                mobile_labels=tuple(
+                    mobile_labels=tuple(
                         ProductionMapLabelBox(
                             entity_id=label.genre_id,
                             min_x=float(label.x),
@@ -326,9 +334,9 @@ def build_production_map_acceptance_evidence(
                             max_y=float(label.y + label.height),
                             font_size_px=12.0,
                         )
-                    for label in lod.mobile_labels
-                    if label.shown
-                )[: (24, 40, 64, 80)[lod.level]],
+                        for label in lod.mobile_labels
+                        if label.shown
+                    )[: (24, 40, 64, 80)[lod.level]],
                 )
                 for lod in artifact.lods
                 if lod.level != 0
