@@ -60,12 +60,14 @@ class HistoricalSignalModelTests(unittest.TestCase):
         positions = np.array([(index / 31, (31 - index) / 31) for index in range(32)])
         first, first_assignments = _graph_hierarchy(
             graph,
+            graph,
             genre_ids,
             {genre_id: f"first {genre_id}" for genre_id in genre_ids},
             positions,
             settings,
         )
         second, second_assignments = _graph_hierarchy(
+            graph,
             graph,
             genre_ids,
             {genre_id: f"second {genre_id}" for genre_id in genre_ids},
@@ -82,7 +84,18 @@ class HistoricalSignalModelTests(unittest.TestCase):
         microgenres = [item for item in first if item.level == _MICROGENRE_LEVEL]
         self.assertTrue(microgenres)
         self.assertTrue(all(item.member_count <= _MICROGENRE_MAX_MEMBERS for item in microgenres))
-        self.assertTrue(all(item.provenance == "graph_derived_h3_similarity" for item in first))
+        self.assertTrue(
+            all(
+                item.provenance == "graph_and_genre_name_derived"
+                for item in first
+                if item.level == 0
+            )
+        )
+        self.assertTrue(
+            all(
+                item.provenance == "graph_derived_h3_similarity" for item in first if item.level > 0
+            )
+        )
 
     def test_graph_hierarchy_bundles_disconnected_components_at_the_umbrella_level(self) -> None:
         genre_ids = tuple(f"genre:{index:02d}" for index in range(16))
@@ -92,6 +105,7 @@ class HistoricalSignalModelTests(unittest.TestCase):
             graph[index + 1][index] = 0.8
         positions = np.array([(index / 15, (15 - index) / 15) for index in range(16)])
         hierarchy, assignments = _graph_hierarchy(
+            graph,
             graph,
             genre_ids,
             {genre_id: genre_id for genre_id in genre_ids},

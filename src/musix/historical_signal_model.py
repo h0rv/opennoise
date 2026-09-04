@@ -48,6 +48,11 @@ _OVERVIEW_SEED_MINIMUM_DISTANCE = 0.08
 _MINIMUM_SPECTRAL_COMPONENT_SIZE = 4
 _HIERARCHY_SUBCOMMUNITY_LEVEL = 1
 _HIERARCHY_MICROGENRE_LEVEL = 2
+_LEXICAL_MIN_WORD_LENGTH = 3
+_LEXICAL_TRIGRAM_MIN_WORD_LENGTH = 4
+_LEXICAL_MAX_DOCUMENT_FREQUENCY = 64
+_LEXICAL_SIMILARITY_CUTOFF = 0.02
+_DISPLAY_HEAD_MIN_HITS = 2
 
 
 class HistoricalSignalInputError(ValueError):
@@ -473,11 +478,16 @@ def _modularity_groups(
                 if neighbor != item:
                     scores[labels[neighbor]] += weight
             scores[current] += 0.0
-            current_score = scores[current] - resolution * degree[item] * totals[current] / total_weight_twice
+            current_score = (
+                scores[current] - resolution * degree[item] * totals[current] / total_weight_twice
+            )
             candidate = min(
                 scores,
                 key=lambda label: (
-                    -(scores[label] - resolution * degree[item] * totals[label] / total_weight_twice),
+                    -(
+                        scores[label]
+                        - resolution * degree[item] * totals[label] / total_weight_twice
+                    ),
                     label,
                 ),
             )
@@ -510,9 +520,7 @@ def _natural_subcommunities(
     groups = tuple(_HierarchyGroup((member,)) for member in range(len(graph)))
     current_graph = graph
     for round_ordinal in range(4):
-        moved = _modularity_groups(
-            current_graph, groups, genre_ids, seed=seed + round_ordinal
-        )
+        moved = _modularity_groups(current_graph, groups, genre_ids, seed=seed + round_ordinal)
         if len(moved) == len(groups):
             break
         current_graph = _contract_groups(current_graph, moved)
@@ -520,7 +528,7 @@ def _natural_subcommunities(
     return groups
 
 
-def _lexical_meta_graph(
+def _lexical_meta_graph(  # noqa: PLR0912
     groups: tuple[_HierarchyGroup, ...], names: Mapping[str, str], genre_ids: tuple[str, ...]
 ) -> list[dict[int, float]]:
     """Build sparse TF-IDF word/character lexical affinity without all-pairs comparison."""
@@ -530,12 +538,12 @@ def _lexical_meta_graph(
         counts: dict[str, float] = defaultdict(float)
         for member in group.members:
             for word in re.findall(r"[a-z0-9]+", names[genre_ids[member]].casefold()):
-                if len(word) < 3:
+                if len(word) < _LEXICAL_MIN_WORD_LENGTH:
                     continue
                 counts[f"word:{word}"] += 1.0
-                if len(word) >= 4:
+                if len(word) >= _LEXICAL_TRIGRAM_MIN_WORD_LENGTH:
                     for start in range(len(word) - 2):
-                        counts[f"char:{word[start:start + 3]}"] += 0.2
+                        counts[f"char:{word[start : start + 3]}"] += 0.2
         token_counts.append(dict(counts))
         for token in counts:
             document_frequency[token] += 1
@@ -545,7 +553,7 @@ def _lexical_meta_graph(
         weighted: dict[str, float] = {}
         for token, count in counts.items():
             frequency = document_frequency[token]
-            if frequency > 64:
+            if frequency > _LEXICAL_MAX_DOCUMENT_FREQUENCY:
                 continue
             weighted[token] = count * (math.log((len(groups) + 1) / (frequency + 1)) + 1.0)
         norms.append(math.sqrt(sum(value * value for value in weighted.values())))
@@ -560,7 +568,7 @@ def _lexical_meta_graph(
     for (left, right), dot_product in sorted(dot_products.items()):
         denominator = norms[left] * norms[right]
         similarity = dot_product / denominator if denominator else 0.0
-        if similarity >= 0.02:
+        if similarity >= _LEXICAL_SIMILARITY_CUTOFF:
             graph[left][right] = similarity
             graph[right][left] = similarity
     return graph
@@ -606,13 +614,15 @@ def _coarse_umbrellas(
     # Groups with no union or lexical affinity have no semantic parent evidence.  They are one
     # explicitly disconnected display region, never a claimed taxonomy or balanced bin.
     linked_members = {member for neighbors in graph for member in neighbors}
-    disconnected = tuple(group for ordinal, group in enumerate(natural) if ordinal not in linked_members)
+    disconnected = tuple(
+        group for ordinal, group in enumerate(natural) if ordinal not in linked_members
+    )
     if len(disconnected) > 1:
         disconnected_members = {member for group in disconnected for member in group.members}
         retained = tuple(
             group for group in coarse if not set(group.members).issubset(disconnected_members)
         )
-        coarse = retained + (_HierarchyGroup(tuple(sorted(disconnected_members))),)
+        coarse = (*retained, _HierarchyGroup(tuple(sorted(disconnected_members))))
     # Re-evaluate the resulting meta communities from their original sparse signals.  This is
     # multilevel modularity coarsening, not balanced packing: every merge remains a positive
     # affinity/modularity move on the freshly contracted evidence graph.
@@ -622,14 +632,18 @@ def _coarse_umbrellas(
         for left, neighbors in enumerate(lexical):
             for right, weight in neighbors.items():
                 meta[left][right] = meta[left].get(right, 0.0) + 0.8 * weight
-        moved = _modularity_groups(meta, coarse, genre_ids, seed=seed + round_ordinal + 1, resolution=1.5)
+        moved = _modularity_groups(
+            meta, coarse, genre_ids, seed=seed + round_ordinal + 1, resolution=1.5
+        )
         if len(moved) == len(coarse):
             break
         coarse = moved
     return tuple(sorted(coarse, key=lambda group: tuple(genre_ids[item] for item in group.members)))
 
 
-def _display_family(group: _HierarchyGroup, names: Mapping[str, str], genre_ids: tuple[str, ...]) -> str | None:
+def _display_family(
+    group: _HierarchyGroup, names: Mapping[str, str], genre_ids: tuple[str, ...]
+) -> str | None:
     """Choose a broad, source-name-derived display family for an H3 natural community."""
     words = [
         word
@@ -650,11 +664,20 @@ def _display_family(group: _HierarchyGroup, names: Mapping[str, str], genre_ids:
     _latin_label, latin_hits = min(latin_scores.items(), key=lambda item: (-item[1], item[0]))
     global_hits = sum(
         counts[word]
-        for word in ("indian", "hindustani", "carnatic", "african", "arabic", "turkish", "kurdish", "persian")
+        for word in (
+            "indian",
+            "hindustani",
+            "carnatic",
+            "african",
+            "arabic",
+            "turkish",
+            "kurdish",
+            "persian",
+        )
     )
-    if latin_hits >= 2:
+    if latin_hits >= _DISPLAY_HEAD_MIN_HITS:
         return "Latin & Caribbean"
-    if global_hits >= 2:
+    if global_hits >= _DISPLAY_HEAD_MIN_HITS:
         return "Global & traditional"
     hip_hop_hits = sum(
         bool(re.search(r"\bhip[ -]hop\b|\brap\b", names[genre_ids[member]].casefold()))
@@ -665,7 +688,9 @@ def _display_family(group: _HierarchyGroup, names: Mapping[str, str], genre_ids:
         "Metal": counts["metal"],
         "Jazz": counts["jazz"],
         "Classical": counts["classical"] + counts["classique"],
-        "Electronic": sum(counts[word] for word in ("house", "techno", "edm", "electro", "electronic", "idm")),
+        "Electronic": sum(
+            counts[word] for word in ("house", "techno", "edm", "electro", "electronic", "idm")
+        ),
         "Rock": counts["rock"],
         "Pop": counts["pop"],
         "Latin & Caribbean": latin_hits,
@@ -675,15 +700,13 @@ def _display_family(group: _HierarchyGroup, names: Mapping[str, str], genre_ids:
         "Blues": counts["blues"],
     }
     label, score = min(scores.items(), key=lambda item: (-item[1], item[0]))
-    return label if score >= 2 else None
+    return label if score >= _DISPLAY_HEAD_MIN_HITS else None
 
 
 def _semantic_umbrellas(
-    union_graph: list[dict[int, float]],
     natural: tuple[_HierarchyGroup, ...],
     names: Mapping[str, str],
     genre_ids: tuple[str, ...],
-    seed: int,
 ) -> tuple[tuple[_HierarchyGroup, ...], dict[tuple[int, ...], str]]:
     """Preserve natural H3 groups while using explicit observed name heads for overview families."""
     by_family: dict[str, list[int]] = defaultdict(list)
@@ -699,19 +722,23 @@ def _semantic_umbrellas(
     # Residual natural communities have no repeated broad lexical head.  Their sole overview
     # parent is an explicitly non-taxonomic Other region, not a fabricated semantic family.
     if unresolved:
-        other = _HierarchyGroup(tuple(sorted(member for group in unresolved for member in group.members)))
+        other = _HierarchyGroup(
+            tuple(sorted(member for group in unresolved for member in group.members))
+        )
         coarse.append(other)
         labels[other.members] = "Other / unplaced"
     umbrellas = tuple(
         _HierarchyGroup(tuple(sorted(members))) for members in by_family.values()
     ) + tuple(coarse)
     return (
-        tuple(sorted(umbrellas, key=lambda group: tuple(genre_ids[item] for item in group.members))),
+        tuple(
+            sorted(umbrellas, key=lambda group: tuple(genre_ids[item] for item in group.members))
+        ),
         labels,
     )
 
 
-def _graph_hierarchy(
+def _graph_hierarchy(  # noqa: PLR0913, PLR0917
     graph: list[dict[int, float]],
     reciprocal_graph: list[dict[int, float]],
     genre_ids: tuple[str, ...],
@@ -721,9 +748,7 @@ def _graph_hierarchy(
 ) -> tuple[tuple[HistoricalSignalHierarchyNode, ...], dict[int, tuple[str, str, str]]]:
     """Emit H3 natural communities below lexically coarsened evidence-derived regions."""
     natural = _natural_subcommunities(reciprocal_graph, genre_ids, settings.embedding_seed)
-    umbrellas, display_labels = _semantic_umbrellas(
-        graph, natural, names, genre_ids, settings.embedding_seed
-    )
+    umbrellas, display_labels = _semantic_umbrellas(natural, names, genre_ids)
     hierarchy: list[HistoricalSignalHierarchyNode] = []
     assignments: dict[int, tuple[str, str, str]] = {}
     for umbrella_ordinal, umbrella in enumerate(umbrellas):
