@@ -35,7 +35,7 @@ def _artifact() -> HistoricalSignalPublicationArtifact:
     overview = tuple(_node(index, 0) for index in range(24))
     detailed = tuple(_node(index, 3) for index in range(24, 2_001))
     nodes = overview + detailed
-    hierarchy = tuple(
+    umbrellas = tuple(
         HistoricalSignalHierarchyNode(
             hierarchy_id=f"graph:umbrella:{index:03d}",
             children_ids=(f"graph:umbrella:{index:03d}:sub:000",),
@@ -48,6 +48,18 @@ def _artifact() -> HistoricalSignalPublicationArtifact:
         )
         for index, node in enumerate(overview)
     )
+    subcommunity = HistoricalSignalHierarchyNode(
+        hierarchy_id="graph:umbrella:000:sub:000",
+        parent_id="graph:umbrella:000",
+        children_ids=("graph:umbrella:000:sub:000:micro:000",),
+        level=1,
+        member_count=1,
+        representative_genre_id=overview[0].genre_id,
+        representative_label=overview[0].name,
+        x=overview[0].x,
+        y=overview[0].y,
+    )
+    hierarchy = (*umbrellas, subcommunity)
     tile = HistoricalSignalTile(
         level=3,
         column=0,
@@ -121,6 +133,15 @@ class HistoricalSignalMapStoreTests(unittest.TestCase):
     def test_close_lod_requires_tile_when_it_exceeds_cap(self) -> None:
         with self.assertRaisesRegex(HistoricalSignalMapStoreError, "response cap"):
             self._store().response(level=3)
+
+    def test_hierarchy_focus_returns_only_the_named_child_summaries(self) -> None:
+        response = self._store().response(level=1, parent_id="graph:umbrella:000")
+
+        self.assertIsNotNone(response)
+        if response is not None:
+            self.assertEqual(len(response.hierarchy), 1)
+            self.assertEqual(response.hierarchy[0].level, 1)
+            self.assertEqual(response.nodes, ())
 
     def test_tile_and_neighbors_are_independently_bounded(self) -> None:
         store = self._store()
