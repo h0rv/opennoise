@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     historical_signal_map_path: Path | None = Field(
         default=None, validation_alias="MUSIX_HISTORICAL_SIGNAL_MAP_PATH"
     )
+    historical_membership_database_path: Path | None = Field(
+        default=None, validation_alias="MUSIX_HISTORICAL_MEMBERSHIP_DATABASE_PATH"
+    )
 
 
 class SearchHit(FrozenModel):

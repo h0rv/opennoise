@@ -20,6 +20,11 @@ from musix.exploration import (
     optional_viewport,
 )
 from musix.genre_entry import GenreEntryRepository
+from musix.historical_membership_store import (
+    HistoricalMembershipStore,
+    HistoricalMembershipStoreError,
+    HistoricalSignalMembersApiResponse,
+)
 from musix.historical_signal_store import (
     HistoricalSignalMapApiResponse,
     HistoricalSignalMapStore,
@@ -217,6 +222,22 @@ class MapController(Controller):
         if response is None:
             raise RuntimeError("configured historical signal map store returned no graph")
         return response
+
+    @get("/api/historical-signal-map/members/{genre_id:str}")
+    async def historical_signal_members(
+        self,
+        historical_memberships: NamedDependency[HistoricalMembershipStore],
+        genre_id: FromPath[str],
+        offset: FromQuery[int] = 0,
+        limit: FromQuery[int] = 50,
+    ) -> HistoricalSignalMembersApiResponse:
+        """Return one bounded, policy-authorized H3 member page for a selected genre."""
+        if not historical_memberships.configured:
+            raise ServiceUnavailableException(detail="historical membership database is disabled")
+        try:
+            return await historical_memberships.members(genre_id, offset=offset, limit=limit)
+        except HistoricalMembershipStoreError as error:
+            raise NotFoundException(detail="historical membership data unavailable") from error
 
     @get("/api/explore/map")
     async def explore_map(

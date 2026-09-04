@@ -91,6 +91,10 @@ class HistoricalSignalMapStore:
             return
         await asyncio.to_thread(self._require_artifact)
 
+    def publication_artifact(self) -> HistoricalSignalPublicationArtifact | None:
+        """Return the already-validated sealed artifact for other startup-only adapters."""
+        return self._require_artifact()
+
     def response(
         self,
         *,

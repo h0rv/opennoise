@@ -233,6 +233,11 @@ class HistoricalSignalPublicationArtifact(FrozenModel):
     source_signal_artifact_sha256: Sha256
     h2_artifact_sha256: Sha256
     h3_artifact_sha256: Sha256
+    h3_database_sha256: Sha256
+    h3_policy_key: str = Field(min_length=1, max_length=300)
+    h3_membership_query_view: Literal["displayable_historical_genre_artists"] = (
+        "displayable_historical_genre_artists"
+    )
     map: HistoricalSignalArtifact
     quality: HistoricalSignalPublicationQuality
 
@@ -257,6 +262,11 @@ class HistoricalSignalPublicationReceipt(FrozenModel):
     source_signal_artifact_sha256: Sha256
     h2_artifact_sha256: Sha256
     h3_artifact_sha256: Sha256
+    h3_database_sha256: Sha256
+    h3_policy_key: str = Field(min_length=1, max_length=300)
+    h3_membership_query_view: Literal["displayable_historical_genre_artists"] = (
+        "displayable_historical_genre_artists"
+    )
     default_production_promotion: Literal[False] = False
 
 
@@ -267,6 +277,10 @@ def _require_publication_provenance(artifact: HistoricalSignalPublicationArtifac
         raise ValueError("publication H2 provenance must match the embedded map")
     if artifact.h3_artifact_sha256 != artifact.map.inputs.h3_artifact_sha256:
         raise ValueError("publication H3 provenance must match the embedded map")
+    if artifact.h3_database_sha256 != artifact.map.inputs.h3_database_sha256:
+        raise ValueError("publication H3 database hash must match the embedded map")
+    if not artifact.h3_policy_key.startswith("historical-membership:local-display:"):
+        raise ValueError("publication H3 policy must be an explicit local-display policy")
     if artifact.quality.h3_membership_count != artifact.map.inputs.membership_count:
         raise ValueError("publication membership count must match the embedded map")
     if artifact.quality.h3_member_genre_count != artifact.map.inputs.mapped_membership_genre_count:

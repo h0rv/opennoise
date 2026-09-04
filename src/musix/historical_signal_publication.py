@@ -72,6 +72,8 @@ def build_historical_signal_publication(
         source_signal_artifact_sha256=signal.quality.artifact_sha256,
         h2_artifact_sha256=signal.inputs.h2_artifact_sha256,
         h3_artifact_sha256=signal.inputs.h3_artifact_sha256,
+        h3_database_sha256=signal.inputs.h3_database_sha256,
+        h3_policy_key=membership.policy_key,
         map=signal,
         quality=HistoricalSignalPublicationQuality(
             node_count=len(signal.nodes),
@@ -135,6 +137,8 @@ def publish_historical_signal_publication(
             source_signal_artifact_sha256=artifact.source_signal_artifact_sha256,
             h2_artifact_sha256=artifact.h2_artifact_sha256,
             h3_artifact_sha256=artifact.h3_artifact_sha256,
+            h3_database_sha256=artifact.h3_database_sha256,
+            h3_policy_key=artifact.h3_policy_key,
         ),
         object_write,
     )
