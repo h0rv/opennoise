@@ -64,6 +64,23 @@ in a release receipt.
 | Browser and content QA | Desktop/mobile light/dark/system screenshots plus selection, back, zoom, focus, switch-state, and no-script checks pass. No media URL or audio byte may be fetched, embedded, or exposed. | Missing. |
 | Rebuildability | The exact local source/cache and every derived artifact are retained or separately delivered with hashes; a fresh authorized environment can rerun certification offline. | Missing: the source is not distributable through this checkout and must be operator-supplied. |
 
+### Browser and performance acceptance contract
+
+After the eligibility gates pass, certification of the 6,291-node switch must
+measure the following contract in the raw-CDP browser harness. These are
+release gates, not aspirational design notes.
+
+| Area | Required acceptance |
+| --- | --- |
+| Addressable switch | `?view=public` and `?view=historical` are normal, shareable URLs. A switch never silently substitutes one view for the other. It preserves the query and, where the selected stable ID exists in both views, the selection; otherwise it announces that the selected item is unavailable in the new view. |
+| Initial payload | The historical initial response contains at most 24 overview-community records and is at most 256 KiB of uncompressed JSON. It contains no raw H3 membership rows, preview URLs, track identifiers, or audio/media URLs. The 6,291 nodes are requested only through the declared LOD/tile contract. |
+| LOD and tiles | LOD 0 renders at most 24 overview communities. LOD 1 may expose at most 240 genre nodes, LOD 2 at most 1,200, and LOD 3 all 6,291. LOD 3 obtains visible nodes in declared 16-by-16 viewport tiles, with no response exceeding 512 node records. Earlier selected context remains visible while zooming. |
+| Labels | The historical renderer uses the same maximum shown-label budgets as the public map: desktop `48/80/128/180`, mobile `24/40/64/80`, with no label below 12 px and overlap no greater than 2% desktop or 3% mobile at every LOD. At LOD 0, at least 18 desktop and 6 mobile overview labels are visible or revealed on keyboard focus. |
+| Local performance | On the certification host, five cold-cache runs must record p95 overview-ready time of at most 2.5 s at 1366 by 768 and 3.5 s at 390 by 844. Five warm-cache tile requests must have p95 response-to-render time of at most 300 ms, and five genre-detail clicks at most 250 ms. Each measurement records host, browser revision, viewport, cache state, and all samples. |
+| Interaction and mobile | In both views, browser QA passes switch click and keyboard activation, drag/touch pan, wheel/pinch zoom, LOD transition, tile loading, genre-detail click, search, browser back, retained theme, and visible focus. The historical view must be checked in system, light, and dark modes at 1366 by 768 and 390 by 844. |
+| No-script fallback | With JavaScript disabled, the URL renders a labelled historical compatibility notice, source/provenance link, search or paginated genre navigation, and ordinary detail links. It must not emit a 6,291-label SVG, request tiles, or reveal local-only data when the local-display policy is not enabled. |
+| Evidence bundle | The final receipt includes the public and historical artifact hashes, source/policy hashes, 12 screenshot hashes (two views by desktop/mobile and system/light/dark), raw-CDP interaction results, payload sizes, timing samples, and a negative network/content check showing no audio or media request. |
+
 ## Independent comparison
 
 The evaluator accepts a typed `public-graph-v2` or `production-map-v1` artifact. It joins only
