@@ -29,7 +29,9 @@ class AssetTests(unittest.TestCase):
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
         self.assertIn('mapElement.dataset.mapMode === "historical"', source)
         self.assertIn("payload.initial_edge_count !== 0", source)
-        self.assertIn("(payload.nodes ?? []).length > 24", source)
+        self.assertIn("const overview = payload.hierarchy ?? payload.nodes ?? [];", source)
+        self.assertIn("overview.length > 24", source)
+        self.assertIn("parent_id=${encodeURIComponent(hierarchyId)}", source)
         self.assertIn(
             "/api/historical-signal-map?level=${level}&column=${column}&row=${row}", source
         )

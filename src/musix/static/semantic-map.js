@@ -69,10 +69,14 @@
       { selector: "node:selected", style: { "background-color": cssValue("--focus"), "border-width": 3, "border-color": cssValue("--focus") } },
       { selector: "edge", style: { width: 1.5, "line-color": cssValue("--similarity"), opacity: 0.65 } },
     ];
-    const element = (node) => ({
-      data: { id: `historical-${node.genre_id}`, genreId: node.genre_id, label: node.name, displayLabel: "", weight: node.membership_count, overview: Number(node.lod_min) === 0 },
+    const element = (node) => {
+      const aggregate = Boolean(node.hierarchy_id);
+      const identifier = aggregate ? node.hierarchy_id : node.genre_id;
+      return {
+      data: { id: `historical-${identifier}`, genreId: aggregate ? node.representative_genre_id : node.genre_id, hierarchyId: node.hierarchy_id ?? null, hierarchyLevel: node.level ?? null, label: node.representative_label ?? node.name, displayLabel: "", weight: node.member_count ?? node.membership_count, overview: aggregate && Number(node.level) === 0 },
       position: { x: Number(node.x) * 600, y: Number(node.y) * 600 },
-    });
+      };
+    };
     const appendNodes = (nodes) => {
       const available = Math.max(0, 1200 - cy.nodes().length);
       const additions = nodes.filter((node) => cy.$id(`historical-${node.genre_id}`).empty())
@@ -221,8 +225,9 @@
     fetch(graphUrl, { headers: { Accept: "application/json" } })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("historical overview unavailable")))
       .then((payload) => {
-        if (payload.initial_edge_count !== 0 || (payload.nodes ?? []).length > 24) throw new Error("historical overview is not bounded");
-        cy = window.cytoscape({ container: mapElement, elements: payload.nodes.map(element), style: style(), layout: { name: "preset", fit: true, padding: 72 }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false });
+        const overview = payload.hierarchy ?? payload.nodes ?? [];
+        if (payload.initial_edge_count !== 0 || overview.length > 24) throw new Error("historical overview is not bounded");
+        cy = window.cytoscape({ container: mapElement, elements: overview.map(element), style: style(), layout: { name: "preset", fit: true, padding: 72 }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false });
         window.__musixMap = cy;
         window.__musixMapMetrics = { initialElementCount: cy.elements().length, historical: true };
         root.classList.add("js-map-ready");
@@ -230,6 +235,26 @@
         cy.on("zoom pan", scheduleTiles);
         cy.on("zoom", update);
         cy.on("tap", "node", (event) => {
+          const hierarchyId = event.target.data("hierarchyId");
+          if (hierarchyId && Number(event.target.data("hierarchyLevel")) < 2) {
+            const nextLevel = Number(event.target.data("hierarchyLevel")) + 1;
+            fetch(`/api/historical-signal-map?level=${nextLevel}&parent_id=${encodeURIComponent(hierarchyId)}`, { headers: { Accept: "application/json" } })
+              .then((response) => response.ok ? response.json() : null)
+              .then((focused) => {
+                if (!(focused?.hierarchy ?? []).length) return;
+                cy.elements().remove();
+                cy.add(focused.hierarchy.map(element));
+                level = nextLevel;
+                cy.fit(cy.nodes(), 72);
+                setHistoricalLabels();
+              });
+            return;
+          }
+          if (hierarchyId) {
+            level = 3;
+            scheduleTiles();
+            return;
+          }
           cy.$(":selected").unselect();
           event.target.select();
           selectedId = event.target.data("genreId");

@@ -11,6 +11,7 @@ from pydantic import Field, ValidationError
 
 from musix.models import FrozenModel
 from musix.models.historical_signal import (
+    HistoricalSignalHierarchyNode,
     HistoricalSignalLOD,
     HistoricalSignalNeighbor,
     HistoricalSignalNode,
@@ -26,6 +27,7 @@ _MAX_NEIGHBORS_PER_RESPONSE = 50
 _MAX_LOD_LEVEL = 3
 _MAX_INITIAL_NODES = 24
 _MAX_RESPONSE_BYTES = 256 * 1_024
+_MICROGENRE_LEVEL = 2
 
 
 class HistoricalSignalMapStoreError(RuntimeError):
@@ -51,6 +53,9 @@ class HistoricalSignalMapApiResponse(FrozenModel):
     metadata: HistoricalSignalMapMetadata
     level: int = Field(ge=0, le=3)
     tile: HistoricalSignalTile | None = None
+    hierarchy: tuple[HistoricalSignalHierarchyNode, ...] = Field(
+        default=(), max_length=_MAX_NODES_PER_RESPONSE
+    )
     nodes: tuple[HistoricalSignalNode, ...] = Field(max_length=_MAX_NODES_PER_RESPONSE)
     initial_edge_count: Literal[0] = 0
 
@@ -77,6 +82,7 @@ class HistoricalSignalMapStore:
         self._error: str | None = None
         self._node_by_id: dict[str, HistoricalSignalNode] = {}
         self._nodes_by_level: tuple[tuple[HistoricalSignalNode, ...], ...] = ()
+        self._hierarchy_by_id: dict[str, HistoricalSignalHierarchyNode] = {}
         self._tiles_by_key: dict[tuple[int, int, int], HistoricalSignalTile] = {}
         self._neighbors_by_genre: dict[str, tuple[HistoricalSignalNeighbor, ...]] = {}
 
@@ -95,12 +101,13 @@ class HistoricalSignalMapStore:
         """Return the already-validated sealed artifact for other startup-only adapters."""
         return self._require_artifact()
 
-    def response(
+    def response(  # noqa: C901 - one bounded public-slice state machine.
         self,
         *,
         level: int,
         column: int | None = None,
         row: int | None = None,
+        parent_id: str | None = None,
     ) -> HistoricalSignalMapApiResponse | None:
         """Return one bounded LOD cohort or one bounded viewport tile, never all edges."""
         artifact = self._require_artifact()
@@ -115,10 +122,39 @@ class HistoricalSignalMapStore:
                 "historical signal tile requires both column and row"
             )
         metadata = _metadata(artifact)
+        if parent_id is not None:
+            parent = self._hierarchy_by_id.get(parent_id)
+            if parent is None:
+                raise HistoricalSignalMapStoreError("historical hierarchy focus does not exist")
+            if parent.level >= _MICROGENRE_LEVEL:
+                raise HistoricalSignalMapStoreError(
+                    "historical microgenre has no aggregate children"
+                )
+            children = tuple(
+                self._hierarchy_by_id[child_id]
+                for child_id in parent.children_ids
+                if child_id in self._hierarchy_by_id
+            )
+            return _require_bounded_response(
+                HistoricalSignalMapApiResponse(
+                    metadata=metadata, level=level, hierarchy=children, nodes=()
+                )
+            )
         if column is None or row is None:
+            if level == 0:
+                hierarchy = tuple(
+                    item for item in self._hierarchy_by_id.values() if item.level == 0
+                )
+                if len(hierarchy) > _MAX_INITIAL_NODES:
+                    raise HistoricalSignalMapStoreError(
+                        "historical overview exceeds the 24-node cap"
+                    )
+                return _require_bounded_response(
+                    HistoricalSignalMapApiResponse(
+                        metadata=metadata, level=level, hierarchy=hierarchy, nodes=()
+                    )
+                )
             nodes = self._nodes_by_level[level]
-            if level == 0 and len(nodes) > _MAX_INITIAL_NODES:
-                raise HistoricalSignalMapStoreError("historical overview exceeds the 24-node cap")
             if len(nodes) > _MAX_NODES_PER_RESPONSE:
                 raise HistoricalSignalMapStoreError(
                     "historical signal level exceeds the response cap; request a viewport tile"
@@ -177,6 +213,9 @@ class HistoricalSignalMapStore:
                 tuple(node for node in self._artifact.map.nodes if node.lod_min <= level)
                 for level in range(_MAX_LOD_LEVEL + 1)
             )
+            self._hierarchy_by_id = {
+                item.hierarchy_id: item for item in getattr(self._artifact.map, "hierarchy", ())
+            }
             self._tiles_by_key = {
                 (tile.level, tile.column, tile.row): tile for tile in self._artifact.map.tiles
             }

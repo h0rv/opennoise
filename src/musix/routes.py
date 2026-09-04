@@ -188,6 +188,7 @@ class MapController(Controller):
         level: FromQuery[int] = 0,
         column: FromQuery[int | None] = None,
         row: FromQuery[int | None] = None,
+        parent_id: FromQuery[str | None] = None,
     ) -> HistoricalSignalMapApiResponse:
         """Return one bounded H3 map cohort or viewport tile after explicit local opt-in."""
         if not historical_signal_map.configured:
@@ -197,7 +198,9 @@ class MapController(Controller):
                 )
             )
         try:
-            response = historical_signal_map.response(level=level, column=column, row=row)
+            response = historical_signal_map.response(
+                level=level, column=column, row=row, parent_id=parent_id
+            )
         except HistoricalSignalMapStoreError as error:
             raise ServiceUnavailableException(
                 detail="historical signal map artifact unavailable"

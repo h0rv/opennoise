@@ -4,6 +4,7 @@ from pathlib import Path
 from musix.historical_signal_store import HistoricalSignalMapStore, HistoricalSignalMapStoreError
 from musix.models.historical_signal import (
     HistoricalSignalArtifact,
+    HistoricalSignalHierarchyNode,
     HistoricalSignalLOD,
     HistoricalSignalNeighbor,
     HistoricalSignalNode,
@@ -20,6 +21,9 @@ def _node(index: int, lod_min: int) -> HistoricalSignalNode:
         x=1.0,
         y=0.5,
         community_id="overview:00",
+        umbrella_id="graph:umbrella:000",
+        subcommunity_id="graph:umbrella:000:sub:000",
+        microgenre_id="graph:umbrella:000:sub:000:micro:000",
         component_id=0,
         membership_count=1,
         lod_min=lod_min,
@@ -31,6 +35,19 @@ def _artifact() -> HistoricalSignalPublicationArtifact:
     overview = tuple(_node(index, 0) for index in range(24))
     detailed = tuple(_node(index, 3) for index in range(24, 2_001))
     nodes = overview + detailed
+    hierarchy = tuple(
+        HistoricalSignalHierarchyNode(
+            hierarchy_id=f"graph:umbrella:{index:03d}",
+            children_ids=(f"graph:umbrella:{index:03d}:sub:000",),
+            level=0,
+            member_count=1,
+            representative_genre_id=node.genre_id,
+            representative_label=node.name,
+            x=node.x,
+            y=node.y,
+        )
+        for index, node in enumerate(overview)
+    )
     tile = HistoricalSignalTile(
         level=3,
         column=0,
@@ -57,6 +74,7 @@ def _artifact() -> HistoricalSignalPublicationArtifact:
                 shared_artist_count=1,
             ),
         ),
+        hierarchy=hierarchy,
     )
     return HistoricalSignalPublicationArtifact.model_construct(
         revision="historical-signal-publication-v1",
@@ -81,6 +99,9 @@ class HistoricalSignalMapStoreTests(unittest.TestCase):
             tuple(node for node in artifact.map.nodes if node.lod_min <= level)
             for level in range(4)
         )
+        store._hierarchy_by_id = {  # noqa: SLF001
+            item.hierarchy_id: item for item in artifact.map.hierarchy
+        }
         store._tiles_by_key = {  # noqa: SLF001
             (tile.level, tile.column, tile.row): tile for tile in artifact.map.tiles
         }
@@ -93,7 +114,8 @@ class HistoricalSignalMapStoreTests(unittest.TestCase):
         response = self._store().response(level=0)
         self.assertIsNotNone(response)
         if response is not None:
-            self.assertEqual(len(response.nodes), 24)
+            self.assertEqual(len(response.hierarchy), 24)
+            self.assertEqual(response.nodes, ())
             self.assertEqual(response.initial_edge_count, 0)
 
     def test_close_lod_requires_tile_when_it_exceeds_cap(self) -> None:
