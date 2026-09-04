@@ -23,7 +23,13 @@ and blocks publication.
 - Shown label boxes are checked at every zoom level. No more than 2% of desktop
   labels and 3% of mobile labels may touch another shown label.
 - One-hop weighted-Jaccard neighbor recall is measured against a hashed source
-  model over every mapped genre. Top-10 recall is at least 0.30. Top-25 recall
+  model over every mapped genre. The artifact records one hashed, variable
+  eligible-candidate set for every query, its source-neighbor count, and the
+  versioned eligibility rule. Candidate and canonical spectral baseline must
+  use the same source-model, neighbor, and eligible-set hashes. The random null
+  is recomputed from those per-query pools, never supplied as an ungrounded
+  global percentage. The candidate retains at least 98% of the baseline's
+  null-adjusted top-10 quality and beats random by at least 0.15. Top-25 recall
   is reported for comparison but not substituted for the top-10 gate.
 - The harness records screenshots for 1366 by 768 desktop and 390 by 844 mobile
   in system, light, and dark appearances. Each screenshot must exist at its

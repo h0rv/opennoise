@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import json
+from hashlib import sha256
 from typing import Literal
 
 from pydantic import Field, FiniteFloat, model_validator
 
 from musix.models.web import FrozenModel
+
+_RANDOM_NULL_TOLERANCE = 1e-12
 
 
 class ProductionMapCoordinate(FrozenModel):
@@ -99,16 +103,86 @@ class ProductionMapPresentationParent(FrozenModel):
         return self
 
 
+class ProductionMapEligibleSet(FrozenModel):
+    """One query's exact eligible pool for deterministic neighborhood QA."""
+
+    query_entity_id: str = Field(min_length=1, max_length=200)
+    eligible_candidate_count: int = Field(ge=1, le=19_999)
+    reference_neighbor_count: int = Field(ge=1, le=10)
+    eligible_candidate_ids_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def require_reference_neighbors_within_eligible_pool(self) -> ProductionMapEligibleSet:
+        """Reject source neighbors the layout could not retrieve."""
+        if self.reference_neighbor_count > self.eligible_candidate_count:
+            raise ValueError("reference neighbor count exceeds the eligible candidate pool")
+        return self
+
+
 class ProductionMapSimilarityEvidence(FrozenModel):
     """Comparable source-space and layout-space neighborhood evidence."""
 
     source_model_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     source_neighbor_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    candidate_coordinate_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    canonical_baseline_model_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    canonical_baseline_neighbor_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    canonical_baseline_coordinate_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    eligibility_rule_version: str = Field(min_length=1, max_length=200)
+    eligible_sets_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    canonical_baseline_eligibility_rule_version: str = Field(min_length=1, max_length=200)
+    canonical_baseline_eligible_sets_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     evaluated_entity_count: int = Field(ge=1, le=20_000)
+    eligible_sets: tuple[ProductionMapEligibleSet, ...] = Field(min_length=1, max_length=20_000)
     top_10_recall: FiniteFloat = Field(ge=0.0, le=1.0)
     top_25_recall: FiniteFloat = Field(ge=0.0, le=1.0)
-    prior_baseline_top_10_recall: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
+    canonical_baseline_top_10_recall: FiniteFloat = Field(ge=0.0, le=1.0)
+    random_top_10_recall: FiniteFloat = Field(ge=0.0, le=1.0)
     metric: Literal["one_hop_weighted_jaccard"] = "one_hop_weighted_jaccard"
+
+    @model_validator(mode="after")
+    def require_meaningful_baseline(self) -> ProductionMapSimilarityEvidence:
+        """Require a comparable, non-random canonical reference for map selection."""
+        if self.source_model_sha256 != self.canonical_baseline_model_sha256:
+            raise ValueError("candidate and canonical baseline must use the same source model hash")
+        if self.source_neighbor_sha256 != self.canonical_baseline_neighbor_sha256:
+            raise ValueError("candidate and canonical baseline must use the same neighbor hash")
+        if self.eligibility_rule_version != self.canonical_baseline_eligibility_rule_version:
+            raise ValueError("candidate and canonical baseline must use the same eligibility rule")
+        if self.eligible_sets_sha256 != self.canonical_baseline_eligible_sets_sha256:
+            raise ValueError("candidate and canonical baseline must use the same eligible-set hash")
+        if self.evaluated_entity_count != len(self.eligible_sets):
+            raise ValueError("eligible sets must match the evaluated entity count")
+        query_ids = [entry.query_entity_id for entry in self.eligible_sets]
+        if len(query_ids) != len(set(query_ids)):
+            raise ValueError("eligible sets must have one record per query entity")
+        if self.eligible_sets_sha256 != hash_eligible_sets(self.eligible_sets):
+            raise ValueError("eligible-set hash must match its exact ordered query records")
+        expected_random = sum(
+            min(10, entry.reference_neighbor_count) / entry.eligible_candidate_count
+            for entry in self.eligible_sets
+        ) / len(self.eligible_sets)
+        if abs(self.random_top_10_recall - expected_random) > _RANDOM_NULL_TOLERANCE:
+            raise ValueError("random top-10 recall must match the exact eligible-neighbor null")
+        if self.canonical_baseline_top_10_recall <= self.random_top_10_recall:
+            raise ValueError("canonical neighborhood baseline must exceed its random null")
+        return self
+
+
+def hash_eligible_sets(entries: tuple[ProductionMapEligibleSet, ...]) -> str:
+    """Hash exactly the variable eligible pools used by the random-null calculation."""
+    payload = [
+        {
+            "eligible_candidate_count": entry.eligible_candidate_count,
+            "eligible_candidate_ids_sha256": entry.eligible_candidate_ids_sha256,
+            "query_entity_id": entry.query_entity_id,
+            "reference_neighbor_count": entry.reference_neighbor_count,
+        }
+        for entry in sorted(entries, key=lambda entry: entry.query_entity_id)
+    ]
+    return sha256(
+        json.dumps(payload, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode()
+    ).hexdigest()
 
 
 class ProductionMapScreenshot(FrozenModel):
@@ -166,6 +240,20 @@ class ProductionMapAcceptanceInput(FrozenModel):
         for region in self.regions:
             if not set(region.entity_ids).issubset(coordinate_ids):
                 raise ValueError("region contains an entity without a coordinate")
-        if self.similarity.evaluated_entity_count > len(self.coordinates):
-            raise ValueError("similarity evaluation exceeds coordinate count")
+        if self.similarity.candidate_coordinate_sha256 != self.coordinate_sha256:
+            raise ValueError("similarity evidence must name this candidate coordinate artifact")
+        similarity_query_ids = {
+            eligible_set.query_entity_id for eligible_set in self.similarity.eligible_sets
+        }
+        if similarity_query_ids != coordinate_ids:
+            raise ValueError(
+                "similarity evidence must evaluate every mapped coordinate exactly once"
+            )
+        if any(
+            eligible_set.eligible_candidate_count > len(coordinate_ids) - 1
+            for eligible_set in self.similarity.eligible_sets
+        ):
+            raise ValueError(
+                "eligible candidate pools cannot exceed the mapped coordinate population"
+            )
         return self

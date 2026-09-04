@@ -30,7 +30,9 @@ _MAX_ISOLATED_NODE_FRACTION = 0.05
 _MAX_REGION_ESCAPE_FRACTION = 0.02
 _MAX_DESKTOP_LABEL_OVERLAP_FRACTION = 0.02
 _MAX_MOBILE_LABEL_OVERLAP_FRACTION = 0.03
-_MIN_TOP_10_RECALL = 0.30
+_MIN_NORMALIZED_TOP_10_QUALITY = 0.98
+_MIN_TOP_10_ABSOLUTE_LIFT_ABOVE_RANDOM = 0.15
+_MIN_EVALUATED_ENTITIES = 2
 _FIFTH_NEIGHBOR_INDEX = 5
 _MAX_FIFTH_NEIGHBOR_DISTANCE = 0.45
 
@@ -71,6 +73,7 @@ class ProductionMapAcceptanceResult:
     lod_persistent: bool
     top_10_recall: float
     top_25_recall: float
+    normalized_top_10_quality: float
 
 
 def evaluate_production_map(value: ProductionMapAcceptanceInput) -> ProductionMapAcceptanceResult:
@@ -139,6 +142,7 @@ def evaluate_production_map(value: ProductionMapAcceptanceInput) -> ProductionMa
         lod_persistent=lod_persistent,
         top_10_recall=float(value.similarity.top_10_recall),
         top_25_recall=float(value.similarity.top_25_recall),
+        normalized_top_10_quality=_normalized_top_10_quality(value),
     )
 
 
@@ -320,13 +324,27 @@ def _label_collisions(labels: tuple[ProductionMapLabelBox, ...]) -> LabelCollisi
 
 def _similarity_failures(value: ProductionMapAcceptanceInput, failures: list[str]) -> None:
     similarity = value.similarity
-    if similarity.top_10_recall < _MIN_TOP_10_RECALL:
+    normalized_quality = _normalized_top_10_quality(value)
+    if normalized_quality < _MIN_NORMALIZED_TOP_10_QUALITY:
         failures.append(
-            f"one-hop top-10 neighbor recall must be >= {_MIN_TOP_10_RECALL:.2f}; "
-            f"got {similarity.top_10_recall:.4f}"
+            "one-hop top-10 normalized quality against the same-scope canonical spectral baseline "
+            f"must be >= {_MIN_NORMALIZED_TOP_10_QUALITY:.2f}; got {normalized_quality:.4f}"
         )
-    if similarity.evaluated_entity_count != len(value.coordinates):
-        failures.append("similarity evidence must cover every coordinate in the production map")
+    lift = similarity.top_10_recall - similarity.random_top_10_recall
+    if lift < _MIN_TOP_10_ABSOLUTE_LIFT_ABOVE_RANDOM:
+        failures.append(
+            "one-hop top-10 recall must exceed the exact random null by "
+            f">= {_MIN_TOP_10_ABSOLUTE_LIFT_ABOVE_RANDOM:.2f}; got {lift:.4f}"
+        )
+    if similarity.evaluated_entity_count < _MIN_EVALUATED_ENTITIES:
+        failures.append("similarity evidence needs at least two eligible mapped entities")
+
+
+def _normalized_top_10_quality(value: ProductionMapAcceptanceInput) -> float:
+    similarity = value.similarity
+    return (similarity.top_10_recall - similarity.random_top_10_recall) / (
+        similarity.canonical_baseline_top_10_recall - similarity.random_top_10_recall
+    )
 
 
 def _screenshot_failures(value: ProductionMapAcceptanceInput, failures: list[str]) -> None:
