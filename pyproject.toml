@@ -105,5 +105,9 @@ sequence = [
     { cmd = "python scripts/build_production_map.py --database data/public.sqlite --source-model data/model/phase3-public-model.json --output data/model/production-map-v1.json" },
 ]
 
+
+[tool.poe.tasks.release-certify]
+cmd = "python scripts/release_certify.py"
+
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]

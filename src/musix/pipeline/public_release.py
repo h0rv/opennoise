@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -10,6 +11,7 @@ import sqlite3
 import tempfile
 from contextlib import closing
 from datetime import UTC, datetime
+from errno import EINVAL, ENOTTY, EOPNOTSUPP, EXDEV
 from pathlib import Path
 
 from pydantic import Field
@@ -27,6 +29,8 @@ from musix.models.modeling import PublicModelArtifact, PublicModelSettings
 from musix.pipeline.release_manifest import verify_manifest_against_database
 
 _POLICY_VERSION = 1
+_FICLONE = 0x40049409
+_REFLINK_UNAVAILABLE_ERRORS = frozenset({EINVAL, ENOTTY, EOPNOTSUPP, EXDEV})
 
 
 class PublicReleaseBuildError(RuntimeError):
@@ -99,13 +103,34 @@ def _write_atomic(path: Path, payload: bytes) -> None:
 
 
 def _snapshot_cache(source: Path, destination: Path) -> None:
-    """Copy a sealed SQLite file byte-for-byte without acquiring a source lock."""
+    """Clone a sealed SQLite cache without ever sharing mutable storage.
+
+    Linux copy-on-write reflinks avoid reserving the entire multi-gigabyte cache
+    on a small laptop. A reflink has independent writes, unlike a hardlink, so
+    schema migration cannot alter the sealed source. Filesystems without
+    reflinks use a verified byte copy instead.
+    """
     absolute_source = source.resolve(strict=True)
-    shutil.copyfile(absolute_source, destination)
-    with destination.open("rb") as stream:
-        os.fsync(stream.fileno())
+    if not _try_reflink(absolute_source, destination):
+        shutil.copyfile(absolute_source, destination)
+        with destination.open("rb") as stream:
+            os.fsync(stream.fileno())
     if _sha256(absolute_source) != _sha256(destination):
         raise PublicReleaseBuildError("sealed cache copy does not match its source hash")
+
+
+def _try_reflink(source: Path, destination: Path) -> bool:
+    """Create an independent copy-on-write clone when the local filesystem supports it."""
+    with source.open("rb") as source_stream, destination.open("r+b") as destination_stream:
+        try:
+            fcntl.ioctl(destination_stream.fileno(), _FICLONE, source_stream.fileno())
+        except OSError as error:
+            if error.errno in _REFLINK_UNAVAILABLE_ERRORS:
+                return False
+            raise PublicReleaseBuildError("sealed cache reflink failed") from error
+        destination_stream.flush()
+        os.fsync(destination_stream.fileno())
+    return True
 
 
 def _release_policy_id(connection: sqlite3.Connection, release_id: str) -> int:
