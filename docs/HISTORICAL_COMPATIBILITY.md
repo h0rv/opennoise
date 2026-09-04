@@ -74,9 +74,11 @@ H3-H6 each have an explicit disabled resumable adapter contract. Enabling one ne
 verified local/archive source manifest with capture information, hash, and rights decision. The
 contracts do not fetch, scrape, or infer data.
 
-The H3 source never enters the object store or public model. The SQLite policy allows local display
-only when explicitly enabled and denies export. The publication receipt links the compatibility
-artifact, object key, SQLite run, and the sealed H3 projection. See [the H4/H5 source audit](H4_H5_SOURCE_AUDIT.md).
+The H3 source and derived SQLite are retained only in an operator-configured local
+content-addressed vault; neither is committed to the repository or entered into the public model.
+The SQLite policy allows local display only when explicitly enabled and denies export. The H3
+rebuild receipt links both vault objects, their hashes, the source manifests, model settings, and
+the exact rebuild command. See [the H4/H5 source audit](H4_H5_SOURCE_AUDIT.md).
 
 When H3 is enabled, that receipt also carries a `historical-full-map-production-input-v1` handoff:
 6,291 stable H2 genre IDs, representatives, provenance hashes, and LOD-first viewport-tile

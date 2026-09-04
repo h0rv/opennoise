@@ -1,5 +1,27 @@
 # Historical H3 release blockers
 
+## Custody workflow (implemented)
+
+The operator can now seal the two operator-supplied H3 inputs without adding either
+blob to the checkout:
+
+```sh
+export MUSIX_HISTORICAL_H3_SOURCE=/path/to/spotify_genres_artists_map.json
+export MUSIX_HISTORICAL_MEMBERSHIP_DATABASE=/path/to/historical-memberships.sqlite
+export MUSIX_HISTORICAL_OBJECT_STORE=/path/to/local-vault
+export MUSIX_HISTORICAL_CUSTODY_RECEIPT=/path/to/historical-h3-rebuild.receipt.json
+export MUSIX_HISTORICAL_MANIFEST=/path/to/historical-compatibility.json
+poe custody-historical-inputs
+```
+
+The task verifies the configured raw-source SHA-256 and byte count, source and
+projection counts, and the source-scoped SQLite rows before publishing both files
+through the `ObjectStore` protocol. It uses content-addressed keys below the
+configured vault and writes an atomic Pydantic receipt containing both keys and
+hashes, H3/H2 manifest hashes, the local-display policy key, model settings, the
+exact signal rebuild command, Python version, and code revision. The default
+promotion state remains disabled.
+
 The sealed raw H3 JSON and its derived membership SQLite currently exist only
 under `.worktrees/final-integration/.cache`. That location is not a release
 artifact bundle and can be removed by normal worktree or cache cleanup.
