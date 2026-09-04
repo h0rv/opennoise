@@ -373,9 +373,7 @@ def _partition_graph(
         ]
         small = _pack_disconnected_components(
             tuple(
-                component
-                for component in components
-                if component.member_count <= maximum_members
+                component for component in components if component.member_count <= maximum_members
             ),
             genre_ids,
             maximum_members,
