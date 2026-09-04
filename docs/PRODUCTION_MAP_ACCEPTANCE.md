@@ -21,11 +21,17 @@ and blocks publication.
   root regions exactly match display-tree roots and do not overlap. A
   `similarity_first_non_containment` map cannot claim containment polygons. It
   instead emits one exact centroid per umbrella root, derived from its explicit
-  display subtree, and the overview zoom level exposes every umbrella root.
+  display subtree. All roots remain graph data and must be searchable and
+  visible by the final zoom level. The overview is a separate, bounded set of
+  model-emitted communities: they partition every mapped node, declare their
+  exact members, and place each label at its exact member centroid. They appear
+  only at overview; descendants progressively replace them at closer levels.
 - Zoom levels start at zero, are contiguous, retain all earlier visible nodes,
   and end with every node visible.
 - Shown label boxes are checked at every zoom level. No more than 2% of desktop
-  labels and 3% of mobile labels may touch another shown label.
+  labels and 3% of mobile labels may touch another shown label. Desktop levels
+  may show at most 48, 80, 128, then 180 labels; mobile levels may show at most
+  24, 40, 64, then 80. All shown labels must be at least 12px.
 - One-hop weighted-Jaccard neighbor recall is measured against a hashed source
   model over every mapped genre. The artifact records one hashed, variable
   eligible-candidate set for every query, including zero-source-neighbor rows,

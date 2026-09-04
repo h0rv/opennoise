@@ -18,6 +18,7 @@ from musix.models.production_qa import (
     ProductionMapInteractionEvidence,
     ProductionMapLabelBox,
     ProductionMapLod,
+    ProductionMapOverviewCommunity,
     ProductionMapPresentationParent,
     ProductionMapRegion,
     ProductionMapScreenshot,
@@ -36,6 +37,7 @@ def _boxes(ids: tuple[str, ...], *, mobile: bool) -> tuple[ProductionMapLabelBox
             min_y=10.0 + (index // columns) * 90.0,
             max_x=40.0 + (index % columns) * ((width - 50) / columns),
             max_y=26.0 + (index // columns) * 90.0,
+            font_size_px=13.0,
         )
         for index, entity_id in enumerate(ids)
     )
@@ -286,6 +288,15 @@ class ProductionMapQaTests(unittest.TestCase):
             average_y = sum(float(item.y) for item in evidence.coordinates) / len(
                 evidence.coordinates
             )
+            community = ProductionMapOverviewCommunity(
+                community_id="community:all",
+                member_entity_ids=tuple(item.entity_id for item in evidence.coordinates),
+                x=average_x,
+                y=average_y,
+            )
+            overview = evidence.lods[0].model_copy(
+                update={"visible_overview_community_ids": (community.community_id,)}
+            )
             similarity_first = ProductionMapAcceptanceInput.model_validate(
                 {
                     **evidence.model_dump(mode="python"),
@@ -301,10 +312,65 @@ class ProductionMapQaTests(unittest.TestCase):
                             "y": average_y,
                         },
                     ),
+                    "overview_communities": (community,),
+                    "lods": (overview, *evidence.lods[1:]),
                 }
             )
             result = require_accepted_production_map(similarity_first)
             self.assertTrue(result.accepted)
+
+    def test_rejects_unbounded_or_unreadable_similarity_first_overview(self) -> None:
+        with TemporaryDirectory() as temporary:
+            evidence = _input(screenshot_directory=Path(temporary))
+            average_x = sum(float(item.x) for item in evidence.coordinates) / len(
+                evidence.coordinates
+            )
+            average_y = sum(float(item.y) for item in evidence.coordinates) / len(
+                evidence.coordinates
+            )
+            community = ProductionMapOverviewCommunity(
+                community_id="community:all",
+                member_entity_ids=tuple(item.entity_id for item in evidence.coordinates),
+                x=average_x,
+                y=average_y,
+            )
+            overview = evidence.lods[0].model_copy(
+                update={"visible_overview_community_ids": (community.community_id,)}
+            )
+            similarity_first = ProductionMapAcceptanceInput.model_validate(
+                {
+                    **evidence.model_dump(mode="python"),
+                    "layout_semantics": "similarity_first_non_containment",
+                    "regions": (),
+                    "umbrella_centroids": (
+                        {
+                            "root_entity_id": evidence.coordinates[0].entity_id,
+                            "descendant_entity_ids": tuple(
+                                item.entity_id for item in evidence.coordinates
+                            ),
+                            "x": average_x,
+                            "y": average_y,
+                        },
+                    ),
+                    "overview_communities": (community,),
+                    "lods": (overview, *evidence.lods[1:]),
+                }
+            )
+            unreadable_overview = similarity_first.lods[0].model_copy(
+                update={
+                    "desktop_labels": tuple(
+                        label.model_copy(update={"font_size_px": 11.0})
+                        for label in similarity_first.lods[0].desktop_labels
+                    )
+                }
+            )
+            result = evaluate_production_map(
+                similarity_first.model_copy(
+                    update={"lods": (unreadable_overview, *similarity_first.lods[1:])}
+                )
+            )
+            self.assertFalse(result.accepted)
+            self.assertTrue(any("below 12px" in failure for failure in result.failures))
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from itertools import pairwise
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from musix.models.production_qa import (
         ProductionMapAcceptanceInput,
         ProductionMapLabelBox,
+        ProductionMapLod,
         ProductionMapRegion,
     )
 
@@ -30,6 +31,10 @@ _MAX_ISOLATED_NODE_FRACTION = 0.05
 _MAX_REGION_ESCAPE_FRACTION = 0.02
 _MAX_DESKTOP_LABEL_OVERLAP_FRACTION = 0.02
 _MAX_MOBILE_LABEL_OVERLAP_FRACTION = 0.03
+_MAX_DESKTOP_LABELS_BY_LOD = (48, 80, 128, 180)
+_MAX_MOBILE_LABELS_BY_LOD = (24, 40, 64, 80)
+_MIN_DESKTOP_LABEL_FONT_SIZE_PX = 12.0
+_MIN_MOBILE_LABEL_FONT_SIZE_PX = 12.0
 _MIN_NORMALIZED_TOP_10_QUALITY = 0.98
 _MIN_TOP_10_ABSOLUTE_LIFT_ABOVE_RANDOM = 0.15
 _MIN_EVALUATED_ENTITIES = 2
@@ -292,8 +297,9 @@ def _lod_failures(
 def _label_collision_failures(
     value: ProductionMapAcceptanceInput, failures: list[str]
 ) -> tuple[tuple[LabelCollisionSummary, ...], tuple[LabelCollisionSummary, ...]]:
-    desktop = tuple(_label_collisions(lod.desktop_labels) for lod in value.lods)
-    mobile = tuple(_label_collisions(lod.mobile_labels) for lod in value.lods)
+    lods = tuple(sorted(value.lods, key=lambda lod: lod.level))
+    desktop = tuple(_label_collisions(lod.desktop_labels) for lod in lods)
+    mobile = tuple(_label_collisions(lod.mobile_labels) for lod in lods)
     if any(item.overlap_fraction > _MAX_DESKTOP_LABEL_OVERLAP_FRACTION for item in desktop):
         failures.append(
             "desktop labels overlap above "
@@ -304,7 +310,43 @@ def _label_collision_failures(
             "mobile labels overlap above "
             f"{_MAX_MOBILE_LABEL_OVERLAP_FRACTION:.2f} at one or more LODs"
         )
+    _label_readability_failures(
+        lods,
+        viewport="desktop",
+        label_budgets=_MAX_DESKTOP_LABELS_BY_LOD,
+        minimum_font_size_px=_MIN_DESKTOP_LABEL_FONT_SIZE_PX,
+        failures=failures,
+    )
+    _label_readability_failures(
+        lods,
+        viewport="mobile",
+        label_budgets=_MAX_MOBILE_LABELS_BY_LOD,
+        minimum_font_size_px=_MIN_MOBILE_LABEL_FONT_SIZE_PX,
+        failures=failures,
+    )
     return desktop, mobile
+
+
+def _label_readability_failures(
+    lods: tuple[ProductionMapLod, ...],
+    *,
+    viewport: Literal["desktop", "mobile"],
+    label_budgets: tuple[int, ...],
+    minimum_font_size_px: float,
+    failures: list[str],
+) -> None:
+    """Reject unreadably dense or undersized labels at each semantic zoom level."""
+    for lod in lods:
+        labels = lod.desktop_labels if viewport == "desktop" else lod.mobile_labels
+        budget = label_budgets[min(lod.level, len(label_budgets) - 1)]
+        if len(labels) > budget:
+            failures.append(
+                f"{viewport} LOD {lod.level} shows {len(labels)} labels; maximum is {budget}"
+            )
+        if any(float(label.font_size_px) < minimum_font_size_px for label in labels):
+            failures.append(
+                f"{viewport} LOD {lod.level} uses labels below {minimum_font_size_px:.0f}px"
+            )
 
 
 def _label_collisions(labels: tuple[ProductionMapLabelBox, ...]) -> LabelCollisionSummary:

@@ -29,6 +29,7 @@ class ProductionMapLabelBox(FrozenModel):
     min_y: FiniteFloat = Field(ge=0.0)
     max_x: FiniteFloat = Field(gt=0.0)
     max_y: FiniteFloat = Field(gt=0.0)
+    font_size_px: FiniteFloat = Field(gt=0.0, le=128.0)
 
     @model_validator(mode="after")
     def require_nonempty_bounds(self) -> ProductionMapLabelBox:
@@ -43,6 +44,7 @@ class ProductionMapLod(FrozenModel):
 
     level: int = Field(ge=0, le=10)
     visible_entity_ids: tuple[str, ...] = Field(min_length=1, max_length=20_000)
+    visible_overview_community_ids: tuple[str, ...] = Field(default=(), max_length=48)
     desktop_labels: tuple[ProductionMapLabelBox, ...] = Field(max_length=4_000)
     mobile_labels: tuple[ProductionMapLabelBox, ...] = Field(max_length=4_000)
 
@@ -52,12 +54,17 @@ class ProductionMapLod(FrozenModel):
         visible = set(self.visible_entity_ids)
         if len(visible) != len(self.visible_entity_ids):
             raise ValueError("visible entities must be unique")
+        visible_labels = set(self.visible_entity_ids) | set(self.visible_overview_community_ids)
+        if len(self.visible_overview_community_ids) != len(
+            set(self.visible_overview_community_ids)
+        ):
+            raise ValueError("visible overview communities must be unique")
         for name, labels in (("desktop", self.desktop_labels), ("mobile", self.mobile_labels)):
             ids = [label.entity_id for label in labels]
             if len(ids) != len(set(ids)):
                 raise ValueError(f"{name} labels must be unique")
-            if not set(ids).issubset(visible):
-                raise ValueError(f"{name} labels must belong to visible entities")
+            if not set(ids).issubset(visible_labels):
+                raise ValueError(f"{name} labels must belong to visible map items")
         return self
 
 
@@ -99,6 +106,22 @@ class ProductionMapUmbrellaCentroid(FrozenModel):
             raise ValueError("umbrella centroid descendants must be unique")
         if self.root_entity_id not in self.descendant_entity_ids:
             raise ValueError("umbrella centroid must include its root entity")
+        return self
+
+
+class ProductionMapOverviewCommunity(FrozenModel):
+    """One model-emitted overview community with an exact coordinate provenance."""
+
+    community_id: str = Field(min_length=1, max_length=200)
+    member_entity_ids: tuple[str, ...] = Field(min_length=1, max_length=20_000)
+    x: FiniteFloat = Field(ge=0.0, le=1.0)
+    y: FiniteFloat = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def require_unique_members(self) -> ProductionMapOverviewCommunity:
+        """Keep the community population auditable and deterministic."""
+        if len(self.member_entity_ids) != len(set(self.member_entity_ids)):
+            raise ValueError("overview community members must be unique")
         return self
 
 
@@ -272,18 +295,15 @@ def _display_subtrees(
 
 
 def _validate_similarity_first_centroids(
-    centroids: tuple[ProductionMapUmbrellaCentroid, ...],
+    value: ProductionMapAcceptanceInput,
     coordinate_ids: set[str],
-    coordinates: tuple[ProductionMapCoordinate, ...],
-    presentation_parents: tuple[ProductionMapPresentationParent, ...],
-    lods: tuple[ProductionMapLod, ...],
 ) -> None:
     """Require exact, inspectable overview anchors without claiming containment geometry."""
-    roots, descendant_sets = _display_subtrees(coordinate_ids, presentation_parents)
-    if {item.root_entity_id for item in centroids} != roots:
+    roots, descendant_sets = _display_subtrees(coordinate_ids, value.presentation_parents)
+    if {item.root_entity_id for item in value.umbrella_centroids} != roots:
         raise ValueError("similarity-first map needs one derived umbrella centroid per root")
-    coordinate_by_id = {item.entity_id: item for item in coordinates}
-    for centroid in centroids:
+    coordinate_by_id = {item.entity_id: item for item in value.coordinates}
+    for centroid in value.umbrella_centroids:
         descendants = descendant_sets[centroid.root_entity_id]
         if set(centroid.descendant_entity_ids) != descendants:
             raise ValueError("umbrella centroid must name its exact display subtree")
@@ -296,9 +316,50 @@ def _validate_similarity_first_centroids(
             raise ValueError(
                 "umbrella centroid must be derived from its declared descendant coordinates"
             )
+    _validate_overview_communities(
+        value.overview_communities,
+        coordinate_ids,
+        value.coordinates,
+        value.lods,
+    )
+
+
+def _validate_overview_communities(
+    communities: tuple[ProductionMapOverviewCommunity, ...],
+    coordinate_ids: set[str],
+    coordinates: tuple[ProductionMapCoordinate, ...],
+    lods: tuple[ProductionMapLod, ...],
+) -> None:
+    """Require a bounded, exact, synthetic overview instead of every taxonomy root."""
+    if not communities:
+        raise ValueError("similarity-first map needs model-emitted overview communities")
+    community_ids = [community.community_id for community in communities]
+    if len(community_ids) != len(set(community_ids)):
+        raise ValueError("overview community IDs must be unique")
+    members = [member for community in communities for member in community.member_entity_ids]
+    if set(members) != coordinate_ids or len(members) != len(set(members)):
+        raise ValueError("overview communities must partition every mapped coordinate exactly once")
+    coordinate_by_id = {item.entity_id: item for item in coordinates}
+    for community in communities:
+        expected_x = sum(
+            float(coordinate_by_id[entity_id].x) for entity_id in community.member_entity_ids
+        ) / len(community.member_entity_ids)
+        expected_y = sum(
+            float(coordinate_by_id[entity_id].y) for entity_id in community.member_entity_ids
+        ) / len(community.member_entity_ids)
+        if (
+            abs(float(community.x) - expected_x) > _RANDOM_NULL_TOLERANCE
+            or abs(float(community.y) - expected_y) > _RANDOM_NULL_TOLERANCE
+        ):
+            raise ValueError(
+                "overview community centroid must match its declared member coordinates"
+            )
+
     overview = min(lods, key=lambda item: item.level)
-    if not roots.issubset(overview.visible_entity_ids):
-        raise ValueError("similarity-first overview LOD must expose every umbrella root")
+    if set(overview.visible_overview_community_ids) != set(community_ids):
+        raise ValueError("overview LOD must expose every model-emitted overview community")
+    if any(lod.visible_overview_community_ids for lod in lods if lod.level != overview.level):
+        raise ValueError("overview communities may only appear at the overview LOD")
 
 
 def _validate_layout_semantics(
@@ -315,13 +376,7 @@ def _validate_layout_semantics(
         return
     if value.regions:
         raise ValueError("similarity-first map cannot claim containment regions")
-    _validate_similarity_first_centroids(
-        value.umbrella_centroids,
-        coordinate_ids,
-        value.coordinates,
-        value.presentation_parents,
-        value.lods,
-    )
+    _validate_similarity_first_centroids(value, coordinate_ids)
 
 
 def _validate_region_owners(
@@ -397,6 +452,9 @@ class ProductionMapAcceptanceInput(FrozenModel):
     regions: tuple[ProductionMapRegion, ...] = Field(default=(), max_length=20_000)
     umbrella_centroids: tuple[ProductionMapUmbrellaCentroid, ...] = Field(
         default=(), max_length=20_000
+    )
+    overview_communities: tuple[ProductionMapOverviewCommunity, ...] = Field(
+        default=(), max_length=48
     )
     lods: tuple[ProductionMapLod, ...] = Field(min_length=1, max_length=11)
     similarity: ProductionMapSimilarityEvidence
