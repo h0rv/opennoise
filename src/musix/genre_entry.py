@@ -16,6 +16,8 @@ from musix.exploration import (
     GenreProfileSummary,
     GenreSimilarity,
     HistoricalGenreRepresentative,
+    RepresentativeDiscoveryItem,
+    RepresentativeRanking,
 )
 from musix.metadata_links import metadata_url
 from musix.models.modeling import MetadataKind
@@ -65,9 +67,9 @@ class GenreEntryRepository:
         genre_id: int,
     ) -> tuple[
         HistoricalGenreRepresentative | None,
-        tuple[GenreDiscoveryItem, ...],
-        tuple[GenreDiscoveryItem, ...],
-        tuple[GenreDiscoveryItem, ...],
+        tuple[RepresentativeDiscoveryItem, ...],
+        tuple[RepresentativeDiscoveryItem, ...],
+        tuple[RepresentativeDiscoveryItem, ...],
         tuple[GenreDiscoveryItem, ...],
         GenreModelExplanation | None,
     ]:
@@ -85,7 +87,8 @@ class GenreEntryRepository:
                 (genre_id,),
             ).fetchone()
             public_rows = connection.execute(
-                """SELECT entity_kind, source_entity_ref, display_name
+                """SELECT entity_kind, source_entity_ref, display_name, rank,
+                          direct_evidence_value, source_count, evidence_refs_json
                    FROM displayable_public_genre_representatives
                    WHERE genre_id = ? AND rank <= ?
                    ORDER BY entity_kind, rank, source_entity_ref""",
@@ -179,9 +182,9 @@ def _public_items(
     rows: list[sqlite3.Row],
     entity_kind: MetadataKind,
     limit: int,
-) -> tuple[GenreDiscoveryItem, ...]:
+) -> tuple[RepresentativeDiscoveryItem, ...]:
     """Build bounded outbound items only from kind-matched public identifiers."""
-    result: list[GenreDiscoveryItem] = []
+    result: list[RepresentativeDiscoveryItem] = []
     for row in rows:
         if str(row[0]) != entity_kind:
             continue
@@ -189,7 +192,18 @@ def _public_items(
         href = metadata_url(entity_kind, source_ref)
         if href is None:
             continue
-        result.append(GenreDiscoveryItem(name=str(row[2]), href=href))
+        result.append(
+            RepresentativeDiscoveryItem(
+                name=str(row[2]),
+                href=href,
+                ranking=RepresentativeRanking(
+                    rank=int(row[3]),
+                    direct_evidence_value=float(row[4]),
+                    source_count=int(row[5]),
+                    evidence_refs=_json_string_tuple(json.loads(str(row[6]))),
+                ),
+            )
+        )
         if len(result) == limit:
             break
     return tuple(result)

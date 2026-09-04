@@ -96,6 +96,23 @@ class GenreDiscoveryItem(FrozenModel):
     evidence_refs: tuple[int, ...] = ()
 
 
+class RepresentativeRanking(FrozenModel):
+    """Explain one bounded public representative without implying popularity."""
+
+    rank: int = Field(gt=0)
+    direct_evidence_value: FiniteFloat = Field(gt=0.0)
+    source_count: int = Field(gt=0)
+    evidence_refs: tuple[str, ...] = Field(min_length=1, max_length=32)
+
+
+class RepresentativeDiscoveryItem(FrozenModel):
+    """One displayable representative and the features used to rank it."""
+
+    name: str = Field(min_length=1, max_length=500)
+    href: str | None = None
+    ranking: RepresentativeRanking
+
+
 class GenreExternalLink(FrozenModel):
     """One policy-safe external or playable destination for a genre."""
 
@@ -165,9 +182,9 @@ class GenreDetail(FrozenModel):
     description: str | None
     evidence: tuple[ProvenanceEvidence, ...]
     historical_representative: HistoricalGenreRepresentative | None = None
-    representative_artists: tuple[GenreDiscoveryItem, ...] = ()
-    defining_albums: tuple[GenreDiscoveryItem, ...] = ()
-    defining_tracks: tuple[GenreDiscoveryItem, ...] = ()
+    representative_artists: tuple[RepresentativeDiscoveryItem, ...] = ()
+    defining_albums: tuple[RepresentativeDiscoveryItem, ...] = ()
+    defining_tracks: tuple[RepresentativeDiscoveryItem, ...] = ()
     playable_links: tuple[GenreExternalLink, ...] = ()
     neighbors: tuple[GenreDiscoveryItem, ...] = ()
     model_explanation: GenreModelExplanation | None = None

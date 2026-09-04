@@ -294,6 +294,10 @@ class PublicModelPublishTests(unittest.TestCase):
         self.assertEqual(enriched[1][0].name, "Representative Artist")
         self.assertEqual(enriched[2][0].name, "Defining Album")
         self.assertEqual(enriched[3][0].name, "Defining Track")
+        self.assertEqual(enriched[1][0].ranking.rank, 1)
+        self.assertEqual(enriched[1][0].ranking.direct_evidence_value, 3.0)
+        self.assertEqual(enriched[1][0].ranking.source_count, 1)
+        self.assertEqual(enriched[1][0].ranking.evidence_refs, ("wd:artist",))
         self.assertEqual(
             enriched[2][0].href,
             f"https://musicbrainz.org/release-group/{ALBUM_ID}",
@@ -315,6 +319,16 @@ class PublicModelPublishTests(unittest.TestCase):
         assert explanation is not None
         self.assertTrue(explanation["profiles"])
         self.assertTrue(explanation["neighbors"])
+        artist = response.json()["representative_artists"][0]
+        self.assertEqual(
+            artist["ranking"],
+            {
+                "rank": 1,
+                "direct_evidence_value": 3.0,
+                "source_count": 1,
+                "evidence_refs": ["wd:artist"],
+            },
+        )
 
     def test_genre_fragment_renders_compact_model_signals(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)
@@ -327,6 +341,8 @@ class PublicModelPublishTests(unittest.TestCase):
         self.assertIn("direct membership", response.text)
         self.assertIn("weighted jaccard", response.text)
         self.assertIn("musicbrainz:artist:", response.text)
+        self.assertIn("rank 1", response.text)
+        self.assertIn("wd:artist", response.text)
 
     def test_active_input_and_output_suppressions_retract_public_rows(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)
