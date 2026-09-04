@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from threading import Lock
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Literal
 from urllib.parse import quote
 
 from pydantic import ValidationError
 
 from musix.models import FrozenModel
 from musix.models.production import ProductionMapArtifact
+from musix.models.production_qa import ProductionMapOverviewCommunity
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -24,10 +26,11 @@ class ProductionMapStoreError(RuntimeError):
 class ProductionMapApiResponse(FrozenModel):
     """Serve immutable graph data with local, stable public detail routes."""
 
-    source: str = "production-artifact"
-    fallback: bool = False
+    source: Literal["production-artifact"] = "production-artifact"
+    fallback: Literal[False] = False
     graph: ProductionMapArtifact
     detail_hrefs: dict[str, str]
+    overview_communities: tuple[ProductionMapOverviewCommunity, ...]
 
 
 class ProductionMapStore:
@@ -61,6 +64,7 @@ class ProductionMapStore:
                 node.genre_id: _DETAIL_ROUTE_PREFIX + quote(node.genre_id, safe="")
                 for node in artifact.nodes
             },
+            overview_communities=_overview_communities(artifact),
         )
 
     def _load_once(self) -> None:
@@ -74,3 +78,25 @@ class ProductionMapStore:
             self._artifact = ProductionMapArtifact.model_validate_json(payload)
         except (OSError, ValidationError, ValueError) as error:
             self._error = str(error)
+
+
+def _overview_communities(
+    artifact: ProductionMapArtifact,
+) -> tuple[ProductionMapOverviewCommunity, ...]:
+    """Partition the coordinate plane into a bounded, deterministic overview."""
+    columns = 6
+    rows = 8
+    grouped: dict[tuple[int, int], list[tuple[str, float, float]]] = defaultdict(list)
+    for node in artifact.nodes:
+        column = min(columns - 1, int(float(node.x) * columns))
+        row = min(rows - 1, int(float(node.y) * rows))
+        grouped[column, row].append((node.genre_id, float(node.x), float(node.y)))
+    return tuple(
+        ProductionMapOverviewCommunity(
+            community_id=f"overview:{column}:{row}",
+            member_entity_ids=tuple(item[0] for item in sorted(members)),
+            x=sum(item[1] for item in members) / len(members),
+            y=sum(item[2] for item in members) / len(members),
+        )
+        for (column, row), members in sorted(grouped.items())
+    )

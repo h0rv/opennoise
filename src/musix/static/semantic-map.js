@@ -37,6 +37,7 @@
   const getNodes = (payload) => payload.nodes ?? payload.graph?.nodes ?? payload.points ?? [];
   const getEdges = (payload) => payload.edges ?? payload.graph?.edges ?? [];
   const getLods = (payload) => payload.lods ?? payload.graph?.lods ?? [];
+  const getOverviewCommunities = (payload) => payload.overview_communities ?? [];
 
   const normalisedPositions = (nodes) => {
     const xs = nodes.map((node) => Number(node.x)).filter(Number.isFinite);
@@ -52,12 +53,39 @@
 
   const elementsFor = (payload) => {
     const nodes = getNodes(payload);
+    const communities = getOverviewCommunities(payload);
     const positions = normalisedPositions(nodes);
-    const elements = nodes.map((node) => {
+    const nodesById = new Map(nodes.map((node) => [node.genre_id ?? node.id, node]));
+    const overviewLabel = (community) => {
+      const lead = community.member_entity_ids.map((id) => nodesById.get(id)).filter(Boolean).sort(
+        (left, right) => Number(right.direct_artist_count ?? 0) - Number(left.direct_artist_count ?? 0)
+          || Number(right.subtree_size ?? 0) - Number(left.subtree_size ?? 0)
+          || String(left.name).localeCompare(String(right.name)),
+      )[0];
+      return lead ? lead.name : `${community.member_entity_ids.length} genres`;
+    };
+    const elements = communities.map((community) => ({
+      data: {
+        id: community.community_id,
+        itemId: community.community_id,
+        label: overviewLabel(community),
+        detailHref: null,
+        depth: 0,
+        lodMin: 0,
+        weight: community.member_entity_ids.length,
+        displayLabel: "",
+        labelSize: 13,
+        overview: true,
+      },
+      position: { x: 180 + Number(community.x) * 2200, y: 160 + Number(community.y) * 1500 },
+      classes: "overview",
+    }));
+    elements.push(...nodes.map((node) => {
       const id = nodeId(node);
       return {
         data: {
           id,
+          itemId: node.genre_id ?? node.id,
           genreId: node.genre_id ?? node.id,
           label: node.name,
           detailHref: node.detail_href ?? payload.detail_hrefs?.[node.genre_id ?? node.id] ?? null,
@@ -68,13 +96,14 @@
           weight: node.display_weight ?? node.weight ?? 0,
           displayLabel: "",
           labelSize: 13,
+          overview: false,
           subtreeSize: node.subtree_size ?? 0,
           communityId: node.community_id ?? "",
         },
         position: positions.get(id),
         classes: node.display_parent_id === null || node.display_parent_id === undefined ? "umbrella" : "genre",
       };
-    });
+    }));
     for (const edge of getEdges(payload)) {
       const kind = edge.kind ?? "similarity";
       const source = `genre-${edge.source_genre_id ?? edge.source}`;
@@ -88,6 +117,7 @@
   const stylesheet = () => [
     { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": "data(labelSize)", "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, "text-valign": "bottom", "text-margin-y": 7, width: 13, height: 13, "overlay-opacity": 0 } },
     { selector: "node.umbrella", style: { "background-color": cssValue("--parent"), width: 25, height: 25, "font-size": "data(labelSize)", "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },
+    { selector: "node.overview", style: { "background-color": cssValue("--parent"), width: 28, height: 28, "font-size": "data(labelSize)", "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },
     { selector: "node:selected", style: { "border-width": 4, "border-color": cssValue("--focus"), "background-color": cssValue("--focus") } },
     { selector: "edge", style: { width: 1, "line-color": cssValue("--edge"), opacity: 0.52, "curve-style": "straight" } },
     { selector: "edge.similarity", style: { "line-style": "dashed", "line-color": cssValue("--similarity"), opacity: 0.3 } },
@@ -95,30 +125,36 @@
   ];
 
   const lodForZoom = (zoom) => zoom < 0.58 ? 0 : zoom < 0.95 ? 1 : zoom < 1.55 ? 2 : 3;
-  const fallbackLabelIds = (cy, lod) => {
+  const fallbackLabelIds = (cy, lod, overview) => {
     const budget = [16, 48, 128, 280][lod];
-    return new Set(cy.nodes().filter((node) => Number(node.data("lodMin")) <= lod).sort((left, right) => (
+    return new Set(cy.nodes().filter((node) => overview
+      ? Boolean(node.data("overview"))
+      : !node.data("overview") && Number(node.data("lodMin")) <= lod).sort((left, right) => (
       Number(right.data("weight")) - Number(left.data("weight"))
       || String(left.data("label")).localeCompare(String(right.data("label")))
-    )).slice(0, budget).map((node) => node.data("genreId")));
+    )).slice(0, budget).map((node) => node.data("itemId")));
   };
 
   const updateLod = (cy, payload) => {
     const lod = lodForZoom(cy.zoom());
     if (lod === currentLod) return;
     currentLod = lod;
+    const communities = getOverviewCommunities(payload);
+    const showingOverview = lod === 0 && communities.length > 0;
     const descriptor = getLods(payload).find((item) => Number(item.level) === lod);
-    const visibleIds = new Set(descriptor?.visible_node_ids ?? cy.nodes().filter(
+    const visibleIds = new Set(showingOverview
+      ? communities.map((item) => item.community_id)
+      : descriptor?.visible_node_ids ?? cy.nodes().filter(
       (node) => Number(node.data("lodMin")) <= lod,
-    ).map((node) => node.data("genreId")));
+    ).map((node) => node.data("itemId")));
     // Every root remains a reachable overview node.  Labels intentionally use
     // a small priority budget, rather than pretending every umbrella can be
     // legible at once on a single viewport.
-    const labelIds = fallbackLabelIds(cy, lod);
-    const labelSize = [32, 24, 18, 14][lod];
+    const labelIds = fallbackLabelIds(cy, lod, showingOverview);
+    const labelSize = [18, 24, 18, 14][lod];
     cy.batch(() => {
       cy.nodes().forEach((node) => {
-        const visible = visibleIds.has(node.data("genreId"));
+        const visible = visibleIds.has(node.data("itemId"));
         node.toggleClass("lod-hidden", !visible);
         node.data("displayLabel", visible && labelIds.has(node.data("genreId")) ? node.data("label") : "");
         node.data("labelSize", labelSize);
@@ -170,6 +206,7 @@
       cy.resize();
       cy.fit(cy.elements(), 72);
       updateLod(cy, payload);
+      cy.fit(cy.elements(":visible"), Math.max(56, Math.min(mapElement.clientWidth, mapElement.clientHeight) * 0.10));
       cy.on("zoom", () => updateLod(cy, payload));
       cy.on("tap", "node", (event) => selectGenre(cy, event.target));
       cy.on("tap", (event) => { if (event.target === cy) cy.$(":selected").unselect(); });
