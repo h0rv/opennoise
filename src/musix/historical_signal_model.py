@@ -22,6 +22,7 @@ from musix.models.historical_signal import (
     HistoricalSignalArtifact,
     HistoricalSignalCommunity,
     HistoricalSignalGeometry,
+    HistoricalSignalHierarchyNode,
     HistoricalSignalInput,
     HistoricalSignalLOD,
     HistoricalSignalNeighbor,
@@ -44,6 +45,8 @@ _TILE_GRID = 16
 _MINIMUM_ALIGNMENT_NODES = 3
 _OVERVIEW_SEED_MINIMUM_DISTANCE = 0.08
 _MINIMUM_SPECTRAL_COMPONENT_SIZE = 4
+_HIERARCHY_SUBCOMMUNITY_LEVEL = 1
+_HIERARCHY_MICROGENRE_LEVEL = 2
 
 
 class HistoricalSignalInputError(ValueError):
@@ -58,6 +61,17 @@ class _SimilarityCandidate:
     cosine: float
     idf_overlap: float
     shared_artist_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class _HierarchyGroup:
+    """A disjoint topology-only cohort while constructing a bounded zoom hierarchy."""
+
+    members: tuple[int, ...]
+
+    @property
+    def member_count(self) -> int:
+        return len(self.members)
 
 
 def _sha256_path(path: Path) -> str:
@@ -114,6 +128,8 @@ def _load_memberships(
     source_hashes: set[str] = set()
     rows = 0
     with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as connection:
+        # The sealed input is read-only; keep the deterministic ORDER BY sort off disk.
+        connection.execute("PRAGMA temp_store = MEMORY")
         for genre_name, artist_id, source_hash in connection.execute(query):
             source_hashes.add(str(source_hash))
             genre_id = name_to_id.get(_normalize_name(str(genre_name)))
@@ -240,6 +256,284 @@ def _components(graph: list[dict[int, float]]) -> list[int]:
                     queue.append(neighbor)
         component += 1
     return result
+
+
+def _group_components(
+    group: _HierarchyGroup, graph: list[dict[int, float]]
+) -> tuple[_HierarchyGroup, ...]:
+    """Split a cohort into its graph-connected pieces without inspecting names or geometry."""
+    allowed = set(group.members)
+    remaining = set(group.members)
+    components: list[_HierarchyGroup] = []
+    while remaining:
+        root = min(remaining)
+        remaining.remove(root)
+        found = [root]
+        queue = deque((root,))
+        while queue:
+            current = queue.popleft()
+            for neighbor in graph[current]:
+                if neighbor in remaining and neighbor in allowed:
+                    remaining.remove(neighbor)
+                    found.append(neighbor)
+                    queue.append(neighbor)
+        components.append(_HierarchyGroup(tuple(sorted(found))))
+    return tuple(components)
+
+
+def _partition_connected_group(
+    group: _HierarchyGroup,
+    genre_ids: tuple[str, ...],
+    maximum_members: int,
+    positions: np.ndarray | None,
+) -> tuple[_HierarchyGroup, ...]:
+    """Partition by a stable longest embedding axis in one bounded sort.
+
+    The retained H3 graph is responsible for the embedding in ``positions``. Sorting
+    that embedding once and taking balanced contiguous chunks keeps this operation
+    deterministic and O(n log n), instead of repeatedly traversing weighted shortest
+    paths for every candidate seed.
+    """
+    if group.member_count <= maximum_members:
+        return (group,)
+    members = list(group.members)
+    if positions is None:
+        ranked = sorted(members, key=lambda member: genre_ids[member])
+    else:
+        values = positions[members]
+        spread = np.ptp(values, axis=0)
+        axis = 0 if float(spread[0]) >= float(spread[1]) else 1
+        ranked = sorted(
+            members,
+            key=lambda member: (float(positions[member, axis]), genre_ids[member]),
+        )
+    part_count = math.ceil(group.member_count / maximum_members)
+    # Balanced chunks ensure every bucket is within the configured bound while
+    # preserving the order learned from the graph embedding.
+    base, remainder = divmod(group.member_count, part_count)
+    partitions: list[_HierarchyGroup] = []
+    offset = 0
+    for ordinal in range(part_count):
+        size = base + (1 if ordinal < remainder else 0)
+        partitions.append(_HierarchyGroup(tuple(sorted(ranked[offset : offset + size]))))
+        offset += size
+    return tuple(partitions)
+
+
+def _pack_disconnected_components(
+    components: tuple[_HierarchyGroup, ...],
+    genre_ids: tuple[str, ...],
+    maximum_members: int,
+) -> tuple[_HierarchyGroup, ...]:
+    """Bundle small disconnected components deterministically without inventing semantic links."""
+    ordered = sorted(
+        components,
+        key=lambda component: (
+            -component.member_count,
+            tuple(genre_ids[item] for item in component.members),
+        ),
+    )
+    bins: list[list[int]] = []
+    for component in ordered:
+        for bucket in bins:
+            if len(bucket) + component.member_count <= maximum_members:
+                bucket.extend(component.members)
+                break
+        else:
+            bins.append(list(component.members))
+    return tuple(_HierarchyGroup(tuple(sorted(bucket))) for bucket in bins)
+
+
+def _partition_graph(
+    members: tuple[int, ...],
+    graph: list[dict[int, float]],
+    genre_ids: tuple[str, ...],
+    maximum_members: int,
+    positions: np.ndarray | None = None,
+) -> tuple[_HierarchyGroup, ...]:
+    """Bound graph-derived hierarchy groups; disconnected regions stay visibly disconnected."""
+    group = _HierarchyGroup(tuple(sorted(members)))
+    components = _group_components(group, graph)
+    if len(components) == 1:
+        partitions = list(
+            _partition_connected_group(components[0], genre_ids, maximum_members, positions)
+        )
+    else:
+        oversized = [
+            partition
+            for component in components
+            if component.member_count > maximum_members
+            for partition in _partition_connected_group(
+                component, genre_ids, maximum_members, positions
+            )
+        ]
+        small = _pack_disconnected_components(
+            tuple(
+                component
+                for component in components
+                if component.member_count <= maximum_members
+            ),
+            genre_ids,
+            maximum_members,
+        )
+        partitions = oversized + list(small)
+    return tuple(
+        sorted(partitions, key=lambda group: tuple(genre_ids[item] for item in group.members))
+    )
+
+
+def _hierarchy_component_count(group: _HierarchyGroup, graph: list[dict[int, float]]) -> int:
+    """Count original H3 graph components represented by an aggregate cohort."""
+    return len(_group_components(group, graph))
+
+
+def _hierarchy_representative(
+    group: _HierarchyGroup,
+    graph: list[dict[int, float]],
+    genre_ids: tuple[str, ...],
+) -> int:
+    """Choose a label representative from internal H3-similarity degree with stable ties."""
+    allowed = set(group.members)
+    return min(
+        group.members,
+        key=lambda member: (
+            -sum(weight for neighbor, weight in graph[member].items() if neighbor in allowed),
+            genre_ids[member],
+        ),
+    )
+
+
+def _hierarchy_centroid(group: _HierarchyGroup, positions: np.ndarray) -> tuple[float, float]:
+    """Place a graph aggregate at the deterministic centroid of its learned members."""
+    centroid = np.mean(positions[list(group.members)], axis=0)
+    return round(float(centroid[0] * _ASPECT), 12), round(float(centroid[1]), 12)
+
+
+def _graph_hierarchy(
+    graph: list[dict[int, float]],
+    genre_ids: tuple[str, ...],
+    names: Mapping[str, str],
+    positions: np.ndarray,
+    settings: HistoricalSignalSettings,
+) -> tuple[tuple[HistoricalSignalHierarchyNode, ...], dict[int, tuple[str, str, str]]]:
+    """Emit three bounded graph-derived levels for umbrella, subcommunity, and microgenre zoom."""
+    umbrellas = _partition_graph(
+        tuple(range(len(genre_ids))),
+        graph,
+        genre_ids,
+        settings.hierarchy_umbrella_max_members,
+        positions,
+    )
+    hierarchy: list[HistoricalSignalHierarchyNode] = []
+    assignments: dict[int, tuple[str, str, str]] = {}
+    for umbrella_ordinal, umbrella in enumerate(umbrellas):
+        umbrella_id = f"graph:umbrella:{umbrella_ordinal:03d}"
+        subcommunities = _partition_graph(
+            umbrella.members,
+            graph,
+            genre_ids,
+            settings.hierarchy_subcommunity_max_members,
+            positions,
+        )
+        subcommunity_ids = tuple(
+            f"{umbrella_id}:sub:{subcommunity_ordinal:03d}"
+            for subcommunity_ordinal in range(len(subcommunities))
+        )
+        umbrella_representative = _hierarchy_representative(umbrella, graph, genre_ids)
+        umbrella_x, umbrella_y = _hierarchy_centroid(umbrella, positions)
+        hierarchy.append(
+            HistoricalSignalHierarchyNode(
+                hierarchy_id=umbrella_id,
+                children_ids=subcommunity_ids,
+                level=0,
+                member_count=umbrella.member_count,
+                component_count=_hierarchy_component_count(umbrella, graph),
+                representative_genre_id=genre_ids[umbrella_representative],
+                representative_label=names[genre_ids[umbrella_representative]],
+                x=umbrella_x,
+                y=umbrella_y,
+                connectivity=(
+                    "connected"
+                    if _hierarchy_component_count(umbrella, graph) == 1
+                    else "disconnected_bundle"
+                ),
+            )
+        )
+        for subcommunity_ordinal, subcommunity in enumerate(subcommunities):
+            subcommunity_id = subcommunity_ids[subcommunity_ordinal]
+            microgenres = _partition_graph(
+                subcommunity.members,
+                graph,
+                genre_ids,
+                settings.hierarchy_microgenre_max_members,
+                positions,
+            )
+            microgenre_ids = tuple(
+                f"{subcommunity_id}:micro:{microgenre_ordinal:03d}"
+                for microgenre_ordinal in range(len(microgenres))
+            )
+            subcommunity_representative = _hierarchy_representative(subcommunity, graph, genre_ids)
+            subcommunity_x, subcommunity_y = _hierarchy_centroid(subcommunity, positions)
+            hierarchy.append(
+                HistoricalSignalHierarchyNode(
+                    hierarchy_id=subcommunity_id,
+                    parent_id=umbrella_id,
+                    children_ids=microgenre_ids,
+                    level=1,
+                    member_count=subcommunity.member_count,
+                    component_count=_hierarchy_component_count(subcommunity, graph),
+                    representative_genre_id=genre_ids[subcommunity_representative],
+                    representative_label=names[genre_ids[subcommunity_representative]],
+                    x=subcommunity_x,
+                    y=subcommunity_y,
+                    connectivity=(
+                        "connected"
+                        if _hierarchy_component_count(subcommunity, graph) == 1
+                        else "disconnected_bundle"
+                    ),
+                )
+            )
+            for microgenre_ordinal, microgenre in enumerate(microgenres):
+                microgenre_id = microgenre_ids[microgenre_ordinal]
+                representative = _hierarchy_representative(microgenre, graph, genre_ids)
+                microgenre_x, microgenre_y = _hierarchy_centroid(microgenre, positions)
+                hierarchy.append(
+                    HistoricalSignalHierarchyNode(
+                        hierarchy_id=microgenre_id,
+                        parent_id=subcommunity_id,
+                        level=2,
+                        member_count=microgenre.member_count,
+                        component_count=_hierarchy_component_count(microgenre, graph),
+                        representative_genre_id=genre_ids[representative],
+                        representative_label=names[genre_ids[representative]],
+                        x=microgenre_x,
+                        y=microgenre_y,
+                        connectivity=(
+                            "connected"
+                            if _hierarchy_component_count(microgenre, graph) == 1
+                            else "disconnected_bundle"
+                        ),
+                    )
+                )
+                for member in microgenre.members:
+                    assignments[member] = (umbrella_id, subcommunity_id, microgenre_id)
+    return tuple(hierarchy), assignments
+
+
+def _microgenre_internal_edge_fraction(
+    graph: list[dict[int, float]], assignments: Mapping[int, tuple[str, str, str]]
+) -> float:
+    """Measure how much retained H3 similarity remains inside the finest graph grouping."""
+    total_weight = 0.0
+    internal_weight = 0.0
+    for left, neighbors in enumerate(graph):
+        for right, weight in neighbors.items():
+            if right <= left:
+                continue
+            total_weight += weight
+            if assignments[left][2] == assignments[right][2]:
+                internal_weight += weight
+    return internal_weight / total_weight if total_weight else 0.0
 
 
 def _embed(
@@ -603,7 +897,16 @@ def build_historical_signal_model(
         positions = _spectral_embed(genre_ids, graph, components, resolved_settings.embedding_seed)
         if resolved_settings.embedding_method == "spectral_force_refined":
             positions = _spectral_force_refine(positions, graph, resolved_settings.embedding_seed)
-    seeds, overview = _overview_communities(graph, positions)
+    hierarchy, hierarchy_assignments = _graph_hierarchy(
+        graph, genre_ids, names, positions, resolved_settings
+    )
+    umbrella_ids = tuple(item.hierarchy_id for item in hierarchy if item.level == 0)
+    umbrella_positions = {
+        hierarchy_id: position for position, hierarchy_id in enumerate(umbrella_ids)
+    }
+    overview = [
+        umbrella_positions[hierarchy_assignments[index][0]] for index in range(len(genre_ids))
+    ]
     lod_min = _lods(genre_ids, memberships, overview)
     nodes = tuple(
         HistoricalSignalNode(
@@ -611,7 +914,10 @@ def build_historical_signal_model(
             name=names[genre_id],
             x=round(float(positions[position, 0] * _ASPECT), 12),
             y=round(float(positions[position, 1]), 12),
-            community_id=f"overview:{overview[position]:02d}",
+            community_id=hierarchy_assignments[position][0],
+            umbrella_id=hierarchy_assignments[position][0],
+            subcommunity_id=hierarchy_assignments[position][1],
+            microgenre_id=hierarchy_assignments[position][2],
             component_id=components[position],
             membership_count=len(memberships[genre_id]),
             lod_min=lod_min[position],
@@ -621,14 +927,19 @@ def build_historical_signal_model(
     )
     communities = tuple(
         HistoricalSignalCommunity(
-            community_id=f"overview:{community:02d}",
-            member_count=overview.count(community),
+            community_id=umbrella.hierarchy_id,
+            member_count=umbrella.member_count,
             component_count=len(
-                {components[index] for index, value in enumerate(overview) if value == community}
+                {
+                    components[index]
+                    for index, assignment in hierarchy_assignments.items()
+                    if assignment[0] == umbrella.hierarchy_id
+                }
             ),
-            representative_genre_id=genre_ids[seed],
+            representative_genre_id=umbrella.representative_genre_id,
         )
-        for community, seed in enumerate(seeds)
+        for umbrella in hierarchy
+        if umbrella.level == 0
     )
     q05, q95 = np.quantile(np.array([(node.x, node.y) for node in nodes]), (0.05, 0.95), axis=0)
     span_x, span_y = float(q95[0] - q05[0]), float(q95[1] - q05[1])
@@ -660,7 +971,10 @@ def build_historical_signal_model(
         HistoricalSignalAblation(
             name="h3_idf_membership",
             role="active",
-            detail="Weighted Jaccard/cosine over direct genre-to-artist memberships.",
+            detail=(
+                "Weighted Jaccard/cosine over direct genre-to-artist memberships; the retained "
+                "kNN graph also produces graph-derived zoom hierarchy groups."
+            ),
         ),
         HistoricalSignalAblation(
             name="name_and_taxonomy",
@@ -679,6 +993,7 @@ def build_historical_signal_model(
         nodes=nodes,
         neighbors=neighbors,
         communities=communities,
+        hierarchy=hierarchy,
         geometry=geometry,
         progressive_lods=progressive_lods,
         tiles=_tiles(nodes),
@@ -698,6 +1013,25 @@ def build_historical_signal_model(
             )
             if neighbors
             else 0.0,
+            hierarchy_umbrella_count=len(communities),
+            hierarchy_subcommunity_count=sum(
+                item.level == _HIERARCHY_SUBCOMMUNITY_LEVEL for item in hierarchy
+            ),
+            hierarchy_microgenre_count=sum(
+                item.level == _HIERARCHY_MICROGENRE_LEVEL for item in hierarchy
+            ),
+            hierarchy_node_coverage=round(len(hierarchy_assignments) / len(nodes), 12),
+            hierarchy_microgenre_internal_edge_fraction=round(
+                _microgenre_internal_edge_fraction(graph, hierarchy_assignments), 12
+            ),
+            hierarchy_max_microgenre_member_count=max(
+                (
+                    item.member_count
+                    for item in hierarchy
+                    if item.level == _HIERARCHY_MICROGENRE_LEVEL
+                ),
+                default=0,
+            ),
             artifact_sha256="0" * 64,
             exact_rerun=True,
         ),

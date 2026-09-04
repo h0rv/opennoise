@@ -104,6 +104,7 @@ def main() -> int:
             "peak_rss_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1_024,
             "inputs": artifact.inputs.model_dump(mode="json"),
             "quality": artifact.quality.model_dump(mode="json"),
+            "hierarchy": [item.model_dump(mode="json") for item in artifact.hierarchy],
             "geometry": artifact.geometry.model_dump(mode="json"),
             "progressive_lods": [lod.model_dump(mode="json") for lod in artifact.progressive_lods],
             "coordinate_evaluation": artifact.coordinate_evaluation.model_dump(mode="json"),

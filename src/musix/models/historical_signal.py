@@ -7,7 +7,14 @@ from pydantic import Field, FiniteFloat, model_validator
 from musix.models import FrozenModel
 from musix.types import Sha256
 
-HISTORICAL_FULL_MAP_NODE_TARGET = 6_291
+_UMBRELLA_LEVEL = 0
+_SUBCOMMUNITY_LEVEL = 1
+_MICROGENRE_LEVEL = 2
+_MIN_COMPONENTS_IN_BUNDLE = 2
+_FULL_NODE_COUNT = 6_291
+_MIN_FULL_UMBRELLAS = 18
+_MAX_FULL_UMBRELLAS = 24
+HISTORICAL_FULL_MAP_NODE_TARGET = _FULL_NODE_COUNT
 
 
 class HistoricalSignalSettings(FrozenModel):
@@ -29,6 +36,10 @@ class HistoricalSignalSettings(FrozenModel):
     embedding_seed: int = Field(default=20260904, ge=0)
     evaluation_neighbor_count: int = Field(default=10, ge=1, le=50)
     evaluation_pair_sample: int = Field(default=50_000, ge=1_000, le=500_000)
+    # 350 members targets 18 umbrellas for the 6,291-node retained vocabulary.
+    hierarchy_umbrella_max_members: int = Field(default=350, ge=32, le=2_000)
+    hierarchy_subcommunity_max_members: int = Field(default=96, ge=8, le=512)
+    hierarchy_microgenre_max_members: int = Field(default=24, ge=2, le=128)
 
     @model_validator(mode="after")
     def require_method_matches_embedding(self) -> "HistoricalSignalSettings":
@@ -44,6 +55,12 @@ class HistoricalSignalSettings(FrozenModel):
         )
         if self.method != expected:
             raise ValueError("historical signal method must match embedding method")
+        if not (
+            self.hierarchy_umbrella_max_members
+            >= self.hierarchy_subcommunity_max_members
+            >= self.hierarchy_microgenre_max_members
+        ):
+            raise ValueError("historical hierarchy member bounds must descend by zoom level")
         return self
 
 
@@ -97,6 +114,9 @@ class HistoricalSignalNode(FrozenModel):
     x: FiniteFloat = Field(ge=0.0, le=2.0)
     y: FiniteFloat = Field(ge=0.0, le=1.0)
     community_id: str = Field(min_length=1, max_length=200)
+    umbrella_id: str = Field(min_length=1, max_length=200)
+    subcommunity_id: str = Field(min_length=1, max_length=200)
+    microgenre_id: str = Field(min_length=1, max_length=200)
     component_id: int = Field(ge=0)
     membership_count: int = Field(ge=0)
     lod_min: int = Field(ge=0, le=3)
@@ -110,6 +130,43 @@ class HistoricalSignalCommunity(FrozenModel):
     member_count: int = Field(gt=0)
     component_count: int = Field(gt=0)
     representative_genre_id: str = Field(min_length=1, max_length=200)
+
+
+class HistoricalSignalHierarchyNode(FrozenModel):
+    """One graph-derived zoom grouping, not a semantic genre taxonomy."""
+
+    hierarchy_id: str = Field(min_length=1, max_length=200)
+    parent_id: str | None = Field(default=None, min_length=1, max_length=200)
+    children_ids: tuple[str, ...] = Field(default=(), max_length=2_000)
+    level: Literal[0, 1, 2]
+    member_count: int = Field(gt=0, le=20_000)
+    component_count: int = Field(default=1, gt=0, le=20_000)
+    representative_genre_id: str = Field(min_length=1, max_length=200)
+    representative_label: str = Field(min_length=1, max_length=500)
+    x: FiniteFloat = Field(ge=0.0, le=2.0)
+    y: FiniteFloat = Field(ge=0.0, le=1.0)
+    provenance: Literal["graph_derived_h3_similarity"] = "graph_derived_h3_similarity"
+    connectivity: Literal["connected", "disconnected_bundle"] = "connected"
+
+    @model_validator(mode="after")
+    def require_level_shape(self) -> "HistoricalSignalHierarchyNode":
+        """Keep the UI hierarchy explicitly limited to its three zoom levels."""
+        if self.level == _UMBRELLA_LEVEL and self.parent_id is not None:
+            raise ValueError("umbrella hierarchy nodes cannot have a parent")
+        if self.level > _UMBRELLA_LEVEL and self.parent_id is None:
+            raise ValueError("non-umbrella hierarchy nodes must have a parent")
+        if self.level == _MICROGENRE_LEVEL and self.children_ids:
+            raise ValueError("microgenre hierarchy nodes cannot have children")
+        if self.level < _MICROGENRE_LEVEL and not self.children_ids:
+            raise ValueError("non-leaf hierarchy nodes must expose children")
+        if self.connectivity == "connected" and self.component_count != 1:
+            raise ValueError("connected hierarchy nodes must contain one graph component")
+        if (
+            self.connectivity == "disconnected_bundle"
+            and self.component_count < _MIN_COMPONENTS_IN_BUNDLE
+        ):
+            raise ValueError("disconnected hierarchy bundles must contain multiple components")
+        return self
 
 
 class HistoricalSignalLOD(FrozenModel):
@@ -176,8 +233,95 @@ class HistoricalSignalQuality(FrozenModel):
     community_count: int = Field(ge=0)
     connected_component_count: int = Field(ge=0)
     mean_neighbor_weight: FiniteFloat = Field(ge=0.0, le=1.0)
+    hierarchy_umbrella_count: int = Field(ge=0, le=20_000)
+    hierarchy_subcommunity_count: int = Field(ge=0, le=20_000)
+    hierarchy_microgenre_count: int = Field(ge=0, le=20_000)
+    hierarchy_node_coverage: FiniteFloat = Field(ge=0.0, le=1.0)
+    hierarchy_microgenre_internal_edge_fraction: FiniteFloat = Field(ge=0.0, le=1.0)
+    hierarchy_max_microgenre_member_count: int = Field(ge=0, le=20_000)
     artifact_sha256: Sha256
     exact_rerun: bool
+
+
+def _require_hierarchy_parent_edges(
+    hierarchy: tuple[HistoricalSignalHierarchyNode, ...],
+    hierarchy_by_id: dict[str, HistoricalSignalHierarchyNode],
+) -> None:
+    for item in hierarchy:
+        if len(set(item.children_ids)) != len(item.children_ids):
+            raise ValueError("historical signal hierarchy children must be unique")
+        if any(child_id not in hierarchy_by_id for child_id in item.children_ids):
+            raise ValueError("historical signal hierarchy children must exist")
+        if item.parent_id is not None:
+            parent = hierarchy_by_id.get(item.parent_id)
+            if parent is None or parent.level + 1 != item.level:
+                raise ValueError("historical signal hierarchy parents must be adjacent levels")
+            if item.hierarchy_id not in parent.children_ids:
+                raise ValueError("historical signal hierarchy parent must list each child")
+
+
+def _require_hierarchy_child_edges(
+    hierarchy: tuple[HistoricalSignalHierarchyNode, ...],
+    hierarchy_by_id: dict[str, HistoricalSignalHierarchyNode],
+) -> None:
+    for parent in hierarchy:
+        if not parent.children_ids:
+            continue
+        children = tuple(hierarchy_by_id[child_id] for child_id in parent.children_ids)
+        if any(child.level != parent.level + 1 for child in children):
+            raise ValueError("historical signal hierarchy children must be adjacent levels")
+        if any(child.parent_id != parent.hierarchy_id for child in children):
+            raise ValueError("historical signal hierarchy children must point to their parent")
+        if sum(child.member_count for child in children) != parent.member_count:
+            raise ValueError("historical signal hierarchy child counts must sum to parent count")
+
+
+def _require_hierarchy_structure(hierarchy: tuple[HistoricalSignalHierarchyNode, ...]) -> None:
+    """Validate unique, parent-closed hierarchy edges before node memberships are checked."""
+    hierarchy_by_id = {item.hierarchy_id: item for item in hierarchy}
+    if len(hierarchy_by_id) != len(hierarchy):
+        raise ValueError("historical signal hierarchy IDs must be unique")
+    _require_hierarchy_parent_edges(hierarchy, hierarchy_by_id)
+    _require_hierarchy_child_edges(hierarchy, hierarchy_by_id)
+
+
+def _require_hierarchy_node_paths(
+    hierarchy: tuple[HistoricalSignalHierarchyNode, ...], nodes: tuple[HistoricalSignalNode, ...]
+) -> tuple[int, int, int]:
+    """Verify every node has one closed umbrella-to-microgenre graph hierarchy path."""
+    hierarchy_by_id = {item.hierarchy_id: item for item in hierarchy}
+    microgenres = {item.hierarchy_id: item for item in hierarchy if item.level == _MICROGENRE_LEVEL}
+    subcommunities = {
+        item.hierarchy_id: item for item in hierarchy if item.level == _SUBCOMMUNITY_LEVEL
+    }
+    umbrellas = {item.hierarchy_id: item for item in hierarchy if item.level == _UMBRELLA_LEVEL}
+    if any(
+        node.umbrella_id not in umbrellas
+        or node.subcommunity_id not in subcommunities
+        or node.microgenre_id not in microgenres
+        for node in nodes
+    ):
+        raise ValueError("every historical signal node must have a complete hierarchy path")
+    if any(
+        node.community_id != node.umbrella_id
+        or subcommunities[node.subcommunity_id].parent_id != node.umbrella_id
+        or microgenres[node.microgenre_id].parent_id != node.subcommunity_id
+        for node in nodes
+    ):
+        raise ValueError("historical signal node hierarchy paths must be parent-closed")
+    membership_counts = {
+        hierarchy_id: sum(
+            (node.umbrella_id, node.subcommunity_id, node.microgenre_id).count(hierarchy_id)
+            for node in nodes
+        )
+        for hierarchy_id in hierarchy_by_id
+    }
+    if any(
+        membership_counts[hierarchy_id] != item.member_count
+        for hierarchy_id, item in hierarchy_by_id.items()
+    ):
+        raise ValueError("historical signal hierarchy member counts must match node paths")
+    return len(umbrellas), len(subcommunities), len(microgenres)
 
 
 class HistoricalSignalArtifact(FrozenModel):
@@ -189,6 +333,7 @@ class HistoricalSignalArtifact(FrozenModel):
     nodes: tuple[HistoricalSignalNode, ...] = Field(min_length=1, max_length=20_000)
     neighbors: tuple[HistoricalSignalNeighbor, ...] = Field(max_length=1_000_000)
     communities: tuple[HistoricalSignalCommunity, ...] = Field(max_length=20_000)
+    hierarchy: tuple[HistoricalSignalHierarchyNode, ...] = Field(min_length=3, max_length=20_000)
     geometry: HistoricalSignalGeometry
     progressive_lods: tuple[HistoricalSignalLOD, ...] = Field(min_length=4, max_length=4)
     tiles: tuple[HistoricalSignalTile, ...] = Field(max_length=1_024)
@@ -203,6 +348,23 @@ class HistoricalSignalArtifact(FrozenModel):
             raise ValueError("historical signal nodes must have unique genre IDs")
         if self.inputs.genre_count != len(self.nodes):
             raise ValueError("historical signal input genre count must equal node count")
+        _require_hierarchy_structure(self.hierarchy)
+        umbrellas, subcommunities, microgenres = _require_hierarchy_node_paths(
+            self.hierarchy, self.nodes
+        )
+        if self.quality.hierarchy_node_coverage != 1.0:
+            raise ValueError("historical signal hierarchy must cover every retained node")
+        if (
+            self.quality.hierarchy_umbrella_count != umbrellas
+            or self.quality.hierarchy_subcommunity_count != subcommunities
+            or self.quality.hierarchy_microgenre_count != microgenres
+        ):
+            raise ValueError("historical signal hierarchy quality counts must match the artifact")
+        if (
+            self.inputs.genre_count == _FULL_NODE_COUNT
+            and not _MIN_FULL_UMBRELLAS <= umbrellas <= _MAX_FULL_UMBRELLAS
+        ):
+            raise ValueError("6,291-node historical hierarchy must contain 18 to 24 umbrellas")
         return self
 
 
