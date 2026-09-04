@@ -20,7 +20,7 @@ class AssetTests(unittest.TestCase):
         self.assertIn("initialElementCount", source)
         self.assertIn("const cap = [0, 96, 280, 720][lod]", source)
         node_element = source[
-            source.index("const nodeElement"):source.index("const materializeLod")
+            source.index("const nodeElement") : source.index("const materializeLod")
         ]
         self.assertNotIn("mapPositions(getNodes(payload)", node_element)
         self.assertIn("materializeSelectedEdges", source)

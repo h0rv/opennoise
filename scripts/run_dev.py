@@ -47,7 +47,9 @@ def resolve_production_paths(root: Path) -> ProductionLaunchPaths | None:
         ):
             continue
         try:
-            ProductionMapArtifact.model_validate_json(candidate.map_artifact.read_text(encoding="utf-8"))
+            ProductionMapArtifact.model_validate_json(
+                candidate.map_artifact.read_text(encoding="utf-8")
+            )
         except (OSError, ValueError):
             continue
         return candidate
