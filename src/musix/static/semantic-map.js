@@ -16,6 +16,8 @@
   const preferredDark = window.matchMedia("(prefers-color-scheme: dark)");
   let currentLod = -1;
   let selectedNode = null;
+  let activeCommunity = null;
+  let cameraTransition = false;
 
   const say = (message) => {
     const liveStatus = document.querySelector("#map-status");
@@ -72,8 +74,26 @@
     const xs = axis("x"); const ys = axis("y");
     const lowX = quantile(xs, 0.05); const highX = quantile(xs, 0.95);
     const lowY = quantile(ys, 0.05); const highY = quantile(ys, 0.95);
-    const scale = (value, low, high) => 0.06 + 0.88 * Math.max(0, Math.min(1, (Number(value) - low) / Math.max(high - low, 0.0001)));
-    return new Map(items.map((item) => [id(item), { x: scale(item.x, lowX, highX) * 1600, y: scale(item.y, lowY, highY) * 900 }]));
+    const tailRanks = (values, low, high) => {
+      const ranks = (tail) => new Map(tail.map((value, index) => [value, index]));
+      const lower = values.filter((value) => value < low);
+      const upper = values.filter((value) => value > high);
+      return { lower, upper, lowerRanks: ranks(lower), upperRanks: ranks(upper) };
+    };
+    const xTails = tailRanks(xs, lowX, highX); const yTails = tailRanks(ys, lowY, highY);
+    const scale = (raw, low, high, tails) => {
+      const value = Number(raw);
+      const tailPosition = (rank, count, start, end) => count <= 1
+        ? (start + end) / 2
+        : start + (end - start) * rank / (count - 1);
+      if (value < low) return tailPosition(tails.lowerRanks.get(value) ?? 0, tails.lower.length, 0.02, 0.06);
+      if (value > high) return tailPosition(tails.upperRanks.get(value) ?? 0, tails.upper.length, 0.94, 0.98);
+      return 0.06 + 0.88 * (value - low) / Math.max(high - low, 0.0001);
+    };
+    return new Map(items.map((item) => [id(item), {
+      x: scale(item.x, lowX, highX, xTails) * 1600,
+      y: scale(item.y, lowY, highY, yTails) * 900,
+    }]));
   };
   const nodePositions = (payload) => {
     const cached = nodePositionCache.get(payload);
@@ -126,6 +146,7 @@
         displayLabel: "",
         labelSize: overviewFontSize(memberCount),
         overviewNodeSize: Math.round(42 + 34 * overviewProminence(memberCount)),
+        memberEntityIds: community.member_entity_ids,
         overview: true,
       },
       position: overviewPositions.get(community.community_id),
@@ -159,12 +180,16 @@
       };
   };
 
-  const materializeLod = (cy, payload, lod) => {
+  const materializeLod = (cy, payload, lod, memberIds = null) => {
     if (lod === 0) return;
     const descriptor = getLods(payload).find((item) => Number(item.level) === lod);
     const allowed = new Set(descriptor?.visible_node_ids ?? []);
-    const cap = [0, 96, 280, 720][lod];
-    const candidates = getNodes(payload).filter((node) => allowed.has(node.genre_id ?? node.id)).sort(
+    const communityMembers = memberIds ? new Set(memberIds) : null;
+    // A focused community is a bounded, intentional cohort. Do not mix it
+    // with the global LOD list then slice it away by popularity.
+    const allowedIds = communityMembers ?? allowed;
+    const cap = communityMembers ? communityMembers.size : [0, 96, 280, 720][lod];
+    const candidates = getNodes(payload).filter((node) => allowedIds.has(node.genre_id ?? node.id)).sort(
       (left, right) => Number(right.direct_artist_count ?? 0) - Number(left.direct_artist_count ?? 0)
         || String(left.name).localeCompare(String(right.name)),
     ).slice(0, cap);
@@ -220,15 +245,26 @@
     };
   };
 
-  const labelCandidates = (cy, overview, lod) => cy.nodes().filter((node) => overview
-    ? Boolean(node.data("overview"))
-    : !node.data("overview") && Number(node.data("lodMin")) <= lod).sort((left, right) => (
-    Number(right.id() === selectedNode?.id()) - Number(left.id() === selectedNode?.id())
-    || Number(right.data("weight")) - Number(left.data("weight"))
-    || String(left.data("label")).localeCompare(String(right.data("label")))
-  ));
+  const labelCandidates = (cy, overview, lod) => {
+    const focusedMembers = new Set(activeCommunity?.data("memberEntityIds") ?? []);
+    return cy.nodes().filter((node) => (
+      overview
+        ? Boolean(node.data("overview"))
+        : ((!node.data("overview") && (
+          Number(node.data("lodMin")) <= lod || focusedMembers.has(node.data("itemId"))
+        )) || node.id() === selectedNode?.id())
+    )).sort((left, right) => (
+      Number(right.id() === selectedNode?.id()) - Number(left.id() === selectedNode?.id())
+      || Number(right.data("weight")) - Number(left.data("weight"))
+      || String(left.data("label")).localeCompare(String(right.data("label")))
+    ));
+  };
 
   const setVisibleEdges = (cy) => {
+    if (activeCommunity) {
+      cy.edges().addClass("edge-hidden");
+      return;
+    }
     cy.edges().forEach((edge) => {
       const selected = selectedNode && (edge.source() === selectedNode || edge.target() === selectedNode);
       const visible = selected && !edge.source().hasClass("lod-hidden") && !edge.target().hasClass("lod-hidden");
@@ -299,6 +335,15 @@
 
   const updateLod = (cy, payload) => {
     const lod = lodForZoom(cy.zoom());
+    // `fit()` briefly crosses the overview threshold while it calculates a
+    // community camera. That must not cancel the drill state mid-transition.
+    if (activeCommunity && lod === 0 && !cameraTransition) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("overview");
+      window.history.replaceState({}, "", url);
+      resetCommunity(cy, payload);
+      return;
+    }
     if (lod === currentLod) {
       const showingOverview = lod === 0 && getOverviewCommunities(payload).length > 0;
       setCollisionFreeLabels(cy, lod, showingOverview);
@@ -308,13 +353,19 @@
     currentLod = lod;
     const communities = getOverviewCommunities(payload);
     const showingOverview = lod === 0 && communities.length > 0;
-    materializeLod(cy, payload, lod);
+    const focusedMembers = activeCommunity?.data("memberEntityIds") ?? null;
+    materializeLod(cy, payload, lod, focusedMembers);
     const descriptor = getLods(payload).find((item) => Number(item.level) === lod);
     const visibleIds = new Set(showingOverview
       ? communities.map((item) => item.community_id)
       : descriptor?.visible_node_ids ?? cy.nodes().filter(
       (node) => Number(node.data("lodMin")) <= lod,
     ).map((node) => node.data("itemId")));
+    if (activeCommunity && !showingOverview) {
+      visibleIds.clear();
+      for (const memberId of focusedMembers) visibleIds.add(memberId);
+      visibleIds.add(activeCommunity.data("itemId"));
+    }
     const labelSize = [12, 14, 13, 12][lod];
     cy.batch(() => {
       cy.nodes().forEach((node) => {
@@ -331,10 +382,70 @@
     });
     setCollisionFreeLabels(cy, lod, showingOverview);
     setVisibleEdges(cy);
-    say(statusMessage(payload, lod));
+    if (activeCommunity && !showingOverview) {
+      const shownMembers = [...visibleIds].filter((id) => id !== activeCommunity.data("itemId")).length;
+      say(`${activeCommunity.data("label")}; ${shownMembers} member genres. Genre level.`);
+    } else say(statusMessage(payload, lod));
+  };
+
+  const focusCommunity = (cy, node, payload) => {
+    if (activeCommunity?.id() === node.id()) return;
+    cameraTransition = true;
+    selectedNode = node;
+    activeCommunity = node;
+    cy.$(":selected").unselect();
+    node.select();
+    const memberIds = node.data("memberEntityIds") ?? [];
+    materializeLod(cy, payload, 1, memberIds);
+    const members = memberIds.reduce(
+      (collection, id) => collection.union(cy.$id(`genre-${id}`)),
+      cy.collection(),
+    );
+    const visible = members.union(node);
+    if (visible.nonempty()) cy.fit(visible, 96);
+    const point = node.renderedPosition();
+    cy.zoom({ level: Math.max(cy.zoom(), 0.66), renderedPosition: point });
+    currentLod = -1;
+    cameraTransition = false;
+    updateLod(cy, payload);
+    const url = new URL(window.location.href);
+    url.searchParams.set("overview", String(node.data("itemId")));
+    window.history.pushState({ musixOverviewCommunity: node.data("itemId") }, "", url);
+    window.__musixMapMetrics.activeCommunityId = node.data("itemId");
+    say(`${node.data("label")}; ${memberIds.length} member genres revealed. Genre level.`);
+  };
+
+  const resetCommunity = (cy, payload) => {
+    cameraTransition = true;
+    activeCommunity = null;
+    selectedNode = null;
+    cy.$(":selected").unselect();
+    cy.fit(cy.nodes(".overview"), 72);
+    cy.zoom(Math.min(cy.zoom(), 0.5));
+    cy.center(cy.nodes(".overview"));
+    currentLod = -1;
+    cameraTransition = false;
+    updateLod(cy, payload);
+    window.__musixMapMetrics.activeCommunityId = null;
+    say(statusMessage(payload, 0));
+  };
+
+  const returnToOverview = (cy, payload) => {
+    // Focus has one explicit browser history entry. Escape/Fit consume it via
+    // real Back, and the popstate handler restores the overview without
+    // appending or replacing a duplicate entry.
+    if (window.history.state?.musixOverviewCommunity) {
+      window.history.back();
+      return;
+    }
+    resetCommunity(cy, payload);
   };
 
   const selectGenre = (cy, node, payload) => {
+    if (node.data("overview")) {
+      focusCommunity(cy, node, payload);
+      return;
+    }
     cy.$(":selected").unselect();
     node.select();
     selectedNode = node;
@@ -353,8 +464,24 @@
       window.history.pushState({ musixGenreDetail: detailHref }, "", detailHref);
       return;
     }
-    const fallbackLink = document.querySelector(`#map-point-${node.data("genreId")}`);
+    const fallbackLink = document.querySelector(`#map-point-${CSS.escape(String(node.data("genreId")))}`);
     if (fallbackLink) fallbackLink.click();
+  };
+
+  const bindMapInteractions = (cy, payload) => {
+    cy.on("zoom", () => updateLod(cy, payload));
+    cy.on("pan", () => updateLod(cy, payload));
+    cy.on("tap", "node", (event) => selectGenre(cy, event.target, payload));
+    cy.on("tap", (event) => {
+      if (event.target !== cy) return;
+      if (activeCommunity) {
+        returnToOverview(cy, payload);
+        return;
+      }
+      cy.$(":selected").unselect();
+      selectedNode = null;
+      setVisibleEdges(cy);
+    });
   };
 
   fetch(graphUrl, { headers: { Accept: "application/json" } })
@@ -374,7 +501,11 @@
         boxSelectionEnabled: false,
       });
       window.__musixMap = cy;
-      window.__musixMapMetrics = { initialElementCount: cy.elements().length, nodePositionBuilds };
+      window.__musixMapMetrics = {
+        initialElementCount: cy.elements().length,
+        nodePositionBuilds,
+        activeCommunityId: null,
+      };
       root.classList.add("js-map-ready");
       cy.resize();
       // Fit establishes the overview center. Clamp zoom below the first semantic
@@ -383,16 +514,7 @@
       cy.zoom(Math.min(cy.zoom(), 0.5));
       cy.center(cy.nodes(".overview"));
       updateLod(cy, payload);
-      cy.on("zoom", () => updateLod(cy, payload));
-      cy.on("pan", () => updateLod(cy, payload));
-      cy.on("tap", "node", (event) => selectGenre(cy, event.target, payload));
-      cy.on("tap", (event) => {
-        if (event.target === cy) {
-          cy.$(":selected").unselect();
-          selectedNode = null;
-          setVisibleEdges(cy);
-        }
-      });
+      bindMapInteractions(cy, payload);
 
       const selected = mapElement.dataset.selectedGenre;
       if (selected) cy.$(`#genre-${selected}`).select();
@@ -400,7 +522,10 @@
         const action = button.dataset.mapAction;
         if (action === "zoom-in") cy.zoom({ level: Math.min(cy.maxZoom(), cy.zoom() * 1.25), renderedPosition: { x: innerWidth / 2, y: innerHeight / 2 } });
         if (action === "zoom-out") cy.zoom({ level: Math.max(cy.minZoom(), cy.zoom() / 1.25), renderedPosition: { x: innerWidth / 2, y: innerHeight / 2 } });
-        if (action === "fit") cy.fit(cy.elements(":visible"), 72);
+        if (action === "fit") {
+          if (activeCommunity) returnToOverview(cy, payload);
+          else cy.fit(cy.elements(":visible"), 72);
+        }
       }));
       mapElement.addEventListener("keydown", (event) => {
         const key = event.key;
@@ -411,7 +536,10 @@
         if (key === "ArrowDown") cy.panBy({ x: 0, y: -60 });
         if (key === "ArrowLeft") cy.panBy({ x: 60, y: 0 });
         if (key === "ArrowRight") cy.panBy({ x: -60, y: 0 });
-        if (key === "Escape") cy.$(":selected").unselect();
+        if (key === "Escape") {
+          if (activeCommunity) returnToOverview(cy, payload);
+          else cy.$(":selected").unselect();
+        }
       });
       mapElement.tabIndex = 0;
       const refreshTheme = () => cy.style(stylesheet()).update();
@@ -423,6 +551,8 @@
         mapElement = liveMap;
         currentLod = -1;
         selectedNode = null;
+        activeCommunity = null;
+        cameraTransition = false;
         const replacement = window.cytoscape({
           container: mapElement,
           elements: elementsFor(payload),
@@ -440,16 +570,7 @@
         replacement.zoom(snapshot.zoom);
         replacement.pan(snapshot.pan);
         updateLod(replacement, payload);
-        replacement.on("zoom", () => updateLod(replacement, payload));
-        replacement.on("pan", () => updateLod(replacement, payload));
-        replacement.on("tap", "node", (event) => selectGenre(replacement, event.target, payload));
-        replacement.on("tap", (event) => {
-          if (event.target === replacement) {
-            replacement.$(":selected").unselect();
-            selectedNode = null;
-            setVisibleEdges(replacement);
-          }
-        });
+        bindMapInteractions(replacement, payload);
         window.requestAnimationFrame(() => {
           replacement.resize();
           replacement.pan(snapshot.pan);
@@ -466,12 +587,18 @@
         if (detail && window.htmx) {
           window.htmx.ajax("GET", detail, { target: "#genre-detail-slot", swap: "innerHTML" });
         } else {
-          const snapshot = { pan: cy.pan(), zoom: cy.zoom() };
           const slot = document.querySelector("#genre-detail-slot");
           if (slot) slot.innerHTML = "";
-          cy.$(":selected").unselect();
-          selectedNode = null;
-          setVisibleEdges(cy);
+          if (activeCommunity) resetCommunity(cy, payload);
+          else {
+            cy.$(":selected").unselect();
+            selectedNode = null;
+            setVisibleEdges(cy);
+          }
+          // Capture after an overview reset. Restoring the pre-Back focus
+          // camera would turn a correct overview Back into an empty LOD state.
+          const liveCy = window.__musixMap ?? cy;
+          const snapshot = { pan: liveCy.pan(), zoom: liveCy.zoom() };
           const restoreStatus = () => say(statusMessage(payload, currentLod));
           restoreStatus();
           // A browser Back can finish an HTMX cache restore after popstate. Write
