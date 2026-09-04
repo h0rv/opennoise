@@ -860,6 +860,11 @@ def _import_jsonl_sync(options: ImportOptions) -> ImportSummary:
         return _summary(connection, artifact_sha256, attempt_ref, reused=False)
 
 
+def import_jsonl_sync(options: ImportOptions) -> ImportSummary:
+    """Run a local import for deterministic command-line pipeline steps."""
+    return _import_jsonl_sync(options)
+
+
 async def import_jsonl(options: ImportOptions) -> ImportSummary:
     """Run one local import without blocking the caller's event loop."""
-    return await asyncio.to_thread(_import_jsonl_sync, options)
+    return await asyncio.to_thread(import_jsonl_sync, options)

@@ -27,11 +27,13 @@ from musix.models.historical import (
     HistoricalAdapterContract,
     HistoricalArtifact,
     HistoricalCompatibilityManifest,
+    HistoricalCompatibilityReceipt,
     HistoricalCompatibilityReport,
     HistoricalCoordinate,
     HistoricalCoverage,
     HistoricalGenre,
     HistoricalGeometryComparison,
+    HistoricalMembershipProjection,
     HistoricalQuarantine,
     HistoricalRelationshipComparison,
     HistoricalRepresentative,
@@ -55,7 +57,7 @@ type AdapterSpecification = tuple[
     Literal["H3", "H4", "H5", "H6"],
     str,
     str,
-    Literal["archived_html", "archived_list", "derived_projection"],
+    Literal["archived_html", "archived_json", "archived_list", "derived_projection"],
     str,
     tuple[str, ...],
 ]
@@ -99,10 +101,10 @@ def _representative(record: HistoricalRepresentativeRecord) -> HistoricalReprese
 def _coverage(
     adaptation: AdaptationResult,
     representatives: HistoricalAdaptationResult,
+    h3_membership: HistoricalMembershipProjection | None,
 ) -> tuple[HistoricalCoverage, ...]:
     """Account for source availability without treating absent archive pages as facts."""
     source_count = adaptation.source.expected_records
-    representative_count = len(representatives.records)
     return (
         HistoricalCoverage(
             stage="H1",
@@ -127,34 +129,26 @@ def _coverage(
             ),
             accounting_note="All verified map rows are retained as legacy display observations.",
         ),
-        HistoricalCoverage(
-            stage="H3",
-            state="partial" if representative_count else "missing",
-            retained_record_count=representative_count,
-            quarantined_record_count=len(representatives.quarantine),
-            expected_record_count=source_count,
-            retained_fields=("one map-row representative artist and track",)
-            if representative_count
-            else (),
-            missing_fields=(
-                "genre-page artist membership lists",
-                "artist page positions",
-                "related-genre blocks",
-                "genre-page capture dates",
-            ),
-            accounting_note=(
-                f"{representative_count} map-row representatives are retained; "
-                f"{len(representatives.quarantine)} source rows are quarantined for this field. "
-                "No archived genre artist-page corpus was provided. Representative absence is "
-                "never negative membership."
-            ),
-        ),
+        _h3_coverage(adaptation, representatives, h3_membership),
         HistoricalCoverage(
             stage="H4",
-            state="missing",
-            retained_record_count=0,
-            missing_fields=("artist pages", "artist genre lists", "artist recording lists"),
-            accounting_note="No verified archived artist-page artifact is retained for this build.",
+            state="partial" if h3_membership is not None else "missing",
+            retained_record_count=h3_membership.stored_membership_count if h3_membership else 0,
+            retained_fields=("derived exact artist-to-genre index",) if h3_membership else (),
+            missing_fields=(
+                "artist-page capture",
+                "artist-page genre list",
+                "artist-page recording list",
+                "historical related-artist links",
+            ),
+            accounting_note=(
+                f"A derived_partial inverse index has {h3_membership.stored_membership_count} "
+                "exact source-scoped artist-to-genre rows; it is not artist-page evidence. "
+                f"{h3_membership.quarantined_membership_count} duplicate or malformed source "
+                "rows were quarantined."
+                if h3_membership
+                else "No verified archived artist-page artifact is retained for this build."
+            ),
         ),
         HistoricalCoverage(
             stage="H5",
@@ -183,7 +177,68 @@ def _coverage(
     )
 
 
-def _missing_adapter_contracts() -> tuple[HistoricalAdapterContract, ...]:
+def _h3_coverage(
+    adaptation: AdaptationResult,
+    representatives: HistoricalAdaptationResult,
+    h3_membership: HistoricalMembershipProjection | None,
+) -> HistoricalCoverage:
+    """Account for H3 from measured sealed source coverage, never assumed completeness."""
+    if h3_membership is None:
+        representative_count = len(representatives.records)
+        return HistoricalCoverage(
+            stage="H3",
+            state="partial" if representative_count else "missing",
+            retained_record_count=representative_count,
+            quarantined_record_count=len(representatives.quarantine),
+            expected_record_count=adaptation.source.expected_records,
+            retained_fields=("one map-row representative artist and track",)
+            if representative_count
+            else (),
+            missing_fields=(
+                "genre-page artist membership lists",
+                "artist page positions",
+                "related-genre blocks",
+                "genre-page capture dates",
+            ),
+            accounting_note=(
+                f"{representative_count} map-row representatives are retained; "
+                f"{len(representatives.quarantine)} source rows are quarantined for this field. "
+                "No archived genre artist-page corpus was provided. Representative absence is "
+                "never negative membership."
+            ),
+        )
+    complete = (
+        h3_membership.matched_h2_genre_count == h3_membership.h2_genre_count
+        and h3_membership.stored_membership_count == h3_membership.source_membership_count
+        and h3_membership.unmatched_source_genre_count == 0
+    )
+    return HistoricalCoverage(
+        stage="H3",
+        state="complete" if complete else "partial",
+        retained_record_count=h3_membership.stored_membership_count,
+        expected_record_count=h3_membership.source_membership_count,
+        retained_fields=("source-scoped genre-to-artist membership",),
+        missing_fields=()
+        if complete
+        else (
+            "full verified H2 name coverage",
+            "artist page positions",
+            "related-genre blocks",
+            "genre-page capture dates",
+        ),
+        accounting_note=(
+            f"{h3_membership.stored_membership_count} H3 memberships across "
+            f"{h3_membership.matched_h2_genre_count} of {h3_membership.h2_genre_count} "
+            "retained H2 genre names are stored under an explicit local-display policy. "
+            "The sealed source is an observed membership projection, not evidence of missing "
+            "members or a complete historical page corpus."
+        ),
+    )
+
+
+def _adapter_contracts(
+    h3_membership: HistoricalMembershipProjection | None,
+) -> tuple[HistoricalAdapterContract, ...]:
     """Declare bounded resume points without authorizing a fetch or scrape."""
     specifications: tuple[AdapterSpecification, ...] = (
         (
@@ -235,7 +290,7 @@ def _missing_adapter_contracts() -> tuple[HistoricalAdapterContract, ...]:
             ("compatibility_surface", "coverage_accounting", "provenance_link"),
         ),
     )
-    return tuple(
+    contracts = tuple(
         HistoricalAdapterContract(
             stage=stage,
             contract_key=contract_key,
@@ -254,9 +309,36 @@ def _missing_adapter_contracts() -> tuple[HistoricalAdapterContract, ...]:
             observations,
         ) in specifications
     )
+    if h3_membership is None:
+        return contracts
+    h3_contract = contracts[0].model_copy(
+        update={
+            "adapter_key": "enao_genre_artist_map_v1",
+            "input_kind": "archived_json",
+            "source_requirement": "Sealed local H3 JSON source and matching manifest hash.",
+            "output_observations": ("genre_page_member",),
+            "checkpoint": HistoricalAdapterCheckpoint(
+                contract_key=contracts[0].contract_key,
+                source_sha256=h3_membership.source_sha256,
+                accepted_records=h3_membership.stored_membership_count,
+                complete=(
+                    h3_membership.matched_h2_genre_count == h3_membership.h2_genre_count
+                    and h3_membership.stored_membership_count
+                    == h3_membership.source_membership_count
+                    and h3_membership.unmatched_source_genre_count == 0
+                ),
+            ),
+            "enabled": True,
+        }
+    )
+    return (h3_contract, *contracts[1:])
 
 
-def build_historical_compatibility(raw: bytes) -> HistoricalCompatibilityManifest:
+def build_historical_compatibility(
+    raw: bytes,
+    *,
+    h3_membership: HistoricalMembershipProjection | None = None,
+) -> HistoricalCompatibilityManifest:
     """Build a fail-closed full map compatibility artifact from verified retained bytes."""
     adaptation = adapt_quint_html(raw)
     representatives = adapt_quint_historical_representatives(raw)
@@ -305,8 +387,9 @@ def build_historical_compatibility(raw: bytes) -> HistoricalCompatibilityManifes
             )
             for item in representatives.quarantine
         ),
-        coverage=_coverage(adaptation, representatives),
-        adapter_contracts=_missing_adapter_contracts(),
+        coverage=_coverage(adaptation, representatives, h3_membership),
+        adapter_contracts=_adapter_contracts(h3_membership),
+        h3_membership=h3_membership,
     )
 
 
@@ -403,6 +486,29 @@ def publish_historical_compatibility(
         object_write=object_write,
         sqlite_run_id=run_id,
     )
+
+
+def compatibility_receipt(
+    manifest: HistoricalCompatibilityManifest,
+    publication: HistoricalPublicationSummary,
+) -> HistoricalCompatibilityReceipt:
+    """Create a compact receipt that links the published artifact to its local H3 projection."""
+    return HistoricalCompatibilityReceipt(
+        artifact_sha256=publication.artifact_sha256,
+        artifact_byte_size=publication.artifact_byte_size,
+        object_key=publication.object_write.key.value,
+        sqlite_run_id=publication.sqlite_run_id,
+        h2_source_sha256=manifest.artifact.content_sha256,
+        h3_membership=manifest.h3_membership,
+    )
+
+
+def write_compatibility_receipt(
+    receipt: HistoricalCompatibilityReceipt,
+    output_path: Path,
+) -> None:
+    """Atomically write the small receipt that links H2, H3, object storage, and SQLite."""
+    _atomic_write(output_path, (receipt.model_dump_json(indent=2) + "\n").encode())
 
 
 def _comparison_from_public_artifact(artifact: PublicModelArtifact) -> PublicComparisonModel:
@@ -574,6 +680,11 @@ def coverage_quality_report(manifest: HistoricalCompatibilityManifest) -> dict[s
             sorted(Counter(item.reason for item in manifest.quarantine).items())
         ),
         "relation_count": len(manifest.relations),
+        "h3_membership": (
+            manifest.h3_membership.model_dump(mode="json")
+            if manifest.h3_membership is not None
+            else None
+        ),
         "coverage_state_counts": dict(sorted(state_counts.items())),
         "missing_adapter_contracts": [
             {

@@ -128,6 +128,136 @@ class HistoricalCoverage(FrozenModel):
         return self
 
 
+class HistoricalMembershipProjection(FrozenModel):
+    """Link a sealed, local H3 membership projection without exporting its rows."""
+
+    source_id: str = Field(min_length=1, max_length=200)
+    source_sha256: Sha256
+    source_manifest_sha256: Sha256
+    source_revision_date: str = Field(min_length=1, max_length=100)
+    source_genre_row_count: int = Field(gt=0)
+    source_membership_count: int = Field(gt=0)
+    stored_membership_count: int = Field(ge=0)
+    quarantined_membership_count: int = Field(ge=0)
+    matched_h2_genre_count: int = Field(ge=0)
+    unmatched_source_genre_count: int = Field(ge=0)
+    h2_genre_count: int = Field(gt=0)
+    distinct_source_artist_count: int = Field(ge=0)
+    local_display_enabled: Literal[True] = True
+    policy_key: str = Field(min_length=1, max_length=300)
+    query_view: Literal["displayable_historical_genre_artists"] = (
+        "displayable_historical_genre_artists"
+    )
+    h4_derived_state: Literal["derived_partial"] = "derived_partial"
+
+    @model_validator(mode="after")
+    def require_measured_projection_coverage(self) -> "HistoricalMembershipProjection":
+        """Keep retained H3 rows and H2 name coverage internally consistent."""
+        if self.stored_membership_count > self.source_membership_count:
+            raise ValueError("stored H3 memberships exceed the sealed source count")
+        if self.quarantined_membership_count > self.source_membership_count:
+            raise ValueError("quarantined H3 memberships exceed the sealed source count")
+        if self.matched_h2_genre_count > self.h2_genre_count:
+            raise ValueError("matched H2 genres exceed the retained H2 map")
+        if not self.policy_key.startswith("historical-membership:local-display:"):
+            raise ValueError("H3 compatibility projection needs the explicit local-display policy")
+        return self
+
+
+class HistoricalH3Coverage(FrozenModel):
+    """Measured coverage claimed by one sealed H3 source manifest."""
+
+    historical_stage: Literal["H3"]
+    source_genre_rows: int = Field(gt=0)
+    source_distinct_genres: int = Field(gt=0)
+    source_artist_memberships: int = Field(gt=0)
+    source_distinct_artist_ids: int = Field(gt=0)
+    base_map_matched_genres: int = Field(ge=0)
+    base_map_unmatched_genres: int = Field(ge=0)
+    base_map_imported_artist_memberships: int = Field(ge=0)
+    full_coverage: str = Field(min_length=1, max_length=1_000)
+
+
+class HistoricalBoundedRange(FrozenModel):
+    """Retain the research probe fingerprint without accepting it as the full source."""
+
+    start: int = Field(ge=0)
+    end: int = Field(gt=0)
+    byte_size: int = Field(gt=0)
+    sha256: Sha256
+
+    @model_validator(mode="after")
+    def require_consistent_range(self) -> "HistoricalBoundedRange":
+        """Keep the recorded byte range self-consistent."""
+        if self.end - self.start + 1 != self.byte_size:
+            raise ValueError("historical bounded range size does not match its offsets")
+        return self
+
+
+class HistoricalH3SourceManifest(FrozenModel):
+    """Parse the immutable local H3 source manifest before local display is enabled."""
+
+    schema_version: Literal[1]
+    source_id: str = Field(min_length=1, max_length=200)
+    status: Literal["discovery_only"]
+    scope: str = Field(min_length=1, max_length=1_000)
+    source_url: AnyHttpUrl
+    repository_url: AnyHttpUrl
+    repository_commit: str = Field(pattern=r"^[0-9a-f]{40}$")
+    git_blob_sha1: str = Field(pattern=r"^[0-9a-f]{40}$")
+    full_byte_size: int = Field(gt=0)
+    full_sha256: Sha256
+    bounded_range: HistoricalBoundedRange
+    safe_projection_fixture: str = Field(min_length=1, max_length=1_000)
+    safe_projection_sha256: Sha256
+    coverage_report: str = Field(min_length=1, max_length=1_000)
+    coverage_report_sha256: Sha256
+    observed_at: str = Field(min_length=1, max_length=100)
+    repository_license: Literal["MIT"]
+    source_data_license_status: Literal["unspecified"]
+    rights_status: str = Field(min_length=1, max_length=1_000)
+    publication_policy: Literal["discovery-only by default; enable local display explicitly"]
+    excluded_fields: tuple[Literal["preview_url", "sample_song", "track_id"], ...]
+    forbidden_actions: tuple[str, ...] = Field(min_length=1, max_length=32)
+    adapter: Literal["enao_genre_artist_map_v1"]
+    coverage: HistoricalH3Coverage
+
+    @model_validator(mode="after")
+    def require_media_exclusions(self) -> "HistoricalH3SourceManifest":
+        """Require the seal to name every media field that the projection discards."""
+        if set(self.excluded_fields) != {"preview_url", "sample_song", "track_id"}:
+            raise ValueError("H3 source manifest must exclude preview, sample, and track IDs")
+        return self
+
+
+class HistoricalCompatibilityReceipt(FrozenModel):
+    """Bind one compatibility artifact to its SQLite publication and optional H3 projection."""
+
+    revision: Literal["historical-compatibility-receipt-v1"] = "historical-compatibility-receipt-v1"
+    artifact_sha256: Sha256
+    artifact_byte_size: int = Field(gt=0)
+    object_key: str = Field(min_length=1, max_length=1_000)
+    sqlite_run_id: int = Field(gt=0)
+    h2_source_sha256: Sha256
+    h3_membership: HistoricalMembershipProjection | None = None
+
+
+def _require_h3_membership_accounting(
+    h3_membership: HistoricalMembershipProjection | None,
+    adapter_contracts: tuple["HistoricalAdapterContract", ...],
+) -> None:
+    """Require the H3 adapter state to exactly match its optional sealed projection."""
+    h3_contract = next(item for item in adapter_contracts if item.stage == "H3")
+    if h3_membership is None and h3_contract.enabled:
+        raise ValueError("an enabled H3 adapter needs a sealed membership projection")
+    if h3_membership is None:
+        return
+    if not h3_contract.enabled:
+        raise ValueError("a sealed H3 membership projection needs an enabled adapter")
+    if h3_contract.checkpoint.source_sha256 != h3_membership.source_sha256:
+        raise ValueError("H3 adapter checkpoint must match the membership source hash")
+
+
 class HistoricalAdapterCheckpoint(FrozenModel):
     """Portable state needed to resume a future bounded historical adapter."""
 
@@ -145,7 +275,7 @@ class HistoricalAdapterContract(FrozenModel):
     stage: Literal["H3", "H4", "H5", "H6"]
     contract_key: str = Field(min_length=1, max_length=200)
     adapter_key: str = Field(min_length=1, max_length=200)
-    input_kind: Literal["archived_html", "archived_list", "derived_projection"]
+    input_kind: Literal["archived_html", "archived_json", "archived_list", "derived_projection"]
     source_requirement: str = Field(min_length=1, max_length=2_000)
     output_observations: tuple[str, ...] = Field(min_length=1, max_length=32)
     checkpoint: HistoricalAdapterCheckpoint
@@ -171,6 +301,7 @@ class HistoricalCompatibilityManifest(FrozenModel):
     quarantine: tuple[HistoricalQuarantine, ...] = Field(default=(), max_length=20_000)
     coverage: tuple[HistoricalCoverage, ...] = Field(min_length=6, max_length=6)
     adapter_contracts: tuple[HistoricalAdapterContract, ...] = Field(min_length=4, max_length=4)
+    h3_membership: HistoricalMembershipProjection | None = None
 
     @model_validator(mode="after")
     def require_complete_accounting(self) -> "HistoricalCompatibilityManifest":
@@ -203,6 +334,7 @@ class HistoricalCompatibilityManifest(FrozenModel):
             for item in self.quarantine
         ):
             raise ValueError("historical quarantine needs matching source provenance")
+        _require_h3_membership_accounting(self.h3_membership, self.adapter_contracts)
         return self
 
 

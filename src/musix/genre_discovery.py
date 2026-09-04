@@ -2,6 +2,7 @@
 
 import hashlib
 import sqlite3
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -15,6 +16,15 @@ from musix.adapters.everynoise import (
     HistoricalRepresentativeRecord,
 )
 from musix.db import Database
+
+type _MembershipInsertValues = tuple[int, str, str, str, str, int, int, str]
+
+_MEMBERSHIP_INSERT_SQL = """INSERT OR IGNORE INTO historical_genre_artist_observations
+    (genre_id, source_artist_id, source_artist_name, observation_role,
+     source_revision_date, source_artifact_sha256, provenance_id, policy_id,
+     record_fingerprint)
+    VALUES (?, ?, ?, 'genre_page_member', ?, ?, ?, ?, ?)"""
+_MEMBERSHIP_INSERT_BATCH_SIZE = 4_096
 
 
 class DiscoveryImportSummary(BaseModel):
@@ -42,6 +52,40 @@ class GenreMembershipImportSummary(BaseModel):
     discarded_track_identifier_count: int = Field(ge=0)
     empty_genre_rows: int = Field(ge=0)
     local_display_enabled: bool
+    policy_key: str = Field(min_length=1)
+    source_membership_count: int = Field(ge=0)
+    quarantined_membership_count: int = Field(ge=0)
+
+
+class DisplayableGenreMembershipSummary(BaseModel):
+    """Count only the H3 rows that the active local display policy can query."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    genre_memberships: int = Field(ge=0)
+    matched_genres: int = Field(ge=0)
+    distinct_source_artists: int = Field(ge=0)
+
+
+class DerivedHistoricalArtistGenres(BaseModel):
+    """One queryable reverse lookup, explicitly derived from H3 genre-to-artist rows."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    source_artist_id: str = Field(pattern=r"^[A-Za-z0-9]{22}$")
+    source_artist_name: str = Field(min_length=1)
+    genre_names: tuple[str, ...] = Field(min_length=1, max_length=10_000)
+    state: str = "derived_partial"
+
+
+@dataclass(frozen=True, slots=True)
+class _MembershipPersistenceContext:
+    """Keep one membership write's database identity and policy inseparable."""
+
+    genre_id: int
+    policy_id: int
+    provenance_id: int
+    policy_key: str
 
 
 def _now() -> str:
@@ -122,7 +166,7 @@ def _historical_membership_context(
     adaptation: HistoricalGenreMembershipAdaptationResult,
     *,
     enable_local_display: bool,
-) -> tuple[int, int, int]:
+) -> tuple[int, int, int, str]:
     """Register immutable source metadata for a local-only H3 projection."""
     source = adaptation.source
     policy_id, mode = _seal_historical_membership_policy(
@@ -193,7 +237,8 @@ def _historical_membership_context(
     ).fetchone()
     if provenance_row is None:
         raise RuntimeError("historical discovery provenance registration failed")
-    return source_id, policy_id, int(provenance_row[0])
+    policy_key = f"historical-membership:{mode}:{source.sha256}"
+    return source_id, policy_id, int(provenance_row[0]), policy_key
 
 
 def _genre_name_contexts(
@@ -212,38 +257,38 @@ def _genre_name_contexts(
     return {str(row[0]): int(row[1]) for row in rows}
 
 
-def _insert_genre_membership(
-    connection: sqlite3.Connection,
+def _membership_insert_values(
     *,
-    genre_id: int,
-    policy_id: int,
-    provenance_id: int,
+    context: _MembershipPersistenceContext,
     record: HistoricalGenreMemberRecord,
-) -> None:
+) -> _MembershipInsertValues:
+    """Prepare one idempotent SQLite row without retaining discarded media fields."""
     fingerprint = _fingerprint(
+        context.policy_key,
         record.source_id,
         record.source_sha256,
         record.genre_name.casefold(),
         record.source_artist_id,
         record.source_revision_date,
     )
-    connection.execute(
-        """INSERT OR IGNORE INTO historical_genre_artist_observations
-           (genre_id, source_artist_id, source_artist_name, observation_role,
-            source_revision_date, source_artifact_sha256, provenance_id, policy_id,
-            record_fingerprint)
-           VALUES (?, ?, ?, 'genre_page_member', ?, ?, ?, ?, ?)""",
-        (
-            genre_id,
-            record.source_artist_id,
-            record.artist_name,
-            record.source_revision_date,
-            record.source_sha256,
-            provenance_id,
-            policy_id,
-            fingerprint,
-        ),
+    return (
+        context.genre_id,
+        record.source_artist_id,
+        record.artist_name,
+        record.source_revision_date,
+        record.source_sha256,
+        context.provenance_id,
+        context.policy_id,
+        fingerprint,
     )
+
+
+def _insert_genre_membership_batch(
+    connection: sqlite3.Connection,
+    rows: list[_MembershipInsertValues],
+) -> None:
+    """Use bounded batches while retaining one enclosing atomic import transaction."""
+    connection.executemany(_MEMBERSHIP_INSERT_SQL, rows)
 
 
 def _genre_contexts(
@@ -398,21 +443,23 @@ def import_historical_genre_memberships(
 ) -> GenreMembershipImportSummary:
     """Project local-only H3 evidence onto genres from a sealed base map.
 
-    The source policy permits normalization only. The observations are never
-    canonical artist facts and cannot enter a public model or UI publication.
+    Discovery-only is the default. Explicit local display permits a private
+    SQLite projection, but the observations remain source-scoped, noncanonical,
+    and denied export from every public model or UI publication.
     """
     database = Database(database_path)
     database.initialize()
-    source_artists = {record.source_artist_id for record in adaptation.records}
+    matched_source_artists: set[str] = set()
     matched_genres: set[str] = set()
     unmatched_genres: set[str] = set()
     with database.connect() as connection, connection:
-        _, policy_id, provenance_id = _historical_membership_context(
+        _, policy_id, provenance_id, policy_key = _historical_membership_context(
             connection,
             adaptation,
             enable_local_display=enable_local_display,
         )
         contexts = _genre_name_contexts(connection, base_source_key)
+        matched_records: list[tuple[int, HistoricalGenreMemberRecord]] = []
         for record in adaptation.records:
             normalized_name = record.genre_name.casefold()
             genre_id = contexts.get(normalized_name)
@@ -420,13 +467,35 @@ def import_historical_genre_memberships(
                 unmatched_genres.add(normalized_name)
                 continue
             matched_genres.add(normalized_name)
-            _insert_genre_membership(
-                connection,
-                genre_id=genre_id,
-                policy_id=policy_id,
-                provenance_id=provenance_id,
-                record=record,
-            )
+            matched_source_artists.add(record.source_artist_id)
+            matched_records.append((genre_id, record))
+        existing_membership_row = connection.execute(
+            """SELECT count(*) FROM historical_genre_artist_observations
+               WHERE provenance_id = ? AND observation_role = 'genre_page_member'""",
+            (provenance_id,),
+        ).fetchone()
+        if existing_membership_row is None:
+            raise RuntimeError("historical genre membership count failed")
+        existing_memberships = int(existing_membership_row[0])
+        if existing_memberships != len(matched_records):
+            pending_rows: list[_MembershipInsertValues] = []
+            for genre_id, record in matched_records:
+                pending_rows.append(
+                    _membership_insert_values(
+                        context=_MembershipPersistenceContext(
+                            genre_id=genre_id,
+                            policy_id=policy_id,
+                            provenance_id=provenance_id,
+                            policy_key=policy_key,
+                        ),
+                        record=record,
+                    )
+                )
+                if len(pending_rows) == _MEMBERSHIP_INSERT_BATCH_SIZE:
+                    _insert_genre_membership_batch(connection, pending_rows)
+                    pending_rows.clear()
+            if pending_rows:
+                _insert_genre_membership_batch(connection, pending_rows)
         membership_row = connection.execute(
             """SELECT count(*) FROM historical_genre_artist_observations
                WHERE provenance_id = ? AND observation_role = 'genre_page_member'""",
@@ -436,7 +505,7 @@ def import_historical_genre_memberships(
         raise RuntimeError("historical genre membership count failed")
     return GenreMembershipImportSummary(
         genre_memberships=int(membership_row[0]),
-        distinct_source_artists=len(source_artists),
+        distinct_source_artists=len(matched_source_artists),
         matched_genres=len(matched_genres),
         unmatched_genres=len(unmatched_genres),
         discarded_preview_metadata_count=adaptation.discarded_preview_metadata_count,
@@ -444,4 +513,69 @@ def import_historical_genre_memberships(
         discarded_track_identifier_count=adaptation.discarded_track_identifier_count,
         empty_genre_rows=adaptation.empty_genre_rows,
         local_display_enabled=enable_local_display,
+        policy_key=policy_key,
+        source_membership_count=adaptation.source_membership_count,
+        quarantined_membership_count=adaptation.quarantined_membership_count,
+    )
+
+
+def query_displayable_historical_genre_memberships(
+    database_path: Path,
+    *,
+    source_sha256: str,
+    policy_key: str,
+) -> DisplayableGenreMembershipSummary:
+    """Read only H3 rows that remain visible through the active local display policy."""
+    database = Database(database_path)
+    database.initialize()
+    with database.connect() as connection:
+        connection.execute("PRAGMA optimize")
+        row = connection.execute(
+            """SELECT count(*), count(DISTINCT observation.genre_id),
+                      count(DISTINCT observation.source_artist_id)
+               FROM displayable_historical_genre_artists AS observation
+               JOIN rights_policies AS policy ON policy.id = observation.policy_id
+               WHERE observation.observation_role = 'genre_page_member'
+                 AND observation.source_artifact_sha256 = ?
+                 AND policy.policy_key = ?""",
+            (source_sha256, policy_key),
+        ).fetchone()
+    if row is None:
+        raise RuntimeError("displayable historical membership count failed")
+    return DisplayableGenreMembershipSummary(
+        genre_memberships=int(row[0]),
+        matched_genres=int(row[1]),
+        distinct_source_artists=int(row[2]),
+    )
+
+
+def query_displayable_historical_artist_genres(
+    database_path: Path,
+    *,
+    source_sha256: str,
+    policy_key: str,
+    source_artist_id: str,
+) -> DerivedHistoricalArtistGenres | None:
+    """Reverse visible H3 rows for one artist without claiming an observed artist page."""
+    database = Database(database_path)
+    database.initialize()
+    with database.connect() as connection:
+        rows = connection.execute(
+            """SELECT observation.source_artist_name, genre.name
+               FROM displayable_historical_genre_artists AS observation
+               JOIN rights_policies AS policy ON policy.id = observation.policy_id
+               JOIN genres AS genre ON genre.id = observation.genre_id
+               WHERE observation.observation_role = 'genre_page_member'
+                 AND observation.source_artifact_sha256 = ?
+                 AND policy.policy_key = ?
+                 AND observation.source_artist_id = ?
+               ORDER BY genre.name""",
+            (source_sha256, policy_key, source_artist_id),
+        ).fetchall()
+    if not rows:
+        return None
+    return DerivedHistoricalArtistGenres(
+        source_artist_id=source_artist_id,
+        source_artist_name=str(rows[0][0]),
+        genre_names=tuple(str(row[1]) for row in rows),
     )

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "source": {
+    "kind": "bounded_http_range",
+    "repository": "NeroYuki/everynoise_enhancement_script",
+    "commit": "88bd6f6cac0be49cf58af364af5db6f323065375",
+    "git_blob_sha1": "f91b03a6bdd736035f40f10b391b4bcf33978aa6",
+    "source_path": "spotify_genres_artists_map.json",
+    "range_start": 0,
+    "range_end": 65535,
+    "range_sha256": "5e5555f2d5e68546cb599634b7cf4bd7cc5455e5cd06e9c8159e4be11f4648b4",
+    "observed_at": "2026-09-04",
+    "status": "discovery_only"
+  },
+  "projection": {
+    "adapter": "enao_genre_artist_map_v1",
+    "dropped_fields": ["sample_song", "preview_url"],
+    "genres": 1,
+    "artist_memberships": 3
+  },
+  "records": [
+    {
+      "genre": "pop",
+      "artist": "Taylor Swift",
+      "artist_id": "06HL4z0CvFAxyc27GXpf02"
+    },
+    {
+      "genre": "pop",
+      "artist": "The Weeknd",
+      "artist_id": "1Xyo4u8uXC1ZmMpatF05PJ"
+    },
+    {
+      "genre": "pop",
+      "artist": "Lana Del Rey",
+      "artist_id": "00FQb4jTyendYWaN8pK0wa"
+    }
+  ]
+}

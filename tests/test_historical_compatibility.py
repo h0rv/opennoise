@@ -21,6 +21,7 @@ from musix.models.historical import (
     HistoricalCoordinate,
     HistoricalCoverage,
     HistoricalGenre,
+    HistoricalMembershipProjection,
     HistoricalQuarantine,
     HistoricalRelation,
     HistoricalRepresentative,
@@ -110,6 +111,62 @@ def manifest(*, relations: tuple[HistoricalRelation, ...] = ()) -> HistoricalCom
 
 
 class HistoricalCompatibilityTests(unittest.TestCase):
+    def test_sealed_h3_projection_updates_coverage_without_exporting_memberships(self) -> None:
+        projection = HistoricalMembershipProjection(
+            source_id="fixture-h3",
+            source_sha256="c" * 64,
+            source_manifest_sha256="d" * 64,
+            source_revision_date="2024-11-16",
+            source_genre_row_count=2,
+            source_membership_count=3,
+            stored_membership_count=2,
+            quarantined_membership_count=1,
+            matched_h2_genre_count=1,
+            unmatched_source_genre_count=1,
+            h2_genre_count=1,
+            distinct_source_artist_count=2,
+            policy_key=f"historical-membership:local-display:{'c' * 64}",
+        )
+        value = manifest().model_copy(
+            update={
+                "h3_membership": projection,
+                "coverage": tuple(
+                    coverage_item.model_copy(
+                        update={
+                            "state": "partial",
+                            "retained_record_count": 2,
+                            "expected_record_count": 3,
+                            "retained_fields": ("source-scoped genre-to-artist membership",),
+                            "missing_fields": ("full verified H2 name coverage",),
+                        }
+                    )
+                    if coverage_item.stage == "H3"
+                    else coverage_item
+                    for coverage_item in manifest().coverage
+                ),
+                "adapter_contracts": tuple(
+                    contract.model_copy(
+                        update={
+                            "enabled": True,
+                            "checkpoint": HistoricalAdapterCheckpoint(
+                                contract_key=contract.contract_key,
+                                source_sha256=projection.source_sha256,
+                            ),
+                        }
+                    )
+                    if contract.stage == "H3"
+                    else contract
+                    for contract in manifest().adapter_contracts
+                ),
+            }
+        )
+        value = HistoricalCompatibilityManifest.model_validate(value.model_dump())
+        rendered = value.h3_membership.model_dump_json() if value.h3_membership else ""
+        self.assertIn("stored_membership_count", rendered)
+        self.assertNotIn("preview_url", rendered)
+        self.assertNotIn("sample_song", rendered)
+        self.assertNotIn("track_id", rendered)
+
     def test_manifest_rejects_partial_map_count(self) -> None:
         value = manifest().model_dump(mode="json")
         value["artifact"]["expected_genres"] = 2

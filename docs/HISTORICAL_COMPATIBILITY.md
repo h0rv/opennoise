@@ -9,6 +9,14 @@ poe build-historical-compatibility --source data/raw/sha256/1ac0c659a9764536675b
 poe evaluate-historical-compatibility data/historical/historical-compatibility-v1.json data/model/production-map-v1.json --report data/historical/comparison-report-v1.json
 ```
 
+An H3 projection is opt-in, local-only, and needs both the exact pinned JSON and an explicit
+display switch. It writes the 306,136 source-scoped memberships to SQLite, then records only
+their sealed hashes and measured aggregate coverage in the compatibility artifact.
+
+```sh
+poe build-historical-compatibility --source data/raw/sha256/1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180 --h3-source /local/spotify_genres_artists_map.json --enable-local-display
+```
+
 The publisher verifies the pinned source before parsing, writes one immutable JSON artifact to the
 configured object store, and writes an append-only coverage record to SQLite. It retains no audio
 or preview URL. A legacy preview is represented only by `absent` or `disabled_legacy` and, when
@@ -20,14 +28,18 @@ present in source markup, a SHA-256 hash of the URL.
 | --- | --- | --- | --- |
 | H1 source manifest | complete | pinned URL, snapshot, SHA-256, byte size | none for this artifact |
 | H2 map | complete | 6,291 names, item IDs, source order, coordinates, colors, font sizes | none for retained map rows |
-| H3 genre pages | partial | 6,226 parsable map-row artist/track representatives; 65 quarantined representative rows | genre-page memberships, page positions, related blocks, capture dates |
-| H4 artist pages | missing | none | artist genre and recording pages |
+| H3 genre pages | partial by measurement when enabled | 306,136 exact local-display genre-to-artist memberships across 6,289 H2 names; 5,445 source rows quarantined | complete H2 name coverage, page positions, related blocks, capture dates |
+| H4 artist pages | derived_partial when H3 is enabled | reverse index of the retained H3 memberships | artist-page capture, page ordering, recordings, related links |
 | H5 lists/playlists | missing | none | historical ranks, playlist IDs, track order |
 | H6 compatibility view | partial | retained map geometry, labels, dated representatives | paths requiring H3-H5 pages |
 
 H3-H6 each have an explicit disabled resumable adapter contract. Enabling one needs a separately
 verified local/archive source manifest with capture information, hash, and rights decision. The
 contracts do not fetch, scrape, or infer data.
+
+The H3 source never enters the object store or public model. The SQLite policy allows local display
+only when explicitly enabled and denies export. The publication receipt links the compatibility
+artifact, object key, SQLite run, and the sealed H3 projection. See [the H4/H5 source audit](H4_H5_SOURCE_AUDIT.md).
 
 ## Independent comparison
 

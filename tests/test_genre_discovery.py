@@ -15,6 +15,8 @@ from musix.adapters.everynoise import (
 from musix.genre_discovery import (
     import_historical_genre_memberships,
     import_historical_representatives,
+    query_displayable_historical_artist_genres,
+    query_displayable_historical_genre_memberships,
 )
 from musix.ingest import ImportOptions, import_jsonl
 
@@ -66,6 +68,8 @@ class GenreDiscoveryTests(unittest.TestCase):
         self.assertEqual(result.discarded_preview_metadata_count, 1)
         self.assertEqual(result.discarded_sample_metadata_count, 1)
         self.assertEqual(result.discarded_track_identifier_count, 0)
+        self.assertEqual(result.source_membership_count, 2)
+        self.assertEqual(result.quarantined_membership_count, 0)
         self.assertEqual(result.empty_genre_rows, 0)
         self.assertEqual(
             [
@@ -80,6 +84,7 @@ class GenreDiscoveryTests(unittest.TestCase):
         rendered = result.model_dump_json()
         self.assertNotIn("preview_url", rendered)
         self.assertNotIn("sample_song", rendered)
+        self.assertNotIn('"track_id":', rendered)
         self.assertNotIn("p.scdn.co", rendered)
 
     def test_genre_membership_import_is_local_only_and_idempotent(self) -> None:
@@ -87,7 +92,7 @@ class GenreDiscoveryTests(unittest.TestCase):
             b'<div id=item1 class="genre scanme" style="color: #ad8907; top: 4997px; '
             b'left: 783px; font-size: 160%" '
             b'onclick=\'playx("1V6gIisPpYqgFeWbMLI0bA", "pop", this);\' '
-            b'title=\'e.g. Demi Lovato "Heart Attack"\'>pop</div>'
+            b"title='e.g. Demi Lovato \"Heart Attack\"'>pop</div>"
         )
         h2_source = SourceSpec.model_validate(
             {
@@ -166,6 +171,22 @@ class GenreDiscoveryTests(unittest.TestCase):
             self.assertEqual(first.discarded_track_identifier_count, 0)
             self.assertFalse(first.local_display_enabled)
             self.assertTrue(display_enabled.local_display_enabled)
+            hidden = query_displayable_historical_genre_memberships(
+                database_path,
+                source_sha256=h3_source.sha256,
+                policy_key=first.policy_key,
+            )
+            visible = query_displayable_historical_genre_memberships(
+                database_path,
+                source_sha256=h3_source.sha256,
+                policy_key=display_enabled.policy_key,
+            )
+            inverse = query_displayable_historical_artist_genres(
+                database_path,
+                source_sha256=h3_source.sha256,
+                policy_key=display_enabled.policy_key,
+                source_artist_id="06HL4z0CvFAxyc27GXpf02",
+            )
             connection = sqlite3.connect(database_path)
             try:
                 policy = connection.execute(
@@ -182,10 +203,25 @@ class GenreDiscoveryTests(unittest.TestCase):
                        WHERE policy.policy_key = ? AND permission.use_kind = 'display'""",
                     (f"historical-membership:local-display:{h3_source.sha256}",),
                 ).fetchone()
+                export_policy = connection.execute(
+                    """SELECT permission.decision
+                       FROM rights_policy_permissions AS permission
+                       JOIN rights_policies AS policy ON policy.id = permission.policy_id
+                       WHERE policy.policy_key = ? AND permission.use_kind = 'export'""",
+                    (f"historical-membership:local-display:{h3_source.sha256}",),
+                ).fetchone()
             finally:
                 connection.close()
             self.assertEqual(policy, ("deny",))
             self.assertEqual(display_policy, ("allow",))
+            self.assertEqual(export_policy, ("deny",))
+            self.assertEqual(hidden.genre_memberships, 0)
+            self.assertEqual(visible.genre_memberships, 1)
+            self.assertIsNotNone(inverse)
+            if inverse is not None:
+                self.assertEqual(inverse.genre_names, ("pop",))
+                self.assertEqual(inverse.state, "derived_partial")
+
     def test_representative_import_is_idempotent_and_policy_safe(self) -> None:
         raw = (
             b'<div id=item1 preview_url="https://p.scdn.co/mp3-preview/legacy" '

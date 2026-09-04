@@ -52,7 +52,11 @@ class SourceSpec(BaseModel):
     expected_bytes: Annotated[int, Field(gt=0)]
     sha256: Sha256
     expected_records: Annotated[int, Field(gt=0)]
-    adapter: Literal["enao_html_map_v1", "enao_watch_csv_v1"]
+    adapter: Literal[
+        "enao_html_map_v1",
+        "enao_watch_csv_v1",
+        "enao_genre_artist_map_v1",
+    ]
     local_only: Literal[True] = True
     rights_classification: Literal["user_authorized_local"] = "user_authorized_local"
 
@@ -220,6 +224,8 @@ class HistoricalGenreMembershipAdaptationResult(BaseModel):
     discarded_sample_metadata_count: Annotated[int, Field(ge=0)]
     discarded_track_identifier_count: Annotated[int, Field(ge=0)]
     empty_genre_rows: Annotated[int, Field(ge=0)]
+    source_membership_count: Annotated[int, Field(ge=0)]
+    quarantined_membership_count: Annotated[int, Field(ge=0)]
 
 
 class _GenreArtistMapArtist(BaseModel):
@@ -268,6 +274,7 @@ def _genre_member_record(
         source_id=source.source_id,
         source_sha256=source.sha256,
     )
+
 
 class AdaptationResult(BaseModel):
     """Deterministic accepted and quarantined outputs from one adapter run."""
@@ -498,16 +505,20 @@ def adapt_historical_genre_artist_map(
     discarded_sample_metadata_count = 0
     discarded_track_identifier_count = 0
     empty_genre_rows = 0
+    source_membership_count = 0
+    quarantined_membership_count = 0
     for row in rows:
         if not row.artists:
             empty_genre_rows += 1
         for artist in row.artists:
+            source_membership_count += 1
             preview_count, sample_count, track_identifier_count = _discarded_media_metadata(artist)
             discarded_preview_metadata_count += preview_count
             discarded_sample_metadata_count += sample_count
             discarded_track_identifier_count += track_identifier_count
             fingerprint = (row.genre.casefold(), artist.artist_id)
             if fingerprint in fingerprints:
+                quarantined_membership_count += 1
                 continue
             fingerprints.add(fingerprint)
             records.append(
@@ -525,7 +536,10 @@ def adapt_historical_genre_artist_map(
         discarded_sample_metadata_count=discarded_sample_metadata_count,
         discarded_track_identifier_count=discarded_track_identifier_count,
         empty_genre_rows=empty_genre_rows,
+        source_membership_count=source_membership_count,
+        quarantined_membership_count=quarantined_membership_count,
     )
+
 
 def _slug(name: str) -> str:
     normalized = unicodedata.normalize("NFKC", name).casefold()
