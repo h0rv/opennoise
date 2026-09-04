@@ -196,6 +196,14 @@
         setHistoricalLabels();
       });
     };
+    // Wait for the first renderer frame after the map is made visible.  The
+    // initial fit happens before Cytoscape has painted its node geometry, so
+    // an immediate label pass can see a zero-sized/hidden viewport and leave
+    // the overview unlabeled until a resize or camera event occurs.
+    const paintInitialHistoricalLabels = () => {
+      scheduleLabels();
+      window.requestAnimationFrame(() => setHistoricalLabels());
+    };
     const updateBackControl = () => {
       const button = document.querySelector('[data-map-action="historical-back"]');
       if (button instanceof HTMLButtonElement) button.disabled = cohorts.length === 0;
@@ -377,7 +385,7 @@
           }
         });
         updateBackControl();
-        setHistoricalLabels();
+        paintInitialHistoricalLabels();
       })
       .catch(() => say("Historical compatibility is unavailable."));
   }

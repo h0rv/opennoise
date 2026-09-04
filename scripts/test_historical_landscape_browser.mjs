@@ -102,6 +102,10 @@ try {
   await cdp.wait("Boolean(window.__musixMap)", "historical map init");
   // Cytoscape's renderer calculates label geometry on its first animation frame.
   await sleep(120);
+  await cdp.wait(
+    "window.__musixMap.nodes().filter(n => Boolean(n.data('displayLabel'))).length === window.__musixMap.nodes().length",
+    "initial overview labels",
+  );
   const nodeLabels = () => cdp.evaluate("window.__musixMap.nodes().map(n => n.data('label')).sort()");
   const clickNode = async (id) => {
     const point = await cdp.evaluate(`(() => { const node=window.__musixMap.$id(${JSON.stringify(`historical-${id}`)}); const point=node.renderedPosition(); return {x:point.x,y:point.y}; })()`);
@@ -115,7 +119,7 @@ try {
     const map=document.querySelector('#semantic-map').getBoundingClientRect();
     const nodes=window.__musixMap.nodes(); const points=nodes.map(node => node.renderedPosition());
     const labels=nodes.filter(node => Boolean(node.data('displayLabel'))).length;
-    return { labels, width:(Math.max(...points.map(point => point.x))-Math.min(...points.map(point => point.x)))/map.width,
+    return { nodeCount:nodes.length, labels, width:(Math.max(...points.map(point => point.x))-Math.min(...points.map(point => point.x)))/map.width,
       height:(Math.max(...points.map(point => point.y))-Math.min(...points.map(point => point.y)))/map.height };
   })()`);
   const readyLayout = await cdp.evaluate(`(() => {
@@ -161,7 +165,7 @@ try {
   await cdp.wait("document.readyState === 'complete'", "no-JS document");
   const noJs = await cdp.evaluate("(() => { const fallback=document.querySelector('#historical-fallback'); return Boolean(fallback && fallback.querySelectorAll('a').length === 12 && getComputedStyle(fallback).display !== 'none'); })()");
   const expectedRequests = [...payloads.keys()];
-  const geometryPasses = overviewGeometry.labels >= 3 && overviewGeometry.width >= 0.7 && overviewGeometry.height >= 0.45;
+  const geometryPasses = overviewGeometry.labels === overviewGeometry.nodeCount && overviewGeometry.width >= 0.7 && overviewGeometry.height >= 0.45;
   if (JSON.stringify(requests) !== JSON.stringify(expectedRequests) || !geometryPasses || !readyLayout.fallbackHidden || !readyLayout.controlsSearchSeparate || !readyLayout.nodesAndLabelsUnobscured || !mobileLive || !noJs || depthAndStack.depth !== 0 || depthAndStack.stack !== 0 || !depthAndStack.back || cdp.errors.length) {
     throw new Error(JSON.stringify({ requests, expectedRequests, overviewGeometry, geometryPasses, readyLayout, mobileState, noJs, depthAndStack, errors:cdp.errors }));
   }
