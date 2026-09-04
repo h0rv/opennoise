@@ -96,9 +96,22 @@ class HistoricalGenreMembers(BaseModel):
 
     model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
 
-    genre_id: int = Field(gt=0)
+    genre_external_id: str = Field(min_length=1, max_length=200)
     members: tuple[HistoricalGenreMember, ...] = Field(max_length=100)
     ranking_method: str = "direct_h3_membership_then_source_rank_then_artist"
+
+
+class HistoricalGenreMemberQuery(BaseModel):
+    """Resolve one historical signal node into a policy-scoped lazy lookup."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    policy_key: str = Field(min_length=1, max_length=300)
+    base_source_key: str = Field(min_length=1, max_length=200)
+    genre_external_id: str = Field(min_length=1, max_length=200)
+    genre_name: str = Field(min_length=1, max_length=500)
+    limit: int = Field(default=6, ge=1, le=100)
 
 
 @dataclass(frozen=True, slots=True)
@@ -606,11 +619,7 @@ def query_displayable_historical_artist_genres(
 
 def query_displayable_historical_genre_members(
     database_path: Path,
-    *,
-    source_sha256: str,
-    policy_key: str,
-    genre_id: int,
-    limit: int = 6,
+    query: HistoricalGenreMemberQuery,
 ) -> HistoricalGenreMembers:
     """Lazily read direct H3 members without placing them in a map payload.
 
@@ -619,10 +628,26 @@ def query_displayable_historical_genre_members(
     future source supplies it; otherwise this is only a stable display order,
     not a popularity or representative claim.
     """
-    bounded_limit = min(max(limit, 1), 100)
     database = Database(database_path)
     database.initialize()
     with database.connect() as connection:
+        target_rows = connection.execute(
+            """SELECT DISTINCT genre.id
+               FROM genres AS genre
+               JOIN entity_provenance AS link ON link.entity_id = genre.id
+               JOIN provenance_records AS provenance ON provenance.id = link.provenance_id
+               JOIN data_sources AS source ON source.id = provenance.source_id
+               WHERE source.source_key = ? AND genre.name = ?
+               ORDER BY genre.id
+               LIMIT 2""",
+            (query.base_source_key, query.genre_name),
+        ).fetchall()
+        if len(target_rows) != 1:
+            raise RuntimeError(
+                "historical genre name must resolve exactly once within its base source: "
+                f"{query.genre_external_id} resolved {len(target_rows)} times"
+            )
+        genre_id = int(target_rows[0][0])
         rows = connection.execute(
             """SELECT observation.id, observation.source_artist_id,
                       observation.source_artist_name, observation.source_local_rank
@@ -638,10 +663,10 @@ def query_displayable_historical_genre_members(
                         observation.source_artist_id,
                         observation.id
                LIMIT ?""",
-            (source_sha256, policy_key, genre_id, bounded_limit),
+            (query.source_sha256, query.policy_key, genre_id, query.limit),
         ).fetchall()
     return HistoricalGenreMembers(
-        genre_id=genre_id,
+        genre_external_id=query.genre_external_id,
         members=tuple(
             HistoricalGenreMember(
                 source_artist_id=str(row[1]),

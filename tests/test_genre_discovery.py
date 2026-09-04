@@ -13,6 +13,7 @@ from musix.adapters.everynoise import (
     adapt_quint_html,
 )
 from musix.genre_discovery import (
+    HistoricalGenreMemberQuery,
     import_historical_genre_memberships,
     import_historical_representatives,
     query_displayable_historical_artist_genres,
@@ -190,10 +191,13 @@ class GenreDiscoveryTests(unittest.TestCase):
             )
             members = query_displayable_historical_genre_members(
                 database_path,
-                source_sha256=h3_source.sha256,
-                policy_key=display_enabled.policy_key,
-                genre_id=1,
-                limit=6,
+                HistoricalGenreMemberQuery(
+                    source_sha256=h3_source.sha256,
+                    policy_key=display_enabled.policy_key,
+                    base_source_key=h2_source.source_id,
+                    genre_external_id="enao-test:item1",
+                    genre_name="pop",
+                ),
             )
             connection = sqlite3.connect(database_path)
             try:
@@ -229,7 +233,7 @@ class GenreDiscoveryTests(unittest.TestCase):
             if inverse is not None:
                 self.assertEqual(inverse.genre_names, ("pop",))
                 self.assertEqual(inverse.state, "derived_partial")
-            self.assertEqual(members.genre_id, 1)
+            self.assertEqual(members.genre_external_id, "enao-test:item1")
             self.assertEqual(len(members.members), 1)
             self.assertEqual(members.members[0].source_artist_name, "Taylor Swift")
             self.assertEqual(members.members[0].rank, 1)
