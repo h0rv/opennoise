@@ -19,6 +19,7 @@ from musix.models.production_qa import (
     ProductionMapLabelBox,
     ProductionMapLod,
     ProductionMapOverviewCommunity,
+    ProductionMapOverviewNaming,
     ProductionMapPresentationParent,
     ProductionMapRegion,
     ProductionMapScreenshot,
@@ -293,12 +294,12 @@ class ProductionMapQaTests(unittest.TestCase):
                 community_id="community:all",
                 member_entity_ids=tuple(item.entity_id for item in evidence.coordinates),
                 name="All genres",
-                naming={
-                    "method": "community_centrality_fallback_v1",
-                    "anchor_entity_id": evidence.coordinates[0].entity_id,
-                    "weighted_coverage": 1.0,
-                    "provenance_refs": ("fixture:community",),
-                },
+                naming=ProductionMapOverviewNaming(
+                    method="community_centrality_fallback_v1",
+                    anchor_entity_id=evidence.coordinates[0].entity_id,
+                    weighted_coverage=1.0,
+                    provenance_refs=("fixture:community",),
+                ),
                 x=average_x,
                 y=average_y,
             )
@@ -353,12 +354,12 @@ class ProductionMapQaTests(unittest.TestCase):
                 community_id="community:all",
                 member_entity_ids=tuple(item.entity_id for item in evidence.coordinates),
                 name="All genres",
-                naming={
-                    "method": "community_centrality_fallback_v1",
-                    "anchor_entity_id": evidence.coordinates[0].entity_id,
-                    "weighted_coverage": 1.0,
-                    "provenance_refs": ("fixture:community",),
-                },
+                naming=ProductionMapOverviewNaming(
+                    method="community_centrality_fallback_v1",
+                    anchor_entity_id=evidence.coordinates[0].entity_id,
+                    weighted_coverage=1.0,
+                    provenance_refs=("fixture:community",),
+                ),
                 x=average_x,
                 y=average_y,
             )

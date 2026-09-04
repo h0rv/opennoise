@@ -17,6 +17,7 @@ _MIN_ANCHOR_DIRECT_ARTISTS: Final = 4
 _MIN_ANCHOR_PROPAGATED_ARTISTS: Final = 8
 _SINGLETON_SUBTREE_SIZE: Final = 1
 _SMALL_SUBTREE_SIZE: Final = 2
+_GENERIC_TAXONOMY_LABELS: Final = frozenset({"music", "popular music"})
 
 
 def build_overview_communities(
@@ -179,8 +180,8 @@ def _ancestors(
 
 
 def _meaningful_overview_anchor(node: ProductionNode) -> bool:
-    """Avoid promoting a rare leaf when a community has no shared umbrella."""
-    return (
+    """Reject generic taxonomy buckets and rare leaves as overview anchors."""
+    return node.name.casefold() not in _GENERIC_TAXONOMY_LABELS and (
         node.subtree_size >= _MIN_ANCHOR_SUBTREE_SIZE
         or node.direct_artist_count >= _MIN_ANCHOR_DIRECT_ARTISTS
         or node.propagated_artist_count >= _MIN_ANCHOR_PROPAGATED_ARTISTS

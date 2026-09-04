@@ -152,7 +152,7 @@
 
   const lodForZoom = (zoom) => zoom < 0.58 ? 0 : zoom < 0.95 ? 1 : zoom < 1.55 ? 2 : 3;
   const labelBudget = (lod) => (mapElement.clientWidth <= 600
-    ? [24, 32, 48, 64][lod]
+    ? [6, 32, 48, 64][lod]
     : [24, 60, 96, 140][lod]);
 
   const intersects = (first, second) => first.x1 < second.x2 && first.x2 > second.x1
@@ -177,7 +177,7 @@
   const labelCandidates = (cy, overview, lod) => cy.nodes().filter((node) => overview
     ? Boolean(node.data("overview"))
     : !node.data("overview") && Number(node.data("lodMin")) <= lod).sort((left, right) => (
-    Number(right === selectedNode) - Number(left === selectedNode)
+    Number(right.id() === selectedNode?.id()) - Number(left.id() === selectedNode?.id())
     || Number(right.data("weight")) - Number(left.data("weight"))
     || String(left.data("label")).localeCompare(String(right.data("label")))
   ));

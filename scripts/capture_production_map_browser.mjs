@@ -251,29 +251,42 @@ async function lodMeasurements(cdp) {
 async function overviewFocusRevealsLabel(cdp) {
   const candidate = await cdp.evaluate(`(() => {
     const cy = window.__musixMap;
-    const node = cy.nodes('.overview:visible').filter(n => !n.data('displayLabel')).sort(
-      (left, right) => String(left.data('itemId')).localeCompare(String(right.data('itemId'))),
-    )[0];
+    const map = document.querySelector('#semantic-map').getBoundingClientRect();
+    const node = cy.nodes('.overview:visible').filter(n => !n.data('displayLabel')).map(n => ({
+      node: n, point: n.renderedPosition(),
+    })).filter(({ point }) => point.x > map.left + 8 && point.x < map.right - 8
+      && point.y > map.top + 8 && point.y < map.bottom - 8).sort(
+      (left, right) => String(left.node.data('itemId')).localeCompare(String(right.node.data('itemId'))),
+    )[0]?.node;
     if (!node) throw new Error('no initially unlabeled overview community');
     const point = node.renderedPosition();
     return { id: node.id(), x: point.x, y: point.y };
   })()`, "initially unlabeled overview community");
   await click(cdp, candidate.x, candidate.y);
   await sleep(120);
-  return cdp.evaluate(`(() => {
+  const result = await cdp.evaluate(`(() => {
     const cy = window.__musixMap;
     const node = cy.$id(${JSON.stringify(candidate.id)});
     const map = document.querySelector('#semantic-map').getBoundingClientRect();
     const label = String(node.data('displayLabel') ?? '');
     node.boundingBox({includeLabels:true});
     const raw = node[0]._private.labelBounds.main;
+    if (!raw) return {
+      selected: node.selected(), label, raw: null,
+      currentLod: cy.nodes('.overview:visible').length ? 0 : 1,
+    };
     const pan = cy.pan(); const zoom = cy.zoom();
     const bounds = { x1:raw.x1 * zoom + pan.x, y1:raw.y1 * zoom + pan.y, x2:raw.x2 * zoom + pan.x, y2:raw.y2 * zoom + pan.y };
-    return node.selected() && label.length > 0
+    return {
+      selected: node.selected(), label, bounds,
+      visible: node.selected() && label.length > 0
       && [bounds.x1, bounds.y1, bounds.x2, bounds.y2].every(Number.isFinite)
       && bounds.x1 >= map.left && bounds.y1 >= map.top
-      && bounds.x2 <= map.right && bounds.y2 <= map.bottom;
+      && bounds.x2 <= map.right && bounds.y2 <= map.bottom,
+    };
   })()`, "selected overview label is visible in renderer");
+  if (!result.visible) throw new CdpError("selected overview label is visible in renderer", result);
+  return true;
 }
 
 async function desktopInteractions(cdp) {
@@ -418,6 +431,9 @@ async function run() {
     const mobilePage = await createPage();
     await navigate(mobilePage, mobile, "light");
     const mobileLabels = await lodMeasurements(mobilePage);
+    // Measurements intentionally traverse every level. Reload before interaction
+    // proof so the focus test starts at the real overview level.
+    await navigate(mobilePage, mobile, "light");
     const mobileChecks = await mobileInteractions(mobilePage);
     mobilePage.close();
     const fallbackPage = await createPage();
