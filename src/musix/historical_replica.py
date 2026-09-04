@@ -12,7 +12,8 @@ if TYPE_CHECKING:
 
 
 type NamePair = tuple[str, str]
-_MAX_GRAM_DOCUMENT_FREQUENCY = 256
+_MAX_GRAM_DOCUMENT_FREQUENCY = 64
+_MAX_NAME_CANDIDATES_PER_GENRE = 64
 
 
 def deterministic_h2_split(genre_ids: tuple[str, ...]) -> tuple[frozenset[str], frozenset[str]]:
@@ -60,3 +61,20 @@ def name_tfidf_cosine(names: Mapping[str, str]) -> dict[NamePair, float]:
         for pair, value in overlap.items()
         if norms[pair[0]] and norms[pair[1]]
     }
+
+
+def bounded_name_tfidf_cosine(names: Mapping[str, str]) -> dict[NamePair, float]:
+    """Keep only deterministic top name candidates per genre for laptop-bounded calibration."""
+    candidates = name_tfidf_cosine(names)
+    per_genre: dict[str, list[tuple[str, float]]] = defaultdict(list)
+    for (left, right), score in candidates.items():
+        per_genre[left].append((right, score))
+        per_genre[right].append((left, score))
+    retained: dict[NamePair, float] = {}
+    for genre_id, items in per_genre.items():
+        for neighbor, score in sorted(items, key=lambda item: (-item[1], item[0]))[
+            :_MAX_NAME_CANDIDATES_PER_GENRE
+        ]:
+            key = (genre_id, neighbor) if genre_id < neighbor else (neighbor, genre_id)
+            retained[key] = score
+    return retained
