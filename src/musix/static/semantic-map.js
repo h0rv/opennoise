@@ -33,6 +33,7 @@
   const nodeId = (raw) => `genre-${raw.genre_id ?? raw.id}`;
   const getNodes = (payload) => payload.nodes ?? payload.graph?.nodes ?? payload.points ?? [];
   const getEdges = (payload) => payload.edges ?? payload.graph?.edges ?? [];
+  const getLods = (payload) => payload.lods ?? payload.graph?.lods ?? [];
 
   const normalisedPositions = (nodes) => {
     const xs = nodes.map((node) => Number(node.x)).filter(Number.isFinite);
@@ -57,9 +58,14 @@
           id,
           genreId: node.genre_id ?? node.id,
           label: node.name,
+          detailHref: node.detail_href ?? null,
           parent: parentId === null || parentId === undefined ? undefined : `genre-${parentId}`,
           depth: node.depth ?? 1,
-          lodMin: node.lod_min ?? 1,
+          // Legacy point responses have no semantic tiers; keep them usable while
+          // production-map-v1 supplies its explicit `lod_min` contract.
+          lodMin: node.lod_min ?? 0,
+          weight: node.display_weight ?? node.weight ?? 0,
+          displayLabel: "",
           subtreeSize: node.subtree_size ?? 0,
           communityId: node.community_id ?? "",
         },
@@ -78,7 +84,7 @@
 
   const cssValue = (name) => getComputedStyle(root).getPropertyValue(name).trim();
   const stylesheet = () => [
-    { selector: "node", style: { "background-color": cssValue("--node"), label: "data(label)", color: cssValue("--ink"), "font-size": 13, "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, "text-valign": "bottom", "text-margin-y": 7, width: 13, height: 13, "overlay-opacity": 0 } },
+    { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": 13, "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, "text-valign": "bottom", "text-margin-y": 7, width: 13, height: 13, "overlay-opacity": 0 } },
     { selector: "node.umbrella", style: { "background-color": cssValue("--parent"), width: 25, height: 25, "font-size": 16, "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },
     { selector: ":parent", style: { "background-opacity": 0.12, "background-color": cssValue("--parent"), "border-width": 1, "border-color": cssValue("--node"), padding: 22, "text-valign": "top", "text-halign": "center" } },
     { selector: "node:selected", style: { "border-width": 4, "border-color": cssValue("--focus"), "background-color": cssValue("--focus") } },
@@ -88,12 +94,32 @@
   ];
 
   const lodForZoom = (zoom) => zoom < 0.58 ? 0 : zoom < 0.95 ? 1 : zoom < 1.55 ? 2 : 3;
-  const updateLod = (cy) => {
+  const fallbackLabelIds = (cy, lod) => {
+    const budget = [36, 72, 144, 320][lod];
+    return new Set(cy.nodes().sort((left, right) => (
+      Number(right.data("weight")) - Number(left.data("weight"))
+      || String(left.data("label")).localeCompare(String(right.data("label")))
+    )).slice(0, budget).map((node) => node.data("genreId")));
+  };
+
+  const updateLod = (cy, payload) => {
     const lod = lodForZoom(cy.zoom());
     if (lod === currentLod) return;
     currentLod = lod;
+    const descriptor = getLods(payload).find((item) => Number(item.level) === lod);
+    const visibleIds = new Set(descriptor?.visible_node_ids ?? cy.nodes().filter(
+      (node) => Number(node.data("lodMin")) <= lod,
+    ).map((node) => node.data("genreId")));
+    const labels = mapElement.clientWidth <= 600 ? descriptor?.mobile_labels : descriptor?.desktop_labels;
+    const labelIds = labels
+      ? new Set(labels.filter((item) => item.shown).map((item) => item.genre_id))
+      : fallbackLabelIds(cy, lod);
     cy.batch(() => {
-      cy.nodes().forEach((node) => node.toggleClass("lod-hidden", Number(node.data("lodMin")) > lod));
+      cy.nodes().forEach((node) => {
+        const visible = visibleIds.has(node.data("genreId"));
+        node.toggleClass("lod-hidden", !visible);
+        node.data("displayLabel", visible && labelIds.has(node.data("genreId")) ? node.data("label") : "");
+      });
       cy.edges().forEach((edge) => edge.toggleClass("lod-hidden", edge.source().hasClass("lod-hidden") || edge.target().hasClass("lod-hidden") || (edge.hasClass("similarity") && lod < 2)));
     });
     say(["Umbrella genres", "Genres", "Subgenres", "Detailed genres"][lod]);
@@ -102,8 +128,23 @@
   const selectGenre = (cy, node) => {
     cy.$(":selected").unselect();
     node.select();
-    const link = document.querySelector(`#map-point-${node.data("genreId")}`);
-    if (link) link.click();
+    const detailHref = node.data("detailHref");
+    if (detailHref && window.htmx) {
+      const link = document.createElement("a");
+      link.href = detailHref;
+      link.setAttribute("hx-get", detailHref);
+      link.setAttribute("hx-target", "#genre-detail-slot");
+      link.setAttribute("hx-swap", "innerHTML");
+      link.setAttribute("hx-push-url", detailHref);
+      link.hidden = true;
+      document.body.append(link);
+      window.htmx.process(link);
+      link.click();
+      window.setTimeout(() => link.remove(), 0);
+      return;
+    }
+    const fallbackLink = document.querySelector(`#map-point-${node.data("genreId")}`);
+    if (fallbackLink) fallbackLink.click();
   };
 
   fetch(graphUrl, { headers: { Accept: "application/json" } })
@@ -118,14 +159,15 @@
         layout: { name: "preset", fit: true, padding: 72 },
         minZoom: 0.28,
         maxZoom: 4.8,
-        wheelSensitivity: 0.18,
         userPanningEnabled: true,
         userZoomingEnabled: true,
         boxSelectionEnabled: false,
       });
       root.classList.add("js-map-ready");
-      updateLod(cy);
-      cy.on("zoom", () => updateLod(cy));
+      cy.resize();
+      cy.fit(cy.elements(), 72);
+      updateLod(cy, payload);
+      cy.on("zoom", () => updateLod(cy, payload));
       cy.on("tap", "node", (event) => selectGenre(cy, event.target));
       cy.on("tap", (event) => { if (event.target === cy) cy.$(":selected").unselect(); });
 

@@ -169,6 +169,11 @@ class PopulatedAppTests(unittest.TestCase):
                     '3535353535353535353535353535353535353535353535353535353535353535',
                     1, 1
                 );
+                INSERT INTO identifier_types (id, type_key, name)
+                VALUES (2, 'wikidata_genre_qid', 'Wikidata Genre Qid');
+                INSERT INTO entity_identifiers (
+                    entity_id, identifier_type_id, namespace, value, normalized_value, provenance_id
+                ) VALUES (1, 2, 'wikidata', 'Q9778', 'Q9778', 1);
                 INSERT INTO historical_genre_artist_observations (
                     id, genre_id, source_artist_name, observation_role, source_local_rank,
                     source_revision_date, source_artifact_sha256, provenance_id, policy_id,
@@ -237,15 +242,15 @@ class PopulatedAppTests(unittest.TestCase):
     def test_genre_links_have_one_canonical_selection_contract(self) -> None:
         response = self.client.get("/")
 
-        self.assertIn('href="/genres/1?layout=default"', response.text)
-        self.assertIn('hx-get="/fragments/workspace?focus=1&amp;layout=default"', response.text)
-        self.assertIn('hx-target="#workspace"', response.text)
-        self.assertIn('hx-push-url="/genres/1?layout=default"', response.text)
-        self.assertIn('preserveAspectRatio="xMinYMin meet"', response.text)
-        self.assertIn('id="map-zoom"', response.text)
-        self.assertIn('id="zoom-detail"', response.text)
+        self.assertIn('href="/genres/1"', response.text)
+        self.assertIn('hx-get="/fragments/genres/1"', response.text)
+        self.assertIn('hx-target="#genre-detail-slot"', response.text)
+        self.assertIn('hx-push-url="/genres/1"', response.text)
+        self.assertIn('preserveAspectRatio="xMidYMid meet"', response.text)
+        self.assertIn('id="semantic-map"', response.text)
+        self.assertIn('id="map-controls"', response.text)
         self.assertIn('aria-describedby="map-pan-help"', response.text)
-        self.assertIn('id="map-canvas"', response.text)
+        self.assertNotIn('id="layout-lenses"', response.text)
         self.assertIn('class="label-overview"', response.text)
         self.assertIn('id="map-point-1"', response.text)
         self.assertIn("<title>IDM</title>", response.text)
@@ -255,13 +260,9 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/", params={"layout": "classic"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('id="layout-lenses"', response.text)
-        self.assertIn('data-coordinate-kind="historic_source"', response.text)
-        self.assertIn('aria-current="page"', response.text)
-        self.assertIn('data-coordinate-kind="derived"', response.text)
-        self.assertIn('data-layout="classic" data-coordinate-kind="historic_source"', response.text)
-        self.assertIn(">classic</a>", response.text)
-        self.assertIn('href="/genres/1?layout=classic"', response.text)
+        self.assertNotIn('id="layout-lenses"', response.text)
+        self.assertNotIn("Map layout", response.text)
+        self.assertIn('id="semantic-map"', response.text)
         self.assertNotIn("<audio", response.text)
         self.assertNotIn("player", response.text.casefold())
         self.assertNotIn("preview", response.text.casefold())
@@ -280,7 +281,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn('class="point genre selected"', response.text)
         self.assertIn('aria-current="location"', response.text)
         self.assertIn('id="selection-clear"', response.text)
-        self.assertIn('href="/?layout=default" aria-label="Close IDM"', response.text)
+        self.assertIn('href="/" aria-label="Close IDM"', response.text)
         self.assertIn('id="genre-detail"', response.text)
         self.assertIn("Autechre", response.text)
         self.assertIn("Bike", response.text)
@@ -308,7 +309,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn("Autechre", selected.text)
         self.assertIn("Bike", selected.text)
         self.assertNotIn("Every Noise legacy genre map", selected.text)
-        self.assertIn('hx-push-url="/?layout=default"', selected.text)
+        self.assertIn('hx-push-url="/"', selected.text)
         self.assertNotIn("600.0 800.0", selected.text)
 
         self.assertEqual(reset.status_code, 200)
@@ -322,11 +323,9 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/fragments/search", params={"q": "idm"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('<a class="result" href="/genres/1?layout=default&amp;q=idm"', response.text)
-        self.assertIn(
-            'hx-get="/fragments/workspace?focus=1&amp;layout=default&amp;q=idm"', response.text
-        )
-        self.assertIn('hx-push-url="/genres/1?layout=default&amp;q=idm"', response.text)
+        self.assertIn('<a class="result" href="/genres/1?q=idm"', response.text)
+        self.assertIn('hx-get="/fragments/genres/1"', response.text)
+        self.assertIn('hx-push-url="/genres/1?q=idm"', response.text)
         self.assertNotIn("<button", response.text)
 
     def test_search_and_genre_entry_preserve_selected_layout(self) -> None:
@@ -335,9 +334,29 @@ class PopulatedAppTests(unittest.TestCase):
             "/fragments/workspace", params={"focus": "1", "layout": "classic"}
         )
 
-        self.assertIn('href="/genres/1?layout=classic&amp;q=idm"', search.text)
-        self.assertIn('data-layout="classic"', selected.text)
-        self.assertIn('href="/?layout=classic" aria-label="Close IDM"', selected.text)
+        self.assertIn('href="/genres/1?q=idm"', search.text)
+        self.assertIn('id="semantic-map"', selected.text)
+        self.assertIn('href="/" aria-label="Close IDM"', selected.text)
+
+    def test_stable_public_genre_key_has_full_and_partial_routes(self) -> None:
+        encoded_key = "wikidata%3Agenre%3AQ9778"
+
+        full = self.client.get(f"/genres/key/{encoded_key}")
+        partial = self.client.get(f"/genres/key/{encoded_key}", headers={"HX-Request": "true"})
+        fragment = self.client.get(f"/fragments/genres/key/{encoded_key}")
+        missing = self.client.get("/genres/key/wikidata%3Agenre%3AQ999999999")
+        malformed = self.client.get("/genres/key/wikidata%3Aartist%3AQ9778")
+
+        self.assertEqual(full.status_code, 200)
+        self.assertIn('<main id="map"', full.text)
+        self.assertIn('id="genre-detail"', full.text)
+        self.assertEqual(partial.status_code, 200)
+        self.assertIn('id="genre-detail"', partial.text)
+        self.assertNotIn("<!doctype html>", partial.text)
+        self.assertEqual(fragment.status_code, 200)
+        self.assertIn('id="genre-detail"', fragment.text)
+        self.assertEqual(missing.status_code, 404)
+        self.assertEqual(malformed.status_code, 404)
 
     def test_genre_api_returns_one_historical_representative(self) -> None:
         response = self.client.get("/api/genres/1")

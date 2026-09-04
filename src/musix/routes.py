@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from litestar import Controller, MediaType, get
+from litestar import Controller, MediaType, Request, get
 from litestar.di import NamedDependency
 from litestar.exceptions import NotFoundException, ValidationException
 from litestar.params import FromPath, FromQuery
@@ -51,6 +51,7 @@ class CoreController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
+        request: Request[object, object, object],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
     ) -> Template:
@@ -58,6 +59,29 @@ class CoreController(Controller):
         context = await workspace_context(
             database, genre_entries, layout=layout, focus=genre_id, search_query=q
         )
+        if request.headers.get("HX-Request") == "true":
+            return detail_template(context)
+        return Template(template_name="index.html", context=context)
+
+    @get("/genres/key/{genre_key:str}")
+    async def selected_genre_key(
+        self,
+        database: NamedDependency[AsyncDatabase],
+        genre_entries: NamedDependency[GenreEntryRepository],
+        genre_key: FromPath[str],
+        request: Request[object, object, object],
+        layout: FromQuery[str] = "default",
+        q: FromQuery[str] = "",
+    ) -> Template:
+        """Open a stable public key, resolving its current local entity only server-side."""
+        genre_id = await database.genre_id_for_public_key(genre_key)
+        if genre_id is None:
+            raise NotFoundException(detail="genre not found")
+        context = await workspace_context(
+            database, genre_entries, layout=layout, focus=genre_id, search_query=q
+        )
+        if request.headers.get("HX-Request") == "true":
+            return detail_template(context)
         return Template(template_name="index.html", context=context)
 
     @get("/api/health", media_type=MediaType.TEXT)
@@ -316,6 +340,33 @@ class EvidenceController(Controller):
             },
         )
 
+    @get("/fragments/genres/key/{genre_key:str}")
+    async def genre_detail_key_fragment(
+        self,
+        database: NamedDependency[AsyncDatabase],
+        genre_entries: NamedDependency[GenreEntryRepository],
+        genre_key: FromPath[str],
+        layout: FromQuery[str] = "default",
+    ) -> Template:
+        """Render detail for a stable public key while preserving the normal-link fallback."""
+        genre_id = await database.genre_id_for_public_key(genre_key)
+        if genre_id is None:
+            raise NotFoundException(detail="genre not found")
+        detail = await database.genre_detail(genre_id)
+        if detail is None:
+            raise NotFoundException(detail="genre not found")
+        detail = await genre_entries.enrich(detail)
+        layout_key, _ = resolve_layout(layout, await database.published_layouts())
+        placement = await database.genre_placement(genre_id, layout_key)
+        return Template(
+            template_name="genre_detail.html",
+            context={
+                "genre": detail,
+                "layout_key": placement.layout_key,
+                "placement": placement,
+            },
+        )
+
 
 def map_query(
     *,
@@ -400,3 +451,16 @@ async def workspace_context(
         "hits": await database.search(bounded_search_query) if bounded_search_query else (),
         "search_query": bounded_search_query,
     }
+
+
+def detail_template(context: dict[str, object]) -> Template:
+    """Render only the persistent detail slot for an HTMX normal-link request."""
+    return Template(
+        template_name="genre_detail.html",
+        context={
+            "genre": context["genre"],
+            "layout_key": context["layout_key"],
+            "placement": context["placement"],
+            "search_query": context["search_query"],
+        },
+    )

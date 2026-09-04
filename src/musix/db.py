@@ -1,6 +1,7 @@
 """SQLite schema lifecycle and policy-safe catalog queries."""
 
 import asyncio
+import re
 import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -43,6 +44,7 @@ DEFAULT_MIGRATION_PATHS = (
     Path("migrations/0011_public_model_explainability.sql"),
 )
 MAX_FTS_TERMS = 8
+PUBLIC_GENRE_KEY_PATTERN = re.compile(r"wikidata:genre:(Q[1-9][0-9]*)")
 FIELD_SET_ADAPTER = TypeAdapter(tuple[str, ...])
 PARAMETERS_ADAPTER = TypeAdapter(dict[str, JsonValue])
 UNPLACED_REASON_ADAPTER = TypeAdapter(GenrePlacementReason)
@@ -136,6 +138,9 @@ class Database:
         if match_query is None:
             return []
         bounded_limit = min(max(limit, 1), 100)
+        public_hits = self._search_public_genre_names(query, limit=bounded_limit)
+        if public_hits is not None:
+            return public_hits
         sql = """
             WITH ranked_names AS (
                 SELECT entity_id, name,
@@ -173,6 +178,62 @@ class Database:
         return [
             SearchHit(entity_id=int(row[0]), entity_kind=str(row[1]), name=str(row[2]))
             for row in rows
+        ]
+
+    def _search_public_genre_names(self, query: str, *, limit: int) -> list[SearchHit] | None:
+        """Search a selected public model's names, never its internal source-key labels."""
+        terms = tuple(
+            "".join(character for character in term if character.isalnum()).casefold()
+            for term in query.split()
+        )
+        terms = tuple(term for term in terms if term)[:MAX_FTS_TERMS]
+        if not terms:
+            return []
+        padded_terms = terms + (None,) * (MAX_FTS_TERMS - len(terms))
+        sql = """
+            WITH public_name AS (
+                SELECT name.genre_id, name.display_name
+                FROM current_public_models AS current
+                JOIN servable_public_model_runs AS run ON run.id = current.model_run_id
+                JOIN public_genre_names AS name ON name.model_run_id = run.id
+                WHERE current.model_key = 'public-graph'
+            )
+            SELECT public_name.genre_id, public_name.display_name
+            FROM public_name
+            WHERE (? IS NULL OR lower(public_name.display_name) LIKE ?)
+              AND (? IS NULL OR lower(public_name.display_name) LIKE ?)
+              AND (? IS NULL OR lower(public_name.display_name) LIKE ?)
+              AND (? IS NULL OR lower(public_name.display_name) LIKE ?)
+              AND (? IS NULL OR lower(public_name.display_name) LIKE ?)
+              AND (? IS NULL OR lower(public_name.display_name) LIKE ?)
+              AND (? IS NULL OR lower(public_name.display_name) LIKE ?)
+              AND (? IS NULL OR lower(public_name.display_name) LIKE ?)
+            ORDER BY (lower(public_name.display_name) = ?) DESC,
+                     length(public_name.display_name),
+                     public_name.display_name COLLATE NOCASE,
+                     public_name.genre_id
+            LIMIT ?
+        """
+        with self.connect() as connection:
+            selected = connection.execute(
+                "SELECT 1 FROM current_public_models WHERE model_key = 'public-graph'"
+            ).fetchone()
+            if selected is None:
+                return None
+            rows = connection.execute(
+                sql,
+                (
+                    *(
+                        value
+                        for term in padded_terms
+                        for value in (term, f"%{term}%" if term else None)
+                    ),
+                    " ".join(terms),
+                    limit,
+                ),
+            ).fetchall()
+        return [
+            SearchHit(entity_id=int(row[0]), entity_kind="genre", name=str(row[1])) for row in rows
         ]
 
     def map_points(self, layout_key: str = "default") -> list[MapPoint]:
@@ -478,6 +539,29 @@ class Database:
             evidence=self.entity_provenance(entity_id),
         )
 
+    def genre_id_for_public_key(self, key: str) -> int | None:
+        """Resolve one stable public Wikidata genre key without guessing an entity ID."""
+        match = PUBLIC_GENRE_KEY_PATTERN.fullmatch(key)
+        if match is None:
+            return None
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT entity.id
+                FROM catalog_entities AS entity
+                JOIN entity_identifiers AS identifier ON identifier.entity_id = entity.id
+                JOIN identifier_types AS identifier_type
+                  ON identifier_type.id = identifier.identifier_type_id
+                WHERE entity.entity_kind = 'genre'
+                  AND identifier_type.type_key = 'wikidata_genre_qid'
+                  AND identifier.normalized_value = ?
+                ORDER BY entity.id
+                LIMIT 2
+                """,
+                (match.group(1),),
+            ).fetchall()
+        return int(rows[0][0]) if len(rows) == 1 else None
+
     @staticmethod
     def _map_point(row: sqlite3.Row) -> MapPoint:
         """Parse one trusted SQLite row into a map point."""
@@ -547,6 +631,10 @@ class AsyncDatabase:
     async def genre_detail(self, entity_id: int) -> GenreDetail | None:
         """Read a genre detail record without blocking the event loop."""
         return await self._call(lambda: self._database.genre_detail(entity_id))
+
+    async def genre_id_for_public_key(self, key: str) -> int | None:
+        """Resolve a stable public genre key without exposing database identifiers."""
+        return await self._call(lambda: self._database.genre_id_for_public_key(key))
 
 
 def _sqlite_datetime(value: str) -> datetime:

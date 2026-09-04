@@ -37,8 +37,8 @@ button, input, select { font: inherit; }
 
 #map { position: fixed; inset: 0; background: var(--canvas); }
 #semantic-map { position: absolute; inset: 0; display: none; outline: none; }
-.js-map-ready #semantic-map { display: block; }
-.js-map-ready .map-fallback { display: none; }
+html.js-map-ready #semantic-map { display: block; }
+html.js-map-ready #plot { display: none; }
 
 #plot { display: block; width: 100%; height: 100%; background: var(--canvas); }
 .point { cursor: pointer; }
