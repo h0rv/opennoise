@@ -222,7 +222,8 @@ async function zoomUntil(cdp, expected) {
 function renderedLabels(cdp) {
   return cdp.evaluate(`(() => {
     const cy = window.__musixMap;
-    const map = document.querySelector('#semantic-map').getBoundingClientRect();
+    const mapElement = document.querySelector('#semantic-map');
+    const map = mapElement.getBoundingClientRect();
     const labels = cy.nodes(':visible').filter(n => Boolean(n.data('displayLabel'))).map(n => {
       // Renderer calculated text geometry; not a model-derived or node-union box.
       n.boundingBox({includeLabels:true});
@@ -251,16 +252,25 @@ async function lodMeasurements(cdp) {
 async function overviewFocusRevealsLabel(cdp) {
   const candidate = await cdp.evaluate(`(() => {
     const cy = window.__musixMap;
-    const map = document.querySelector('#semantic-map').getBoundingClientRect();
-    const node = cy.nodes('.overview:visible').filter(n => !n.data('displayLabel')).map(n => ({
-      node: n, point: n.renderedPosition(),
-    })).filter(({ point }) => point.x > map.left + 8 && point.x < map.right - 8
-      && point.y > map.top + 8 && point.y < map.bottom - 8).sort(
+    const mapElement = document.querySelector('#semantic-map');
+    const map = mapElement.getBoundingClientRect();
+    const node = cy.nodes('.overview:visible').filter(n => !n.data('displayLabel')).map(n => {
+      const rendered = n.renderedPosition();
+      return { node: n, x: map.left + rendered.x, y: map.top + rendered.y };
+    }).filter(({ x, y }) => x > map.left + 8 && x < map.right - 8
+      && y > map.top + 8 && y < map.bottom - 8
+      && mapElement.contains(document.elementFromPoint(x, y))).sort(
       (left, right) => String(left.node.data('itemId')).localeCompare(String(right.node.data('itemId'))),
     )[0]?.node;
     if (!node) throw new Error('no initially unlabeled overview community');
-    const point = node.renderedPosition();
-    return { id: node.id(), x: point.x, y: point.y };
+    const rendered = node.renderedPosition();
+    return {
+      id: node.id(),
+      x: map.left + rendered.x,
+      y: map.top + rendered.y,
+      map: { left: map.left, top: map.top, width: map.width, height: map.height },
+      hit: document.elementFromPoint(map.left + rendered.x, map.top + rendered.y)?.tagName ?? null,
+    };
   })()`, "initially unlabeled overview community");
   await click(cdp, candidate.x, candidate.y);
   await sleep(120);
