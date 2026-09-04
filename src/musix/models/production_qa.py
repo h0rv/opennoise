@@ -43,8 +43,8 @@ class ProductionMapLod(FrozenModel):
     """Visible nodes and label decisions for one persistent semantic zoom level."""
 
     level: int = Field(ge=0, le=10)
-    visible_entity_ids: tuple[str, ...] = Field(min_length=1, max_length=20_000)
-    visible_overview_community_ids: tuple[str, ...] = Field(default=(), max_length=48)
+    visible_entity_ids: tuple[str, ...] = Field(default=(), max_length=20_000)
+    visible_overview_community_ids: tuple[str, ...] = Field(default=(), max_length=24)
     desktop_labels: tuple[ProductionMapLabelBox, ...] = Field(max_length=4_000)
     mobile_labels: tuple[ProductionMapLabelBox, ...] = Field(max_length=4_000)
 
@@ -55,6 +55,8 @@ class ProductionMapLod(FrozenModel):
         if len(visible) != len(self.visible_entity_ids):
             raise ValueError("visible entities must be unique")
         visible_labels = set(self.visible_entity_ids) | set(self.visible_overview_community_ids)
+        if not visible_labels:
+            raise ValueError("a semantic-zoom level must expose a map item")
         if len(self.visible_overview_community_ids) != len(
             set(self.visible_overview_community_ids)
         ):
@@ -358,6 +360,12 @@ def _validate_overview_communities(
     overview = min(lods, key=lambda item: item.level)
     if set(overview.visible_overview_community_ids) != set(community_ids):
         raise ValueError("overview LOD must expose every model-emitted overview community")
+    for viewport, labels in (
+        ("desktop", overview.desktop_labels),
+        ("mobile", overview.mobile_labels),
+    ):
+        if {label.entity_id for label in labels} != set(community_ids):
+            raise ValueError(f"overview LOD must label every {viewport} overview community")
     if any(lod.visible_overview_community_ids for lod in lods if lod.level != overview.level):
         raise ValueError("overview communities may only appear at the overview LOD")
 
@@ -454,7 +462,7 @@ class ProductionMapAcceptanceInput(FrozenModel):
         default=(), max_length=20_000
     )
     overview_communities: tuple[ProductionMapOverviewCommunity, ...] = Field(
-        default=(), max_length=48
+        default=(), max_length=24
     )
     lods: tuple[ProductionMapLod, ...] = Field(min_length=1, max_length=11)
     similarity: ProductionMapSimilarityEvidence

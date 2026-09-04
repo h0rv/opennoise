@@ -294,8 +294,21 @@ class ProductionMapQaTests(unittest.TestCase):
                 x=average_x,
                 y=average_y,
             )
+            community_label = ProductionMapLabelBox(
+                entity_id=community.community_id,
+                min_x=10.0,
+                min_y=10.0,
+                max_x=150.0,
+                max_y=30.0,
+                font_size_px=13.0,
+            )
             overview = evidence.lods[0].model_copy(
-                update={"visible_overview_community_ids": (community.community_id,)}
+                update={
+                    "visible_entity_ids": (),
+                    "visible_overview_community_ids": (community.community_id,),
+                    "desktop_labels": (community_label,),
+                    "mobile_labels": (community_label,),
+                }
             )
             similarity_first = ProductionMapAcceptanceInput.model_validate(
                 {
@@ -334,8 +347,21 @@ class ProductionMapQaTests(unittest.TestCase):
                 x=average_x,
                 y=average_y,
             )
+            community_label = ProductionMapLabelBox(
+                entity_id=community.community_id,
+                min_x=10.0,
+                min_y=10.0,
+                max_x=150.0,
+                max_y=30.0,
+                font_size_px=13.0,
+            )
             overview = evidence.lods[0].model_copy(
-                update={"visible_overview_community_ids": (community.community_id,)}
+                update={
+                    "visible_entity_ids": (),
+                    "visible_overview_community_ids": (community.community_id,),
+                    "desktop_labels": (community_label,),
+                    "mobile_labels": (community_label,),
+                }
             )
             similarity_first = ProductionMapAcceptanceInput.model_validate(
                 {
