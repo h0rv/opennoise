@@ -11,7 +11,14 @@
        data-map-mode="historical" data-graph-url="/api/historical-signal-map?level=0"
        aria-describedby="map-pan-help"></div>
   <section id="historical-fallback" class="map-fallback" aria-label="Historical compatibility">
-    <p>Historical compatibility</p>
+    <p>Historical compatibility overview</p>
+    {% if historical_overview %}
+    <ul>
+      {% for node in historical_overview %}
+      <li><a href="/api/historical-signal-map?level=1&amp;parent_id={{ node.hierarchy_id | urlencode }}">{{ node.representative_label }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
     <p><a href="/api/historical-signal-map">Source and provenance</a></p>
   </section>
   <aside id="historical-detail" aria-label="Historical details"></aside>

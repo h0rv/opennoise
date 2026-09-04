@@ -176,6 +176,22 @@ class HistoricalSignalMapStoreTests(unittest.TestCase):
         if neighbors is not None:
             self.assertEqual(len(neighbors.neighbors), 1)
 
+    def test_oversized_legacy_tile_is_a_store_error_not_a_validation_500(self) -> None:
+        store = self._store()
+        artifact = store._artifact  # noqa: SLF001 - extend the bounded response fixture.
+        if artifact is None:
+            self.fail("store fixture must have an artifact")
+        oversized = HistoricalSignalTile.model_construct(
+            level=3,
+            column=1,
+            row=1,
+            node_ids=tuple(node.genre_id for node in artifact.map.nodes[24:537]),
+        )
+        store._tiles_by_key[(3, 1, 1)] = oversized  # noqa: SLF001
+
+        with self.assertRaisesRegex(HistoricalSignalMapStoreError, "512-node response cap"):
+            store.response(level=3, column=1, row=1)
+
 
 if __name__ == "__main__":
     unittest.main()

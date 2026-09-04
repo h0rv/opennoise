@@ -1,7 +1,7 @@
 """Typed Litestar routes for map, search, and evidence fragments."""
 
 from datetime import datetime
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from litestar import Controller, MediaType, Request, get
 from litestar.datastructures import State
@@ -39,6 +39,9 @@ from musix.models import (
     SearchResponse,
     map_view,
 )
+
+if TYPE_CHECKING:
+    from musix.models.historical_signal import HistoricalSignalHierarchyNode
 from musix.production_store import (
     ProductionMapApiResponse,
     ProductionMapStore,
@@ -579,6 +582,7 @@ async def workspace_context(
         placement = await database.genre_placement(focus, layout_key)
     bounded_search_query = search_query[:500]
     production_graph: ProductionMapApiResponse | None = None
+    historical_overview: tuple[HistoricalSignalHierarchyNode, ...] = ()
     if production_map.configured and layout == "default":
         try:
             production_graph = production_map.response()
@@ -586,6 +590,13 @@ async def workspace_context(
             raise ServiceUnavailableException(
                 detail="production map artifact unavailable"
             ) from error
+    if view == "historical" and historical_signal_map.configured:
+        try:
+            historical_response = historical_signal_map.response(level=0)
+            historical_overview = historical_response.hierarchy if historical_response else ()
+        except HistoricalSignalMapStoreError:
+            # A malformed optional artifact must not turn the no-JS shell into a 500.
+            historical_overview = ()
     return {
         "active_layout": active_layout,
         "genre": genre,
@@ -598,6 +609,7 @@ async def workspace_context(
         "search_query": bounded_search_query,
         "map_view_mode": view,
         "historical_map_configured": historical_signal_map.configured,
+        "historical_overview": historical_overview,
     }
 
 

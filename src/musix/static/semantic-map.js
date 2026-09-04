@@ -14,6 +14,9 @@
   const query = document.querySelector("#query");
   const graphUrl = mapElement.dataset.graphUrl;
   const preferredDark = window.matchMedia("(prefers-color-scheme: dark)");
+  // Historical mode returns early before the public-map helpers below, so this
+  // shared style accessor has to be initialized before either renderer starts.
+  const cssValue = (name) => getComputedStyle(root).getPropertyValue(name).trim();
   let currentLod = -1;
   let selectedNode = null;
   let activeCommunity = null;
@@ -55,15 +58,17 @@
   });
 
   function initHistoricalMap() {
-    const loadedTiles = new Set();
-    const pendingTiles = new Set();
-    const tileNodes = new Map();
-    const tileOrder = [];
-    let tileFrame = null;
+    let labelFrame = null;
+    let resizeFrame = null;
     let selectedId = null;
     let memberRequest = null;
+    let drillRequest = null;
     let cy = null;
-    let level = 0;
+    // Semantic depth comes only from hierarchy drill actions.  It must never
+    // be inferred from camera scale: a wide parent cohort can need a low
+    // physical zoom while still being a deep, focused cohort.
+    let semanticDepth = 0;
+    let currentCohort = null;
     const cohorts = [];
     const style = () => [
       { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": 12, "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, width: 12, height: 12, "overlay-opacity": 0 } },
@@ -79,24 +84,87 @@
       };
     };
     const elements = (items) => {
+      const viewportWidth = Math.max(1, mapElement.clientWidth || window.innerWidth || 1000);
+      const viewportHeight = Math.max(1, mapElement.clientHeight || window.innerHeight || 600);
+      const aspect = Math.max(0.45, Math.min(3.2, viewportWidth / viewportHeight));
+      const width = 600 * aspect;
+      const height = 600;
       const axis = (key) => items.map((item) => Number(item[key])).filter(Number.isFinite).sort((left, right) => left - right);
-      const quantile = (values, fraction) => values[Math.max(0, Math.min(values.length - 1, Math.round((values.length - 1) * fraction)))];
+      const quantile = (values, fraction) => values.length
+        ? values[Math.max(0, Math.min(values.length - 1, Math.round((values.length - 1) * fraction)))]
+        : 0;
       const xs = axis("x"); const ys = axis("y");
       const scale = (value, low, high, span) => 0.06 * span + 0.88 * span * (Number(value) - low) / Math.max(high - low, 0.0001);
       const lowX = quantile(xs, 0.05); const highX = quantile(xs, 0.95);
       const lowY = quantile(ys, 0.05); const highY = quantile(ys, 0.95);
-      return items.map((item) => element(item, { x: scale(item.x, lowX, highX, 1000), y: scale(item.y, lowY, highY, 600) }));
+      const collapsedX = Math.abs(highX - lowX) < 0.0001;
+      const collapsedY = Math.abs(highY - lowY) < 0.0001;
+      // Some historical coordinate exports collapse one axis for an aggregate
+      // cohort.  Preserve normal coordinates when they have usable spread;
+      // otherwise use a stable display-only grid to retain a readable map.
+      const ranked = [...items].sort((left, right) => (
+        String(left.representative_label ?? left.name).localeCompare(
+          String(right.representative_label ?? right.name),
+        ) || String(left.hierarchy_id ?? left.genre_id).localeCompare(String(right.hierarchy_id ?? right.genre_id))
+      ));
+      const ranks = new Map(ranked.map((item, index) => [item, index]));
+      const rows = Math.max(2, Math.min(4, Math.ceil(Math.sqrt(items.length))));
+      const columns = Math.max(1, Math.ceil(items.length / rows));
+      const packed = (index, count, span) => count <= 1
+        ? span / 2
+        : 0.1 * span + 0.8 * span * index / (count - 1);
+      return items.map((item) => {
+        const rank = ranks.get(item) ?? 0;
+        return element(item, {
+          x: collapsedX ? packed(Math.floor(rank / rows), columns, width) : scale(item.x, lowX, highX, width),
+          y: collapsedY ? packed(rank % rows, rows, height) : scale(item.y, lowY, highY, height),
+        });
+      });
     };
-    const appendNodes = (nodes) => {
-      const available = Math.max(0, 1200 - cy.nodes().length);
-      const additions = nodes.filter((node) => cy.$id(`historical-${node.genre_id}`).empty())
-        .sort((left, right) => Number(right.membership_count) - Number(left.membership_count) || String(left.name).localeCompare(String(right.name)))
-        .slice(0, available);
-      if (additions.length) cy.add(elements(additions));
+    const fitHistoricalViewport = () => {
+      const mapBounds = mapElement.getBoundingClientRect();
+      const horizontalInset = 44;
+      const left = horizontalInset; const right = Math.max(left + 1, mapBounds.width - horizontalInset);
+      let top = 0; let bottom = mapBounds.height;
+      for (const selector of ["#search", "#map-view-switch", "#map-controls", "#historical-detail"]) {
+        const overlay = document.querySelector(selector);
+        if (!overlay || getComputedStyle(overlay).display === "none") continue;
+        const bounds = overlay.getBoundingClientRect();
+        if (bounds.top < mapBounds.top + mapBounds.height / 2) {
+          top = Math.max(top, bounds.bottom - mapBounds.top + 32);
+        } else if (bounds.bottom > mapBounds.top + mapBounds.height / 2) {
+          bottom = Math.min(bottom, bounds.top - mapBounds.top - 32);
+        }
+      }
+      const safeWidth = Math.max(1, right - left); const safeHeight = Math.max(1, bottom - top);
+      const bounds = cy.nodes().boundingBox();
+      const width = Math.max(1, bounds.w); const height = Math.max(1, bounds.h);
+      const zoom = Math.max(cy.minZoom(), Math.min(cy.maxZoom(), safeWidth / width, safeHeight / height));
+      cy.zoom(zoom);
+      cy.pan({
+        x: left + (safeWidth - width * zoom) / 2 - bounds.x1 * zoom,
+        y: top + (safeHeight - height * zoom) / 2 - bounds.y1 * zoom,
+      });
     };
     const setHistoricalLabels = () => {
-      const budget = mapElement.clientWidth <= 600 ? [24, 40, 64, 80][level] : [48, 80, 128, 180][level];
+      // Camera scale is an optional display detail only.  It may reveal a few
+      // more labels, but never changes which semantic cohort is rendered.
+      const zoomDensity = cy.zoom() < 1 ? 0 : cy.zoom() < 2 ? 1 : 2;
+      const renderedFont = mapElement.clientWidth <= 600 ? 13 : 12;
+      const renderedNode = mapElement.clientWidth <= 600 ? 11 : 10;
+      const modelFont = Math.max(12, Math.min(48, renderedFont / Math.max(cy.zoom(), 0.01)));
+      const modelNode = Math.max(12, Math.min(48, renderedNode / Math.max(cy.zoom(), 0.01)));
+      cy.nodes().forEach((node) => node.style({ "font-size": modelFont, width: modelNode, height: modelNode }));
+      const baseBudget = mapElement.clientWidth <= 600 ? [18, 28, 42, 64] : [36, 60, 96, 144];
+      const budget = Math.min(cy.nodes().length, baseBudget[semanticDepth] + zoomDensity * 8);
       const extent = cy.extent();
+      const mapBounds = mapElement.getBoundingClientRect();
+      const overlays = ["#search", "#map-controls", "#map-view-switch", "#historical-detail"]
+        .map((selector) => document.querySelector(selector))
+        .filter((overlay) => overlay && getComputedStyle(overlay).display !== "none")
+        .map((overlay) => overlay.getBoundingClientRect());
+      const intersects = (first, second) => first.x1 < second.right && first.x2 > second.left
+        && first.y1 < second.bottom && first.y2 > second.top;
       const candidates = cy.nodes().filter((node) => {
         const position = node.position();
         return position.x >= extent.x1 && position.x <= extent.x2 && position.y >= extent.y1 && position.y <= extent.y2;
@@ -108,85 +176,69 @@
         if (shown === budget) break;
         const position = node.renderedPosition();
         const width = Math.max(40, String(node.data("label")).length * 7);
-        const box = { x1: position.x - width / 2, x2: position.x + width / 2, y1: position.y + 8, y2: position.y + 22 };
-        if (boxes.some((other) => box.x1 < other.x2 && box.x2 > other.x1 && box.y1 < other.y2 && box.y2 > other.y1)) continue;
+        const box = {
+          x1: mapBounds.left + position.x - width / 2, x2: mapBounds.left + position.x + width / 2,
+          y1: mapBounds.top + position.y + 8, y2: mapBounds.top + position.y + 22,
+        };
+        if (box.x1 < mapBounds.left + 4 || box.x2 > mapBounds.right - 4
+          || box.y1 < mapBounds.top + 4 || box.y2 > mapBounds.bottom - 4
+          || boxes.some((other) => box.x1 < other.x2 && box.x2 > other.x1 && box.y1 < other.y2 && box.y2 > other.y1)
+          || overlays.some((overlay) => intersects(box, overlay))) continue;
         boxes.push(box);
         node.data("displayLabel", node.data("label"));
         shown += 1;
       }
     };
-    const tileRange = () => {
-      const extent = cy.extent();
-      const lowerColumn = Math.max(0, Math.min(15, Math.floor(extent.x1 / 600 * 16)));
-      const upperColumn = Math.max(0, Math.min(15, Math.floor(extent.x2 / 600 * 16)));
-      const lowerRow = Math.max(0, Math.min(15, Math.floor(extent.y1 / 600 * 16)));
-      const upperRow = Math.max(0, Math.min(15, Math.floor(extent.y2 / 600 * 16)));
-      const result = [];
-      for (let column = lowerColumn; column <= upperColumn; column += 1) {
-        for (let row = lowerRow; row <= upperRow; row += 1) result.push([column, row]);
-      }
-      return result;
-    };
-    const loadVisibleTiles = () => {
-      if (level === 0) return;
-      for (const [column, row] of tileRange()) {
-        const key = `${level}:${column}:${row}`;
-        if (loadedTiles.has(key) || pendingTiles.has(key)) continue;
-        pendingTiles.add(key);
-        fetch(`/api/historical-signal-map?level=${level}&column=${column}&row=${row}`, { headers: { Accept: "application/json" } })
-          .then((response) => response.ok ? response.json() : null)
-          .then((payload) => {
-            if (payload) {
-              tileNodes.set(key, new Set((payload.nodes ?? []).map((node) => node.genre_id)));
-              const prior = tileOrder.indexOf(key);
-              if (prior >= 0) tileOrder.splice(prior, 1);
-              tileOrder.push(key);
-              trimTiles();
-              appendNodes(payload.nodes ?? []);
-              loadedTiles.add(key);
-              setHistoricalLabels();
-            }
-          })
-          .finally(() => pendingTiles.delete(key));
-      }
-    };
-    const trimTiles = () => {
-      const active = new Set(tileRange().map(([column, row]) => `${level}:${column}:${row}`));
-      const retained = new Set([...tileOrder.filter((key) => active.has(key)).slice(-3), ...tileOrder.slice(-2)]);
-      const keep = new Set();
-      for (const node of cy.nodes()) if (node.data("overview") || selectedId === node.data("genreId")) keep.add(node.id());
-      for (const key of retained) for (const genreId of tileNodes.get(key) ?? []) keep.add(`historical-${genreId}`);
-      const stale = cy.nodes().filter((node) => !keep.has(node.id()));
-      if (stale.length) cy.remove(stale);
-      for (const key of [...tileNodes.keys()]) {
-        if (retained.has(key)) continue;
-        tileNodes.delete(key);
-        loadedTiles.delete(key);
-        const index = tileOrder.indexOf(key);
-        if (index >= 0) tileOrder.splice(index, 1);
-      }
-      const excess = Math.max(0, cy.nodes().length - 1200);
-      if (excess) {
-        const removable = cy.nodes().filter((node) => !node.data("overview") && selectedId !== node.data("genreId")).sort((left, right) => Number(left.data("weight")) - Number(right.data("weight")));
-        const evicted = removable.slice(0, excess);
-        const evictedIds = new Set(evicted.map((node) => node.data("genreId")));
-        cy.remove(evicted);
-        for (const [key, genreIds] of tileNodes) {
-          if (![...genreIds].some((genreId) => evictedIds.has(genreId))) continue;
-          tileNodes.delete(key);
-          loadedTiles.delete(key);
-          const index = tileOrder.indexOf(key);
-          if (index >= 0) tileOrder.splice(index, 1);
-        }
-      }
-    };
-    const scheduleTiles = () => {
-      if (tileFrame !== null) return;
-      tileFrame = window.requestAnimationFrame(() => {
-        tileFrame = null;
-        loadVisibleTiles();
+    const scheduleLabels = () => {
+      if (labelFrame !== null) return;
+      labelFrame = window.requestAnimationFrame(() => {
+        labelFrame = null;
         setHistoricalLabels();
       });
+    };
+    const updateBackControl = () => {
+      const button = document.querySelector('[data-map-action="historical-back"]');
+      if (button instanceof HTMLButtonElement) button.disabled = cohorts.length === 0;
+    };
+    const replaceCohort = (cohort, rememberCurrent = true) => {
+      if (rememberCurrent && currentCohort) cohorts.push(currentCohort);
+      currentCohort = cohort;
+      semanticDepth = cohort.depth;
+      selectedId = null;
+      cy.elements().remove();
+      cy.add(elements(cohort.items));
+      fitHistoricalViewport();
+      updateBackControl();
+      setHistoricalLabels();
+      say(`Historical compatibility depth ${semanticDepth}`);
+    };
+    const restorePreviousCohort = () => {
+      drillRequest?.abort();
+      drillRequest = null;
+      const cohort = cohorts.pop();
+      if (!cohort) return false;
+      replaceCohort(cohort, false);
+      return true;
+    };
+    const drill = (source, url, depth, property) => {
+      drillRequest?.abort();
+      const request = new AbortController();
+      drillRequest = request;
+      fetch(url, { headers: { Accept: "application/json" }, signal: request.signal })
+        .then((response) => response.ok ? response.json() : null)
+        .then((focused) => {
+          // A late response cannot overwrite a Back action or a newer drill.
+          if (drillRequest !== request || currentCohort !== source) return;
+          const items = focused?.[property] ?? [];
+          if (!items.length) return;
+          replaceCohort({ depth, items });
+        })
+        .catch((error) => {
+          if (error.name !== "AbortError") say("Historical compatibility drill is unavailable.");
+        })
+        .finally(() => {
+          if (drillRequest === request) drillRequest = null;
+        });
     };
     const loadNeighbors = (node) => {
       fetch(`/api/historical-signal-map/neighbors/${encodeURIComponent(node.data("genreId"))}`, { headers: { Accept: "application/json" } })
@@ -224,55 +276,65 @@
         })
         .catch(() => {});
     };
-    const update = () => {
-      const relative = cy.zoom();
-      const nextLevel = relative < 1.25 ? 0 : relative < 2 ? 1 : relative < 3 ? 2 : 3;
-      level = nextLevel;
-      scheduleTiles();
-      setHistoricalLabels();
-      say(`Historical compatibility level ${level}`);
-    };
     fetch(graphUrl, { headers: { Accept: "application/json" } })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("historical overview unavailable")))
       .then((payload) => {
         const overview = payload.hierarchy ?? payload.nodes ?? [];
         if (payload.initial_edge_count !== 0 || overview.length > 24) throw new Error("historical overview is not bounded");
-        cy = window.cytoscape({ container: mapElement, elements: elements(overview), style: style(), layout: { name: "preset", fit: true, padding: 72 }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false });
+        cy = window.cytoscape({ container: mapElement, elements: elements(overview), style: style(), layout: { name: "preset", fit: false }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false });
         window.__musixMap = cy;
-        window.__musixMapMetrics = { initialElementCount: cy.elements().length, historical: true };
+        currentCohort = { depth: 0, items: overview };
+        // Explicitly center the current model cohort in the rectangle left by
+        // fixed search, view-switch, and control overlays.
+        fitHistoricalViewport();
+        window.__musixMapMetrics = {
+          initialElementCount: cy.elements().length,
+          historical: true,
+          get semanticDepth() { return semanticDepth; },
+          get cohortCount() { return cohorts.length; },
+        };
         root.classList.add("js-map-ready");
         mapElement.tabIndex = 0;
-        cy.on("zoom pan", scheduleTiles);
-        cy.on("zoom", update);
+        cy.on("zoom pan", scheduleLabels);
+        const resizeObserver = new ResizeObserver(() => {
+          if (resizeFrame !== null) return;
+          resizeFrame = window.requestAnimationFrame(() => {
+            resizeFrame = null;
+            cy.resize();
+            // Repack raw cohort coordinates for the new aspect ratio instead
+            // of preserving a desktop-wide world and shrinking labels to fit.
+            if (currentCohort) {
+              cy.elements().remove();
+              cy.add(elements(currentCohort.items));
+            }
+            fitHistoricalViewport();
+            scheduleLabels();
+          });
+        });
+        resizeObserver.observe(mapElement);
+        new MutationObserver(() => {
+          cy.style(style());
+          scheduleLabels();
+        }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
         cy.on("tap", "node", (event) => {
           const hierarchyId = event.target.data("hierarchyId");
           if (hierarchyId && Number(event.target.data("hierarchyLevel")) < 2) {
             const nextLevel = Number(event.target.data("hierarchyLevel")) + 1;
-            fetch(`/api/historical-signal-map?level=${nextLevel}&parent_id=${encodeURIComponent(hierarchyId)}`, { headers: { Accept: "application/json" } })
-              .then((response) => response.ok ? response.json() : null)
-              .then((focused) => {
-                if (!(focused?.hierarchy ?? []).length) return;
-                cohorts.push({ level, items: focused.hierarchy ?? [] });
-                cy.elements().remove();
-                cy.add(elements(focused.hierarchy));
-                level = nextLevel;
-                cy.fit(cy.nodes(), 72);
-                setHistoricalLabels();
-              });
+            drill(
+              currentCohort,
+              `/api/historical-signal-map?level=${nextLevel}&parent_id=${encodeURIComponent(hierarchyId)}`,
+              nextLevel,
+              "hierarchy",
+            );
             return;
           }
           if (hierarchyId) {
-            fetch(`/api/historical-signal-map?level=3&parent_id=${encodeURIComponent(hierarchyId)}`, { headers: { Accept: "application/json" } })
-              .then((response) => response.ok ? response.json() : null)
-              .then((focused) => {
-                if (!(focused?.nodes ?? []).length) return;
-                cohorts.push({ level, items: focused.nodes });
-                cy.elements().remove();
-                cy.add(elements(focused.nodes));
-                level = 3;
-                cy.fit(cy.nodes(), 72);
-                setHistoricalLabels();
-              });
+            drill(
+              currentCohort,
+              `/api/historical-signal-map?level=3&parent_id=${encodeURIComponent(hierarchyId)}`,
+              3,
+              "nodes",
+            );
             return;
           }
           cy.$(":selected").unselect();
@@ -287,18 +349,35 @@
           event.preventDefault();
           if (button.dataset.mapAction === "zoom-in") cy.zoom(cy.zoom() * 1.25);
           if (button.dataset.mapAction === "zoom-out") cy.zoom(cy.zoom() / 1.25);
-          if (button.dataset.mapAction === "fit") cy.fit(cy.nodes(), 72);
+          if (button.dataset.mapAction === "fit") fitHistoricalViewport();
           if (button.dataset.mapAction === "historical-back") {
-            const cohort = cohorts.pop();
-            if (!cohort) return;
-            cy.elements().remove();
-            cy.add(elements(cohort.items));
-            level = cohort.level;
-            cy.fit(cy.nodes(), 72);
-            setHistoricalLabels();
+            restorePreviousCohort();
           }
         }, true);
-        update();
+        mapElement.addEventListener("keydown", (event) => {
+          const panStep = Math.max(24, Math.min(mapElement.clientWidth, mapElement.clientHeight) * 0.08);
+          const directions = {
+            ArrowDown: { x: 0, y: -panStep }, ArrowLeft: { x: panStep, y: 0 },
+            ArrowRight: { x: -panStep, y: 0 }, ArrowUp: { x: 0, y: panStep },
+          };
+          if (directions[event.key]) {
+            event.preventDefault();
+            cy.panBy(directions[event.key]);
+          } else if (["+", "="].includes(event.key)) {
+            event.preventDefault();
+            cy.zoom({ level: cy.zoom() * 1.25, renderedPosition: { x: mapElement.clientWidth / 2, y: mapElement.clientHeight / 2 } });
+          } else if (event.key === "-") {
+            event.preventDefault();
+            cy.zoom({ level: cy.zoom() / 1.25, renderedPosition: { x: mapElement.clientWidth / 2, y: mapElement.clientHeight / 2 } });
+          } else if (event.key === "Escape") {
+            if (!restorePreviousCohort()) {
+              cy.$(":selected").unselect();
+              selectedId = null;
+            }
+          }
+        });
+        updateBackControl();
+        setHistoricalLabels();
       })
       .catch(() => say("Historical compatibility is unavailable."));
   }
@@ -523,7 +602,6 @@
     if (additions.length) cy.batch(() => cy.add(additions));
   };
 
-  const cssValue = (name) => getComputedStyle(root).getPropertyValue(name).trim();
   const stylesheet = () => [
     { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": "data(labelSize)", "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, "text-valign": "bottom", "text-margin-y": 7, width: 13, height: 13, "overlay-opacity": 0 } },
     { selector: "node.umbrella", style: { "background-color": cssValue("--parent"), width: 25, height: 25, "font-size": "data(labelSize)", "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },

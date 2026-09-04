@@ -177,6 +177,10 @@ class HistoricalSignalMapStore:
         tile = self._tiles_by_key.get((level, column, row))
         if tile is None:
             raise HistoricalSignalMapStoreError("historical signal tile does not exist")
+        if len(tile.node_ids) > _MAX_NODES_PER_RESPONSE:
+            raise HistoricalSignalMapStoreError(
+                "historical signal tile exceeds the 512-node response cap"
+            )
         return _require_bounded_response(
             HistoricalSignalMapApiResponse(
                 metadata=metadata,

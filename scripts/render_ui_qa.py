@@ -131,7 +131,7 @@ def fixture_html(*, zoom_id: str = "zoom-default") -> str:
         search_query="",
     )
     stylesheet = CSS.resolve().as_uri()
-    rendered = rendered.replace("/static/app.css?v=7", stylesheet)
+    rendered = rendered.replace("/static/app.css?v=9", stylesheet)
     if zoom_id != "zoom-default":
         rendered = rendered.replace(
             'id="zoom-default" name="map-zoom" type="radio" checked',

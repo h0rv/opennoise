@@ -63,6 +63,9 @@ html.js-map-ready #historical-fallback { display: none; }
 #historical-fallback { padding: 74px 14px 14px; color: var(--muted); }
 #historical-fallback p { margin: 0 0 8px; }
 #historical-fallback a { color: var(--ink); }
+#historical-fallback ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 6px 16px; max-width: 72rem; margin: 0 0 12px; padding: 0; list-style: none; }
+#historical-fallback li { min-width: 0; }
+#historical-fallback a { overflow-wrap: anywhere; }
 .point { cursor: pointer; }
 .point circle { stroke: var(--canvas); stroke-width: 1.5; }
 .point text { fill: var(--ink); font-size: 11px; paint-order: stroke; stroke: var(--canvas); stroke-width: 3px; stroke-linejoin: round; }

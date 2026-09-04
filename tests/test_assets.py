@@ -25,20 +25,27 @@ class AssetTests(unittest.TestCase):
         self.assertNotIn("mapPositions(getNodes(payload)", node_element)
         self.assertIn("materializeSelectedEdges", source)
 
-    def test_historical_renderer_uses_only_bounded_overview_tiles_and_neighbors(self) -> None:
+    def test_historical_renderer_uses_bounded_hierarchy_drills_not_global_tiles(self) -> None:
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
         self.assertIn('mapElement.dataset.mapMode === "historical"', source)
         self.assertIn("payload.initial_edge_count !== 0", source)
         self.assertIn("const overview = payload.hierarchy ?? payload.nodes ?? [];", source)
         self.assertIn("overview.length > 24", source)
         self.assertIn("parent_id=${encodeURIComponent(hierarchyId)}", source)
+        self.assertIn("const drill = (source, url, depth, property) =>", source)
         self.assertIn(
-            "/api/historical-signal-map?level=${level}&column=${column}&row=${row}", source
+            "`/api/historical-signal-map?level=${nextLevel}&parent_id=${encodeURIComponent(hierarchyId)}`",
+            source,
         )
+        self.assertIn(
+            "`/api/historical-signal-map?level=3&parent_id=${encodeURIComponent(hierarchyId)}`",
+            source,
+        )
+        self.assertNotIn("&column=${column}&row=${row}", source)
         self.assertIn("/api/historical-signal-map/neighbors/${encodeURIComponent", source)
         self.assertIn("/api/historical-signal-map/members/${encodeURIComponent", source)
-        self.assertIn("trimTiles();\n              appendNodes(payload.nodes ?? []);", source)
-        self.assertIn("loadedTiles.delete(key);", source)
+        self.assertNotIn("scheduleTiles", source)
+        self.assertNotIn("loadedTiles", source)
         self.assertIn("memberRequest?.abort();", source)
 
     def test_browser_certification_uses_screen_font_size_and_rejects_runtime_errors(self) -> None:
