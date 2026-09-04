@@ -260,6 +260,29 @@ function renderedLabels(cdp) {
   })()`, "actual Cytoscape rendered label bounds");
 }
 
+function overviewGeometry(cdp) {
+  return cdp.evaluate(`(() => {
+    const cy = window.__musixMap;
+    const map = document.querySelector('#semantic-map').getBoundingClientRect();
+    const nodes = cy.nodes('.overview:visible');
+    const centers = nodes.map(node => node.renderedPosition());
+    const xs = centers.map(point => point.x); const ys = centers.map(point => point.y);
+    const labels = cy.nodes(':visible').filter(node => Boolean(node.data('displayLabel'))).map(node =>
+      Number.parseFloat(node.style('font-size')) * cy.zoom());
+    return {
+      overview_nodes:nodes.length,
+      visible_nodes:cy.nodes(':visible').length,
+      visible_edges:cy.edges(':visible').length,
+      center_span_width:xs.length ? (Math.max(...xs) - Math.min(...xs)) / map.width : 0,
+      center_span_height:ys.length ? (Math.max(...ys) - Math.min(...ys)) / map.height : 0,
+      effective_label_font_min:labels.length ? Math.min(...labels) : 0,
+      effective_label_font_max:labels.length ? Math.max(...labels) : 0,
+      sample_centers:centers.slice(0, 3),
+      map:{ width:map.width, height:map.height, zoom:cy.zoom(), pan:cy.pan() },
+    };
+  })()`, "overview geometry");
+}
+
 async function lodMeasurements(cdp) {
   const measurements = [];
   for (let level = 0; level < 4; level += 1) {
@@ -521,7 +544,19 @@ async function run() {
   try {
     await mkdir(capturesDirectory, { recursive: true });
     const desktopPage = await createPage();
-    await navigate(desktopPage, desktop, "light");
+    const overviewViewport = arguments_.includes("--mobile-overview") ? mobile : desktop;
+    await navigate(desktopPage, overviewViewport, "light");
+    const desktopOverview = await overviewGeometry(desktopPage);
+    if (arguments_.includes("--overview-only")) {
+      const measurement = {
+        evidence_revision: "browser-production-map-v2",
+        overview_geometry: { [overviewViewport.name]: desktopOverview },
+      };
+      await writeFile(output, `${JSON.stringify(measurement, null, 2)}\n`);
+      desktopPage.close();
+      return measurement;
+    }
+    if (overviewViewport !== desktop) await navigate(desktopPage, desktop, "light");
     const desktopLabels = await lodMeasurements(desktopPage);
     const desktopRun = await desktopInteractions(desktopPage);
     const { diagnostics, ...desktopChecks } = desktopRun;
@@ -533,16 +568,19 @@ async function run() {
     const screenshots = [];
     for (const viewport of [desktop, mobile]) {
       for (const appearance of appearances) {
-        const page = viewport === desktop && appearance === "light" ? desktopPage : await createPage();
+        // Reuse one page for the six captures. Opening a target per capture is
+        // needlessly expensive on an older laptop and leaves Chrome renderer
+        // processes alive until browser shutdown.
+        const page = desktopPage;
         await navigate(page, viewport, appearance);
         const path = resolve(capturesDirectory, `${viewport.name}-${appearance}.png`);
         screenshots.push({ viewport: viewport.name, color_scheme: appearance, width: viewport.width, height: viewport.height, ...(await screenshot(page, path)) });
         requireNoRuntimeErrors(page, `${viewport.name} ${appearance} capture`);
-        if (page !== desktopPage) page.close();
       }
     }
     const mobilePage = await createPage();
     await navigate(mobilePage, mobile, "light");
+    const mobileOverview = await overviewGeometry(mobilePage);
     const mobileLabels = await lodMeasurements(mobilePage);
     // Measurements intentionally traverse every level. Reload before interaction
     // proof so the focus test starts at the real overview level.
@@ -559,6 +597,7 @@ async function run() {
       evidence_revision: "browser-production-map-v2",
       capture_method: "Chrome DevTools Protocol input plus live Cytoscape renderedBoundingBox(includeLabels:true)",
       labels: { desktop: desktopLabels, mobile: mobileLabels },
+      overview_geometry: { desktop: desktopOverview, mobile: mobileOverview },
       screenshots,
       interactions: {
         ...desktopChecks,
@@ -594,4 +633,8 @@ if (reportPath && acceptancePath) {
   const code = await new Promise((resolve_) => evaluator.once("exit", resolve_));
   if (code !== 0) throw new Error(`production map evaluator exited ${code}`);
 }
-process.stdout.write(`${JSON.stringify({ screenshots: measurement.screenshots.length, interactions: measurement.interactions }, null, 2)}\n`);
+process.stdout.write(`${JSON.stringify({
+  screenshots: measurement.screenshots?.length ?? 0,
+  interactions: measurement.interactions ?? {},
+  overview_geometry: measurement.overview_geometry,
+}, null, 2)}\n`);

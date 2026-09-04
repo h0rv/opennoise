@@ -19,6 +19,7 @@
   let activeCommunity = null;
   let cameraTransition = false;
   let lodFrame = null;
+  let overviewZoom = 1;
 
   const say = (message) => {
     const liveStatus = document.querySelector("#map-status");
@@ -64,13 +65,15 @@
   const overviewProminence = (members) => Math.min(1, Math.log2(Math.max(1, members) + 1) / 6);
   const overviewFontSize = (members) => {
     const mobile = mapElement.clientWidth <= 600;
-    // Cytoscape scales text with camera zoom. These generous model sizes keep
-    // the sparse overview readable at its fitted camera scale.
-    const minimum = mobile ? 28 : 32;
-    const maximum = mobile ? 40 : 48;
+    const minimum = mobile ? 14 : 16;
+    const maximum = mobile ? 20 : 24;
     return Math.round(minimum + (maximum - minimum) * overviewProminence(members));
   };
   const overviewFitPadding = () => mapElement.clientWidth <= 600 ? 28 : 72;
+  const overviewDimensions = () => ({
+    width: Math.max(1, mapElement.clientWidth || window.innerWidth),
+    height: Math.max(1, mapElement.clientHeight || window.innerHeight),
+  });
   const mapDimensions = () => {
     const padding = overviewFitPadding();
     const usableWidth = Math.max(1, mapElement.clientWidth - 2 * padding);
@@ -81,7 +84,7 @@
   };
 
   const quantile = (values, fraction) => values[Math.min(values.length - 1, Math.max(0, Math.round((values.length - 1) * fraction)))];
-  const mapPositions = (items, id) => {
+  const mapPositions = (items, id, dimensions = mapDimensions()) => {
     const axis = (key) => items.map((item) => Number(item[key])).filter(Number.isFinite).sort((a, b) => a - b);
     const xs = axis("x"); const ys = axis("y");
     const lowX = quantile(xs, 0.05); const highX = quantile(xs, 0.95);
@@ -102,23 +105,22 @@
       if (value > high) return tailPosition(tails.upperRanks.get(value) ?? 0, tails.upper.length, 0.94, 0.98);
       return 0.06 + 0.88 * (value - low) / Math.max(high - low, 0.0001);
     };
-    const dimensions = mapDimensions();
     return new Map(items.map((item) => [id(item), {
       x: scale(item.x, lowX, highX, xTails) * dimensions.width,
       y: scale(item.y, lowY, highY, yTails) * dimensions.height,
     }]));
   };
   const spreadOverviewPositions = (communities) => {
-    const dimensions = mapDimensions();
-    const positions = mapPositions(communities, (community) => community.community_id);
+    const dimensions = overviewDimensions();
+    const positions = mapPositions(communities, (community) => community.community_id, dimensions);
     const points = communities.map((community) => ({
       id: community.community_id,
       ...positions.get(community.community_id),
     }));
-    const inset = mapElement.clientWidth <= 600
-      ? Math.min(260, dimensions.width * 0.3, dimensions.height * 0.12)
-      : Math.min(144, dimensions.width * 0.12, dimensions.height * 0.08);
-    const minimumDistance = mapElement.clientWidth <= 600 ? 300 : 264;
+    const mobile = mapElement.clientWidth <= 600;
+    const horizontalInset = mobile ? 36 : 110;
+    const verticalInset = mobile ? 126 : 100;
+    const minimumDistance = mobile ? 64 : 96;
     // This deterministic display adjustment retains the relative input map as
     // its starting point while separating dense overview anchors for readable labels.
     for (let iteration = 0; iteration < 90; iteration += 1) {
@@ -139,16 +141,16 @@
         }
       }
       for (const point of points) {
-        point.x = Math.max(inset, Math.min(dimensions.width - inset, point.x));
-        point.y = Math.max(inset, Math.min(dimensions.height - inset, point.y));
+        point.x = Math.max(horizontalInset, Math.min(dimensions.width - horizontalInset, point.x));
+        point.y = Math.max(verticalInset, Math.min(dimensions.height - verticalInset, point.y));
       }
     }
     if (mapElement.clientWidth > 600) {
       // Preserve ordinal source placement while spreading the dense left-side
       // cluster across a usable landscape overview.
       [...points].sort((left, right) => left.x - right.x || left.id.localeCompare(right.id)).forEach((point, index) => {
-        const target = inset + (dimensions.width - 2 * inset) * index / Math.max(1, points.length - 1);
-        point.x = point.x * 0.25 + target * 0.75;
+        const target = horizontalInset + (dimensions.width - 2 * horizontalInset) * index / Math.max(1, points.length - 1);
+        point.x = point.x * 0.1 + target * 0.9;
       });
     }
     return new Map(points.map((point) => [point.id, { x: point.x, y: point.y }]));
@@ -279,12 +281,14 @@
     { selector: ".edge-hidden", style: { display: "none" } },
   ];
 
-  const lodForZoom = (zoom) => zoom < 0.58 ? 0 : zoom < 0.95 ? 1 : zoom < 1.55 ? 2 : 3;
+  const lodForZoom = (zoom) => {
+    const relative = zoom / Math.max(overviewZoom, 0.0001);
+    return relative < 1.25 ? 0 : relative < 2 ? 1 : relative < 3 ? 2 : 3;
+  };
   const fitOverview = (cy) => {
-    const overview = cy.nodes(".overview");
-    cy.fit(overview, overviewFitPadding());
-    cy.zoom(Math.min(cy.zoom(), 0.5));
-    cy.center(overview);
+    cy.zoom(1);
+    cy.pan({ x: 0, y: 0 });
+    overviewZoom = 1;
   };
   const labelBudget = (lod) => (mapElement.clientWidth <= 600
     ? [8, 32, 48, 64][lod]
