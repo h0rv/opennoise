@@ -73,7 +73,10 @@
     const padding = overviewFitPadding();
     const usableWidth = Math.max(1, mapElement.clientWidth - 2 * padding);
     const usableHeight = Math.max(1, mapElement.clientHeight - 2 * padding);
-    return { width: 1000 * usableWidth / usableHeight, height: 1000 };
+    // The overview is intentionally capped below the raw-genre threshold.
+    // Doubling the preset coordinate space lets that 0.5 zoom still fill the
+    // usable viewport in either portrait or landscape orientation.
+    return { width: 2000 * usableWidth / usableHeight, height: 2000 };
   };
 
   const quantile = (values, fraction) => values[Math.min(values.length - 1, Math.max(0, Math.round((values.length - 1) * fraction)))];
@@ -111,8 +114,8 @@
       id: community.community_id,
       ...positions.get(community.community_id),
     }));
-    const inset = Math.min(72, dimensions.width * 0.12, dimensions.height * 0.08);
-    const minimumDistance = mapElement.clientWidth <= 600 ? 150 : 132;
+    const inset = Math.min(144, dimensions.width * 0.12, dimensions.height * 0.08);
+    const minimumDistance = mapElement.clientWidth <= 600 ? 300 : 264;
     // This deterministic display adjustment retains the relative input map as
     // its starting point while separating dense overview anchors for readable labels.
     for (let iteration = 0; iteration < 90; iteration += 1) {
@@ -476,7 +479,12 @@
     const visible = members.union(node);
     // Keep room for the focused cohort's readable alternate label placements,
     // rather than fitting circles flush to the viewport edge.
-    if (visible.nonempty()) cy.fit(visible, memberIds.length <= 12 ? 144 : 96);
+    if (visible.nonempty()) {
+      const focusPadding = memberIds.length <= 12
+        ? mapElement.clientWidth <= 600 ? 40 : 144
+        : 96;
+      cy.fit(visible, focusPadding);
+    }
     currentLod = -1;
     cameraTransition = false;
     updateLod(cy, payload);
