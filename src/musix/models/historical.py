@@ -15,6 +15,8 @@ type HistoricalRelationMethod = Literal[
     "historical_unspecified",
 ]
 
+HISTORICAL_FULL_MAP_NODE_TARGET = 6_291
+
 
 class HistoricalArtifact(FrozenModel):
     """Identify one immutable, local-only historical source artifact."""
@@ -230,6 +232,62 @@ class HistoricalH3SourceManifest(FrozenModel):
         return self
 
 
+class HistoricalFullMapProductionInput(FrozenModel):
+    """Describe the complete local input boundary for a future full-map builder."""
+
+    revision: Literal["historical-full-map-production-input-v1"] = (
+        "historical-full-map-production-input-v1"
+    )
+    enabled: Literal[True] = True
+    production_node_count_target: int = Field(gt=0, le=20_000)
+    stable_genre_id_field: Literal["genres[].external_id"] = "genres[].external_id"
+    source_coordinate_fields: tuple[
+        Literal["x_px"], Literal["y_px"], Literal["color_hex"], Literal["font_size_percent"]
+    ] = (
+        "x_px",
+        "y_px",
+        "color_hex",
+        "font_size_percent",
+    )
+    representative_field: Literal["genres[].representative"] = "genres[].representative"
+    provenance_fields: tuple[
+        Literal["h2_source_sha256"], Literal["h3_membership.source_sha256"]
+    ] = (
+        "h2_source_sha256",
+        "h3_membership.source_sha256",
+    )
+    legacy_coordinate_role: Literal["evaluation_oracle"] = "evaluation_oracle"
+    legacy_reference_view_available: Literal[True] = True
+    independent_layout_mode: Literal["reconstruct_from_safe_graph"] = "reconstruct_from_safe_graph"
+    independent_layout_input_fields: tuple[
+        Literal["genres[].external_id"],
+        Literal["genres[].name"],
+        Literal["genres[].representative"],
+        Literal["h2_source_sha256"],
+        Literal["sqlite:displayable_historical_genre_artists"],
+    ] = (
+        "genres[].external_id",
+        "genres[].name",
+        "genres[].representative",
+        "h2_source_sha256",
+        "sqlite:displayable_historical_genre_artists",
+    )
+    progressive_delivery: Literal["lod_then_viewport_tiles"] = "lod_then_viewport_tiles"
+    membership_store: Literal["sqlite:displayable_historical_genre_artists"] = (
+        "sqlite:displayable_historical_genre_artists"
+    )
+    membership_edge_count: int = Field(gt=0)
+    membership_exported: Literal[False] = False
+    h3_coverage_state: Literal["complete", "partial"]
+
+    @model_validator(mode="after")
+    def require_complete_h2_target(self) -> "HistoricalFullMapProductionInput":
+        """Keep H2 geometry as an oracle, not an input to independent reconstruction."""
+        if self.production_node_count_target != HISTORICAL_FULL_MAP_NODE_TARGET:
+            raise ValueError("full-map production input must target all 6,291 H2 map rows")
+        return self
+
+
 class HistoricalCompatibilityReceipt(FrozenModel):
     """Bind one compatibility artifact to its SQLite publication and optional H3 projection."""
 
@@ -240,6 +298,21 @@ class HistoricalCompatibilityReceipt(FrozenModel):
     sqlite_run_id: int = Field(gt=0)
     h2_source_sha256: Sha256
     h3_membership: HistoricalMembershipProjection | None = None
+    full_map_production_input: HistoricalFullMapProductionInput | None = None
+
+    @model_validator(mode="after")
+    def require_full_map_input_matches_h3(self) -> "HistoricalCompatibilityReceipt":
+        """Bind the full-map production handoff to the local, sealed H3 measurement."""
+        if self.full_map_production_input is None:
+            return self
+        if self.h3_membership is None:
+            raise ValueError("full-map production input requires a sealed H3 projection")
+        if (
+            self.full_map_production_input.membership_edge_count
+            != self.h3_membership.stored_membership_count
+        ):
+            raise ValueError("full-map production input must match measured H3 edge count")
+        return self
 
 
 def _require_h3_membership_accounting(

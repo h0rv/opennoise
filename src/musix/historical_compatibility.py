@@ -31,6 +31,7 @@ from musix.models.historical import (
     HistoricalCompatibilityReport,
     HistoricalCoordinate,
     HistoricalCoverage,
+    HistoricalFullMapProductionInput,
     HistoricalGenre,
     HistoricalGeometryComparison,
     HistoricalMembershipProjection,
@@ -493,14 +494,35 @@ def compatibility_receipt(
     publication: HistoricalPublicationSummary,
 ) -> HistoricalCompatibilityReceipt:
     """Create a compact receipt that links the published artifact to its local H3 projection."""
+    h3_membership = manifest.h3_membership
+    full_map_input = (
+        HistoricalFullMapProductionInput(
+            production_node_count_target=manifest.artifact.expected_genres,
+            membership_edge_count=h3_membership.stored_membership_count,
+            h3_coverage_state=_full_map_h3_coverage_state(manifest),
+        )
+        if h3_membership is not None
+        else None
+    )
     return HistoricalCompatibilityReceipt(
         artifact_sha256=publication.artifact_sha256,
         artifact_byte_size=publication.artifact_byte_size,
         object_key=publication.object_write.key.value,
         sqlite_run_id=publication.sqlite_run_id,
         h2_source_sha256=manifest.artifact.content_sha256,
-        h3_membership=manifest.h3_membership,
+        h3_membership=h3_membership,
+        full_map_production_input=full_map_input,
     )
+
+
+def _full_map_h3_coverage_state(
+    manifest: HistoricalCompatibilityManifest,
+) -> Literal["complete", "partial"]:
+    """Narrow the enabled H3 state before attaching it to a full-map handoff."""
+    h3_coverage = next(item for item in manifest.coverage if item.stage == "H3")
+    if h3_coverage.state == "missing":
+        raise ValueError("full-map H3 handoff cannot use missing coverage")
+    return h3_coverage.state
 
 
 def write_compatibility_receipt(

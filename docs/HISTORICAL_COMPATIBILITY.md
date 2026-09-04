@@ -41,6 +41,13 @@ The H3 source never enters the object store or public model. The SQLite policy a
 only when explicitly enabled and denies export. The publication receipt links the compatibility
 artifact, object key, SQLite run, and the sealed H3 projection. See [the H4/H5 source audit](H4_H5_SOURCE_AUDIT.md).
 
+When H3 is enabled, that receipt also carries a `historical-full-map-production-input-v1` handoff:
+6,291 stable H2 genre IDs, representatives, provenance hashes, and LOD-first viewport-tile
+delivery. H2 coordinates, color, and font remain an evaluation oracle and optional legacy-reference
+view only. An independent model produces its own landscape coordinates from safe graph inputs.
+Its 306,136 membership edges remain behind the export-denied SQLite display view; a browser payload
+must build tiles from that contract rather than receive raw rows.
+
 ## Independent comparison
 
 The evaluator accepts a typed `public-graph-v2` or `production-map-v1` artifact. It joins only

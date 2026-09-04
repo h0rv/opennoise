@@ -18,8 +18,10 @@ from musix.models.historical import (
     HistoricalAdapterContract,
     HistoricalArtifact,
     HistoricalCompatibilityManifest,
+    HistoricalCompatibilityReceipt,
     HistoricalCoordinate,
     HistoricalCoverage,
+    HistoricalFullMapProductionInput,
     HistoricalGenre,
     HistoricalMembershipProjection,
     HistoricalQuarantine,
@@ -166,6 +168,57 @@ class HistoricalCompatibilityTests(unittest.TestCase):
         self.assertNotIn("preview_url", rendered)
         self.assertNotIn("sample_song", rendered)
         self.assertNotIn("track_id", rendered)
+
+    def test_full_map_receipt_keeps_h3_edges_out_of_the_artifact(self) -> None:
+        projection = HistoricalMembershipProjection(
+            source_id="fixture-h3",
+            source_sha256="c" * 64,
+            source_manifest_sha256="d" * 64,
+            source_revision_date="2024-11-16",
+            source_genre_row_count=2,
+            source_membership_count=3,
+            stored_membership_count=2,
+            quarantined_membership_count=1,
+            matched_h2_genre_count=1,
+            unmatched_source_genre_count=1,
+            h2_genre_count=1,
+            distinct_source_artist_count=2,
+            policy_key=f"historical-membership:local-display:{'c' * 64}",
+        )
+        receipt = HistoricalCompatibilityReceipt(
+            artifact_sha256="a" * 64,
+            artifact_byte_size=1,
+            object_key="historical-compatibility/fixture.json",
+            sqlite_run_id=1,
+            h2_source_sha256="b" * 64,
+            h3_membership=projection,
+            full_map_production_input=HistoricalFullMapProductionInput(
+                production_node_count_target=6_291,
+                membership_edge_count=2,
+                h3_coverage_state="partial",
+            ),
+        )
+        full_map_input = receipt.full_map_production_input
+        self.assertIsNotNone(full_map_input)
+        if full_map_input is not None:
+            self.assertEqual(full_map_input.production_node_count_target, 6_291)
+            self.assertFalse(full_map_input.membership_exported)
+
+        with self.assertRaises(ValidationError):
+            HistoricalFullMapProductionInput.model_validate(
+                {
+                    "production_node_count_target": 6_291,
+                    "membership_edge_count": 2,
+                    "h3_coverage_state": "partial",
+                    "independent_layout_input_fields": (
+                        "genres[].external_id",
+                        "genres[].name",
+                        "genres[].representative",
+                        "h2_source_sha256",
+                        "genres[].coordinate",
+                    ),
+                }
+            )
 
     def test_manifest_rejects_partial_map_count(self) -> None:
         value = manifest().model_dump(mode="json")
