@@ -3,9 +3,22 @@
      data-graph-url="/api/map" data-selected-genre="{{ map.focused_entity_id or '' }}"
      aria-describedby="map-pan-help"></div>
 <svg id="plot" class="map-fallback" role="img" aria-label="Genre map. Enable JavaScript for the interactive map."
-     viewBox="{{ map.view_box }}" width="{{ map.view_width }}" height="{{ map.view_height }}"
+     viewBox="{% if production_graph %}0 0 1 1{% else %}{{ map.view_box }}{% endif %}" width="{{ map.view_width }}" height="{{ map.view_height }}"
      preserveAspectRatio="xMidYMid meet">
-{% if map.points %}
+{% if production_graph %}
+  {% for point in production_graph.graph.nodes %}
+  <a id="map-point-{{ point.genre_id }}" class="point genre" data-genre-id="{{ point.genre_id }}"
+     href="{{ production_graph.detail_hrefs[point.genre_id] }}" aria-label="{{ point.name }}, open details"
+     hx-get="{{ production_graph.detail_hrefs[point.genre_id] }}" hx-target="#genre-detail-slot" hx-swap="innerHTML"
+     hx-push-url="{{ production_graph.detail_hrefs[point.genre_id] }}" hx-sync="#search:abort">
+    <title>{{ point.name }}</title>
+    <circle cx="{{ point.x }}" cy="{{ point.y }}" r="0.0035" fill="#77776f"></circle>
+    {% if point.lod_min == 0 and loop.index <= 36 %}
+    <text x="{{ point.x + 0.006 }}" y="{{ point.y + 0.003 }}" font-size="0.012">{{ point.name }}</text>
+    {% endif %}
+  </a>
+  {% endfor %}
+{% elif map.points %}
   {% for point in map.points %}
   <a id="map-point-{{ point.entity_id }}" class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
      data-genre-id="{{ point.entity_id }}"

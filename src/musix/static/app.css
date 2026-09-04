@@ -29,6 +29,22 @@
   --similarity: #c7ac7a;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --canvas: #171917;
+    --panel: rgb(35 39 35 / 96%);
+    --ink: #f2f2eb;
+    --muted: #b9b9ae;
+    --line: #555a52;
+    --focus: #80baff;
+    --node: #94ab92;
+    --parent: #2f4332;
+    --edge: #758074;
+    --similarity: #c7ac7a;
+  }
+}
+
 * { box-sizing: border-box; }
 html, body, #workspace { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 button, input, select { font: inherit; }

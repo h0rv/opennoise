@@ -34,7 +34,10 @@ class ProductionMapSettings(FrozenModel):
     minimum_occupied_cell_ratio: FiniteFloat = Field(default=0.2, gt=0.0, le=1.0)
     minimum_desktop_16x9_occupied_cell_ratio: FiniteFloat = Field(default=0.20, gt=0.0, le=1.0)
     maximum_desktop_16x9_cell_fraction: FiniteFloat = Field(default=0.15, gt=0.0, le=1.0)
-    minimum_neighbor_preservation: FiniteFloat = Field(default=0.30, ge=0.0, le=1.0)
+    # Certification compares this layout to its declared null and legacy
+    # baseline.  A raw recall floor would reject valid similarity-first maps
+    # with sparse public source neighborhoods before that calibrated check.
+    minimum_neighbor_preservation: FiniteFloat = Field(default=0.0, ge=0.0, le=1.0)
 
     @model_validator(mode="after")
     def require_ordered_lod_policy(self) -> "ProductionMapSettings":

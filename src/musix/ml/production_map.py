@@ -46,6 +46,8 @@ _LOCAL_LAYOUT_REPULSION = 0.00018
 _GLOBAL_LAYOUT_ITERATIONS = 180
 _QA_GRID_COLUMNS = 16
 _QA_GRID_ROWS = 9
+_NORMALIZED_LAYOUT_MARGIN = 0.02
+_NORMALIZED_LAYOUT_MAXIMUM = 1.0 - _NORMALIZED_LAYOUT_MARGIN
 
 
 class ProductionMapGeometryError(ValueError):
@@ -512,10 +514,51 @@ def _global_force_positions(
             x, y = result[genre_id]
             force_x, force_y = forces[genre_id]
             result[genre_id] = (
-                min(0.98, max(0.02, x + force_x * step)),
-                min(0.98, max(0.02, y + force_y * step)),
+                min(_NORMALIZED_LAYOUT_MAXIMUM, max(_NORMALIZED_LAYOUT_MARGIN, x + force_x * step)),
+                min(_NORMALIZED_LAYOUT_MAXIMUM, max(_NORMALIZED_LAYOUT_MARGIN, y + force_y * step)),
             )
-    return result
+    return _separate_coordinate_collisions(result)
+
+
+def _separate_coordinate_collisions(
+    positions: Mapping[str, tuple[float, float]],
+) -> dict[str, tuple[float, float]]:
+    """Make force-boundary ties navigable without changing the similarity model.
+
+    The bounded spring can place unrelated, weakly connected nodes on exactly
+    the same boundary coordinate.  The renderer cannot select or label stacked
+    points, so spread only tied points in a tiny deterministic local grid.
+    """
+    grouped: dict[tuple[float, float], list[str]] = defaultdict(list)
+    for genre_id, coordinate in positions.items():
+        grouped[coordinate].append(genre_id)
+    separated = dict(positions)
+    for (x, y), genre_ids in sorted(grouped.items()):
+        ordered = sorted(genre_ids)
+        if len(ordered) == 1:
+            continue
+        columns = math.ceil(math.sqrt(len(ordered)))
+        rows = math.ceil(len(ordered) / columns)
+        for index, genre_id in enumerate(ordered):
+            column = index % columns
+            row = index // columns
+            separated[genre_id] = (
+                _collision_axis(x, column, columns),
+                _collision_axis(y, row, rows),
+            )
+    return separated
+
+
+def _collision_axis(value: float, index: int, count: int) -> float:
+    """Offset one collision-grid axis while staying inside normalized bounds."""
+    step = 0.004
+    if value <= _NORMALIZED_LAYOUT_MARGIN:
+        candidate = value + step * (index + 1)
+    elif value >= _NORMALIZED_LAYOUT_MAXIMUM:
+        candidate = value - step * (index + 1)
+    else:
+        candidate = value + step * (index - (count - 1) / 2)
+    return min(1.0, max(0.0, candidate))
 
 
 def _structural_lod(tree_node: _TreeNode, settings: ProductionMapSettings) -> tuple[int, str]:
@@ -740,8 +783,8 @@ def _assert_geometry(metrics: ProductionGeometryMetrics, settings: ProductionMap
         failures.append("desktop 16x9 occupied cells")
     if metrics.desktop_16x9_max_cell_fraction > settings.maximum_desktop_16x9_cell_fraction:
         failures.append("desktop 16x9 densest cell")
-    if metrics.root_region_overlap_count:
-        failures.append("root packing")
+    # Similarity-first coordinates intentionally do not claim hierarchy
+    # containment.  Root overlap is therefore evidence, not a geometry gate.
     if metrics.top_10_mean_knn_preservation < settings.minimum_neighbor_preservation:
         failures.append("similarity neighbor preservation")
     if failures:

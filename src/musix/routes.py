@@ -42,12 +42,18 @@ class CoreController(Controller):
         self,
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
+        production_map: NamedDependency[ProductionMapStore],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
     ) -> Template:
         """Render the current full map."""
         context = await workspace_context(
-            database, genre_entries, layout=layout, focus=None, search_query=q
+            database,
+            genre_entries,
+            production_map,
+            layout=layout,
+            focus=None,
+            search_query=q,
         )
         return Template(template_name="index.html", context=context)
 
@@ -56,6 +62,7 @@ class CoreController(Controller):
         self,
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
+        production_map: NamedDependency[ProductionMapStore],
         genre_id: FromPath[int],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
@@ -63,7 +70,12 @@ class CoreController(Controller):
     ) -> Template:
         """Render a shareable genre selection with the complete app shell."""
         context = await workspace_context(
-            database, genre_entries, layout=layout, focus=genre_id, search_query=q
+            database,
+            genre_entries,
+            production_map,
+            layout=layout,
+            focus=genre_id,
+            search_query=q,
         )
         if request.headers.get("HX-Request") == "true":
             return detail_template(context)
@@ -74,6 +86,7 @@ class CoreController(Controller):
         self,
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
+        production_map: NamedDependency[ProductionMapStore],
         genre_key: FromPath[str],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
@@ -84,7 +97,12 @@ class CoreController(Controller):
         if genre_id is None:
             raise NotFoundException(detail="genre not found")
         context = await workspace_context(
-            database, genre_entries, layout=layout, focus=genre_id, search_query=q
+            database,
+            genre_entries,
+            production_map,
+            layout=layout,
+            focus=genre_id,
+            search_query=q,
         )
         if request.headers.get("HX-Request") == "true":
             return detail_template(context)
@@ -248,13 +266,19 @@ class MapController(Controller):
         self,
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
+        production_map: NamedDependency[ProductionMapStore],
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
     ) -> Template:
         """Render one coherent map selection and detail fragment."""
         context = await workspace_context(
-            database, genre_entries, layout=layout, focus=focus, search_query=q
+            database,
+            genre_entries,
+            production_map,
+            layout=layout,
+            focus=focus,
+            search_query=q,
         )
         return Template(
             template_name="workspace.html",
@@ -441,6 +465,7 @@ def resolve_layout(
 async def workspace_context(
     database: AsyncDatabase,
     genre_entries: GenreEntryRepository,
+    production_map: ProductionMapStore,
     *,
     layout: str,
     focus: int | None,
@@ -458,6 +483,14 @@ async def workspace_context(
         genre = await genre_entries.enrich(genre)
         placement = await database.genre_placement(focus, layout_key)
     bounded_search_query = search_query[:500]
+    production_graph: ProductionMapApiResponse | None = None
+    if production_map.configured and layout == "default":
+        try:
+            production_graph = production_map.response()
+        except ProductionMapStoreError as error:
+            raise ServiceUnavailableException(
+                detail="production map artifact unavailable"
+            ) from error
     return {
         "active_layout": active_layout,
         "genre": genre,
@@ -465,6 +498,7 @@ async def workspace_context(
         "layouts": layouts,
         "map": map_view(await database.map_points(layout_key), focus),
         "placement": placement,
+        "production_graph": production_graph,
         "hits": await database.search(bounded_search_query) if bounded_search_query else (),
         "search_query": bounded_search_query,
     }

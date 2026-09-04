@@ -15,6 +15,7 @@ from musix.models.production_qa import (
     ProductionMapLod,
     ProductionMapPresentationParent,
     ProductionMapSimilarityEvidence,
+    ProductionMapUmbrellaCentroid,
     hash_eligible_sets,
 )
 
@@ -178,6 +179,39 @@ def _eligible_sets(
     )
 
 
+def _umbrella_centroids(
+    artifact: ProductionMapArtifact,
+    coordinates: Mapping[str, tuple[float, float]],
+) -> tuple[ProductionMapUmbrellaCentroid, ...]:
+    """Emit exact display-root centroids without claiming spatial containment."""
+    children: dict[str, list[str]] = {}
+    by_id = {node.genre_id: node for node in artifact.nodes}
+    for node in artifact.nodes:
+        if node.display_parent_id is not None:
+            children.setdefault(node.display_parent_id, []).append(node.genre_id)
+
+    def descendants(owner_id: str) -> tuple[str, ...]:
+        result: list[str] = []
+        pending = [owner_id]
+        while pending:
+            current = pending.pop()
+            result.append(current)
+            pending.extend(sorted(children.get(current, ())))
+        return tuple(sorted(result))
+
+    return tuple(
+        ProductionMapUmbrellaCentroid(
+            root_entity_id=node.genre_id,
+            descendant_entity_ids=member_ids,
+            x=sum(coordinates[item][0] for item in member_ids) / len(member_ids),
+            y=sum(coordinates[item][1] for item in member_ids) / len(member_ids),
+        )
+        for node in sorted(by_id.values(), key=lambda item: item.genre_id)
+        if node.display_parent_id is None
+        for member_ids in (descendants(node.genre_id),)
+    )
+
+
 def build_production_map_acceptance_evidence(
     artifact: ProductionMapArtifact, source_model: PublicModelArtifact
 ) -> ProductionMapAcceptanceInput:
@@ -207,6 +241,7 @@ def build_production_map_acceptance_evidence(
     explanations = {item.genre_id: item for item in artifact.explanations}
     return ProductionMapAcceptanceInput(
         revision=artifact.revision,
+        layout_semantics="similarity_first_non_containment",
         coordinate_sha256=_coordinate_hash(candidate_coordinates),
         coordinates=tuple(
             ProductionMapCoordinate(entity_id=genre_id, x=x, y=y)
@@ -230,6 +265,7 @@ def build_production_map_acceptance_evidence(
             )
             for node in artifact.nodes
         ),
+        umbrella_centroids=_umbrella_centroids(artifact, candidate_coordinates),
         lods=tuple(
             ProductionMapLod(
                 level=lod.level,
