@@ -11,7 +11,8 @@ from pathlib import Path
 import numpy as np
 from pydantic import ValidationError
 
-from musix.historical_signal_model import _graph_hierarchy, _idf_candidates, _knn
+from musix.historical_signal_model import _genre_family_seed, _idf_candidates, _knn
+from musix.historical_signal_model import _graph_hierarchy
 from musix.models.historical_signal import HistoricalSignalSettings
 
 _MICROGENRE_LEVEL = 2
@@ -19,6 +20,13 @@ _MICROGENRE_MAX_MEMBERS = 2
 
 
 class HistoricalSignalModelTests(unittest.TestCase):
+    def test_explicit_genre_family_seeds_are_broad_and_conflict_free(self) -> None:
+        self.assertEqual(_genre_family_seed("deep house"), "Electronic")
+        self.assertEqual(_genre_family_seed("black metal"), "Metal")
+        self.assertEqual(_genre_family_seed("boom bap"), "Hip-hop")
+        self.assertEqual(_genre_family_seed("carnatic"), "Global & traditional")
+        self.assertEqual(_genre_family_seed("salsa"), "Latin & Caribbean")
+
     def test_idf_overlap_is_not_relabelled_weighted_jaccard(self) -> None:
         memberships = {
             "genre:a": {"artist:shared", "artist:a-only"},

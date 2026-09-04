@@ -738,7 +738,71 @@ def _semantic_umbrellas(
     )
 
 
-def _graph_hierarchy(  # noqa: PLR0913, PLR0917
+def _genre_family_seed(name: str) -> str | None:
+    """Return an explicit broad display-family seed from one genre's own name only."""
+    value = name.casefold()
+    words = set(re.findall(r"[a-z0-9]+", value))
+    if words & {"salsa", "reggaeton", "bachata", "merengue", "cumbia", "samba", "bossa", "norteno"} or "latin" in words:
+        return "Latin & Caribbean"
+    if words & {"indian", "hindustani", "carnatic", "african", "arabic", "persian", "kurdish"}:
+        return "Global & traditional"
+    if re.search(r"\bhip[ -]hop\b|\btrap\b|\bboom bap\b|\brap\b", value):
+        return "Hip-hop"
+    if "metal" in words:
+        return "Metal"
+    if "classical" in words or "baroque" in words or "romantic" in words:
+        return "Classical"
+    if "jazz" in words or "bebop" in words:
+        return "Jazz"
+    if words & {"house", "techno", "edm", "electro", "electronic", "idm", "ambient", "industrial"}:
+        return "Electronic"
+    if "reggae" in words or "dancehall" in words:
+        return "Reggae"
+    if "blues" in words:
+        return "Blues"
+    if "country" in words or "bluegrass" in words or "folk" in words:
+        return "Folk & country"
+    if "rock" in words or "punk" in words:
+        return "Rock"
+    if "pop" in words or "kpop" in words or "jpop" in words:
+        return "Pop"
+    return None
+
+
+def _family_assignments(
+    graph: list[dict[int, float]], names: Mapping[str, str], genre_ids: tuple[str, ...]
+) -> dict[int, str]:
+    """Keep explicit lexical seeds fixed; propagate only unseeded nodes from weighted H3 affinity."""
+    assignments = {
+        index: seed
+        for index, genre_id in enumerate(genre_ids)
+        if (seed := _genre_family_seed(names[genre_id])) is not None
+    }
+    for _iteration in range(24):
+        additions: dict[int, str] = {}
+        for index, neighbors in enumerate(graph):
+            if index in assignments:
+                continue
+            scores: dict[str, float] = defaultdict(float)
+            for neighbor, weight in neighbors.items():
+                family = assignments.get(neighbor)
+                if family is not None:
+                    scores[family] += weight
+            if not scores:
+                continue
+            family = min(scores, key=lambda candidate: (-scores[candidate], candidate))
+            support = scores[family] / sum(scores.values())
+            if support >= 0.60:
+                additions[index] = family
+        if not additions:
+            break
+        assignments.update(additions)
+    return {index: assignments.get(index, "Other / unplaced") for index in range(len(graph))}
+
+
+def _graph_hierarchy(
+    # The reciprocal graph remains part of the model boundary for compatibility with
+    # the persisted artifact contract; display families are seeded from the full graph.
     graph: list[dict[int, float]],
     reciprocal_graph: list[dict[int, float]],
     genre_ids: tuple[str, ...],
@@ -746,19 +810,26 @@ def _graph_hierarchy(  # noqa: PLR0913, PLR0917
     positions: np.ndarray,
     settings: HistoricalSignalSettings,
 ) -> tuple[tuple[HistoricalSignalHierarchyNode, ...], dict[int, tuple[str, str, str]]]:
-    """Emit H3 natural communities below lexically coarsened evidence-derived regions."""
-    natural = _natural_subcommunities(reciprocal_graph, genre_ids, settings.embedding_seed)
-    umbrellas, display_labels = _semantic_umbrellas(natural, names, genre_ids)
+    """Emit broad name-seeded display families with graph-only conditioned drill-downs."""
+    family_assignments = _family_assignments(graph, names, genre_ids)
+    family_members: dict[str, list[int]] = defaultdict(list)
+    for member, family in family_assignments.items():
+        family_members[family].append(member)
+    umbrellas = tuple(
+        _HierarchyGroup(tuple(sorted(members)))
+        for _family, members in sorted(family_members.items())
+    )
+    display_labels = {group.members: family_assignments[group.members[0]] for group in umbrellas}
     hierarchy: list[HistoricalSignalHierarchyNode] = []
     assignments: dict[int, tuple[str, str, str]] = {}
     for umbrella_ordinal, umbrella in enumerate(umbrellas):
         umbrella_id = f"graph:umbrella:{umbrella_ordinal:03d}"
-        umbrella_members = set(umbrella.members)
-        subcommunities = tuple(
-            group for group in natural if set(group.members).issubset(umbrella_members)
+        subcommunities = _partition_graph(
+            umbrella.members,
+            graph,
+            genre_ids,
+            settings.hierarchy_subcommunity_max_members,
         )
-        if not subcommunities:
-            raise ValueError("every lexical umbrella must retain at least one natural subcommunity")
         subcommunity_ids = tuple(
             f"{umbrella_id}:sub:{subcommunity_ordinal:03d}"
             for subcommunity_ordinal in range(len(subcommunities))
@@ -790,10 +861,9 @@ def _graph_hierarchy(  # noqa: PLR0913, PLR0917
             subcommunity_id = subcommunity_ids[subcommunity_ordinal]
             microgenres = _partition_graph(
                 subcommunity.members,
-                reciprocal_graph,
+                graph,
                 genre_ids,
                 settings.hierarchy_microgenre_max_members,
-                positions,
             )
             microgenre_ids = tuple(
                 f"{subcommunity_id}:micro:{microgenre_ordinal:03d}"

@@ -38,7 +38,7 @@ class HistoricalSignalSettings(FrozenModel):
     evaluation_pair_sample: int = Field(default=50_000, ge=1_000, le=500_000)
     # Browser response limits cap aggregate results, not leaves.
     hierarchy_umbrella_max_members: int = Field(default=3_000, ge=32, le=3_000)
-    hierarchy_subcommunity_max_members: int = Field(default=512, ge=8, le=512)
+    hierarchy_subcommunity_max_members: int = Field(default=96, ge=8, le=512)
     hierarchy_microgenre_max_members: int = Field(default=24, ge=2, le=128)
 
     @model_validator(mode="after")
