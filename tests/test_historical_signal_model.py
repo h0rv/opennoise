@@ -11,7 +11,13 @@ from pathlib import Path
 import numpy as np
 from pydantic import ValidationError
 
-from musix.historical_signal_model import _genre_family_seed, _idf_candidates, _knn
+from musix.historical_signal_model import (
+    _HierarchyGroup,
+    _family_hierarchy_representative,
+    _genre_family_seed,
+    _idf_candidates,
+    _knn,
+)
 from musix.historical_signal_model import _graph_hierarchy
 from musix.models.historical_signal import HistoricalSignalSettings
 
@@ -26,6 +32,24 @@ class HistoricalSignalModelTests(unittest.TestCase):
         self.assertEqual(_genre_family_seed("boom bap"), "Hip-hop")
         self.assertEqual(_genre_family_seed("carnatic"), "Global & traditional")
         self.assertEqual(_genre_family_seed("salsa"), "Latin & Caribbean")
+
+    def test_level_one_representative_prefers_matching_family_seed(self) -> None:
+        """A graph-central unseeded label must not disguise its lexical parent family."""
+        representative = _family_hierarchy_representative(
+            _HierarchyGroup((0, 1, 2)),
+            [{1: 10.0, 2: 10.0}, {0: 10.0}, {0: 10.0}],
+            ("genre:worship", "genre:hip-hop", "genre:trap"),
+            {
+                "genre:worship": "german worship",
+                "genre:hip-hop": "hip-hop",
+                "genre:trap": "trap",
+            },
+            "Hip-hop",
+        )
+        self.assertEqual(representative, 1)
+
+    def test_default_level_one_cap_requires_drill_down_before_microgenres(self) -> None:
+        self.assertEqual(HistoricalSignalSettings().hierarchy_subcommunity_max_members, 64)
 
     def test_idf_overlap_is_not_relabelled_weighted_jaccard(self) -> None:
         memberships = {

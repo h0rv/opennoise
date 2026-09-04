@@ -420,6 +420,25 @@ def _hierarchy_representative(
     )
 
 
+def _family_hierarchy_representative(
+    group: _HierarchyGroup,
+    graph: list[dict[int, float]],
+    genre_ids: tuple[str, ...],
+    names: Mapping[str, str],
+    family: str,
+) -> int:
+    """Prefer an explicit matching family seed for a level-one display label."""
+    seeded_members = tuple(
+        member
+        for member in group.members
+        if _genre_family_seed(names[genre_ids[member]]) == family
+    )
+    if not seeded_members:
+        return _hierarchy_representative(group, graph, genre_ids)
+    seeded_group = _HierarchyGroup(seeded_members)
+    return _hierarchy_representative(seeded_group, graph, genre_ids)
+
+
 def _hierarchy_centroid(group: _HierarchyGroup, positions: np.ndarray) -> tuple[float, float]:
     """Place a graph aggregate at the deterministic centroid of its learned members."""
     centroid = np.mean(positions[list(group.members)], axis=0)
@@ -824,6 +843,7 @@ def _graph_hierarchy(
     assignments: dict[int, tuple[str, str, str]] = {}
     for umbrella_ordinal, umbrella in enumerate(umbrellas):
         umbrella_id = f"graph:umbrella:{umbrella_ordinal:03d}"
+        umbrella_family = display_labels[umbrella.members]
         subcommunities = _partition_graph(
             umbrella.members,
             graph,
@@ -869,7 +889,13 @@ def _graph_hierarchy(
                 f"{subcommunity_id}:micro:{microgenre_ordinal:03d}"
                 for microgenre_ordinal in range(len(microgenres))
             )
-            subcommunity_representative = _hierarchy_representative(subcommunity, graph, genre_ids)
+            subcommunity_representative = _family_hierarchy_representative(
+                subcommunity,
+                graph,
+                genre_ids,
+                names,
+                umbrella_family,
+            )
             subcommunity_x, subcommunity_y = _hierarchy_centroid(subcommunity, positions)
             hierarchy.append(
                 HistoricalSignalHierarchyNode(
@@ -1379,9 +1405,9 @@ def build_historical_signal_model(
             name="genre_name_display_taxonomy",
             role="active",
             detail=(
-                "Sparse TF-IDF word and character affinity is used only to coarsen reciprocal-H3 "
-                "natural communities into level-0 display regions; it never changes H3 kNN, "
-                "similarity weights, layout coordinates, or lower hierarchy levels."
+                "Explicit individual genre-name family seeds assign only level-0 display families; "
+                "unseeded genres may propagate those families over weighted H3 affinity. It never "
+                "changes H3 kNN, similarity weights, layout coordinates, or graph-only lower levels."
             ),
         ),
         HistoricalSignalAblation(

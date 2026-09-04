@@ -38,7 +38,7 @@ class HistoricalSignalSettings(FrozenModel):
     evaluation_pair_sample: int = Field(default=50_000, ge=1_000, le=500_000)
     # Browser response limits cap aggregate results, not leaves.
     hierarchy_umbrella_max_members: int = Field(default=3_000, ge=32, le=3_000)
-    hierarchy_subcommunity_max_members: int = Field(default=96, ge=8, le=512)
+    hierarchy_subcommunity_max_members: int = Field(default=64, ge=8, le=512)
     hierarchy_microgenre_max_members: int = Field(default=24, ge=2, le=128)
 
     @model_validator(mode="after")
@@ -367,6 +367,14 @@ class HistoricalSignalArtifact(FrozenModel):
             and not _MIN_FULL_UMBRELLAS <= umbrellas <= _MAX_FULL_UMBRELLAS
         ):
             raise ValueError("6,291-node historical hierarchy must contain 2 to 24 umbrellas")
+        hierarchy_by_id = {item.hierarchy_id: item for item in self.hierarchy}
+        if any(
+            umbrella.member_count > self.settings.hierarchy_subcommunity_max_members
+            and len(umbrella.children_ids) < 2
+            for umbrella in hierarchy_by_id.values()
+            if umbrella.level == _UMBRELLA_LEVEL
+        ):
+            raise ValueError("large historical signal umbrellas must have multiple level-one children")
         return self
 
 
