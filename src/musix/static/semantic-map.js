@@ -18,6 +18,7 @@
   let selectedNode = null;
   let activeCommunity = null;
   let cameraTransition = false;
+  let lodFrame = null;
 
   const say = (message) => {
     const liveStatus = document.querySelector("#map-status");
@@ -250,11 +251,11 @@
     return cy.nodes().filter((node) => (
       overview
         ? Boolean(node.data("overview"))
-        : ((!node.data("overview") && (
+        : (!node.data("overview") && (
           Number(node.data("lodMin")) <= lod || focusedMembers.has(node.data("itemId"))
-        )) || node.id() === selectedNode?.id())
+        ))
     )).sort((left, right) => (
-      Number(right.id() === selectedNode?.id()) - Number(left.id() === selectedNode?.id())
+      Number(focusedMembers.has(right.data("itemId"))) - Number(focusedMembers.has(left.data("itemId")))
       || Number(right.data("weight")) - Number(left.data("weight"))
       || String(left.data("label")).localeCompare(String(right.data("label")))
     ));
@@ -290,8 +291,10 @@
     const acceptedBoxes = [];
     const viewport = mapElement.getBoundingClientRect();
     let accepted = 0;
+    const focusedMemberCount = activeCommunity?.data("memberEntityIds")?.length ?? 0;
+    const focusedSmallCommunity = !overview && focusedMemberCount > 0 && focusedMemberCount <= 12;
     const candidates = labelCandidates(cy, overview, lod);
-    const placements = overview
+    const placements = overview || focusedSmallCommunity
       ? [
         { "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 7 },
         { "text-halign": "center", "text-valign": "top", "text-margin-x": 0, "text-margin-y": -7 },
@@ -310,7 +313,7 @@
       node.removeStyle("text-margin-y");
     });
     for (const node of candidates) {
-      if (accepted === labelBudget(lod)) break;
+      if (accepted === (focusedSmallCommunity ? focusedMemberCount : labelBudget(lod))) break;
       node.data("displayLabel", node.data("label"));
       let chosen = false;
       for (const placement of placements) {
@@ -334,7 +337,9 @@
   };
 
   const updateLod = (cy, payload) => {
-    const lod = lodForZoom(cy.zoom());
+    // A wide community may need a low physical zoom to keep every member in
+    // frame. It is still semantically the genre drill level, never overview.
+    const lod = activeCommunity ? Math.max(1, lodForZoom(cy.zoom())) : lodForZoom(cy.zoom());
     // `fit()` briefly crosses the overview threshold while it calculates a
     // community camera. That must not cancel the drill state mid-transition.
     if (activeCommunity && lod === 0 && !cameraTransition) {
@@ -391,6 +396,9 @@
   const focusCommunity = (cy, node, payload) => {
     if (activeCommunity?.id() === node.id()) return;
     cameraTransition = true;
+    // A pointer drill owns the keyboard continuation too: Escape is the
+    // explicit, accessible way back to the overview.
+    mapElement.focus({ preventScroll: true });
     selectedNode = node;
     activeCommunity = node;
     cy.$(":selected").unselect();
@@ -402,15 +410,12 @@
       cy.collection(),
     );
     const visible = members.union(node);
-    if (visible.nonempty()) cy.fit(visible, 96);
-    const point = node.renderedPosition();
-    cy.zoom({ level: Math.max(cy.zoom(), 0.66), renderedPosition: point });
+    // Keep room for the focused cohort's readable alternate label placements,
+    // rather than fitting circles flush to the viewport edge.
+    if (visible.nonempty()) cy.fit(visible, memberIds.length <= 12 ? 144 : 96);
     currentLod = -1;
     cameraTransition = false;
     updateLod(cy, payload);
-    const url = new URL(window.location.href);
-    url.searchParams.set("overview", String(node.data("itemId")));
-    window.history.pushState({ musixOverviewCommunity: node.data("itemId") }, "", url);
     window.__musixMapMetrics.activeCommunityId = node.data("itemId");
     say(`${node.data("label")}; ${memberIds.length} member genres revealed. Genre level.`);
   };
@@ -431,13 +436,8 @@
   };
 
   const returnToOverview = (cy, payload) => {
-    // Focus has one explicit browser history entry. Escape/Fit consume it via
-    // real Back, and the popstate handler restores the overview without
-    // appending or replacing a duplicate entry.
-    if (window.history.state?.musixOverviewCommunity) {
-      window.history.back();
-      return;
-    }
+    // Community drill is transient local camera state. It intentionally does
+    // not create HTMX/browser history entries that can detach this canvas.
     resetCommunity(cy, payload);
   };
 
@@ -469,8 +469,15 @@
   };
 
   const bindMapInteractions = (cy, payload) => {
-    cy.on("zoom", () => updateLod(cy, payload));
-    cy.on("pan", () => updateLod(cy, payload));
+    const scheduleLodUpdate = () => {
+      if (lodFrame !== null) return;
+      lodFrame = window.requestAnimationFrame(() => {
+        lodFrame = null;
+        updateLod(cy, payload);
+      });
+    };
+    cy.on("zoom", scheduleLodUpdate);
+    cy.on("pan", scheduleLodUpdate);
     cy.on("tap", "node", (event) => selectGenre(cy, event.target, payload));
     cy.on("tap", (event) => {
       if (event.target !== cy) return;
@@ -518,15 +525,20 @@
 
       const selected = mapElement.dataset.selectedGenre;
       if (selected) cy.$(`#genre-${selected}`).select();
-      document.querySelectorAll("[data-map-action]").forEach((button) => button.addEventListener("click", () => {
+      // Capture-phase delegation keeps controls reliable above Cytoscape's
+      // canvas, including on a remounted map after browser history restores.
+      document.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-map-action]");
+        if (!button) return;
         const action = button.dataset.mapAction;
+        event.preventDefault();
         if (action === "zoom-in") cy.zoom({ level: Math.min(cy.maxZoom(), cy.zoom() * 1.25), renderedPosition: { x: innerWidth / 2, y: innerHeight / 2 } });
         if (action === "zoom-out") cy.zoom({ level: Math.max(cy.minZoom(), cy.zoom() / 1.25), renderedPosition: { x: innerWidth / 2, y: innerHeight / 2 } });
         if (action === "fit") {
           if (activeCommunity) returnToOverview(cy, payload);
           else cy.fit(cy.elements(":visible"), 72);
         }
-      }));
+      }, true);
       mapElement.addEventListener("keydown", (event) => {
         const key = event.key;
         if (["+", "=", "-", "_", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Escape"].includes(key)) event.preventDefault();

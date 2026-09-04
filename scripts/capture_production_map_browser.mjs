@@ -45,8 +45,15 @@ class Cdp {
     this.socket = new WebSocket(webSocketUrl);
     this.sequence = 0;
     this.pending = new Map();
+    this.runtimeErrors = [];
     this.socket.addEventListener("message", ({ data }) => {
       const message = JSON.parse(data);
+      if (message.method === "Runtime.exceptionThrown") {
+        this.runtimeErrors.push(message.params.exceptionDetails.text ?? "runtime exception");
+      }
+      if (message.method === "Runtime.consoleAPICalled" && message.params.type === "error") {
+        this.runtimeErrors.push(message.params.args.map((item) => item.value ?? item.description ?? "console error").join(" "));
+      }
       const entry = this.pending.get(message.id);
       if (!entry) return;
       this.pending.delete(message.id);
@@ -249,20 +256,22 @@ async function lodMeasurements(cdp) {
   return measurements;
 }
 
-async function overviewFocusRevealsLabel(cdp) {
-  const candidate = await cdp.evaluate(`(() => {
+async function overviewFocusRevealsLabel(cdp, mobile = false) {
+  const expectedMembers = [
+    "electronic music", "hyperpop", "kawaii future bass", "digicore",
+    "jungle", "techno", "rave music", "breakcore",
+  ];
+  const overview = async () => cdp.evaluate(`(() => {
     const cy = window.__musixMap;
     const mapElement = document.querySelector('#semantic-map');
     const map = mapElement.getBoundingClientRect();
-    const node = cy.nodes('.overview:visible').filter(n => !n.data('displayLabel')).map(n => {
+    const node = cy.nodes('.overview:visible').filter(n => n.data('label') === 'electronic music').map(n => {
       const rendered = n.renderedPosition();
       return { node: n, x: map.left + rendered.x, y: map.top + rendered.y };
     }).filter(({ x, y }) => x > map.left + 8 && x < map.right - 8
       && y > map.top + 8 && y < map.bottom - 8
-      && mapElement.contains(document.elementFromPoint(x, y))).sort(
-      (left, right) => String(left.node.data('itemId')).localeCompare(String(right.node.data('itemId'))),
-    )[0]?.node;
-    if (!node) throw new Error('no initially unlabeled overview community');
+      && mapElement.contains(document.elementFromPoint(x, y)))[0]?.node;
+    if (!node) throw new Error('electronic overview community is not a live pointer target');
     const rendered = node.renderedPosition();
     return {
       id: node.id(),
@@ -271,31 +280,70 @@ async function overviewFocusRevealsLabel(cdp) {
       map: { left: map.left, top: map.top, width: map.width, height: map.height },
       hit: document.elementFromPoint(map.left + rendered.x, map.top + rendered.y)?.tagName ?? null,
     };
-  })()`, "initially unlabeled overview community");
-  await click(cdp, candidate.x, candidate.y);
-  await sleep(120);
-  const result = await cdp.evaluate(`(() => {
+  })()`, "electronic overview community");
+  const resetIsOverview = () => cdp.evaluate(`(() => {
     const cy = window.__musixMap;
-    const node = cy.$id(${JSON.stringify(candidate.id)});
+    return cy.nodes('.overview:visible').length === 24 && cy.edges(':visible').length === 0
+      && cy.nodes(':visible').length === 24 && !window.__musixMapMetrics.activeCommunityId;
+  })()`, "overview restored");
+  const focus = async () => {
+    const candidate = await overview();
+    const errorsBefore = cdp.runtimeErrors.length;
+    if (mobile) {
+      await touch(cdp, "touchStart", [[candidate.x, candidate.y]]);
+      await touch(cdp, "touchEnd", []);
+    } else await click(cdp, candidate.x, candidate.y);
+    await cdp.waitFor("Boolean(window.__musixMapMetrics.activeCommunityId)", "community drill state");
+    await sleep(160);
+    const result = await cdp.evaluate(`(() => {
+    const cy = window.__musixMap;
+    const expected = ${JSON.stringify(expectedMembers)};
     const map = document.querySelector('#semantic-map').getBoundingClientRect();
-    const label = String(node.data('displayLabel') ?? '');
-    node.boundingBox({includeLabels:true});
-    const raw = node[0]._private.labelBounds.main;
-    if (!raw) return {
-      selected: node.selected(), label, raw: null,
-      currentLod: cy.nodes('.overview:visible').length ? 0 : 1,
-    };
-    const pan = cy.pan(); const zoom = cy.zoom();
-    const bounds = { x1:raw.x1 * zoom + pan.x, y1:raw.y1 * zoom + pan.y, x2:raw.x2 * zoom + pan.x, y2:raw.y2 * zoom + pan.y };
+    const members = cy.nodes(':visible').filter(n => !n.data('overview'));
+    const named = members.map(n => String(n.data('label'))).sort();
+    const labels = members.map(n => {
+      n.boundingBox({includeLabels:true});
+      const raw = n[0]._private.labelBounds.main;
+      const pan = cy.pan(); const zoom = cy.zoom();
+      const bounds = raw ? { x1:raw.x1 * zoom + pan.x, y1:raw.y1 * zoom + pan.y, x2:raw.x2 * zoom + pan.x, y2:raw.y2 * zoom + pan.y } : null;
+      return { label:String(n.data('label')), displayed:String(n.data('displayLabel') ?? ''), bounds,
+        font:Number.parseFloat(n.style('font-size')) || 0 };
+    });
+    const labelled = labels.filter(({ displayed, bounds, font }) => displayed && bounds && font >= 12
+      && bounds.x1 >= map.left && bounds.y1 >= map.top && bounds.x2 <= map.right && bounds.y2 <= map.bottom);
+    const nonoverlap = labelled.every((left, index) => labelled.slice(index + 1).every((right) =>
+      left.bounds.x2 <= right.bounds.x1 || left.bounds.x1 >= right.bounds.x2
+      || left.bounds.y2 <= right.bounds.y1 || left.bounds.y1 >= right.bounds.y2));
     return {
-      selected: node.selected(), label, bounds,
-      visible: node.selected() && label.length > 0
-      && [bounds.x1, bounds.y1, bounds.x2, bounds.y2].every(Number.isFinite)
-      && bounds.x1 >= map.left && bounds.y1 >= map.top
-      && bounds.x2 <= map.right && bounds.y2 <= map.bottom,
+      active:window.__musixMapMetrics.activeCommunityId,
+      visible_nodes:cy.nodes(':visible').length,
+      visible_edges:cy.edges(':visible').length,
+      exact_members:expected.every(name => named.includes(name)) && named.length === expected.length,
+      exact_labels:expected.every(name => labelled.some(label => label.label === name)),
+      nonoverlap,
+      labels,
     };
-  })()`, "selected overview label is visible in renderer");
-  if (!result.visible) throw new CdpError("selected overview label is visible in renderer", result);
+    })()`, "focused electronic community renderer state");
+    return { ...result, no_console_error: cdp.runtimeErrors.length === errorsBefore };
+  };
+  const first = await focus();
+  await cdp.command("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  await cdp.waitFor("!window.__musixMapMetrics.activeCommunityId", "Escape returns overview");
+  await sleep(420);
+  const escape = await resetIsOverview();
+  await focus();
+  const fit = await box(cdp, '[data-map-action="fit"]');
+  if (!fit) throw new Error("fit control not found");
+  if (mobile) {
+    await touch(cdp, "touchStart", [[fit.x + fit.width / 2, fit.y + fit.height / 2]]);
+    await touch(cdp, "touchEnd", []);
+  } else await click(cdp, fit.x + fit.width / 2, fit.y + fit.height / 2);
+  await cdp.waitFor("!window.__musixMapMetrics.activeCommunityId", "Fit returns overview", 500);
+  const fitReset = await resetIsOverview();
+  const accepted = first.active && first.visible_nodes <= 81 && first.visible_edges === 0
+    && first.exact_members && first.exact_labels && first.nonoverlap && first.no_console_error
+    && escape && fitReset;
+  if (!accepted) throw new CdpError("overview community drill", { first, escape, fit: fitReset });
   return true;
 }
 
@@ -407,7 +455,7 @@ async function mobileInteractions(cdp) {
   if (!map) throw new Error("mobile map bounding box not found");
   const x = map.x + map.width * 0.68;
   const y = map.y + map.height * 0.54;
-  const overview_focus_reveals_label = await overviewFocusRevealsLabel(cdp);
+  const overview_focus_reveals_label = await overviewFocusRevealsLabel(cdp, true);
   const initial = await state(cdp);
   await touch(cdp, "touchStart", [[x, y]]);
   await touch(cdp, "touchMove", [[x + 40, y + 55]]);
@@ -459,6 +507,10 @@ async function run() {
     const desktopLabels = await lodMeasurements(desktopPage);
     const desktopRun = await desktopInteractions(desktopPage);
     const { diagnostics, ...desktopChecks } = desktopRun;
+    const desktopFocusPage = await createPage();
+    await navigate(desktopFocusPage, desktop, "light");
+    const desktop_overview_community_drill = await overviewFocusRevealsLabel(desktopFocusPage);
+    desktopFocusPage.close();
     const screenshots = [];
     for (const viewport of [desktop, mobile]) {
       for (const appearance of appearances) {
@@ -486,7 +538,12 @@ async function run() {
       capture_method: "Chrome DevTools Protocol input plus live Cytoscape renderedBoundingBox(includeLabels:true)",
       labels: { desktop: desktopLabels, mobile: mobileLabels },
       screenshots,
-      interactions: { ...desktopChecks, ...mobileChecks, no_javascript_svg_fallback },
+      interactions: {
+        ...desktopChecks,
+        ...mobileChecks,
+        desktop_overview_community_drill,
+        no_javascript_svg_fallback,
+      },
       interaction_diagnostics: diagnostics,
     };
     await writeFile(output, `${JSON.stringify(measurement, null, 2)}\n`);
