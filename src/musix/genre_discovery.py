@@ -78,6 +78,29 @@ class DerivedHistoricalArtistGenres(BaseModel):
     state: str = "derived_partial"
 
 
+class HistoricalGenreMember(BaseModel):
+    """One direct H3 membership, never a claim that the artist is a representative."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    source_artist_id: str = Field(pattern=r"^[A-Za-z0-9]{22}$")
+    source_artist_name: str = Field(min_length=1)
+    rank: int = Field(gt=0)
+    source_local_rank: int | None = Field(default=None, gt=0)
+    membership_evidence_count: int = Field(default=1, ge=1, le=1)
+    evidence_ref: str = Field(min_length=1, max_length=500)
+
+
+class HistoricalGenreMembers(BaseModel):
+    """A lazily queried and bounded display projection for one historical genre."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    genre_id: int = Field(gt=0)
+    members: tuple[HistoricalGenreMember, ...] = Field(max_length=100)
+    ranking_method: str = "direct_h3_membership_then_source_rank_then_artist"
+
+
 @dataclass(frozen=True, slots=True)
 class _MembershipPersistenceContext:
     """Keep one membership write's database identity and policy inseparable."""
@@ -578,4 +601,55 @@ def query_displayable_historical_artist_genres(
         source_artist_id=source_artist_id,
         source_artist_name=str(rows[0][0]),
         genre_names=tuple(str(row[1]) for row in rows),
+    )
+
+
+def query_displayable_historical_genre_members(
+    database_path: Path,
+    *,
+    source_sha256: str,
+    policy_key: str,
+    genre_id: int,
+    limit: int = 6,
+) -> HistoricalGenreMembers:
+    """Lazily read direct H3 members without placing them in a map payload.
+
+    H3 retains one membership observation per artist and does not retain a
+    source popularity score.  A nullable source-local rank is honored when a
+    future source supplies it; otherwise this is only a stable display order,
+    not a popularity or representative claim.
+    """
+    bounded_limit = min(max(limit, 1), 100)
+    database = Database(database_path)
+    database.initialize()
+    with database.connect() as connection:
+        rows = connection.execute(
+            """SELECT observation.id, observation.source_artist_id,
+                      observation.source_artist_name, observation.source_local_rank
+               FROM displayable_historical_genre_artists AS observation
+               JOIN rights_policies AS policy ON policy.id = observation.policy_id
+               WHERE observation.observation_role = 'genre_page_member'
+                 AND observation.source_artifact_sha256 = ?
+                 AND policy.policy_key = ?
+                 AND observation.genre_id = ?
+               ORDER BY observation.source_local_rank IS NULL,
+                        observation.source_local_rank,
+                        observation.source_artist_name COLLATE NOCASE,
+                        observation.source_artist_id,
+                        observation.id
+               LIMIT ?""",
+            (source_sha256, policy_key, genre_id, bounded_limit),
+        ).fetchall()
+    return HistoricalGenreMembers(
+        genre_id=genre_id,
+        members=tuple(
+            HistoricalGenreMember(
+                source_artist_id=str(row[1]),
+                source_artist_name=str(row[2]),
+                rank=rank,
+                source_local_rank=None if row[3] is None else int(row[3]),
+                evidence_ref=f"historical:genre-artist:{int(row[0])}",
+            )
+            for rank, row in enumerate(rows, start=1)
+        ),
     )

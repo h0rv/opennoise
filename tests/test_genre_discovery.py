@@ -16,6 +16,7 @@ from musix.genre_discovery import (
     import_historical_genre_memberships,
     import_historical_representatives,
     query_displayable_historical_artist_genres,
+    query_displayable_historical_genre_members,
     query_displayable_historical_genre_memberships,
 )
 from musix.ingest import ImportOptions, import_jsonl
@@ -87,7 +88,7 @@ class GenreDiscoveryTests(unittest.TestCase):
         self.assertNotIn('"track_id":', rendered)
         self.assertNotIn("p.scdn.co", rendered)
 
-    def test_genre_membership_import_is_local_only_and_idempotent(self) -> None:
+    def test_genre_membership_import_is_local_only_and_idempotent(self) -> None:  # noqa: PLR0915
         h2_raw = (
             b'<div id=item1 class="genre scanme" style="color: #ad8907; top: 4997px; '
             b'left: 783px; font-size: 160%" '
@@ -187,6 +188,13 @@ class GenreDiscoveryTests(unittest.TestCase):
                 policy_key=display_enabled.policy_key,
                 source_artist_id="06HL4z0CvFAxyc27GXpf02",
             )
+            members = query_displayable_historical_genre_members(
+                database_path,
+                source_sha256=h3_source.sha256,
+                policy_key=display_enabled.policy_key,
+                genre_id=1,
+                limit=6,
+            )
             connection = sqlite3.connect(database_path)
             try:
                 policy = connection.execute(
@@ -221,6 +229,12 @@ class GenreDiscoveryTests(unittest.TestCase):
             if inverse is not None:
                 self.assertEqual(inverse.genre_names, ("pop",))
                 self.assertEqual(inverse.state, "derived_partial")
+            self.assertEqual(members.genre_id, 1)
+            self.assertEqual(len(members.members), 1)
+            self.assertEqual(members.members[0].source_artist_name, "Taylor Swift")
+            self.assertEqual(members.members[0].rank, 1)
+            self.assertIsNone(members.members[0].source_local_rank)
+            self.assertTrue(members.members[0].evidence_ref.startswith("historical:"))
 
     def test_representative_import_is_idempotent_and_policy_safe(self) -> None:
         raw = (
