@@ -193,7 +193,7 @@ class ProductionMapQaTests(unittest.TestCase):
                 ProductionMapEligibleSet(
                     query_entity_id=f"genre:{index:02d}",
                     eligible_candidate_count=29 if index % 2 == 0 else 18,
-                    reference_neighbor_count=10 if index % 2 == 0 else 7,
+                    reference_neighbor_count=0 if index % 3 == 0 else 10 if index % 2 == 0 else 7,
                     eligible_candidate_ids_sha256=sha256(f"variable:{index}".encode()).hexdigest(),
                 )
                 for index in range(30)

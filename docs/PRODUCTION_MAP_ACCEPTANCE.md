@@ -24,8 +24,8 @@ and blocks publication.
   labels and 3% of mobile labels may touch another shown label.
 - One-hop weighted-Jaccard neighbor recall is measured against a hashed source
   model over every mapped genre. The artifact records one hashed, variable
-  eligible-candidate set for every query, its source-neighbor count, and the
-  versioned eligibility rule. Candidate and canonical spectral baseline must
+  eligible-candidate set for every query, including zero-source-neighbor rows,
+  its source-neighbor count, and the versioned eligibility rule. Candidate and canonical spectral baseline must
   use the same source-model, neighbor, and eligible-set hashes. The random null
   is recomputed from those per-query pools, never supplied as an ungrounded
   global percentage. The candidate retains at least 98% of the baseline's
