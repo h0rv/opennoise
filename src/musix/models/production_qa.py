@@ -108,12 +108,12 @@ class ProductionMapEligibleSet(FrozenModel):
 
     query_entity_id: str = Field(min_length=1, max_length=200)
     eligible_candidate_count: int = Field(ge=1, le=19_999)
-    reference_neighbor_count: int = Field(ge=1, le=10)
+    reference_neighbor_count: int = Field(ge=0, le=10)
     eligible_candidate_ids_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
     @model_validator(mode="after")
     def require_reference_neighbors_within_eligible_pool(self) -> ProductionMapEligibleSet:
-        """Reject source neighbors the layout could not retrieve."""
+        """Reject source-neighbor claims outside the layout's eligible pool."""
         if self.reference_neighbor_count > self.eligible_candidate_count:
             raise ValueError("reference neighbor count exceeds the eligible candidate pool")
         return self
