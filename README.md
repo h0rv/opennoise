@@ -24,6 +24,12 @@ uv run poe format
 uv run poe check
 ```
 
+`poe test` creates ignored `.cache/test-tmp` and `.cache/uv` directories so test
+artifacts and uv downloads can be reused without depending on a small shared
+`/tmp`. Litestar's synchronous `TestClient` uses a cross-thread AnyIO portal.
+It works in a normal local shell; restricted execution sandboxes that block
+cross-thread event-loop wakeups cannot run it, independent of the app lifecycle.
+
 Useful tasks include `format`, `lint`, `typecheck`, `test`, `schema`, `bootstrap`,
 `ingest-musicbrainz-artists`, `ingest-listenbrainz`, `dev`, and `check`.
 
