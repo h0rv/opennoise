@@ -98,6 +98,8 @@ validate-public-graph = "python scripts/validate_public_graph.py"
 verify-phase3-release-manifest = "python scripts/verify_phase3_release_manifest.py"
 ui-qa = "python scripts/render_ui_qa.py"
 evaluate-production-map = "python scripts/evaluate_production_map.py"
+build-historical-compatibility = "python scripts/build_historical_compatibility.py"
+evaluate-historical-compatibility = "python scripts/evaluate_historical_compatibility.py"
 
 [tool.poe.tasks.build-public-release]
 sequence = [
