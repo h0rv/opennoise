@@ -9,15 +9,18 @@ a source, or reads audio or music files. It needs the ignored local cache at
 First, the command verifies the cache against the checked in Phase 3 manifest.
 The cache stays at schema 10. Next, it copies the verified cache to a serving
 database and applies schema 11. Finally, it rebuilds the public graph and
-checks the input, settings, and logical output hashes.
+checks the input, settings, and logical output hashes. It then builds
+`production-map-v1.json` from that verified database and model.
 
-The command writes three derived outputs:
+The command writes four derived outputs:
 
 - `data/public.sqlite` is the serving database. It includes names, layouts,
   representatives, profile memberships, neighbor rows, and their evidence.
 - `data/model/phase3-public-model.json` is the rebuilt model artifact.
 - `data/release/phase3-public-receipt.json` records the cache, model, schema,
   and row count hashes used for the build.
+- `data/model/production-map-v1.json` is the production map artifact. The app
+  reads it only when `MUSIX_PRODUCTION_MAP_PATH` names this file.
 
 The model's logical hash is reproducible. The command records the model file
 hash but does not use it as a rebuild check. The old file contains elapsed time

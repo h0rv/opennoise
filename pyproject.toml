@@ -100,7 +100,10 @@ ui-qa = "python scripts/render_ui_qa.py"
 evaluate-production-map = "python scripts/evaluate_production_map.py"
 
 [tool.poe.tasks.build-public-release]
-cmd = "python scripts/build_public_release.py"
+sequence = [
+    { cmd = "python scripts/build_public_release.py" },
+    { cmd = "python scripts/build_production_map.py --database data/public.sqlite --source-model data/model/phase3-public-model.json --output data/model/production-map-v1.json" },
+]
 
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]

@@ -76,7 +76,7 @@ class _Inspector(HTMLParser):
             self.main_count += 1
         if values.get("role") == "search":
             self.search_count += 1
-        if tag == "svg" and values.get("role") == "group" and values.get("aria-label"):
+        if tag == "svg" and values.get("role") in {"group", "img"} and values.get("aria-label"):
             self.named_svg_count += 1
         if tag in {"a", "button", "input", "select", "textarea"} or "tabindex" in values:
             self.focusable_count += 1
@@ -156,11 +156,11 @@ def inspect_fixture(html: str) -> UiInspection:
         raise ValueError("fixture requires one main, search landmark, and named SVG")
     required_ids = (
         "workspace",
-        "layout-lenses",
-        "map-zoom",
         "map",
-        "map-canvas",
+        "semantic-map",
         "plot",
+        "map-controls",
+        "map-status",
         "search",
         "query",
         "results",
