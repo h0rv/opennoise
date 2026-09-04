@@ -10,9 +10,9 @@ the rest remain explicitly `Other / unplaced`.  The lower hierarchy is then grap
 family: induced H3 graph regions are bounded to 64 members, then split to microgenres of at most 24.
 Names never affect the H3 kNN graph, edge weights, layout, or lower-level clustering.
 
-The final in-process deterministic build reports complete hierarchy coverage, 13 umbrellas, 142
-subcommunities, and 498 microgenres.  Weighted union-H3 edge retention at those levels is
-0.689795697233, 0.385059887198, and 0.280562987003 respectively.  Every family with more than 64
+The final in-process deterministic build reports complete hierarchy coverage, 13 umbrellas, 132
+subcommunities, and 496 microgenres.  Weighted union-H3 edge retention at those levels is
+0.690000147561, 0.390932068948, and 0.283401074343 respectively.  Every family with more than 64
 members has at least two level-one drill-down cohorts.  The largest microgenre has 24 members and each
 overview region is no larger than 3,000 members.  Level-one labels prefer an explicit lexical seed that
 matches their display-family parent whenever that cohort contains one, before applying deterministic

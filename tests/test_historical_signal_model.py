@@ -31,7 +31,13 @@ class HistoricalSignalModelTests(unittest.TestCase):
         self.assertEqual(_genre_family_seed("black metal"), "Metal")
         self.assertEqual(_genre_family_seed("boom bap"), "Hip-hop")
         self.assertEqual(_genre_family_seed("carnatic"), "Global & traditional")
+        self.assertEqual(_genre_family_seed("indian classical"), "Global & traditional")
         self.assertEqual(_genre_family_seed("salsa"), "Latin & Caribbean")
+        self.assertEqual(_genre_family_seed("persian hip hop"), "Hip-hop")
+        self.assertEqual(_genre_family_seed("south african jazz"), "Jazz")
+        self.assertEqual(_genre_family_seed("latin rock"), "Rock")
+        self.assertEqual(_genre_family_seed("baroque pop"), "Pop")
+        self.assertEqual(_genre_family_seed("classical drill"), "Hip-hop")
 
     def test_level_one_representative_prefers_matching_family_seed(self) -> None:
         """A graph-central unseeded label must not disguise its lexical parent family."""

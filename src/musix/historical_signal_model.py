@@ -761,16 +761,16 @@ def _genre_family_seed(name: str) -> str | None:
     """Return an explicit broad display-family seed from one genre's own name only."""
     value = name.casefold()
     words = set(re.findall(r"[a-z0-9]+", value))
-    if words & {"salsa", "reggaeton", "bachata", "merengue", "cumbia", "samba", "bossa", "norteno"} or "latin" in words:
+    # Style heads take precedence over regional modifiers: ``persian hip hop`` is Hip-hop,
+    # not a generic global region, while named Latin styles remain Latin & Caribbean.
+    if words & {"salsa", "reggaeton", "bachata", "merengue", "cumbia", "samba", "bossa", "norteno"}:
         return "Latin & Caribbean"
-    if words & {"indian", "hindustani", "carnatic", "african", "arabic", "persian", "kurdish"}:
+    if words & {"indian", "hindustani", "carnatic"}:
         return "Global & traditional"
-    if re.search(r"\bhip[ -]hop\b|\btrap\b|\bboom bap\b|\brap\b", value):
+    if re.search(r"\bhip[ -]hop\b|\btrap\b|\bboom bap\b|\brap\b|\bdrill\b", value):
         return "Hip-hop"
     if "metal" in words:
         return "Metal"
-    if "classical" in words or "baroque" in words or "romantic" in words:
-        return "Classical"
     if "jazz" in words or "bebop" in words:
         return "Jazz"
     if words & {"house", "techno", "edm", "electro", "electronic", "idm", "ambient", "industrial"}:
@@ -785,6 +785,12 @@ def _genre_family_seed(name: str) -> str | None:
         return "Rock"
     if "pop" in words or "kpop" in words or "jpop" in words:
         return "Pop"
+    if "classical" in words or "baroque" in words or "romantic" in words:
+        return "Classical"
+    if "latin" in words:
+        return "Latin & Caribbean"
+    if words & {"african", "arabic", "persian", "kurdish"}:
+        return "Global & traditional"
     return None
 
 
