@@ -25,7 +25,8 @@ if TYPE_CHECKING:
     from musix.models.production import ProductionMapArtifact
 
 _ELIGIBILITY_RULE_VERSION = "all-mapped-genres-except-query-v1"
-_METRIC = "one_hop_weighted_jaccard"
+_PROFILE_KIND = "one_hop"
+_SIMILARITY_METRIC = "weighted_jaccard"
 _MAX_REPORTED_NEIGHBORS = 25
 
 
@@ -85,8 +86,8 @@ def _source_neighbors(
     records: list[dict[str, object]] = []
     for item in source_model.neighbors:
         if (
-            item.profile_kind != "one_hop"
-            or item.metric != _METRIC
+            item.profile_kind != _PROFILE_KIND
+            or item.metric != _SIMILARITY_METRIC
             or item.rank > limit
             or item.genre_id not in mapped_ids
             or item.neighbor_genre_id not in mapped_ids
@@ -125,8 +126,8 @@ def _neighbor_hash(source_model: PublicModelArtifact, mapped_ids: set[str]) -> s
             "shared_artist_count": item.shared_artist_count,
         }
         for item in source_model.neighbors
-        if item.profile_kind == "one_hop"
-        and item.metric == _METRIC
+        if item.profile_kind == _PROFILE_KIND
+        and item.metric == _SIMILARITY_METRIC
         and item.rank <= _MAX_REPORTED_NEIGHBORS
         and item.genre_id in mapped_ids
         and item.neighbor_genre_id in mapped_ids
