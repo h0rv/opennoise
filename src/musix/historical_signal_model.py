@@ -5,8 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import sqlite3
-from collections import defaultdict, deque
+from collections import Counter, defaultdict, deque
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -232,13 +233,22 @@ def _knn(
 
 
 def _weighted_graph(
-    genre_ids: tuple[str, ...], neighbors: Iterable[HistoricalSignalNeighbor]
+    genre_ids: tuple[str, ...],
+    neighbors: Iterable[HistoricalSignalNeighbor],
+    *,
+    reciprocal: bool = False,
 ) -> list[dict[int, float]]:
     index = {genre_id: position for position, genre_id in enumerate(genre_ids)}
-    graph: list[dict[int, float]] = [{} for _ in genre_ids]
+    directed: dict[tuple[int, int], float] = {}
     for edge in neighbors:
         left, right = index[edge.genre_id], index[edge.neighbor_genre_id]
-        weight = float(edge.weighted_jaccard)
+        directed[(left, right)] = max(
+            directed.get((left, right), 0.0), float(edge.weighted_jaccard)
+        )
+    graph: list[dict[int, float]] = [{} for _ in genre_ids]
+    for (left, right), weight in sorted(directed.items()):
+        if reciprocal and (right, left) not in directed:
+            continue
         graph[left][right] = max(graph[left].get(right, 0.0), weight)
         graph[right][left] = max(graph[right].get(left, 0.0), weight)
     return graph
@@ -411,32 +421,319 @@ def _hierarchy_centroid(group: _HierarchyGroup, positions: np.ndarray) -> tuple[
     return round(float(centroid[0] * _ASPECT), 12), round(float(centroid[1]), 12)
 
 
+def _contract_groups(
+    graph: list[dict[int, float]], groups: tuple[_HierarchyGroup, ...]
+) -> list[dict[int, float]]:
+    """Contract a partition while retaining internal weight as deterministic self-loops."""
+    owner = {member: ordinal for ordinal, group in enumerate(groups) for member in group.members}
+    contracted: list[dict[int, float]] = [defaultdict(float) for _group in groups]
+    for left, neighbors in enumerate(graph):
+        for right, weight in neighbors.items():
+            if right < left:
+                continue
+            left_group, right_group = owner[left], owner[right]
+            if left == right:
+                contracted[left_group][left_group] += weight
+            elif left_group == right_group:
+                contracted[left_group][left_group] += 2.0 * weight
+            else:
+                contracted[left_group][right_group] += weight
+                contracted[right_group][left_group] += weight
+    return [dict(neighbors) for neighbors in contracted]
+
+
+def _modularity_groups(
+    graph: list[dict[int, float]],
+    groups: tuple[_HierarchyGroup, ...],
+    genre_ids: tuple[str, ...],
+    *,
+    seed: int,
+    resolution: float = 1.0,
+) -> tuple[_HierarchyGroup, ...]:
+    """Perform deterministic positive modularity moves on a weighted sparse graph."""
+    labels = list(range(len(groups)))
+    degree = [sum(neighbors.values()) for neighbors in graph]
+    total_weight_twice = sum(degree)
+    if total_weight_twice == 0.0:
+        return groups
+    totals = degree.copy()
+    order = sorted(
+        range(len(groups)),
+        key=lambda ordinal: hashlib.sha256(
+            f"{seed}\0{','.join(genre_ids[item] for item in groups[ordinal].members)}".encode()
+        ).hexdigest(),
+    )
+    for _iteration in range(80):
+        changed = False
+        for item in order:
+            current = labels[item]
+            totals[current] -= degree[item]
+            scores: dict[int, float] = defaultdict(float)
+            for neighbor, weight in graph[item].items():
+                if neighbor != item:
+                    scores[labels[neighbor]] += weight
+            scores[current] += 0.0
+            current_score = scores[current] - resolution * degree[item] * totals[current] / total_weight_twice
+            candidate = min(
+                scores,
+                key=lambda label: (
+                    -(scores[label] - resolution * degree[item] * totals[label] / total_weight_twice),
+                    label,
+                ),
+            )
+            candidate_score = (
+                scores[candidate]
+                - resolution * degree[item] * totals[candidate] / total_weight_twice
+            )
+            if candidate_score <= current_score + 1e-15:
+                candidate = current
+            totals[candidate] += degree[item]
+            changed = changed or candidate != current
+            labels[item] = candidate
+        if not changed:
+            break
+    members: dict[int, list[int]] = defaultdict(list)
+    for ordinal, label in enumerate(labels):
+        members[label].extend(groups[ordinal].members)
+    return tuple(
+        _HierarchyGroup(tuple(sorted(group_members)))
+        for group_members in sorted(
+            members.values(), key=lambda value: tuple(genre_ids[item] for item in sorted(value))
+        )
+    )
+
+
+def _natural_subcommunities(
+    graph: list[dict[int, float]], genre_ids: tuple[str, ...], seed: int
+) -> tuple[_HierarchyGroup, ...]:
+    """Resolve reciprocal H3 affinity before any name-derived coarse grouping."""
+    groups = tuple(_HierarchyGroup((member,)) for member in range(len(graph)))
+    current_graph = graph
+    for round_ordinal in range(4):
+        moved = _modularity_groups(
+            current_graph, groups, genre_ids, seed=seed + round_ordinal
+        )
+        if len(moved) == len(groups):
+            break
+        current_graph = _contract_groups(current_graph, moved)
+        groups = moved
+    return groups
+
+
+def _lexical_meta_graph(
+    groups: tuple[_HierarchyGroup, ...], names: Mapping[str, str], genre_ids: tuple[str, ...]
+) -> list[dict[int, float]]:
+    """Build sparse TF-IDF word/character lexical affinity without all-pairs comparison."""
+    token_counts: list[dict[str, float]] = []
+    document_frequency: dict[str, int] = defaultdict(int)
+    for group in groups:
+        counts: dict[str, float] = defaultdict(float)
+        for member in group.members:
+            for word in re.findall(r"[a-z0-9]+", names[genre_ids[member]].casefold()):
+                if len(word) < 3:
+                    continue
+                counts[f"word:{word}"] += 1.0
+                if len(word) >= 4:
+                    for start in range(len(word) - 2):
+                        counts[f"char:{word[start:start + 3]}"] += 0.2
+        token_counts.append(dict(counts))
+        for token in counts:
+            document_frequency[token] += 1
+    inverted: dict[str, list[tuple[int, float]]] = defaultdict(list)
+    norms: list[float] = []
+    for ordinal, counts in enumerate(token_counts):
+        weighted: dict[str, float] = {}
+        for token, count in counts.items():
+            frequency = document_frequency[token]
+            if frequency > 64:
+                continue
+            weighted[token] = count * (math.log((len(groups) + 1) / (frequency + 1)) + 1.0)
+        norms.append(math.sqrt(sum(value * value for value in weighted.values())))
+        for token, value in weighted.items():
+            inverted[token].append((ordinal, value))
+    dot_products: dict[tuple[int, int], float] = defaultdict(float)
+    for entries in inverted.values():
+        for offset, (left, left_weight) in enumerate(entries):
+            for right, right_weight in entries[offset + 1 :]:
+                dot_products[(left, right)] += left_weight * right_weight
+    graph: list[dict[int, float]] = [{} for _group in groups]
+    for (left, right), dot_product in sorted(dot_products.items()):
+        denominator = norms[left] * norms[right]
+        similarity = dot_product / denominator if denominator else 0.0
+        if similarity >= 0.02:
+            graph[left][right] = similarity
+            graph[right][left] = similarity
+    return graph
+
+
+def _normalized_meta_graph(
+    graph: list[dict[int, float]], groups: tuple[_HierarchyGroup, ...]
+) -> list[dict[int, float]]:
+    """Use the union H3 graph between natural communities, normalised by their sizes."""
+    owner = {member: ordinal for ordinal, group in enumerate(groups) for member in group.members}
+    raw: list[dict[int, float]] = [defaultdict(float) for _group in groups]
+    for left, neighbors in enumerate(graph):
+        for right, weight in neighbors.items():
+            if right <= left or owner[left] == owner[right]:
+                continue
+            raw[owner[left]][owner[right]] += weight
+            raw[owner[right]][owner[left]] += weight
+    normalized: list[dict[int, float]] = [{} for _group in groups]
+    for left, neighbors in enumerate(raw):
+        for right, weight in neighbors.items():
+            if right <= left:
+                continue
+            denominator = math.sqrt(groups[left].member_count * groups[right].member_count)
+            normalized[left][right] = weight / denominator
+            normalized[right][left] = normalized[left][right]
+    return normalized
+
+
+def _coarse_umbrellas(
+    union_graph: list[dict[int, float]],
+    natural: tuple[_HierarchyGroup, ...],
+    names: Mapping[str, str],
+    genre_ids: tuple[str, ...],
+    seed: int,
+) -> tuple[_HierarchyGroup, ...]:
+    """Coarsen natural H3 communities with sparse lexical affinity for honest display regions."""
+    graph = _normalized_meta_graph(union_graph, natural)
+    lexical = _lexical_meta_graph(natural, names, genre_ids)
+    for left, neighbors in enumerate(lexical):
+        for right, weight in neighbors.items():
+            graph[left][right] = graph[left].get(right, 0.0) + 0.8 * weight
+    coarse = _modularity_groups(graph, natural, genre_ids, seed=seed, resolution=1.5)
+    # Groups with no union or lexical affinity have no semantic parent evidence.  They are one
+    # explicitly disconnected display region, never a claimed taxonomy or balanced bin.
+    linked_members = {member for neighbors in graph for member in neighbors}
+    disconnected = tuple(group for ordinal, group in enumerate(natural) if ordinal not in linked_members)
+    if len(disconnected) > 1:
+        disconnected_members = {member for group in disconnected for member in group.members}
+        retained = tuple(
+            group for group in coarse if not set(group.members).issubset(disconnected_members)
+        )
+        coarse = retained + (_HierarchyGroup(tuple(sorted(disconnected_members))),)
+    # Re-evaluate the resulting meta communities from their original sparse signals.  This is
+    # multilevel modularity coarsening, not balanced packing: every merge remains a positive
+    # affinity/modularity move on the freshly contracted evidence graph.
+    for round_ordinal in range(4):
+        meta = _normalized_meta_graph(union_graph, coarse)
+        lexical = _lexical_meta_graph(coarse, names, genre_ids)
+        for left, neighbors in enumerate(lexical):
+            for right, weight in neighbors.items():
+                meta[left][right] = meta[left].get(right, 0.0) + 0.8 * weight
+        moved = _modularity_groups(meta, coarse, genre_ids, seed=seed + round_ordinal + 1, resolution=1.5)
+        if len(moved) == len(coarse):
+            break
+        coarse = moved
+    return tuple(sorted(coarse, key=lambda group: tuple(genre_ids[item] for item in group.members)))
+
+
+def _display_family(group: _HierarchyGroup, names: Mapping[str, str], genre_ids: tuple[str, ...]) -> str | None:
+    """Choose a broad, source-name-derived display family for an H3 natural community."""
+    words = [
+        word
+        for member in group.members
+        for word in re.findall(r"[a-z0-9]+", names[genre_ids[member]].casefold())
+    ]
+    counts = Counter(words)
+    latin_families = {
+        "Latin & Caribbean — salsa": ("salsa", "reggaeton", "bachata", "merengue", "cumbia"),
+        "Latin & Caribbean — samba": ("samba", "bossa"),
+        "Latin & Caribbean — regional Mexican": ("norteno",),
+        "Latin & Caribbean": ("latin",),
+    }
+    latin_scores = {
+        family: sum(counts[word] for word in family_words)
+        for family, family_words in latin_families.items()
+    }
+    _latin_label, latin_hits = min(latin_scores.items(), key=lambda item: (-item[1], item[0]))
+    global_hits = sum(
+        counts[word]
+        for word in ("indian", "hindustani", "carnatic", "african", "arabic", "turkish", "kurdish", "persian")
+    )
+    if latin_hits >= 2:
+        return "Latin & Caribbean"
+    if global_hits >= 2:
+        return "Global & traditional"
+    hip_hop_hits = sum(
+        bool(re.search(r"\bhip[ -]hop\b|\brap\b", names[genre_ids[member]].casefold()))
+        for member in group.members
+    )
+    scores = {
+        "Hip-hop": hip_hop_hits,
+        "Metal": counts["metal"],
+        "Jazz": counts["jazz"],
+        "Classical": counts["classical"] + counts["classique"],
+        "Electronic": sum(counts[word] for word in ("house", "techno", "edm", "electro", "electronic", "idm")),
+        "Rock": counts["rock"],
+        "Pop": counts["pop"],
+        "Latin & Caribbean": latin_hits,
+        "Global & traditional": global_hits,
+        "Reggae": counts["reggae"] + counts["dancehall"],
+        "Folk & country": counts["folk"] + counts["country"],
+        "Blues": counts["blues"],
+    }
+    label, score = min(scores.items(), key=lambda item: (-item[1], item[0]))
+    return label if score >= 2 else None
+
+
+def _semantic_umbrellas(
+    union_graph: list[dict[int, float]],
+    natural: tuple[_HierarchyGroup, ...],
+    names: Mapping[str, str],
+    genre_ids: tuple[str, ...],
+    seed: int,
+) -> tuple[tuple[_HierarchyGroup, ...], dict[tuple[int, ...], str]]:
+    """Preserve natural H3 groups while using explicit observed name heads for overview families."""
+    by_family: dict[str, list[int]] = defaultdict(list)
+    unresolved: list[_HierarchyGroup] = []
+    for group in natural:
+        family = _display_family(group, names, genre_ids)
+        if family is None:
+            unresolved.append(group)
+        else:
+            by_family[family].extend(group.members)
+    labels = {tuple(sorted(members)): family for family, members in by_family.items()}
+    coarse: list[_HierarchyGroup] = []
+    # Residual natural communities have no repeated broad lexical head.  Their sole overview
+    # parent is an explicitly non-taxonomic Other region, not a fabricated semantic family.
+    if unresolved:
+        other = _HierarchyGroup(tuple(sorted(member for group in unresolved for member in group.members)))
+        coarse.append(other)
+        labels[other.members] = "Other / unplaced"
+    umbrellas = tuple(
+        _HierarchyGroup(tuple(sorted(members))) for members in by_family.values()
+    ) + tuple(coarse)
+    return (
+        tuple(sorted(umbrellas, key=lambda group: tuple(genre_ids[item] for item in group.members))),
+        labels,
+    )
+
+
 def _graph_hierarchy(
     graph: list[dict[int, float]],
+    reciprocal_graph: list[dict[int, float]],
     genre_ids: tuple[str, ...],
     names: Mapping[str, str],
     positions: np.ndarray,
     settings: HistoricalSignalSettings,
 ) -> tuple[tuple[HistoricalSignalHierarchyNode, ...], dict[int, tuple[str, str, str]]]:
-    """Emit three bounded graph-derived levels for umbrella, subcommunity, and microgenre zoom."""
-    umbrellas = _partition_graph(
-        tuple(range(len(genre_ids))),
-        graph,
-        genre_ids,
-        settings.hierarchy_umbrella_max_members,
-        positions,
+    """Emit H3 natural communities below lexically coarsened evidence-derived regions."""
+    natural = _natural_subcommunities(reciprocal_graph, genre_ids, settings.embedding_seed)
+    umbrellas, display_labels = _semantic_umbrellas(
+        graph, natural, names, genre_ids, settings.embedding_seed
     )
     hierarchy: list[HistoricalSignalHierarchyNode] = []
     assignments: dict[int, tuple[str, str, str]] = {}
     for umbrella_ordinal, umbrella in enumerate(umbrellas):
         umbrella_id = f"graph:umbrella:{umbrella_ordinal:03d}"
-        subcommunities = _partition_graph(
-            umbrella.members,
-            graph,
-            genre_ids,
-            settings.hierarchy_subcommunity_max_members,
-            positions,
+        umbrella_members = set(umbrella.members)
+        subcommunities = tuple(
+            group for group in natural if set(group.members).issubset(umbrella_members)
         )
+        if not subcommunities:
+            raise ValueError("every lexical umbrella must retain at least one natural subcommunity")
         subcommunity_ids = tuple(
             f"{umbrella_id}:sub:{subcommunity_ordinal:03d}"
             for subcommunity_ordinal in range(len(subcommunities))
@@ -451,9 +748,12 @@ def _graph_hierarchy(
                 member_count=umbrella.member_count,
                 component_count=_hierarchy_component_count(umbrella, graph),
                 representative_genre_id=genre_ids[umbrella_representative],
-                representative_label=names[genre_ids[umbrella_representative]],
+                representative_label=display_labels.get(
+                    umbrella.members, names[genre_ids[umbrella_representative]]
+                ),
                 x=umbrella_x,
                 y=umbrella_y,
+                provenance="graph_and_genre_name_derived",
                 connectivity=(
                     "connected"
                     if _hierarchy_component_count(umbrella, graph) == 1
@@ -465,7 +765,7 @@ def _graph_hierarchy(
             subcommunity_id = subcommunity_ids[subcommunity_ordinal]
             microgenres = _partition_graph(
                 subcommunity.members,
-                graph,
+                reciprocal_graph,
                 genre_ids,
                 settings.hierarchy_microgenre_max_members,
                 positions,
@@ -892,6 +1192,7 @@ def build_historical_signal_model(
     candidates, artist_degrees = _idf_candidates(memberships, resolved_settings)
     neighbors = _knn(genre_ids, candidates, resolved_settings)
     graph = _weighted_graph(genre_ids, neighbors)
+    reciprocal_graph = _weighted_graph(genre_ids, neighbors, reciprocal=True)
     components = _components(graph)
     if resolved_settings.embedding_method == "anchored_diffusion":
         positions = _embed(genre_ids, graph, resolved_settings)
@@ -900,7 +1201,7 @@ def build_historical_signal_model(
         if resolved_settings.embedding_method == "spectral_force_refined":
             positions = _spectral_force_refine(positions, graph, resolved_settings.embedding_seed)
     hierarchy, hierarchy_assignments = _graph_hierarchy(
-        graph, genre_ids, names, positions, resolved_settings
+        graph, reciprocal_graph, genre_ids, names, positions, resolved_settings
     )
     umbrella_ids = tuple(item.hierarchy_id for item in hierarchy if item.level == 0)
     umbrella_positions = {
@@ -975,13 +1276,18 @@ def build_historical_signal_model(
             role="active",
             detail=(
                 "Weighted Jaccard/cosine over direct genre-to-artist memberships; the retained "
-                "kNN graph also produces graph-derived zoom hierarchy groups."
+                "kNN graph produces layout, similarity, and the natural subcommunity/microgenre "
+                "levels of the zoom hierarchy."
             ),
         ),
         HistoricalSignalAblation(
-            name="name_and_taxonomy",
-            role="disabled_auxiliary",
-            detail="Not used for candidate generation, communities, or coordinates.",
+            name="genre_name_display_taxonomy",
+            role="active",
+            detail=(
+                "Sparse TF-IDF word and character affinity is used only to coarsen reciprocal-H3 "
+                "natural communities into level-0 display regions; it never changes H3 kNN, "
+                "similarity weights, layout coordinates, or lower hierarchy levels."
+            ),
         ),
         HistoricalSignalAblation(
             name="h2_legacy_coordinates",

@@ -12,7 +12,7 @@ _SUBCOMMUNITY_LEVEL = 1
 _MICROGENRE_LEVEL = 2
 _MIN_COMPONENTS_IN_BUNDLE = 2
 _FULL_NODE_COUNT = 6_291
-_MIN_FULL_UMBRELLAS = 18
+_MIN_FULL_UMBRELLAS = 2
 _MAX_FULL_UMBRELLAS = 24
 HISTORICAL_FULL_MAP_NODE_TARGET = _FULL_NODE_COUNT
 
@@ -36,9 +36,9 @@ class HistoricalSignalSettings(FrozenModel):
     embedding_seed: int = Field(default=20260904, ge=0)
     evaluation_neighbor_count: int = Field(default=10, ge=1, le=50)
     evaluation_pair_sample: int = Field(default=50_000, ge=1_000, le=500_000)
-    # 350 members targets 18 umbrellas for the 6,291-node retained vocabulary.
-    hierarchy_umbrella_max_members: int = Field(default=350, ge=32, le=2_000)
-    hierarchy_subcommunity_max_members: int = Field(default=96, ge=8, le=512)
+    # Umbrellas are evidence-derived regions; browser response limits cap aggregate results, not leaves.
+    hierarchy_umbrella_max_members: int = Field(default=3_000, ge=32, le=3_000)
+    hierarchy_subcommunity_max_members: int = Field(default=512, ge=8, le=512)
     hierarchy_microgenre_max_members: int = Field(default=24, ge=2, le=128)
 
     @model_validator(mode="after")
@@ -145,7 +145,9 @@ class HistoricalSignalHierarchyNode(FrozenModel):
     representative_label: str = Field(min_length=1, max_length=500)
     x: FiniteFloat = Field(ge=0.0, le=2.0)
     y: FiniteFloat = Field(ge=0.0, le=1.0)
-    provenance: Literal["graph_derived_h3_similarity"] = "graph_derived_h3_similarity"
+    provenance: Literal[
+        "graph_derived_h3_similarity", "graph_and_genre_name_derived"
+    ] = "graph_derived_h3_similarity"
     connectivity: Literal["connected", "disconnected_bundle"] = "connected"
 
     @model_validator(mode="after")
@@ -364,7 +366,7 @@ class HistoricalSignalArtifact(FrozenModel):
             self.inputs.genre_count == _FULL_NODE_COUNT
             and not _MIN_FULL_UMBRELLAS <= umbrellas <= _MAX_FULL_UMBRELLAS
         ):
-            raise ValueError("6,291-node historical hierarchy must contain 18 to 24 umbrellas")
+            raise ValueError("6,291-node historical hierarchy must contain 2 to 24 umbrellas")
         return self
 
 
