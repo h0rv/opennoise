@@ -166,7 +166,8 @@
   const labelCandidates = (cy, overview, lod) => cy.nodes().filter((node) => overview
     ? Boolean(node.data("overview"))
     : !node.data("overview") && Number(node.data("lodMin")) <= lod).sort((left, right) => (
-    Number(right.data("weight")) - Number(left.data("weight"))
+    Number(right === selectedNode) - Number(left === selectedNode)
+    || Number(right.data("weight")) - Number(left.data("weight"))
     || String(left.data("label")).localeCompare(String(right.data("label")))
   ));
 
@@ -236,11 +237,16 @@
     say(statusMessage(payload, lod));
   };
 
-  const selectGenre = (cy, node) => {
+  const selectGenre = (cy, node, payload) => {
     cy.$(":selected").unselect();
     node.select();
     selectedNode = node;
     setVisibleEdges(cy);
+    setCollisionFreeLabels(
+      cy,
+      currentLod,
+      currentLod === 0 && getOverviewCommunities(payload).length > 0,
+    );
     const detailHref = node.data("detailHref");
     if (detailHref && window.htmx) {
       // The graph owns its persistent canvas. Keep HTMX history from restoring
@@ -280,7 +286,7 @@
       updateLod(cy, payload);
       cy.on("zoom", () => updateLod(cy, payload));
       cy.on("pan", () => updateLod(cy, payload));
-      cy.on("tap", "node", (event) => selectGenre(cy, event.target));
+      cy.on("tap", "node", (event) => selectGenre(cy, event.target, payload));
       cy.on("tap", (event) => {
         if (event.target === cy) {
           cy.$(":selected").unselect();
