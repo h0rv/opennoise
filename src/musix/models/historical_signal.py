@@ -12,7 +12,12 @@ class HistoricalSignalSettings(FrozenModel):
     """Fixed public-signal configuration; no legacy coordinates are model inputs."""
 
     revision: Literal["historical-signal-v1"] = "historical-signal-v1"
-    method: Literal["idf_membership_knn_diffusion_v1"] = "idf_membership_knn_diffusion_v1"
+    method: Literal["idf_membership_knn_diffusion_v1", "idf_membership_knn_spectral_v1"] = (
+        "idf_membership_knn_diffusion_v1"
+    )
+    embedding_method: Literal["anchored_diffusion", "normalized_laplacian_spectral"] = (
+        "anchored_diffusion"
+    )
     neighbors_per_genre: int = Field(default=20, ge=2, le=50)
     maximum_artist_genre_degree: int = Field(default=32, ge=2, le=1_000)
     label_propagation_iterations: int = Field(default=30, ge=1, le=200)
@@ -20,6 +25,18 @@ class HistoricalSignalSettings(FrozenModel):
     embedding_seed: int = Field(default=20260904, ge=0)
     evaluation_neighbor_count: int = Field(default=10, ge=1, le=50)
     evaluation_pair_sample: int = Field(default=50_000, ge=1_000, le=500_000)
+
+    @model_validator(mode="after")
+    def require_method_matches_embedding(self) -> "HistoricalSignalSettings":
+        """Bind the hashable method identifier to the actual layout algorithm."""
+        expected = (
+            "idf_membership_knn_diffusion_v1"
+            if self.embedding_method == "anchored_diffusion"
+            else "idf_membership_knn_spectral_v1"
+        )
+        if self.method != expected:
+            raise ValueError("historical signal method must match embedding method")
+        return self
 
 
 class HistoricalSignalInput(FrozenModel):
@@ -109,8 +126,8 @@ class HistoricalSignalGeometry(FrozenModel):
     """Landscape viewport expectations validated without legacy-coordinate fitting."""
 
     viewport_aspect_ratio: FiniteFloat = Field(default=16 / 9, gt=1.0, le=3.0)
-    tile_columns: int = Field(default=4, ge=1, le=16)
-    tile_rows: int = Field(default=4, ge=1, le=16)
+    tile_columns: int = Field(default=16, ge=1, le=16)
+    tile_rows: int = Field(default=16, ge=1, le=16)
     central_q05_q95_span_x: FiniteFloat = Field(gt=0.0, le=2.0)
     central_q05_q95_span_y: FiniteFloat = Field(gt=0.0, le=1.0)
     central_span_aspect_ratio: FiniteFloat = Field(gt=0.0, le=3.0)
@@ -126,6 +143,11 @@ class CoordinateComparison(FrozenModel):
     normalized_stress: FiniteFloat | None = Field(default=None, ge=0.0)
     sampled_distance_rank_correlation: FiniteFloat | None = Field(default=None, ge=-1.0, le=1.0)
     legacy_neighborhood_recall_at_k: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
+    embedding_graph_neighbor_recall_at_k: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
+    direct_weighted_jaccard_recall_at_k: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
+    direct_cosine_recall_at_k: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
+    direct_idf_overlap_recall_at_k: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
+    direct_shared_artist_recall_at_k: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class HistoricalSignalAblation(FrozenModel):
