@@ -271,6 +271,13 @@ async function desktopInteractions(cdp) {
   }
   if (darkMode.theme !== "dark") throw new CdpError("dark mode selection", darkMode);
   const keyboard_focus_visible = await keyboardFocus(cdp);
+  const search = await box(cdp, "#query");
+  if (!search) throw new Error("search input not found");
+  const beforeSearch = await state(cdp);
+  await click(cdp, search.x + 16, search.y + search.height / 2);
+  await cdp.command("Input.insertText", { text: "electronic" });
+  await cdp.waitFor("document.querySelectorAll('#results .result').length > 0", "search results");
+  const afterSearch = await state(cdp);
   await zoomUntil(cdp, 3);
   const beforeSelection = await state(cdp);
   const initialUrl = await cdp.evaluate("location.pathname + location.search", "initial location");
@@ -296,13 +303,6 @@ async function desktopInteractions(cdp) {
     const status = document.querySelector('#map-status')?.textContent ?? '';
     return { connected:Boolean(map?.isConnected), visible:Boolean(map && style?.display !== 'none' && map.getBoundingClientRect().width > 0 && map.getBoundingClientRect().height > 0), visible_nodes:cy ? cy.nodes(':visible').length : 0, shown_labels:cy ? cy.nodes(':visible').filter(n => Boolean(n.data('displayLabel'))).length : 0, pan:cy?.pan(), zoom:cy?.zoom(), status };
   })()`, "map state after browser back");
-  const search = await box(cdp, "#query");
-  if (!search) throw new Error("search input not found");
-  const beforeSearch = await state(cdp);
-  await click(cdp, search.x + 16, search.y + search.height / 2);
-  await cdp.command("Input.insertText", { text: "electronic" });
-  await cdp.waitFor("document.querySelectorAll('#results .result').length > 0", "search results");
-  const afterSearch = await state(cdp);
   return {
     drag_pan: afterDrag.pan.x !== initial.pan.x || afterDrag.pan.y !== initial.pan.y,
     wheel_zoom: afterWheel.zoom !== afterDrag.zoom,

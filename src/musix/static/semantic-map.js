@@ -4,7 +4,6 @@
   const mapElement = document.querySelector("#semantic-map");
   if (!mapElement || !window.cytoscape) return;
 
-  const status = document.querySelector("#map-status");
   const root = document.documentElement;
   const themeSelect = document.querySelector("#theme-select");
   const themeToggle = document.querySelector("#theme-toggle");
@@ -15,7 +14,8 @@
   let selectedNode = null;
 
   const say = (message) => {
-    if (status) status.textContent = message;
+    const liveStatus = document.querySelector("#map-status");
+    if (liveStatus) liveStatus.textContent = message;
   };
 
   const setTheme = (value) => {
@@ -188,21 +188,45 @@
     const viewport = mapElement.getBoundingClientRect();
     let accepted = 0;
     const candidates = labelCandidates(cy, overview, lod);
-    cy.nodes().forEach((node) => node.data("displayLabel", ""));
+    const placements = overview
+      ? [
+        { "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 7 },
+        { "text-halign": "center", "text-valign": "top", "text-margin-x": 0, "text-margin-y": -7 },
+        { "text-halign": "left", "text-valign": "center", "text-margin-x": 7, "text-margin-y": 0 },
+        { "text-halign": "right", "text-valign": "center", "text-margin-x": -7, "text-margin-y": 0 },
+        { "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 28 },
+        { "text-halign": "left", "text-valign": "center", "text-margin-x": 28, "text-margin-y": 0 },
+        { "text-halign": "right", "text-valign": "center", "text-margin-x": -28, "text-margin-y": 0 },
+      ]
+      : [{ "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 7 }];
+    cy.nodes().forEach((node) => {
+      node.data("displayLabel", "");
+      node.removeStyle("text-halign");
+      node.removeStyle("text-valign");
+      node.removeStyle("text-margin-x");
+      node.removeStyle("text-margin-y");
+    });
     for (const node of candidates) {
       if (accepted === labelBudget(lod)) break;
       node.data("displayLabel", node.data("label"));
-      // This is the same live renderer geometry collected by browser QA. It keeps
-      // the UI from rendering a label the map cannot actually show clearly.
-      const bounds = renderedLabelBounds(cy, node);
-      const inViewport = bounds.x1 >= viewport.left + 4 && bounds.y1 >= viewport.top + 4
-        && bounds.x2 <= viewport.right - 4 && bounds.y2 <= viewport.bottom - 4;
-      if (!inViewport || acceptedBoxes.some((other) => intersects(bounds, other))) {
+      let chosen = false;
+      for (const placement of placements) {
+        node.style(placement);
+        // This is the same live renderer geometry collected by browser QA. It
+        // keeps the UI from rendering a label the map cannot actually show.
+        const bounds = renderedLabelBounds(cy, node);
+        const inViewport = bounds.x1 >= viewport.left + 4 && bounds.y1 >= viewport.top + 4
+          && bounds.x2 <= viewport.right - 4 && bounds.y2 <= viewport.bottom - 4;
+        if (!inViewport || acceptedBoxes.some((other) => intersects(bounds, other))) continue;
+        acceptedBoxes.push(bounds);
+        accepted += 1;
+        chosen = true;
+        break;
+      }
+      if (!chosen) {
         node.data("displayLabel", "");
         continue;
       }
-      acceptedBoxes.push(bounds);
-      accepted += 1;
     }
   };
 
@@ -331,7 +355,13 @@
           cy.$(":selected").unselect();
           selectedNode = null;
           setVisibleEdges(cy);
-          say(statusMessage(payload, currentLod));
+          const restoreStatus = () => say(statusMessage(payload, currentLod));
+          restoreStatus();
+          // A browser Back can finish an HTMX cache restore after popstate. Write
+          // into the currently connected live region after those microtasks too.
+          window.setTimeout(restoreStatus, 0);
+          window.setTimeout(restoreStatus, 120);
+          window.setTimeout(restoreStatus, 320);
         }
       }, { capture: true });
     })
