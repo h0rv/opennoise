@@ -335,14 +335,43 @@ async function desktopInteractions(cdp) {
   // Browser-level back pointer button, rather than a synthetic popstate/history callback.
   await cdp.command("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "back", buttons: 8, clickCount: 1 });
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "back", buttons: 0, clickCount: 1 });
-  await sleep(350);
+  // Give HTMX history restoration enough time to replace the DOM. This must
+  // prove the rebuilt renderer paints after that late restore, not just that a
+  // stale Cytoscape object still has nodes in memory.
+  await sleep(2200);
   const backUrl = await cdp.evaluate("location.pathname + location.search", "back location");
   const backState = await cdp.evaluate(`(() => {
     const map = document.querySelector('#semantic-map');
     const cy = window.__musixMap;
     const style = map ? getComputedStyle(map) : null;
     const status = document.querySelector('#map-status')?.textContent ?? '';
-    return { connected:Boolean(map?.isConnected), visible:Boolean(map && style?.display !== 'none' && map.getBoundingClientRect().width > 0 && map.getBoundingClientRect().height > 0), visible_nodes:cy ? cy.nodes(':visible').length : 0, shown_labels:cy ? cy.nodes(':visible').filter(n => Boolean(n.data('displayLabel'))).length : 0, pan:cy?.pan(), zoom:cy?.zoom(), status };
+    const box = map?.getBoundingClientRect();
+    const canvases = map ? [...map.querySelectorAll('canvas')] : [];
+    const painted_pixel_count = canvases.reduce((total, canvas) => {
+      const context = canvas.getContext('2d', {willReadFrequently:true});
+      if (!context || canvas.width === 0 || canvas.height === 0) return total;
+      const image = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let painted = 0;
+      const step = Math.max(4, Math.floor(image.length / 16000 / 4) * 4);
+      for (let index = 3; index < image.length; index += step) if (image[index] > 0) painted += 1;
+      return total + painted;
+    }, 0);
+    const rendered_nodes = cy && map && cy.container() === map ? cy.nodes(':visible').filter(node => {
+      const bounds = node.renderedBoundingBox();
+      return bounds.w > 0 && bounds.h > 0 && bounds.x2 >= box.left && bounds.x1 <= box.right
+        && bounds.y2 >= box.top && bounds.y1 <= box.bottom;
+    }).length : 0;
+    return {
+      connected:Boolean(map?.isConnected),
+      visible:Boolean(map && style?.display !== 'none' && box.width > 0 && box.height > 0),
+      cy_owns_live_container:Boolean(cy && map && cy.container() === map),
+      canvas_count:canvases.length,
+      painted_pixel_count,
+      rendered_nodes,
+      visible_nodes:cy ? cy.nodes(':visible').length : 0,
+      shown_labels:cy ? cy.nodes(':visible').filter(n => Boolean(n.data('displayLabel'))).length : 0,
+      pan:cy?.pan(), zoom:cy?.zoom(), status,
+    };
   })()`, "map state after browser back");
   return {
     drag_pan: afterDrag.pan.x !== initial.pan.x || afterDrag.pan.y !== initial.pan.y,
@@ -350,7 +379,9 @@ async function desktopInteractions(cdp) {
     click_opens_detail: selectedUrl !== "/" && node.href.length > 0,
     search_preserves_map_state: beforeSearch.pan.x === afterSearch.pan.x && beforeSearch.pan.y === afterSearch.pan.y && beforeSearch.zoom === afterSearch.zoom,
     browser_back_restores_map_state: selectedUrl !== backUrl && backUrl === initialUrl
-      && backState.connected && backState.visible && backState.visible_nodes > 0 && backState.shown_labels > 0
+      && backState.connected && backState.visible && backState.cy_owns_live_container
+      && backState.canvas_count > 0 && backState.painted_pixel_count > 0 && backState.rendered_nodes > 0
+      && backState.visible_nodes > 0 && backState.shown_labels > 0
       && backState.status.includes("genres available")
       && Math.abs(backState.pan.x - beforeSelection.pan.x) < 0.001
       && Math.abs(backState.pan.y - beforeSelection.pan.y) < 0.001

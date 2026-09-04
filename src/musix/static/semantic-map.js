@@ -1,10 +1,14 @@
 (() => {
   "use strict";
 
-  const mapElement = document.querySelector("#semantic-map");
+  let mapElement = document.querySelector("#semantic-map");
   if (!mapElement || !window.cytoscape) return;
 
   const root = document.documentElement;
+  // Genre details use an explicit browser history entry. HTMX snapshot history
+  // can replace the renderer DOM with an inert cached canvas on Back, so leave
+  // this persistent map outside that secondary history mechanism.
+  if (window.htmx) window.htmx.config.historyEnabled = false;
   const themeSelect = document.querySelector("#theme-select");
   const themeToggle = document.querySelector("#theme-toggle");
   const query = document.querySelector("#query");
@@ -190,6 +194,16 @@
     });
   };
 
+  const rendererIsLive = (cy, container) => {
+    if (!container) return false;
+    const canvases = [...container.querySelectorAll("canvas")];
+    return Boolean(
+      cy && container.isConnected && cy.container() === container
+      && canvases.some((canvas) => canvas.isConnected && canvas.width > 0
+        && canvas.height > 0 && canvas.getBoundingClientRect().width > 0),
+    );
+  };
+
   const statusMessage = (payload, lod) => lod === 0
     ? `${getOverviewCommunities(payload).length} overview communities; ${getNodes(payload).length} genres available. Overview level.`
     : `${getNodes(payload).length} genres available. ${["", "Genre", "Subgenre", "Detailed genre"][lod]} level.`;
@@ -357,6 +371,47 @@
       mapElement.tabIndex = 0;
       const refreshTheme = () => cy.style(stylesheet()).update();
       themeSelect?.addEventListener("change", refreshTheme);
+      const remountAfterHistoryRestore = (snapshot) => {
+        const liveMap = document.querySelector("#semantic-map");
+        if (!liveMap || rendererIsLive(window.__musixMap, liveMap)) return;
+        window.__musixMap?.destroy();
+        mapElement = liveMap;
+        currentLod = -1;
+        selectedNode = null;
+        const replacement = window.cytoscape({
+          container: mapElement,
+          elements: elementsFor(payload),
+          style: stylesheet(),
+          layout: { name: "preset", fit: true, padding: 72 },
+          minZoom: 0.28,
+          maxZoom: 4.8,
+          userPanningEnabled: true,
+          userZoomingEnabled: true,
+          boxSelectionEnabled: false,
+        });
+        window.__musixMap = replacement;
+        mapElement.tabIndex = 0;
+        replacement.resize();
+        replacement.zoom(snapshot.zoom);
+        replacement.pan(snapshot.pan);
+        updateLod(replacement, payload);
+        replacement.on("zoom", () => updateLod(replacement, payload));
+        replacement.on("pan", () => updateLod(replacement, payload));
+        replacement.on("tap", "node", (event) => selectGenre(replacement, event.target, payload));
+        replacement.on("tap", (event) => {
+          if (event.target === replacement) {
+            replacement.$(":selected").unselect();
+            selectedNode = null;
+            setVisibleEdges(replacement);
+          }
+        });
+        window.requestAnimationFrame(() => {
+          replacement.resize();
+          replacement.pan(snapshot.pan);
+          replacement.zoom(snapshot.zoom);
+          updateLod(replacement, payload);
+        });
+      };
       window.addEventListener("popstate", (event) => {
         // HTMX's body-snapshot restoration disconnects a canvas renderer while
         // leaving its old object in window. This map owns history selection, so
@@ -366,6 +421,7 @@
         if (detail && window.htmx) {
           window.htmx.ajax("GET", detail, { target: "#genre-detail-slot", swap: "innerHTML" });
         } else {
+          const snapshot = { pan: cy.pan(), zoom: cy.zoom() };
           const slot = document.querySelector("#genre-detail-slot");
           if (slot) slot.innerHTML = "";
           cy.$(":selected").unselect();
@@ -378,6 +434,15 @@
           window.setTimeout(restoreStatus, 0);
           window.setTimeout(restoreStatus, 120);
           window.setTimeout(restoreStatus, 320);
+          for (const delay of [0, 120, 360, 900, 1800]) {
+            window.setTimeout(() => {
+              remountAfterHistoryRestore(snapshot);
+              const active = window.__musixMap;
+              if (rendererIsLive(active, document.querySelector("#semantic-map"))) {
+                say(statusMessage(payload, currentLod));
+              }
+            }, delay);
+          }
         }
       }, { capture: true });
     })
