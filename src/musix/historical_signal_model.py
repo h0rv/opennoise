@@ -152,15 +152,19 @@ def _idf_candidates(
     genre_ids = tuple(sorted(memberships))
     index = {genre_id: position for position, genre_id in enumerate(genre_ids)}
     artist_genres: dict[str, list[int]] = defaultdict(list)
-    for genre_id, artists in memberships.items():
-        for artist_id in artists:
+    for genre_id in sorted(memberships):
+        # Memberships are sets after ingestion.  Their iteration order depends
+        # on PYTHONHASHSEED, so preserve a canonical artist insertion order
+        # before the later floating-point reductions.
+        for artist_id in sorted(memberships[genre_id]):
             artist_genres[artist_id].append(index[genre_id])
     norm_sum = [0.0] * len(genre_ids)
     norm_square = [0.0] * len(genre_ids)
     overlap: dict[Pair, list[float]] = {}
     artist_degrees: dict[str, int] = {}
     total_genres = len(genre_ids)
-    for artist_id, positions in artist_genres.items():
+    for artist_id in sorted(artist_genres):
+        positions = artist_genres[artist_id]
         unique_positions = sorted(set(positions))
         degree = len(unique_positions)
         artist_degrees[artist_id] = degree
