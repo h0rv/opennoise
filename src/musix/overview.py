@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Final
 
@@ -18,6 +19,7 @@ _MIN_ANCHOR_PROPAGATED_ARTISTS: Final = 8
 _SINGLETON_SUBTREE_SIZE: Final = 1
 _SMALL_SUBTREE_SIZE: Final = 2
 _GENERIC_TAXONOMY_LABELS: Final = frozenset({"music", "popular music"})
+_ENTITY_ID_SUFFIX: Final = re.compile(r"\s*\((?:[\w-]+:)?Q\d+\)\s*$", re.IGNORECASE)
 
 
 def build_overview_communities(
@@ -53,24 +55,82 @@ def build_overview_communities(
         _community_draft(source_id, nodes, centers[source_id], artifact.nodes)
         for source_id, nodes in sorted(merged.items())
     ]
-    name_counts: dict[str, int] = defaultdict(int)
-    for draft in drafts:
-        name_counts[draft.name] += 1
+    names = _distinct_overview_names(drafts, merged)
     return tuple(
         ProductionMapOverviewCommunity(
             community_id=f"overview:{draft.source_id}",
             member_entity_ids=draft.member_entity_ids,
-            name=(
-                draft.name
-                if name_counts[draft.name] == 1
-                else f"{draft.name} ({draft.source_id.rsplit(':', maxsplit=1)[-1]})"
-            ),
+            name=names[draft.source_id],
             naming=draft.naming,
             x=draft.center[0],
             y=draft.center[1],
         )
         for draft in drafts
     )
+
+
+def _distinct_overview_names(
+    drafts: list[_CommunityDraft],
+    members_by_source: dict[str, list[ProductionNode]],
+) -> dict[str, str]:
+    """Return short public labels without leaking entity IDs into the map.
+
+    Community IDs and the selected anchor remain structured provenance.  A
+    duplicate broad taxonomy anchor is instead disambiguated by the strongest
+    distinct genre within that community, which is both readable and useful as
+    the entry point for its cohort.
+    """
+    bases = {draft.source_id: _clean_overview_name(draft.name) for draft in drafts}
+    counts: dict[str, int] = defaultdict(int)
+    for name in bases.values():
+        counts[name.casefold()] += 1
+    names = {source_id: name for source_id, name in bases.items() if counts[name.casefold()] == 1}
+    used = {name.casefold() for name in names.values()}
+    for draft in drafts:
+        base = bases[draft.source_id]
+        if counts[base.casefold()] == 1:
+            continue
+        candidates = sorted(
+            members_by_source[draft.source_id],
+            key=lambda node: (
+                -node.direct_artist_count,
+                -node.propagated_artist_count,
+                -node.subtree_size,
+                node.name.casefold(),
+                node.genre_id,
+            ),
+        )
+        label = next(
+            (
+                candidate
+                for node in candidates
+                if (candidate := _clean_overview_name(node.name)).casefold() != base.casefold()
+                and candidate.casefold() not in used
+                and candidate.casefold() not in _GENERIC_TAXONOMY_LABELS
+            ),
+            None,
+        )
+        if label is None:
+            label = _numbered_collection_name(base, used)
+        names[draft.source_id] = label
+        used.add(label.casefold())
+    return names
+
+
+def _clean_overview_name(name: str) -> str:
+    """Remove an accidental parenthetical entity ID from a public label."""
+    return _ENTITY_ID_SUFFIX.sub("", name).strip()
+
+
+def _numbered_collection_name(base: str, used: set[str]) -> str:
+    """Keep the exceptional no-distinct-member fallback human-readable."""
+    stem = f"{base} collection"
+    candidate = stem
+    ordinal = 2
+    while candidate.casefold() in used:
+        candidate = f"{stem} {ordinal}"
+        ordinal += 1
+    return candidate
 
 
 class _CommunityDraft:

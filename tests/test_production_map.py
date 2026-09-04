@@ -1,4 +1,6 @@
 import unittest
+from types import SimpleNamespace
+from typing import Any
 
 from musix.ml.production_map import ProductionMapGeometryError, build_production_map
 from musix.ml.public_graph import build_public_model
@@ -11,7 +13,7 @@ from musix.models.modeling import (
     PublicModelSettings,
 )
 from musix.models.production import ProductionMapSettings
-from musix.overview import build_overview_communities
+from musix.overview import _distinct_overview_names, build_overview_communities
 
 
 def _inputs() -> PublicModelInput:
@@ -100,6 +102,47 @@ def _settings() -> ProductionMapSettings:
 
 
 class ProductionMapTests(unittest.TestCase):
+    def test_overview_duplicate_names_use_clean_representative_genres(self) -> None:
+        drafts: Any = [
+            SimpleNamespace(source_id="one", name="rock music"),
+            SimpleNamespace(source_id="two", name="rock music (Q2)"),
+            SimpleNamespace(source_id="three", name="jazz"),
+        ]
+        members: Any = {
+            "one": [
+                SimpleNamespace(
+                    name="indie rock",
+                    direct_artist_count=12,
+                    propagated_artist_count=12,
+                    subtree_size=3,
+                    genre_id="one",
+                )
+            ],
+            "two": [
+                SimpleNamespace(
+                    name="metalcore",
+                    direct_artist_count=10,
+                    propagated_artist_count=10,
+                    subtree_size=3,
+                    genre_id="two",
+                )
+            ],
+            "three": [
+                SimpleNamespace(
+                    name="jazz",
+                    direct_artist_count=12,
+                    propagated_artist_count=12,
+                    subtree_size=3,
+                    genre_id="three",
+                )
+            ],
+        }
+
+        names = _distinct_overview_names(drafts, members)
+
+        self.assertEqual(names, {"one": "indie rock", "two": "metalcore", "three": "jazz"})
+        self.assertTrue(all("Q" not in name for name in names.values()))
+
     def test_builds_full_dag_display_tree_nested_lod_and_electronic_audit(self) -> None:
         inputs = _inputs()
         source = build_public_model(inputs, PublicModelSettings())
@@ -124,6 +167,7 @@ class ProductionMapTests(unittest.TestCase):
         overview = build_overview_communities(first)
         overview_names = [community.name for community in overview]
         self.assertEqual(len(overview_names), len(set(overview_names)))
+        self.assertTrue(all("(Q" not in name for name in overview_names))
         electronic = next(
             community
             for community in overview
