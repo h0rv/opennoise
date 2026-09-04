@@ -66,6 +66,9 @@
 </svg>
 {% endif %}
 <div id="map-controls" aria-label="Map controls">
+  {% if map_view_mode | default('public') == 'historical' and historical_map_configured %}
+  <button type="button" data-map-action="historical-back" aria-label="Back">Back</button>
+  {% endif %}
   <button type="button" data-map-action="zoom-in" aria-label="Zoom in">+</button>
   <button type="button" data-map-action="zoom-out" aria-label="Zoom out">−</button>
   <button type="button" data-map-action="fit">Fit map</button>

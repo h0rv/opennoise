@@ -23,7 +23,11 @@ def _node(index: int, lod_min: int) -> HistoricalSignalNode:
         community_id="overview:00",
         umbrella_id="graph:umbrella:000",
         subcommunity_id="graph:umbrella:000:sub:000",
-        microgenre_id="graph:umbrella:000:sub:000:micro:000",
+        microgenre_id=(
+            "graph:umbrella:000:sub:000:micro:000"
+            if index == 0
+            else "graph:umbrella:999:sub:999:micro:999"
+        ),
         component_id=0,
         membership_count=1,
         lod_min=lod_min,
@@ -59,7 +63,17 @@ def _artifact() -> HistoricalSignalPublicationArtifact:
         x=overview[0].x,
         y=overview[0].y,
     )
-    hierarchy = (*umbrellas, subcommunity)
+    microgenre = HistoricalSignalHierarchyNode(
+        hierarchy_id="graph:umbrella:000:sub:000:micro:000",
+        parent_id="graph:umbrella:000:sub:000",
+        level=2,
+        member_count=1,
+        representative_genre_id=overview[0].genre_id,
+        representative_label=overview[0].name,
+        x=overview[0].x,
+        y=overview[0].y,
+    )
+    hierarchy = (*umbrellas, subcommunity, microgenre)
     tile = HistoricalSignalTile(
         level=3,
         column=0,
@@ -142,6 +156,14 @@ class HistoricalSignalMapStoreTests(unittest.TestCase):
             self.assertEqual(len(response.hierarchy), 1)
             self.assertEqual(response.hierarchy[0].level, 1)
             self.assertEqual(response.nodes, ())
+
+    def test_microgenre_focus_returns_only_its_leaf_nodes(self) -> None:
+        response = self._store().response(level=3, parent_id="graph:umbrella:000:sub:000:micro:000")
+
+        self.assertIsNotNone(response)
+        if response is not None:
+            self.assertEqual(len(response.nodes), 1)
+            self.assertEqual(response.hierarchy, ())
 
     def test_tile_and_neighbors_are_independently_bounded(self) -> None:
         store = self._store()

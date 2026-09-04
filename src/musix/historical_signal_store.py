@@ -101,7 +101,7 @@ class HistoricalSignalMapStore:
         """Return the already-validated sealed artifact for other startup-only adapters."""
         return self._require_artifact()
 
-    def response(  # noqa: C901 - one bounded public-slice state machine.
+    def response(  # noqa: C901, PLR0912 - one bounded public-slice state machine.
         self,
         *,
         level: int,
@@ -123,12 +123,24 @@ class HistoricalSignalMapStore:
             )
         metadata = _metadata(artifact)
         if parent_id is not None:
+            if column is not None or row is not None:
+                raise HistoricalSignalMapStoreError(
+                    "historical hierarchy focus cannot request a tile"
+                )
             parent = self._hierarchy_by_id.get(parent_id)
             if parent is None:
                 raise HistoricalSignalMapStoreError("historical hierarchy focus does not exist")
-            if parent.level >= _MICROGENRE_LEVEL:
+            expected_level = parent.level + 1
+            if level != expected_level:
                 raise HistoricalSignalMapStoreError(
-                    "historical microgenre has no aggregate children"
+                    "historical hierarchy focus level does not match"
+                )
+            if parent.level == _MICROGENRE_LEVEL:
+                nodes = tuple(
+                    node for node in self._node_by_id.values() if node.microgenre_id == parent_id
+                )
+                return _require_bounded_response(
+                    HistoricalSignalMapApiResponse(metadata=metadata, level=level, nodes=nodes)
                 )
             children = tuple(
                 self._hierarchy_by_id[child_id]

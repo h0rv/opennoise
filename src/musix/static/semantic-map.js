@@ -64,25 +64,35 @@
     let memberRequest = null;
     let cy = null;
     let level = 0;
+    const cohorts = [];
     const style = () => [
       { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": 12, "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, width: 12, height: 12, "overlay-opacity": 0 } },
       { selector: "node:selected", style: { "background-color": cssValue("--focus"), "border-width": 3, "border-color": cssValue("--focus") } },
       { selector: "edge", style: { width: 1.5, "line-color": cssValue("--similarity"), opacity: 0.65 } },
     ];
-    const element = (node) => {
+    const element = (node, position = null) => {
       const aggregate = Boolean(node.hierarchy_id);
       const identifier = aggregate ? node.hierarchy_id : node.genre_id;
       return {
       data: { id: `historical-${identifier}`, genreId: aggregate ? node.representative_genre_id : node.genre_id, hierarchyId: node.hierarchy_id ?? null, hierarchyLevel: node.level ?? null, label: node.representative_label ?? node.name, displayLabel: "", weight: node.member_count ?? node.membership_count, overview: aggregate && Number(node.level) === 0 },
-      position: { x: Number(node.x) * 600, y: Number(node.y) * 600 },
+      position: position ?? { x: Number(node.x) * 600, y: Number(node.y) * 600 },
       };
+    };
+    const elements = (items) => {
+      const axis = (key) => items.map((item) => Number(item[key])).filter(Number.isFinite).sort((left, right) => left - right);
+      const quantile = (values, fraction) => values[Math.max(0, Math.min(values.length - 1, Math.round((values.length - 1) * fraction)))];
+      const xs = axis("x"); const ys = axis("y");
+      const scale = (value, low, high, span) => 0.06 * span + 0.88 * span * (Number(value) - low) / Math.max(high - low, 0.0001);
+      const lowX = quantile(xs, 0.05); const highX = quantile(xs, 0.95);
+      const lowY = quantile(ys, 0.05); const highY = quantile(ys, 0.95);
+      return items.map((item) => element(item, { x: scale(item.x, lowX, highX, 1000), y: scale(item.y, lowY, highY, 600) }));
     };
     const appendNodes = (nodes) => {
       const available = Math.max(0, 1200 - cy.nodes().length);
       const additions = nodes.filter((node) => cy.$id(`historical-${node.genre_id}`).empty())
         .sort((left, right) => Number(right.membership_count) - Number(left.membership_count) || String(left.name).localeCompare(String(right.name)))
-        .slice(0, available).map(element);
-      if (additions.length) cy.add(additions);
+        .slice(0, available);
+      if (additions.length) cy.add(elements(additions));
     };
     const setHistoricalLabels = () => {
       const budget = mapElement.clientWidth <= 600 ? [24, 40, 64, 80][level] : [48, 80, 128, 180][level];
@@ -227,7 +237,7 @@
       .then((payload) => {
         const overview = payload.hierarchy ?? payload.nodes ?? [];
         if (payload.initial_edge_count !== 0 || overview.length > 24) throw new Error("historical overview is not bounded");
-        cy = window.cytoscape({ container: mapElement, elements: overview.map(element), style: style(), layout: { name: "preset", fit: true, padding: 72 }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false });
+        cy = window.cytoscape({ container: mapElement, elements: elements(overview), style: style(), layout: { name: "preset", fit: true, padding: 72 }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false });
         window.__musixMap = cy;
         window.__musixMapMetrics = { initialElementCount: cy.elements().length, historical: true };
         root.classList.add("js-map-ready");
@@ -242,8 +252,9 @@
               .then((response) => response.ok ? response.json() : null)
               .then((focused) => {
                 if (!(focused?.hierarchy ?? []).length) return;
+                cohorts.push({ level, items: focused.hierarchy ?? [] });
                 cy.elements().remove();
-                cy.add(focused.hierarchy.map(element));
+                cy.add(elements(focused.hierarchy));
                 level = nextLevel;
                 cy.fit(cy.nodes(), 72);
                 setHistoricalLabels();
@@ -251,8 +262,17 @@
             return;
           }
           if (hierarchyId) {
-            level = 3;
-            scheduleTiles();
+            fetch(`/api/historical-signal-map?level=3&parent_id=${encodeURIComponent(hierarchyId)}`, { headers: { Accept: "application/json" } })
+              .then((response) => response.ok ? response.json() : null)
+              .then((focused) => {
+                if (!(focused?.nodes ?? []).length) return;
+                cohorts.push({ level, items: focused.nodes });
+                cy.elements().remove();
+                cy.add(elements(focused.nodes));
+                level = 3;
+                cy.fit(cy.nodes(), 72);
+                setHistoricalLabels();
+              });
             return;
           }
           cy.$(":selected").unselect();
@@ -268,6 +288,15 @@
           if (button.dataset.mapAction === "zoom-in") cy.zoom(cy.zoom() * 1.25);
           if (button.dataset.mapAction === "zoom-out") cy.zoom(cy.zoom() / 1.25);
           if (button.dataset.mapAction === "fit") cy.fit(cy.nodes(), 72);
+          if (button.dataset.mapAction === "historical-back") {
+            const cohort = cohorts.pop();
+            if (!cohort) return;
+            cy.elements().remove();
+            cy.add(elements(cohort.items));
+            level = cohort.level;
+            cy.fit(cy.nodes(), 72);
+            setHistoricalLabels();
+          }
         }, true);
         update();
       })
