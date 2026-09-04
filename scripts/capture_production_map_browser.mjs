@@ -57,5 +57,7 @@ const measurement = await evaluate(`(async () => {
   });
   return { labels, interactions: { drag_pan: dragPan, touch_pan: touchPan, wheel_zoom: wheelZoom, pinch_zoom: pinchZoom, click_opens_detail: opensDetail, search_preserves_map_state: searchPreserves, browser_back_restores_map_state: true, no_javascript_svg_fallback: true, keyboard_focus_visible: document.activeElement === cy.container(), dark_mode_toggle: darkMode } };
 })()`);
-await (await import("node:fs/promises")).writeFile(output, JSON.stringify(measurement.result.result.value, null, 2) + "\n");
+const value = measurement.result?.value ?? measurement.result?.result?.value;
+if (!value) throw new Error(JSON.stringify(measurement));
+await (await import("node:fs/promises")).writeFile(output, JSON.stringify(value, null, 2) + "\n");
 socket.close();
