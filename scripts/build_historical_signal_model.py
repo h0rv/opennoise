@@ -25,7 +25,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument(
         "--embedding-method",
         choices=("anchored_diffusion", "normalized_laplacian_spectral", "spectral_force_refined"),
-        default="anchored_diffusion",
+        default="spectral_force_refined",
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)

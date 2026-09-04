@@ -19,6 +19,12 @@ from musix.exploration import (
     optional_viewport,
 )
 from musix.genre_entry import GenreEntryRepository
+from musix.historical_signal_store import (
+    HistoricalSignalMapApiResponse,
+    HistoricalSignalMapStore,
+    HistoricalSignalMapStoreError,
+    HistoricalSignalNeighborApiResponse,
+)
 from musix.layouts import ExploredMap, LayoutArtifactMetadata, PublishedLayout
 from musix.models import (
     LegacyMapResponse,
@@ -156,6 +162,48 @@ class MapController(Controller):
                 for point in points
             )
         )
+
+    @get("/api/historical-signal-map")
+    async def historical_signal_map_data(
+        self,
+        historical_signal_map: NamedDependency[HistoricalSignalMapStore],
+        level: FromQuery[int] = 0,
+        column: FromQuery[int | None] = None,
+        row: FromQuery[int | None] = None,
+    ) -> HistoricalSignalMapApiResponse:
+        """Return one bounded H3 map cohort or viewport tile after explicit local opt-in."""
+        if not historical_signal_map.configured:
+            raise ServiceUnavailableException(
+                detail=(
+                    "historical signal map is disabled; configure MUSIX_HISTORICAL_SIGNAL_MAP_PATH"
+                )
+            )
+        try:
+            response = historical_signal_map.response(level=level, column=column, row=row)
+        except HistoricalSignalMapStoreError as error:
+            raise ServiceUnavailableException(
+                detail="historical signal map artifact unavailable"
+            ) from error
+        if response is None:
+            raise RuntimeError("configured historical signal map store returned no graph")
+        return response
+
+    @get("/api/historical-signal-map/neighbors/{genre_id:str}")
+    async def historical_signal_neighbors(
+        self,
+        historical_signal_map: NamedDependency[HistoricalSignalMapStore],
+        genre_id: FromPath[str],
+    ) -> HistoricalSignalNeighborApiResponse:
+        """Return focused H3 similarity evidence without graph-wide edge serialization."""
+        if not historical_signal_map.configured:
+            raise ServiceUnavailableException(detail="historical signal map is disabled")
+        try:
+            response = historical_signal_map.neighbors(genre_id)
+        except HistoricalSignalMapStoreError as error:
+            raise NotFoundException(detail="historical signal genre unavailable") from error
+        if response is None:
+            raise RuntimeError("configured historical signal map store returned no graph")
+        return response
 
     @get("/api/explore/map")
     async def explore_map(

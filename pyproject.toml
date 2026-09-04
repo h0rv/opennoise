@@ -106,6 +106,7 @@ evaluate-production-map = "python scripts/evaluate_production_map.py"
 build-historical-compatibility = "python scripts/build_historical_compatibility.py"
 evaluate-historical-compatibility = "python scripts/evaluate_historical_compatibility.py"
 build-historical-signal-model = "python scripts/build_historical_signal_model.py"
+publish-historical-signal-map = "python scripts/publish_historical_signal_map.py"
 
 [tool.poe.tasks.build-public-release]
 sequence = [

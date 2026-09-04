@@ -2,8 +2,11 @@
 
 import argparse
 import asyncio
+import json
 import os
+import resource
 import sys
+import time
 from contextlib import suppress
 from pathlib import Path
 
@@ -15,9 +18,15 @@ from musix.catalog.artists import ArtistProjector
 from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
 from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
+from musix.historical_signal_publication import (
+    build_historical_signal_publication,
+    publish_historical_signal_publication,
+)
 from musix.ingest import ImportOptions, import_jsonl
 from musix.ml.publish import publish_public_model, resolve_public_policy_id
 from musix.models import Settings
+from musix.models.historical import HistoricalCompatibilityReceipt
+from musix.models.historical_signal import HistoricalSignalArtifact
 from musix.models.pipeline import SourceLimits
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
@@ -28,6 +37,7 @@ from musix.sources.musicbrainz import (
     MusicBrainzReleaseGroupDumpAdapter,
 )
 from musix.sources.registry import AdapterRegistry
+from musix.storage import LocalObjectStore
 
 
 def _serve(args: argparse.Namespace) -> int:
@@ -125,6 +135,42 @@ def _publish_public_model(args: argparse.Namespace) -> int:
     return 0
 
 
+def _publish_historical_signal_map(args: argparse.Namespace) -> int:
+    """Publish the H3-only historical map without changing the public default map."""
+    started = time.monotonic()
+    signal = HistoricalSignalArtifact.model_validate_json(
+        args.signal_artifact.read_text(encoding="utf-8")
+    )
+    compatibility = HistoricalCompatibilityReceipt.model_validate_json(
+        args.compatibility_receipt.read_text(encoding="utf-8")
+    )
+    artifact = build_historical_signal_publication(signal, compatibility)
+    receipt, object_write = publish_historical_signal_publication(
+        artifact,
+        output_path=args.output,
+        store=LocalObjectStore(args.object_store),
+    )
+    args.receipt.parent.mkdir(parents=True, exist_ok=True)
+    args.receipt.write_text(receipt.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    report = {
+        "revision": artifact.revision,
+        "source_signal_artifact_sha256": artifact.source_signal_artifact_sha256,
+        "publication_receipt": receipt.model_dump(mode="json"),
+        "object_write": object_write.model_dump(mode="json"),
+        "quality": artifact.quality.model_dump(mode="json"),
+        "signal_quality": signal.quality.model_dump(mode="json"),
+        "coordinate_evaluation": signal.coordinate_evaluation.model_dump(mode="json"),
+        "progressive_lods": [item.model_dump(mode="json") for item in signal.progressive_lods],
+        "tile_count": len(signal.tiles),
+        "elapsed_seconds": round(time.monotonic() - started, 3),
+        "peak_rss_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1_024,
+    }
+    args.report.parent.mkdir(parents=True, exist_ok=True)
+    args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    sys.stdout.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:
     """Build the command line parser."""
     settings = Settings()
@@ -181,6 +227,17 @@ def parser() -> argparse.ArgumentParser:
     policy.add_argument("--policy-id", type=int)
     policy.add_argument("--policy-source-key")
     publish_model.set_defaults(handler=_publish_public_model)
+    publish_historical = commands.add_parser(
+        "publish-historical-signal-map",
+        help="seal a 6,291-node H3-only historical map for explicit local opt-in",
+    )
+    publish_historical.add_argument("--signal-artifact", type=Path, required=True)
+    publish_historical.add_argument("--compatibility-receipt", type=Path, required=True)
+    publish_historical.add_argument("--output", type=Path, required=True)
+    publish_historical.add_argument("--object-store", type=Path, required=True)
+    publish_historical.add_argument("--receipt", type=Path, required=True)
+    publish_historical.add_argument("--report", type=Path, required=True)
+    publish_historical.set_defaults(handler=_publish_historical_signal_map)
     return command_parser
 
 
@@ -198,6 +255,8 @@ def main() -> int:
             return _ingest_source(args)
         case "publish-public-model":
             return _publish_public_model(args)
+        case "publish-historical-signal-map":
+            return _publish_historical_signal_map(args)
         case _:
             raise RuntimeError(f"unknown command: {args.command}")
 

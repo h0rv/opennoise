@@ -12,6 +12,7 @@ from litestar.template.config import TemplateConfig
 
 from musix.db import AsyncDatabase
 from musix.genre_entry import GenreEntryRepository
+from musix.historical_signal_store import HistoricalSignalMapStore
 from musix.models import Settings
 from musix.production_store import ProductionMapStore
 from musix.routes import CoreController, EvidenceController, MapController, SearchController
@@ -22,7 +23,9 @@ TEMPLATE_ROOT = PACKAGE_ROOT / "templates"
 
 
 def create_app(
-    database_path: Path | None = None, production_map_path: Path | None = None
+    database_path: Path | None = None,
+    production_map_path: Path | None = None,
+    historical_signal_map_path: Path | None = None,
 ) -> Litestar:
     """Create an app with a separate lifecycle-managed read connection."""
     settings = Settings()
@@ -30,9 +33,13 @@ def create_app(
     database = AsyncDatabase(selected_path)
     genre_entries = GenreEntryRepository(selected_path)
     production_map = ProductionMapStore(production_map_path or settings.production_map_path)
+    historical_signal_map = HistoricalSignalMapStore(
+        historical_signal_map_path or settings.historical_signal_map_path
+    )
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
+        await historical_signal_map.start()
         await database.start()
         try:
             yield
@@ -48,6 +55,9 @@ def create_app(
     async def provide_production_map() -> ProductionMapStore:
         return production_map
 
+    async def provide_historical_signal_map() -> HistoricalSignalMapStore:
+        return historical_signal_map
+
     return Litestar(
         route_handlers=[
             CoreController,
@@ -60,6 +70,7 @@ def create_app(
             "database": Provide(provide_database),
             "genre_entries": Provide(provide_genre_entries),
             "production_map": Provide(provide_production_map),
+            "historical_signal_map": Provide(provide_historical_signal_map),
         },
         lifespan=[lifespan],
         template_config=TemplateConfig(directory=TEMPLATE_ROOT, engine=JinjaTemplateEngine),

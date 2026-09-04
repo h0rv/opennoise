@@ -7,6 +7,8 @@ from pydantic import Field, FiniteFloat, model_validator
 from musix.models import FrozenModel
 from musix.types import Sha256
 
+HISTORICAL_FULL_MAP_NODE_TARGET = 6_291
+
 
 class HistoricalSignalSettings(FrozenModel):
     """Fixed public-signal configuration; no legacy coordinates are model inputs."""
@@ -202,3 +204,102 @@ class HistoricalSignalArtifact(FrozenModel):
         if self.inputs.genre_count != len(self.nodes):
             raise ValueError("historical signal input genre count must equal node count")
         return self
+
+
+class HistoricalSignalPublicationQuality(FrozenModel):
+    """Record publication gates for an explicit local historical-map opt-in."""
+
+    required_node_count: Literal[6291] = HISTORICAL_FULL_MAP_NODE_TARGET
+    node_count: int = Field(gt=0, le=20_000)
+    final_lod_node_count: int = Field(gt=0, le=20_000)
+    final_lod_tile_node_count: int = Field(gt=0, le=20_000)
+    h3_membership_count: int = Field(ge=0, le=2_000_000)
+    h3_member_genre_count: int = Field(ge=0, le=20_000)
+    h2_oracle_evaluation_node_count: int = Field(ge=0, le=20_000)
+    deterministic_source_build: Literal[True] = True
+    deterministic_publication: Literal[True] = True
+    h2_coordinates_excluded_from_training: Literal[True] = True
+    default_production_promotion: Literal[False] = False
+
+
+class HistoricalSignalPublicationArtifact(FrozenModel):
+    """A sealed local-only map envelope around an H3-built signal artifact.
+
+    This deliberately remains separate from ``ProductionMapArtifact``: the latter
+    makes qualified public-taxonomy claims that historical H3 evidence cannot make.
+    """
+
+    revision: Literal["historical-signal-publication-v1"] = "historical-signal-publication-v1"
+    source_signal_artifact_sha256: Sha256
+    h2_artifact_sha256: Sha256
+    h3_artifact_sha256: Sha256
+    map: HistoricalSignalArtifact
+    quality: HistoricalSignalPublicationQuality
+
+    @model_validator(mode="after")
+    def require_safe_complete_local_map(self) -> "HistoricalSignalPublicationArtifact":
+        """Bind every published coordinate to the sealed H3-only source build."""
+        _require_publication_provenance(self)
+        _require_publication_delivery(self)
+        _require_publication_coordinate_boundary(self)
+        return self
+
+
+class HistoricalSignalPublicationReceipt(FrozenModel):
+    """Portable object-store receipt for a local historical signal map."""
+
+    revision: Literal["historical-signal-publication-receipt-v1"] = (
+        "historical-signal-publication-receipt-v1"
+    )
+    artifact_sha256: Sha256
+    artifact_byte_size: int = Field(gt=0)
+    object_key: str = Field(min_length=1, max_length=1_000)
+    source_signal_artifact_sha256: Sha256
+    h2_artifact_sha256: Sha256
+    h3_artifact_sha256: Sha256
+    default_production_promotion: Literal[False] = False
+
+
+def _require_publication_provenance(artifact: HistoricalSignalPublicationArtifact) -> None:
+    if artifact.source_signal_artifact_sha256 != artifact.map.quality.artifact_sha256:
+        raise ValueError("publication signal hash must match the embedded map")
+    if artifact.h2_artifact_sha256 != artifact.map.inputs.h2_artifact_sha256:
+        raise ValueError("publication H2 provenance must match the embedded map")
+    if artifact.h3_artifact_sha256 != artifact.map.inputs.h3_artifact_sha256:
+        raise ValueError("publication H3 provenance must match the embedded map")
+    if artifact.quality.h3_membership_count != artifact.map.inputs.membership_count:
+        raise ValueError("publication membership count must match the embedded map")
+    if artifact.quality.h3_member_genre_count != artifact.map.inputs.mapped_membership_genre_count:
+        raise ValueError("publication member genre count must match the embedded map")
+
+
+def _require_publication_delivery(artifact: HistoricalSignalPublicationArtifact) -> None:
+    if artifact.quality.node_count != len(artifact.map.nodes):
+        raise ValueError("publication node count must match the embedded map")
+    if artifact.quality.node_count != HISTORICAL_FULL_MAP_NODE_TARGET:
+        raise ValueError("historical full-map publication must contain all 6,291 nodes")
+    final_lod = artifact.map.progressive_lods[-1]
+    if artifact.quality.final_lod_node_count != final_lod.node_count:
+        raise ValueError("publication final LOD count must match the embedded map")
+    if final_lod.node_count != len(artifact.map.nodes):
+        raise ValueError("historical final LOD must expose every node")
+    final_tiles = [tile for tile in artifact.map.tiles if tile.level == final_lod.level]
+    final_tile_ids = [genre_id for tile in final_tiles for genre_id in tile.node_ids]
+    if len(set(final_tile_ids)) != len(final_tile_ids) or set(final_tile_ids) != {
+        node.genre_id for node in artifact.map.nodes
+    }:
+        raise ValueError("historical final LOD tiles must partition every node exactly once")
+    if artifact.quality.final_lod_tile_node_count != len(final_tile_ids):
+        raise ValueError("publication tile count must match the embedded map")
+
+
+def _require_publication_coordinate_boundary(artifact: HistoricalSignalPublicationArtifact) -> None:
+    if (
+        artifact.quality.h2_oracle_evaluation_node_count
+        != artifact.map.coordinate_evaluation.compared_node_count
+    ):
+        raise ValueError("publication H2 evaluation count must match the embedded map")
+    if artifact.map.inputs.coordinate_training_status != "excluded":
+        raise ValueError("H2 coordinates must be excluded from historical map training")
+    if artifact.map.coordinate_evaluation.used_for_training:
+        raise ValueError("H2 coordinates must remain an evaluation-only oracle")

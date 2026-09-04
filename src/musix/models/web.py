@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     production_map_path: Path | None = Field(
         default=None, validation_alias="MUSIX_PRODUCTION_MAP_PATH"
     )
+    historical_signal_map_path: Path | None = Field(
+        default=None, validation_alias="MUSIX_HISTORICAL_SIGNAL_MAP_PATH"
+    )
 
 
 class SearchHit(FrozenModel):
