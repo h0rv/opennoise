@@ -56,6 +56,8 @@
   const getLods = (payload) => payload.lods ?? payload.graph?.lods ?? [];
   const getOverviewCommunities = (payload) => payload.overview_communities ?? [];
   const nodePositionCache = new WeakMap();
+  const edgeIndexCache = new WeakMap();
+  let nodePositionBuilds = 0;
   const overviewProminence = (members) => Math.min(1, Math.log2(Math.max(1, members) + 1) / 6);
   const overviewFontSize = (members) => {
     const mobile = mapElement.clientWidth <= 600;
@@ -78,7 +80,22 @@
     if (cached) return cached;
     const positions = mapPositions(getNodes(payload), nodeId);
     nodePositionCache.set(payload, positions);
+    nodePositionBuilds += 1;
     return positions;
+  };
+  const edgesByEndpoint = (payload) => {
+    const cached = edgeIndexCache.get(payload);
+    if (cached) return cached;
+    const index = new Map();
+    for (const edge of getEdges(payload)) {
+      for (const endpoint of [edge.source_genre_id ?? edge.source, edge.target_genre_id ?? edge.target]) {
+        const entries = index.get(endpoint) ?? [];
+        entries.push(edge);
+        index.set(endpoint, entries);
+      }
+    }
+    edgeIndexCache.set(payload, index);
+    return index;
   };
 
   const elementsFor = (payload) => {
@@ -157,9 +174,7 @@
 
   const materializeSelectedEdges = (cy, payload, node) => {
     const id = node.data("itemId");
-    const additions = getEdges(payload).filter((edge) => (
-      edge.source_genre_id === id || edge.target_genre_id === id
-    )).slice(0, 12).flatMap((edge) => {
+    const additions = (edgesByEndpoint(payload).get(id) ?? []).slice(0, 12).flatMap((edge) => {
       const source = `genre-${edge.source_genre_id ?? edge.source}`;
       const target = `genre-${edge.target_genre_id ?? edge.target}`;
       const edgeId = `${edge.kind ?? "similarity"}-${source}-${target}`;
@@ -359,12 +374,14 @@
         boxSelectionEnabled: false,
       });
       window.__musixMap = cy;
-      window.__musixMapMetrics = { initialElementCount: cy.elements().length, nodePositionBuilds: 1 };
+      window.__musixMapMetrics = { initialElementCount: cy.elements().length, nodePositionBuilds };
       root.classList.add("js-map-ready");
       cy.resize();
-      // Start at the actual overview level. A later fit-to-overview jump used to
-      // skip semantic level zero and make the first view look tiny and sparse.
+      // Fit establishes the overview center. Clamp zoom below the first semantic
+      // threshold so a small community set cannot skip straight to raw nodes.
       cy.fit(cy.nodes(".overview"), 72);
+      cy.zoom(Math.min(cy.zoom(), 0.5));
+      cy.center(cy.nodes(".overview"));
       updateLod(cy, payload);
       cy.on("zoom", () => updateLod(cy, payload));
       cy.on("pan", () => updateLod(cy, payload));

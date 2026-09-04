@@ -16,6 +16,7 @@ class AssetTests(unittest.TestCase):
     def test_semantic_map_starts_with_bounded_overview_and_cached_positions(self) -> None:
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
         self.assertIn("nodePositionCache", source)
+        self.assertIn("edgeIndexCache", source)
         self.assertIn("initialElementCount", source)
         self.assertIn("const cap = [0, 96, 280, 720][lod]", source)
         node_element = source[
