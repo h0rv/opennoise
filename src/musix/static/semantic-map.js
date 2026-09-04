@@ -68,6 +68,13 @@
     const maximum = mobile ? 20 : 24;
     return Math.round(minimum + (maximum - minimum) * overviewProminence(members));
   };
+  const overviewFitPadding = () => mapElement.clientWidth <= 600 ? 28 : 72;
+  const mapDimensions = () => {
+    const padding = overviewFitPadding();
+    const usableWidth = Math.max(1, mapElement.clientWidth - 2 * padding);
+    const usableHeight = Math.max(1, mapElement.clientHeight - 2 * padding);
+    return { width: 1000 * usableWidth / usableHeight, height: 1000 };
+  };
 
   const quantile = (values, fraction) => values[Math.min(values.length - 1, Math.max(0, Math.round((values.length - 1) * fraction)))];
   const mapPositions = (items, id) => {
@@ -91,10 +98,46 @@
       if (value > high) return tailPosition(tails.upperRanks.get(value) ?? 0, tails.upper.length, 0.94, 0.98);
       return 0.06 + 0.88 * (value - low) / Math.max(high - low, 0.0001);
     };
+    const dimensions = mapDimensions();
     return new Map(items.map((item) => [id(item), {
-      x: scale(item.x, lowX, highX, xTails) * 1600,
-      y: scale(item.y, lowY, highY, yTails) * 900,
+      x: scale(item.x, lowX, highX, xTails) * dimensions.width,
+      y: scale(item.y, lowY, highY, yTails) * dimensions.height,
     }]));
+  };
+  const spreadOverviewPositions = (communities) => {
+    const dimensions = mapDimensions();
+    const positions = mapPositions(communities, (community) => community.community_id);
+    const points = communities.map((community) => ({
+      id: community.community_id,
+      ...positions.get(community.community_id),
+    }));
+    const inset = Math.min(72, dimensions.width * 0.12, dimensions.height * 0.08);
+    const minimumDistance = mapElement.clientWidth <= 600 ? 150 : 132;
+    // This deterministic display adjustment retains the relative input map as
+    // its starting point while separating dense overview anchors for readable labels.
+    for (let iteration = 0; iteration < 90; iteration += 1) {
+      for (let leftIndex = 0; leftIndex < points.length; leftIndex += 1) {
+        for (let rightIndex = leftIndex + 1; rightIndex < points.length; rightIndex += 1) {
+          const left = points[leftIndex]; const right = points[rightIndex];
+          let dx = left.x - right.x; let dy = left.y - right.y;
+          let distance = Math.hypot(dx, dy);
+          if (distance >= minimumDistance) continue;
+          if (distance < 0.001) {
+            dx = left.id < right.id ? -1 : 1;
+            dy = left.id < right.id ? -0.5 : 0.5;
+            distance = Math.hypot(dx, dy);
+          }
+          const movement = (minimumDistance - distance) * 0.08 / distance;
+          left.x += dx * movement; left.y += dy * movement;
+          right.x -= dx * movement; right.y -= dy * movement;
+        }
+      }
+      for (const point of points) {
+        point.x = Math.max(inset, Math.min(dimensions.width - inset, point.x));
+        point.y = Math.max(inset, Math.min(dimensions.height - inset, point.y));
+      }
+    }
+    return new Map(points.map((point) => [point.id, { x: point.x, y: point.y }]));
   };
   const nodePositions = (payload) => {
     const cached = nodePositionCache.get(payload);
@@ -122,7 +165,7 @@
   const elementsFor = (payload) => {
     const nodes = getNodes(payload);
     const communities = getOverviewCommunities(payload);
-    const overviewPositions = mapPositions(communities, (community) => community.community_id);
+    const overviewPositions = spreadOverviewPositions(communities);
     const nodesById = new Map(nodes.map((node) => [node.genre_id ?? node.id, node]));
     const overviewLabel = (community) => {
       const lead = community.member_entity_ids.map((id) => nodesById.get(id)).filter(Boolean).sort(
@@ -393,6 +436,27 @@
     } else say(statusMessage(payload, lod));
   };
 
+  const refreshViewportGeometry = (cy, payload) => {
+    const positions = mapPositions(getNodes(payload), nodeId);
+    const overviewPositions = spreadOverviewPositions(getOverviewCommunities(payload));
+    nodePositionCache.set(payload, positions);
+    nodePositionBuilds += 1;
+    cy.batch(() => cy.nodes().forEach((node) => {
+      const position = node.data("overview")
+        ? overviewPositions.get(node.data("itemId"))
+        : positions.get(node.id());
+      if (position) node.position(position);
+    }));
+    cy.resize();
+    if (!activeCommunity) {
+      cy.fit(cy.nodes(".overview"), overviewFitPadding());
+      cy.zoom(Math.min(cy.zoom(), 0.5));
+      cy.center(cy.nodes(".overview"));
+      currentLod = -1;
+    }
+    updateLod(cy, payload);
+  };
+
   const focusCommunity = (cy, node, payload) => {
     if (activeCommunity?.id() === node.id()) return;
     cameraTransition = true;
@@ -425,7 +489,7 @@
     activeCommunity = null;
     selectedNode = null;
     cy.$(":selected").unselect();
-    cy.fit(cy.nodes(".overview"), 72);
+    cy.fit(cy.nodes(".overview"), overviewFitPadding());
     cy.zoom(Math.min(cy.zoom(), 0.5));
     cy.center(cy.nodes(".overview"));
     currentLod = -1;
@@ -517,11 +581,19 @@
       cy.resize();
       // Fit establishes the overview center. Clamp zoom below the first semantic
       // threshold so a small community set cannot skip straight to raw nodes.
-      cy.fit(cy.nodes(".overview"), 72);
+      cy.fit(cy.nodes(".overview"), overviewFitPadding());
       cy.zoom(Math.min(cy.zoom(), 0.5));
       cy.center(cy.nodes(".overview"));
       updateLod(cy, payload);
       bindMapInteractions(cy, payload);
+      let viewportSize = `${mapElement.clientWidth}x${mapElement.clientHeight}`;
+      const resizeObserver = new ResizeObserver(() => {
+        const nextSize = `${mapElement.clientWidth}x${mapElement.clientHeight}`;
+        if (nextSize === viewportSize) return;
+        viewportSize = nextSize;
+        window.requestAnimationFrame(() => refreshViewportGeometry(cy, payload));
+      });
+      resizeObserver.observe(mapElement);
 
       const selected = mapElement.dataset.selectedGenre;
       if (selected) cy.$(`#genre-${selected}`).select();
@@ -536,7 +608,7 @@
         if (action === "zoom-out") cy.zoom({ level: Math.max(cy.minZoom(), cy.zoom() / 1.25), renderedPosition: { x: innerWidth / 2, y: innerHeight / 2 } });
         if (action === "fit") {
           if (activeCommunity) returnToOverview(cy, payload);
-          else cy.fit(cy.elements(":visible"), 72);
+          else cy.fit(cy.elements(":visible"), overviewFitPadding());
         }
       }, true);
       mapElement.addEventListener("keydown", (event) => {

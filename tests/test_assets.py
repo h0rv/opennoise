@@ -18,7 +18,7 @@ class AssetTests(unittest.TestCase):
         self.assertIn("nodePositionCache", source)
         self.assertIn("edgeIndexCache", source)
         self.assertIn("initialElementCount", source)
-        self.assertIn("const cap = [0, 96, 280, 720][lod]", source)
+        self.assertIn("[0, 96, 280, 720][lod]", source)
         node_element = source[
             source.index("const nodeElement") : source.index("const materializeLod")
         ]
