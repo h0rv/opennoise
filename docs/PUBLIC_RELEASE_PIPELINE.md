@@ -1,39 +1,65 @@
 # Public release pipeline
 
-`poe build-public-release` is the only command that builds a public serving release.
+`poe release-certify` is the cache-only public release command. It builds a
+fresh serving release and fails closed if any source, model, map, renderer, or
+browser evidence is missing or inconsistent.
 
-The command uses only the local cache. It never calls a public API, downloads
-a source, or reads audio or music files. It needs the ignored local cache at
-`data/phase3-public-qualified.sqlite`.
+It requires:
 
-First, the command verifies the cache against the checked in Phase 3 manifest.
-The cache stays at schema 10. Next, it copies the verified cache to a serving
-database and applies schema 11. Finally, it rebuilds the public graph and
-checks the input, settings, and logical output hashes. It then builds
-`production-map-v1.json` from that verified database and model.
+- `config/releases/phase3-public-20260831/release-manifest.json`
+- `data/phase3-public-qualified.sqlite`
+- Chromium at `/usr/bin/chromium`, Node, and the `musix` CLI
 
-The command writes four derived outputs:
+It never fetches a source, reads music or audio files, or calls a live data API.
 
-- `data/public.sqlite` is the serving database. It includes names, layouts,
-  representatives, profile memberships, neighbor rows, and their evidence.
-- `data/model/phase3-public-model.json` is the rebuilt model artifact.
-- `data/release/phase3-public-receipt.json` records the cache, model, schema,
-  and row count hashes used for the build.
-- `data/model/production-map-v1.json` is the production map artifact. The app
-  reads it only when `MUSIX_PRODUCTION_MAP_PATH` names this file.
-
-The model's logical hash is reproducible. The command records the model file
-hash but does not use it as a rebuild check. The old file contains elapsed time
-and peak memory values, which vary by run. The receipt includes both hashes.
-
-The sealed input can be checked without rebuilding:
+## Command
 
 ```sh
-poe verify-phase3-release-manifest
-poe verify-phase3-release-manifest --database data/phase3-public-qualified.sqlite
+uv run poe release-certify
 ```
 
-Serving profile and neighbor rows are immutable. The app hides a row if the
-selected model, one of its source inputs, or either related genre is
-suppressed. `GET /api/genres/{id}` returns the typed explanation in
-`model_explanation`.
+The command verifies the sealed cache, materializes a serving database and
+public model, builds the production map, writes acceptance evidence, starts a
+local app with `MUSIX_PRODUCTION_MAP_PATH`, runs raw-CDP browser QA, and checks
+the final evidence bundle.
+
+Default outputs:
+
+- `data/public.sqlite`
+- `data/model/phase3-public-model.json`
+- `data/release/phase3-public-receipt.json`
+- `data/model/production-map-v1.json` and its acceptance, seed, browser, and
+  final report sidecars under `data/model/production-map-v1*`
+- `data/model/production-map-captures/`
+
+The command accepts explicit path and port overrides:
+
+```sh
+uv run poe release-certify -- \
+  --cache-database data/phase3-public-qualified.sqlite \
+  --serving-database data/public.sqlite \
+  --model-output data/model/phase3-public-model.json \
+  --receipt-output data/release/phase3-public-receipt.json \
+  --map-output data/model/production-map-v1.json \
+  --acceptance-output data/model/production-map-v1.acceptance.json \
+  --seed-report-output data/model/production-map-v1.seed-report.json \
+  --browser-evidence-output data/model/production-map-v1.browser.json \
+  --report-output data/model/production-map-v1.report.json \
+  --captures-directory data/model/production-map-captures \
+  --port 3001
+```
+
+The final report is the release decision. It names every input and derived
+artifact by hash. A successful build does not authorize serving a different
+database or map path.
+
+## Serving
+
+```sh
+MUSIX_DATABASE_PATH=data/public.sqlite \
+MUSIX_PRODUCTION_MAP_PATH=data/model/production-map-v1.json \
+uv run poe dev
+```
+
+The application reads only local artifacts. Source adapters and object storage
+are build-time concerns, not request-time dependencies.

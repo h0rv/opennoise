@@ -10,9 +10,10 @@ The first Wikidata music slice is documented in
 artifacts. The shared runner owns source snapshots, attempts, checkpoints, quarantine, policies,
 transactions, provenance, and idempotency. Catalog projectors own direct SQLite normalization.
 
-Musix uses one SQLite database at `data/musix.sqlite`. The schema is in
-`migrations/0001_initial.sql`. The database stores source metadata, import
-history, normalized music data, search text, and map layouts.
+Musix uses SQLite for source metadata, import history, normalized music data,
+search text, model evidence, and map publication. Migrations are ordered under
+`migrations/`. A sealed public release copies verified local inputs into a
+serving database. Application requests do not fetch sources or rebuild models.
 
 Exact source bytes stay outside SQLite in a content addressed vault. The
 importer hashes each file with SHA256 before parsing it. The lowercase digest
@@ -170,9 +171,10 @@ suppression state. Display code should use views such as
 `displayable_entity_names`, `displayable_assets`, and
 `displayable_map_points`.
 
-`layout_runs` records an algorithm version, input hash, parameters, status, and
-policy. `layout_points` stores coordinates. A complete run becomes visible only
-after `current_layouts` selects it.
+The public model and production-map artifact are immutable derived outputs. The
+map artifact records its source-model hash, topology, display-parent decisions,
+coordinates, LOD choices, label decisions, and quality evidence. A complete
+release becomes visible only after certification selects it.
 
 `content_fragments` prepares approved text for later embedding work.
 `embeddable_content_fragments` and `trainable_content_fragments` apply separate

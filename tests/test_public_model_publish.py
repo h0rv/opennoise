@@ -316,6 +316,18 @@ class PublicModelPublishTests(unittest.TestCase):
         self.assertTrue(explanation["profiles"])
         self.assertTrue(explanation["neighbors"])
 
+    def test_genre_fragment_renders_compact_model_signals(self) -> None:
+        publish_public_model(self.database_path, self.artifact_path, policy_id=3)
+
+        with TestClient(create_app(self.database_path)) as client:
+            response = client.get("/fragments/genres/1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id="genre-signals"', response.text)
+        self.assertIn("direct membership", response.text)
+        self.assertIn("weighted jaccard", response.text)
+        self.assertIn("musicbrainz:artist:", response.text)
+
     def test_active_input_and_output_suppressions_retract_public_rows(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)
         with sqlite3.connect(self.database_path) as connection:

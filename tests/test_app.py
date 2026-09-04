@@ -36,7 +36,7 @@ class AppTests(unittest.TestCase):
         self.assertIn('<main id="map"', response.text)
         self.assertNotIn("<h1", response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=8", response.text)
+        self.assertIn("/static/app.css?v=9", response.text)
         self.assertIn("cytoscape-3.34.0.min.js", response.text)
         self.assertIn("semantic-map.js", response.text)
         self.assertNotIn('id="count"', response.text)

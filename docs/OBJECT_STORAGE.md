@@ -18,7 +18,8 @@ symbolic links that already exist in an object's path, but it does not claim to 
 hostile process that changes path components during an operation. Preventing path replacement
 races would require Linux directory file descriptor operations and a larger interface.
 
-The interface contains only the operations used by the source pipeline. A future R2 or S3
-implementation can implement the same protocol with multipart transfers. Cloud credentials,
-buckets, signed URLs, object listing, deletion, and lifecycle policies are outside the current
-scope.
+The interface contains only the operations used by the source and release pipeline. A future R2
+or S3 implementation can implement the same protocol with multipart transfers. Cloud
+credentials, buckets, signed URLs, object listing, deletion, and lifecycle policies are outside
+the current scope. The running application never needs object-store credentials: it serves a
+sealed local SQLite database and immutable map artifact.

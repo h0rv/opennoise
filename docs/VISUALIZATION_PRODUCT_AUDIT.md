@@ -1,24 +1,37 @@
 # Visualization product audit
 
-Audit date: 2026-08-31
+## Product surface
 
-## Layout inventory
+The primary workspace has one map. It has search, a selected-genre detail
+region, simple zoom controls, and system, light, or dark appearance. There is
+no layout selector.
 
-| Layout or experiment | Current state | Product decision |
-| --- | --- | --- |
-| Historical source coordinates | Stored as a published `layout_run` with `algorithm_key = source_coordinates`. The metadata API returns a `historic_source` coordinate space. | Selectable when the run is current, displayable, and nonempty. Coordinates remain unchanged. |
-| Other published layout runs | Stored through the same `layout_runs`, `layout_points`, and `current_layouts` tables. The metadata API returns a `derived` coordinate space. | Selectable through the same UI. The template does not know the algorithm. |
-| Weighted Jaccard and cosine reconstruction | Implemented as bounded evaluation code in `reconstruction.py`. It produces candidate neighbors and comparison metrics. | Not presented as a map layout because it does not publish layout points. |
-| Sparse labels, landmarks, density, and evidence edges | Typed presentation contracts exist in `map_presentation.py`. | Not presented as a selectable lens because no published presentation artifact exists. |
-| PCA, multidimensional scaling, UMAP, PaCMAP, ForceAtlas2, OpenOrd, and hyperbolic layouts | Research candidates only. | Not shown. A candidate becomes selectable only after it writes a current, complete layout run. |
-| Historical artist overlap and audio similarity neighbors | Imported as dated relation observations. | Kept as genre metadata. They are not treated as generated layout coordinates. |
+At overview, the map shows named public umbrellas or communities. Zooming adds
+genres and descendants without removing the prior context. A click opens the
+genre detail. It does not merely refocus an unlabeled point.
 
-The selector reads nonempty rows from `current_layouts`. It never copies point data and does not maintain a list of algorithms in HTML. Adding a new published layout requires no template change.
+## Responsibilities
 
-## Click flow audit
+- The production-map artifact owns graph structure, coordinates, display-parent
+  choices, LOD, labels, and map evidence.
+- Cytoscape.js 3.34 owns viewport interaction and rendering from those preset
+  coordinates.
+- HTMX 4 owns server search and detail fragments.
+- Normal genre URLs, search links, and server-rendered detail remain the
+  accessible HTML path.
+- The server-rendered SVG is a no-script fallback only. It is not a competing
+  primary renderer.
 
-Before this change, the API accepted a layout key but the page, workspace fragment, search results, genre links, neighbor links, and close action returned to `default`. A click could replace the complete map, mark a point, and show only a detached close control when no discovery metadata existed. Artist and track links pointed at an entity route that did not exist. The template also had a generic listen section for playable links.
+## Non-goals
 
-The current flow preserves one validated layout key through normal links and HTMX requests. Clicking a genre opens its stable URL and always displays a panel headed by the genre name. The panel shows available artist, album, track, and neighbor metadata. External destinations remain ordinary links. Closing the panel keeps the selected layout. Unknown layouts return an error instead of silently changing the representation.
+- No audio, preview, player, waveform, or media placeholder.
+- No browser-inferred taxonomy parent, geometry, label choice, or score.
+- No historical Every Noise coordinates mixed into the public graph.
+- No direct, community, taxonomy, or historical layout switcher in the product.
 
-The UI does not render audio elements, preview controls, players, waveform elements, or audio placeholders. It uses the self-hosted HTMX 4 script and no application JavaScript.
+## Release evidence
+
+The release checks drag or touch pan, wheel or pinch zoom, click detail, search
+state, browser history, keyboard focus, dark mode, overview label reveal, and
+the no-script fallback. It captures desktop and mobile screenshots in system,
+light, and dark appearances.

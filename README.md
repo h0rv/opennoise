@@ -1,38 +1,81 @@
 # Musix
 
-Musix is a local map of 6,291 music microgenres. It reproduces a pinned Every Noise layout and keeps source rights and provenance with each normalized record.
+Musix is an open, metadata-only music graph. It builds explainable genres,
+artist membership, similarity, hierarchy, representative albums and tracks,
+and a semantic map from bounded public data.
 
-## Run the demo
+The default public model has 603 independently built genres. The 6,291 Every
+Noise labels and coordinates are a separate, dated historical reference. They
+do not train, place, or score the public model.
 
-Install [mise](https://mise.jdx.dev/), then run:
+No music, preview, or audio bytes enter the project.
+
+## Run
+
+Python is pinned to 3.13.14. mise installs Python and uv. uv installs the
+locked environment. Poe runs project tasks.
 
 ```sh
 mise install
-mise run bootstrap
-mise run dev
-```
-
-Open <http://127.0.0.1:3001>. The first bootstrap downloads about 3.8 MB from a pinned source URL, verifies its byte count and SHA256, and loads the map. Later runs use the local content addressed vault and do not create duplicates.
-
-## Development
-
-Poe is the project task runner. uv installs the locked environment and runs each task.
-
-```sh
-uv sync --locked
-uv run poe format
+mise run sync
 uv run poe check
 ```
 
-`poe test` creates ignored `.cache/test-tmp` and `.cache/uv` directories so test
-artifacts and uv downloads can be reused without depending on a small shared
-`/tmp`. Litestar's synchronous `TestClient` uses a cross-thread AnyIO portal.
-It works in a normal local shell; restricted execution sandboxes that block
-cross-thread event-loop wakeups cannot run it, independent of the app lifecycle.
+Build or verify a sealed local release before serving a production map. The
+release uses only its local cache and never fetches data during serving.
 
-Useful tasks include `format`, `lint`, `typecheck`, `test`, `schema`, `bootstrap`,
-`ingest-musicbrainz-artists`, `ingest-listenbrainz`, `dev`, and `check`.
+```sh
+uv run poe release-certify
+MUSIX_DATABASE_PATH=data/public.sqlite \
+MUSIX_PRODUCTION_MAP_PATH=data/model/production-map-v1.json \
+uv run poe dev
+```
 
-The app uses Python 3.13 or newer, Litestar, Jinja, Pydantic, standard library SQLite, and a self-hosted copy of htmx 4.0.0. It uses no ORM, Alpine, or custom JavaScript. The SVG map is rendered on the server, and htmx replaces search and map fragments.
+Open <http://127.0.0.1:3001>.
 
-The default database is `data/musix.sqlite`. Raw and normalized source artifacts stay in the ignored `data/vault` directory. The repository docs describe the reproduction method and local data policy.
+`release-certify` fails closed until the qualified source cache, public model,
+map artifact, and renderer evidence agree. The product only serves a configured
+map artifact that passes those checks.
+
+## Stack
+
+- Python 3.13.14, uv, mise, Poe, Ruff, and ty.
+- Litestar async routes, Jinja templates, Pydantic models, and standard-library
+  SQLite persistence. If an ORM becomes necessary, the project choice is
+  SQLModel rather than declarative SQLAlchemy.
+- HTMX 4 for search, detail fragments, ordinary URLs, and history.
+- A vendored Cytoscape.js 3.34 island for pan, wheel or pinch zoom, graph
+  selection, and semantic level of detail.
+- Local content-addressed object storage behind a small adapter. R2 or S3 can
+  implement the same interface later.
+
+The graph island is optional. Search and genre URLs remain ordinary HTML links.
+The server-rendered SVG is the no-script fallback, not the production renderer.
+
+## Data boundary
+
+Source adapters are small and explicit. They ingest approved metadata from
+Wikidata, MusicBrainz, ListenBrainz aggregates, and user-authorized local
+inputs. Each source has a snapshot, hash, policy, provenance, and bounded
+parser contract. The public model uses only sources whose policy permits the
+specific output.
+
+ListenBrainz contributes privacy-thresholded aggregate artist co-listens. Raw
+listens and listener identifiers are not published. Anna's Archive is never a
+default source or downloader. A user-authorized local source remains local and
+subject to its policy.
+
+## Product model
+
+The production map has one view. At a distance it shows umbrella regions.
+Zooming keeps prior context and introduces genres, then deeper subgenres. The
+taxonomy remains a DAG. Any single display parent is a versioned presentation
+choice, not a claim that a multi-parent genre has one true parent.
+
+A selected genre exposes compact direct and one-hop membership components plus
+ranked similarity scores. Representative artists, albums, tracks, and external
+metadata links appear only when the public data supports them.
+
+See [the stack and architecture](docs/STACK.md),
+[the source-to-release pipeline](docs/PUBLIC_RELEASE_PIPELINE.md), and
+[the historical reconstruction boundary](docs/EVERY_NOISE_REPRODUCTION.md).

@@ -93,6 +93,16 @@ html.js-map-ready #plot { display: none; }
 #selection-clear { color: var(--ink); font-size: 22px; text-decoration: none; }
 #selection-clear:focus-visible, #genre-detail a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .placement-note { color: var(--muted); font-size: 12px; }
+.signals { margin-top: 14px; border-top: 1px solid var(--line); }
+.signals > summary { padding: 10px 0 0; cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.signals > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.signals section { margin: 0; }
+.signal-list, .signal-list ul { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.signal-list > li, .signal-list ul > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: baseline; font-size: 12px; line-height: 1.35; }
+.signal-list > li { padding: 5px 0; border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+.signal-list ul { grid-column: 1 / -1; padding-left: 9px; color: var(--muted); }
+.signal-list a, .signal-artist { min-width: 0; overflow-wrap: anywhere; }
+.signal-list data { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .empty { fill: var(--muted); font-size: 28px; }
 
 @media (max-width: 600px) {
