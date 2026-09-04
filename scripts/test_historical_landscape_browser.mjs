@@ -24,7 +24,7 @@ const hierarchy = (id, level, label, x = level + 0.15, y = level + 0.25) => ({
 const leaf = (id, x, y) => ({ genre_id: id, name: id, membership_count: 1, x, y });
 const overview = Array.from({ length:12 }, (_, index) => hierarchy(
   `overview-${index}`, 0, `Overview ${String(index + 1).padStart(2, "0")}`,
-  index / 11, 0.500 + (index % 2) * 0.00001,
+  index === 11 ? 12.5 : index / 11, 0.14 + (index % 3) * 0.34,
 ));
 const payloads = new Map([
   ["/api/historical-signal-map?level=0", { initial_edge_count: 0, hierarchy: overview }],

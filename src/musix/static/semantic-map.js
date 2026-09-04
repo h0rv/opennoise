@@ -89,6 +89,9 @@
       const aspect = Math.max(0.45, Math.min(3.2, viewportWidth / viewportHeight));
       const width = 600 * aspect;
       const height = 600;
+      const isOverview = items.length > 0 && items.every((item) => (
+        Boolean(item.hierarchy_id) && Number(item.level) === 0
+      ));
       const axis = (key) => items.map((item) => Number(item[key])).filter(Number.isFinite).sort((left, right) => left - right);
       const quantile = (values, fraction) => values.length
         ? values[Math.max(0, Math.min(values.length - 1, Math.round((values.length - 1) * fraction)))]
@@ -113,8 +116,26 @@
       const packed = (index, count, span) => count <= 1
         ? span / 2
         : 0.1 * span + 0.8 * span * index / (count - 1);
+      // Overview aggregate coordinates can contain extreme learned outliers,
+      // so use a stable landscape grid for the bounded root cohort.  Keep
+      // deeper cohorts on their learned coordinates so drilling remains a
+      // faithful view of the model output.
+      const overviewColumns = Math.max(
+        1,
+        Math.min(
+          Math.ceil(Math.sqrt(items.length * aspect)),
+          Math.max(1, Math.floor(viewportWidth / 180)),
+        ),
+      );
+      const overviewRows = Math.ceil(items.length / overviewColumns);
       return items.map((item) => {
         const rank = ranks.get(item) ?? 0;
+        if (isOverview) {
+          return element(item, {
+            x: packed(rank % overviewColumns, overviewColumns, width),
+            y: packed(Math.floor(rank / overviewColumns), overviewRows, height),
+          });
+        }
         return element(item, {
           x: collapsedX ? packed(Math.floor(rank / rows), columns, width) : scale(item.x, lowX, highX, width),
           y: collapsedY ? packed(rank % rows, rows, height) : scale(item.y, lowY, highY, height),
@@ -123,7 +144,7 @@
     };
     const fitHistoricalViewport = () => {
       const mapBounds = mapElement.getBoundingClientRect();
-      const horizontalInset = 44;
+      const horizontalInset = 120;
       const left = horizontalInset; const right = Math.max(left + 1, mapBounds.width - horizontalInset);
       let top = 0; let bottom = mapBounds.height;
       for (const selector of ["#search", "#map-view-switch", "#map-controls", "#historical-detail"]) {
