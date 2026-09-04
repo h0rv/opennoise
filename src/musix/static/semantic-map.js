@@ -51,6 +51,13 @@
   const getEdges = (payload) => payload.edges ?? payload.graph?.edges ?? [];
   const getLods = (payload) => payload.lods ?? payload.graph?.lods ?? [];
   const getOverviewCommunities = (payload) => payload.overview_communities ?? [];
+  const overviewProminence = (members) => Math.min(1, Math.log2(Math.max(1, members) + 1) / 6);
+  const overviewFontSize = (members) => {
+    const mobile = mapElement.clientWidth <= 600;
+    const minimum = mobile ? 14 : 16;
+    const maximum = mobile ? 20 : 24;
+    return Math.round(minimum + (maximum - minimum) * overviewProminence(members));
+  };
 
   const normalisedPositions = (nodes) => {
     const xs = nodes.map((node) => Number(node.x)).filter(Number.isFinite);
@@ -77,7 +84,9 @@
       )[0];
       return lead ? lead.name : `${community.member_entity_ids.length} genres`;
     };
-    const elements = communities.map((community) => ({
+    const elements = communities.map((community) => {
+      const memberCount = community.member_entity_ids.length;
+      return {
       data: {
         id: community.community_id,
         itemId: community.community_id,
@@ -86,14 +95,16 @@
         detailHref: null,
         depth: 0,
         lodMin: 0,
-        weight: community.member_entity_ids.length,
+        weight: memberCount,
         displayLabel: "",
-        labelSize: 13,
+        labelSize: overviewFontSize(memberCount),
+        overviewNodeSize: Math.round(42 + 34 * overviewProminence(memberCount)),
         overview: true,
       },
       position: { x: 180 + Number(community.x) * 2200, y: 160 + Number(community.y) * 1500 },
       classes: "overview",
-    }));
+      };
+    });
     elements.push(...nodes.map((node) => {
       const id = nodeId(node);
       return {
@@ -131,7 +142,7 @@
   const stylesheet = () => [
     { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": "data(labelSize)", "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, "text-valign": "bottom", "text-margin-y": 7, width: 13, height: 13, "overlay-opacity": 0 } },
     { selector: "node.umbrella", style: { "background-color": cssValue("--parent"), width: 25, height: 25, "font-size": "data(labelSize)", "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },
-    { selector: "node.overview", style: { "background-color": cssValue("--parent"), width: 28, height: 28, "font-size": "data(labelSize)", "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },
+    { selector: "node.overview", style: { "background-color": cssValue("--parent"), "background-opacity": 0.9, width: "data(overviewNodeSize)", height: "data(overviewNodeSize)", "font-size": "data(labelSize)", "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },
     { selector: "node:selected", style: { "border-width": 4, "border-color": cssValue("--focus"), "background-color": cssValue("--focus") } },
     { selector: "edge", style: { width: 1.5, "line-color": cssValue("--edge"), opacity: 0.68, "curve-style": "straight" } },
     { selector: "edge.similarity", style: { "line-style": "dashed", "line-color": cssValue("--similarity"), opacity: 0.65 } },
@@ -252,7 +263,12 @@
       cy.nodes().forEach((node) => {
         const visible = visibleIds.has(node.data("itemId"));
         node.toggleClass("lod-hidden", !visible);
-        node.data("labelSize", labelSize);
+        node.data(
+          "labelSize",
+          Boolean(node.data("overview"))
+            ? overviewFontSize(Number(node.data("weight")))
+            : labelSize,
+        );
       });
       cy.edges().forEach((edge) => edge.toggleClass("lod-hidden", edge.source().hasClass("lod-hidden") || edge.target().hasClass("lod-hidden")));
     });
@@ -304,7 +320,7 @@
       cy.resize();
       // Start at the actual overview level. A later fit-to-overview jump used to
       // skip semantic level zero and make the first view look tiny and sparse.
-      cy.zoom(0.42);
+      cy.zoom(0.5);
       updateLod(cy, payload);
       cy.center(cy.elements(":visible"));
       updateLod(cy, payload);
