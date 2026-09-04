@@ -7,6 +7,7 @@ import json
 import re
 import sqlite3
 from collections import Counter
+from contextlib import closing
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -160,7 +161,9 @@ def verify_manifest_against_database(release_directory: Path, database: Path) ->
         (item["source_key"], item["artifact_sha256"], item["source_manifest_sha256"])
         for item in manifest["inputs"]
     }
-    with sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True) as connection:
+    with closing(
+        sqlite3.connect(f"file:{database.resolve()}?mode=ro&immutable=1", uri=True)
+    ) as connection:
         integrity = connection.execute("PRAGMA integrity_check").fetchone()
         version = connection.execute("PRAGMA user_version").fetchone()
         if integrity is None or integrity[0] != "ok":

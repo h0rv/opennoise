@@ -244,6 +244,8 @@ class PublicModelPublishTests(unittest.TestCase):
             },
         )
         self.assertEqual(first.representative_items, 3)
+        self.assertGreater(first.profile_memberships, 0)
+        self.assertGreater(first.neighbor_rows, 0)
         with sqlite3.connect(self.database_path) as connection:
             selections = connection.execute(
                 """SELECT selected_at FROM current_public_models WHERE model_key = 'public-graph'
@@ -254,8 +256,16 @@ class PublicModelPublishTests(unittest.TestCase):
                 """SELECT name FROM displayable_map_points
                    WHERE layout_key = 'public' AND entity_id = 1"""
             ).fetchone()
+            profile_count = connection.execute(
+                "SELECT count(*) FROM public_genre_profile_memberships"
+            ).fetchone()
+            neighbor_count = connection.execute(
+                "SELECT count(*) FROM public_genre_neighbors"
+            ).fetchone()
         self.assertEqual(selections, [(sentinel,), (sentinel,)])
         self.assertEqual(map_name, ("Public IDM",))
+        self.assertEqual(profile_count, (first.profile_memberships,))
+        self.assertEqual(neighbor_count, (first.neighbor_rows,))
         database = Database(self.database_path)
         published_layouts = database.published_layouts()
         layouts = {item.layout_key for item in published_layouts}
@@ -288,6 +298,23 @@ class PublicModelPublishTests(unittest.TestCase):
             enriched[2][0].href,
             f"https://musicbrainz.org/release-group/{ALBUM_ID}",
         )
+        self.assertIsNotNone(enriched[5])
+        assert enriched[5] is not None
+        self.assertTrue(enriched[5].profiles)
+        self.assertTrue(enriched[5].neighbors)
+
+    def test_genre_api_exposes_persisted_model_explanation(self) -> None:
+        publish_public_model(self.database_path, self.artifact_path, policy_id=3)
+
+        with TestClient(create_app(self.database_path)) as client:
+            response = client.get("/api/genres/1")
+
+        self.assertEqual(response.status_code, 200)
+        explanation = response.json()["model_explanation"]
+        self.assertIsNotNone(explanation)
+        assert explanation is not None
+        self.assertTrue(explanation["profiles"])
+        self.assertTrue(explanation["neighbors"])
 
     def test_active_input_and_output_suppressions_retract_public_rows(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)

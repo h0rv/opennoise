@@ -4,6 +4,7 @@ import argparse
 import sqlite3
 import sys
 import tempfile
+from contextlib import closing
 from pathlib import Path
 
 from musix.ml.public_graph import build_public_model
@@ -63,8 +64,8 @@ def main() -> None:
         max_artist_pairs=arguments.max_artist_pairs,
     )
     with (
-        _read_only(arguments.catalog_db) as catalog,
-        _read_only(arguments.listenbrainz_db) as listenbrainz,
+        closing(_read_only(arguments.catalog_db)) as catalog,
+        closing(_read_only(arguments.listenbrainz_db)) as listenbrainz,
     ):
         inputs = PublicModelRepository(catalog, listenbrainz).load(load_settings)
     artifact = build_public_model(inputs, model_settings)

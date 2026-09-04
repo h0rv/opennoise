@@ -15,6 +15,7 @@ MIGRATIONS = (
     ROOT / "migrations" / "0008_public_model_layout_lenses.sql",
     ROOT / "migrations" / "0009_wikidata_recording_genres.sql",
     ROOT / "migrations" / "0010_music_genre_qualification.sql",
+    ROOT / "migrations" / "0011_public_model_explainability.sql",
 )
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
 
@@ -39,7 +40,7 @@ class SchemaTests(unittest.TestCase):
         integrity = self.database.execute("PRAGMA integrity_check").fetchone()
         foreign_keys = self.database.execute("PRAGMA foreign_key_check").fetchall()
 
-        self.assertEqual(version, (10,))
+        self.assertEqual(version, (11,))
         self.assertEqual(integrity, ("ok",))
         self.assertEqual(foreign_keys, [])
 

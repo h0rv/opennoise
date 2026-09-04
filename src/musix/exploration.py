@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import AwareDatetime, Field, FiniteFloat, model_validator
 
@@ -112,6 +112,50 @@ class HistoricalGenreRepresentative(FrozenModel):
     external_link: GenreExternalLink | None = None
 
 
+class GenreProfileComponent(FrozenModel):
+    """Expose one source-backed contribution to a published artist membership."""
+
+    component_kind: Literal["musicbrainz_tag", "wikidata_p136", "listenbrainz_one_hop"]
+    raw_value: FiniteFloat = Field(gt=0.0)
+    normalized_value: FiniteFloat = Field(gt=0.0, le=1.0)
+    evidence_refs: tuple[str, ...] = Field(min_length=1)
+
+
+class GenreProfileMember(FrozenModel):
+    """Expose one bounded artist membership from a public graph profile."""
+
+    artist_ref: str = Field(min_length=1, max_length=200)
+    score: FiniteFloat = Field(gt=0.0, le=1.0)
+    evidence_refs: tuple[str, ...] = Field(min_length=1)
+    components: tuple[GenreProfileComponent, ...] = Field(min_length=1)
+
+
+class GenreProfileSummary(FrozenModel):
+    """Keep direct and propagated memberships explicitly separate."""
+
+    profile_kind: Literal["direct", "one_hop"]
+    members: tuple[GenreProfileMember, ...]
+
+
+class GenreSimilarity(FrozenModel):
+    """Expose one persisted, ranked, source-model neighbor relation."""
+
+    genre_id: int
+    name: str
+    profile_kind: Literal["direct", "one_hop"]
+    metric: Literal["weighted_jaccard", "cosine"]
+    score: FiniteFloat = Field(gt=0.0, le=1.0)
+    shared_artist_count: int = Field(gt=0)
+    rank: int = Field(gt=0)
+
+
+class GenreModelExplanation(FrozenModel):
+    """Return the model evidence that produced a genre's public relationships."""
+
+    profiles: tuple[GenreProfileSummary, ...] = ()
+    neighbors: tuple[GenreSimilarity, ...] = ()
+
+
 class GenreDetail(FrozenModel):
     """A genre and the source evidence available for its fields."""
 
@@ -126,6 +170,7 @@ class GenreDetail(FrozenModel):
     defining_tracks: tuple[GenreDiscoveryItem, ...] = ()
     playable_links: tuple[GenreExternalLink, ...] = ()
     neighbors: tuple[GenreDiscoveryItem, ...] = ()
+    model_explanation: GenreModelExplanation | None = None
 
 
 class ProvenanceResponse(FrozenModel):

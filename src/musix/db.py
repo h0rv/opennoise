@@ -26,7 +26,7 @@ from musix.layouts import (
 )
 from musix.models import GenrePlacement, GenrePlacementReason, MapPoint, SearchHit
 
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 11
 DEFAULT_DATABASE_PATH = Path("data/musix.sqlite")
 DEFAULT_MIGRATION_PATH = Path("migrations/0001_initial.sql")
 DEFAULT_MIGRATION_PATHS = (
@@ -40,6 +40,7 @@ DEFAULT_MIGRATION_PATHS = (
     Path("migrations/0008_public_model_layout_lenses.sql"),
     Path("migrations/0009_wikidata_recording_genres.sql"),
     Path("migrations/0010_music_genre_qualification.sql"),
+    Path("migrations/0011_public_model_explainability.sql"),
 )
 MAX_FTS_TERMS = 8
 FIELD_SET_ADAPTER = TypeAdapter(tuple[str, ...])

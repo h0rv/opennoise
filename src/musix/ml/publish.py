@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import sqlite3
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -29,7 +30,9 @@ class PublicModelPublishError(RuntimeError):
 
 def resolve_public_policy_id(database_path: Path, source_key: SourceId) -> int:
     """Resolve one sealed public manifest policy by its exact source identity."""
-    with sqlite3.connect(f"file:{database_path.resolve()}?mode=ro", uri=True) as connection:
+    with closing(
+        sqlite3.connect(f"file:{database_path.resolve()}?mode=ro", uri=True)
+    ) as connection:
         row = connection.execute(
             """SELECT source.default_policy_id, source.acquisition_kind,
                       policy.policy_key, policy.classification, policy.local_only
@@ -71,7 +74,17 @@ class PublicModelPublishSummary(FrozenModel):
     output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     layouts: tuple[PublishedLensSummary, ...] = Field(min_length=4, max_length=4)
     representative_items: int = Field(ge=0)
+    profile_memberships: int = Field(ge=0)
+    neighbor_rows: int = Field(ge=0)
     duplicate: bool
+
+
+class PublicModelExplainabilitySummary(FrozenModel):
+    """Report persisted explanation rows for one already-published logical model."""
+
+    output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    profile_memberships: int = Field(ge=0)
+    neighbor_rows: int = Field(ge=0)
 
 
 class LoadedPublicModel(FrozenModel):
@@ -420,6 +433,104 @@ def _link_layout(
         raise PublicModelPublishError("existing public model layout does not match artifact")
 
 
+def _persist_explainability(
+    connection: sqlite3.Connection,
+    artifact: PublicModelArtifact,
+    model_run_id: int,
+    genre_ids: dict[str, int],
+) -> PublicModelExplainabilitySummary:
+    """Persist the logical model's profile components and ranked neighbors once."""
+    connection.executemany(
+        """INSERT OR IGNORE INTO public_genre_profile_memberships
+           (model_run_id, genre_id, profile_kind, source_artist_ref, score,
+            evidence_refs_json, components_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (
+            (
+                model_run_id,
+                genre_ids[profile.genre_id],
+                profile.profile_kind,
+                membership.artist_id,
+                float(membership.score),
+                json.dumps(membership.evidence_refs, separators=(",", ":")),
+                json.dumps(
+                    [component.model_dump(mode="json") for component in membership.components],
+                    separators=(",", ":"),
+                    sort_keys=True,
+                ),
+            )
+            for profile in artifact.profiles
+            for membership in profile.memberships
+        ),
+    )
+    connection.executemany(
+        """INSERT OR IGNORE INTO public_genre_neighbors
+           (model_run_id, genre_id, neighbor_genre_id, profile_kind, metric,
+            score, shared_artist_count, rank)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            (
+                model_run_id,
+                genre_ids[item.genre_id],
+                genre_ids[item.neighbor_genre_id],
+                item.profile_kind,
+                item.metric,
+                float(item.score),
+                item.shared_artist_count,
+                item.rank,
+            )
+            for item in artifact.neighbors
+        ),
+    )
+    profile_memberships = connection.execute(
+        "SELECT count(*) FROM public_genre_profile_memberships WHERE model_run_id = ?",
+        (model_run_id,),
+    ).fetchone()
+    neighbor_rows = connection.execute(
+        "SELECT count(*) FROM public_genre_neighbors WHERE model_run_id = ?",
+        (model_run_id,),
+    ).fetchone()
+    if profile_memberships is None or neighbor_rows is None:
+        raise RuntimeError("persisted public explanation counts could not be read")
+    expected_profiles = sum(len(profile.memberships) for profile in artifact.profiles)
+    if int(profile_memberships[0]) != expected_profiles or int(neighbor_rows[0]) != len(
+        artifact.neighbors
+    ):
+        raise PublicModelPublishError("persisted public explanation rows do not match artifact")
+    return PublicModelExplainabilitySummary(
+        output_sha256=artifact.output_sha256,
+        profile_memberships=int(profile_memberships[0]),
+        neighbor_rows=int(neighbor_rows[0]),
+    )
+
+
+def project_public_model_explainability(
+    database_path: Path,
+    artifact_path: Path,
+) -> PublicModelExplainabilitySummary:
+    """Add serving projections to an existing model selected by its logical hash."""
+    loaded = load_public_model(artifact_path)
+    database = Database(database_path)
+    database.initialize()
+    with database.connect() as connection, connection:
+        row = connection.execute(
+            "SELECT id FROM public_model_runs WHERE output_sha256 = ?",
+            (loaded.artifact.output_sha256,),
+        ).fetchone()
+        if row is None:
+            raise PublicModelPublishError("public model output has not been published")
+        genre_ids = {
+            genre.genre_id: _resolve_genre(connection, genre.genre_id)
+            for genre in loaded.artifact.genres
+        }
+        return _persist_explainability(
+            connection,
+            loaded.artifact,
+            int(row[0]),
+            genre_ids,
+        )
+
+
 def publish_public_model(
     database_path: Path,
     artifact_path: Path,
@@ -468,6 +579,7 @@ def publish_public_model(
                 for item in artifact.genres
             ),
         )
+        explanation = _persist_explainability(connection, artifact, model_run_id, genre_ids)
         layout_summaries: list[PublishedLensSummary] = []
         layout_runs: list[tuple[str, int]] = []
         for lens in artifact.layouts:
@@ -534,5 +646,7 @@ def publish_public_model(
         output_sha256=artifact.output_sha256,
         layouts=tuple(layout_summaries),
         representative_items=len(artifact.representatives),
+        profile_memberships=explanation.profile_memberships,
+        neighbor_rows=explanation.neighbor_rows,
         duplicate=duplicate,
     )

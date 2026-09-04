@@ -103,7 +103,10 @@ class HierarchyCoverageTests(unittest.TestCase):
             report["multi_parent_nodes"],
             ({"qid": "Q3", "parent_qids": ("Q1", "Q4")},),
         )
-        self.assertEqual(report["focus"]["closure_node_count"], 3)
+        focus = report["focus"]
+        self.assertIsInstance(focus, dict)
+        assert isinstance(focus, dict)
+        self.assertEqual(focus["closure_node_count"], 3)
         self.assertEqual(
             report["display_parent_policy"],
             "not_selected; preserve every exact direct Wikidata parent",

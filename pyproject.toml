@@ -95,14 +95,7 @@ verify-phase3-release-manifest = "python scripts/verify_phase3_release_manifest.
 ui-qa = "python scripts/render_ui_qa.py"
 
 [tool.poe.tasks.build-public-release]
-sequence = [
-    { cmd = "python scripts/require_fresh_public_database.py data/public.sqlite" },
-    { cmd = "python scripts/ingest_wikidata.py --query config/wikidata_music_slice.rq --source-id wikidata_music_sparql_slice --database data/public.sqlite --vault data/vault" },
-    { cmd = "python scripts/ingest_wikidata.py --query config/wikidata_public_genres_20260831.rq --source-id wikidata_public_genres_20260831 --database data/public.sqlite --vault data/vault --max-records 50000" },
-    { cmd = "python scripts/ingest_joint_listenbrainz.py --database data/public.sqlite --vault data/vault" },
-    { cmd = "python scripts/build_public_model.py --catalog-db data/public.sqlite --listenbrainz-db data/public.sqlite --output data/model/public-model-v2.json" },
-    { cmd = "musix publish-public-model data/model/public-model-v2.json --database data/public.sqlite --policy-source-key wikidata_public_genres_20260831" },
-]
+cmd = "python scripts/build_public_release.py"
 
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]
