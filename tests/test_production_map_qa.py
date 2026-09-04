@@ -108,6 +108,7 @@ def _input(
     )
     return ProductionMapAcceptanceInput(
         revision="production-map-v1",
+        layout_semantics="hierarchy_containment",
         coordinate_sha256="d" * 64,
         coordinates=coordinates,
         taxonomy_edges=tuple((entity_id, ids[0]) for entity_id in ids[1:]),
@@ -267,6 +268,43 @@ class ProductionMapQaTests(unittest.TestCase):
                 ProductionMapAcceptanceInput.model_validate(
                     {**evidence.model_dump(mode="python"), "regions": incomplete_regions}
                 )
+            overlapping_root = evidence.regions[0].model_copy(update={"allow_overlap": True})
+            with self.assertRaisesRegex(ValidationError, "cannot opt out"):
+                ProductionMapAcceptanceInput.model_validate(
+                    {
+                        **evidence.model_dump(mode="python"),
+                        "regions": (overlapping_root, *evidence.regions[1:]),
+                    }
+                )
+
+    def test_accepts_similarity_first_map_with_exact_umbrella_centroid(self) -> None:
+        with TemporaryDirectory() as temporary:
+            evidence = _input(screenshot_directory=Path(temporary))
+            average_x = sum(float(item.x) for item in evidence.coordinates) / len(
+                evidence.coordinates
+            )
+            average_y = sum(float(item.y) for item in evidence.coordinates) / len(
+                evidence.coordinates
+            )
+            similarity_first = ProductionMapAcceptanceInput.model_validate(
+                {
+                    **evidence.model_dump(mode="python"),
+                    "layout_semantics": "similarity_first_non_containment",
+                    "regions": (),
+                    "umbrella_centroids": (
+                        {
+                            "root_entity_id": evidence.coordinates[0].entity_id,
+                            "descendant_entity_ids": tuple(
+                                item.entity_id for item in evidence.coordinates
+                            ),
+                            "x": average_x,
+                            "y": average_y,
+                        },
+                    ),
+                }
+            )
+            result = require_accepted_production_map(similarity_first)
+            self.assertTrue(result.accepted)
 
 
 if __name__ == "__main__":

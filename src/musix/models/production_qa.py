@@ -84,6 +84,24 @@ class ProductionMapRegion(FrozenModel):
         return self
 
 
+class ProductionMapUmbrellaCentroid(FrozenModel):
+    """One explicit overview anchor derived from a display-tree root's descendants."""
+
+    root_entity_id: str = Field(min_length=1, max_length=200)
+    descendant_entity_ids: tuple[str, ...] = Field(min_length=1, max_length=20_000)
+    x: FiniteFloat = Field(ge=0.0, le=1.0)
+    y: FiniteFloat = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def require_unique_descendants(self) -> ProductionMapUmbrellaCentroid:
+        """Reject an ambiguous umbrella population."""
+        if len(self.descendant_entity_ids) != len(set(self.descendant_entity_ids)):
+            raise ValueError("umbrella centroid descendants must be unique")
+        if self.root_entity_id not in self.descendant_entity_ids:
+            raise ValueError("umbrella centroid must include its root entity")
+        return self
+
+
 class ProductionMapPresentationParent(FrozenModel):
     """The explicit, explainable one-parent rendering choice for a DAG node."""
 
@@ -223,6 +241,89 @@ def _validate_hierarchy_regions(
     _validate_region_subtrees(regions, children)
 
 
+def _display_subtrees(
+    coordinate_ids: set[str],
+    presentation_parents: tuple[ProductionMapPresentationParent, ...],
+) -> tuple[set[str], dict[str, set[str]]]:
+    """Return exact roots and descendant populations from explicit parent choices."""
+    parent_by_child = {choice.child_id: choice.parent_id for choice in presentation_parents}
+    if set(parent_by_child) != coordinate_ids:
+        raise ValueError("every production coordinate needs an explicit presentation parent")
+    roots = {child_id for child_id, parent_id in parent_by_child.items() if parent_id is None}
+    children: dict[str, set[str]] = {}
+    for child_id, parent_id in parent_by_child.items():
+        if parent_id is not None and parent_id in coordinate_ids:
+            children.setdefault(parent_id, set()).add(child_id)
+
+    def descendants(owner_entity_id: str) -> set[str]:
+        result: set[str] = set()
+        pending = [owner_entity_id]
+        while pending:
+            current = pending.pop()
+            if current in result:
+                raise ValueError("presentation tree cannot contain a cycle")
+            result.add(current)
+            pending.extend(children.get(current, set()))
+        return result
+
+    return roots, {
+        owner_entity_id: descendants(owner_entity_id) for owner_entity_id in coordinate_ids
+    }
+
+
+def _validate_similarity_first_centroids(
+    centroids: tuple[ProductionMapUmbrellaCentroid, ...],
+    coordinate_ids: set[str],
+    coordinates: tuple[ProductionMapCoordinate, ...],
+    presentation_parents: tuple[ProductionMapPresentationParent, ...],
+    lods: tuple[ProductionMapLod, ...],
+) -> None:
+    """Require exact, inspectable overview anchors without claiming containment geometry."""
+    roots, descendant_sets = _display_subtrees(coordinate_ids, presentation_parents)
+    if {item.root_entity_id for item in centroids} != roots:
+        raise ValueError("similarity-first map needs one derived umbrella centroid per root")
+    coordinate_by_id = {item.entity_id: item for item in coordinates}
+    for centroid in centroids:
+        descendants = descendant_sets[centroid.root_entity_id]
+        if set(centroid.descendant_entity_ids) != descendants:
+            raise ValueError("umbrella centroid must name its exact display subtree")
+        expected_x = sum(float(coordinate_by_id[item].x) for item in descendants) / len(descendants)
+        expected_y = sum(float(coordinate_by_id[item].y) for item in descendants) / len(descendants)
+        if (
+            abs(float(centroid.x) - expected_x) > _RANDOM_NULL_TOLERANCE
+            or abs(float(centroid.y) - expected_y) > _RANDOM_NULL_TOLERANCE
+        ):
+            raise ValueError(
+                "umbrella centroid must be derived from its declared descendant coordinates"
+            )
+    overview = min(lods, key=lambda item: item.level)
+    if not roots.issubset(overview.visible_entity_ids):
+        raise ValueError("similarity-first overview LOD must expose every umbrella root")
+
+
+def _validate_layout_semantics(
+    value: ProductionMapAcceptanceInput,
+    coordinate_ids: set[str],
+) -> None:
+    """Validate the geometry claims appropriate to the declared layout semantics."""
+    if value.layout_semantics == "hierarchy_containment":
+        if not value.regions:
+            raise ValueError("containment map needs hierarchy regions")
+        if value.umbrella_centroids:
+            raise ValueError("containment map cannot substitute umbrella centroids for regions")
+        _validate_hierarchy_regions(value.regions, coordinate_ids, value.presentation_parents)
+        return
+    if value.regions:
+        raise ValueError("similarity-first map cannot claim containment regions")
+    _validate_similarity_first_centroids(
+        value.umbrella_centroids,
+        coordinate_ids,
+        value.coordinates,
+        value.presentation_parents,
+        value.lods,
+    )
+
+
 def _validate_region_owners(
     regions: tuple[ProductionMapRegion, ...],
     coordinate_ids: set[str],
@@ -230,6 +331,8 @@ def _validate_region_owners(
 ) -> dict[str, set[str]]:
     """Validate region identity, owners, roots, and direct display-tree links."""
     _validate_region_shapes(regions, coordinate_ids)
+    if any(region.is_root and region.allow_overlap for region in regions):
+        raise ValueError("root hierarchy regions cannot opt out of overlap validation")
     if len({region.region_id for region in regions}) != len(regions):
         raise ValueError("hierarchy region IDs must be unique")
     if len({region.owner_entity_id for region in regions}) != len(regions):
@@ -286,11 +389,15 @@ class ProductionMapAcceptanceInput(FrozenModel):
     """All evidence needed to accept or reject one production-map artifact."""
 
     revision: str = Field(min_length=1, max_length=100)
+    layout_semantics: Literal["hierarchy_containment", "similarity_first_non_containment"]
     coordinate_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     coordinates: tuple[ProductionMapCoordinate, ...] = Field(min_length=26, max_length=20_000)
     taxonomy_edges: tuple[tuple[str, str], ...] = Field(max_length=100_000)
     presentation_parents: tuple[ProductionMapPresentationParent, ...] = Field(max_length=20_000)
-    regions: tuple[ProductionMapRegion, ...] = Field(min_length=1, max_length=20_000)
+    regions: tuple[ProductionMapRegion, ...] = Field(default=(), max_length=20_000)
+    umbrella_centroids: tuple[ProductionMapUmbrellaCentroid, ...] = Field(
+        default=(), max_length=20_000
+    )
     lods: tuple[ProductionMapLod, ...] = Field(min_length=1, max_length=11)
     similarity: ProductionMapSimilarityEvidence
     screenshots: tuple[ProductionMapScreenshot, ...] = Field(default=(), max_length=12)
@@ -307,7 +414,10 @@ class ProductionMapAcceptanceInput(FrozenModel):
         for lod in self.lods:
             if not set(lod.visible_entity_ids).issubset(coordinate_ids):
                 raise ValueError("LOD contains an entity without a coordinate")
-        _validate_hierarchy_regions(self.regions, coordinate_ids, self.presentation_parents)
+        _validate_layout_semantics(
+            self,
+            coordinate_ids,
+        )
         if self.similarity.candidate_coordinate_sha256 != self.coordinate_sha256:
             raise ValueError("similarity evidence must name this candidate coordinate artifact")
         similarity_query_ids = {

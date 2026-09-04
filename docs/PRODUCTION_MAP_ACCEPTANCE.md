@@ -16,10 +16,12 @@ and blocks publication.
 - The full taxonomy remains a DAG. Every node has one explicit rendering-parent
   choice. A taxonomy choice must be a real taxonomy edge. Generated and absent
   parents say so with a reason.
-- Every production coordinate emits one explicit hierarchy region covering
-  exactly its display subtree. Every region contains at least 98% of its
-  declared nodes. Root regions exactly match display-tree roots and do not
-  overlap.
+- The artifact declares its layout semantics. A `hierarchy_containment` map
+  emits one region per coordinate, each covering exactly its display subtree;
+  root regions exactly match display-tree roots and do not overlap. A
+  `similarity_first_non_containment` map cannot claim containment polygons. It
+  instead emits one exact centroid per umbrella root, derived from its explicit
+  display subtree, and the overview zoom level exposes every umbrella root.
 - Zoom levels start at zero, are contiguous, retain all earlier visible nodes,
   and end with every node visible.
 - Shown label boxes are checked at every zoom level. No more than 2% of desktop
