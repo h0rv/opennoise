@@ -205,7 +205,7 @@
         weight: memberCount,
         displayLabel: "",
         labelSize: overviewFontSize(memberCount),
-        overviewNodeSize: Math.round(42 + 34 * overviewProminence(memberCount)),
+        overviewNodeSize: Math.round(18 + 14 * overviewProminence(memberCount)),
         memberEntityIds: community.member_entity_ids,
         overview: true,
       },
@@ -443,7 +443,7 @@
       for (const memberId of focusedMembers) visibleIds.add(memberId);
       visibleIds.add(activeCommunity.data("itemId"));
     }
-    const labelSize = [12, mapElement.clientWidth <= 600 ? 24 : 14, 13, 12][lod];
+    const labelSize = [12, mapElement.clientWidth <= 600 ? 18 : 14, 13, 12][lod];
     cy.batch(() => {
       cy.nodes().forEach((node) => {
         const visible = visibleIds.has(node.data("itemId"));
