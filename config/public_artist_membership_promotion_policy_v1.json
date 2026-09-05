@@ -1,0 +1,6 @@
+{
+  "revision": "public-artist-membership-promotion-policy-v1",
+  "minimum_labeled_candidates": 100,
+  "minimum_precision": 0.9,
+  "minimum_recall": 0.5
+}

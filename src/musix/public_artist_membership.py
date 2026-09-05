@@ -1,7 +1,8 @@
 """Build a bounded, explainable artist-to-name-universe membership candidate.
 
 This module accepts only public metadata already admitted by the public graph:
-direct MusicBrainz tags and privacy-safe aggregate ListenBrainz co-listens.
+direct MusicBrainz/Wikidata evidence selected by policy and privacy-safe
+aggregate ListenBrainz co-listens.
 The retained name universe is an identity-only input.  It cannot carry artist
 assignments, coordinates, rankings, recordings, or audio into this builder.
 
@@ -19,28 +20,32 @@ from collections import defaultdict
 from pathlib import Path  # noqa: TC003
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
+from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, TypeAdapter, model_validator
 
-from musix.genre_seed_universe import load_seed_input, normalize_label
+from musix.genre_seed_universe import SeedInput, load_seed_input, normalize_label
 from musix.models.modeling import PublicModelInput  # noqa: TC001
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 from musix.types import Sha256  # noqa: TC001
 
-_REVISION: Literal["public-artist-membership-candidate-v1"] = (
-    "public-artist-membership-candidate-v1"
+_REVISION: Literal["public-artist-membership-candidate-v2"] = (
+    "public-artist-membership-candidate-v2"
 )
 _PUBLICATION_PREFIX = "public-artist-membership-candidates/sha256"
 
-type CandidateKind = Literal["direct_musicbrainz_tag", "aggregate_co_listen_candidate"]
+type DirectSource = Literal["musicbrainz", "wikidata"]
+type DirectFacet = Literal["musicbrainz_tag", "wikidata_p136"]
+type DirectCandidateKind = Literal["direct_musicbrainz_tag", "direct_wikidata_p136"]
+type CandidateKind = DirectCandidateKind | Literal["aggregate_co_listen_candidate"]
 type CandidateFacet = Literal[
     "musicbrainz_artist_genre_tag",
+    "wikidata_p136",
     "listenbrainz_privacy_safe_aggregate_co_listen",
 ]
 type GenreDispositionStatus = Literal["direct_evidence", "aggregate_candidate", "abstained"]
 type GenreAbstentionReason = Literal[
     "no_public_genre_identity",
     "ambiguous_public_genre_identity",
-    "no_approved_direct_musicbrainz_tag",
+    "no_approved_direct_evidence",
     "no_eligible_aggregate_candidate",
 ]
 
@@ -59,6 +64,11 @@ def _canonical_json(value: object) -> str:
 
 def _sha256(value: object) -> Sha256:
     return hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def canonical_sha256(value: object) -> Sha256:
+    """Return the public canonical JSON hash used by sealed input artifacts."""
+    return _sha256(value)
 
 
 class NameUniverseEntry(StrictFrozenModel):
@@ -98,7 +108,16 @@ class NameUniverse(StrictFrozenModel):
 
 def load_name_universe(seed_artifact: Path) -> NameUniverse:
     """Parse only the permitted name projection from an established sealed input."""
-    seed_input = load_seed_input(seed_artifact)
+    document = TypeAdapter(dict[str, object]).validate_json(seed_artifact.read_bytes())
+    embedded = document.get("seed_input")
+    # Open construction artifacts contain an already sealed name-only projection.
+    # Parsing that object, rather than their nodes or edges, preserves the strict
+    # boundary even if the enclosing artifact carries historical graph material.
+    seed_input = (
+        SeedInput.model_validate(embedded)
+        if isinstance(embedded, dict)
+        else load_seed_input(seed_artifact)
+    )
     return NameUniverse(
         source_content_sha256=seed_input.source_content_sha256,
         names=tuple(
@@ -115,12 +134,17 @@ def load_name_universe(seed_artifact: Path) -> NameUniverse:
 class PublicArtistMembershipSourcePolicy(StrictFrozenModel):
     """Declare the only permitted construction sources and bounded thresholds."""
 
-    revision: Literal["public-artist-membership-source-policy-v1"] = (
-        "public-artist-membership-source-policy-v1"
+    revision: Literal["public-artist-membership-source-policy-v2"] = (
+        "public-artist-membership-source-policy-v2"
     )
     expected_name_count: Literal[6291] = 6291
-    direct_source: Literal["musicbrainz"] = "musicbrainz"
-    direct_facet: Literal["musicbrainz_tag"] = "musicbrainz_tag"
+    direct_source: DirectSource = "musicbrainz"
+    direct_facet: DirectFacet = "musicbrainz_tag"
+    # A policy may explicitly admit a union of direct facets.  The singular
+    # fields remain the compatibility/default spelling for existing callers;
+    # when these tuples are populated they are the authoritative union.
+    direct_sources: tuple[DirectSource, ...] = ()
+    direct_facets: tuple[DirectFacet, ...] = ()
     direct_metadata_publicly_permitted: Literal[True] = True
     direct_metadata_export_allowed: Literal[True] = True
     aggregate_source: Literal["listenbrainz"] = "listenbrainz"
@@ -146,7 +170,40 @@ class PublicArtistMembershipSourcePolicy(StrictFrozenModel):
             raise ValueError(
                 "aggregate candidates require explicit public permission and export allowance"
             )
+        expected_facet: dict[DirectSource, DirectFacet] = {
+            "musicbrainz": "musicbrainz_tag",
+            "wikidata": "wikidata_p136",
+        }
+        sources = self.direct_sources or (self.direct_source,)
+        facets = self.direct_facets or (self.direct_facet,)
+        if not sources or not facets or len(sources) != len(facets):
+            raise ValueError("direct source/facet union must contain paired entries")
+        if len(set(sources)) != len(sources) or len(set(facets)) != len(facets):
+            raise ValueError("direct source/facet union entries must be unique")
+        if any(
+            expected_facet[source] != facet for source, facet in zip(sources, facets, strict=True)
+        ):
+            raise ValueError("direct source and facet must use the declared source mapping")
         return self
+
+    @property
+    def allowed_direct_sources(self) -> frozenset[DirectSource]:
+        """Return the explicitly permitted direct source families."""
+        return frozenset(self.direct_sources or (self.direct_source,))
+
+    @property
+    def allowed_direct_facets(self) -> frozenset[DirectFacet]:
+        """Return the explicitly permitted direct evidence facets."""
+        return frozenset(self.direct_facets or (self.direct_facet,))
+
+    def facet_for_source(self, source: DirectSource) -> DirectFacet:
+        """Resolve the direct facet paired with one permitted source."""
+        sources = self.direct_sources or (self.direct_source,)
+        facets = self.direct_facets or (self.direct_facet,)
+        try:
+            return facets[sources.index(source)]
+        except ValueError as error:
+            raise ValueError(f"direct source is not admitted by source policy: {source}") from error
 
 
 class ApprovedPublicMembershipInput(StrictFrozenModel):
@@ -196,6 +253,7 @@ class CandidatePath(StrictFrozenModel):
     """One direct observation or one bounded aggregate path."""
 
     kind: CandidateKind
+    direct_facet: DirectFacet
     seed_artist_id: str = Field(min_length=1, max_length=200)
     listener_day_support: int | None = Field(default=None, gt=0)
     supporting_windows: int | None = Field(default=None, gt=0)
@@ -205,21 +263,33 @@ class CandidatePath(StrictFrozenModel):
     def require_kind_specific_evidence(self) -> CandidatePath:
         """Require direct anchors for every propagated path."""
         facets = tuple(item.facet for item in self.evidence)
-        if self.kind == "direct_musicbrainz_tag":
+        direct_evidence_facet: CandidateFacet = (
+            "musicbrainz_artist_genre_tag"
+            if self.direct_facet == "musicbrainz_tag"
+            else "wikidata_p136"
+        )
+        expected_direct_kind: DirectCandidateKind = (
+            "direct_musicbrainz_tag"
+            if self.direct_facet == "musicbrainz_tag"
+            else "direct_wikidata_p136"
+        )
+        if self.kind == expected_direct_kind:
             if self.listener_day_support is not None or self.supporting_windows is not None:
                 raise ValueError("direct tag paths cannot contain aggregate support")
-            if facets != ("musicbrainz_artist_genre_tag",):
-                raise ValueError("direct tag paths require exactly one MusicBrainz tag facet")
+            if facets != (direct_evidence_facet,):
+                raise ValueError("direct paths require exactly one declared direct evidence facet")
+        elif self.kind in {"direct_musicbrainz_tag", "direct_wikidata_p136"}:
+            raise ValueError("direct candidate kind must match declared direct facet")
         elif (
             self.listener_day_support is None
             or self.supporting_windows is None
             or set(facets)
             != {
-                "musicbrainz_artist_genre_tag",
+                direct_evidence_facet,
                 "listenbrainz_privacy_safe_aggregate_co_listen",
             }
         ):
-            raise ValueError("aggregate paths require direct-tag and aggregate evidence facets")
+            raise ValueError("aggregate paths require direct and aggregate evidence facets")
         return self
 
 
@@ -230,6 +300,7 @@ class ArtistGenreMembershipCandidate(StrictFrozenModel):
     genre_id: str = Field(min_length=1, max_length=200)
     source_item_id: str = Field(min_length=1, max_length=200)
     kind: CandidateKind
+    direct_facet: DirectFacet
     score: FiniteFloat = Field(gt=0.0, le=1.0)
     paths: tuple[CandidatePath, ...] = Field(min_length=1, max_length=10_000)
 
@@ -279,7 +350,7 @@ class CandidateCoverage(StrictFrozenModel):
     abstained_genre_count: int = Field(ge=0)
     no_public_genre_identity_count: int = Field(ge=0)
     ambiguous_public_genre_identity_count: int = Field(ge=0)
-    no_approved_direct_musicbrainz_tag_count: int = Field(ge=0)
+    no_approved_direct_evidence_count: int = Field(ge=0)
     no_eligible_aggregate_candidate_count: int = Field(ge=0)
     examined_candidate_path_count: int = Field(ge=0)
 
@@ -293,7 +364,7 @@ class CandidateCoverage(StrictFrozenModel):
         if self.abstained_genre_count != (
             self.no_public_genre_identity_count
             + self.ambiguous_public_genre_identity_count
-            + self.no_approved_direct_musicbrainz_tag_count
+            + self.no_approved_direct_evidence_count
             + self.no_eligible_aggregate_candidate_count
         ):
             raise ValueError("candidate abstentions do not partition abstained names")
@@ -303,7 +374,7 @@ class CandidateCoverage(StrictFrozenModel):
 class PublicArtistMembershipCandidateArtifact(StrictFrozenModel):
     """Sealed public-input candidate with no quality or serving claim."""
 
-    revision: Literal["public-artist-membership-candidate-v1"] = _REVISION
+    revision: Literal["public-artist-membership-candidate-v2"] = _REVISION
     non_production_candidate: Literal[True] = True
     serving_membership_claimed: Literal[False] = False
     quality_claim: Literal["not_evaluated_without_independent_public_gold"] = (
@@ -327,9 +398,10 @@ class PublicArtistMembershipCandidateArtifact(StrictFrozenModel):
         if disposition_ids != universe_ids:
             raise ValueError("dispositions must preserve the complete name-universe order")
         if any(
-            item.kind != "direct_musicbrainz_tag" for item in self.directly_observed_memberships
+            item.kind not in {"direct_musicbrainz_tag", "direct_wikidata_p136"}
+            for item in self.directly_observed_memberships
         ):
-            raise ValueError("directly observed memberships must contain direct tag observations")
+            raise ValueError("directly observed memberships must contain direct observations")
         if any(item.kind != "aggregate_co_listen_candidate" for item in self.propagated_candidates):
             raise ValueError("propagated candidates must contain one-hop aggregate paths")
         memberships = (*self.directly_observed_memberships, *self.propagated_candidates)
@@ -452,17 +524,19 @@ def _require_public_inputs(
     if len(name_universe.names) != policy.expected_name_count:
         raise ValueError("name universe does not match the fixed public candidate scope")
     sources = {item.source for item in inputs.artifacts}
-    allowed = {policy.direct_source}
+    allowed = set(policy.allowed_direct_sources)
     if policy.include_aggregate_candidates:
         allowed.add(policy.aggregate_source)
     if not sources <= allowed:
         raise ValueError("public membership input includes a source outside source policy")
     if not all(item.export_allowed for item in inputs.artifacts):
         raise ValueError("public membership input includes a non-exportable artifact")
-    if inputs.direct_memberships and policy.direct_source not in sources:
-        raise ValueError("direct evidence requires its declared MusicBrainz artifact")
-    if any(item.facet != policy.direct_facet for item in inputs.direct_memberships):
+    if any(item.facet not in policy.allowed_direct_facets for item in inputs.direct_memberships):
         raise ValueError("direct evidence includes a facet outside source policy")
+    for facet in {item.facet for item in inputs.direct_memberships}:
+        source = "musicbrainz" if facet == "musicbrainz_tag" else "wikidata"
+        if source not in sources:
+            raise ValueError("direct evidence requires its declared direct-source artifact")
     if inputs.artist_pairs and not policy.include_aggregate_candidates:
         raise ValueError("aggregate evidence is present but aggregate candidates are not permitted")
     if inputs.artist_pairs and policy.aggregate_source not in sources:
@@ -504,44 +578,60 @@ def _unambiguous_genre_owners(
     )
 
 
+def _direct_candidate_kind(facet: DirectFacet) -> DirectCandidateKind:
+    return "direct_musicbrainz_tag" if facet == "musicbrainz_tag" else "direct_wikidata_p136"
+
+
+def _direct_candidate_evidence_facet(facet: DirectFacet) -> CandidateFacet:
+    return "musicbrainz_artist_genre_tag" if facet == "musicbrainz_tag" else "wikidata_p136"
+
+
 def _direct_candidates(
     matched: dict[str, tuple[str, ...]],
     inputs: PublicModelInput,
 ) -> tuple[
     dict[str, list[ArtistGenreMembershipCandidate]],
-    dict[str, list[tuple[str, float, tuple[str, ...]]]],
+    dict[str, list[tuple[str, float, tuple[str, ...], DirectFacet]]],
 ]:
     source_item_for_genre, _ambiguous_items = _unambiguous_genre_owners(matched)
     raw: dict[tuple[str, str], float] = defaultdict(float)
     refs: dict[tuple[str, str], set[str]] = defaultdict(set)
+    facets: dict[tuple[str, str], set[DirectFacet]] = defaultdict(set)
     for evidence in inputs.direct_memberships:
         if evidence.genre_id not in source_item_for_genre:
             continue
         key = (evidence.artist_id, evidence.genre_id)
         raw[key] += float(evidence.value)
         refs[key].add(evidence.evidence_ref)
+        facets[key].add(evidence.facet)
     maxima: dict[str, float] = defaultdict(float)
     for (_artist_id, genre_id), value in raw.items():
         maxima[genre_id] = max(maxima[genre_id], value)
     candidates: dict[str, list[ArtistGenreMembershipCandidate]] = defaultdict(list)
-    seeds: dict[str, list[tuple[str, float, tuple[str, ...]]]] = defaultdict(list)
+    seeds: dict[str, list[tuple[str, float, tuple[str, ...], DirectFacet]]] = defaultdict(list)
     for (artist_id, genre_id), value in sorted(raw.items()):
         source_item_id = source_item_for_genre[genre_id]
         evidence_refs = tuple(sorted(refs[(artist_id, genre_id)]))
+        pair_facets = facets[(artist_id, genre_id)]
+        if len(pair_facets) != 1:
+            raise ValueError("one artist/genre candidate cannot mix direct evidence facets")
+        direct_facet = next(iter(pair_facets))
         candidates[source_item_id].append(
             ArtistGenreMembershipCandidate(
                 artist_id=artist_id,
                 genre_id=genre_id,
                 source_item_id=source_item_id,
-                kind="direct_musicbrainz_tag",
+                kind=_direct_candidate_kind(direct_facet),
+                direct_facet=direct_facet,
                 score=round(value / maxima[genre_id], 12),
                 paths=(
                     CandidatePath(
-                        kind="direct_musicbrainz_tag",
+                        kind=_direct_candidate_kind(direct_facet),
+                        direct_facet=direct_facet,
                         seed_artist_id=artist_id,
                         evidence=(
                             CandidateEvidence(
-                                facet="musicbrainz_artist_genre_tag",
+                                facet=_direct_candidate_evidence_facet(direct_facet),
                                 evidence_refs=evidence_refs,
                                 raw_value=value,
                             ),
@@ -550,7 +640,7 @@ def _direct_candidates(
                 ),
             )
         )
-        seeds[artist_id].append((genre_id, value, evidence_refs))
+        seeds[artist_id].append((genre_id, value, evidence_refs, direct_facet))
     return candidates, seeds
 
 
@@ -584,7 +674,7 @@ def _aggregate_candidates(  # noqa: C901
             (pair.left_artist_id, pair.right_artist_id),
             (pair.right_artist_id, pair.left_artist_id),
         ):
-            for genre_id, tag_value, tag_refs in seeds.get(seed_artist, ()):
+            for genre_id, tag_value, tag_refs, direct_facet in seeds.get(seed_artist, ()):
                 examined += 1
                 if examined > policy.max_candidate_paths:
                     raise ValueError("aggregate candidate paths exceed source-policy bound")
@@ -595,12 +685,13 @@ def _aggregate_candidates(  # noqa: C901
                 paths[key].append(
                     CandidatePath(
                         kind="aggregate_co_listen_candidate",
+                        direct_facet=direct_facet,
                         seed_artist_id=seed_artist,
                         listener_day_support=pair.listener_day_support,
                         supporting_windows=pair.supporting_windows,
                         evidence=(
                             CandidateEvidence(
-                                facet="musicbrainz_artist_genre_tag",
+                                facet=_direct_candidate_evidence_facet(direct_facet),
                                 evidence_refs=tag_refs,
                                 raw_value=tag_value,
                             ),
@@ -630,6 +721,7 @@ def _aggregate_candidates(  # noqa: C901
                     genre_id=genre_id,
                     source_item_id=source_item_id,
                     kind="aggregate_co_listen_candidate",
+                    direct_facet=paths[(artist_id, genre_id)][0].direct_facet,
                     score=round(value / maxima[genre_id], 12),
                     paths=tuple(
                         sorted(
@@ -734,7 +826,7 @@ def build_public_artist_membership_candidate(
             reason = (
                 "no_eligible_aggregate_candidate"
                 if policy.include_aggregate_candidates
-                else "no_approved_direct_musicbrainz_tag"
+                else "no_approved_direct_evidence"
             )
             reasons[reason] += 1
             dispositions.append(
@@ -758,7 +850,7 @@ def build_public_artist_membership_candidate(
         abstained_genre_count=sum(item.status == "abstained" for item in dispositions),
         no_public_genre_identity_count=reasons["no_public_genre_identity"],
         ambiguous_public_genre_identity_count=reasons["ambiguous_public_genre_identity"],
-        no_approved_direct_musicbrainz_tag_count=reasons["no_approved_direct_musicbrainz_tag"],
+        no_approved_direct_evidence_count=reasons["no_approved_direct_evidence"],
         no_eligible_aggregate_candidate_count=reasons["no_eligible_aggregate_candidate"],
         examined_candidate_path_count=examined,
     )

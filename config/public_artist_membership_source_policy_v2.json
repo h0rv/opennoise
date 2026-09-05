@@ -1,0 +1,20 @@
+{
+  "revision": "public-artist-membership-source-policy-v2",
+  "expected_name_count": 6291,
+  "direct_source": "wikidata",
+  "direct_facet": "wikidata_p136",
+  "direct_metadata_publicly_permitted": true,
+  "direct_metadata_export_allowed": true,
+  "aggregate_source": "listenbrainz",
+  "aggregate_co_listen_publicly_permitted": true,
+  "aggregate_co_listen_export_allowed": true,
+  "include_aggregate_candidates": true,
+  "maximum_hops": 1,
+  "minimum_listener_day_support": 15,
+  "minimum_supporting_windows": 2,
+  "max_aggregate_candidates_per_genre": 100,
+  "max_candidate_paths": 2000000,
+  "historical_artist_memberships_used": false,
+  "external_gold_used_for_construction": false,
+  "audio_used_for_construction": false
+}

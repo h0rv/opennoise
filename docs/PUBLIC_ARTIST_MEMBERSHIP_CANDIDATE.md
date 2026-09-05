@@ -11,10 +11,11 @@ and neighbours are not accepted as construction inputs.
 
 The artifact has three disjoint states.
 
-- `directly_observed_memberships` are positive direct `musicbrainz_tag`
-  observations. They are observations, not an inferred serving-model claim.
+- `directly_observed_memberships` are positive direct `musicbrainz_tag` or
+  `wikidata_p136` observations. They are observations, not an inferred
+  serving-model claim.
 - `propagated_candidates` are exactly one-hop paths. Every path contains both a
-  direct MusicBrainz tag anchor and a privacy-safe aggregate co-listen facet;
+  direct source/facet anchor and a privacy-safe aggregate co-listen facet;
   a co-listen edge by itself cannot create an artist-to-genre entry.
 - `dispositions` has one ordered result for every retained name. It records
   direct evidence, an aggregate-only candidate, or an explicit abstention.
@@ -28,8 +29,10 @@ produce no entries. There is no last-writer-wins mapping.
 
 `ApprovedPublicMembershipInput` binds the normalized immutable public-model
 rows to a SHA-256, declared row counts, a row-export-policy SHA-256, and the
-file SHA-256 supplied by the release process. All artifacts must be exportable.
-The source policy accepts only MusicBrainz direct tags. Aggregate ListenBrainz
+exact certified SQLite database bytes. All artifacts must be exportable. The
+certified release uses CC0/export-allowed Wikidata P136; MusicBrainz tags stay
+policy-bound and are excluded when their source policy is not exportable.
+Aggregate ListenBrainz
 rows are rejected unless both row-level export and policy-level public/export
 permission are explicit. The default policy disables aggregate candidates.
 
@@ -51,9 +54,9 @@ uv run poe build-public-artist-membership-candidate
 ```
 
 The task reads the sealed name artifact and an approved public-input JSON. The
-input JSON must omit `input_file_sha256`: the build command hashes its exact
-bytes and injects that value before strict Pydantic parsing. It rejects a
-caller-provided file hash. It writes candidate JSON, an object-store receipt,
+input JSON includes `input_file_sha256`, the SHA-256 of the exact certified
+SQLite database bytes. The adapter receipt repeats that hash and binds each
+selected row to its provenance policy, snapshot, and artifact. It writes candidate JSON, an object-store receipt,
 and a promotion report on every successful build. Supply `--independent-gold`
 only when an independently sourced public gold document is available; add
 `--require-promotion` only when a non-eligible report should fail the command.

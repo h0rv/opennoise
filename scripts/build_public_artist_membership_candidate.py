@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from pathlib import Path
-
-from pydantic import TypeAdapter
 
 from musix.public_artist_membership import (
     ApprovedPublicMembershipInput,
@@ -22,22 +19,9 @@ from musix.public_artist_membership import (
 from musix.storage import LocalObjectStore
 
 
-def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _approved_input(path: Path) -> ApprovedPublicMembershipInput:
-    """Parse immutable approved rows while deriving, rather than trusting, their file hash."""
-    document = TypeAdapter(dict[str, object]).validate_json(path.read_bytes())
-    if "input_file_sha256" in document:
-        raise ValueError("approved input file must omit input_file_sha256; this command derives it")
-    return ApprovedPublicMembershipInput.model_validate(
-        {**document, "input_file_sha256": _file_sha256(path)}
-    )
+    """Parse rows whose hash binds the certified database, not this JSON wrapper."""
+    return ApprovedPublicMembershipInput.model_validate_json(path.read_bytes())
 
 
 def _arguments() -> argparse.Namespace:

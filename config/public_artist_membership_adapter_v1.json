@@ -1,0 +1,16 @@
+{
+  "revision": "certified-public-membership-adapter-v1",
+  "direct_selectors": [{
+    "source": "wikidata",
+    "facet": "wikidata_p136",
+    "source_key_prefix": "wikidata_phase3_artists_",
+    "method_key": "wikidata_p136",
+    "required_license": "CC0-1.0"
+  }],
+  "require_public_domain": true,
+  "include_aggregate_candidates": true,
+  "aggregate_source_key_prefix": "listenbrainz_joint_",
+  "minimum_distinct_users_per_window": 5,
+  "maximum_direct_rows": 1000000,
+  "maximum_aggregate_pairs": 5000000
+}
