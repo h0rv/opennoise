@@ -5,6 +5,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from musix.models.modeling import (
@@ -95,7 +96,7 @@ class PublicArtistMembershipHistoricalTests(unittest.TestCase):
         approved_path.write_text(approved.model_dump_json(), encoding="utf-8")
 
         public_path = root / "public.sqlite"
-        with sqlite3.connect(public_path) as public:
+        with closing(sqlite3.connect(public_path)) as public:
             public.executescript(
                 """
                 CREATE TABLE identifier_types (id INTEGER PRIMARY KEY, type_key TEXT);
@@ -117,9 +118,10 @@ class PublicArtistMembershipHistoricalTests(unittest.TestCase):
                 ((1, "Alpha"), (2, "Alpha" if ambiguous else "Other")),
             )
             public.execute("INSERT INTO entity_names VALUES (2, 'alias', 'Alpha', 'en', 0)")
+            public.commit()
 
         historical_path = root / "historical.sqlite"
-        with sqlite3.connect(historical_path) as historical:
+        with closing(sqlite3.connect(historical_path)) as historical:
             historical.executescript(
                 """
                 CREATE TABLE genres (id INTEGER PRIMARY KEY, name TEXT);
@@ -133,6 +135,7 @@ class PublicArtistMembershipHistoricalTests(unittest.TestCase):
             historical.execute(
                 "INSERT INTO historical_genre_artist_observations VALUES (1, 1, 'Alpha', 1)"
             )
+            historical.commit()
         return candidate_path, approved_path, public_path, historical_path
 
     def test_synthetic_evaluation_ranks_top_k_and_ignores_aliases(self) -> None:
