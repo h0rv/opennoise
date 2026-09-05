@@ -112,6 +112,7 @@ audit-historical-signal = "python scripts/audit_historical_signal.py"
 publish-historical-signal-map = "python scripts/publish_historical_signal_map.py"
 evaluate-historical-hierarchy = "python scripts/evaluate_historical_hierarchy.py"
 evaluate-historical-hierarchy-gate = "python scripts/evaluate_historical_hierarchy_release_gate.py"
+build-metadata-representatives = "python scripts/build_metadata_representatives.py $MUSIX_PUBLIC_DATABASE --output $MUSIX_METADATA_REPRESENTATIVES_OUTPUT"
 
 [tool.poe.tasks.historical-signal-release]
 sequence = [
