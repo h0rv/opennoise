@@ -2,23 +2,20 @@
 
 ## Current product
 
-The certified default is a 603 genre public semantic map with semantic zoom,
-dark mode, genre detail, and a local sealed release. Its landscape map works
-from the certified production artifact.
+The default map uses the versioned open construction graph. It retains all
+6,291 historical names and adds 746 public catalog anchors. The map has one
+landscape surface with stable neighborhoods, semantic zoom, genre detail,
+search, pan, zoom, and dark mode.
 
-The workspace selector exposes three separate views: Public, Open 6,291, and
-Historical 6,291. Open uses the committed open construction graph and bounded
-landscape responses. Historical remains a dated, local only compatibility view
-and is unavailable unless its separate artifact and local display setting are
-configured.
+The historical Every Noise result is a separate local reference. It preserves
+dated observed output for evaluation and does not provide inputs to the open
+model.
 
-The Open graph retains all 6,291 names. It contains 1,059 edges, 5,243
-components, 5,173 isolated nodes, 216 factual taxonomy edges, and 843 lexical
-review edges. It contains no inferred memberships. Its sparse coverage and
-review only edges are known limits, not missing evidence to fill by guessing.
-
-The local MusicBrainz research graph covers 724 matched names. It is not part
-of the exportable public model. Its scores and landscape are research output.
+The open graph contains 7,037 nodes and 3,317 edges. It has 441 exact identity
+edges, 853 factual taxonomy edges, 1,940 compositional review edges, and 83
+ambiguous review edges. It has no inferred artist memberships. Review edges
+remain review candidates until a later evidence or human review run promotes
+them.
 
 ## Release gates
 
@@ -26,27 +23,30 @@ of the exportable public model. Its scores and landscape are research output.
 - Rebuild or verify the public model and its logical hash.
 - Build and verify the production map and browser evidence.
 - Serve only the certified database and map artifact.
-- Keep Open and Historical view boundaries explicit in the selector and API.
+- Keep historical reference data separate from open model inputs.
 
 The public release bundle is portable and cache only. It carries the sealed
-derived cache, release configuration, model, map, and evidence. Raw-source
-replay is separate: a fresh checkout can rebuild a selected bounded local vault
-from declared, network-verifiable pins or restore a supplied source-cache
-receipt. Raw bytes with local-only or non-redistributable policy never enter a
-portable store. The full release-manifest source vault and derived database are
-not yet reproducible from this workflow.
+derived cache, release configuration, model, map, and evidence. Raw source
+replay is separate. A fresh checkout can rebuild a selected bounded local vault
+from declared, network verifiable pins or restore a supplied source cache
+receipt. Raw bytes with local only or non redistributable policy never enter a
+portable store. The full release manifest source vault and derived database
+are not yet reproducible from this workflow.
 
 ## Next data work
 
+- Enrich the 6,291 immutable name seeds with public identities, hierarchy,
+  overlapping communities, artist membership, and similarity while preserving
+  each source claim.
 - Complete the MusicBrainz release and track catalog chain beyond the current
-  20 release and 237 track hydration slice.
+  bounded 51 release and 491 track metadata slice.
 - Keep metadata candidates separate from published metadata examples.
 - Add a reviewed, versioned genre candidate workflow before publishing any new
   generated genre.
 - Replace calibration only artist membership evidence with an independent
   public gold set before using it as a production quality gate.
-- Expand source-cache replay until every selected release-manifest input can
-  be acquired or restored, ingested, and replayed into the certified database.
+- Expand source cache replay until every selected release manifest input can be
+  acquired or restored, ingested, and replayed into the certified database.
 
 ## Later experiments
 
