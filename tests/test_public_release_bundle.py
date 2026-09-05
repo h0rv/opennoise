@@ -206,6 +206,7 @@ class PublicReleaseBundleTests(unittest.TestCase):
                     "restore_path": {"value": "musicbrainz-release-tracks.json"},
                 }
             )
+            payload["entries"] = tuple(payload["entries"])
             with self.assertRaisesRegex(ValidationError, "optional integrated evidence"):
                 PublicReleaseCustodyBundleReceipt.model_validate(payload)
 
