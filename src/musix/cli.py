@@ -10,6 +10,7 @@ import time
 from contextlib import suppress
 from pathlib import Path
 
+import httpx
 import uvicorn
 
 from musix.adapters.everynoise import QUINT_SOURCE, fetch_verified_source
@@ -29,6 +30,14 @@ from musix.models import Settings
 from musix.models.historical import HistoricalCompatibilityReceipt
 from musix.models.historical_signal import HistoricalSignalArtifact
 from musix.models.pipeline import SourceLimits
+from musix.musicbrainz_release_hydration import (
+    HydrationSettings,
+    MusicBrainzReleaseHydrationArtifact,
+    MusicBrainzReleaseTrackHydrationAdapter,
+    load_representative_artifact,
+    materialize_hydration_catalog,
+    write_hydration_artifact,
+)
 from musix.musicbrainz_research_graph import (
     ResearchGraphBuildConfig,
     build_gate,
@@ -127,6 +136,42 @@ def _ingest_source(args: argparse.Namespace) -> int:
         )
     )
     sys.stdout.write(f"{summary.model_dump_json(indent=2)}\n")
+    return 0
+
+
+def _hydrate_musicbrainz_releases(args: argparse.Namespace) -> int:
+    """Retain a small core-metadata release/track slice, never playable media."""
+    representatives, source_sha256 = load_representative_artifact(args.representatives)
+
+    async def run() -> MusicBrainzReleaseHydrationArtifact:
+        async with httpx.AsyncClient(timeout=args.timeout_seconds) as client:
+            adapter = MusicBrainzReleaseTrackHydrationAdapter(
+                client,
+                HydrationSettings(
+                    cache_directory=args.cache_directory,
+                    max_genres=args.max_genres,
+                    max_releases_per_seed=args.max_releases_per_seed,
+                    max_attempts=args.max_attempts,
+                    offline=args.offline,
+                ),
+                user_agent=args.user_agent,
+            )
+            return await adapter.hydrate(representatives, source_sha256=source_sha256)
+
+    artifact = asyncio.run(run())
+    receipt = write_hydration_artifact(
+        artifact,
+        output=args.output,
+        store=LocalObjectStore(args.object_store),
+    )
+    result = {"publication": receipt.model_dump(mode="json")}
+    if args.database is not None:
+        result["catalog"] = materialize_hydration_catalog(
+            artifact,
+            database_path=args.database,
+            artifact_sha256=receipt.artifact.sha256,
+        ).model_dump(mode="json")
+    sys.stdout.write(json.dumps(result, indent=2) + "\n")
     return 0
 
 
@@ -278,6 +323,25 @@ def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     ingest_source.add_argument("--timeout-seconds", type=float, default=6 * 60 * 60)
     ingest_source.add_argument("--checkpoint-every", type=int, default=10_000)
     ingest_source.set_defaults(handler=_ingest_source)
+    hydrate = commands.add_parser(
+        "hydrate-musicbrainz-releases",
+        help=(
+            "hydrate a bounded metadata-only release, medium, and track slice; "
+            "tracks are not playable media"
+        ),
+    )
+    hydrate.add_argument("--representatives", type=Path, required=True)
+    hydrate.add_argument("--output", type=Path, required=True)
+    hydrate.add_argument("--object-store", type=Path, required=True)
+    hydrate.add_argument("--cache-directory", type=Path, required=True)
+    hydrate.add_argument("--user-agent", required=True)
+    hydrate.add_argument("--max-genres", type=int, default=20)
+    hydrate.add_argument("--max-releases-per-seed", type=int, default=1)
+    hydrate.add_argument("--max-attempts", type=int, default=3)
+    hydrate.add_argument("--timeout-seconds", type=float, default=30.0)
+    hydrate.add_argument("--offline", action="store_true")
+    hydrate.add_argument("--database", type=Path)
+    hydrate.set_defaults(handler=_hydrate_musicbrainz_releases)
     publish_model = commands.add_parser(
         "publish-public-model",
         help="verify and publish a public graph artifact",
@@ -341,7 +405,7 @@ def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     return command_parser
 
 
-def main() -> int:  # noqa: PLR0911
+def main() -> int:  # noqa: C901, PLR0911
     """Run the selected command."""
     args = parser().parse_args()
     match args.command:
@@ -353,6 +417,8 @@ def main() -> int:  # noqa: PLR0911
             return _bootstrap(args)
         case "ingest-source":
             return _ingest_source(args)
+        case "hydrate-musicbrainz-releases":
+            return _hydrate_musicbrainz_releases(args)
         case "publish-public-model":
             return _publish_public_model(args)
         case "publish-historical-signal-map":
