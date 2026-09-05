@@ -10,6 +10,7 @@ serving SQLite database.  It never fetches sources, audio, or genre research.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
 import os
@@ -64,11 +65,23 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _clone_file(source: Path, destination: Path) -> None:
+    """Make an independent CoW clone when available, falling back to a byte copy."""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.unlink(missing_ok=True)
+    try:
+        with source.open("rb") as source_stream, destination.open("xb") as destination_stream:
+            fcntl.ioctl(destination_stream.fileno(), 0x40049409, source_stream.fileno())
+    except OSError:
+        destination.unlink(missing_ok=True)
+        _clone_file(source, destination)
+
+
 def _copy_exact(source: Path, destination: Path, expected_sha256: str) -> None:
     """Copy immutable bytes and prove the new path is not a shared hardlink."""
     source = source.resolve(strict=True)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, destination)
+    _clone_file(source, destination)
     if _sha256(source) != expected_sha256 or _sha256(destination) != expected_sha256:
         raise Phase4ReleaseError("certified source cache copy does not match its declared hash")
     if source.stat().st_ino == destination.stat().st_ino:
@@ -231,7 +244,7 @@ def _bundle_phase4_release(
         object_path = objects / "sha256" / digest
         object_path.parent.mkdir(parents=True, exist_ok=True)
         if not object_path.is_file():
-            shutil.copyfile(source, object_path)
+            _clone_file(source, object_path)
         if _sha256(object_path) != digest:
             raise Phase4ReleaseError("custody object bytes changed during copy")
         entries.append(
@@ -251,7 +264,7 @@ def _bundle_phase4_release(
             "entries": sorted(entries, key=lambda item: str(item["destination"])),
         },
     )
-    shutil.copyfile(receipt_path, bundle / "phase4-custody-receipt.json")
+    _clone_file(receipt_path, bundle / "phase4-custody-receipt.json")
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     for entry in receipt["entries"]:
         if _sha256(bundle / str(entry["object"])) != entry["sha256"]:
@@ -264,7 +277,7 @@ def _bundle_phase4_release(
             if not destination.resolve(strict=False).is_relative_to(restored.resolve()):
                 raise Phase4ReleaseError("portable restore destination escapes its root")
             destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(bundle / str(entry["object"]), destination)
+            _clone_file(bundle / str(entry["object"]), destination)
             if _sha256(destination) != entry["sha256"]:
                 raise Phase4ReleaseError(
                     "portable restored bytes differ from their custody checksum"
@@ -384,7 +397,7 @@ def main() -> int:
         str(gates / "public-model-gate-v1.json"),
     )
     judgments = Path("tests/fixtures/artist_membership_judgments_v1.json")
-    shutil.copyfile(judgments, gates / "artist-membership-judgments-v1.json")
+    _clone_file(judgments, gates / "artist-membership-judgments-v1.json")
     _run(
         sys.executable,
         "scripts/evaluate_artist_memberships.py",
@@ -406,7 +419,7 @@ def main() -> int:
     )
     if hydration.source_representative_artifact_sha256 != _REPRESENTATIVES_SHA256:
         raise Phase4ReleaseError("hydration artifact targets another representative selection")
-    shutil.copyfile(hydration_source, evidence / "musicbrainz-release-tracks.json")
+    _clone_file(hydration_source, evidence / "musicbrainz-release-tracks.json")
     materialized = materialize_hydration_catalog(
         hydration, database_path=derived, artifact_sha256=_HYDRATION_SHA256
     )
@@ -460,7 +473,7 @@ def main() -> int:
         (arguments.graph_gate.resolve(strict=True), "open-construction-graph-v1.gate.json"),
         (arguments.graph_receipt.resolve(strict=True), "open-construction-graph-v1.receipt.json"),
     ):
-        shutil.copyfile(source, evidence / filename)
+        _clone_file(source, evidence / filename)
     _api_qa(
         derived,
         evidence / "production-map-v1.json",
