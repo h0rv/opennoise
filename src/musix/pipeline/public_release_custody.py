@@ -61,6 +61,18 @@ _OPTIONAL_ARTIST_MEMBERSHIP_EVIDENCE_FILES: Final[tuple[tuple[str, str], ...]] =
     ("artist-membership-judgments", "artist-membership-judgments-v1.json"),
 )
 
+_ALLOWED_ADDITIONAL_EVIDENCE_FILES: Final[dict[str, str]] = {
+    "musicbrainz-core-metadata-hydration": "musicbrainz-release-tracks.json",
+    "musicbrainz-core-metadata-hydration-report": "musicbrainz-release-tracks.report.json",
+    "representative-catalog-candidates": "representative-candidates-v1.json",
+    "representative-catalog-candidates-report": "representative-candidates-v1.report.json",
+    "open-construction-graph": "open-construction-graph-v1.json",
+    "open-construction-graph-gate": "open-construction-graph-v1.gate.json",
+    "open-construction-graph-receipt": "open-construction-graph-v1.receipt.json",
+    "phase4-api-source-qa": "phase4-api-source-qa.json",
+    "phase4-integration-report": "phase4-integration-report.json",
+}
+
 
 class PublicReleaseCustodyError(ValueError):
     """Report a release boundary that cannot be sealed for rebuild."""
@@ -126,7 +138,7 @@ class PublicReleaseCustodyReceipt(FrozenModel):
     source_completeness: Literal["complete", "cache_only"]
     source_vault: str = Field(min_length=1, max_length=2_000)
     source_storage_mode: Literal["copy", "reference"]
-    evidence: tuple[EvidenceBinding, ...] = Field(min_length=1, max_length=16)
+    evidence: tuple[EvidenceBinding, ...] = Field(min_length=1, max_length=24)
     objective_gate_state: Literal["present", "absent"]
     objective_gate_evidence: tuple[EvidenceBinding, ...] = Field(max_length=4)
     public_model_gate_sha256: Sha256 | None = None
@@ -155,6 +167,7 @@ class PublicReleaseCustodySettings(FrozenModel):
     evidence_directory: Path
     output_directory: Path
     objective_gates_directory: Path | None = None
+    additional_evidence_files: tuple[tuple[str, str], ...] = ()
     source_mode: Literal["copy", "reference"] = "copy"
     expected_cache_sha256: Sha256
     expected_cache_byte_size: int = Field(gt=0)
@@ -301,6 +314,10 @@ def _evidence_bindings(
     release_receipt: PublicReleaseResult,
     files: tuple[tuple[str, str], ...],
 ) -> tuple[EvidenceBinding, ...]:
+    names = tuple(name for name, _ in files)
+    filenames = tuple(filename for _, filename in files)
+    if len(set(names)) != len(names) or len(set(filenames)) != len(filenames):
+        raise PublicReleaseCustodyError("release evidence names and filenames must be unique")
     bindings: list[EvidenceBinding] = []
     for name, filename in files:
         path = evidence_directory / filename
@@ -315,6 +332,19 @@ def _evidence_bindings(
         stored = _push_verified(store, path, key, sha256, byte_size)
         bindings.append(EvidenceBinding(**stored.model_dump(), name=name, path=str(path.resolve())))
     return tuple(bindings)
+
+def _validate_additional_evidence(files: tuple[tuple[str, str], ...]) -> None:
+    """Accept only named public-release evidence with a fixed in-directory filename."""
+    if len(set(files)) != len(files):
+        raise PublicReleaseCustodyError("additional release evidence entries must be unique")
+    for name, filename in files:
+        if _ALLOWED_ADDITIONAL_EVIDENCE_FILES.get(name) != filename:
+            raise PublicReleaseCustodyError(
+                f"additional release evidence is not an allowlisted semantic artifact: {name}"
+            )
+        if Path(filename).name != filename:
+            raise PublicReleaseCustodyError("additional release evidence must stay in its directory")
+
 
 
 def _objective_evidence_files(
@@ -421,6 +451,7 @@ def custody_public_release(
     code_revision: str | None = None,
 ) -> PublicReleaseCustodyReceipt:
     """Verify and custody the cache, manifest sources, and release evidence atomically."""
+    _validate_additional_evidence(settings.additional_evidence_files)
     cache_sha256, cache_size, counts = _verify_cache(settings)
     receipt_path = settings.evidence_directory / "receipt.json"
     release_receipt = _load_release_receipt(receipt_path)
@@ -489,7 +520,7 @@ def custody_public_release(
         object_store,
         settings.evidence_directory,
         release_receipt,
-        _EVIDENCE_FILES,
+        (*_EVIDENCE_FILES, *settings.additional_evidence_files),
     )
     objective_directory = settings.objective_gates_directory
     objective_files = _objective_evidence_files(settings)

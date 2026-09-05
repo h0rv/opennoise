@@ -42,6 +42,33 @@ _EVIDENCE_DESTINATIONS: Final[dict[str, tuple[Literal["evidence", "objective-gat
     "release-receipt": ("evidence", "receipt.json"),
     "public-model-gate": ("objective-gate", "public-model-gate-v1.json"),
     "metadata-representatives": ("objective-gate", "metadata-representatives-v1.json"),
+    "artist-membership-evaluation": ("objective-gate", "artist-membership-evaluation-v1.json"),
+    "artist-membership-judgments": ("objective-gate", "artist-membership-judgments-v1.json"),
+    "musicbrainz-core-metadata-hydration": (
+        "evidence",
+        "musicbrainz-release-tracks.json",
+    ),
+    "musicbrainz-core-metadata-hydration-report": (
+        "evidence",
+        "musicbrainz-release-tracks.report.json",
+    ),
+    "representative-catalog-candidates": (
+        "evidence",
+        "representative-candidates-v1.json",
+    ),
+    "representative-catalog-candidates-report": (
+        "evidence",
+        "representative-candidates-v1.report.json",
+    ),
+    "open-construction-graph": ("evidence", "open-construction-graph-v1.json"),
+    "open-construction-graph-gate": (
+        "evidence",
+        "open-construction-graph-v1.gate.json",
+    ),
+    "open-construction-graph-receipt": (
+        "evidence",
+        "open-construction-graph-v1.receipt.json",
+    ),
 }
 
 
@@ -75,7 +102,7 @@ class PublicReleaseCustodyBundleReceipt(FrozenModel):
     )
     raw_source_reingestion: Literal["not-included"] = "not-included"
     custody_receipt_sha256: Sha256
-    entries: tuple[PublicReleaseBundleEntry, ...] = Field(min_length=1, max_length=32)
+    entries: tuple[PublicReleaseBundleEntry, ...] = Field(min_length=1, max_length=40)
 
     @model_validator(mode="after")
     def complete_and_unambiguous(self) -> PublicReleaseCustodyBundleReceipt:
@@ -110,6 +137,10 @@ class PublicReleaseCustodyBundleReceipt(FrozenModel):
             "metadata-representatives-v1.json" in present_evidence
         ):
             raise ValueError("bundle objective gates must be present as a pair")
+        if ("artist-membership-evaluation-v1.json" in present_evidence) != (
+            "artist-membership-judgments-v1.json" in present_evidence
+        ):
+            raise ValueError("bundle artist membership evidence must be present as a pair")
         if not required_evidence:  # Keep the static table visibly total for the checker.
             raise ValueError("bundle evidence table is unexpectedly empty")
         return self
@@ -256,6 +287,9 @@ def _custody_evidence(receipt: PublicReleaseCustodyReceipt) -> dict[str, Evidenc
     gates = {"public-model-gate", "metadata-representatives"}
     if (gates <= set(evidence)) != (receipt.objective_gate_state == "present"):
         raise PublicReleaseBundleError("custody receipt objective-gate state is inconsistent")
+    artist_evidence = {"artist-membership-evaluation", "artist-membership-judgments"}
+    if bool(artist_evidence & set(evidence)) and not artist_evidence <= set(evidence):
+        raise PublicReleaseBundleError("custody receipt artist membership evidence is incomplete")
     return evidence
 
 
