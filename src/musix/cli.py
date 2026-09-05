@@ -29,6 +29,13 @@ from musix.models import Settings
 from musix.models.historical import HistoricalCompatibilityReceipt
 from musix.models.historical_signal import HistoricalSignalArtifact
 from musix.models.pipeline import SourceLimits
+from musix.musicbrainz_research_graph import (
+    ResearchGraphBuildConfig,
+    build_gate,
+    build_musicbrainz_research_graph,
+    evaluate_sealed_graph,
+    write_research_graph,
+)
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
 from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter
@@ -180,6 +187,51 @@ def _build_genre_seed_universe(args: argparse.Namespace) -> int:
     return 0
 
 
+def _build_musicbrainz_research_graph(args: argparse.Namespace) -> int:
+    """Build a local-only graph from name seeds and direct MusicBrainz evidence."""
+    graph = build_musicbrainz_research_graph(
+        args.coverage,
+        args.reconstruction_inputs,
+        args.research_database,
+        config=ResearchGraphBuildConfig(
+            expected_genre_count=args.expected_genre_count,
+            max_neighbors=args.max_neighbors,
+            landscape_iterations=args.landscape_iterations,
+        ),
+    )
+    byte_sha = write_research_graph(args.output, graph)
+    gate = build_gate(graph)
+    args.gate_report.parent.mkdir(parents=True, exist_ok=True)
+    args.gate_report.write_text(gate.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    sys.stdout.write(
+        json.dumps(
+            {
+                "logical_output_sha256": graph.output_sha256,
+                "written_byte_sha256": byte_sha,
+                "quality": graph.quality.model_dump(mode="json"),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    return 0
+
+
+def _evaluate_musicbrainz_research_graph(args: argparse.Namespace) -> int:
+    """Run the read-only topology benchmark only after graph hash verification."""
+    report = evaluate_sealed_graph(
+        args.graph,
+        args.historical_benchmark,
+        expected_graph_sha256=args.expected_graph_sha256,
+        neighbor_count=args.neighbor_count,
+    )
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    sys.stdout.write(report.model_dump_json(indent=2) + "\n")
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     """Build the command line parser."""
     settings = Settings()
@@ -263,6 +315,29 @@ def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     )
     seed_universe.add_argument("--output", type=Path, required=True)
     seed_universe.set_defaults(handler=_build_genre_seed_universe)
+    research_graph = commands.add_parser(
+        "build-musicbrainz-research-graph",
+        help="build a sealed local-only MusicBrainz name-seed research graph",
+    )
+    research_graph.add_argument("--coverage", type=Path, required=True)
+    research_graph.add_argument("--reconstruction-inputs", type=Path, required=True)
+    research_graph.add_argument("--research-database", type=Path, required=True)
+    research_graph.add_argument("--output", type=Path, required=True)
+    research_graph.add_argument("--gate-report", type=Path, required=True)
+    research_graph.add_argument("--expected-genre-count", type=int, default=724)
+    research_graph.add_argument("--max-neighbors", type=int, default=12)
+    research_graph.add_argument("--landscape-iterations", type=int, default=80)
+    research_graph.set_defaults(handler=_build_musicbrainz_research_graph)
+    evaluate_research_graph = commands.add_parser(
+        "evaluate-musicbrainz-research-graph",
+        help="compare a sealed local graph against historical topology only",
+    )
+    evaluate_research_graph.add_argument("--graph", type=Path, required=True)
+    evaluate_research_graph.add_argument("--expected-graph-sha256", required=True)
+    evaluate_research_graph.add_argument("--historical-benchmark", type=Path, required=True)
+    evaluate_research_graph.add_argument("--output", type=Path, required=True)
+    evaluate_research_graph.add_argument("--neighbor-count", type=int, default=10)
+    evaluate_research_graph.set_defaults(handler=_evaluate_musicbrainz_research_graph)
     return command_parser
 
 
@@ -284,6 +359,10 @@ def main() -> int:  # noqa: PLR0911
             return _publish_historical_signal_map(args)
         case "build-genre-seed-universe":
             return _build_genre_seed_universe(args)
+        case "build-musicbrainz-research-graph":
+            return _build_musicbrainz_research_graph(args)
+        case "evaluate-musicbrainz-research-graph":
+            return _evaluate_musicbrainz_research_graph(args)
         case _:
             raise RuntimeError(f"unknown command: {args.command}")
 

@@ -10,6 +10,29 @@ do not train, place, or score the public model.
 
 No music, preview, or audio bytes enter the project.
 
+## Local MusicBrainz name-seed research graph
+
+The prefix-0 MusicBrainz research cache can produce a separate 724-genre,
+metadata-only research graph. It uses only matched legacy *names* as vocabulary
+seeds plus direct positive MusicBrainz artist--genre evidence. The builder opens
+the completed research SQLite read-only to verify every retained evidence
+reference. The output records evidence references, weighted Jaccard and cosine
+overlap, bounded neighbors, and a deterministic topology landscape seeded from
+genre IDs and names. It is
+`CC-BY-NC-SA-3.0-local-research`, is explicitly not an exportable public model,
+and never contains audio or music files.
+
+```sh
+uv run poe build-musicbrainz-research-graph
+MUSIX_MB_RESEARCH_GRAPH_SHA256=<logical-output-sha256> \
+  uv run poe evaluate-musicbrainz-research-graph
+```
+
+The build rejects any input that contains historical coordinates, historical
+artist assignments, or historical neighbors. Evaluation is a separate command:
+it first verifies the graph's logical output hash, then reads only historical
+node names/IDs and neighbor ranks to report name overlap and topology recall.
+
 ## Run
 
 Python is pinned to 3.13.14. mise installs Python and uv. uv installs the
