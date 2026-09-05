@@ -190,6 +190,25 @@ class PublicReleaseBundleTests(unittest.TestCase):
             with self.assertRaisesRegex(PublicReleaseBundleError, "hash or size"):
                 verify_public_release_bundle(store, key)
 
+    def test_parser_requires_complete_optional_integrated_evidence_group(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt, _, _ = self._export(root)
+            payload = receipt.model_dump(mode="json")
+            payload["entries"].append(
+                {
+                    "kind": "evidence",
+                    "object": {
+                        "key": {"value": "bundle/hydration"},
+                        "sha256": "a" * 64,
+                        "byte_size": 1,
+                    },
+                    "restore_path": {"value": "musicbrainz-release-tracks.json"},
+                }
+            )
+            with self.assertRaisesRegex(ValidationError, "optional integrated evidence"):
+                PublicReleaseCustodyBundleReceipt.model_validate(payload)
+
 
 if __name__ == "__main__":
     unittest.main()
