@@ -333,6 +333,7 @@ def _evidence_bindings(
         bindings.append(EvidenceBinding(**stored.model_dump(), name=name, path=str(path.resolve())))
     return tuple(bindings)
 
+
 def _validate_additional_evidence(files: tuple[tuple[str, str], ...]) -> None:
     """Accept only named public-release evidence with a fixed in-directory filename."""
     if len(set(files)) != len(files):
@@ -343,8 +344,9 @@ def _validate_additional_evidence(files: tuple[tuple[str, str], ...]) -> None:
                 f"additional release evidence is not an allowlisted semantic artifact: {name}"
             )
         if Path(filename).name != filename:
-            raise PublicReleaseCustodyError("additional release evidence must stay in its directory")
-
+            raise PublicReleaseCustodyError(
+                "additional release evidence must stay in its directory"
+            )
 
 
 def _objective_evidence_files(
