@@ -8,7 +8,7 @@ from musix.models import FrozenModel
 from musix.types import Sha256
 
 type PublicSource = Literal["listenbrainz", "musicbrainz", "wikidata"]
-type MembershipFacet = Literal["musicbrainz_tag", "wikidata_p136"]
+type MembershipFacet = Literal["musicbrainz_genre", "musicbrainz_tag", "wikidata_p136"]
 type ProfileKind = Literal["direct", "one_hop"]
 type SimilarityMetric = Literal["weighted_jaccard", "cosine"]
 type MetadataKind = Literal["artist", "release_group", "recording"]

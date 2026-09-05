@@ -106,6 +106,7 @@ class ArtistProjection(_FrozenModel):
     begin_year: int | None = Field(default=None, ge=1, le=9999)
     end_year: int | None = Field(default=None, ge=1, le=9999)
     genre_claims: tuple[GenreMembershipClaim, ...] = Field(default=(), max_length=128)
+    tag_claims: tuple[GenreMembershipClaim, ...] = Field(default=(), max_length=512)
 
 
 class ArtistCreditMemberClaim(_FrozenModel):

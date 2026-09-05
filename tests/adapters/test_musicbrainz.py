@@ -14,7 +14,9 @@ from musix.sources.musicbrainz import (
     AdapterLimits,
     MusicBrainzAdapterError,
     MusicBrainzArtist,
+    MusicBrainzArtistDumpAdapter,
     MusicBrainzClient,
+    adapt_artist,
     iter_artist_archive,
     iter_release_group_jsonl,
     iter_release_jsonl,
@@ -56,6 +58,9 @@ def _write_archive(path: Path, *, schema: str = "1", artist_name: str = "mbdump/
 
 
 class MusicBrainzArchiveTests(unittest.TestCase):
+    def test_artist_dump_version_includes_tags(self) -> None:
+        self.assertEqual(MusicBrainzArtistDumpAdapter().version, "4")
+
     def test_artist_genre_claims_are_strictly_bounded_and_unique(self) -> None:
         payload = _artist_payload()
         payload["genres"] = [
@@ -70,6 +75,44 @@ class MusicBrainzArchiveTests(unittest.TestCase):
         duplicate["genres"] = [repeated_genre, repeated_genre]
         with self.assertRaises(ValidationError):
             MusicBrainzArtist.model_validate(duplicate)
+
+    def test_artist_tags_are_bounded_and_normalized_duplicates_are_merged(self) -> None:
+        payload = _artist_payload()
+        payload["tags"] = [{"name": f"tag-{index}", "count": 1} for index in range(513)]
+        self.assertEqual(MusicBrainzArtist.model_validate_json(json.dumps(payload)).tags, ())
+
+        duplicate = _artist_payload()
+        duplicate["tags"] = [
+            {"name": "Micro-genre", "count": 1},
+            {"name": "micro genre", "count": 2},
+        ]
+        merged = MusicBrainzArtist.model_validate_json(json.dumps(duplicate))
+        self.assertEqual([(tag.name, tag.count) for tag in merged.tags], [("Micro-genre", 2)])
+
+        for name in ("   ", "!!!"):
+            invalid = _artist_payload()
+            invalid["tags"] = [{"name": name, "count": 1}]
+            with self.subTest(name=name):
+                self.assertEqual(
+                    MusicBrainzArtist.model_validate_json(json.dumps(invalid)).tags, ()
+                )
+
+    def test_artist_tags_are_separate_positive_evidence_from_genres(self) -> None:
+        payload = _artist_payload()
+        payload["tags"] = [
+            {"name": "Micro-genre", "count": 3},
+            {"name": "Zero tag", "count": 0},
+            {"name": "Negative tag", "count": -1},
+            {"name": "Missing tag"},
+        ]
+        adapted = adapt_artist(MusicBrainzArtist.model_validate_json(json.dumps(payload)))
+
+        self.assertEqual(len(adapted.genres), 1)
+        self.assertEqual(len(adapted.tags), 1)
+        self.assertEqual(adapted.tags[0].name, "Micro-genre")
+        self.assertTrue(adapted.tags[0].external_id.startswith("musicbrainz_tag:tag:tag:"))
+        self.assertEqual(adapted.tags[0].identifiers[0].type, "musicbrainz_tag_name")
+        self.assertEqual(adapted.tag_relationships[0].type, "artist_has_tag")
 
     def test_streams_release_groups_and_editions_with_direct_genres(self) -> None:
         with (

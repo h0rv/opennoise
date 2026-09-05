@@ -5,6 +5,7 @@ import json
 import re
 import sqlite3
 from datetime import UTC, datetime
+from typing import NamedTuple
 
 from musix.models.catalog import (
     ArtistProjection,
@@ -18,6 +19,26 @@ GENRE_PARAMETER_MANIFEST = {
     "count_semantics": "positive_aggregate",
     "maximum_genres_per_artist": 128,
 }
+TAG_PARAMETER_MANIFEST = {
+    "association": "artist_tag",
+    "count_semantics": "positive_aggregate",
+    "maximum_tags_per_artist": 512,
+}
+
+
+class _EvidenceFacet(NamedTuple):
+    claims: tuple[GenreMembershipClaim, ...]
+    method_key: str
+    parameter_manifest: str
+    source_record_facet: str
+
+
+class _ClaimPersistence(NamedTuple):
+    connection: sqlite3.Connection
+    projection: ArtistProjection
+    artist_id: int
+    provenance_id: int
+    policy_id: int
 
 
 def _hash_parts(*parts: str) -> str:
@@ -58,8 +79,13 @@ def _identifier_type(connection: sqlite3.Connection, type_key: str) -> int:
     )
 
 
-def _genre_slug(source_id: str) -> str:
+def _genre_slug(source_id: str, *, namespace: str = "musicbrainz") -> str:
     normalized = re.sub(r"[^a-z0-9]+", "-", source_id.casefold()).strip("-")
+    if namespace == "musicbrainz_tag":
+        # Tags can contain scripts that the legacy ASCII slugger erases. Keep
+        # a readable prefix, then disambiguate with the complete source key.
+        digest = _hash_parts(namespace, source_id)[:12]
+        return f"musicbrainz-tag-{normalized or 'tag'}-{digest}"
     return f"musicbrainz-{normalized}"
 
 
@@ -68,7 +94,12 @@ def _ensure_genre(
     claim: GenreMembershipClaim,
     provenance_id: int,
 ) -> int:
-    identifier_type_id = _identifier_type(connection, "musicbrainz_genre_id")
+    identifier_type_key = (
+        "musicbrainz_tag_name"
+        if claim.source_identity.namespace == "musicbrainz_tag"
+        else "musicbrainz_genre_id"
+    )
+    identifier_type_id = _identifier_type(connection, identifier_type_key)
     row = connection.execute(
         """SELECT entity_id FROM entity_identifiers
            WHERE identifier_type_id = ? AND namespace = ? AND normalized_value = ?
@@ -80,7 +111,14 @@ def _ensure_genre(
         genre_id = _lastrowid(cursor)
         connection.execute(
             "INSERT INTO genres (id, slug, name) VALUES (?, ?, ?)",
-            (genre_id, _genre_slug(claim.source_identity.value), claim.name),
+            (
+                genre_id,
+                _genre_slug(
+                    claim.source_identity.value,
+                    namespace=claim.source_identity.namespace,
+                ),
+                claim.name,
+            ),
         )
     else:
         genre_id = int(row[0])
@@ -105,8 +143,12 @@ def _ensure_genre(
     connection.execute(
         """INSERT OR IGNORE INTO entity_provenance
            (entity_id, provenance_id, field_set_json, is_primary)
-           VALUES (?, ?, '["name","musicbrainz_genre_id"]', 0)""",
-        (genre_id, provenance_id),
+           VALUES (?, ?, ?, 0)""",
+        (
+            genre_id,
+            provenance_id,
+            json.dumps(["name", identifier_type_key], separators=(",", ":")),
+        ),
     )
     fingerprint = _hash_parts(str(genre_id), "primary", "und", claim.name)
     connection.execute(
@@ -138,13 +180,36 @@ def _persist_genre_claims(
     provenance_id: int,
     policy_id: int,
 ) -> None:
+    _persist_claims(
+        _ClaimPersistence(connection, projection, artist_id, provenance_id, policy_id),
+        _EvidenceFacet(
+            claims=projection.genre_claims,
+            method_key="musicbrainz_artist_genre",
+            parameter_manifest=json.dumps(
+                GENRE_PARAMETER_MANIFEST, sort_keys=True, separators=(",", ":")
+            ),
+            source_record_facet="genre",
+        ),
+    )
+
+
+def _persist_claims(
+    context: _ClaimPersistence,
+    facet: _EvidenceFacet,
+) -> None:
+    """Persist one immutable direct evidence facet in the shared evidence table."""
+    connection = context.connection
+    projection = context.projection
+    artist_id = context.artist_id
+    provenance_id = context.provenance_id
+    policy_id = context.policy_id
     source_key = _source_key(connection, provenance_id)
-    parameters = json.dumps(GENRE_PARAMETER_MANIFEST, sort_keys=True, separators=(",", ":"))
     observed_at = _now()
-    for claim in projection.genre_claims:
+    for claim in facet.claims:
         genre_id = _ensure_genre(connection, claim, provenance_id)
         source_record_id = (
-            f"musicbrainz:artist:{projection.external_id}:genre:{claim.source_identity.value}"
+            f"musicbrainz:artist:{projection.external_id}:{facet.source_record_facet}:"
+            f"{claim.source_identity.value}"
         )
         fingerprint = _hash_parts(
             source_key,
@@ -158,14 +223,15 @@ def _persist_genre_claims(
                 source_record_id, method_key, method_version, parameter_manifest_json,
                 observed_at, provenance_id, policy_id, record_fingerprint)
                VALUES (?, ?, 'direct_source_claim', ?, ?, ?,
-                       'musicbrainz_artist_genre', '1', ?, ?, ?, ?, ?)""",
+                       ?, '1', ?, ?, ?, ?, ?)""",
             (
                 artist_id,
                 genre_id,
                 float(claim.support_count),
                 source_key,
                 source_record_id,
-                parameters,
+                facet.method_key,
+                facet.parameter_manifest,
                 observed_at,
                 provenance_id,
                 policy_id,
@@ -296,6 +362,17 @@ class ArtistProjector:
             entity_id,
             provenance_id,
             policy_id,
+        )
+        _persist_claims(
+            _ClaimPersistence(connection, projection, entity_id, provenance_id, policy_id),
+            _EvidenceFacet(
+                claims=projection.tag_claims,
+                method_key="musicbrainz_artist_tag",
+                parameter_manifest=json.dumps(
+                    TAG_PARAMETER_MANIFEST, sort_keys=True, separators=(",", ":")
+                ),
+                source_record_facet="tag",
+            ),
         )
         return ProjectionResult(
             projection_kind=self.key,

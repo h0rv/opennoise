@@ -145,6 +145,7 @@ def _profile_checks(artifact: PublicModelArtifact) -> _ProfileCheck:
                 failures.append(f"profile membership genre mismatch: {profile.genre_id}")
             component_kinds = {component.component_kind for component in membership.components}
             if profile.profile_kind == "direct" and not component_kinds <= {
+                "musicbrainz_genre",
                 "musicbrainz_tag",
                 "wikidata_p136",
             }:

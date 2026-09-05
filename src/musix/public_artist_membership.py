@@ -502,7 +502,7 @@ class PublicArtistMembershipPromotionError(RuntimeError):
     """Raise when a candidate has not met the independent-gold promotion gate."""
 
 
-def _require_public_inputs(
+def _require_public_inputs(  # noqa: C901
     name_universe: NameUniverse,
     approved_input: ApprovedPublicMembershipInput,
     policy: PublicArtistMembershipSourcePolicy,
@@ -518,6 +518,8 @@ def _require_public_inputs(
         raise ValueError("public membership input includes a source outside source policy")
     if not all(item.export_allowed for item in inputs.artifacts):
         raise ValueError("public membership input includes a non-exportable artifact")
+    for item in inputs.direct_memberships:
+        _require_candidate_direct_facet(item.facet)
     if any(item.facet not in policy.allowed_direct_facets for item in inputs.direct_memberships):
         raise ValueError("direct evidence includes a facet outside source policy")
     for facet in {item.facet for item in inputs.direct_memberships}:
@@ -569,6 +571,17 @@ def _direct_candidate_evidence_facet(facet: DirectFacet) -> CandidateFacet:
     return "musicbrainz_artist_genre_tag" if facet == "musicbrainz_tag" else "wikidata_p136"
 
 
+def _require_candidate_direct_facet(facet: str) -> DirectFacet:
+    """Admit only the facets this candidate artifact models."""
+    if facet == "musicbrainz_tag":
+        return "musicbrainz_tag"
+    if facet == "wikidata_p136":
+        return "wikidata_p136"
+    raise ValueError(
+        "musicbrainz_genre evidence is not admitted by the artist-membership candidate"
+    )
+
+
 def _direct_candidates(
     matched: dict[str, tuple[str, ...]],
     inputs: PublicModelInput,
@@ -585,7 +598,7 @@ def _direct_candidates(
             continue
         key = (evidence.artist_id, evidence.genre_id)
         raw[key] += float(evidence.value)
-        direct_facet: DirectFacet = evidence.facet
+        direct_facet = _require_candidate_direct_facet(evidence.facet)
         refs[(*key, direct_facet)].add(evidence.evidence_ref)
         facet_values[(*key, direct_facet)] += float(evidence.value)
     maxima: dict[str, float] = defaultdict(float)

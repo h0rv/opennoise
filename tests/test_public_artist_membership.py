@@ -227,6 +227,34 @@ class PublicArtistMembershipTests(unittest.TestCase):
             ("musicbrainz_artist_genre_tag", "wikidata_p136"),
         )
 
+    def test_musicbrainz_genre_facet_is_rejected_by_legacy_candidate_lane(self) -> None:
+        base = _model_input(pairs=False)
+        model_input = base.model_copy(
+            update={
+                "direct_memberships": (
+                    DirectMembershipEvidence(
+                        artist_id="artist:alpha",
+                        genre_id="genre:jazz",
+                        facet="musicbrainz_genre",
+                        value=1.0,
+                        evidence_ref="musicbrainz:artist:alpha:genre:jazz",
+                    ),
+                )
+            }
+        )
+        approved = ApprovedPublicMembershipInput(
+            public_model_input=model_input,
+            input_file_sha256="d" * 64,
+            public_model_input_sha256=_sha256(model_input.model_dump(mode="json")),
+            row_export_policy_sha256="e" * 64,
+            declared_direct_row_count=1,
+            declared_aggregate_row_count=0,
+        )
+        with self.assertRaisesRegex(ValueError, "musicbrainz_genre evidence is not admitted"):
+            build_public_artist_membership_candidate(
+                _universe(), approved, PublicArtistMembershipSourcePolicy()
+            )
+
     def test_normalized_name_collisions_abstain_without_last_writer_wins_assignment(self) -> None:
         artifact = build_public_artist_membership_candidate(
             _universe(collision=True),

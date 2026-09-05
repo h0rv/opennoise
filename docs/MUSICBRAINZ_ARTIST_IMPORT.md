@@ -37,13 +37,25 @@ recording archive is 33,572,648 bytes, but this branch does not claim support
 for its record shape. The next import should add and test those source adapters
 before it downloads either archive.
 
-## Positive genre evidence
+## Positive genre and tag evidence
 
-Adapter version 3 also projects positive counts from each artist record's
+Adapter version 4 projects positive counts from each artist record's
 official MusicBrainz `genres` array. At most 128 unique genre identities are
 accepted per artist. Repeated identities or a larger array quarantine the whole
 record instead of choosing a count or silently truncating it. Zero, missing, and
 negative counts do not become positive evidence.
+
+The same adapter parses the broader supplementary `tags` array, bounded at 512
+normalized unique names per artist. Whitespace-only, punctuation-only, and
+malformed tag entries are dropped from the tag facet. Case/punctuation-normalized
+duplicates are merged deterministically, retaining the first spelling and the
+maximum count. If the bounded unique-name limit is exceeded, the tag facet is
+dropped while core artist and curated genre fields remain available. Tags have
+no MusicBrainz UUID, so they use deterministic name-derived identities under the
+`musicbrainz_tag_name` identifier type and remain separate from UUID-backed
+genres. Positive tag counts are stored in the same append-only
+`artist_genre_evidence` table with method `musicbrainz_artist_tag`; curated
+genres retain method `musicbrainz_artist_genre`.
 
 Genre entities are resolved only through the MusicBrainz genre UUID. The
 projector records the raw positive count in `artist_genre_evidence` with method
@@ -72,6 +84,6 @@ and ListenBrainz instead.
 
 The measured 185,779-artist run above used adapter version 2 and therefore
 contains identity data only. It must not be reported as having genre evidence.
-The version 3 fixture run accepts one artist, one positive genre claim with raw
-count 4, and ignores one negative association. A real version 3 partition rerun
-remains pending.
+The version 4 fixture run accepts one artist, one positive genre claim with raw
+count 4, and positive tag claims while ignoring zero, missing, and negative
+counts. A real version 4 partition rerun remains pending.

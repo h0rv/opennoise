@@ -87,6 +87,7 @@ class GenreArtistEdge(FrozenModel):
     """One weighted artist membership observation used by a baseline."""
 
     genre_id: str = Field(min_length=1, max_length=200)
+    facet: Literal["genre", "tag", "musicbrainz_genre", "musicbrainz_tag"] = "genre"
     artist_id: str = Field(min_length=1, max_length=200)
     weight: FiniteFloat = Field(default=1.0, gt=0.0)
     evidence_refs: tuple[EvidenceRef, ...] = Field(min_length=1, max_length=32)
@@ -147,7 +148,7 @@ class ReconstructionInputs(FrozenModel):
 
     @model_validator(mode="after")
     def _require_consistent_inputs(self) -> ReconstructionInputs:
-        edge_keys = {(edge.genre_id, edge.artist_id) for edge in self.membership_edges}
+        edge_keys = {(edge.facet, edge.genre_id, edge.artist_id) for edge in self.membership_edges}
         if len(edge_keys) != len(self.membership_edges):
             raise ValueError("genre and artist membership pairs must be unique")
         _require_unique_genre_ids(
@@ -587,9 +588,13 @@ def _vector_similarity(
     if metric is SimilarityMetric.WEIGHTED_JACCARD:
         intersection = sum(min(source.weights[key], target.weights[key]) for key in shared)
         union = source.weight_sum + target.weight_sum - intersection
-        return intersection / union if union else 0.0
-    dot = sum(source.weights[key] * target.weights[key] for key in shared)
-    return dot / (source.norm * target.norm) if source.norm and target.norm else 0.0
+        score = intersection / union if union else 0.0
+    else:
+        dot = sum(source.weights[key] * target.weights[key] for key in shared)
+        score = dot / (source.norm * target.norm) if source.norm and target.norm else 0.0
+    # Floating point accumulation can put a mathematically bounded score just
+    # outside [0, 1], which would violate the typed edge contract.
+    return min(1.0, max(0.0, score))
 
 
 def _center(

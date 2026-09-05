@@ -15,6 +15,10 @@ result can be measured against the historical result, but it remains a different
 
 An exact reproduction of the private model is not possible from the public record. Glenn McDonald disclosed several inputs and design choices, but he did not publish the source code, complete feature vectors, thresholds, weights, or the final layout transform. Musix should show the difference between a disclosed fact and a fitted approximation.
 
+## Current open construction contract
+
+The immutable 6,291 seed IDs are the join boundary. An explicit bridge maps each seed to public identities and separate MusicBrainz genre or tag identities. Direct artist sets produce canonical symmetric peer candidates and a directional top-k view. Public taxonomy supplies directed containment candidates. Every output is versioned, hashed, evidence-backed, and able to abstain. H3 data is evaluation-only. Musix stores metadata, never audio or music files.
+
 ## Claim labels
 
 The known and unknown matrix uses four labels.

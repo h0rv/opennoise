@@ -13,7 +13,7 @@ from typing import BinaryIO, Literal, Protocol, override
 from uuid import UUID
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from musix.models.catalog import (
     ArtistCreditMemberClaim,
@@ -41,8 +41,19 @@ MUSICBRAINZ_MIN_REQUEST_INTERVAL_SECONDS = 1.0
 YEAR_TEXT_LENGTH = 4
 MAX_YEAR = 9999
 MAX_GENRE_CLAIMS_PER_ARTIST = 128
+# Tags are user/community supplied and broader than curated genres, but remain
+# bounded so one malformed record cannot consume unbounded memory.
+MAX_TAG_CLAIMS_PER_ARTIST = 512
 MAX_ARTIST_CREDIT_MEMBERS = 128
 MAX_SECONDARY_TYPES = 32
+
+
+def _normalize_tag_name(value: str) -> str:
+    """Return the stable identity key used for supplementary tag entities."""
+    decomposed = unicodedata.normalize("NFKD", value).casefold()
+    without_marks = "".join(char for char in decomposed if not unicodedata.combining(char))
+    words = re.sub(r"[^\w]+", " ", unicodedata.normalize("NFKC", without_marks), flags=re.UNICODE)
+    return re.sub(r"\s+", " ", words).strip()
 
 
 class MusicBrainzAdapterError(SourceAdapterError):
@@ -95,6 +106,22 @@ class MusicBrainzGenre(BaseModel):
     disambiguation: str = ""
 
 
+class MusicBrainzTag(BaseModel):
+    """Parse one supplementary MusicBrainz artist tag."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    name: str = Field(min_length=1)
+    count: int | None = None
+
+    @model_validator(mode="after")
+    def meaningful_name(self) -> "MusicBrainzTag":
+        """Reject names that cannot form a deterministic matching identity."""
+        if not self.name.strip() or not _normalize_tag_name(self.name):
+            raise ValueError("MusicBrainz tag name must contain a normalized label")
+        return self
+
+
 class MusicBrainzLifeSpan(BaseModel):
     """Parse the bounded artist lifespan fields used by the catalog."""
 
@@ -115,10 +142,41 @@ class MusicBrainzArtist(BaseModel):
     disambiguation: str = ""
     aliases: tuple[MusicBrainzAlias, ...] = ()
     genres: tuple[MusicBrainzGenre, ...] = Field(default=(), max_length=MAX_GENRE_CLAIMS_PER_ARTIST)
+    tags: tuple[MusicBrainzTag, ...] = Field(default=(), max_length=MAX_TAG_CLAIMS_PER_ARTIST)
     isnis: tuple[str, ...] = ()
     ipis: tuple[str, ...] = ()
     type: str | None = None
     life_span: MusicBrainzLifeSpan | None = Field(default=None, alias="life-span")
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def prepare_tags(cls, value: object) -> object:
+        """Keep malformed or duplicate supplementary tags from rejecting the artist."""
+        if not isinstance(value, list):
+            return value
+        merged: dict[str, dict[str, object]] = {}
+        for raw_tag in value:
+            if not isinstance(raw_tag, dict):
+                continue
+            name = raw_tag.get("name")
+            if not isinstance(name, str):
+                continue
+            normalized = _normalize_tag_name(name)
+            if not name.strip() or not normalized:
+                continue
+            count = raw_tag.get("count")
+            if count is not None and (not isinstance(count, int) or isinstance(count, bool)):
+                continue
+            existing = merged.get(normalized)
+            if existing is None:
+                merged[normalized] = {"name": name, "count": count}
+                continue
+            previous = existing.get("count")
+            if count is not None and (
+                previous is None or (isinstance(previous, int) and count > previous)
+            ):
+                existing["count"] = count
+        return tuple(merged.values()) if len(merged) <= MAX_TAG_CLAIMS_PER_ARTIST else ()
 
     @model_validator(mode="after")
     def unique_genre_claims(self) -> "MusicBrainzArtist":
@@ -126,6 +184,14 @@ class MusicBrainzArtist(BaseModel):
         identities = tuple(genre.id for genre in self.genres)
         if len(identities) != len(set(identities)):
             raise ValueError("MusicBrainz artist repeats a genre identity")
+        return self
+
+    @model_validator(mode="after")
+    def unique_tag_claims(self) -> "MusicBrainzArtist":
+        """Defensively reject duplicates in already-parsed tag records."""
+        identities = tuple(_normalize_tag_name(tag.name) for tag in self.tags)
+        if len(identities) != len(set(identities)):
+            raise ValueError("MusicBrainz artist repeats a tag identity")
         return self
 
 
@@ -211,8 +277,8 @@ class Identifier(BaseModel):
 
     model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
 
-    type: Literal["source_id", "isni", "ipi"]
-    namespace: Literal["musicbrainz", "isni", "ipi"]
+    type: Literal["source_id", "musicbrainz_tag_name", "isni", "ipi"]
+    namespace: Literal["musicbrainz", "musicbrainz_tag", "isni", "ipi"]
     value: str = Field(min_length=1)
 
 
@@ -252,6 +318,17 @@ class ArtistGenreRelationship(BaseModel):
     weight: int | None = None
 
 
+class ArtistTagRelationship(BaseModel):
+    """Represent one weighted supplementary MusicBrainz artist tag claim."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    type: Literal["artist_has_tag"] = "artist_has_tag"
+    artist_external_id: str = Field(min_length=1)
+    tag_external_id: str = Field(min_length=1)
+    weight: int | None = None
+
+
 class AdaptedArtist(BaseModel):
     """Keep one artist and its bounded genre claims together while streaming."""
 
@@ -260,6 +337,8 @@ class AdaptedArtist(BaseModel):
     artist: ArtistRecord
     genres: tuple[GenreRecord, ...]
     relationships: tuple[ArtistGenreRelationship, ...]
+    tags: tuple[GenreRecord, ...] = ()
+    tag_relationships: tuple[ArtistTagRelationship, ...] = ()
 
 
 class ReleaseGroupRecord(BaseModel):
@@ -345,6 +424,15 @@ def _slug(value: str, fallback: str) -> str:
     return slug or fallback
 
 
+def _tag_identity(tag: MusicBrainzTag) -> str:
+    """Create a deterministic source ID without conflating tags and genres."""
+    normalized = _normalize_tag_name(tag.name)
+    if normalized:
+        return f"tag:{_slug(normalized, 'tag')}"
+    digest = hashlib.sha256(unicodedata.normalize("NFKC", tag.name).casefold().encode()).hexdigest()
+    return f"tag:unnamed-{digest}"
+
+
 def adapt_artist(artist: MusicBrainzArtist) -> AdaptedArtist:
     """Convert one parsed MusicBrainz artist into stable local records."""
     artist_id = str(artist.id)
@@ -393,6 +481,33 @@ def adapt_artist(artist: MusicBrainzArtist) -> AdaptedArtist:
             )
         )
 
+    tags: list[GenreRecord] = []
+    tag_relationships: list[ArtistTagRelationship] = []
+    for tag in artist.tags:
+        if tag.count is None or tag.count <= 0:
+            continue
+        tag_id = _tag_identity(tag)
+        tag_external_id = f"musicbrainz_tag:tag:{tag_id}"
+        tags.append(
+            GenreRecord(
+                external_id=tag_external_id,
+                name=tag.name,
+                slug=_slug(tag_id, tag_id),
+                identifiers=(
+                    Identifier(
+                        type="musicbrainz_tag_name", namespace="musicbrainz_tag", value=tag_id
+                    ),
+                ),
+            )
+        )
+        tag_relationships.append(
+            ArtistTagRelationship(
+                artist_external_id=external_id,
+                tag_external_id=tag_external_id,
+                weight=tag.count,
+            )
+        )
+
     return AdaptedArtist(
         artist=ArtistRecord(
             external_id=external_id,
@@ -402,6 +517,8 @@ def adapt_artist(artist: MusicBrainzArtist) -> AdaptedArtist:
         ),
         genres=tuple(genres),
         relationships=tuple(relationships),
+        tags=tuple(tags),
+        tag_relationships=tuple(tag_relationships),
     )
 
 
@@ -762,6 +879,7 @@ def write_artist_outputs(
     entity_count = 0
     relationship_count = 0
     seen_genres: set[str] = set()
+    seen_tags: set[str] = set()
     try:
         with (
             entities_temporary.open("xb") as entities_stream,
@@ -774,11 +892,22 @@ def write_artist_outputs(
                     if genre.external_id in seen_genres:
                         continue
                     seen_genres.add(genre.external_id)
-                    if len(seen_genres) > limits.max_unique_genres:
+                    if len(seen_genres) + len(seen_tags) > limits.max_unique_genres:
                         raise MusicBrainzAdapterError("MusicBrainz dump exceeds max_unique_genres")
                     _write_line(entities_stream, genre)
                     entity_count += 1
+                for tag in adapted.tags:
+                    if tag.external_id in seen_tags:
+                        continue
+                    seen_tags.add(tag.external_id)
+                    if len(seen_genres) + len(seen_tags) > limits.max_unique_genres:
+                        raise MusicBrainzAdapterError("MusicBrainz dump exceeds max_unique_genres")
+                    _write_line(entities_stream, tag)
+                    entity_count += 1
                 for relationship in adapted.relationships:
+                    _write_line(relationships_stream, relationship)
+                    relationship_count += 1
+                for relationship in adapted.tag_relationships:
                     _write_line(relationships_stream, relationship)
                     relationship_count += 1
         entities_temporary.replace(entities_destination)
@@ -818,11 +947,11 @@ class MusicBrainzClient:
             self._next_request_at = now + MUSICBRAINZ_MIN_REQUEST_INTERVAL_SECONDS
 
     async def fetch_artist(self, artist_id: UUID) -> MusicBrainzArtist:
-        """Fetch one official artist response with aliases and genres."""
+        """Fetch one official artist response with aliases, genres, and tags."""
         await self._wait_for_rate_limit()
         response = await self._client.get(
             f"{MUSICBRAINZ_API_BASE}/artist/{artist_id}",
-            params={"fmt": "json", "inc": "aliases+genres"},
+            params={"fmt": "json", "inc": "aliases+genres+tags"},
             headers={"User-Agent": self._user_agent, "Accept": "application/json"},
         )
         response.raise_for_status()
@@ -887,6 +1016,7 @@ def _artist_projection(artist: MusicBrainzArtist) -> ArtistProjection:
         begin_year=_year(artist.life_span.begin if artist.life_span is not None else None),
         end_year=_year(artist.life_span.end if artist.life_span is not None else None),
         genre_claims=_genre_projection(artist.genres),
+        tag_claims=_tag_projection(artist.tags),
     )
 
 
@@ -913,6 +1043,19 @@ def _genre_projection(genres: tuple[MusicBrainzGenre, ...]) -> tuple[GenreMember
         )
         for genre in sorted(genres, key=lambda item: str(item.id))
         if genre.count is not None and genre.count > 0
+    )
+
+
+def _tag_projection(tags: tuple[MusicBrainzTag, ...]) -> tuple[GenreMembershipClaim, ...]:
+    """Project only positive artist tags as a separate evidence facet."""
+    return tuple(
+        GenreMembershipClaim(
+            source_identity=ExternalIdentity(namespace="musicbrainz_tag", value=_tag_identity(tag)),
+            name=tag.name,
+            support_count=tag.count,
+        )
+        for tag in sorted(tags, key=lambda item: (_normalize_tag_name(item.name), item.name))
+        if tag.count is not None and tag.count > 0
     )
 
 
@@ -970,8 +1113,8 @@ class MusicBrainzArtistDumpAdapter:
 
     @property
     def version(self) -> str:
-        """Return the immutable projection version."""
-        return "3"
+        """Return the immutable projection version including artist tags."""
+        return "4"
 
     def supports(self, source: DownloadSource) -> bool:
         """Require the official archive format understood by this adapter."""

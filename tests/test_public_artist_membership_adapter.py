@@ -269,6 +269,72 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
                 )
             )
 
+    def test_musicbrainz_tag_selector_projects_tag_identity_and_facet(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "public.sqlite"
+            self._synthetic_database(database)
+            with closing(sqlite3.connect(database)) as connection:
+                connection.execute(
+                    "INSERT INTO rights_policies VALUES (?, ?, 1, 'public_domain', 0)",
+                    (4, "musicbrainz-direct"),
+                )
+                connection.execute(
+                    "INSERT INTO active_rights_policy_permissions VALUES (4, 'export', 'allow')"
+                )
+                connection.execute(
+                    "INSERT INTO data_sources VALUES (?, ?, 'CC0-1.0', ?)",
+                    (5, "musicbrainz_tags_fixture", 4),
+                )
+                connection.execute(
+                    "INSERT INTO source_snapshots VALUES (4, 5, 'snapshot-tags', ?, 4)",
+                    ("7" * 64,),
+                )
+                connection.execute(
+                    "INSERT INTO source_artifacts VALUES (4, 4, 'tags.json', ?, 4)",
+                    ("8" * 64,),
+                )
+                connection.execute(
+                    "INSERT INTO provenance_records VALUES "
+                    "(4, 5, 4, 'snapshot-tags', ?, 'fp-tags')",
+                    ("8" * 64,),
+                )
+                connection.execute(
+                    "INSERT INTO identifier_types VALUES (4, 'musicbrainz_tag_name')"
+                )
+                connection.execute("INSERT INTO genres VALUES (30, 'Ambient')")
+                connection.execute(
+                    "INSERT INTO entity_identifiers VALUES (?, ?, ?, ?)",
+                    (31, 30, 4, "tag:ambient"),
+                )
+                connection.execute(
+                    "INSERT INTO artist_genre_evidence VALUES "
+                    "(4, 10, 30, 'direct_source_claim', 3.0, ?, 'tag-record', "
+                    "'musicbrainz_artist_tag', 4, 4, 'fp-tag-row')",
+                    ("musicbrainz_tags_fixture",),
+                )
+                connection.commit()
+            policy = CertifiedPublicMembershipAdapterPolicy(
+                direct_selectors=(
+                    CertifiedPublicDirectSelector(
+                        source="musicbrainz",
+                        facet="musicbrainz_tag",
+                        source_key_prefix="musicbrainz_tags_",
+                        method_key="musicbrainz_artist_tag",
+                        required_license="CC0-1.0",
+                    ),
+                )
+            )
+            adaptation = adapt_certified_public_membership_input(database, policy)
+
+        membership = adaptation.approved_input.public_model_input.direct_memberships[0]
+        self.assertEqual(membership.artist_id, "musicbrainz:artist:artist-a")
+        self.assertEqual(membership.genre_id, "musicbrainz:tag:tag:ambient")
+        self.assertEqual(membership.facet, "musicbrainz_tag")
+        self.assertEqual(
+            adaptation.approved_input.public_model_input.genres[0].evidence_refs,
+            ("musicbrainz:artist:tag:tag:ambient",),
+        )
+
     def test_certified_release_counts_and_provenance_bindings(self) -> None:
         database = Path(
             "/home/h0rv/projects/musix/.cache/public-release-custody-integrated/objects/"

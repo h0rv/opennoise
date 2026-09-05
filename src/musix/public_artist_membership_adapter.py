@@ -383,11 +383,18 @@ def _direct_rows(
               JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
              WHERE type.type_key = 'wikidata_genre_qid'
              GROUP BY identifier.entity_id
+        ), musicbrainz_tag_identifiers AS (
+            SELECT identifier.entity_id, MIN(identifier.normalized_value) AS value
+              FROM entity_identifiers AS identifier
+              JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
+             WHERE type.type_key = 'musicbrainz_tag_name'
+             GROUP BY identifier.entity_id
         )
         SELECT evidence.id, evidence.artist_id, evidence.genre_id, evidence.evidence_value,
                evidence.source_key, evidence.source_record_id, evidence.record_fingerprint,
                genre.name AS genre_name, artist_mbid.value AS artist_mbid,
-               artist_qid.value AS artist_qid, genre_qid.value AS genre_qid
+               artist_qid.value AS artist_qid, genre_qid.value AS genre_qid,
+               tag_identity.value AS tag_identity
           FROM artist_genre_evidence AS evidence
           JOIN data_sources AS source ON source.source_key = evidence.source_key
           JOIN rights_policies AS policy ON policy.id = evidence.policy_id
@@ -398,6 +405,8 @@ def _direct_rows(
             ON artist_qid.entity_id = evidence.artist_id
           LEFT JOIN wikidata_genre_identifiers AS genre_qid
             ON genre_qid.entity_id = evidence.genre_id
+          LEFT JOIN musicbrainz_tag_identifiers AS tag_identity
+            ON tag_identity.entity_id = evidence.genre_id
          WHERE evidence.evidence_kind = 'direct_source_claim'
            AND ({selector_clauses})
            AND policy.classification = 'public_domain'
@@ -430,12 +439,6 @@ def _direct_rows(
     genre_rows: dict[str, GenreIdentity] = {}
     source_counts: dict[str, int] = defaultdict(int)
     for row in rows:
-        artist_identifier = row["artist_mbid"] or row["artist_qid"]
-        if artist_identifier is None or row["genre_qid"] is None:
-            raise ValueError("direct evidence lacks a stable public artist or genre identifier")
-        artist_prefix = "musicbrainz:artist:" if row["artist_mbid"] else "wikidata:artist:"
-        artist_id = f"{artist_prefix}{artist_identifier}"
-        genre_id = f"wikidata:genre:{row['genre_qid']}"
         source_key = str(row["source_key"])
         try:
             selector = next(
@@ -446,7 +449,22 @@ def _direct_rows(
         except StopIteration as error:
             raise ValueError("direct evidence source is outside adapter policy") from error
         facet = selector.facet
-        evidence_prefix = "wikidata:p136" if facet == "wikidata_p136" else "musicbrainz:artist:tag"
+        if facet == "musicbrainz_tag":
+            artist_identifier = row["artist_mbid"]
+            genre_identifier = row["tag_identity"]
+            artist_prefix = "musicbrainz:artist:"
+            genre_prefix = "musicbrainz:tag:"
+            evidence_prefix = "musicbrainz:artist:tag"
+        else:
+            artist_identifier = row["artist_qid"] or row["artist_mbid"]
+            genre_identifier = row["genre_qid"]
+            artist_prefix = "wikidata:artist:" if row["artist_qid"] else "musicbrainz:artist:"
+            genre_prefix = "wikidata:genre:"
+            evidence_prefix = "wikidata:p136"
+        if artist_identifier is None or genre_identifier is None:
+            raise ValueError("direct evidence lacks a stable public artist or genre identifier")
+        artist_id = f"{artist_prefix}{artist_identifier}"
+        genre_id = f"{genre_prefix}{genre_identifier}"
         evidence_ref = (
             f"{evidence_prefix}:{source_key}:{row['source_record_id']}:{row['record_fingerprint']}"
         )
@@ -462,7 +480,7 @@ def _direct_rows(
         genre_rows[genre_id] = GenreIdentity(
             genre_id=genre_id,
             name=str(row["genre_name"]),
-            evidence_refs=(f"wikidata:genre:{row['genre_qid']}",),
+            evidence_refs=(f"{evidence_prefix}:{genre_identifier}",),
         )
         source_counts[source_key] += 1
     return (

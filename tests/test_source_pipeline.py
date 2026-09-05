@@ -9,7 +9,7 @@ from pathlib import Path
 import httpx
 from pydantic import HttpUrl, ValidationError
 
-from musix.catalog.artists import ArtistProjector
+from musix.catalog.artists import ArtistProjector, _genre_slug
 from musix.catalog.registry import ProjectorRegistry
 from musix.clients.downloads import download_verified
 from musix.models.pipeline import SourceLimits
@@ -54,6 +54,11 @@ def _artist_line() -> bytes:
                     "name": "Ignored negative tag",
                     "count": -1,
                 },
+            ],
+            "tags": [
+                {"name": "micro-genre", "count": 3},
+                {"name": "zero tag", "count": 0},
+                {"name": "negative tag", "count": -1},
             ],
             "isnis": ["0000000121032683"],
             "ipis": ["00123456789"],
@@ -241,6 +246,13 @@ class DownloadTests(PollingIsolatedAsyncioTestCase):
 
 
 class SourcePipelineTests(PollingIsolatedAsyncioTestCase):
+    def test_musicbrainz_tag_slugs_disambiguate_non_ascii_source_names(self) -> None:
+        first = _genre_slug("tag:日本語", namespace="musicbrainz_tag")
+        second = _genre_slug("tag:音楽", namespace="musicbrainz_tag")
+
+        self.assertNotEqual(first, second)
+        self.assertTrue(first.startswith("musicbrainz-tag-tag-"))
+
     async def test_oversized_record_does_not_desynchronize_following_record(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -360,10 +372,14 @@ class SourcePipelineTests(PollingIsolatedAsyncioTestCase):
                 ).fetchone()
 
             self.assertEqual(artist, ("Person", "fixture artist", 1981))
-            self.assertEqual(len(names), 4)
-            self.assertEqual(len(evidence), 1)
-            self.assertEqual(evidence[0][0:2], (4.0, "musicbrainz_artist_genre"))
+            self.assertEqual(len(names), 5)
+            self.assertEqual(len(evidence), 2)
+            self.assertEqual(
+                [(row[0], row[1]) for row in evidence],
+                [(4.0, "musicbrainz_artist_genre"), (3.0, "musicbrainz_artist_tag")],
+            )
             self.assertIn('"maximum_genres_per_artist":128', evidence[0][2])
+            self.assertIn('"maximum_tags_per_artist":512', evidence[1][2])
             self.assertEqual(evidence[0][4], "allow")
             self.assertEqual(source_objects, (1,))
 

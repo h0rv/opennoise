@@ -157,7 +157,9 @@ class HistoricalGenreRepresentative(FrozenModel):
 class GenreProfileComponent(FrozenModel):
     """Expose one source-backed contribution to a published artist membership."""
 
-    component_kind: Literal["musicbrainz_tag", "wikidata_p136", "listenbrainz_one_hop"]
+    component_kind: Literal[
+        "musicbrainz_genre", "musicbrainz_tag", "wikidata_p136", "listenbrainz_one_hop"
+    ]
     raw_value: FiniteFloat = Field(gt=0.0)
     normalized_value: FiniteFloat = Field(gt=0.0, le=1.0)
     evidence_refs: tuple[str, ...] = Field(min_length=1)
