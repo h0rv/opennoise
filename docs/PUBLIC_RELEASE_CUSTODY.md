@@ -48,3 +48,47 @@ content-addressed MusicBrainz artist object: its recorded SHA-256 is the final
 path component. Copy mode streams it without parsing or loading it into memory;
 reference mode verifies the existing content-addressed path without duplicating
 the object.
+
+## Portable cache-only bundle
+
+`poe public-release-bundle` moves the **sealed derived cache**, release
+configuration, original custody receipt, public model, map, acceptance and
+browser evidence, final report, and the paired objective-gate reports between
+object stores. It is deliberately not a raw-source archive: the bundle receipt
+states `raw_source_reingestion: "not-included"`, and it never copies `raw/` or
+any local research/history material.
+
+All paths below are explicit. The current known-good source is the retained
+`public-release-custody-hardening` store; the similarly named `integrated`
+store must not be used because its cache bytes no longer match its receipt.
+
+```sh
+uv run poe public-release-bundle -- export \
+  --custody-receipt .cache/public-release-custody-hardening/public-release-custody-receipt.json \
+  --release-directory config/releases/phase3-public-20260831 \
+  --custody-store .cache/public-release-custody-hardening/objects \
+  --bundle-store /portable/public-release-objects
+
+uv run poe public-release-bundle -- verify \
+  --bundle-store /portable/public-release-objects \
+  --receipt-key bundles/public-release/v1/<custody-receipt-sha256>/receipt.json
+
+uv run poe public-release-bundle -- restore \
+  --bundle-store /portable/public-release-objects \
+  --receipt-key bundles/public-release/v1/<custody-receipt-sha256>/receipt.json \
+  --cache-database data/phase3-public-qualified.sqlite \
+  --release-directory config/releases/phase3-public-20260831 \
+  --evidence-directory data/release-evidence \
+  --objective-gates-directory data/objective-gates \
+  --custody-receipt data/release/public-release-custody-receipt.json
+```
+
+The receipt key is printed by `export`. `verify` parses the Pydantic receipt at
+the boundary, rejects traversal and omitted required members, checks every
+object digest and size, validates the nested custody receipt bindings, and
+loads the restored release configuration. `restore` verifies before pulling and
+uses the atomic object-store pull for every named destination. Running it again
+is a byte-for-byte idempotent replacement. After restore,
+`poe release-certify -- --cache-database data/phase3-public-qualified.sqlite`
+has its exact required cache and release configuration; it can produce fresh
+serving/browser outputs, but does not claim to re-ingest the original sources.

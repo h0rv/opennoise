@@ -139,5 +139,8 @@ cmd = "python scripts/release_certify.py"
 [tool.poe.tasks.public-release-custody]
 cmd = "python scripts/custody_public_release.py"
 
+[tool.poe.tasks.public-release-bundle]
+cmd = "python scripts/public_release_bundle.py"
+
 [tool.poe.tasks.check]
 sequence = ["format-check", "lint", "typecheck", "test", "schema"]
