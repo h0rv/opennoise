@@ -48,6 +48,10 @@ class AssetTests(unittest.TestCase):
         self.assertNotIn("loadedTiles", source)
         self.assertIn("memberRequest?.abort();", source)
 
+    def test_semantic_map_script_url_is_versioned_for_deploy_cache_busting(self) -> None:
+        template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
+        self.assertIn('src="/static/semantic-map.js?v=11"', template)
+
     def test_browser_certification_uses_screen_font_size_and_rejects_runtime_errors(self) -> None:
         source = Path("scripts/capture_production_map_browser.mjs").read_text(encoding="utf-8")
         self.assertIn("Number.parseFloat(n.style('font-size')) * zoom", source)

@@ -71,7 +71,7 @@
     let currentCohort = null;
     const cohorts = [];
     const style = () => [
-      { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": 12, "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, width: 12, height: 12, "overlay-opacity": 0 } },
+      { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": 12, "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, "text-valign": "bottom", "text-margin-y": 6, width: 12, height: 12, "overlay-opacity": 0 } },
       { selector: "node:selected", style: { "background-color": cssValue("--focus"), "border-width": 3, "border-color": cssValue("--focus") } },
       { selector: "edge", style: { width: 1.5, "line-color": cssValue("--similarity"), opacity: 0.65 } },
     ];
@@ -120,21 +120,24 @@
       // so use a stable landscape grid for the bounded root cohort.  Keep
       // deeper cohorts on their learned coordinates so drilling remains a
       // faithful view of the model output.
+      // The root cohort is deliberately a short, landscape reading list, not
+      // a projection of 6,291 tiny points. Four columns leave enough screen
+      // width for its long umbrella labels at a normal desktop viewport. A
+      // phone switches to one column, which guarantees every umbrella name
+      // stays readable between the fixed top search and bottom controls.
       const overviewColumns = Math.max(
         1,
-        Math.min(
-          Math.ceil(Math.sqrt(items.length * aspect)),
-          Math.max(1, Math.floor(viewportWidth / 180)),
-        ),
+        Math.min(items.length, viewportWidth <= 600 ? 1 : 4),
       );
       const overviewRows = Math.ceil(items.length / overviewColumns);
       return items.map((item) => {
         const rank = ranks.get(item) ?? 0;
         if (isOverview) {
-          return element(item, {
+          const overviewElement = element(item, {
             x: packed(rank % overviewColumns, overviewColumns, width),
             y: packed(Math.floor(rank / overviewColumns), overviewRows, height),
           });
+          return overviewElement;
         }
         return element(item, {
           x: collapsedX ? packed(Math.floor(rank / rows), columns, width) : scale(item.x, lowX, highX, width),
@@ -171,10 +174,12 @@
       // Camera scale is an optional display detail only.  It may reveal a few
       // more labels, but never changes which semantic cohort is rendered.
       const zoomDensity = cy.zoom() < 1 ? 0 : cy.zoom() < 2 ? 1 : 2;
-      const renderedFont = mapElement.clientWidth <= 600 ? 13 : 12;
+      const renderedFont = mapElement.clientWidth <= 600 ? 13 : 14;
       const renderedNode = mapElement.clientWidth <= 600 ? 11 : 10;
-      const modelFont = Math.max(12, Math.min(48, renderedFont / Math.max(cy.zoom(), 0.01)));
-      const modelNode = Math.max(12, Math.min(48, renderedNode / Math.max(cy.zoom(), 0.01)));
+      // Store the model sizes inverse to the camera. This keeps the visible
+      // type comfortably readable after fit without inflating it on wide maps.
+      const modelFont = Math.max(6, Math.min(24, renderedFont / Math.max(cy.zoom(), 0.01)));
+      const modelNode = Math.max(6, Math.min(24, renderedNode / Math.max(cy.zoom(), 0.01)));
       cy.nodes().forEach((node) => node.style({ "font-size": modelFont, width: modelNode, height: modelNode }));
       const baseBudget = mapElement.clientWidth <= 600 ? [18, 28, 42, 64] : [36, 60, 96, 144];
       const budget = Math.min(cy.nodes().length, baseBudget[semanticDepth] + zoomDensity * 8);
@@ -196,10 +201,10 @@
       for (const node of candidates) {
         if (shown === budget) break;
         const position = node.renderedPosition();
-        const width = Math.max(40, String(node.data("label")).length * 7);
+        const width = Math.max(40, String(node.data("label")).length * renderedFont * 0.58);
         const box = {
           x1: mapBounds.left + position.x - width / 2, x2: mapBounds.left + position.x + width / 2,
-          y1: mapBounds.top + position.y + 8, y2: mapBounds.top + position.y + 22,
+          y1: mapBounds.top + position.y + 8, y2: mapBounds.top + position.y + 8 + renderedFont,
         };
         if (box.x1 < mapBounds.left + 4 || box.x2 > mapBounds.right - 4
           || box.y1 < mapBounds.top + 4 || box.y2 > mapBounds.bottom - 4
@@ -310,7 +315,7 @@
       .then((payload) => {
         const overview = payload.hierarchy ?? payload.nodes ?? [];
         if (payload.initial_edge_count !== 0 || overview.length > 24) throw new Error("historical overview is not bounded");
-        cy = window.cytoscape({ container: mapElement, elements: elements(overview), style: style(), layout: { name: "preset", fit: false }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false });
+        cy = window.cytoscape({ container: mapElement, elements: elements(overview), style: style(), layout: { name: "preset", fit: false }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false, hideEdgesOnViewport: true, textureOnViewport: true, motionBlur: false, pixelRatio: 1, wheelSensitivity: 0.18 });
         window.__musixMap = cy;
         currentCohort = { depth: 0, items: overview };
         // Explicitly center the current model cohort in the rectangle left by

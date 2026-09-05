@@ -22,9 +22,16 @@ const hierarchy = (id, level, label, x = level + 0.15, y = level + 0.25) => ({
   representative_label: label, member_count: 3, x, y,
 });
 const leaf = (id, x, y) => ({ genre_id: id, name: id, membership_count: 1, x, y });
-const overview = Array.from({ length:12 }, (_, index) => hierarchy(
-  `overview-${index}`, 0, `Overview ${String(index + 1).padStart(2, "0")}`,
-  index === 11 ? 12.5 : index / 11, 0.14 + (index % 3) * 0.34,
+const umbrellaLabels = [
+  "Alternative and Indie Rock", "Ambient and Atmospheric", "Blues and Roots Music",
+  "Classical and Contemporary", "Country and Americana", "Dance and Electronic",
+  "Experimental and Avant-Garde", "Folk and Singer Songwriter", "Hip Hop and Rap",
+  "Jazz and Improvised Music", "Latin and Caribbean", "Metal and Heavy Music",
+  "Pop, Soul and R&B",
+];
+const overview = umbrellaLabels.map((label, index) => hierarchy(
+  `overview-${index}`, 0, label,
+  index === 12 ? 12.5 : index / 12, 0.14 + (index % 3) * 0.34,
 ));
 const payloads = new Map([
   ["/api/historical-signal-map?level=0", { initial_edge_count: 0, hierarchy: overview }],
@@ -32,7 +39,7 @@ const payloads = new Map([
   ["/api/historical-signal-map?level=2&parent_id=sub", { hierarchy: [hierarchy("micro", 2, "Microgenre")] }],
   ["/api/historical-signal-map?level=3&parent_id=micro", { nodes: [leaf("Leaf A", 0.1, 0.2), leaf("Leaf B", 0.8, 0.7), leaf("Leaf C", 0.5, 0.4)] }],
 ]);
-const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/app.css"><script src="/cytoscape.js" defer></script><script src="/semantic-map.js" defer></script></head><body>
+const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/app.css"><script src="/cytoscape.js" defer></script><script src="/semantic-map.js?v=11" defer></script></head><body>
 <section id="workspace"><main id="map" data-map-view="historical"><div id="semantic-map" role="application" data-map-mode="historical" data-graph-url="/api/historical-signal-map?level=0"></div>
 <section id="historical-fallback"><p>Historical compatibility overview</p><ul>${overview.map((node) => `<li><a href="/api/historical-signal-map?level=1&amp;parent_id=${node.hierarchy_id}">${node.representative_label}</a></li>`).join("")}</ul></section>
 <aside id="historical-detail"></aside><div id="map-controls"><button data-map-action="historical-back">Back</button><button data-map-action="zoom-in">+</button><button data-map-action="zoom-out">−</button><button data-map-action="fit">Fit</button><button id="theme-toggle">Dark</button><label for="theme-select">Theme</label><select id="theme-select"><option value="light">Light</option><option value="dark">Dark</option><option value="system">System</option></select></div><p id="map-status" class="sr-only"></p></main>
@@ -46,6 +53,7 @@ const server = createServer((request, response) => {
   if (url.pathname === "/cytoscape.js") { response.writeHead(200, { "content-type": "text/javascript" }); response.end(cytoscapeSource); return; }
   if (url.pathname === "/semantic-map.js") { response.writeHead(200, { "content-type": "text/javascript" }); response.end(mapSource); return; }
   if (url.pathname === "/app.css") { response.writeHead(200, { "content-type": "text/css" }); response.end(cssSource); return; }
+  if (url.pathname === "/favicon.ico") { response.writeHead(204); response.end(); return; }
   const key = `${url.pathname}${url.search}`;
   if (payloads.has(key)) {
     requests.push(key); response.writeHead(200, { "content-type": "application/json" }); response.end(JSON.stringify(payloads.get(key))); return;
@@ -69,6 +77,10 @@ class Cdp {
     this.socket.addEventListener("message", ({ data }) => {
       const message = JSON.parse(data);
       if (message.method === "Runtime.exceptionThrown") this.errors.push(message.params.exceptionDetails.text);
+      if (message.method === "Runtime.consoleAPICalled" && ["error", "assert"].includes(message.params.type)) {
+        this.errors.push(message.params.args.map((argument) => argument.value ?? argument.description ?? "console error").join(" "));
+      }
+      if (message.method === "Log.entryAdded" && message.params.entry.level === "error") this.errors.push(message.params.entry.text);
       const pending = this.pending.get(message.id); if (!pending) return;
       this.pending.delete(message.id); message.error ? pending.reject(new Error(JSON.stringify(message.error))) : pending.resolve(message.result ?? {});
     });
@@ -96,14 +108,14 @@ const chrome = spawn("/usr/bin/chromium", ["--headless=new", "--no-sandbox", "--
 try {
   for (let count = 0; count < 120; count += 1) { try { await json(`http://127.0.0.1:${chromePort}/json/version`); break; } catch { await sleep(25); } }
   const target = await json(`http://127.0.0.1:${chromePort}/json/new?about:blank`, { method:"PUT" });
-  const cdp = new Cdp(target.webSocketDebuggerUrl); await cdp.connect(); await cdp.command("Page.enable"); await cdp.command("Runtime.enable");
+  const cdp = new Cdp(target.webSocketDebuggerUrl); await cdp.connect(); await cdp.command("Page.enable"); await cdp.command("Runtime.enable"); await cdp.command("Log.enable");
   const viewport = async (width, height, mobile = false) => cdp.command("Emulation.setDeviceMetricsOverride", { width, height, mobile, deviceScaleFactor:1, screenWidth:width, screenHeight:height });
-  await viewport(1366, 768); await cdp.command("Page.navigate", { url });
+  await viewport(1580, 944); await cdp.command("Page.navigate", { url });
   await cdp.wait("Boolean(window.__musixMap)", "historical map init");
   // Cytoscape's renderer calculates label geometry on its first animation frame.
   await sleep(120);
   await cdp.wait(
-    "window.__musixMap.nodes().filter(n => Boolean(n.data('displayLabel'))).length === window.__musixMap.nodes().length",
+    "window.__musixMap.nodes().filter(n => Boolean(n.data('displayLabel'))).length === 13",
     "initial overview labels",
   );
   const nodeLabels = () => cdp.evaluate("window.__musixMap.nodes().map(n => n.data('label')).sort()");
@@ -119,9 +131,16 @@ try {
     const map=document.querySelector('#semantic-map').getBoundingClientRect();
     const nodes=window.__musixMap.nodes(); const points=nodes.map(node => node.renderedPosition());
     const labels=nodes.filter(node => Boolean(node.data('displayLabel'))).length;
-    return { nodeCount:nodes.length, labels, width:(Math.max(...points.map(point => point.x))-Math.min(...points.map(point => point.x)))/map.width,
-      height:(Math.max(...points.map(point => point.y))-Math.min(...points.map(point => point.y)))/map.height };
+    const renderedWidth=Math.max(...points.map(point => point.x))-Math.min(...points.map(point => point.x));
+    const renderedHeight=Math.max(...points.map(point => point.y))-Math.min(...points.map(point => point.y));
+    const width=renderedWidth/map.width;
+    const height=renderedHeight/map.height;
+    const columns=new Set(points.map(point => Math.round(point.x))).size;
+    const canvases=[...document.querySelector('#semantic-map').querySelectorAll('canvas')].filter(canvas => canvas.width > 0 && canvas.height > 0);
+    return { nodeCount:nodes.length, canvasNodeCount:nodes.length, canvasCount:canvases.length, labels, columns, width, height, aspect:renderedWidth/renderedHeight };
   })()`);
+  const initialRequests = [...requests];
+  const semanticMapAssetLoaded = await cdp.evaluate("performance.getEntriesByType('resource').some(entry => new URL(entry.name).pathname === '/semantic-map.js' && new URL(entry.name).search === '?v=11')");
   const readyLayout = await cdp.evaluate(`(() => {
     const fallback=document.querySelector('#historical-fallback'); const search=document.querySelector('#search').getBoundingClientRect(); const controls=document.querySelector('#map-controls').getBoundingClientRect();
     const overlap=search.left < controls.right && search.right > controls.left && search.top < controls.bottom && search.bottom > controls.top;
@@ -139,6 +158,9 @@ try {
     });
     return { fallbackHidden:getComputedStyle(fallback).display === 'none', controlsSearchSeparate:!overlap, nodesAndLabelsUnobscured:unobscured };
   })()`);
+  const lightTheme = await cdp.evaluate("document.documentElement.dataset.theme === 'light'");
+  await cdp.evaluate("document.querySelector('#theme-toggle').click()"); await cdp.wait("document.documentElement.dataset.theme === 'dark'", "dark theme");
+  const darkTheme = await cdp.evaluate("document.documentElement.dataset.theme === 'dark'");
   const desktopScreenshot = await screenshot(cdp, "historical-landscape-desktop.png");
   await clickNode("overview-3"); await waitLabel("Subgenre", 1);
   await clickNode("sub"); await waitLabel("Microgenre", 2);
@@ -154,22 +176,22 @@ try {
   const clickBack = async () => { await cdp.evaluate("document.querySelector('[data-map-action=historical-back]').click()"); await sleep(50); };
   await clickBack(); await waitLabel("Microgenre", 2);
   await clickBack(); await waitLabel("Subgenre", 1);
-  await clickBack(); await waitLabel("Overview 01", 0);
+  await clickBack(); await waitLabel("Alternative and Indie Rock", 0);
   const depthAndStack = await cdp.evaluate("({depth:window.__musixMapMetrics.semanticDepth, stack:window.__musixMapMetrics.cohortCount, back:document.querySelector('[data-map-action=historical-back]').disabled})");
   await viewport(390, 844, true); await sleep(80);
-  const mobileState = await cdp.evaluate("(() => { const map=document.querySelector('#semantic-map'); const c=[...map.querySelectorAll('canvas')]; const box=map.getBoundingClientRect(); const query=document.querySelector('#query'); const cy=window.__musixMap; return { live:c.some(x => x.width > 0 && x.height > 0) && cy.nodes().length === 12, canvas:c.map(x => ({width:x.width,height:x.height})), box:{width:box.width,height:box.height}, viewportWidth:innerWidth, queryFontSize:Number.parseFloat(getComputedStyle(query).fontSize), labelFontSize:Number.parseFloat(cy.nodes().first().style('font-size')) * cy.zoom(), zoom:cy.zoom(), nodes:cy.nodes().length }; })()");
-  const mobileLive = mobileState.live && mobileState.viewportWidth === 390 && mobileState.queryFontSize >= 12 && mobileState.labelFontSize >= 12;
-  await cdp.evaluate("document.querySelector('#theme-toggle').click()"); await cdp.wait("document.documentElement.dataset.theme === 'dark'", "dark theme");
+  const mobileState = await cdp.evaluate("(() => { const map=document.querySelector('#semantic-map'); const c=[...map.querySelectorAll('canvas')]; const box=map.getBoundingClientRect(); const query=document.querySelector('#query'); const cy=window.__musixMap; return { live:c.some(x => x.width > 0 && x.height > 0) && cy.nodes().length === 13, canvas:c.map(x => ({width:x.width,height:x.height})), box:{width:box.width,height:box.height}, viewportWidth:innerWidth, queryFontSize:Number.parseFloat(getComputedStyle(query).fontSize), labelFontSize:Number.parseFloat(cy.nodes().first().style('font-size')) * cy.zoom(), labels:cy.nodes().filter(node => Boolean(node.data('displayLabel'))).length, zoom:cy.zoom(), nodes:cy.nodes().length }; })()");
+  const mobileLive = mobileState.live && mobileState.viewportWidth === 390 && mobileState.queryFontSize >= 12 && mobileState.labelFontSize >= 12 && mobileState.labels === 13;
   const mobileScreenshot = await screenshot(cdp, "historical-landscape-mobile.png");
   await cdp.command("Emulation.setScriptExecutionDisabled", { value:true }); await cdp.command("Page.navigate", { url });
   await cdp.wait("document.readyState === 'complete'", "no-JS document");
-  const noJs = await cdp.evaluate("(() => { const fallback=document.querySelector('#historical-fallback'); return Boolean(fallback && fallback.querySelectorAll('a').length === 12 && getComputedStyle(fallback).display !== 'none'); })()");
+  const noJs = await cdp.evaluate("(() => { const fallback=document.querySelector('#historical-fallback'); return Boolean(fallback && fallback.querySelectorAll('a').length === 13 && getComputedStyle(fallback).display !== 'none'); })()");
   const expectedRequests = [...payloads.keys()];
-  const geometryPasses = overviewGeometry.labels === overviewGeometry.nodeCount && overviewGeometry.width >= 0.7 && overviewGeometry.height >= 0.45;
-  if (JSON.stringify(requests) !== JSON.stringify(expectedRequests) || !geometryPasses || !readyLayout.fallbackHidden || !readyLayout.controlsSearchSeparate || !readyLayout.nodesAndLabelsUnobscured || !mobileLive || !noJs || depthAndStack.depth !== 0 || depthAndStack.stack !== 0 || !depthAndStack.back || cdp.errors.length) {
-    throw new Error(JSON.stringify({ requests, expectedRequests, overviewGeometry, geometryPasses, readyLayout, mobileState, noJs, depthAndStack, errors:cdp.errors }));
+  const geometryPasses = overviewGeometry.nodeCount === 13 && overviewGeometry.canvasNodeCount === 13 && overviewGeometry.canvasCount > 0 && overviewGeometry.labels === 13 && overviewGeometry.columns === 4 && overviewGeometry.width >= 0.75 && overviewGeometry.height >= 0.75 && overviewGeometry.aspect >= 1.35;
+  const initialLoadIsBounded = JSON.stringify(initialRequests) === JSON.stringify(["/api/historical-signal-map?level=0"]);
+  if (JSON.stringify(requests) !== JSON.stringify(expectedRequests) || !initialLoadIsBounded || !semanticMapAssetLoaded || !geometryPasses || !readyLayout.fallbackHidden || !readyLayout.controlsSearchSeparate || !readyLayout.nodesAndLabelsUnobscured || !lightTheme || !darkTheme || !mobileLive || !noJs || depthAndStack.depth !== 0 || depthAndStack.stack !== 0 || !depthAndStack.back || cdp.errors.length) {
+    throw new Error(JSON.stringify({ requests, expectedRequests, initialRequests, initialLoadIsBounded, semanticMapAssetLoaded, overviewGeometry, geometryPasses, readyLayout, lightTheme, darkTheme, mobileState, noJs, depthAndStack, errors:cdp.errors }));
   }
-  process.stdout.write(`${JSON.stringify({ requests, leaves, overviewGeometry, readyLayout, desktopScreenshot, mobileScreenshot, mobileState, mobileLive, noJs, depthAndStack })}\n`);
+  process.stdout.write(`${JSON.stringify({ requests, initialRequests, semanticMapAssetLoaded, leaves, overviewGeometry, readyLayout, lightTheme, darkTheme, desktopScreenshot, mobileScreenshot, mobileState, mobileLive, noJs, depthAndStack })}\n`);
 } finally {
   chrome.kill("SIGTERM"); await new Promise((resolve_) => chrome.once("exit", resolve_));
   await rm(profile, { recursive:true, force:true }); await new Promise((resolve_) => server.close(resolve_));
