@@ -16,6 +16,11 @@ from musix.public_artist_membership import (
     evaluate_public_artist_membership_promotion,
     write_public_artist_membership_candidate,
 )
+from musix.public_artist_membership_adapter import (
+    CertifiedPublicMembershipAdapterPolicy,
+    CertifiedPublicMembershipAdapterReceipt,
+    verify_certified_public_membership_receipt,
+)
 from musix.storage import LocalObjectStore
 
 
@@ -28,6 +33,9 @@ def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed-artifact", type=Path, required=True)
     parser.add_argument("--approved-input", type=Path, required=True)
+    parser.add_argument("--adapter-receipt", type=Path, required=True)
+    parser.add_argument("--certified-database", type=Path, required=True)
+    parser.add_argument("--adapter-policy", type=Path, required=True)
     parser.add_argument("--source-policy", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--object-store", type=Path, required=True)
@@ -43,6 +51,15 @@ def main() -> int:
     """Build the candidate, custody exact bytes, and report promotion eligibility."""
     arguments = _arguments()
     approved_input = _approved_input(arguments.approved_input)
+    adapter_policy = CertifiedPublicMembershipAdapterPolicy.model_validate_json(
+        arguments.adapter_policy.read_bytes()
+    )
+    adapter_receipt = CertifiedPublicMembershipAdapterReceipt.model_validate_json(
+        arguments.adapter_receipt.read_bytes()
+    )
+    verify_certified_public_membership_receipt(
+        approved_input, adapter_receipt, arguments.certified_database, adapter_policy
+    )
     source_policy = PublicArtistMembershipSourcePolicy.model_validate_json(
         arguments.source_policy.read_bytes()
     )

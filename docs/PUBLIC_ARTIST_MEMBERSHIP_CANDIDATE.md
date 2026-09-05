@@ -61,6 +61,12 @@ selected row to its provenance policy, snapshot, and artifact. It writes candida
 and a promotion report on every successful build. Supply `--independent-gold`
 only when an independently sourced public gold document is available; add
 `--require-promotion` only when a non-eligible report should fail the command.
+The builder also requires the adapter receipt, adapter policy, and certified
+database path. It re-hashes the database and checks the receipt's database,
+normalized-row, export-policy, selector-policy, and row-count hashes before
+construction. It replays the adapter and compares the derived approved input
+and receipt, so an approved JSON wrapper or self-consistent forged receipt
+alone is not accepted.
 
 ## Promotion gate
 

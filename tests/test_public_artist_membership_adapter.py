@@ -3,19 +3,23 @@ from __future__ import annotations
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
+from musix.public_artist_membership import canonical_sha256
 from musix.public_artist_membership_adapter import (
     CertifiedPublicDirectSelector,
     CertifiedPublicMembershipAdapterPolicy,
+    CertifiedPublicMembershipAdapterReceipt,
     adapt_certified_public_membership_input,
+    verify_certified_public_membership_receipt,
 )
 
 
 class PublicArtistMembershipAdapterTests(unittest.TestCase):
     def _synthetic_database(self, path: Path) -> None:
-        with sqlite3.connect(path) as connection:
+        with closing(sqlite3.connect(path)) as connection:
             connection.executescript(
                 """
                 CREATE TABLE data_sources (id INTEGER PRIMARY KEY, source_key TEXT,
@@ -136,6 +140,7 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
                 "INSERT INTO artist_co_listen_evidence VALUES "
                 "(2, 2, 'artist-x', 'artist-y', 99, 'fp-other-pair')"
             )
+            connection.commit()
 
     def test_synthetic_adapter_binds_exact_provenance_and_ignores_unrelated_source(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -154,6 +159,56 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
         self.assertEqual(
             adaptation.receipt.aggregate_source_bindings[0].policy_key, "aggregate-exact"
         )
+
+    def test_build_receipt_revalidation_rejects_database_hash_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "public.sqlite"
+            self._synthetic_database(database)
+            policy = CertifiedPublicMembershipAdapterPolicy(
+                include_aggregate_candidates=True,
+                aggregate_source_key_prefix="listenbrainz_joint_",
+            )
+            adaptation = adapt_certified_public_membership_input(database, policy)
+            payload = adaptation.receipt.model_dump(mode="python", exclude={"output_sha256"})
+            payload["database_file_sha256"] = "0" * 64
+            tampered = CertifiedPublicMembershipAdapterReceipt.model_validate(
+                {**payload, "output_sha256": canonical_sha256(payload)}
+            )
+            with self.assertRaisesRegex(ValueError, "do not reproduce"):
+                verify_certified_public_membership_receipt(
+                    adaptation.approved_input, tampered, database, policy
+                )
+
+    def test_build_receipt_revalidation_rejects_forged_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "public.sqlite"
+            self._synthetic_database(database)
+            policy = CertifiedPublicMembershipAdapterPolicy(
+                include_aggregate_candidates=True,
+                aggregate_source_key_prefix="listenbrainz_joint_",
+            )
+            adaptation = adapt_certified_public_membership_input(database, policy)
+            row = adaptation.approved_input.public_model_input.direct_memberships[0]
+            forged_input = adaptation.approved_input.public_model_input.model_copy(
+                update={"direct_memberships": (row.model_copy(update={"value": 2.0}),)}
+            )
+            forged_approved = adaptation.approved_input.model_copy(
+                update={
+                    "public_model_input": forged_input,
+                    "public_model_input_sha256": canonical_sha256(
+                        forged_input.model_dump(mode="json")
+                    ),
+                }
+            )
+            payload = adaptation.receipt.model_dump(mode="python", exclude={"output_sha256"})
+            payload["approved_input_sha256"] = forged_approved.public_model_input_sha256
+            forged_receipt = CertifiedPublicMembershipAdapterReceipt.model_validate(
+                {**payload, "output_sha256": canonical_sha256(payload)}
+            )
+            with self.assertRaisesRegex(ValueError, "do not reproduce"):
+                verify_certified_public_membership_receipt(
+                    forged_approved, forged_receipt, database, policy
+                )
 
     def test_synthetic_adapter_detects_database_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -189,7 +244,7 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
                     facet="musicbrainz_tag",
                     source_key_prefix="musicbrainz_",
                     method_key="musicbrainz_artist_tag",
-                    required_license="CC-BY-SA-3.0",
+                    required_license="CC0-1.0",
                 ),
             )
         )
@@ -201,6 +256,18 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
             )
         with self.assertRaisesRegex(ValueError, "String should match pattern"):
             CertifiedPublicMembershipAdapterPolicy(aggregate_source_key_prefix="listenbrainz_*")
+        with self.assertRaisesRegex(ValueError, "require CC0-1.0"):
+            CertifiedPublicMembershipAdapterPolicy(
+                direct_selectors=(
+                    CertifiedPublicDirectSelector(
+                        source="musicbrainz",
+                        facet="musicbrainz_tag",
+                        source_key_prefix="musicbrainz_",
+                        method_key="musicbrainz_artist_tag",
+                        required_license="CC-BY-SA-3.0",
+                    ),
+                )
+            )
 
     def test_certified_release_counts_and_provenance_bindings(self) -> None:
         database = Path(

@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from collections import defaultdict
+from contextlib import closing
 from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field, model_validator
@@ -101,6 +102,10 @@ class CertifiedPublicMembershipAdapterPolicy(StrictFrozenModel):
         )
         if len(keys) != len(set(keys)):
             raise ValueError("adapter direct selectors must be unique")
+        if self.require_public_domain and any(
+            item.required_license != "CC0-1.0" for item in self.direct_selectors
+        ):
+            raise ValueError("public-domain adapter selectors require CC0-1.0")
         return self
 
     @property
@@ -190,6 +195,32 @@ class CertifiedPublicMembershipAdaptation(StrictFrozenModel):
         if self.approved_input.public_model_input_sha256 != self.receipt.approved_input_sha256:
             raise ValueError("approved input hash must match adapter receipt")
         return self
+
+
+def verify_certified_public_membership_receipt(
+    approved_input: ApprovedPublicMembershipInput,
+    receipt: CertifiedPublicMembershipAdapterReceipt,
+    database_path: Path,
+    adapter_policy: CertifiedPublicMembershipAdapterPolicy,
+) -> None:
+    """Verify a build's approved rows are exactly from the supplied adapter run."""
+    derived = adapt_certified_public_membership_input(database_path, adapter_policy)
+    if approved_input != derived.approved_input or receipt != derived.receipt:
+        raise ValueError("approved input and adapter receipt do not reproduce database rows")
+    if _file_sha256(database_path) != receipt.database_file_sha256:
+        raise ValueError("adapter receipt database hash does not match the supplied database")
+    if approved_input.input_file_sha256 != receipt.database_file_sha256:
+        raise ValueError("approved input database hash does not match adapter receipt")
+    if approved_input.public_model_input_sha256 != receipt.approved_input_sha256:
+        raise ValueError("approved input model hash does not match adapter receipt")
+    if approved_input.row_export_policy_sha256 != receipt.row_export_policy_sha256:
+        raise ValueError("approved input policy hash does not match adapter receipt")
+    if approved_input.declared_direct_row_count != receipt.direct_row_count:
+        raise ValueError("approved direct row count does not match adapter receipt")
+    if approved_input.declared_aggregate_row_count != receipt.aggregate_pair_count:
+        raise ValueError("approved aggregate row count does not match adapter receipt")
+    if _sha256(adapter_policy.model_dump(mode="json")) != receipt.adapter_policy_sha256:
+        raise ValueError("adapter policy hash does not match adapter receipt")
 
 
 def _source_family_for_key(
@@ -539,7 +570,7 @@ def adapt_certified_public_membership_input(
 ) -> CertifiedPublicMembershipAdaptation:
     """Convert one immutable certified database into a replayable approved input."""
     database_sha = _file_sha256(database_path)
-    with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True) as connection:
+    with closing(sqlite3.connect(f"file:{database_path}?mode=ro", uri=True)) as connection:
         connection.row_factory = sqlite3.Row
         direct, genres, direct_counts = _direct_rows(connection, policy)
         pairs, aggregate_counts, aggregate_run = _aggregate_pairs(connection, policy)
