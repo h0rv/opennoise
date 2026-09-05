@@ -236,6 +236,24 @@ class CatalogHydrationResult(_FrozenModel):
     recordings: int = Field(ge=0)
 
 
+class HydrationFailure(_FrozenModel):
+    """One deterministic, non-fatal representative hydration abstention."""
+
+    representative_kind: Literal["release_group", "recording"]
+    representative_id: str = Field(min_length=1)
+    representative_rank: int = Field(gt=0)
+    error_type: str = Field(min_length=1)
+    message: str = Field(min_length=1)
+
+
+class HydrationBatchResult(_FrozenModel):
+    """Keep the successfully hydrated subset and typed abstentions together."""
+
+    artifact: MusicBrainzReleaseHydrationArtifact
+    selected_seed_count: int = Field(ge=0)
+    failures: tuple[HydrationFailure, ...]
+
+
 def _sha256(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
@@ -309,6 +327,12 @@ class MusicBrainzReleaseTrackHydrationAdapter:
         self._sleep = sleep
         self._next_request_at = 0.0
         self._rate_lock = asyncio.Lock()
+        self._upstream_request_count = 0
+
+    @property
+    def upstream_request_count(self) -> int:
+        """Return requests that reached MusicBrainz rather than a local replay cache."""
+        return self._upstream_request_count
 
     async def _wait_for_rate_limit(self) -> None:
         async with self._rate_lock:
@@ -360,6 +384,7 @@ class MusicBrainzReleaseTrackHydrationAdapter:
                 inclusion = (
                     "release-groups+recordings" if endpoint.startswith("release/") else "releases"
                 )
+                self._upstream_request_count += 1
                 response = await self._client.get(
                     f"{MUSICBRAINZ_API_BASE}/{endpoint}",
                     params={"fmt": "json", "inc": inclusion},
@@ -491,6 +516,46 @@ class MusicBrainzReleaseTrackHydrationAdapter:
             selection_sha256=_sha256(selected_json),
             source_representative_artifact_sha256=source_sha256,
             releases=tuple(hydrated),
+        )
+
+    async def hydrate_batch(
+        self, representative_artifact: MetadataRepresentativeArtifact, *, source_sha256: str
+    ) -> HydrationBatchResult:
+        """Continue through the bounded deterministic seed list after individual failures."""
+        seeds = select_representative_seeds(
+            representative_artifact, max_genres=self._settings.max_genres
+        )
+        releases: list[HydratedRelease] = []
+        failures: list[HydrationFailure] = []
+        for seed in seeds:
+            single = representative_artifact.model_copy(update={"items": (seed,)})
+            try:
+                result = await self.hydrate(single, source_sha256=source_sha256)
+            except MusicBrainzHydrationError as error:
+                failures.append(
+                    HydrationFailure(
+                        representative_kind=seed.entity_kind,
+                        representative_id=seed.entity_id,
+                        representative_rank=seed.rank,
+                        error_type=type(error).__name__,
+                        message=str(error),
+                    )
+                )
+                continue
+            releases.extend(result.releases)
+        selection = json.dumps(
+            [item.model_dump(mode="json") for item in seeds],
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return HydrationBatchResult(
+            artifact=MusicBrainzReleaseHydrationArtifact(
+                selection_sha256=_sha256(selection),
+                source_representative_artifact_sha256=source_sha256,
+                releases=tuple(sorted(releases, key=lambda release: str(release.release_id))),
+            ),
+            selected_seed_count=len(seeds),
+            failures=tuple(failures),
         )
 
 
