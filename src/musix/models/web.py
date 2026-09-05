@@ -39,6 +39,10 @@ class Settings(BaseSettings):
         default=Path(__file__).resolve().parents[3] / "data/model/open-construction-graph-v1.json",
         validation_alias="MUSIX_OPEN_CONSTRUCTION_GRAPH_PATH",
     )
+    open_construction_graph_v2_path: Path | None = Field(
+        default=None,
+        validation_alias="MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH",
+    )
 
 
 class SearchHit(FrozenModel):

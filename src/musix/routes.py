@@ -46,6 +46,12 @@ from musix.open_construction_store import (
     OpenConstructionMapStoreError,
     OpenConstructionNeighborResponse,
 )
+from musix.open_construction_store_v2 import (
+    OpenConstructionV2MapResponse,
+    OpenConstructionV2MapStore,
+    OpenConstructionV2MapStoreError,
+    OpenConstructionV2NeighborResponse,
+)
 
 if TYPE_CHECKING:
     from musix.models.historical_signal import HistoricalSignalHierarchyNode
@@ -275,6 +281,57 @@ class MapController(Controller):
             return open_construction_graph.neighbors(genre_id)
         except OpenConstructionMapStoreError as error:
             raise NotFoundException(detail="open construction graph node unavailable") from error
+
+    @get("/api/open-construction-map/v2")
+    async def open_construction_map_v2_data(
+        self,
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        level: FromQuery[int] = 0,
+        min_x: FromQuery[float | None] = None,
+        min_y: FromQuery[float | None] = None,
+        max_x: FromQuery[float | None] = None,
+        max_y: FromQuery[float | None] = None,
+    ) -> OpenConstructionV2MapResponse:
+        """Return a bounded v2 LOD only from an explicitly configured artifact."""
+        if not open_construction_graph_v2.configured:
+            raise ServiceUnavailableException(detail="open construction v2 graph is disabled")
+        if level not in range(4):
+            raise ValidationException(detail="open construction v2 level must be between 0 and 3")
+        bounds = (min_x, min_y, max_x, max_y)
+        if any(value is None for value in bounds) and any(value is not None for value in bounds):
+            raise ValidationException(
+                detail="open construction v2 viewport must include all bounds"
+            )
+        if (
+            min_x is not None
+            and min_y is not None
+            and max_x is not None
+            and max_y is not None
+            and (min_x >= max_x or min_y >= max_y)
+        ):
+            raise ValidationException(detail="open construction v2 viewport bounds are invalid")
+        try:
+            return open_construction_graph_v2.response(
+                level=level, min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y
+            )
+        except OpenConstructionV2MapStoreError as error:
+            raise ServiceUnavailableException(
+                detail="open construction v2 graph artifact unavailable"
+            ) from error
+
+    @get("/api/open-construction-map/v2/neighbors/{genre_id:str}")
+    async def open_construction_v2_neighbors(
+        self,
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        genre_id: FromPath[str],
+    ) -> OpenConstructionV2NeighborResponse:
+        """Return a bounded one-hop v2 drill without an implied membership claim."""
+        if not open_construction_graph_v2.configured:
+            raise ServiceUnavailableException(detail="open construction v2 graph is disabled")
+        try:
+            return open_construction_graph_v2.neighbors(genre_id)
+        except OpenConstructionV2MapStoreError as error:
+            raise NotFoundException(detail="open construction v2 graph node unavailable") from error
 
     @get("/api/historical-signal-map/neighbors/{genre_id:str}")
     async def historical_signal_neighbors(
