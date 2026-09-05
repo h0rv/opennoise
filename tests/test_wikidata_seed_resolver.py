@@ -4,14 +4,15 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Literal
 
 from musix.wikidata_seed_resolver import (
-    _RequestResult,
     SparqlBinding,
     SparqlHead,
     SparqlResponse,
     SparqlResults,
     WikidataResolverConfig,
+    _RequestResult,
     merge_wikidata_public_anchors,
     resolve_wikidata_seed_batch,
     select_wikidata_seed_targets,
@@ -19,7 +20,7 @@ from musix.wikidata_seed_resolver import (
 )
 
 
-def _binding(kind: str, value: str) -> SparqlBinding:
+def _binding(kind: Literal["uri", "literal", "typed-literal"], value: str) -> SparqlBinding:
     return SparqlBinding(type=kind, value=value)
 
 
@@ -149,7 +150,10 @@ class WikidataSeedResolverTests(unittest.TestCase):
             self.assertEqual(artifact.counts.artist_membership_count, 0)
             self.assertEqual(
                 {item.reason for item in artifact.abstentions},
-                {"unique_exact_match_lacks_music_genre_evidence", "ambiguous_exact_wikidata_candidates"},
+                {
+                    "unique_exact_match_lacks_music_genre_evidence",
+                    "ambiguous_exact_wikidata_candidates",
+                },
             )
             write_wikidata_seed_resolution(artifact, output)
             merge = merge_wikidata_public_anchors(output)
@@ -184,8 +188,7 @@ class WikidataSeedResolverTests(unittest.TestCase):
         self.assertEqual(len(selected.selected_targets), 250)
         self.assertTrue(
             all(
-                target.prior_status
-                in {"abstained", "ambiguous_exact", "ambiguous_compositional"}
+                target.prior_status in {"abstained", "ambiguous_exact", "ambiguous_compositional"}
                 for target in selected.selected_targets
             )
         )

@@ -25,7 +25,7 @@ from typing import Any, Final, Literal, Protocol
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, model_validator
 
-from musix.genre_seed_universe import SeedInput, SeedName, normalize_label
+from musix.genre_seed_universe import SeedInput, normalize_label
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 
 _REVISION: Final = "wikidata-genre-seed-resolver-v1"
@@ -93,10 +93,14 @@ class SparqlBinding(_StrictModel):
 
 
 class SparqlHead(_StrictModel):
+    """Variable names declared by one SPARQL JSON response."""
+
     vars: tuple[str, ...]
 
 
 class SparqlResults(_StrictModel):
+    """Typed bindings emitted by one SPARQL JSON response."""
+
     bindings: tuple[dict[str, SparqlBinding], ...]
 
 
@@ -145,7 +149,7 @@ class AcceptedWikidataAnchor(_StrictModel):
     matched_english_name: str = Field(min_length=1)
     match_kind: MatchKind
     class_or_taxonomy_evidence_qid: Literal["Q188451"] = _MUSIC_GENRE_QID
-    confidence: Literal[1.0] = 1.0
+    confidence: float = Field(default=1.0, ge=1.0, le=1.0)
     canonical_membership_created: Literal[False] = False
     artist_memberships_created: Literal[0] = 0
 
@@ -163,6 +167,8 @@ class WikidataAbstention(_StrictModel):
 
 
 class WikidataResolverCounts(_StrictModel):
+    """Non-membership outcome counts for one bounded batch."""
+
     targets: int = Field(ge=1)
     candidate_count: int = Field(ge=0)
     accepted_exact_unique_count: int = Field(ge=0)
@@ -200,9 +206,9 @@ class WikidataSeedResolutionArtifact(_StrictModel):
     @model_validator(mode="after")
     def _enforce_fail_closed_partition(self) -> WikidataSeedResolutionArtifact:
         target_ids = {target.source_item_id for target in self.input.selected_targets}
-        output_ids = {
-            item.source_item_id for item in self.accepted_exact_unique
-        } | {item.source_item_id for item in self.abstentions}
+        output_ids = {item.source_item_id for item in self.accepted_exact_unique} | {
+            item.source_item_id for item in self.abstentions
+        }
         if target_ids != output_ids:
             raise ValueError("accepted anchors and abstentions must partition the selected targets")
         if len(output_ids) != len(self.accepted_exact_unique) + len(self.abstentions):
@@ -266,12 +272,14 @@ class WikidataRequestError(RuntimeError):
 class _SparqlFetcher(Protocol):
     async def fetch(self, query: str, *, offline: bool) -> _RequestResult:
         """Return one strict response from the cache or Wikidata endpoint."""
+        ...
 
 
 class WikidataSparqlClient:
     """Rate-limited async SPARQL client with deterministic file cache replay."""
 
     def __init__(self, config: WikidataResolverConfig, cache_directory: Path) -> None:
+        """Bind immutable request controls and a local replay cache."""
         self._config = config
         self._cache_directory = cache_directory
         self._next_request_at = 0.0
@@ -286,6 +294,7 @@ class WikidataSparqlClient:
         return self._cache_directory / f"{request_sha256}.json"
 
     async def fetch(self, query: str, *, offline: bool) -> _RequestResult:
+        """Read a verified cache record or issue one bounded network request."""
         request_sha256 = self._hash(query.encode("utf-8"))
         cache_path = self._cache_path(request_sha256)
         if cache_path.is_file():
@@ -299,7 +308,7 @@ class WikidataSparqlClient:
             if cached.response_sha256 != response_sha256:
                 raise WikidataRequestError("cached SPARQL response hash is invalid")
             self.cache_hit_count += 1
-            return _RequestResult(cached.response, request_sha256, response_sha256, True)
+            return _RequestResult(cached.response, request_sha256, response_sha256, cache_hit=True)
         if offline:
             raise FileNotFoundError(request_sha256)
         return await self._fetch_network(query, request_sha256, cache_path)
@@ -317,10 +326,15 @@ class WikidataSparqlClient:
             try:
                 async with httpx.AsyncClient(
                     timeout=self._config.request_timeout_seconds,
-                    headers={"User-Agent": self._config.user_agent, "Accept": "application/sparql-results+json"},
+                    headers={
+                        "User-Agent": self._config.user_agent,
+                        "Accept": "application/sparql-results+json",
+                    },
                     follow_redirects=False,
                 ) as client:
-                    response = await client.get(_SPARQL_ENDPOINT, params={"format": "json", "query": query})
+                    response = await client.get(
+                        _SPARQL_ENDPOINT, params={"format": "json", "query": query}
+                    )
                 if response.status_code in {429, 500, 502, 503, 504}:
                     retry_after = response.headers.get("Retry-After")
                     await self._backoff(attempt, retry_after)
@@ -341,8 +355,10 @@ class WikidataSparqlClient:
             )
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             _write_atomic(cache_path, cached.model_dump_json(indent=2).encode() + b"\n")
-            return _RequestResult(parsed, request_sha256, response_sha256, False)
-        raise WikidataRequestError("Wikidata SPARQL request failed after bounded retries") from last_error
+            return _RequestResult(parsed, request_sha256, response_sha256, cache_hit=False)
+        raise WikidataRequestError(
+            "Wikidata SPARQL request failed after bounded retries"
+        ) from last_error
 
     async def _backoff(self, attempt: int, retry_after: str | None) -> None:
         try:
@@ -406,7 +422,18 @@ def _projection(path: Path) -> tuple[SeedInput, dict[str, str]]:
     if "nodes" in raw:
         document = _GraphProjection.model_validate_json(
             json.dumps(
-                {"seed_input": raw.get("seed_input"), "nodes": [{"source_item_id": node.get("source_item_id"), "taxonomy_status": node.get("taxonomy_status")} if isinstance(node, dict) else node for node in raw.get("nodes", [])]},
+                {
+                    "seed_input": raw.get("seed_input"),
+                    "nodes": [
+                        {
+                            "source_item_id": node.get("source_item_id"),
+                            "taxonomy_status": node.get("taxonomy_status"),
+                        }
+                        if isinstance(node, dict)
+                        else node
+                        for node in raw.get("nodes", [])
+                    ],
+                },
                 ensure_ascii=False,
             )
         )
@@ -415,7 +442,18 @@ def _projection(path: Path) -> tuple[SeedInput, dict[str, str]]:
     elif "inferences" in raw:
         document = _TaxonomyProjection.model_validate_json(
             json.dumps(
-                {"seed_input": raw.get("seed_input"), "inferences": [{"source_item_id": inference.get("source_item_id"), "status": inference.get("status")} if isinstance(inference, dict) else inference for inference in raw.get("inferences", [])]},
+                {
+                    "seed_input": raw.get("seed_input"),
+                    "inferences": [
+                        {
+                            "source_item_id": inference.get("source_item_id"),
+                            "status": inference.get("status"),
+                        }
+                        if isinstance(inference, dict)
+                        else inference
+                        for inference in raw.get("inferences", [])
+                    ],
+                },
                 ensure_ascii=False,
             )
         )
@@ -448,7 +486,9 @@ def select_wikidata_seed_targets(
     """Select the first lexical batch of unresolved/ambiguous name-only targets."""
     seed, statuses = _projection(source_artifact)
     if len(seed.names) != config.expected_seed_count:
-        raise ValueError(f"expected {config.expected_seed_count} name seeds, found {len(seed.names)}")
+        raise ValueError(
+            f"expected {config.expected_seed_count} name seeds, found {len(seed.names)}"
+        )
     targets_unsorted: list[WikidataSeedTarget] = []
     for item in seed.names:
         status = _eligible_status(statuses[item.source_item_id])
@@ -462,7 +502,9 @@ def select_wikidata_seed_targets(
                     prior_status=status,
                 )
             )
-    targets = tuple(sorted(targets_unsorted, key=lambda item: (item.normalized_name, item.source_item_id)))
+    targets = tuple(
+        sorted(targets_unsorted, key=lambda item: (item.normalized_name, item.source_item_id))
+    )
     if not targets:
         raise ValueError("source artifact has no unresolved or ambiguous names")
     return WikidataResolverInput(
@@ -508,8 +550,9 @@ ORDER BY ?term ?item ?matchKind ?matchedName
 
 
 def _qid(value: str) -> str | None:
-    matched = _QID_PATTERN.search(value)
-    return matched.group(1) if matched else None
+    if _QID_PATTERN.search(value) is None:
+        return None
+    return value.rsplit("/", 1)[-1]
 
 
 def _binding_value(row: dict[str, SparqlBinding], name: str) -> str | None:
@@ -523,7 +566,7 @@ def _qid_values(value: str | None) -> tuple[str, ...]:
     return tuple(sorted({qid for item in value.split("|") if (qid := _qid(item)) is not None}))
 
 
-def _candidates_from_response(
+def _candidates_from_response(  # noqa: C901
     targets: tuple[WikidataSeedTarget, ...], response: SparqlResponse
 ) -> tuple[WikidataCandidate, ...]:
     target_by_normalized = {target.normalized_name: target for target in targets}
@@ -549,16 +592,25 @@ def _candidates_from_response(
     candidates: list[WikidataCandidate] = []
     for (term, qid), rows in sorted(grouped.items()):
         target = target_by_normalized[term]
-        labels = sorted({_binding_value(row, "label") for row in rows if _binding_value(row, "label")})
-        matches = sorted(
-            {
-                (_binding_value(row, "matchKind"), _binding_value(row, "matchedName"))
-                for row in rows
-                if _binding_value(row, "matchKind") in {"label", "alias"}
-                and _binding_value(row, "matchedName")
-            },
-            key=lambda item: (item[0] != "label", item[1]),
-        )
+        label_values: set[str] = set()
+        matches_values: set[tuple[MatchKind, str]] = set()
+        for row in rows:
+            label = _binding_value(row, "label")
+            if label is not None:
+                label_values.add(label)
+            matched_name = _binding_value(row, "matchedName")
+            match_kind_value = _binding_value(row, "matchKind")
+            match match_kind_value:
+                case "label":
+                    match_kind: MatchKind = "label"
+                case "alias":
+                    match_kind = "alias"
+                case _:
+                    continue
+            if matched_name is not None:
+                matches_values.add((match_kind, matched_name))
+        labels = sorted(label_values)
+        matches = sorted(matches_values, key=lambda item: (item[0] != "label", item[1]))
         if len(labels) != 1 or not matches:
             continue
         instance_of = _qid_values(_binding_value(rows[0], "classes"))
@@ -584,7 +636,7 @@ def _candidates_from_response(
     return tuple(candidates)
 
 
-def _artifacts_from_candidates(
+def _artifacts_from_candidates(  # noqa: PLR0913
     resolver_input: WikidataResolverInput,
     config: WikidataResolverConfig,
     candidates: tuple[WikidataCandidate, ...],
@@ -662,7 +714,9 @@ def _artifacts_from_candidates(
 
 def _logical_hash(artifact: WikidataSeedResolutionArtifact) -> str:
     document = artifact.model_dump(mode="json", exclude={"output_sha256", "runtime"})
-    payload = json.dumps(document, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
+    payload = json.dumps(
+        document, ensure_ascii=False, separators=(",", ":"), sort_keys=True
+    ).encode()
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -701,7 +755,9 @@ async def resolve_wikidata_seed_batch(
             continue
         response_hashes.append(result.response_sha256)
         candidates.extend(_candidates_from_response(group, result.response))
-    request_count = client.request_count if isinstance(client, WikidataSparqlClient) else len(request_hashes)
+    request_count = (
+        client.request_count if isinstance(client, WikidataSparqlClient) else len(request_hashes)
+    )
     cache_hits = client.cache_hit_count if isinstance(client, WikidataSparqlClient) else 0
     return _artifacts_from_candidates(
         resolver_input,
@@ -729,9 +785,31 @@ def write_wikidata_seed_resolution(
     accepted = output.with_name(f"{output.stem}.accepted.json")
     abstentions = output.with_name(f"{output.stem}.abstentions.json")
     _write_atomic(output, artifact.model_dump_json(indent=2).encode() + b"\n")
-    _write_atomic(candidates, json.dumps([item.model_dump(mode="json") for item in artifact.candidates], indent=2, sort_keys=True).encode() + b"\n")
-    _write_atomic(accepted, json.dumps([item.model_dump(mode="json") for item in artifact.accepted_exact_unique], indent=2, sort_keys=True).encode() + b"\n")
-    _write_atomic(abstentions, json.dumps([item.model_dump(mode="json") for item in artifact.abstentions], indent=2, sort_keys=True).encode() + b"\n")
+    _write_atomic(
+        candidates,
+        json.dumps(
+            [item.model_dump(mode="json") for item in artifact.candidates], indent=2, sort_keys=True
+        ).encode()
+        + b"\n",
+    )
+    _write_atomic(
+        accepted,
+        json.dumps(
+            [item.model_dump(mode="json") for item in artifact.accepted_exact_unique],
+            indent=2,
+            sort_keys=True,
+        ).encode()
+        + b"\n",
+    )
+    _write_atomic(
+        abstentions,
+        json.dumps(
+            [item.model_dump(mode="json") for item in artifact.abstentions],
+            indent=2,
+            sort_keys=True,
+        ).encode()
+        + b"\n",
+    )
     return output, candidates, accepted, abstentions
 
 
