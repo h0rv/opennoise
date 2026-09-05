@@ -152,8 +152,7 @@ class OpenConstructionV2MapStore:
             candidates = [
                 node
                 for node in candidates
-                if node.node_kind == "public_catalog_genre"
-                and node.degree
+                if node.node_kind == "public_catalog_genre" and node.degree
             ]
         elif level == 1:
             candidates = [node for node in candidates if node.degree]

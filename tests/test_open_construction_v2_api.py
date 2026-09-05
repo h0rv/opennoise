@@ -115,9 +115,7 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
             all(node["node_kind"] == "public_catalog_genre" for node in payload["nodes"])
         )
         names = {node["name"] for node in payload["nodes"]}
-        self.assertTrue(
-            {"rock music", "jazz", "house music", "techno", "hip-hop"}.issubset(names)
-        )
+        self.assertTrue({"rock music", "jazz", "house music", "techno", "hip-hop"}.issubset(names))
         self.assertTrue({"film", "fiction", "crime film"}.isdisjoint(names))
 
 
