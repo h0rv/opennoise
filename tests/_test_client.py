@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import selectors
-from typing import TYPE_CHECKING, override
+import unittest
+from typing import TYPE_CHECKING, Any, override
 
 from litestar.testing import TestClient
 
 if TYPE_CHECKING:
+    from collections.abc import Coroutine
+
     from litestar import Litestar
 
 
@@ -25,6 +28,18 @@ class _PollingSelector(selectors.SelectSelector):
 def _polling_loop_factory() -> asyncio.AbstractEventLoop:
     """Create an asyncio loop that does not require cross-thread wakeups."""
     return asyncio.SelectorEventLoop(_PollingSelector())
+
+
+def run_async[ResultT](coroutine: Coroutine[Any, Any, ResultT]) -> ResultT:
+    """Run one async test operation without relying on cross-thread wakeups."""
+    with asyncio.Runner(loop_factory=_polling_loop_factory) as runner:
+        return runner.run(coroutine)
+
+
+class PollingIsolatedAsyncioTestCase(unittest.IsolatedAsyncioTestCase):
+    """Use polling event loops for async tests in restricted runners."""
+
+    loop_factory = staticmethod(_polling_loop_factory)
 
 
 def create_test_client(app: Litestar) -> TestClient[Litestar]:

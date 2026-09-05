@@ -1,4 +1,3 @@
-import asyncio
 import hashlib
 import json
 import sqlite3
@@ -21,6 +20,7 @@ from musix.genre_discovery import (
     query_displayable_historical_genre_memberships,
 )
 from musix.ingest import ImportOptions, import_jsonl
+from tests._test_client import run_async
 
 
 class GenreDiscoveryTests(unittest.TestCase):
@@ -136,7 +136,7 @@ class GenreDiscoveryTests(unittest.TestCase):
             catalog_path = root / "catalog.jsonl"
             catalog_path.write_bytes(catalog.catalog_jsonl())
             database_path = root / "musix.sqlite"
-            asyncio.run(
+            run_async(
                 import_jsonl(
                     ImportOptions(
                         input_path=catalog_path,
@@ -267,7 +267,7 @@ class GenreDiscoveryTests(unittest.TestCase):
             catalog_path = root / "catalog.jsonl"
             catalog_path.write_bytes(catalog.catalog_jsonl())
             database_path = root / "musix.sqlite"
-            asyncio.run(
+            run_async(
                 import_jsonl(
                     ImportOptions(
                         input_path=catalog_path,

@@ -18,6 +18,7 @@ from musix.adapters.wikidata import (
     write_genre_outputs,
 )
 from musix.ingest import parse_catalog_record
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -189,7 +190,7 @@ class WikidataDumpTests(unittest.TestCase):
                 list(iter_sparql_response(path, AdapterLimits(max_response_bytes=1)))
 
 
-class WikidataNetworkTests(unittest.IsolatedAsyncioTestCase):
+class WikidataNetworkTests(PollingIsolatedAsyncioTestCase):
     async def test_fetches_bounded_identified_sparql_snapshot(self) -> None:
         requests: list[httpx.Request] = []
 

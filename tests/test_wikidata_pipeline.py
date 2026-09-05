@@ -12,6 +12,7 @@ from musix.models.sources import DownloadSource
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
 from musix.sources.registry import AdapterRegistry
 from musix.sources.wikidata import WikidataSourceAdapter
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 FIXTURE = Path(__file__).parent / "fixtures" / "wikidata_music_slice.json"
 
@@ -41,7 +42,7 @@ def _source(payload: bytes) -> DownloadSource:
     )
 
 
-class WikidataPipelineTests(unittest.IsolatedAsyncioTestCase):
+class WikidataPipelineTests(PollingIsolatedAsyncioTestCase):
     async def test_ingests_evidence_and_reuses_the_complete_attempt(self) -> None:
         payload = FIXTURE.read_bytes()
         source = _source(payload)

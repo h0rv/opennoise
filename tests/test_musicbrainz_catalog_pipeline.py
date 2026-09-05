@@ -20,6 +20,7 @@ from musix.sources.musicbrainz import (
     MusicBrainzReleaseGroupDumpAdapter,
 )
 from musix.sources.registry import AdapterRegistry
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ARTIST_ID = "30238ead-59fa-41e2-a7ab-b7f6e6363c4b"
 GENRE_ID = "2f8f4ab6-5f11-4c1c-b3a9-17f0ef4d9cb9"
@@ -77,7 +78,7 @@ def _options(root: Path, source: DownloadSource) -> PipelineOptions:
     )
 
 
-class MusicBrainzCatalogPipelineTests(unittest.IsolatedAsyncioTestCase):
+class MusicBrainzCatalogPipelineTests(PollingIsolatedAsyncioTestCase):
     def test_real_manifests_pin_metadata_only_research_archives(self) -> None:
         manifest = Path(__file__).resolve().parents[1] / "config" / "data_sources.toml"
         release_groups = load_download_source(

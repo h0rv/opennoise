@@ -1,4 +1,3 @@
-import asyncio
 import json
 import tempfile
 import unittest
@@ -6,6 +5,7 @@ from pathlib import Path
 
 from musix.db import Database
 from musix.ingest import ImportOptions, RecordParseError, import_jsonl, parse_catalog_record
+from tests._test_client import run_async
 
 
 class IngestTests(unittest.TestCase):
@@ -50,8 +50,8 @@ class IngestTests(unittest.TestCase):
                 source_key="enao-legacy",
                 source_name="Every Noise legacy snapshot",
             )
-            first = asyncio.run(import_jsonl(options))
-            second = asyncio.run(import_jsonl(options))
+            first = run_async(import_jsonl(options))
+            second = run_async(import_jsonl(options))
             self.assertEqual(first.accepted, 1)
             self.assertEqual(first.quarantined, 1)
             self.assertFalse(first.reused_attempt)

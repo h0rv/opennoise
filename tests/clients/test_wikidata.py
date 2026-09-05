@@ -5,9 +5,10 @@ from pathlib import Path
 import httpx
 
 from musix.clients.wikidata import WikidataClientError, WikidataQueryRequest, fetch_wikidata_query
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 
-class WikidataClientTests(unittest.IsolatedAsyncioTestCase):
+class WikidataClientTests(PollingIsolatedAsyncioTestCase):
     async def test_fetches_a_bounded_identified_snapshot(self) -> None:
         requests: list[httpx.Request] = []
 

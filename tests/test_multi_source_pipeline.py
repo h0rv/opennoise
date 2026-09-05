@@ -1,7 +1,6 @@
 import hashlib
 import sqlite3
 import tempfile
-import unittest
 from collections.abc import Iterator
 from pathlib import Path
 from typing import override
@@ -16,6 +15,7 @@ from musix.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProj
 from musix.models.pipeline import ParsedSourceRecord, SourceLimits, SourceRecord
 from musix.models.sources import DownloadResult, DownloadSource
 from musix.pipeline.multi_source import MultiArtifactOptions, run_multi_artifact_pipeline
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 
 class _Adapter:
@@ -69,7 +69,7 @@ def _record(
     )
 
 
-class MultiSourcePipelineTests(unittest.IsolatedAsyncioTestCase):
+class MultiSourcePipelineTests(PollingIsolatedAsyncioTestCase):
     @override
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()

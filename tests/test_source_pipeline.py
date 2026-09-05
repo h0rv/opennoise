@@ -22,6 +22,7 @@ from musix.pipeline.runner import (
 )
 from musix.sources.musicbrainz import MusicBrainzArtistDumpAdapter
 from musix.sources.registry import AdapterRegistry
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -104,7 +105,7 @@ def _source(path: Path) -> DownloadSource:
     )
 
 
-class DownloadTests(unittest.IsolatedAsyncioTestCase):
+class DownloadTests(PollingIsolatedAsyncioTestCase):
     def test_source_id_rejects_filesystem_separators_traversal_and_controls(self) -> None:
         source = load_download_source(
             ROOT / "config" / "data_sources.toml",
@@ -239,7 +240,7 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(requests[0].headers["range"], "bytes=8-")
 
 
-class SourcePipelineTests(unittest.IsolatedAsyncioTestCase):
+class SourcePipelineTests(PollingIsolatedAsyncioTestCase):
     async def test_oversized_record_does_not_desynchronize_following_record(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

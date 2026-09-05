@@ -25,6 +25,7 @@ from musix.models.sources import DownloadSource
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
 from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter, ListenBrainzSourceError
 from musix.sources.registry import AdapterRegistry
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ARTIST_A = "30238ead-59fa-41e2-a7ab-b7f6e6363c4b"
 ARTIST_B = "f59c5520-5f46-4d2c-b2c4-822eabf53419"
@@ -303,7 +304,7 @@ class ListenBrainzIncrementalAdapterTests(unittest.TestCase):
         self.assertIsInstance(resumed_record.projection, ArtistCoListenRunProjection)
 
 
-class ListenBrainzPipelineTests(unittest.IsolatedAsyncioTestCase):
+class ListenBrainzPipelineTests(PollingIsolatedAsyncioTestCase):
     async def test_ingests_only_aggregate_evidence_and_reuses_complete_attempt(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

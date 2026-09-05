@@ -20,6 +20,7 @@ from musix.sources.musicbrainz import (
     iter_release_jsonl,
     write_artist_outputs,
 )
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ARTIST_ID = UUID("30238ead-59fa-41e2-a7ab-b7f6e6363c4b")
 GENRE_ID = "2f8f4ab6-5f11-4c1c-b3a9-17f0ef4d9cb9"
@@ -143,7 +144,7 @@ class MusicBrainzArchiveTests(unittest.TestCase):
         self.assertEqual([entity.kind for entity in entities], ["artist", "genre"])
 
 
-class MusicBrainzClientTests(unittest.IsolatedAsyncioTestCase):
+class MusicBrainzClientTests(PollingIsolatedAsyncioTestCase):
     async def test_fetch_uses_identified_rate_limited_api_request(self) -> None:
         requests: list[httpx.Request] = []
 
