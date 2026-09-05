@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _LEVEL_BUDGETS = (240, 480, 720, 720)
+_SEARCH_LIMIT = 20
 
 
 class OpenConstructionV2MapNode(FrozenModel):
@@ -73,6 +74,13 @@ class OpenConstructionV2NeighborResponse(FrozenModel):
     node_id: str = Field(min_length=1)
     nodes: tuple[OpenConstructionV2MapNode, ...] = Field(min_length=1, max_length=25)
     edges: tuple[OpenConstructionV2MapEdge, ...] = Field(max_length=24)
+
+
+class OpenConstructionV2SearchResponse(FrozenModel):
+    """A small, name-only lookup result for the Open v2 map surface."""
+
+    source: Literal["open-construction-v2-artifact"] = "open-construction-v2-artifact"
+    hits: tuple[OpenConstructionV2MapNode, ...] = Field(max_length=_SEARCH_LIMIT)
 
 
 class OpenConstructionV2MapStoreError(ValueError):
@@ -144,6 +152,10 @@ class OpenConstructionV2MapStore:
             candidates = [node for node in candidates if node.degree and node.hierarchy_depth <= 1]
         elif level == 1:
             candidates = [node for node in candidates if node.degree]
+        # The deep cohorts are spatially tiled by the request bounds. Include
+        # isolated names here as well: they have no edge-driven reason to be
+        # ranked into the overview, but their coordinates must remain
+        # discoverable by zooming and panning through the complete artifact.
         return sorted(
             candidates,
             key=lambda node: (
@@ -238,3 +250,23 @@ class OpenConstructionV2MapStore:
             nodes=tuple(self._nodes[value] for value in sorted(node_ids)),
             edges=tuple(self._edge(edge) for edge in edges),
         )
+
+    def search(self, query: str, *, limit: int = _SEARCH_LIMIT) -> OpenConstructionV2SearchResponse:
+        """Find a bounded, deterministic set of names from the configured artifact."""
+        if limit < 1 or limit > _SEARCH_LIMIT:
+            raise ValueError(
+                f"open construction v2 search limit must be between 1 and {_SEARCH_LIMIT}"
+            )
+        self._require_artifact()
+        needle = query.strip().casefold()
+        if not needle:
+            return OpenConstructionV2SearchResponse(hits=())
+        matches = sorted(
+            (node for node in self._nodes.values() if needle in node.name.casefold()),
+            key=lambda node: (
+                not node.name.casefold().startswith(needle),
+                node.name.casefold(),
+                node.node_id,
+            ),
+        )
+        return OpenConstructionV2SearchResponse(hits=tuple(matches[:limit]))

@@ -63,7 +63,11 @@ class AssetTests(unittest.TestCase):
 
     def test_semantic_map_script_url_is_versioned_for_deploy_cache_busting(self) -> None:
         template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
-        self.assertIn('src="/static/semantic-map.js?v=17"', template)
+        self.assertIn('src="/static/semantic-map.js?v=18"', template)
+
+    def test_stylesheet_url_is_versioned_for_deploy_cache_busting(self) -> None:
+        template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
+        self.assertIn('href="/static/app.css?v=12"', template)
 
     def test_mobile_small_community_drill_uses_a_deterministic_label_layout(self) -> None:
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")

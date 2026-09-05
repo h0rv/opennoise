@@ -51,6 +51,11 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
                 overview = client.get("/api/open-construction-map/v2", params={"level": 0})
                 invalid_level = client.get("/api/open-construction-map/v2", params={"level": 4})
                 partial_viewport = client.get("/api/open-construction-map/v2", params={"min_x": 0})
+                search = client.get("/api/open-construction-map/v2/search", params={"q": "rock"})
+                search_fragment = client.get(
+                    "/fragments/open-construction-map/v2/search", params={"q": "rock"}
+                )
+                page = client.get("/", params={"view": "open", "q": "rock"})
                 node_id = overview.json()["nodes"][0]["node_id"]
                 drill = client.get(f"/api/open-construction-map/v2/neighbors/{node_id}")
 
@@ -64,6 +69,16 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
         self.assertLessEqual(len(payload["edges"]), 512)
         self.assertEqual(invalid_level.status_code, 400)
         self.assertEqual(partial_viewport.status_code, 400)
+        self.assertEqual(search.status_code, 200)
+        self.assertIn("Rock Music", [hit["name"] for hit in search.json()["hits"]])
+        self.assertEqual(search_fragment.status_code, 200)
+        self.assertIn('data-open-node-id="legacy:1"', search_fragment.text)
+        self.assertIn('data-map-mode="open"', page.text)
+        self.assertIn('data-open-graph-version="v2"', page.text)
+        self.assertIn('data-graph-url="/api/open-construction-map/v2?level=0"', page.text)
+        self.assertIn('data-neighbor-url="/api/open-construction-map/v2/neighbors/"', page.text)
+        self.assertIn('hx-get="/fragments/open-construction-map/v2/search"', page.text)
+        self.assertIn('data-open-node-id="legacy:1"', page.text)
         self.assertEqual(drill.status_code, 200)
         self.assertLessEqual(len(drill.json()["nodes"]), 25)
         self.assertLessEqual(len(drill.json()["edges"]), 24)

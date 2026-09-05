@@ -51,6 +51,7 @@ from musix.open_construction_store_v2 import (
     OpenConstructionV2MapStore,
     OpenConstructionV2MapStoreError,
     OpenConstructionV2NeighborResponse,
+    OpenConstructionV2SearchResponse,
 )
 
 if TYPE_CHECKING:
@@ -75,6 +76,7 @@ class CoreController(Controller):
         production_map: NamedDependency[ProductionMapStore],
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
         view: FromQuery[Literal["public", "open", "historical"]] = "public",
@@ -86,6 +88,7 @@ class CoreController(Controller):
             production_map,
             historical_signal_map,
             open_construction_graph,
+            open_construction_graph_v2,
             layout=layout,
             focus=None,
             search_query=q,
@@ -101,6 +104,7 @@ class CoreController(Controller):
         production_map: NamedDependency[ProductionMapStore],
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         genre_id: FromPath[int],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
@@ -114,6 +118,7 @@ class CoreController(Controller):
             production_map,
             historical_signal_map,
             open_construction_graph,
+            open_construction_graph_v2,
             layout=layout,
             focus=genre_id,
             search_query=q,
@@ -131,6 +136,7 @@ class CoreController(Controller):
         production_map: NamedDependency[ProductionMapStore],
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         genre_key: FromPath[str],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
@@ -147,6 +153,7 @@ class CoreController(Controller):
             production_map,
             historical_signal_map,
             open_construction_graph,
+            open_construction_graph_v2,
             layout=layout,
             focus=genre_id,
             search_query=q,
@@ -319,17 +326,33 @@ class MapController(Controller):
                 detail="open construction v2 graph artifact unavailable"
             ) from error
 
-    @get("/api/open-construction-map/v2/neighbors/{genre_id:str}")
+    @get("/api/open-construction-map/v2/search")
+    async def open_construction_v2_search(
+        self,
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        q: FromQuery[str] = "",
+    ) -> OpenConstructionV2SearchResponse:
+        """Find configured v2 names without consulting public catalog membership data."""
+        if not open_construction_graph_v2.configured:
+            raise ServiceUnavailableException(detail="open construction v2 graph is disabled")
+        try:
+            return open_construction_graph_v2.search(q[:500])
+        except OpenConstructionV2MapStoreError as error:
+            raise ServiceUnavailableException(
+                detail="open construction v2 graph artifact unavailable"
+            ) from error
+
+    @get("/api/open-construction-map/v2/neighbors/{node_id:str}")
     async def open_construction_v2_neighbors(
         self,
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
-        genre_id: FromPath[str],
+        node_id: FromPath[str],
     ) -> OpenConstructionV2NeighborResponse:
         """Return a bounded one-hop v2 drill without an implied membership claim."""
         if not open_construction_graph_v2.configured:
             raise ServiceUnavailableException(detail="open construction v2 graph is disabled")
         try:
-            return open_construction_graph_v2.neighbors(genre_id)
+            return open_construction_graph_v2.neighbors(node_id)
         except OpenConstructionV2MapStoreError as error:
             raise NotFoundException(detail="open construction v2 graph node unavailable") from error
 
@@ -483,6 +506,7 @@ class MapController(Controller):
         production_map: NamedDependency[ProductionMapStore],
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
@@ -495,6 +519,7 @@ class MapController(Controller):
             production_map,
             historical_signal_map,
             open_construction_graph,
+            open_construction_graph_v2,
             layout=layout,
             focus=focus,
             search_query=q,
@@ -542,6 +567,26 @@ class SearchController(Controller):
                 "layout_query": None if layout == "default" else layout_key,
                 "search_query": q[:500],
             },
+        )
+
+    @get("/fragments/open-construction-map/v2/search")
+    async def open_construction_v2_search_fragment(
+        self,
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        q: FromQuery[str] = "",
+    ) -> Template:
+        """Render map-name results with ordinary links when JavaScript is unavailable."""
+        if not open_construction_graph_v2.configured:
+            raise ServiceUnavailableException(detail="open construction v2 graph is disabled")
+        try:
+            response = open_construction_graph_v2.search(q[:500])
+        except OpenConstructionV2MapStoreError as error:
+            raise ServiceUnavailableException(
+                detail="open construction v2 graph artifact unavailable"
+            ) from error
+        return Template(
+            template_name="open_construction_v2_search_results.html",
+            context={"hits": response.hits},
         )
 
 
@@ -737,6 +782,7 @@ async def workspace_context(
     production_map: ProductionMapStore,
     historical_signal_map: HistoricalSignalMapStore,
     open_construction_graph: OpenConstructionMapStore,
+    open_construction_graph_v2: OpenConstructionV2MapStore,
     *,
     layout: str,
     focus: int | None,
@@ -781,12 +827,19 @@ async def workspace_context(
         "map": map_view(await database.map_points(layout_key), focus),
         "placement": placement,
         "production_graph": production_graph,
-        "hits": await database.search(bounded_search_query) if bounded_search_query else (),
+        "hits": (
+            open_construction_graph_v2.search(bounded_search_query).hits
+            if view == "open" and open_construction_graph_v2.configured and bounded_search_query
+            else await database.search(bounded_search_query)
+            if bounded_search_query
+            else ()
+        ),
         "search_query": bounded_search_query,
         "map_view_mode": view,
         "historical_map_configured": historical_signal_map.configured,
         "historical_overview": historical_overview,
         "open_construction_graph_configured": open_construction_graph.configured,
+        "open_construction_graph_v2_configured": open_construction_graph_v2.configured,
     }
 
 

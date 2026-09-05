@@ -9,6 +9,16 @@
 {% endif %}
 {% include "map.html" %}
 <section id="genre-detail-slot" aria-live="polite">{% if genre %}{% include "genre_detail.html" %}{% endif %}</section>
+{% if map_view_mode | default('public') == 'open' and open_construction_graph_v2_configured %}
+<form id="search" role="search" action="/fragments/open-construction-map/v2/search" method="get">
+<label class="sr-only" for="query">Open graph name</label>
+<input id="query" name="q" type="search" placeholder="Search 6,291 names" autocomplete="off"
+       value="{{ search_query }}" hx-get="/fragments/open-construction-map/v2/search"
+       hx-trigger="input changed delay:160ms" hx-target="#results"
+       hx-swap="innerHTML" hx-sync="this:replace">
+</form>
+<aside id="results" aria-label="Open graph name results">{% include "open_construction_v2_search_results.html" %}</aside>
+{% else %}
 <form id="search" role="search" action="/fragments/search" method="get">
 <label class="sr-only" for="query">Artist or genre</label>
 {% if layout_query %}<input name="layout" type="hidden" value="{{ layout_query }}">{% endif %}
@@ -18,4 +28,5 @@
        hx-swap="innerHTML" hx-include="#search [name='layout']" hx-sync="this:replace">
 </form>
 <aside id="results" aria-label="Search results">{% include "search_results.html" %}</aside>
+{% endif %}
 </section>

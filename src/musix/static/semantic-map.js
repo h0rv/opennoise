@@ -1019,32 +1019,41 @@
   };
 
   const initOpenConstructionMap = () => {
-    // The open artifact has 6,291 retained nodes, but this renderer never
-    // materializes that global set. Each server LOD response is capped at 720.
+    // The Open graph always renders server-bounded cohorts, never its complete
+    // 6,291-name seed set (or the v2 catalog anchors) in the browser at once.
     let cy = null;
     let baselineZoom = 1;
     let activeLevel = -1;
-    let fetching = false;
+    let loadController = null;
+    let loadSequence = 0;
+    let viewportTimer = null;
+    let levelTimer = null;
+    let neighborController = null;
+    let neighborSequence = 0;
+    let suppressCameraEvents = false;
+    const graphEndpoint = new URL(graphUrl, window.location.origin);
+    const neighborEndpoint = mapElement.dataset.neighborUrl || "/api/open-construction-map/neighbors/";
+    const nodeId = (node) => node.node_id ?? node.genre_id;
     const openElement = (node) => ({
       data: {
-        id: `open-${node.genre_id}`,
-        itemId: node.genre_id,
+        id: `open-${nodeId(node)}`,
+        itemId: nodeId(node),
         label: node.name,
         displayLabel: "",
         labelSize: 13,
         degree: node.degree,
       },
       position: { x: Number(node.x), y: Number(node.y) },
-      classes: node.hierarchy_depth === 0 ? "umbrella" : "genre",
+      classes: [node.hierarchy_depth === 0 ? "umbrella" : "genre", node.node_kind ?? "legacy_name_seed"].join(" "),
     });
     const edgeElement = (edge) => ({
       data: {
         id: `open-${edge.kind}-${edge.source}-${edge.target}`,
         source: `open-${edge.source}`,
         target: `open-${edge.target}`,
-        weight: edge.confidence,
+        weight: edge.confidence ?? 1,
       },
-      classes: edge.review_candidate ? "similarity" : "taxonomy",
+      classes: edge.factual_relationship ? "taxonomy" : "similarity",
     });
     const paintLabels = () => {
       const visible = cy.nodes().sort((left, right) => Number(right.data("degree")) - Number(left.data("degree"))
@@ -1052,18 +1061,70 @@
       visible.forEach((node, index) => node.data("displayLabel", index < labelBudget(0) ? node.data("label") : ""));
       window.__musixMapMetrics.shownLabelCount = Math.min(visible.length, labelBudget(0));
     };
-    const detail = (node, payload) => {
-      const panel = document.querySelector("#open-detail");
-      if (panel) panel.textContent = `${node.data("label")}: ${node.data("degree")} public taxonomy or review links.`;
-      fetch(`/api/open-construction-map/neighbors/${encodeURIComponent(node.data("itemId"))}`, { headers: { Accept: "application/json" } })
+    const addNeighborPayload = (neighbors) => {
+      const additions = neighbors.nodes.filter((item) => cy.$id(`open-${nodeId(item)}`).empty()).map(openElement);
+      const edges = neighbors.edges.filter((edge) => cy.$id(`open-${edge.kind}-${edge.source}-${edge.target}`).empty()).map(edgeElement);
+      if (additions.length || edges.length) cy.batch(() => cy.add([...additions, ...edges]));
+      paintLabels();
+    };
+    const cancelNeighborRequest = () => {
+      neighborController?.abort();
+      neighborController = null;
+      neighborSequence += 1;
+    };
+    const fetchNeighbors = (id) => {
+      neighborController?.abort();
+      const controller = new AbortController();
+      neighborController = controller;
+      const sequence = ++neighborSequence;
+      return fetch(`${neighborEndpoint}${encodeURIComponent(id)}`, {
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+      })
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("open graph neighbors unavailable")))
+        .then((neighbors) => sequence === neighborSequence ? neighbors : null)
+        .finally(() => {
+          if (neighborController === controller) neighborController = null;
+        });
+    };
+    const fitNeighborhood = (neighbors) => {
+      const neighborhood = neighbors.nodes.reduce(
+        (items, item) => items.union(cy.$id(`open-${nodeId(item)}`)),
+        cy.collection(),
+      );
+      window.clearTimeout(levelTimer);
+      window.clearTimeout(viewportTimer);
+      suppressCameraEvents = true;
+      cy.fit(neighborhood, 96);
+      suppressCameraEvents = false;
+    };
+    const detail = (node) => {
+      cy.$(":selected").unselect();
+      node.select();
+      fetchNeighbors(node.data("itemId"))
         .then((neighbors) => {
-          const additions = neighbors.nodes.filter((item) => cy.$id(`open-${item.genre_id}`).empty()).map(openElement);
-          const edges = neighbors.edges.filter((edge) => cy.$id(`open-${edge.kind}-${edge.source}-${edge.target}`).empty()).map(edgeElement);
-          if (additions.length || edges.length) cy.batch(() => cy.add([...additions, ...edges]));
-          paintLabels();
+          if (!neighbors) return;
+          addNeighborPayload(neighbors);
+          fitNeighborhood(neighbors);
         })
-        .catch(() => say("Open graph detail unavailable."));
+        .catch((error) => {
+          if (error.name !== "AbortError") say("Open graph neighborhood unavailable.");
+        });
+    };
+    const focusSearchResult = (id) => {
+      fetchNeighbors(id)
+        .then((neighbors) => {
+          if (!neighbors) return;
+          addNeighborPayload(neighbors);
+          const node = cy.$id(`open-${id}`);
+          if (node.empty()) throw new Error("open graph search target missing");
+          cy.$(":selected").unselect();
+          node.select();
+          fitNeighborhood(neighbors);
+        })
+        .catch((error) => {
+          if (error.name !== "AbortError") say("Open graph search target unavailable.");
+        });
     };
     const render = (payload, preserveCamera) => {
       const elements = [
@@ -1071,18 +1132,25 @@
         ...payload.edges.map(edgeElement),
       ];
       const previous = preserveCamera && cy ? { zoom: cy.zoom(), pan: cy.pan() } : null;
-      cy?.destroy();
-      cy = window.cytoscape({
-        container: mapElement,
-        elements,
-        style: stylesheet(),
-        layout: { name: "preset", fit: !previous, padding: 72 },
-        minZoom: 0.05,
-        maxZoom: 4.8,
-        userPanningEnabled: true,
-        userZoomingEnabled: true,
-        boxSelectionEnabled: false,
-      });
+      const isInitialRender = !cy;
+      if (isInitialRender) {
+        cy = window.cytoscape({
+          container: mapElement,
+          elements,
+          style: stylesheet(),
+          layout: { name: "preset", fit: !previous, padding: 72 },
+          minZoom: 0.05,
+          maxZoom: 4.8,
+          userPanningEnabled: true,
+          userZoomingEnabled: true,
+          boxSelectionEnabled: false,
+        });
+      } else {
+        cy.batch(() => {
+          cy.elements().remove();
+          cy.add(elements);
+        });
+      }
       if (previous) {
         cy.zoom(previous.zoom);
         cy.pan(previous.pan);
@@ -1102,22 +1170,48 @@
       };
       root.classList.add("js-map-ready");
       paintLabels();
-      cy.on("tap", "node", (event) => detail(event.target, payload));
-      cy.on("zoom", () => {
-        const level = Math.min(3, Math.max(0, Math.floor(Math.log2(cy.zoom() / Math.max(baselineZoom, 0.0001)) + 1)));
-        if (level !== activeLevel && !fetching) load(level, true);
-      });
-      cy.on("tap", (event) => {
-        if (event.target === cy) cy.$(":selected").unselect();
-      });
+      if (isInitialRender) {
+        cy.on("tap", "node", (event) => detail(event.target));
+        cy.on("zoom", () => {
+          if (suppressCameraEvents) return;
+          const level = Math.min(3, Math.max(0, Math.floor(Math.log2(cy.zoom() / Math.max(baselineZoom, 0.0001)) + 1)));
+          if (level === activeLevel) return;
+          window.clearTimeout(levelTimer);
+          levelTimer = window.setTimeout(() => load(level, true), 120);
+        });
+        cy.on("pan", () => {
+          if (suppressCameraEvents) return;
+          if (activeLevel === 0) return;
+          window.clearTimeout(viewportTimer);
+          viewportTimer = window.setTimeout(() => load(activeLevel, true), 160);
+        });
+        cy.on("tap", (event) => {
+          if (event.target !== cy) return;
+          cancelNeighborRequest();
+          cy.$(":selected").unselect();
+        });
+      }
     };
     const load = (level, preserveCamera = false) => {
-      fetching = true;
-      fetch(`/api/open-construction-map?level=${level}`, { headers: { Accept: "application/json" } })
+      loadController?.abort();
+      loadController = new AbortController();
+      const sequence = ++loadSequence;
+      const request = new URL(graphEndpoint);
+      request.searchParams.set("level", String(level));
+      if (level > 0 && cy) {
+        const viewport = cy.extent();
+        for (const [key, value] of Object.entries({ min_x: viewport.x1, min_y: viewport.y1, max_x: viewport.x2, max_y: viewport.y2 })) {
+          if (Number.isFinite(value)) request.searchParams.set(key, String(value));
+        }
+      }
+      fetch(request, { headers: { Accept: "application/json" }, signal: loadController.signal })
         .then((response) => response.ok ? response.json() : Promise.reject(new Error(`open graph request failed: ${response.status}`)))
-        .then((payload) => render(payload, preserveCamera))
-        .catch(() => say("Open 6,291 landscape unavailable."))
-        .finally(() => { fetching = false; });
+        .then((payload) => {
+          if (sequence === loadSequence) render(payload, preserveCamera);
+        })
+        .catch((error) => {
+          if (error.name !== "AbortError") say("Open 6,291 landscape unavailable.");
+        });
     };
     document.addEventListener("click", (event) => {
       const button = event.target.closest("[data-map-action]");
@@ -1126,7 +1220,19 @@
       if (action === "zoom-in") cy.zoom(cy.zoom() * 1.25);
       if (action === "zoom-out") cy.zoom(cy.zoom() / 1.25);
       if (action === "fit") cy.fit(cy.nodes(), 72);
+      if (action === "open-back") {
+        cancelNeighborRequest();
+        window.clearTimeout(levelTimer);
+        window.clearTimeout(viewportTimer);
+        load(0);
+      }
     }, true);
+    document.addEventListener("click", (event) => {
+      const result = event.target.closest("[data-open-node-id]");
+      if (!result || !cy) return;
+      event.preventDefault();
+      focusSearchResult(result.dataset.openNodeId);
+    });
     load(0);
   };
 

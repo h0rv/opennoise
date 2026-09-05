@@ -1,0 +1,6 @@
+{% for hit in hits %}
+<a class="result" data-open-node-id="{{ hit.node_id }}"
+   href="/api/open-construction-map/v2/neighbors/{{ hit.node_id | urlencode }}">
+  {{ hit.name }} <span class="result-kind">{% if hit.node_kind == 'legacy_name_seed' %}legacy name{% else %}public taxonomy{% endif %}</span>
+</a>
+{% endfor %}

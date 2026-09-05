@@ -30,15 +30,26 @@
   </section>
   {% endif %}
 {% elif map_view_mode | default('public') == 'open' %}
-  {% if open_construction_graph_configured %}
+  {% if open_construction_graph_v2_configured %}
+  <div id="semantic-map" role="application" aria-label="Interactive open 6,291-name and public taxonomy landscape"
+       data-map-mode="open" data-open-graph-version="v2"
+       data-graph-url="/api/open-construction-map/v2?level=0"
+       data-neighbor-url="/api/open-construction-map/v2/neighbors/"
+       aria-describedby="map-pan-help"></div>
+  <section id="open-fallback" class="map-fallback" aria-label="Open construction graph">
+    <p>Open v2 retains 6,291 legacy names and adds public taxonomy anchors. Factual taxonomy and review/navigation links remain distinct.</p>
+    <p><a href="/api/open-construction-map/v2?level=0">Open v2 landscape overview</a></p>
+  </section>
+  {% elif open_construction_graph_configured %}
   <div id="semantic-map" role="application" aria-label="Interactive open 6,291 genre landscape"
-       data-map-mode="open" data-graph-url="/api/open-construction-map?level=0"
+       data-map-mode="open" data-open-graph-version="v1"
+       data-graph-url="/api/open-construction-map?level=0"
+       data-neighbor-url="/api/open-construction-map/neighbors/"
        aria-describedby="map-pan-help"></div>
   <section id="open-fallback" class="map-fallback" aria-label="Open construction graph">
     <p>Open 6,291-node landscape. Use the interactive map to reveal bounded detail.</p>
     <p><a href="/api/open-construction-map?level=0">Open landscape overview</a></p>
   </section>
-  <aside id="open-detail" aria-label="Open graph details"></aside>
   {% else %}
   <section id="open-fallback" class="map-fallback" aria-label="Open construction graph">
     <p>Open 6,291 landscape is unavailable.</p>
@@ -92,6 +103,9 @@
 <div id="map-controls" aria-label="Map controls">
   {% if map_view_mode | default('public') == 'historical' and historical_map_configured %}
   <button type="button" data-map-action="historical-back" aria-label="Back">Back</button>
+  {% endif %}
+  {% if map_view_mode | default('public') == 'open' and (open_construction_graph_configured or open_construction_graph_v2_configured) %}
+  <button type="button" data-map-action="open-back" aria-label="Back">Back</button>
   {% endif %}
   <button type="button" data-map-action="zoom-in" aria-label="Zoom in">+</button>
   <button type="button" data-map-action="zoom-out" aria-label="Zoom out">−</button>
