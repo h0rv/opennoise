@@ -40,7 +40,7 @@ class GenreSeedUniverseTests(unittest.TestCase):
         return path
 
     def _seed(self, path: Path, *, noisy: bool = False) -> None:
-        genres = [
+        genres: list[dict[str, object]] = [
             {
                 "external_id": "enao-legacy:item1",
                 "source_item_id": "item1",
