@@ -228,7 +228,7 @@ def _api_qa(database: Path, map_path: Path, graph_path: Path, output: Path, port
             process.wait(timeout=5)
 
 
-def _bundle_phase4_release(
+def _bundle_phase4_release(  # noqa: PLR0915
     root: Path, source_cache: Path, derived: Path, evidence: Path, gates: Path
 ) -> dict[str, object]:
     """Custody, export, verify, and twice restore a typed ObjectStore bundle."""
