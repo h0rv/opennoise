@@ -240,6 +240,19 @@ class MapController(Controller):
         """Return one bounded landscape LOD from the committed 6,291-node artifact."""
         if not open_construction_graph.configured:
             raise ServiceUnavailableException(detail="open construction graph is disabled")
+        if level not in range(4):
+            raise ValidationException(detail="open construction level must be between 0 and 3")
+        bounds = (min_x, min_y, max_x, max_y)
+        if any(value is None for value in bounds) and any(value is not None for value in bounds):
+            raise ValidationException(detail="open construction viewport must include all bounds")
+        if (
+            min_x is not None
+            and min_y is not None
+            and max_x is not None
+            and max_y is not None
+            and (min_x >= max_x or min_y >= max_y)
+        ):
+            raise ValidationException(detail="open construction viewport bounds are invalid")
         try:
             return open_construction_graph.response(
                 level=level, min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y
