@@ -2,6 +2,7 @@ import sqlite3
 import unittest
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import override
 
 from musix.album_genres import AlbumGenreRepository, MembershipObservation
 from musix.representative_catalog_ranking import (
@@ -13,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class RepresentativeCatalogRankingTests(unittest.TestCase):
+    @override
     def setUp(self) -> None:
         self.connection = sqlite3.connect(":memory:")
         self.connection.execute("PRAGMA foreign_keys = ON")
@@ -24,6 +26,7 @@ class RepresentativeCatalogRankingTests(unittest.TestCase):
             self.connection.executescript((ROOT / "migrations" / name).read_text())
         self.connection.executescript((ROOT / "migrations" / "smoke" / "fixture.sql").read_text())
 
+    @override
     def tearDown(self) -> None:
         self.connection.close()
 
