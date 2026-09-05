@@ -18,12 +18,17 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import time
 from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 from urllib.request import urlopen
 
+from pydantic import Field, model_validator
+
+from musix.models import FrozenModel
 from musix.musicbrainz_release_hydration import (
     MusicBrainzReleaseHydrationArtifact,
     artifact_counts,
@@ -33,6 +38,7 @@ from musix.open_construction_graph import (
     OpenConstructionGraphArtifact,
     verify_open_construction_graph,
 )
+from musix.storage import LocalObjectStore, ObjectKey, ObjectWrite
 
 _CACHE_SHA256 = "282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866"
 _CACHE_BYTES = 153_231_360
@@ -51,6 +57,37 @@ _ADDITIONAL_EVIDENCE = (
     ("phase4-api-source-qa", "phase4-api-source-qa.json"),
     ("phase4-integration-report", "phase4-integration-report.json"),
 )
+
+
+class Phase4BundleEntry(FrozenModel):
+    """One typed content-addressed member of the portable Phase 4 release."""
+
+    kind: Literal[
+        "source-cache", "derived-database", "release-config", "evidence", "objective-gate"
+    ]
+    object: ObjectWrite
+    destination: ObjectKey
+
+
+class Phase4BundleReceipt(FrozenModel):
+    """Closed manifest for the final derived database and replay evidence."""
+
+    revision: Literal["phase4-public-bundle-v1"] = "phase4-public-bundle-v1"
+    release_id: Literal["phase4-integrated-public-20260904"] = "phase4-integrated-public-20260904"
+    derived_database_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_cache_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    entries: tuple[Phase4BundleEntry, ...] = Field(min_length=1, max_length=32)
+
+    @model_validator(mode="after")
+    def complete_and_safe(self) -> Phase4BundleReceipt:
+        """Require unique safe destinations and each release boundary."""
+        destinations = tuple(entry.destination.value for entry in self.entries)
+        if len(destinations) != len(set(destinations)):
+            raise ValueError("phase4 bundle destinations must be unique")
+        kinds = {entry.kind for entry in self.entries}
+        if not {"source-cache", "derived-database", "release-config"} <= kinds:
+            raise ValueError("phase4 bundle is missing a required release boundary")
+        return self
 
 
 class Phase4ReleaseError(RuntimeError):
@@ -194,27 +231,32 @@ def _api_qa(database: Path, map_path: Path, graph_path: Path, output: Path, port
 def _bundle_phase4_release(
     root: Path, source_cache: Path, derived: Path, evidence: Path, gates: Path
 ) -> dict[str, object]:
-    """Write, verify, and twice restore a portable bundle for the final derived database."""
-    checks = _sqlite_checks(derived)
+    """Custody, export, verify, and twice restore a typed ObjectStore bundle."""
     manifest_path = root / "release-config" / "phase4-release-manifest.json"
-    manifest = {
-        "release_id": "phase4-integrated-public-20260904",
-        "derived_database": {"sha256": _sha256(derived), "byte_size": derived.stat().st_size},
-        "source_cache": {"sha256": _sha256(source_cache), "byte_size": source_cache.stat().st_size},
-        "database_checks": checks,
-        "source_policy": "exportable public metadata only; no supplementary genre research or audio",
-    }
-    _write_json(manifest_path, manifest)
-    members = [
-        (source_cache, "inputs/phase3-public-qualified.sqlite"),
-        (derived, "release/phase4-public.sqlite"),
-        (manifest_path, "release-config/phase4-release-manifest.json"),
+    _write_json(
+        manifest_path,
+        {
+            "release_id": "phase4-integrated-public-20260904",
+            "derived_database": {"sha256": _sha256(derived), "byte_size": derived.stat().st_size},
+            "source_cache": {
+                "sha256": _sha256(source_cache),
+                "byte_size": source_cache.stat().st_size,
+            },
+            "database_checks": _sqlite_checks(derived),
+            "source_policy": "exportable public metadata only; no supplementary genre research or audio",
+        },
+    )
+    members: list[tuple[str, Path, str]] = [
+        ("source-cache", source_cache, "inputs/phase3-public-qualified.sqlite"),
+        ("derived-database", derived, "release/phase4-public.sqlite"),
+        ("release-config", manifest_path, "release-config/phase4-release-manifest.json"),
     ]
     members.extend(
-        (evidence / filename, f"evidence/{filename}") for _, filename in _ADDITIONAL_EVIDENCE
+        ("evidence", evidence / filename, f"evidence/{filename}")
+        for _, filename in _ADDITIONAL_EVIDENCE
     )
     members.extend(
-        (evidence / filename, f"evidence/{filename}")
+        ("evidence", evidence / filename, f"evidence/{filename}")
         for filename in (
             "public-model.json",
             "production-map-v1.json",
@@ -226,7 +268,7 @@ def _bundle_phase4_release(
         )
     )
     members.extend(
-        (gates / filename, f"objective-gates/{filename}")
+        ("objective-gate", gates / filename, f"objective-gates/{filename}")
         for filename in (
             "public-model-gate-v1.json",
             "metadata-representatives-v1.json",
@@ -234,51 +276,58 @@ def _bundle_phase4_release(
             "artist-membership-judgments-v1.json",
         )
     )
-    bundle = root / "portable-bundle"
-    objects = bundle
-    entries: list[dict[str, object]] = []
-    for source, destination in members:
-        if not source.is_file():
-            raise Phase4ReleaseError(f"portable custody input is missing: {source}")
-        digest = _sha256(source)
-        object_path = objects / "sha256" / digest
-        object_path.parent.mkdir(parents=True, exist_ok=True)
-        if not object_path.is_file():
-            _clone_file(source, object_path)
-        if _sha256(object_path) != digest:
-            raise Phase4ReleaseError("custody object bytes changed during copy")
-        entries.append(
-            {
-                "destination": destination,
-                "sha256": digest,
-                "byte_size": source.stat().st_size,
-                "object": f"sha256/{digest}",
-            }
-        )
-    receipt_path = root / "custody" / "phase4-custody-receipt.json"
-    _write_json(
-        receipt_path,
-        {
-            "revision": "phase4-public-custody-v1",
-            "release_id": manifest["release_id"],
-            "entries": sorted(entries, key=lambda item: str(item["destination"])),
-        },
+    custody_store = LocalObjectStore(root / "custody" / "objects")
+    bundle_store = LocalObjectStore(root / "portable-bundle")
+    entries: list[Phase4BundleEntry] = []
+    with tempfile.TemporaryDirectory(prefix="phase4-bundle-", dir=root) as temporary:
+        temp = Path(temporary) / "object"
+        for kind, source, destination in members:
+            if not source.is_file():
+                raise Phase4ReleaseError(f"portable custody input is missing: {source}")
+            digest = _sha256(source)
+            custody_key = ObjectKey(value=f"custody/sha256/{digest}")
+            custody = custody_store.push(source, custody_key)
+            pulled = custody_store.pull(custody.key, temp)
+            if (pulled.sha256, pulled.byte_size) != (custody.sha256, custody.byte_size):
+                raise Phase4ReleaseError("custody ObjectStore pull differs from its publication")
+            bundle_key = ObjectKey(value=f"phase4/objects/sha256/{digest}")
+            published = bundle_store.push(temp, bundle_key)
+            if (published.sha256, published.byte_size) != (custody.sha256, custody.byte_size):
+                raise Phase4ReleaseError("portable ObjectStore changed custody bytes")
+            entries.append(
+                Phase4BundleEntry(
+                    kind=kind, object=published, destination=ObjectKey(value=destination)
+                )
+            )
+    receipt = Phase4BundleReceipt(
+        derived_database_sha256=_sha256(derived),
+        source_cache_sha256=_sha256(source_cache),
+        entries=tuple(entries),
     )
-    _clone_file(receipt_path, bundle / "phase4-custody-receipt.json")
-    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-    for entry in receipt["entries"]:
-        if _sha256(bundle / str(entry["object"])) != entry["sha256"]:
-            raise Phase4ReleaseError("portable bundle checksum verification failed")
+    receipt_path = root / "custody" / "phase4-custody-receipt.json"
+    _write_json(receipt_path, receipt.model_dump(mode="json"))
+    receipt_digest = _sha256(receipt_path)
+    receipt_key = ObjectKey(value=f"phase4/receipts/{receipt_digest}.json")
+    receipt_write = bundle_store.push(receipt_path, receipt_key)
+    if receipt_write.sha256 != receipt_digest:
+        raise Phase4ReleaseError("portable bundle receipt hash differs after publication")
+    with tempfile.TemporaryDirectory(prefix="phase4-bundle-", dir=root) as temporary:
+        parsed_path = Path(temporary) / "receipt.json"
+        bundle_store.pull(receipt_key, parsed_path)
+        parsed = Phase4BundleReceipt.model_validate_json(parsed_path.read_text(encoding="utf-8"))
+        for entry in parsed.entries:
+            pulled = bundle_store.pull(entry.object.key, Path(temporary) / entry.object.sha256)
+            if (pulled.sha256, pulled.byte_size) != (entry.object.sha256, entry.object.byte_size):
+                raise Phase4ReleaseError("portable bundle object checksum verification failed")
     restored = root / "restored"
 
     def restore() -> dict[str, str]:
-        for entry in receipt["entries"]:
-            destination = restored / str(entry["destination"])
+        for entry in receipt.entries:
+            destination = restored.joinpath(*entry.destination.parts)
             if not destination.resolve(strict=False).is_relative_to(restored.resolve()):
                 raise Phase4ReleaseError("portable restore destination escapes its root")
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            _clone_file(bundle / str(entry["object"]), destination)
-            if _sha256(destination) != entry["sha256"]:
+            pulled = bundle_store.pull(entry.object.key, destination)
+            if (pulled.sha256, pulled.byte_size) != (entry.object.sha256, entry.object.byte_size):
                 raise Phase4ReleaseError(
                     "portable restored bytes differ from their custody checksum"
                 )
@@ -293,8 +342,9 @@ def _bundle_phase4_release(
     if first != second:
         raise Phase4ReleaseError("portable restore is not byte-identically idempotent")
     return {
-        "custody_receipt_sha256": _sha256(receipt_path),
-        "bundle_entries": len(entries),
+        "custody_receipt_sha256": receipt_digest,
+        "bundle_receipt_key": receipt_key.value,
+        "bundle_entries": len(receipt.entries),
         "restored_files": len(second),
     }
 
