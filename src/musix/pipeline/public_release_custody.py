@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field
 
+from musix.metadata_representatives import MetadataRepresentativeArtifact
+from musix.ml.public_model_gate import PublicModelGateReport
 from musix.models import FrozenModel
 from musix.pipeline.public_release import PublicReleaseResult
 from musix.pipeline.release_manifest import verify_manifest_against_database
@@ -49,6 +51,10 @@ _EVIDENCE_FILES: Final[tuple[tuple[str, str], ...]] = (
     ("production-map-report", "production-map-v1.report.json"),
     ("release-receipt", "receipt.json"),
 )
+_OBJECTIVE_EVIDENCE_FILES: Final[tuple[tuple[str, str], ...]] = (
+    ("public-model-gate", "public-model-gate-v1.json"),
+    ("metadata-representatives", "metadata-representatives-v1.json"),
+)
 
 
 class PublicReleaseCustodyError(ValueError):
@@ -68,6 +74,7 @@ class SourceCustody(CustodyObject):
 
     source_key: str = Field(min_length=1, max_length=300)
     recorded_vault_key: Sha256
+    storage_mode: Literal["copy", "reference"]
 
 
 class MissingSource(FrozenModel):
@@ -112,7 +119,13 @@ class PublicReleaseCustodyReceipt(FrozenModel):
     source_objects: tuple[SourceCustody, ...] = Field(max_length=64)
     source_objects_missing: tuple[MissingSource, ...] = Field(max_length=64)
     source_completeness: Literal["complete", "cache_only"]
+    source_vault: str = Field(min_length=1, max_length=2_000)
+    source_storage_mode: Literal["copy", "reference"]
     evidence: tuple[EvidenceBinding, ...] = Field(min_length=1, max_length=16)
+    objective_gate_state: Literal["present", "absent"]
+    objective_gate_evidence: tuple[EvidenceBinding, ...] = Field(max_length=2)
+    public_model_gate_sha256: Sha256 | None = None
+    metadata_representatives_sha256: Sha256 | None = None
     model_logical_sha256: Sha256
     model_file_sha256: Sha256
     production_map_sha256: Sha256
@@ -134,6 +147,8 @@ class PublicReleaseCustodySettings(FrozenModel):
     source_vault: Path
     evidence_directory: Path
     output_directory: Path
+    objective_gates_directory: Path | None = None
+    source_mode: Literal["copy", "reference"] = "copy"
     expected_cache_sha256: Sha256
     expected_cache_byte_size: int = Field(gt=0)
 
@@ -277,9 +292,10 @@ def _evidence_bindings(
     store: ObjectStore,
     evidence_directory: Path,
     release_receipt: PublicReleaseResult,
+    files: tuple[tuple[str, str], ...],
 ) -> tuple[EvidenceBinding, ...]:
     bindings: list[EvidenceBinding] = []
-    for name, filename in _EVIDENCE_FILES:
+    for name, filename in files:
         path = evidence_directory / filename
         if not path.is_file():
             raise PublicReleaseCustodyError(f"release evidence is missing: {path}")
@@ -292,6 +308,54 @@ def _evidence_bindings(
         stored = _push_verified(store, path, key, sha256, byte_size)
         bindings.append(EvidenceBinding(**stored.model_dump(), name=name, path=str(path.resolve())))
     return tuple(bindings)
+
+
+def _objective_evidence_files(
+    settings: PublicReleaseCustodySettings,
+) -> tuple[tuple[str, str], ...]:
+    """Require both objective artifacts when an objective-gate directory is present."""
+    directory = settings.objective_gates_directory
+    if directory is None:
+        return ()
+    paths = tuple(directory / filename for _, filename in _OBJECTIVE_EVIDENCE_FILES)
+    present = tuple(path.is_file() for path in paths)
+    if any(present) and not all(present):
+        missing = ", ".join(
+            str(path) for path, exists in zip(paths, present, strict=True) if not exists
+        )
+        raise PublicReleaseCustodyError(f"objective release evidence is incomplete: {missing}")
+    return _OBJECTIVE_EVIDENCE_FILES if all(present) else ()
+
+
+def _verify_objective_evidence(
+    paths: tuple[tuple[str, Path], ...], release_receipt: PublicReleaseResult
+) -> None:
+    """Parse objective reports and bind them to the same public model release."""
+    for name, path in paths:
+        try:
+            if name == "public-model-gate":
+                report = PublicModelGateReport.model_validate_json(path.read_text(encoding="utf-8"))
+                if not report.passed:
+                    raise PublicReleaseCustodyError("public model objective gate did not pass")
+                if (
+                    report.artifact_file_sha256 != release_receipt.model_file_sha256
+                    or report.artifact_output_sha256 != release_receipt.model_logical_sha256
+                ):
+                    raise PublicReleaseCustodyError(
+                        "public model objective gate targets another model"
+                    )
+            else:
+                artifact = MetadataRepresentativeArtifact.model_validate_json(
+                    path.read_text(encoding="utf-8")
+                )
+                if artifact.run.output_sha256 != release_receipt.model_logical_sha256:
+                    raise PublicReleaseCustodyError(
+                        "metadata representatives objective gate targets another model"
+                    )
+        except (OSError, ValueError) as error:
+            if isinstance(error, PublicReleaseCustodyError):
+                raise
+            raise PublicReleaseCustodyError(f"invalid {name} objective evidence") from error
 
 
 def custody_public_release(
@@ -348,17 +412,49 @@ def custody_public_release(
                 f"source vault key is not content-addressed: {source_key}"
             )
         key = ObjectKey(value=f"raw/sha256/{artifact_sha256}")
-        stored = _push_verified(object_store, expected_path, key, artifact_sha256, byte_size)
+        if settings.source_mode == "reference":
+            source_sha256, source_size = _hash_file(expected_path)
+            if (source_sha256, source_size) != (artifact_sha256, byte_size):
+                raise PublicReleaseCustodyError(
+                    f"source vault bytes do not match the manifest: {source_key}"
+                )
+            stored = _object(key, source_sha256, source_size)
+        else:
+            stored = _push_verified(object_store, expected_path, key, artifact_sha256, byte_size)
         source_objects.append(
             SourceCustody(
                 **stored.model_dump(),
                 source_key=source_key,
                 recorded_vault_key=recorded_vault_key,
+                storage_mode=settings.source_mode,
             )
         )
 
-    evidence = _evidence_bindings(object_store, settings.evidence_directory, release_receipt)
-    evidence_by_name = {item.name: item for item in evidence}
+    evidence = _evidence_bindings(
+        object_store,
+        settings.evidence_directory,
+        release_receipt,
+        _EVIDENCE_FILES,
+    )
+    objective_directory = settings.objective_gates_directory
+    objective_files = _objective_evidence_files(settings)
+    objective_paths = tuple(
+        (name, objective_directory / filename)
+        for name, filename in objective_files
+        if objective_directory is not None
+    )
+    if objective_directory is not None and objective_paths:
+        _verify_objective_evidence(objective_paths, release_receipt)
+        objective_evidence = _evidence_bindings(
+            object_store,
+            objective_directory,
+            release_receipt,
+            objective_files,
+        )
+    else:
+        objective_evidence = ()
+    all_evidence = (*evidence, *objective_evidence)
+    evidence_by_name = {item.name: item for item in all_evidence}
     source_complete = not missing_sources
     receipt = PublicReleaseCustodyReceipt(
         release_id=release_receipt.release_id,
@@ -371,7 +467,17 @@ def custody_public_release(
         source_objects=tuple(source_objects),
         source_objects_missing=tuple(missing_sources),
         source_completeness="complete" if source_complete else "cache_only",
-        evidence=evidence,
+        source_vault=str(settings.source_vault.resolve()),
+        source_storage_mode=settings.source_mode,
+        evidence=all_evidence,
+        objective_gate_state="present" if objective_evidence else "absent",
+        objective_gate_evidence=objective_evidence,
+        public_model_gate_sha256=(
+            evidence_by_name["public-model-gate"].sha256 if objective_evidence else None
+        ),
+        metadata_representatives_sha256=(
+            evidence_by_name["metadata-representatives"].sha256 if objective_evidence else None
+        ),
         model_logical_sha256=release_receipt.model_logical_sha256,
         model_file_sha256=evidence_by_name["public-model"].sha256,
         production_map_sha256=evidence_by_name["production-map"].sha256,
