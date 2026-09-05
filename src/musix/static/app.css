@@ -71,7 +71,7 @@ html.js-map-ready #historical-fallback { display: none; }
 .point text { fill: var(--ink); font-size: 11px; paint-order: stroke; stroke: var(--canvas); stroke-width: 3px; stroke-linejoin: round; }
 .point.selected circle { stroke: var(--focus); stroke-width: 4; }
 
-#map-controls, #map-view-switch, #search, #results, #genre-detail, #historical-detail {
+#map-controls, #map-view-switch, #layout-lenses, #search, #results, #genre-detail, #historical-detail {
   position: fixed; z-index: 4; border: 1px solid var(--line); border-radius: 7px;
   background: var(--panel); box-shadow: 0 4px 20px rgb(0 0 0 / 12%); backdrop-filter: blur(8px);
 }
@@ -81,6 +81,10 @@ html.js-map-ready #historical-fallback { display: none; }
 #map-view-switch a { padding: 6px 8px; border-radius: 4px; color: var(--ink); font-size: 12px; text-decoration: none; }
 #map-view-switch a[aria-current="page"] { background: color-mix(in srgb, var(--line) 45%, transparent); }
 #map-view-switch a:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+#layout-lenses { top: 14px; left: 50%; display: flex; max-width: calc(100vw - 28px); padding: 4px; transform: translateX(-50%); box-shadow: none; backdrop-filter: none; }
+#layout-lenses a { padding: 6px 8px; border-radius: 4px; color: var(--ink); font-size: 12px; text-decoration: none; white-space: nowrap; }
+#layout-lenses a[aria-current="page"] { background: color-mix(in srgb, var(--line) 45%, transparent); }
+#layout-lenses a:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 #map-controls button, #map-controls select { min-height: 32px; border: 0; border-radius: 4px; color: var(--ink); background: transparent; cursor: pointer; }
 #map-controls button { min-width: 32px; padding: 4px 8px; }
 #map-controls button:hover, #map-controls button:focus-visible { background: color-mix(in srgb, var(--line) 35%, transparent); outline: none; }
@@ -124,6 +128,7 @@ html.js-map-ready #historical-fallback { display: none; }
   #results { top: 96px; left: 10px; width: calc(100vw - 20px); }
   #map-controls { right: 10px; bottom: 10px; }
   #map-view-switch { top: 60px; right: 10px; }
+  #layout-lenses { top: 60px; left: 10px; max-width: calc(100vw - 20px); transform: none; overflow-x: auto; }
   #map-view-switch a { padding: 5px 6px; font-size: 11px; }
   #map-controls label { display: none; }
   #genre-detail { top: auto; right: 10px; bottom: 54px; left: 10px; width: auto; max-height: 38vh; }

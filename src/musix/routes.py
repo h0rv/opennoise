@@ -48,6 +48,8 @@ from musix.production_store import (
     ProductionMapStoreError,
 )
 
+PUBLIC_LAYOUT_KEYS = frozenset({"public", "public-direct", "public-community", "public-taxonomy"})
+
 
 class CoreController(Controller):
     """Render the app shell and health response."""
@@ -349,6 +351,7 @@ class MapController(Controller):
             context={
                 "active_layout": active_layout,
                 "layout_key": query.layout_key,
+                "layout_query": None if layout == "default" else query.layout_key,
                 "map": view,
             },
         )
@@ -415,6 +418,7 @@ class SearchController(Controller):
             context={
                 "hits": hits,
                 "layout_key": layout_key,
+                "layout_query": None if layout == "default" else layout_key,
                 "search_query": q[:500],
             },
         )
@@ -459,6 +463,7 @@ class EvidenceController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         genre_id: FromPath[int],
+        q: FromQuery[str] = "",
         layout: FromQuery[str] = "default",
     ) -> Template:
         """Render one bounded genre detail region."""
@@ -473,7 +478,9 @@ class EvidenceController(Controller):
             context={
                 "genre": detail,
                 "layout_key": placement.layout_key,
+                "layout_query": None if layout == "default" else placement.layout_key,
                 "placement": placement,
+                "search_query": q[:500],
             },
         )
 
@@ -483,6 +490,7 @@ class EvidenceController(Controller):
         database: NamedDependency[AsyncDatabase],
         genre_entries: NamedDependency[GenreEntryRepository],
         genre_key: FromPath[str],
+        q: FromQuery[str] = "",
         layout: FromQuery[str] = "default",
     ) -> Template:
         """Render detail for a stable public key while preserving the normal-link fallback."""
@@ -500,7 +508,9 @@ class EvidenceController(Controller):
             context={
                 "genre": detail,
                 "layout_key": placement.layout_key,
+                "layout_query": None if layout == "default" else placement.layout_key,
                 "placement": placement,
+                "search_query": q[:500],
             },
         )
 
@@ -601,7 +611,9 @@ async def workspace_context(
         "active_layout": active_layout,
         "genre": genre,
         "layout_key": layout_key,
+        "layout_query": None if layout == "default" else layout_key,
         "layouts": layouts,
+        "public_layouts": tuple(item for item in layouts if item.layout_key in PUBLIC_LAYOUT_KEYS),
         "map": map_view(await database.map_points(layout_key), focus),
         "placement": placement,
         "production_graph": production_graph,
@@ -620,6 +632,7 @@ def detail_template(context: dict[str, object]) -> Template:
         context={
             "genre": context["genre"],
             "layout_key": context["layout_key"],
+            "layout_query": context["layout_query"],
             "placement": context["placement"],
             "search_query": context["search_query"],
         },

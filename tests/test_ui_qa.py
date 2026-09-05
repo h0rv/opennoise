@@ -19,6 +19,10 @@ class UiQaTests(unittest.TestCase):
         self.assertNotIn("<canvas", first.casefold())
         self.assertNotIn("player", first.casefold())
         self.assertNotIn("preview", first.casefold())
+        self.assertEqual(first.count('id="semantic-map"'), 1)
+        self.assertEqual(first.count('id="layout-lenses"'), 1)
+        for layout_key in ("public", "public-direct", "public-community", "public-taxonomy"):
+            self.assertIn(f'href="/?layout={layout_key}"', first)
 
 
 if __name__ == "__main__":

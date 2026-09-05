@@ -1,7 +1,7 @@
 <main id="map" aria-label="Music map" data-map-view="{{ map_view_mode | default('public') }}">
 <nav id="map-view-switch" aria-label="Map view">
   <a{% if map_view_mode | default('public') == 'public' %} aria-current="page"{% endif %}
-     href="/?view=public{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Public</a>
+     href="/?view=public{% if layout_query %}&amp;layout={{ layout_query }}{% endif %}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Public</a>
   <a{% if map_view_mode | default('public') == 'historical' %} aria-current="page"{% endif %}
      href="/?view=historical{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">6,291</a>
 </nav>
@@ -29,7 +29,7 @@
   {% endif %}
 {% else %}
 <div id="semantic-map" role="application" aria-label="Interactive semantic music map"
-     data-graph-url="/api/map" data-selected-genre="{{ map.focused_entity_id or '' }}"
+     data-graph-url="/api/map{% if layout_query %}?layout={{ layout_query }}{% endif %}" data-selected-genre="{{ map.focused_entity_id or '' }}"
      aria-describedby="map-pan-help"></div>
 <svg id="plot" class="map-fallback" role="img" aria-label="Genre map. Enable JavaScript for the interactive map."
      viewBox="{% if production_graph %}0 0 1 1{% else %}{{ map.view_box }}{% endif %}" width="{{ map.view_width }}" height="{{ map.view_height }}"
@@ -51,11 +51,11 @@
   {% for point in map.points %}
   <a id="map-point-{{ point.entity_id }}" class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
      data-genre-id="{{ point.entity_id }}"
-     href="/genres/{{ point.entity_id }}{% if search_query %}?q={{ search_query | urlencode }}{% endif %}"
+     href="/genres/{{ point.entity_id }}{% if layout_query %}?layout={{ layout_query }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}{% elif search_query %}?q={{ search_query | urlencode }}{% endif %}"
      aria-label="{{ point.name }}{% if point.entity_id == map.focused_entity_id %}, details open{% else %}, open details{% endif %}"
      {% if point.entity_id == map.focused_entity_id %}aria-current="location"{% endif %}
-     hx-get="/fragments/genres/{{ point.entity_id }}" hx-target="#genre-detail-slot"
-     hx-swap="innerHTML" hx-push-url="/genres/{{ point.entity_id }}{% if search_query %}?q={{ search_query | urlencode }}{% endif %}"
+     hx-get="/fragments/genres/{{ point.entity_id }}{% if layout_query %}?layout={{ layout_query }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}{% elif search_query %}?q={{ search_query | urlencode }}{% endif %}" hx-target="#genre-detail-slot"
+     hx-swap="innerHTML" hx-push-url="/genres/{{ point.entity_id }}{% if layout_query %}?layout={{ layout_query }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}{% elif search_query %}?q={{ search_query | urlencode }}{% endif %}"
      hx-sync="#search:abort">
     <title>{{ point.name }}</title>
     <circle cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"

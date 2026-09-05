@@ -36,13 +36,14 @@ class AppTests(unittest.TestCase):
         self.assertIn('<main id="map"', response.text)
         self.assertNotIn("<h1", response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=9", response.text)
+        self.assertIn("/static/app.css?v=10", response.text)
         self.assertIn("cytoscape-3.34.0.min.js", response.text)
         self.assertIn("semantic-map.js", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertNotIn("6291", response.text)
         self.assertIn('data-map-view="public"', response.text)
         self.assertIn('href="/?view=historical"', response.text)
+        self.assertEqual(response.text.count('id="semantic-map"'), 1)
 
     def test_historical_view_is_addressable_but_never_substitutes_public_data(self) -> None:
         response = self.client.get("/", params={"view": "historical"})
@@ -414,9 +415,9 @@ class PopulatedAppTests(unittest.TestCase):
             "/fragments/workspace", params={"focus": "1", "layout": "classic"}
         )
 
-        self.assertIn('href="/genres/1?q=idm"', search.text)
+        self.assertIn('href="/genres/1?layout=classic&amp;q=idm"', search.text)
         self.assertIn('id="semantic-map"', selected.text)
-        self.assertIn('href="/" aria-label="Close IDM"', selected.text)
+        self.assertIn('href="/?layout=classic" aria-label="Close IDM"', selected.text)
 
     def test_stable_public_genre_key_has_full_and_partial_routes(self) -> None:
         encoded_key = "wikidata%3Agenre%3AQ1"

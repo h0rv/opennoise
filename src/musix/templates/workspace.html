@@ -1,12 +1,21 @@
 <section id="workspace">
+{% if map_view_mode | default('public') == 'public' and public_layouts | length > 1 %}
+<nav id="layout-lenses" aria-label="Public map layout">
+{% for lens in public_layouts %}
+<a href="{% if genre %}/genres/{{ genre.entity_id }}{% else %}/{% endif %}?layout={{ lens.layout_key }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}"
+   {% if lens.layout_key == layout_key %}aria-current="page"{% endif %}>{{ lens.label }}</a>
+{% endfor %}
+</nav>
+{% endif %}
 {% include "map.html" %}
 <section id="genre-detail-slot" aria-live="polite">{% if genre %}{% include "genre_detail.html" %}{% endif %}</section>
 <form id="search" role="search" action="/fragments/search" method="get">
 <label class="sr-only" for="query">Artist or genre</label>
+{% if layout_query %}<input name="layout" type="hidden" value="{{ layout_query }}">{% endif %}
 <input id="query" name="q" type="search" placeholder="Artist or genre" autocomplete="off"
        value="{{ search_query }}" hx-get="/fragments/search"
        hx-trigger="input changed delay:160ms" hx-target="#results"
-       hx-swap="innerHTML" hx-sync="this:replace">
+       hx-swap="innerHTML" hx-include="#search [name='layout']" hx-sync="this:replace">
 </form>
 <aside id="results" aria-label="Search results">{% include "search_results.html" %}</aside>
 </section>
