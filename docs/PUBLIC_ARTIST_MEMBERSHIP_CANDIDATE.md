@@ -11,9 +11,10 @@ and neighbours are not accepted as construction inputs.
 
 The artifact has three disjoint states.
 
-- `directly_observed_memberships` are positive direct `musicbrainz_tag` or
-  `wikidata_p136` observations. They are observations, not an inferred
-  serving-model claim.
+- `directly_observed_memberships` are positive direct source claims. Each path
+  retains one or more typed `musicbrainz_tag` or `wikidata_p136` evidence
+  facets, so a union of sources merges without losing provenance. They are
+  observations, not an inferred serving-model claim.
 - `propagated_candidates` are exactly one-hop paths. Every path contains both a
   direct source/facet anchor and a privacy-safe aggregate co-listen facet;
   a co-listen edge by itself cannot create an artist-to-genre entry.

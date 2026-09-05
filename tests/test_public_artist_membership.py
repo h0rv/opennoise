@@ -178,6 +178,55 @@ class PublicArtistMembershipTests(unittest.TestCase):
         self.assertEqual(first.coverage.no_public_genre_identity_count, 6289)
         self.assertEqual(first.coverage.no_eligible_aggregate_candidate_count, 1)
 
+    def test_mixed_direct_facets_merge_into_one_explainable_candidate(self) -> None:
+        base = _model_input(pairs=False)
+        model_input = base.model_copy(
+            update={
+                "artifacts": (
+                    *base.artifacts,
+                    PublicArtifact(
+                        source="wikidata",
+                        snapshot="public-fixture",
+                        artifact_key="wikidata-public.json",
+                        content_sha256="f" * 64,
+                        export_allowed=True,
+                    ),
+                ),
+                "direct_memberships": (
+                    *base.direct_memberships,
+                    DirectMembershipEvidence(
+                        artist_id="artist:alpha",
+                        genre_id="genre:jazz",
+                        facet="wikidata_p136",
+                        value=2.0,
+                        evidence_ref="wikidata:p136:alpha:jazz",
+                    ),
+                ),
+            }
+        )
+        approved = ApprovedPublicMembershipInput(
+            public_model_input=model_input,
+            input_file_sha256="d" * 64,
+            public_model_input_sha256=_sha256(model_input.model_dump(mode="json")),
+            row_export_policy_sha256="e" * 64,
+            declared_direct_row_count=2,
+            declared_aggregate_row_count=0,
+        )
+        artifact = build_public_artist_membership_candidate(
+            _universe(),
+            approved,
+            PublicArtistMembershipSourcePolicy(
+                direct_sources=("musicbrainz", "wikidata"),
+                direct_facets=("musicbrainz_tag", "wikidata_p136"),
+            ),
+        )
+        candidate = artifact.directly_observed_memberships[0]
+        self.assertEqual(candidate.kind, "direct_source_claim")
+        self.assertEqual(
+            tuple(item.facet for item in candidate.paths[0].evidence),
+            ("musicbrainz_artist_genre_tag", "wikidata_p136"),
+        )
+
     def test_normalized_name_collisions_abstain_without_last_writer_wins_assignment(self) -> None:
         artifact = build_public_artist_membership_candidate(
             _universe(collision=True),

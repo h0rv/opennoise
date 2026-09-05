@@ -42,9 +42,9 @@ The adapter receipt file SHA-256 is
 `91e03014dbe0a79673d01f83d93471f195ab0d631d443a45cdd0439b9ccd28ab`; its
 approved-input model SHA-256 is
 `9fed261e9218ad5ff322c344ffdb9560bfba2ec994a37077a8af985075271285`.
-The output logical SHA-256 is `6cbb830c854ca6171086416baa606bf73adc711f55ce2ef6c0704dac76ecf671`.
+The output logical SHA-256 is `a951e546c4919a69ef3c1454364e27e261acdd7561420fbfcac1b81388d061e4`.
 The canonical artifact file SHA-256 is
-`846d5c37bc36e4ea3aaefe4209c39d17e28c074b52d7cd621caf91f63b16fd97`.
+`1f4c6a787e4610a8dd42864cbd1566e5608307d5956fcee9a357b2af136c85a1`.
 
 ## Compatibility-only historical evaluation
 

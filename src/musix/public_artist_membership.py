@@ -34,8 +34,9 @@ _PUBLICATION_PREFIX = "public-artist-membership-candidates/sha256"
 
 type DirectSource = Literal["musicbrainz", "wikidata"]
 type DirectFacet = Literal["musicbrainz_tag", "wikidata_p136"]
-type DirectCandidateKind = Literal["direct_musicbrainz_tag", "direct_wikidata_p136"]
-type CandidateKind = DirectCandidateKind | Literal["aggregate_co_listen_candidate"]
+type DirectEvidence = tuple[DirectFacet, tuple[str, ...], float]
+type DirectSeed = tuple[str, float, tuple[DirectEvidence, ...]]
+type CandidateKind = Literal["direct_source_claim", "aggregate_co_listen_candidate"]
 type CandidateFacet = Literal[
     "musicbrainz_artist_genre_tag",
     "wikidata_p136",
@@ -253,41 +254,31 @@ class CandidatePath(StrictFrozenModel):
     """One direct observation or one bounded aggregate path."""
 
     kind: CandidateKind
-    direct_facet: DirectFacet
     seed_artist_id: str = Field(min_length=1, max_length=200)
     listener_day_support: int | None = Field(default=None, gt=0)
     supporting_windows: int | None = Field(default=None, gt=0)
-    evidence: tuple[CandidateEvidence, ...] = Field(min_length=1, max_length=2)
+    evidence: tuple[CandidateEvidence, ...] = Field(min_length=1, max_length=3)
 
     @model_validator(mode="after")
     def require_kind_specific_evidence(self) -> CandidatePath:
         """Require direct anchors for every propagated path."""
         facets = tuple(item.facet for item in self.evidence)
-        direct_evidence_facet: CandidateFacet = (
-            "musicbrainz_artist_genre_tag"
-            if self.direct_facet == "musicbrainz_tag"
-            else "wikidata_p136"
-        )
-        expected_direct_kind: DirectCandidateKind = (
-            "direct_musicbrainz_tag"
-            if self.direct_facet == "musicbrainz_tag"
-            else "direct_wikidata_p136"
-        )
-        if self.kind == expected_direct_kind:
+        direct_evidence_facets = {
+            "musicbrainz_artist_genre_tag",
+            "wikidata_p136",
+        }
+        if self.kind == "direct_source_claim":
             if self.listener_day_support is not None or self.supporting_windows is not None:
                 raise ValueError("direct tag paths cannot contain aggregate support")
-            if facets != (direct_evidence_facet,):
-                raise ValueError("direct paths require exactly one declared direct evidence facet")
-        elif self.kind in {"direct_musicbrainz_tag", "direct_wikidata_p136"}:
-            raise ValueError("direct candidate kind must match declared direct facet")
+            if not set(facets) <= direct_evidence_facets or not set(facets):
+                raise ValueError("direct paths require typed direct evidence facets")
         elif (
             self.listener_day_support is None
             or self.supporting_windows is None
-            or set(facets)
-            != {
-                direct_evidence_facet,
-                "listenbrainz_privacy_safe_aggregate_co_listen",
-            }
+            or not (set(facets) - {"listenbrainz_privacy_safe_aggregate_co_listen"})
+            <= direct_evidence_facets
+            or not set(facets) & direct_evidence_facets
+            or "listenbrainz_privacy_safe_aggregate_co_listen" not in facets
         ):
             raise ValueError("aggregate paths require direct and aggregate evidence facets")
         return self
@@ -300,7 +291,6 @@ class ArtistGenreMembershipCandidate(StrictFrozenModel):
     genre_id: str = Field(min_length=1, max_length=200)
     source_item_id: str = Field(min_length=1, max_length=200)
     kind: CandidateKind
-    direct_facet: DirectFacet
     score: FiniteFloat = Field(gt=0.0, le=1.0)
     paths: tuple[CandidatePath, ...] = Field(min_length=1, max_length=10_000)
 
@@ -397,10 +387,7 @@ class PublicArtistMembershipCandidateArtifact(StrictFrozenModel):
         universe_ids = tuple(item.source_item_id for item in self.name_universe.names)
         if disposition_ids != universe_ids:
             raise ValueError("dispositions must preserve the complete name-universe order")
-        if any(
-            item.kind not in {"direct_musicbrainz_tag", "direct_wikidata_p136"}
-            for item in self.directly_observed_memberships
-        ):
+        if any(item.kind != "direct_source_claim" for item in self.directly_observed_memberships):
             raise ValueError("directly observed memberships must contain direct observations")
         if any(item.kind != "aggregate_co_listen_candidate" for item in self.propagated_candidates):
             raise ValueError("propagated candidates must contain one-hop aggregate paths")
@@ -524,7 +511,7 @@ def _require_public_inputs(
     if len(name_universe.names) != policy.expected_name_count:
         raise ValueError("name universe does not match the fixed public candidate scope")
     sources = {item.source for item in inputs.artifacts}
-    allowed = set(policy.allowed_direct_sources)
+    allowed: set[str] = set(policy.allowed_direct_sources)
     if policy.include_aggregate_candidates:
         allowed.add(policy.aggregate_source)
     if not sources <= allowed:
@@ -578,10 +565,6 @@ def _unambiguous_genre_owners(
     )
 
 
-def _direct_candidate_kind(facet: DirectFacet) -> DirectCandidateKind:
-    return "direct_musicbrainz_tag" if facet == "musicbrainz_tag" else "direct_wikidata_p136"
-
-
 def _direct_candidate_evidence_facet(facet: DirectFacet) -> CandidateFacet:
     return "musicbrainz_artist_genre_tag" if facet == "musicbrainz_tag" else "wikidata_p136"
 
@@ -591,63 +574,72 @@ def _direct_candidates(
     inputs: PublicModelInput,
 ) -> tuple[
     dict[str, list[ArtistGenreMembershipCandidate]],
-    dict[str, list[tuple[str, float, tuple[str, ...], DirectFacet]]],
+    dict[str, list[DirectSeed]],
 ]:
     source_item_for_genre, _ambiguous_items = _unambiguous_genre_owners(matched)
     raw: dict[tuple[str, str], float] = defaultdict(float)
-    refs: dict[tuple[str, str], set[str]] = defaultdict(set)
-    facets: dict[tuple[str, str], set[DirectFacet]] = defaultdict(set)
+    refs: dict[tuple[str, str, DirectFacet], set[str]] = defaultdict(set)
+    facet_values: dict[tuple[str, str, DirectFacet], float] = defaultdict(float)
     for evidence in inputs.direct_memberships:
         if evidence.genre_id not in source_item_for_genre:
             continue
         key = (evidence.artist_id, evidence.genre_id)
         raw[key] += float(evidence.value)
-        refs[key].add(evidence.evidence_ref)
-        facets[key].add(evidence.facet)
+        direct_facet: DirectFacet = evidence.facet
+        refs[(*key, direct_facet)].add(evidence.evidence_ref)
+        facet_values[(*key, direct_facet)] += float(evidence.value)
     maxima: dict[str, float] = defaultdict(float)
     for (_artist_id, genre_id), value in raw.items():
         maxima[genre_id] = max(maxima[genre_id], value)
     candidates: dict[str, list[ArtistGenreMembershipCandidate]] = defaultdict(list)
-    seeds: dict[str, list[tuple[str, float, tuple[str, ...], DirectFacet]]] = defaultdict(list)
+    seeds: dict[str, list[DirectSeed]] = defaultdict(list)
     for (artist_id, genre_id), value in sorted(raw.items()):
         source_item_id = source_item_for_genre[genre_id]
-        evidence_refs = tuple(sorted(refs[(artist_id, genre_id)]))
-        pair_facets = facets[(artist_id, genre_id)]
-        if len(pair_facets) != 1:
-            raise ValueError("one artist/genre candidate cannot mix direct evidence facets")
-        direct_facet = next(iter(pair_facets))
+        pair_facets = sorted(
+            direct_facet
+            for candidate_artist, candidate_genre, direct_facet in facet_values
+            if candidate_artist == artist_id and candidate_genre == genre_id
+        )
+        direct_evidence = tuple(
+            (
+                direct_facet,
+                tuple(sorted(refs[(artist_id, genre_id, direct_facet)])),
+                facet_values[(artist_id, genre_id, direct_facet)],
+            )
+            for direct_facet in pair_facets
+        )
+        evidence = tuple(
+            CandidateEvidence(
+                facet=_direct_candidate_evidence_facet(direct_facet),
+                evidence_refs=evidence_refs,
+                raw_value=value,
+            )
+            for direct_facet, evidence_refs, value in direct_evidence
+        )
         candidates[source_item_id].append(
             ArtistGenreMembershipCandidate(
                 artist_id=artist_id,
                 genre_id=genre_id,
                 source_item_id=source_item_id,
-                kind=_direct_candidate_kind(direct_facet),
-                direct_facet=direct_facet,
+                kind="direct_source_claim",
                 score=round(value / maxima[genre_id], 12),
                 paths=(
                     CandidatePath(
-                        kind=_direct_candidate_kind(direct_facet),
-                        direct_facet=direct_facet,
+                        kind="direct_source_claim",
                         seed_artist_id=artist_id,
-                        evidence=(
-                            CandidateEvidence(
-                                facet=_direct_candidate_evidence_facet(direct_facet),
-                                evidence_refs=evidence_refs,
-                                raw_value=value,
-                            ),
-                        ),
+                        evidence=evidence,
                     ),
                 ),
             )
         )
-        seeds[artist_id].append((genre_id, value, evidence_refs, direct_facet))
+        seeds[artist_id].append((genre_id, value, direct_evidence))
     return candidates, seeds
 
 
 def _aggregate_candidates(  # noqa: C901
     *,
     direct: dict[str, list[ArtistGenreMembershipCandidate]],
-    seeds: dict[str, list[tuple[str, float, tuple[str, ...]]]],
+    seeds: dict[str, list[DirectSeed]],
     matched: dict[str, tuple[str, ...]],
     inputs: PublicModelInput,
     policy: PublicArtistMembershipSourcePolicy,
@@ -674,7 +666,7 @@ def _aggregate_candidates(  # noqa: C901
             (pair.left_artist_id, pair.right_artist_id),
             (pair.right_artist_id, pair.left_artist_id),
         ):
-            for genre_id, tag_value, tag_refs, direct_facet in seeds.get(seed_artist, ()):
+            for genre_id, tag_value, direct_evidence in seeds.get(seed_artist, ()):
                 examined += 1
                 if examined > policy.max_candidate_paths:
                     raise ValueError("aggregate candidate paths exceed source-policy bound")
@@ -685,15 +677,17 @@ def _aggregate_candidates(  # noqa: C901
                 paths[key].append(
                     CandidatePath(
                         kind="aggregate_co_listen_candidate",
-                        direct_facet=direct_facet,
                         seed_artist_id=seed_artist,
                         listener_day_support=pair.listener_day_support,
                         supporting_windows=pair.supporting_windows,
                         evidence=(
-                            CandidateEvidence(
-                                facet=_direct_candidate_evidence_facet(direct_facet),
-                                evidence_refs=tag_refs,
-                                raw_value=tag_value,
+                            *tuple(
+                                CandidateEvidence(
+                                    facet=_direct_candidate_evidence_facet(direct_facet),
+                                    evidence_refs=tag_refs,
+                                    raw_value=facet_value,
+                                )
+                                for direct_facet, tag_refs, facet_value in direct_evidence
                             ),
                             CandidateEvidence(
                                 facet="listenbrainz_privacy_safe_aggregate_co_listen",
@@ -721,7 +715,6 @@ def _aggregate_candidates(  # noqa: C901
                     genre_id=genre_id,
                     source_item_id=source_item_id,
                     kind="aggregate_co_listen_candidate",
-                    direct_facet=paths[(artist_id, genre_id)][0].direct_facet,
                     score=round(value / maxima[genre_id], 12),
                     paths=tuple(
                         sorted(
@@ -729,7 +722,7 @@ def _aggregate_candidates(  # noqa: C901
                             key=lambda item: (
                                 item.seed_artist_id,
                                 item.listener_day_support or 0,
-                                item.evidence[1].evidence_refs,
+                                item.evidence[-1].evidence_refs,
                             ),
                         )
                     ),
