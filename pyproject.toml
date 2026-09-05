@@ -118,6 +118,7 @@ evaluate-historical-hierarchy-gate = "python scripts/evaluate_historical_hierarc
 build-metadata-representatives = "python scripts/build_metadata_representatives.py $MUSIX_PUBLIC_DATABASE --output $MUSIX_METADATA_REPRESENTATIVES_OUTPUT"
 publish-metadata-representatives = "python scripts/publish_metadata_representatives.py $MUSIX_METADATA_REPRESENTATIVES_ARTIFACT --object-store $MUSIX_METADATA_REPRESENTATIVES_OBJECT_STORE --output $MUSIX_METADATA_REPRESENTATIVES_RECEIPT"
 build-genre-seed-universe = "musix build-genre-seed-universe --seed-artifact $MUSIX_H2_SEED_ARTIFACT --catalog-database $MUSIX_PUBLIC_DATABASE --output $MUSIX_GENRE_SEED_UNIVERSE_OUTPUT"
+build-genre-seed-public-taxonomy = "python scripts/build_genre_seed_public_taxonomy.py --seed-artifact $MUSIX_H2_SEED_ARTIFACT --public-catalog-database $MUSIX_PUBLIC_DATABASE --output $MUSIX_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT"
 
 [tool.poe.tasks.historical-signal-release]
 sequence = [
