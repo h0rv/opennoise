@@ -74,7 +74,7 @@ def _clone_file(source: Path, destination: Path) -> None:
             fcntl.ioctl(destination_stream.fileno(), 0x40049409, source_stream.fileno())
     except OSError:
         destination.unlink(missing_ok=True)
-        _clone_file(source, destination)
+        shutil.copyfile(source, destination)
 
 
 def _copy_exact(source: Path, destination: Path, expected_sha256: str) -> None:
