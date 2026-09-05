@@ -1,0 +1,32 @@
+{
+  "revision": "artist-membership-judgments-v1",
+  "purpose": "user_authored_fixture_calibration_not_independent_public_gold",
+  "independent_public_gold_labels": false,
+  "source": {
+    "kind": "user_authored_fixture",
+    "source_ref": "repository:tests/fixtures/artist_membership_judgments_v1.json",
+    "description": "Small user-authored fixture for deterministic calibration only; it is not an independent public gold set.",
+    "records_sha256": "270033a037c61866e6b6dd346451614aea4512199633098f858b5b9eee65eb1f",
+    "excludes_musicbrainz_supplementary_genres": true,
+    "excludes_historical_every_noise_assignments": true
+  },
+  "split": {
+    "revision": "sha256-judgment-id-modulo-10-v1",
+    "held_out_buckets": [8, 9],
+    "strata": [
+      {"profile_kind": "direct", "source_key": "musicbrainz", "facet": "musicbrainz_tag", "expected_count": 2},
+      {"profile_kind": "direct", "source_key": "wikidata", "facet": "wikidata_p136", "expected_count": 2},
+      {"profile_kind": "one_hop", "source_key": "listenbrainz", "facet": "listenbrainz_one_hop", "expected_count": 4}
+    ]
+  },
+  "judgments": [
+    {"judgment_id": "mb-positive-1", "artist_id": "artist:x", "genre_id": "genre:a", "profile_kind": "direct", "expected_member": true, "source_key": "musicbrainz", "facet": "musicbrainz_tag", "split_bucket": 9},
+    {"judgment_id": "mb-negative-1", "artist_id": "artist:x", "genre_id": "genre:c", "profile_kind": "direct", "expected_member": false, "source_key": "musicbrainz", "facet": "musicbrainz_tag", "split_bucket": 8},
+    {"judgment_id": "wd-positive-4", "artist_id": "artist:y", "genre_id": "genre:b", "profile_kind": "direct", "expected_member": true, "source_key": "wikidata", "facet": "wikidata_p136", "split_bucket": 8},
+    {"judgment_id": "wd-negative-8", "artist_id": "artist:y", "genre_id": "genre:a", "profile_kind": "direct", "expected_member": false, "source_key": "wikidata", "facet": "wikidata_p136", "split_bucket": 8},
+    {"judgment_id": "lb-positive-a-4", "artist_id": "artist:z", "genre_id": "genre:a", "profile_kind": "one_hop", "expected_member": true, "source_key": "listenbrainz", "facet": "listenbrainz_one_hop", "split_bucket": 8},
+    {"judgment_id": "lb-negative-a-2", "artist_id": "artist:x", "genre_id": "genre:a", "profile_kind": "one_hop", "expected_member": false, "source_key": "listenbrainz", "facet": "listenbrainz_one_hop", "split_bucket": 8},
+    {"judgment_id": "lb-positive-b-0", "artist_id": "artist:z", "genre_id": "genre:b", "profile_kind": "one_hop", "expected_member": true, "source_key": "listenbrainz", "facet": "listenbrainz_one_hop", "split_bucket": 8},
+    {"judgment_id": "lb-negative-b-3", "artist_id": "artist:x", "genre_id": "genre:b", "profile_kind": "one_hop", "expected_member": false, "source_key": "listenbrainz", "facet": "listenbrainz_one_hop", "split_bucket": 8}
+  ]
+}

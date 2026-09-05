@@ -8,13 +8,16 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from musix.artist_membership_evaluation import evaluate_artist_memberships, load_judgment_set
 from musix.pipeline.public_release import PublicReleaseResult
 from musix.pipeline.public_release_custody import (
     DatabaseCounts,
     PublicReleaseCustodyError,
     PublicReleaseCustodySettings,
+    _verify_objective_evidence,
     custody_public_release,
 )
+from tests.test_public_model_gate import _artifact
 
 
 class PublicReleaseCustodyTests(unittest.TestCase):
@@ -109,6 +112,49 @@ class PublicReleaseCustodyTests(unittest.TestCase):
             self.assertTrue(
                 (settings.output_directory / "public-release-custody-receipt.json").is_file()
             )
+
+    def test_artist_membership_evidence_binds_judgment_and_model_hashes(self) -> None:
+        judgments_path = Path("tests/fixtures/artist_membership_judgments_v1.json")
+        judgments, judgment_file_sha256 = load_judgment_set(judgments_path)
+        report = evaluate_artist_memberships(
+            _artifact(),
+            judgments,
+            judgment_file_sha256=judgment_file_sha256,
+            model_file_sha256="a" * 64,
+        )
+        release_receipt = PublicReleaseResult(
+            release_id="test",
+            cache_sha256="b" * 64,
+            cache_schema_version=10,
+            serving_schema_version=12,
+            model_logical_sha256=report.model_output_sha256,
+            model_file_sha256="a" * 64,
+            recorded_model_file_sha256="c" * 64,
+            model_input_sha256="d" * 64,
+            model_settings_sha256="e" * 64,
+            input_artifacts=62,
+            representative_items=3344,
+            profile_memberships=26525,
+            neighbor_rows=34348,
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            copied_judgments = root / "artist-membership-judgments-v1.json"
+            copied_judgments.write_bytes(judgments_path.read_bytes())
+            evaluation_path = root / "artist-membership-evaluation-v1.json"
+            evaluation_path.write_text(report.model_dump_json(), encoding="utf-8")
+            _verify_objective_evidence(
+                (
+                    ("artist-membership-evaluation", evaluation_path),
+                    ("artist-membership-judgments", copied_judgments),
+                ),
+                release_receipt,
+            )
+            copied_judgments.write_text("{}", encoding="utf-8")
+            with self.assertRaisesRegex(PublicReleaseCustodyError, "does not bind"):
+                _verify_objective_evidence(
+                    (("artist-membership-judgments", copied_judgments),), release_receipt
+                )
 
 
 if __name__ == "__main__":

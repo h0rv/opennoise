@@ -60,6 +60,11 @@ The final report is the release decision. It names every input and derived
 artifact by hash. A successful build does not authorize serving a different
 database or map path.
 
+`docs/ARTIST_MEMBERSHIP_EVALUATION.md` describes the optional, release-bound
+artist-membership calibration evidence. It is deliberately not represented as
+an independent production-quality claim until a suitable public gold set is
+available.
+
 ## Serving
 
 ```sh

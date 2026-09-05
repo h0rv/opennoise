@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field
 
+from musix.artist_membership_evaluation import ArtistMembershipEvaluationReport
 from musix.metadata_representatives import MetadataRepresentativeArtifact
 from musix.ml.public_model_gate import PublicModelGateReport
 from musix.models import FrozenModel
@@ -54,6 +55,10 @@ _EVIDENCE_FILES: Final[tuple[tuple[str, str], ...]] = (
 _OBJECTIVE_EVIDENCE_FILES: Final[tuple[tuple[str, str], ...]] = (
     ("public-model-gate", "public-model-gate-v1.json"),
     ("metadata-representatives", "metadata-representatives-v1.json"),
+)
+_OPTIONAL_ARTIST_MEMBERSHIP_EVIDENCE_FILES: Final[tuple[tuple[str, str], ...]] = (
+    ("artist-membership-evaluation", "artist-membership-evaluation-v1.json"),
+    ("artist-membership-judgments", "artist-membership-judgments-v1.json"),
 )
 
 
@@ -123,9 +128,11 @@ class PublicReleaseCustodyReceipt(FrozenModel):
     source_storage_mode: Literal["copy", "reference"]
     evidence: tuple[EvidenceBinding, ...] = Field(min_length=1, max_length=16)
     objective_gate_state: Literal["present", "absent"]
-    objective_gate_evidence: tuple[EvidenceBinding, ...] = Field(max_length=2)
+    objective_gate_evidence: tuple[EvidenceBinding, ...] = Field(max_length=4)
     public_model_gate_sha256: Sha256 | None = None
     metadata_representatives_sha256: Sha256 | None = None
+    artist_membership_evaluation_sha256: Sha256 | None = None
+    artist_membership_judgments_sha256: Sha256 | None = None
     model_logical_sha256: Sha256
     model_file_sha256: Sha256
     production_map_sha256: Sha256
@@ -313,21 +320,44 @@ def _evidence_bindings(
 def _objective_evidence_files(
     settings: PublicReleaseCustodySettings,
 ) -> tuple[tuple[str, str], ...]:
-    """Require both objective artifacts when an objective-gate directory is present."""
+    """Require base gates together and artist calibration report/source as an optional pair."""
     directory = settings.objective_gates_directory
     if directory is None:
         return ()
     paths = tuple(directory / filename for _, filename in _OBJECTIVE_EVIDENCE_FILES)
     present = tuple(path.is_file() for path in paths)
+    artist_paths = tuple(
+        directory / filename for _, filename in _OPTIONAL_ARTIST_MEMBERSHIP_EVIDENCE_FILES
+    )
+    artist_present = tuple(path.is_file() for path in artist_paths)
     if any(present) and not all(present):
         missing = ", ".join(
             str(path) for path, exists in zip(paths, present, strict=True) if not exists
         )
         raise PublicReleaseCustodyError(f"objective release evidence is incomplete: {missing}")
-    return _OBJECTIVE_EVIDENCE_FILES if all(present) else ()
+    if any(artist_present) and not all(artist_present):
+        missing = ", ".join(
+            str(path)
+            for path, exists in zip(artist_paths, artist_present, strict=True)
+            if not exists
+        )
+        raise PublicReleaseCustodyError(
+            f"artist membership evaluation evidence is incomplete: {missing}"
+        )
+    if any(artist_present) and not all(present):
+        raise PublicReleaseCustodyError(
+            "artist membership evaluation requires the base objective release evidence"
+        )
+    if not all(present):
+        return ()
+    return (
+        (*_OBJECTIVE_EVIDENCE_FILES, *_OPTIONAL_ARTIST_MEMBERSHIP_EVIDENCE_FILES)
+        if all(artist_present)
+        else _OBJECTIVE_EVIDENCE_FILES
+    )
 
 
-def _verify_objective_evidence(
+def _verify_objective_evidence(  # noqa: C901, PLR0912
     paths: tuple[tuple[str, Path], ...], release_receipt: PublicReleaseResult
 ) -> None:
     """Parse objective reports and bind them to the same public model release."""
@@ -344,13 +374,38 @@ def _verify_objective_evidence(
                     raise PublicReleaseCustodyError(
                         "public model objective gate targets another model"
                     )
-            else:
+            elif name == "metadata-representatives":
                 artifact = MetadataRepresentativeArtifact.model_validate_json(
                     path.read_text(encoding="utf-8")
                 )
                 if artifact.run.output_sha256 != release_receipt.model_logical_sha256:
                     raise PublicReleaseCustodyError(
                         "metadata representatives objective gate targets another model"
+                    )
+            elif name == "artist-membership-evaluation":
+                report = ArtistMembershipEvaluationReport.model_validate_json(
+                    path.read_text(encoding="utf-8")
+                )
+                if not report.passed or not report.stability.exact_replay:
+                    raise PublicReleaseCustodyError(
+                        "artist membership evaluation gate did not pass"
+                    )
+                if (
+                    report.model_file_sha256 != release_receipt.model_file_sha256
+                    or report.model_output_sha256 != release_receipt.model_logical_sha256
+                ):
+                    raise PublicReleaseCustodyError(
+                        "artist membership evaluation targets another model"
+                    )
+            elif name == "artist-membership-judgments":
+                judgment_sha256 = _hash_file(path)[0]
+                evaluation_path = path.parent / "artist-membership-evaluation-v1.json"
+                report = ArtistMembershipEvaluationReport.model_validate_json(
+                    evaluation_path.read_text(encoding="utf-8")
+                )
+                if judgment_sha256 != report.judgment_file_sha256:
+                    raise PublicReleaseCustodyError(
+                        "artist membership evaluation does not bind its judgment bytes"
                     )
         except (OSError, ValueError) as error:
             if isinstance(error, PublicReleaseCustodyError):
@@ -477,6 +532,16 @@ def custody_public_release(
         ),
         metadata_representatives_sha256=(
             evidence_by_name["metadata-representatives"].sha256 if objective_evidence else None
+        ),
+        artist_membership_evaluation_sha256=(
+            evidence_by_name["artist-membership-evaluation"].sha256
+            if "artist-membership-evaluation" in evidence_by_name
+            else None
+        ),
+        artist_membership_judgments_sha256=(
+            evidence_by_name["artist-membership-judgments"].sha256
+            if "artist-membership-judgments" in evidence_by_name
+            else None
         ),
         model_logical_sha256=release_receipt.model_logical_sha256,
         model_file_sha256=evidence_by_name["public-model"].sha256,
