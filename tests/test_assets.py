@@ -36,6 +36,7 @@ class AssetTests(unittest.TestCase):
         self.assertIn("[0, 96, 280, 720][lod]", source)
         self.assertIn("shownLabelCount = accepted", source)
         self.assertIn("overlays.some((overlay) => intersects(bounds", source)
+        self.assertIn("[16, mapElement.clientWidth <= 600 ? 18 : 14, 13, 13][lod]", source)
 
     def test_historical_renderer_uses_bounded_hierarchy_drills_not_global_tiles(self) -> None:
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
@@ -62,7 +63,13 @@ class AssetTests(unittest.TestCase):
 
     def test_semantic_map_script_url_is_versioned_for_deploy_cache_busting(self) -> None:
         template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
-        self.assertIn('src="/static/semantic-map.js?v=14"', template)
+        self.assertIn('src="/static/semantic-map.js?v=17"', template)
+
+    def test_mobile_small_community_drill_uses_a_deterministic_label_layout(self) -> None:
+        source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
+        self.assertIn("members.length <= 12", source)
+        self.assertIn("focusedPositionRestore", source)
+        self.assertIn("horizontalSpacing = 360", source)
 
     def test_historical_overview_labels_are_present_in_initial_elements(self) -> None:
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")

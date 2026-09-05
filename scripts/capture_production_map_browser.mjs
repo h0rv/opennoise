@@ -9,7 +9,7 @@
 
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
@@ -24,14 +24,20 @@ const option = (name) => {
   const index = arguments_.indexOf(name);
   return index < 0 ? null : arguments_[index + 1] ?? null;
 };
+let navigationSequence = 0;
 const acceptancePath = option("--acceptance");
 const reportPath = option("--report");
 const capturesDirectory = resolve(option("--captures") ?? "artifacts/production-map/captures");
+const tracePath = process.env.MUSIX_BROWSER_TRACE_PATH;
 const chromePort = 9322;
 const desktop = { name: "desktop", width: 1366, height: 768, mobile: false };
 const mobile = { name: "mobile", width: 390, height: 844, mobile: true };
 const appearances = ["light", "dark", "system"];
 const sleep = (milliseconds) => new Promise((resolve_) => setTimeout(resolve_, milliseconds));
+const chromeCleanupTimeoutMs = 5_000;
+const trace = async (stage) => {
+  if (tracePath) await appendFile(tracePath, `${new Date().toISOString()} ${stage}\n`);
+};
 
 class CdpError extends Error {
   constructor(prefix, detail) {
@@ -168,11 +174,21 @@ async function navigate(cdp, viewport, appearance, javascript = true) {
   await setViewport(cdp, viewport, appearance);
   const target = new URL(url);
   target.searchParams.set("theme", appearance);
-  target.searchParams.set("browser_evidence", "1");
-  await cdp.command("Page.navigate", { url: target.toString() });
-  await cdp.waitFor("document.readyState === 'complete'", "document load");
+  // Give each navigation a distinct URL. A constant query value lets CDP's
+  // ready-state probe observe the completed *previous* document, so mobile
+  // interaction checks accidentally began after a max-zoom LOD sweep.
+  target.searchParams.set("browser_evidence", String(++navigationSequence));
+  const expectedUrl = target.toString();
+  await cdp.command("Page.navigate", { url: expectedUrl });
+  await cdp.waitFor(
+    `document.readyState === 'complete' && location.href === ${JSON.stringify(expectedUrl)}`,
+    "new document load",
+  );
   if (javascript) {
-    await cdp.waitFor("Boolean(window.__musixMap)", "semantic map initialization");
+    await cdp.waitFor(
+      "Boolean(window.__musixMap) && window.__musixMap.container() === document.querySelector('#semantic-map')",
+      "fresh semantic map initialization",
+    );
     await cdp.waitFor("document.documentElement.classList.contains('js-map-ready')", "semantic map visibility");
   }
 }
@@ -191,7 +207,12 @@ function requireNoRuntimeErrors(cdp, context) {
 
 function requirePassingInteractions(interactions) {
   const failed = Object.entries(interactions).flatMap(([name, passed]) => passed ? [] : [name]);
-  if (failed.length) throw new CdpError("interaction/accessibility checks", failed);
+  if (failed.length) {
+    throw new CdpError("interaction/accessibility checks", {
+      failed,
+      touch_diagnostics: interactions.touch_diagnostics ?? null,
+    });
+  }
 }
 
 async function drag(cdp, x, y, toX, toY) {
@@ -221,6 +242,24 @@ async function screenshot(cdp, path) {
   const bytes = Buffer.from(response.data, "base64");
   await writeFile(path, bytes);
   return { path, sha256: createHash("sha256").update(bytes).digest("hex"), byte_size: bytes.length };
+}
+
+const processIsTerminal = (process_) => process_.exitCode !== null || process_.signalCode !== null;
+
+async function stopChrome(process_) {
+  if (processIsTerminal(process_)) return;
+  const exited = new Promise((resolve_) => process_.once("exit", resolve_));
+  process_.kill("SIGTERM");
+  const terminated = await Promise.race([
+    exited.then(() => true),
+    sleep(chromeCleanupTimeoutMs).then(() => false),
+  ]);
+  if (terminated || processIsTerminal(process_)) return;
+  process_.kill("SIGKILL");
+  // Cleanup must never hide a browser assertion. A second bounded wait gives
+  // the killed child time to reap but lets the original validation outcome
+  // remain the one reported if Chromium itself is pathological.
+  await Promise.race([exited, sleep(chromeCleanupTimeoutMs)]);
 }
 
 const state = (cdp) => cdp.evaluate(`(() => { const cy = window.__musixMap; if (!cy) return null; return { pan:cy.pan(), zoom:cy.zoom(), lod:cy.nodes('.overview:visible').length ? 0 : cy.nodes(':visible').max(n => Number(n.data('lodMin'))).value }; })()`, "map state");
@@ -381,16 +420,23 @@ async function overviewFocusRevealsLabel(cdp, mobile = false) {
   await focus();
   const fit = await box(cdp, '[data-map-action="fit"]');
   if (!fit) throw new Error("fit control not found");
-  if (mobile) {
-    await touch(cdp, "touchStart", [[fit.x + fit.width / 2, fit.y + fit.height / 2]]);
-    await touch(cdp, "touchEnd", []);
-  } else await click(cdp, fit.x + fit.width / 2, fit.y + fit.height / 2);
+  // Raw CDP touch packets drive Cytoscape's canvas gestures, but do not
+  // synthesize a DOM click for an HTML button. Use a real pointer click for
+  // the Fit control so the following mobile gesture starts from its actual
+  // overview reset instead of the focused camera's max zoom.
+  await click(cdp, fit.x + fit.width / 2, fit.y + fit.height / 2);
   await cdp.waitFor("!window.__musixMapMetrics.activeCommunityId", "Fit returns overview", 500);
   const fitReset = await resetIsOverview();
+  const fitCamera = await state(cdp);
+  const fitCameraIsUsable = fitCamera.zoom < 4.8;
   const accepted = first.active && first.visible_nodes <= 81 && first.visible_edges === 0
     && first.exact_members && first.exact_labels && first.nonoverlap && first.no_console_error
-    && escape && fitReset;
-  if (!accepted) throw new CdpError("overview community drill", { first, escape, fit: fitReset });
+    && escape && fitReset && fitCameraIsUsable;
+  if (!accepted) {
+    throw new CdpError("overview community drill", {
+      first, escape, fit: fitReset, fit_camera: fitCamera,
+    });
+  }
   return true;
 }
 
@@ -500,10 +546,13 @@ async function desktopInteractions(cdp) {
 async function mobileInteractions(cdp) {
   const map = await box(cdp, "#semantic-map");
   if (!map) throw new Error("mobile map bounding box not found");
-  const x = map.x + map.width * 0.68;
-  const y = map.y + map.height * 0.54;
+  const x = map.x + map.width / 2;
+  const y = map.y + map.height / 2;
   const overview_focus_reveals_label = await overviewFocusRevealsLabel(cdp, true);
   const initial = await state(cdp);
+  if (initial.zoom >= 4.8) {
+    throw new CdpError("mobile post-reset overview camera", initial);
+  }
   await touch(cdp, "touchStart", [[x, y]]);
   await sleep(45);
   await touch(cdp, "touchMove", [[x + 40, y + 55]]);
@@ -551,12 +600,15 @@ async function patchAcceptance(path, measurement) {
 }
 
 async function run() {
+  await trace("launch-chromium");
   const chrome = await launchChrome();
   try {
     await mkdir(capturesDirectory, { recursive: true });
     const desktopPage = await createPage();
     const overviewViewport = arguments_.includes("--mobile-overview") ? mobile : desktop;
+    await trace(`${overviewViewport.name}-navigate-overview`);
     await navigate(desktopPage, overviewViewport, "light");
+    await trace(`${overviewViewport.name}-measure-overview`);
     const desktopOverview = await overviewGeometry(desktopPage);
     const requireOverviewContract = (geometry, name) => {
       const acceptable = geometry.internal_world_aspect >= 1.6
@@ -581,15 +633,19 @@ async function run() {
       return measurement;
     }
     if (overviewViewport !== desktop) await navigate(desktopPage, desktop, "light");
+    await trace("desktop-lod-measurements");
     const desktopLabels = await lodMeasurements(desktopPage);
+    await trace("desktop-interactions");
     const desktopRun = await desktopInteractions(desktopPage);
     const { diagnostics, ...desktopChecks } = desktopRun;
     const desktopFocusPage = await createPage();
+    await trace("desktop-community-drill");
     await navigate(desktopFocusPage, desktop, "light");
     const desktop_overview_community_drill = await overviewFocusRevealsLabel(desktopFocusPage);
     requireNoRuntimeErrors(desktopFocusPage, "desktop community drill");
     desktopFocusPage.close();
     const screenshots = [];
+    await trace("screenshots");
     for (const viewport of [desktop, mobile]) {
       for (const appearance of appearances) {
         // Reuse one page for the six captures. Opening a target per capture is
@@ -603,17 +659,23 @@ async function run() {
       }
     }
     const mobilePage = await createPage();
+    await trace("mobile-navigate-overview");
     await navigate(mobilePage, mobile, "light");
+    await trace("mobile-measure-overview");
     const mobileOverview = await overviewGeometry(mobilePage);
     requireOverviewContract(mobileOverview, "mobile");
+    await trace("mobile-lod-measurements");
     const mobileLabels = await lodMeasurements(mobilePage);
     // Measurements intentionally traverse every level. Reload before interaction
     // proof so the focus test starts at the real overview level.
     await navigate(mobilePage, mobile, "light");
+    await trace("mobile-interactions");
     const mobileChecks = await mobileInteractions(mobilePage);
+    await trace(`mobile-interaction-result ${JSON.stringify(mobileChecks.touch_diagnostics)}`);
     requireNoRuntimeErrors(mobilePage, "mobile interactions");
     mobilePage.close();
     const fallbackPage = await createPage();
+    await trace("fallback");
     const no_javascript_svg_fallback = await fallback(fallbackPage);
     requireNoRuntimeErrors(fallbackPage, "no-JavaScript fallback");
     fallbackPage.close();
@@ -633,12 +695,15 @@ async function run() {
       interaction_diagnostics: diagnostics,
     };
     requirePassingInteractions(measurement.interactions);
+    await trace("write-browser-evidence");
     await writeFile(output, `${JSON.stringify(measurement, null, 2)}\n`);
     if (acceptancePath) await patchAcceptance(acceptancePath, measurement);
     return measurement;
   } finally {
-    chrome.process_.kill("SIGTERM");
-    await new Promise((resolve_) => chrome.process_.once("exit", resolve_));
+    // Chromium may already have exited by the time the CDP pages finish.
+    // stopChrome registers before signalling and bounds every wait so cleanup
+    // cannot suppress an otherwise decisive acceptance result.
+    await stopChrome(chrome.process_);
     // Chromium can leave short-lived utility processes after its parent exits.
     // Cleanup must never mask a validation failure.
     for (let attempt = 0; attempt < 8; attempt += 1) {

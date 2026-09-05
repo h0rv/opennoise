@@ -23,6 +23,7 @@
   let cameraTransition = false;
   let lodFrame = null;
   let overviewZoom = 1;
+  let focusedPositionRestore = new Map();
 
   const say = (message) => {
     const liveStatus = document.querySelector("#map-status");
@@ -680,6 +681,12 @@
     // magic zoom/pan pair: that was the source of the initial narrow layout.
     cy.fit(overview, overviewFitPadding());
     overviewZoom = cy.zoom();
+    // The overview is deliberately a landscape world even on a portrait
+    // viewport.  Its fitted zoom can therefore be below the desktop floor.
+    // Establish the interactive floor *after* that fit, so Cytoscape never
+    // clamps the first camera and leaves legitimate overview nodes outside the
+    // viewport.  Semantic LODs use overviewZoom relatively, not a magic zoom.
+    cy.minZoom(Math.min(0.28, overviewZoom * 0.8));
   };
   const labelBudget = (lod) => (mapElement.clientWidth <= 600
     ? [8, 32, 48, 64][lod]
@@ -845,7 +852,10 @@
       for (const memberId of focusedMembers) visibleIds.add(memberId);
       visibleIds.add(activeCommunity.data("itemId"));
     }
-    const screenLabelSize = [16, mapElement.clientWidth <= 600 ? 18 : 14, 13][lod];
+    // Every semantic zoom level has an explicit screen-space target. Leaving
+    // level 3 undefined propagates NaN into Cytoscape and falls back to tiny
+    // graph-unit text on mobile at the deepest visible level.
+    const screenLabelSize = [16, mapElement.clientWidth <= 600 ? 18 : 14, 13, 13][lod];
     // Cytoscape font and node dimensions live in graph coordinates. Scale
     // those values against the fitted camera so overview labels remain legible
     // on screen instead of collapsing to tiny text in a wide internal extent.
@@ -858,7 +868,7 @@
         node.data(
           "labelSize",
           Boolean(node.data("overview"))
-            ? Math.max(8, Math.min(96, overviewFontSize(Number(node.data("weight"))) / cameraScale))
+            ? Math.max(8, Math.min(256, overviewFontSize(Number(node.data("weight"))) / cameraScale))
             : labelSize,
         );
         if (Boolean(node.data("overview"))) {
@@ -892,6 +902,30 @@
       (collection, id) => collection.union(cy.$id(`genre-${id}`)),
       cy.collection(),
     );
+    if (mapElement.clientWidth <= 600 && members.length <= 12) {
+      // A small community is an explicit semantic cohort. On a narrow screen,
+      // display it as a deterministic two-column local grid so every member
+      // label has its own readable space. This changes presentation positions
+      // only; the source-map coordinates remain the default everywhere else.
+      const ordered = members
+        .toArray()
+        .sort((left, right) => String(left.data("label")).localeCompare(String(right.data("label"))));
+      const horizontalSpacing = 360;
+      const verticalSpacing = 300;
+      focusedPositionRestore = new Map([
+        [node.id(), { ...node.position() }],
+        ...ordered.map((member) => [member.id(), { ...member.position() }]),
+      ]);
+      node.position({ x: 0, y: -verticalSpacing });
+      ordered.forEach((member, index) => {
+        const column = index % 2;
+        const row = Math.floor(index / 2);
+        member.position({
+          x: (column - 0.5) * horizontalSpacing,
+          y: row * verticalSpacing,
+        });
+      });
+    }
     const visible = members.union(node);
     // Keep room for the focused cohort's readable alternate label placements,
     // rather than fitting circles flush to the viewport edge.
@@ -910,9 +944,16 @@
 
   const resetCommunity = (cy, payload) => {
     cameraTransition = true;
+    for (const [id, position] of focusedPositionRestore) cy.$id(id).position(position);
+    focusedPositionRestore = new Map();
     activeCommunity = null;
     selectedNode = null;
     cy.$(":selected").unselect();
+    // Focus hides non-active overview anchors. Cytoscape ignores display:none
+    // nodes when fitting, which otherwise turns the post-drill Fit action into
+    // a max-zoom camera on an empty bound. Reveal the full overview before
+    // deriving its camera; updateLod immediately restores the intended cohort.
+    cy.nodes(".overview").removeClass("lod-hidden");
     fitOverview(cy);
     currentLod = -1;
     cameraTransition = false;
@@ -1036,7 +1077,7 @@
         elements,
         style: stylesheet(),
         layout: { name: "preset", fit: !previous, padding: 72 },
-        minZoom: 0.28,
+        minZoom: 0.05,
         maxZoom: 4.8,
         userPanningEnabled: true,
         userZoomingEnabled: true,
@@ -1104,7 +1145,9 @@
         elements: elementsFor(payload),
         style: stylesheet(),
         layout: { name: "preset", fit: true, padding: 72 },
-        minZoom: 0.28,
+        // fitOverview establishes the per-viewport floor after it has the
+        // actual landscape overview extent.
+        minZoom: 0.05,
         maxZoom: 4.8,
         userPanningEnabled: true,
         userZoomingEnabled: true,
@@ -1176,7 +1219,7 @@
           elements: elementsFor(payload),
           style: stylesheet(),
           layout: { name: "preset", fit: true, padding: 72 },
-          minZoom: 0.28,
+          minZoom: 0.05,
           maxZoom: 4.8,
           userPanningEnabled: true,
           userZoomingEnabled: true,
