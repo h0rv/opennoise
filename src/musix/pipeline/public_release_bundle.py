@@ -71,6 +71,32 @@ _EVIDENCE_DESTINATIONS: Final[dict[str, tuple[Literal["evidence", "objective-gat
     ),
 }
 
+_BASE_EVIDENCE_NAMES: Final[frozenset[str]] = frozenset(
+    {
+        "public-model",
+        "production-map",
+        "production-map-acceptance",
+        "production-map-seed-report",
+        "production-map-browser",
+        "production-map-report",
+        "release-receipt",
+    }
+)
+_OPTIONAL_EVIDENCE_GROUPS: Final[tuple[frozenset[str], ...]] = (
+    frozenset(
+        {"musicbrainz-core-metadata-hydration", "musicbrainz-core-metadata-hydration-report"}
+    ),
+    frozenset({"representative-catalog-candidates", "representative-catalog-candidates-report"}),
+    frozenset(
+        {
+            "open-construction-graph",
+            "open-construction-graph-gate",
+            "open-construction-graph-receipt",
+        }
+    ),
+    frozenset({"phase4-api-source-qa", "phase4-integration-report"}),
+)
+
 
 class PublicReleaseBundleError(ValueError):
     """Report a bundle that cannot reproduce the sealed cache-only release."""
@@ -116,7 +142,7 @@ class PublicReleaseCustodyBundleReceipt(FrozenModel):
             raise ValueError("bundle must contain exactly one cache and custody receipt")
         if kinds.count("release-config") != len(_RELEASE_FILE_NAMES):
             raise ValueError("bundle must contain the complete release configuration")
-        required_evidence = set(_EVIDENCE_DESTINATIONS)
+        required_evidence = _BASE_EVIDENCE_NAMES
         present_evidence = {
             item.restore_path.value
             for item in self.entries
@@ -124,11 +150,7 @@ class PublicReleaseCustodyBundleReceipt(FrozenModel):
         }
         expected_evidence = {path for _, path in _EVIDENCE_DESTINATIONS.values()}
         # Objective gates are either both present or both absent in a custody receipt.
-        required_base = {
-            path
-            for name, (_, path) in _EVIDENCE_DESTINATIONS.items()
-            if name not in {"public-model-gate", "metadata-representatives"}
-        }
+        required_base = {_EVIDENCE_DESTINATIONS[name][1] for name in _BASE_EVIDENCE_NAMES}
         if not required_base <= present_evidence:
             raise ValueError("bundle is missing required release evidence")
         if present_evidence - expected_evidence or not present_evidence <= expected_evidence:
@@ -141,6 +163,12 @@ class PublicReleaseCustodyBundleReceipt(FrozenModel):
             "artist-membership-judgments-v1.json" in present_evidence
         ):
             raise ValueError("bundle artist membership evidence must be present as a pair")
+        present_names = {
+            name for name, (_, path) in _EVIDENCE_DESTINATIONS.items() if path in present_evidence
+        }
+        for group in _OPTIONAL_EVIDENCE_GROUPS:
+            if bool(group & present_names) and not group <= present_names:
+                raise ValueError("bundle optional integrated evidence is incomplete")
         if not required_evidence:  # Keep the static table visibly total for the checker.
             raise ValueError("bundle evidence table is unexpectedly empty")
         return self
@@ -277,19 +305,21 @@ def _custody_evidence(receipt: PublicReleaseCustodyReceipt) -> dict[str, Evidenc
         raise PublicReleaseBundleError(
             "custody receipt evidence names are ambiguous or unsupported"
         )
-    required = {
-        name
-        for name in _EVIDENCE_DESTINATIONS
-        if name not in {"public-model-gate", "metadata-representatives"}
-    }
+    required = _BASE_EVIDENCE_NAMES
     if not required <= set(evidence):
         raise PublicReleaseBundleError("custody receipt is missing release evidence")
     gates = {"public-model-gate", "metadata-representatives"}
     if (gates <= set(evidence)) != (receipt.objective_gate_state == "present"):
         raise PublicReleaseBundleError("custody receipt objective-gate state is inconsistent")
     artist_evidence = {"artist-membership-evaluation", "artist-membership-judgments"}
-    if bool(artist_evidence & set(evidence)) and not artist_evidence <= set(evidence):
+    names = set(evidence)
+    if bool(artist_evidence & names) and not artist_evidence <= names:
         raise PublicReleaseBundleError("custody receipt artist membership evidence is incomplete")
+    for group in _OPTIONAL_EVIDENCE_GROUPS:
+        if bool(group & names) and not group <= names:
+            raise PublicReleaseBundleError(
+                "custody receipt optional integrated evidence is incomplete"
+            )
     return evidence
 
 
