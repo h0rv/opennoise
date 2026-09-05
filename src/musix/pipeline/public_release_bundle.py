@@ -131,7 +131,7 @@ class PublicReleaseCustodyBundleReceipt(FrozenModel):
     entries: tuple[PublicReleaseBundleEntry, ...] = Field(min_length=1, max_length=40)
 
     @model_validator(mode="after")
-    def complete_and_unambiguous(self) -> PublicReleaseCustodyBundleReceipt:
+    def complete_and_unambiguous(self) -> PublicReleaseCustodyBundleReceipt:  # noqa: C901
         """Require a closed, restore-safe set of derived-release members."""
         keys = tuple(item.object.key.value for item in self.entries)
         paths = tuple(item.restore_path.value for item in self.entries)
