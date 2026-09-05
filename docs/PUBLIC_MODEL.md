@@ -61,3 +61,19 @@ direct and one-hop membership components plus ranked similarity scores.
 
 Publication is deterministic for the logical model output. File-level runtime
 measurements are recorded separately because elapsed time and peak memory vary.
+
+## Independent publication gate
+
+Run `poe evaluate-public-model-gate -- data/model/public-model-v1.json` before
+publishing a model. The gate accepts only the typed public sources above and
+rejects historical or Every Noise vocabulary in the artifact. It recomputes
+every directed neighbor score and shared-artist count from the sparse profile
+rows, checks that each neighbor has source references through its common
+memberships, and reports direct versus one-hop coverage.
+
+The report has separate hashes for model evidence, coordinate data, and layout
+version settings. Coordinates therefore cannot be mistaken for evidence or
+for a semantic axis. It also records per-lens coverage and deterministic rerun
+checks. The command reads a bounded JSON artifact and returns nonzero on any
+failed check; its report is suitable for a release cache and does not contain
+the model blob itself.
