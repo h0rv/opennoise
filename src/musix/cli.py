@@ -8,6 +8,7 @@ import resource
 import sys
 import time
 from contextlib import suppress
+from datetime import datetime
 from pathlib import Path
 
 import httpx
@@ -19,6 +20,7 @@ from musix.catalog.artists import ArtistProjector
 from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
 from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
+from musix.db import Database
 from musix.genre_seed_universe import build_genre_seed_universe, write_genre_seed_universe
 from musix.historical_signal_publication import (
     build_historical_signal_publication,
@@ -52,6 +54,13 @@ from musix.open_construction_graph import (
 )
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
+from musix.representative_catalog_ranking import (
+    RepresentativeCatalogRankingConfig,
+    RepresentativeCatalogRankingReport,
+    RepresentativeCatalogRankingRepository,
+    publish_representative_catalog_ranking,
+    write_representative_catalog_ranking,
+)
 from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter
 from musix.sources.musicbrainz import (
     MusicBrainzArtistDumpAdapter,
@@ -316,6 +325,40 @@ def _evaluate_musicbrainz_research_graph(args: argparse.Namespace) -> int:
     return 0
 
 
+def _build_representative_catalog_candidates(args: argparse.Namespace) -> int:
+    """Rank evidence-backed release-group candidates without audio or audience inputs."""
+    database = Database(args.database)
+    database.initialize()
+    config = RepresentativeCatalogRankingConfig(
+        max_genres=args.max_genres,
+        max_candidates_per_genre=args.max_candidates_per_genre,
+        minimum_direct_source_families=args.minimum_direct_source_families,
+    )
+    with database.connect() as connection:
+        artifact, replayed = RepresentativeCatalogRankingRepository(connection).build(
+            run_ref=args.run_ref,
+            genre_ids=args.genre_id,
+            config=config,
+            policy_id=args.policy_id,
+            generated_at=args.generated_at,
+        )
+        connection.commit()
+    digest, size = write_representative_catalog_ranking(artifact, args.output)
+    publication = publish_representative_catalog_ranking(
+        args.output, LocalObjectStore(args.object_store)
+    )
+    report = RepresentativeCatalogRankingReport(
+        artifact_sha256=digest,
+        artifact_byte_size=size,
+        publication=publication,
+        replayed=replayed,
+    )
+    args.report.parent.mkdir(parents=True, exist_ok=True)
+    args.report.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    sys.stdout.write(report.model_dump_json(indent=2) + "\n")
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     """Build the command line parser."""
     settings = Settings()
@@ -381,6 +424,25 @@ def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     hydrate.add_argument("--offline", action="store_true")
     hydrate.add_argument("--database", type=Path)
     hydrate.set_defaults(handler=_hydrate_musicbrainz_releases)
+    representatives = commands.add_parser(
+        "build-representative-catalog-candidates",
+        help=(
+            "rank bounded release-group representative candidates from direct metadata evidence; "
+            "never uses audio, streams, listeners, popularity, or quality data"
+        ),
+    )
+    representatives.add_argument("--database", type=Path, default=settings.database_path)
+    representatives.add_argument("--run-ref", required=True)
+    representatives.add_argument("--policy-id", required=True, type=int)
+    representatives.add_argument("--generated-at", required=True, type=datetime.fromisoformat)
+    representatives.add_argument("--genre-id", action="append", type=int, default=[])
+    representatives.add_argument("--max-genres", type=int, default=100)
+    representatives.add_argument("--max-candidates-per-genre", type=int, default=20)
+    representatives.add_argument("--minimum-direct-source-families", type=int, default=1)
+    representatives.add_argument("--output", required=True, type=Path)
+    representatives.add_argument("--object-store", required=True, type=Path)
+    representatives.add_argument("--report", required=True, type=Path)
+    representatives.set_defaults(handler=_build_representative_catalog_candidates)
     publish_model = commands.add_parser(
         "publish-public-model",
         help="verify and publish a public graph artifact",
@@ -458,7 +520,7 @@ def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     return command_parser
 
 
-def main() -> int:  # noqa: C901, PLR0911
+def main() -> int:  # noqa: C901, PLR0911, PLR0912
     """Run the selected command."""
     args = parser().parse_args()
     match args.command:
@@ -472,6 +534,8 @@ def main() -> int:  # noqa: C901, PLR0911
             return _ingest_source(args)
         case "hydrate-musicbrainz-releases":
             return _hydrate_musicbrainz_releases(args)
+        case "build-representative-catalog-candidates":
+            return _build_representative_catalog_candidates(args)
         case "publish-public-model":
             return _publish_public_model(args)
         case "publish-historical-signal-map":
