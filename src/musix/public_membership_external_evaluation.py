@@ -606,10 +606,7 @@ def _evaluate_once(  # noqa: C901, PLR0915
         [(prediction.genre_ref, prediction.genre_name) for prediction in predictions]
     )
     research_name_map = _unique_name_map(
-        [
-            ("research:" + _normalized_name(reference.genre_name), reference.genre_name)
-            for reference in references
-        ]
+        [(reference.genre_name, reference.genre_name) for reference in references]
     )
     resolved_by_profile: dict[ProfileKind, list[_ResolvedPrediction]] = {
         "direct": [],
