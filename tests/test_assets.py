@@ -50,7 +50,12 @@ class AssetTests(unittest.TestCase):
 
     def test_semantic_map_script_url_is_versioned_for_deploy_cache_busting(self) -> None:
         template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
-        self.assertIn('src="/static/semantic-map.js?v=11"', template)
+        self.assertIn('src="/static/semantic-map.js?v=12"', template)
+
+    def test_historical_overview_labels_are_present_in_initial_elements(self) -> None:
+        source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
+        self.assertIn('const element = (node, position = null, displayLabel = "")', source)
+        self.assertIn("}, item.representative_label ?? item.name);", source)
 
     def test_historical_renderer_reveals_and_measures_its_container_before_drawing(self) -> None:
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")

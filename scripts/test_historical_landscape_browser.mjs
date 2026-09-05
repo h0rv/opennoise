@@ -39,7 +39,7 @@ const payloads = new Map([
   ["/api/historical-signal-map?level=2&parent_id=sub", { hierarchy: [hierarchy("micro", 2, "Microgenre")] }],
   ["/api/historical-signal-map?level=3&parent_id=micro", { nodes: [leaf("Leaf A", 0.1, 0.2), leaf("Leaf B", 0.8, 0.7), leaf("Leaf C", 0.5, 0.4)] }],
 ]);
-const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/app.css"><script src="/cytoscape.js" defer></script><script src="/semantic-map.js?v=11" defer></script></head><body>
+const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/app.css"><script src="/cytoscape.js" defer></script><script src="/semantic-map.js?v=12" defer></script></head><body>
 <section id="workspace"><main id="map" data-map-view="historical"><div id="semantic-map" role="application" data-map-mode="historical" data-graph-url="/api/historical-signal-map?level=0"></div>
 <section id="historical-fallback"><p>Historical compatibility overview</p><ul>${overview.map((node) => `<li><a href="/api/historical-signal-map?level=1&amp;parent_id=${node.hierarchy_id}">${node.representative_label}</a></li>`).join("")}</ul></section>
 <aside id="historical-detail"></aside><div id="map-controls"><button data-map-action="historical-back">Back</button><button data-map-action="zoom-in">+</button><button data-map-action="zoom-out">−</button><button data-map-action="fit">Fit</button><button id="theme-toggle">Dark</button><label for="theme-select">Theme</label><select id="theme-select"><option value="light">Light</option><option value="dark">Dark</option><option value="system">System</option></select></div><p id="map-status" class="sr-only"></p></main>
@@ -140,7 +140,7 @@ try {
     return { nodeCount:nodes.length, canvasNodeCount:nodes.length, canvasCount:canvases.length, labels, columns, width, height, aspect:renderedWidth/renderedHeight };
   })()`);
   const initialRequests = [...requests];
-  const semanticMapAssetLoaded = await cdp.evaluate("performance.getEntriesByType('resource').some(entry => new URL(entry.name).pathname === '/semantic-map.js' && new URL(entry.name).search === '?v=11')");
+  const semanticMapAssetLoaded = await cdp.evaluate("performance.getEntriesByType('resource').some(entry => new URL(entry.name).pathname === '/semantic-map.js' && new URL(entry.name).search === '?v=12')");
   const readyLayout = await cdp.evaluate(`(() => {
     const fallback=document.querySelector('#historical-fallback'); const search=document.querySelector('#search').getBoundingClientRect(); const controls=document.querySelector('#map-controls').getBoundingClientRect();
     const overlap=search.left < controls.right && search.right > controls.left && search.top < controls.bottom && search.bottom > controls.top;

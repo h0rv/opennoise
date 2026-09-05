@@ -75,11 +75,11 @@
       { selector: "node:selected", style: { "background-color": cssValue("--focus"), "border-width": 3, "border-color": cssValue("--focus") } },
       { selector: "edge", style: { width: 1.5, "line-color": cssValue("--similarity"), opacity: 0.65 } },
     ];
-    const element = (node, position = null) => {
+    const element = (node, position = null, displayLabel = "") => {
       const aggregate = Boolean(node.hierarchy_id);
       const identifier = aggregate ? node.hierarchy_id : node.genre_id;
       return {
-      data: { id: `historical-${identifier}`, genreId: aggregate ? node.representative_genre_id : node.genre_id, hierarchyId: node.hierarchy_id ?? null, hierarchyLevel: node.level ?? null, label: node.representative_label ?? node.name, displayLabel: "", weight: node.member_count ?? node.membership_count, overview: aggregate && Number(node.level) === 0 },
+      data: { id: `historical-${identifier}`, genreId: aggregate ? node.representative_genre_id : node.genre_id, hierarchyId: node.hierarchy_id ?? null, hierarchyLevel: node.level ?? null, label: node.representative_label ?? node.name, displayLabel, weight: node.member_count ?? node.membership_count, overview: aggregate && Number(node.level) === 0 },
       position: position ?? { x: Number(node.x) * 600, y: Number(node.y) * 600 },
       };
     };
@@ -136,7 +136,7 @@
           const overviewElement = element(item, {
             x: packed(rank % overviewColumns, overviewColumns, width),
             y: packed(Math.floor(rank / overviewColumns), overviewRows, height),
-          });
+          }, item.representative_label ?? item.name);
           return overviewElement;
         }
         return element(item, {
@@ -161,7 +161,10 @@
         }
       }
       const safeWidth = Math.max(1, right - left); const safeHeight = Math.max(1, bottom - top);
-      const bounds = cy.nodes().boundingBox();
+      // Initial overview labels are deliberately present before the first
+      // paint. Fit node bodies, not their text bounds, so those labels do not
+      // shrink the landscape map into a sparse inset.
+      const bounds = cy.nodes().boundingBox({ includeLabels: false });
       const width = Math.max(1, bounds.w); const height = Math.max(1, bounds.h);
       const zoom = Math.max(cy.minZoom(), Math.min(cy.maxZoom(), safeWidth / width, safeHeight / height));
       cy.zoom(zoom);
