@@ -315,11 +315,21 @@
       .then((payload) => {
         const overview = payload.hierarchy ?? payload.nodes ?? [];
         if (payload.initial_edge_count !== 0 || overview.length > 24) throw new Error("historical overview is not bounded");
-        cy = window.cytoscape({ container: mapElement, elements: elements(overview), style: style(), layout: { name: "preset", fit: false }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false, hideEdgesOnViewport: true, textureOnViewport: true, motionBlur: false, pixelRatio: 1, wheelSensitivity: 0.18 });
+        // Cytoscape measures its container as it is constructed. Revealing it
+        // first avoids an intermittent zero-sized canvas in headless and
+        // slower desktop compositors.
+        root.classList.add("js-map-ready");
+        try {
+          cy = window.cytoscape({ container: mapElement, elements: elements(overview), style: style(), layout: { name: "preset", fit: false }, minZoom: 0.28, maxZoom: 4.8, userPanningEnabled: true, userZoomingEnabled: true, boxSelectionEnabled: false, hideEdgesOnViewport: true, textureOnViewport: true, motionBlur: false, pixelRatio: 1, wheelSensitivity: 0.18 });
+        } catch (error) {
+          root.classList.remove("js-map-ready");
+          throw error;
+        }
         window.__musixMap = cy;
         currentCohort = { depth: 0, items: overview };
         // Explicitly center the current model cohort in the rectangle left by
         // fixed search, view-switch, and control overlays.
+        cy.resize();
         fitHistoricalViewport();
         window.__musixMapMetrics = {
           initialElementCount: cy.elements().length,
@@ -327,7 +337,6 @@
           get semanticDepth() { return semanticDepth; },
           get cohortCount() { return cohorts.length; },
         };
-        root.classList.add("js-map-ready");
         mapElement.tabIndex = 0;
         cy.on("zoom pan", scheduleLabels);
         const resizeObserver = new ResizeObserver(() => {
@@ -412,6 +421,14 @@
         });
         updateBackControl();
         paintInitialHistoricalLabels();
+        // A renderer can still observe an intermediate layout just after the
+        // fixed map becomes visible. Re-measure in the first painted frame so
+        // every browser gets a correctly sized canvas and fitted overview.
+        window.requestAnimationFrame(() => {
+          cy.resize();
+          fitHistoricalViewport();
+          paintInitialHistoricalLabels();
+        });
       })
       .catch(() => say("Historical compatibility is unavailable."));
   }

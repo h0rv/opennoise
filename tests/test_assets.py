@@ -52,6 +52,14 @@ class AssetTests(unittest.TestCase):
         template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
         self.assertIn('src="/static/semantic-map.js?v=11"', template)
 
+    def test_historical_renderer_reveals_and_measures_its_container_before_drawing(self) -> None:
+        source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
+        reveal = source.index('root.classList.add("js-map-ready")')
+        renderer = source.index("cy = window.cytoscape")
+        self.assertLess(reveal, renderer)
+        self.assertIn("cy.resize();\n        fitHistoricalViewport();", source)
+        self.assertIn("window.requestAnimationFrame(() => {\n          cy.resize();", source)
+
     def test_browser_certification_uses_screen_font_size_and_rejects_runtime_errors(self) -> None:
         source = Path("scripts/capture_production_map_browser.mjs").read_text(encoding="utf-8")
         self.assertIn("Number.parseFloat(n.style('font-size')) * zoom", source)
