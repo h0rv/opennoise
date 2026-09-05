@@ -51,7 +51,7 @@ class CertifiedPublicDirectSelector(StrictFrozenModel):
 
     source: Literal["wikidata", "musicbrainz"]
     facet: Literal["wikidata_p136", "musicbrainz_tag"]
-    source_key_prefix: str = Field(min_length=1)
+    source_key_prefix: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.:-]+$")
     method_key: str = Field(min_length=1)
     required_license: str = Field(min_length=1)
 
@@ -84,7 +84,9 @@ class CertifiedPublicMembershipAdapterPolicy(StrictFrozenModel):
     )
     require_public_domain: Literal[True] = True
     include_aggregate_candidates: bool = False
-    aggregate_source_key_prefix: str = Field(default="listenbrainz_", min_length=1)
+    aggregate_source_key_prefix: str = Field(
+        default="listenbrainz_", min_length=1, pattern=r"^[A-Za-z0-9_.:-]+$"
+    )
     minimum_distinct_users_per_window: int = Field(default=5, ge=1, le=100_000)
     maximum_direct_rows: int = Field(default=1_000_000, ge=1, le=1_000_000)
     maximum_aggregate_pairs: int = Field(default=5_000_000, ge=1, le=5_000_000)
@@ -327,7 +329,7 @@ def _direct_rows(
 ) -> tuple[tuple[DirectMembershipEvidence, ...], tuple[GenreIdentity, ...], dict[str, int]]:
     """Read only direct, export-authorized artist/genre claims from certified tables."""
     selector_clauses = " OR ".join(
-        "(evidence.source_key LIKE ? AND evidence.method_key = ? AND source.license_name = ?)"
+        "(evidence.source_key GLOB ? AND evidence.method_key = ? AND source.license_name = ?)"
         for _ in policy.direct_selectors
     )
     rows = connection.execute(
@@ -382,7 +384,7 @@ def _direct_rows(
                 value
                 for selector in policy.direct_selectors
                 for value in (
-                    f"{selector.source_key_prefix}%",
+                    f"{selector.source_key_prefix}*",
                     selector.method_key,
                     selector.required_license,
                 )
@@ -453,14 +455,14 @@ def _aggregate_pairs(
           JOIN source_snapshots AS snapshot ON snapshot.id = artifact.snapshot_id
           JOIN data_sources AS source ON source.id = snapshot.source_id
           JOIN rights_policies AS rights ON rights.id = artifact.policy_id
-         WHERE source.source_key LIKE ?
+         WHERE source.source_key GLOB ?
            AND rights.classification = 'public_domain' AND rights.local_only = 0
            AND artifact.policy_id = (
                SELECT policy_id FROM ingest_attempts WHERE id = run.ingest_attempt_id
            )
          ORDER BY run.id
         """,
-        (f"{policy.aggregate_source_key_prefix}%",),
+        (f"{policy.aggregate_source_key_prefix}*",),
     ).fetchall()
     if len(run_rows) != 1:
         raise ValueError("aggregate adapter requires exactly one completed public run")
@@ -482,7 +484,7 @@ def _aggregate_pairs(
           JOIN source_snapshots AS snapshot ON snapshot.id = artifact.snapshot_id
           JOIN data_sources AS source ON source.id = snapshot.source_id
           JOIN rights_policies AS policy ON policy.id = artifact.policy_id
-         WHERE source.source_key LIKE ?
+         WHERE source.source_key GLOB ?
            AND policy.classification = 'public_domain'
            AND policy.local_only = 0
            AND evidence.distinct_user_count >= ?
@@ -497,7 +499,7 @@ def _aggregate_pairs(
          ORDER BY evidence.left_artist_source_id, evidence.right_artist_source_id, source.source_key
         """,
         (
-            f"{policy.aggregate_source_key_prefix}%",
+            f"{policy.aggregate_source_key_prefix}*",
             policy.minimum_distinct_users_per_window,
             run["id"],
         ),

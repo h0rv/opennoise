@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import sqlite3
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from musix.public_artist_membership_adapter import (
     CertifiedPublicDirectSelector,
@@ -11,6 +14,166 @@ from musix.public_artist_membership_adapter import (
 
 
 class PublicArtistMembershipAdapterTests(unittest.TestCase):
+    def _synthetic_database(self, path: Path) -> None:
+        with sqlite3.connect(path) as connection:
+            connection.executescript(
+                """
+                CREATE TABLE data_sources (id INTEGER PRIMARY KEY, source_key TEXT,
+                    license_name TEXT, default_policy_id INTEGER);
+                CREATE TABLE rights_policies (id INTEGER PRIMARY KEY, policy_key TEXT,
+                    policy_version INTEGER, classification TEXT, local_only INTEGER);
+                CREATE TABLE active_rights_policy_permissions
+                    (policy_id INTEGER, use_kind TEXT, decision TEXT);
+                CREATE TABLE provenance_records (id INTEGER PRIMARY KEY, source_id INTEGER,
+                    policy_id INTEGER, snapshot_ref TEXT, artifact_sha256 TEXT,
+                    record_fingerprint TEXT);
+                CREATE TABLE source_snapshots (id INTEGER PRIMARY KEY, source_id INTEGER,
+                    snapshot_ref TEXT, manifest_sha256 TEXT, policy_id INTEGER);
+                CREATE TABLE source_artifacts (id INTEGER PRIMARY KEY, snapshot_id INTEGER,
+                    artifact_ref TEXT, sha256 TEXT, policy_id INTEGER);
+                CREATE TABLE artist_genre_evidence (id INTEGER PRIMARY KEY, artist_id INTEGER,
+                    genre_id INTEGER, evidence_kind TEXT, evidence_value REAL, source_key TEXT,
+                    source_record_id TEXT, method_key TEXT, provenance_id INTEGER,
+                    policy_id INTEGER, record_fingerprint TEXT);
+                CREATE TABLE identifier_types (id INTEGER PRIMARY KEY, type_key TEXT);
+                CREATE TABLE entity_identifiers (id INTEGER PRIMARY KEY, entity_id INTEGER,
+                    identifier_type_id INTEGER, normalized_value TEXT);
+                CREATE TABLE genres (id INTEGER PRIMARY KEY, name TEXT);
+                CREATE TABLE artist_co_listen_runs (id INTEGER PRIMARY KEY, run_ref TEXT,
+                    ingest_attempt_id INTEGER, artifact_id INTEGER, window_seconds INTEGER,
+                    minimum_distinct_users INTEGER, listens_seen INTEGER,
+                    distinct_artists INTEGER, user_windows INTEGER, candidate_pairs INTEGER,
+                    emitted_pairs INTEGER, quarantined_records INTEGER);
+                CREATE TABLE ingest_attempts (id INTEGER PRIMARY KEY, snapshot_id INTEGER,
+                    policy_id INTEGER);
+                CREATE TABLE artist_co_listen_evidence (id INTEGER PRIMARY KEY,
+                    ingest_attempt_id INTEGER, left_artist_source_id TEXT,
+                    right_artist_source_id TEXT, distinct_user_count INTEGER,
+                    evidence_fingerprint TEXT);
+                """
+            )
+            connection.executemany(
+                "INSERT INTO rights_policies VALUES (?, ?, 1, 'public_domain', 0)",
+                ((1, "default-not-selected"), (2, "direct-exact"), (3, "aggregate-exact")),
+            )
+            connection.executemany(
+                "INSERT INTO active_rights_policy_permissions VALUES (?, 'export', 'allow')",
+                ((2,), (3,)),
+            )
+            connection.executemany(
+                "INSERT INTO data_sources VALUES (?, ?, 'CC0-1.0', ?)",
+                (
+                    (1, "wikidata_phase3_artists_good", 1),
+                    (2, "other-unrelated", 1),
+                    (3, "listenbrainz_joint_good", 1),
+                ),
+            )
+            connection.execute("INSERT INTO identifier_types VALUES (1, 'musicbrainz_artist_id')")
+            connection.execute("INSERT INTO identifier_types VALUES (2, 'wikidata_genre_qid')")
+            connection.executemany(
+                "INSERT INTO entity_identifiers VALUES (?, ?, ?, ?)",
+                ((1, 10, 1, "artist-a"), (2, 20, 2, "Q-jazz")),
+            )
+            connection.execute("INSERT INTO genres VALUES (20, 'Jazz')")
+            connection.execute(
+                "INSERT INTO source_snapshots VALUES (1, 1, 'snapshot-direct', ?, 2)",
+                ("d" * 64,),
+            )
+            connection.execute(
+                "INSERT INTO source_artifacts VALUES (1, 1, 'direct.json', ?, 2)",
+                ("a" * 64,),
+            )
+            connection.execute(
+                "INSERT INTO provenance_records VALUES "
+                "(1, 1, 2, 'snapshot-direct', ?, 'fp-direct')",
+                ("a" * 64,),
+            )
+            connection.execute(
+                "INSERT INTO artist_genre_evidence VALUES "
+                "(1, 10, 20, 'direct_source_claim', 1.0, ?, 'record-1', "
+                "'wikidata_p136', 1, 2, 'fp-direct')",
+                ("wikidata_phase3_artists_good",),
+            )
+            connection.execute(
+                "INSERT INTO artist_genre_evidence VALUES "
+                "(2, 10, 20, 'direct_source_claim', 9.0, 'other-unrelated', "
+                "'record-other', 'wikidata_p136', 1, 2, 'fp-other')"
+            )
+            connection.execute(
+                "INSERT INTO source_snapshots VALUES (2, 3, 'snapshot-aggregate', ?, 3)",
+                ("e" * 64,),
+            )
+            connection.execute(
+                "INSERT INTO source_artifacts VALUES (2, 2, 'aggregate.json', ?, 3)",
+                ("b" * 64,),
+            )
+            connection.execute("INSERT INTO ingest_attempts VALUES (1, 2, 3)")
+            connection.execute(
+                "INSERT INTO artist_co_listen_runs VALUES "
+                "(1, 'run-good', 1, 2, 86400, 5, 10, 2, 1, 1, 1, 0)"
+            )
+            connection.execute(
+                "INSERT INTO artist_co_listen_evidence VALUES "
+                "(1, 1, 'artist-a', 'artist-b', 5, 'fp-pair')"
+            )
+            connection.execute(
+                "INSERT INTO data_sources VALUES (4, 'listenbrainz_other', 'CC0-1.0', 1)"
+            )
+            connection.execute(
+                "INSERT INTO source_snapshots VALUES (3, 4, 'snapshot-other', ?, 3)",
+                ("f" * 64,),
+            )
+            connection.execute(
+                "INSERT INTO source_artifacts VALUES (3, 3, 'other.json', ?, 3)",
+                ("c" * 64,),
+            )
+            connection.execute("INSERT INTO ingest_attempts VALUES (2, 3, 3)")
+            connection.execute(
+                "INSERT INTO artist_co_listen_runs VALUES "
+                "(2, 'run-other', 2, 3, 86400, 5, 10, 2, 1, 1, 1, 0)"
+            )
+            connection.execute(
+                "INSERT INTO artist_co_listen_evidence VALUES "
+                "(2, 2, 'artist-x', 'artist-y', 99, 'fp-other-pair')"
+            )
+
+    def test_synthetic_adapter_binds_exact_provenance_and_ignores_unrelated_source(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "public.sqlite"
+            self._synthetic_database(database)
+            adaptation = adapt_certified_public_membership_input(
+                database,
+                CertifiedPublicMembershipAdapterPolicy(
+                    include_aggregate_candidates=True,
+                    aggregate_source_key_prefix="listenbrainz_joint_",
+                ),
+            )
+        self.assertEqual(adaptation.receipt.direct_row_count, 1)
+        self.assertEqual(adaptation.receipt.aggregate_pair_count, 1)
+        self.assertEqual(adaptation.receipt.direct_source_bindings[0].policy_key, "direct-exact")
+        self.assertEqual(
+            adaptation.receipt.aggregate_source_bindings[0].policy_key, "aggregate-exact"
+        )
+
+    def test_synthetic_adapter_detects_database_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "public.sqlite"
+            self._synthetic_database(database)
+            with (
+                patch(
+                    "musix.public_artist_membership_adapter._file_sha256",
+                    side_effect=("a" * 64, "b" * 64),
+                ),
+                self.assertRaisesRegex(ValueError, "changed while adapting"),
+            ):
+                adapt_certified_public_membership_input(
+                    database,
+                    CertifiedPublicMembershipAdapterPolicy(
+                        include_aggregate_candidates=True,
+                        aggregate_source_key_prefix="listenbrainz_joint_",
+                    ),
+                )
+
     def test_direct_source_union_is_explicitly_paired(self) -> None:
         policy = CertifiedPublicMembershipAdapterPolicy(
             direct_selectors=(
@@ -36,6 +199,8 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
             CertifiedPublicMembershipAdapterPolicy(
                 direct_selectors=(),
             )
+        with self.assertRaisesRegex(ValueError, "String should match pattern"):
+            CertifiedPublicMembershipAdapterPolicy(aggregate_source_key_prefix="listenbrainz_*")
 
     def test_certified_release_counts_and_provenance_bindings(self) -> None:
         database = Path(
