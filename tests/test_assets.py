@@ -25,6 +25,18 @@ class AssetTests(unittest.TestCase):
         self.assertNotIn("mapPositions(getNodes(payload)", node_element)
         self.assertIn("materializeSelectedEdges", source)
 
+    def test_semantic_map_uses_a_wide_world_with_bounded_detail_and_readable_overview(self) -> None:
+        source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
+        self.assertIn("Math.max(1.6, Math.min(2.4, viewportWidth / viewportHeight))", source)
+        self.assertIn("cy.fit(overview, overviewFitPadding());", source)
+        self.assertNotIn("cy.zoom(1);\n    cy.pan({ x: 0, y: 0 });", source)
+        self.assertIn("screenLabelSize / cameraScale", source)
+        self.assertIn('overviewFontSize(Number(node.data("weight"))) / cameraScale', source)
+        self.assertIn("nodeBudget: 720", source)
+        self.assertIn("[0, 96, 280, 720][lod]", source)
+        self.assertIn("shownLabelCount = accepted", source)
+        self.assertIn("overlays.some((overlay) => intersects(bounds", source)
+
     def test_historical_renderer_uses_bounded_hierarchy_drills_not_global_tiles(self) -> None:
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
         self.assertIn('mapElement.dataset.mapMode === "historical"', source)
@@ -50,7 +62,7 @@ class AssetTests(unittest.TestCase):
 
     def test_semantic_map_script_url_is_versioned_for_deploy_cache_busting(self) -> None:
         template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
-        self.assertIn('src="/static/semantic-map.js?v=12"', template)
+        self.assertIn('src="/static/semantic-map.js?v=13"', template)
 
     def test_historical_overview_labels_are_present_in_initial_elements(self) -> None:
         source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
@@ -70,6 +82,9 @@ class AssetTests(unittest.TestCase):
         self.assertIn("Number.parseFloat(n.style('font-size')) * zoom", source)
         self.assertIn("requireNoRuntimeErrors", source)
         self.assertIn("requirePassingInteractions", source)
+        self.assertIn("internal_world_aspect", source)
+        self.assertIn("element_bounds_ok", source)
+        self.assertIn("requireOverviewContract", source)
 
 
 if __name__ == "__main__":

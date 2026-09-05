@@ -458,16 +458,18 @@
   };
   const overviewFitPadding = () => mapElement.clientWidth <= 600 ? 28 : 72;
   const overviewDimensions = () => ({
-    width: Math.max(1, mapElement.clientWidth || window.innerWidth),
-    height: Math.max(1, mapElement.clientHeight || window.innerHeight),
+    // These are graph coordinates, not CSS pixels. A stable wide extent keeps
+    // the default from becoming a tall, narrow column when a fitted renderer
+    // starts before it has measured the viewport.
+    ...mapDimensions(),
   });
   const mapDimensions = () => {
-    const padding = overviewFitPadding();
-    const usableWidth = Math.max(1, mapElement.clientWidth - 2 * padding);
-    const usableHeight = Math.max(1, mapElement.clientHeight - 2 * padding);
-    // A generous preset space leaves room for collision-free labels before
-    // Cytoscape fits the actual viewport.
-    return { width: 2000 * usableWidth / usableHeight, height: 2000 };
+    const viewportWidth = Math.max(1, mapElement.clientWidth || window.innerWidth || 1366);
+    const viewportHeight = Math.max(1, mapElement.clientHeight || window.innerHeight || 768);
+    // Deliberately keep even a portrait browser's *world* landscape. Cytoscape
+    // fits this extent into its canvas; CSS never stretches the graph.
+    const aspect = Math.max(1.6, Math.min(2.4, viewportWidth / viewportHeight));
+    return { width: 2000 * aspect, height: 2000, aspect };
   };
 
   const quantile = (values, fraction) => values[Math.min(values.length - 1, Math.max(0, Math.round((values.length - 1) * fraction)))];
@@ -505,9 +507,9 @@
       ...positions.get(community.community_id),
     }));
     const mobile = mapElement.clientWidth <= 600;
-    const horizontalInset = mobile ? 36 : 110;
-    const verticalInset = mobile ? 126 : 100;
-    const minimumDistance = mobile ? 64 : 96;
+    const horizontalInset = dimensions.width * (mobile ? 0.07 : 0.09);
+    const verticalInset = dimensions.height * (mobile ? 0.12 : 0.09);
+    const minimumDistance = dimensions.height * (mobile ? 0.10 : 0.085);
     // This deterministic display adjustment retains the relative input map as
     // its starting point while separating dense overview anchors for readable labels.
     for (let iteration = 0; iteration < 90; iteration += 1) {
@@ -672,9 +674,12 @@
     return relative < 1.25 ? 0 : relative < 2 ? 1 : relative < 3 ? 2 : 3;
   };
   const fitOverview = (cy) => {
-    cy.zoom(1);
-    cy.pan({ x: 0, y: 0 });
-    overviewZoom = 1;
+    const overview = cy.nodes(".overview");
+    if (overview.empty()) return;
+    // Fit the graph's actual wide world into the live canvas.  Do not reset a
+    // magic zoom/pan pair: that was the source of the initial narrow layout.
+    cy.fit(overview, overviewFitPadding());
+    overviewZoom = cy.zoom();
   };
   const labelBudget = (lod) => (mapElement.clientWidth <= 600
     ? [8, 32, 48, 64][lod]
@@ -743,6 +748,10 @@
   const setCollisionFreeLabels = (cy, lod, overview) => {
     const acceptedBoxes = [];
     const viewport = mapElement.getBoundingClientRect();
+    const overlays = ["#search", "#results", "#map-view-switch", "#layout-lenses", "#map-controls", "#genre-detail"]
+      .map((selector) => document.querySelector(selector))
+      .filter((element) => element && getComputedStyle(element).display !== "none")
+      .map((element) => element.getBoundingClientRect());
     let accepted = 0;
     const focusedMemberCount = activeCommunity?.data("memberEntityIds")?.length ?? 0;
     const focusedSmallCommunity = !overview && focusedMemberCount > 0 && focusedMemberCount <= 12;
@@ -781,7 +790,10 @@
         const textInset = mapElement.clientWidth <= 600 ? 18 : 8;
         const inViewport = bounds.x1 >= viewport.left + textInset && bounds.y1 >= viewport.top + textInset
           && bounds.x2 <= viewport.right - textInset && bounds.y2 <= viewport.bottom - textInset;
-        if (!inViewport || acceptedBoxes.some((other) => intersects(bounds, other))) continue;
+        if (!inViewport || acceptedBoxes.some((other) => intersects(bounds, other))
+          || overlays.some((overlay) => intersects(bounds, {
+            x1: overlay.left, y1: overlay.top, x2: overlay.right, y2: overlay.bottom,
+          }))) continue;
         acceptedBoxes.push(bounds);
         accepted += 1;
         chosen = true;
@@ -791,6 +803,10 @@
         node.data("displayLabel", "");
         continue;
       }
+    }
+    if (window.__musixMapMetrics) {
+      window.__musixMapMetrics.shownLabelCount = accepted;
+      window.__musixMapMetrics.labelBudget = overview ? labelBudget(0) : labelBudget(lod);
     }
   };
 
@@ -829,7 +845,12 @@
       for (const memberId of focusedMembers) visibleIds.add(memberId);
       visibleIds.add(activeCommunity.data("itemId"));
     }
-    const labelSize = [12, mapElement.clientWidth <= 600 ? 18 : 14, 13, 12][lod];
+    const screenLabelSize = [16, mapElement.clientWidth <= 600 ? 18 : 14, 13][lod];
+    // Cytoscape font and node dimensions live in graph coordinates. Scale
+    // those values against the fitted camera so overview labels remain legible
+    // on screen instead of collapsing to tiny text in a wide internal extent.
+    const cameraScale = Math.max(cy.zoom(), 0.01);
+    const labelSize = Math.max(8, Math.min(96, screenLabelSize / cameraScale));
     cy.batch(() => {
       cy.nodes().forEach((node) => {
         const visible = visibleIds.has(node.data("itemId"));
@@ -837,9 +858,13 @@
         node.data(
           "labelSize",
           Boolean(node.data("overview"))
-            ? overviewFontSize(Number(node.data("weight")))
+            ? Math.max(8, Math.min(96, overviewFontSize(Number(node.data("weight"))) / cameraScale))
             : labelSize,
         );
+        if (Boolean(node.data("overview"))) {
+          const screenNodeSize = 22 + 12 * overviewProminence(Number(node.data("weight")));
+          node.data("overviewNodeSize", Math.max(12, Math.min(128, screenNodeSize / cameraScale)));
+        }
       });
       cy.edges().forEach((edge) => edge.toggleClass("lod-hidden", edge.source().hasClass("lod-hidden") || edge.target().hasClass("lod-hidden")));
     });
@@ -971,8 +996,13 @@
       window.__musixMap = cy;
       window.__musixMapMetrics = {
         initialElementCount: cy.elements().length,
+        initialNodeCount: cy.nodes().length,
         nodePositionBuilds,
         activeCommunityId: null,
+        initialWorldAspect: mapDimensions().aspect,
+        nodeBudget: 720,
+        shownLabelCount: 0,
+        labelBudget: 0,
       };
       root.classList.add("js-map-ready");
       cy.resize();
@@ -1036,6 +1066,16 @@
           boxSelectionEnabled: false,
         });
         window.__musixMap = replacement;
+        window.__musixMapMetrics = {
+          initialElementCount: replacement.elements().length,
+          initialNodeCount: replacement.nodes().length,
+          nodePositionBuilds,
+          activeCommunityId: null,
+          initialWorldAspect: mapDimensions().aspect,
+          nodeBudget: 720,
+          shownLabelCount: 0,
+          labelBudget: 0,
+        };
         mapElement.tabIndex = 0;
         replacement.resize();
         replacement.zoom(snapshot.zoom);

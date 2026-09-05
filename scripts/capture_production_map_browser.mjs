@@ -263,12 +263,17 @@ function renderedLabels(cdp) {
 function overviewGeometry(cdp) {
   return cdp.evaluate(`(() => {
     const cy = window.__musixMap;
+    const metrics = window.__musixMapMetrics ?? {};
     const map = document.querySelector('#semantic-map').getBoundingClientRect();
     const nodes = cy.nodes('.overview:visible');
     const centers = nodes.map(node => node.renderedPosition());
     const xs = centers.map(point => point.x); const ys = centers.map(point => point.y);
     const labels = cy.nodes(':visible').filter(node => Boolean(node.data('displayLabel'))).map(node =>
       Number.parseFloat(node.style('font-size')) * cy.zoom());
+    const element_bounds_ok = nodes.every(node => {
+      const box = node.renderedBoundingBox();
+      return box.x1 >= 0 && box.y1 >= 0 && box.x2 <= map.width && box.y2 <= map.height;
+    });
     return {
       overview_nodes:nodes.length,
       visible_nodes:cy.nodes(':visible').length,
@@ -277,6 +282,12 @@ function overviewGeometry(cdp) {
       center_span_height:ys.length ? (Math.max(...ys) - Math.min(...ys)) / map.height : 0,
       effective_label_font_min:labels.length ? Math.min(...labels) : 0,
       effective_label_font_max:labels.length ? Math.max(...labels) : 0,
+      shown_labels:metrics.shownLabelCount ?? 0,
+      label_budget:metrics.labelBudget ?? 0,
+      initial_node_count:metrics.initialNodeCount ?? 0,
+      node_budget:metrics.nodeBudget ?? 0,
+      internal_world_aspect:metrics.initialWorldAspect ?? 0,
+      element_bounds_ok,
       sample_centers:centers.slice(0, 3),
       map:{ width:map.width, height:map.height, zoom:cy.zoom(), pan:cy.pan() },
     };
@@ -547,6 +558,19 @@ async function run() {
     const overviewViewport = arguments_.includes("--mobile-overview") ? mobile : desktop;
     await navigate(desktopPage, overviewViewport, "light");
     const desktopOverview = await overviewGeometry(desktopPage);
+    const requireOverviewContract = (geometry, name) => {
+      const acceptable = geometry.internal_world_aspect >= 1.6
+        && geometry.initial_node_count === geometry.overview_nodes
+        && geometry.initial_node_count <= 24
+        && geometry.initial_node_count <= geometry.node_budget
+        && geometry.visible_edges === 0
+        && geometry.shown_labels > 0
+        && geometry.shown_labels <= geometry.label_budget
+        && geometry.effective_label_font_min >= 14
+        && geometry.element_bounds_ok;
+      if (!acceptable) throw new CdpError(`${name} overview geometry`, geometry);
+    };
+    requireOverviewContract(desktopOverview, overviewViewport.name);
     if (arguments_.includes("--overview-only")) {
       const measurement = {
         evidence_revision: "browser-production-map-v2",
@@ -581,6 +605,7 @@ async function run() {
     const mobilePage = await createPage();
     await navigate(mobilePage, mobile, "light");
     const mobileOverview = await overviewGeometry(mobilePage);
+    requireOverviewContract(mobileOverview, "mobile");
     const mobileLabels = await lodMeasurements(mobilePage);
     // Measurements intentionally traverse every level. Reload before interaction
     // proof so the focus test starts at the real overview level.

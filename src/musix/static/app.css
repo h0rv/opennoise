@@ -52,7 +52,7 @@ button, input, select { font: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 #map { position: fixed; inset: 0; background: var(--canvas); }
-#semantic-map { position: absolute; inset: 0; display: none; outline: none; }
+#semantic-map { position: absolute; inset: 0; display: none; outline: none; touch-action: none; }
 #semantic-map:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 #semantic-map.keyboard-focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 html.js-map-ready #semantic-map { display: block; }
