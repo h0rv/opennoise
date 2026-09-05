@@ -3,8 +3,6 @@ import unittest
 from pathlib import Path
 from typing import override
 
-from litestar.testing import TestClient
-
 from musix.app import create_app
 from musix.db import Database
 from musix.ml.production_map import build_production_map
@@ -12,6 +10,7 @@ from musix.ml.public_graph import build_public_model
 from musix.models import MapPoint, map_view
 from musix.models.modeling import PublicModelSettings
 from musix.models.production import ProductionMapSettings
+from tests._test_client import create_test_client
 from tests.test_production_map import _inputs as production_inputs
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +21,7 @@ class AppTests(unittest.TestCase):
     @override
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
-        self.client = TestClient(create_app(Path(self.temporary.name) / "catalog.sqlite"))
+        self.client = create_test_client(create_app(Path(self.temporary.name) / "catalog.sqlite"))
         self.client.__enter__()
 
     @override
@@ -86,7 +85,7 @@ class AppTests(unittest.TestCase):
         )
         artifact_path = Path(self.temporary.name) / "production-map.json"
         artifact_path.write_text(artifact.model_dump_json(), encoding="utf-8")
-        with TestClient(
+        with create_test_client(
             create_app(Path(self.temporary.name) / "production.sqlite", artifact_path)
         ) as client:
             response = client.get("/api/map")
@@ -108,7 +107,7 @@ class AppTests(unittest.TestCase):
         for artifact_path in (missing_path, invalid_path):
             with (
                 self.subTest(artifact_path=artifact_path.name),
-                TestClient(
+                create_test_client(
                     create_app(Path(self.temporary.name) / "production.sqlite", artifact_path)
                 ) as client,
             ):
@@ -313,7 +312,7 @@ class PopulatedAppTests(unittest.TestCase):
                 );
                 """
             )
-        self.client = TestClient(create_app(self.database_path, production_map_path))
+        self.client = create_test_client(create_app(self.database_path, production_map_path))
         self.client.__enter__()
 
     @override

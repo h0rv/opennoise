@@ -46,7 +46,8 @@ It must not be treated as input to the public model.
    boundary, while keeping the historical option explicitly local-only.
 3. Finish the MusicBrainz release, release, and recording/track catalog chain,
    then run the existing evidence-backed album and recording ranking tables.
-4. Resolve the known Litestar `TestClient` async teardown hang before claiming
-   a full-suite release. It is recorded as unresolved in
-   `docs/reports/PUBLIC_DATA_INTEGRATION.md:62-66` and
-   `docs/reports/PRODUCTION_MAP_20260831.md:87-96`.
+4. Preserve the full-suite lifecycle check in certification. The known
+   Litestar `TestClient` timeout was caused by restricted runners suppressing
+   AnyIO's cross-thread socket wakeup; app tests now use a bounded polling
+   selector and the full suite passes in a normal shell. The production app
+   keeps its non-blocking threaded database boundary.

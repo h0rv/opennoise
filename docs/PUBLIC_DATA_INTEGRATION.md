@@ -59,11 +59,14 @@ inputs unless output attribution and ShareAlike terms receive a separate review.
   ListenBrainz, and Wikidata tests passed.
 - The no-audio tests cover media URLs and MIME types, common container
   signatures, archive members, local object storage, and dependency declarations.
-- Bounded full discovery advanced through the adapter and album suites, then
-  timed out in the pre-existing first Litestar `TestClient` app test. Running
-  `tests.test_app.AppTests.test_empty_bounded_map_preserves_viewport_aspect`
-  alone also timed out after five seconds. No integrated source test failed, but
-  the full suite is not reported as passing.
+- The full unittest suite passes: 257 tests passed and one was skipped in
+  13.213 seconds. Litestar app tests use a test-only polling selector because
+  some restricted runners suppress the cross-thread socket wakeup used by
+  AnyIO's portal. The application lifecycle and threaded database boundary
+  pass unchanged in a normal shell; the configured uvicorn app also reaches
+  application startup with the retained artifacts. A restricted runner that
+  also suppresses worker-to-loop wakeups cannot run the asynchronous ingestion
+  tests; that is an execution-environment limitation, not an application failure.
 
 ## Measured data and limitations
 

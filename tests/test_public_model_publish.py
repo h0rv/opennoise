@@ -4,8 +4,6 @@ import unittest
 from pathlib import Path
 from typing import override
 
-from litestar.testing import TestClient
-
 from musix.app import create_app
 from musix.db import Database
 from musix.genre_entry import GenreEntryRepository
@@ -24,6 +22,7 @@ from musix.models.modeling import (
     PublicModelInput,
     PublicModelSettings,
 )
+from tests._test_client import create_test_client
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
@@ -310,7 +309,7 @@ class PublicModelPublishTests(unittest.TestCase):
     def test_genre_api_exposes_persisted_model_explanation(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)
 
-        with TestClient(create_app(self.database_path)) as client:
+        with create_test_client(create_app(self.database_path)) as client:
             response = client.get("/api/genres/1")
 
         self.assertEqual(response.status_code, 200)
@@ -333,7 +332,7 @@ class PublicModelPublishTests(unittest.TestCase):
     def test_genre_fragment_renders_compact_model_signals(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)
 
-        with TestClient(create_app(self.database_path)) as client:
+        with create_test_client(create_app(self.database_path)) as client:
             response = client.get("/fragments/genres/1")
 
         self.assertEqual(response.status_code, 200)
@@ -379,7 +378,7 @@ class PublicModelPublishTests(unittest.TestCase):
                 connection.commit()
                 self.assertIsNone(Database(self.database_path).genre_detail(1))
                 if target_kind == "source":
-                    with TestClient(create_app(self.database_path)) as client:
+                    with create_test_client(create_app(self.database_path)) as client:
                         self.assertEqual(client.get("/api/genres/1").status_code, 404)
                         self.assertEqual(
                             client.get(

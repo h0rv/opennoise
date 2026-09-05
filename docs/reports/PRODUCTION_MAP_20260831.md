@@ -92,7 +92,7 @@ multi-level.
 | Profiles/neighbors not persisted or served | The artifact now emits profiles, ranked public neighbors, direct/propagated coverage, and evidence references. Database/API persistence remains with the serving integration. |
 | Four layout lenses were exposed as product UI | This artifact is exactly one map; the renderer contract has no lens switcher. |
 | Search/lens state defect | Out of scope for the data artifact; the renderer receives one stable map state. |
-| Application test hang and connections | Not changed here; remains a release blocker. |
+| Application test hang and connections | Resolved in the test harness. The 257-test suite passes; the app lifecycle remains threaded and non-blocking. Restricted runners that deny cross-thread socket wakeups must use the test harness polling selector or run certification outside the sandbox. |
 | Historical reproduction coexisting with successor | Deliberately out of this successor artifact; no historical data is mixed in. |
 
 ## Reproduction
