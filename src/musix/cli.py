@@ -18,6 +18,7 @@ from musix.catalog.artists import ArtistProjector
 from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
 from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
+from musix.genre_seed_universe import build_genre_seed_universe, write_genre_seed_universe
 from musix.historical_signal_publication import (
     build_historical_signal_publication,
     publish_historical_signal_publication,
@@ -171,7 +172,15 @@ def _publish_historical_signal_map(args: argparse.Namespace) -> int:
     return 0
 
 
-def parser() -> argparse.ArgumentParser:
+def _build_genre_seed_universe(args: argparse.Namespace) -> int:
+    """Build the name-only H2 bridge against approved catalog databases."""
+    artifact = build_genre_seed_universe(args.seed_artifact, args.catalog_databases)
+    write_genre_seed_universe(artifact, args.output)
+    sys.stdout.write(artifact.model_dump_json(indent=2) + "\n")
+    return 0
+
+
+def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     """Build the command line parser."""
     settings = Settings()
     command_parser = argparse.ArgumentParser(prog="musix")
@@ -238,10 +247,26 @@ def parser() -> argparse.ArgumentParser:
     publish_historical.add_argument("--receipt", type=Path, required=True)
     publish_historical.add_argument("--report", type=Path, required=True)
     publish_historical.set_defaults(handler=_publish_historical_signal_map)
+    seed_universe = commands.add_parser(
+        "build-genre-seed-universe",
+        help="resolve retained H2 names against approved catalog SQLite databases",
+    )
+    seed_universe.add_argument("--seed-artifact", type=Path, required=True)
+    seed_universe.add_argument(
+        "--catalog-database",
+        "--database",
+        dest="catalog_databases",
+        type=Path,
+        action="append",
+        required=True,
+        help="approved public or local-research catalog database; repeatable",
+    )
+    seed_universe.add_argument("--output", type=Path, required=True)
+    seed_universe.set_defaults(handler=_build_genre_seed_universe)
     return command_parser
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0911
     """Run the selected command."""
     args = parser().parse_args()
     match args.command:
@@ -257,6 +282,8 @@ def main() -> int:
             return _publish_public_model(args)
         case "publish-historical-signal-map":
             return _publish_historical_signal_map(args)
+        case "build-genre-seed-universe":
+            return _build_genre_seed_universe(args)
         case _:
             raise RuntimeError(f"unknown command: {args.command}")
 
