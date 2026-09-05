@@ -55,6 +55,7 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
                 search_fragment = client.get(
                     "/fragments/open-construction-map/v2/search", params={"q": "rock"}
                 )
+                default_page = client.get("/", params={"q": "rock"})
                 page = client.get("/", params={"view": "open", "q": "rock"})
                 node_id = overview.json()["nodes"][0]["node_id"]
                 drill = client.get(f"/api/open-construction-map/v2/neighbors/{node_id}")
@@ -72,6 +73,9 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
         self.assertEqual(search.status_code, 200)
         self.assertIn("Rock Music", [hit["name"] for hit in search.json()["hits"]])
         self.assertEqual(search_fragment.status_code, 200)
+        self.assertIn('data-map-view="open"', default_page.text)
+        self.assertIn('data-open-graph-version="v2"', default_page.text)
+        self.assertNotIn('id="map-view-switch"', default_page.text)
         self.assertIn('data-open-node-id="legacy:1"', search_fragment.text)
         self.assertIn('data-map-mode="open"', page.text)
         self.assertIn('data-open-graph-version="v2"', page.text)
@@ -90,10 +94,31 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
             )
         )
 
-    def test_v2_configuration_is_explicitly_disabled_by_default(self) -> None:
-        self.assertIsNone(
-            Settings(open_construction_graph_v2_path=None).open_construction_graph_v2_path
+    def test_v2_configuration_defaults_to_the_certified_model_artifact(self) -> None:
+        settings = Settings()
+        self.assertEqual(
+            settings.open_construction_graph_v2_path,
+            Path(__file__).resolve().parents[1] / "data/model/open-construction-graph-v2.json",
         )
+
+    def test_certified_overview_is_broad_catalog_anchor_cohort(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            app = create_app(Path(temporary) / "app.sqlite")
+            with create_test_client(app) as client:
+                response = client.get("/api/open-construction-map/v2", params={"level": 0})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["node_budget"], 48)
+        self.assertEqual(len(payload["nodes"]), 48)
+        self.assertTrue(
+            all(node["node_kind"] == "public_catalog_genre" for node in payload["nodes"])
+        )
+        names = {node["name"] for node in payload["nodes"]}
+        self.assertTrue(
+            {"rock music", "jazz", "house music", "techno", "hip-hop"}.issubset(names)
+        )
+        self.assertTrue({"film", "fiction", "crime film"}.isdisjoint(names))
 
 
 if __name__ == "__main__":

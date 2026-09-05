@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -133,7 +134,14 @@ def fixture_html(*, zoom_id: str = "zoom-default") -> str:
         search_query="",
     )
     stylesheet = CSS.resolve().as_uri()
-    rendered = rendered.replace("/static/app.css?v=10", stylesheet)
+    rendered = re.sub(
+        r'"/static/app\.css(?:\?[^" ]*)?"',
+        f'"{stylesheet}"',
+        rendered,
+        count=1,
+    )
+    if re.search(r'href="/static/app\.css(?:\?[^" ]*)?"', rendered):
+        raise ValueError("fixture retained an unresolved static stylesheet URL")
     if zoom_id != "zoom-default":
         rendered = rendered.replace(
             'id="zoom-default" name="map-zoom" type="radio" checked',

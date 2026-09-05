@@ -40,7 +40,7 @@ class Settings(BaseSettings):
         validation_alias="MUSIX_OPEN_CONSTRUCTION_GRAPH_PATH",
     )
     open_construction_graph_v2_path: Path | None = Field(
-        default=None,
+        default=Path(__file__).resolve().parents[3] / "data/model/open-construction-graph-v2.json",
         validation_alias="MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH",
     )
 

@@ -17,7 +17,7 @@ from musix.open_construction_graph_v2 import (
 if TYPE_CHECKING:
     from pathlib import Path
 
-_LEVEL_BUDGETS = (240, 480, 720, 720)
+_LEVEL_BUDGETS = (48, 240, 480, 720)
 _SEARCH_LIMIT = 20
 
 
@@ -149,7 +149,12 @@ class OpenConstructionV2MapStore:
     def _ranked_nodes(self, level: int) -> list[OpenConstructionV2MapNode]:
         candidates = list(self._nodes.values())
         if level == 0:
-            candidates = [node for node in candidates if node.degree and node.hierarchy_depth <= 1]
+            candidates = [
+                node
+                for node in candidates
+                if node.node_kind == "public_catalog_genre"
+                and node.degree
+            ]
         elif level == 1:
             candidates = [node for node in candidates if node.degree]
         # The deep cohorts are spatially tiled by the request bounds. Include

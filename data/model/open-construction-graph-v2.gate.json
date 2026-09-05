@@ -1,0 +1,12 @@
+{
+  "artifact_output_sha256": "9806332b9d35a0153cf150e28f2ba33ac12d5123c17c2b53d92ae25472d549cc",
+  "legacy_seed_node_count": 6291,
+  "total_node_count": 7037,
+  "edge_count": 3317,
+  "complete_legacy_seed_coverage": true,
+  "verified_taxonomy_expansion": true,
+  "no_prohibited_inputs": true,
+  "no_review_promotion": true,
+  "no_artist_membership_inference": true,
+  "deterministic_replay": true
+}

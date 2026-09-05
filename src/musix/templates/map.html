@@ -1,12 +1,4 @@
 <main id="map" aria-label="Music map" data-map-view="{{ map_view_mode | default('public') }}">
-<nav id="map-view-switch" aria-label="Map view">
-  <a{% if map_view_mode | default('public') == 'public' %} aria-current="page"{% endif %}
-     href="/?view=public{% if layout_query %}&amp;layout={{ layout_query }}{% endif %}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Public</a>
-  <a{% if map_view_mode | default('public') == 'open' %} aria-current="page"{% endif %}
-     href="/?view=open{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Open 6,291</a>
-  <a{% if map_view_mode | default('public') == 'historical' %} aria-current="page"{% endif %}
-     href="/?view=historical{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Historical 6,291</a>
-</nav>
 {% if map_view_mode | default('public') == 'historical' %}
   {% if historical_map_configured %}
   <div id="semantic-map" role="application" aria-label="Interactive historical compatibility map"
@@ -105,13 +97,11 @@
   <button type="button" data-map-action="historical-back" aria-label="Back">Back</button>
   {% endif %}
   {% if map_view_mode | default('public') == 'open' and (open_construction_graph_configured or open_construction_graph_v2_configured) %}
-  <button type="button" data-map-action="open-back" aria-label="Back">Back</button>
+  <button type="button" data-map-action="open-back" aria-label="Back" hidden>Back</button>
   {% endif %}
   <button type="button" data-map-action="zoom-in" aria-label="Zoom in">+</button>
   <button type="button" data-map-action="zoom-out" aria-label="Zoom out">−</button>
   <button type="button" data-map-action="fit">Fit map</button>
-  <button type="button" id="theme-toggle" aria-label="Toggle dark mode">Dark</button>
-  <label for="theme-select">Theme</label>
   <select id="theme-select" aria-label="Color theme">
     <option value="system">System</option>
     <option value="light">Light</option>

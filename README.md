@@ -16,6 +16,18 @@ edge evidence, and treats compositional anchors as review links rather than
 memberships or factual parentage. See
 [the open construction graph contract](docs/OPEN_CONSTRUCTION_GRAPH.md).
 
+When the app is started with the checked-in defaults, Open v2 is the main
+surface: `data/model/open-construction-graph-v2.json` contains 7,037 nodes and
+3,317 typed edges (including all 6,291 legacy names). The v1 Open artifact is
+the compatibility fallback when v2 is explicitly disabled. Run
+`uv run poe open-v2-qa -- --base-url http://127.0.0.1:3001` against a running
+app to write a bounded API and no-script fallback report.
+
+For repeatable Chromium evidence, set `MUSIX_OPEN_V2_BROWSER_URL` to the local
+app URL and run `uv run poe open-v2-browser-qa`; the task writes desktop light,
+mobile dark, and no-JavaScript captures plus interaction checks under the
+configured output directory.
+
 No music, preview, or audio bytes enter the project.
 
 ## Local MusicBrainz name-seed research graph

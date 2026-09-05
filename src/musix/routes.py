@@ -79,9 +79,14 @@ class CoreController(Controller):
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
-        view: FromQuery[Literal["public", "open", "historical"]] = "public",
+        view: FromQuery[Literal["public", "open", "historical"] | None] = None,
     ) -> Template:
         """Render the current full map."""
+        selected_view = view or (
+            "open"
+            if open_construction_graph_v2.configured or open_construction_graph.configured
+            else "public"
+        )
         context = await workspace_context(
             database,
             genre_entries,
@@ -92,7 +97,7 @@ class CoreController(Controller):
             layout=layout,
             focus=None,
             search_query=q,
-            view=view,
+            view=selected_view,
         )
         return Template(template_name="index.html", context=context)
 
@@ -510,9 +515,14 @@ class MapController(Controller):
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
-        view: FromQuery[Literal["public", "open", "historical"]] = "public",
+        view: FromQuery[Literal["public", "open", "historical"] | None] = None,
     ) -> Template:
         """Render one coherent map selection and detail fragment."""
+        selected_view = view or (
+            "open"
+            if open_construction_graph_v2.configured or open_construction_graph.configured
+            else "public"
+        )
         context = await workspace_context(
             database,
             genre_entries,
@@ -523,7 +533,7 @@ class MapController(Controller):
             layout=layout,
             focus=focus,
             search_query=q,
-            view=view,
+            view=selected_view,
         )
         return Template(
             template_name="workspace.html",

@@ -25,13 +25,20 @@ STATIC_ROOT = PACKAGE_ROOT / "static"
 TEMPLATE_ROOT = PACKAGE_ROOT / "templates"
 
 
+class _UnsetPath:
+    """Distinguish an omitted path from an explicit opt-out in create_app."""
+
+
+_UNSET_PATH = _UnsetPath()
+
+
 def create_app(  # noqa: PLR0913, PLR0917
     database_path: Path | None = None,
     production_map_path: Path | None = None,
     historical_signal_map_path: Path | None = None,
     historical_membership_database_path: Path | None = None,
-    open_construction_graph_path: Path | None = None,
-    open_construction_graph_v2_path: Path | None = None,
+    open_construction_graph_path: Path | _UnsetPath | None = _UNSET_PATH,
+    open_construction_graph_v2_path: Path | _UnsetPath | None = _UNSET_PATH,
 ) -> Litestar:
     """Create an app with a separate lifecycle-managed read connection."""
     settings = Settings()
@@ -45,12 +52,25 @@ def create_app(  # noqa: PLR0913, PLR0917
     historical_memberships = HistoricalMembershipStore(
         historical_membership_database_path or settings.historical_membership_database_path
     )
-    open_construction_graph = OpenConstructionMapStore(
-        open_construction_graph_path or settings.open_construction_graph_path
+    selected_v2_path = (
+        settings.open_construction_graph_v2_path
+        if isinstance(open_construction_graph_v2_path, _UnsetPath)
+        else open_construction_graph_v2_path
     )
-    open_construction_graph_v2 = OpenConstructionV2MapStore(
-        open_construction_graph_v2_path or settings.open_construction_graph_v2_path
-    )
+    if isinstance(open_construction_graph_path, _UnsetPath):
+        # The checked-in v2 artifact is the sole default Open surface. Keep v1
+        # available when explicitly configured (including by environment), and
+        # retain the v1-only fallback when v2 is explicitly disabled.
+        v1_explicitly_configured = "open_construction_graph_path" in settings.model_fields_set
+        selected_v1_path = (
+            settings.open_construction_graph_path
+            if v1_explicitly_configured or selected_v2_path is None
+            else None
+        )
+    else:
+        selected_v1_path = open_construction_graph_path
+    open_construction_graph = OpenConstructionMapStore(selected_v1_path)
+    open_construction_graph_v2 = OpenConstructionV2MapStore(selected_v2_path)
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:

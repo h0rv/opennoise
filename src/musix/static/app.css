@@ -59,6 +59,7 @@ html.js-map-ready #semantic-map { display: block; }
 html.js-map-ready #plot { display: none; }
 html.js-map-ready #historical-fallback { display: none; }
 html.js-map-ready #open-fallback { display: none; }
+html:not(.js-map-ready) #search, html:not(.js-map-ready) #map-controls { display: none; }
 
 #plot { display: block; width: 100%; height: 100%; background: var(--canvas); }
 #historical-fallback { padding: 74px 14px 14px; color: var(--muted); }
@@ -74,7 +75,7 @@ html.js-map-ready #open-fallback { display: none; }
 
 #map-controls, #map-view-switch, #layout-lenses, #search, #results, #genre-detail, #historical-detail {
   position: fixed; z-index: 4; border: 1px solid var(--line); border-radius: 7px;
-  background: var(--panel); box-shadow: 0 4px 20px rgb(0 0 0 / 12%); backdrop-filter: blur(8px);
+  background: var(--panel);
 }
 
 #map-controls { right: 14px; bottom: 14px; display: flex; align-items: center; gap: 4px; padding: 4px; }

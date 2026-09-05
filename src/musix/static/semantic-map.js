@@ -10,7 +10,6 @@
   // this persistent map outside that secondary history mechanism.
   if (window.htmx) window.htmx.config.history = false;
   const themeSelect = document.querySelector("#theme-select");
-  const themeToggle = document.querySelector("#theme-toggle");
   const query = document.querySelector("#query");
   const graphUrl = mapElement.dataset.graphUrl;
   const preferredDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -34,7 +33,6 @@
     const mode = value === "system" ? (preferredDark.matches ? "dark" : "light") : value;
     root.dataset.theme = mode;
     if (themeSelect) themeSelect.value = value;
-    if (themeToggle) themeToggle.textContent = mode === "dark" ? "Light" : "Dark";
     window.localStorage.setItem("musix-theme", value);
   };
 
@@ -53,7 +51,6 @@
     : window.localStorage.getItem("musix-theme") || "light";
   setTheme(storedTheme);
   themeSelect?.addEventListener("change", () => setTheme(themeSelect.value));
-  themeToggle?.addEventListener("click", () => setTheme(root.dataset.theme === "dark" ? "light" : "dark"));
   preferredDark.addEventListener("change", () => {
     if ((window.localStorage.getItem("musix-theme") || "system") === "system") setTheme("system");
   });
@@ -663,11 +660,13 @@
     { selector: "node", style: { "background-color": cssValue("--node"), label: "data(displayLabel)", color: cssValue("--ink"), "font-size": "data(labelSize)", "text-outline-color": cssValue("--canvas"), "text-outline-width": 3, "text-valign": "bottom", "text-margin-y": 7, width: 13, height: 13, "overlay-opacity": 0 } },
     { selector: "node.umbrella", style: { "background-color": cssValue("--parent"), width: 25, height: 25, "font-size": "data(labelSize)", "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },
     { selector: "node.overview", style: { "background-color": cssValue("--parent"), "background-opacity": 0.9, width: "data(overviewNodeSize)", height: "data(overviewNodeSize)", "font-size": "data(labelSize)", "font-weight": 700, "border-width": 2, "border-color": cssValue("--node") } },
+    { selector: "node.open-graph", style: { width: "data(openNodeSize)", height: "data(openNodeSize)" } },
     { selector: "node:selected", style: { "border-width": 4, "border-color": cssValue("--focus"), "background-color": cssValue("--focus") } },
     { selector: "edge", style: { width: 1.5, "line-color": cssValue("--edge"), opacity: 0.68, "curve-style": "straight" } },
     { selector: "edge.similarity", style: { "line-style": "dashed", "line-color": cssValue("--similarity"), opacity: 0.65 } },
     { selector: ".lod-hidden", style: { display: "none" } },
     { selector: ".edge-hidden", style: { display: "none" } },
+    { selector: ".neighborhood-hidden", style: { display: "none" } },
   ];
 
   const lodForZoom = (zoom) => {
@@ -1028,23 +1027,34 @@
     let loadSequence = 0;
     let viewportTimer = null;
     let levelTimer = null;
+    let cameraReady = false;
     let neighborController = null;
     let neighborSequence = 0;
     let suppressCameraEvents = false;
     const graphEndpoint = new URL(graphUrl, window.location.origin);
     const neighborEndpoint = mapElement.dataset.neighborUrl || "/api/open-construction-map/neighbors/";
+    const openBack = document.querySelector('[data-map-action="open-back"]');
+    let focusedNodeId = null;
     const nodeId = (node) => node.node_id ?? node.genre_id;
-    const openElement = (node) => ({
+    // A single monotonic world transform expands the dense high-degree music
+    // region while keeping outliers bounded and viewport requests invertible.
+    const displayX = (value) => 1200 * Math.tanh((Number(value) - 665) / 50);
+    const rawX = (value) => 665 + 50 * Math.atanh(Math.max(-0.999999, Math.min(0.999999, Number(value) / 1200)));
+    const displayY = (value) => 1000 * Math.tanh((Number(value) + 78) / 160);
+    const rawY = (value) => -78 + 160 * Math.atanh(Math.max(-0.999999, Math.min(0.999999, Number(value) / 1000)));
+    const openElement = (node, overview = false) => ({
       data: {
         id: `open-${nodeId(node)}`,
         itemId: nodeId(node),
         label: node.name,
         displayLabel: "",
-        labelSize: 13,
+        labelSize: 14,
+        openNodeSize: 10,
         degree: node.degree,
+        overview,
       },
-      position: { x: Number(node.x), y: Number(node.y) },
-      classes: [node.hierarchy_depth === 0 ? "umbrella" : "genre", node.node_kind ?? "legacy_name_seed"].join(" "),
+      position: { x: displayX(node.x), y: displayY(node.y) },
+      classes: [node.hierarchy_depth === 0 ? "umbrella" : "genre", node.node_kind ?? "legacy_name_seed", "open-graph"].join(" "),
     });
     const edgeElement = (edge) => ({
       data: {
@@ -1055,22 +1065,87 @@
       },
       classes: edge.factual_relationship ? "taxonomy" : "similarity",
     });
-    const paintLabels = () => {
+    const paintLabels = (level = activeLevel < 0 ? 0 : activeLevel) => {
+      if (focusedNodeId) {
+        const viewport = mapElement.getBoundingClientRect();
+        const accepted = [];
+        const candidates = cy.nodes().filter((node) => !node.hasClass("neighborhood-hidden")).sort(
+          (left, right) => Number(right.data("itemId") === focusedNodeId) - Number(left.data("itemId") === focusedNodeId)
+            || Number(right.data("degree")) - Number(left.data("degree")),
+        );
+        const placements = [
+          { "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 7 },
+          { "text-halign": "center", "text-valign": "top", "text-margin-x": 0, "text-margin-y": -7 },
+          { "text-halign": "left", "text-valign": "center", "text-margin-x": 7, "text-margin-y": 0 },
+          { "text-halign": "right", "text-valign": "center", "text-margin-x": -7, "text-margin-y": 0 },
+        ];
+        cy.nodes().forEach((node) => node.data("displayLabel", ""));
+        for (const node of candidates) {
+          let shown = false;
+          node.data("labelSize", Math.max(8, Math.min(96, 14 / Math.max(cy.zoom(), 0.01))));
+          for (const placement of placements) {
+            node.data("displayLabel", node.data("label"));
+            node.style(placement);
+            const bounds = renderedLabelBounds(cy, node);
+            if (bounds.x1 < viewport.left + 8 || bounds.y1 < viewport.top + 8
+              || bounds.x2 > viewport.right - 8 || bounds.y2 > viewport.bottom - 8
+              || accepted.some((other) => intersects(bounds, other))) {
+              node.data("displayLabel", "");
+              continue;
+            }
+            accepted.push(bounds);
+            shown = true;
+            break;
+          }
+          if (!shown) node.data("displayLabel", "");
+        }
+        window.__musixMapMetrics.shownLabelCount = accepted.length;
+        window.__musixMapMetrics.labelBudget = window.__musixMapMetrics.shownLabelCount;
+        return;
+      }
+      if (level === 0) {
+        setCollisionFreeLabels(cy, 0, true);
+        return;
+      }
+      const budget = labelBudget(level);
       const visible = cy.nodes().sort((left, right) => Number(right.data("degree")) - Number(left.data("degree"))
         || String(left.data("label")).localeCompare(String(right.data("label"))));
-      visible.forEach((node, index) => node.data("displayLabel", index < labelBudget(0) ? node.data("label") : ""));
-      window.__musixMapMetrics.shownLabelCount = Math.min(visible.length, labelBudget(0));
+      visible.forEach((node, index) => node.data("displayLabel", index < budget ? node.data("label") : ""));
+      window.__musixMapMetrics.shownLabelCount = Math.min(visible.length, budget);
+      window.__musixMapMetrics.labelBudget = budget;
+    };
+    const applyOpenCameraSizing = () => {
+      const scale = Math.max(cy.zoom(), 0.01);
+      cy.nodes().forEach((node) => {
+        node.data("labelSize", 14 / scale);
+        node.data("openNodeSize", 10 / scale);
+      });
     };
     const addNeighborPayload = (neighbors) => {
+      const neighborhoodIds = new Set(neighbors.nodes.map((item) => nodeId(item)));
       const additions = neighbors.nodes.filter((item) => cy.$id(`open-${nodeId(item)}`).empty()).map(openElement);
       const edges = neighbors.edges.filter((edge) => cy.$id(`open-${edge.kind}-${edge.source}-${edge.target}`).empty()).map(edgeElement);
       if (additions.length || edges.length) cy.batch(() => cy.add([...additions, ...edges]));
+      cy.nodes().forEach((node) => node.toggleClass(
+        "neighborhood-hidden",
+        Boolean(focusedNodeId) && !neighborhoodIds.has(node.data("itemId")),
+      ));
       paintLabels();
     };
     const cancelNeighborRequest = () => {
       neighborController?.abort();
       neighborController = null;
       neighborSequence += 1;
+    };
+    const setOpenBack = (visible) => {
+      if (openBack) openBack.hidden = !visible;
+    };
+    const cancelMapLoad = () => {
+      loadController?.abort();
+      loadController = null;
+      loadSequence += 1;
+      window.clearTimeout(levelTimer);
+      window.clearTimeout(viewportTimer);
     };
     const fetchNeighbors = (id) => {
       neighborController?.abort();
@@ -1097,13 +1172,18 @@
       suppressCameraEvents = true;
       cy.fit(neighborhood, 96);
       suppressCameraEvents = false;
+      applyOpenCameraSizing();
+      paintLabels();
     };
     const detail = (node) => {
+      cancelMapLoad();
+      focusedNodeId = node.data("itemId");
       cy.$(":selected").unselect();
       node.select();
       fetchNeighbors(node.data("itemId"))
         .then((neighbors) => {
           if (!neighbors) return;
+          setOpenBack(true);
           addNeighborPayload(neighbors);
           fitNeighborhood(neighbors);
         })
@@ -1112,9 +1192,12 @@
         });
     };
     const focusSearchResult = (id) => {
+      cancelMapLoad();
+      focusedNodeId = id;
       fetchNeighbors(id)
         .then((neighbors) => {
           if (!neighbors) return;
+          setOpenBack(true);
           addNeighborPayload(neighbors);
           const node = cy.$id(`open-${id}`);
           if (node.empty()) throw new Error("open graph search target missing");
@@ -1127,60 +1210,75 @@
         });
     };
     const render = (payload, preserveCamera) => {
+      const overview = payload.level === 0;
+      const orderedNodes = payload.nodes;
       const elements = [
-        ...payload.nodes.map(openElement),
+        ...orderedNodes.map((node) => openElement(node, overview)),
         ...payload.edges.map(edgeElement),
       ];
       const previous = preserveCamera && cy ? { zoom: cy.zoom(), pan: cy.pan() } : null;
       const isInitialRender = !cy;
-      if (isInitialRender) {
-        cy = window.cytoscape({
-          container: mapElement,
-          elements,
-          style: stylesheet(),
-          layout: { name: "preset", fit: !previous, padding: 72 },
-          minZoom: 0.05,
-          maxZoom: 4.8,
-          userPanningEnabled: true,
-          userZoomingEnabled: true,
-          boxSelectionEnabled: false,
-        });
-      } else {
-        cy.batch(() => {
-          cy.elements().remove();
-          cy.add(elements);
-        });
-      }
-      if (previous) {
-        cy.zoom(previous.zoom);
-        cy.pan(previous.pan);
-      } else {
-        cy.fit(cy.nodes(), 72);
-        baselineZoom = cy.zoom();
-      }
       activeLevel = payload.level;
+      if (payload.level === 0) focusedNodeId = null;
+      // The canvas is hidden until the renderer is ready for the no-JS
+      // fallback. Make it measurable before Cytoscape constructs its renderer
+      // so a narrow viewport does not get a zero-size initial fit.
+      if (isInitialRender) root.classList.add("js-map-ready");
+      suppressCameraEvents = true;
+      try {
+        if (isInitialRender) {
+          cy = window.cytoscape({
+            container: mapElement,
+            elements,
+            style: stylesheet(),
+            layout: { name: "preset", fit: !previous, padding: 72 },
+            minZoom: 0.05,
+            maxZoom: 4.8,
+            userPanningEnabled: true,
+            userZoomingEnabled: true,
+            boxSelectionEnabled: false,
+          });
+        } else {
+          cy.batch(() => {
+            cy.elements().remove();
+            cy.add(elements);
+          });
+        }
+        if (previous) {
+          cy.zoom(previous.zoom);
+          cy.pan(previous.pan);
+        } else {
+          cy.fit(cy.nodes(), 72);
+          baselineZoom = cy.zoom();
+        }
+      } finally {
+        suppressCameraEvents = false;
+      }
       window.__musixMap = cy;
+      applyOpenCameraSizing();
       window.__musixMapMetrics = {
         initialElementCount: cy.elements().length,
         initialNodeCount: cy.nodes().length,
         nodeBudget: payload.node_budget,
         totalNodeCount: payload.total_node_count,
+        level: payload.level,
         shownLabelCount: 0,
         labelBudget: labelBudget(0),
       };
       root.classList.add("js-map-ready");
-      paintLabels();
+      cy.edges().toggleClass("edge-hidden", payload.level === 0);
+      paintLabels(activeLevel);
       if (isInitialRender) {
         cy.on("tap", "node", (event) => detail(event.target));
         cy.on("zoom", () => {
-          if (suppressCameraEvents) return;
+          if (suppressCameraEvents || !cameraReady) return;
           const level = Math.min(3, Math.max(0, Math.floor(Math.log2(cy.zoom() / Math.max(baselineZoom, 0.0001)) + 1)));
           if (level === activeLevel) return;
           window.clearTimeout(levelTimer);
           levelTimer = window.setTimeout(() => load(level, true), 120);
         });
         cy.on("pan", () => {
-          if (suppressCameraEvents) return;
+          if (suppressCameraEvents || !cameraReady) return;
           if (activeLevel === 0) return;
           window.clearTimeout(viewportTimer);
           viewportTimer = window.setTimeout(() => load(activeLevel, true), 160);
@@ -1188,9 +1286,15 @@
         cy.on("tap", (event) => {
           if (event.target !== cy) return;
           cancelNeighborRequest();
+          cancelMapLoad();
           cy.$(":selected").unselect();
+          focusedNodeId = null;
+          cy.nodes().removeClass("neighborhood-hidden");
+          setOpenBack(false);
+          load(0);
         });
       }
+      if (isInitialRender) window.setTimeout(() => { cameraReady = true; }, 700);
     };
     const load = (level, preserveCamera = false) => {
       loadController?.abort();
@@ -1200,14 +1304,19 @@
       request.searchParams.set("level", String(level));
       if (level > 0 && cy) {
         const viewport = cy.extent();
-        for (const [key, value] of Object.entries({ min_x: viewport.x1, min_y: viewport.y1, max_x: viewport.x2, max_y: viewport.y2 })) {
+        for (const [key, value] of Object.entries({
+          min_x: rawX(viewport.x1), min_y: rawY(viewport.y1), max_x: rawX(viewport.x2), max_y: rawY(viewport.y2),
+        })) {
           if (Number.isFinite(value)) request.searchParams.set(key, String(value));
         }
       }
       fetch(request, { headers: { Accept: "application/json" }, signal: loadController.signal })
         .then((response) => response.ok ? response.json() : Promise.reject(new Error(`open graph request failed: ${response.status}`)))
         .then((payload) => {
-          if (sequence === loadSequence) render(payload, preserveCamera);
+          if (sequence === loadSequence) {
+            render(payload, preserveCamera);
+            if (payload.level === 0) setOpenBack(false);
+          }
         })
         .catch((error) => {
           if (error.name !== "AbortError") say("Open 6,291 landscape unavailable.");
@@ -1219,11 +1328,19 @@
       const action = button.dataset.mapAction;
       if (action === "zoom-in") cy.zoom(cy.zoom() * 1.25);
       if (action === "zoom-out") cy.zoom(cy.zoom() / 1.25);
-      if (action === "fit") cy.fit(cy.nodes(), 72);
+      if (action === "fit") {
+        cancelNeighborRequest();
+        cy.$(":selected").unselect();
+        window.clearTimeout(levelTimer);
+        window.clearTimeout(viewportTimer);
+        load(0);
+      }
       if (action === "open-back") {
         cancelNeighborRequest();
         window.clearTimeout(levelTimer);
         window.clearTimeout(viewportTimer);
+        setOpenBack(false);
+        cy.$(":selected").unselect();
         load(0);
       }
     }, true);

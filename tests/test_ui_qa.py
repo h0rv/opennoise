@@ -1,3 +1,4 @@
+import re
 import unittest
 
 from scripts.render_ui_qa import fixture_html, inspect_fixture
@@ -17,6 +18,7 @@ class UiQaTests(unittest.TestCase):
         self.assertNotIn("<audio", first.casefold())
         self.assertNotIn("<video", first.casefold())
         self.assertNotIn("<canvas", first.casefold())
+        self.assertIsNone(re.search(r'href="/static/app\.css(?:\?[^" ]*)?"', first))
         self.assertNotIn("player", first.casefold())
         self.assertNotIn("preview", first.casefold())
         self.assertEqual(first.count('id="semantic-map"'), 1)

@@ -21,7 +21,12 @@ class AppTests(unittest.TestCase):
     @override
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
-        self.client = create_test_client(create_app(Path(self.temporary.name) / "catalog.sqlite"))
+        self.client = create_test_client(
+            create_app(
+                Path(self.temporary.name) / "catalog.sqlite",
+                open_construction_graph_v2_path=None,
+            )
+        )
         self.client.__enter__()
 
     @override
@@ -35,14 +40,13 @@ class AppTests(unittest.TestCase):
         self.assertIn('<main id="map"', response.text)
         self.assertNotIn("<h1", response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=12", response.text)
+        self.assertIn("/static/app.css?v=14", response.text)
         self.assertIn("cytoscape-3.34.0.min.js", response.text)
-        self.assertIn("semantic-map.js?v=18", response.text)
+        self.assertIn("semantic-map.js?v=20", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertIn("Open 6,291", response.text)
-        self.assertIn("Historical 6,291", response.text)
-        self.assertIn('data-map-view="public"', response.text)
-        self.assertIn('href="/?view=historical"', response.text)
+        self.assertIn('data-map-view="open"', response.text)
+        self.assertNotIn('id="map-view-switch"', response.text)
         self.assertEqual(response.text.count('id="semantic-map"'), 1)
 
     def test_open_view_uses_the_committed_artifact_in_bounded_lods(self) -> None:
@@ -343,7 +347,13 @@ class PopulatedAppTests(unittest.TestCase):
                 );
                 """
             )
-        self.client = create_test_client(create_app(self.database_path, production_map_path))
+        self.client = create_test_client(
+            create_app(
+                self.database_path,
+                production_map_path,
+                open_construction_graph_v2_path=None,
+            )
+        )
         self.client.__enter__()
 
     @override
@@ -352,7 +362,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def test_genre_links_have_one_canonical_selection_contract(self) -> None:
-        response = self.client.get("/")
+        response = self.client.get("/", params={"view": "public"})
 
         detail_href = "/genres/key/wikidata%3Agenre%3AQ1"
         self.assertIn(f'href="{detail_href}"', response.text)
@@ -369,7 +379,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertNotIn('id="count"', response.text)
 
     def test_published_layout_lenses_keep_source_and_generated_contracts_distinct(self) -> None:
-        response = self.client.get("/", params={"layout": "classic"})
+        response = self.client.get("/", params={"layout": "classic", "view": "public"})
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('id="layout-lenses"', response.text)
@@ -382,12 +392,12 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertNotIn(">Listen<", response.text)
 
     def test_unknown_layout_is_not_silently_replaced(self) -> None:
-        response = self.client.get("/", params={"layout": "missing"})
+        response = self.client.get("/", params={"layout": "missing", "view": "public"})
 
         self.assertEqual(response.status_code, 404)
 
     def test_canonical_genre_url_is_a_complete_fallback(self) -> None:
-        response = self.client.get("/genres/1")
+        response = self.client.get("/genres/1", params={"view": "public"})
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('data-selected-genre="1"', response.text)
@@ -407,8 +417,8 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertNotIn("2026-01-01", response.text)
 
     def test_workspace_selection_and_deselection_are_atomic(self) -> None:
-        selected = self.client.get("/fragments/workspace", params={"focus": "1"})
-        reset = self.client.get("/fragments/workspace")
+        selected = self.client.get("/fragments/workspace", params={"focus": "1", "view": "public"})
+        reset = self.client.get("/fragments/workspace", params={"view": "public"})
 
         self.assertEqual(selected.status_code, 200)
         self.assertEqual(selected.text.count('id="workspace"'), 1)
