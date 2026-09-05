@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 import sqlite3
 import tempfile
 import unittest
@@ -25,7 +24,9 @@ from musix.artist_backed_release_expansion import (
     ExpansionDatabaseReport,
     ExpansionSettings,
     ReleaseGroupSeed,
+    copy_expansion_serving_database,
     evaluate_expansion_acceptance,
+    inspect_expansion_serving_database,
     materialize_expansion_catalog,
     write_expansion_artifact,
 )
@@ -263,7 +264,14 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
             _create_evidence_fixture(source)
             source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
             serving = root / "serving.sqlite"
-            shutil.copyfile(source, serving)
+            copy_expansion_serving_database(source, serving)
+            before = inspect_expansion_serving_database(serving)
+            self.assertEqual(
+                before.catalog_counts.model_dump(),
+                {"releases": 1, "media": 1, "tracks": 1, "recordings": 2},
+            )
+            with self.assertRaises(FileExistsError):
+                copy_expansion_serving_database(source, serving)
             plan = _plan(root)
             async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
                 adapter = ArtistBackedReleaseExpansionAdapter(
@@ -277,9 +285,14 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
                 (counts.releases, counts.media, counts.tracks, counts.recordings), (1, 1, 1, 1)
             )
             self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(), source_hash)
-            with sqlite3.connect(serving) as connection:
-                self.assertEqual(connection.execute("PRAGMA integrity_check").fetchone(), ("ok",))
-                self.assertEqual(tuple(connection.execute("PRAGMA foreign_key_check")), ())
+            after = inspect_expansion_serving_database(serving)
+            self.assertEqual(after.integrity_check, ("ok",))
+            self.assertEqual(after.foreign_key_violations, 0)
+            self.assertNotEqual(before.sha256, after.sha256)
+            self.assertEqual(
+                after.catalog_counts.model_dump(),
+                {"releases": 2, "media": 2, "tracks": 2, "recordings": 3},
+            )
             replay_counts = materialize_expansion_catalog(
                 artifact, database_path=serving, artifact_sha256="b" * 64
             )
