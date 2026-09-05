@@ -165,8 +165,14 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
             )
 
     async def test_offline_cache_miss_fails_without_network(self) -> None:
+        async def unexpected_request(_: httpx.Request) -> httpx.Response:
+            """Make an accidental offline network request fail as a valid HTTP response."""
+            return httpx.Response(599)
+
         with tempfile.TemporaryDirectory() as directory:
-            async with httpx.AsyncClient(transport=httpx.MockTransport(lambda _: None)) as client:
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(unexpected_request)
+            ) as client:
                 adapter = MusicBrainzReleaseTrackHydrationAdapter(
                     client,
                     HydrationSettings(cache_directory=Path(directory) / "cache", offline=True),
