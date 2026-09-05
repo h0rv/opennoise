@@ -12,7 +12,13 @@ class OpenConstructionMapSourceTests(unittest.TestCase):
         self.assertIn("data-neighbor-url", Path("src/musix/templates/map.html").read_text())
         self.assertIn("graphEndpoint", source)
         self.assertIn("neighborEndpoint", source)
-        self.assertIn("min_x: viewport.x1", source)
+        for transform_call in (
+            "min_x: rawX(viewport.x1)",
+            "min_y: rawY(viewport.y1)",
+            "max_x: rawX(viewport.x2)",
+            "max_y: rawY(viewport.y2)",
+        ):
+            self.assertIn(transform_call, source)
         self.assertIn("loadController?.abort();", source)
         self.assertIn("cy.elements().remove();", source)
         self.assertIn("data-open-node-id", source)
