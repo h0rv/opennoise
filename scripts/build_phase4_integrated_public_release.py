@@ -58,13 +58,15 @@ _ADDITIONAL_EVIDENCE = (
     ("phase4-integration-report", "phase4-integration-report.json"),
 )
 
+type Phase4BundleKind = Literal[
+    "source-cache", "derived-database", "release-config", "evidence", "objective-gate"
+]
+
 
 class Phase4BundleEntry(FrozenModel):
     """One typed content-addressed member of the portable Phase 4 release."""
 
-    kind: Literal[
-        "source-cache", "derived-database", "release-config", "evidence", "objective-gate"
-    ]
+    kind: Phase4BundleKind
     object: ObjectWrite
     destination: ObjectKey
 
@@ -246,7 +248,7 @@ def _bundle_phase4_release(  # noqa: PLR0915
             "source_policy": "exportable public metadata only; no supplementary genre research or audio",
         },
     )
-    members: list[tuple[str, Path, str]] = [
+    members: list[tuple[Phase4BundleKind, Path, str]] = [
         ("source-cache", source_cache, "inputs/phase3-public-qualified.sqlite"),
         ("derived-database", derived, "release/phase4-public.sqlite"),
         ("release-config", manifest_path, "release-config/phase4-release-manifest.json"),
