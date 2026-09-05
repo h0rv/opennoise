@@ -18,20 +18,19 @@ from musix.artist_backed_release_expansion import (
     ArtistBackedReleaseExpansionError,
     ArtistBackedReleaseExpansionPlan,
     DirectArtistGenreAnchor,
+    ExpansionAcceptanceGate,
+    ExpansionAcceptanceInputs,
+    ExpansionCatalogReachability,
+    ExpansionDatabaseCounts,
+    ExpansionDatabaseReport,
     ExpansionSettings,
     ReleaseGroupSeed,
+    evaluate_expansion_acceptance,
     materialize_expansion_catalog,
     write_expansion_artifact,
 )
 from musix.musicbrainz_release_hydration import CatalogHydrationResult
 from musix.storage import LocalObjectStore
-from scripts.build_artist_backed_release_expansion import (
-    AcceptanceGate,
-    CatalogReachability,
-    DatabaseCounts,
-    DatabaseReport,
-    _acceptance_gate,
-)
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -116,32 +115,38 @@ def _release(release_id: UUID) -> dict[str, object]:
 
 class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
     def test_acceptance_gate_rejects_unchanged_hash_with_inserted_rows(self) -> None:
-        before = DatabaseReport(
+        before = ExpansionDatabaseReport(
             sha256="a" * 64,
             integrity_check=("ok",),
             foreign_key_violations=0,
-            catalog_counts=DatabaseCounts(releases=0, media=0, tracks=0, recordings=0),
+            catalog_counts=ExpansionDatabaseCounts(releases=0, media=0, tracks=0, recordings=0),
         )
         after = before.model_copy(
-            update={"catalog_counts": DatabaseCounts(releases=1, media=1, tracks=1, recordings=1)}
+            update={
+                "catalog_counts": ExpansionDatabaseCounts(
+                    releases=1, media=1, tracks=1, recordings=1
+                )
+            }
         )
-        gate = _acceptance_gate(
-            source_hash_before="c" * 64,
-            source_hash_after="c" * 64,
-            before=before,
-            after=after,
-            catalog=CatalogHydrationResult(releases=1, media=1, tracks=1, recordings=1),
-            replay_catalog=CatalogHydrationResult(releases=0, media=0, tracks=0, recordings=0),
-            reachability=CatalogReachability(
-                reachable_genre_count=1,
-                reachable_release_group_count=1,
-                reachable_release_count=1,
-                missing_release_link_count=0,
-            ),
-            artifact_release_count=21,
-            replay_matches=True,
+        gate = evaluate_expansion_acceptance(
+            ExpansionAcceptanceInputs(
+                source_hash_before="c" * 64,
+                source_hash_after="c" * 64,
+                before=before,
+                after=after,
+                catalog=CatalogHydrationResult(releases=1, media=1, tracks=1, recordings=1),
+                replay_catalog=CatalogHydrationResult(releases=0, media=0, tracks=0, recordings=0),
+                reachability=ExpansionCatalogReachability(
+                    reachable_genre_count=1,
+                    reachable_release_group_count=1,
+                    reachable_release_count=1,
+                    missing_release_link_count=0,
+                ),
+                artifact_release_count=21,
+                replay_matches=True,
+            )
         )
-        self.assertIsInstance(gate, AcceptanceGate)
+        self.assertIsInstance(gate, ExpansionAcceptanceGate)
         self.assertFalse(gate.passed)
         self.assertIn("hash did not change", " ".join(gate.failures))
 

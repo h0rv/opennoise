@@ -30,7 +30,7 @@ checks every retained release's album and direct-artist evidence IDs before
 materialization, runs SQLite integrity and foreign-key checks, verifies the
 genre → evidence → release-group → release product join, and materializes the
 same artifact again to prove zero duplicate inserts. The certified source file
-is never opened for writing. Operational cache path and offline mode are not
+is never opened for writing. Operational cache path, retry count, and offline mode are not
 part of the semantic plan hash, so identical source and bounds have identical
 artifact identity across cache locations.
 
