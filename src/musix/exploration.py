@@ -113,6 +113,30 @@ class RepresentativeDiscoveryItem(FrozenModel):
     ranking: RepresentativeRanking
 
 
+class MetadataExampleDiscoveryItem(RepresentativeDiscoveryItem):
+    """One selected album or recording metadata example with its limits stated."""
+
+    entity_kind: Literal["release_group", "recording"]
+    classification: Literal["metadata_example"] = "metadata_example"
+    explanation: str = (
+        "Selected from direct metadata evidence. This is a representative metadata example, not "
+        "evidence of popularity, quality, audience consensus, or influence."
+    )
+    missing_features: tuple[
+        Literal[
+            "audio",
+            "previews",
+            "media_assets",
+            "edition_rows",
+            "catalog_track_rows",
+            "popularity",
+            "listener_consensus",
+            "influence",
+        ],
+        ...,
+    ]
+
+
 class GenreExternalLink(FrozenModel):
     """One policy-safe external or playable destination for a genre."""
 
@@ -183,8 +207,8 @@ class GenreDetail(FrozenModel):
     evidence: tuple[ProvenanceEvidence, ...]
     historical_representative: HistoricalGenreRepresentative | None = None
     representative_artists: tuple[RepresentativeDiscoveryItem, ...] = ()
-    defining_albums: tuple[RepresentativeDiscoveryItem, ...] = ()
-    defining_tracks: tuple[RepresentativeDiscoveryItem, ...] = ()
+    representative_album_metadata: tuple[MetadataExampleDiscoveryItem, ...] = ()
+    representative_recording_metadata: tuple[MetadataExampleDiscoveryItem, ...] = ()
     playable_links: tuple[GenreExternalLink, ...] = ()
     neighbors: tuple[GenreDiscoveryItem, ...] = ()
     model_explanation: GenreModelExplanation | None = None

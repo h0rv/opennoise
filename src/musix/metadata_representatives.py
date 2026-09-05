@@ -4,8 +4,9 @@ import sqlite3
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, TypeAdapter, model_validator
+from pydantic import ConfigDict, Field, FiniteFloat, TypeAdapter, model_validator
 
+from musix.metadata_links import metadata_url
 from musix.ml.repository import PublicInputLoadSettings, _metadata_candidates
 from musix.models import FrozenModel
 from musix.types import Sha256
@@ -13,6 +14,16 @@ from musix.types import Sha256
 type ReleaseMetadataKind = Literal["release_group", "recording"]
 _RELEASE_KINDS: tuple[ReleaseMetadataKind, ...] = ("release_group", "recording")
 _EVIDENCE_REFS_ADAPTER: TypeAdapter[tuple[str, ...]] = TypeAdapter(tuple[str, ...])
+_MISSING_FEATURES = (
+    "audio",
+    "previews",
+    "media_assets",
+    "edition_rows",
+    "catalog_track_rows",
+    "popularity",
+    "listener_consensus",
+    "influence",
+)
 
 
 class MetadataRepresentativeSettings(FrozenModel):
@@ -40,7 +51,7 @@ class MetadataRepresentativeItem(FrozenModel):
     entity_id: str = Field(min_length=1)
     display_name: str = Field(min_length=1)
     rank: int = Field(gt=0)
-    direct_evidence_value: float = Field(gt=0.0)
+    direct_evidence_value: FiniteFloat = Field(gt=0.0)
     source_count: int = Field(gt=0)
     evidence_refs: tuple[str, ...] = Field(min_length=1)
     classification: Literal["metadata_example"] = "metadata_example"
@@ -48,16 +59,18 @@ class MetadataRepresentativeItem(FrozenModel):
         "Selected by the published public model from direct metadata evidence. This is a metadata "
         "example, not evidence of popularity, quality, audience consensus, or influence."
     )
-    missing_features: tuple[str, ...] = (
-        "audio",
-        "previews",
-        "media_assets",
-        "edition_rows",
-        "catalog_track_rows",
-        "popularity",
-        "listener_consensus",
-        "influence",
-    )
+    missing_features: tuple[str, ...] = _MISSING_FEATURES
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    @model_validator(mode="after")
+    def require_safe_metadata_reference(self) -> "MetadataRepresentativeItem":
+        """Reject URLs, media references, and mismatched catalog identifiers."""
+        if metadata_url(self.entity_kind, self.entity_id) is None:
+            raise ValueError("metadata examples require an exact safe catalog identifier")
+        if self.missing_features != _MISSING_FEATURES:
+            raise ValueError("metadata examples must declare the complete no-media boundary")
+        return self
 
 
 class MetadataRepresentativeArtifact(FrozenModel):
@@ -73,6 +86,8 @@ class MetadataRepresentativeArtifact(FrozenModel):
         "MusicBrainz recordings are the track-level metadata proxy in this MVP; the catalog has no "
         "track rows and this export does not infer a recording-to-release relationship."
     )
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
 
     @model_validator(mode="after")
     def require_contiguous_ranks(self) -> "MetadataRepresentativeArtifact":

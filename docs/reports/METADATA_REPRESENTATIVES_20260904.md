@@ -26,3 +26,18 @@ The command is `poe build-metadata-representatives`, with `MUSIX_PUBLIC_DATABASE
 `MUSIX_METADATA_REPRESENTATIVES_OUTPUT` set by the caller. The artifact is an export/verification gate
 over the existing release evidence path; it does not mutate the source cache or assert that absent
 releases/tracks exist.
+
+`poe publish-metadata-representatives` parses that artifact again at its publication boundary, rejects
+unknown fields, unsafe catalog references, and media-shaped files, then streams the exact JSON under
+`metadata-representatives/sha256/<file-sha256>.json` through the configured object-store adapter. Its
+receipt records the source public-model run, artifact identity, and release-group/recording counts;
+it does not fetch adapters, source catalogs, audio, previews, or media URLs. The served genre API uses
+the existing `displayable_public_genre_representatives` projection, so current source, policy, and
+suppression checks remain authoritative.
+
+The `/api/genres/{id}` and genre-detail fragment expose
+`representative_album_metadata` and `representative_recording_metadata` rather than calling them
+defining or quintessential works. Each visible item is explicitly `metadata_example`, includes rank,
+direct-evidence value, source count, and evidence references, and only receives a MusicBrainz or
+Wikidata metadata page link when its exact typed identifier is valid. Recording items retain the
+track-level metadata-proxy limitation.

@@ -301,6 +301,8 @@ class PublicModelPublishTests(unittest.TestCase):
             enriched[2][0].href,
             f"https://musicbrainz.org/release-group/{ALBUM_ID}",
         )
+        self.assertEqual(enriched[2][0].classification, "metadata_example")
+        self.assertEqual(enriched[3][0].entity_kind, "recording")
         self.assertIsNotNone(enriched[5])
         assert enriched[5] is not None
         self.assertTrue(enriched[5].profiles)
@@ -328,6 +330,10 @@ class PublicModelPublishTests(unittest.TestCase):
                 "evidence_refs": ["wd:artist"],
             },
         )
+        album = response.json()["representative_album_metadata"][0]
+        self.assertEqual(album["classification"], "metadata_example")
+        self.assertEqual(album["entity_kind"], "release_group")
+        self.assertNotIn("defining_albums", response.json())
 
     def test_genre_fragment_renders_compact_model_signals(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)
@@ -342,6 +348,9 @@ class PublicModelPublishTests(unittest.TestCase):
         self.assertIn("musicbrainz:artist:", response.text)
         self.assertIn("rank 1", response.text)
         self.assertIn("wd:artist", response.text)
+        self.assertIn("Representative album metadata examples", response.text)
+        self.assertIn("Representative recording metadata examples", response.text)
+        self.assertIn("track-level metadata proxies", response.text)
 
     def test_active_input_and_output_suppressions_retract_public_rows(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)

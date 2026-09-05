@@ -1,7 +1,7 @@
 # Musix
 
 Musix is an open, metadata-only music graph. It builds explainable genres,
-artist membership, similarity, hierarchy, representative albums and tracks,
+artist membership, similarity, hierarchy, and representative album and recording metadata examples,
 and a semantic map from bounded public data.
 
 The default public model has 603 independently built genres. The 6,291 Every
@@ -73,8 +73,9 @@ taxonomy remains a DAG. Any single display parent is a versioned presentation
 choice, not a claim that a multi-parent genre has one true parent.
 
 A selected genre exposes compact direct and one-hop membership components plus
-ranked similarity scores. Representative artists, albums, tracks, and external
-metadata links appear only when the public data supports them.
+ranked similarity scores. Representative album and recording metadata examples
+show their direct-evidence rank and source count, never imply quality or
+popularity, and link only to exact external metadata pages.
 
 See [the stack and architecture](docs/STACK.md),
 [the source-to-release pipeline](docs/PUBLIC_RELEASE_PIPELINE.md), and

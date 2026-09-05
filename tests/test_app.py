@@ -446,7 +446,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertEqual(representative["artist_name"], "Autechre")
         self.assertEqual(representative["track_title"], "Bike")
         self.assertEqual(representative["external_link"]["label"], "Spotify")
-        self.assertEqual(response.json()["defining_albums"], [])
+        self.assertEqual(response.json()["representative_album_metadata"], [])
         self.assertEqual(response.json()["neighbors"], [])
 
 

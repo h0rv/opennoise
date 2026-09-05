@@ -4,6 +4,7 @@ import asyncio
 import json
 import sqlite3
 from pathlib import Path
+from typing import Literal
 
 from musix.db import Database
 from musix.exploration import (
@@ -16,6 +17,7 @@ from musix.exploration import (
     GenreProfileSummary,
     GenreSimilarity,
     HistoricalGenreRepresentative,
+    MetadataExampleDiscoveryItem,
     RepresentativeDiscoveryItem,
     RepresentativeRanking,
 )
@@ -55,8 +57,8 @@ class GenreEntryRepository:
             evidence=detail.evidence,
             historical_representative=representative,
             representative_artists=artists,
-            defining_albums=albums,
-            defining_tracks=tracks,
+            representative_album_metadata=albums,
+            representative_recording_metadata=tracks,
             playable_links=detail.playable_links,
             neighbors=neighbors,
             model_explanation=explanation,
@@ -68,8 +70,8 @@ class GenreEntryRepository:
     ) -> tuple[
         HistoricalGenreRepresentative | None,
         tuple[RepresentativeDiscoveryItem, ...],
-        tuple[RepresentativeDiscoveryItem, ...],
-        tuple[RepresentativeDiscoveryItem, ...],
+        tuple[MetadataExampleDiscoveryItem, ...],
+        tuple[MetadataExampleDiscoveryItem, ...],
         tuple[GenreDiscoveryItem, ...],
         GenreModelExplanation | None,
     ]:
@@ -164,8 +166,8 @@ class GenreEntryRepository:
             ).fetchall()
         representative = _representative(representative_row)
         artists = _public_items(public_rows, "artist", ARTIST_LIMIT)
-        albums = _public_items(public_rows, "release_group", ALBUM_LIMIT)
-        tracks = _public_items(public_rows, "recording", TRACK_LIMIT)
+        albums = _metadata_examples(public_rows, "release_group", ALBUM_LIMIT)
+        tracks = _metadata_examples(public_rows, "recording", TRACK_LIMIT)
         neighbors = tuple(
             GenreDiscoveryItem(
                 entity_id=int(row[0]),
@@ -201,6 +203,48 @@ def _public_items(
                     direct_evidence_value=float(row[4]),
                     source_count=int(row[5]),
                     evidence_refs=_json_string_tuple(json.loads(str(row[6]))),
+                ),
+            )
+        )
+        if len(result) == limit:
+            break
+    return tuple(result)
+
+
+def _metadata_examples(
+    rows: list[sqlite3.Row],
+    entity_kind: Literal["release_group", "recording"],
+    limit: int,
+) -> tuple[MetadataExampleDiscoveryItem, ...]:
+    """Build bounded, policy-safe album or recording metadata examples."""
+    result: list[MetadataExampleDiscoveryItem] = []
+    for row in rows:
+        if str(row[0]) != entity_kind:
+            continue
+        source_ref = str(row[1])
+        href = metadata_url(entity_kind, source_ref)
+        if href is None:
+            continue
+        result.append(
+            MetadataExampleDiscoveryItem(
+                entity_kind=entity_kind,
+                name=str(row[2]),
+                href=href,
+                ranking=RepresentativeRanking(
+                    rank=int(row[3]),
+                    direct_evidence_value=float(row[4]),
+                    source_count=int(row[5]),
+                    evidence_refs=_json_string_tuple(json.loads(str(row[6]))),
+                ),
+                missing_features=(
+                    "audio",
+                    "previews",
+                    "media_assets",
+                    "edition_rows",
+                    "catalog_track_rows",
+                    "popularity",
+                    "listener_consensus",
+                    "influence",
                 ),
             )
         )

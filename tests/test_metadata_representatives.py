@@ -31,9 +31,11 @@ def _database(path: Path) -> None:
             INSERT INTO public_model_input_provenance VALUES (7, 41), (7, 42);
             INSERT INTO entity_identifiers VALUES (1, 20, 'wikidata', 'Q100');
             INSERT INTO displayable_public_genre_representatives VALUES
-              ('release_group', 20, 'musicbrainz:release-group:album-a', 'Album A', 1, 3.0, 2,
+              ('release_group', 20, 'musicbrainz:release-group:' ||
+               '11111111-1111-4111-8111-111111111111', 'Album A', 1, 3.0, 2,
                '["catalog:metadata:1"]'),
-              ('recording', 20, 'musicbrainz:recording:track-a', 'Track A', 1, 2.0, 1,
+              ('recording', 20, 'musicbrainz:recording:' ||
+               '22222222-2222-4222-8222-222222222222', 'Track A', 1, 2.0, 1,
                '["catalog:metadata:2"]');
             """
         )
@@ -44,7 +46,7 @@ class MetadataRepresentativesTests(unittest.TestCase):
         candidates = (
             MetadataCandidate(
                 entity_kind="release_group",
-                entity_id="musicbrainz:release-group:album-a",
+                entity_id="musicbrainz:release-group:11111111-1111-4111-8111-111111111111",
                 genre_id="wikidata:genre:Q100",
                 name="Album A",
                 direct_evidence_value=3.0,
@@ -53,7 +55,7 @@ class MetadataRepresentativesTests(unittest.TestCase):
             ),
             MetadataCandidate(
                 entity_kind="recording",
-                entity_id="musicbrainz:recording:track-a",
+                entity_id="musicbrainz:recording:22222222-2222-4222-8222-222222222222",
                 genre_id="wikidata:genre:Q100",
                 name="Track A",
                 direct_evidence_value=2.0,
