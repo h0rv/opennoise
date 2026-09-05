@@ -1,0 +1,26 @@
+{
+  "release_id": "phase4-integrated-public-20260904",
+  "source_release_id": "phase3-public-20260831-qualified",
+  "certified_source_cache": {
+    "sha256": "282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866",
+    "byte_size": 153231360,
+    "copy_required_before_derivation": true,
+    "source_is_never_mutated": true
+  },
+  "retained_musicbrainz_core_metadata": {
+    "hydration_artifact_sha256": "30bb3641e6503338121aa9fefb9b973f33c2136fe090f3cde775d786a5e4d519",
+    "representative_artifact_sha256": "5a85fde3788579f8a00b3c03090ce8a2a61e8a2556056796f66b59f5436142df",
+    "max_releases": 20,
+    "content_boundary": "core_metadata_only_no_audio_or_supplementary_genre_research"
+  },
+  "committed_open_construction_graph": {
+    "artifact_sha256": "94c7a5b3374e17e78aed8c7390e547235e06c041c9d51d803a77cb5d1e4a1d6f",
+    "logical_output_sha256": "9c080faae48db9270b4d8546bec003a90b62cd764ee6e233ed2b3a47f10d1957"
+  },
+  "source_policy": {
+    "exportable_public_inputs_only": true,
+    "musicbrainz_core_catalog_metadata": "public_domain_cc0",
+    "supplementary_genre_research": "excluded",
+    "audio": "excluded"
+  }
+}
