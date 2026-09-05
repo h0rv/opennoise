@@ -35,8 +35,11 @@ gold set exists. A calibration report cannot establish production quality.
 The pipeline is: verified source artifact, typed source claim, SQLite
 projection, versioned model, production map artifact, and sealed local release.
 The portable release bundle contains the sealed derived cache and evidence. It
-does not contain raw sources and does not close the raw source re-ingestion
-gap.
+does not contain raw sources. A separate, content-addressed source-cache
+receipt can rebuild a selected bounded fresh local source vault from pinned
+public metadata or restore approved raw bytes. Local-only source bytes cannot
+enter a portable object store. The full release-manifest source vault and
+derived database are not yet reproducible from this selected-cache workflow.
 
 Keep the stack small: Python 3.13.14, uv, mise, Poe, Litestar, Pydantic,
 SQLite, HTMX 4, and vendored Cytoscape.js 3.34. The graph island handles

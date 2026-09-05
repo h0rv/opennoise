@@ -39,6 +39,8 @@ class DownloadSource(BaseModel):
     embed: bool
     train: bool
     export_metadata: bool
+    export_raw: bool = False
+    redistribute: bool = False
 
     @model_validator(mode="after")
     def metadata_only(self) -> "DownloadSource":
@@ -52,6 +54,10 @@ class DownloadSource(BaseModel):
         if self.checksum_algorithm != "sha256":
             raise ValueError(f"source {self.id} does not declare SHA256")
         return self.checksum
+
+    def expected_media_type(self) -> str:
+        """Return the comparable media type without declared response parameters."""
+        return self.expected_content_type.partition(";")[0].strip().casefold()
 
 
 class DataSourceManifest(_FrozenModel):

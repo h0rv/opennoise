@@ -41,7 +41,7 @@ async def _stream_to_partial(
         response.raise_for_status()
         media_type = response.headers.get("content-type", "").partition(";")[0].strip()
         require_metadata_media_type(media_type)
-        if media_type != source.expected_content_type:
+        if media_type.casefold() != source.expected_media_type():
             expected = source.expected_content_type
             raise SourceManifestError(
                 f"upstream content type is {media_type!r}; expected {expected!r}"

@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 import resource
@@ -52,8 +53,22 @@ from musix.open_construction_graph import (
     build_open_construction_graph,
     publish_open_construction_graph,
 )
-from musix.pipeline.manifest import load_download_source
+from musix.pipeline.manifest import (
+    load_download_source,
+    load_reacquirable_download_sources,
+    source_acquisition_status,
+)
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
+from musix.pipeline.source_cache import (
+    SourceCacheAcquisition,
+    SourceCacheLimits,
+    acquire_source_cache,
+    load_source_cache_receipt,
+    publish_source_cache_receipt,
+    restore_source_cache,
+    verify_source_cache_receipt,
+    write_source_cache_receipt,
+)
 from musix.representative_catalog_ranking import (
     RepresentativeCatalogRankingConfig,
     RepresentativeCatalogRankingReport,
@@ -150,6 +165,95 @@ def _ingest_source(args: argparse.Namespace) -> int:
         )
     )
     sys.stdout.write(f"{summary.model_dump_json(indent=2)}\n")
+    return 0
+
+
+def _file_sha256(path: Path) -> str:
+    """Hash exact manifest bytes before binding them into a cache receipt."""
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _source_cache_status(args: argparse.Namespace) -> int:
+    """Report whether selected declarations may be network-acquired or need an operator."""
+    statuses = tuple(
+        source_acquisition_status(args.manifest, source_id) for source_id in args.source_id
+    )
+    sys.stdout.write(
+        json.dumps([status.model_dump(mode="json") for status in statuses], indent=2) + "\n"
+    )
+    return 0
+
+
+def _acquire_source_cache(args: argparse.Namespace) -> int:
+    """Build a bounded immutable raw-input cache from network-verifiable declarations."""
+    sources = load_reacquirable_download_sources(args.manifest, tuple(args.source_id))
+    receipt = asyncio.run(
+        acquire_source_cache(
+            sources,
+            acquisition=SourceCacheAcquisition(
+                declared_manifest_sha256=_file_sha256(args.manifest),
+                work_directory=args.work_directory,
+                limits=SourceCacheLimits(
+                    max_sources=args.max_sources,
+                    max_total_bytes=args.max_total_bytes,
+                    max_concurrency=args.max_concurrency,
+                    timeout_seconds=args.timeout_seconds,
+                ),
+                storage_scope=args.storage_scope,
+            ),
+            store=LocalObjectStore(args.object_store),
+        )
+    )
+    verify_source_cache_receipt(
+        receipt,
+        sources,
+        declared_manifest_sha256=_file_sha256(args.manifest),
+    )
+    match args.storage_scope:
+        case "local_vault":
+            digest = write_source_cache_receipt(receipt, output=args.receipt)
+            sys.stdout.write(
+                json.dumps(
+                    {"receipt": receipt.model_dump(mode="json"), "receipt_sha256": digest}, indent=2
+                )
+                + "\n"
+            )
+        case "portable_object_store":
+            publication = publish_source_cache_receipt(
+                receipt,
+                output=args.receipt,
+                store=LocalObjectStore(args.object_store),
+            )
+            sys.stdout.write(publication.model_dump_json(indent=2) + "\n")
+        case _:
+            raise RuntimeError(f"unknown source cache scope: {args.storage_scope}")
+    return 0
+
+
+def _restore_source_cache(args: argparse.Namespace) -> int:
+    """Reconstruct downloader-compatible raw input paths from a supplied receipt."""
+    sources = load_reacquirable_download_sources(args.manifest, tuple(args.source_id))
+    receipt = load_source_cache_receipt(args.receipt)
+    verify_source_cache_receipt(
+        receipt,
+        sources,
+        declared_manifest_sha256=_file_sha256(args.manifest),
+    )
+    restored = asyncio.run(
+        restore_source_cache(
+            receipt,
+            destination_root=args.destination,
+            store=LocalObjectStore(args.object_store),
+            max_concurrency=args.max_concurrency,
+        )
+    )
+    sys.stdout.write(
+        json.dumps([item.model_dump(mode="json") for item in restored], indent=2) + "\n"
+    )
     return 0
 
 
@@ -405,6 +509,45 @@ def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     ingest_source.add_argument("--timeout-seconds", type=float, default=6 * 60 * 60)
     ingest_source.add_argument("--checkpoint-every", type=int, default=10_000)
     ingest_source.set_defaults(handler=_ingest_source)
+    source_cache_status = commands.add_parser(
+        "source-cache-status",
+        help="report whether selected raw sources are network-verifiable or operator-supplied",
+    )
+    source_cache_status.add_argument("source_id", nargs="+")
+    source_cache_status.add_argument(
+        "--manifest", type=Path, default=Path("config/data_sources.toml")
+    )
+    source_cache_status.set_defaults(handler=_source_cache_status)
+    acquire_cache = commands.add_parser(
+        "acquire-source-cache",
+        help="acquire bounded, pinned public metadata into a content-addressed object store",
+    )
+    acquire_cache.add_argument("source_id", nargs="+")
+    acquire_cache.add_argument("--manifest", type=Path, default=Path("config/data_sources.toml"))
+    acquire_cache.add_argument("--object-store", required=True, type=Path)
+    acquire_cache.add_argument("--work-directory", required=True, type=Path)
+    acquire_cache.add_argument("--receipt", required=True, type=Path)
+    acquire_cache.add_argument("--max-sources", type=int, default=8)
+    acquire_cache.add_argument("--max-total-bytes", type=int, default=128 * 1024 * 1024)
+    acquire_cache.add_argument("--max-concurrency", type=int, default=2)
+    acquire_cache.add_argument("--timeout-seconds", type=float, default=120.0)
+    acquire_cache.add_argument(
+        "--storage-scope",
+        choices=("local_vault", "portable_object_store"),
+        default="local_vault",
+    )
+    acquire_cache.set_defaults(handler=_acquire_source_cache)
+    restore_cache = commands.add_parser(
+        "restore-source-cache",
+        help="restore a receipt's raw source cache without network access",
+    )
+    restore_cache.add_argument("source_id", nargs="+")
+    restore_cache.add_argument("--manifest", type=Path, default=Path("config/data_sources.toml"))
+    restore_cache.add_argument("--object-store", required=True, type=Path)
+    restore_cache.add_argument("--receipt", required=True, type=Path)
+    restore_cache.add_argument("--destination", required=True, type=Path)
+    restore_cache.add_argument("--max-concurrency", type=int, default=2)
+    restore_cache.set_defaults(handler=_restore_source_cache)
     hydrate = commands.add_parser(
         "hydrate-musicbrainz-releases",
         help=(
@@ -532,6 +675,12 @@ def main() -> int:  # noqa: C901, PLR0911, PLR0912
             return _bootstrap(args)
         case "ingest-source":
             return _ingest_source(args)
+        case "source-cache-status":
+            return _source_cache_status(args)
+        case "acquire-source-cache":
+            return _acquire_source_cache(args)
+        case "restore-source-cache":
+            return _restore_source_cache(args)
         case "hydrate-musicbrainz-releases":
             return _hydrate_musicbrainz_releases(args)
         case "build-representative-catalog-candidates":
