@@ -977,6 +977,123 @@
     });
   };
 
+  const initOpenConstructionMap = () => {
+    // The open artifact has 6,291 retained nodes, but this renderer never
+    // materializes that global set. Each server LOD response is capped at 720.
+    let cy = null;
+    let baselineZoom = 1;
+    let activeLevel = -1;
+    let fetching = false;
+    const openElement = (node) => ({
+      data: {
+        id: `open-${node.genre_id}`,
+        itemId: node.genre_id,
+        label: node.name,
+        displayLabel: "",
+        labelSize: 13,
+        degree: node.degree,
+      },
+      position: { x: Number(node.x), y: Number(node.y) },
+      classes: node.hierarchy_depth === 0 ? "umbrella" : "genre",
+    });
+    const edgeElement = (edge) => ({
+      data: {
+        id: `open-${edge.kind}-${edge.source}-${edge.target}`,
+        source: `open-${edge.source}`,
+        target: `open-${edge.target}`,
+        weight: edge.confidence,
+      },
+      classes: edge.review_candidate ? "similarity" : "taxonomy",
+    });
+    const paintLabels = () => {
+      const visible = cy.nodes().sort((left, right) => Number(right.data("degree")) - Number(left.data("degree"))
+        || String(left.data("label")).localeCompare(String(right.data("label"))));
+      visible.forEach((node, index) => node.data("displayLabel", index < labelBudget(0) ? node.data("label") : ""));
+      window.__musixMapMetrics.shownLabelCount = Math.min(visible.length, labelBudget(0));
+    };
+    const detail = (node, payload) => {
+      const panel = document.querySelector("#open-detail");
+      if (panel) panel.textContent = `${node.data("label")}: ${node.data("degree")} public taxonomy or review links.`;
+      fetch(`/api/open-construction-map/neighbors/${encodeURIComponent(node.data("itemId"))}`, { headers: { Accept: "application/json" } })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("open graph neighbors unavailable")))
+        .then((neighbors) => {
+          const additions = neighbors.nodes.filter((item) => cy.$id(`open-${item.genre_id}`).empty()).map(openElement);
+          const edges = neighbors.edges.filter((edge) => cy.$id(`open-${edge.kind}-${edge.source}-${edge.target}`).empty()).map(edgeElement);
+          if (additions.length || edges.length) cy.batch(() => cy.add([...additions, ...edges]));
+          paintLabels();
+        })
+        .catch(() => say("Open graph detail unavailable."));
+    };
+    const render = (payload, preserveCamera) => {
+      const elements = [
+        ...payload.nodes.map(openElement),
+        ...payload.edges.map(edgeElement),
+      ];
+      const previous = preserveCamera && cy ? { zoom: cy.zoom(), pan: cy.pan() } : null;
+      cy?.destroy();
+      cy = window.cytoscape({
+        container: mapElement,
+        elements,
+        style: stylesheet(),
+        layout: { name: "preset", fit: !previous, padding: 72 },
+        minZoom: 0.28,
+        maxZoom: 4.8,
+        userPanningEnabled: true,
+        userZoomingEnabled: true,
+        boxSelectionEnabled: false,
+      });
+      if (previous) {
+        cy.zoom(previous.zoom);
+        cy.pan(previous.pan);
+      } else {
+        cy.fit(cy.nodes(), 72);
+        baselineZoom = cy.zoom();
+      }
+      activeLevel = payload.level;
+      window.__musixMap = cy;
+      window.__musixMapMetrics = {
+        initialElementCount: cy.elements().length,
+        initialNodeCount: cy.nodes().length,
+        nodeBudget: payload.node_budget,
+        totalNodeCount: payload.total_node_count,
+        shownLabelCount: 0,
+        labelBudget: labelBudget(0),
+      };
+      root.classList.add("js-map-ready");
+      paintLabels();
+      cy.on("tap", "node", (event) => detail(event.target, payload));
+      cy.on("zoom", () => {
+        const level = Math.min(3, Math.max(0, Math.floor(Math.log2(cy.zoom() / Math.max(baselineZoom, 0.0001)) + 1)));
+        if (level !== activeLevel && !fetching) load(level, true);
+      });
+      cy.on("tap", (event) => {
+        if (event.target === cy) cy.$(":selected").unselect();
+      });
+    };
+    const load = (level, preserveCamera = false) => {
+      fetching = true;
+      fetch(`/api/open-construction-map?level=${level}`, { headers: { Accept: "application/json" } })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error(`open graph request failed: ${response.status}`)))
+        .then((payload) => render(payload, preserveCamera))
+        .catch(() => say("Open 6,291 landscape unavailable."))
+        .finally(() => { fetching = false; });
+    };
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-map-action]");
+      if (!button || !cy) return;
+      const action = button.dataset.mapAction;
+      if (action === "zoom-in") cy.zoom(cy.zoom() * 1.25);
+      if (action === "zoom-out") cy.zoom(cy.zoom() / 1.25);
+      if (action === "fit") cy.fit(cy.nodes(), 72);
+    }, true);
+    load(0);
+  };
+
+  if (mapElement.dataset.mapMode === "open") {
+    initOpenConstructionMap();
+    return;
+  }
+
   fetch(graphUrl, { headers: { Accept: "application/json" } })
     .then((response) => response.ok ? response.json() : Promise.reject(new Error(`map request failed: ${response.status}`)))
     .then((payload) => {

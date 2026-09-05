@@ -15,6 +15,7 @@ from musix.genre_entry import GenreEntryRepository
 from musix.historical_membership_store import HistoricalMembershipStore
 from musix.historical_signal_store import HistoricalSignalMapStore
 from musix.models import Settings
+from musix.open_construction_store import OpenConstructionMapStore
 from musix.production_store import ProductionMapStore
 from musix.routes import CoreController, EvidenceController, MapController, SearchController
 
@@ -28,6 +29,7 @@ def create_app(
     production_map_path: Path | None = None,
     historical_signal_map_path: Path | None = None,
     historical_membership_database_path: Path | None = None,
+    open_construction_graph_path: Path | None = None,
 ) -> Litestar:
     """Create an app with a separate lifecycle-managed read connection."""
     settings = Settings()
@@ -41,11 +43,15 @@ def create_app(
     historical_memberships = HistoricalMembershipStore(
         historical_membership_database_path or settings.historical_membership_database_path
     )
+    open_construction_graph = OpenConstructionMapStore(
+        open_construction_graph_path or settings.open_construction_graph_path
+    )
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
         await historical_signal_map.start()
         await historical_memberships.start(historical_signal_map.publication_artifact())
+        await open_construction_graph.start()
         await database.start()
         try:
             yield
@@ -67,6 +73,9 @@ def create_app(
     async def provide_historical_memberships() -> HistoricalMembershipStore:
         return historical_memberships
 
+    async def provide_open_construction_graph() -> OpenConstructionMapStore:
+        return open_construction_graph
+
     return Litestar(
         route_handlers=[
             CoreController,
@@ -81,6 +90,7 @@ def create_app(
             "production_map": Provide(provide_production_map),
             "historical_signal_map": Provide(provide_historical_signal_map),
             "historical_memberships": Provide(provide_historical_memberships),
+            "open_construction_graph": Provide(provide_open_construction_graph),
         },
         lifespan=[lifespan],
         template_config=TemplateConfig(directory=TEMPLATE_ROOT, engine=JinjaTemplateEngine),

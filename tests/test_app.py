@@ -37,12 +37,37 @@ class AppTests(unittest.TestCase):
         self.assertIn("htmx-4.0.0.min.js", response.text)
         self.assertIn("/static/app.css?v=11", response.text)
         self.assertIn("cytoscape-3.34.0.min.js", response.text)
-        self.assertIn("semantic-map.js", response.text)
+        self.assertIn("semantic-map.js?v=14", response.text)
         self.assertNotIn('id="count"', response.text)
-        self.assertNotIn("6291", response.text)
+        self.assertIn("Open 6,291", response.text)
+        self.assertIn("Historical 6,291", response.text)
         self.assertIn('data-map-view="public"', response.text)
         self.assertIn('href="/?view=historical"', response.text)
         self.assertEqual(response.text.count('id="semantic-map"'), 1)
+
+    def test_open_view_uses_the_committed_artifact_in_bounded_lods(self) -> None:
+        page = self.client.get("/", params={"view": "open"})
+        overview = self.client.get("/api/open-construction-map", params={"level": 0})
+        detail = self.client.get("/api/open-construction-map", params={"level": 3})
+
+        self.assertEqual(page.status_code, 200)
+        self.assertIn('data-map-view="open"', page.text)
+        self.assertIn('data-map-mode="open"', page.text)
+        self.assertIn('data-graph-url="/api/open-construction-map?level=0"', page.text)
+        self.assertNotIn('data-graph-url="/api/map"', page.text)
+        for response, budget in ((overview, 240), (detail, 720)):
+            self.assertEqual(response.status_code, 200)
+            payload = response.json()
+            self.assertEqual(payload["source"], "open-construction-artifact")
+            self.assertEqual(payload["total_node_count"], 6291)
+            self.assertEqual(payload["node_budget"], budget)
+            self.assertLessEqual(len(payload["nodes"]), budget)
+            self.assertLess(len(payload["nodes"]), payload["total_node_count"])
+        genre_id = overview.json()["nodes"][0]["genre_id"]
+        drill = self.client.get(f"/api/open-construction-map/neighbors/{genre_id}")
+        self.assertEqual(drill.status_code, 200)
+        self.assertLessEqual(len(drill.json()["nodes"]), 25)
+        self.assertLessEqual(len(drill.json()["edges"]), 24)
 
     def test_historical_view_is_addressable_but_never_substitutes_public_data(self) -> None:
         response = self.client.get("/", params={"view": "historical"})

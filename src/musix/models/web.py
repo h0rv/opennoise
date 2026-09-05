@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     historical_membership_database_path: Path | None = Field(
         default=None, validation_alias="MUSIX_HISTORICAL_MEMBERSHIP_DATABASE_PATH"
     )
+    open_construction_graph_path: Path | None = Field(
+        default=Path(__file__).resolve().parents[3] / "data/model/open-construction-graph-v1.json",
+        validation_alias="MUSIX_OPEN_CONSTRUCTION_GRAPH_PATH",
+    )
 
 
 class SearchHit(FrozenModel):

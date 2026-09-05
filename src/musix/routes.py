@@ -40,6 +40,12 @@ from musix.models import (
     SearchResponse,
     map_view,
 )
+from musix.open_construction_store import (
+    OpenConstructionMapResponse,
+    OpenConstructionMapStore,
+    OpenConstructionMapStoreError,
+    OpenConstructionNeighborResponse,
+)
 
 if TYPE_CHECKING:
     from musix.models.historical_signal import HistoricalSignalHierarchyNode
@@ -62,9 +68,10 @@ class CoreController(Controller):
         genre_entries: NamedDependency[GenreEntryRepository],
         production_map: NamedDependency[ProductionMapStore],
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
+        open_construction_graph: NamedDependency[OpenConstructionMapStore],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
-        view: FromQuery[Literal["public", "historical"]] = "public",
+        view: FromQuery[Literal["public", "open", "historical"]] = "public",
     ) -> Template:
         """Render the current full map."""
         context = await workspace_context(
@@ -72,6 +79,7 @@ class CoreController(Controller):
             genre_entries,
             production_map,
             historical_signal_map,
+            open_construction_graph,
             layout=layout,
             focus=None,
             search_query=q,
@@ -86,11 +94,12 @@ class CoreController(Controller):
         genre_entries: NamedDependency[GenreEntryRepository],
         production_map: NamedDependency[ProductionMapStore],
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
+        open_construction_graph: NamedDependency[OpenConstructionMapStore],
         genre_id: FromPath[int],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
-        view: FromQuery[Literal["public", "historical"]] = "public",
+        view: FromQuery[Literal["public", "open", "historical"]] = "public",
     ) -> Template:
         """Render a shareable genre selection with the complete app shell."""
         context = await workspace_context(
@@ -98,6 +107,7 @@ class CoreController(Controller):
             genre_entries,
             production_map,
             historical_signal_map,
+            open_construction_graph,
             layout=layout,
             focus=genre_id,
             search_query=q,
@@ -114,11 +124,12 @@ class CoreController(Controller):
         genre_entries: NamedDependency[GenreEntryRepository],
         production_map: NamedDependency[ProductionMapStore],
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
+        open_construction_graph: NamedDependency[OpenConstructionMapStore],
         genre_key: FromPath[str],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
-        view: FromQuery[Literal["public", "historical"]] = "public",
+        view: FromQuery[Literal["public", "open", "historical"]] = "public",
     ) -> Template:
         """Open a stable public key, resolving its current local entity only server-side."""
         genre_id = await database.genre_id_for_public_key(genre_key)
@@ -129,6 +140,7 @@ class CoreController(Controller):
             genre_entries,
             production_map,
             historical_signal_map,
+            open_construction_graph,
             layout=layout,
             focus=genre_id,
             search_query=q,
@@ -214,6 +226,42 @@ class MapController(Controller):
         if response is None:
             raise RuntimeError("configured historical signal map store returned no graph")
         return response
+
+    @get("/api/open-construction-map")
+    async def open_construction_map_data(
+        self,
+        open_construction_graph: NamedDependency[OpenConstructionMapStore],
+        level: FromQuery[int] = 0,
+        min_x: FromQuery[float | None] = None,
+        min_y: FromQuery[float | None] = None,
+        max_x: FromQuery[float | None] = None,
+        max_y: FromQuery[float | None] = None,
+    ) -> OpenConstructionMapResponse:
+        """Return one bounded landscape LOD from the committed 6,291-node artifact."""
+        if not open_construction_graph.configured:
+            raise ServiceUnavailableException(detail="open construction graph is disabled")
+        try:
+            return open_construction_graph.response(
+                level=level, min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y
+            )
+        except OpenConstructionMapStoreError as error:
+            raise ServiceUnavailableException(
+                detail="open construction graph artifact unavailable"
+            ) from error
+
+    @get("/api/open-construction-map/neighbors/{genre_id:str}")
+    async def open_construction_neighbors(
+        self,
+        open_construction_graph: NamedDependency[OpenConstructionMapStore],
+        genre_id: FromPath[str],
+    ) -> OpenConstructionNeighborResponse:
+        """Return one bounded one-hop open graph drill result."""
+        if not open_construction_graph.configured:
+            raise ServiceUnavailableException(detail="open construction graph is disabled")
+        try:
+            return open_construction_graph.neighbors(genre_id)
+        except OpenConstructionMapStoreError as error:
+            raise NotFoundException(detail="open construction graph node unavailable") from error
 
     @get("/api/historical-signal-map/neighbors/{genre_id:str}")
     async def historical_signal_neighbors(
@@ -364,10 +412,11 @@ class MapController(Controller):
         genre_entries: NamedDependency[GenreEntryRepository],
         production_map: NamedDependency[ProductionMapStore],
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
+        open_construction_graph: NamedDependency[OpenConstructionMapStore],
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
-        view: FromQuery[Literal["public", "historical"]] = "public",
+        view: FromQuery[Literal["public", "open", "historical"]] = "public",
     ) -> Template:
         """Render one coherent map selection and detail fragment."""
         context = await workspace_context(
@@ -375,6 +424,7 @@ class MapController(Controller):
             genre_entries,
             production_map,
             historical_signal_map,
+            open_construction_graph,
             layout=layout,
             focus=focus,
             search_query=q,
@@ -616,11 +666,12 @@ async def workspace_context(
     genre_entries: GenreEntryRepository,
     production_map: ProductionMapStore,
     historical_signal_map: HistoricalSignalMapStore,
+    open_construction_graph: OpenConstructionMapStore,
     *,
     layout: str,
     focus: int | None,
     search_query: str,
-    view: Literal["public", "historical"],
+    view: Literal["public", "open", "historical"],
 ) -> dict[str, object]:
     """Build one consistent workspace from a published layout and optional genre."""
     layouts = await database.published_layouts()
@@ -665,6 +716,7 @@ async def workspace_context(
         "map_view_mode": view,
         "historical_map_configured": historical_signal_map.configured,
         "historical_overview": historical_overview,
+        "open_construction_graph_configured": open_construction_graph.configured,
     }
 
 

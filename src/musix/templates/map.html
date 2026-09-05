@@ -2,8 +2,10 @@
 <nav id="map-view-switch" aria-label="Map view">
   <a{% if map_view_mode | default('public') == 'public' %} aria-current="page"{% endif %}
      href="/?view=public{% if layout_query %}&amp;layout={{ layout_query }}{% endif %}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Public</a>
+  <a{% if map_view_mode | default('public') == 'open' %} aria-current="page"{% endif %}
+     href="/?view=open{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Open 6,291</a>
   <a{% if map_view_mode | default('public') == 'historical' %} aria-current="page"{% endif %}
-     href="/?view=historical{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">6,291</a>
+     href="/?view=historical{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}">Historical 6,291</a>
 </nav>
 {% if map_view_mode | default('public') == 'historical' %}
   {% if historical_map_configured %}
@@ -25,6 +27,21 @@
   {% else %}
   <section id="historical-fallback" class="map-fallback" aria-label="Historical compatibility">
     <p>Historical compatibility is unavailable.</p>
+  </section>
+  {% endif %}
+{% elif map_view_mode | default('public') == 'open' %}
+  {% if open_construction_graph_configured %}
+  <div id="semantic-map" role="application" aria-label="Interactive open 6,291 genre landscape"
+       data-map-mode="open" data-graph-url="/api/open-construction-map?level=0"
+       aria-describedby="map-pan-help"></div>
+  <section id="open-fallback" class="map-fallback" aria-label="Open construction graph">
+    <p>Open 6,291-node landscape. Use the interactive map to reveal bounded detail.</p>
+    <p><a href="/api/open-construction-map?level=0">Open landscape overview</a></p>
+  </section>
+  <aside id="open-detail" aria-label="Open graph details"></aside>
+  {% else %}
+  <section id="open-fallback" class="map-fallback" aria-label="Open construction graph">
+    <p>Open 6,291 landscape is unavailable.</p>
   </section>
   {% endif %}
 {% else %}
