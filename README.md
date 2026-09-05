@@ -8,6 +8,14 @@ The default public model has 603 independently built genres. The 6,291 Every
 Noise labels and coordinates are a separate, dated historical reference. They
 do not train, place, or score the public model.
 
+## Open construction graph
+
+The retained legacy vocabulary can also be rendered as a bounded,
+public-taxonomy-only graph. It retains all 6,291 labels, records confidence and
+edge evidence, and treats compositional anchors as review links rather than
+memberships or factual parentage. See
+[the open construction graph contract](docs/OPEN_CONSTRUCTION_GRAPH.md).
+
 No music, preview, or audio bytes enter the project.
 
 ## Local MusicBrainz name-seed research graph

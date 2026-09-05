@@ -1,0 +1,10 @@
+{
+  "artifact_output_sha256": "9c080faae48db9270b4d8546bec003a90b62cd764ee6e233ed2b3a47f10d1957",
+  "node_count": 6291,
+  "edge_count": 1059,
+  "component_count": 5243,
+  "complete_seed_coverage": true,
+  "no_prohibited_inputs": true,
+  "no_review_membership_promotion": true,
+  "deterministic_replay": true
+}

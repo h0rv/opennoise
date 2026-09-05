@@ -45,6 +45,11 @@ from musix.musicbrainz_research_graph import (
     evaluate_sealed_graph,
     write_research_graph,
 )
+from musix.open_construction_graph import (
+    OpenConstructionGraphConfig,
+    build_open_construction_graph,
+    publish_open_construction_graph,
+)
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
 from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter
@@ -232,6 +237,40 @@ def _build_genre_seed_universe(args: argparse.Namespace) -> int:
     return 0
 
 
+def _build_open_construction_graph(args: argparse.Namespace) -> int:
+    """Build and publish the public-only graph over every retained name seed."""
+    graph = build_open_construction_graph(
+        args.seed_artifact,
+        args.taxonomy_artifact,
+        args.public_catalog_database,
+        config=OpenConstructionGraphConfig(
+            expected_seed_count=args.expected_seed_count,
+            max_review_anchor_degree=args.max_review_anchor_degree,
+        ),
+    )
+    receipt, object_write = publish_open_construction_graph(
+        graph, output_path=args.output, store=LocalObjectStore(args.object_store)
+    )
+    args.gate_report.parent.mkdir(parents=True, exist_ok=True)
+    args.gate_report.write_text(receipt.gate.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    args.receipt.parent.mkdir(parents=True, exist_ok=True)
+    args.receipt.write_text(receipt.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    sys.stdout.write(
+        json.dumps(
+            {
+                "logical_output_sha256": graph.output_sha256,
+                "receipt": receipt.model_dump(mode="json"),
+                "object_write": object_write.model_dump(mode="json"),
+                "coverage": graph.coverage.model_dump(mode="json"),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    return 0
+
+
 def _build_musicbrainz_research_graph(args: argparse.Namespace) -> int:
     """Build a local-only graph from name seeds and direct MusicBrainz evidence."""
     graph = build_musicbrainz_research_graph(
@@ -379,6 +418,20 @@ def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     )
     seed_universe.add_argument("--output", type=Path, required=True)
     seed_universe.set_defaults(handler=_build_genre_seed_universe)
+    open_graph = commands.add_parser(
+        "build-open-construction-graph",
+        help="build and publish a public-only graph over all retained name seeds",
+    )
+    open_graph.add_argument("--seed-artifact", type=Path, required=True)
+    open_graph.add_argument("--taxonomy-artifact", type=Path, required=True)
+    open_graph.add_argument("--public-catalog-database", type=Path, required=True)
+    open_graph.add_argument("--output", type=Path, required=True)
+    open_graph.add_argument("--object-store", type=Path, required=True)
+    open_graph.add_argument("--receipt", type=Path, required=True)
+    open_graph.add_argument("--gate-report", type=Path, required=True)
+    open_graph.add_argument("--expected-seed-count", type=int, default=6291)
+    open_graph.add_argument("--max-review-anchor-degree", type=int, default=24)
+    open_graph.set_defaults(handler=_build_open_construction_graph)
     research_graph = commands.add_parser(
         "build-musicbrainz-research-graph",
         help="build a sealed local-only MusicBrainz name-seed research graph",
@@ -425,6 +478,8 @@ def main() -> int:  # noqa: C901, PLR0911
             return _publish_historical_signal_map(args)
         case "build-genre-seed-universe":
             return _build_genre_seed_universe(args)
+        case "build-open-construction-graph":
+            return _build_open_construction_graph(args)
         case "build-musicbrainz-research-graph":
             return _build_musicbrainz_research_graph(args)
         case "evaluate-musicbrainz-research-graph":

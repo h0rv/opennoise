@@ -120,6 +120,7 @@ publish-metadata-representatives = "python scripts/publish_metadata_representati
 hydrate-musicbrainz-releases = "musix hydrate-musicbrainz-releases --representatives $MUSIX_METADATA_REPRESENTATIVES_ARTIFACT --output $MUSIX_MUSICBRAINZ_HYDRATION_OUTPUT --object-store $MUSIX_MUSICBRAINZ_HYDRATION_OBJECT_STORE --cache-directory $MUSIX_MUSICBRAINZ_HYDRATION_CACHE --user-agent $MUSIX_MUSICBRAINZ_USER_AGENT"
 build-genre-seed-universe = "musix build-genre-seed-universe --seed-artifact $MUSIX_H2_SEED_ARTIFACT --catalog-database $MUSIX_PUBLIC_DATABASE --output $MUSIX_GENRE_SEED_UNIVERSE_OUTPUT"
 build-genre-seed-public-taxonomy = "python scripts/build_genre_seed_public_taxonomy.py --seed-artifact $MUSIX_H2_SEED_ARTIFACT --public-catalog-database $MUSIX_PUBLIC_DATABASE --output $MUSIX_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT"
+build-open-construction-graph = "musix build-open-construction-graph --seed-artifact $MUSIX_H2_SEED_ARTIFACT --taxonomy-artifact $MUSIX_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT --public-catalog-database $MUSIX_PUBLIC_DATABASE --output $MUSIX_OPEN_CONSTRUCTION_GRAPH_OUTPUT --object-store $MUSIX_OPEN_CONSTRUCTION_GRAPH_OBJECT_STORE --receipt $MUSIX_OPEN_CONSTRUCTION_GRAPH_RECEIPT --gate-report $MUSIX_OPEN_CONSTRUCTION_GRAPH_GATE"
 
 [tool.poe.tasks.historical-signal-release]
 sequence = [

@@ -1,0 +1,16 @@
+{
+  "artifact_sha256": "94c7a5b3374e17e78aed8c7390e547235e06c041c9d51d803a77cb5d1e4a1d6f",
+  "artifact_byte_size": 5855841,
+  "object_key": "open-construction-graph/9c080faae48db9270b4d8546bec003a90b62cd764ee6e233ed2b3a47f10d1957/94c7a5b3374e17e78aed8c7390e547235e06c041c9d51d803a77cb5d1e4a1d6f.json",
+  "logical_output_sha256": "9c080faae48db9270b4d8546bec003a90b62cd764ee6e233ed2b3a47f10d1957",
+  "gate": {
+    "artifact_output_sha256": "9c080faae48db9270b4d8546bec003a90b62cd764ee6e233ed2b3a47f10d1957",
+    "node_count": 6291,
+    "edge_count": 1059,
+    "component_count": 5243,
+    "complete_seed_coverage": true,
+    "no_prohibited_inputs": true,
+    "no_review_membership_promotion": true,
+    "deterministic_replay": true
+  }
+}
