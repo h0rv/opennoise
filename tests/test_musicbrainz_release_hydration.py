@@ -5,6 +5,7 @@ from uuid import UUID
 
 import httpx
 
+from musix.db import Database
 from musix.metadata_representatives import (
     MetadataRepresentativeArtifact,
     MetadataRepresentativeItem,
@@ -162,6 +163,20 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
                     replay_catalog.recordings,
                 ),
                 (0, 0, 0, 0),
+            )
+            detail = Database(root / "catalog.sqlite").hydrated_release_metadata_by_source(
+                "release_group", RELEASE_GROUP_ID
+            )
+            self.assertIsNotNone(detail)
+            if detail is None:
+                self.fail("hydrated release lookup unexpectedly returned no data")
+            self.assertEqual(detail.title, "Synthetic Album")
+            self.assertEqual(detail.media[0].tracks[0].number, "1")
+            self.assertEqual(detail.media[0].tracks[0].length_ms, 123456)
+            self.assertIsNone(
+                Database(root / "catalog.sqlite").hydrated_release_metadata_by_source(
+                    "recording", "00000000-0000-4000-8000-000000000000"
+                )
             )
 
     async def test_offline_cache_miss_fails_without_network(self) -> None:

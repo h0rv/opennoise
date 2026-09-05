@@ -246,6 +246,10 @@ def _metadata_examples(
                     "listener_consensus",
                     "influence",
                 ),
+                hydrated_release_href=(
+                    "/fragments/musicbrainz/"
+                    f"{entity_kind}/{source_ref.rsplit(':', maxsplit=1)[-1]}/hydrated-release"
+                ),
             )
         )
         if len(result) == limit:

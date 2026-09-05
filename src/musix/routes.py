@@ -14,6 +14,7 @@ from musix.db import AsyncDatabase
 from musix.exploration import (
     CatalogLens,
     GenreDetail,
+    HydratedReleaseMetadata,
     LevelOfDetail,
     MapQuery,
     ProvenanceResponse,
@@ -450,6 +451,48 @@ class EvidenceController(Controller):
         return ProvenanceResponse(
             entity_id=entity_id,
             evidence=await database.entity_provenance(entity_id),
+        )
+
+    @get("/api/entities/{entity_id:int}/hydrated-release")
+    async def hydrated_release(
+        self, database: NamedDependency[AsyncDatabase], entity_id: FromPath[int]
+    ) -> HydratedReleaseMetadata:
+        """Return one non-playable hydrated release or a normal empty-state 404."""
+        release = await database.hydrated_release_metadata(entity_id)
+        if release is None:
+            raise NotFoundException(detail="hydrated release metadata not found")
+        return release
+
+    @get("/fragments/entities/{entity_id:int}/hydrated-release", media_type=MediaType.HTML)
+    async def hydrated_release_fragment(
+        self, database: NamedDependency[AsyncDatabase], entity_id: FromPath[int]
+    ) -> Template:
+        """Render a compact no-JavaScript release-track metadata fragment."""
+        return Template(
+            template_name="hydrated_release.html",
+            context={"release": await database.hydrated_release_metadata(entity_id)},
+        )
+
+    @get(
+        "/fragments/musicbrainz/{entity_kind:str}/{source_id:str}/hydrated-release",
+        media_type=MediaType.HTML,
+    )
+    async def hydrated_release_source_fragment(
+        self,
+        database: NamedDependency[AsyncDatabase],
+        entity_kind: FromPath[str],
+        source_id: FromPath[str],
+    ) -> Template:
+        """Render hydrated metadata for one exact representative source identity."""
+        if entity_kind not in {"release_group", "recording"}:
+            raise NotFoundException(detail="unsupported hydrated metadata identity")
+        return Template(
+            template_name="hydrated_release.html",
+            context={
+                "release": await database.hydrated_release_metadata_by_source(
+                    entity_kind, source_id
+                )
+            },
         )
 
     @get("/fragments/genre-detail-empty", media_type=MediaType.HTML)

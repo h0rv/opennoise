@@ -135,6 +135,7 @@ class MetadataExampleDiscoveryItem(RepresentativeDiscoveryItem):
         ],
         ...,
     ]
+    hydrated_release_href: str | None = None
 
 
 class GenreExternalLink(FrozenModel):
@@ -219,6 +220,34 @@ class ProvenanceResponse(FrozenModel):
 
     entity_id: int
     evidence: tuple[ProvenanceEvidence, ...]
+
+
+class HydratedTrackMetadata(FrozenModel):
+    """One ordered, non-playable hydrated track listing."""
+
+    number: str
+    title: str
+    length_ms: int | None = None
+    artist_credit: tuple[str, ...] = ()
+
+
+class HydratedMediumMetadata(FrozenModel):
+    """One ordered metadata-only medium."""
+
+    position: int
+    format: str | None = None
+    tracks: tuple[HydratedTrackMetadata, ...]
+
+
+class HydratedReleaseMetadata(FrozenModel):
+    """A linked MusicBrainz release listing, never playable media."""
+
+    title: str
+    date: str | None = None
+    country: str | None = None
+    status: str | None = None
+    href: str
+    media: tuple[HydratedMediumMetadata, ...]
 
 
 def optional_viewport(

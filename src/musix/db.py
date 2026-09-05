@@ -13,6 +13,9 @@ from pydantic import JsonValue, TypeAdapter
 from musix.exploration import (
     CatalogLens,
     GenreDetail,
+    HydratedMediumMetadata,
+    HydratedReleaseMetadata,
+    HydratedTrackMetadata,
     MapQuery,
     MapQueryResult,
     ProvenanceEvidence,
@@ -540,6 +543,75 @@ class Database:
             evidence=self.entity_provenance(entity_id),
         )
 
+    def hydrated_release_metadata(self, entity_id: int) -> HydratedReleaseMetadata | None:
+        """Read one hydrated release for a release-group or recording representative."""
+        with self.connect() as connection:
+            row = connection.execute(
+                """SELECT release.id, release.status, name.name, identifier.normalized_value
+                   FROM releases AS release
+                   JOIN release_groups AS group_row ON group_row.id = release.release_group_id
+                   JOIN entity_identifiers AS identifier ON identifier.entity_id = release.id
+                   JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
+                   JOIN displayable_entity_names AS name ON name.entity_id = release.id
+                   WHERE type.type_key = 'musicbrainz_release_id'
+                     AND (group_row.id = ? OR EXISTS (
+                         SELECT 1 FROM tracks JOIN media ON media.id = tracks.medium_id
+                         WHERE media.release_id = release.id AND tracks.recording_id = ?
+                     ))
+                   ORDER BY release.id, name.id LIMIT 1""",
+                (entity_id, entity_id),
+            ).fetchone()
+            if row is None:
+                return None
+            media_rows = connection.execute(
+                "SELECT id, position, format FROM media WHERE release_id = ? ORDER BY position",
+                (int(row[0]),),
+            ).fetchall()
+            media = []
+            for medium in media_rows:
+                tracks = connection.execute(
+                    """SELECT track.number_text, name.name, track.duration_ms
+                       FROM tracks AS track
+                       JOIN displayable_entity_names AS name ON name.entity_id = track.id
+                       WHERE track.medium_id = ? ORDER BY track.position, name.id""",
+                    (int(medium[0]),),
+                ).fetchall()
+                media.append(
+                    HydratedMediumMetadata(
+                        position=int(medium[1]),
+                        format=str(medium[2]) if medium[2] is not None else None,
+                        tracks=tuple(
+                            HydratedTrackMetadata(
+                                number=str(track[0]),
+                                title=str(track[1]),
+                                length_ms=int(track[2]) if track[2] is not None else None,
+                            )
+                            for track in tracks
+                        ),
+                    )
+                )
+        return HydratedReleaseMetadata(
+            title=str(row[2]),
+            status=str(row[1]) if row[1] is not None else None,
+            href=f"https://musicbrainz.org/release/{row[3]}",
+            media=tuple(media),
+        )
+
+    def hydrated_release_metadata_by_source(
+        self, entity_kind: str, source_id: str
+    ) -> HydratedReleaseMetadata | None:
+        """Resolve one exact MusicBrainz release-group or recording identifier before lookup."""
+        type_key = f"musicbrainz_{entity_kind}_id"
+        with self.connect() as connection:
+            row = connection.execute(
+                """SELECT identifier.entity_id FROM entity_identifiers AS identifier
+                   JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
+                   WHERE type.type_key = ? AND identifier.namespace = 'musicbrainz'
+                     AND identifier.normalized_value = ? ORDER BY identifier.id LIMIT 1""",
+                (type_key, source_id),
+            ).fetchone()
+        return self.hydrated_release_metadata(int(row[0])) if row is not None else None
+
     def genre_id_for_public_key(self, key: str) -> int | None:
         """Resolve one stable public Wikidata genre key without guessing an entity ID."""
         match = PUBLIC_GENRE_KEY_PATTERN.fullmatch(key)
@@ -620,6 +692,18 @@ class AsyncDatabase:
     async def query_map(self, query: MapQuery) -> MapQueryResult:
         """Read one bounded map query without blocking the event loop."""
         return await self._call(lambda: self._database.query_map(query))
+
+    async def hydrated_release_metadata(self, entity_id: int) -> HydratedReleaseMetadata | None:
+        """Read a hydrated release listing without blocking the event loop."""
+        return await self._call(lambda: self._database.hydrated_release_metadata(entity_id))
+
+    async def hydrated_release_metadata_by_source(
+        self, entity_kind: str, source_id: str
+    ) -> HydratedReleaseMetadata | None:
+        """Resolve exact hydrated metadata without blocking the event loop."""
+        return await self._call(
+            lambda: self._database.hydrated_release_metadata_by_source(entity_kind, source_id)
+        )
 
     async def layout_metadata(self, layout_key: str) -> LayoutArtifactMetadata | None:
         """Read published layout metadata without blocking the event loop."""
