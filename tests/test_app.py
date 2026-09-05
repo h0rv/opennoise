@@ -404,7 +404,7 @@ class PopulatedAppTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('<a class="result" href="/genres/1?q=idm"', response.text)
-        self.assertIn('hx-get="/fragments/genres/1"', response.text)
+        self.assertIn('hx-get="/fragments/genres/1?q=idm"', response.text)
         self.assertIn('hx-push-url="/genres/1?q=idm"', response.text)
         self.assertNotIn("<button", response.text)
 
