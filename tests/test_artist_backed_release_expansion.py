@@ -7,6 +7,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 from uuid import UUID
 
@@ -24,6 +25,7 @@ from musix.artist_backed_release_expansion import (
     ExpansionDatabaseReport,
     ExpansionSettings,
     ReleaseGroupSeed,
+    build_expansion_plan,
     copy_expansion_serving_database,
     evaluate_expansion_acceptance,
     inspect_expansion_serving_database,
@@ -244,6 +246,75 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
                 other_artifact = await other_adapter.hydrate(other_plan)
             self.assertEqual(other_artifact, artifact)
 
+    async def test_musicbrainz_identity_mismatches_are_explicit_abstentions(self) -> None:
+        for mismatch in ("group", "release", "release-group"):
+
+            async def handler(request: httpx.Request, mismatch: str = mismatch) -> httpx.Response:
+                if request.url.path.endswith(f"release-group/{GROUP_ID}"):
+                    group_id = SECOND_RELEASE_ID if mismatch == "group" else GROUP_ID
+                    return httpx.Response(
+                        200,
+                        json={
+                            "id": str(group_id),
+                            "title": "Synthetic Group",
+                            "artist-credit": [{"artist": {"id": str(ARTIST_ID), "name": "Artist"}}],
+                            "releases": [{"id": str(RELEASE_ID), "title": "Synthetic Release"}],
+                        },
+                    )
+                payload = _release(RELEASE_ID)
+                if mismatch == "release":
+                    payload["id"] = str(SECOND_RELEASE_ID)
+                elif mismatch == "release-group":
+                    payload["release-group"] = {
+                        "id": str(SECOND_RELEASE_ID),
+                        "title": "Wrong Group",
+                    }
+                return httpx.Response(200, json=payload)
+
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                plan = _plan(root)
+                async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                    adapter = ArtistBackedReleaseExpansionAdapter(
+                        client, plan.settings, user_agent="musix/0.1 (maintainer@example.test)"
+                    )
+                    artifact = await adapter.hydrate(plan)
+                self.assertEqual(artifact.coverage.unique_release_count, 0)
+                self.assertEqual(artifact.coverage.metadata_unavailable_count, 1)
+                self.assertEqual(
+                    artifact.results[0].abstention_reason,
+                    "musicbrainz_metadata_unavailable",
+                )
+                self.assertIn("identity", artifact.results[0].abstention_message or "")
+
+    def test_plan_ignores_expired_and_unsealed_permissions(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.sqlite"
+            _create_evidence_fixture(source)
+            _add_inactive_evidence_fixture(source)
+            with closing(sqlite3.connect(source)) as connection:
+                inactive = connection.execute(
+                    """
+                    SELECT policy_id FROM active_rights_policy_permissions
+                    WHERE policy_id IN (5, 6)
+                    """
+                ).fetchall()
+                self.assertEqual(inactive, [])
+                connection.executescript(
+                    """
+                    DROP VIEW active_rights_policy_permissions;
+                    CREATE VIEW active_rights_policy_permissions AS
+                    SELECT policy_id, use_kind, decision, reason
+                    FROM rights_policy_permissions WHERE 0;
+                    """
+                )
+                connection.commit()
+            with self.assertRaisesRegex(
+                ArtistBackedReleaseExpansionError, "no exportable artist-backed"
+            ):
+                build_expansion_plan(source, _plan(root).settings)
+
     async def test_materializes_copied_database_with_source_linkage_and_idempotence(self) -> None:
         async def handler(request: httpx.Request) -> httpx.Response:
             if request.url.path.endswith(f"release-group/{GROUP_ID}"):
@@ -360,7 +431,7 @@ if __name__ == "__main__":
 
 def _create_evidence_fixture(path: Path) -> None:
     """Build a tiny migration fixture with the exact public evidence joins."""
-    with sqlite3.connect(path) as connection:
+    with closing(sqlite3.connect(path)) as connection:
         for migration in MIGRATIONS:
             connection.executescript(migration.read_text(encoding="utf-8"))
         connection.executescript(FIXTURE.read_text(encoding="utf-8"))
@@ -418,3 +489,26 @@ def _create_evidence_fixture(path: Path) -> None:
                     'direct_source_claim', '1', '{{}}', '2026-01-01T00:00:00Z', 4, 3, '{"f" * 64}');
             """
         )
+        connection.commit()
+
+
+def _add_inactive_evidence_fixture(path: Path) -> None:
+    """Add expired and unsealed public-looking policies for view regression tests."""
+    with closing(sqlite3.connect(path)) as connection:
+        connection.executescript(
+            """
+            INSERT INTO rights_policies
+                (id, policy_key, policy_version, classification, local_only, basis, expires_at)
+            VALUES
+                (5, 'expired-fixture', 1, 'public_domain', 0, 'Expired fixture',
+                 '2000-01-01T00:00:00Z'),
+                (6, 'unsealed-fixture', 1, 'public_domain', 0, 'Unsealed fixture', NULL);
+            INSERT INTO rights_policy_permissions (policy_id, use_kind, decision, reason)
+            VALUES
+                (5, 'normalize', 'allow', 'Expired fixture'),
+                (5, 'export', 'allow', 'Expired fixture'),
+                (6, 'normalize', 'allow', 'Unsealed fixture'),
+                (6, 'export', 'allow', 'Unsealed fixture');
+            """
+        )
+        connection.commit()

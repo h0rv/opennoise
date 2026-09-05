@@ -300,7 +300,7 @@ def build_expansion_plan(
     absolute = database.resolve(strict=True)
     source_hash = _sha256_path(absolute)
     uri = f"file:{absolute.as_posix()}?mode=ro"
-    with sqlite3.connect(uri, uri=True) as connection:
+    with closing(sqlite3.connect(uri, uri=True)) as connection:
         group_rows = connection.execute(
             """
             SELECT 'wikidata:genre:' || genre_identifier.normalized_value,
@@ -320,7 +320,7 @@ def build_expansion_plan(
             JOIN provenance_records AS provenance ON provenance.id = album.provenance_id
             JOIN data_sources AS source ON source.id = provenance.source_id
             JOIN rights_policies AS policy ON policy.id = album.policy_id
-            JOIN rights_policy_permissions AS permission
+            JOIN active_rights_policy_permissions AS permission
               ON permission.policy_id = policy.id
              AND permission.use_kind = 'export' AND permission.decision = 'allow'
             WHERE album.evidence_kind = 'wikidata_p136'
@@ -349,7 +349,7 @@ def build_expansion_plan(
             JOIN provenance_records AS provenance ON provenance.id = evidence.provenance_id
             JOIN data_sources AS source ON source.id = provenance.source_id
             JOIN rights_policies AS policy ON policy.id = evidence.policy_id
-            JOIN rights_policy_permissions AS permission
+            JOIN active_rights_policy_permissions AS permission
               ON permission.policy_id = policy.id
              AND permission.use_kind = 'export' AND permission.decision = 'allow'
             WHERE evidence.evidence_kind = 'direct_source_claim'
@@ -506,7 +506,7 @@ class ArtistBackedReleaseExpansionAdapter:
             return parsed, cached.projection_sha256
         raise AssertionError("bounded retry loop exhausted")
 
-    async def hydrate(
+    async def hydrate(  # noqa: C901
         self, plan: ArtistBackedReleaseExpansionPlan
     ) -> ArtistBackedReleaseExpansionArtifact:
         """Hydrate every seed and keep a direct-artist join or explicit abstention."""
@@ -526,6 +526,17 @@ class ArtistBackedReleaseExpansionAdapter:
                         seed=seed,
                         abstention_reason="musicbrainz_metadata_unavailable",
                         abstention_message=str(error),
+                    )
+                )
+                continue
+            if group.id != seed.release_group_mbid:
+                results.append(
+                    ExpansionSeedResult(
+                        seed=seed,
+                        abstention_reason="musicbrainz_metadata_unavailable",
+                        abstention_message=(
+                            "MusicBrainz release-group identity does not match the retained seed."
+                        ),
                     )
                 )
                 continue
@@ -575,6 +586,19 @@ class ArtistBackedReleaseExpansionAdapter:
                     )
                 except ArtistBackedReleaseExpansionError as error:
                     metadata_error = str(error)
+                    expanded = []
+                    break
+                if release.id != reference.id:
+                    metadata_error = (
+                        "MusicBrainz release identity does not match the selected "
+                        "release reference."
+                    )
+                    expanded = []
+                    break
+                if release.release_group.id != seed.release_group_mbid:
+                    metadata_error = (
+                        "MusicBrainz release-group identity does not match the retained seed."
+                    )
                     expanded = []
                     break
                 matching_artist = matching[0]
