@@ -1,0 +1,15 @@
+{
+  "revision": "one-hop-membership-candidate-policy-v2",
+  "candidate_id": "one-hop-membership-conservative-v2",
+  "selection_basis": "a_priori_public_inputs_only",
+  "minimum_seed_source_diversity": 1,
+  "minimum_seed_direct_score": 0.85,
+  "minimum_genre_direct_seed_count": 3,
+  "minimum_listener_day_support": 15,
+  "minimum_supporting_windows": 2,
+  "required_edge_type": "listenbrainz_privacy_safe_co_listen",
+  "maximum_target_taxonomy_distance": 1,
+  "require_target_direct_taxonomy_anchor": true,
+  "external_reference_used_for_construction": false,
+  "historical_input_used_for_construction": false
+}
