@@ -45,10 +45,11 @@ direct observations, with a fail-closed one-million-observation ceiling. The
 effective limits are recorded in the artifact `settings` and its receipt-bound
 artifact hash.
 
-Before querying H3, the runner copies it to a private working snapshot, checks
-the source hash before and after that copy, and deletes the snapshot on either
-success or failure. The workspace location is operational only and is never a
-durable artifact identity.
+Before querying H3, the runner makes one streamed private working copy while
+computing its SHA-256. It accepts that snapshot only when the streamed-copy hash
+matches the bridge-bound source hash, then deletes the snapshot on either success
+or failure. The workspace location is operational only and is never a durable
+artifact identity.
 
 ## Sealed reference run
 

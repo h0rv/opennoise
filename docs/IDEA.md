@@ -23,20 +23,26 @@ Zooming reveals their child genres and nearby related genres. Further zooming
 reveals artists and representative metadata. The map does not treat a denser
 flat batch of points as a more detailed neighborhood.
 
-The current open graph contains 7,037 nodes and 3,317 edges. It contains all
-6,291 historical names and 746 public catalog anchors. It has 441 exact
-identity edges, 853 factual taxonomy edges, 1,940 compositional review edges,
-and 83 ambiguous review edges. It connects 2,418 historical names through
-review links. It has no inferred artist memberships and no promoted review
-links.
+The current full-corpus hierarchy checkpoint retains all 6,291 immutable names
+and 66,132 directed public-evidence candidates: 160 accepted, 59,911 review,
+and 6,061 abstained. The separately sealed all-seed frontier is built from the
+restored public catalog snapshot. Neither artifact inherits artist memberships
+through the hierarchy or uses historical data during construction.
 
-The current public membership candidate has 4,948 direct Wikidata observations,
-30,903 privacy safe listening observations, and 13,175 normalized aggregate
-pairs. It produces 3,049 direct candidate pairs and 9,256 one hop candidate
-pairs across 292 named genres. It abstains on 5,999 names. It is a candidate
-artifact, not a serving model. Its historical comparison reaches 37.05 percent
-positive only recall on the mapped evaluation subset, and the historical data
-is not an independent public gold set.
+The historical peer compatibility evaluator name-matches 6,289 H3 genre names.
+Only 1,580 have a constructed candidate neighborhood and are peer-supported;
+the other 4,709 are retained as abstentions. The 1,580 figure is an evaluation
+subset, not genre, catalog, or hierarchy coverage. H3 has unranked,
+positive-only samples, so this remains a neighborhood check rather than a
+ground-truth reconstruction.
+
+The separate bridge-backed membership experiment maps 120,288 of 306,136 H3
+observations to 78,954 MusicBrainz artists using receipt-bound identities and
+an 88,328-artist, 212,696-row open-tag matrix. Its open-only Recall@50 is
+0.01582 micro and its H3 edge-holdout Recall@50 is 0.03059 micro; 1,172 whole
+cold-label genres deliberately abstain. It is a local, positive-only baseline,
+not complete membership, ranked relevance, Every Noise parity, or a serving
+model.
 
 The bounded representative catalog currently contains 51 retained releases
 and 491 unique track records across 40 genres. These are metadata records only.
