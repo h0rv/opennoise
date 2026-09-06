@@ -85,15 +85,40 @@ candidates: 160 accepted, 59,911 review, and 6,061 abstained. The hierarchy is
 a public evidence candidate layer; it does not inherit parent artist
 memberships into children and does not use historical data in construction.
 
-The all-seed evidence frontier was deliberately not published at this
-checkpoint. Its taxonomy expansion requires the exact CC0 public-catalog
-snapshot bound into taxonomy `45eea…`, whose database byte hash is
+The all-seed evidence frontier is now published from the exact CC0 public
+catalog snapshot bound into taxonomy `45eea…`: database byte hash
 `240047cabddbbebccd48a775c9967488dd2dd2968d38d27f31354b90f3a3e8fc`.
-The local catalog at `.cache/musicbrainz-20-catalog/public.sqlite` was later
-hydrated and now hashes to `31b342e11a03fcfabca6a8e639f96e9250ef7cfb06b4e615608a6445e9b15b7c`.
-The expansion command rejects that mismatch before writing output. The missing
-pre-hydration snapshot must be restored, or a separately sealed taxonomy and
-reconciliation lineage must be created; this checkpoint does neither.
+It has logical hash
+`8b17de7f4ad31ee8f49b1e36b006ff5f35e32510ab26533943d751ff5f775194` and
+byte hash `274cd2ac29cd44609dfdf571014eac97da7a904dc0a422036f8b0a754d48b46d`.
+The restored snapshot is at
+`.cache/catalog-snapshots/sha256/240047cabddbbebccd48a775c9967488dd2dd2968d38d27f31354b90f3a3e8fc.sqlite`.
+Its receipt binds the retained local source path, both byte hashes, size, and
+the expected taxonomy hash. The current hydrated descendant remains separate
+at `.cache/musicbrainz-20-catalog/public.sqlite` with hash
+`31b342e11a03fcfabca6a8e639f96e9250ef7cfb06b4e615608a6445e9b15b7c`.
+The restore command refuses a source hash mismatch before replacing a
+destination, so no provenance gate is weakened.
+
+## Historical H3 peer evaluation
+
+The sealed full peer component is evaluated only after construction against
+the immutable H3 snapshot. The evaluation report file hash is
+`5ea0ccdf2f795e2ce66d2058abbe5eebee9650e4fbfd9d7ea6efd4434f9b8c91`;
+its logical report hash is
+`91c2f2dedc6d83ba7423eb8e401ba749b97c21a19e4ade5ace1ba0911b848724`.
+It binds candidate logical hash `15ce7a…`, public catalog hash `31b342e…`,
+and historical database hash `098dc878…`.
+
+The evaluator records `historical_inputs_used_for_construction=false` and
+`absence_is_negative=false`. H3 supplies 306,136 unranked positive
+observations; only 3,630 have a unique public artist-name crosswalk, so this
+is a neighborhood-compatibility check rather than membership recall. At 25
+neighbors it matches 1,684 historical directed links: micro precision is
+0.08604 and recall is 0.25358, versus null precision 0.000804 and recall
+0.002370. It covers 1,580 candidate-neighborhood genres and preserves 4,709
+matched genres without candidates as abstentions. It is not a claim of a
+complete Every Noise reconstruction or ranked historical ground truth.
 
 The optional reconstruction artifact contains only direct positive
 MusicBrainz artist-to-genre evidence for matched seed names. It is a typed
