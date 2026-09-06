@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Protocol, TypeVar
 
@@ -65,10 +67,17 @@ def _load[ModelT](path: Path, model_type: _JsonModelType[ModelT]) -> ModelT:
 
 def _write_json(path: Path, value: _JsonModel) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(value.model_dump(mode="json"), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(value.model_dump(mode="json"), indent=2, sort_keys=True))
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def _reconcile(arguments: argparse.Namespace) -> int:

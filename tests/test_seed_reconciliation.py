@@ -214,6 +214,19 @@ class SeedReconciliationTests(unittest.TestCase):
         tampered = artifact.model_copy(update={"seed_count": 4})
         with self.assertRaises(ValueError):
             verify_seed_reconciliation(tampered)
+        rebound = artifact.model_copy(
+            update={
+                "seed_identity_sha256": "f" * 64,
+                "output_sha256": "0" * 64,
+            }
+        )
+        rebound = rebound.model_copy(
+            update={
+                "output_sha256": _hash(rebound.model_dump(mode="json", exclude={"output_sha256"}))
+            }
+        )
+        with self.assertRaisesRegex(ValueError, "stable seed identity hash"):
+            verify_seed_reconciliation(rebound)
         mb = make_musicbrainz_identity_input(
             "e" * 64,
             (
@@ -337,6 +350,118 @@ class SeedReconciliationTests(unittest.TestCase):
         self.assertEqual(report.accepted_edge_count, 2)
         self.assertEqual(report.rejected_edge_count, 1)
         self.assertIn("missing_identity", report.rejected_edge_refs[0])
+
+    def test_cross_facet_musicbrainz_evidence_reconciles_one_seed_and_bridges_both(self) -> None:
+        seed, taxonomy = self._inputs()
+        musicbrainz = make_musicbrainz_identity_input(
+            "d" * 64,
+            (
+                MusicBrainzGenreIdentity(
+                    source_item_id="5",
+                    namespace="musicbrainz_genre_id",
+                    identifier="mb:unknown-genre",
+                    name="Unknown",
+                    evidence_refs=("mb-genre-row",),
+                ),
+                MusicBrainzGenreIdentity(
+                    source_item_id="5",
+                    namespace="musicbrainz_tag_name",
+                    identifier="tag:unknown",
+                    name="Unknown",
+                    evidence_refs=("mb-tag-row",),
+                ),
+            ),
+        )
+        reconciliation = build_seed_reconciliation(seed, taxonomy, musicbrainz)
+        unknown = next(row for row in reconciliation.dispositions if row.source_item_id == "5")
+        self.assertEqual(unknown.disposition, "musicbrainz_only")
+        self.assertEqual(len(unknown.musicbrainz_identities), 2)
+
+        reconstruction = ReconstructionInputs(
+            membership_artifact=VersionedInput(
+                artifact_key="musicbrainz-memberships",
+                revision="fixture-v1",
+                content_sha256="e" * 64,
+            ),
+            membership_edges=(
+                GenreArtistEdge(
+                    genre_id="musicbrainz:genre:mb:unknown-genre",
+                    facet="genre",
+                    artist_id="artist:genre",
+                    evidence_refs=("edge-genre",),
+                ),
+                GenreArtistEdge(
+                    genre_id="musicbrainz:tag:tag:unknown",
+                    facet="tag",
+                    artist_id="artist:tag",
+                    evidence_refs=("edge-tag",),
+                ),
+            ),
+        )
+        model_input, report = public_model_input_from_reconstruction_reconciliation(
+            reconstruction, reconciliation
+        )
+        self.assertEqual({item.genre_id for item in model_input.genres}, {"5"})
+        self.assertEqual(
+            {(item.artist_id, item.facet) for item in model_input.direct_memberships},
+            {("artist:genre", "musicbrainz_genre"), ("artist:tag", "musicbrainz_tag")},
+        )
+        self.assertEqual(report.accepted_edge_count, 2)
+        self.assertEqual(report.rejected_edge_count, 0)
+
+    def test_same_facet_or_cross_seed_musicbrainz_targets_remain_ambiguous(self) -> None:
+        seed, taxonomy = self._inputs()
+        same_facet = make_musicbrainz_identity_input(
+            "d" * 64,
+            (
+                MusicBrainzGenreIdentity(
+                    source_item_id="5",
+                    identifier="mb:unknown-a",
+                    name="Unknown",
+                    evidence_refs=("mb-row-a",),
+                ),
+                MusicBrainzGenreIdentity(
+                    source_item_id="5",
+                    identifier="mb:unknown-b",
+                    name="Unknown",
+                    evidence_refs=("mb-row-b",),
+                ),
+            ),
+        )
+        same_facet_artifact = build_seed_reconciliation(seed, taxonomy, same_facet)
+        same_facet_unknown = next(
+            row for row in same_facet_artifact.dispositions if row.source_item_id == "5"
+        )
+        self.assertEqual(same_facet_unknown.disposition, "ambiguous")
+        self.assertIn("facet targets", same_facet_unknown.reason or "")
+
+        conflicting_target = make_musicbrainz_identity_input(
+            "e" * 64,
+            (
+                MusicBrainzGenreIdentity(
+                    source_item_id="1",
+                    identifier="mb:shared",
+                    name="Rock",
+                    evidence_refs=("mb-row-1",),
+                ),
+                MusicBrainzGenreIdentity(
+                    source_item_id="5",
+                    identifier="mb:shared",
+                    name="Unknown",
+                    evidence_refs=("mb-row-5",),
+                ),
+            ),
+        )
+        conflicting_artifact = build_seed_reconciliation(seed, taxonomy, conflicting_target)
+        conflicting_rows = {
+            row.source_item_id: row
+            for row in conflicting_artifact.dispositions
+            if row.source_item_id in {"1", "5"}
+        }
+        self.assertEqual({row.disposition for row in conflicting_rows.values()}, {"ambiguous"})
+        self.assertTrue(
+            all("multiple stable seeds" in (row.reason or "") for row in conflicting_rows.values())
+        )
 
     def test_coverage_adapter_preserves_facets_and_abstains_without_positive_evidence(self) -> None:
         seed, _taxonomy = self._inputs()

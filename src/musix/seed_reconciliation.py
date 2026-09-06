@@ -40,7 +40,8 @@ if TYPE_CHECKING:
     from musix.reconstruction import GenreArtistEdge, ReconstructionInputs
     from musix.storage import ObjectStore, ObjectWrite
 
-_REVISION: Final = "seed-reconciliation-v1"
+_REVISION: Final = "seed-reconciliation-v3"
+_BRIDGE_REVISION: Final = "reconstruction-seed-bridge-v2"
 _SHA256_PATTERN: Final[str] = r"^[0-9a-f]{64}$"
 _PUBLIC_EVIDENCE_MAX: Final = 500
 
@@ -59,6 +60,7 @@ type IdentityMatchKind = Literal[
     "canonical", "alias", "explicit_bridge", "lexical_exact", "lexical_normalized"
 ]
 type BridgeFacet = Literal["musicbrainz_genre", "musicbrainz_tag"]
+type IdentityKey = tuple[IdentityNamespace, str]
 
 
 class MusicBrainzGenreIdentity(FrozenModel):
@@ -95,6 +97,11 @@ class MusicBrainzIdentityInput(FrozenModel):
 
     @model_validator(mode="after")
     def _verify_input_hash(self) -> MusicBrainzIdentityInput:
+        identity_claims = tuple(
+            (row.source_item_id, row.namespace, row.identifier) for row in self.rows
+        )
+        if len(identity_claims) != len(set(identity_claims)):
+            raise ValueError("MusicBrainz identity rows must not repeat one seed identity claim")
         if (
             _mb_input_hash(self.source_artifact_sha256, self.rows, self.coverage_report_sha256)
             != self.input_sha256
@@ -111,6 +118,35 @@ class ReconciledIdentity(FrozenModel):
     name: str = Field(min_length=1, max_length=500)
     match_kind: IdentityMatchKind
     evidence_refs: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _require_unique_evidence_refs(self) -> ReconciledIdentity:
+        if any(not ref for ref in self.evidence_refs):
+            raise ValueError("reconciled identity evidence references must be non-empty")
+        if len(self.evidence_refs) != len(set(self.evidence_refs)):
+            raise ValueError("reconciled identity evidence references must be unique")
+        return self
+
+
+def _require_unique_identity_claims(
+    identities: tuple[ReconciledIdentity, ...], *, label: str
+) -> None:
+    claims = tuple((identity.namespace, identity.identifier) for identity in identities)
+    if len(claims) != len(set(claims)):
+        raise ValueError(f"{label} identity claims must be unique per seed")
+
+
+def _has_multiple_identity_targets_in_one_facet(
+    public_identities: tuple[ReconciledIdentity, ...],
+    musicbrainz_identities: tuple[ReconciledIdentity, ...],
+) -> bool:
+    musicbrainz_namespace_counts = {
+        namespace: sum(identity.namespace == namespace for identity in musicbrainz_identities)
+        for namespace in ("musicbrainz_genre_id", "musicbrainz_tag_name")
+    }
+    return len(public_identities) > 1 or any(
+        count > 1 for count in musicbrainz_namespace_counts.values()
+    )
 
 
 class SeedReconciliationDisposition(FrozenModel):
@@ -129,6 +165,8 @@ class SeedReconciliationDisposition(FrozenModel):
 
     @model_validator(mode="after")
     def _enforce_state(self) -> SeedReconciliationDisposition:
+        _require_unique_identity_claims(self.public_identities, label="public")
+        _require_unique_identity_claims(self.musicbrainz_identities, label="MusicBrainz")
         if self.source_item_id in self.collision_source_item_ids:
             raise ValueError("collision IDs cannot contain the disposition's own source ID")
         if len(self.collision_source_item_ids) != len(set(self.collision_source_item_ids)):
@@ -145,6 +183,10 @@ class SeedReconciliationDisposition(FrozenModel):
             raise ValueError("review-only seeds require retained review candidates")
         if self.disposition in {"ambiguous", "unresolved"} and self.reason is None:
             raise ValueError("ambiguous and unresolved seeds require a reason")
+        if self.disposition != "ambiguous" and _has_multiple_identity_targets_in_one_facet(
+            self.public_identities, self.musicbrainz_identities
+        ):
+            raise ValueError("multiple identity targets within one facet require ambiguity")
         return self
 
 
@@ -189,8 +231,11 @@ class SeedReconciliationCoverage(FrozenModel):
 class SeedReconciliationArtifact(FrozenModel):
     """Content-addressed all-seed reconciliation artifact."""
 
-    revision: Literal["seed-reconciliation-v1"] = _REVISION
+    revision: Literal["seed-reconciliation-v3"] = _REVISION
     seed_input_sha256: str = Field(pattern=_SHA256_PATTERN)
+    seed_source_id: str = Field(min_length=1)
+    seed_source_content_sha256: str = Field(pattern=_SHA256_PATTERN)
+    seed_identity_sha256: str = Field(pattern=_SHA256_PATTERN)
     taxonomy_artifact_sha256: str = Field(pattern=_SHA256_PATTERN)
     musicbrainz_input_sha256: str | None = Field(default=None, pattern=_SHA256_PATTERN)
     input_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -207,6 +252,8 @@ class SeedReconciliationArtifact(FrozenModel):
             raise ValueError("reconciliation dispositions must have unique source item IDs")
         if self.seed_count != len(ids) or self.coverage.seed_count != self.seed_count:
             raise ValueError("reconciliation counts must match disposition rows")
+        if self.seed_identity_sha256 != _seed_identity_hash_from_dispositions(self.dispositions):
+            raise ValueError("reconciliation seed identity hash does not match dispositions")
         if self.coverage.collision_seed_count != sum(
             bool(item.collision_source_item_ids) for item in self.dispositions
         ):
@@ -237,7 +284,7 @@ class ReconstructionSeedBridgeDisposition(FrozenModel):
 class ReconstructionSeedBridgeReport(FrozenModel):
     """Audit the stable-ID conversion without hiding rejected identity rows."""
 
-    revision: Literal["reconstruction-seed-bridge-v1"] = "reconstruction-seed-bridge-v1"
+    revision: Literal["reconstruction-seed-bridge-v2"] = _BRIDGE_REVISION
     reconciliation_output_sha256: str = Field(pattern=_SHA256_PATTERN)
     membership_artifact_sha256: str = Field(pattern=_SHA256_PATTERN)
     input_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -278,6 +325,40 @@ def _sha256(value: object) -> str:
 
 def _seed_hash(seed: SeedInput) -> str:
     return _sha256(seed.model_dump(mode="json"))
+
+
+def _seed_identity_hash(seed: SeedInput) -> str:
+    """Hash the canonical stable seed join universe independent of wrappers.
+
+    ``SeedInput.artifact_sha256`` is the H2 name projection and ``_seed_hash``
+    seals the complete producer wrapper.  This third hash binds only the stable
+    IDs, external IDs, and names that downstream evidence joins actually use.
+    """
+    return _sha256(
+        [
+            {
+                "source_item_id": item.source_item_id,
+                "source_external_id": item.source_external_id,
+                "name": item.name,
+            }
+            for item in sorted(seed.names, key=lambda item: item.source_item_id)
+        ]
+    )
+
+
+def _seed_identity_hash_from_dispositions(
+    dispositions: tuple[SeedReconciliationDisposition, ...],
+) -> str:
+    return _sha256(
+        [
+            {
+                "source_item_id": item.source_item_id,
+                "source_external_id": item.source_external_id,
+                "name": item.seed_name,
+            }
+            for item in sorted(dispositions, key=lambda item: item.source_item_id)
+        ]
+    )
 
 
 def _mb_input_hash(
@@ -647,11 +728,51 @@ def _public_identities(
     return tuple(sorted(identities, key=lambda item: item.identifier))
 
 
+def _musicbrainz_identity_conflicts(
+    rows: tuple[MusicBrainzGenreIdentity, ...],
+) -> dict[str, tuple[IdentityKey, ...]]:
+    """Return stable seeds that one exact MusicBrainz identity would target twice.
+
+    Genre UUIDs and tag names are separate source facets, so their agreement
+    is corroboration for one seed.  A repeated target *within* either facet is
+    different: that source identity cannot simultaneously designate two stable
+    seeds and must remain reviewable as ambiguity.
+    """
+    seed_ids_by_identity: dict[IdentityKey, set[str]] = defaultdict(set)
+    for row in rows:
+        seed_ids_by_identity[(row.namespace, row.identifier)].add(row.source_item_id)
+    conflict_keys = tuple(
+        (identity, seed_ids)
+        for identity, seed_ids in seed_ids_by_identity.items()
+        if len(seed_ids) > 1
+    )
+    conflicts_by_seed: dict[str, list[IdentityKey]] = defaultdict(list)
+    for identity, seed_ids in conflict_keys:
+        for source_item_id in seed_ids:
+            conflicts_by_seed[source_item_id].append(identity)
+    return {
+        source_item_id: tuple(sorted(identity_keys))
+        for source_item_id, identity_keys in conflicts_by_seed.items()
+    }
+
+
+def _has_multiple_musicbrainz_targets_in_one_facet(
+    rows: tuple[MusicBrainzGenreIdentity, ...],
+) -> bool:
+    """Distinguish same-facet candidate conflicts from cross-facet agreement."""
+    namespace_counts = {
+        namespace: sum(row.namespace == namespace for row in rows)
+        for namespace in ("musicbrainz_genre_id", "musicbrainz_tag_name")
+    }
+    return any(count > 1 for count in namespace_counts.values())
+
+
 def _build_disposition(
     seed_item: SeedName,
     inference: SeedTaxonomyInference,
     mb_rows: tuple[MusicBrainzGenreIdentity, ...],
     collision_ids: tuple[str, ...],
+    musicbrainz_identity_conflicts: tuple[IdentityKey, ...],
 ) -> SeedReconciliationDisposition:
     """Build one typed row after stable-ID joins have been validated."""
     public = _public_identities(inference.status, inference.exact_candidates)
@@ -670,9 +791,13 @@ def _build_disposition(
         review_names.append(inference.anchor.name)
     if inference.status == "ambiguous_compositional":
         review_names.append(inference.abstention_reason or "ambiguous compositional candidate")
-    if len(public) > 1 or len(mb) > 1 or inference.status == "ambiguous_exact":
+    if inference.status == "ambiguous_exact" or len(public) > 1:
         disposition: ReconciliationDisposition = "ambiguous"
-        reason = "multiple identity candidates remain unresolved"
+        reason = "multiple public identity candidates remain unresolved"
+    elif _has_multiple_musicbrainz_targets_in_one_facet(mb_rows):
+        disposition, reason = "ambiguous", "multiple MusicBrainz facet targets remain unresolved"
+    elif musicbrainz_identity_conflicts:
+        disposition, reason = "ambiguous", "MusicBrainz identity targets multiple stable seeds"
     elif public and mb:
         disposition, reason = "reconciled", None
     elif public:
@@ -736,6 +861,9 @@ def build_seed_reconciliation(
                     f"MusicBrainz identity is outside the seed universe: {row.source_item_id}"
                 )
             mb_by_seed[row.source_item_id].append(row)
+    musicbrainz_conflicts_by_seed = _musicbrainz_identity_conflicts(
+        musicbrainz.rows if musicbrainz is not None else ()
+    )
     normalized_name_groups: dict[str, list[str]] = defaultdict(list)
     for item in seed.names:
         normalized_name_groups[normalize_label(item.name)].append(item.source_item_id)
@@ -756,12 +884,24 @@ def build_seed_reconciliation(
                 if item_id != seed_item.source_item_id
             )
         )
-        dispositions.append(_build_disposition(seed_item, inference, mb_rows, collision_ids))
+        dispositions.append(
+            _build_disposition(
+                seed_item,
+                inference,
+                mb_rows,
+                collision_ids,
+                musicbrainz_conflicts_by_seed.get(seed_item.source_item_id, ()),
+            )
+        )
     disposition_tuple = tuple(dispositions)
     counts = _disposition_counts(disposition_tuple)
     input_sha256 = _sha256(
         {
+            "revision": _REVISION,
             "seed_input_sha256": _seed_hash(seed),
+            "seed_source_id": seed.source_id,
+            "seed_source_content_sha256": seed.source_content_sha256,
+            "seed_identity_sha256": _seed_identity_hash(seed),
             "taxonomy_artifact_sha256": taxonomy_hash,
             "musicbrainz_input_sha256": musicbrainz.input_sha256 if musicbrainz else None,
         }
@@ -798,6 +938,9 @@ def build_seed_reconciliation(
     )
     preliminary = SeedReconciliationArtifact(
         seed_input_sha256=_seed_hash(seed),
+        seed_source_id=seed.source_id,
+        seed_source_content_sha256=seed.source_content_sha256,
+        seed_identity_sha256=_seed_identity_hash(seed),
         taxonomy_artifact_sha256=taxonomy_hash,
         musicbrainz_input_sha256=musicbrainz.input_sha256 if musicbrainz else None,
         input_sha256=input_sha256,
@@ -815,6 +958,12 @@ def build_seed_reconciliation(
 
 def verify_seed_reconciliation(artifact: SeedReconciliationArtifact) -> None:
     """Fail closed if a serialized artifact was modified or mis-partitioned."""
+    if artifact.seed_identity_sha256 != _seed_identity_hash_from_dispositions(
+        artifact.dispositions
+    ):
+        raise ValueError(
+            "seed reconciliation stable seed identity hash does not match dispositions"
+        )
     actual = _sha256(artifact.model_dump(mode="json", exclude={"output_sha256"}))
     if actual != artifact.output_sha256:
         raise ValueError("seed reconciliation output hash does not match its content")

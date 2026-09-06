@@ -36,9 +36,10 @@ from musix.types import Sha256  # noqa: TC001
 if TYPE_CHECKING:
     from musix.reconstruction import ReconstructionInputs
 
-_REVISION = "genre-peer-similarity-v3"
-_RECEIPT_REVISION = "genre-peer-similarity-receipt-v3"
-_GATE_REVISION = "genre-peer-similarity-gate-v3"
+_REVISION = "genre-peer-similarity-v4"
+_RECEIPT_REVISION = "genre-peer-similarity-receipt-v4"
+_GATE_REVISION = "genre-peer-similarity-gate-v4"
+_SETTINGS_REVISION = "genre-peer-similarity-v3"
 _MAX_GENRES = 20_000
 _MAX_CANDIDATES = 500_000
 _MAX_PAIR_VISITS = 5_000_000
@@ -57,7 +58,7 @@ type AbstentionReason = Literal[
 class PeerSimilaritySettings(FrozenModel):
     """Versioned, bounded settings for one peer candidate build."""
 
-    revision: Literal["genre-peer-similarity-v3"] = _REVISION
+    revision: Literal["genre-peer-similarity-v3"] = _SETTINGS_REVISION
     metric: PeerMetric = "weighted_jaccard"
     minimum_shared_artists: int = Field(default=2, ge=1, le=10_000)
     minimum_aggregate_support: int = Field(default=2, ge=1, le=100_000_000)
@@ -192,14 +193,14 @@ class PeerSimilarityCoverage(FrozenModel):
 class GenrePeerSimilarityArtifact(FrozenModel):
     """Content-addressed derived candidates, separate from public observations."""
 
-    revision: Literal["genre-peer-similarity-v3"] = _REVISION
+    revision: Literal["genre-peer-similarity-v4"] = _REVISION
     non_production_candidate: Literal[True] = True
     input_sha256: Sha256
     settings_sha256: Sha256
     output_sha256: Sha256
     source_artifacts: tuple[PublicArtifact, ...] = Field(min_length=1, max_length=64)
     similarity_per_seed_accounting: Literal[
-        "unbridged", "sealed_membership_bridge-v1", "sealed_seed_reconciliation-v1"
+        "unbridged", "sealed_membership_bridge-v1", "sealed_seed_reconciliation-v2"
     ] = "unbridged"
     seed_reconciliation_output_sha256: Sha256 | None = None
     seed_reconciliation_name_count: int = Field(default=0, ge=0, le=_NAME_UNIVERSE_COUNT)
@@ -221,7 +222,7 @@ class GenrePeerSimilarityArtifact(FrozenModel):
         self,
     ) -> GenrePeerSimilarityArtifact:
         """Preserve every retained name disposition when a sealed candidate is used."""
-        if self.similarity_per_seed_accounting == "sealed_seed_reconciliation-v1":
+        if self.similarity_per_seed_accounting == "sealed_seed_reconciliation-v2":
             if self.seed_reconciliation_output_sha256 is None:
                 raise ValueError("sealed seed accounting needs its reconciliation output hash")
             if self.seed_reconciliation_name_count != _NAME_UNIVERSE_COUNT:
@@ -258,7 +259,7 @@ class GenrePeerSimilarityArtifact(FrozenModel):
 class PeerSimilarityReceipt(FrozenModel):
     """Replay receipt binding observed inputs, settings, and derived output."""
 
-    revision: Literal["genre-peer-similarity-receipt-v3"] = _RECEIPT_REVISION
+    revision: Literal["genre-peer-similarity-receipt-v4"] = _RECEIPT_REVISION
     input_sha256: Sha256
     settings_sha256: Sha256
     output_sha256: Sha256
@@ -270,7 +271,7 @@ class PeerSimilarityReceipt(FrozenModel):
 class PeerSimilarityGateReport(FrozenModel):
     """Fail-closed publication diagnostics for one peer candidate artifact."""
 
-    revision: Literal["genre-peer-similarity-gate-v3"] = _GATE_REVISION
+    revision: Literal["genre-peer-similarity-gate-v4"] = _GATE_REVISION
     passed: bool
     failures: tuple[str, ...]
     input_sha256: Sha256
@@ -586,7 +587,7 @@ def build_peer_similarity(  # noqa: C901, PLR0915
         similarity_per_seed_accounting=(
             "sealed_membership_bridge-v1"
             if selected_candidate is not None
-            else "sealed_seed_reconciliation-v1"
+            else "sealed_seed_reconciliation-v2"
             if seed_reconciliation is not None
             else "unbridged"
         ),
@@ -865,7 +866,7 @@ def evaluate_peer_similarity_gate(  # noqa: C901, PLR0912
         failures.append("peer directional neighbors do not replay from canonical candidates")
     if artifact.coverage.directional_neighbor_count != len(artifact.directional_neighbors):
         failures.append("peer directional neighbor coverage count does not match rows")
-    if artifact.similarity_per_seed_accounting == "sealed_seed_reconciliation-v1":
+    if artifact.similarity_per_seed_accounting == "sealed_seed_reconciliation-v2":
         if (
             artifact.seed_reconciliation_output_sha256 is None
             or artifact.seed_reconciliation_name_count != _NAME_UNIVERSE_COUNT

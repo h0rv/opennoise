@@ -56,7 +56,8 @@ public artists. H3 absence is unknown, not a negative label.
 The replay evaluator matched 292 unambiguous genre names. It used preferred
 English primary names and built uniqueness across all public artist IDs before
 filtering to candidate IDs, yielding 1,022 candidate-crosswalk names and IDs.
-It mapped 1,622 H3 top-50 positives, overlapped 601, and measured
+It mapped 1,622 H3 observed positive samples (at most 50 unranked observations per
+genre), overlapped 601, and measured
 positives-only micro recall@50 of `0.37053020961775585` (6,765 ranked candidate
 predictions in the matched genres). These are compatibility metrics with
 explicit positive denominators, not precision, negatives, independent gold,
