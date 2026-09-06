@@ -127,6 +127,52 @@ weighted Jaccard and weighted cosine similarity with ten neighbors and records
 genre, pair, edge, and artist counts. No historical points or neighbors are
 attached.
 
+## Open label graph review layer
+
+`build-open-label-graph-model` is a local, review-only identity-candidate
+stage. It accepts only the sealed seed-target and seed-reconciliation
+artifacts. It partitions canonical target-label identities deterministically
+into training, calibration, and held-out sets. Calibration and held-out label
+identities, plus their artist and contextual facts, are excluded from the fit
+graph. Thresholding and cold-label evaluation use the same stripped,
+name-only representation available for an unanchored deployment query.
+
+This means the held-out metric is a label-normalization check, not semantic
+genre recovery: the evaluation target is already a candidate label name. On
+the current full checkpoint, name-only top-1 recall is 99.607073% (507 of 509)
+and top-5 recall is 99.803536% (508 of 509). The graph model has the same
+scores and zero lift. It is therefore not evidence that the model recovers
+unobserved genre meaning. The model produces review candidates only when its
+training-chosen calibrated threshold, 0.09402051860382732, is met; no candidate
+is promoted to an observed identity, membership, taxonomy row, or hierarchy
+fact. Historical Every Noise/H3 construction inputs are prohibited.
+
+The current reviewed checkpoint is
+`open-label-graph-model-v2.json`: logical hash
+`5ab075325adeed7a778820389d41a7de3b14199abfbeb3064b20cc433e7fc6a8`,
+artifact byte hash
+`39dd76e860f65ed247eac24ac848fcb3e38423d960548e35ca558bfa710183fc`.
+It contains 484 review rows for 358 of 3,914 unanchored seeds and 3,556
+explicit abstentions. Candidate scores range from 0.09412 to 0.16409; this is
+triage priority, not probability or acceptance. P1 quality caveat: 203 of the
+484 rows are normalized substring matches, and the rows reuse only 189 label
+identities (for example, `classical piano` occurs 27 times). Together with the
+zero graph lift, this is lexical triage rather than semantic recovery; every
+row, especially repeated-label rows, needs human review before any downstream
+use.
+
+The mutable `open-label-graph-model-v1.json` release alias was overwritten by
+a stale detached writer and is rejected for release custody. Do not use the
+v1 artifact or receipt paths. The generic Poe task is safe only when pointed
+at the v2 paths below (or a newly versioned path with its own verified receipt).
+
+```bash
+export MUSIX_OPEN_LABEL_GRAPH_MODEL_OUTPUT=.cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v2.json
+export MUSIX_OPEN_LABEL_GRAPH_MODEL_OBJECT_STORE=.cache/musicbrainz-full-seed-targets/pipeline/objects
+export MUSIX_OPEN_LABEL_GRAPH_MODEL_RECEIPT=.cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v2.receipt.json
+uv run poe build-open-label-graph-model
+```
+
 The imported archive is local noncommercial research data. MusicBrainz core
 identity fields are CC0, while genre associations are supplementary
 CC-BY-NC-SA-3.0 data. The stored policy permits local normalization, search,

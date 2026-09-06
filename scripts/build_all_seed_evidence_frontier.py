@@ -8,28 +8,40 @@ import sys
 from pathlib import Path
 
 from musix.evidence_frontier import (
-    build_all_seed_evidence_frontier,
+    load_frontier_v4_source,
     publish_all_seed_evidence_frontier,
+    upgrade_frontier_v4_with_listenbrainz_review,
 )
-from musix.genre_hierarchy_candidates import GenreHierarchyCandidateArtifact
-from musix.models.modeling import PublicModelInput
-from musix.peer_similarity import GenrePeerSimilarityArtifact
-from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.listenbrainz_propagation import load_listenbrainz_propagation_frontier_summary
 from musix.storage import LocalObjectStore
 
 
 def build_parser() -> argparse.ArgumentParser:
     """Expose an explicit artifact-only frontier boundary."""
     parser = argparse.ArgumentParser(prog="build-all-seed-evidence-frontier")
-    parser.add_argument("--reconciliation", type=Path, required=True)
-    parser.add_argument("--taxonomy-expansion", type=Path, required=True)
-    parser.add_argument("--public-input", type=Path, required=True)
-    parser.add_argument("--peer-similarity", type=Path, required=True)
     parser.add_argument(
-        "--hierarchy-candidates",
+        "--previous-frontier-v4",
         type=Path,
-        help="Optional sealed hierarchy-candidate artifact; absence remains explicit in output.",
+        required=True,
+        help="Sealed Wikidata-fused v4 frontier whose direct/peer/hierarchy coverage v5 preserves.",
+    )
+    parser.add_argument(
+        "--previous-frontier-v4-receipt",
+        type=Path,
+        required=True,
+        help="Custody receipt whose byte and logical hashes bind the sealed v4 frontier.",
+    )
+    parser.add_argument(
+        "--listenbrainz-propagation",
+        type=Path,
+        required=True,
+        help="Sealed ListenBrainz v2 review artifact; candidates remain derived evidence.",
+    )
+    parser.add_argument(
+        "--listenbrainz-propagation-receipt",
+        type=Path,
+        required=True,
+        help="Custody receipt whose artifact and logical hashes bind ListenBrainz v2.",
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--object-store", type=Path, required=True)
@@ -40,26 +52,15 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     """Build, gate, and publish one all-seed frontier."""
     arguments = build_parser().parse_args()
-    reconciliation = load_seed_reconciliation(arguments.reconciliation)
-    taxonomy = PublicTaxonomyExpansionArtifact.model_validate_json(
-        arguments.taxonomy_expansion.read_bytes()
+    v4_source = load_frontier_v4_source(
+        arguments.previous_frontier_v4, arguments.previous_frontier_v4_receipt
     )
-    public_input = PublicModelInput.model_validate_json(arguments.public_input.read_bytes())
-    peers = GenrePeerSimilarityArtifact.model_validate_json(arguments.peer_similarity.read_bytes())
-    hierarchy_candidates = (
-        GenreHierarchyCandidateArtifact.model_validate_json(
-            arguments.hierarchy_candidates.read_bytes()
-        )
-        if arguments.hierarchy_candidates is not None
-        else None
+    listenbrainz_review = load_listenbrainz_propagation_frontier_summary(
+        arguments.listenbrainz_propagation,
+        arguments.listenbrainz_propagation_receipt,
+        seed_source_item_ids=frozenset(item.source_item_id for item in v4_source.rows),
     )
-    artifact = build_all_seed_evidence_frontier(
-        reconciliation,
-        taxonomy,
-        public_input,
-        peers,
-        hierarchy_candidates,
-    )
+    artifact = upgrade_frontier_v4_with_listenbrainz_review(v4_source, listenbrainz_review)
     receipt, _write = publish_all_seed_evidence_frontier(
         artifact, output_path=arguments.output, store=LocalObjectStore(arguments.object_store)
     )

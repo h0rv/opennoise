@@ -29,6 +29,34 @@ and 6,061 abstained. The separately sealed all-seed frontier is built from the
 restored public catalog snapshot. Neither artifact inherits artist memberships
 through the hierarchy or uses historical data during construction.
 
+The sealed v5 frontier receipt-binds and preserves the full Wikidata-fused v4
+ledger: 2,377 MusicBrainz direct-observation seeds, 292 Wikidata seeds, 291
+cross-source corroborations, and 2,378 direct-observation seeds in union. It
+adds 23,497 ListenBrainz-derived review candidates across 425 seeds, all of
+which already have direct observations. This adds no factual memberships and
+no direct-coverage seeds. Its logical hash is
+`edf01e96b8ab12d7c90b49cf9119aa5fb0a01ccdea253924b7923ed3e0ecbef8`;
+the artifact byte hash is
+`4c0dbc32b28d01b95ce79f988750b39db74241368a8b1257d6e2a9345c1c0db2`.
+
+The downstream H3 check is evaluation only. It joins H3 page-member positives
+through accepted receipt-bound Spotify-to-MusicBrainz bridges and never feeds
+them into v5. Its artifact hash is
+`7cbcd8b6859fd8207ac271c9564963f96fea9bfe57d8cc1541c125d4fa2fb6bb`.
+It reports 179 top-50 hits among 15,772 positives for the 425 candidate-covered
+genres (conditional recall 1.1349%), and 179 among all 120,163 bridge-resolved
+unique positives (global positive-only recall 0.14896%). It abstains on 5,644
+of 6,069 H3-positive genres. Precision is intentionally unavailable because
+an H3 absence is unknown, not a negative.
+
+An optional Last.fm reverse-tag adapter is review-only. It writes its
+credential-free query manifest before any network request and exits 2 without
+`LASTFM_API_KEY`; no live Last.fm artifact is sealed in this checkout. A claim
+requires a Last.fm-provided MusicBrainz artist ID plus exact normalized tag
+corroboration for that same ID. Name-only rows and all noncorroborated results
+remain review data and cannot promote identities, memberships, taxonomy, or
+hierarchy facts.
+
 The historical peer compatibility evaluator name-matches 6,289 H3 genre names.
 Only 1,580 have a constructed candidate neighborhood and are peer-supported;
 the other 4,709 are retained as abstentions. The 1,580 figure is an evaluation
