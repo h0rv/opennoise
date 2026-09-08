@@ -71,6 +71,23 @@ class Settings(BaseSettings):
         ),
         validation_alias="MUSIX_LOCAL_RESEARCH_PEER_INDEX",
     )
+    local_research_reviewed_alias_context_enabled: bool = Field(
+        default=False, validation_alias="MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ENABLED"
+    )
+    local_research_reviewed_alias_context_artifact_path: Path = Field(
+        default=Path(".cache/reviewed-alias-context-v1/artifact-v1.json"),
+        validation_alias="MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ARTIFACT",
+    )
+    local_research_reviewed_alias_context_receipt_path: Path = Field(
+        default=Path(".cache/reviewed-alias-combined-model-v1/receipt.json"),
+        validation_alias="MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_RECEIPT",
+    )
+    local_research_reviewed_alias_peer_index_path: Path = Field(
+        default=Path(
+            ".cache/reviewed-alias-combined-model-v1/peer-similarity-local-research.sqlite"
+        ),
+        validation_alias="MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_PEER_INDEX",
+    )
     local_research_artist_metadata_database_path: Path | None = Field(
         default=None, validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_DATABASE"
     )

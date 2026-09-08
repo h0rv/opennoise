@@ -2,7 +2,7 @@
   <p><a href="/fragments/local-research/musicbrainz/{{ node_id | urlencode }}"
         hx-get="/fragments/local-research/musicbrainz/{{ node_id | urlencode }}"
         hx-target="#artist-navigation-slot" hx-swap="innerHTML">Back</a></p>
-  {% if response.seeds %}<ul>{% for item in response.seeds %}
+  {% if observed_seeds %}<ul>{% for item in observed_seeds[:25] %}
     <li><a href="/fragments/local-research/musicbrainz/legacy%3A{{ item.source_item_id | urlencode }}"
            hx-get="/fragments/local-research/musicbrainz/legacy%3A{{ item.source_item_id | urlencode }}"
            hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ item.name }}</a></li>

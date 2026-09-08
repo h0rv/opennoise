@@ -1,7 +1,7 @@
 """Typed Litestar routes for map, search, and evidence fragments."""
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from litestar import Controller, MediaType, Request, get
 from litestar.datastructures import State
@@ -41,6 +41,7 @@ from musix.local_musicbrainz_peer_store import (
     LocalMusicBrainzPeerStore,
     LocalMusicBrainzPeerStoreError,
 )
+from musix.local_reviewed_alias_context_store import LocalReviewedAliasContextStore
 from musix.models import (
     LegacyMapResponse,
     MapPointResponse,
@@ -78,6 +79,36 @@ from musix.public_artist_navigation_store import (
 )
 
 PUBLIC_LAYOUT_KEYS = frozenset({"public", "public-direct", "public-community", "public-taxonomy"})
+
+
+class _ObservedArtistRow(Protocol):
+    @property
+    def artist_mbid(self) -> str: ...
+
+
+class _ObservedSeedRow(Protocol):
+    @property
+    def source_item_id(self) -> str: ...
+
+
+def _union_observed_artists(
+    direct: tuple[_ObservedArtistRow, ...], context: tuple[_ObservedArtistRow, ...]
+) -> tuple[_ObservedArtistRow, ...]:
+    """Union direct and reviewed tag observations by the exact MusicBrainz ID."""
+    rows: dict[str, _ObservedArtistRow] = {item.artist_mbid: item for item in direct}
+    for item in context:
+        rows.setdefault(item.artist_mbid, item)
+    return tuple(rows.values())
+
+
+def _union_observed_seeds(
+    direct: tuple[_ObservedSeedRow, ...], context: tuple[_ObservedSeedRow, ...]
+) -> tuple[_ObservedSeedRow, ...]:
+    """Union direct and reviewed tag observations by the exact stable seed ID."""
+    rows: dict[str, _ObservedSeedRow] = {item.source_item_id: item for item in direct}
+    for item in context:
+        rows.setdefault(item.source_item_id, item)
+    return tuple(rows.values())
 
 
 class CoreController(Controller):
@@ -644,6 +675,7 @@ class EvidenceController(Controller):
         request: Request[object, object, State],
         local_research_artists: NamedDependency[object],
         local_research_peers: NamedDependency[object],
+        local_reviewed_alias_context: NamedDependency[object],
         node_id: FromPath[str],
     ) -> Template:
         """Render bounded loopback-only research evidence for one legacy seed."""
@@ -669,9 +701,20 @@ class EvidenceController(Controller):
                 raise ServiceUnavailableException(
                     detail="local peer evidence is unavailable"
                 ) from error
+        observed_artists: tuple[_ObservedArtistRow, ...] = response.artists
+        if isinstance(local_reviewed_alias_context, LocalReviewedAliasContextStore):
+            observed_artists = _union_observed_artists(
+                observed_artists,
+                local_reviewed_alias_context.artist_rows(node_id.removeprefix("legacy:")),
+            )
         return Template(
             template_name="local_musicbrainz_artist_evidence.html",
-            context={"node_id": node_id, "response": response, "peers": peers},
+            context={
+                "node_id": node_id,
+                "response": response,
+                "peers": peers,
+                "observed_artists": observed_artists,
+            },
         )
 
     @get("/fragments/local-research/musicbrainz/{node_id:str}/artist/{artist_mbid:str}")
@@ -679,6 +722,7 @@ class EvidenceController(Controller):
         self,
         request: Request[object, object, State],
         local_research_artists: NamedDependency[object],
+        local_reviewed_alias_context: NamedDependency[object],
         node_id: FromPath[str],
         artist_mbid: FromPath[str],
     ) -> Template:
@@ -697,9 +741,18 @@ class EvidenceController(Controller):
             raise ServiceUnavailableException(
                 detail="local research evidence is unavailable"
             ) from error
+        observed_seeds: tuple[_ObservedSeedRow, ...] = response.seeds
+        if isinstance(local_reviewed_alias_context, LocalReviewedAliasContextStore):
+            observed_seeds = _union_observed_seeds(
+                observed_seeds, local_reviewed_alias_context.seed_rows(artist_mbid)
+            )
         return Template(
             template_name="local_musicbrainz_artist_seeds.html",
-            context={"node_id": node_id, "response": response},
+            context={
+                "node_id": node_id,
+                "response": response,
+                "observed_seeds": observed_seeds,
+            },
         )
 
     @get("/fragments/open-construction-map/v2/artists/{node_id:str}")

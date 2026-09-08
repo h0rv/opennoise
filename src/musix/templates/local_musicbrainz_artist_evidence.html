@@ -2,7 +2,7 @@
   <p><a href="/fragments/open-construction-map/v2/artists/{{ node_id | urlencode }}"
         hx-get="/fragments/open-construction-map/v2/artists/{{ node_id | urlencode }}"
         hx-target="#artist-navigation-slot" hx-swap="innerHTML">Back</a></p>
-  {% if response.artists %}<ul>{% for item in response.artists %}
+  {% if observed_artists %}<ul>{% for item in observed_artists[:25] %}
     <li><a href="/fragments/local-research/musicbrainz/{{ node_id | urlencode }}/artist/{{ item.artist_mbid | urlencode }}"
            hx-get="/fragments/local-research/musicbrainz/{{ node_id | urlencode }}/artist/{{ item.artist_mbid | urlencode }}"
            hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ item.canonical_name or item.artist_mbid }}</a></li>

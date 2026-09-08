@@ -26,6 +26,7 @@ from musix.local_musicbrainz_artist_metadata import (
     load_artist_metadata_artifact,
 )
 from musix.local_musicbrainz_peer_store import LocalMusicBrainzPeerStore
+from musix.local_reviewed_alias_context_store import LocalReviewedAliasContextStore
 from musix.models import Settings
 from musix.open_construction_store import OpenConstructionMapStore
 from musix.open_construction_store_v2 import OpenConstructionV2MapStore
@@ -89,6 +90,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     public_artist_navigation = PublicArtistNavigationStore(selected_path)
     local_research_artists: LocalMusicBrainzArtistEvidenceStore | None = None
     local_research_peers: LocalMusicBrainzPeerStore | None = None
+    local_reviewed_alias_context: LocalReviewedAliasContextStore | None = None
     if settings.local_research_artist_evidence_enabled:
         if settings.host not in {"127.0.0.1", "::1", "localhost"}:
             raise ValueError("local research artist evidence requires a loopback host")
@@ -127,8 +129,21 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
         )
         if not (peer_source.local_only and peer_source.local_search and peer_source.display):
             raise ValueError("local peer evidence source policy forbids local discovery")
+        peer_index_path = (
+            settings.local_research_reviewed_alias_peer_index_path
+            if settings.local_research_reviewed_alias_context_enabled
+            else settings.local_research_peer_index_path
+        )
+        if settings.local_research_reviewed_alias_context_enabled:
+            local_reviewed_alias_context = LocalReviewedAliasContextStore(
+                settings.local_research_reviewed_alias_context_artifact_path,
+                settings.local_research_reviewed_alias_context_receipt_path,
+                peer_index_path,
+                local_research_artists.sources.adapter_report,
+                local_research_artists.sources.reconciliation,
+            )
         local_research_peers = LocalMusicBrainzPeerStore(
-            settings.local_research_peer_index_path,
+            peer_index_path,
             local_research_artists.sources.reconciliation,
         )
 
@@ -141,6 +156,8 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
         await database.start()
         if local_research_artists is not None:
             await asyncio.to_thread(local_research_artists.start)
+        if local_reviewed_alias_context is not None:
+            await asyncio.to_thread(local_reviewed_alias_context.start)
         if local_research_peers is not None:
             await asyncio.to_thread(local_research_peers.start)
         try:
@@ -178,6 +195,9 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     async def provide_local_research_peers() -> LocalMusicBrainzPeerStore | None:
         return local_research_peers
 
+    async def provide_local_reviewed_alias_context() -> LocalReviewedAliasContextStore | None:
+        return local_reviewed_alias_context
+
     return Litestar(
         route_handlers=[
             CoreController,
@@ -197,6 +217,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
             "public_artist_navigation": Provide(provide_public_artist_navigation),
             "local_research_artists": Provide(provide_local_research_artists),
             "local_research_peers": Provide(provide_local_research_peers),
+            "local_reviewed_alias_context": Provide(provide_local_reviewed_alias_context),
         },
         lifespan=[lifespan],
         template_config=TemplateConfig(directory=TEMPLATE_ROOT, engine=JinjaTemplateEngine),

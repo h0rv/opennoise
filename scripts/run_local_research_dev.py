@@ -26,8 +26,12 @@ def main() -> int:
         / ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json",
         "MUSIX_LOCAL_RESEARCH_ADAPTER_REPORT": root
         / ".cache/musicbrainz-full-seed-targets/pipeline/musicbrainz-model-adapter-report.json",
-        "MUSIX_LOCAL_RESEARCH_PEER_INDEX": root
-        / ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite",
+        "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ARTIFACT": root
+        / ".cache/reviewed-alias-context-v1/artifact-v1.json",
+        "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_RECEIPT": root
+        / ".cache/reviewed-alias-combined-model-v1/receipt.json",
+        "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_PEER_INDEX": root
+        / ".cache/reviewed-alias-combined-model-v1/peer-similarity-local-research.sqlite",
         "MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_DATABASE": root
         / ".cache/musicbrainz-release-group-artist-metadata-v1/metadata.sqlite",
         "MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_ARTIFACT": root
@@ -44,6 +48,7 @@ def main() -> int:
         "HOST": "127.0.0.1",
         "PORT": os.environ.get("PORT", "3002"),
         "MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true",
+        "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ENABLED": "true",
         **{key: str(value) for key, value in inputs.items()},
     }
     return subprocess.run(
