@@ -43,6 +43,8 @@ class CoreMetric(FrozenModel):
     giant_component_fraction: float = Field(ge=0, le=1)
     largest_component_size: int = Field(ge=0)
     exact_pair_stability: float = Field(ge=0, le=1)
+    direct_ablation_coassignment: float = Field(ge=0, le=1)
+    support_ablation_coassignment: float = Field(ge=0, le=1)
     communities: tuple[tuple[str, ...], ...]
     cross_community_edge_count: int = Field(ge=0)
 
@@ -63,7 +65,9 @@ def build_strength_aware_peer_audit(direct_path: Path, support_path: Path) -> St
     """Audit a preregistered threshold grid without combining source channels."""
     direct = _load(direct_path, "direct_artist_overlap")
     support = _load(support_path, "release_group_artist_overlap")
-    metrics = tuple(_metric(direct.candidates + support.candidates, shared, score) for shared, score in _GRID)
+    metrics = tuple(
+        _metric(direct.candidates, support.candidates, shared, score) for shared, score in _GRID
+    )
     direct_pairs = {_pair(edge) for edge in direct.candidates}
     support_pairs = {_pair(edge) for edge in support.candidates}
     base = StrengthAwarePeerAudit(
@@ -87,23 +91,36 @@ def _load(path: Path, kind: str) -> ChannelInput:
     return value
 
 
-def _metric(edges: tuple[PeerCandidate, ...], shared: int, score: float) -> CoreMetric:
+def _metric(
+    direct: tuple[PeerCandidate, ...], support: tuple[PeerCandidate, ...], shared: int, score: float
+) -> CoreMetric:
+    edges = direct + support
     selected = tuple(edge for edge in edges if edge.shared_supported_artist_count >= shared and edge.score >= score)
     components = _components(selected)
     covered = sum(len(component) for component in components)
     largest = max((len(component) for component in components), default=0)
     communities = _partition(selected)
     labels = {node: index for index, community in enumerate(communities) for node in community}
+    direct_pairs = _coassignment(_partition(_select(direct, shared, score)))
+    support_pairs = _coassignment(_partition(_select(support, shared, score)))
+    combined_pairs = _coassignment(communities)
     return CoreMetric(
         min_shared_artists=shared, min_jaccard=score, edge_count=len(selected),
         covered_seed_count=covered, component_count=len(components),
         giant_component_fraction=largest / covered if covered else 0.0,
         largest_component_size=largest,
-        exact_pair_stability=_stability(selected), communities=communities,
+        exact_pair_stability=_stability(selected),
+        direct_ablation_coassignment=_jaccard(combined_pairs, direct_pairs),
+        support_ablation_coassignment=_jaccard(combined_pairs, support_pairs),
+        communities=communities,
         cross_community_edge_count=sum(
             labels.get(edge.source_genre_id) != labels.get(edge.target_genre_id) for edge in selected
         ),
     )
+
+
+def _select(edges: tuple[PeerCandidate, ...], shared: int, score: float) -> tuple[PeerCandidate, ...]:
+    return tuple(edge for edge in edges if edge.shared_supported_artist_count >= shared and edge.score >= score)
 
 
 def _components(edges: tuple[PeerCandidate, ...]) -> tuple[frozenset[str], ...]:
@@ -189,6 +206,10 @@ def _coassignment(communities: tuple[tuple[str, ...], ...]) -> set[tuple[str, st
         for index, left in enumerate(community)
         for right in community[index + 1 :]
     }
+
+
+def _jaccard(left: set[tuple[str, str]], right: set[tuple[str, str]]) -> float:
+    return len(left & right) / len(left | right) if left or right else 1.0
 
 
 def _stable_bit(edge: PeerCandidate) -> int:
