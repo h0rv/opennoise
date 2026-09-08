@@ -130,3 +130,34 @@ artist IDs and their source claims for those two hip hop edges, then compare it
 with the house to deep house edge. The sample should test for a broad tagging
 cohort or duplicated evidence, without reading the 714 MiB archive, scanning
 the peer JSON, or treating names as a correctness label.
+
+## Completed bounded provenance check
+
+The check used the completed release-group candidate only to read
+`direct_anchor`. The database hash was
+`980b2c58e16b024d282ca1acc58b98dcab292f0e1a50917812d1b59df0340c8a`.
+It selected the first ten exact shared MusicBrainz artist IDs in ascending ID
+order for each pair. The pair IDs were `item5` hip hop with `item667`
+chillwave, `item5` hip hop with `item300` downtempo, and `item94` house with
+`item479` deep house.
+
+The full distinct shared-artist counts were 4,196 for hip hop and chillwave,
+4,263 for hip hop and downtempo, and 838 for house and deep house. All ten
+chillwave sample artists had both `musicbrainz_genre` and `musicbrainz_tag`
+facets for both selected seeds. The downtempo sample had both facets for every
+artist, although one artist had a tag-only hip hop claim and therefore three
+evidence references instead of four. All ten house and deep house artists had
+both facets for both selected seeds.
+
+The sampled artists had two to fourteen distinct direct seed labels each. The
+matching public database had no exact MusicBrainz ID to artist-name crosswalk
+for any of the thirty selected IDs, so the check made no network name lookups.
+The evidence references were distinct seed-target records for each artist and
+facet. The sample does not show a repeated artist row creating the overlap.
+
+The comparison shows the same genre and tag facet pattern for the house and
+deep house edge. The larger hip hop counts therefore cannot be explained by a
+facet pattern found only in the two questioned edges. The sample does not
+establish musical similarity or rule out a broader source-tagging cohort. A
+future ranking experiment should keep artists distinct by ID and state whether
+genre and tag facets are collapsed before scoring.
