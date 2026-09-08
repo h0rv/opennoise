@@ -52,6 +52,18 @@ class _QualityContext:
     one_hop_weights: Mapping[tuple[str, str], float] | None
 
 
+@dataclass(frozen=True, slots=True)
+class WeightedCommunitySpectralResult:
+    """Coordinates and replay diagnostics for the existing community lens."""
+
+    coordinates: tuple[GenreCoordinate, ...]
+    community_count: int
+    iterations: int
+    converged: bool
+    layout_edge_count: int
+    layout_weights: Mapping[tuple[str, str], float]
+
+
 def _edge_key(left: str, right: str) -> tuple[str, str]:
     return (left, right) if left < right else (right, left)
 
@@ -156,6 +168,78 @@ def _coordinates(
                 )
             )
     return tuple(sorted(result, key=lambda item: item.genre_id))
+
+
+def build_weighted_spectral_coordinates(
+    genres: tuple[str, ...], weights: Mapping[tuple[str, str], float]
+) -> tuple[GenreCoordinate, ...]:
+    """Embed one explicitly weighted, evidence-connected genre graph.
+
+    Callers own their input-policy boundary.  This helper deliberately refuses
+    isolated or unknown endpoints so a caller cannot accidentally turn missing
+    evidence into a synthetic coordinate.
+    """
+    if len(genres) != len(set(genres)):
+        raise ValueError("spectral layout genre IDs must be unique")
+    genre_ids = set(genres)
+    if not genres:
+        return ()
+    if not weights:
+        return ()
+    for (left, right), weight in weights.items():
+        if left >= right:
+            raise ValueError("spectral layout edges must be canonical and non-self")
+        if left not in genre_ids or right not in genre_ids:
+            raise ValueError("spectral layout edge endpoint is not eligible")
+        if not math.isfinite(weight) or weight <= 0.0:
+            raise ValueError("spectral layout edge weight must be finite and positive")
+    connected = {genre_id for edge in weights for genre_id in edge}
+    if connected != genre_ids:
+        raise ValueError("spectral layout accepts evidence-connected genres only")
+    return _coordinates(tuple(sorted(genres)), weights)
+
+
+def weighted_spectral_quality(
+    coordinates: tuple[GenreCoordinate, ...],
+    weights: Mapping[tuple[str, str], float],
+    *,
+    neighbors_per_genre: int,
+    layout_weights: Mapping[tuple[str, str], float] | None = None,
+) -> LayoutQuality:
+    """Measure a weighted layout against its immutable source evidence edges."""
+    return _quality(
+        coordinates,
+        (),
+        _QualityContext(
+            layout_weights=weights if layout_weights is None else layout_weights,
+            input_weights=weights,
+            neighbors_per_genre=neighbors_per_genre,
+            one_hop_weights=weights,
+        ),
+    )
+
+
+def build_weighted_community_spectral_coordinates(
+    genres: tuple[str, ...],
+    weights: Mapping[tuple[str, str], float],
+    *,
+    seed: int,
+    maximum_iterations: int,
+) -> WeightedCommunitySpectralResult:
+    """Apply the existing community-packed spectral lens to weighted evidence."""
+    build_weighted_spectral_coordinates(genres, weights)
+    labels, iterations, converged = _community_assignments(
+        genres, weights, seed=seed, maximum_iterations=maximum_iterations
+    )
+    community_weights = _community_edges(weights, labels)
+    return WeightedCommunitySpectralResult(
+        coordinates=_coordinates(tuple(sorted(genres)), community_weights),
+        community_count=len(set(labels.values())),
+        iterations=iterations,
+        converged=converged,
+        layout_edge_count=len(community_weights),
+        layout_weights=community_weights,
+    )
 
 
 def _profile_edges(neighbors: tuple[GenreNeighbor, ...], profile_kind: ProfileKind) -> EdgeWeights:
