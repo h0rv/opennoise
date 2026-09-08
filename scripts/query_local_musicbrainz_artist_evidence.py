@@ -14,6 +14,10 @@ from musix.local_musicbrainz_artist_evidence import (
     load_musicbrainz_model_adapter_report,
     load_release_group_evidence_artifact,
 )
+from musix.local_musicbrainz_artist_metadata import (
+    LocalArtistMetadataSources,
+    load_artist_metadata_artifact,
+)
 from musix.seed_reconciliation import load_seed_reconciliation
 
 
@@ -23,6 +27,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--evidence-artifact", type=Path, required=True)
     parser.add_argument("--adapter-report", type=Path, required=True)
     parser.add_argument("--reconciliation", type=Path, required=True)
+    parser.add_argument("--artist-metadata-db", type=Path)
+    parser.add_argument("--artist-metadata-artifact", type=Path)
     query = parser.add_mutually_exclusive_group(required=True)
     query.add_argument("--seed")
     query.add_argument("--artist-mbid")
@@ -33,6 +39,8 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> int:
     """Write one bounded local-research JSON result to standard output."""
     arguments = _parser().parse_args()
+    if (arguments.artist_metadata_db is None) != (arguments.artist_metadata_artifact is None):
+        _parser().error("--artist-metadata-db and --artist-metadata-artifact must be used together")
     try:
         reconciliation = load_seed_reconciliation(arguments.reconciliation)
         evidence_artifact = load_release_group_evidence_artifact(arguments.evidence_artifact)
@@ -42,6 +50,15 @@ def main() -> int:
             evidence_artifact=evidence_artifact,
             reconciliation=reconciliation,
             adapter_report=adapter_report,
+            artist_metadata=(
+                LocalArtistMetadataSources(
+                    database=arguments.artist_metadata_db,
+                    artifact=load_artist_metadata_artifact(arguments.artist_metadata_artifact),
+                )
+                if arguments.artist_metadata_db is not None
+                and arguments.artist_metadata_artifact is not None
+                else None
+            ),
         )
         if arguments.seed is not None:
             response = direct_artists_for_seed(

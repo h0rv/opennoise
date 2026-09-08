@@ -11,6 +11,13 @@ from musix.local_musicbrainz_artist_evidence import (
     direct_artists_for_seed,
     direct_seeds_for_artist,
 )
+from musix.local_musicbrainz_artist_metadata import (
+    ArtistMetadataArtifact,
+    ArtistMetadataCounters,
+    ArtistMetadataSettings,
+    LocalArtistMetadataSources,
+    artist_metadata_artifact_sha256,
+)
 from musix.musicbrainz_model_adapter import (
     AdapterSeedCoverage,
     MusicBrainzModelAdapterReport,
@@ -85,6 +92,40 @@ class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
             [3, 3],
         )
         self.assertFalse(response.contextual_claims_available)
+
+    def test_optional_metadata_attaches_only_the_exact_artist_id(self) -> None:
+        with TemporaryDirectory() as temporary:
+            database = _database(Path(temporary) / "evidence.sqlite")
+            evidence_artifact = _evidence_artifact(database)
+            metadata = _metadata_sources(
+                Path(temporary) / "names.sqlite", evidence_artifact.output_sha256
+            )
+            sources = _sources(database, evidence_artifact=evidence_artifact)
+            baseline = direct_artists_for_seed(sources, "item887", limit=25)
+            response = direct_artists_for_seed(
+                sources.__class__(
+                    database=sources.database,
+                    evidence_artifact=sources.evidence_artifact,
+                    reconciliation=sources.reconciliation,
+                    adapter_report=sources.adapter_report,
+                    artist_metadata=metadata,
+                ),
+                "item887",
+                limit=25,
+            )
+
+        names = {item.artist_mbid: item.canonical_name for item in response.artists}
+        supported_names = {
+            item.artist_mbid: item.canonical_name for item in response.album_supported_artists
+        }
+        self.assertEqual(names[_ARTIST_A], "Exact Name")
+        self.assertIsNone(names[_ARTIST_B])
+        self.assertEqual(supported_names[_ARTIST_A], "Exact Name")
+        self.assertEqual(response.total_direct_artist_count, baseline.total_direct_artist_count)
+        self.assertEqual(
+            response.total_album_supported_artist_count,
+            baseline.total_album_supported_artist_count,
+        )
 
     def test_rejects_database_evidence_outside_the_all_seed_sidecar(self) -> None:
         with TemporaryDirectory() as temporary:
@@ -259,6 +300,57 @@ def _sources(
         reconciliation=_reconciliation(),
         adapter_report=adapter_report or _adapter_report(),
     )
+
+
+def _metadata_sources(path: Path, evidence_output_sha256: str) -> LocalArtistMetadataSources:
+    with closing(sqlite3.connect(path)) as connection, connection:
+        connection.executescript(
+            """
+            CREATE TABLE artist_summary (
+                artist_mbid TEXT PRIMARY KEY, canonical_name TEXT,
+                canonical_name_variant_count INTEGER NOT NULL,
+                sort_name TEXT, disambiguation TEXT, artist_type TEXT, country TEXT
+            );
+            INSERT INTO artist_summary VALUES (
+                '00000000-0000-4000-8000-000000000001', 'Exact Name', 1,
+                NULL, NULL, NULL, NULL
+            );
+            INSERT INTO artist_summary VALUES (
+                '00000000-0000-4000-8000-000000000002', NULL, 2,
+                NULL, NULL, NULL, NULL
+            );
+            INSERT INTO artist_summary VALUES (
+                '00000000-0000-4000-8000-000000000099', 'Wrong ID Name', 1,
+                NULL, NULL, NULL, NULL
+            );
+            """
+        )
+    contents = path.read_bytes()
+    preliminary = ArtistMetadataArtifact(
+        source_archive_sha256="a" * 64,
+        source_archive_bytes=1,
+        source_snapshot="fixture",
+        evidence_output_sha256=evidence_output_sha256,
+        evidence_database_sha256="b" * 64,
+        evidence_database_bytes=1,
+        metadata_database_sha256=hashlib.sha256(contents).hexdigest(),
+        metadata_database_bytes=len(contents),
+        target_artist_count=3,
+        observed_artist_count=3,
+        conflicting_artist_count=1,
+        counters=ArtistMetadataCounters(
+            records_seen=0,
+            records_parsed=0,
+            rejected_records=0,
+            target_credit_observations=0,
+        ),
+        settings=ArtistMetadataSettings(),
+        output_sha256="0" * 64,
+    )
+    artifact = preliminary.model_copy(
+        update={"output_sha256": artist_metadata_artifact_sha256(preliminary)}
+    )
+    return LocalArtistMetadataSources(database=path, artifact=artifact)
 
 
 def _adapter_report() -> MusicBrainzModelAdapterReport:

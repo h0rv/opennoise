@@ -18,6 +18,11 @@ from typing import TYPE_CHECKING, Final, Literal
 from pydantic import Field, FiniteFloat
 
 from musix.genre_seed_universe import normalize_label
+from musix.local_musicbrainz_artist_metadata import (
+    LocalArtistMetadataSources,
+    LocalMusicBrainzArtistMetadataError,
+    exact_canonical_names,
+)
 from musix.models import FrozenModel
 from musix.musicbrainz_model_adapter import (
     MusicBrainzModelAdapterReport,
@@ -60,6 +65,7 @@ class LocalMusicBrainzEvidenceSources:
     evidence_artifact: ReleaseGroupEvidenceArtifact
     reconciliation: SeedReconciliationArtifact
     adapter_report: MusicBrainzModelAdapterReport
+    artist_metadata: LocalArtistMetadataSources | None = None
 
 
 class LocalResearchSeed(FrozenModel):
@@ -75,6 +81,7 @@ class DirectArtistClaim(FrozenModel):
     """Direct artist membership grouped by stable MusicBrainz artist ID."""
 
     artist_mbid: str = Field(pattern=r"^[0-9a-f-]{36}$")
+    canonical_name: str | None = None
     facets: tuple[DirectFacet, ...] = Field(min_length=1, max_length=2)
     evidence_reference_count: int = Field(ge=1)
 
@@ -90,6 +97,7 @@ class AlbumSupportedArtistClaim(FrozenModel):
     """One artist supported by matched release groups for a stable seed."""
 
     artist_mbid: str = Field(pattern=r"^[0-9a-f-]{36}$")
+    canonical_name: str | None = None
     facets: tuple[AlbumSupportFacet, ...] = Field(min_length=1, max_length=2)
     distinct_release_group_count: int = Field(ge=1)
 
@@ -190,6 +198,15 @@ def direct_artists_for_seed(
         query_seconds = monotonic() - query_started
     claims = _group_artist_claims(_parse_artist_rows(raw_rows))
     supported = _group_supported_artists(_parse_support_artist_rows(support_rows))
+    names = _exact_attached_names(sources, claims, supported)
+    claims = tuple(
+        claim.model_copy(update={"canonical_name": names.get(claim.artist_mbid)})
+        for claim in claims
+    )
+    supported = tuple(
+        claim.model_copy(update={"canonical_name": names.get(claim.artist_mbid)})
+        for claim in supported
+    )
     return LocalArtistEvidenceResponse(
         seed_universe_count=sources.reconciliation.seed_count,
         seed=seed,
@@ -295,6 +312,29 @@ def _require_source_binding(sources: LocalMusicBrainzEvidenceSources) -> None:
         raise LocalMusicBrainzArtistEvidenceError(
             "evidence database and reconciliation sidecar do not share a verified seed binding"
         )
+
+
+def _exact_attached_names(
+    sources: LocalMusicBrainzEvidenceSources,
+    direct: tuple[DirectArtistClaim, ...],
+    supported: tuple[AlbumSupportedArtistClaim, ...],
+) -> dict[str, str]:
+    metadata = sources.artist_metadata
+    if metadata is None:
+        return {}
+    if metadata.artifact.evidence_output_sha256 != sources.evidence_artifact.output_sha256:
+        raise LocalMusicBrainzArtistEvidenceError(
+            "artist metadata does not bind the completed evidence artifact"
+        )
+    artist_ids = tuple(
+        dict.fromkeys(
+            (*[item.artist_mbid for item in direct], *[item.artist_mbid for item in supported])
+        )
+    )
+    try:
+        return exact_canonical_names(metadata, artist_ids)
+    except LocalMusicBrainzArtistMetadataError as error:
+        raise LocalMusicBrainzArtistEvidenceError("artist metadata is invalid") from error
 
 
 def _verified_database(
