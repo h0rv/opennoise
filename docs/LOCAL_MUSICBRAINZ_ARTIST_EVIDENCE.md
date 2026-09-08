@@ -57,6 +57,18 @@ receipt together to show conflict-free exact MusicBrainz credit names; otherwise
 the panel displays the exact MBID. These routes remain local research only and
 do not alter public routes or export policy.
 
+Run the completed local discovery mode with one command:
+
+```sh
+uv run poe dev-research
+```
+
+It uses the completed evidence, peer-index, and metadata paths shown in
+`.env.example`, then fails with the missing paths if any input is absent.
+It listens on `127.0.0.1:3002` by default, so it leaves the standard
+`poe dev` port alone. Set `PORT` before the command to use a different
+loopback port. It keeps the standard `poe dev` and public routes unchanged.
+
 ## Candidate smoke checks
 
 Run these checks only after both candidate files exist. The existing adapter report shows direct evidence for the first four seeds and no direct evidence for the last one.

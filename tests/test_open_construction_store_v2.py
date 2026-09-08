@@ -141,10 +141,16 @@ class OpenConstructionV2MapStoreTests(unittest.TestCase):
             "catalog:wikidata:genre:Q373342",
             {item.node_id for item in store.response(level=0).nodes},
         )
+        popular_hits = store.search("popular music").hits
         self.assertEqual(
-            store.search("popular music").hits[0].taxonomy_presentation,
-            "structural_umbrella",
+            [item.node_id for item in popular_hits[:2]],
+            [
+                "catalog:wikidata:genre:Q37073",
+                "catalog:wikidata:genre:Q373342",
+            ],
         )
+        self.assertEqual(popular_hits[0].taxonomy_presentation, "ordinary")
+        self.assertEqual(popular_hits[1].taxonomy_presentation, "structural_umbrella")
         self.assertEqual(review_only.hierarchy.broader, ())
         self.assertEqual(review_only.hierarchy.narrower, ())
         self.assertEqual(review_only.hierarchy.siblings, ())

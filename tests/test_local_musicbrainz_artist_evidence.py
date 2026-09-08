@@ -20,6 +20,7 @@ from musix.local_musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     artist_metadata_artifact_sha256,
 )
+from musix.local_musicbrainz_peer_store import LocalMusicBrainzPeerStore
 from musix.musicbrainz_model_adapter import (
     AdapterSeedCoverage,
     MusicBrainzModelAdapterReport,
@@ -71,6 +72,34 @@ class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(LocalMusicBrainzArtistEvidenceError, "not certified"):
                 store.artists_for_seed("item887")
+
+    def test_local_peer_store_keeps_direct_overlap_separate_and_bounded(self) -> None:
+        with TemporaryDirectory() as temporary:
+            index = Path(temporary) / "peers.sqlite"
+            with closing(sqlite3.connect(index)) as connection, connection:
+                connection.executescript(
+                    """
+                    CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                    CREATE TABLE seed (source_item_id TEXT PRIMARY KEY);
+                    CREATE TABLE peer_edge (
+                      source_genre_id TEXT NOT NULL, target_genre_id TEXT NOT NULL,
+                      direct_score REAL NOT NULL, shared_direct_artist_count INTEGER NOT NULL
+                    );
+                    INSERT INTO metadata VALUES ('non_production_candidate', 'true');
+                    INSERT INTO metadata VALUES ('all_inputs_export_allowed', 'false');
+                    INSERT INTO peer_edge VALUES ('item887', 'item2', .5, 3);
+                    """
+                )
+            peers = LocalMusicBrainzPeerStore(index, _reconciliation())
+            peers.start()
+            response = peers.neighbors("item887")
+
+        self.assertTrue(peers.configured)
+        self.assertEqual(
+            [(item.source_item_id, item.name) for item in response],
+            [("item2", "rock")],
+        )
+        self.assertEqual(response[0].shared_direct_artist_count, 3)
 
     def test_seed_lookup_uses_stable_id_or_existing_idm_alias(self) -> None:
         with TemporaryDirectory() as temporary:

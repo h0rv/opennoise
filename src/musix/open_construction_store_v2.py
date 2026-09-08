@@ -39,10 +39,16 @@ class OpenConstructionV2Alias:
 
 
 _ALIASES_BY_NODE_ID = {
+    # This is a search convenience only. Q37073 remains a distinct ordinary
+    # genre from the structural Q373342 umbrella in every graph response.
+    "catalog:wikidata:genre:Q37073": OpenConstructionV2Alias(
+        display_name="Pop music",
+        search_terms=("pop", "popular music"),
+    ),
     "legacy:item887": OpenConstructionV2Alias(
         display_name="Intelligent dance music (IDM)",
         search_terms=("idm", "intelligent dance music"),
-    )
+    ),
 }
 
 

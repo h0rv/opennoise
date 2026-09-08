@@ -21,6 +21,7 @@ class TaskContractTests(unittest.TestCase):
                 "sync",
                 "bootstrap",
                 "dev",
+                "dev-research",
                 "dev-legacy",
                 "check",
                 "release-certify",

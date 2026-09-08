@@ -23,7 +23,7 @@ The release-group parser rejects a tag with a boolean, zero, negative, or non-in
 
 The builder verifies the source-cache receipt, archive hash, source size, member path, and bounded stream before it writes the final database. It verifies the seed-target artifact before using its direct anchors. A partial database remains inspectable but is not queryable.
 
-The local direct-artist query tool is ready for a completed candidate. It verifies the evidence artifact, database hash and size, SQLite integrity, the all-seed reconciliation sidecar, and the existing MusicBrainz adapter report. The sidecars bind the same seed target and all 6,291 stable seed IDs. The query reports verification time separately from SQL time. It is local research only and has no public API or UI path.
+The local direct-artist query tool verifies the evidence artifact, database hash and size, SQLite integrity, the all-seed reconciliation sidecar, and the existing MusicBrainz adapter report. The sidecars bind the same seed target and all 6,291 stable seed IDs. The query reports verification time separately from SQL time. An opt-in loopback-only panel can use the same completed inputs after startup checks them once. It is not a public API or public UI path. A loopback HTTP smoke passed with the completed evidence and final metadata artifacts.
 
 ## Acceptance steps
 

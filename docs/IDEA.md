@@ -76,10 +76,11 @@ and its logical artifact hash is
 `21126aae5cf8b849edd132e9125ad12f1037474fecc1f89f6b8c1f8254efbd15`.
 This is a taxonomy-only candidate, not a hierarchy, artist, or coverage
 promotion.
-Release-group evidence remains
-pending: its verified MusicBrainz raw archive and source receipt exist, but no
-evidence artifact or receipt was published; the prior staging SQLite database
-is malformed and is not an input. MSD/Last.fm remains an offline, metadata-only
+The completed release-group candidate is local research. Its verified archive,
+receipt, final evidence database, and artifact are bound in
+`docs/MUSICBRAINZ_EVIDENCE_CHECKPOINT.md`. Direct artist claims and
+release-group support remain separate. The prior staging SQLite database is
+malformed and is not an input. MSD/Last.fm remains an offline, metadata-only
 adapter awaiting the three verified SQLite files (or an already verified local
 cache receipt); no live MSD result is claimed.
 

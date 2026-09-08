@@ -65,6 +65,12 @@ class Settings(BaseSettings):
         ),
         validation_alias="MUSIX_LOCAL_RESEARCH_ADAPTER_REPORT",
     )
+    local_research_peer_index_path: Path = Field(
+        default=Path(
+            ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite"
+        ),
+        validation_alias="MUSIX_LOCAL_RESEARCH_PEER_INDEX",
+    )
     local_research_artist_metadata_database_path: Path | None = Field(
         default=None, validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_DATABASE"
     )

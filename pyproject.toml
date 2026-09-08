@@ -104,6 +104,7 @@ acquire-source-cache = "musix acquire-source-cache $MUSIX_SOURCE_CACHE_SOURCE_ID
 cache-musicbrainz-release-group-20260905 = "musix acquire-source-cache musicbrainz_json_release_group_research_20260905 --object-store $MUSIX_MB_RELEASE_GROUP_CACHE_OBJECT_STORE --work-directory $MUSIX_MB_RELEASE_GROUP_CACHE_WORK_DIRECTORY --receipt $MUSIX_MB_RELEASE_GROUP_CACHE_RECEIPT --max-sources 1 --max-total-bytes 1200000000 --max-concurrency 1 --timeout-seconds 3600"
 restore-source-cache = "musix restore-source-cache $MUSIX_SOURCE_CACHE_SOURCE_IDS --object-store $MUSIX_SOURCE_CACHE_OBJECT_STORE --receipt $MUSIX_SOURCE_CACHE_RECEIPT --destination $MUSIX_SOURCE_CACHE_DESTINATION"
 dev = "python scripts/run_dev.py"
+dev-research = "python scripts/run_local_research_dev.py"
 dev-legacy = "musix serve"
 evaluate-layout = "python scripts/evaluate_layout.py data/musix.sqlite --layout default"
 evaluate-membership = "python scripts/evaluate_membership.py tests/fixtures/membership_evaluation.json"

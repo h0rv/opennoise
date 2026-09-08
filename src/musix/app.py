@@ -25,6 +25,7 @@ from musix.local_musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     load_artist_metadata_artifact,
 )
+from musix.local_musicbrainz_peer_store import LocalMusicBrainzPeerStore
 from musix.models import Settings
 from musix.open_construction_store import OpenConstructionMapStore
 from musix.open_construction_store_v2 import OpenConstructionV2MapStore
@@ -87,6 +88,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     open_construction_graph_v2 = OpenConstructionV2MapStore(selected_v2_path)
     public_artist_navigation = PublicArtistNavigationStore(selected_path)
     local_research_artists: LocalMusicBrainzArtistEvidenceStore | None = None
+    local_research_peers: LocalMusicBrainzPeerStore | None = None
     if settings.local_research_artist_evidence_enabled:
         if settings.host not in {"127.0.0.1", "::1", "localhost"}:
             raise ValueError("local research artist evidence requires a loopback host")
@@ -120,6 +122,15 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 artist_metadata=artist_metadata,
             )
         )
+        peer_source = load_download_source(
+            Path("config/data_sources.toml"), "musicbrainz_json_artist_research_20260829"
+        )
+        if not (peer_source.local_only and peer_source.local_search and peer_source.display):
+            raise ValueError("local peer evidence source policy forbids local discovery")
+        local_research_peers = LocalMusicBrainzPeerStore(
+            settings.local_research_peer_index_path,
+            local_research_artists.sources.reconciliation,
+        )
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
@@ -130,6 +141,8 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
         await database.start()
         if local_research_artists is not None:
             await asyncio.to_thread(local_research_artists.start)
+        if local_research_peers is not None:
+            await asyncio.to_thread(local_research_peers.start)
         try:
             yield
         finally:
@@ -162,6 +175,9 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     async def provide_local_research_artists() -> LocalMusicBrainzArtistEvidenceStore | None:
         return local_research_artists
 
+    async def provide_local_research_peers() -> LocalMusicBrainzPeerStore | None:
+        return local_research_peers
+
     return Litestar(
         route_handlers=[
             CoreController,
@@ -180,6 +196,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
             "open_construction_graph_v2": Provide(provide_open_construction_graph_v2),
             "public_artist_navigation": Provide(provide_public_artist_navigation),
             "local_research_artists": Provide(provide_local_research_artists),
+            "local_research_peers": Provide(provide_local_research_peers),
         },
         lifespan=[lifespan],
         template_config=TemplateConfig(directory=TEMPLATE_ROOT, engine=JinjaTemplateEngine),

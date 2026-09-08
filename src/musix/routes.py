@@ -37,6 +37,10 @@ from musix.local_musicbrainz_artist_evidence import (
     LocalMusicBrainzArtistEvidenceError,
     LocalMusicBrainzArtistEvidenceStore,
 )
+from musix.local_musicbrainz_peer_store import (
+    LocalMusicBrainzPeerStore,
+    LocalMusicBrainzPeerStoreError,
+)
 from musix.models import (
     LegacyMapResponse,
     MapPointResponse,
@@ -639,6 +643,7 @@ class EvidenceController(Controller):
         self,
         request: Request[object, object, State],
         local_research_artists: NamedDependency[object],
+        local_research_peers: NamedDependency[object],
         node_id: FromPath[str],
     ) -> Template:
         """Render bounded loopback-only research evidence for one legacy seed."""
@@ -656,9 +661,17 @@ class EvidenceController(Controller):
             raise ServiceUnavailableException(
                 detail="local research evidence is unavailable"
             ) from error
+        peers = ()
+        if isinstance(local_research_peers, LocalMusicBrainzPeerStore):
+            try:
+                peers = local_research_peers.neighbors(node_id.removeprefix("legacy:"))
+            except LocalMusicBrainzPeerStoreError as error:
+                raise ServiceUnavailableException(
+                    detail="local peer evidence is unavailable"
+                ) from error
         return Template(
             template_name="local_musicbrainz_artist_evidence.html",
-            context={"node_id": node_id, "response": response},
+            context={"node_id": node_id, "response": response, "peers": peers},
         )
 
     @get("/fragments/local-research/musicbrainz/{node_id:str}/artist/{artist_mbid:str}")
