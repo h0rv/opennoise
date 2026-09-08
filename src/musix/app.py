@@ -18,6 +18,7 @@ from musix.models import Settings
 from musix.open_construction_store import OpenConstructionMapStore
 from musix.open_construction_store_v2 import OpenConstructionV2MapStore
 from musix.production_store import ProductionMapStore
+from musix.public_artist_navigation_store import PublicArtistNavigationStore
 from musix.routes import CoreController, EvidenceController, MapController, SearchController
 
 PACKAGE_ROOT = Path(__file__).parent
@@ -32,7 +33,7 @@ class _UnsetPath:
 _UNSET_PATH = _UnsetPath()
 
 
-def create_app(  # noqa: PLR0913, PLR0917
+def create_app(  # noqa: C901, PLR0913, PLR0917
     database_path: Path | None = None,
     production_map_path: Path | None = None,
     historical_signal_map_path: Path | None = None,
@@ -71,6 +72,7 @@ def create_app(  # noqa: PLR0913, PLR0917
         selected_v1_path = open_construction_graph_path
     open_construction_graph = OpenConstructionMapStore(selected_v1_path)
     open_construction_graph_v2 = OpenConstructionV2MapStore(selected_v2_path)
+    public_artist_navigation = PublicArtistNavigationStore(selected_path)
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
@@ -105,6 +107,9 @@ def create_app(  # noqa: PLR0913, PLR0917
     async def provide_open_construction_graph_v2() -> OpenConstructionV2MapStore:
         return open_construction_graph_v2
 
+    async def provide_public_artist_navigation() -> PublicArtistNavigationStore:
+        return public_artist_navigation
+
     return Litestar(
         route_handlers=[
             CoreController,
@@ -121,6 +126,7 @@ def create_app(  # noqa: PLR0913, PLR0917
             "historical_memberships": Provide(provide_historical_memberships),
             "open_construction_graph": Provide(provide_open_construction_graph),
             "open_construction_graph_v2": Provide(provide_open_construction_graph_v2),
+            "public_artist_navigation": Provide(provide_public_artist_navigation),
         },
         lifespan=[lifespan],
         template_config=TemplateConfig(directory=TEMPLATE_ROOT, engine=JinjaTemplateEngine),

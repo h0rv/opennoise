@@ -61,6 +61,13 @@ from musix.production_store import (
     ProductionMapStore,
     ProductionMapStoreError,
 )
+from musix.public_artist_navigation_store import (
+    ArtistGenresResponse,
+    GenreArtistsResponse,
+    PublicArtistNavigationStore,
+    PublicArtistNavigationStoreError,
+    RelatedArtistsResponse,
+)
 
 PUBLIC_LAYOUT_KEYS = frozenset({"public", "public-direct", "public-community", "public-taxonomy"})
 
@@ -602,6 +609,74 @@ class SearchController(Controller):
 
 class EvidenceController(Controller):
     """Serve genre detail and provenance contracts."""
+
+    @get("/api/genres/{genre_id:int}/artists")
+    async def genre_artists(
+        self,
+        public_artist_navigation: NamedDependency[PublicArtistNavigationStore],
+        genre_id: FromPath[int],
+        offset: FromQuery[int] = 0,
+        limit: FromQuery[int] = 20,
+    ) -> GenreArtistsResponse:
+        """Page only direct, display-authorized artist claims for a known catalog genre."""
+        try:
+            return await public_artist_navigation.genre_artists(
+                genre_id, offset=offset, limit=limit
+            )
+        except PublicArtistNavigationStoreError as error:
+            if "not found" in str(error):
+                raise NotFoundException(detail="genre not found") from error
+            raise ValidationException(detail=str(error)) from error
+
+    @get("/api/artists/{artist_id:int}")
+    async def artist_detail(
+        self,
+        public_artist_navigation: NamedDependency[PublicArtistNavigationStore],
+        artist_id: FromPath[int],
+    ) -> ArtistGenresResponse:
+        """Return a known artist and its first direct-genre page for API traversal."""
+        try:
+            return await public_artist_navigation.artist_genres(artist_id, offset=0, limit=20)
+        except PublicArtistNavigationStoreError as error:
+            if "not found" in str(error):
+                raise NotFoundException(detail="artist not found") from error
+            raise ValidationException(detail=str(error)) from error
+
+    @get("/api/artists/{artist_id:int}/genres")
+    async def artist_genres(
+        self,
+        public_artist_navigation: NamedDependency[PublicArtistNavigationStore],
+        artist_id: FromPath[int],
+        offset: FromQuery[int] = 0,
+        limit: FromQuery[int] = 20,
+    ) -> ArtistGenresResponse:
+        """Page only direct, display-authorized genre claims for a known artist."""
+        try:
+            return await public_artist_navigation.artist_genres(
+                artist_id, offset=offset, limit=limit
+            )
+        except PublicArtistNavigationStoreError as error:
+            if "not found" in str(error):
+                raise NotFoundException(detail="artist not found") from error
+            raise ValidationException(detail=str(error)) from error
+
+    @get("/api/artists/{artist_id:int}/related")
+    async def related_artists(
+        self,
+        public_artist_navigation: NamedDependency[PublicArtistNavigationStore],
+        artist_id: FromPath[int],
+        offset: FromQuery[int] = 0,
+        limit: FromQuery[int] = 20,
+    ) -> RelatedArtistsResponse:
+        """Page transparent related artists by shared direct genre, never a learned score."""
+        try:
+            return await public_artist_navigation.related_artists(
+                artist_id, offset=offset, limit=limit
+            )
+        except PublicArtistNavigationStoreError as error:
+            if "not found" in str(error):
+                raise NotFoundException(detail="artist not found") from error
+            raise ValidationException(detail=str(error)) from error
 
     @get("/api/genres/{genre_id:int}")
     async def genre_detail(
