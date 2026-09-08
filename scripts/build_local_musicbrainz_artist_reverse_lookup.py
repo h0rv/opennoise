@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 from time import monotonic
+from uuid import uuid4
 
 from musix.local_musicbrainz_artist_evidence import load_release_group_evidence_artifact
 from musix.local_musicbrainz_artist_reverse_lookup import (
@@ -35,9 +36,14 @@ def main() -> int:
         sys.stderr.write(f"reverse lookup build failed: {error}\n")
         return 2
     arguments.output_artifact.parent.mkdir(parents=True, exist_ok=True)
-    arguments.output_artifact.write_text(
-        artifact.model_dump_json(indent=2) + "\n", encoding="utf-8"
+    temporary_artifact = arguments.output_artifact.with_name(
+        f".{arguments.output_artifact.name}.{uuid4().hex}.partial"
     )
+    try:
+        temporary_artifact.write_text(artifact.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        temporary_artifact.replace(arguments.output_artifact)
+    finally:
+        temporary_artifact.unlink(missing_ok=True)
     sys.stdout.write(
         artifact.model_dump_json()[:-1] + f',"elapsed_seconds":{monotonic() - started:.6f}' + "}\n"
     )

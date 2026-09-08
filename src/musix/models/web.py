@@ -55,6 +55,14 @@ class Settings(BaseSettings):
         default=Path(".cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json"),
         validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ARTIFACT",
     )
+    local_research_artist_reverse_lookup_database_path: Path | None = Field(
+        default=None,
+        validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_DATABASE",
+    )
+    local_research_artist_reverse_lookup_artifact_path: Path | None = Field(
+        default=None,
+        validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_ARTIFACT",
+    )
     local_research_seed_reconciliation_path: Path = Field(
         default=Path(".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json"),
         validation_alias="MUSIX_LOCAL_RESEARCH_SEED_RECONCILIATION",
@@ -108,6 +116,13 @@ class Settings(BaseSettings):
         ):
             raise ValueError(
                 "local artist metadata database and artifact paths must be configured together"
+            )
+        if (self.local_research_artist_reverse_lookup_database_path is None) != (
+            self.local_research_artist_reverse_lookup_artifact_path is None
+        ):
+            raise ValueError(
+                "local artist reverse lookup database and artifact paths must be configured "
+                "together"
             )
         return self
 

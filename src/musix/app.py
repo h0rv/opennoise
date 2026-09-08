@@ -25,6 +25,10 @@ from musix.local_musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     load_artist_metadata_artifact,
 )
+from musix.local_musicbrainz_artist_reverse_lookup import (
+    LocalArtistReverseLookupSources,
+    load_artist_reverse_lookup_artifact,
+)
 from musix.local_musicbrainz_peer_store import LocalMusicBrainzPeerStore
 from musix.local_research_map_store import LocalResearchMapStore
 from musix.local_reviewed_alias_context_store import LocalReviewedAliasContextStore
@@ -113,6 +117,17 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     settings.local_research_artist_metadata_artifact_path
                 ),
             )
+        reverse_lookup = None
+        if (
+            settings.local_research_artist_reverse_lookup_database_path is not None
+            and settings.local_research_artist_reverse_lookup_artifact_path is not None
+        ):
+            reverse_lookup = LocalArtistReverseLookupSources(
+                database=settings.local_research_artist_reverse_lookup_database_path,
+                artifact=load_artist_reverse_lookup_artifact(
+                    settings.local_research_artist_reverse_lookup_artifact_path
+                ),
+            )
         local_research_artists = LocalMusicBrainzArtistEvidenceStore(
             LocalMusicBrainzEvidenceSources(
                 database=settings.local_research_artist_evidence_database_path,
@@ -124,6 +139,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     settings.local_research_adapter_report_path
                 ),
                 artist_metadata=artist_metadata,
+                reverse_lookup=reverse_lookup,
             )
         )
         peer_source = load_download_source(

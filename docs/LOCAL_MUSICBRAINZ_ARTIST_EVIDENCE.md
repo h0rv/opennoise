@@ -36,7 +36,28 @@ uv run python scripts/query_local_musicbrainz_artist_evidence.py \
 
 The query verifies the evidence artifact and the adapter report. The adapter report must bind both the evidence artifact's seed-target hash and the reconciliation sidecar's hash, seed source, source content hash, seed identity fingerprint, and full seed count. The query then checks the database SHA-256, byte size, and SQLite integrity before reading it. It rejects partial databases and a schema-shaped staging file that does not match the artifact.
 
-This is a verified one-shot CLI, not an interactive service. Its JSON output reports `verification_seconds` separately from `query_seconds`. Verification reads the complete SQLite file to calculate its SHA-256 and may take much longer than the bounded SQL query. Response sections are bounded by `--limit`; the current candidate's reverse support lookup may scan its SQLite table because the live build began before an artist-leading support index was added for future builds. Record the measured SQL time after publication and do not describe it as an indexed interactive lookup. The command does not keep a service process or a verification cache.
+This is a verified one-shot CLI, not an interactive service. Its JSON output reports `verification_seconds` separately from `query_seconds`. Verification reads the complete SQLite file to calculate its SHA-256 and may take much longer than the bounded SQL query. Response sections are bounded by `--limit`.
+
+## Reverse lookup sidecar
+
+Build the separate local-only reverse projection once from the completed source:
+
+```sh
+uv run poe build-local-musicbrainz-artist-reverse-lookup
+```
+
+It writes `artist-reverse-lookup.sqlite` and
+`artist-reverse-lookup-artifact.json` beside the evidence database. Its receipt
+binds the exact evidence artifact hash, source database hash and size, and the
+derived database hash and size. The source database is read-only and is never
+modified. The projection retains per-facet distinct release-group counts and a
+cross-facet deduplicated count.
+
+When both sidecar files exist, `uv run poe dev-research` verifies them with the
+source at loopback startup and uses them for artist-to-seed requests. A missing
+pair leaves the completed-source query path available. A configured incomplete,
+tampered, or source-mismatched pair fails startup; it never silently uses the
+sidecar.
 
 The JSON output is local research only. It has `export_allowed=false` and `serving_allowed=false`. It is not a public API, a UI result, or an artist similarity claim.
 
@@ -64,10 +85,11 @@ uv run poe dev-research
 ```
 
 It uses the completed evidence, peer-index, and metadata paths shown in
-`.env.example`, then fails with the missing paths if any input is absent.
-It listens on `127.0.0.1:3002` by default, so it leaves the standard
-`poe dev` port alone. Set `PORT` before the command to use a different
-loopback port. It keeps the standard `poe dev` and public routes unchanged.
+`.env.example`, and automatically adds the reverse sidecar when both files are
+present. It fails with the required missing paths if any are absent. It listens
+on `127.0.0.1:3002` by default, so it leaves the standard `poe dev` port alone.
+Set `PORT` before the command to use a different loopback port. It keeps the
+standard `poe dev` and public routes unchanged.
 
 ## Candidate smoke checks
 

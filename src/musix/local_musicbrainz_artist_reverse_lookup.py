@@ -8,6 +8,7 @@ import sqlite3
 from contextlib import closing
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final, Literal
+from uuid import uuid4
 
 from pydantic import ConfigDict, Field
 
@@ -92,6 +93,11 @@ def _file_sha256(path: Path) -> tuple[str, int]:
     return digest.hexdigest(), size
 
 
+def _partial_path(output: Path) -> Path:
+    """Return an unlinked, uniquely named sibling for atomic publication."""
+    return output.with_name(f".{output.name}.{uuid4().hex}.partial")
+
+
 def artist_reverse_lookup_artifact_sha256(artifact: ArtistReverseLookupArtifact) -> str:
     """Return the replay hash excluding the self-referential receipt value."""
     return hashlib.sha256(
@@ -128,35 +134,41 @@ def build_artist_reverse_lookup(
         raise LocalMusicBrainzArtistReverseLookupError(
             "reverse lookup output database already exists"
         )
-    with closing(
-        sqlite3.connect(f"file:{inputs.evidence_database.absolute()}?mode=ro", uri=True)
-    ) as source:
-        source.execute("PRAGMA query_only = ON")
-        _require_source_schema(source)
-        with closing(sqlite3.connect(inputs.output_database)) as output, output:
-            _init_database(output)
-            _copy_projection(source, output)
-            output.execute("PRAGMA optimize")
-            if output.execute("PRAGMA integrity_check").fetchone() != ("ok",):
-                raise LocalMusicBrainzArtistReverseLookupError(
-                    "reverse lookup database failed integrity check"
-                )
-            direct_count = _count(output, "direct_seed")
-            support_count = _count(output, "support_aggregate")
-    reverse_sha256, reverse_bytes = _file_sha256(inputs.output_database)
-    preliminary = ArtistReverseLookupArtifact(
-        source_evidence_output_sha256=inputs.evidence_artifact.output_sha256,
-        source_evidence_database_sha256=inputs.evidence_artifact.evidence_database_sha256,
-        source_evidence_database_bytes=inputs.evidence_artifact.evidence_database_bytes,
-        reverse_database_sha256=reverse_sha256,
-        reverse_database_bytes=reverse_bytes,
-        direct_membership_count=direct_count,
-        support_facet_count=support_count,
-        output_sha256="0" * 64,
-    )
-    return preliminary.model_copy(
-        update={"output_sha256": artist_reverse_lookup_artifact_sha256(preliminary)}
-    )
+    temporary_database = _partial_path(inputs.output_database)
+    try:
+        with closing(
+            sqlite3.connect(f"file:{inputs.evidence_database.absolute()}?mode=ro", uri=True)
+        ) as source:
+            source.execute("PRAGMA query_only = ON")
+            _require_source_schema(source)
+            with closing(sqlite3.connect(temporary_database)) as output, output:
+                _init_database(output)
+                _copy_projection(source, output)
+                output.execute("PRAGMA optimize")
+                if output.execute("PRAGMA integrity_check").fetchone() != ("ok",):
+                    raise LocalMusicBrainzArtistReverseLookupError(
+                        "reverse lookup database failed integrity check"
+                    )
+                direct_count = _count(output, "direct_seed")
+                support_count = _count(output, "support_aggregate")
+        reverse_sha256, reverse_bytes = _file_sha256(temporary_database)
+        preliminary = ArtistReverseLookupArtifact(
+            source_evidence_output_sha256=inputs.evidence_artifact.output_sha256,
+            source_evidence_database_sha256=inputs.evidence_artifact.evidence_database_sha256,
+            source_evidence_database_bytes=inputs.evidence_artifact.evidence_database_bytes,
+            reverse_database_sha256=reverse_sha256,
+            reverse_database_bytes=reverse_bytes,
+            direct_membership_count=direct_count,
+            support_facet_count=support_count,
+            output_sha256="0" * 64,
+        )
+        artifact = preliminary.model_copy(
+            update={"output_sha256": artist_reverse_lookup_artifact_sha256(preliminary)}
+        )
+        temporary_database.replace(inputs.output_database)
+        return artifact
+    finally:
+        temporary_database.unlink(missing_ok=True)
 
 
 def verify_artist_reverse_lookup_sources(

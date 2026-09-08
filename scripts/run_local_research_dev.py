@@ -41,9 +41,22 @@ def main() -> int:
         "MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_ARTIFACT": root
         / ".cache/musicbrainz-release-group-artist-metadata-v1/artifact.json",
     }
+    reverse_lookup = {
+        "MUSIX_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_DATABASE": root
+        / ".cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup.sqlite",
+        "MUSIX_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_ARTIFACT": root
+        / (
+            ".cache/musicbrainz-release-group-evidence-candidate-v1/"
+            "artist-reverse-lookup-artifact.json"
+        ),
+    }
     missing = [str(path) for path in inputs.values() if not path.is_file()]
     if missing:
         sys.stderr.write("Local research inputs are unavailable:\n" + "\n".join(missing) + "\n")
+        return 2
+    sidecar_present = tuple(path.is_file() for path in reverse_lookup.values())
+    if any(sidecar_present) and not all(sidecar_present):
+        sys.stderr.write("Local artist reverse lookup requires both database and artifact files.\n")
         return 2
     environment = os.environ | {
         "MUSIX_DATABASE_PATH": str(production.database),
@@ -54,6 +67,11 @@ def main() -> int:
         "MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true",
         "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ENABLED": "true",
         **{key: str(value) for key, value in inputs.items()},
+        **(
+            {key: str(value) for key, value in reverse_lookup.items()}
+            if all(sidecar_present)
+            else {}
+        ),
     }
     return subprocess.run(
         [sys.executable, "-m", "musix.cli", "serve"], check=False, env=environment

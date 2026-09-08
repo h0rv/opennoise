@@ -106,6 +106,45 @@ class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
                     source.evidence_artifact,
                 )
 
+    def test_reverse_sidecar_build_failure_leaves_no_final_database(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            database = _database(root / "evidence.sqlite")
+            source = _sources(database)
+            reverse_database = root / "reverse.sqlite"
+            with (
+                patch(
+                    "musix.local_musicbrainz_artist_reverse_lookup._copy_projection",
+                    side_effect=sqlite3.DatabaseError("interrupted"),
+                ),
+                self.assertRaisesRegex(sqlite3.DatabaseError, "interrupted"),
+            ):
+                build_artist_reverse_lookup(
+                    ArtistReverseLookupBuildInputs(
+                        database, source.evidence_artifact, reverse_database
+                    )
+                )
+
+            self.assertFalse(reverse_database.exists())
+            self.assertEqual(list(root.glob(".reverse.sqlite.*.partial")), [])
+
+    def test_reverse_sidecar_builder_preserves_an_existing_final_database(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            database = _database(root / "evidence.sqlite")
+            source = _sources(database)
+            reverse_database = root / "reverse.sqlite"
+            reverse_database.write_bytes(b"existing final database")
+
+            with self.assertRaisesRegex(LocalMusicBrainzArtistReverseLookupError, "already exists"):
+                build_artist_reverse_lookup(
+                    ArtistReverseLookupBuildInputs(
+                        database, source.evidence_artifact, reverse_database
+                    )
+                )
+
+            self.assertEqual(reverse_database.read_bytes(), b"existing final database")
+
     def test_startup_certified_store_hashes_once_then_uses_read_only_queries(self) -> None:
         with TemporaryDirectory() as temporary:
             database = _database(Path(temporary) / "evidence.sqlite")
