@@ -57,7 +57,9 @@ When both sidecar files exist, `uv run poe dev-research` verifies them with the
 source at loopback startup and uses them for artist-to-seed requests. A missing
 pair leaves the completed-source query path available. A configured incomplete,
 tampered, or source-mismatched pair fails startup; it never silently uses the
-sidecar.
+sidecar. Startup deliberately includes whole-file SHA-256 and SQLite integrity
+checks for the multi-gigabyte source, so wait for the loopback server to report
+that startup is complete before measuring request latency.
 
 The JSON output is local research only. It has `export_allowed=false` and `serving_allowed=false`. It is not a public API, a UI result, or an artist similarity claim.
 
