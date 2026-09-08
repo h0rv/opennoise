@@ -664,6 +664,7 @@
     { selector: "node:selected", style: { "border-width": 4, "border-color": cssValue("--focus"), "background-color": cssValue("--focus") } },
     { selector: "edge", style: { width: 1.5, "line-color": cssValue("--edge"), opacity: 0.68, "curve-style": "straight" } },
     { selector: "edge.similarity", style: { "line-style": "dashed", "line-color": cssValue("--similarity"), opacity: 0.65 } },
+    { selector: "edge.open-review", style: { "line-style": "dashed", "line-color": cssValue("--similarity"), opacity: 0.5 } },
     { selector: ".lod-hidden", style: { display: "none" } },
     { selector: ".edge-hidden", style: { display: "none" } },
     { selector: ".neighborhood-hidden", style: { display: "none" } },
@@ -1027,6 +1028,7 @@
     let loadSequence = 0;
     let viewportTimer = null;
     let levelTimer = null;
+    let labelPaintFrame = null;
     let cameraReady = false;
     let neighborController = null;
     let neighborSequence = 0;
@@ -1035,21 +1037,38 @@
     const neighborEndpoint = mapElement.dataset.neighborUrl || "/api/open-construction-map/neighbors/";
     const openBack = document.querySelector('[data-map-action="open-back"]');
     let focusedNodeId = null;
+    let neighborhoodNodeIds = null;
+    let overviewCamera = null;
+    mapElement.tabIndex = 0;
     const nodeId = (node) => node.node_id ?? node.genre_id;
+    const openGraphV2 = mapElement.dataset.openGraphVersion === "v2";
     // A single monotonic world transform expands the dense high-degree music
-    // region while keeping outliers bounded and viewport requests invertible.
-    const displayX = (value) => 1200 * Math.tanh((Number(value) - 665) / 50);
-    const rawX = (value) => 665 + 50 * Math.atanh(Math.max(-0.999999, Math.min(0.999999, Number(value) / 1200)));
-    const displayY = (value) => 1000 * Math.tanh((Number(value) + 78) / 160);
-    const rawY = (value) => -78 + 160 * Math.atanh(Math.max(-0.999999, Math.min(0.999999, Number(value) / 1000)));
+    // region while keeping v1 viewport requests invertible. V2 already has a
+    // centered bounded landscape; applying the v1 center (x=665) collapses a
+    // selected v2 neighborhood into one corner of its fitted camera.
+    const displayX = (value) => openGraphV2
+      ? Number(value)
+      : 1200 * Math.tanh((Number(value) - 665) / 50);
+    const rawX = (value) => openGraphV2
+      ? Number(value)
+      : 665 + 50 * Math.atanh(Math.max(-0.999999, Math.min(0.999999, Number(value) / 1200)));
+    const displayY = (value) => openGraphV2
+      ? Number(value)
+      : 1000 * Math.tanh((Number(value) + 78) / 160);
+    const rawY = (value) => openGraphV2
+      ? Number(value)
+      : -78 + 160 * Math.atanh(Math.max(-0.999999, Math.min(0.999999, Number(value) / 1000)));
     const openElement = (node, overview = false) => ({
       data: {
         id: `open-${nodeId(node)}`,
         itemId: nodeId(node),
         label: node.name,
         displayLabel: "",
-        labelSize: 14,
-        openNodeSize: 10,
+        labelSize: 12,
+        // The Open map is a navigation surface, not a scatter plot. Keep
+        // unselected anchors deliberately quiet until a local drill supplies
+        // their relationship context.
+        openNodeSize: 6,
         degree: node.degree,
         overview,
       },
@@ -1063,73 +1082,161 @@
         target: `open-${edge.target}`,
         weight: edge.confidence ?? 1,
       },
-      classes: edge.factual_relationship ? "taxonomy" : "similarity",
+      // Review links are navigation candidates, not an implied similarity
+      // metric. Their dashed treatment stays visually distinct from factual
+      // taxonomy edges in a selected local neighborhood.
+      classes: edge.factual_relationship ? "taxonomy" : "open-review",
     });
+    const openLabelBudget = (level) => (mapElement.clientWidth <= 600
+      // A phone overview is a wayfinding surface. One clear anchor is more
+      // useful than a pile of tiny overlapping names; zoom and local detail
+      // progressively reveal the bounded viewport cohort.
+      ? [1, 8, 14, 20][level]
+      : [8, 16, 28, 40][level]);
+    const scheduleOpenLabelPaint = () => {
+      if (labelPaintFrame !== null) return;
+      labelPaintFrame = window.requestAnimationFrame(() => {
+        labelPaintFrame = null;
+        if (cy) paintLabels(activeLevel);
+      });
+    };
+    const paintOpenCollisionFreeLabels = (level) => {
+      const acceptedBoxes = [];
+      const viewport = mapElement.getBoundingClientRect();
+      const overlays = ["#search", "#results", "#map-controls", "#genre-detail"]
+        .map((selector) => document.querySelector(selector))
+        .filter((element) => element && getComputedStyle(element).display !== "none")
+        .map((element) => element.getBoundingClientRect());
+      const focused = Boolean(focusedNodeId);
+      const budget = focused ? 25 : openLabelBudget(level);
+      const candidates = cy.nodes().filter((node) => !node.hasClass("neighborhood-hidden")).sort(
+        (left, right) => Number(right.data("itemId") === focusedNodeId) - Number(left.data("itemId") === focusedNodeId)
+          || Number(right.data("degree")) - Number(left.data("degree"))
+          || String(left.data("label")).localeCompare(String(right.data("label"))),
+      );
+      const placements = [
+        { "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 7 },
+        { "text-halign": "center", "text-valign": "top", "text-margin-x": 0, "text-margin-y": -7 },
+        { "text-halign": "left", "text-valign": "center", "text-margin-x": 7, "text-margin-y": 0 },
+        { "text-halign": "right", "text-valign": "center", "text-margin-x": -7, "text-margin-y": 0 },
+      ];
+      cy.nodes().forEach((node) => {
+        node.data("displayLabel", "");
+        node.removeStyle("text-halign");
+        node.removeStyle("text-valign");
+        node.removeStyle("text-margin-x");
+        node.removeStyle("text-margin-y");
+      });
+      for (const node of candidates) {
+        if (acceptedBoxes.length === budget) break;
+        const screenLabelSize = focused ? 14 : 12;
+        node.data("labelSize", Math.max(9, Math.min(64, screenLabelSize / Math.max(cy.zoom(), 0.01))));
+        node.data("displayLabel", node.data("label"));
+        let accepted = false;
+        for (const placement of placements) {
+          node.style(placement);
+          const bounds = renderedLabelBounds(cy, node);
+          const inset = mapElement.clientWidth <= 600 ? 18 : 10;
+          if (bounds.x1 < viewport.left + inset || bounds.y1 < viewport.top + inset
+            || bounds.x2 > viewport.right - inset || bounds.y2 > viewport.bottom - inset
+            || acceptedBoxes.some((other) => intersects(bounds, other))
+            || overlays.some((overlay) => intersects(bounds, {
+              x1: overlay.left, y1: overlay.top, x2: overlay.right, y2: overlay.bottom,
+            }))) continue;
+          acceptedBoxes.push(bounds);
+          accepted = true;
+          break;
+        }
+        if (!accepted) node.data("displayLabel", "");
+      }
+      // Renderer bounds can be temporarily conservative immediately after a
+      // mobile fit. Keep one priority anchor available rather than presenting
+      // a blank overview while the next pan/zoom label pass catches up.
+      if (!acceptedBoxes.length && candidates.nonempty()) {
+        const fallback = candidates.first();
+        fallback.data("displayLabel", fallback.data("label"));
+        fallback.style({
+          "text-halign": "center",
+          "text-valign": "bottom",
+          "text-margin-x": 0,
+          "text-margin-y": 7,
+        });
+        acceptedBoxes.push(renderedLabelBounds(cy, fallback));
+      }
+      if (focused) {
+        // A selected neighborhood is capped by the API. Preserve every local
+        // name if conservative first-paint bounds rejected it, assigning the
+        // four compass placements before its fitted camera settles.
+        candidates.forEach((node, index) => {
+          if (node.data("displayLabel")) return;
+          node.data("displayLabel", node.data("label"));
+          node.style(placements[index % placements.length]);
+        });
+      }
+      window.__musixMapMetrics.shownLabelCount = focused ? candidates.length : acceptedBoxes.length;
+      window.__musixMapMetrics.labelBudget = focused ? candidates.length : budget;
+    };
+    const setOpenNeighborhoodEdges = () => {
+      cy.edges().forEach((edge) => {
+        const visible = neighborhoodNodeIds
+          && neighborhoodNodeIds.has(String(edge.source().data("itemId")))
+          && neighborhoodNodeIds.has(String(edge.target().data("itemId")));
+        edge.toggleClass("edge-hidden", !visible);
+      });
+    };
+    const publishOpenSelectionSnapshot = () => {
+      if (!focusedNodeId) {
+        delete mapElement.dataset.openSelectedNodeId;
+        delete mapElement.dataset.openRenderedNodeIds;
+        delete mapElement.dataset.openRenderedLabels;
+        delete mapElement.dataset.openCamera;
+        return;
+      }
+      const bounds = cy.elements().boundingBox({ includeLabels: false });
+      mapElement.dataset.openSelectedNodeId = String(focusedNodeId);
+      mapElement.dataset.openRenderedNodeIds = JSON.stringify(
+        cy.nodes().map((node) => String(node.data("itemId"))).sort(),
+      );
+      mapElement.dataset.openRenderedLabels = JSON.stringify(
+        cy.nodes().map((node) => String(node.data("displayLabel"))).filter(Boolean).sort(),
+      );
+      mapElement.dataset.openCamera = JSON.stringify({
+        zoom: cy.zoom(), pan: cy.pan(), bounds: { x1: bounds.x1, y1: bounds.y1, x2: bounds.x2, y2: bounds.y2 },
+      });
+    };
     const paintLabels = (level = activeLevel < 0 ? 0 : activeLevel) => {
       if (focusedNodeId) {
-        const viewport = mapElement.getBoundingClientRect();
-        const accepted = [];
-        const candidates = cy.nodes().filter((node) => !node.hasClass("neighborhood-hidden")).sort(
-          (left, right) => Number(right.data("itemId") === focusedNodeId) - Number(left.data("itemId") === focusedNodeId)
-            || Number(right.data("degree")) - Number(left.data("degree")),
-        );
-        const placements = [
-          { "text-halign": "center", "text-valign": "bottom", "text-margin-x": 0, "text-margin-y": 7 },
-          { "text-halign": "center", "text-valign": "top", "text-margin-x": 0, "text-margin-y": -7 },
-          { "text-halign": "left", "text-valign": "center", "text-margin-x": 7, "text-margin-y": 0 },
-          { "text-halign": "right", "text-valign": "center", "text-margin-x": -7, "text-margin-y": 0 },
-        ];
-        cy.nodes().forEach((node) => node.data("displayLabel", ""));
-        for (const node of candidates) {
-          let shown = false;
-          node.data("labelSize", Math.max(8, Math.min(96, 14 / Math.max(cy.zoom(), 0.01))));
-          for (const placement of placements) {
-            node.data("displayLabel", node.data("label"));
-            node.style(placement);
-            const bounds = renderedLabelBounds(cy, node);
-            if (bounds.x1 < viewport.left + 8 || bounds.y1 < viewport.top + 8
-              || bounds.x2 > viewport.right - 8 || bounds.y2 > viewport.bottom - 8
-              || accepted.some((other) => intersects(bounds, other))) {
-              node.data("displayLabel", "");
-              continue;
-            }
-            accepted.push(bounds);
-            shown = true;
-            break;
-          }
-          if (!shown) node.data("displayLabel", "");
-        }
-        window.__musixMapMetrics.shownLabelCount = accepted.length;
-        window.__musixMapMetrics.labelBudget = window.__musixMapMetrics.shownLabelCount;
+        paintOpenCollisionFreeLabels(level);
         return;
       }
       if (level === 0) {
-        setCollisionFreeLabels(cy, 0, true);
+        paintOpenCollisionFreeLabels(level);
         return;
       }
-      const budget = labelBudget(level);
-      const visible = cy.nodes().sort((left, right) => Number(right.data("degree")) - Number(left.data("degree"))
-        || String(left.data("label")).localeCompare(String(right.data("label"))));
-      visible.forEach((node, index) => node.data("displayLabel", index < budget ? node.data("label") : ""));
-      window.__musixMapMetrics.shownLabelCount = Math.min(visible.length, budget);
-      window.__musixMapMetrics.labelBudget = budget;
+      paintOpenCollisionFreeLabels(level);
     };
     const applyOpenCameraSizing = () => {
       const scale = Math.max(cy.zoom(), 0.01);
       cy.nodes().forEach((node) => {
-        node.data("labelSize", 14 / scale);
-        node.data("openNodeSize", 10 / scale);
+        node.data("labelSize", 12 / scale);
+        node.data("openNodeSize", 6 / scale);
       });
     };
     const addNeighborPayload = (neighbors) => {
-      const neighborhoodIds = new Set(neighbors.nodes.map((item) => nodeId(item)));
-      const additions = neighbors.nodes.filter((item) => cy.$id(`open-${nodeId(item)}`).empty()).map(openElement);
-      const edges = neighbors.edges.filter((edge) => cy.$id(`open-${edge.kind}-${edge.source}-${edge.target}`).empty()).map(edgeElement);
-      if (additions.length || edges.length) cy.batch(() => cy.add([...additions, ...edges]));
-      cy.nodes().forEach((node) => node.toggleClass(
-        "neighborhood-hidden",
-        Boolean(focusedNodeId) && !neighborhoodIds.has(node.data("itemId")),
-      ));
+      const neighborhoodIds = new Set(neighbors.nodes.map((item) => String(nodeId(item))));
+      // A drill is an explicit, bounded local graph. Replace the global LOD
+      // cohort rather than merely hiding it: Cytoscape then has no unrelated
+      // elements left to retain through asynchronous camera activity.
+      const localElements = [
+        ...neighbors.nodes.map((item) => openElement(item)),
+        ...neighbors.edges.map(edgeElement),
+      ];
+      cy.batch(() => {
+        cy.elements().remove();
+        cy.add(localElements);
+      });
+      neighborhoodNodeIds = neighborhoodIds;
+      setOpenNeighborhoodEdges();
       paintLabels();
     };
     const cancelNeighborRequest = () => {
@@ -1174,12 +1281,18 @@
       suppressCameraEvents = false;
       applyOpenCameraSizing();
       paintLabels();
+      publishOpenSelectionSnapshot();
     };
     const detail = (node) => {
       cancelMapLoad();
+      overviewCamera ??= { level: activeLevel, zoom: cy.zoom(), pan: cy.pan() };
       focusedNodeId = node.data("itemId");
+      neighborhoodNodeIds = null;
       cy.$(":selected").unselect();
       node.select();
+      mapElement.focus({ preventScroll: true });
+      setOpenBack(true);
+      setOpenNeighborhoodEdges();
       fetchNeighbors(node.data("itemId"))
         .then((neighbors) => {
           if (!neighbors) return;
@@ -1193,7 +1306,12 @@
     };
     const focusSearchResult = (id) => {
       cancelMapLoad();
+      overviewCamera ??= { level: activeLevel, zoom: cy.zoom(), pan: cy.pan() };
       focusedNodeId = id;
+      neighborhoodNodeIds = null;
+      mapElement.focus({ preventScroll: true });
+      setOpenBack(true);
+      setOpenNeighborhoodEdges();
       fetchNeighbors(id)
         .then((neighbors) => {
           if (!neighbors) return;
@@ -1220,6 +1338,8 @@
       const isInitialRender = !cy;
       activeLevel = payload.level;
       if (payload.level === 0) focusedNodeId = null;
+      if (payload.level === 0) neighborhoodNodeIds = null;
+      if (payload.level === 0) publishOpenSelectionSnapshot();
       // The canvas is hidden until the renderer is ready for the no-JS
       // fallback. Make it measurable before Cytoscape constructs its renderer
       // so a narrow viewport does not get a zero-size initial fit.
@@ -1266,20 +1386,35 @@
         labelBudget: labelBudget(0),
       };
       root.classList.add("js-map-ready");
-      cy.edges().toggleClass("edge-hidden", payload.level === 0);
+      // Global topology is intentionally not painted: crossing map-wide lines
+      // obscure labels without helping navigation. A selected node reveals its
+      // bounded one-hop neighborhood in `addNeighborPayload()` instead.
+      setOpenNeighborhoodEdges();
       paintLabels(activeLevel);
       if (isInitialRender) {
         cy.on("tap", "node", (event) => detail(event.target));
-        cy.on("zoom", () => {
-          if (suppressCameraEvents || !cameraReady) return;
-          const level = Math.min(3, Math.max(0, Math.floor(Math.log2(cy.zoom() / Math.max(baselineZoom, 0.0001)) + 1)));
-          if (level === activeLevel) return;
-          window.clearTimeout(levelTimer);
-          levelTimer = window.setTimeout(() => load(level, true), 120);
-        });
-        cy.on("pan", () => {
-          if (suppressCameraEvents || !cameraReady) return;
-          if (activeLevel === 0) return;
+          cy.on("zoom", () => {
+            if (suppressCameraEvents || !cameraReady) return;
+            // Fitting a bounded selected neighborhood is a local camera
+            // operation. Its zoom must not queue a global viewport reload and
+            // replace the just-selected nodes with an unrelated LOD cohort.
+            if (focusedNodeId) {
+              scheduleOpenLabelPaint();
+              return;
+            }
+            const level = Math.min(3, Math.max(0, Math.floor(Math.log2(cy.zoom() / Math.max(baselineZoom, 0.0001)) + 1)));
+            if (level === activeLevel) {
+              scheduleOpenLabelPaint();
+              return;
+            }
+            window.clearTimeout(levelTimer);
+            levelTimer = window.setTimeout(() => load(level, true), 120);
+          });
+          cy.on("pan", () => {
+            if (suppressCameraEvents || !cameraReady) return;
+            scheduleOpenLabelPaint();
+            if (focusedNodeId) return;
+            if (activeLevel === 0) return;
           window.clearTimeout(viewportTimer);
           viewportTimer = window.setTimeout(() => load(activeLevel, true), 160);
         });
@@ -1289,6 +1424,8 @@
           cancelMapLoad();
           cy.$(":selected").unselect();
           focusedNodeId = null;
+          overviewCamera = null;
+          neighborhoodNodeIds = null;
           cy.nodes().removeClass("neighborhood-hidden");
           setOpenBack(false);
           load(0);
@@ -1341,7 +1478,17 @@
         window.clearTimeout(viewportTimer);
         setOpenBack(false);
         cy.$(":selected").unselect();
-        load(0);
+        const previous = overviewCamera;
+        overviewCamera = null;
+        neighborhoodNodeIds = null;
+        focusedNodeId = null;
+        if (previous) {
+          suppressCameraEvents = true;
+          cy.zoom(previous.zoom);
+          cy.pan(previous.pan);
+          suppressCameraEvents = false;
+        }
+        load(previous?.level ?? 0, Boolean(previous));
       }
     }, true);
     document.addEventListener("click", (event) => {
@@ -1349,6 +1496,29 @@
       if (!result || !cy) return;
       event.preventDefault();
       focusSearchResult(result.dataset.openNodeId);
+    });
+    mapElement.addEventListener("keydown", (event) => {
+      const key = event.key;
+      if (!["+", "=", "-", "_", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Escape"].includes(key)) return;
+      event.preventDefault();
+      if (key === "Escape" && focusedNodeId) {
+        openBack?.click();
+        return;
+      }
+      if (!cy) return;
+      if (key === "+" || key === "=") cy.zoom(cy.zoom() * 1.2);
+      if (key === "-" || key === "_") cy.zoom(cy.zoom() / 1.2);
+      if (key === "ArrowUp") cy.panBy({ x: 0, y: 60 });
+      if (key === "ArrowDown") cy.panBy({ x: 0, y: -60 });
+      if (key === "ArrowLeft") cy.panBy({ x: 60, y: 0 });
+      if (key === "ArrowRight") cy.panBy({ x: -60, y: 0 });
+    });
+    themeSelect?.addEventListener("change", () => {
+      if (!cy) return;
+      // Cytoscape paints from its own stylesheet, so CSS custom properties
+      // need an explicit refresh after the surrounding document theme changes.
+      cy.style(stylesheet()).update();
+      paintLabels();
     });
     load(0);
   };
