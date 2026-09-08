@@ -61,7 +61,10 @@ def main() -> int:
     root = Path.cwd()
     paths = resolve_production_paths(root)
     if paths is None:
-        sys.stderr.write("Production map unavailable. Run `mise run release-certify` first.\n")
+        sys.stderr.write(
+            "Production map unavailable. Run `uv run poe release-certify` first "
+            "(requires the sealed cache; see docs/PUBLIC_RELEASE_PIPELINE.md).\n"
+        )
         return 2
     environment = os.environ | {
         "MUSIX_DATABASE_PATH": str(paths.database),

@@ -22,6 +22,11 @@ description = "Run the legacy map diagnostic only"
 depends = ["sync"]
 run = "uv run poe dev-legacy"
 
+[tasks.release-certify]
+description = "Build and certify the sealed production map"
+depends = ["sync"]
+run = "uv run poe release-certify"
+
 [tasks.check]
 description = "Run all project checks"
 depends = ["sync"]

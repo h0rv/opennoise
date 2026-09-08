@@ -68,17 +68,19 @@ Build or verify a sealed local release before serving a production map. The
 release uses only its local cache and never fetches data during serving.
 
 ```sh
-uv run poe release-certify
+mise run release-certify
 MUSIX_DATABASE_PATH=data/public.sqlite \
 MUSIX_PRODUCTION_MAP_PATH=data/model/production-map-v1.json \
-uv run poe dev
+mise run dev
 ```
 
 Open <http://127.0.0.1:3001>.
 
 `release-certify` fails closed until the qualified source cache, public model,
 map artifact, and renderer evidence agree. The product only serves a configured
-map artifact that passes those checks.
+map artifact that passes those checks. In a fresh checkout, the sealed cache is
+not retained; see `docs/PUBLIC_RELEASE_PIPELINE.md` for its required identity
+and restoration path. `uv run poe release-certify` remains the direct Poe form.
 
 ## Stack
 

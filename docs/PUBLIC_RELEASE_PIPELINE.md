@@ -1,6 +1,6 @@
 # Public release pipeline
 
-`poe release-certify` is the cache-only public release command. It builds a
+`mise run release-certify` is the cache-only public release command. It builds a
 fresh serving release and fails closed if any source, model, map, renderer, or
 browser evidence is missing or inconsistent.
 
@@ -22,8 +22,10 @@ replacement for that source cache or a full source-to-publication rebuild.
 ## Command
 
 ```sh
-uv run poe release-certify
+mise run release-certify
 ```
+
+`uv run poe release-certify` is the equivalent direct Poe command.
 
 The command verifies the sealed cache, materializes a serving database and
 public model, builds the production map, writes acceptance evidence, starts a
