@@ -26,7 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, TypeAdapter, mod
 from musix.genre_seed_universe import SeedInput, normalize_label
 
 type Facet = Literal["genre", "tag"]
-type MatchKind = Literal["exact", "normalized"]
+type MatchKind = Literal["exact", "normalized", "reviewed_alias"]
 _JSON_OBJECT_ADAPTER = TypeAdapter(dict[str, object])
 
 
@@ -49,6 +49,27 @@ class SeedTargetExtractorSettings(BaseModel):
     max_tags_per_artist: int = Field(default=512, gt=0)
     max_evidence_rows: int = Field(default=2_000_000, gt=0)
     max_contextual_tag_rows: int = Field(default=2_000_000, gt=0)
+
+
+class ReviewedSeedAlias(BaseModel):
+    """One human-approved spelling alias for an immutable stable seed ID."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    source_item_id: str = Field(min_length=1)
+    alias: str = Field(min_length=1)
+    approval_ref: str = Field(
+        pattern=r"^reviewed:[a-z0-9][a-z0-9._:-]{0,290}$",
+        max_length=300,
+    )
+    facets: tuple[Facet, ...] = ("tag",)
+
+    @model_validator(mode="after")
+    def require_unique_facets(self) -> ReviewedSeedAlias:
+        """Keep the reviewed source facet scope explicit and deterministic."""
+        if not self.facets or len(self.facets) != len(set(self.facets)):
+            raise ValueError("reviewed aliases require unique allowed facets")
+        return self
 
 
 class SeedTargetEvidence(BaseModel):
@@ -244,6 +265,17 @@ class _Claim:
     identity: str
     name: str
     count: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class _SeedMatch:
+    """One canonical or reviewed-alias resolution for a source claim."""
+
+    index: int
+    match_kind: MatchKind
+    approval_ref: str | None = None
+    allowed_facets: tuple[Facet, ...] = ()
+    mapping_sha256: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -816,21 +848,78 @@ def _matches(
     claim: _Claim,
     exact: dict[str, tuple[int, ...]],
     normalized: dict[str, tuple[int, ...]],
-) -> tuple[tuple[int, MatchKind], ...]:
+    reviewed_aliases: dict[str, _SeedMatch],
+) -> tuple[_SeedMatch, ...]:
     exact_indices = exact.get(claim.name, ())
     if exact_indices:
-        return tuple((index, "exact") for index in exact_indices)
+        return tuple(_SeedMatch(index, "exact") for index in exact_indices)
     normalized_indices = normalized.get(normalize_label(claim.name), ())
-    return tuple((index, "normalized") for index in normalized_indices)
+    if normalized_indices:
+        return tuple(_SeedMatch(index, "normalized") for index in normalized_indices)
+    reviewed = reviewed_aliases.get(normalize_label(claim.name))
+    if reviewed is None or claim.facet not in reviewed.allowed_facets:
+        return ()
+    return (reviewed,)
+
+
+def _reviewed_alias_lookup(
+    seed_input: SeedInput, aliases: tuple[ReviewedSeedAlias, ...]
+) -> dict[str, _SeedMatch]:
+    """Validate a small reviewed overlay without modifying the source vocabulary."""
+    indices_by_id = {seed.source_item_id: index for index, seed in enumerate(seed_input.names)}
+    canonical_ids_by_normalized_name: dict[str, set[str]] = {}
+    for seed in seed_input.names:
+        canonical_ids_by_normalized_name.setdefault(normalize_label(seed.name), set()).add(
+            seed.source_item_id
+        )
+    alias_rows = tuple(
+        sorted(
+            aliases,
+            key=lambda item: (item.source_item_id, normalize_label(item.alias), item.approval_ref),
+        )
+    )
+    mapping_sha256 = _sha256_bytes(
+        _canonical([item.model_dump(mode="json") for item in alias_rows])
+    )
+    resolved: dict[str, _SeedMatch] = {}
+    for alias in aliases:
+        index = indices_by_id.get(alias.source_item_id)
+        if index is None:
+            raise MusicBrainzSeedTargetExtractorError(
+                "reviewed alias references an unknown stable seed ID"
+            )
+        normalized_alias = normalize_label(alias.alias)
+        if not normalized_alias:
+            raise MusicBrainzSeedTargetExtractorError("reviewed alias normalizes to an empty label")
+        canonical_ids = canonical_ids_by_normalized_name.get(normalized_alias, set())
+        if canonical_ids:
+            raise MusicBrainzSeedTargetExtractorError(
+                "reviewed alias conflicts with a canonical seed spelling"
+            )
+        if normalized_alias in resolved:
+            raise MusicBrainzSeedTargetExtractorError(
+                "reviewed aliases must have unique normalized spellings"
+            )
+        resolved[normalized_alias] = _SeedMatch(
+            index=index,
+            match_kind="reviewed_alias",
+            approval_ref=alias.approval_ref,
+            allowed_facets=alias.facets,
+            mapping_sha256=mapping_sha256,
+        )
+    return resolved
 
 
 def extract_musicbrainz_seed_targets(  # noqa: C901, PLR0912, PLR0915
     archive_path: Path,
     seed_input: SeedInput,
     settings: SeedTargetExtractorSettings | None = None,
+    *,
+    reviewed_aliases: tuple[ReviewedSeedAlias, ...] = (),
 ) -> MusicBrainzSeedTargetArtifact:
     """Scan one artist archive once and return positive target evidence."""
     settings = settings or SeedTargetExtractorSettings()
+    reviewed_aliases_by_name = _reviewed_alias_lookup(seed_input, reviewed_aliases)
     archive_size = archive_path.stat().st_size
     if archive_size > settings.max_archive_bytes:
         raise MusicBrainzSeedTargetExtractorError("archive exceeds max_archive_bytes")
@@ -906,16 +995,21 @@ def extract_musicbrainz_seed_targets(  # noqa: C901, PLR0912, PLR0915
                             target_tag_identities: set[str] = set()
                             evidence_before_record = len(evidence)
                             for claim in parsed.tags:
-                                matches = _matches(claim, exact, normalized)
+                                matches = _matches(
+                                    claim, exact, normalized, reviewed_aliases_by_name
+                                )
                                 if matches:
                                     target_tag_identities.add(claim.identity)
                             for claim in (*parsed.genres, *parsed.tags):
-                                matches = _matches(claim, exact, normalized)
+                                matches = _matches(
+                                    claim, exact, normalized, reviewed_aliases_by_name
+                                )
                                 if not matches:
                                     continue
-                                matched_seed_indices.update(index for index, _ in matches)
+                                matched_seed_indices.update(match.index for match in matches)
                                 matched_target_identities.add(claim.identity)
-                                for index, match_kind in matches:
+                                for match in matches:
+                                    index = match.index
                                     seed = seed_input.names[index]
                                     target_namespace = (
                                         "musicbrainz_genre_id"
@@ -931,6 +1025,15 @@ def extract_musicbrainz_seed_targets(  # noqa: C901, PLR0912, PLR0915
                                         f"musicbrainz:seed-target:{raw_line.sha256}:"
                                         f"{claim.facet}:{claim.identity}"
                                     )
+                                    if match.approval_ref is not None:
+                                        if match.mapping_sha256 is None:
+                                            raise MusicBrainzSeedTargetExtractorError(
+                                                "reviewed alias is missing its mapping digest"
+                                            )
+                                        evidence_ref += (
+                                            f":reviewed-alias:{match.approval_ref}:"
+                                            f"{match.mapping_sha256}"
+                                        )
                                     row = SeedTargetEvidence(
                                         seed_source_item_id=seed.source_item_id,
                                         seed_source_external_id=seed.source_external_id,
@@ -949,7 +1052,7 @@ def extract_musicbrainz_seed_targets(  # noqa: C901, PLR0912, PLR0915
                                         positive_weight=float(
                                             claim.count if claim.count and claim.count > 0 else 1
                                         ),
-                                        match_kind=match_kind,
+                                        match_kind=match.match_kind,
                                     )
                                     evidence.append(row)
                                     accumulator = accumulators[index]

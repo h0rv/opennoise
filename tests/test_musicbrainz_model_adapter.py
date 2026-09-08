@@ -28,17 +28,19 @@ from musix.seed_reconciliation import (
 
 
 class MusicBrainzModelAdapterTests(unittest.TestCase):
-    def _source(self) -> tuple[MusicBrainzSeedTargetArtifact, SeedReconciliationArtifact]:
+    def _source(
+        self, *, first_seed: str = "seed-a", second_seed: str = "seed-b"
+    ) -> tuple[MusicBrainzSeedTargetArtifact, SeedReconciliationArtifact]:
         settings = SeedTargetExtractorSettings()
         artists = (
             "00000000-0000-0000-0000-000000000001",
             "00000000-0000-0000-0000-000000000002",
         )
         source_rows: tuple[tuple[str, Literal["genre", "tag"], str], ...] = (
-            ("seed-a", "genre", artists[0]),
-            ("seed-a", "tag", artists[0]),
-            ("seed-a", "tag", artists[1]),
-            ("seed-b", "genre", artists[1]),
+            (first_seed, "genre", artists[0]),
+            (first_seed, "tag", artists[0]),
+            (first_seed, "tag", artists[1]),
+            (second_seed, "genre", artists[1]),
         )
         evidence = tuple(
             SeedTargetEvidence(
@@ -93,7 +95,7 @@ class MusicBrainzModelAdapterTests(unittest.TestCase):
                         row.seed_source_item_id == seed and row.facet == "tag" for row in evidence
                     ),
                 )
-                for seed in ("seed-a", "seed-b")
+                for seed in (first_seed, second_seed)
             ),
             evidence=evidence,
             output_sha256="0" * 64,
@@ -108,7 +110,7 @@ class MusicBrainzModelAdapterTests(unittest.TestCase):
                 disposition="unresolved",
                 reason="fixture",
             )
-            for seed in ("seed-a", "seed-b")
+            for seed in (first_seed, second_seed)
         )
         seed_identity_sha256 = hashlib.sha256(
             json.dumps(
@@ -118,7 +120,7 @@ class MusicBrainzModelAdapterTests(unittest.TestCase):
                         "source_external_id": row.source_external_id,
                         "name": row.seed_name,
                     }
-                    for row in dispositions
+                    for row in sorted(dispositions, key=lambda item: item.source_item_id)
                 ],
                 ensure_ascii=False,
                 allow_nan=False,
@@ -161,6 +163,44 @@ class MusicBrainzModelAdapterTests(unittest.TestCase):
             ).encode()
         ).hexdigest()
         return target, reconciliation.model_copy(update={"output_sha256": reconciliation_hash})
+
+    def test_reviewed_alias_evidence_reaches_the_stable_seed_membership(self) -> None:
+        """The adapter retains reviewed source provenance without replacing item887."""
+        target, reconciliation = self._source(first_seed="item887", second_seed="item2")
+        evidence = list(target.evidence)
+        evidence[1] = evidence[1].model_copy(
+            update={
+                "target_identity": "tag:idm",
+                "target_name": "IDM",
+                "evidence_ref": "source:tag:idm:reviewed-alias:reviewed:idm-v1:abc",
+                "match_kind": "reviewed_alias",
+            }
+        )
+        target = target.model_copy(update={"evidence": tuple(evidence)})
+        target = target.model_copy(update={"output_sha256": artifact_sha256(target)})
+
+        result = adapt_musicbrainz_seed_targets(
+            target, reconciliation, MusicBrainzModelAdapterPolicy(expected_seed_count=2)
+        )
+
+        membership = next(
+            item
+            for item in result.model_input.direct_memberships
+            if item.genre_id == "item887" and item.facet == "musicbrainz_tag"
+        )
+        self.assertEqual(
+            membership.artist_id,
+            "musicbrainz:artist:00000000-0000-0000-0000-000000000001",
+        )
+        aggregate = next(
+            item
+            for item in result.aggregates
+            if item.seed_source_item_id == "item887"
+            and item.artist_id.endswith("00000000-0000-0000-0000-000000000001")
+            and item.facet == "musicbrainz_tag"
+        )
+        self.assertIn("target:musicbrainz_tag_name:tag:idm", aggregate.source_evidence_refs[0])
+        self.assertIn("reviewed:idm-v1", aggregate.source_evidence_refs[0])
 
     def test_adapts_facets_and_aggregates_without_lexical_resolution(self) -> None:
         target, reconciliation = self._source()

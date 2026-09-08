@@ -10,6 +10,8 @@ from uuid import uuid4
 
 from musix.genre_seed_universe import SeedInput, SeedName
 from musix.musicbrainz_seed_targets import (
+    MusicBrainzSeedTargetExtractorError,
+    ReviewedSeedAlias,
     SeedTargetExtractorSettings,
     artifact_sha256,
     extract_musicbrainz_seed_targets,
@@ -33,6 +35,21 @@ def _seed() -> SeedInput:
     )
 
 
+def _idm_seed() -> SeedInput:
+    return SeedInput(
+        source_id="test-seed",
+        source_content_sha256="a" * 64,
+        artifact_sha256="b" * 64,
+        names=(
+            SeedName(
+                source_item_id="item887",
+                source_external_id="eno:887",
+                name="intelligent dance music",
+            ),
+        ),
+    )
+
+
 def _archive(path: Path, records: list[bytes]) -> None:
     payload = b"\n".join(records) + b"\n"
     with tarfile.open(path, "w:xz") as archive:
@@ -52,6 +69,91 @@ def _artist(
 
 
 class MusicBrainzSeedTargetExtractorTests(unittest.TestCase):
+    def test_reviewed_idm_alias_preserves_source_and_stable_seed_identity(self) -> None:
+        """A reviewed tag-only alias is explicit, provenance-bound, and opt-in."""
+        with TemporaryDirectory() as directory:
+            archive = Path(directory) / "artist.tar.xz"
+            _archive(
+                archive,
+                [
+                    _artist(
+                        str(uuid4()),
+                        [{"id": str(uuid4()), "name": "IDM"}],
+                        [
+                            {"name": "IDM", "count": 4},
+                            {"name": "intelligent dance music", "count": 2},
+                        ],
+                    )
+                ],
+            )
+            default = extract_musicbrainz_seed_targets(archive, _idm_seed())
+            legacy_path = Path(directory) / "legacy-v1-no-alias.json"
+            write_seed_target_artifact(legacy_path, default)
+            legacy_roundtrip = load_seed_target_artifact(legacy_path)
+            explicit_empty = extract_musicbrainz_seed_targets(
+                archive, _idm_seed(), reviewed_aliases=()
+            )
+            approved = extract_musicbrainz_seed_targets(
+                archive,
+                _idm_seed(),
+                reviewed_aliases=(
+                    ReviewedSeedAlias(
+                        source_item_id="item887",
+                        alias="IDM",
+                        approval_ref="reviewed:idm-intelligent-dance-music-v1",
+                        facets=("tag",),
+                    ),
+                ),
+            )
+
+        self.assertEqual(default.output_sha256, explicit_empty.output_sha256)
+        self.assertEqual(legacy_roundtrip.output_sha256, default.output_sha256)
+        self.assertEqual(
+            [(row.target_identity, row.match_kind) for row in default.evidence],
+            [("tag:intelligent-dance-music", "exact")],
+        )
+        self.assertEqual(len(approved.evidence), 2)
+        exact = next(
+            row for row in approved.evidence if row.target_identity == "tag:intelligent-dance-music"
+        )
+        alias = next(row for row in approved.evidence if row.target_identity == "tag:idm")
+        self.assertEqual(exact.target_identity, "tag:intelligent-dance-music")
+        self.assertEqual(exact.match_kind, "exact")
+        self.assertEqual(alias.seed_source_item_id, "item887")
+        self.assertEqual(alias.seed_name, "intelligent dance music")
+        self.assertEqual(alias.target_identity, "tag:idm")
+        self.assertEqual(alias.target_name, "IDM")
+        self.assertEqual(alias.match_kind, "reviewed_alias")
+        self.assertIn("reviewed:idm-intelligent-dance-music-v1", alias.evidence_ref)
+        self.assertIn("reviewed-alias:", alias.evidence_ref)
+
+    def test_reviewed_aliases_reject_canonical_and_duplicate_spelling_collisions(self) -> None:
+        """Alias validation fails before opening an archive or broadening a seed."""
+        canonical = ReviewedSeedAlias(
+            source_item_id="item887",
+            alias="intelligent dance music",
+            approval_ref="reviewed:canonical-collision-v1",
+        )
+        duplicate = ReviewedSeedAlias(
+            source_item_id="item887",
+            alias="IDM!",
+            approval_ref="reviewed:duplicate-alias-v1",
+        )
+        approved = ReviewedSeedAlias(
+            source_item_id="item887",
+            alias="IDM",
+            approval_ref="reviewed:idm-intelligent-dance-music-v1",
+        )
+
+        with self.assertRaisesRegex(MusicBrainzSeedTargetExtractorError, "canonical seed"):
+            extract_musicbrainz_seed_targets(
+                Path("missing.tar.xz"), _idm_seed(), reviewed_aliases=(canonical,)
+            )
+        with self.assertRaisesRegex(MusicBrainzSeedTargetExtractorError, "unique normalized"):
+            extract_musicbrainz_seed_targets(
+                Path("missing.tar.xz"), _idm_seed(), reviewed_aliases=(approved, duplicate)
+            )
+
     def test_signed_tag_counts_never_become_positive_evidence(self) -> None:
         """Keep only positive tag votes while accepting an unweighted genre fact."""
         with TemporaryDirectory() as directory:

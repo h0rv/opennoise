@@ -5,6 +5,38 @@ The coverage evaluator compares one pinned MusicBrainz artist snapshot with the
 Historical Every Noise coordinates, memberships, representatives, and ordering
 are not evaluator or reconstruction inputs.
 
+## Reviewed extraction aliases
+
+The seed-target extractor can accept an optional small JSON array of reviewed
+exact aliases. This is not a fuzzy match and does not change a source seed's
+name or ID. Each row names one existing `source_item_id`, an alias, a
+`reviewed:` approval reference, and allowed source facets. Canonical seed
+spellings always win. Alias collisions with a canonical spelling or another
+reviewed alias fail before the archive is read.
+
+For example, the user-reviewed tag-only alias `IDM` may target stable seed
+`item887`, `intelligent dance music`. An emitted row retains the raw source tag
+name and identity `tag:idm`, the stable seed ID, and a deterministic digest of
+the reviewed alias input in its evidence reference. It uses
+`match_kind=reviewed_alias`, distinct from ordinary spelling normalization. It
+does not create a public QID bridge or alter a sealed artifact built without
+the optional input.
+
+The checked-in file [reviewed_musicbrainz_seed_aliases_v1.json](../config/reviewed_musicbrainz_seed_aliases_v1.json)
+contains only the approved tag alias. No new artist extraction has run with
+this file. The current full release-group job still uses the baseline sealed
+seed-target artifact.
+
+Use a new output path for a future reviewed-alias extraction:
+
+```bash
+uv run python scripts/extract_musicbrainz_seed_targets.py \
+  --archive "$MUSIX_MB_ARTIST_ARCHIVE" \
+  --seed-artifact "$MUSIX_H2_SEED_ARTIFACT" \
+  --reviewed-aliases config/reviewed_musicbrainz_seed_aliases_v1.json \
+  --output .cache/musicbrainz-full-seed-targets/pipeline/musicbrainz-seed-target-reviewed-aliases-v1.json
+```
+
 Run it with explicit paths after the research import. The example uses the
 current v4 research run; another snapshot only needs different values:
 

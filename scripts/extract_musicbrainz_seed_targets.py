@@ -7,8 +7,11 @@ import json
 import sys
 from pathlib import Path
 
+from pydantic import TypeAdapter
+
 from musix.genre_seed_universe import load_seed_input
 from musix.musicbrainz_seed_targets import (
+    ReviewedSeedAlias,
     SeedTargetExtractorSettings,
     extract_musicbrainz_seed_targets,
     write_seed_target_artifact,
@@ -22,6 +25,11 @@ def main() -> int:
     parser.add_argument("--seed-artifact", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--expected-archive-sha256")
+    parser.add_argument(
+        "--reviewed-aliases",
+        type=Path,
+        help="JSON array of reviewed exact source-label aliases; never inferred from UI aliases",
+    )
     parser.add_argument("--max-archive-bytes", type=int, default=8 * 1024**3)
     parser.add_argument("--max-member-bytes", type=int, default=64 * 1024**3)
     parser.add_argument("--max-record-bytes", type=int, default=64 * 1024**2)
@@ -43,8 +51,16 @@ def main() -> int:
         max_evidence_rows=args.max_evidence_rows,
         max_contextual_tag_rows=args.max_contextual_tag_rows,
     )
+    aliases = (
+        TypeAdapter(tuple[ReviewedSeedAlias, ...]).validate_json(args.reviewed_aliases.read_bytes())
+        if args.reviewed_aliases is not None
+        else ()
+    )
     artifact = extract_musicbrainz_seed_targets(
-        args.archive, load_seed_input(args.seed_artifact), settings
+        args.archive,
+        load_seed_input(args.seed_artifact),
+        settings,
+        reviewed_aliases=aliases,
     )
     if args.expected_archive_sha256 and artifact.archive_sha256 != args.expected_archive_sha256:
         raise SystemExit(
