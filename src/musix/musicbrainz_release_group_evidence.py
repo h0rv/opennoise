@@ -13,9 +13,11 @@ import json
 import sqlite3
 import tarfile
 from collections import OrderedDict
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import closing
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
+from time import monotonic
 from typing import Final, Literal, Protocol
 from uuid import UUID
 
@@ -46,6 +48,17 @@ class _FrozenModel(BaseModel):
 
 class MusicBrainzReleaseGroupEvidenceError(ValueError):
     """Report an unsafe dump or a broken provenance boundary."""
+
+
+@dataclass(frozen=True, slots=True)
+class ReleaseGroupEvidenceProgress:
+    """One aggregate checkpoint emitted by an opted-in local build."""
+
+    records_seen: int
+    elapsed_seconds: float
+
+
+type ReleaseGroupEvidenceProgressCallback = Callable[[ReleaseGroupEvidenceProgress], None]
 
 
 class ReleaseGroupEvidenceSettings(_FrozenModel):
@@ -379,6 +392,8 @@ def build_release_group_evidence(
     manifest_sha256: str,
     database_path: Path,
     settings: ReleaseGroupEvidenceSettings | None = None,
+    *,
+    progress_callback: ReleaseGroupEvidenceProgressCallback | None = None,
 ) -> ReleaseGroupEvidenceArtifact:
     """Verify arbitrary seed input before building release-group support evidence."""
     verify_seed_target_artifact(seed_target)
@@ -390,6 +405,7 @@ def build_release_group_evidence(
         manifest_sha256,
         database_path,
         settings,
+        progress_callback=progress_callback,
     )
 
 
@@ -401,6 +417,8 @@ def build_release_group_evidence_from_seed_target_path(
     manifest_sha256: str,
     database_path: Path,
     settings: ReleaseGroupEvidenceSettings | None = None,
+    *,
+    progress_callback: ReleaseGroupEvidenceProgressCallback | None = None,
 ) -> ReleaseGroupEvidenceArtifact:
     """Load and verify a seed artifact once before entering the private build core."""
     return _build_release_group_evidence(
@@ -411,6 +429,7 @@ def build_release_group_evidence_from_seed_target_path(
         manifest_sha256,
         database_path,
         settings,
+        progress_callback=progress_callback,
     )
 
 
@@ -422,6 +441,8 @@ def _build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
     manifest_sha256: str,
     database_path: Path,
     settings: ReleaseGroupEvidenceSettings | None = None,
+    *,
+    progress_callback: ReleaseGroupEvidenceProgressCallback | None = None,
 ) -> ReleaseGroupEvidenceArtifact:
     """Stream one pinned release-group dump into typed direct/support SQLite evidence."""
     resolved = settings or ReleaseGroupEvidenceSettings()
@@ -449,6 +470,7 @@ def _build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
         )
     counters = dict.fromkeys(ReleaseGroupEvidenceCounters.model_fields, 0)
     member_bytes = 0
+    started = monotonic()
     with (
         closing(sqlite3.connect(database_path)) as connection,
         connection,
@@ -604,9 +626,20 @@ def _build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
                             (counters["records_seen"],),
                         )
                         connection.commit()
+                        if progress_callback is not None:
+                            progress_callback(
+                                ReleaseGroupEvidenceProgress(
+                                    records_seen=counters["records_seen"],
+                                    elapsed_seconds=monotonic() - started,
+                                )
+                            )
         if not found:
             raise MusicBrainzReleaseGroupEvidenceError("archive has no mbdump/release-group member")
         flush_support_rows()
+        final_partial_checkpoint = (
+            progress_callback is not None
+            and counters["records_seen"] % resolved.checkpoint_every_records != 0
+        )
         counters["capped_support_rows"] = connection.execute(
             "SELECT count(*) FROM release_group_support"
         ).fetchone()[0]
@@ -617,6 +650,13 @@ def _build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
         connection.execute("DROP TABLE build_checkpoint")
         _create_reverse_lookup_indexes(connection)
         connection.commit()
+        if final_partial_checkpoint and progress_callback is not None:
+            progress_callback(
+                ReleaseGroupEvidenceProgress(
+                    records_seen=counters["records_seen"],
+                    elapsed_seconds=monotonic() - started,
+                )
+            )
         if connection.execute("PRAGMA integrity_check").fetchone() != ("ok",):
             raise MusicBrainzReleaseGroupEvidenceError("staging database failed integrity check")
     database_path.replace(final_database_path)

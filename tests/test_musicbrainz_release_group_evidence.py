@@ -15,6 +15,7 @@ from pydantic import HttpUrl
 from musix.models.sources import DownloadSource
 from musix.musicbrainz_release_group_evidence import (
     MusicBrainzReleaseGroupEvidenceError,
+    ReleaseGroupEvidenceProgress,
     ReleaseGroupEvidenceSettings,
     build_release_group_evidence,
     build_release_group_evidence_from_seed_target_path,
@@ -170,6 +171,22 @@ class ReleaseGroupEvidenceTests(unittest.TestCase):
                 ),
             )
             database = root / "evidence.sqlite"
+            progress: list[ReleaseGroupEvidenceProgress] = []
+            progress_tables: list[set[str]] = []
+
+            def record_progress(item: ReleaseGroupEvidenceProgress) -> None:
+                progress.append(item)
+                staging = database.with_suffix(".sqlite.partial")
+                with closing(sqlite3.connect(staging)) as checkpoint:
+                    progress_tables.append(
+                        {
+                            str(row[0])
+                            for row in checkpoint.execute(
+                                "SELECT name FROM sqlite_master WHERE type = 'table'"
+                            )
+                        }
+                    )
+
             artifact = build_release_group_evidence(
                 archive,
                 _target(),
@@ -178,8 +195,12 @@ class ReleaseGroupEvidenceTests(unittest.TestCase):
                 "e" * 64,
                 database,
                 ReleaseGroupEvidenceSettings(max_release_groups_per_membership=1),
+                progress_callback=record_progress,
             )
             verify_release_group_evidence(artifact)
+            self.assertEqual([item.records_seen for item in progress], [3])
+            self.assertGreaterEqual(progress[0].elapsed_seconds, 0.0)
+            self.assertNotIn("build_checkpoint", progress_tables[0])
             verified_seed_path = root / "verified-seed-target.json"
             write_seed_target_artifact(verified_seed_path, _target())
             verified_artifact = build_release_group_evidence_from_seed_target_path(

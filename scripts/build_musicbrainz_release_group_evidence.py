@@ -7,8 +7,10 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from musix.musicbrainz_release_group_evidence import (
+    ReleaseGroupEvidenceProgress,
     ReleaseGroupEvidenceSettings,
     build_release_group_evidence_from_seed_target_path,
     publish_release_group_evidence,
@@ -16,6 +18,9 @@ from musix.musicbrainz_release_group_evidence import (
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.source_cache import load_source_cache_receipt
 from musix.storage import LocalObjectStore
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _sha256_file(path: Path) -> str:
@@ -40,12 +45,38 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--receipt", type=Path, required=True)
     result.add_argument("--max-release-groups-per-membership", type=int, default=3)
     result.add_argument("--heldout-direct-anchor-percent", type=int, default=20)
+    result.add_argument("--progress-every-records", type=int, default=100_000)
     return result
+
+
+def _progress_reporter(*, every_records: int) -> Callable[[ReleaseGroupEvidenceProgress], None]:
+    """Return a stderr-only aggregate progress reporter for this CLI invocation."""
+    if every_records < 1:
+        raise ValueError("progress_every_records must be positive")
+    last_reported = 0
+
+    def report(progress: ReleaseGroupEvidenceProgress) -> None:
+        nonlocal last_reported
+        if progress.records_seen - last_reported < every_records:
+            return
+        last_reported = progress.records_seen
+        sys.stderr.write(
+            "release-group progress "
+            f"records_seen={progress.records_seen} "
+            f"elapsed_seconds={progress.elapsed_seconds:.3f}\n"
+        )
+        sys.stderr.flush()
+
+    return report
 
 
 def main() -> int:
     """Stream only release-group metadata into a typed local research artifact."""
     arguments = parser().parse_args()
+    try:
+        progress_callback = _progress_reporter(every_records=arguments.progress_every_records)
+    except ValueError as error:
+        parser().error(str(error))
     source = load_download_source(arguments.manifest, arguments.source_id)
     sys.stderr.write("loading verified seed-target artifact\n")
     sys.stderr.flush()
@@ -62,6 +93,7 @@ def main() -> int:
             max_release_groups_per_membership=arguments.max_release_groups_per_membership,
             heldout_direct_anchor_percent=arguments.heldout_direct_anchor_percent,
         ),
+        progress_callback=progress_callback,
     )
     receipt = publish_release_group_evidence(
         artifact,
