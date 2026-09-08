@@ -123,6 +123,20 @@ html:not(.js-map-ready) #search, html:not(.js-map-ready) #map-controls { display
 .signal-list > li { padding: 5px 0; border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
 .signal-list ul { grid-column: 1 / -1; padding-left: 9px; color: var(--muted); }
 .signal-list a, .signal-artist { min-width: 0; overflow-wrap: anywhere; }
+
+.artist-navigation {
+  max-width: 28rem;
+  margin: .75rem;
+  padding: .75rem;
+  border: 1px solid var(--border-color, #77776f);
+  border-radius: .4rem;
+  background: var(--panel-background, Canvas);
+}
+
+.artist-navigation h2, .artist-navigation h3 { margin: 0 0 .4rem; }
+.artist-navigation section + section { margin-top: .8rem; }
+.artist-navigation ul { margin: .3rem 0; padding-left: 1.2rem; }
+.artist-navigation small { display: block; }
 .signal-list data { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .empty { fill: var(--muted); font-size: 28px; }
 

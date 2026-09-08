@@ -2,6 +2,17 @@
 
 Build an open music map from public metadata and privacy safe aggregates.
 
+The immediate product goal is coherent open music discovery: a user should be
+able to traverse a catalog genre to artists, an artist to its directly observed
+genres, and then to artists sharing those direct genres. These navigation links
+are source-claimed membership only; `shared_direct_genre` is an explained
+overlap method, not a learned similarity or an inferred membership. The local
+public catalog currently has direct artist claims for, for example, post-punk
+(23 artists), jazz (55), free jazz (4), electronic music (44), and folk music
+(36). Important gaps remain: direct coverage is sparse and uneven, unresolved
+seeds have no fabricated artist membership, and the real catalog needs bounded
+query performance before these links are a usable discovery surface.
+
 The historical Every Noise result is a local reference. It preserves 6,291
 immutable genre name seeds and dated observed map output. It does not claim to
 recreate Spotify's private data or McDonald's private model.

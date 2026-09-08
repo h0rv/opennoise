@@ -1036,6 +1036,7 @@
     const graphEndpoint = new URL(graphUrl, window.location.origin);
     const neighborEndpoint = mapElement.dataset.neighborUrl || "/api/open-construction-map/neighbors/";
     const openBack = document.querySelector('[data-map-action="open-back"]');
+    const artistNavigation = document.querySelector("#artist-navigation-slot");
     let focusedNodeId = null;
     let neighborhoodNodeIds = null;
     let overviewCamera = null;
@@ -1247,6 +1248,15 @@
     const setOpenBack = (visible) => {
       if (openBack) openBack.hidden = !visible;
     };
+    const clearArtistNavigation = () => artistNavigation?.replaceChildren();
+    const showArtistNavigation = (id) => {
+      if (!openGraphV2 || !artistNavigation || !window.htmx) return;
+      window.htmx.ajax(
+        "GET",
+        `/fragments/open-construction-map/v2/artists/${encodeURIComponent(id)}`,
+        { target: "#artist-navigation-slot", swap: "innerHTML" },
+      );
+    };
     const cancelMapLoad = () => {
       loadController?.abort();
       loadController = null;
@@ -1287,6 +1297,7 @@
       cancelMapLoad();
       overviewCamera ??= { level: activeLevel, zoom: cy.zoom(), pan: cy.pan() };
       focusedNodeId = node.data("itemId");
+      showArtistNavigation(focusedNodeId);
       neighborhoodNodeIds = null;
       cy.$(":selected").unselect();
       node.select();
@@ -1308,6 +1319,7 @@
       cancelMapLoad();
       overviewCamera ??= { level: activeLevel, zoom: cy.zoom(), pan: cy.pan() };
       focusedNodeId = id;
+      showArtistNavigation(focusedNodeId);
       neighborhoodNodeIds = null;
       mapElement.focus({ preventScroll: true });
       setOpenBack(true);
@@ -1482,6 +1494,7 @@
         overviewCamera = null;
         neighborhoodNodeIds = null;
         focusedNodeId = null;
+        clearArtistNavigation();
         if (previous) {
           suppressCameraEvents = true;
           cy.zoom(previous.zoom);

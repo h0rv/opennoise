@@ -10,6 +10,9 @@
 {% include "map.html" %}
 <section id="genre-detail-slot" aria-live="polite">{% if genre %}{% include "genre_detail.html" %}{% endif %}</section>
 {% if map_view_mode | default('public') == 'open' and open_construction_graph_v2_configured %}
+<aside id="artist-navigation-slot" aria-live="polite" aria-label="Artist navigation"></aside>
+{% endif %}
+{% if map_view_mode | default('public') == 'open' and open_construction_graph_v2_configured %}
 <form id="search" role="search" action="/fragments/open-construction-map/v2/search" method="get">
 <label class="sr-only" for="query">Open graph name</label>
 <input id="query" name="q" type="search" placeholder="Search 6,291 names" autocomplete="off"

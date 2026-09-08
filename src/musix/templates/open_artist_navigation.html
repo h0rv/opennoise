@@ -1,0 +1,19 @@
+<section class="artist-navigation" data-open-artist-node-id="{{ node_id }}">
+{% if genre_response %}
+  <h2>{{ genre_response.genre.name }}</h2>
+  {% if genre_response.members %}
+  <p>Direct artist claims</p>
+  <ul>
+  {% for membership in genre_response.members %}
+    <li><a href="/fragments/open-construction-map/v2/artists/{{ node_id | urlencode }}/artist/{{ membership.artist.entity_id }}"
+           hx-get="/fragments/open-construction-map/v2/artists/{{ node_id | urlencode }}/artist/{{ membership.artist.entity_id }}"
+           hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ membership.artist.name }}</a></li>
+  {% endfor %}
+  </ul>
+  {% else %}
+  <p>No artist evidence yet.</p>
+  {% endif %}
+{% else %}
+  <p>No artist evidence yet.</p>
+{% endif %}
+</section>

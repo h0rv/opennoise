@@ -5,8 +5,10 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import sqlite3
 from collections import defaultdict
+from contextlib import closing
 from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field
@@ -17,6 +19,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _MAX_PAGE_SIZE = 50
+_OPEN_CATALOG_NODE_PATTERN = re.compile(r"^catalog:(wikidata:genre:Q[1-9][0-9]*)$")
 
 
 class PublicArtistNavigationStoreError(RuntimeError):
@@ -121,9 +124,22 @@ class PublicArtistNavigationStore:
         """Return related artists sharing direct display-authorized genres."""
         return await asyncio.to_thread(self._related_artists_sync, artist_id, offset, limit)
 
+    async def catalog_genre_id_for_open_node(self, node_id: str) -> int | None:
+        """Resolve only one exact Open catalog QID to its local catalog identity."""
+        match = _OPEN_CATALOG_NODE_PATTERN.fullmatch(node_id)
+        if match is None:
+            return None
+        return await asyncio.to_thread(
+            self._catalog_genre_id_for_qid_sync, match.group(1).removeprefix("wikidata:genre:")
+        )
+
+    async def open_node_ids_for_catalog_genres(self, genre_ids: tuple[int, ...]) -> dict[int, str]:
+        """Return exact Open QID nodes for bounded catalog-genre links only."""
+        return await asyncio.to_thread(self._open_node_ids_for_catalog_genres_sync, genre_ids)
+
     def _genre_artists_sync(self, genre_id: int, offset: int, limit: int) -> GenreArtistsResponse:
         self._validate_page(offset, limit)
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             genre = self._genre(connection, genre_id)
             artist_ids = self._page_ids(
                 connection,
@@ -138,7 +154,7 @@ class PublicArtistNavigationStore:
 
     def _artist_genres_sync(self, artist_id: int, offset: int, limit: int) -> ArtistGenresResponse:
         self._validate_page(offset, limit)
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             artist = self._artist(connection, artist_id)
             genre_ids = self._page_ids(
                 connection,
@@ -155,7 +171,7 @@ class PublicArtistNavigationStore:
         self, artist_id: int, offset: int, limit: int
     ) -> RelatedArtistsResponse:
         self._validate_page(offset, limit)
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             artist = self._artist(connection, artist_id)
             rows = connection.execute(
                 """WITH source_genres AS (
@@ -203,6 +219,50 @@ class PublicArtistNavigationStore:
                 for related_id in related_ids
             )
         return RelatedArtistsResponse(artist=artist, offset=offset, limit=limit, related=related)
+
+    def _catalog_genre_id_for_qid_sync(self, qid: str) -> int | None:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """SELECT genre.id
+                   FROM genres AS genre
+                   JOIN entity_identifiers AS identifier ON identifier.entity_id = genre.id
+                   JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
+                   WHERE type.type_key = 'wikidata_genre_qid' AND identifier.normalized_value = ?
+                   ORDER BY genre.id LIMIT 2""",
+                (qid,),
+            ).fetchall()
+        return int(rows[0][0]) if len(rows) == 1 else None
+
+    def _open_node_ids_for_catalog_genres_sync(self, genre_ids: tuple[int, ...]) -> dict[int, str]:
+        if not genre_ids:
+            return {}
+        placeholders = ",".join("?" for _ in genre_ids)
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                f"""SELECT genre.id, identifier.normalized_value
+                    FROM genres AS genre
+                    JOIN entity_identifiers AS identifier ON identifier.entity_id = genre.id
+                    JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
+                    WHERE genre.id IN ({placeholders})
+                      AND type.type_key = 'wikidata_genre_qid'
+                      AND identifier.normalized_value GLOB 'Q*'
+                    ORDER BY genre.id, identifier.id""",
+                genre_ids,
+            ).fetchall()
+        result: dict[int, str] = {}
+        duplicates: set[int] = set()
+        for genre_id, external_id in rows:
+            parsed = _OPEN_CATALOG_NODE_PATTERN.fullmatch(f"catalog:wikidata:genre:{external_id}")
+            if parsed is None:
+                continue
+            identifier = int(genre_id)
+            if identifier in result:
+                duplicates.add(identifier)
+            else:
+                result[identifier] = f"catalog:wikidata:genre:{external_id}"
+        for genre_id in duplicates:
+            result.pop(genre_id, None)
+        return result
 
     def _memberships(
         self,

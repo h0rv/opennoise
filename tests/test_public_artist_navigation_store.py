@@ -3,6 +3,7 @@
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from musix.public_artist_navigation_store import (
@@ -23,6 +24,11 @@ class PublicArtistNavigationStoreTests(unittest.TestCase):
             artist_genres = run_async(store.artist_genres(1, offset=0, limit=20))
             related = run_async(store.related_artists(1, offset=0, limit=20))
             unsupported = run_async(store.genre_artists(30, offset=0, limit=20))
+            open_genre = run_async(
+                store.catalog_genre_id_for_open_node("catalog:wikidata:genre:Q10")
+            )
+            legacy_genre = run_async(store.catalog_genre_id_for_open_node("legacy:item1"))
+            open_nodes = run_async(store.open_node_ids_for_catalog_genres((10, 20)))
 
         self.assertEqual(genre_members.genre.genre_id, "catalog:genre:10")
         self.assertEqual(len(genre_members.members), 1)
@@ -40,6 +46,9 @@ class PublicArtistNavigationStoreTests(unittest.TestCase):
         self.assertEqual(related.related[0].shared_genre_count, 2)
         self.assertNotIn("catalog:artist:1", [item.artist.artist_id for item in related.related])
         self.assertEqual(unsupported.members, ())
+        self.assertEqual(open_genre, 10)
+        self.assertIsNone(legacy_genre)
+        self.assertEqual(open_nodes, {10: "catalog:wikidata:genre:Q10"})
 
     def test_unknown_id_and_invalid_page_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -56,7 +65,9 @@ class PublicArtistNavigationStoreTests(unittest.TestCase):
 
 
 def _fixture(path: Path) -> None:
-    with sqlite3.connect(path) as connection:
+    # sqlite's transaction context manager commits but does not close.  Keep
+    # this short-lived fixture explicit so focused validation is warning-free.
+    with closing(sqlite3.connect(path)) as connection:
         connection.executescript(
             """
             CREATE TABLE artists (id INTEGER PRIMARY KEY);
@@ -75,6 +86,11 @@ def _fixture(path: Path) -> None:
                 id INTEGER PRIMARY KEY, artist_id INTEGER NOT NULL, genre_id INTEGER NOT NULL,
                 evidence_kind TEXT NOT NULL
             );
+            CREATE TABLE identifier_types (id INTEGER PRIMARY KEY, type_key TEXT NOT NULL);
+            CREATE TABLE entity_identifiers (
+                id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL, identifier_type_id INTEGER NOT NULL,
+                normalized_value TEXT NOT NULL
+            );
             INSERT INTO artists VALUES (1), (2), (3), (4);
             INSERT INTO genres VALUES (10, 'Rock'), (20, 'Jazz'), (30, 'Unsupported');
             INSERT INTO displayable_entity_names VALUES
@@ -87,8 +103,11 @@ def _fixture(path: Path) -> None:
                 (5, 3, 10, 'fixture:direct', 'gamma-rock', 'fixture_direct', '1', 3, 'direct_source_claim'),
                 (6, 4, 10, 'fixture:propagated', 'orphan-rock', 'propagated', '1', 4, 'release_group_propagation');
             INSERT INTO artist_genre_evidence VALUES (99, 4, 10, 'review_anchor');
+            INSERT INTO identifier_types VALUES (1, 'wikidata_genre_qid');
+            INSERT INTO entity_identifiers VALUES (1, 10, 1, 'Q10');
             """
         )
+        connection.commit()
 
 
 if __name__ == "__main__":

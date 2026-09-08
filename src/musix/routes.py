@@ -610,6 +610,58 @@ class SearchController(Controller):
 class EvidenceController(Controller):
     """Serve genre detail and provenance contracts."""
 
+    @get("/fragments/open-construction-map/v2/artists/{node_id:str}")
+    async def open_v2_genre_artists_fragment(
+        self,
+        public_artist_navigation: NamedDependency[PublicArtistNavigationStore],
+        node_id: FromPath[str],
+    ) -> Template:
+        """Render direct artists only after an exact Open catalog-QID identity join."""
+        genre_id = await public_artist_navigation.catalog_genre_id_for_open_node(node_id)
+        if genre_id is None:
+            return Template(
+                template_name="open_artist_navigation.html",
+                context={"node_id": node_id, "genre_response": None},
+            )
+        try:
+            response = await public_artist_navigation.genre_artists(genre_id, offset=0, limit=20)
+        except PublicArtistNavigationStoreError as error:
+            raise ServiceUnavailableException(
+                detail="public artist navigation is unavailable"
+            ) from error
+        return Template(
+            template_name="open_artist_navigation.html",
+            context={"node_id": node_id, "genre_response": response},
+        )
+
+    @get("/fragments/open-construction-map/v2/artists/{node_id:str}/artist/{artist_id:int}")
+    async def open_v2_artist_fragment(
+        self,
+        public_artist_navigation: NamedDependency[PublicArtistNavigationStore],
+        node_id: FromPath[str],
+        artist_id: FromPath[int],
+    ) -> Template:
+        """Render direct artist genres and shared-direct-genre relations in one panel."""
+        try:
+            genres = await public_artist_navigation.artist_genres(artist_id, offset=0, limit=20)
+            related = await public_artist_navigation.related_artists(artist_id, offset=0, limit=20)
+            open_node_ids = await public_artist_navigation.open_node_ids_for_catalog_genres(
+                tuple(item.genre.entity_id for item in genres.genres)
+            )
+        except PublicArtistNavigationStoreError as error:
+            raise ServiceUnavailableException(
+                detail="public artist navigation is unavailable"
+            ) from error
+        return Template(
+            template_name="open_artist_navigation_artist.html",
+            context={
+                "node_id": node_id,
+                "genres_response": genres,
+                "related_response": related,
+                "open_node_ids": open_node_ids,
+            },
+        )
+
     @get("/api/genres/{genre_id:int}/artists")
     async def genre_artists(
         self,

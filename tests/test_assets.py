@@ -63,7 +63,14 @@ class AssetTests(unittest.TestCase):
 
     def test_semantic_map_script_url_is_versioned_for_deploy_cache_busting(self) -> None:
         template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
-        self.assertIn('src="/static/semantic-map.js?v=25"', template)
+        self.assertIn('src="/static/semantic-map.js?v=26"', template)
+
+    def test_open_map_artist_navigation_uses_exact_catalog_fragments(self) -> None:
+        workspace = Path("src/musix/templates/workspace.html").read_text(encoding="utf-8")
+        source = Path("src/musix/static/semantic-map.js").read_text(encoding="utf-8")
+        self.assertIn('id="artist-navigation-slot"', workspace)
+        self.assertIn("/fragments/open-construction-map/v2/artists/", source)
+        self.assertIn("clearArtistNavigation();", source)
 
     def test_stylesheet_url_is_versioned_for_deploy_cache_busting(self) -> None:
         template = Path("src/musix/templates/index.html").read_text(encoding="utf-8")
