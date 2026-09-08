@@ -263,8 +263,9 @@ class LastFmReverseTagAdapterTests(PollingIsolatedAsyncioTestCase):
                 ).fetch(query)
 
     async def test_cli_writes_plan_but_blocks_without_a_key(self) -> None:
-        with tempfile.TemporaryDirectory() as directory, patch.dict(
-            "os.environ", {"LASTFM_API_KEY": ""}, clear=False
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.dict("os.environ", {"LASTFM_API_KEY": ""}, clear=False),
         ):
             root = Path(directory)
             reconciliation_path = root / "reconciliation.json"

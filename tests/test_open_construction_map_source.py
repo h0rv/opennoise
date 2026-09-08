@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 
@@ -33,15 +34,16 @@ class OpenConstructionMapSourceTests(unittest.TestCase):
         self.assertIn("? Number(value)", source)
         self.assertIn("cy.fit(neighborhood, 96);", source)
         self.assertIn("replace the just-selected nodes with an unrelated LOD cohort", source)
-        self.assertIn("if (focusedNodeId) {\n              scheduleOpenLabelPaint();\n              return;", source)
+        self.assertIn(
+            "if (focusedNodeId) {\n              scheduleOpenLabelPaint();\n              return;",
+            source,
+        )
         self.assertIn("const publishOpenSelectionSnapshot = () =>", source)
         self.assertIn("mapElement.dataset.openRenderedNodeIds", source)
 
         # The committed v2 layout spans negative coordinates, whereas the v1
         # display transform is centered near x=665. A v2 identity round-trip
         # is required for a selected local neighborhood to remain fit-visible.
-        import json
-
         artifact = json.loads(Path("data/model/open-construction-graph-v2.json").read_text())
         x = float(artifact["layout"][0]["landscape_x"])
         self.assertLess(min(item["landscape_x"] for item in artifact["layout"]), 0)

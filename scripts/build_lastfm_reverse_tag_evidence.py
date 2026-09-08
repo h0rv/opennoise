@@ -81,9 +81,7 @@ async def _run(arguments: argparse.Namespace) -> int:
     )
     arguments.receipt.parent.mkdir(parents=True, exist_ok=True)
     arguments.receipt.write_text(receipt.model_dump_json(indent=2) + "\n", encoding="utf-8")
-    sys.stdout.write(
-        collection.coverage.model_dump_json(indent=2) + "\n"
-    )
+    sys.stdout.write(collection.coverage.model_dump_json(indent=2) + "\n")
     return 0
 
 

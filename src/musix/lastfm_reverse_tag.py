@@ -926,9 +926,12 @@ def publish_lastfm_reverse_tag_evidence(
 ) -> LastFmReverseTagReceipt:
     """Push raw responses first, then publish one review-only evidence artifact."""
     manifest_sha256 = _sha256_file(query_manifest_path)
-    if manifest_sha256 != hashlib.sha256(
-        (collection.manifest.model_dump_json(indent=2) + "\n").encode("utf-8")
-    ).hexdigest():
+    if (
+        manifest_sha256
+        != hashlib.sha256(
+            (collection.manifest.model_dump_json(indent=2) + "\n").encode("utf-8")
+        ).hexdigest()
+    ):
         raise LastFmReverseTagError("written Last.fm query manifest does not match collection")
     manifest_write = store.push(
         query_manifest_path,
