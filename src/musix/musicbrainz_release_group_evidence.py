@@ -289,6 +289,18 @@ def _init_database(connection: sqlite3.Connection) -> None:
     )
 
 
+def _create_reverse_lookup_indexes(connection: sqlite3.Connection) -> None:
+    """Create local query indexes only after evidence insertion is complete."""
+    connection.executescript(
+        """
+        CREATE INDEX direct_anchor_artist_genre_idx
+            ON direct_anchor (artist_id, genre_id, facet, evidence_ref);
+        CREATE INDEX release_group_support_artist_genre_idx
+            ON release_group_support (artist_id, genre_id, facet, release_group_id);
+        """
+    )
+
+
 def _insert_direct_anchors(
     connection: sqlite3.Connection, seed_target: MusicBrainzSeedTargetArtifact
 ) -> None:
@@ -603,6 +615,7 @@ def _build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
         )
         coverage = _coverage(connection, seed_target.seed_count, resolved)
         connection.execute("DROP TABLE build_checkpoint")
+        _create_reverse_lookup_indexes(connection)
         connection.commit()
         if connection.execute("PRAGMA integrity_check").fetchone() != ("ok",):
             raise MusicBrainzReleaseGroupEvidenceError("staging database failed integrity check")

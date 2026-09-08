@@ -1,4 +1,4 @@
-"""Query local-only direct MusicBrainz seed-to-artist evidence."""
+"""Query local-only direct and separately album-supported MusicBrainz evidence."""
 
 from __future__ import annotations
 

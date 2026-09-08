@@ -230,6 +230,15 @@ class ReleaseGroupEvidenceTests(unittest.TestCase):
                     "SELECT evidence_kind, genre_id, release_group_id "
                     "FROM typed_evidence ORDER BY evidence_kind, genre_id"
                 ).fetchall()
+                direct_indexes = {
+                    str(row[1]) for row in connection.execute("PRAGMA index_list('direct_anchor')")
+                }
+                support_indexes = {
+                    str(row[1])
+                    for row in connection.execute("PRAGMA index_list('release_group_support')")
+                }
+            self.assertIn("direct_anchor_artist_genre_idx", direct_indexes)
+            self.assertIn("release_group_support_artist_genre_idx", support_indexes)
             self.assertEqual(rows[0], ("artist_direct", "rock", None))
             self.assertEqual(
                 rows[1],

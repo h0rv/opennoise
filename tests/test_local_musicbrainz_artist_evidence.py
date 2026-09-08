@@ -47,8 +47,21 @@ class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
         self.assertEqual(response.total_direct_artist_count, 2)
         self.assertEqual(response.artists[0].artist_mbid, _ARTIST_A)
         self.assertEqual(response.artists[0].facets, ("musicbrainz_genre", "musicbrainz_tag"))
+        self.assertEqual(response.total_album_supported_artist_count, 2)
+        self.assertEqual(response.album_supported_artists[0].artist_mbid, _ARTIST_A)
+        self.assertEqual(
+            response.album_supported_artists[0].distinct_release_group_count,
+            1,
+        )
+        self.assertEqual(
+            [
+                facet.distinct_release_group_count
+                for facet in response.album_supported_artists[0].facets
+            ],
+            [1, 1],
+        )
         self.assertFalse(response.contextual_claims_available)
-        self.assertFalse(response.release_group_support_included)
+        self.assertTrue(response.release_group_support_included)
         self.assertGreaterEqual(response.verification_seconds, 0.0)
         self.assertGreaterEqual(response.query_seconds, 0.0)
 
@@ -63,6 +76,14 @@ class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
 
         self.assertEqual([seed.source_item_id for seed in response.seeds], ["item2", "item887"])
         self.assertEqual(response.total_direct_seed_count, 2)
+        self.assertEqual(response.total_album_supported_seed_count, 2)
+        support = {item.seed.source_item_id: item for item in response.album_supported_seeds}
+        self.assertEqual(support["item887"].distinct_release_group_count, 1)
+        self.assertEqual(support["item2"].distinct_release_group_count, 6)
+        self.assertEqual(
+            [facet.distinct_release_group_count for facet in support["item2"].facets],
+            [3, 3],
+        )
         self.assertFalse(response.contextual_claims_available)
 
     def test_rejects_database_evidence_outside_the_all_seed_sidecar(self) -> None:
@@ -140,7 +161,31 @@ def _database(path: Path, *, outside_seed: bool = False) -> Path:
                    facet TEXT NOT NULL,
                    evidence_ref TEXT NOT NULL,
                    PRIMARY KEY (genre_id, artist_id, facet, evidence_ref)
+               ) WITHOUT ROWID;
+               CREATE TABLE release_group_support (
+                   genre_id TEXT NOT NULL,
+                   artist_id TEXT NOT NULL,
+                   facet TEXT NOT NULL,
+                   release_group_id TEXT NOT NULL,
+                   evidence_ref TEXT NOT NULL,
+                   PRIMARY KEY (genre_id, artist_id, facet, release_group_id)
                ) WITHOUT ROWID;"""
+        )
+        connection.executemany(
+            "INSERT INTO release_group_support VALUES (?, ?, ?, ?, ?)",
+            [
+                # One release group in both facets still counts once for the artist/seed.
+                ("item887", _ARTIST_A, "musicbrainz_genre", "rg:shared", "support:one"),
+                ("item887", _ARTIST_A, "musicbrainz_tag", "rg:shared", "support:two"),
+                ("item887", _ARTIST_B, "musicbrainz_tag", "rg:b", "support:three"),
+                # Each facet can have its own capped three groups; the union is six.
+                ("item2", _ARTIST_A, "musicbrainz_genre", "rg:one", "support:four"),
+                ("item2", _ARTIST_A, "musicbrainz_genre", "rg:two", "support:five"),
+                ("item2", _ARTIST_A, "musicbrainz_genre", "rg:three", "support:six"),
+                ("item2", _ARTIST_A, "musicbrainz_tag", "rg:four", "support:seven"),
+                ("item2", _ARTIST_A, "musicbrainz_tag", "rg:five", "support:eight"),
+                ("item2", _ARTIST_A, "musicbrainz_tag", "rg:six", "support:nine"),
+            ],
         )
         connection.executemany(
             "INSERT INTO direct_anchor VALUES (?, ?, ?, ?)",
