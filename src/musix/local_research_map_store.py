@@ -54,6 +54,7 @@ class LocalResearchMapResponse(FrozenModel):
     source: Literal["local-research-peer-layout"] = "local-research-peer-layout"
     logical_output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     level: int = Field(ge=0, le=3)
+    offset: int = Field(default=0, ge=0)
     node_budget: int = Field(ge=1)
     total_node_count: int = Field(ge=1)
     total_edge_count: int = Field(ge=0)
@@ -145,7 +146,7 @@ class LocalResearchMapStore:
             )[:512]
         return LocalResearchMapResponse(
             logical_output_sha256=self._artifact.output_sha256,
-            level=level,
+            level=level, offset=0,
             node_budget=_BUDGET,
             total_node_count=len(self._nodes),
             total_edge_count=len(self._edges),
@@ -179,7 +180,7 @@ class LocalResearchMapStore:
             nodes = tuple(self._nodes[value] for value in sorted(ids))
             return LocalResearchMapResponse(
                 logical_output_sha256=self._artifact.output_sha256,
-                level=3,
+                level=3, offset=0,
                 node_budget=25,
                 total_node_count=len(self._nodes),
                 total_edge_count=len(self._edges),
@@ -193,7 +194,7 @@ class LocalResearchMapStore:
         ]
         return LocalResearchMapResponse(
             logical_output_sha256=self._artifact.output_sha256,
-            level=1,
+            level=1, offset=offset,
             node_budget=_BUDGET,
             total_node_count=len(self._nodes),
             total_edge_count=len(self._edges),

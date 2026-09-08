@@ -105,8 +105,10 @@
   {% if map_view_mode | default('public') == 'historical' and historical_map_configured %}
   <button type="button" data-map-action="historical-back" aria-label="Back">Back</button>
   {% endif %}
-  {% if map_view_mode | default('public') == 'open' and (open_construction_graph_configured or open_construction_graph_v2_configured) %}
+  {% if map_view_mode | default('public') == 'open' and (open_construction_graph_configured or open_construction_graph_v2_configured or local_research_map_configured) %}
   <button type="button" data-map-action="open-back" aria-label="Back" hidden>Back</button>
+  <button type="button" data-map-action="local-page-previous" aria-label="Previous community page" hidden>Previous</button>
+  <button type="button" data-map-action="local-page-next" aria-label="Next community page" hidden>Next</button>
   {% endif %}
   <button type="button" data-map-action="zoom-in" aria-label="Zoom in">+</button>
   <button type="button" data-map-action="zoom-out" aria-label="Zoom out">−</button>

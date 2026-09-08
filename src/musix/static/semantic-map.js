@@ -1068,6 +1068,9 @@
     const graphEndpoint = new URL(graphUrl, window.location.origin);
     const neighborEndpoint = mapElement.dataset.neighborUrl || "/api/open-construction-map/neighbors/";
     const openBack = document.querySelector('[data-map-action="open-back"]');
+    const localPrevious = document.querySelector('[data-map-action="local-page-previous"]');
+    const localNext = document.querySelector('[data-map-action="local-page-next"]');
+    let localPage = { id: null, offset: 0, truncated: false };
     const artistNavigation = document.querySelector("#artist-navigation-slot");
     let focusedNodeId = null;
     let neighborhoodNodeIds = null;
@@ -1340,12 +1343,13 @@
       window.clearTimeout(levelTimer);
       window.clearTimeout(viewportTimer);
     };
-    const fetchNeighbors = (id) => {
+    const fetchNeighbors = (id, offset = 0) => {
       neighborController?.abort();
       const controller = new AbortController();
       neighborController = controller;
       const sequence = ++neighborSequence;
-      return fetch(`${neighborEndpoint}${encodeURIComponent(id)}`, {
+      const page = openGraphV2 && mapElement.dataset.openGraphVersion === "local" ? `?offset=${offset}` : "";
+      return fetch(`${neighborEndpoint}${encodeURIComponent(id)}${page}`, {
         headers: { Accept: "application/json" },
         signal: controller.signal,
       })
@@ -1385,6 +1389,9 @@
           if (!neighbors) return;
           setOpenBack(true);
           addNeighborPayload(neighbors);
+          localPage = { id: node.data("itemId"), offset: neighbors.offset ?? 0, truncated: Boolean(neighbors.truncated) };
+          localPrevious.hidden = localPage.offset === 0;
+          localNext.hidden = !localPage.truncated;
           fitNeighborhood(neighbors);
         })
         .catch((error) => {
@@ -1405,6 +1412,9 @@
           if (!neighbors) return;
           setOpenBack(true);
           addNeighborPayload(neighbors);
+          localPage = { id, offset: neighbors.offset ?? 0, truncated: Boolean(neighbors.truncated) };
+          localPrevious.hidden = localPage.offset === 0;
+          localNext.hidden = !localPage.truncated;
           const node = cy.$id(`open-${id}`);
           if (node.empty()) throw new Error("open graph search target missing");
           cy.$(":selected").unselect();
@@ -1589,6 +1599,7 @@
         neighborhoodNodeIds = null;
         focusedNodeId = null;
         clearArtistNavigation();
+        localPrevious.hidden = true; localNext.hidden = true;
         if (previous) {
           suppressCameraEvents = true;
           cy.zoom(previous.zoom);
@@ -1596,6 +1607,17 @@
           suppressCameraEvents = false;
         }
         load(previous?.level ?? 0, Boolean(previous));
+      }
+      if ((action === "local-page-next" || action === "local-page-previous") && localPage.id) {
+        const offset = action === "local-page-next" ? localPage.offset + 240 : Math.max(0, localPage.offset - 240);
+        fetchNeighbors(localPage.id, offset).then((neighbors) => {
+          if (!neighbors) return;
+          addNeighborPayload(neighbors);
+          localPage = { id: localPage.id, offset: neighbors.offset ?? offset, truncated: Boolean(neighbors.truncated) };
+          localPrevious.hidden = localPage.offset === 0;
+          localNext.hidden = !localPage.truncated;
+          fitNeighborhood(neighbors);
+        }).catch(() => say("Local evidence community page unavailable."));
       }
     }, true);
     document.addEventListener("click", (event) => {
