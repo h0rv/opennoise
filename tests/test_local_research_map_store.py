@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 # ruff: noqa: SLF001
+import asyncio
 import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from musix.local_research_map_store import LocalResearchMapError, LocalResearchMapStore
+from musix.routes import SearchController
 from musix.seed_reconciliation import load_seed_reconciliation
 
 ROOT = Path(__file__).parents[1]
@@ -71,6 +73,39 @@ class LocalResearchMapStoreTests(unittest.TestCase):
             store = LocalResearchMapStore(path, INDEX, load_seed_reconciliation(RECONCILIATION))
             with self.assertRaisesRegex(LocalResearchMapError, "logical hash"):
                 store.start()
+
+    def test_local_search_fragment_keeps_layout_scope_for_unplaced_names(self) -> None:
+        store = _store()
+        assert store._nodes is not None
+        placed = next(iter(store._nodes.values()))
+        unplaced = next(
+            row
+            for row in store.reconciliation.dispositions
+            if f"legacy:{row.source_item_id}" not in store._nodes
+        )
+        placed_response = asyncio.run(
+            SearchController.local_research_map_search_fragment.fn(None, store, placed.name)
+        )
+        unplaced_response = asyncio.run(
+            SearchController.local_research_map_search_fragment.fn(
+                None, store, unplaced.seed_name
+            )
+        )
+        self.assertEqual(
+            placed_response.template_name, "local_research_map_search_results.html"
+        )
+        placed_hits = placed_response.context["hits"]
+        unplaced_hits = unplaced_response.context["hits"]
+        assert isinstance(placed_hits, tuple)
+        assert isinstance(unplaced_hits, tuple)
+        self.assertTrue(any(hit.placed for hit in placed_hits))
+        self.assertTrue(
+            any(
+                not hit.placed
+                and hit.unplaced_reason == "no_peer_similarity_evidence"
+                for hit in unplaced_hits
+            )
+        )
 
 
 def _store() -> LocalResearchMapStore:

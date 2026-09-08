@@ -1,0 +1,6 @@
+{% for hit in hits %}
+<a class="result" {% if hit.placed %}data-open-node-id="{{ hit.node_id }}"{% endif %}
+   href="{% if hit.placed %}/api/local-research-map/neighbors/{{ hit.node_id | urlencode }}{% else %}/fragments/local-research/musicbrainz/{{ hit.node_id | urlencode }}{% endif %}">
+  {{ hit.name }} <span class="result-kind">{% if hit.placed %}placed in this local evidence layout{% else %}not placed in this map{% endif %}</span>
+</a>
+{% endfor %}

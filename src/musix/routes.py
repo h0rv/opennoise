@@ -147,6 +147,11 @@ class CoreController(Controller):
             historical_signal_map,
             open_construction_graph,
             open_construction_graph_v2,
+            local_research_map=(
+                local_research_map
+                if isinstance(local_research_map, LocalResearchMapStore)
+                else None
+            ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
                 and local_research_artists.configured
@@ -172,6 +177,7 @@ class CoreController(Controller):
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         local_research_artists: NamedDependency[object],
+        local_research_map: NamedDependency[object],
         genre_id: FromPath[int],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
@@ -186,6 +192,11 @@ class CoreController(Controller):
             historical_signal_map,
             open_construction_graph,
             open_construction_graph_v2,
+            local_research_map=(
+                local_research_map
+                if isinstance(local_research_map, LocalResearchMapStore)
+                else None
+            ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
                 and local_research_artists.configured
@@ -209,6 +220,7 @@ class CoreController(Controller):
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         local_research_artists: NamedDependency[object],
+        local_research_map: NamedDependency[object],
         genre_key: FromPath[str],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
@@ -226,6 +238,11 @@ class CoreController(Controller):
             historical_signal_map,
             open_construction_graph,
             open_construction_graph_v2,
+            local_research_map=(
+                local_research_map
+                if isinstance(local_research_map, LocalResearchMapStore)
+                else None
+            ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
                 and local_research_artists.configured
@@ -619,6 +636,7 @@ class MapController(Controller):
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         local_research_artists: NamedDependency[object],
+        local_research_map: NamedDependency[object],
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
@@ -637,6 +655,11 @@ class MapController(Controller):
             historical_signal_map,
             open_construction_graph,
             open_construction_graph_v2,
+            local_research_map=(
+                local_research_map
+                if isinstance(local_research_map, LocalResearchMapStore)
+                else None
+            ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
                 and local_research_artists.configured
@@ -708,6 +731,29 @@ class SearchController(Controller):
         return Template(
             template_name="open_construction_v2_search_results.html",
             context={"hits": response.hits},
+        )
+
+    @get("/fragments/local-research-map/search")
+    async def local_research_map_search_fragment(
+        self,
+        local_research_map: NamedDependency[object],
+        q: FromQuery[str] = "",
+    ) -> Template:
+        """Render local-layout results without assigning missing coordinates."""
+        if (
+            not isinstance(local_research_map, LocalResearchMapStore)
+            or not local_research_map.configured
+        ):
+            raise ServiceUnavailableException(detail="local research peer map is disabled")
+        try:
+            hits = local_research_map.search(q[:500])
+        except LocalResearchMapError as error:
+            raise ServiceUnavailableException(
+                detail="local research peer map artifact unavailable"
+            ) from error
+        return Template(
+            template_name="local_research_map_search_results.html",
+            context={"hits": hits},
         )
 
 
@@ -1147,6 +1193,7 @@ async def workspace_context(
     historical_signal_map: HistoricalSignalMapStore,
     open_construction_graph: OpenConstructionMapStore,
     open_construction_graph_v2: OpenConstructionV2MapStore,
+    local_research_map: LocalResearchMapStore | None,
     *,
     layout: str,
     focus: int | None,
@@ -1194,7 +1241,12 @@ async def workspace_context(
         "placement": placement,
         "production_graph": production_graph,
         "hits": (
-            open_construction_graph_v2.search(bounded_search_query).hits
+            local_research_map.search(bounded_search_query)
+            if view == "open"
+            and local_research_map is not None
+            and local_research_map.configured
+            and bounded_search_query
+            else open_construction_graph_v2.search(bounded_search_query).hits
             if view == "open" and open_construction_graph_v2.configured and bounded_search_query
             else await database.search(bounded_search_query)
             if bounded_search_query
