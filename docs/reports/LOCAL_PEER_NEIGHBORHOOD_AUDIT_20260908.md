@@ -161,3 +161,37 @@ facet pattern found only in the two questioned edges. The sample does not
 establish musical similarity or rule out a broader source-tagging cohort. A
 future ranking experiment should keep artists distinct by ID and state whether
 genre and tag facets are collapsed before scoring.
+
+## Direct and release-group support comparison
+
+The completed local-only comparison used the bound release-group candidate and
+the frozen peer index. Its JSON output is
+`.cache/musicbrainz-release-group-evidence-candidate-v1/direct-vs-support-neighbors.json`,
+with SHA-256
+`b42d92261de2b8580085954c800ac11e7b752bc28177f6a2ac5ddb4dead98f40`.
+It verifies the release-group artifact and database before reading them. It
+also checks that the frozen peer index is non-production and export-disabled.
+
+The command was:
+
+```sh
+.venv/bin/python scripts/compare_release_group_neighbors.py \
+  --database .cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite \
+  --artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json \
+  --frozen-peer-index .cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite \
+  --output .cache/musicbrainz-release-group-evidence-candidate-v1/direct-vs-support-neighbors.json
+```
+
+The direct binary control for house starts with deep house, tech house, and
+EDM. The separate support binary list starts with deep house, techno, and
+electro. For cumbia, the support list shifts toward salsa, merengue, and porro
+rather than the direct list's cumbia-specific entries. These are examples of a
+larger evidence set broadening a neighborhood. They do not show improvement,
+musical correctness, or a reason to change the existing ranking.
+
+The comparison keeps support separate from direct memberships. It collapses
+genre and tag rows to a binary seed and artist membership for support Jaccard.
+Its release-group diagnostic is a sum of per-artist minimum counts, not a
+pair-wide distinct release-group count. The output is bounded to ten neighbors
+per requested seed. It is a local diagnostic and does not alter a model or a
+public result.
