@@ -2,7 +2,10 @@
 
 `local-research-peer-layout-v1` is a local-only projection of the sealed
 MusicBrainz peer-candidate index. It is never an input to the public model,
-production map, Open construction map, or serving API.
+production map, or Open construction artifact/API. A separately configured,
+loopback-only dev-research endpoint may display it through the existing bounded
+map renderer; that local display is not public promotion or a replacement for
+the Open construction surface.
 
 The adapter reads a compact SQLite index with all 6,291 retained seed identities
 and canonical weighted peer-candidate pairs. A seed receives a coordinate only
@@ -28,6 +31,18 @@ the seeded community-packed variant preserves `0.186309523810`. The latter
 uses 20,214 intra-community edges for placement but is evaluated against all
 28,508 source edges. This is a projection-fidelity comparison, not a quality
 threshold, ground-truth semantic claim, or public-model promotion.
+
+The current display partition is flat, not a semantic hierarchy: one component
+contains 997 of the 1,580 placed seeds. Community labels therefore mean only
+deterministic layout grouping. Community API drills are paged at 240 nodes;
+the renderer needs progressive page navigation before that large component can
+be fully explored interactively. A deterministic multilevel graph partition,
+not arbitrary name buckets, remains necessary for a genuine coarse-to-fine
+semantic navigation claim.
+
+Peer edges are derived similarity measurements with receipt-bound scores. They
+are not factual taxonomy assertions; this distinction does not make the
+evidence-derived score fictional.
 
 The current exportable 603-node production map is a different contract. Its
 source public lens has 468 evidence-placed genres and 135 explicit

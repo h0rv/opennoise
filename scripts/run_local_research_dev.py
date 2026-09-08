@@ -32,6 +32,10 @@ def main() -> int:
         / ".cache/reviewed-alias-combined-model-v1/receipt.json",
         "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_PEER_INDEX": root
         / ".cache/reviewed-alias-combined-model-v1/peer-similarity-local-research.sqlite",
+        "MUSIX_LOCAL_RESEARCH_PEER_LAYOUT": root
+        / ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json",
+        "MUSIX_LOCAL_RESEARCH_MAP_PEER_INDEX": root
+        / ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite",
         "MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_DATABASE": root
         / ".cache/musicbrainz-release-group-artist-metadata-v1/metadata.sqlite",
         "MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_ARTIFACT": root

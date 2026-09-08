@@ -1076,7 +1076,7 @@
     let pendingOverviewResizeCamera = null;
     mapElement.tabIndex = 0;
     const nodeId = (node) => node.node_id ?? node.genre_id;
-    const openGraphV2 = mapElement.dataset.openGraphVersion === "v2";
+    const openGraphV2 = ["v2", "local"].includes(mapElement.dataset.openGraphVersion);
     // A single monotonic world transform expands the dense high-degree music
     // region while keeping v1 viewport requests invertible. V2 already has a
     // centered bounded landscape; applying the v1 center (x=665) collapses a

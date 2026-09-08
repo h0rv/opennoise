@@ -41,6 +41,11 @@ from musix.local_musicbrainz_peer_store import (
     LocalMusicBrainzPeerStore,
     LocalMusicBrainzPeerStoreError,
 )
+from musix.local_research_map_store import (
+    LocalResearchMapError,
+    LocalResearchMapResponse,
+    LocalResearchMapStore,
+)
 from musix.local_reviewed_alias_context_store import LocalReviewedAliasContextStore
 from musix.models import (
     LegacyMapResponse,
@@ -124,6 +129,7 @@ class CoreController(Controller):
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         local_research_artists: NamedDependency[object],
+        local_research_map: NamedDependency[object],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
         view: FromQuery[Literal["public", "open", "historical"] | None] = None,
@@ -144,6 +150,10 @@ class CoreController(Controller):
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
                 and local_research_artists.configured
+            ),
+            local_research_map_configured=(
+                isinstance(local_research_map, LocalResearchMapStore)
+                and local_research_map.configured
             ),
             layout=layout,
             focus=None,
@@ -238,6 +248,41 @@ class CoreController(Controller):
 
 class MapController(Controller):
     """Serve stable and experimental map representations."""
+
+    @get("/api/local-research-map")
+    async def local_research_map_data(
+        self, local_research_map: NamedDependency[object], level: FromQuery[int] = 0
+    ) -> LocalResearchMapResponse:
+        """Return a bounded local-only peer layout cohort."""
+        if (
+            not isinstance(local_research_map, LocalResearchMapStore)
+            or not local_research_map.configured
+        ):
+            raise ServiceUnavailableException(detail="local research peer map is disabled")
+        try:
+            return local_research_map.response(level=level)
+        except LocalResearchMapError as error:
+            raise ServiceUnavailableException(
+                detail="local research peer map unavailable"
+            ) from error
+
+    @get("/api/local-research-map/neighbors/{node_id:str}")
+    async def local_research_map_neighbors(
+        self,
+        local_research_map: NamedDependency[object],
+        node_id: FromPath[str],
+        offset: FromQuery[int] = 0,
+    ) -> LocalResearchMapResponse:
+        """Drill a display community or a direct evidence neighborhood."""
+        if (
+            not isinstance(local_research_map, LocalResearchMapStore)
+            or not local_research_map.configured
+        ):
+            raise ServiceUnavailableException(detail="local research peer map is disabled")
+        try:
+            return local_research_map.neighbors(node_id, offset=offset)
+        except LocalResearchMapError as error:
+            raise NotFoundException(detail="local research peer node unavailable") from error
 
     @get("/api/map")
     async def map_data(
@@ -1108,6 +1153,7 @@ async def workspace_context(
     search_query: str,
     view: Literal["public", "open", "historical"],
     local_research_artist_evidence_configured: bool = False,
+    local_research_map_configured: bool = False,
 ) -> dict[str, object]:
     """Build one consistent workspace from a published layout and optional genre."""
     layouts = await database.published_layouts()
@@ -1161,6 +1207,7 @@ async def workspace_context(
         "open_construction_graph_configured": open_construction_graph.configured,
         "open_construction_graph_v2_configured": open_construction_graph_v2.configured,
         "local_research_artist_evidence_configured": local_research_artist_evidence_configured,
+        "local_research_map_configured": local_research_map_configured,
     }
 
 

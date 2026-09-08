@@ -1,0 +1,79 @@
+from __future__ import annotations
+
+# ruff: noqa: SLF001
+import json
+import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from musix.local_research_map_store import LocalResearchMapError, LocalResearchMapStore
+from musix.seed_reconciliation import load_seed_reconciliation
+
+ROOT = Path(__file__).parents[1]
+LAYOUT = ROOT / ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json"
+INDEX = ROOT / ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite"
+RECONCILIATION = ROOT / ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json"
+
+
+class LocalResearchMapStoreTests(unittest.TestCase):
+    def test_overview_drill_genre_and_unplaced_search_are_explicit(self) -> None:
+        store = _store()
+        overview = store.response(level=0)
+        self.assertEqual(len(overview.nodes), 136)
+        self.assertTrue(all(node.node_kind == "peer_community" for node in overview.nodes))
+        community = store.neighbors(overview.nodes[0].node_id)
+        self.assertLessEqual(len(community.nodes), 240)
+        genre = store.neighbors(community.nodes[0].node_id)
+        self.assertEqual(genre.nodes[0].node_kind, "legacy_name_seed")
+        self.assertTrue(all(not edge.factual_relationship for edge in genre.edges))
+        assert store._nodes is not None
+        placed = {node.source_item_id for node in store._nodes.values()}
+        unplaced = next(
+            row for row in store.reconciliation.dispositions if row.source_item_id not in placed
+        )
+        hit = next(
+            row
+            for row in store.search(unplaced.seed_name)
+            if row.node_id.endswith(unplaced.source_item_id)
+        )
+        self.assertFalse(hit.placed)
+        self.assertEqual(hit.unplaced_reason, "no_peer_similarity_evidence")
+
+    def test_community_pagination_keeps_all_members_accessible(self) -> None:
+        store = _store()
+        assert store._communities is not None
+        communities = store._communities
+        community_id = max(communities, key=lambda key: len(communities[key]))
+        first = store.neighbors(f"community:{community_id}")
+        second = store.neighbors(f"community:{community_id}", offset=240)
+        self.assertTrue(first.truncated)
+        self.assertTrue(second.nodes)
+        self.assertFalse(
+            {node.node_id for node in first.nodes} & {node.node_id for node in second.nodes}
+        )
+        pages = []
+        offset = 0
+        while True:
+            page = store.neighbors(f"community:{community_id}", offset=offset)
+            pages.extend(node.node_id for node in page.nodes)
+            if not page.truncated:
+                break
+            offset += 240
+        self.assertEqual(len(pages), len(set(pages)))
+        self.assertEqual(len(pages), len(communities[community_id]))
+
+    def test_tampered_layout_hash_fails_binding(self) -> None:
+        with TemporaryDirectory() as temporary:
+            path = Path(temporary) / "layout.json"
+            payload = json.loads(LAYOUT.read_text())
+            payload["output_sha256"] = "0" * 64
+            path.write_text(json.dumps(payload))
+            store = LocalResearchMapStore(path, INDEX, load_seed_reconciliation(RECONCILIATION))
+            with self.assertRaisesRegex(LocalResearchMapError, "logical hash"):
+                store.start()
+
+
+def _store() -> LocalResearchMapStore:
+    store = LocalResearchMapStore(LAYOUT, INDEX, load_seed_reconciliation(RECONCILIATION))
+    store.start()
+    return store

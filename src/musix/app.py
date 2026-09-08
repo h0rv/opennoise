@@ -26,6 +26,7 @@ from musix.local_musicbrainz_artist_metadata import (
     load_artist_metadata_artifact,
 )
 from musix.local_musicbrainz_peer_store import LocalMusicBrainzPeerStore
+from musix.local_research_map_store import LocalResearchMapStore
 from musix.local_reviewed_alias_context_store import LocalReviewedAliasContextStore
 from musix.models import Settings
 from musix.open_construction_store import OpenConstructionMapStore
@@ -90,6 +91,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     public_artist_navigation = PublicArtistNavigationStore(selected_path)
     local_research_artists: LocalMusicBrainzArtistEvidenceStore | None = None
     local_research_peers: LocalMusicBrainzPeerStore | None = None
+    local_research_map: LocalResearchMapStore | None = None
     local_reviewed_alias_context: LocalReviewedAliasContextStore | None = None
     if settings.local_research_artist_evidence_enabled:
         if settings.host not in {"127.0.0.1", "::1", "localhost"}:
@@ -146,6 +148,12 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
             peer_index_path,
             local_research_artists.sources.reconciliation,
         )
+        if settings.local_research_peer_layout_path is not None:
+            local_research_map = LocalResearchMapStore(
+                settings.local_research_peer_layout_path,
+                settings.local_research_map_peer_index_path or peer_index_path,
+                local_research_artists.sources.reconciliation,
+            )
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
@@ -160,6 +168,8 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
             await asyncio.to_thread(local_reviewed_alias_context.start)
         if local_research_peers is not None:
             await asyncio.to_thread(local_research_peers.start)
+        if local_research_map is not None:
+            await asyncio.to_thread(local_research_map.start)
         try:
             yield
         finally:
@@ -195,6 +205,9 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     async def provide_local_research_peers() -> LocalMusicBrainzPeerStore | None:
         return local_research_peers
 
+    async def provide_local_research_map() -> LocalResearchMapStore | None:
+        return local_research_map
+
     async def provide_local_reviewed_alias_context() -> LocalReviewedAliasContextStore | None:
         return local_reviewed_alias_context
 
@@ -217,6 +230,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
             "public_artist_navigation": Provide(provide_public_artist_navigation),
             "local_research_artists": Provide(provide_local_research_artists),
             "local_research_peers": Provide(provide_local_research_peers),
+            "local_research_map": Provide(provide_local_research_map),
             "local_reviewed_alias_context": Provide(provide_local_reviewed_alias_context),
         },
         lifespan=[lifespan],

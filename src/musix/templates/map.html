@@ -22,7 +22,15 @@
   </section>
   {% endif %}
 {% elif map_view_mode | default('public') == 'open' %}
-  {% if open_construction_graph_v2_configured %}
+  {% if local_research_map_configured %}
+  <div id="semantic-map" role="application" aria-label="Interactive local MusicBrainz peer evidence landscape"
+       data-map-mode="open" data-open-graph-version="local"
+       data-graph-url="/api/local-research-map?level=0"
+       data-neighbor-url="/api/local-research-map/neighbors/"
+       {% if local_research_artist_evidence_configured %}data-local-research-artist-url="/fragments/local-research/musicbrainz/"{% endif %}
+       aria-describedby="map-pan-help"></div>
+  <section id="open-fallback" class="map-fallback"><p>Local evidence layout: 1,580 placed seeds; unsupported names remain searchable.</p></section>
+  {% elif open_construction_graph_v2_configured %}
   <div id="semantic-map" role="application" aria-label="Interactive open 6,291-name and public taxonomy landscape"
        data-map-mode="open" data-open-graph-version="v2"
        data-graph-url="/api/open-construction-map/v2?level=0"
