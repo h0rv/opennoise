@@ -26,8 +26,12 @@ from musix.sources.musicbrainz import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from musix.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
+    from musix.seed_reconciliation import SeedReconciliationArtifact
+
 RELEASE_GROUP_CONTEXT_PREFIX_REVISION = "release-group-context-prefix-pilot-v2"
 DEFAULT_RECORD_CAP = 100_000
+EXPECTED_SEED_COUNT = 6_291
 DEFAULT_ARCHIVE_SHA256 = "6f153846228dc6034b2f8f43b472b088792cc2e242b09783a8968fa8d4bd7a43"
 
 
@@ -75,21 +79,61 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _seed_identity_fingerprint(rows: object) -> str:
+    """Hash stable seed triples independently of producer-specific wrappers."""
+    payload = json.dumps(rows, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _verify_complete_seed_binding(
+    reconciliation: SeedReconciliationArtifact, seed_target: MusicBrainzSeedTargetArtifact
+) -> None:
+    """Verify the all-seed join without equating producer-local input hashes."""
+    if (
+        seed_target.seed_count != reconciliation.seed_count
+        or seed_target.seed_source_id != reconciliation.seed_source_id
+        or seed_target.seed_source_content_sha256 != reconciliation.seed_source_content_sha256
+    ):
+        raise ReleaseGroupContextError(
+            "seed-target artifact and reconciliation do not share a complete seed binding"
+        )
+    if reconciliation.seed_count != EXPECTED_SEED_COUNT:
+        raise ReleaseGroupContextError(
+            "reconciliation must account for the complete 6291-seed universe"
+        )
+    target_rows = [
+        {
+            "source_item_id": row.seed_source_item_id,
+            "source_external_id": row.seed_source_external_id,
+            "name": row.seed_name,
+        }
+        for row in sorted(seed_target.coverage, key=lambda item: item.seed_source_item_id)
+    ]
+    reconciliation_rows = [
+        {
+            "source_item_id": row.source_item_id,
+            "source_external_id": row.source_external_id,
+            "name": row.seed_name,
+        }
+        for row in sorted(reconciliation.dispositions, key=lambda item: item.source_item_id)
+    ]
+    target_fingerprint = _seed_identity_fingerprint(target_rows)
+    if (
+        target_fingerprint != _seed_identity_fingerprint(reconciliation_rows)
+        or target_fingerprint != reconciliation.seed_identity_sha256
+    ):
+        raise ReleaseGroupContextError(
+            "seed-target artifact and reconciliation do not share stable seed identities"
+        )
+
+
 def load_target_mask(
     reconciliation_path: Path, seed_target_path: Path, alias_config_path: Path
 ) -> TargetMask:
     """Load the full seed vocabulary and verify its complete seed-target binding."""
     reconciliation = load_seed_reconciliation(reconciliation_path)
     seed_target = load_seed_target_artifact(seed_target_path)
-    if (
-        seed_target.seed_input_sha256 != reconciliation.seed_input_sha256
-        or seed_target.seed_source_id != reconciliation.seed_source_id
-        or seed_target.seed_source_content_sha256 != reconciliation.seed_source_content_sha256
-        or seed_target.seed_count != reconciliation.seed_count
-    ):
-        raise ReleaseGroupContextError(
-            "seed-target artifact and reconciliation do not share a complete seed binding"
-        )
+    _verify_complete_seed_binding(reconciliation, seed_target)
     disposition_by_id = {item.source_item_id: item for item in reconciliation.dispositions}
     tokens = {normalize_label(item.seed_name) for item in reconciliation.dispositions}
     genre_ids: set[str] = set()
@@ -141,15 +185,17 @@ def load_target_mask(
 
 def _rows_for_release_group(
     release_group: MusicBrainzReleaseGroup, mask: TargetMask | None
-) -> tuple[tuple[str, str, str, str | None, str], ...]:
+) -> tuple[tuple[str, str, str, str | None, str, int | None], ...]:
     artists = tuple(str(credit.artist.id) for credit in release_group.artist_credit)
-    tokens: list[tuple[str, str | None, str]] = [
-        ("genre", str(item.id), item.name) for item in release_group.genres
+    tokens: list[tuple[str, str | None, str, int | None]] = [
+        ("genre", str(item.id), item.name, item.count) for item in release_group.genres
     ]
-    tokens.extend(("tag", None, item.name) for item in release_group.tags)
+    tokens.extend(("tag", None, item.name, item.count) for item in release_group.tags)
+    if any(count is not None and count <= 0 for _, _, _, count in tokens):
+        raise ReleaseGroupContextError("MusicBrainz context token count must be positive")
     return tuple(
-        (artist, str(release_group.id), kind, token_id, token_name)
-        for kind, token_id, token_name in tokens
+        (artist, str(release_group.id), kind, token_id, token_name, source_vote_count)
+        for kind, token_id, token_name, source_vote_count in tokens
         if mask is None or not mask.matches(kind=kind, token_id=token_id, token_name=token_name)
         for artist in artists
     )
@@ -231,6 +277,7 @@ def build_context_prefix(
               artist_mbid TEXT NOT NULL, release_group_mbid TEXT NOT NULL,
               token_kind TEXT NOT NULL CHECK(token_kind IN ('genre','tag')),
               token_id TEXT, token_name TEXT NOT NULL,
+              source_vote_count INTEGER NULL CHECK(source_vote_count > 0),
               PRIMARY KEY(artist_mbid, release_group_mbid, token_kind, token_name)
             ) WITHOUT ROWID;""")
             records_seen = malformed_records = masked_occurrences = inserted_rows = 0
@@ -246,14 +293,17 @@ def build_context_prefix(
                 masked_occurrences += len(all_rows) - len(kept_rows)
                 before = connection.total_changes
                 connection.executemany(
-                    "INSERT OR IGNORE INTO context_token VALUES (?, ?, ?, ?, ?)", kept_rows
+                    "INSERT OR IGNORE INTO context_token VALUES (?, ?, ?, ?, ?, ?)", kept_rows
                 )
                 inserted_rows += connection.total_changes - before
             _audit_database(connection, mask)
             if connection.execute("PRAGMA integrity_check").fetchone() != ("ok",):
                 raise ReleaseGroupContextError("SQLite integrity check failed")
-            artists, stored_rows = connection.execute(
-                "SELECT count(DISTINCT artist_mbid), count(*) FROM context_token"
+            artists, stored_rows, weighted_rows, unweighted_rows = connection.execute(
+                """SELECT count(DISTINCT artist_mbid), count(*),
+                coalesce(sum(source_vote_count IS NOT NULL), 0),
+                coalesce(sum(source_vote_count IS NULL), 0)
+                FROM context_token"""
             ).fetchone()
         report = {
             **manifest,
@@ -261,6 +311,8 @@ def build_context_prefix(
             "stored_rows": stored_rows,
             "inserted_rows": inserted_rows,
             "artists_with_context": artists,
+            "weighted_stored_rows": weighted_rows,
+            "unweighted_stored_rows": unweighted_rows,
             "malformed_records": malformed_records,
             "masked_artist_token_occurrences": masked_occurrences,
             "derived_database_sha256": file_sha256(database),

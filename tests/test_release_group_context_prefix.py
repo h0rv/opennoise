@@ -9,6 +9,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from musix.release_group_context_prefix import (
+    ReleaseGroupContextError,
     TargetMask,
     _iter_prefix,
     _rows_for_release_group,
@@ -43,7 +44,7 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
                     "title": "fixture",
                     "artist-credit": [{"artist": {"id": artist, "name": "a"}, "name": "a"}],
                     "genres": [{"id": str(uuid4()), "name": "Hip-Hop"}],
-                    "tags": [{"name": "noise"}, {"name": "noise"}],
+                    "tags": [{"name": "noise", "count": 2}, {"name": "noise", "count": 2}],
                 }
             )
         )
@@ -53,6 +54,20 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
         rows = _rows_for_release_group(group, mask)
         self.assertEqual([(row[2], row[4]) for row in rows], [("tag", "noise"), ("tag", "noise")])
         self.assertEqual(len(set(rows)), 1)
+        self.assertEqual(rows[0][5], 2)
+
+    def test_rows_reject_nonpositive_source_vote_count(self) -> None:
+        group = MusicBrainzReleaseGroup.model_validate_json(
+            json.dumps(
+                {
+                    "id": str(uuid4()),
+                    "title": "fixture",
+                    "tags": [{"name": "noise", "count": 0}],
+                }
+            )
+        )
+        with self.assertRaisesRegex(ReleaseGroupContextError, "count must be positive"):
+            _rows_for_release_group(group, None)
 
     def test_prefix_only_swallows_the_expected_cap_error(self) -> None:
         with patch(
@@ -71,7 +86,7 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
 
     def test_reconciliation_binding_rejects_tampered_seed_target(self) -> None:
         reconciliation = _Artifact("seed", "source", "content", 2, ())
-        target = _Artifact("other", "source", "content", 2, ())
+        target = _Artifact("seed", "other-source", "content", 2, ())
         with (
             patch(
                 "musix.release_group_context_prefix.load_seed_reconciliation",
@@ -82,6 +97,21 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
             ),
             patch("musix.release_group_context_prefix.file_sha256", return_value="a" * 64),
             self.assertRaisesRegex(ValueError, "complete seed binding"),
+        ):
+            load_target_mask(Path("reconciliation"), Path("target"), Path("aliases"))
+
+    def test_reconciliation_binding_rejects_a_coherent_incomplete_universe(self) -> None:
+        reconciliation = _Artifact("seed", "source", "content", 2, ())
+        target = _Artifact("seed", "source", "content", 2, ())
+        with (
+            patch(
+                "musix.release_group_context_prefix.load_seed_reconciliation",
+                return_value=reconciliation,
+            ),
+            patch(
+                "musix.release_group_context_prefix.load_seed_target_artifact", return_value=target
+            ),
+            self.assertRaisesRegex(ValueError, "complete 6291-seed universe"),
         ):
             load_target_mask(Path("reconciliation"), Path("target"), Path("aliases"))
 
