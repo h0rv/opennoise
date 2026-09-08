@@ -233,5 +233,6 @@ __marimo__/
 /data/staging/
 /data/quarantine/
 /data/model/
+/data/release/phase3-public-receipt.json
 .worktrees/
 /artifacts/ui-qa/
