@@ -23,6 +23,7 @@ class PublicArtistNavigationStoreTests(unittest.TestCase):
             genre_members = run_async(store.genre_artists(10, offset=0, limit=1))
             artist_genres = run_async(store.artist_genres(1, offset=0, limit=20))
             related = run_async(store.related_artists(1, offset=0, limit=20))
+            peers = run_async(store.genre_direct_peers(10))
             unsupported = run_async(store.genre_artists(30, offset=0, limit=20))
             open_genre = run_async(
                 store.catalog_genre_id_for_open_node("catalog:wikidata:genre:Q10")
@@ -45,6 +46,9 @@ class PublicArtistNavigationStoreTests(unittest.TestCase):
         self.assertEqual(related.related[0].artist.artist_id, "catalog:artist:2")
         self.assertEqual(related.related[0].shared_genre_count, 2)
         self.assertNotIn("catalog:artist:1", [item.artist.artist_id for item in related.related])
+        self.assertEqual([item.genre.name for item in peers.peers], ["Jazz"])
+        self.assertEqual(peers.peers[0].method, "direct_weighted_jaccard")
+        self.assertEqual(peers.peers[0].shared_artist_count, 2)
         self.assertEqual(unsupported.members, ())
         self.assertEqual(open_genre, 10)
         self.assertIsNone(legacy_genre)
@@ -91,6 +95,11 @@ def _fixture(path: Path) -> None:
                 id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL, identifier_type_id INTEGER NOT NULL,
                 normalized_value TEXT NOT NULL
             );
+            CREATE TABLE displayable_public_genre_neighbors (
+                genre_id INTEGER NOT NULL, neighbor_genre_id INTEGER NOT NULL,
+                profile_kind TEXT NOT NULL, metric TEXT NOT NULL, score REAL NOT NULL,
+                shared_artist_count INTEGER NOT NULL, rank INTEGER NOT NULL
+            );
             INSERT INTO artists VALUES (1), (2), (3), (4);
             INSERT INTO genres VALUES (10, 'Rock'), (20, 'Jazz'), (30, 'Unsupported');
             INSERT INTO displayable_entity_names VALUES
@@ -105,6 +114,10 @@ def _fixture(path: Path) -> None:
             INSERT INTO artist_genre_evidence VALUES (99, 4, 10, 'review_anchor');
             INSERT INTO identifier_types VALUES (1, 'wikidata_genre_qid');
             INSERT INTO entity_identifiers VALUES (1, 10, 1, 'Q10');
+            INSERT INTO displayable_public_genre_neighbors VALUES
+                (10, 20, 'direct', 'weighted_jaccard', 0.5, 2, 1),
+                (10, 30, 'one_hop', 'weighted_jaccard', 0.9, 4, 1),
+                (10, 30, 'direct', 'cosine', 0.9, 4, 1);
             """
         )
         connection.commit()

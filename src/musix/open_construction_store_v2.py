@@ -20,7 +20,11 @@ if TYPE_CHECKING:
 
 _LEVEL_BUDGETS = (48, 240, 480, 720)
 _SEARCH_LIMIT = 20
+_HIERARCHY_RELATION_LIMIT = 12
 _MUSIC_ROOT_NODE_ID: Final = "catalog:wikidata:genre:Q115484611"
+# A reviewed presentation distinction for this exact catalog identity, not a
+# general rule inferred from a node name or from taxonomy depth.
+_POPULAR_MUSIC_NODE_ID: Final = "catalog:wikidata:genre:Q373342"
 _UNRESOLVED_IMPORT_STATUSES: Final = frozenset(
     {"anchored_compositional", "ambiguous_exact", "ambiguous_compositional", "abstained"}
 )
@@ -50,6 +54,7 @@ class OpenConstructionV2MapNode(FrozenModel):
     name: str = Field(min_length=1)
     source_name: str | None = Field(default=None, min_length=1)
     taxonomy_status: str | None = Field(default=None, min_length=1)
+    taxonomy_presentation: Literal["ordinary", "structural_umbrella"] = "ordinary"
     x: float
     y: float
     degree: int = Field(ge=0)
@@ -97,6 +102,21 @@ class OpenConstructionV2NeighborResponse(FrozenModel):
     node_id: str = Field(min_length=1)
     nodes: tuple[OpenConstructionV2MapNode, ...] = Field(min_length=1, max_length=25)
     edges: tuple[OpenConstructionV2MapEdge, ...] = Field(max_length=24)
+    hierarchy: OpenConstructionV2HierarchyRelations
+
+
+class OpenConstructionV2HierarchyRelations(FrozenModel):
+    """Factual taxonomy navigation, kept separate from review links and peers."""
+
+    broader: tuple[OpenConstructionV2MapNode, ...] = Field(max_length=_HIERARCHY_RELATION_LIMIT)
+    broader_total: int = Field(ge=0)
+    broader_remaining: int = Field(ge=0)
+    narrower: tuple[OpenConstructionV2MapNode, ...] = Field(max_length=_HIERARCHY_RELATION_LIMIT)
+    narrower_total: int = Field(ge=0)
+    narrower_remaining: int = Field(ge=0)
+    siblings: tuple[OpenConstructionV2MapNode, ...] = Field(max_length=_HIERARCHY_RELATION_LIMIT)
+    siblings_total: int = Field(ge=0)
+    siblings_remaining: int = Field(ge=0)
 
 
 class OpenConstructionV2SearchResponse(FrozenModel):
@@ -157,6 +177,9 @@ class OpenConstructionV2MapStore:
                 name=_display_name(node.node_id, node.name),
                 source_name=node.name if node.node_id in _ALIASES_BY_NODE_ID else None,
                 taxonomy_status=node.taxonomy_status,
+                taxonomy_presentation=(
+                    "structural_umbrella" if node.node_id == _POPULAR_MUSIC_NODE_ID else "ordinary"
+                ),
                 x=layout[node.node_id].landscape_x,
                 y=layout[node.node_id].landscape_y,
                 degree=degree[node.node_id],
@@ -177,10 +200,18 @@ class OpenConstructionV2MapStore:
             candidates = [
                 node
                 for node in candidates
-                if node.node_kind == "public_catalog_genre" and node.degree
+                if (
+                    node.node_kind == "public_catalog_genre"
+                    and node.taxonomy_presentation == "ordinary"
+                    and node.degree
+                )
             ]
         elif level == 1:
-            candidates = [node for node in candidates if node.degree]
+            candidates = [
+                node
+                for node in candidates
+                if node.taxonomy_presentation == "ordinary" and node.degree
+            ]
         # The deep cohorts are spatially tiled by the request bounds. Include
         # isolated names here as well: they have no edge-driven reason to be
         # ranked into the overview, but their coordinates must remain
@@ -282,6 +313,52 @@ class OpenConstructionV2MapStore:
             node_id=node_id,
             nodes=tuple(self._nodes[value] for value in sorted(node_ids)),
             edges=tuple(self._edge(edge) for edge in edges),
+            hierarchy=self._hierarchy_relations(node_id),
+        )
+
+    def _hierarchy_relations(self, node_id: str) -> OpenConstructionV2HierarchyRelations:
+        """Project factual parent, child, and shared-parent navigation only."""
+        artifact = self._require_artifact()
+        parents: set[str] = set()
+        children: set[str] = set()
+        for edge in artifact.edges:
+            if edge.kind != "public_catalog_taxonomy_parent" or not edge.factual_relationship:
+                continue
+            if edge.source_node_id == node_id:
+                parents.add(edge.target_node_id)
+            elif edge.target_node_id == node_id:
+                children.add(edge.source_node_id)
+        siblings: set[str] = set()
+        for edge in artifact.edges:
+            if (
+                edge.kind == "public_catalog_taxonomy_parent"
+                and edge.factual_relationship
+                and edge.target_node_id in parents
+                and edge.source_node_id != node_id
+            ):
+                siblings.add(edge.source_node_id)
+        broader = self._relation_nodes(parents)
+        narrower = self._relation_nodes(children)
+        sibling_nodes = self._relation_nodes(siblings)
+        return OpenConstructionV2HierarchyRelations(
+            broader=broader,
+            broader_total=len(parents),
+            broader_remaining=len(parents) - len(broader),
+            narrower=narrower,
+            narrower_total=len(children),
+            narrower_remaining=len(children) - len(narrower),
+            siblings=sibling_nodes,
+            siblings_total=len(siblings),
+            siblings_remaining=len(siblings) - len(sibling_nodes),
+        )
+
+    def _relation_nodes(self, node_ids: set[str]) -> tuple[OpenConstructionV2MapNode, ...]:
+        """Bound factual relations by graph prominence, then stable visible name."""
+        return tuple(
+            sorted(
+                (self._nodes[node_id] for node_id in node_ids),
+                key=lambda node: (-node.degree, node.name.casefold(), node.node_id),
+            )[:_HIERARCHY_RELATION_LIMIT]
         )
 
     def search(self, query: str, *, limit: int = _SEARCH_LIMIT) -> OpenConstructionV2SearchResponse:

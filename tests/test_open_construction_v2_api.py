@@ -86,6 +86,26 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
         self.assertEqual(drill.status_code, 200)
         self.assertLessEqual(len(drill.json()["nodes"]), 25)
         self.assertLessEqual(len(drill.json()["edges"]), 24)
+        hierarchy = drill.json()["hierarchy"]
+        self.assertEqual(
+            set(hierarchy),
+            {
+                "broader",
+                "broader_total",
+                "broader_remaining",
+                "narrower",
+                "narrower_total",
+                "narrower_remaining",
+                "siblings",
+                "siblings_total",
+                "siblings_remaining",
+            },
+        )
+        self.assertGreaterEqual(hierarchy["narrower_total"], len(hierarchy["narrower"]))
+        self.assertEqual(
+            hierarchy["narrower_remaining"],
+            hierarchy["narrower_total"] - len(hierarchy["narrower"]),
+        )
         self.assertTrue(
             all(
                 not edge["factual_relationship"]

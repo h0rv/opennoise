@@ -99,6 +99,22 @@ class RelatedArtistsResponse(FrozenModel):
     related: tuple[RelatedArtist, ...] = Field(max_length=_MAX_PAGE_SIZE)
 
 
+class DirectPeerGenre(FrozenModel):
+    """One persisted direct-profile neighbor from the current public model."""
+
+    genre: PublicGenre
+    method: Literal["direct_weighted_jaccard"] = "direct_weighted_jaccard"
+    score: float = Field(gt=0.0, le=1.0)
+    shared_artist_count: int = Field(gt=0)
+
+
+class GenreDirectPeersResponse(FrozenModel):
+    """Bounded direct artist-overlap peers, separate from taxonomy relations."""
+
+    genre: PublicGenre
+    peers: tuple[DirectPeerGenre, ...] = Field(max_length=8)
+
+
 class PublicArtistNavigationStore:
     """Read the policy-filtered direct-evidence view without using model or H3 data."""
 
@@ -123,6 +139,10 @@ class PublicArtistNavigationStore:
     ) -> RelatedArtistsResponse:
         """Return related artists sharing direct display-authorized genres."""
         return await asyncio.to_thread(self._related_artists_sync, artist_id, offset, limit)
+
+    async def genre_direct_peers(self, genre_id: int) -> GenreDirectPeersResponse:
+        """Read the current model's bounded direct weighted-Jaccard peers only."""
+        return await asyncio.to_thread(self._genre_direct_peers_sync, genre_id)
 
     async def catalog_genre_id_for_open_node(self, node_id: str) -> int | None:
         """Resolve only one exact Open catalog QID to its local catalog identity."""
@@ -232,6 +252,33 @@ class PublicArtistNavigationStore:
                 (qid,),
             ).fetchall()
         return int(rows[0][0]) if len(rows) == 1 else None
+
+    def _genre_direct_peers_sync(self, genre_id: int) -> GenreDirectPeersResponse:
+        with closing(self._connect()) as connection:
+            genre = self._genre(connection, genre_id)
+            rows = connection.execute(
+                """SELECT relation.neighbor_genre_id, neighbor.name, relation.score,
+                          relation.shared_artist_count
+                   FROM displayable_public_genre_neighbors AS relation
+                   JOIN genres AS neighbor ON neighbor.id = relation.neighbor_genre_id
+                   WHERE relation.genre_id = ?
+                     AND relation.profile_kind = 'direct'
+                     AND relation.metric = 'weighted_jaccard'
+                   ORDER BY relation.rank, neighbor.name COLLATE NOCASE, neighbor.id
+                   LIMIT 8""",
+                (genre_id,),
+            ).fetchall()
+        return GenreDirectPeersResponse(
+            genre=genre,
+            peers=tuple(
+                DirectPeerGenre(
+                    genre=_genre_value(int(row[0]), str(row[1])),
+                    score=float(row[2]),
+                    shared_artist_count=int(row[3]),
+                )
+                for row in rows
+            ),
+        )
 
     def _open_node_ids_for_catalog_genres_sync(self, genre_ids: tuple[int, ...]) -> dict[int, str]:
         if not genre_ids:

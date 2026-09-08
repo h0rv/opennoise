@@ -95,6 +95,63 @@ class OpenConstructionV2MapStoreTests(unittest.TestCase):
         self.assertEqual(neighbors.node_id, "legacy:item4656")
         self.assertEqual(neighbors.edges, ())
 
+    def test_projects_factual_taxonomy_roles_without_turning_them_into_peers(self) -> None:
+        store = OpenConstructionV2MapStore(ROOT / "data/model/open-construction-graph-v2.json")
+
+        hip_hop = store.neighbors("catalog:wikidata:genre:Q11401")
+        pop_music = store.neighbors("catalog:wikidata:genre:Q37073")
+        popular_music = store.neighbors("catalog:wikidata:genre:Q373342")
+        review_only = store.neighbors("legacy:item887")
+
+        self.assertEqual(
+            [item.node_id for item in hip_hop.hierarchy.broader],
+            ["catalog:wikidata:genre:Q373342"],
+        )
+        self.assertIn(
+            "catalog:wikidata:genre:Q438503",
+            {item.node_id for item in hip_hop.hierarchy.narrower},
+        )
+        self.assertEqual(hip_hop.hierarchy.narrower_total, 39)
+        self.assertEqual(len(hip_hop.hierarchy.narrower), 12)
+        self.assertEqual(hip_hop.hierarchy.narrower_remaining, 27)
+        self.assertEqual(
+            [item.node_id for item in pop_music.hierarchy.broader],
+            ["catalog:wikidata:genre:Q373342"],
+        )
+        self.assertEqual(pop_music.hierarchy.siblings_total, 28)
+        self.assertEqual(len(pop_music.hierarchy.siblings), 12)
+        self.assertEqual(pop_music.hierarchy.siblings_remaining, 16)
+        self.assertIn(
+            "catalog:wikidata:genre:Q37073",
+            {item.node_id for item in popular_music.hierarchy.narrower},
+        )
+        self.assertEqual(
+            next(
+                item for item in pop_music.nodes if item.node_id == pop_music.node_id
+            ).taxonomy_presentation,
+            "ordinary",
+        )
+        self.assertEqual(
+            next(
+                item for item in popular_music.nodes if item.node_id == popular_music.node_id
+            ).taxonomy_presentation,
+            "structural_umbrella",
+        )
+        self.assertNotIn(
+            "catalog:wikidata:genre:Q373342",
+            {item.node_id for item in store.response(level=0).nodes},
+        )
+        self.assertEqual(
+            store.search("popular music").hits[0].taxonomy_presentation,
+            "structural_umbrella",
+        )
+        self.assertEqual(review_only.hierarchy.broader, ())
+        self.assertEqual(review_only.hierarchy.narrower, ())
+        self.assertEqual(review_only.hierarchy.siblings, ())
+        self.assertEqual(review_only.hierarchy.broader_total, 0)
+        self.assertEqual(review_only.hierarchy.narrower_total, 0)
+        self.assertEqual(review_only.hierarchy.siblings_total, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

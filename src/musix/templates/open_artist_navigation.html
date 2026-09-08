@@ -1,6 +1,42 @@
 <section class="artist-navigation" data-open-artist-node-id="{{ node_id }}">
 {% if genre_response %}
   <h2>{{ genre_response.genre.name }}</h2>
+  {% if hierarchy %}
+    {% if hierarchy.broader %}
+    <section aria-label="Broader taxonomy genres"><h3>Broader</h3><ul>{% for item in hierarchy.broader %}
+      <li><a href="/fragments/open-construction-map/v2/artists/{{ item.node_id | urlencode }}"
+             data-open-node-id="{{ item.node_id }}"
+             hx-get="/fragments/open-construction-map/v2/artists/{{ item.node_id | urlencode }}"
+             hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ item.name }}</a>{% if item.taxonomy_presentation == 'structural_umbrella' %} <small>category</small>{% endif %}</li>
+    {% endfor %}</ul></section>
+    {% endif %}
+    {% if hierarchy.narrower %}
+    <section aria-label="Narrower taxonomy genres"><h3>Narrower{% if hierarchy.narrower_remaining %} <small>{{ hierarchy.narrower_total }} total; showing {{ hierarchy.narrower | length }}</small>{% endif %}</h3><ul>{% for item in hierarchy.narrower %}
+      <li><a href="/fragments/open-construction-map/v2/artists/{{ item.node_id | urlencode }}"
+             data-open-node-id="{{ item.node_id }}"
+             hx-get="/fragments/open-construction-map/v2/artists/{{ item.node_id | urlencode }}"
+             hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ item.name }}</a></li>
+    {% endfor %}</ul></section>
+    {% endif %}
+    {% if hierarchy.siblings %}
+    <section aria-label="Sibling taxonomy genres"><h3>Siblings{% if hierarchy.siblings_remaining %} <small>{{ hierarchy.siblings_total }} total; showing {{ hierarchy.siblings | length }}</small>{% endif %}</h3><ul>{% for item in hierarchy.siblings %}
+      <li><a href="/fragments/open-construction-map/v2/artists/{{ item.node_id | urlencode }}"
+             data-open-node-id="{{ item.node_id }}"
+             hx-get="/fragments/open-construction-map/v2/artists/{{ item.node_id | urlencode }}"
+             hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ item.name }}</a></li>
+    {% endfor %}</ul></section>
+    {% endif %}
+  {% endif %}
+  {% if peer_response and peer_response.peers %}
+  <section aria-label="Related genres by shared direct artists"><h3>Related genres</h3><p>Shared direct artists</p><ul>{% for peer in peer_response.peers %}
+    {% set open_node_id = peer_node_ids.get(peer.genre.entity_id) %}
+    {% if open_node_id not in structural_peer_node_ids %}<li>{% if open_node_id %}<a href="/fragments/open-construction-map/v2/artists/{{ open_node_id | urlencode }}"
+           data-open-node-id="{{ open_node_id }}"
+           hx-get="/fragments/open-construction-map/v2/artists/{{ open_node_id | urlencode }}"
+           hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ peer.genre.name }}</a>{% else %}{{ peer.genre.name }}{% endif %}
+        <small>{{ peer.shared_artist_count }} shared direct artist{% if peer.shared_artist_count != 1 %}s{% endif %} · {{ '%.2f' | format(peer.score) }}</small></li>{% endif %}
+  {% endfor %}</ul></section>
+  {% endif %}
   {% if genre_response.members %}
   <p>Direct artist claims</p>
   <ul>

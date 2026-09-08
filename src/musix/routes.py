@@ -613,6 +613,7 @@ class EvidenceController(Controller):
     @get("/fragments/open-construction-map/v2/artists/{node_id:str}")
     async def open_v2_genre_artists_fragment(
         self,
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
         public_artist_navigation: NamedDependency[PublicArtistNavigationStore],
         node_id: FromPath[str],
     ) -> Template:
@@ -621,17 +622,53 @@ class EvidenceController(Controller):
         if genre_id is None:
             return Template(
                 template_name="open_artist_navigation.html",
-                context={"node_id": node_id, "genre_response": None},
+                context={
+                    "node_id": node_id,
+                    "genre_response": None,
+                    "peer_response": None,
+                    "peer_node_ids": {},
+                    "hierarchy": None,
+                },
             )
         try:
             response = await public_artist_navigation.genre_artists(genre_id, offset=0, limit=20)
+            peers = await public_artist_navigation.genre_direct_peers(genre_id)
+            peer_node_ids = await public_artist_navigation.open_node_ids_for_catalog_genres(
+                tuple(item.genre.entity_id for item in peers.peers)
+            )
         except PublicArtistNavigationStoreError as error:
             raise ServiceUnavailableException(
                 detail="public artist navigation is unavailable"
             ) from error
+        hierarchy = None
+        structural_peer_node_ids = frozenset[str]()
+        if open_construction_graph_v2.configured:
+            try:
+                hierarchy = open_construction_graph_v2.neighbors(node_id).hierarchy
+                structural_peer_node_ids = frozenset(
+                    peer_node_id
+                    for peer_node_id in peer_node_ids.values()
+                    if any(
+                        item.node_id == peer_node_id
+                        and item.taxonomy_presentation == "structural_umbrella"
+                        for item in open_construction_graph_v2.neighbors(peer_node_id).nodes
+                    )
+                )
+            except OpenConstructionV2MapStoreError:
+                # Exact catalog artist evidence can exist for a node that is
+                # absent from a configured map artifact; do not invent a
+                # hierarchy or hide the independent direct-claim panel.
+                hierarchy = None
         return Template(
             template_name="open_artist_navigation.html",
-            context={"node_id": node_id, "genre_response": response},
+            context={
+                "node_id": node_id,
+                "genre_response": response,
+                "peer_response": peers,
+                "peer_node_ids": peer_node_ids,
+                "structural_peer_node_ids": structural_peer_node_ids,
+                "hierarchy": hierarchy,
+            },
         )
 
     @get("/fragments/open-construction-map/v2/artists/{node_id:str}/artist/{artist_id:int}")
