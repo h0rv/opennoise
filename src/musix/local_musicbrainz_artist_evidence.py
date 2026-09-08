@@ -20,10 +20,12 @@ from pydantic import Field, FiniteFloat
 
 from musix.genre_seed_universe import normalize_label
 from musix.local_musicbrainz_artist_metadata import (
+    CertifiedLocalArtistMetadataSources,
     LocalArtistMetadataSources,
     LocalMusicBrainzArtistMetadataError,
+    certify_local_artist_metadata_sources,
     exact_canonical_names,
-    verify_local_artist_metadata_sources,
+    exact_certified_canonical_names,
 )
 from musix.models import FrozenModel
 from musix.musicbrainz_model_adapter import (
@@ -74,6 +76,7 @@ class LocalMusicBrainzArtistEvidenceStore:
 
     sources: LocalMusicBrainzEvidenceSources
     _ready: bool = False
+    _certified_artist_metadata: CertifiedLocalArtistMetadataSources | None = None
 
     def start(self) -> None:
         """Verify immutable files once before accepting bounded queries."""
@@ -90,7 +93,9 @@ class LocalMusicBrainzArtistEvidenceStore:
                 raise LocalMusicBrainzArtistEvidenceError(
                     "artist metadata does not bind the completed evidence artifact"
                 )
-            verify_local_artist_metadata_sources(self.sources.artist_metadata)
+            self._certified_artist_metadata = certify_local_artist_metadata_sources(
+                self.sources.artist_metadata
+            )
         self._ready = True
 
     @property
@@ -102,7 +107,13 @@ class LocalMusicBrainzArtistEvidenceStore:
         """Query a startup-certified database without recalculating its full hash."""
         if not self._ready:
             raise LocalMusicBrainzArtistEvidenceError("local research evidence is not certified")
-        return _direct_artists_for_seed(self.sources, seed_query, limit=limit, trusted=True)
+        return _direct_artists_for_seed(
+            self.sources,
+            seed_query,
+            limit=limit,
+            trusted=True,
+            certified_artist_metadata=self._certified_artist_metadata,
+        )
 
     def seeds_for_artist(self, artist_mbid: str, *, limit: int = 25) -> LocalArtistSeedResponse:
         """Return exact direct and album-supported stable seeds after certification."""
@@ -227,6 +238,7 @@ def _direct_artists_for_seed(
     *,
     limit: int,
     trusted: bool,
+    certified_artist_metadata: CertifiedLocalArtistMetadataSources | None = None,
 ) -> LocalArtistEvidenceResponse:
     """Implement the public query and the startup-certified store query."""
     _require_limit(limit)
@@ -255,7 +267,7 @@ def _direct_artists_for_seed(
         query_seconds = monotonic() - query_started
     claims = _group_artist_claims(_parse_artist_rows(raw_rows))
     supported = _group_supported_artists(_parse_support_artist_rows(support_rows))
-    names = _exact_attached_names(sources, claims, supported, certified=trusted)
+    names = _exact_attached_names(sources, claims, supported, certified_artist_metadata)
     claims = tuple(
         claim.model_copy(update={"canonical_name": names.get(claim.artist_mbid)})
         for claim in claims
@@ -389,8 +401,7 @@ def _exact_attached_names(
     sources: LocalMusicBrainzEvidenceSources,
     direct: tuple[DirectArtistClaim, ...],
     supported: tuple[AlbumSupportedArtistClaim, ...],
-    *,
-    certified: bool = False,
+    certified: CertifiedLocalArtistMetadataSources | None,
 ) -> dict[str, str]:
     metadata = sources.artist_metadata
     if metadata is None:
@@ -405,7 +416,9 @@ def _exact_attached_names(
         )
     )
     try:
-        return exact_canonical_names(metadata, artist_ids, verified=certified)
+        if certified is not None:
+            return exact_certified_canonical_names(certified, artist_ids)
+        return exact_canonical_names(metadata, artist_ids)
     except LocalMusicBrainzArtistMetadataError as error:
         raise LocalMusicBrainzArtistEvidenceError("artist metadata is invalid") from error
 

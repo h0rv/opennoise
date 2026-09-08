@@ -7,6 +7,7 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from musix.local_musicbrainz_artist_metadata import (
     ArtistMetadataBuildInputs,
@@ -14,7 +15,9 @@ from musix.local_musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     LocalMusicBrainzArtistMetadataError,
     build_artist_metadata,
+    certify_local_artist_metadata_sources,
     exact_canonical_names,
+    exact_certified_canonical_names,
 )
 from musix.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
@@ -29,6 +32,29 @@ _ARTIST_B = "00000000-0000-4000-8000-000000000002"
 
 
 class LocalMusicBrainzArtistMetadataTests(unittest.TestCase):
+    def test_only_startup_certificate_allows_lookup_without_integrity_check(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            evidence_db = _evidence_database(root / "evidence.sqlite")
+            archive = _single_name_archive(root / "release-group.tar.xz")
+            artifact = build_artist_metadata(
+                ArtistMetadataBuildInputs(
+                    archive=archive,
+                    evidence_database=evidence_db,
+                    evidence_artifact=_evidence_artifact(evidence_db, archive),
+                    output_database=root / "names.sqlite",
+                )
+            )
+            sources = LocalArtistMetadataSources(database=root / "names.sqlite", artifact=artifact)
+            certified = certify_local_artist_metadata_sources(sources)
+            with patch(
+                "musix.local_musicbrainz_artist_metadata._exact_canonical_names", return_value={}
+            ) as lookup:
+                exact_certified_canonical_names(certified, (_ARTIST_A,))
+                exact_canonical_names(sources, (_ARTIST_A,))
+
+        self.assertEqual(lookup.call_args_list[0].kwargs["integrity_check"], False)
+        self.assertEqual(lookup.call_args_list[1].kwargs["integrity_check"], True)
     def test_uses_exact_nested_names_and_preserves_conflicts(self) -> None:
         with TemporaryDirectory() as temporary:
             root = Path(temporary)

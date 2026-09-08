@@ -116,6 +116,13 @@ class LocalArtistMetadataSources:
 
 
 @dataclass(frozen=True, slots=True)
+class CertifiedLocalArtistMetadataSources:
+    """Startup-certified metadata inputs for bounded process-local lookups."""
+
+    sources: LocalArtistMetadataSources
+
+
+@dataclass(frozen=True, slots=True)
 class ArtistMetadataBuildInputs:
     """Immutable inputs for one exact-ID release-credit metadata build."""
 
@@ -230,17 +237,30 @@ def build_artist_metadata(
 def exact_canonical_names(
     sources: LocalArtistMetadataSources,
     artist_mbids: tuple[str, ...],
-    *,
-    verified: bool = False,
 ) -> dict[str, str]:
     """Return only conflict-free canonical names for exact source MBIDs."""
-    if not verified:
-        verify_local_artist_metadata_sources(sources)
+    certify_local_artist_metadata_sources(sources)
+    return _exact_canonical_names(sources, artist_mbids, integrity_check=True)
+
+
+def exact_certified_canonical_names(
+    certified: CertifiedLocalArtistMetadataSources, artist_mbids: tuple[str, ...]
+) -> dict[str, str]:
+    """Read metadata after this process completed startup certification."""
+    return _exact_canonical_names(certified.sources, artist_mbids, integrity_check=False)
+
+
+def _exact_canonical_names(
+    sources: LocalArtistMetadataSources,
+    artist_mbids: tuple[str, ...],
+    *,
+    integrity_check: bool,
+) -> dict[str, str]:
     if not artist_mbids:
         return {}
     with closing(sqlite3.connect(f"file:{sources.database.absolute()}?mode=ro", uri=True)) as conn:
         conn.execute("PRAGMA query_only = ON")
-        if conn.execute("PRAGMA integrity_check").fetchone() != ("ok",):
+        if integrity_check and conn.execute("PRAGMA integrity_check").fetchone() != ("ok",):
             raise LocalMusicBrainzArtistMetadataError("metadata database failed integrity check")
         placeholders = ",".join("?" for _ in artist_mbids)
         rows = conn.execute(
@@ -264,6 +284,14 @@ def verify_local_artist_metadata_sources(sources: LocalArtistMetadataSources) ->
         conn.execute("PRAGMA query_only = ON")
         if conn.execute("PRAGMA integrity_check").fetchone() != ("ok",):
             raise LocalMusicBrainzArtistMetadataError("metadata database failed integrity check")
+
+
+def certify_local_artist_metadata_sources(
+    sources: LocalArtistMetadataSources,
+) -> CertifiedLocalArtistMetadataSources:
+    """Return a certificate only after whole-file and SQLite startup checks."""
+    verify_local_artist_metadata_sources(sources)
+    return CertifiedLocalArtistMetadataSources(sources)
 
 
 def _verify_evidence_database(path: Path, artifact: ReleaseGroupEvidenceArtifact) -> None:
