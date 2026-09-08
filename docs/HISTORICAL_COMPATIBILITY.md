@@ -41,7 +41,7 @@ poe historical-signal-release
 Serve the resulting publication only through the explicit local setting:
 
 ```sh
-MUSIX_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json poe dev
+MUSIX_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json uv run poe dev
 ```
 
 Member detail remains independently opt-in. It requires only the separately configured local
@@ -51,7 +51,7 @@ It is unavailable rather than inferred when the database setting is absent.
 ```sh
 MUSIX_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json \
 MUSIX_HISTORICAL_MEMBERSHIP_DATABASE_PATH=path/to/local-memberships.sqlite \
-poe dev
+uv run poe dev
 ```
 
 The publisher verifies the pinned source before parsing, writes one immutable JSON artifact to the

@@ -1,31 +1,30 @@
 # Public release pipeline
 
-`mise run release-certify` is the cache-only public release command. It builds a
+`uv run poe release-certify` is the cache-only public release command. It builds a
 fresh serving release and fails closed if any source, model, map, renderer, or
 browser evidence is missing or inconsistent.
 
 It requires:
 
 - `config/releases/phase3-public-20260831/release-manifest.json`
-- `data/phase3-public-qualified.sqlite`
+- the sealed cache passed with `--cache-database`
 - Chromium at `/usr/bin/chromium`, Node, and the `musix` CLI
 
 It never fetches a source, reads music or audio files, or calls a live data API.
 
-The manifest is checked in, but the 153,231,360-byte sealed cache database is
-not retained in this checkout. Consequently a fresh checkout cannot run this
-command until an operator supplies the exact cache database whose SHA-256 is
+The verified sealed cache in this checkout is
+`.cache/listenbrainz-qualified-input/sha256/282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite`.
+It is 153,231,360 bytes and has SHA-256
 `282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866`.
 The retained `.cache/release-certify` outputs are runnable evidence, not a
-replacement for that source cache or a full source-to-publication rebuild.
+replacement for the sealed cache or a full source-to-publication rebuild.
 
 ## Command
 
 ```sh
-mise run release-certify
+uv run poe release-certify -- \
+  --cache-database .cache/listenbrainz-qualified-input/sha256/282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite
 ```
-
-`uv run poe release-certify` is the equivalent direct Poe command.
 
 The command verifies the sealed cache, materializes a serving database and
 public model, builds the production map, writes acceptance evidence, starts a
@@ -45,7 +44,7 @@ The command accepts explicit path and port overrides:
 
 ```sh
 uv run poe release-certify -- \
-  --cache-database data/phase3-public-qualified.sqlite \
+  --cache-database .cache/listenbrainz-qualified-input/sha256/282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite \
   --serving-database data/public.sqlite \
   --model-output data/model/phase3-public-model.json \
   --receipt-output data/release/phase3-public-receipt.json \

@@ -86,6 +86,7 @@ python-version = "3.13"
 all = "error"
 
 [tool.poe.tasks]
+sync = "uv sync --locked"
 format = "ruff format ."
 format-check = "ruff format --check ."
 lint = "ruff check ."

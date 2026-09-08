@@ -8,18 +8,28 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class TaskContractTests(unittest.TestCase):
-    """Keep documented production commands reachable through both task runners."""
+    """Keep Poe as the sole project task runner."""
 
-    def test_mise_exposes_the_poe_release_certification_boundary(self) -> None:
+    def test_poe_exposes_required_project_tasks_without_mise_task_aliases(self) -> None:
         mise = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        poe_tasks = project["tool"]["poe"]["tasks"]
 
-        release_task = mise["tasks"]["release-certify"]
+        self.assertNotIn("tasks", mise)
+        self.assertTrue(
+            {
+                "sync",
+                "bootstrap",
+                "dev",
+                "dev-legacy",
+                "check",
+                "release-certify",
+            }.issubset(poe_tasks)
+        )
+        self.assertEqual(poe_tasks["sync"], "uv sync --locked")
 
-        self.assertEqual(release_task["depends"], ["sync"])
-        self.assertEqual(release_task["run"], "uv run poe release-certify")
         self.assertEqual(
-            project["tool"]["poe"]["tasks"]["release-certify"]["cmd"],
+            poe_tasks["release-certify"]["cmd"],
             "python scripts/release_certify.py",
         )
 
@@ -27,6 +37,20 @@ class TaskContractTests(unittest.TestCase):
         startup_script = (ROOT / "scripts" / "run_dev.py").read_text(encoding="utf-8")
 
         self.assertIn("uv run poe release-certify", startup_script)
+
+    def test_active_release_docs_use_the_verified_cache_with_poe(self) -> None:
+        documentation = "\n".join(
+            (ROOT / path).read_text(encoding="utf-8")
+            for path in ("README.md", "docs/PUBLIC_RELEASE_PIPELINE.md")
+        )
+
+        self.assertNotIn("mise run", documentation)
+        self.assertIn("uv run poe release-certify", documentation)
+        self.assertIn(
+            ".cache/listenbrainz-qualified-input/sha256/"
+            "282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite",
+            documentation,
+        )
 
 
 if __name__ == "__main__":

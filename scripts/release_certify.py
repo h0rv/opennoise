@@ -51,7 +51,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--port", type=int, default=3012)
     arguments = sys.argv[1:]
     # Poe forwards free task arguments after a literal separator. Accept that
-    # separator here so `poe release-certify -- --cache-database …` is exact.
+    # separator here so `uv run poe release-certify -- --cache-database …` is exact.
     if arguments[:1] == ["--"]:
         arguments = arguments[1:]
     return parser.parse_args(arguments)

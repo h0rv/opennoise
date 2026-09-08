@@ -51,7 +51,7 @@ are satisfied.
 ## Publication
 
 `poe build-public-model` creates a versioned model artifact from local,
-verified inputs. `poe release-certify` is the release boundary. It validates the
+verified inputs. `uv run poe release-certify` is the release boundary. It validates the
 qualified cache, serving database, model artifact, production-map artifact, and
 their manifests before a server can use them.
 

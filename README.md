@@ -55,12 +55,12 @@ node names/IDs and neighbor ranks to report name overlap and topology recall.
 
 ## Run
 
-Python is pinned to 3.13.14. mise installs Python and uv. uv installs the
-locked environment. Poe runs project tasks.
+Python is pinned to 3.13.14. mise installs Python and uv. Poe is the sole
+project task runner and uses uv to install the locked environment.
 
 ```sh
 mise install
-mise run sync
+uv run poe sync
 uv run poe check
 ```
 
@@ -68,19 +68,20 @@ Build or verify a sealed local release before serving a production map. The
 release uses only its local cache and never fetches data during serving.
 
 ```sh
-mise run release-certify
+uv run poe release-certify -- \
+  --cache-database .cache/listenbrainz-qualified-input/sha256/282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite
 MUSIX_DATABASE_PATH=data/public.sqlite \
 MUSIX_PRODUCTION_MAP_PATH=data/model/production-map-v1.json \
-mise run dev
+uv run poe dev
 ```
 
 Open <http://127.0.0.1:3001>.
 
 `release-certify` fails closed until the qualified source cache, public model,
 map artifact, and renderer evidence agree. The product only serves a configured
-map artifact that passes those checks. In a fresh checkout, the sealed cache is
-not retained; see `docs/PUBLIC_RELEASE_PIPELINE.md` for its required identity
-and restoration path. `uv run poe release-certify` remains the direct Poe form.
+map artifact that passes those checks. This checkout's retained sealed cache is
+the path used above; see `docs/PUBLIC_RELEASE_PIPELINE.md` for the release
+inputs and outputs.
 
 ## Stack
 

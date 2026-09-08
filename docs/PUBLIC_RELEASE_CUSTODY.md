@@ -89,6 +89,6 @@ object digest and size, validates the nested custody receipt bindings, and
 loads the restored release configuration. `restore` verifies before pulling and
 uses the atomic object-store pull for every named destination. Running it again
 is a byte-for-byte idempotent replacement. After restore,
-`poe release-certify -- --cache-database data/phase3-public-qualified.sqlite`
+`uv run poe release-certify -- --cache-database data/phase3-public-qualified.sqlite`
 has its exact required cache and release configuration; it can produce fresh
 serving/browser outputs, but does not claim to re-ingest the original sources.
