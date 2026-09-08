@@ -22,6 +22,7 @@ from uuid import UUID
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from musix.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
 from musix.sources.musicbrainz import MusicBrainzArtist, MusicBrainzClient
 
 if TYPE_CHECKING:
@@ -189,10 +190,20 @@ def build_query_manifest(evidence_database: Path, reconciliation: Path) -> Pilot
             "evidence database does not match the pinned input SHA256"
         )
     reconciliation_sha = _file_sha256(reconciliation)
+    reconciliation_artifact = SeedReconciliationArtifact.model_validate_json(
+        reconciliation.read_bytes()
+    )
+    verify_seed_reconciliation(reconciliation_artifact)
+    dispositions = {item.source_item_id: item for item in reconciliation_artifact.dispositions}
     selected: set[str] = set()
     entries: list[PilotSelectionEntry] = []
     with sqlite3.connect(f"file:{evidence_database}?mode=ro", uri=True) as connection:
         for cohort, source_item_id, seed_name, genre_id in _COHORTS:
+            disposition = dispositions.get(source_item_id)
+            if disposition is None or disposition.seed_name != seed_name:
+                raise ArtistMetadataContextPilotError(
+                    "pilot cohort does not match the verified reconciliation artifact"
+                )
             rows = connection.execute(
                 "SELECT DISTINCT artist_id FROM direct_anchor "
                 "WHERE genre_id = ? ORDER BY artist_id",
@@ -252,6 +263,10 @@ async def _load_or_fetch(
         if hashlib.sha256(raw).hexdigest() != cached.raw_sha256:
             raise ArtistMetadataContextPilotError(
                 "cached raw response hash does not match request entry"
+            )
+        if len(raw) != cached.raw_byte_size:
+            raise ArtistMetadataContextPilotError(
+                "cached raw response byte size does not match request entry"
             )
         return MusicBrainzArtist.model_validate_json(raw), cached, True
     try:

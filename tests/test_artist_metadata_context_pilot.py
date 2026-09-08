@@ -58,6 +58,30 @@ class ArtistMetadataContextPilotTests(unittest.TestCase):
         self.assertIsNotNone(artist)
         self.assertEqual(request.raw_sha256, digest)
 
+    def test_cached_response_rejects_a_declared_byte_size_mismatch(self) -> None:
+        raw = json.dumps(_artist_payload(), separators=(",", ":")).encode()
+        digest = hashlib.sha256(raw).hexdigest()
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw_path = root / "raw" / "sha256" / digest / "artist.json"
+            raw_path.parent.mkdir(parents=True)
+            raw_path.write_bytes(raw)
+            request_path = root / "requests" / f"{_ARTIST}.json"
+            request_path.parent.mkdir()
+            request_path.write_text(
+                CachedRequest(
+                    artist_mbid=_ARTIST,
+                    request_url="https://musicbrainz.org/ws/2/artist/example",
+                    received_at="2026-09-08T00:00:00+00:00",
+                    outcome="success",
+                    raw_sha256=digest,
+                    raw_byte_size=len(raw) + 1,
+                ).model_dump_json(),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(Exception, "byte size"):
+                asyncio.run(_cached_load(root))
+
 
 def _artist_payload() -> dict[str, object]:
     return {
