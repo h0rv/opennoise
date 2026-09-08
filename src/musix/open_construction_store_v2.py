@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Literal
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field
 
@@ -19,6 +20,26 @@ if TYPE_CHECKING:
 
 _LEVEL_BUDGETS = (48, 240, 480, 720)
 _SEARCH_LIMIT = 20
+_MUSIC_ROOT_NODE_ID: Final = "catalog:wikidata:genre:Q115484611"
+_UNRESOLVED_IMPORT_STATUSES: Final = frozenset(
+    {"anchored_compositional", "ambiguous_exact", "ambiguous_compositional", "abstained"}
+)
+
+
+@dataclass(frozen=True, slots=True)
+class OpenConstructionV2Alias:
+    """One reviewed display alias for an immutable retained source node."""
+
+    display_name: str
+    search_terms: tuple[str, ...]
+
+
+_ALIASES_BY_NODE_ID = {
+    "legacy:item887": OpenConstructionV2Alias(
+        display_name="Intelligent dance music (IDM)",
+        search_terms=("idm", "intelligent dance music"),
+    )
+}
 
 
 class OpenConstructionV2MapNode(FrozenModel):
@@ -27,6 +48,8 @@ class OpenConstructionV2MapNode(FrozenModel):
     node_id: str = Field(min_length=1)
     node_kind: Literal["legacy_name_seed", "public_catalog_genre"]
     name: str = Field(min_length=1)
+    source_name: str | None = Field(default=None, min_length=1)
+    taxonomy_status: str | None = Field(default=None, min_length=1)
     x: float
     y: float
     degree: int = Field(ge=0)
@@ -131,7 +154,9 @@ class OpenConstructionV2MapStore:
             node.node_id: OpenConstructionV2MapNode(
                 node_id=node.node_id,
                 node_kind=node.node_kind,
-                name=node.name,
+                name=_display_name(node.node_id, node.name),
+                source_name=node.name if node.node_id in _ALIASES_BY_NODE_ID else None,
+                taxonomy_status=node.taxonomy_status,
                 x=layout[node.node_id].landscape_x,
                 y=layout[node.node_id].landscape_y,
                 degree=degree[node.node_id],
@@ -243,7 +268,11 @@ class OpenConstructionV2MapStore:
         node = self._nodes.get(node_id)
         if node is None:
             raise OpenConstructionV2MapStoreError("open construction v2 graph node unavailable")
-        edges = self._edges_by_node.get(node_id, ())[:24]
+        edges = tuple(
+            edge
+            for edge in self._edges_by_node.get(node_id, ())
+            if not _is_generic_music_review_anchor(node, edge)
+        )[:24]
         node_ids = {node_id}
         for edge in edges:
             node_ids.add(
@@ -266,11 +295,44 @@ class OpenConstructionV2MapStore:
         if not needle:
             return OpenConstructionV2SearchResponse(hits=())
         matches = sorted(
-            (node for node in self._nodes.values() if needle in node.name.casefold()),
-            key=lambda node: (
-                not node.name.casefold().startswith(needle),
-                node.name.casefold(),
-                node.node_id,
+            (
+                (_search_rank(node, needle), node)
+                for node in self._nodes.values()
+                if _search_rank(node, needle) is not None
             ),
+            key=lambda item: (item[0], item[1].name.casefold(), item[1].node_id),
         )
-        return OpenConstructionV2SearchResponse(hits=tuple(matches[:limit]))
+        return OpenConstructionV2SearchResponse(hits=tuple(node for _, node in matches[:limit]))
+
+
+def _display_name(node_id: str, source_name: str) -> str:
+    """Use a reviewed alias without replacing the immutable source label."""
+    alias = _ALIASES_BY_NODE_ID.get(node_id)
+    return alias.display_name if alias is not None else source_name
+
+
+def _is_generic_music_review_anchor(node: OpenConstructionV2MapNode, edge: OpenGraphV2Edge) -> bool:
+    """Hide a generic review root, while retaining factual taxonomy relationships."""
+    other_node_id = (
+        edge.target_node_id if edge.source_node_id == node.node_id else edge.source_node_id
+    )
+    return (
+        edge.review_candidate
+        and edge.kind == "compositional_review_anchor"
+        and not edge.factual_relationship
+        and other_node_id == _MUSIC_ROOT_NODE_ID
+        and node.node_kind == "legacy_name_seed"
+        and node.taxonomy_status in _UNRESOLVED_IMPORT_STATUSES
+    )
+
+
+def _search_rank(node: OpenConstructionV2MapNode, needle: str) -> int | None:
+    """Rank reviewed aliases before ordinary source-name substring matches."""
+    alias = _ALIASES_BY_NODE_ID.get(node.node_id)
+    terms = (node.name, node.source_name, *(alias.search_terms if alias is not None else ()))
+    normalized = tuple(term.casefold() for term in terms if term is not None)
+    if needle in normalized:
+        return 0
+    if any(term.startswith(needle) for term in normalized):
+        return 1
+    return 2 if any(needle in term for term in normalized) else None

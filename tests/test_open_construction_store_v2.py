@@ -13,6 +13,8 @@ from musix.open_construction_store_v2 import (
 )
 from tests.test_open_construction_graph_v2 import build_expansion
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 class OpenConstructionV2MapStoreTests(unittest.TestCase):
     def test_bounded_responses_keep_fact_and_review_counts_explicit(self) -> None:
@@ -48,6 +50,16 @@ class OpenConstructionV2MapStoreTests(unittest.TestCase):
             self.assertTrue(
                 all(not edge.factual_relationship for edge in drill.edges if edge.review_candidate)
             )
+            factual_parent = next(
+                edge for edge in graph.edges if edge.kind == "public_catalog_taxonomy_parent"
+            )
+            factual_neighbors = store.neighbors(factual_parent.source_node_id)
+            self.assertTrue(
+                any(
+                    edge.kind == "public_catalog_taxonomy_parent" and edge.factual_relationship
+                    for edge in factual_neighbors.edges
+                )
+            )
 
     def test_rejects_missing_path_partial_viewports_and_invalid_artifacts(self) -> None:
         with self.assertRaisesRegex(OpenConstructionV2MapStoreError, "disabled"):
@@ -58,6 +70,30 @@ class OpenConstructionV2MapStoreTests(unittest.TestCase):
             store = OpenConstructionV2MapStore(path)
             with self.assertRaisesRegex(OpenConstructionV2MapStoreError, "unavailable"):
                 store.response(level=0)
+
+    def test_idm_alias_keeps_its_source_identity_and_excludes_music_review_anchor(self) -> None:
+        store = OpenConstructionV2MapStore(ROOT / "data/model/open-construction-graph-v2.json")
+
+        acronym = store.search("idm").hits
+        full_name = store.search("intelligent dance music").hits
+        neighbors = store.neighbors("legacy:item887")
+        related_name = store.search("acid idm").hits
+
+        self.assertEqual([item.node_id for item in acronym[:1]], ["legacy:item887"])
+        self.assertEqual([item.node_id for item in full_name[:1]], ["legacy:item887"])
+        self.assertEqual(acronym[0].name, "Intelligent dance music (IDM)")
+        self.assertEqual(acronym[0].source_name, "intelligent dance music")
+        self.assertEqual(neighbors.node_id, "legacy:item887")
+        self.assertEqual(neighbors.edges, ())
+        self.assertEqual([item.node_id for item in related_name[:1]], ["legacy:item5061"])
+
+    def test_unresolved_imports_do_not_navigate_to_the_generic_music_review_root(self) -> None:
+        store = OpenConstructionV2MapStore(ROOT / "data/model/open-construction-graph-v2.json")
+
+        neighbors = store.neighbors("legacy:item4656")
+
+        self.assertEqual(neighbors.node_id, "legacy:item4656")
+        self.assertEqual(neighbors.edges, ())
 
 
 if __name__ == "__main__":
