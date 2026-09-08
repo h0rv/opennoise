@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from musix.genre_hierarchy_candidates import (
     GenreHierarchyCandidatePolicy,
@@ -30,6 +32,13 @@ from musix.seed_reconciliation import (
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,
 )
+from musix.storage import LocalObjectStore
+from musix.taxonomy_relation_expansion import (
+    TaxonomyRelationExpansionPolicy,
+    build_taxonomy_relation_expansion,
+    catalog_wikidata_p279_feed,
+)
+from tests.test_taxonomy_relation_expansion import _write_catalog
 
 
 def _inputs() -> tuple[
@@ -69,7 +78,7 @@ def _inputs() -> tuple[
                 status="canonical_exact",
                 exact_candidates=(
                     PublicTaxonomyNode(
-                        catalog_id="catalog:child", name="Child", match_kind="canonical"
+                        catalog_id="wikidata:genre:Q1", name="Child", match_kind="canonical"
                     ),
                 ),
                 structural_confidence=1.0,
@@ -82,7 +91,7 @@ def _inputs() -> tuple[
                 status="canonical_exact",
                 exact_candidates=(
                     PublicTaxonomyNode(
-                        catalog_id="catalog:parent", name="Parent", match_kind="canonical"
+                        catalog_id="wikidata:genre:Q2", name="Parent", match_kind="canonical"
                     ),
                 ),
                 structural_confidence=1.0,
@@ -95,7 +104,7 @@ def _inputs() -> tuple[
                 status="anchored_compositional",
                 lexical_modifier="pov",
                 anchor=PublicTaxonomyNode(
-                    catalog_id="catalog:child", name="Child", match_kind="canonical"
+                    catalog_id="wikidata:genre:Q1", name="Child", match_kind="canonical"
                 ),
                 structural_confidence=0.8,
             ),
@@ -220,6 +229,42 @@ class GenreHierarchyCandidateTests(unittest.TestCase):
         self.assertEqual(artifact.coverage.seed_count, 3)
         self.assertEqual(artifact.coverage.isolated_seed_count, 1)
         verify_genre_hierarchy_candidates(artifact)
+
+    def test_receipt_verified_relation_facts_merge_and_dedupe(self) -> None:
+        reconciliation, taxonomy, public_input = _inputs()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            store = LocalObjectStore(root / "objects")
+            catalog = root / "catalog.sqlite"
+            _write_catalog(catalog, rows=((10, 1, 2),))
+            feed = catalog_wikidata_p279_feed(catalog, store=store)
+            relation = build_taxonomy_relation_expansion(
+                taxonomy,
+                feed,
+                TaxonomyRelationExpansionPolicy(expected_seed_count=3),
+                source_store=store,
+            )
+            artifact = build_genre_hierarchy_candidates(
+                reconciliation,
+                taxonomy,
+                public_input,
+                GenreHierarchyCandidatePolicy(expected_seed_count=3, accepted_score=0.2),
+                taxonomy_relation_expansion=relation,
+                taxonomy_relation_source_store=store,
+            )
+        child_parent = next(
+            row
+            for row in artifact.candidates
+            if (row.child_genre_id, row.parent_genre_id) == ("item1", "item2")
+        )
+        self.assertEqual(artifact.taxonomy_relation_expansion_output_sha256, relation.output_sha256)
+        self.assertEqual(artifact.coverage.candidate_count, 2)
+        self.assertEqual(child_parent.reason, "factual_public_taxonomy")
+        self.assertIn(
+            f"taxonomy-relation-expansion:{relation.output_sha256}:"
+            f"catalog:{feed.observations[0].source_response_sha256}:genre_hierarchy:10",
+            child_parent.evidence_refs,
+        )
 
 
 if __name__ == "__main__":

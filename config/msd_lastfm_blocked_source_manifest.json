@@ -1,0 +1,35 @@
+{
+  "revision": "msd-lastfm-blocked-source-manifest-v1",
+  "checked_at": "2026-09-06T00:00:00Z",
+  "state": "blocked_unpinned_official_endpoint_unreachable",
+  "source_docs": [
+    "https://millionsongdataset.com/",
+    "https://millionsongdataset.com/pages/tasks-demos",
+    "https://millionsongdataset.com/faq"
+  ],
+  "required_metadata_only_files": [
+    {
+      "role": "track_metadata",
+      "url": "https://millionsongdataset.com/sites/default/files/AdditionalFiles/track_metadata.db"
+    },
+    {
+      "role": "lastfm_tags",
+      "url": "https://millionsongdataset.com/sites/default/files/lastfm/lastfm_tags.db"
+    },
+    {
+      "role": "lastfm_similarity",
+      "url": "https://millionsongdataset.com/sites/default/files/lastfm/lastfm_similars.db"
+    }
+  ],
+  "prohibited_inputs": [
+    "audio",
+    "HDF5_song_files",
+    "Spotify",
+    "H3_or_historical_construction_data"
+  ],
+  "missing_required_pins": [
+    "sha256",
+    "byte_size"
+  ],
+  "trust_root_requirement": "Do not promote this manifest to an acquirable source declaration. A future operator must acquire only the listed SQLite files from an official endpoint, compute SHA-256 and byte size, and write a content-addressed MsdLastFmSourceCache receipt before the adapter runs."
+}

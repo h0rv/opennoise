@@ -205,6 +205,38 @@ export_raw = false
 redistribute = false
 
 [[sources]]
+id = "musicbrainz_json_release_group_research_20260905"
+priority = 102
+enabled_by_default = false
+adapter = "musicbrainz_release_group_json_dump_v1"
+content_kind = "metadata"
+role = "local_noncommercial_album_credit_genre_and_tag_research"
+snapshot = "20260905-001001"
+url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/20260905-001001/release-group.tar.xz"
+discovery_url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/LATEST"
+checksum_url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/20260905-001001/SHA256SUMS"
+expected_content_type = "application/octet-stream"
+compression = "tar.xz"
+payload_format = "MusicBrainz JSON release-group records"
+expected_bytes = 1159485640
+checksum_algorithm = "sha256"
+checksum = "6f153846228dc6034b2f8f43b472b088792cc2e242b09783a8968fa8d4bd7a43"
+update_cadence = "twice weekly"
+data_license = "mixed_by_field: core CC0; genre and tag associations CC-BY-NC-SA-3.0"
+license_url = "https://musicbrainz.org/doc/About/Data_License"
+rights_classification = "restricted_research"
+local_only = true
+retrieval_note = "Pinned from the official LATEST pointer on 2026-09-06. Metadata only; no cover, preview, stream, audio, or recording data. Raw bytes are local-vault only."
+normalize = true
+local_search = true
+display = true
+embed = true
+train = true
+export_metadata = false
+export_raw = false
+redistribute = false
+
+[[sources]]
 id = "musicbrainz_json_release_group_research_20260829"
 priority = 102
 enabled_by_default = false

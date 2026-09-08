@@ -93,6 +93,18 @@ class MusicBrainzCatalogPipelineTests(PollingIsolatedAsyncioTestCase):
             self.assertTrue(source.embed)
             self.assertFalse(source.export_metadata)
 
+    def test_current_release_group_manifest_pin_is_official_and_metadata_only(self) -> None:
+        manifest = Path(__file__).resolve().parents[1] / "config" / "data_sources.toml"
+        source = load_download_source(manifest, "musicbrainz_json_release_group_research_20260905")
+        self.assertEqual(source.snapshot, "20260905-001001")
+        self.assertEqual(source.expected_bytes, 1_159_485_640)
+        self.assertEqual(
+            source.checksum,
+            "6f153846228dc6034b2f8f43b472b088792cc2e242b09783a8968fa8d4bd7a43",
+        )
+        self.assertTrue(source.local_only)
+        self.assertFalse(source.export_raw)
+
     async def test_ingests_release_group_and_recording_without_media_fields(self) -> None:
         credit = [
             {

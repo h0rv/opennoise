@@ -51,11 +51,23 @@ class ObjectRead(_FrozenModel):
     byte_size: int = Field(ge=0)
 
 
+class ObjectMetadata(_FrozenModel):
+    """Describe an immutable object after hashing its stored bytes in place."""
+
+    key: ObjectKey
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    byte_size: int = Field(ge=0)
+
+
 class ObjectStore(Protocol):
     """Expose the artifact operations shared by local and future remote stores."""
 
     def exists(self, key: ObjectKey) -> bool:
         """Return whether an immutable object exists."""
+        ...
+
+    def inspect(self, key: ObjectKey) -> ObjectMetadata:
+        """Hash and describe a stored object without materializing a second copy."""
         ...
 
     def push(self, source: Path, key: ObjectKey) -> ObjectWrite:

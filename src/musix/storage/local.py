@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import BinaryIO
 
 from musix.policy import require_metadata_file
-from musix.storage.base import ObjectKey, ObjectRead, ObjectWrite
+from musix.storage.base import ObjectKey, ObjectMetadata, ObjectRead, ObjectWrite
 
 COPY_CHUNK_BYTES = 1024 * 1024
 
@@ -79,6 +79,14 @@ class LocalObjectStore:
     def exists(self, key: ObjectKey) -> bool:
         """Return whether a regular file exists for the key."""
         return self._object_path(key).is_file()
+
+    def inspect(self, key: ObjectKey) -> ObjectMetadata:
+        """Hash a stored object in place without creating a temporary copy."""
+        source = self._object_path(key)
+        if not source.is_file():
+            raise FileNotFoundError(f"object key {key.value!r} does not exist")
+        sha256, byte_size = _hash_file(source)
+        return ObjectMetadata(key=key, sha256=sha256, byte_size=byte_size)
 
     def _push_sync(self, source: Path, key: ObjectKey) -> ObjectWrite:
         if not source.is_file():

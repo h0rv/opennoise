@@ -49,6 +49,29 @@ unique positives (global positive-only recall 0.14896%). It abstains on 5,644
 of 6,069 H3-positive genres. Precision is intentionally unavailable because
 an H3 absence is unknown, not a negative.
 
+Legacy taxonomy overlay and v6 frontier files are present locally but are
+superseded and unverified under the current row-bound provenance schema. The
+checked-in Poe workflow writes any replay to separate candidate directories.
+Its source is the sealed catalog snapshot, not an undeclared relation-feed
+path. The corresponding evaluator replays that same snapshot, so construction
+and holdout evaluation share a declared immutable source boundary.
+The current verified standalone replay retains all 6,291 seeds and projects
+216 accepted factual edges from 853 permitted catalog P279 rows; 346 seeds have
+an exact-QID mapping and 6,057 remain factual-isolated. It reports no review or
+cycle rows. Its taxonomy input was
+`.worktrees/open-construction-graph/data/model/genre-seed-public-taxonomy-v1.json`
+(SHA-256 `5c8bac592fdbd982d529a422940b3d601c0c81b83e42d0c7641779821b03f712`)
+and its logical artifact hash is
+`21126aae5cf8b849edd132e9125ad12f1037474fecc1f89f6b8c1f8254efbd15`.
+This is a taxonomy-only candidate, not a hierarchy, artist, or coverage
+promotion.
+Release-group evidence remains
+pending: its verified MusicBrainz raw archive and source receipt exist, but no
+evidence artifact or receipt was published; the prior staging SQLite database
+is malformed and is not an input. MSD/Last.fm remains an offline, metadata-only
+adapter awaiting the three verified SQLite files (or an already verified local
+cache receipt); no live MSD result is claimed.
+
 An optional Last.fm reverse-tag adapter is review-only. It writes its
 credential-free query manifest before any network request and exits 2 without
 `LASTFM_API_KEY`; no live Last.fm artifact is sealed in this checkout. A claim

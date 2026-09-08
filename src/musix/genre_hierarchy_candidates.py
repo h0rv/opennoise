@@ -25,6 +25,10 @@ from musix.models.modeling import PublicModelInput  # noqa: TC001
 from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact  # noqa: TC001
 from musix.seed_reconciliation import SeedReconciliationArtifact  # noqa: TC001
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+from musix.taxonomy_relation_expansion import (
+    TaxonomyRelationExpansionArtifact,
+    verify_taxonomy_relation_expansion,
+)
 from musix.types import Sha256  # noqa: TC001
 
 _REVISION: Final = "genre-hierarchy-candidates-v1"
@@ -185,6 +189,7 @@ class GenreHierarchyCandidateArtifact(FrozenModel):
     revision: Literal["genre-hierarchy-candidates-v1"] = _REVISION
     seed_reconciliation_output_sha256: Sha256
     taxonomy_output_sha256: Sha256
+    taxonomy_relation_expansion_output_sha256: Sha256 | None = None
     public_model_input_sha256: Sha256
     policy_sha256: Sha256
     policy: GenreHierarchyCandidatePolicy
@@ -394,6 +399,22 @@ def _proposals_from_expansion(  # noqa: C901
     return proposals
 
 
+def _proposals_from_taxonomy_relation_expansion(
+    expansion: TaxonomyRelationExpansionArtifact,
+) -> dict[tuple[str, str], _Proposal]:
+    """Project receipt-verified direct relation facts without name-based joins."""
+    proposals: dict[tuple[str, str], _Proposal] = {}
+    for edge in expansion.edges:
+        if edge.disposition != "accepted_factual":
+            continue
+        proposal = proposals.setdefault((edge.child_seed_id, edge.parent_seed_id), _Proposal())
+        proposal.taxonomy_refs.update(
+            f"taxonomy-relation-expansion:{expansion.output_sha256}:{evidence.observation_id}"
+            for evidence in edge.factual_evidence
+        )
+    return proposals
+
+
 def _proposals_from_artist_sets(
     public_input: PublicModelInput,
     proposals: dict[tuple[str, str], _Proposal],
@@ -533,13 +554,15 @@ def _candidate(
     )
 
 
-def build_genre_hierarchy_candidates(  # noqa: C901
+def build_genre_hierarchy_candidates(  # noqa: C901, PLR0912, PLR0913
     reconciliation: SeedReconciliationArtifact,
     taxonomy: GenreSeedPublicTaxonomyArtifact,
     public_input: PublicModelInput,
     policy: GenreHierarchyCandidatePolicy | None = None,
     *,
     taxonomy_expansion: PublicTaxonomyExpansionArtifact | None = None,
+    taxonomy_relation_expansion: TaxonomyRelationExpansionArtifact | None = None,
+    taxonomy_relation_source_store: ObjectStore | None = None,
 ) -> GenreHierarchyCandidateArtifact:
     """Build deterministic, multi-parent public hierarchy candidates."""
     resolved = policy or GenreHierarchyCandidatePolicy()
@@ -553,6 +576,14 @@ def build_genre_hierarchy_candidates(  # noqa: C901
         raise ValueError(
             "taxonomy expansion and reconciliation artifacts do not refer to the same snapshot"
         )
+    if taxonomy_relation_expansion is not None:
+        if taxonomy_relation_source_store is None:
+            raise ValueError("taxonomy relation expansion requires its custody object store")
+        verify_taxonomy_relation_expansion(
+            taxonomy_relation_expansion, source_store=taxonomy_relation_source_store
+        )
+        if taxonomy_relation_expansion.taxonomy_output_sha256 != taxonomy.output_sha256:
+            raise ValueError("taxonomy relation expansion does not match the sealed taxonomy")
     seed_names = {item.source_item_id: item.seed_name for item in reconciliation.dispositions}
     if set(seed_names) != {item.source_item_id for item in taxonomy.inferences}:
         raise ValueError("taxonomy must cover exactly the reconciled seed universe")
@@ -568,6 +599,12 @@ def build_genre_hierarchy_candidates(  # noqa: C901
             raise ValueError("taxonomy expansion does not cover the expected seed universe")
         proposals = _proposals_from_expansion(taxonomy_expansion)
         taxonomy_output_sha256 = taxonomy_expansion.output_sha256
+    if taxonomy_relation_expansion is not None:
+        for pair, relation_proposal in _proposals_from_taxonomy_relation_expansion(
+            taxonomy_relation_expansion
+        ).items():
+            proposal = proposals.setdefault(pair, _Proposal())
+            proposal.taxonomy_refs.update(relation_proposal.taxonomy_refs)
     artist_values = _proposals_from_artist_sets(public_input, proposals)
     _prioritize_acyclic(proposals)
     if len(proposals) > resolved.maximum_candidates:
@@ -623,6 +660,11 @@ def build_genre_hierarchy_candidates(  # noqa: C901
         "revision": _REVISION,
         "seed_reconciliation_output_sha256": reconciliation.output_sha256,
         "taxonomy_output_sha256": taxonomy_output_sha256,
+        "taxonomy_relation_expansion_output_sha256": (
+            taxonomy_relation_expansion.output_sha256
+            if taxonomy_relation_expansion is not None
+            else None
+        ),
         "public_model_input_sha256": _input_hash(public_input.model_dump(mode="json")),
         "policy_sha256": policy_hash,
         "policy": resolved.model_dump(mode="json"),
@@ -635,6 +677,11 @@ def build_genre_hierarchy_candidates(  # noqa: C901
     return GenreHierarchyCandidateArtifact(
         seed_reconciliation_output_sha256=reconciliation.output_sha256,
         taxonomy_output_sha256=taxonomy_output_sha256,
+        taxonomy_relation_expansion_output_sha256=(
+            taxonomy_relation_expansion.output_sha256
+            if taxonomy_relation_expansion is not None
+            else None
+        ),
         public_model_input_sha256=_input_hash(public_input.model_dump(mode="json")),
         policy_sha256=policy_hash,
         policy=resolved,

@@ -16,6 +16,10 @@ from musix.models.modeling import PublicModelInput
 from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact
 from musix.seed_reconciliation import SeedReconciliationArtifact
 from musix.storage import LocalObjectStore
+from musix.taxonomy_relation_expansion import (
+    TaxonomyRelationExpansionArtifact,
+    TaxonomyRelationExpansionReceipt,
+)
 
 
 def main() -> None:
@@ -24,6 +28,9 @@ def main() -> None:
     parser.add_argument("--reconciliation", type=Path, required=True)
     parser.add_argument("--taxonomy", type=Path, required=True)
     parser.add_argument("--taxonomy-expansion", type=Path)
+    parser.add_argument("--taxonomy-relation-expansion", type=Path)
+    parser.add_argument("--taxonomy-relation-expansion-receipt", type=Path)
+    parser.add_argument("--taxonomy-relation-source-object-store", type=Path)
     parser.add_argument("--public-model-input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--object-store", type=Path, required=True)
@@ -41,6 +48,34 @@ def main() -> None:
         if arguments.taxonomy_expansion is not None
         else None
     )
+    relation_expansion = (
+        TaxonomyRelationExpansionArtifact.model_validate_json(
+            arguments.taxonomy_relation_expansion.read_bytes()
+        )
+        if arguments.taxonomy_relation_expansion is not None
+        else None
+    )
+    if (arguments.taxonomy_relation_expansion_receipt is None) != (relation_expansion is None):
+        parser.error("taxonomy relation expansion and its receipt must be supplied together")
+    if relation_expansion is not None:
+        receipt = TaxonomyRelationExpansionReceipt.model_validate_json(
+            arguments.taxonomy_relation_expansion_receipt.read_bytes()
+        )
+        if receipt.logical_output_sha256 != relation_expansion.output_sha256:
+            raise ValueError("taxonomy relation receipt does not bind the supplied artifact")
+        if arguments.taxonomy_relation_source_object_store is None:
+            parser.error("taxonomy relation expansion requires its source object store")
+        relation_store = LocalObjectStore(arguments.taxonomy_relation_source_object_store)
+        stored = relation_store.inspect(receipt.artifact.key)
+        if (
+            stored.sha256 != receipt.artifact_sha256
+            or stored.byte_size != receipt.artifact.byte_size
+        ):
+            raise ValueError(
+                "taxonomy relation receipt artifact is absent or has substituted bytes"
+            )
+    else:
+        relation_store = None
     public_input = PublicModelInput.model_validate_json(arguments.public_model_input.read_bytes())
     artifact = build_genre_hierarchy_candidates(
         reconciliation,
@@ -48,6 +83,8 @@ def main() -> None:
         public_input,
         GenreHierarchyCandidatePolicy(expected_seed_count=arguments.expected_seed_count),
         taxonomy_expansion=taxonomy_expansion,
+        taxonomy_relation_expansion=relation_expansion,
+        taxonomy_relation_source_store=relation_store,
     )
     receipt = publish_genre_hierarchy_candidates(
         artifact,
