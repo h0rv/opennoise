@@ -10,6 +10,7 @@ import { resolve } from "node:path";
 
 const args = process.argv.slice(2);
 const url = args[0];
+const focusedOnly = args.includes("--focused");
 const output = resolve(args[1] ?? ".cache/open-v2-runtime-qa/browser");
 const artifactPath = resolve(args[2] ?? "data/model/open-construction-graph-v2.json");
 if (!url) throw new Error("usage: capture_open_construction_v2_browser.mjs URL [OUTPUT] [ARTIFACT]");
@@ -206,6 +207,60 @@ async function main() {
     await navigate(cdp, { name: "desktop", width: 1366, height: 768, mobile: false }, "light");
     await sleep(500);
     const initial = await liveMetrics(cdp);
+    if (focusedOnly) {
+      const selectedId = "catalog:wikidata:genre:Q7749";
+      const expectedIds = artifact.edges
+        .filter((edge) => edge.source_node_id === selectedId || edge.target_node_id === selectedId)
+        .flatMap((edge) => [edge.source_node_id, edge.target_node_id]);
+      const expectedCohort = [...new Set([selectedId, ...expectedIds])].sort();
+      const query = await box(cdp, "#query");
+      await click(cdp, query.x + 40, query.y + query.height / 2);
+      await cdp.command("Input.insertText", { text: "rock and roll" });
+      await cdp.waitFor(
+        `Boolean(document.querySelector('[data-open-node-id=${JSON.stringify(selectedId)}]'))`,
+        "rock and roll search result",
+      );
+      const result = await box(cdp, `[data-open-node-id="${selectedId}"]`);
+      await click(cdp, result.x + result.width / 2, result.y + result.height / 2);
+      await cdp.waitFor(
+        `document.querySelector('#semantic-map').dataset.openSelectedNodeId === ${JSON.stringify(selectedId)}`,
+        "selected local neighborhood",
+      );
+      const selected = await cdp.evaluate(`(() => {
+        const map = document.querySelector('#semantic-map');
+        return {
+          selected: map.dataset.openSelectedNodeId,
+          ids: JSON.parse(map.dataset.openRenderedNodeIds ?? '[]'),
+          labels: JSON.parse(map.dataset.openRenderedLabels ?? '[]'),
+          camera: JSON.parse(map.dataset.openCamera ?? '{}'),
+          canvases: map.querySelectorAll('canvas').length,
+          cyNodes: window.__musixMap.nodes().length,
+          cyEdges: window.__musixMap.edges().length,
+        };
+      })()`);
+      checks.focused_exact_local_cohort = selected.selected === selectedId
+        && JSON.stringify(selected.ids.sort()) === JSON.stringify(expectedCohort)
+        && ["rock and roll", "rock music", "rockabilly", "rock-and-roll"].every((label) => selected.labels.includes(label))
+        && Number.isFinite(selected.camera.zoom)
+        && Object.values(selected.camera.bounds ?? {}).every(Number.isFinite)
+        && selected.canvases === 3
+        && selected.cyNodes === expectedCohort.length
+        && selected.cyEdges === 3;
+      const back = await box(cdp, '[data-map-action="open-back"]');
+      await click(cdp, back.x + back.width / 2, back.y + back.height / 2);
+      await cdp.waitFor(
+        "window.__musixMapMetrics.level === 0 && !document.querySelector('#semantic-map').dataset.openSelectedNodeId",
+        "Back overview restoration",
+      );
+      const restored = await liveMetrics(cdp);
+      checks.focused_back_restores_overview = restored.backHidden
+        && restored.visibleNodes === initial.visibleNodes
+        && JSON.stringify(restored.visibleIds) === JSON.stringify(initial.visibleIds);
+      assert(cdp.runtimeErrors.length === 0, `runtime errors: ${cdp.runtimeErrors.join("; ")}`);
+      assert(Object.values(checks).every(Boolean), `failed checks: ${Object.entries(checks).filter(([, value]) => !value).map(([name]) => name).join(", ")}`);
+      console.log(JSON.stringify(checks));
+      return;
+    }
     checks.initial_square_fit_and_labels = initial.boundsOk && initial.labels >= 16 && initial.labelFontMin >= 12
       && initial.labelOverlaps === 0 && initial.worldAspect > 1.1
       && initial.occupancyWidth > 0.55 && initial.occupancyHeight > 0.55;
