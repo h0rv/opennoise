@@ -12,7 +12,7 @@ import hashlib
 import json
 import sqlite3
 from contextlib import closing
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from time import monotonic
 from typing import TYPE_CHECKING, Final, Literal
 
@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
 _REVISION: Final = "musicbrainz-release-credit-artist-metadata-v1"
 _SHA256: Final = r"^[0-9a-f]{64}$"
+_METADATA_CERTIFICATE: Final = object()
 
 
 class _FrozenModel(BaseModel):
@@ -120,6 +121,11 @@ class CertifiedLocalArtistMetadataSources:
     """Startup-certified metadata inputs for bounded process-local lookups."""
 
     sources: LocalArtistMetadataSources
+    _certificate: object = field(repr=False, compare=False)
+
+    def is_valid(self) -> bool:
+        """Return whether this wrapper was produced by the local certification factory."""
+        return self._certificate is _METADATA_CERTIFICATE
 
 
 @dataclass(frozen=True, slots=True)
@@ -247,6 +253,8 @@ def exact_certified_canonical_names(
     certified: CertifiedLocalArtistMetadataSources, artist_mbids: tuple[str, ...]
 ) -> dict[str, str]:
     """Read metadata after this process completed startup certification."""
+    if not certified.is_valid():
+        raise LocalMusicBrainzArtistMetadataError("metadata sources are not startup-certified")
     return _exact_canonical_names(certified.sources, artist_mbids, integrity_check=False)
 
 
@@ -291,7 +299,7 @@ def certify_local_artist_metadata_sources(
 ) -> CertifiedLocalArtistMetadataSources:
     """Return a certificate only after whole-file and SQLite startup checks."""
     verify_local_artist_metadata_sources(sources)
-    return CertifiedLocalArtistMetadataSources(sources)
+    return CertifiedLocalArtistMetadataSources(sources, _METADATA_CERTIFICATE)
 
 
 def _verify_evidence_database(path: Path, artifact: ReleaseGroupEvidenceArtifact) -> None:

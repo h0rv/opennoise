@@ -2,6 +2,7 @@ import hashlib
 import sqlite3
 import unittest
 from contextlib import closing
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -19,6 +20,13 @@ from musix.local_musicbrainz_artist_metadata import (
     ArtistMetadataSettings,
     LocalArtistMetadataSources,
     artist_metadata_artifact_sha256,
+)
+from musix.local_musicbrainz_artist_reverse_lookup import (
+    ArtistReverseLookupBuildInputs,
+    LocalArtistReverseLookupSources,
+    LocalMusicBrainzArtistReverseLookupError,
+    build_artist_reverse_lookup,
+    verify_artist_reverse_lookup_sources,
 )
 from musix.local_musicbrainz_peer_store import LocalMusicBrainzPeerStore
 from musix.musicbrainz_model_adapter import (
@@ -43,6 +51,61 @@ _ARTIST_B = "00000000-0000-4000-8000-000000000002"
 
 
 class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
+    def test_reverse_sidecar_preserves_artist_response_and_source(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            database = _database(root / "evidence.sqlite")
+            source_before = hashlib.sha256(database.read_bytes()).hexdigest()
+            source = _sources(database)
+            baseline = direct_seeds_for_artist(source, _ARTIST_A, limit=25)
+            reverse_database = root / "reverse.sqlite"
+            reverse_artifact = build_artist_reverse_lookup(
+                ArtistReverseLookupBuildInputs(
+                    evidence_database=database,
+                    evidence_artifact=source.evidence_artifact,
+                    output_database=reverse_database,
+                )
+            )
+            sidecar_sources = replace(
+                source,
+                reverse_lookup=LocalArtistReverseLookupSources(reverse_database, reverse_artifact),
+            )
+            response = direct_seeds_for_artist(sidecar_sources, _ARTIST_A, limit=25)
+            self.assertEqual(source_before, hashlib.sha256(database.read_bytes()).hexdigest())
+            self.assertEqual(
+                response.model_dump(exclude={"verification_seconds", "query_seconds"}),
+                baseline.model_dump(exclude={"verification_seconds", "query_seconds"}),
+            )
+            self.assertEqual(reverse_artifact.direct_membership_count, 3)
+            self.assertEqual(reverse_artifact.support_facet_count, 5)
+            by_seed = {claim.seed.source_item_id: claim for claim in response.album_supported_seeds}
+            self.assertEqual(by_seed["item887"].distinct_release_group_count, 1)
+            self.assertEqual(
+                [facet.distinct_release_group_count for facet in by_seed["item2"].facets],
+                [3, 3],
+            )
+            self.assertEqual(by_seed["item2"].distinct_release_group_count, 6)
+
+    def test_reverse_sidecar_rejects_tampering(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            database = _database(root / "evidence.sqlite")
+            source = _sources(database)
+            reverse_database = root / "reverse.sqlite"
+            artifact = build_artist_reverse_lookup(
+                ArtistReverseLookupBuildInputs(database, source.evidence_artifact, reverse_database)
+            )
+            with closing(sqlite3.connect(reverse_database)) as connection, connection:
+                connection.execute(
+                    "UPDATE direct_seed SET genre_id = 'tampered' WHERE genre_id = 'item2'"
+                )
+
+            with self.assertRaisesRegex(LocalMusicBrainzArtistReverseLookupError, "does not match"):
+                verify_artist_reverse_lookup_sources(
+                    LocalArtistReverseLookupSources(reverse_database, artifact),
+                    source.evidence_artifact,
+                )
+
     def test_startup_certified_store_hashes_once_then_uses_read_only_queries(self) -> None:
         with TemporaryDirectory() as temporary:
             database = _database(Path(temporary) / "evidence.sqlite")

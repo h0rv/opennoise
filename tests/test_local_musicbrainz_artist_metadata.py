@@ -12,6 +12,7 @@ from unittest.mock import patch
 from musix.local_musicbrainz_artist_metadata import (
     ArtistMetadataBuildInputs,
     ArtistMetadataSettings,
+    CertifiedLocalArtistMetadataSources,
     LocalArtistMetadataSources,
     LocalMusicBrainzArtistMetadataError,
     build_artist_metadata,
@@ -55,6 +56,28 @@ class LocalMusicBrainzArtistMetadataTests(unittest.TestCase):
 
         self.assertEqual(lookup.call_args_list[0].kwargs["integrity_check"], False)
         self.assertEqual(lookup.call_args_list[1].kwargs["integrity_check"], True)
+
+    def test_unvalidated_certificate_wrapper_is_rejected(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            evidence_db = _evidence_database(root / "evidence.sqlite")
+            archive = _single_name_archive(root / "release-group.tar.xz")
+            artifact = build_artist_metadata(
+                ArtistMetadataBuildInputs(
+                    archive=archive,
+                    evidence_database=evidence_db,
+                    evidence_artifact=_evidence_artifact(evidence_db, archive),
+                    output_database=root / "names.sqlite",
+                )
+            )
+            sources = LocalArtistMetadataSources(database=root / "names.sqlite", artifact=artifact)
+            with self.assertRaisesRegex(
+                LocalMusicBrainzArtistMetadataError, "not startup-certified"
+            ):
+                exact_certified_canonical_names(
+                    CertifiedLocalArtistMetadataSources(sources, object()), (_ARTIST_A,)
+                )
+
     def test_uses_exact_nested_names_and_preserves_conflicts(self) -> None:
         with TemporaryDirectory() as temporary:
             root = Path(temporary)

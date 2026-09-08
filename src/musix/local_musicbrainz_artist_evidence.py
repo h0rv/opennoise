@@ -27,6 +27,12 @@ from musix.local_musicbrainz_artist_metadata import (
     exact_canonical_names,
     exact_certified_canonical_names,
 )
+from musix.local_musicbrainz_artist_reverse_lookup import (
+    LocalArtistReverseLookupSources,
+    LocalMusicBrainzArtistReverseLookupError,
+    open_trusted_reverse_lookup,
+    verify_artist_reverse_lookup_sources,
+)
 from musix.models import FrozenModel
 from musix.musicbrainz_model_adapter import (
     MusicBrainzModelAdapterReport,
@@ -47,6 +53,7 @@ if TYPE_CHECKING:
 _MAX_RESULTS: Final = 100
 _ARTIST_ROW_COLUMN_COUNT: Final = 3
 _SUPPORT_ROW_COLUMN_COUNT: Final = 3
+_REVERSE_SUPPORT_ROW_COLUMN_COUNT: Final = 4
 _EXPECTED_DIRECT_COLUMNS: Final = frozenset({"genre_id", "artist_id", "facet", "evidence_ref"})
 _EXPECTED_SUPPORT_COLUMNS: Final = frozenset(
     {"genre_id", "artist_id", "facet", "release_group_id", "evidence_ref"}
@@ -68,6 +75,7 @@ class LocalMusicBrainzEvidenceSources:
     reconciliation: SeedReconciliationArtifact
     adapter_report: MusicBrainzModelAdapterReport
     artist_metadata: LocalArtistMetadataSources | None = None
+    reverse_lookup: LocalArtistReverseLookupSources | None = None
 
 
 @dataclass(slots=True)
@@ -77,6 +85,7 @@ class LocalMusicBrainzArtistEvidenceStore:
     sources: LocalMusicBrainzEvidenceSources
     _ready: bool = False
     _certified_artist_metadata: CertifiedLocalArtistMetadataSources | None = None
+    _reverse_lookup_ready: bool = False
 
     def start(self) -> None:
         """Verify immutable files once before accepting bounded queries."""
@@ -85,6 +94,14 @@ class LocalMusicBrainzArtistEvidenceStore:
         with closing(connection):
             _require_direct_anchor_schema(connection)
             _require_release_group_support_schema(connection)
+        if self.sources.reverse_lookup is not None:
+            try:
+                verify_artist_reverse_lookup_sources(
+                    self.sources.reverse_lookup, self.sources.evidence_artifact
+                )
+            except LocalMusicBrainzArtistReverseLookupError as error:
+                raise LocalMusicBrainzArtistEvidenceError("reverse lookup is invalid") from error
+            self._reverse_lookup_ready = True
         if self.sources.artist_metadata is not None:
             if (
                 self.sources.artist_metadata.artifact.evidence_output_sha256
@@ -119,7 +136,13 @@ class LocalMusicBrainzArtistEvidenceStore:
         """Return exact direct and album-supported stable seeds after certification."""
         if not self._ready:
             raise LocalMusicBrainzArtistEvidenceError("local research evidence is not certified")
-        return _direct_seeds_for_artist(self.sources, artist_mbid, limit=limit, trusted=True)
+        return _direct_seeds_for_artist(
+            self.sources,
+            artist_mbid,
+            limit=limit,
+            trusted=True,
+            trusted_reverse_lookup=self._reverse_lookup_ready,
+        )
 
 
 class LocalResearchSeed(FrozenModel):
@@ -306,6 +329,7 @@ def _direct_seeds_for_artist(
     *,
     limit: int,
     trusted: bool,
+    trusted_reverse_lookup: bool = False,
 ) -> LocalArtistSeedResponse:
     """Implement the public query and the startup-certified store query."""
     _require_limit(limit)
@@ -321,16 +345,32 @@ def _direct_seeds_for_artist(
         _require_direct_anchor_schema(connection)
         _require_release_group_support_schema(connection)
         query_started = monotonic()
-        raw_rows = connection.execute(
-            """SELECT genre_id
-                 FROM direct_anchor
-                 WHERE artist_id = ?
-                 GROUP BY genre_id
-                 ORDER BY genre_id""",
-            (artist_mbid,),
-        ).fetchall()
-        support_total = _support_seed_total(connection, artist_mbid)
-        support_rows = _support_seeds_for_artist(connection, artist_mbid, limit)
+        reverse_support_rows: list[tuple[object, ...]] | None = None
+        support_rows: list[tuple[object, ...]] = []
+        if sources.reverse_lookup is not None:
+            if not trusted_reverse_lookup:
+                try:
+                    verify_artist_reverse_lookup_sources(
+                        sources.reverse_lookup, sources.evidence_artifact
+                    )
+                except LocalMusicBrainzArtistReverseLookupError as error:
+                    raise LocalMusicBrainzArtistEvidenceError(
+                        "reverse lookup is invalid"
+                    ) from error
+            raw_rows, support_total, reverse_support_rows = _reverse_seeds_for_artist(
+                sources.reverse_lookup, artist_mbid, limit
+            )
+        else:
+            raw_rows = connection.execute(
+                """SELECT genre_id
+                     FROM direct_anchor
+                     WHERE artist_id = ?
+                     GROUP BY genre_id
+                     ORDER BY genre_id""",
+                (artist_mbid,),
+            ).fetchall()
+            support_total = _support_seed_total(connection, artist_mbid)
+            support_rows = _support_seeds_for_artist(connection, artist_mbid, limit)
         query_seconds = monotonic() - query_started
     seed_ids = _parse_seed_ids(raw_rows)
     unknown_ids = set(seed_ids) - set(by_id)
@@ -339,7 +379,11 @@ def _direct_seeds_for_artist(
             "direct evidence contains genre IDs outside the reconciliation sidecar"
         )
     seeds = tuple(_seed(by_id[seed_id]) for seed_id in seed_ids)
-    supported = _group_supported_seeds(_parse_support_seed_rows(support_rows), by_id)
+    supported = (
+        _group_aggregated_supported_seeds(reverse_support_rows, by_id)
+        if reverse_support_rows is not None
+        else _group_supported_seeds(_parse_support_seed_rows(support_rows), by_id)
+    )
     return LocalArtistSeedResponse(
         artist_mbid=artist_mbid,
         verification_seconds=verification_seconds,
@@ -541,6 +585,40 @@ def _support_seeds_for_artist(
     return [tuple(row) for row in rows]
 
 
+def _reverse_seeds_for_artist(
+    sources: LocalArtistReverseLookupSources, artist_mbid: str, limit: int
+) -> tuple[list[tuple[object, ...]], int, list[tuple[object, ...]]]:
+    """Read pre-aggregated reverse rows after the separate sidecar is certified."""
+    with closing(open_trusted_reverse_lookup(sources.database)) as connection:
+        direct_rows: list[tuple[object, ...]] = [
+            (row[0],)
+            for row in connection.execute(
+                "SELECT genre_id FROM direct_seed WHERE artist_id = ? ORDER BY genre_id",
+                (artist_mbid,),
+            )
+        ]
+        total_row = connection.execute(
+            "SELECT count(DISTINCT genre_id) FROM support_aggregate WHERE artist_id = ?",
+            (artist_mbid,),
+        ).fetchone()
+        support_total = _count_value(total_row, "reverse album support seed total")
+        rows: list[tuple[object, ...]] = [
+            (row[0], row[1], row[2], row[3])
+            for row in connection.execute(
+                """WITH selected AS (
+                       SELECT genre_id FROM support_aggregate WHERE artist_id = ?
+                        GROUP BY genre_id ORDER BY genre_id LIMIT ?
+                   )
+                   SELECT support.genre_id, support.facet, support.distinct_release_group_count,
+                          support.combined_release_group_count
+                     FROM support_aggregate AS support JOIN selected USING (genre_id)
+                    WHERE support.artist_id = ? ORDER BY support.genre_id, support.facet""",
+                (artist_mbid, limit, artist_mbid),
+            )
+        ]
+    return direct_rows, support_total, rows
+
+
 def _count_value(row: tuple[object, ...] | None, description: str) -> int:
     if row is None or len(row) != 1 or not isinstance(row[0], int) or row[0] < 0:
         raise LocalMusicBrainzArtistEvidenceError(f"{description} is invalid")
@@ -646,6 +724,56 @@ def _group_supported_seeds(
         for seed_id, seed_rows in sorted(grouped.items())
         for facets, release_group_count in (_support_facets(seed_rows, seed_id),)
     )
+
+
+def _group_aggregated_supported_seeds(
+    rows: list[tuple[object, ...]], by_id: dict[str, SeedReconciliationDisposition]
+) -> tuple[AlbumSupportedSeedClaim, ...]:
+    """Project source-deduplicated sidecar counts without reconstructing release IDs."""
+    grouped: dict[str, list[tuple[DirectFacet, int, int]]] = defaultdict(list)
+    for row in rows:
+        if len(row) != _REVERSE_SUPPORT_ROW_COLUMN_COUNT:
+            raise LocalMusicBrainzArtistEvidenceError("reverse album support has an invalid row")
+        seed_id, raw_facet, facet_count, combined_count = row
+        if (
+            not isinstance(seed_id, str)
+            or not isinstance(facet_count, int)
+            or not isinstance(combined_count, int)
+            or facet_count < 1
+            or combined_count < facet_count
+        ):
+            raise LocalMusicBrainzArtistEvidenceError("reverse album support has an invalid row")
+        if raw_facet == "musicbrainz_genre":
+            facet: DirectFacet = "musicbrainz_genre"
+        elif raw_facet == "musicbrainz_tag":
+            facet = "musicbrainz_tag"
+        else:
+            raise LocalMusicBrainzArtistEvidenceError("reverse album support has an unknown facet")
+        grouped[seed_id].append((facet, facet_count, combined_count))
+    unknown_ids = set(grouped) - set(by_id)
+    if unknown_ids:
+        raise LocalMusicBrainzArtistEvidenceError(
+            "album support contains genre IDs outside the reconciliation sidecar"
+        )
+    claims: list[AlbumSupportedSeedClaim] = []
+    for seed_id, values in sorted(grouped.items()):
+        combined_counts = {value[2] for value in values}
+        if len(combined_counts) != 1:
+            raise LocalMusicBrainzArtistEvidenceError(
+                "reverse album support grouping is inconsistent"
+            )
+        facets = tuple(
+            AlbumSupportFacet(facet=facet, distinct_release_group_count=count)
+            for facet, count, _ in values
+        )
+        claims.append(
+            AlbumSupportedSeedClaim(
+                seed=_seed(by_id[seed_id]),
+                facets=facets,
+                distinct_release_group_count=combined_counts.pop(),
+            )
+        )
+    return tuple(claims)
 
 
 def _seed_search_terms(source_item_id: str, name: str, normalized_name: str) -> frozenset[str]:
