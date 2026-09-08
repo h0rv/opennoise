@@ -175,7 +175,7 @@ class HistoricalPeerEvaluationTests(unittest.TestCase):
         )
 
     def test_ambiguous_name_is_excluded_from_crosswalk(self) -> None:
-        with sqlite3.connect(self.public_db) as connection:
+        with closing(sqlite3.connect(self.public_db)) as connection, connection:
             connection.execute("INSERT INTO entity_identifiers VALUES ('other', 1, 5)")
             connection.execute(
                 "INSERT INTO entity_names VALUES (5, 'Artist Two', 'primary', 1, 'en')"

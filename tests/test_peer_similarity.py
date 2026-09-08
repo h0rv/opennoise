@@ -139,6 +139,44 @@ def _empty_membership_candidate(
 
 
 class PeerSimilarityTests(unittest.TestCase):
+    def test_cross_facet_evidence_counts_one_shared_artist(self) -> None:
+        """Genre and tag corroboration can add weight but not duplicate an artist."""
+        memberships = tuple(
+            DirectMembershipEvidence(
+                artist_id="artist:one",
+                genre_id=genre_id,
+                facet=facet,
+                value=1.0,
+                evidence_ref=f"{genre_id}:{facet}",
+            )
+            for genre_id in ("genre-a", "genre-b")
+            for facet in ("musicbrainz_genre", "musicbrainz_tag")
+        )
+        inputs = PublicModelInput(
+            artifacts=(
+                PublicArtifact(
+                    source="musicbrainz",
+                    snapshot="fixture",
+                    artifact_key="cross-facet",
+                    content_sha256="c" * 64,
+                    export_allowed=False,
+                ),
+            ),
+            genres=tuple(
+                GenreIdentity(genre_id=genre_id, name=genre_id, evidence_refs=(genre_id,))
+                for genre_id in ("genre-a", "genre-b")
+            ),
+            direct_memberships=memberships,
+        )
+
+        candidate = build_peer_similarity(
+            inputs,
+            PeerSimilaritySettings(minimum_shared_artists=1, aggregate_component_weight=0.0),
+        ).candidates[0]
+
+        self.assertEqual(candidate.shared_direct_artist_count, 1)
+        self.assertEqual(candidate.direct_score, 1.0)
+
     def test_pairs_are_canonical_symmetric_and_bounded(self) -> None:
         result = build_peer_similarity(_inputs())
         self.assertEqual(result.similarity_per_seed_accounting, "unbridged")

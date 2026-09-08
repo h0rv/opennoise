@@ -52,6 +52,40 @@ def _artist(
 
 
 class MusicBrainzSeedTargetExtractorTests(unittest.TestCase):
+    def test_signed_tag_counts_never_become_positive_evidence(self) -> None:
+        """Keep only positive tag votes while accepting an unweighted genre fact."""
+        with TemporaryDirectory() as directory:
+            archive = Path(directory) / "artist.tar.xz"
+            _archive(
+                archive,
+                [
+                    _artist(
+                        str(uuid4()),
+                        [
+                            {"id": str(uuid4()), "name": "Rock"},
+                            {"id": str(uuid4()), "name": "Rock", "count": -1},
+                        ],
+                        [
+                            {"name": "Rock", "count": -2},
+                            {"name": "Rock", "count": 0},
+                            {"name": "Rock"},
+                            {"name": "Rock", "count": True},
+                            {"name": "Rock", "count": 2},
+                        ],
+                    )
+                ],
+            )
+            artifact = extract_musicbrainz_seed_targets(archive, _seed())
+
+        self.assertEqual(
+            [(row.facet, row.positive_weight) for row in artifact.evidence],
+            [("genre", 1.0), ("tag", 2.0)],
+        )
+        self.assertEqual(artifact.counters.malformed_claim_count, 3)
+        self.assertEqual(artifact.counters.positive_evidence_count, 2)
+        self.assertEqual(artifact.coverage[0].genre_evidence_count, 1)
+        self.assertEqual(artifact.coverage[0].tag_evidence_count, 1)
+
     def test_extracts_facets_context_and_replays_deterministically(self) -> None:
         """Extract both facets, context, malformed counts, and stable hashes."""
         with self.subTest("temporary archive"):
