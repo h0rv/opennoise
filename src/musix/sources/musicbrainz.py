@@ -8,6 +8,7 @@ import time
 import unicodedata
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO, Literal, Protocol, override
 from uuid import UUID
@@ -131,6 +132,16 @@ class MusicBrainzLifeSpan(BaseModel):
     end: str | None = None
 
 
+class MusicBrainzArea(BaseModel):
+    """Preserve one source-provided MusicBrainz area without interpretation."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
+
+    id: UUID
+    name: str = Field(min_length=1)
+    type: str | None = None
+
+
 class MusicBrainzArtist(BaseModel):
     """Parse the supported fields from one official artist JSON document."""
 
@@ -147,6 +158,9 @@ class MusicBrainzArtist(BaseModel):
     ipis: tuple[str, ...] = ()
     type: str | None = None
     life_span: MusicBrainzLifeSpan | None = Field(default=None, alias="life-span")
+    country: str | None = None
+    area: MusicBrainzArea | None = None
+    begin_area: MusicBrainzArea | None = Field(default=None, alias="begin-area")
 
     @field_validator("tags", mode="before")
     @classmethod
@@ -239,6 +253,7 @@ class MusicBrainzReleaseGroup(BaseModel):
         default=(), alias="artist-credit", max_length=MAX_ARTIST_CREDIT_MEMBERS
     )
     genres: tuple[MusicBrainzGenre, ...] = Field(default=(), max_length=128)
+    tags: tuple[MusicBrainzTag, ...] = Field(default=(), max_length=512)
 
 
 class MusicBrainzRecording(BaseModel):
@@ -918,6 +933,16 @@ def write_artist_outputs(
     return entity_count, relationship_count
 
 
+@dataclass(frozen=True, slots=True)
+class MusicBrainzArtistResponse:
+    """One parsed artist response together with immutable acquisition facts."""
+
+    artist: MusicBrainzArtist
+    raw_bytes: bytes
+    request_url: str
+    received_at: datetime
+
+
 class MusicBrainzClient:
     """Fetch bounded typed records with the required identity and request rate."""
 
@@ -948,6 +973,10 @@ class MusicBrainzClient:
 
     async def fetch_artist(self, artist_id: UUID) -> MusicBrainzArtist:
         """Fetch one official artist response with aliases, genres, and tags."""
+        return (await self.fetch_artist_response(artist_id)).artist
+
+    async def fetch_artist_response(self, artist_id: UUID) -> MusicBrainzArtistResponse:
+        """Fetch one artist and retain exact response bytes for a caller-owned cache."""
         await self._wait_for_rate_limit()
         response = await self._client.get(
             f"{MUSICBRAINZ_API_BASE}/artist/{artist_id}",
@@ -955,7 +984,12 @@ class MusicBrainzClient:
             headers={"User-Agent": self._user_agent, "Accept": "application/json"},
         )
         response.raise_for_status()
-        return MusicBrainzArtist.model_validate_json(response.content)
+        return MusicBrainzArtistResponse(
+            artist=MusicBrainzArtist.model_validate_json(response.content),
+            raw_bytes=response.content,
+            request_url=str(response.url),
+            received_at=datetime.now(UTC),
+        )
 
     async def fetch_release_group(self, release_group_id: UUID) -> MusicBrainzReleaseGroup:
         """Fetch one release group with direct genres."""
