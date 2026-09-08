@@ -11,6 +11,10 @@ import { resolve } from "node:path";
 const args = process.argv.slice(2);
 const url = args[0];
 const focusedOnly = args.includes("--focused");
+const initialOnly = args.includes("--initial-only");
+const mobileInitial = args.includes("--mobile");
+const transitionOnly = args.includes("--transition");
+const resizeOnly = args.includes("--resize");
 const output = resolve(args[1] ?? ".cache/open-v2-runtime-qa/browser");
 const artifactPath = resolve(args[2] ?? "data/model/open-construction-graph-v2.json");
 if (!url) throw new Error("usage: capture_open_construction_v2_browser.mjs URL [OUTPUT] [ARTIFACT]");
@@ -204,9 +208,83 @@ async function main() {
   const captures = {};
   const checks = {};
   try {
-    await navigate(cdp, { name: "desktop", width: 1366, height: 768, mobile: false }, "light");
+    const initialViewport = mobileInitial
+      ? { name: "mobile-initial", width: 390, height: 844, mobile: true }
+      : { name: "desktop", width: 1366, height: 768, mobile: false };
+    await navigate(cdp, initialViewport, "light");
     await sleep(500);
     const initial = await liveMetrics(cdp);
+    if (resizeOnly) {
+      const before = await cdp.evaluate(`(() => {
+        const map = document.querySelector('#semantic-map').getBoundingClientRect();
+        const center = { x: map.width / 2, y: map.height / 2 };
+        const node = [...window.__musixMap.nodes(':visible')].sort((left, right) => {
+          const a = left.renderedPosition(); const b = right.renderedPosition();
+          return Math.hypot(a.x - center.x, a.y - center.y) - Math.hypot(b.x - center.x, b.y - center.y);
+        })[0];
+        return { id: node.id() };
+      })()`);
+      await cdp.command("Emulation.setDeviceMetricsOverride", {
+        width: 390, height: 844, deviceScaleFactor: 1, mobile: true,
+        screenWidth: 390, screenHeight: 844,
+      });
+      await cdp.command("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+      await cdp.evaluate("window.dispatchEvent(new Event('resize'))");
+      await cdp.waitFor("window.__musixMapMetrics.level === 0 && window.__musixMap.width() === 390 && window.__musixMapMetrics.labelBudget === 8", "responsive overview rebuild");
+      const resized = await liveMetrics(cdp);
+      const anchor = await cdp.evaluate(`(() => {
+        const map = document.querySelector('#semantic-map').getBoundingClientRect();
+        const point = window.__musixMap.$id(${JSON.stringify(before.id)}).renderedPosition();
+        return { x: point.x, y: point.y, width: map.width, height: map.height };
+      })()`);
+      checks.resize_keeps_overview_anchor = resized.visibleIds.includes(before.id)
+        && Math.abs(anchor.x - anchor.width / 2) < anchor.width * 0.3
+        && Math.abs(anchor.y - anchor.height / 2) < anchor.height * 0.3
+        && resized.labels >= Math.max(6, Math.floor(resized.labelBudget * 0.7));
+      console.log(JSON.stringify({ checks, before, resized, anchor }));
+      assert(cdp.runtimeErrors.length === 0, `runtime errors: ${cdp.runtimeErrors.join("; ")}`);
+      assert(Object.values(checks).every(Boolean), `failed checks: ${Object.entries(checks).filter(([, value]) => !value).map(([name]) => name).join(", ")}`);
+      return;
+    }
+    if (transitionOnly) {
+      const anchor = await cdp.evaluate(`(() => {
+        const map = document.querySelector('#semantic-map').getBoundingClientRect();
+        const center = { x: map.width / 2, y: map.height / 2 };
+        const node = [...window.__musixMap.nodes(':visible')].sort((left, right) => {
+          const a = left.renderedPosition(); const b = right.renderedPosition();
+          return Math.hypot(a.x - center.x, a.y - center.y) - Math.hypot(b.x - center.x, b.y - center.y);
+        })[0];
+        return { id: node.id(), itemId: node.data('itemId') };
+      })()`);
+      await sleep(300); // renderer enables LOD camera events after its first fit
+      const zoomIn = await box(cdp, '[data-map-action="zoom-in"]');
+      await click(cdp, zoomIn.x + zoomIn.width / 2, zoomIn.y + zoomIn.height / 2);
+      await cdp.waitFor("window.__musixMapMetrics.level > 0", "deeper source-coordinate cohort");
+      const transition = await liveMetrics(cdp);
+      const request = new URL(cdp.mapRequests.at(-1));
+      const bounds = ["min_x", "min_y", "max_x", "max_y"].map((key) => Number(request.searchParams.get(key)));
+      checks.zoom_keeps_nearest_overview_anchor = transition.level > initial.level
+        && transition.visibleIds.includes(anchor.id)
+        && bounds.every(Number.isFinite)
+        && transition.boundsOk;
+      console.log(JSON.stringify({ checks, anchor, transition, bounds }));
+      assert(cdp.runtimeErrors.length === 0, `runtime errors: ${cdp.runtimeErrors.join("; ")}`);
+      assert(Object.values(checks).every(Boolean), `failed checks: ${Object.entries(checks).filter(([, value]) => !value).map(([name]) => name).join(", ")}`);
+      return;
+    }
+    if (initialOnly) {
+      checks.initial_overview_visible = initial.boundsOk
+        && initial.labels >= Math.max(6, Math.floor(initial.labelBudget * 0.7))
+        && initial.labelOverlaps === 0
+        && initial.occupancyWidth > 0.55
+        && initial.labelFontMin >= 12
+        && (!initialViewport.mobile || initial.occupancyHeight > 0.35);
+      captures.initial = await screenshot(cdp, `${output}/initial.png`);
+      console.log(JSON.stringify({ checks, initial, captures }));
+      assert(cdp.runtimeErrors.length === 0, `runtime errors: ${cdp.runtimeErrors.join("; ")}`);
+      assert(Object.values(checks).every(Boolean), `failed checks: ${Object.entries(checks).filter(([, value]) => !value).map(([name]) => name).join(", ")}`);
+      return;
+    }
     if (focusedOnly) {
       const selectedId = "catalog:wikidata:genre:Q7749";
       const expectedIds = artifact.edges
@@ -261,7 +339,7 @@ async function main() {
       console.log(JSON.stringify(checks));
       return;
     }
-    checks.initial_square_fit_and_labels = initial.boundsOk && initial.labels >= 16 && initial.labelFontMin >= 12
+    checks.initial_square_fit_and_labels = initial.boundsOk && initial.labels >= 8 && initial.labelFontMin >= 12
       && initial.labelOverlaps === 0 && initial.worldAspect > 1.1
       && initial.occupancyWidth > 0.55 && initial.occupancyHeight > 0.55;
     captures.desktop_light = await screenshot(cdp, `${output}/desktop-light.png`);

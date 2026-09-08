@@ -44,7 +44,7 @@ class AppTests(unittest.TestCase):
         self.assertIn("htmx-4.0.0.min.js", response.text)
         self.assertIn("/static/app.css?v=14", response.text)
         self.assertIn("cytoscape-3.34.0.min.js", response.text)
-        self.assertIn("semantic-map.js?v=27", response.text)
+        self.assertIn("semantic-map.js?v=31", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertIn("Open 6,291", response.text)
         self.assertIn('data-map-view="open"', response.text)

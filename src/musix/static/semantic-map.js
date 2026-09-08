@@ -1,6 +1,38 @@
 (() => {
   "use strict";
 
+  // display-transform-testable-start
+  const createMonotonicAxisTransform = (rawPoints) => {
+    const sums = new Map();
+    for (const point of rawPoints) {
+      const current = sums.get(point.raw) ?? { total: 0, count: 0 };
+      current.total += point.display;
+      current.count += 1;
+      sums.set(point.raw, current);
+    }
+    const points = [...sums.entries()]
+      .map(([raw, value]) => ({ raw, display: value.total / value.count }))
+      .sort((left, right) => left.raw - right.raw);
+    if (points.length === 1) {
+      return { forward: () => points[0].display, inverse: () => points[0].raw };
+    }
+    const interpolate = (value, source, target) => {
+      let upper = points.findIndex((point) => point[source] >= value);
+      if (upper < 0) upper = points.length - 1;
+      if (upper === 0) upper = 1;
+      const left = points[upper - 1];
+      const right = points[upper];
+      const denominator = right[source] - left[source];
+      if (Math.abs(denominator) < 0.0001) return left[target];
+      return left[target] + (value - left[source]) * (right[target] - left[target]) / denominator;
+    };
+    return {
+      forward: (value) => interpolate(value, "raw", "display"),
+      inverse: (value) => interpolate(value, "display", "raw"),
+    };
+  };
+  // display-transform-testable-end
+
   let mapElement = document.querySelector("#semantic-map");
   if (!mapElement || !window.cytoscape) return;
 
@@ -1040,6 +1072,8 @@
     let focusedNodeId = null;
     let neighborhoodNodeIds = null;
     let overviewCamera = null;
+    let openDisplayTransform = null;
+    let pendingOverviewResizeCamera = null;
     mapElement.tabIndex = 0;
     const nodeId = (node) => node.node_id ?? node.genre_id;
     const openGraphV2 = mapElement.dataset.openGraphVersion === "v2";
@@ -1048,18 +1082,52 @@
     // centered bounded landscape; applying the v1 center (x=665) collapses a
     // selected v2 neighborhood into one corner of its fitted camera.
     const displayX = (value) => openGraphV2
-      ? Number(value)
+      ? (openDisplayTransform?.x.forward(Number(value)) ?? Number(value))
       : 1200 * Math.tanh((Number(value) - 665) / 50);
     const rawX = (value) => openGraphV2
-      ? Number(value)
+      ? (openDisplayTransform?.x.inverse(Number(value)) ?? Number(value))
       : 665 + 50 * Math.atanh(Math.max(-0.999999, Math.min(0.999999, Number(value) / 1200)));
     const displayY = (value) => openGraphV2
-      ? Number(value)
+      ? (openDisplayTransform?.y.forward(Number(value)) ?? Number(value))
       : 1000 * Math.tanh((Number(value) + 78) / 160);
     const rawY = (value) => openGraphV2
-      ? Number(value)
+      ? (openDisplayTransform?.y.inverse(Number(value)) ?? Number(value))
       : -78 + 160 * Math.atanh(Math.max(-0.999999, Math.min(0.999999, Number(value) / 1000)));
-    const openElement = (node, overview = false) => ({
+    const monotonicAxisTransform = (items, key, positions) => {
+      const sums = new Map();
+      for (const item of items) {
+        const raw = Number(item[key]);
+        const display = positions.get(nodeId(item))?.[key === "x" ? "x" : "y"];
+        if (!Number.isFinite(raw) || !Number.isFinite(display)) continue;
+        const current = sums.get(raw) ?? { total: 0, count: 0 };
+        current.total += display;
+        current.count += 1;
+        sums.set(raw, current);
+      }
+      return createMonotonicAxisTransform(
+        [...sums.entries()].map(([raw, value]) => ({ raw, display: value.total / value.count })),
+      );
+    };
+    const overviewDisplayPositions = (payload) => {
+      // This display transform is derived from the first bounded overview and
+      // reused by deeper client cohorts. The artifact coordinates remain the
+      // source of truth for API viewport requests. Quantile scaling prevents
+      // one far-away navigation point from shrinking ordinary anchors.
+      // A portrait canvas needs a taller display world. This is responsive
+      // packing only: it does not alter the stored layout or the deeper
+      // source-coordinate navigation surface.
+      const viewportWidth = Math.max(mapElement.clientWidth || 0, window.innerWidth || 0);
+      const dimensions = viewportWidth <= 600
+        ? { width: 1500, height: 2000, aspect: 0.75 }
+        : mapDimensions();
+      const positions = mapPositions(payload.nodes, nodeId, dimensions);
+      return {
+        positions,
+        x: monotonicAxisTransform(payload.nodes, "x", positions),
+        y: monotonicAxisTransform(payload.nodes, "y", positions),
+      };
+    };
+    const openElement = (node, overview = false, overviewPositions = null) => ({
       data: {
         id: `open-${nodeId(node)}`,
         itemId: nodeId(node),
@@ -1073,7 +1141,8 @@
         degree: node.degree,
         overview,
       },
-      position: { x: displayX(node.x), y: displayY(node.y) },
+      position: overviewPositions?.get(nodeId(node))
+        ?? { x: displayX(node.x), y: displayY(node.y) },
       classes: [node.hierarchy_depth === 0 ? "umbrella" : "genre", node.node_kind ?? "legacy_name_seed", "open-graph"].join(" "),
     });
     const edgeElement = (edge) => ({
@@ -1088,12 +1157,14 @@
       // taxonomy edges in a selected local neighborhood.
       classes: edge.factual_relationship ? "taxonomy" : "open-review",
     });
-    const openLabelBudget = (level) => (mapElement.clientWidth <= 600
-      // A phone overview is a wayfinding surface. One clear anchor is more
-      // useful than a pile of tiny overlapping names; zoom and local detail
-      // progressively reveal the bounded viewport cohort.
-      ? [1, 8, 14, 20][level]
-      : [8, 16, 28, 40][level]);
+    const openLabelBudget = (level) => {
+      // Label density follows usable screen area, while collision placement is
+      // still the final authority. This keeps a recognizable genre overview
+      // on phones without turning either viewport into a name cloud.
+      const area = Math.max(1, mapElement.clientWidth * mapElement.clientHeight);
+      const overview = Math.max(8, Math.min(24, Math.round(area / 42000)));
+      return [overview, Math.ceil(overview * 1.5), overview * 2, Math.ceil(overview * 2.5)][level];
+    };
     const scheduleOpenLabelPaint = () => {
       if (labelPaintFrame !== null) return;
       labelPaintFrame = window.requestAnimationFrame(() => {
@@ -1131,7 +1202,8 @@
       for (const node of candidates) {
         if (acceptedBoxes.length === budget) break;
         const screenLabelSize = focused ? 14 : 12;
-        node.data("labelSize", Math.max(9, Math.min(64, screenLabelSize / Math.max(cy.zoom(), 0.01))));
+        const maximumLabelSize = mapElement.clientWidth <= 600 ? 192 : 64;
+        node.data("labelSize", Math.max(9, Math.min(maximumLabelSize, screenLabelSize / Math.max(cy.zoom(), 0.01))));
         node.data("displayLabel", node.data("label"));
         let accepted = false;
         for (const placement of placements) {
@@ -1346,8 +1418,10 @@
     const render = (payload, preserveCamera) => {
       const overview = payload.level === 0;
       const orderedNodes = payload.nodes;
+      if (overview) openDisplayTransform = overviewDisplayPositions(payload);
+      const overviewPositions = overview ? openDisplayTransform.positions : null;
       const elements = [
-        ...orderedNodes.map((node) => openElement(node, overview)),
+        ...orderedNodes.map((node) => openElement(node, overview, overviewPositions)),
         ...payload.edges.map(edgeElement),
       ];
       const previous = preserveCamera && cy ? { zoom: cy.zoom(), pan: cy.pan() } : null;
@@ -1386,6 +1460,22 @@
         } else {
           cy.fit(cy.nodes(), 72);
           baselineZoom = cy.zoom();
+          if (overview && pendingOverviewResizeCamera) {
+            const zoom = Math.max(
+              cy.minZoom(),
+              Math.min(cy.maxZoom(), baselineZoom * pendingOverviewResizeCamera.relativeZoom),
+            );
+            const center = {
+              x: displayX(pendingOverviewResizeCamera.rawX),
+              y: displayY(pendingOverviewResizeCamera.rawY),
+            };
+            cy.zoom(zoom);
+            cy.pan({
+              x: mapElement.clientWidth / 2 - center.x * zoom,
+              y: mapElement.clientHeight / 2 - center.y * zoom,
+            });
+            pendingOverviewResizeCamera = null;
+          }
         }
       } finally {
         suppressCameraEvents = false;
@@ -1536,6 +1626,30 @@
       // need an explicit refresh after the surrounding document theme changes.
       cy.style(stylesheet()).update();
       paintLabels();
+    });
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      if (!cy) return;
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        const extent = cy.extent();
+        const center = {
+          x: (extent.x1 + extent.x2) / 2,
+          y: (extent.y1 + extent.y2) / 2,
+        };
+        cy.resize();
+        // Rebuild responsive packing only for the overview, retaining its raw
+        // camera center and relative zoom. A deeper LOD keeps its exact
+        // source-coordinate viewport intact.
+        if (!focusedNodeId && activeLevel === 0) {
+          pendingOverviewResizeCamera = {
+            rawX: rawX(center.x),
+            rawY: rawY(center.y),
+            relativeZoom: cy.zoom() / Math.max(baselineZoom, 0.0001),
+          };
+          load(0);
+        }
+      }, 120);
     });
     load(0);
   };
