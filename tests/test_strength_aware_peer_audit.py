@@ -5,7 +5,11 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.strength_aware_peer_audit import PeerAuditError, build_strength_aware_peer_audit
+from musix.strength_aware_peer_audit import (
+    PeerAuditError,
+    build_corroborated_peer_audit,
+    build_strength_aware_peer_audit,
+)
 
 
 class StrengthAwarePeerAuditTests(unittest.TestCase):
@@ -29,6 +33,17 @@ class StrengthAwarePeerAuditTests(unittest.TestCase):
             _write(path, "release_group_artist_overlap", [])
             with self.assertRaises(PeerAuditError):
                 build_strength_aware_peer_audit(path, path)
+
+    def test_corroborated_core_requires_both_channels(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            direct = root / "direct.json"
+            support = root / "support.json"
+            _write(direct, "direct_artist_overlap", [("a", "b", 0.03, 5), ("b", "c", 0.03, 5)])
+            _write(support, "release_group_artist_overlap", [("a", "b", 0.02, 3)])
+            artifact = build_corroborated_peer_audit(direct, support)
+        self.assertEqual(artifact.corroborated_edge_count, 1)
+        self.assertEqual(artifact.covered_seed_count, 2)
 
 
 def _write(path: Path, kind: str, edges: list[tuple[str, str, float, int]]) -> None:

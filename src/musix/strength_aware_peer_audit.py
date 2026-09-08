@@ -61,6 +61,20 @@ class StrengthAwarePeerAudit(FrozenModel):
     output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
+class CorroboratedPeerAudit(FrozenModel):
+    revision: Literal["corroborated-peer-audit-v1"] = "corroborated-peer-audit-v1"
+    scope: Literal["local_research_non_production"] = "local_research_non_production"
+    direct_input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    support_input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    corroborated_edge_count: int = Field(ge=0)
+    covered_seed_count: int = Field(ge=0)
+    component_count: int = Field(ge=0)
+    largest_partition_size: int = Field(ge=0)
+    direct_ablation_coassignment: float = Field(ge=0, le=1)
+    support_ablation_coassignment: float = Field(ge=0, le=1)
+    output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 def build_strength_aware_peer_audit(direct_path: Path, support_path: Path) -> StrengthAwarePeerAudit:
     """Audit a preregistered threshold grid without combining source channels."""
     direct = _load(direct_path, "direct_artist_overlap")
@@ -79,6 +93,34 @@ def build_strength_aware_peer_audit(direct_path: Path, support_path: Path) -> St
             edge.shared_supported_artist_count < 2 or edge.score < 0.005
             for edge in direct.candidates + support.candidates
         ),
+        output_sha256="0" * 64,
+    )
+    return base.model_copy(update={"output_sha256": _hash(base)})
+
+
+def build_corroborated_peer_audit(direct_path: Path, support_path: Path) -> CorroboratedPeerAudit:
+    """Audit only independently corroborated pairs, with no raw-score blending."""
+    direct = _load(direct_path, "direct_artist_overlap")
+    support = _load(support_path, "release_group_artist_overlap")
+    direct_by_pair = {_pair(edge): edge for edge in direct.candidates}
+    support_by_pair = {_pair(edge): edge for edge in support.candidates}
+    pairs = direct_by_pair.keys() & support_by_pair.keys()
+    core = tuple(direct_by_pair[pair] for pair in sorted(pairs))
+    communities = _partition(core)
+    combined = _coassignment(communities)
+    return _corroborated_artifact(direct, support, core, combined, communities)
+
+
+def _corroborated_artifact(
+    direct: ChannelInput, support: ChannelInput, core: tuple[PeerCandidate, ...], combined: set[tuple[str, str]], communities: tuple[tuple[str, ...], ...]
+) -> CorroboratedPeerAudit:
+    covered = sum(len(group) for group in communities)
+    base = CorroboratedPeerAudit(
+        direct_input_sha256=direct.output_sha256, support_input_sha256=support.output_sha256,
+        corroborated_edge_count=len(core), covered_seed_count=covered,
+        component_count=len(_components(core)), largest_partition_size=max(map(len, communities), default=0),
+        direct_ablation_coassignment=_jaccard(combined, _coassignment(_partition(direct.candidates))),
+        support_ablation_coassignment=_jaccard(combined, _coassignment(_partition(support.candidates))),
         output_sha256="0" * 64,
     )
     return base.model_copy(update={"output_sha256": _hash(base)})
