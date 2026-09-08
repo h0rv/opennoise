@@ -9,11 +9,15 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from musix.genre_seed_universe import SeedInput, SeedName
-from musix.musicbrainz_model_adapter import MusicBrainzModelAdapterPolicy
+from musix.musicbrainz_model_adapter import (
+    MusicBrainzModelAdapterPolicy,
+    adapt_musicbrainz_seed_targets,
+)
 from musix.musicbrainz_reviewed_alias_context import (
     ReviewedAliasContextError,
     adapt_reviewed_alias_context,
     build_reviewed_alias_context,
+    combine_reviewed_alias_context_model_input,
 )
 from musix.musicbrainz_reviewed_alias_context import artifact_sha256 as context_artifact_sha256
 from musix.musicbrainz_seed_targets import (
@@ -155,6 +159,16 @@ class ReviewedAliasContextTests(unittest.TestCase):
                 context,
                 MusicBrainzModelAdapterPolicy(expected_seed_count=1),
             )
+            baseline_result = adapt_musicbrainz_seed_targets(
+                baseline,
+                _reconciliation(),
+                MusicBrainzModelAdapterPolicy(expected_seed_count=1),
+            )
+            materialized, receipt = combine_reviewed_alias_context_model_input(
+                baseline_result.model_input,
+                baseline_result.report,
+                context,
+            )
 
             self.assertEqual(baseline_path.read_bytes(), original_bytes)
             self.assertEqual(len(context.memberships), 1)
@@ -207,6 +221,27 @@ class ReviewedAliasContextTests(unittest.TestCase):
                 context.output_sha256,
             )
             self.assertNotEqual(combined.output_sha256, baseline.output_sha256)
+            self.assertEqual(
+                [
+                    (row.artist_id, row.genre_id, row.facet, row.value)
+                    for row in materialized.direct_memberships
+                ],
+                [
+                    (row.artist_id, row.genre_id, row.facet, row.value)
+                    for row in combined.model_input.direct_memberships
+                ],
+            )
+            self.assertEqual(
+                receipt.combined_model_input_sha256,
+                hashlib.sha256(
+                    json.dumps(
+                        materialized.model_dump(mode="json"),
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                        sort_keys=True,
+                    ).encode()
+                ).hexdigest(),
+            )
 
     def test_rejects_unknown_alias_seed_and_mismatched_baseline_binding(self) -> None:
         with TemporaryDirectory() as directory:

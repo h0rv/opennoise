@@ -14,8 +14,10 @@ from musix.musicbrainz_model_adapter import (
     AdapterAggregate,
     AdapterFacet,
     MusicBrainzModelAdapterPolicy,
+    MusicBrainzModelAdapterReport,
     MusicBrainzModelAdapterResult,
     adapt_musicbrainz_seed_targets,
+    verify_musicbrainz_model_adapter_report,
 )
 from musix.musicbrainz_seed_targets import (
     ReviewedSeedAlias,
@@ -96,6 +98,23 @@ class ReviewedAliasCombinedAdapterResult(FrozenModel):
     reviewed_alias_context_aggregates: tuple[AdapterAggregate, ...]
     combined_aggregates: tuple[AdapterAggregate, ...]
     model_input: PublicModelInput
+    output_sha256: Sha256
+
+
+class ReviewedAliasCombinedModelReceipt(FrozenModel):
+    """Bind a separately written combined input to its immutable source artifacts."""
+
+    revision: Literal["musicbrainz-reviewed-alias-combined-model-v1"] = (
+        "musicbrainz-reviewed-alias-combined-model-v1"
+    )
+    baseline_model_input_sha256: Sha256
+    baseline_adapter_output_sha256: Sha256
+    baseline_seed_target_output_sha256: Sha256
+    reviewed_alias_context_output_sha256: Sha256
+    combined_model_input_sha256: Sha256
+    baseline_unique_seed_artist_count: int = Field(ge=0)
+    reviewed_alias_unique_seed_artist_count: int = Field(ge=0)
+    combined_unique_seed_artist_count: int = Field(ge=0)
     output_sha256: Sha256
 
 
@@ -226,6 +245,121 @@ def write_reviewed_alias_context(path: Path, artifact: ReviewedAliasContextArtif
 def combined_adapter_sha256(result: ReviewedAliasCombinedAdapterResult) -> Sha256:
     """Return the logical hash for one separate additive adapter result."""
     return _sha(result.model_dump(mode="json", exclude={"output_sha256"}))
+
+
+def public_model_input_sha256(model_input: PublicModelInput) -> Sha256:
+    """Hash one public model input without assigning it a mutable wrapper."""
+    return _sha(model_input.model_dump(mode="json"))
+
+
+def combined_model_receipt_sha256(receipt: ReviewedAliasCombinedModelReceipt) -> Sha256:
+    """Return the logical hash of one combined-model receipt."""
+    return _sha(receipt.model_dump(mode="json", exclude={"output_sha256"}))
+
+
+def verify_reviewed_alias_combined_model_receipt(
+    receipt: ReviewedAliasCombinedModelReceipt,
+) -> None:
+    """Fail closed when a combined-model receipt does not replay."""
+    if combined_model_receipt_sha256(receipt) != receipt.output_sha256:
+        raise ReviewedAliasContextError(
+            "reviewed alias combined model receipt hash does not replay"
+        )
+
+
+def combine_reviewed_alias_context_model_input(
+    baseline_model_input: PublicModelInput,
+    baseline_adapter_report: MusicBrainzModelAdapterReport,
+    context: ReviewedAliasContextArtifact,
+) -> tuple[PublicModelInput, ReviewedAliasCombinedModelReceipt]:
+    """Add reviewed context to an already materialized baseline input exactly once.
+
+    This does not re-read the large seed-target extractor artifact.  The adapter
+    report supplies the sealed target identity that both inputs must bind.
+    """
+    verify_musicbrainz_model_adapter_report(baseline_adapter_report)
+    verify_reviewed_alias_context_artifact(context)
+    if context.baseline_output_sha256 != baseline_adapter_report.seed_target_output_sha256:
+        raise ReviewedAliasContextError("reviewed alias context does not bind the adapter target")
+    baseline_target_artifacts = {
+        row.content_sha256
+        for row in baseline_model_input.artifacts
+        if row.source == "musicbrainz" and row.artifact_key == "musicbrainz-seed-target-artifact"
+    }
+    if baseline_target_artifacts != {baseline_adapter_report.seed_target_output_sha256}:
+        raise ReviewedAliasContextError("baseline model input does not bind the adapter target")
+    baseline_pairs = {
+        (row.genre_id, row.artist_id.removeprefix("musicbrainz:artist:"))
+        for row in baseline_model_input.direct_memberships
+    }
+    context_pairs = {(row.seed_source_item_id, row.artist_id) for row in context.memberships}
+    memberships = {
+        (row.genre_id, row.artist_id, row.facet): row
+        for row in baseline_model_input.direct_memberships
+    }
+    for row in context.memberships:
+        key = (row.seed_source_item_id, f"musicbrainz:artist:{row.artist_id}", "musicbrainz_tag")
+        context_ref = (
+            f"reviewed-alias-context:{context.output_sha256}:{row.contextual_evidence_ref}:"
+            f"target:musicbrainz_tag_name:{row.tag_identity}:{row.approval_ref}:"
+            f"{context.alias_mapping_sha256}"
+        )
+        baseline = memberships.get(key)
+        if baseline is None:
+            memberships[key] = DirectMembershipEvidence(
+                artist_id=key[1],
+                genre_id=key[0],
+                facet="musicbrainz_tag",
+                value=row.positive_weight,
+                evidence_ref=context_ref,
+            )
+            continue
+        memberships[key] = DirectMembershipEvidence(
+            artist_id=baseline.artist_id,
+            genre_id=baseline.genre_id,
+            facet=baseline.facet,
+            value=baseline.value + row.positive_weight,
+            evidence_ref=(
+                f"reviewed-alias-context-union:{context.output_sha256}:{baseline.evidence_ref}:"
+                f"{_sha((context_ref,))[:24]}"
+            ),
+        )
+    if context.memberships:
+        combined = PublicModelInput(
+            artifacts=(
+                *baseline_model_input.artifacts,
+                PublicArtifact(
+                    source="musicbrainz",
+                    snapshot=context.revision,
+                    artifact_key="musicbrainz-reviewed-alias-context",
+                    content_sha256=context.output_sha256,
+                    export_allowed=False,
+                ),
+            ),
+            genres=baseline_model_input.genres,
+            direct_memberships=tuple(memberships[key] for key in sorted(memberships)),
+            artist_pairs=baseline_model_input.artist_pairs,
+            metadata_candidates=baseline_model_input.metadata_candidates,
+            hierarchy=baseline_model_input.hierarchy,
+        )
+    else:
+        combined = baseline_model_input
+    preliminary = ReviewedAliasCombinedModelReceipt(
+        baseline_model_input_sha256=public_model_input_sha256(baseline_model_input),
+        baseline_adapter_output_sha256=baseline_adapter_report.output_sha256,
+        baseline_seed_target_output_sha256=baseline_adapter_report.seed_target_output_sha256,
+        reviewed_alias_context_output_sha256=context.output_sha256,
+        combined_model_input_sha256=public_model_input_sha256(combined),
+        baseline_unique_seed_artist_count=len(baseline_pairs),
+        reviewed_alias_unique_seed_artist_count=len(context_pairs),
+        combined_unique_seed_artist_count=len(baseline_pairs | context_pairs),
+        output_sha256="0" * 64,
+    )
+    receipt = preliminary.model_copy(
+        update={"output_sha256": combined_model_receipt_sha256(preliminary)}
+    )
+    verify_reviewed_alias_combined_model_receipt(receipt)
+    return combined, receipt
 
 
 def adapt_reviewed_alias_context(
