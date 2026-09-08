@@ -28,6 +28,10 @@ class TaskContractTests(unittest.TestCase):
             }.issubset(poe_tasks)
         )
         self.assertEqual(poe_tasks["sync"], "uv sync --locked")
+        self.assertEqual(
+            poe_tasks["dev-research"],
+            "python -m scripts.run_local_research_dev",
+        )
 
         self.assertEqual(
             poe_tasks["release-certify"]["cmd"],
