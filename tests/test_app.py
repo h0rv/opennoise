@@ -1,7 +1,9 @@
 import tempfile
 import unittest
+from os import environ
 from pathlib import Path
 from typing import override
+from unittest.mock import patch
 
 from musix.app import create_app
 from musix.db import Database
@@ -42,12 +44,24 @@ class AppTests(unittest.TestCase):
         self.assertIn("htmx-4.0.0.min.js", response.text)
         self.assertIn("/static/app.css?v=14", response.text)
         self.assertIn("cytoscape-3.34.0.min.js", response.text)
-        self.assertIn("semantic-map.js?v=26", response.text)
+        self.assertIn("semantic-map.js?v=27", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertIn("Open 6,291", response.text)
         self.assertIn('data-map-view="open"', response.text)
         self.assertNotIn('id="map-view-switch"', response.text)
         self.assertEqual(response.text.count('id="semantic-map"'), 1)
+        self.assertNotIn("data-local-research-artist-url", response.text)
+
+    def test_local_research_panel_rejects_non_loopback_startup(self) -> None:
+        with (
+            patch.dict(
+                environ,
+                {"MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true", "HOST": "0.0.0.0"},  # noqa: S104
+                clear=False,
+            ),
+            self.assertRaisesRegex(ValueError, "loopback host"),
+        ):
+            create_app(Path(self.temporary.name) / "other.sqlite")
 
     def test_open_view_uses_the_committed_artifact_in_bounded_lods(self) -> None:
         page = self.client.get("/", params={"view": "open"})

@@ -230,15 +230,12 @@ def build_artist_metadata(
 def exact_canonical_names(
     sources: LocalArtistMetadataSources,
     artist_mbids: tuple[str, ...],
+    *,
+    verified: bool = False,
 ) -> dict[str, str]:
     """Return only conflict-free canonical names for exact source MBIDs."""
-    verify_artist_metadata_artifact(sources.artifact)
-    database_sha256, database_bytes = _file_sha256(sources.database)
-    if (database_sha256, database_bytes) != (
-        sources.artifact.metadata_database_sha256,
-        sources.artifact.metadata_database_bytes,
-    ):
-        raise LocalMusicBrainzArtistMetadataError("metadata database does not match artifact")
+    if not verified:
+        verify_local_artist_metadata_sources(sources)
     if not artist_mbids:
         return {}
     with closing(sqlite3.connect(f"file:{sources.database.absolute()}?mode=ro", uri=True)) as conn:
@@ -252,6 +249,21 @@ def exact_canonical_names(
             artist_mbids,
         ).fetchall()
     return {str(row[0]): str(row[1]) for row in rows}
+
+
+def verify_local_artist_metadata_sources(sources: LocalArtistMetadataSources) -> None:
+    """Certify immutable metadata once before a local process serves lookups."""
+    verify_artist_metadata_artifact(sources.artifact)
+    database_sha256, database_bytes = _file_sha256(sources.database)
+    if (database_sha256, database_bytes) != (
+        sources.artifact.metadata_database_sha256,
+        sources.artifact.metadata_database_bytes,
+    ):
+        raise LocalMusicBrainzArtistMetadataError("metadata database does not match artifact")
+    with closing(sqlite3.connect(f"file:{sources.database.absolute()}?mode=ro", uri=True)) as conn:
+        conn.execute("PRAGMA query_only = ON")
+        if conn.execute("PRAGMA integrity_check").fetchone() != ("ok",):
+            raise LocalMusicBrainzArtistMetadataError("metadata database failed integrity check")
 
 
 def _verify_evidence_database(path: Path, artifact: ReleaseGroupEvidenceArtifact) -> None:

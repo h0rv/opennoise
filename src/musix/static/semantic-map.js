@@ -1251,9 +1251,13 @@
     const clearArtistNavigation = () => artistNavigation?.replaceChildren();
     const showArtistNavigation = (id) => {
       if (!openGraphV2 || !artistNavigation || !window.htmx) return;
+      const localResearchEndpoint = mapElement.dataset.localResearchArtistUrl;
+      const endpoint = id.startsWith("legacy:item") && localResearchEndpoint
+        ? `${localResearchEndpoint}${encodeURIComponent(id)}`
+        : `/fragments/open-construction-map/v2/artists/${encodeURIComponent(id)}`;
       window.htmx.ajax(
         "GET",
-        `/fragments/open-construction-map/v2/artists/${encodeURIComponent(id)}`,
+        endpoint,
         { target: "#artist-navigation-slot", swap: "innerHTML" },
       );
     };

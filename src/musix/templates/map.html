@@ -27,6 +27,7 @@
        data-map-mode="open" data-open-graph-version="v2"
        data-graph-url="/api/open-construction-map/v2?level=0"
        data-neighbor-url="/api/open-construction-map/v2/neighbors/"
+       {% if local_research_artist_evidence_configured %}data-local-research-artist-url="/fragments/local-research/musicbrainz/"{% endif %}
        aria-describedby="map-pan-help"></div>
   <section id="open-fallback" class="map-fallback" aria-label="Open construction graph">
     <p>Open v2 retains 6,291 legacy names and adds public taxonomy anchors. Factual taxonomy and review/navigation links remain distinct.</p>

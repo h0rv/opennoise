@@ -1,0 +1,15 @@
+<section class="artist-navigation" data-open-artist-node-id="{{ node_id }}">
+  <p><a href="/fragments/local-research/musicbrainz/{{ node_id | urlencode }}"
+        hx-get="/fragments/local-research/musicbrainz/{{ node_id | urlencode }}"
+        hx-target="#artist-navigation-slot" hx-swap="innerHTML">Back</a></p>
+  {% if response.seeds %}<ul>{% for item in response.seeds %}
+    <li><a href="/fragments/local-research/musicbrainz/legacy%3A{{ item.source_item_id | urlencode }}"
+           hx-get="/fragments/local-research/musicbrainz/legacy%3A{{ item.source_item_id | urlencode }}"
+           hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ item.name }}</a></li>
+  {% endfor %}</ul>{% endif %}
+  {% if response.album_supported_seeds %}<ul>{% for item in response.album_supported_seeds %}
+    <li><small>album support</small><a href="/fragments/local-research/musicbrainz/legacy%3A{{ item.seed.source_item_id | urlencode }}"
+           hx-get="/fragments/local-research/musicbrainz/legacy%3A{{ item.seed.source_item_id | urlencode }}"
+           hx-target="#artist-navigation-slot" hx-swap="innerHTML">{{ item.seed.name }}</a></li>
+  {% endfor %}</ul>{% endif %}
+</section>

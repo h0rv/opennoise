@@ -12,6 +12,7 @@ from collections import defaultdict
 from contextlib import closing
 from dataclasses import dataclass
 from hashlib import sha256
+from pathlib import Path  # noqa: TC003  # Litestar resolves dependency dataclass annotations.
 from time import monotonic
 from typing import TYPE_CHECKING, Final, Literal
 
@@ -22,6 +23,7 @@ from musix.local_musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     LocalMusicBrainzArtistMetadataError,
     exact_canonical_names,
+    verify_local_artist_metadata_sources,
 )
 from musix.models import FrozenModel
 from musix.musicbrainz_model_adapter import (
@@ -35,8 +37,6 @@ from musix.musicbrainz_release_group_evidence import (
 from musix.open_construction_store_v2 import _ALIASES_BY_NODE_ID
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from musix.seed_reconciliation import (
         SeedReconciliationArtifact,
         SeedReconciliationDisposition,
@@ -66,6 +66,49 @@ class LocalMusicBrainzEvidenceSources:
     reconciliation: SeedReconciliationArtifact
     adapter_report: MusicBrainzModelAdapterReport
     artist_metadata: LocalArtistMetadataSources | None = None
+
+
+@dataclass(slots=True)
+class LocalMusicBrainzArtistEvidenceStore:
+    """A process-local, startup-certified reader for loopback research UI."""
+
+    sources: LocalMusicBrainzEvidenceSources
+    _ready: bool = False
+
+    def start(self) -> None:
+        """Verify immutable files once before accepting bounded queries."""
+        _require_source_binding(self.sources)
+        connection, _ = _verified_database(self.sources.database, self.sources.evidence_artifact)
+        with closing(connection):
+            _require_direct_anchor_schema(connection)
+            _require_release_group_support_schema(connection)
+        if self.sources.artist_metadata is not None:
+            if (
+                self.sources.artist_metadata.artifact.evidence_output_sha256
+                != self.sources.evidence_artifact.output_sha256
+            ):
+                raise LocalMusicBrainzArtistEvidenceError(
+                    "artist metadata does not bind the completed evidence artifact"
+                )
+            verify_local_artist_metadata_sources(self.sources.artist_metadata)
+        self._ready = True
+
+    @property
+    def configured(self) -> bool:
+        """Whether startup certification completed successfully."""
+        return self._ready
+
+    def artists_for_seed(self, seed_query: str, *, limit: int = 25) -> LocalArtistEvidenceResponse:
+        """Query a startup-certified database without recalculating its full hash."""
+        if not self._ready:
+            raise LocalMusicBrainzArtistEvidenceError("local research evidence is not certified")
+        return _direct_artists_for_seed(self.sources, seed_query, limit=limit, trusted=True)
+
+    def seeds_for_artist(self, artist_mbid: str, *, limit: int = 25) -> LocalArtistSeedResponse:
+        """Return exact direct and album-supported stable seeds after certification."""
+        if not self._ready:
+            raise LocalMusicBrainzArtistEvidenceError("local research evidence is not certified")
+        return _direct_seeds_for_artist(self.sources, artist_mbid, limit=limit, trusted=True)
 
 
 class LocalResearchSeed(FrozenModel):
@@ -175,11 +218,25 @@ def direct_artists_for_seed(
     limit: int = 25,
 ) -> LocalArtistEvidenceResponse:
     """Return direct and separately album-supported artists for one stable seed."""
+    return _direct_artists_for_seed(sources, seed_query, limit=limit, trusted=False)
+
+
+def _direct_artists_for_seed(
+    sources: LocalMusicBrainzEvidenceSources,
+    seed_query: str,
+    *,
+    limit: int,
+    trusted: bool,
+) -> LocalArtistEvidenceResponse:
+    """Implement the public query and the startup-certified store query."""
     _require_limit(limit)
-    _require_source_binding(sources)
+    if not trusted:
+        _require_source_binding(sources)
     seed = resolve_seed_query(sources.reconciliation, seed_query)
-    connection, verification_seconds = _verified_database(
-        sources.database, sources.evidence_artifact
+    connection, verification_seconds = (
+        _trusted_database(sources.database)
+        if trusted
+        else _verified_database(sources.database, sources.evidence_artifact)
     )
     with closing(connection):
         _require_direct_anchor_schema(connection)
@@ -198,7 +255,7 @@ def direct_artists_for_seed(
         query_seconds = monotonic() - query_started
     claims = _group_artist_claims(_parse_artist_rows(raw_rows))
     supported = _group_supported_artists(_parse_support_artist_rows(support_rows))
-    names = _exact_attached_names(sources, claims, supported)
+    names = _exact_attached_names(sources, claims, supported, certified=trusted)
     claims = tuple(
         claim.model_copy(update={"canonical_name": names.get(claim.artist_mbid)})
         for claim in claims
@@ -228,11 +285,25 @@ def direct_seeds_for_artist(
     limit: int = 25,
 ) -> LocalArtistSeedResponse:
     """Return direct and separately album-supported seeds for one exact artist ID."""
+    return _direct_seeds_for_artist(sources, artist_mbid, limit=limit, trusted=False)
+
+
+def _direct_seeds_for_artist(
+    sources: LocalMusicBrainzEvidenceSources,
+    artist_mbid: str,
+    *,
+    limit: int,
+    trusted: bool,
+) -> LocalArtistSeedResponse:
+    """Implement the public query and the startup-certified store query."""
     _require_limit(limit)
-    _require_source_binding(sources)
+    if not trusted:
+        _require_source_binding(sources)
     by_id = {row.source_item_id: row for row in sources.reconciliation.dispositions}
-    connection, verification_seconds = _verified_database(
-        sources.database, sources.evidence_artifact
+    connection, verification_seconds = (
+        _trusted_database(sources.database)
+        if trusted
+        else _verified_database(sources.database, sources.evidence_artifact)
     )
     with closing(connection):
         _require_direct_anchor_schema(connection)
@@ -318,6 +389,8 @@ def _exact_attached_names(
     sources: LocalMusicBrainzEvidenceSources,
     direct: tuple[DirectArtistClaim, ...],
     supported: tuple[AlbumSupportedArtistClaim, ...],
+    *,
+    certified: bool = False,
 ) -> dict[str, str]:
     metadata = sources.artist_metadata
     if metadata is None:
@@ -332,7 +405,7 @@ def _exact_attached_names(
         )
     )
     try:
-        return exact_canonical_names(metadata, artist_ids)
+        return exact_canonical_names(metadata, artist_ids, verified=certified)
     except LocalMusicBrainzArtistMetadataError as error:
         raise LocalMusicBrainzArtistEvidenceError("artist metadata is invalid") from error
 
@@ -360,6 +433,13 @@ def _verified_database(
         connection.close()
         raise LocalMusicBrainzArtistEvidenceError("local evidence database failed integrity check")
     return connection, monotonic() - verification_started
+
+
+def _trusted_database(path: Path) -> tuple[sqlite3.Connection, float]:
+    """Open a read-only connection after process startup certified the file."""
+    connection = sqlite3.connect(f"file:{path.absolute()}?mode=ro", uri=True)
+    connection.execute("PRAGMA query_only = ON")
+    return connection, 0.0
 
 
 def _file_sha256(path: Path) -> tuple[str, int]:

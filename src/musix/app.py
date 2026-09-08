@@ -1,5 +1,6 @@
 """Async Litestar application for the local map interface."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -14,12 +15,24 @@ from musix.db import AsyncDatabase
 from musix.genre_entry import GenreEntryRepository
 from musix.historical_membership_store import HistoricalMembershipStore
 from musix.historical_signal_store import HistoricalSignalMapStore
+from musix.local_musicbrainz_artist_evidence import (
+    LocalMusicBrainzArtistEvidenceStore,
+    LocalMusicBrainzEvidenceSources,
+    load_musicbrainz_model_adapter_report,
+    load_release_group_evidence_artifact,
+)
+from musix.local_musicbrainz_artist_metadata import (
+    LocalArtistMetadataSources,
+    load_artist_metadata_artifact,
+)
 from musix.models import Settings
 from musix.open_construction_store import OpenConstructionMapStore
 from musix.open_construction_store_v2 import OpenConstructionV2MapStore
+from musix.pipeline.manifest import load_download_source
 from musix.production_store import ProductionMapStore
 from musix.public_artist_navigation_store import PublicArtistNavigationStore
 from musix.routes import CoreController, EvidenceController, MapController, SearchController
+from musix.seed_reconciliation import load_seed_reconciliation
 
 PACKAGE_ROOT = Path(__file__).parent
 STATIC_ROOT = PACKAGE_ROOT / "static"
@@ -33,7 +46,7 @@ class _UnsetPath:
 _UNSET_PATH = _UnsetPath()
 
 
-def create_app(  # noqa: C901, PLR0913, PLR0917
+def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     database_path: Path | None = None,
     production_map_path: Path | None = None,
     historical_signal_map_path: Path | None = None,
@@ -73,6 +86,40 @@ def create_app(  # noqa: C901, PLR0913, PLR0917
     open_construction_graph = OpenConstructionMapStore(selected_v1_path)
     open_construction_graph_v2 = OpenConstructionV2MapStore(selected_v2_path)
     public_artist_navigation = PublicArtistNavigationStore(selected_path)
+    local_research_artists: LocalMusicBrainzArtistEvidenceStore | None = None
+    if settings.local_research_artist_evidence_enabled:
+        if settings.host not in {"127.0.0.1", "::1", "localhost"}:
+            raise ValueError("local research artist evidence requires a loopback host")
+        evidence_artifact = load_release_group_evidence_artifact(
+            settings.local_research_artist_evidence_artifact_path
+        )
+        source = load_download_source(Path("config/data_sources.toml"), evidence_artifact.source_id)
+        if not (source.local_only and source.local_search and source.display):
+            raise ValueError("local research artist evidence source policy forbids local discovery")
+        artist_metadata = None
+        if (
+            settings.local_research_artist_metadata_database_path is not None
+            and settings.local_research_artist_metadata_artifact_path is not None
+        ):
+            artist_metadata = LocalArtistMetadataSources(
+                database=settings.local_research_artist_metadata_database_path,
+                artifact=load_artist_metadata_artifact(
+                    settings.local_research_artist_metadata_artifact_path
+                ),
+            )
+        local_research_artists = LocalMusicBrainzArtistEvidenceStore(
+            LocalMusicBrainzEvidenceSources(
+                database=settings.local_research_artist_evidence_database_path,
+                evidence_artifact=evidence_artifact,
+                reconciliation=load_seed_reconciliation(
+                    settings.local_research_seed_reconciliation_path
+                ),
+                adapter_report=load_musicbrainz_model_adapter_report(
+                    settings.local_research_adapter_report_path
+                ),
+                artist_metadata=artist_metadata,
+            )
+        )
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
@@ -81,6 +128,8 @@ def create_app(  # noqa: C901, PLR0913, PLR0917
         await open_construction_graph.start()
         await open_construction_graph_v2.start()
         await database.start()
+        if local_research_artists is not None:
+            await asyncio.to_thread(local_research_artists.start)
         try:
             yield
         finally:
@@ -110,6 +159,9 @@ def create_app(  # noqa: C901, PLR0913, PLR0917
     async def provide_public_artist_navigation() -> PublicArtistNavigationStore:
         return public_artist_navigation
 
+    async def provide_local_research_artists() -> LocalMusicBrainzArtistEvidenceStore | None:
+        return local_research_artists
+
     return Litestar(
         route_handlers=[
             CoreController,
@@ -127,6 +179,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0917
             "open_construction_graph": Provide(provide_open_construction_graph),
             "open_construction_graph_v2": Provide(provide_open_construction_graph_v2),
             "public_artist_navigation": Provide(provide_public_artist_navigation),
+            "local_research_artists": Provide(provide_local_research_artists),
         },
         lifespan=[lifespan],
         template_config=TemplateConfig(directory=TEMPLATE_ROOT, engine=JinjaTemplateEngine),

@@ -4,9 +4,11 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from musix.local_musicbrainz_artist_evidence import (
     LocalMusicBrainzArtistEvidenceError,
+    LocalMusicBrainzArtistEvidenceStore,
     LocalMusicBrainzEvidenceSources,
     direct_artists_for_seed,
     direct_seeds_for_artist,
@@ -40,6 +42,36 @@ _ARTIST_B = "00000000-0000-4000-8000-000000000002"
 
 
 class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
+    def test_startup_certified_store_hashes_once_then_uses_read_only_queries(self) -> None:
+        with TemporaryDirectory() as temporary:
+            database = _database(Path(temporary) / "evidence.sqlite")
+            store = LocalMusicBrainzArtistEvidenceStore(_sources(database))
+            with patch(
+                "musix.local_musicbrainz_artist_evidence._file_sha256",
+                wraps=lambda path: (
+                    hashlib.sha256(path.read_bytes()).hexdigest(),
+                    path.stat().st_size,
+                ),
+            ) as hashed:
+                store.start()
+                artists = store.artists_for_seed("item887")
+                seeds = store.seeds_for_artist(_ARTIST_A)
+
+        self.assertTrue(store.configured)
+        self.assertEqual(hashed.call_count, 1)
+        self.assertEqual(artists.verification_seconds, 0.0)
+        self.assertEqual(seeds.verification_seconds, 0.0)
+        self.assertEqual(artists.artists[0].artist_mbid, _ARTIST_A)
+        self.assertEqual(seeds.seeds[0].source_item_id, "item2")
+
+    def test_store_rejects_queries_before_startup_certification(self) -> None:
+        with TemporaryDirectory() as temporary:
+            store = LocalMusicBrainzArtistEvidenceStore(
+                _sources(_database(Path(temporary) / "evidence.sqlite"))
+            )
+            with self.assertRaisesRegex(LocalMusicBrainzArtistEvidenceError, "not certified"):
+                store.artists_for_seed("item887")
+
     def test_seed_lookup_uses_stable_id_or_existing_idm_alias(self) -> None:
         with TemporaryDirectory() as temporary:
             database = _database(Path(temporary) / "evidence.sqlite")

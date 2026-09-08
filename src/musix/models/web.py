@@ -44,6 +44,43 @@ class Settings(BaseSettings):
         default=Path(__file__).resolve().parents[3] / "data/model/open-construction-graph-v2.json",
         validation_alias="MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH",
     )
+    local_research_artist_evidence_enabled: bool = Field(
+        default=False, validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED"
+    )
+    local_research_artist_evidence_database_path: Path = Field(
+        default=Path(".cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite"),
+        validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_DATABASE",
+    )
+    local_research_artist_evidence_artifact_path: Path = Field(
+        default=Path(".cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json"),
+        validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ARTIFACT",
+    )
+    local_research_seed_reconciliation_path: Path = Field(
+        default=Path(".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json"),
+        validation_alias="MUSIX_LOCAL_RESEARCH_SEED_RECONCILIATION",
+    )
+    local_research_adapter_report_path: Path = Field(
+        default=Path(
+            ".cache/musicbrainz-full-seed-targets/pipeline/musicbrainz-model-adapter-report.json"
+        ),
+        validation_alias="MUSIX_LOCAL_RESEARCH_ADAPTER_REPORT",
+    )
+    local_research_artist_metadata_database_path: Path | None = Field(
+        default=None, validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_DATABASE"
+    )
+    local_research_artist_metadata_artifact_path: Path | None = Field(
+        default=None, validation_alias="MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_ARTIFACT"
+    )
+
+    @model_validator(mode="after")
+    def _local_research_metadata_paths_are_paired(self) -> Self:
+        if (self.local_research_artist_metadata_database_path is None) != (
+            self.local_research_artist_metadata_artifact_path is None
+        ):
+            raise ValueError(
+                "local artist metadata database and artifact paths must be configured together"
+            )
+        return self
 
 
 class SearchHit(FrozenModel):

@@ -40,6 +40,23 @@ This is a verified one-shot CLI, not an interactive service. Its JSON output rep
 
 The JSON output is local research only. It has `export_allowed=false` and `serving_allowed=false`. It is not a public API, a UI result, or an artist similarity claim.
 
+## Loopback discovery panel
+
+The development app keeps this panel disabled by default. Set
+`MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED=true` only with a loopback host.
+Startup verifies the artifact binding, complete evidence database hash and SQLite
+integrity once, then opens bounded read-only queries. It does not repeat a full
+database hash for each panel request. Non-loopback startup and non-loopback
+fragment requests are rejected.
+
+The panel is available only from an explicit `legacy:itemN` map selection. It
+does not infer a legacy seed from a catalog QID. It lists direct artists and
+album-supported artists separately. An artist link returns exact stable seed
+links with the same separation. Configure the optional metadata database and
+receipt together to show conflict-free exact MusicBrainz credit names; otherwise
+the panel displays the exact MBID. These routes remain local research only and
+do not alter public routes or export policy.
+
 ## Candidate smoke checks
 
 Run these checks only after both candidate files exist. The existing adapter report shows direct evidence for the first four seeds and no direct evidence for the last one.

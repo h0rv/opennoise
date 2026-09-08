@@ -33,6 +33,10 @@ from musix.historical_signal_store import (
     HistoricalSignalNeighborApiResponse,
 )
 from musix.layouts import ExploredMap, LayoutArtifactMetadata, PublishedLayout
+from musix.local_musicbrainz_artist_evidence import (
+    LocalMusicBrainzArtistEvidenceError,
+    LocalMusicBrainzArtistEvidenceStore,
+)
 from musix.models import (
     LegacyMapResponse,
     MapPointResponse,
@@ -84,6 +88,7 @@ class CoreController(Controller):
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        local_research_artists: NamedDependency[object],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
         view: FromQuery[Literal["public", "open", "historical"] | None] = None,
@@ -101,6 +106,10 @@ class CoreController(Controller):
             historical_signal_map,
             open_construction_graph,
             open_construction_graph_v2,
+            local_research_artist_evidence_configured=(
+                isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
+                and local_research_artists.configured
+            ),
             layout=layout,
             focus=None,
             search_query=q,
@@ -117,6 +126,7 @@ class CoreController(Controller):
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        local_research_artists: NamedDependency[object],
         genre_id: FromPath[int],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
@@ -131,6 +141,10 @@ class CoreController(Controller):
             historical_signal_map,
             open_construction_graph,
             open_construction_graph_v2,
+            local_research_artist_evidence_configured=(
+                isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
+                and local_research_artists.configured
+            ),
             layout=layout,
             focus=genre_id,
             search_query=q,
@@ -149,6 +163,7 @@ class CoreController(Controller):
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        local_research_artists: NamedDependency[object],
         genre_key: FromPath[str],
         request: Request[object, object, State],
         layout: FromQuery[str] = "default",
@@ -166,6 +181,10 @@ class CoreController(Controller):
             historical_signal_map,
             open_construction_graph,
             open_construction_graph_v2,
+            local_research_artist_evidence_configured=(
+                isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
+                and local_research_artists.configured
+            ),
             layout=layout,
             focus=genre_id,
             search_query=q,
@@ -519,6 +538,7 @@ class MapController(Controller):
         historical_signal_map: NamedDependency[HistoricalSignalMapStore],
         open_construction_graph: NamedDependency[OpenConstructionMapStore],
         open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        local_research_artists: NamedDependency[object],
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
@@ -537,6 +557,10 @@ class MapController(Controller):
             historical_signal_map,
             open_construction_graph,
             open_construction_graph_v2,
+            local_research_artist_evidence_configured=(
+                isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
+                and local_research_artists.configured
+            ),
             layout=layout,
             focus=focus,
             search_query=q,
@@ -609,6 +633,61 @@ class SearchController(Controller):
 
 class EvidenceController(Controller):
     """Serve genre detail and provenance contracts."""
+
+    @get("/fragments/local-research/musicbrainz/{node_id:str}")
+    async def local_research_musicbrainz_fragment(
+        self,
+        request: Request[object, object, State],
+        local_research_artists: NamedDependency[object],
+        node_id: FromPath[str],
+    ) -> Template:
+        """Render bounded loopback-only research evidence for one legacy seed."""
+        if request.client is None or request.client.host not in {"127.0.0.1", "::1", "localhost"}:
+            raise NotFoundException(detail="local research panel is unavailable")
+        if not isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore):
+            raise NotFoundException(detail="local research panel is unavailable")
+        if not local_research_artists.configured:
+            raise NotFoundException(detail="local research panel is unavailable")
+        if not node_id.startswith("legacy:item"):
+            raise NotFoundException(detail="local research panel requires a legacy seed")
+        try:
+            response = local_research_artists.artists_for_seed(node_id.removeprefix("legacy:"))
+        except LocalMusicBrainzArtistEvidenceError as error:
+            raise ServiceUnavailableException(
+                detail="local research evidence is unavailable"
+            ) from error
+        return Template(
+            template_name="local_musicbrainz_artist_evidence.html",
+            context={"node_id": node_id, "response": response},
+        )
+
+    @get("/fragments/local-research/musicbrainz/{node_id:str}/artist/{artist_mbid:str}")
+    async def local_research_musicbrainz_artist_fragment(
+        self,
+        request: Request[object, object, State],
+        local_research_artists: NamedDependency[object],
+        node_id: FromPath[str],
+        artist_mbid: FromPath[str],
+    ) -> Template:
+        """Render exact stable-seed links for one locally certified artist ID."""
+        if request.client is None or request.client.host not in {"127.0.0.1", "::1", "localhost"}:
+            raise NotFoundException(detail="local research panel is unavailable")
+        if not isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore):
+            raise NotFoundException(detail="local research panel is unavailable")
+        if not local_research_artists.configured:
+            raise NotFoundException(detail="local research panel is unavailable")
+        if not node_id.startswith("legacy:item"):
+            raise NotFoundException(detail="local research panel requires a legacy seed")
+        try:
+            response = local_research_artists.seeds_for_artist(artist_mbid)
+        except LocalMusicBrainzArtistEvidenceError as error:
+            raise ServiceUnavailableException(
+                detail="local research evidence is unavailable"
+            ) from error
+        return Template(
+            template_name="local_musicbrainz_artist_seeds.html",
+            context={"node_id": node_id, "response": response},
+        )
 
     @get("/fragments/open-construction-map/v2/artists/{node_id:str}")
     async def open_v2_genre_artists_fragment(
@@ -962,6 +1041,7 @@ async def workspace_context(
     focus: int | None,
     search_query: str,
     view: Literal["public", "open", "historical"],
+    local_research_artist_evidence_configured: bool = False,
 ) -> dict[str, object]:
     """Build one consistent workspace from a published layout and optional genre."""
     layouts = await database.published_layouts()
@@ -1014,6 +1094,7 @@ async def workspace_context(
         "historical_overview": historical_overview,
         "open_construction_graph_configured": open_construction_graph.configured,
         "open_construction_graph_v2_configured": open_construction_graph_v2.configured,
+        "local_research_artist_evidence_configured": local_research_artist_evidence_configured,
     }
 
 
