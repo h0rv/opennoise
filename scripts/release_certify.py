@@ -15,6 +15,10 @@ from urllib.request import urlopen
 
 _DEFAULT_RELEASE_DIRECTORY: Final = Path("config/releases/phase3-public-20260831")
 _DEFAULT_CACHE_DATABASE: Final = Path("data/phase3-public-qualified.sqlite")
+_RETAINED_CACHE_DATABASE: Final = Path(
+    ".cache/listenbrainz-qualified-input/sha256/"
+    "282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite"
+)
 _DEFAULT_SERVING_DATABASE: Final = Path("data/public.sqlite")
 _DEFAULT_MODEL: Final = Path("data/model/phase3-public-model.json")
 _DEFAULT_RECEIPT: Final = Path("data/release/phase3-public-receipt.json")
@@ -32,12 +36,21 @@ class ReleaseCertificationError(RuntimeError):
     """Report a missing prerequisite or failed release-certification boundary."""
 
 
+def resolve_cache_database(primary: Path, retained: Path) -> Path:
+    """Prefer the conventional release input, then the one verified retained cache."""
+    return primary if primary.is_file() else retained
+
+
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build only from the sealed cache, then certify the rendered production map."
     )
     parser.add_argument("--release-directory", type=Path, default=_DEFAULT_RELEASE_DIRECTORY)
-    parser.add_argument("--cache-database", type=Path, default=_DEFAULT_CACHE_DATABASE)
+    parser.add_argument(
+        "--cache-database",
+        type=Path,
+        default=resolve_cache_database(_DEFAULT_CACHE_DATABASE, _RETAINED_CACHE_DATABASE),
+    )
     parser.add_argument("--serving-database", type=Path, default=_DEFAULT_SERVING_DATABASE)
     parser.add_argument("--model-output", type=Path, default=_DEFAULT_MODEL)
     parser.add_argument("--receipt-output", type=Path, default=_DEFAULT_RECEIPT)
@@ -175,6 +188,7 @@ def main() -> int:
         str(arguments.seed_report_output),
     )
     environment = os.environ.copy()
+    environment["MUSIX_DATABASE_READ_ONLY"] = "true"
     environment["MUSIX_PRODUCTION_MAP_PATH"] = str(arguments.map_output.resolve())
     server = subprocess.Popen(  # noqa: S603
         [

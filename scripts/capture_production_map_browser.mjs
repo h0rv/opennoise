@@ -173,6 +173,7 @@ async function navigate(cdp, viewport, appearance, javascript = true) {
   await cdp.command("Emulation.setScriptExecutionDisabled", { value: !javascript });
   await setViewport(cdp, viewport, appearance);
   const target = new URL(url);
+  target.searchParams.set("view", "public");
   target.searchParams.set("theme", appearance);
   // Give each navigation a distinct URL. A constant query value lets CDP's
   // ready-state probe observe the completed *previous* document, so mobile
@@ -452,13 +453,25 @@ async function desktopInteractions(cdp) {
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseWheel", x, y, deltaX: 0, deltaY: -220, pointerType: "mouse" });
   await sleep(150);
   const afterWheel = await state(cdp);
-  const theme = await box(cdp, "#theme-toggle");
-  if (!theme) throw new Error("theme toggle not found");
+  const theme = await box(cdp, "#theme-select");
+  if (!theme) throw new Error("theme selector not found");
   let darkMode = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     await click(cdp, theme.x + theme.width / 2, theme.y + theme.height / 2);
+    await cdp.command("Input.dispatchKeyEvent", {
+      type: "rawKeyDown", key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40,
+    });
+    await cdp.command("Input.dispatchKeyEvent", {
+      type: "keyUp", key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40,
+    });
+    await cdp.command("Input.dispatchKeyEvent", {
+      type: "rawKeyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13,
+    });
+    await cdp.command("Input.dispatchKeyEvent", {
+      type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13,
+    });
     await sleep(50);
-    darkMode = await cdp.evaluate(`(() => ({ theme:document.documentElement.dataset.theme, text:document.querySelector('#theme-toggle')?.textContent, active:document.activeElement?.id, canvas:getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim() }))()`, "dark mode result");
+    darkMode = await cdp.evaluate(`(() => ({ theme:document.documentElement.dataset.theme, value:document.querySelector('#theme-select')?.value, active:document.activeElement?.id, canvas:getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim() }))()`, "dark mode result");
     if (darkMode.theme === "dark") break;
   }
   if (darkMode.theme !== "dark") throw new CdpError("dark mode selection", darkMode);

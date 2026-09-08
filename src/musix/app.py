@@ -43,7 +43,7 @@ def create_app(  # noqa: PLR0913, PLR0917
     """Create an app with a separate lifecycle-managed read connection."""
     settings = Settings()
     selected_path = database_path or settings.database_path
-    database = AsyncDatabase(selected_path)
+    database = AsyncDatabase(selected_path, read_only=settings.database_read_only)
     genre_entries = GenreEntryRepository(selected_path)
     production_map = ProductionMapStore(production_map_path or settings.production_map_path)
     historical_signal_map = HistoricalSignalMapStore(

@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     database_path: Path = Field(
         default=Path("data/musix.sqlite"), validation_alias="MUSIX_DATABASE_PATH"
     )
+    database_read_only: bool = Field(default=False, validation_alias="MUSIX_DATABASE_READ_ONLY")
     vault_path: Path = Field(default=Path("data/vault"), validation_alias="MUSIX_VAULT_PATH")
     production_map_path: Path | None = Field(
         default=None, validation_alias="MUSIX_PRODUCTION_MAP_PATH"

@@ -68,6 +68,7 @@ def main() -> int:
         return 2
     environment = os.environ | {
         "MUSIX_DATABASE_PATH": str(paths.database),
+        "MUSIX_DATABASE_READ_ONLY": "true",
         "MUSIX_PRODUCTION_MAP_PATH": str(paths.map_artifact),
     }
     return subprocess.run(

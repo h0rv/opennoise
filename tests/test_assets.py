@@ -96,6 +96,8 @@ class AssetTests(unittest.TestCase):
         self.assertIn("internal_world_aspect", source)
         self.assertIn("element_bounds_ok", source)
         self.assertIn("requireOverviewContract", source)
+        self.assertIn('target.searchParams.set("view", "public")', source)
+        self.assertIn('const theme = await box(cdp, "#theme-select")', source)
 
 
 if __name__ == "__main__":

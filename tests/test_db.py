@@ -2,8 +2,10 @@ import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from musix.db import Database, UnsupportedSchemaError, fts_prefix_query
+from musix.db import AsyncDatabase, Database, UnsupportedSchemaError, fts_prefix_query
+from tests._test_client import run_async
 
 ROOT = Path(__file__).resolve().parents[1]
 INITIAL_MIGRATION = ROOT / "migrations" / "0001_initial.sql"
@@ -22,6 +24,16 @@ class DatabaseTests(unittest.TestCase):
                 version = connection.execute("PRAGMA user_version").fetchone()[0]
             self.assertEqual(version, CURRENT_SCHEMA_VERSION)
             self.assertEqual(database.entity_count(), 0)
+
+    def test_read_only_startup_validates_without_opening_a_writable_connection(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "catalog.sqlite"
+            Database(path).initialize()
+            with patch("musix.db.sqlite3.connect", wraps=sqlite3.connect) as connect:
+                run_async(AsyncDatabase(path, read_only=True).start())
+
+            self.assertTrue(connect.call_args.kwargs["uri"])
+            self.assertTrue(connect.call_args.args[0].endswith("?mode=ro"))
 
     def test_rejects_an_unknown_schema_version(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

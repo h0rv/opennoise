@@ -22,9 +22,12 @@ replacement for the sealed cache or a full source-to-publication rebuild.
 ## Command
 
 ```sh
-uv run poe release-certify -- \
-  --cache-database .cache/listenbrainz-qualified-input/sha256/282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite
+uv run poe release-certify
 ```
+
+When `data/phase3-public-qualified.sqlite` is absent, the command uses the
+verified retained cache below automatically. Pass `--cache-database` only to
+certify a different explicit cache.
 
 The command verifies the sealed cache, materializes a serving database and
 public model, builds the production map, writes acceptance evidence, starts a

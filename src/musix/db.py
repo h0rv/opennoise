@@ -73,10 +73,17 @@ def fts_prefix_query(value: str) -> str | None:
 class Database:
     """Open short-lived SQLite connections to one catalog."""
 
-    def __init__(self, path: Path, migration_path: Path = DEFAULT_MIGRATION_PATH) -> None:
+    def __init__(
+        self,
+        path: Path,
+        migration_path: Path = DEFAULT_MIGRATION_PATH,
+        *,
+        read_only: bool = False,
+    ) -> None:
         """Store paths without opening a connection."""
         self.path = path
         self.migration_path = migration_path
+        self.read_only = read_only
 
     def initialize(self) -> None:
         """Create a new database or confirm its schema version."""
@@ -108,14 +115,28 @@ class Database:
                     f"database schema is version {version}; expected {SCHEMA_VERSION}"
                 )
 
+    def validate_read_only(self) -> None:
+        """Verify a sealed serving database without altering its schema or journal mode."""
+        with self.connect() as connection:
+            version = connection.execute("PRAGMA user_version").fetchone()[0]
+            if version != SCHEMA_VERSION:
+                raise UnsupportedSchemaError(
+                    f"database schema is version {version}; expected {SCHEMA_VERSION}"
+                )
+            connection.execute("SELECT 1 FROM catalog_entities LIMIT 1").fetchone()
+
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
         """Yield one configured SQLite connection."""
-        connection = sqlite3.connect(self.path, timeout=5.0)
+        connection = (
+            sqlite3.connect(f"file:{self.path.resolve()}?mode=ro", uri=True, timeout=5.0)
+            if self.read_only
+            else sqlite3.connect(self.path, timeout=5.0)
+        )
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA busy_timeout = 5000")
-        if self.path != Path(":memory:"):
+        if not self.read_only and self.path != Path(":memory:"):
             connection.execute("PRAGMA journal_mode = WAL")
             connection.execute("PRAGMA synchronous = NORMAL")
         try:
@@ -652,14 +673,24 @@ class Database:
 class AsyncDatabase:
     """Expose short-lived SQLite operations through a bounded async boundary."""
 
-    def __init__(self, path: Path, migration_path: Path = DEFAULT_MIGRATION_PATH) -> None:
+    def __init__(
+        self,
+        path: Path,
+        migration_path: Path = DEFAULT_MIGRATION_PATH,
+        *,
+        read_only: bool = False,
+    ) -> None:
         """Store a synchronous database and bound concurrent worker calls."""
-        self._database = Database(path, migration_path)
+        self._database = Database(path, migration_path, read_only=read_only)
+        self._read_only = read_only
         self._calls = asyncio.Semaphore(4)
 
     async def start(self) -> None:
         """Apply or verify the schema in one worker operation."""
-        await self._call(self._database.initialize)
+        operation = (
+            self._database.validate_read_only if self._read_only else self._database.initialize
+        )
+        await self._call(operation)
 
     async def stop(self) -> None:
         """Finish lifecycle shutdown; worker calls own their connections."""
