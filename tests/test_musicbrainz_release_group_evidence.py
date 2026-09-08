@@ -7,6 +7,7 @@ import sqlite3
 import tarfile
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from pydantic import HttpUrl
@@ -16,6 +17,7 @@ from musix.musicbrainz_release_group_evidence import (
     MusicBrainzReleaseGroupEvidenceError,
     ReleaseGroupEvidenceSettings,
     build_release_group_evidence,
+    build_release_group_evidence_from_seed_target_path,
     verify_release_group_evidence,
 )
 from musix.musicbrainz_seed_targets import (
@@ -26,6 +28,7 @@ from musix.musicbrainz_seed_targets import (
     SeedTargetExtractorSettings,
     artifact_sha256,
     settings_sha256,
+    write_seed_target_artifact,
 )
 from musix.pipeline.source_cache import SourceCacheEntry, SourceCacheReceipt
 from musix.storage import ObjectKey
@@ -177,13 +180,52 @@ class ReleaseGroupEvidenceTests(unittest.TestCase):
                 ReleaseGroupEvidenceSettings(max_release_groups_per_membership=1),
             )
             verify_release_group_evidence(artifact)
+            verified_seed_path = root / "verified-seed-target.json"
+            write_seed_target_artifact(verified_seed_path, _target())
+            verified_artifact = build_release_group_evidence_from_seed_target_path(
+                archive,
+                verified_seed_path,
+                source,
+                receipt,
+                "e" * 64,
+                root / "verified-evidence.sqlite",
+                ReleaseGroupEvidenceSettings(max_release_groups_per_membership=1),
+            )
+            self.assertEqual(verified_artifact.counters, artifact.counters)
+            self.assertEqual(verified_artifact.coverage, artifact.coverage)
+            tampered_seed_path = root / "tampered-seed-target.json"
+            tampered_seed_path.write_text(
+                _target().model_copy(update={"output_sha256": "0" * 64}).model_dump_json(),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "output hash mismatch"):
+                build_release_group_evidence_from_seed_target_path(
+                    archive,
+                    tampered_seed_path,
+                    source,
+                    receipt,
+                    "e" * 64,
+                    root / "tampered-evidence.sqlite",
+                )
+            with (
+                closing(sqlite3.connect(database)) as ordinary,
+                closing(sqlite3.connect(root / "verified-evidence.sqlite")) as verified,
+            ):
+                typed_counts = (
+                    "SELECT evidence_kind, count(*) FROM typed_evidence "
+                    "GROUP BY evidence_kind ORDER BY evidence_kind"
+                )
+                self.assertEqual(
+                    ordinary.execute(typed_counts).fetchall(),
+                    verified.execute(typed_counts).fetchall(),
+                )
             self.assertEqual(artifact.coverage.support_genre_count, 2)
             self.assertEqual(artifact.coverage.direct_anchor_membership_count, 1)
             self.assertEqual(artifact.coverage.new_support_membership_count, 1)
             self.assertEqual(artifact.counters.raw_support_rows, 6)
             self.assertEqual(artifact.counters.capped_support_rows, 2)
             self.assertEqual(artifact.source_member_bytes, len(member_payload))
-            with sqlite3.connect(database) as connection:
+            with closing(sqlite3.connect(database)) as connection:
                 rows = connection.execute(
                     "SELECT evidence_kind, genre_id, release_group_id "
                     "FROM typed_evidence ORDER BY evidence_kind, genre_id"
@@ -264,7 +306,7 @@ class ReleaseGroupEvidenceTests(unittest.TestCase):
             self.assertEqual(limited_database.read_bytes(), b"previous-final-artifact")
             staged = limited_database.with_suffix(".sqlite.partial")
             self.assertTrue(staged.is_file())
-            with sqlite3.connect(staged) as connection:
+            with closing(sqlite3.connect(staged)) as connection:
                 self.assertEqual(connection.execute("PRAGMA quick_check").fetchone(), ("ok",))
 
 

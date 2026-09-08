@@ -10,10 +10,9 @@ from pathlib import Path
 
 from musix.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceSettings,
-    build_release_group_evidence,
+    build_release_group_evidence_from_seed_target_path,
     publish_release_group_evidence,
 )
-from musix.musicbrainz_seed_targets import load_seed_target_artifact
 from musix.pipeline.manifest import load_download_source
 from musix.pipeline.source_cache import load_source_cache_receipt
 from musix.storage import LocalObjectStore
@@ -50,12 +49,11 @@ def main() -> int:
     source = load_download_source(arguments.manifest, arguments.source_id)
     sys.stderr.write("loading verified seed-target artifact\n")
     sys.stderr.flush()
-    seed_target = load_seed_target_artifact(arguments.seed_target_artifact)
     sys.stderr.write("streaming pinned MusicBrainz release-group dump\n")
     sys.stderr.flush()
-    artifact = build_release_group_evidence(
+    artifact = build_release_group_evidence_from_seed_target_path(
         arguments.archive,
-        seed_target,
+        arguments.seed_target_artifact,
         source,
         load_source_cache_receipt(arguments.source_cache_receipt),
         _sha256_file(arguments.manifest),

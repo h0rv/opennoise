@@ -14,6 +14,7 @@ import sqlite3
 import tarfile
 from collections import OrderedDict
 from collections.abc import Iterator
+from contextlib import closing
 from pathlib import Path, PurePosixPath
 from typing import Final, Literal, Protocol
 from uuid import UUID
@@ -24,6 +25,7 @@ from musix.genre_seed_universe import normalize_label
 from musix.models.sources import DownloadSource
 from musix.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
+    load_seed_target_artifact,
     verify_seed_target_artifact,
 )
 from musix.pipeline.source_cache import (
@@ -357,7 +359,50 @@ def _coverage(
     )
 
 
-def build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
+def build_release_group_evidence(
+    archive_path: Path,
+    seed_target: MusicBrainzSeedTargetArtifact,
+    source: DownloadSource,
+    source_cache_receipt: SourceCacheReceipt,
+    manifest_sha256: str,
+    database_path: Path,
+    settings: ReleaseGroupEvidenceSettings | None = None,
+) -> ReleaseGroupEvidenceArtifact:
+    """Verify arbitrary seed input before building release-group support evidence."""
+    verify_seed_target_artifact(seed_target)
+    return _build_release_group_evidence(
+        archive_path,
+        seed_target,
+        source,
+        source_cache_receipt,
+        manifest_sha256,
+        database_path,
+        settings,
+    )
+
+
+def build_release_group_evidence_from_seed_target_path(
+    archive_path: Path,
+    seed_target_path: Path,
+    source: DownloadSource,
+    source_cache_receipt: SourceCacheReceipt,
+    manifest_sha256: str,
+    database_path: Path,
+    settings: ReleaseGroupEvidenceSettings | None = None,
+) -> ReleaseGroupEvidenceArtifact:
+    """Load and verify a seed artifact once before entering the private build core."""
+    return _build_release_group_evidence(
+        archive_path,
+        load_seed_target_artifact(seed_target_path),
+        source,
+        source_cache_receipt,
+        manifest_sha256,
+        database_path,
+        settings,
+    )
+
+
+def _build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
     archive_path: Path,
     seed_target: MusicBrainzSeedTargetArtifact,
     source: DownloadSource,
@@ -368,7 +413,6 @@ def build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
 ) -> ReleaseGroupEvidenceArtifact:
     """Stream one pinned release-group dump into typed direct/support SQLite evidence."""
     resolved = settings or ReleaseGroupEvidenceSettings()
-    verify_seed_target_artifact(seed_target)
     if source.adapter != "musicbrainz_release_group_json_dump_v1":
         raise MusicBrainzReleaseGroupEvidenceError("source is not a release-group JSON dump")
     receipt_sha = _source_cache_hash(source_cache_receipt, source, manifest_sha256)
@@ -393,7 +437,11 @@ def build_release_group_evidence(  # noqa: C901, PLR0912, PLR0915
         )
     counters = dict.fromkeys(ReleaseGroupEvidenceCounters.model_fields, 0)
     member_bytes = 0
-    with sqlite3.connect(database_path) as connection, archive_path.open("rb") as input_stream:
+    with (
+        closing(sqlite3.connect(database_path)) as connection,
+        connection,
+        archive_path.open("rb") as input_stream,
+    ):
         # A durable rollback journal makes every checkpoint a valid SQLite state if
         # the process is stopped.  The final name is only replaced after the full
         # database has passed integrity validation below.
