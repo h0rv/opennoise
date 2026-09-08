@@ -31,8 +31,18 @@ The builder atomically wrote the final database. The artifact and publication re
 
 The local query smoke checks also completed with matching sidecars and whole-file verification. Hip hop returned 23,755 direct and 36,812 support artists; jazz returned 18,240 and 49,524; modern rock returned 48 and 29; lo-fi returned 5,362 and 13,476; and an unsupported seed returned zero in both sections. An exact-MBID reverse query returned five direct and six support seeds. SQL time ranged from 0.00037 to 2.562 seconds after the roughly 19 to 37 second full-file verification step. All six commands retained `local_research_only`, `export_allowed=false`, and `serving_allowed=false`.
 
+The final artist metadata build has 515,896 exact artist IDs and 552,283 retained canonical-name variants. The loopback HTTP smoke and the visual browser checks for renderer version 31 passed. The alias overlay adds 683 reviewed IDM tag observations to `item887`. Its seven direct artists overlap five of those observations, so the exact observed union has 685 artist IDs. Album support remains a separate list.
+
+The bridge-resolved H3 evaluation is documented in [Peer H3 bridge evaluation](PEER_H3_BRIDGE_EVALUATION.md). It uses exact accepted MusicBrainz and Spotify IDs. It is not comparable to the older limited name-crosswalk result without running both candidates on the same bridge and H3 cohort.
+
 ## Remaining discovery gaps
 
 The fixed seed vocabulary has 6,291 names, while direct MusicBrainz evidence exists for only an observed subset. A missing direct result remains an explicit empty result. The release-group build may add separate support, but it does not recover every name as a direct membership and it does not make unsupported names observed.
 
 The candidate remains local research. It is not integrated into the production map, public artist navigation, or any public similarity or discovery claim. A separate policy and publication decision would be required before any serving change.
+
+## Special purpose artist policy
+
+MusicBrainz lists `Various Artists` and `[unknown]` as official special purpose artists. The official guidance limits `Various Artists` to compilation releases or release groups, and describes `[unknown]` as an unresolved artist that may be found by later research. The exact IDs are `89ad4ac3-39f7-470e-963a-56509c546377` and `125ec42a-7229-4250-afc5-e057484327fe`.
+
+A future artist-overlap candidate may use a versioned eligibility policy that excludes only those exact IDs. The policy would affect derived overlap edges only. It would not delete source rows, change album genre evidence, or replace the full candidate control. See the [MusicBrainz special purpose artist guideline](https://musicbrainz.org/doc/Style/Unknown_and_untitled/Special_purpose_artist), the [Various Artists record](https://musicbrainz.org/artist/89ad4ac3-39f7-470e-963a-56509c546377/details), and the [[unknown] record](https://musicbrainz.org/artist/125ec42a-7229-4250-afc5-e057484327fe/details).
