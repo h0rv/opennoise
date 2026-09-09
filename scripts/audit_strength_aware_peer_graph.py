@@ -9,6 +9,7 @@ from musix.peers.audit.strength_aware_peer_audit import build_strength_aware_pee
 
 
 def main() -> int:
+    """Audit one strength-aware direct/support peer graph."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--direct", type=Path, required=True)
     parser.add_argument("--support", type=Path, required=True)

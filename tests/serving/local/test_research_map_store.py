@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 # ruff: noqa: SLF001
-import asyncio
 import json
-import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -13,6 +11,7 @@ from musix.serving.local.research_map_store import (
 )
 from musix.serving.routes import SearchController
 from musix.taxonomy.seeds.reconciliation import load_seed_reconciliation
+from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ROOT = Path(__file__).parents[3]
 LAYOUT = ROOT / ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json"
@@ -20,7 +19,7 @@ INDEX = ROOT / ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-lo
 RECONCILIATION = ROOT / ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json"
 
 
-class LocalResearchMapStoreTests(unittest.TestCase):
+class LocalResearchMapStoreTests(PollingIsolatedAsyncioTestCase):
     def test_overview_drill_genre_and_unplaced_search_are_explicit(self) -> None:
         store = _store()
         overview = store.response(level=0)
@@ -77,7 +76,7 @@ class LocalResearchMapStoreTests(unittest.TestCase):
             with self.assertRaisesRegex(LocalResearchMapError, "logical hash"):
                 store.start()
 
-    def test_local_search_fragment_keeps_layout_scope_for_unplaced_names(self) -> None:
+    async def test_local_search_fragment_keeps_layout_scope_for_unplaced_names(self) -> None:
         store = _store()
         assert store._nodes is not None
         placed = next(iter(store._nodes.values()))
@@ -86,11 +85,11 @@ class LocalResearchMapStoreTests(unittest.TestCase):
             for row in store.reconciliation.dispositions
             if f"legacy:{row.source_item_id}" not in store._nodes
         )
-        placed_response = asyncio.run(
-            SearchController.local_research_map_search_fragment.fn(None, store, placed.name)
+        placed_response = await SearchController.local_research_map_search_fragment.fn(
+            None, store, placed.name
         )
-        unplaced_response = asyncio.run(
-            SearchController.local_research_map_search_fragment.fn(None, store, unplaced.seed_name)
+        unplaced_response = await SearchController.local_research_map_search_fragment.fn(
+            None, store, unplaced.seed_name
         )
         self.assertEqual(placed_response.template_name, "local_research_map_search_results.html")
         placed_hits = placed_response.context["hits"]

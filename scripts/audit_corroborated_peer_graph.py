@@ -9,6 +9,7 @@ from musix.peers.audit.strength_aware_peer_audit import build_corroborated_peer_
 
 
 def main() -> int:
+    """Audit one corroborated direct/support peer graph."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--direct", type=Path, required=True)
     parser.add_argument("--support", type=Path, required=True)
@@ -16,7 +17,9 @@ def main() -> int:
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
-    args.output.write_text(build_corroborated_peer_audit(args.direct, args.support).model_dump_json(indent=2) + "\n")
+    args.output.write_text(
+        build_corroborated_peer_audit(args.direct, args.support).model_dump_json(indent=2) + "\n"
+    )
     return 0
 
 

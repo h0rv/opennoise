@@ -28,7 +28,10 @@ class OpenConstructionMapSourceTests(unittest.TestCase):
     def test_v2_keeps_reversible_display_coordinates_for_viewport_and_local_fit(self) -> None:
         """The responsive overview transform must not change source-coordinate queries."""
         source = SOURCE.read_text(encoding="utf-8")
-        self.assertIn('const openGraphV2 = mapElement.dataset.openGraphVersion === "v2";', source)
+        self.assertIn(
+            'const openGraphV2 = ["v2", "local"].includes(mapElement.dataset.openGraphVersion);',
+            source,
+        )
         self.assertIn("openDisplayTransform?.x.forward(Number(value))", source)
         self.assertIn("openDisplayTransform?.x.inverse(Number(value))", source)
         self.assertIn("const monotonicAxisTransform = (items, key, positions) =>", source)
