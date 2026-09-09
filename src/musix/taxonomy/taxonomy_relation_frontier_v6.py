@@ -19,7 +19,7 @@ from musix.evidence.evidence_frontier import (
 )
 from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy_relation_hierarchy_overlay import (
+from musix.taxonomy.taxonomy_relation_hierarchy_overlay import (
     TaxonomyRelationHierarchyOverlay,
     TaxonomyRelationHierarchyOverlayReceipt,
 )

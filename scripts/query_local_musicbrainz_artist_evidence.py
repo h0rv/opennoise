@@ -18,7 +18,7 @@ from musix.local_musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     load_artist_metadata_artifact,
 )
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 
 
 def _parser() -> argparse.ArgumentParser:

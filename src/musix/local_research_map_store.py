@@ -21,7 +21,7 @@ from musix.models import FrozenModel
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from musix.seed_reconciliation import SeedReconciliationArtifact
+    from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact
 
 _BUDGET = 240
 

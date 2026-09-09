@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.hierarchy import HierarchyError, coverage_report
+from musix.taxonomy.hierarchy import HierarchyError, coverage_report
 from musix.pipeline.release_manifest import (
     ReleaseManifestError,
     load_release_manifest,

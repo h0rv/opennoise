@@ -41,7 +41,7 @@ from musix.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceSettings,
     artifact_sha256,
 )
-from musix.seed_reconciliation import (
+from musix.taxonomy.seed_reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationDisposition,
 )

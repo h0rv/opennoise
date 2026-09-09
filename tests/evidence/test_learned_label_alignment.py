@@ -19,7 +19,7 @@ from musix.musicbrainz_seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.seed_reconciliation import (
+from musix.taxonomy.seed_reconciliation import (
     ReconciledIdentity,
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,

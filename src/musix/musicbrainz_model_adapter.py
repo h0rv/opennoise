@@ -28,7 +28,7 @@ from musix.musicbrainz_seed_targets import (
     SeedTargetEvidence,
     verify_seed_target_artifact,
 )
-from musix.seed_reconciliation import (
+from musix.taxonomy.seed_reconciliation import (
     SeedReconciliationArtifact,
     verify_seed_reconciliation,
 )

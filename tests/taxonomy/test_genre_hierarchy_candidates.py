@@ -6,12 +6,19 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.genre_hierarchy_candidates import (
+from musix.models.modeling import (
+    DirectMembershipEvidence,
+    GenreIdentity,
+    PublicArtifact,
+    PublicModelInput,
+)
+from musix.storage import LocalObjectStore
+from musix.taxonomy.genre_hierarchy_candidates import (
     GenreHierarchyCandidatePolicy,
     build_genre_hierarchy_candidates,
     verify_genre_hierarchy_candidates,
 )
-from musix.genre_seed_taxonomy import (
+from musix.taxonomy.genre_seed_taxonomy import (
     CompositionCalibration,
     GenreSeedPublicTaxonomyArtifact,
     PublicCatalogInput,
@@ -20,25 +27,18 @@ from musix.genre_seed_taxonomy import (
     SeedTaxonomyInference,
     TaxonomyCoverageReport,
 )
-from musix.genre_seed_universe import SeedInput, SeedName
-from musix.models.modeling import (
-    DirectMembershipEvidence,
-    GenreIdentity,
-    PublicArtifact,
-    PublicModelInput,
-)
-from musix.seed_reconciliation import (
+from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
+from musix.taxonomy.seed_reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,
 )
-from musix.storage import LocalObjectStore
-from musix.taxonomy_relation_expansion import (
+from musix.taxonomy.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionPolicy,
     build_taxonomy_relation_expansion,
     catalog_wikidata_p279_feed,
 )
-from tests.test_taxonomy_relation_expansion import _write_catalog
+from tests.taxonomy.test_taxonomy_relation_expansion import _write_catalog
 
 
 def _inputs() -> tuple[

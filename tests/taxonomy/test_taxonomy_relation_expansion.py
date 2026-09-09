@@ -7,7 +7,8 @@ from contextlib import closing
 from hashlib import sha256
 from pathlib import Path
 
-from musix.genre_seed_taxonomy import (
+from musix.storage import LocalObjectStore, ObjectKey
+from musix.taxonomy.genre_seed_taxonomy import (
     CompositionCalibration,
     GenreSeedPublicTaxonomyArtifact,
     PublicCatalogInput,
@@ -16,9 +17,8 @@ from musix.genre_seed_taxonomy import (
     SeedTaxonomyInference,
     TaxonomyCoverageReport,
 )
-from musix.genre_seed_universe import SeedInput, SeedName
-from musix.storage import LocalObjectStore, ObjectKey
-from musix.taxonomy_relation_expansion import (
+from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
+from musix.taxonomy.taxonomy_relation_expansion import (
     ExactMusicBrainzGenreQidMapping,
     TaxonomyRelationEvaluationInputs,
     TaxonomyRelationExpansionPolicy,

@@ -22,7 +22,7 @@ from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunP
 from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.db import Database
-from musix.genre_seed_universe import build_genre_seed_universe, write_genre_seed_universe
+from musix.taxonomy.genre_seed_universe import build_genre_seed_universe, write_genre_seed_universe
 from musix.history.historical_signal_publication import (
     build_historical_signal_publication,
     publish_historical_signal_publication,

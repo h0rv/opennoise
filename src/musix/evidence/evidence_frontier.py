@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
-from musix.genre_hierarchy_candidates import (
+from musix.taxonomy.genre_hierarchy_candidates import (
     GenreHierarchyCandidateArtifact,
     verify_genre_hierarchy_candidates,
 )
@@ -28,7 +28,7 @@ from musix.public_taxonomy_expansion import (
     PublicTaxonomyExpansionArtifact,
     verify_public_taxonomy_expansion,
 )
-from musix.seed_reconciliation import (
+from musix.taxonomy.seed_reconciliation import (
     ReconciledIdentity,
     ReconciliationDisposition,
     SeedReconciliationArtifact,

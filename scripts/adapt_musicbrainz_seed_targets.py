@@ -13,7 +13,7 @@ from musix.musicbrainz_model_adapter import (
     adapt_musicbrainz_seed_targets,
 )
 from musix.musicbrainz_seed_targets import load_seed_target_artifact
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 
 
 def _atomic_write_text(path: Path, payload: str) -> None:

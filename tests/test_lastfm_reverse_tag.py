@@ -23,7 +23,7 @@ from musix.lastfm_reverse_tag import (
     verify_lastfm_reverse_tag_artifact,
     write_lastfm_query_manifest,
 )
-from musix.seed_reconciliation import (
+from musix.taxonomy.seed_reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,

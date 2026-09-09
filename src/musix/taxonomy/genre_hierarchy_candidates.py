@@ -19,13 +19,13 @@ from typing import Final, Literal
 
 from pydantic import Field, FiniteFloat, model_validator
 
-from musix.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact  # noqa: TC001
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput  # noqa: TC001
 from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact  # noqa: TC001
-from musix.seed_reconciliation import SeedReconciliationArtifact  # noqa: TC001
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy_relation_expansion import (
+from musix.taxonomy.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact  # noqa: TC001
+from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact  # noqa: TC001
+from musix.taxonomy.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionArtifact,
     verify_taxonomy_relation_expansion,
 )

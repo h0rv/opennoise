@@ -6,17 +6,17 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.genre_hierarchy_candidates import GenreHierarchyCandidatePublicationReceipt
 from musix.storage import LocalObjectStore, ObjectKey
-from musix.taxonomy_relation_expansion import (
+from musix.taxonomy.genre_hierarchy_candidates import GenreHierarchyCandidatePublicationReceipt
+from musix.taxonomy.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionPolicy,
     build_taxonomy_relation_expansion,
 )
-from musix.taxonomy_relation_hierarchy_overlay import (
+from musix.taxonomy.taxonomy_relation_hierarchy_overlay import (
     OverlayBaseInputs,
     build_taxonomy_relation_hierarchy_overlay,
 )
-from tests.test_taxonomy_relation_expansion import _feed, _taxonomy
+from tests.taxonomy.test_taxonomy_relation_expansion import _feed, _taxonomy
 
 
 class TaxonomyRelationHierarchyOverlayTests(unittest.TestCase):

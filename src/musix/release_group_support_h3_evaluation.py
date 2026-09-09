@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field
 
-from musix.genre_seed_universe import normalize_label
+from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput
 from musix.peer_similarity_h3_bridge import _historical_jaccard_neighbors, _load_positives
@@ -17,7 +17,7 @@ from musix.release_group_support_peer import (
     file_sha,
     logical_sha,
 )
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 from musix.spotify_bridge_artifact import (
     iter_accepted_spotify_to_musicbrainz,
     load_receipted_musicbrainz_spotify_bridge,

@@ -8,7 +8,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from musix.hierarchy import coverage_report
+from musix.taxonomy.hierarchy import coverage_report
 
 
 def load_qualified_hierarchy(database: Path) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:

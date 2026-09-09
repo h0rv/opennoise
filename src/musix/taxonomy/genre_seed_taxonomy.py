@@ -18,8 +18,8 @@ from typing import TYPE_CHECKING, Final, Literal
 from pydantic import Field, model_validator
 
 from musix.common import sha256_file, sha256_hex, sha256_json
-from musix.genre_seed_universe import SeedInput, load_seed_input, normalize_label
 from musix.models import FrozenModel
+from musix.taxonomy.genre_seed_universe import SeedInput, load_seed_input, normalize_label
 
 if TYPE_CHECKING:
     from pathlib import Path

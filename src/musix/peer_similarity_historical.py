@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import Field
 
 from musix.common import sha256_file, sha256_json
-from musix.genre_seed_universe import normalize_label
+from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput
 from musix.peer_similarity import (

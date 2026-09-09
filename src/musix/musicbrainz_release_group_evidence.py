@@ -23,7 +23,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
-from musix.genre_seed_universe import normalize_label
+from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.models.sources import DownloadSource
 from musix.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,

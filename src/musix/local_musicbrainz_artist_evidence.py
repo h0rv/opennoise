@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, FiniteFloat
 
-from musix.genre_seed_universe import normalize_label
+from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.local_musicbrainz_artist_metadata import (
     CertifiedLocalArtistMetadataSources,
     LocalArtistMetadataSources,
@@ -45,7 +45,7 @@ from musix.musicbrainz_release_group_evidence import (
 from musix.open_construction_store_v2 import _ALIASES_BY_NODE_ID
 
 if TYPE_CHECKING:
-    from musix.seed_reconciliation import (
+    from musix.taxonomy.seed_reconciliation import (
         SeedReconciliationArtifact,
         SeedReconciliationDisposition,
     )

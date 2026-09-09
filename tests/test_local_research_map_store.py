@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 from musix.local_research_map_store import LocalResearchMapError, LocalResearchMapStore
 from musix.routes import SearchController
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 
 ROOT = Path(__file__).parents[1]
 LAYOUT = ROOT / ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json"

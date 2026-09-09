@@ -6,10 +6,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.genre_hierarchy_candidates import GenreHierarchyCandidateArtifact
-from musix.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
+from musix.taxonomy.genre_hierarchy_candidates import GenreHierarchyCandidateArtifact
+from musix.taxonomy.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
 from musix.storage import LocalObjectStore
-from musix.taxonomy_relation_expansion import (
+from musix.taxonomy.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionPolicy,
     TaxonomyRelationHoldoutPolicy,
     build_taxonomy_relation_expansion,

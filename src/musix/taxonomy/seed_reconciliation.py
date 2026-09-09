@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING, Final, Literal, NamedTuple
 
 from pydantic import Field, model_validator
 
-from musix.genre_seed_universe import SeedInput, normalize_label
 from musix.models import FrozenModel
 from musix.models.modeling import (
     DirectMembershipEvidence,
@@ -28,17 +27,18 @@ from musix.models.modeling import (
     PublicModelInput,
 )
 from musix.storage import ObjectKey
+from musix.taxonomy.genre_seed_universe import SeedInput, normalize_label
 
 if TYPE_CHECKING:
-    from musix.genre_seed_taxonomy import (
+    from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs
+    from musix.musicbrainz_coverage import CoverageReport
+    from musix.storage import ObjectStore, ObjectWrite
+    from musix.taxonomy.genre_seed_taxonomy import (
         GenreSeedPublicTaxonomyArtifact,
         PublicTaxonomyNode,
         SeedTaxonomyInference,
     )
-    from musix.genre_seed_universe import SeedName
-    from musix.musicbrainz_coverage import CoverageReport
-    from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs
-    from musix.storage import ObjectStore, ObjectWrite
+    from musix.taxonomy.genre_seed_universe import SeedName
 
 _REVISION: Final = "seed-reconciliation-v3"
 _BRIDGE_REVISION: Final = "reconstruction-seed-bridge-v2"

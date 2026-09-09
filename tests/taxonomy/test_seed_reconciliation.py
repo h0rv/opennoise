@@ -4,7 +4,10 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.genre_seed_taxonomy import (
+from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from musix.musicbrainz_coverage import CoverageMatch, CoverageReport
+from musix.storage import LocalObjectStore
+from musix.taxonomy.genre_seed_taxonomy import (
     CompositionCalibration,
     GenreSeedPublicTaxonomyArtifact,
     PublicCatalogInput,
@@ -13,10 +16,8 @@ from musix.genre_seed_taxonomy import (
     SeedTaxonomyInference,
     TaxonomyCoverageReport,
 )
-from musix.genre_seed_universe import SeedInput, SeedName
-from musix.musicbrainz_coverage import CoverageMatch, CoverageReport
-from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
-from musix.seed_reconciliation import (
+from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
+from musix.taxonomy.seed_reconciliation import (
     MusicBrainzGenreIdentity,
     build_seed_reconciliation,
     make_musicbrainz_identity_input,
@@ -25,7 +26,6 @@ from musix.seed_reconciliation import (
     publish_seed_reconciliation,
     verify_seed_reconciliation,
 )
-from musix.storage import LocalObjectStore
 
 
 def _hash(value: object) -> str:

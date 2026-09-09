@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from musix.genre_seed_universe import normalize_label
+from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.musicbrainz_seed_targets import load_seed_target_artifact
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 from musix.sources.musicbrainz import (
     AdapterLimits,
     MusicBrainzAdapterError,
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from musix.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
-    from musix.seed_reconciliation import SeedReconciliationArtifact
+    from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact
 
 RELEASE_GROUP_CONTEXT_PREFIX_REVISION = "release-group-context-prefix-pilot-v2"
 DEFAULT_RECORD_CAP = 100_000

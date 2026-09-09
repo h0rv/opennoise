@@ -38,8 +38,11 @@ from musix.musicbrainz_seed_targets import (
     settings_sha256,
     verify_seed_target_artifact,
 )
-from musix.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+from musix.taxonomy.seed_reconciliation import (
+    SeedReconciliationArtifact,
+    verify_seed_reconciliation,
+)
 
 _REVISION: Final = "open-label-graph-model-v1"
 _SHA: Final = r"^[0-9a-f]{64}$"

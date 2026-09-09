@@ -7,10 +7,10 @@ import hashlib
 import sys
 from pathlib import Path
 
-from musix.genre_hierarchy_candidates import GenreHierarchyCandidatePublicationReceipt
+from musix.taxonomy.genre_hierarchy_candidates import GenreHierarchyCandidatePublicationReceipt
 from musix.storage import LocalObjectStore
-from musix.taxonomy_relation_expansion import TaxonomyRelationExpansionArtifact
-from musix.taxonomy_relation_hierarchy_overlay import (
+from musix.taxonomy.taxonomy_relation_expansion import TaxonomyRelationExpansionArtifact
+from musix.taxonomy.taxonomy_relation_hierarchy_overlay import (
     OverlayBaseInputs,
     build_taxonomy_relation_hierarchy_overlay,
     publish_taxonomy_relation_hierarchy_overlay,

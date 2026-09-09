@@ -12,7 +12,7 @@ from musix.models import FrozenModel
 from musix.types import Sha256  # noqa: TC001  # Pydantic resolves this Annotated alias at runtime.
 
 if TYPE_CHECKING:
-    from musix.taxonomy_relation_expansion import TaxonomyRelationExpansionArtifact
+    from musix.taxonomy.taxonomy_relation_expansion import TaxonomyRelationExpansionArtifact
 
 _QID: Final[re.Pattern[str]] = re.compile(r"wd:(Q[1-9][0-9]*)")
 _SEED_COUNT: Final = 6_291

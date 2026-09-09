@@ -13,11 +13,11 @@ from musix.evidence.evidence_graph_projection import (
     verify_evidence_graph_projection,
     write_evidence_graph_projection,
 )
-from musix.taxonomy_relation_expansion import (
+from musix.taxonomy.taxonomy_relation_expansion import (
     RelationExpansionCoverage,
     TaxonomyRelationExpansionArtifact,
 )
-from musix.taxonomy_relation_identity_audit import (
+from musix.taxonomy.taxonomy_relation_identity_audit import (
     audit_taxonomy_relation_identity,
     qids_from_query,
 )

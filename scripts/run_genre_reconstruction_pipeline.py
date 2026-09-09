@@ -15,14 +15,14 @@ import tempfile
 from pathlib import Path
 from typing import Protocol, TypeVar
 
-from musix.asymmetric_genre_containment import (
+from musix.taxonomy.asymmetric_genre_containment import (
     AsymmetricGenreContainmentPolicy,
     GenreContainmentBridge,
     build_asymmetric_genre_containment_from_reconstruction_inputs,
     write_asymmetric_genre_containment,
 )
-from musix.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
-from musix.genre_seed_universe import load_seed_input
+from musix.taxonomy.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
+from musix.taxonomy.genre_seed_universe import load_seed_input
 from musix.models.modeling import PublicModelInput
 from musix.musicbrainz_coverage import CoverageReport
 from musix.peer_similarity import (
@@ -37,7 +37,7 @@ from musix.peer_similarity_historical import (
 )
 from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact
 from musix.evidence.reconstruction import ReconstructionInputs
-from musix.seed_reconciliation import (
+from musix.taxonomy.seed_reconciliation import (
     MusicBrainzIdentityInput,
     build_seed_reconciliation,
     load_seed_reconciliation,

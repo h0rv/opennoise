@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.genre_seed_taxonomy import (
+from musix.taxonomy.genre_seed_taxonomy import (
     PublicTaxonomyConfig,
     build_genre_seed_public_taxonomy,
     write_genre_seed_public_taxonomy,

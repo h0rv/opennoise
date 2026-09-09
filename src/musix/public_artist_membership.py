@@ -22,7 +22,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, TypeAdapter, model_validator
 
-from musix.genre_seed_universe import SeedInput, load_seed_input, normalize_label
+from musix.taxonomy.genre_seed_universe import SeedInput, load_seed_input, normalize_label
 from musix.models.modeling import PublicModelInput  # noqa: TC001
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 from musix.types import Sha256  # noqa: TC001

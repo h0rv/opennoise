@@ -28,8 +28,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from musix.genre_seed_universe import normalize_label
-from musix.seed_reconciliation import SeedReconciliationArtifact
+from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 
 _SHA256: Final = r"^[0-9a-f]{64}$"

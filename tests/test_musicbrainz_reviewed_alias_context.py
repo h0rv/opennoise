@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.genre_seed_universe import SeedInput, SeedName
+from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
 from musix.musicbrainz_model_adapter import (
     MusicBrainzModelAdapterPolicy,
     adapt_musicbrainz_seed_targets,
@@ -25,7 +25,7 @@ from musix.musicbrainz_seed_targets import (
     extract_musicbrainz_seed_targets,
     write_seed_target_artifact,
 )
-from musix.seed_reconciliation import (
+from musix.taxonomy.seed_reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,

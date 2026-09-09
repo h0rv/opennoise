@@ -31,7 +31,7 @@ from musix.musicbrainz_reviewed_alias_context import (
     verify_reviewed_alias_context_artifact,
 )
 from musix.release_group_support_peer import SupportPeerArtifact, logical_sha
-from musix.taxonomy_relation_expansion import (
+from musix.taxonomy.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionArtifact,
     taxonomy_relation_expansion_output_sha256,
 )

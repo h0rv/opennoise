@@ -14,7 +14,7 @@ from pydantic import Field
 from scipy.sparse import coo_matrix, csr_matrix, triu
 
 from musix.models import FrozenModel
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:

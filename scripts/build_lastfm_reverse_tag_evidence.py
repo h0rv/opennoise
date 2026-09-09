@@ -17,7 +17,7 @@ from musix.lastfm_reverse_tag import (
     publish_lastfm_reverse_tag_evidence,
     write_lastfm_query_manifest,
 )
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 from musix.storage import LocalObjectStore
 
 

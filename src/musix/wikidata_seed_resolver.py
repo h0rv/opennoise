@@ -23,7 +23,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, model_validator
 
 from musix.common import canonical_json, sha256_file, sha256_hex, write_durable_bytes
-from musix.genre_seed_universe import SeedInput, normalize_label
+from musix.taxonomy.genre_seed_universe import SeedInput, normalize_label
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 
 if TYPE_CHECKING:

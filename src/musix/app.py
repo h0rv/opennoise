@@ -39,7 +39,7 @@ from musix.pipeline.manifest import load_download_source
 from musix.production_store import ProductionMapStore
 from musix.public_artist_navigation_store import PublicArtistNavigationStore
 from musix.routes import CoreController, EvidenceController, MapController, SearchController
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 
 PACKAGE_ROOT = Path(__file__).parent
 STATIC_ROOT = PACKAGE_ROOT / "static"

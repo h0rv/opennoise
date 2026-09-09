@@ -6,14 +6,7 @@ import unittest
 
 from pydantic import ValidationError
 
-from musix.asymmetric_genre_containment import (
-    AsymmetricGenreContainmentPolicy,
-    GenreContainmentBridge,
-    GenreContainmentBridgeEntry,
-    build_asymmetric_genre_containment,
-    build_asymmetric_genre_containment_from_reconstruction_inputs,
-    verify_asymmetric_genre_containment,
-)
+from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
 from musix.models.modeling import (
     DirectMembershipEvidence,
     GenreIdentity,
@@ -29,7 +22,14 @@ from musix.public_taxonomy_expansion import (
     PublicTaxonomyExpansionConfig,
     PublicTaxonomyExpansionCoverage,
 )
-from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from musix.taxonomy.asymmetric_genre_containment import (
+    AsymmetricGenreContainmentPolicy,
+    GenreContainmentBridge,
+    GenreContainmentBridgeEntry,
+    build_asymmetric_genre_containment,
+    build_asymmetric_genre_containment_from_reconstruction_inputs,
+    verify_asymmetric_genre_containment,
+)
 
 
 def _sha(value: object) -> str:

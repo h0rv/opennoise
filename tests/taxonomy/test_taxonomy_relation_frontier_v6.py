@@ -15,16 +15,16 @@ from musix.evidence.evidence_frontier import (
     EvidenceFrontierReceipt,
 )
 from musix.storage import LocalObjectStore, ObjectKey
-from musix.taxonomy_relation_frontier_v6 import (
+from musix.taxonomy.taxonomy_relation_frontier_v6 import (
     FrontierV6Inputs,
     build_taxonomy_relation_frontier_v6,
 )
-from musix.taxonomy_relation_hierarchy_overlay import (
+from musix.taxonomy.taxonomy_relation_hierarchy_overlay import (
     TaxonomyRelationHierarchyOverlay,
     TaxonomyRelationHierarchyOverlayEdge,
     TaxonomyRelationHierarchyOverlayReceipt,
 )
-from tests.test_evidence_frontier import EvidenceFrontierTests
+from tests.evidence.test_evidence_frontier import EvidenceFrontierTests
 
 
 def _sha(value: object) -> str:

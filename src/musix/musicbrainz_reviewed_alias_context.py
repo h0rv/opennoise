@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from musix.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
-    from musix.seed_reconciliation import SeedReconciliationArtifact
+    from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact
 
 
 class ReviewedAliasContextError(ValueError):

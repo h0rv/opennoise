@@ -8,7 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
 
-from musix.genre_seed_universe import SeedInput, SeedName
+from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
 from musix.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetExtractorError,
     ReviewedSeedAlias,

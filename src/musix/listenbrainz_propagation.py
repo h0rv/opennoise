@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Literal
 import ijson
 from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
 
-from musix.genre_seed_universe import normalize_label
+from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
 from musix.models.modeling import DirectMembershipEvidence
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite

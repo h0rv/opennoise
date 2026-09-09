@@ -7,12 +7,12 @@ import json
 import sys
 from pathlib import Path
 
-from musix.open_label_graph_model import (
+from musix.taxonomy.open_label_graph_model import (
     OpenLabelGraphSettings,
     build_open_label_graph_model_from_path,
     publish_open_label_graph_model,
 )
-from musix.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 from musix.storage import LocalObjectStore
 
 

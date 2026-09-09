@@ -28,7 +28,7 @@ from musix.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
     verify_seed_target_artifact,
 )
-from musix.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 
 _REVISION: Final = "learned-label-alignment-v1"
