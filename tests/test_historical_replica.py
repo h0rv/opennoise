@@ -1,6 +1,6 @@
 import unittest
 
-from musix.historical_replica import deterministic_h2_split, name_tfidf_cosine
+from musix.history.historical_replica import deterministic_h2_split, name_tfidf_cosine
 
 
 class HistoricalReplicaTests(unittest.TestCase):

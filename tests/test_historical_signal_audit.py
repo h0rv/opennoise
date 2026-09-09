@@ -1,6 +1,6 @@
 import unittest
 
-from musix.historical_signal_audit import _histogram, _knn_audit
+from musix.history.historical_signal_audit import _histogram, _knn_audit
 from musix.models.historical_signal import HistoricalSignalArtifact, HistoricalSignalNeighbor
 
 

@@ -8,7 +8,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.historical_imitation import (
+from musix.history.historical_imitation import (
     H3CustodyInput,
     HistoricalImitationSettings,
     build_historical_imitation,

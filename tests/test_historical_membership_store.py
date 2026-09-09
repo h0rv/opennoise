@@ -1,6 +1,6 @@
 import unittest
 
-from musix.historical_membership_store import (
+from musix.history.historical_membership_store import (
     HistoricalMembershipStore,
     HistoricalMembershipStoreError,
 )

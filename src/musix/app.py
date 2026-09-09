@@ -13,8 +13,8 @@ from litestar.template.config import TemplateConfig
 
 from musix.db import AsyncDatabase
 from musix.genre_entry import GenreEntryRepository
-from musix.historical_membership_store import HistoricalMembershipStore
-from musix.historical_signal_store import HistoricalSignalMapStore
+from musix.history.historical_membership_store import HistoricalMembershipStore
+from musix.history.historical_signal_store import HistoricalSignalMapStore
 from musix.local_musicbrainz_artist_evidence import (
     LocalMusicBrainzArtistEvidenceStore,
     LocalMusicBrainzEvidenceSources,

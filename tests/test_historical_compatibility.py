@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import AnyHttpUrl, ValidationError
 
-from musix.historical_compatibility import (
+from musix.history.historical_compatibility import (
     coverage_quality_report,
     evaluate_historical_compatibility,
     publish_historical_compatibility,

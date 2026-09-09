@@ -6,8 +6,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from musix.historical_replica import bounded_name_tfidf_cosine, deterministic_h2_split
-from musix.historical_signal_model import _idf_candidates, _legacy_vocabulary, _load_memberships
+from musix.history.historical_replica import bounded_name_tfidf_cosine, deterministic_h2_split
+from musix.history.historical_signal_model import (
+    _idf_candidates,
+    _legacy_vocabulary,
+    _load_memberships,
+)
 from musix.models.calibrated_replica import CalibratedReplicaReport, ReplicaGridResult
 from musix.models.historical_signal import HistoricalSignalSettings
 

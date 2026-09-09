@@ -61,7 +61,7 @@ ignore = [
     "PLR0913", # Route signatures list the public query parameters explicitly.
     "PLR0917", # Litestar injects route parameters by name rather than positional calls.
 ]
-"src/musix/historical_signal_model.py" = [
+"src/musix/history/historical_signal_model.py" = [
     "C901", # Numerical evaluation and sparse component assembly are intentionally cohesive.
     "PLR0915", # The evaluator keeps every oracle-only calculation in one auditable boundary.
 ]

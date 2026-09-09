@@ -19,7 +19,7 @@ from musix.genre_discovery import (
     import_historical_genre_memberships,
     query_displayable_historical_genre_memberships,
 )
-from musix.historical_compatibility import (
+from musix.history.historical_compatibility import (
     build_historical_compatibility,
     compatibility_receipt,
     coverage_quality_report,

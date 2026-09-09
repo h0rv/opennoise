@@ -21,12 +21,12 @@ from musix.exploration import (
     optional_viewport,
 )
 from musix.genre_entry import GenreEntryRepository
-from musix.historical_membership_store import (
+from musix.history.historical_membership_store import (
     HistoricalMembershipStore,
     HistoricalMembershipStoreError,
     HistoricalSignalMembersApiResponse,
 )
-from musix.historical_signal_store import (
+from musix.history.historical_signal_store import (
     HistoricalSignalMapApiResponse,
     HistoricalSignalMapStore,
     HistoricalSignalMapStoreError,

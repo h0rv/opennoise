@@ -7,7 +7,7 @@ import hashlib
 import sys
 from pathlib import Path
 
-from musix.historical_custody import custody_historical_inputs
+from musix.history.historical_custody import custody_historical_inputs
 from musix.models.historical import HistoricalH3SourceManifest
 from musix.models.historical_signal import HistoricalSignalSettings
 from musix.storage import LocalObjectStore

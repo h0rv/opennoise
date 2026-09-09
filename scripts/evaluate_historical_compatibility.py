@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.historical_compatibility import (
+from musix.history.historical_compatibility import (
     evaluate_historical_compatibility,
     load_public_comparison,
 )

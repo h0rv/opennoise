@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.historical_custody import HistoricalCustodyError, custody_historical_inputs
+from musix.history.historical_custody import HistoricalCustodyError, custody_historical_inputs
 from musix.models.historical_signal import HistoricalSignalSettings
 from musix.storage import LocalObjectStore
 
