@@ -63,7 +63,7 @@ def main() -> int:
     if paths is None:
         sys.stderr.write(
             "Production map unavailable. Run `uv run poe release-certify` first "
-            "(requires the sealed cache; see docs/PUBLIC_RELEASE_PIPELINE.md).\n"
+            "(requires the sealed cache; see docs/serving/PUBLIC_RELEASE_PIPELINE.md).\n"
         )
         return 2
     environment = os.environ | {

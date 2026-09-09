@@ -46,7 +46,7 @@ class TaskContractTests(unittest.TestCase):
     def test_active_release_docs_use_the_verified_cache_with_poe(self) -> None:
         documentation = "\n".join(
             (ROOT / path).read_text(encoding="utf-8")
-            for path in ("README.md", "docs/PUBLIC_RELEASE_PIPELINE.md")
+            for path in ("README.md", "docs/serving/PUBLIC_RELEASE_PIPELINE.md")
         )
 
         self.assertNotIn("mise run", documentation)

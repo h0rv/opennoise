@@ -14,7 +14,7 @@ The retained legacy vocabulary can also be rendered as a bounded,
 public-taxonomy-only graph. It retains all 6,291 labels, records confidence and
 edge evidence, and treats compositional anchors as review links rather than
 memberships or factual parentage. See
-[the open construction graph contract](docs/OPEN_CONSTRUCTION_GRAPH.md).
+[the open construction graph contract](docs/serving/OPEN_CONSTRUCTION_GRAPH.md).
 
 When the app is started with the checked-in defaults, Open v2 is the main
 surface: `data/model/open-construction-graph-v2.json` contains 7,037 nodes and
@@ -80,7 +80,7 @@ Open <http://127.0.0.1:3001>.
 map artifact, and renderer evidence agree. The product only serves a configured
 map artifact that passes those checks. This checkout's retained sealed cache is
 used automatically when `data/phase3-public-qualified.sqlite` is absent; see
-`docs/PUBLIC_RELEASE_PIPELINE.md` for the release inputs and outputs.
+`docs/serving/PUBLIC_RELEASE_PIPELINE.md` for the release inputs and outputs.
 
 ## Stack
 
@@ -123,5 +123,5 @@ show their direct-evidence rank and source count, never imply quality or
 popularity, and link only to exact external metadata pages.
 
 See [the stack and architecture](docs/STACK.md),
-[the source-to-release pipeline](docs/PUBLIC_RELEASE_PIPELINE.md), and
-[the historical reconstruction boundary](docs/EVERY_NOISE_REPRODUCTION.md).
+[the source-to-release pipeline](docs/serving/PUBLIC_RELEASE_PIPELINE.md), and
+[the historical reconstruction boundary](docs/ingest/EVERY_NOISE_REPRODUCTION.md).
