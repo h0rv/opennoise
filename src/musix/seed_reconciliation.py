@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     )
     from musix.genre_seed_universe import SeedName
     from musix.musicbrainz_coverage import CoverageReport
-    from musix.reconstruction import GenreArtistEdge, ReconstructionInputs
+    from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs
     from musix.storage import ObjectStore, ObjectWrite
 
 _REVISION: Final = "seed-reconciliation-v3"

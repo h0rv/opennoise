@@ -38,7 +38,7 @@ from musix.public_taxonomy_expansion import (
     PublicTaxonomyExpansionArtifact,
     verify_public_taxonomy_expansion,
 )
-from musix.reconstruction import ReconstructionInputs  # noqa: TC001
+from musix.evidence.reconstruction import ReconstructionInputs  # noqa: TC001
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 from musix.types import Sha256  # noqa: TC001
 

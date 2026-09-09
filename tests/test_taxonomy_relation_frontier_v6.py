@@ -8,7 +8,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from musix.evidence_frontier import (
+from musix.evidence.evidence_frontier import (
     AllSeedEvidenceFrontierArtifact,
     EvidenceFrontierCoverage,
     EvidenceFrontierGate,

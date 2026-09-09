@@ -10,7 +10,7 @@ from musix.musicbrainz_coverage import (
     run_source_baselines,
     write_reconstruction_inputs,
 )
-from musix.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
 
 
 class MusicBrainzCoverageTests(unittest.TestCase):

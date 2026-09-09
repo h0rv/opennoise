@@ -29,7 +29,7 @@ from musix.public_taxonomy_expansion import (
     PublicTaxonomyExpansionConfig,
     PublicTaxonomyExpansionCoverage,
 )
-from musix.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
 
 
 def _sha(value: object) -> str:

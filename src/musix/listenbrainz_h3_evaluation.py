@@ -20,7 +20,7 @@ from typing import Final, Literal
 import ijson
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from musix.evidence_frontier import AllSeedEvidenceFrontierArtifact, EvidenceFrontierReceipt
+from musix.evidence.evidence_frontier import AllSeedEvidenceFrontierArtifact, EvidenceFrontierReceipt
 from musix.genre_seed_universe import normalize_label
 from musix.listenbrainz_propagation import ListenBrainzPropagationReceipt
 from musix.models import FrozenModel

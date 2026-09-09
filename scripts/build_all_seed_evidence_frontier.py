@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.evidence_frontier import (
+from musix.evidence.evidence_frontier import (
     load_frontier_v4_source,
     publish_all_seed_evidence_frontier,
     upgrade_frontier_v4_with_listenbrainz_review,

@@ -22,7 +22,7 @@ from pydantic import Field, FiniteFloat, model_validator
 
 from musix.models import FrozenModel
 from musix.musicbrainz_coverage import CoverageMatch, normalize_label
-from musix.reconstruction import ReconstructionInputs
+from musix.evidence.reconstruction import ReconstructionInputs
 
 if TYPE_CHECKING:
     from pathlib import Path

@@ -4,7 +4,7 @@ import hashlib
 import json
 import unittest
 
-from musix.learned_label_alignment import (
+from musix.evidence.learned_label_alignment import (
     LearnedLabelAlignmentSettings,
     build_learned_label_alignment,
     verify_learned_label_alignment,

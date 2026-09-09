@@ -15,7 +15,7 @@ from musix.genre_seed_taxonomy import (
 )
 from musix.genre_seed_universe import SeedInput, SeedName
 from musix.musicbrainz_coverage import CoverageMatch, CoverageReport
-from musix.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
 from musix.seed_reconciliation import (
     MusicBrainzGenreIdentity,
     build_seed_reconciliation,

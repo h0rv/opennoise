@@ -17,7 +17,7 @@ from musix.common import (
     sha256_hex,
     write_atomic_bytes,
 )
-from musix.evidence_frontier import (
+from musix.evidence.evidence_frontier import (
     AllSeedEvidenceFrontierArtifact,
     verify_all_seed_evidence_frontier,
 )

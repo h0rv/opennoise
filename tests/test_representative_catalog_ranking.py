@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-from musix.album_genres import AlbumGenreRepository, MembershipObservation
+from musix.evidence.album_genres import AlbumGenreRepository, MembershipObservation
 from musix.representative_catalog_ranking import (
     RepresentativeCatalogRankingConfig,
     RepresentativeCatalogRankingRepository,

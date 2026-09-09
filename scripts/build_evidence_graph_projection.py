@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from time import monotonic
 
-from musix.evidence_graph_projection import (
+from musix.evidence.evidence_graph_projection import (
     EvidenceGraphProjectionInputs,
     build_evidence_graph_projection,
     write_evidence_graph_projection,

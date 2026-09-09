@@ -7,7 +7,7 @@ import hashlib
 import sys
 from pathlib import Path
 
-from musix.evidence_frontier import EvidenceFrontierReceipt
+from musix.evidence.evidence_frontier import EvidenceFrontierReceipt
 from musix.storage import LocalObjectStore
 from musix.taxonomy_relation_frontier_v6 import (
     FrontierV6Inputs,

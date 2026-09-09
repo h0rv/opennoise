@@ -12,7 +12,7 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from musix.common import sha256_file, sha256_json
-from musix.evidence_frontier import (
+from musix.evidence.evidence_frontier import (
     AllSeedEvidenceFrontierArtifact,
     EvidenceFrontierCoverage,
     EvidenceFrontierReceipt,

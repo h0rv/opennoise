@@ -26,7 +26,7 @@ from musix.public_artist_membership import (
     PublicArtistMembershipSourcePolicy,
     public_artist_membership_candidate_output_sha256,
 )
-from musix.reconstruction import (
+from musix.evidence.reconstruction import (
     GenreArtistEdge,
     HistoricalGenrePoint,
     ReconstructionInputs,

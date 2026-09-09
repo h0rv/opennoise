@@ -6,7 +6,7 @@ from typing import override
 
 from pydantic import ValidationError
 
-from musix.reconstruction import (
+from musix.evidence.reconstruction import (
     EvidenceStatus,
     GenreArtistEdge,
     HistoricalClaim,

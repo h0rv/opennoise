@@ -12,7 +12,7 @@ from musix.musicbrainz_research_graph import (
     evaluate_sealed_graph,
     write_research_graph,
 )
-from musix.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
 
 
 class MusicBrainzResearchGraphTests(unittest.TestCase):

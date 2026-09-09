@@ -12,7 +12,7 @@ from typing import Annotated, Literal
 from pydantic import Field, FiniteFloat, JsonValue, TypeAdapter, model_validator
 
 from musix.adapters.wikidata import AlbumGenreEvidenceRecord as WikidataEvidence
-from musix.evidence import (
+from musix.evidence.evidence import (
     AlbumGenreRankingArtifact,
     AlbumGenreRankingItem,
     DirectGenreEvidence,

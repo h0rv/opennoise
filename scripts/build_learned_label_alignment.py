@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.learned_label_alignment import (
+from musix.evidence.learned_label_alignment import (
     LearnedLabelAlignmentSettings,
     build_learned_label_alignment,
     publish_learned_label_alignment,

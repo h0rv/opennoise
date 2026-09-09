@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 from pydantic import TypeAdapter, ValidationError
 
-from musix.evidence import (
+from musix.evidence.evidence import (
     AlbumGenreEvidence,
     AlbumGenreRankingArtifact,
     AlbumGenreRankingItem,

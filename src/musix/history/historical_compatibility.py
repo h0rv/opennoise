@@ -41,7 +41,7 @@ from musix.models.historical import (
 )
 from musix.models.modeling import PublicModelArtifact
 from musix.models.production import ProductionMapArtifact
-from musix.reconstruction import (
+from musix.evidence.reconstruction import (
     HistoricalGenrePoint,
     ReconstructionPoint,
     align_to_historical_points,

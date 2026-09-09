@@ -34,7 +34,7 @@ from musix.seed_reconciliation import SeedReconciliationArtifact, verify_seed_re
 from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:
-    from musix.reconstruction import ReconstructionInputs
+    from musix.evidence.reconstruction import ReconstructionInputs
 
 _REVISION = "genre-peer-similarity-v4"
 _RECEIPT_REVISION = "genre-peer-similarity-receipt-v4"

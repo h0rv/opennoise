@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from musix.reconstruction import (
+from musix.evidence.reconstruction import (
     GenreArtistEdge,
     ReconstructionInputs,
     SimilarityMetric,

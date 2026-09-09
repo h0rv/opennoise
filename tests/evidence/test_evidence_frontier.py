@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.evidence_frontier import (
+from musix.evidence.evidence_frontier import (
     AllSeedEvidenceFrontierArtifact,
     EvidenceFrontierCoverage,
     EvidenceFrontierRow,

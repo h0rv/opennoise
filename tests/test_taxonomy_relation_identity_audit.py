@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from musix.common import canonical_json, sha256_hex
-from musix.evidence_graph_projection import (
+from musix.evidence.evidence_graph_projection import (
     ArtifactInput,
     EvidenceGraphProjectionArtifact,
     EvidenceGraphProjectionError,
