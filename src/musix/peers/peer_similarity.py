@@ -30,7 +30,10 @@ from musix.public_artist_membership import (
     PublicArtistMembershipCandidateArtifact,
     verify_public_artist_membership_candidate,
 )
-from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
+from musix.taxonomy.seed_reconciliation import (
+    SeedReconciliationArtifact,
+    verify_seed_reconciliation,
+)
 from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:

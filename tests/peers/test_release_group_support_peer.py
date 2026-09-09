@@ -8,8 +8,11 @@ from unittest.mock import patch
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from musix.release_group_support_h3_evaluation import SupportPeerH3Report, evaluate_support_peer_h3
-from musix.release_group_support_peer import (
+from musix.peers.release_group_support_h3_evaluation import (
+    SupportPeerH3Report,
+    evaluate_support_peer_h3,
+)
+from musix.peers.release_group_support_peer import (
     SupportPeerArtifact,
     SupportPeerEdge,
     _edges,
@@ -108,7 +111,10 @@ def _evaluate(path: Path, *, patched: bool = False) -> SupportPeerH3Report:
     reconciliation.write_text("{}")
     public_input.write_text("{}")
     if not patched:
-        with patch("musix.release_group_support_h3_evaluation.file_sha", return_value="b" * 64):
+        with patch(
+            "musix.peers.release_group_support_h3_evaluation.file_sha",
+            return_value="b" * 64,
+        ):
             return evaluate_support_peer_h3(
                 candidate_path=path,
                 reconciliation_path=reconciliation,
@@ -137,22 +143,22 @@ def _evaluate(path: Path, *, patched: bool = False) -> SupportPeerH3Report:
         "h3_conflicted_artist_observation_count": 0,
     }
     with (
-        patch("musix.release_group_support_h3_evaluation.file_sha", return_value="b" * 64),
+        patch("musix.peers.release_group_support_h3_evaluation.file_sha", return_value="b" * 64),
         patch(
-            "musix.release_group_support_h3_evaluation.load_seed_reconciliation",
+            "musix.peers.release_group_support_h3_evaluation.load_seed_reconciliation",
             return_value=type("Reconciliation", (), {"seed_count": 6291})(),
         ),
-        patch("musix.release_group_support_h3_evaluation.PublicModelInput") as public,
+        patch("musix.peers.release_group_support_h3_evaluation.PublicModelInput") as public,
         patch(
-            "musix.release_group_support_h3_evaluation.load_receipted_musicbrainz_spotify_bridge",
+            "musix.peers.release_group_support_h3_evaluation.load_receipted_musicbrainz_spotify_bridge",
             return_value=bridge,
         ),
         patch(
-            "musix.release_group_support_h3_evaluation.iter_accepted_spotify_to_musicbrainz",
+            "musix.peers.release_group_support_h3_evaluation.iter_accepted_spotify_to_musicbrainz",
             return_value=iter(()),
         ),
         patch(
-            "musix.release_group_support_h3_evaluation._load_positives",
+            "musix.peers.release_group_support_h3_evaluation._load_positives",
             return_value=({"g1": {"a"}, "g2": {"a"}}, counters),
         ),
     ):

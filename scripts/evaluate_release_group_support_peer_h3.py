@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.release_group_support_h3_evaluation import evaluate_support_peer_h3
+from musix.peers.release_group_support_h3_evaluation import evaluate_support_peer_h3
 
 
 def main() -> int:

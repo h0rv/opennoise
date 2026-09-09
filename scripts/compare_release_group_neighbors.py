@@ -8,7 +8,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from musix.local_release_group_neighbor_comparison import (
+from musix.peers.local_release_group_neighbor_comparison import (
     LocalReleaseGroupNeighborComparisonError,
     compare_neighbors,
 )

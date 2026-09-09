@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.strength_aware_peer_audit import build_corroborated_peer_audit
+from musix.peers.strength_aware_peer_audit import build_corroborated_peer_audit
 
 
 def main() -> int:

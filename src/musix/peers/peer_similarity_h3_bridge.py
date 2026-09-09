@@ -11,19 +11,19 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field
 
-from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput
-from musix.peer_similarity import (
+from musix.peers.peer_similarity import (
     GenrePeerSimilarityArtifact,
     PeerSimilaritySettings,
     evaluate_peer_similarity_gate,
 )
-from musix.peer_similarity_historical import _candidate_neighbors
+from musix.peers.peer_similarity_historical import _candidate_neighbors
 from musix.spotify_bridge_artifact import (
     iter_accepted_spotify_to_musicbrainz,
     load_receipted_musicbrainz_spotify_bridge,
 )
+from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:

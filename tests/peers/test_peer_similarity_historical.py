@@ -17,8 +17,8 @@ from musix.models.modeling import (
     PublicArtifact,
     PublicModelInput,
 )
-from musix.peer_similarity import PeerSimilaritySettings, build_peer_similarity
-from musix.peer_similarity_historical import (
+from musix.peers.peer_similarity import PeerSimilaritySettings, build_peer_similarity
+from musix.peers.peer_similarity_historical import (
     HistoricalPeerSettings,
     evaluate_peer_similarity_historical,
     historical_peer_report_sha256,

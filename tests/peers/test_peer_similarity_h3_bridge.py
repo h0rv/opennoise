@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.peer_similarity_h3_bridge import _historical_jaccard_neighbors, _load_positives
+from musix.peers.peer_similarity_h3_bridge import _historical_jaccard_neighbors, _load_positives
 
 
 class BridgePeerNeighborhoodTests(unittest.TestCase):
