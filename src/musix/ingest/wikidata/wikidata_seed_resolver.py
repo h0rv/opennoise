@@ -24,7 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError,
 
 from musix.common import canonical_json, sha256_file, sha256_hex, write_durable_bytes
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_seed_universe import SeedInput, normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import SeedInput, normalize_label
 
 if TYPE_CHECKING:
     from pathlib import Path

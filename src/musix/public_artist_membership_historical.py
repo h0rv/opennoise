@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import Field
 
 from musix.common import sha256_file
-from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 from musix.public_artist_membership import (
     ApprovedPublicMembershipInput,
     PublicArtistMembershipCandidateArtifact,

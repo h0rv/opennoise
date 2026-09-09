@@ -21,8 +21,8 @@ from typing import TYPE_CHECKING, Final, Literal
 from pydantic import Field, model_validator
 
 from musix.common import sha256_file, sha256_hex, sha256_json, write_durable_bytes
-from musix.taxonomy.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact, SeedTaxonomyInference
-from musix.taxonomy.genre_seed_universe import SeedInput, load_seed_input
+from musix.taxonomy.seeds.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact, SeedTaxonomyInference
+from musix.taxonomy.seeds.genre_seed_universe import SeedInput, load_seed_input
 from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 

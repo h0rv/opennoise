@@ -31,7 +31,7 @@ from musix.spotify_bridge_artifact import (
     load_receipted_musicbrainz_spotify_bridge,
 )
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 
 _SHA256: Final = r"^[0-9a-f]{64}$"
 _ARTIST_PREFIX: Final = "musicbrainz:artist:"

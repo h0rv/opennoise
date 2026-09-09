@@ -23,7 +23,7 @@ from uuid import UUID
 import ijson
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, TypeAdapter, model_validator
 
-from musix.taxonomy.genre_seed_universe import SeedInput, normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import SeedInput, normalize_label
 
 type Facet = Literal["genre", "tag"]
 type MatchKind = Literal["exact", "normalized", "reviewed_alias"]

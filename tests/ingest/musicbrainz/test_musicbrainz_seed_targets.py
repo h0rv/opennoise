@@ -19,7 +19,7 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     verify_seed_target_artifact,
     write_seed_target_artifact,
 )
-from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
+from musix.taxonomy.seeds.genre_seed_universe import SeedInput, SeedName
 
 
 def _seed() -> SeedInput:

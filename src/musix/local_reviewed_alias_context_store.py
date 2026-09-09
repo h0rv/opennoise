@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from musix.ingest.musicbrainz.musicbrainz_model_adapter import MusicBrainzModelAdapterReport
-    from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact
+    from musix.taxonomy.seeds.seed_reconciliation import SeedReconciliationArtifact
 
 
 _REVIEWED_ALIAS_PEER_INDEX_ARTIFACT_SHA256 = (

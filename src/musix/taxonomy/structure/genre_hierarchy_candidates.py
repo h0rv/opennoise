@@ -23,12 +23,12 @@ from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput  # noqa: TC001
 from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact  # noqa: TC001
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact  # noqa: TC001
-from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact  # noqa: TC001
-from musix.taxonomy.taxonomy_relation_expansion import (
+from musix.taxonomy.relations.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionArtifact,
     verify_taxonomy_relation_expansion,
 )
+from musix.taxonomy.seeds.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact  # noqa: TC001
+from musix.taxonomy.seeds.seed_reconciliation import SeedReconciliationArtifact  # noqa: TC001
 from musix.types import Sha256  # noqa: TC001
 
 _REVISION: Final = "genre-hierarchy-candidates-v1"

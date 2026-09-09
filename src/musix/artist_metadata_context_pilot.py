@@ -22,7 +22,7 @@ from uuid import UUID
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
+from musix.taxonomy.seeds.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
 from musix.sources.musicbrainz import MusicBrainzArtist, MusicBrainzClient
 
 if TYPE_CHECKING:

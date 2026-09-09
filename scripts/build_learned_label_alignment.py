@@ -13,7 +13,7 @@ from musix.evidence.learned_label_alignment import (
     publish_learned_label_alignment,
 )
 from musix.ingest.musicbrainz.musicbrainz_seed_targets import load_seed_target_artifact
-from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seeds.seed_reconciliation import load_seed_reconciliation
 from musix.storage import LocalObjectStore
 
 

@@ -18,14 +18,14 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.taxonomy.open_label_graph_model import (
+from musix.taxonomy.open.open_label_graph_model import (
     OpenLabelGraphSettings,
     _split,
     build_open_label_graph_model,
     build_open_label_graph_model_from_path,
     verify_open_label_graph_model,
 )
-from musix.taxonomy.seed_reconciliation import (
+from musix.taxonomy.seeds.seed_reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,

@@ -9,12 +9,12 @@ from pathlib import Path
 
 from musix.evidence.evidence_frontier import EvidenceFrontierReceipt
 from musix.storage import LocalObjectStore
-from musix.taxonomy.taxonomy_relation_frontier_v6 import (
+from musix.taxonomy.relations.taxonomy_relation_frontier_v6 import (
     FrontierV6Inputs,
     build_taxonomy_relation_frontier_v6,
     publish_taxonomy_relation_frontier_v6,
 )
-from musix.taxonomy.taxonomy_relation_hierarchy_overlay import TaxonomyRelationHierarchyOverlayReceipt
+from musix.taxonomy.relations.taxonomy_relation_hierarchy_overlay import TaxonomyRelationHierarchyOverlayReceipt
 
 
 def main() -> int:

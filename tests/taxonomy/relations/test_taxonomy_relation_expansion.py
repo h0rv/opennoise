@@ -8,17 +8,7 @@ from hashlib import sha256
 from pathlib import Path
 
 from musix.storage import LocalObjectStore, ObjectKey
-from musix.taxonomy.genre_seed_taxonomy import (
-    CompositionCalibration,
-    GenreSeedPublicTaxonomyArtifact,
-    PublicCatalogInput,
-    PublicTaxonomyConfig,
-    PublicTaxonomyNode,
-    SeedTaxonomyInference,
-    TaxonomyCoverageReport,
-)
-from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
-from musix.taxonomy.taxonomy_relation_expansion import (
+from musix.taxonomy.relations.taxonomy_relation_expansion import (
     ExactMusicBrainzGenreQidMapping,
     TaxonomyRelationEvaluationInputs,
     TaxonomyRelationExpansionPolicy,
@@ -33,6 +23,16 @@ from musix.taxonomy.taxonomy_relation_expansion import (
     split_taxonomy_relation_feed_for_holdout,
     verify_taxonomy_relation_expansion,
 )
+from musix.taxonomy.seeds.genre_seed_taxonomy import (
+    CompositionCalibration,
+    GenreSeedPublicTaxonomyArtifact,
+    PublicCatalogInput,
+    PublicTaxonomyConfig,
+    PublicTaxonomyNode,
+    SeedTaxonomyInference,
+    TaxonomyCoverageReport,
+)
+from musix.taxonomy.seeds.genre_seed_universe import SeedInput, SeedName
 
 
 def _taxonomy() -> GenreSeedPublicTaxonomyArtifact:

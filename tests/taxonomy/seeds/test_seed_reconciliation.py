@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
 from musix.ingest.musicbrainz.musicbrainz_coverage import CoverageMatch, CoverageReport
 from musix.storage import LocalObjectStore
-from musix.taxonomy.genre_seed_taxonomy import (
+from musix.taxonomy.seeds.genre_seed_taxonomy import (
     CompositionCalibration,
     GenreSeedPublicTaxonomyArtifact,
     PublicCatalogInput,
@@ -16,8 +16,8 @@ from musix.taxonomy.genre_seed_taxonomy import (
     SeedTaxonomyInference,
     TaxonomyCoverageReport,
 )
-from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
-from musix.taxonomy.seed_reconciliation import (
+from musix.taxonomy.seeds.genre_seed_universe import SeedInput, SeedName
+from musix.taxonomy.seeds.seed_reconciliation import (
     MusicBrainzGenreIdentity,
     build_seed_reconciliation,
     make_musicbrainz_identity_input,

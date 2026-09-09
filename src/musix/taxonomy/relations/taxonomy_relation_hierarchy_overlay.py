@@ -17,12 +17,12 @@ from pydantic import Field, model_validator
 from musix.common import sha256_file, sha256_json
 from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_hierarchy_candidates import (  # noqa: TC001
-    GenreHierarchyCandidatePublicationReceipt,
-)
-from musix.taxonomy.taxonomy_relation_expansion import (
+from musix.taxonomy.relations.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionArtifact,
     verify_taxonomy_relation_expansion,
+)
+from musix.taxonomy.structure.genre_hierarchy_candidates import (  # noqa: TC001
+    GenreHierarchyCandidatePublicationReceipt,
 )
 from musix.types import Sha256  # noqa: TC001
 

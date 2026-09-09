@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, model_validator
 
-from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
 from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
@@ -43,7 +43,7 @@ from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
-from musix.taxonomy.open_tag_feature_matrix import (
+from musix.taxonomy.open.open_tag_feature_matrix import (
     OpenTagFeatureMatrixReader,
     verify_open_tag_feature_matrix,
 )

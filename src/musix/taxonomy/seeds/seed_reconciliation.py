@@ -27,18 +27,18 @@ from musix.models.modeling import (
     PublicModelInput,
 )
 from musix.storage import ObjectKey
-from musix.taxonomy.genre_seed_universe import SeedInput, normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import SeedInput, normalize_label
 
 if TYPE_CHECKING:
     from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs
     from musix.ingest.musicbrainz.musicbrainz_coverage import CoverageReport
     from musix.storage import ObjectStore, ObjectWrite
-    from musix.taxonomy.genre_seed_taxonomy import (
+    from musix.taxonomy.seeds.genre_seed_taxonomy import (
         GenreSeedPublicTaxonomyArtifact,
         PublicTaxonomyNode,
         SeedTaxonomyInference,
     )
-    from musix.taxonomy.genre_seed_universe import SeedName
+    from musix.taxonomy.seeds.genre_seed_universe import SeedName
 
 _REVISION: Final = "seed-reconciliation-v3"
 _BRIDGE_REVISION: Final = "reconstruction-seed-bridge-v2"

@@ -19,7 +19,7 @@ from musix.ingest.musicbrainz.musicbrainz_reviewed_alias_context import (
     ReviewedAliasContextMembership,
 )
 from musix.routes import _union_observed_artists, _union_observed_seeds
-from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact, SeedReconciliationDisposition
+from musix.taxonomy.seeds.seed_reconciliation import SeedReconciliationArtifact, SeedReconciliationDisposition
 
 _ARTIST = "00000000-0000-4000-8000-000000000001"
 _PEER_SHA = "201a5061c2bcd0b71e7d6ac867e8a42d76b3c8cfed0318d88752cfbae12853eb"

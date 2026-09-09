@@ -12,7 +12,7 @@ from typing import Final, Literal
 from pydantic import Field
 
 from musix.models import FrozenModel
-from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seeds.seed_reconciliation import load_seed_reconciliation
 
 _REVISION: Final = "strength-aware-peer-audit-v1"
 type GridMinimum = Literal[2, 3, 5]

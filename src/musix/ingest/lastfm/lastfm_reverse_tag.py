@@ -23,8 +23,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from musix.common import sha256_file, sha256_json, write_durable_bytes
 from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_seed_universe import normalize_label
-from musix.taxonomy.seed_reconciliation import (
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.seed_reconciliation import (
     SeedReconciliationArtifact,
     verify_seed_reconciliation,
 )

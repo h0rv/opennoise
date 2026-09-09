@@ -23,7 +23,7 @@ from musix.spotify_bridge_artifact import (
     iter_accepted_spotify_to_musicbrainz,
     load_receipted_musicbrainz_spotify_bridge,
 )
-from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:

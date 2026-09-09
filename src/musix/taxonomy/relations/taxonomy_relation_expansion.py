@@ -33,7 +33,7 @@ from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 from musix.types import Sha256  # noqa: TC001  # Pydantic resolves this Annotated alias at runtime.
 
 if TYPE_CHECKING:
-    from musix.taxonomy.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
+    from musix.taxonomy.seeds.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
 
 _FEED_REVISION: Final = "taxonomy-relation-feed-v1"
 _REVISION: Final = "taxonomy-relation-expansion-v1"

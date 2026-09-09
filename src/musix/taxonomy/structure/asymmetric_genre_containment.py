@@ -38,8 +38,8 @@ from musix.public_taxonomy_expansion import (
     verify_public_taxonomy_expansion,
 )
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_seed_taxonomy import InferenceStatus  # noqa: TC001
-from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.genre_seed_taxonomy import InferenceStatus  # noqa: TC001
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:

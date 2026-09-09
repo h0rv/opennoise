@@ -20,7 +20,7 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     settings_sha256,
 )
 from musix.models.modeling import PublicModelInput
-from musix.taxonomy.seed_reconciliation import (
+from musix.taxonomy.seeds.seed_reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,

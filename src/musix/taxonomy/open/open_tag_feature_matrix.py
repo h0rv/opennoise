@@ -20,11 +20,11 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, model_validator
 
-from musix.models import FrozenModel
 from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
     verify_seed_target_artifact,
 )
+from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 
 _REVISION: Final = "open-tag-feature-matrix-v1"

@@ -35,7 +35,7 @@ from musix.pipeline.source_cache import (
     verify_source_cache_receipt,
 )
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 
 _REVISION: Final = "musicbrainz-release-group-artist-support-v1"
 _JSON: Final = TypeAdapter(dict[str, object])

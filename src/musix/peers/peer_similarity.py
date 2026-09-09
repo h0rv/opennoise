@@ -30,7 +30,7 @@ from musix.public_artist_membership import (
     PublicArtistMembershipCandidateArtifact,
     verify_public_artist_membership_candidate,
 )
-from musix.taxonomy.seed_reconciliation import (
+from musix.taxonomy.seeds.seed_reconciliation import (
     SeedReconciliationArtifact,
     verify_seed_reconciliation,
 )

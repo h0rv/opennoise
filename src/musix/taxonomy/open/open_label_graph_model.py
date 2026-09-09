@@ -26,7 +26,6 @@ import numpy as np
 from pydantic import Field, model_validator
 from scipy.optimize import minimize
 
-from musix.models import FrozenModel
 from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
@@ -38,8 +37,9 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     settings_sha256,
     verify_seed_target_artifact,
 )
+from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.seed_reconciliation import (
+from musix.taxonomy.seeds.seed_reconciliation import (
     SeedReconciliationArtifact,
     verify_seed_reconciliation,
 )

@@ -22,7 +22,7 @@ from musix.public_taxonomy_expansion import (
     PublicTaxonomyExpansionConfig,
     PublicTaxonomyExpansionCoverage,
 )
-from musix.taxonomy.asymmetric_genre_containment import (
+from musix.taxonomy.structure.asymmetric_genre_containment import (
     AsymmetricGenreContainmentPolicy,
     GenreContainmentBridge,
     GenreContainmentBridgeEntry,

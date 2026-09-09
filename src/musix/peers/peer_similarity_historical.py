@@ -26,7 +26,7 @@ from musix.peers.peer_similarity import (
     peer_similarity_output_sha256,
 )
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:

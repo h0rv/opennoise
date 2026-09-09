@@ -30,7 +30,7 @@ from musix.musicbrainz_spotify_bridge import (
     build_musicbrainz_spotify_bridge,
     write_musicbrainz_spotify_bridge,
 )
-from musix.taxonomy.open_tag_feature_matrix import (
+from musix.taxonomy.open.open_tag_feature_matrix import (
     build_open_tag_feature_matrix,
     load_open_tag_feature_matrix,
     load_receipted_open_tag_feature_matrix,

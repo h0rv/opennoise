@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
 from musix.models import FrozenModel
 from musix.models.modeling import DirectMembershipEvidence
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 
 if TYPE_CHECKING:
     from musix.ingest.musicbrainz.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact

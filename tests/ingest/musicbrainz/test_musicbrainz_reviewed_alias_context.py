@@ -26,8 +26,8 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     extract_musicbrainz_seed_targets,
     write_seed_target_artifact,
 )
-from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
-from musix.taxonomy.seed_reconciliation import (
+from musix.taxonomy.seeds.genre_seed_universe import SeedInput, SeedName
+from musix.taxonomy.seeds.seed_reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,

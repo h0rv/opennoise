@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Final, Literal
 from pydantic import Field, model_validator
 
 from musix.common import sha256_file, sha256_hex, sha256_json, write_durable_bytes
-from musix.taxonomy.genre_seed_taxonomy import (
+from musix.taxonomy.seeds.genre_seed_taxonomy import (
     GenreSeedPublicTaxonomyArtifact,
     InferenceStatus,
     SeedTaxonomyInference,
