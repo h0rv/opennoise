@@ -21,12 +21,12 @@ from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunP
 from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.db import Database
-from musix.history.signals.historical_signal_publication import (
+from musix.history.signals.publication import (
     build_historical_signal_publication,
     publish_historical_signal_publication,
 )
 from musix.ingest.jsonl import ImportOptions, import_jsonl
-from musix.ingest.musicbrainz.musicbrainz_release_hydration import (
+from musix.ingest.musicbrainz.release_hydration import (
     HydrationSettings,
     MusicBrainzReleaseHydrationArtifact,
     MusicBrainzReleaseTrackHydrationAdapter,
@@ -34,7 +34,7 @@ from musix.ingest.musicbrainz.musicbrainz_release_hydration import (
     materialize_hydration_catalog,
     write_hydration_artifact,
 )
-from musix.ingest.musicbrainz.musicbrainz_research_graph import (
+from musix.ingest.musicbrainz.research_graph import (
     ResearchGraphBuildConfig,
     build_gate,
     build_musicbrainz_research_graph,
@@ -63,7 +63,7 @@ from musix.pipeline.source_cache import (
     write_source_cache_receipt,
 )
 from musix.serving.bootstrap import bootstrap_everynoise
-from musix.serving.open.open_construction_graph import (
+from musix.serving.open.construction_graph import (
     OpenConstructionGraphConfig,
     build_open_construction_graph,
     publish_open_construction_graph,
@@ -83,7 +83,7 @@ from musix.sources.musicbrainz import (
 )
 from musix.sources.registry import AdapterRegistry
 from musix.storage import LocalObjectStore
-from musix.taxonomy.seeds.genre_seed_universe import (
+from musix.taxonomy.seeds.universe import (
     build_genre_seed_universe,
     write_genre_seed_universe,
 )

@@ -7,13 +7,13 @@ import json
 import sys
 from pathlib import Path
 
-from musix.taxonomy.open.open_label_graph_model import (
+from musix.storage import LocalObjectStore
+from musix.taxonomy.open.label_graph_model import (
     OpenLabelGraphSettings,
     build_open_label_graph_model_from_path,
     publish_open_label_graph_model,
 )
-from musix.taxonomy.seeds.seed_reconciliation import load_seed_reconciliation
-from musix.storage import LocalObjectStore
+from musix.taxonomy.seeds.reconciliation import load_seed_reconciliation
 
 
 def build_parser() -> argparse.ArgumentParser:

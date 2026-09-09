@@ -7,10 +7,8 @@ import json
 import sys
 from pathlib import Path
 
-from musix.taxonomy.structure.genre_hierarchy_candidates import GenreHierarchyCandidateArtifact
-from musix.taxonomy.seeds.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
 from musix.storage import LocalObjectStore
-from musix.taxonomy.relations.taxonomy_relation_expansion import (
+from musix.taxonomy.relations.expansion import (
     TaxonomyRelationEvaluationInputs,
     TaxonomyRelationExpansionArtifact,
     TaxonomyRelationHoldoutPolicy,
@@ -19,6 +17,8 @@ from musix.taxonomy.relations.taxonomy_relation_expansion import (
     load_taxonomy_relation_feed,
     merge_taxonomy_relation_feeds,
 )
+from musix.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
+from musix.taxonomy.structure.hierarchy_candidates import GenreHierarchyCandidateArtifact
 
 _EDGE_ENDPOINT_COUNT = 2
 

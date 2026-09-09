@@ -28,18 +28,18 @@ from musix.models.modeling import (
     PublicArtifact,
     PublicModelInput,
 )
-from musix.serving.public.public_artist_membership import (
+from musix.serving.public.artist_membership import (
     PublicArtistMembershipCandidateArtifact,
     verify_public_artist_membership_candidate,
 )
-from musix.serving.public.public_taxonomy_expansion import (
+from musix.serving.public.taxonomy_expansion import (
     ExpansionEdge,
     PublicTaxonomyExpansionArtifact,
     verify_public_taxonomy_expansion,
 )
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.seeds.genre_seed_taxonomy import InferenceStatus  # noqa: TC001
-from musix.taxonomy.seeds.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.taxonomy import InferenceStatus  # noqa: TC001
+from musix.taxonomy.seeds.universe import normalize_label
 from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:

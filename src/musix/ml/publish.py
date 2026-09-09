@@ -11,10 +11,10 @@ from pathlib import Path
 from pydantic import Field
 
 from musix.db import Database
-from musix.serving.metadata.metadata_links import metadata_url
 from musix.ml.public_graph import public_model_output_sha256
 from musix.models import FrozenModel
 from musix.models.modeling import LayoutLens, PublicModelArtifact
+from musix.serving.metadata.links import metadata_url
 from musix.types import Sha256, SourceId
 
 MODEL_KEY = "public-graph"

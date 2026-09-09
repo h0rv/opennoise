@@ -16,7 +16,7 @@ from musix.history.historical_membership_store import (
     HistoricalMembershipStoreError,
     HistoricalSignalMembersApiResponse,
 )
-from musix.history.signals.historical_signal_store import (
+from musix.history.signals.store import (
     HistoricalSignalMapApiResponse,
     HistoricalSignalMapStore,
     HistoricalSignalMapStoreError,
@@ -39,28 +39,28 @@ from musix.serving.exploration import (
     optional_viewport,
 )
 from musix.serving.genre_entry import GenreEntryRepository
-from musix.serving.local.local_musicbrainz_artist_evidence import (
+from musix.serving.local.musicbrainz_artist_evidence import (
     LocalMusicBrainzArtistEvidenceError,
     LocalMusicBrainzArtistEvidenceStore,
 )
-from musix.serving.local.local_musicbrainz_peer_store import (
+from musix.serving.local.musicbrainz_peer_store import (
     LocalMusicBrainzPeerStore,
     LocalMusicBrainzPeerStoreError,
 )
-from musix.serving.local.local_research_map_store import (
+from musix.serving.local.research_map_store import (
     LocalResearchMapError,
     LocalResearchMapResponse,
     LocalResearchMapStore,
 )
-from musix.serving.local.local_reviewed_alias_context_store import LocalReviewedAliasContextStore
+from musix.serving.local.reviewed_alias_context_store import LocalReviewedAliasContextStore
 from musix.serving.map.layouts import ExploredMap, LayoutArtifactMetadata, PublishedLayout
-from musix.serving.open.open_construction_store import (
+from musix.serving.open.construction_store import (
     OpenConstructionMapResponse,
     OpenConstructionMapStore,
     OpenConstructionMapStoreError,
     OpenConstructionNeighborResponse,
 )
-from musix.serving.open.open_construction_store_v2 import (
+from musix.serving.open.construction_store_v2 import (
     OpenConstructionV2MapResponse,
     OpenConstructionV2MapStore,
     OpenConstructionV2MapStoreError,
@@ -75,7 +75,7 @@ from musix.serving.map.production_store import (
     ProductionMapStore,
     ProductionMapStoreError,
 )
-from musix.serving.public.public_artist_navigation_store import (
+from musix.serving.public.artist_navigation_store import (
     ArtistGenresResponse,
     GenreArtistsResponse,
     PublicArtistNavigationStore,

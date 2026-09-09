@@ -93,9 +93,13 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
                 return_value=reconciliation,
             ),
             patch(
-                "musix.serving.release_group_context_prefix.load_seed_target_artifact", return_value=target
+                "musix.serving.release_group_context_prefix.load_seed_target_artifact",
+                return_value=target,
             ),
-            patch("musix.serving.release_group_context_prefix.file_sha256", return_value="a" * 64),
+            patch(
+                "musix.serving.release_group_context_prefix.file_sha256",
+                return_value="a" * 64,
+            ),
             self.assertRaisesRegex(ValueError, "complete seed binding"),
         ):
             load_target_mask(Path("reconciliation"), Path("target"), Path("aliases"))
@@ -109,7 +113,8 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
                 return_value=reconciliation,
             ),
             patch(
-                "musix.serving.release_group_context_prefix.load_seed_target_artifact", return_value=target
+                "musix.serving.release_group_context_prefix.load_seed_target_artifact",
+                return_value=target,
             ),
             self.assertRaisesRegex(ValueError, "complete 6291-seed universe"),
         ):

@@ -9,7 +9,7 @@ import sys
 import time
 from pathlib import Path
 
-from musix.history.signals.historical_signal_publication import (
+from musix.history.signals.publication import (
     HistoricalSignalPublicationError,
     build_historical_signal_publication,
     publish_historical_signal_publication,

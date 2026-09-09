@@ -13,33 +13,33 @@ from litestar.template.config import TemplateConfig
 
 from musix.db import AsyncDatabase
 from musix.history.historical_membership_store import HistoricalMembershipStore
-from musix.history.signals.historical_signal_store import HistoricalSignalMapStore
+from musix.history.signals.store import HistoricalSignalMapStore
 from musix.models import Settings
 from musix.pipeline.manifest import load_download_source
 from musix.serving.genre_entry import GenreEntryRepository
-from musix.serving.local.local_musicbrainz_artist_evidence import (
+from musix.serving.local.musicbrainz_artist_evidence import (
     LocalMusicBrainzArtistEvidenceStore,
     LocalMusicBrainzEvidenceSources,
     load_musicbrainz_model_adapter_report,
     load_release_group_evidence_artifact,
 )
-from musix.serving.local.local_musicbrainz_artist_metadata import (
+from musix.serving.local.musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     load_artist_metadata_artifact,
 )
-from musix.serving.local.local_musicbrainz_artist_reverse_lookup import (
+from musix.serving.local.musicbrainz_artist_reverse_lookup import (
     LocalArtistReverseLookupSources,
     load_artist_reverse_lookup_artifact,
 )
-from musix.serving.local.local_musicbrainz_peer_store import LocalMusicBrainzPeerStore
-from musix.serving.local.local_research_map_store import LocalResearchMapStore
-from musix.serving.local.local_reviewed_alias_context_store import LocalReviewedAliasContextStore
+from musix.serving.local.musicbrainz_peer_store import LocalMusicBrainzPeerStore
+from musix.serving.local.research_map_store import LocalResearchMapStore
+from musix.serving.local.reviewed_alias_context_store import LocalReviewedAliasContextStore
 from musix.serving.map.production_store import ProductionMapStore
-from musix.serving.open.open_construction_store import OpenConstructionMapStore
-from musix.serving.open.open_construction_store_v2 import OpenConstructionV2MapStore
-from musix.serving.public.public_artist_navigation_store import PublicArtistNavigationStore
+from musix.serving.open.construction_store import OpenConstructionMapStore
+from musix.serving.open.construction_store_v2 import OpenConstructionV2MapStore
+from musix.serving.public.artist_navigation_store import PublicArtistNavigationStore
 from musix.serving.routes import CoreController, EvidenceController, MapController, SearchController
-from musix.taxonomy.seeds.seed_reconciliation import load_seed_reconciliation
+from musix.taxonomy.seeds.reconciliation import load_seed_reconciliation
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 STATIC_ROOT = PACKAGE_ROOT / "static"

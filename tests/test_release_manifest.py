@@ -5,12 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.taxonomy.structure.hierarchy import HierarchyError, coverage_report
 from musix.pipeline.release_manifest import (
     ReleaseManifestError,
     load_release_manifest,
     verify_manifest_against_database,
 )
+from musix.taxonomy.structure.hierarchy import HierarchyError, coverage_report
 
 ROOT = Path(__file__).resolve().parents[1]
 RELEASE = ROOT / "config/releases/phase3-public-20260831"

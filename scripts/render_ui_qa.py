@@ -13,8 +13,8 @@ from typing import override
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import Field
 
-from musix.serving.map.layouts import DerivedCoordinateSpace, PublishedLayout
 from musix.models import FrozenModel, MapPoint, map_view
+from musix.serving.map.layouts import DerivedCoordinateSpace, PublishedLayout
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / "src" / "musix" / "templates"

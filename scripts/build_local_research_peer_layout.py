@@ -7,7 +7,7 @@ import hashlib
 import sys
 from pathlib import Path
 
-from musix.serving.local.local_research_peer_layout import (
+from musix.serving.local.research_peer_layout import (
     LocalResearchPeerLayoutSettings,
     build_local_research_peer_layout,
 )

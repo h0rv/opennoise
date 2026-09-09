@@ -28,22 +28,22 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, model_validator
 
-from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.seed_targets import (
     MusicBrainzSeedTargetArtifact,
     verify_seed_target_artifact,
 )
-from musix.models import FrozenModel
-from musix.ingest.spotify.spotify_bridge_artifact import (
+from musix.ingest.spotify.artifact import (
     LoadedSpotifyBridgeArtifact,
     iter_accepted_spotify_to_musicbrainz,
 )
+from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.seeds.genre_seed_universe import normalize_label
+from musix.taxonomy.seeds.universe import normalize_label
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
-from musix.taxonomy.open.open_tag_feature_matrix import (
+from musix.taxonomy.open.tag_feature_matrix import (
     OpenTagFeatureMatrixReader,
     verify_open_tag_feature_matrix,
 )

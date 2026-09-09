@@ -23,13 +23,13 @@ import numpy as np
 from pydantic import Field, model_validator
 from scipy.optimize import minimize
 
-from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.seed_targets import (
     MusicBrainzSeedTargetArtifact,
     verify_seed_target_artifact,
 )
 from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
-from musix.taxonomy.seeds.seed_reconciliation import (
+from musix.taxonomy.seeds.reconciliation import (
     SeedReconciliationArtifact,
     verify_seed_reconciliation,
 )

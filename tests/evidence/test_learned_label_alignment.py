@@ -9,7 +9,7 @@ from musix.evidence.learned_label_alignment import (
     build_learned_label_alignment,
     verify_learned_label_alignment,
 )
-from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
@@ -19,7 +19,7 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.taxonomy.seeds.seed_reconciliation import (
+from musix.taxonomy.seeds.reconciliation import (
     ReconciledIdentity,
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,

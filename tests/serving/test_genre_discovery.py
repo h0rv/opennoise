@@ -11,6 +11,7 @@ from musix.adapters.everynoise import (
     adapt_quint_historical_representatives,
     adapt_quint_html,
 )
+from musix.ingest.jsonl import ImportOptions, import_jsonl
 from musix.serving.genre_discovery import (
     HistoricalGenreMemberQuery,
     import_historical_genre_memberships,
@@ -19,7 +20,6 @@ from musix.serving.genre_discovery import (
     query_displayable_historical_genre_members,
     query_displayable_historical_genre_memberships,
 )
-from musix.ingest.jsonl import ImportOptions, import_jsonl
 from tests._test_client import run_async
 
 

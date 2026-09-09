@@ -15,10 +15,6 @@ from musix.adapters.everynoise import (
     adapt_quint_html,
 )
 from musix.db import Database
-from musix.serving.genre_discovery import (
-    import_historical_genre_memberships,
-    query_displayable_historical_genre_memberships,
-)
 from musix.history.historical_compatibility import (
     build_historical_compatibility,
     compatibility_receipt,
@@ -28,6 +24,10 @@ from musix.history.historical_compatibility import (
 )
 from musix.ingest.jsonl import ImportOptions, import_jsonl_sync
 from musix.models.historical import HistoricalH3SourceManifest, HistoricalMembershipProjection
+from musix.serving.genre_discovery import (
+    import_historical_genre_memberships,
+    query_displayable_historical_genre_memberships,
+)
 from musix.storage import LocalObjectStore
 
 

@@ -15,7 +15,7 @@ from musix.history.historical_imitation import (
     build_historical_imitation,
     verify_historical_imitation,
 )
-from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
@@ -25,23 +25,23 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.ingest.spotify.musicbrainz_spotify_bridge import (
+from musix.ingest.spotify.artifact import (
+    SpotifyBridgeArtifactError,
+    load_musicbrainz_spotify_bridge,
+)
+from musix.ingest.spotify.bridge import (
     bridge_artifact_sha256,
     build_musicbrainz_spotify_bridge,
     write_musicbrainz_spotify_bridge,
 )
-from musix.taxonomy.open.open_tag_feature_matrix import (
+from musix.storage import LocalObjectStore
+from musix.taxonomy.open.tag_feature_matrix import (
     build_open_tag_feature_matrix,
     load_open_tag_feature_matrix,
     load_receipted_open_tag_feature_matrix,
     publish_open_tag_feature_matrix,
     write_open_tag_feature_matrix_artifact,
 )
-from musix.ingest.spotify.spotify_bridge_artifact import (
-    SpotifyBridgeArtifactError,
-    load_musicbrainz_spotify_bridge,
-)
-from musix.storage import LocalObjectStore
 
 MBIDS = tuple(f"00000000-0000-0000-0000-00000000000{index}" for index in range(1, 5))
 SPOTIFY = tuple(chr(64 + index) * 22 for index in range(1, 5))

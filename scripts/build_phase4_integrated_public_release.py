@@ -28,13 +28,13 @@ from urllib.request import urlopen
 
 from pydantic import Field, model_validator
 
-from musix.models import FrozenModel
-from musix.ingest.musicbrainz.musicbrainz_release_hydration import (
+from musix.ingest.musicbrainz.release_hydration import (
     MusicBrainzReleaseHydrationArtifact,
     artifact_counts,
     materialize_hydration_catalog,
 )
-from musix.serving.open.open_construction_graph import (
+from musix.models import FrozenModel
+from musix.serving.open.construction_graph import (
     OpenConstructionGraphArtifact,
     verify_open_construction_graph,
 )

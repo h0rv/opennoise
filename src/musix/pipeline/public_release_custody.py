@@ -15,12 +15,12 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field
 
-from musix.serving.artist_membership_evaluation import ArtistMembershipEvaluationReport
-from musix.serving.metadata.metadata_representatives import MetadataRepresentativeArtifact
 from musix.ml.public_model_gate import PublicModelGateReport
 from musix.models import FrozenModel
 from musix.pipeline.public_release import PublicReleaseResult
 from musix.pipeline.release_manifest import verify_manifest_against_database
+from musix.serving.artist_membership_evaluation import ArtistMembershipEvaluationReport
+from musix.serving.metadata.representatives import MetadataRepresentativeArtifact
 from musix.storage import LocalObjectStore, ObjectKey, ObjectStore
 
 if TYPE_CHECKING:

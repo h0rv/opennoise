@@ -23,7 +23,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from musix.sources.musicbrainz import MusicBrainzArtist, MusicBrainzClient
-from musix.taxonomy.seeds.seed_reconciliation import (
+from musix.taxonomy.seeds.reconciliation import (
     SeedReconciliationArtifact,
     verify_seed_reconciliation,
 )

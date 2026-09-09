@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.serving.public.public_artist_membership_adapter import (
+from musix.serving.public.artist_membership_adapter import (
     CertifiedPublicMembershipAdapterPolicy,
     adapt_certified_public_membership_input,
 )

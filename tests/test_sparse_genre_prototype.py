@@ -1,6 +1,6 @@
 import unittest
 
-from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,

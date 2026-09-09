@@ -4,6 +4,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
+from pydantic import ValidationError
+
 from musix.evidence.album_genres import (
     AlbumGenreRepository,
     EvidenceFacetsStrategy,
@@ -15,8 +17,6 @@ from musix.evidence.album_genres import (
     membership_from_musicbrainz,
     parse_rank_strategy,
 )
-from pydantic import ValidationError
-
 from musix.sources.musicbrainz import AdapterLimits, iter_release_group_jsonl
 
 ROOT = Path(__file__).resolve().parents[2]

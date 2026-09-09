@@ -13,6 +13,7 @@ from uuid import UUID
 
 import httpx
 
+from musix.ingest.musicbrainz.release_hydration import CatalogHydrationResult
 from musix.serving.artist_backed_release_expansion import (
     ArtistBackedReleaseExpansionAdapter,
     ArtistBackedReleaseExpansionError,
@@ -32,7 +33,6 @@ from musix.serving.artist_backed_release_expansion import (
     materialize_expansion_catalog,
     write_expansion_artifact,
 )
-from musix.ingest.musicbrainz.musicbrainz_release_hydration import CatalogHydrationResult
 from musix.storage import LocalObjectStore
 from tests._test_client import PollingIsolatedAsyncioTestCase
 

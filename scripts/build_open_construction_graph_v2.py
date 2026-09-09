@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.serving.open.open_construction_graph_v2 import (
+from musix.serving.open.construction_graph_v2 import (
     OpenConstructionGraphV2Config,
     build_open_construction_graph_v2,
     publish_open_construction_graph_v2,

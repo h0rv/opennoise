@@ -12,7 +12,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from musix.history.signals.historical_signal_model import build_historical_signal_model
+from musix.history.signals.model import build_historical_signal_model
 from musix.models.historical import HistoricalCompatibilityManifest
 from musix.models.historical_signal import HistoricalSignalSettings
 

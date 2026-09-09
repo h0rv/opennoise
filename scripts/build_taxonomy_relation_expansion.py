@@ -6,10 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.taxonomy.structure.genre_hierarchy_candidates import GenreHierarchyCandidateArtifact
-from musix.taxonomy.seeds.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
 from musix.storage import LocalObjectStore
-from musix.taxonomy.relations.taxonomy_relation_expansion import (
+from musix.taxonomy.relations.expansion import (
     TaxonomyRelationExpansionPolicy,
     TaxonomyRelationHoldoutPolicy,
     build_taxonomy_relation_expansion,
@@ -19,6 +17,8 @@ from musix.taxonomy.relations.taxonomy_relation_expansion import (
     publish_taxonomy_relation_expansion,
     split_taxonomy_relation_feed_for_holdout,
 )
+from musix.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
+from musix.taxonomy.structure.hierarchy_candidates import GenreHierarchyCandidateArtifact
 
 
 def main() -> None:

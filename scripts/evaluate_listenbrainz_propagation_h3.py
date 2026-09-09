@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.ingest.listenbrainz.listenbrainz_h3_evaluation import (
+from musix.ingest.listenbrainz.h3_evaluation import (
     ListenBrainzH3EvaluationInputs,
     ListenBrainzH3EvaluationSettings,
     evaluate_listenbrainz_propagation_h3,

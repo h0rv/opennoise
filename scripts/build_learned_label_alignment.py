@@ -12,9 +12,9 @@ from musix.evidence.learned_label_alignment import (
     build_learned_label_alignment,
     publish_learned_label_alignment,
 )
-from musix.ingest.musicbrainz.musicbrainz_seed_targets import load_seed_target_artifact
-from musix.taxonomy.seeds.seed_reconciliation import load_seed_reconciliation
+from musix.ingest.musicbrainz.seed_targets import load_seed_target_artifact
 from musix.storage import LocalObjectStore
+from musix.taxonomy.seeds.reconciliation import load_seed_reconciliation
 
 
 def build_parser() -> argparse.ArgumentParser:

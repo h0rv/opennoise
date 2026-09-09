@@ -13,7 +13,7 @@ from pathlib import Path
 
 import httpx
 
-from musix.ingest.musicbrainz.musicbrainz_release_hydration import (
+from musix.ingest.musicbrainz.release_hydration import (
     HydrationSettings,
     MusicBrainzReleaseTrackHydrationAdapter,
     load_representative_artifact,

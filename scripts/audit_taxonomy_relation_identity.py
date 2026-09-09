@@ -6,8 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.taxonomy.relations.taxonomy_relation_expansion import TaxonomyRelationExpansionArtifact
-from musix.taxonomy.relations.taxonomy_relation_identity_audit import (
+from musix.taxonomy.relations.expansion import TaxonomyRelationExpansionArtifact
+from musix.taxonomy.relations.identity_audit import (
     audit_taxonomy_relation_identity,
 )
 

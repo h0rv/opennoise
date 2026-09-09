@@ -9,12 +9,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.models.modeling import PublicModelInput
-from musix.ingest.musicbrainz.musicbrainz_model_adapter import MusicBrainzModelAdapterReport
-from musix.ingest.musicbrainz.musicbrainz_reviewed_alias_context import (
+from musix.ingest.musicbrainz.model_adapter import MusicBrainzModelAdapterReport
+from musix.ingest.musicbrainz.reviewed_alias_context import (
     ReviewedAliasContextArtifact,
     combine_reviewed_alias_context_model_input,
 )
+from musix.models.modeling import PublicModelInput
 
 
 def _atomic_write(path: Path, payload: bytes) -> None:

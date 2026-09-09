@@ -4,9 +4,7 @@ import unittest
 from pathlib import Path
 from typing import override
 
-from musix.serving.app import create_app
 from musix.db import Database
-from musix.serving.genre_entry import GenreEntryRepository
 from musix.ml.public_graph import build_public_model, public_model_output_sha256
 from musix.ml.publish import (
     PublicModelPublishError,
@@ -22,6 +20,8 @@ from musix.models.modeling import (
     PublicModelInput,
     PublicModelSettings,
 )
+from musix.serving.app import create_app
+from musix.serving.genre_entry import GenreEntryRepository
 from tests._test_client import create_test_client
 
 ROOT = Path(__file__).resolve().parents[1]

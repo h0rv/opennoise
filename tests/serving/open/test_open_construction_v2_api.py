@@ -4,13 +4,13 @@ from pathlib import Path
 
 from musix.models import Settings
 from musix.serving.app import create_app
-from musix.serving.open.open_construction_graph_v2 import (
+from musix.serving.open.construction_graph_v2 import (
     OpenConstructionGraphV2Config,
     build_open_construction_graph_v2,
     write_open_construction_graph_v2,
 )
 from tests._test_client import create_test_client
-from tests.serving.open.test_open_construction_graph_v2 import build_expansion
+from tests.serving.open.test_construction_graph_v2 import build_expansion
 
 
 class OpenConstructionV2ApiTests(unittest.TestCase):

@@ -8,7 +8,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.history.signals.historical_signal_audit import audit_historical_signal
+from musix.history.signals.audit import audit_historical_signal
 from musix.models.historical_signal import HistoricalSignalArtifact
 
 

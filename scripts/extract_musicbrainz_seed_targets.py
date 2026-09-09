@@ -9,13 +9,13 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from musix.taxonomy.seeds.genre_seed_universe import load_seed_input
-from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.seed_targets import (
     ReviewedSeedAlias,
     SeedTargetExtractorSettings,
     extract_musicbrainz_seed_targets,
     write_seed_target_artifact,
 )
+from musix.taxonomy.seeds.universe import load_seed_input
 
 
 def main() -> int:

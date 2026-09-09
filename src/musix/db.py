@@ -10,6 +10,7 @@ from pathlib import Path
 
 from pydantic import JsonValue, TypeAdapter
 
+from musix.models import GenrePlacement, GenrePlacementReason, MapPoint, SearchHit
 from musix.serving.exploration import (
     CatalogLens,
     GenreDetail,
@@ -28,7 +29,6 @@ from musix.serving.map.layouts import (
     LayoutStrategyVersion,
     PublishedLayout,
 )
-from musix.models import GenrePlacement, GenrePlacementReason, MapPoint, SearchHit
 
 SCHEMA_VERSION = 12
 DEFAULT_DATABASE_PATH = Path("data/musix.sqlite")

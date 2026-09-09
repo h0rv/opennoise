@@ -8,7 +8,7 @@ from contextlib import closing
 from typing import TYPE_CHECKING, Final
 
 from musix.common import sha256_file
-from musix.ingest.musicbrainz.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz.release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     verify_release_group_evidence,
 )

@@ -15,29 +15,22 @@ import tempfile
 from pathlib import Path
 from typing import Protocol, TypeVar
 
-from musix.taxonomy.structure.asymmetric_genre_containment import (
-    AsymmetricGenreContainmentPolicy,
-    GenreContainmentBridge,
-    build_asymmetric_genre_containment_from_reconstruction_inputs,
-    write_asymmetric_genre_containment,
-)
-from musix.taxonomy.seeds.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
-from musix.taxonomy.seeds.genre_seed_universe import load_seed_input
+from musix.evidence.reconstruction import ReconstructionInputs
+from musix.ingest.musicbrainz.coverage import CoverageReport
 from musix.models.modeling import PublicModelInput
-from musix.ingest.musicbrainz.musicbrainz_coverage import CoverageReport
-from musix.peers.similarity.peer_similarity import (
-    PeerSimilaritySettings,
-    build_peer_similarity,
-    evaluate_peer_similarity_gate,
-)
-from musix.peers.similarity.peer_similarity_historical import (
+from musix.peers.similarity.historical import (
     HistoricalPeerSettings,
     evaluate_peer_similarity_historical,
     publish_historical_peer_evaluation,
 )
-from musix.serving.public.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact
-from musix.evidence.reconstruction import ReconstructionInputs
-from musix.taxonomy.seeds.seed_reconciliation import (
+from musix.peers.similarity.similarity import (
+    PeerSimilaritySettings,
+    build_peer_similarity,
+    evaluate_peer_similarity_gate,
+)
+from musix.serving.public.taxonomy_expansion import PublicTaxonomyExpansionArtifact
+from musix.storage import LocalObjectStore
+from musix.taxonomy.seeds.reconciliation import (
     MusicBrainzIdentityInput,
     build_seed_reconciliation,
     load_seed_reconciliation,
@@ -46,7 +39,14 @@ from musix.taxonomy.seeds.seed_reconciliation import (
     publish_seed_reconciliation,
     write_seed_reconciliation,
 )
-from musix.storage import LocalObjectStore
+from musix.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
+from musix.taxonomy.seeds.universe import load_seed_input
+from musix.taxonomy.structure.asymmetric_genre_containment import (
+    AsymmetricGenreContainmentPolicy,
+    GenreContainmentBridge,
+    build_asymmetric_genre_containment_from_reconstruction_inputs,
+    write_asymmetric_genre_containment,
+)
 
 ModelT = TypeVar("ModelT")
 ModelT_co = TypeVar("ModelT_co", covariant=True)

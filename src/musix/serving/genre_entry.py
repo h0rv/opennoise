@@ -22,7 +22,7 @@ from musix.serving.exploration import (
     RepresentativeDiscoveryItem,
     RepresentativeRanking,
 )
-from musix.serving.metadata.metadata_links import metadata_url
+from musix.serving.metadata.links import metadata_url
 
 ARTIST_LIMIT = 6
 ALBUM_LIMIT = 6

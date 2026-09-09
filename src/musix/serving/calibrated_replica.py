@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from musix.history.historical_replica import bounded_name_tfidf_cosine, deterministic_h2_split
-from musix.history.signals.historical_signal_model import (
+from musix.history.signals.model import (
     _idf_candidates,
     _legacy_vocabulary,
     _load_memberships,
