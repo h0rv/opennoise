@@ -28,7 +28,7 @@ from musix.taxonomy.seeds.genre_seed_universe import normalize_label
 if TYPE_CHECKING:
     from musix.ingest.musicbrainz.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
     from musix.models.modeling import PublicModelInput
-    musix.serving.public.public_artist_membership import NameUniverse
+    from musix.serving.public.public_artist_membership import NameUniverse
 
 _SHA256 = r"^[0-9a-f]{64}$"
 _SEED_COUNT = 6_291

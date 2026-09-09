@@ -6,7 +6,7 @@ from pathlib import Path
 from musix.db import Database
 from musix.serving.exploration import CatalogLens, MapQuery, Viewport, optional_viewport
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
 
 

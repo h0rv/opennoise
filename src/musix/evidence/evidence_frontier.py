@@ -44,7 +44,9 @@ if TYPE_CHECKING:
         ListenBrainzPropagationFrontierSummary,
     )
     from musix.models.modeling import PublicModelInput
-    musix.serving.public.public_artist_membership_adapter import CertifiedPublicMembershipAdapterReceipt
+    from musix.serving.public.public_artist_membership_adapter import (
+        CertifiedPublicMembershipAdapterReceipt,
+    )
 
 _REVISION: Final = "all-seed-evidence-frontier-v5"
 _SEED_COUNT: Final = 6_291

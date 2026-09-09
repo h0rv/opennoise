@@ -26,7 +26,7 @@ from tests._test_client import run_async
 class GenreDiscoveryTests(unittest.TestCase):
     def test_bounded_h3_projection_is_sealed_and_media_free(self) -> None:
         fixture_path = (
-            Path(__file__).parent / "fixtures" / "everynoise" / "neroyuki_h3_pop_sample.json"
+            Path(__file__).parent.parent / "fixtures" / "everynoise" / "neroyuki_h3_pop_sample.json"
         )
         raw = fixture_path.read_bytes()
         fixture = json.loads(raw)

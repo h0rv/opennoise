@@ -15,7 +15,7 @@ from musix.models.production import ProductionMapSettings
 from tests._test_client import create_test_client
 from tests.serving.map.test_production_map import _inputs as production_inputs
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
 
 

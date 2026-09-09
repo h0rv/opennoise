@@ -36,7 +36,7 @@ from musix.ingest.musicbrainz.musicbrainz_release_hydration import CatalogHydrat
 from musix.storage import LocalObjectStore
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 MIGRATIONS = tuple(sorted((ROOT / "migrations").glob("[0-9][0-9][0-9][0-9]_*.sql")))
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
 
