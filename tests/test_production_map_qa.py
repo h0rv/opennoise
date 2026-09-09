@@ -18,6 +18,8 @@ from musix.models.production_qa import (
     ProductionMapInteractionEvidence,
     ProductionMapLabelBox,
     ProductionMapLod,
+    ProductionMapOverviewCommunity,
+    ProductionMapOverviewNaming,
     ProductionMapPresentationParent,
     ProductionMapRegion,
     ProductionMapScreenshot,
@@ -36,6 +38,7 @@ def _boxes(ids: tuple[str, ...], *, mobile: bool) -> tuple[ProductionMapLabelBox
             min_y=10.0 + (index // columns) * 90.0,
             max_x=40.0 + (index % columns) * ((width - 50) / columns),
             max_y=26.0 + (index // columns) * 90.0,
+            font_size_px=13.0,
         )
         for index, entity_id in enumerate(ids)
     )
@@ -93,8 +96,22 @@ def _input(
         for entity_id in ids
     )
     eligible_sets_digest = hash_eligible_sets(eligible_sets)
+    regions = tuple(
+        ProductionMapRegion(
+            region_id=f"region:{entity_id}",
+            owner_entity_id=entity_id,
+            entity_ids=ids if index == 0 else (entity_id,),
+            min_x=0.0 if index == 0 else max(0.0, float(coordinates[index].x) - 0.01),
+            min_y=0.0 if index == 0 else max(0.0, float(coordinates[index].y) - 0.01),
+            max_x=1.0 if index == 0 else min(1.0, float(coordinates[index].x) + 0.01),
+            max_y=1.0 if index == 0 else min(1.0, float(coordinates[index].y) + 0.01),
+            is_root=index == 0,
+        )
+        for index, entity_id in enumerate(ids)
+    )
     return ProductionMapAcceptanceInput(
         revision="production-map-v1",
+        layout_semantics="hierarchy_containment",
         coordinate_sha256="d" * 64,
         coordinates=coordinates,
         taxonomy_edges=tuple((entity_id, ids[0]) for entity_id in ids[1:]),
@@ -107,17 +124,7 @@ def _input(
             )
             for index, entity_id in enumerate(ids)
         ),
-        regions=(
-            ProductionMapRegion(
-                region_id=ids[0],
-                entity_ids=ids,
-                min_x=0.0,
-                min_y=0.0,
-                max_x=1.0,
-                max_y=1.0,
-                is_root=True,
-            ),
-        ),
+        regions=regions,
         lods=tuple(
             ProductionMapLod(
                 level=level,
@@ -157,6 +164,7 @@ def _input(
             no_javascript_svg_fallback=True,
             keyboard_focus_visible=True,
             dark_mode_toggle=True,
+            overview_focus_reveals_label=True,
         ),
     )
 
@@ -287,6 +295,13 @@ class ProductionMapQaTests(unittest.TestCase):
                 member_entity_ids=tuple(item.entity_id for item in evidence.coordinates),
                 x=average_x,
                 y=average_y,
+                name="All genres",
+                naming=ProductionMapOverviewNaming(
+                    method="community_centrality_fallback_v1",
+                    anchor_entity_id=evidence.coordinates[0].entity_id,
+                    weighted_coverage=1.0,
+                    provenance_refs=("fixture:community",),
+                ),
             )
             community_label = ProductionMapLabelBox(
                 entity_id=community.community_id,
@@ -340,6 +355,13 @@ class ProductionMapQaTests(unittest.TestCase):
                 member_entity_ids=tuple(item.entity_id for item in evidence.coordinates),
                 x=average_x,
                 y=average_y,
+                name="All genres",
+                naming=ProductionMapOverviewNaming(
+                    method="community_centrality_fallback_v1",
+                    anchor_entity_id=evidence.coordinates[0].entity_id,
+                    weighted_coverage=1.0,
+                    provenance_refs=("fixture:community",),
+                ),
             )
             community_label = ProductionMapLabelBox(
                 entity_id=community.community_id,
@@ -392,7 +414,6 @@ class ProductionMapQaTests(unittest.TestCase):
             self.assertFalse(result.accepted)
             self.assertTrue(any("below 12px" in failure for failure in result.failures))
 
->>>>>>> 51624ac (Require labeled bounded overview communities)
 
 if __name__ == "__main__":
     unittest.main()
