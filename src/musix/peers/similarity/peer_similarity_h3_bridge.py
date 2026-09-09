@@ -13,12 +13,12 @@ from pydantic import Field
 
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput
-from musix.peers.peer_similarity import (
+from musix.peers.similarity.peer_similarity import (
     GenrePeerSimilarityArtifact,
     PeerSimilaritySettings,
     evaluate_peer_similarity_gate,
 )
-from musix.peers.peer_similarity_historical import _candidate_neighbors
+from musix.peers.similarity.peer_similarity_historical import _candidate_neighbors
 from musix.spotify_bridge_artifact import (
     iter_accepted_spotify_to_musicbrainz,
     load_receipted_musicbrainz_spotify_bridge,

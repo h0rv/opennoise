@@ -9,8 +9,11 @@ from pydantic import Field
 
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput
-from musix.peers.peer_similarity_h3_bridge import _historical_jaccard_neighbors, _load_positives
-from musix.peers.release_group_support_peer import (
+from musix.peers.similarity.peer_similarity_h3_bridge import (
+    _historical_jaccard_neighbors,
+    _load_positives,
+)
+from musix.peers.support.release_group_support_peer import (
     SupportPeerArtifact,
     artifact_neighbors,
     file_sha,

@@ -19,7 +19,7 @@ from pydantic import Field
 from musix.common import sha256_file, sha256_json
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput
-from musix.peers.peer_similarity import (
+from musix.peers.similarity.peer_similarity import (
     GenrePeerSimilarityArtifact,
     PeerSimilaritySettings,
     evaluate_peer_similarity_gate,

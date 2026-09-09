@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.peers.peer_similarity_h3_bridge import evaluate_peer_similarity_h3_bridge
+from musix.peers.similarity.peer_similarity_h3_bridge import evaluate_peer_similarity_h3_bridge
 
 
 def main() -> int:

@@ -17,7 +17,7 @@ from musix.taxonomy.structure.genre_hierarchy_candidates import (
     verify_genre_hierarchy_candidates,
 )
 from musix.models import FrozenModel
-from musix.peers.peer_similarity import GenrePeerSimilarityArtifact, peer_similarity_output_sha256
+from musix.peers.similarity.peer_similarity import GenrePeerSimilarityArtifact, peer_similarity_output_sha256
 from musix.public_artist_membership import (
     ApprovedPublicMembershipInput,
     PublicArtistMembershipCandidateArtifact,

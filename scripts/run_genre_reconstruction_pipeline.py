@@ -25,12 +25,12 @@ from musix.taxonomy.seeds.genre_seed_taxonomy import GenreSeedPublicTaxonomyArti
 from musix.taxonomy.seeds.genre_seed_universe import load_seed_input
 from musix.models.modeling import PublicModelInput
 from musix.ingest.musicbrainz.musicbrainz_coverage import CoverageReport
-from musix.peers.peer_similarity import (
+from musix.peers.similarity.peer_similarity import (
     PeerSimilaritySettings,
     build_peer_similarity,
     evaluate_peer_similarity_gate,
 )
-from musix.peers.peer_similarity_historical import (
+from musix.peers.similarity.peer_similarity_historical import (
     HistoricalPeerSettings,
     evaluate_peer_similarity_historical,
     publish_historical_peer_evaluation,

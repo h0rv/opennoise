@@ -15,7 +15,7 @@ from musix.models.modeling import (
     PublicArtifact,
     PublicModelInput,
 )
-from musix.peers.peer_similarity import (
+from musix.peers.similarity.peer_similarity import (
     PeerSimilaritySettings,
     build_peer_similarity,
     build_peer_similarity_receipt,
