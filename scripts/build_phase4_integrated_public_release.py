@@ -178,7 +178,7 @@ def _api_qa(database: Path, map_path: Path, graph_path: Path, output: Path, port
         [
             sys.executable,
             "-m",
-            "musix.cli",
+            "musix.serving.cli",
             "serve",
             "--database",
             str(database),
@@ -491,7 +491,7 @@ def main() -> int:
     _run(
         sys.executable,
         "-m",
-        "musix.cli",
+        "musix.serving.cli",
         "build-representative-catalog-candidates",
         "--database",
         str(derived),

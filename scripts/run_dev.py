@@ -72,7 +72,7 @@ def main() -> int:
         "MUSIX_PRODUCTION_MAP_PATH": str(paths.map_artifact),
     }
     return subprocess.run(
-        [sys.executable, "-m", "musix.cli", "serve"], check=False, env=environment
+        [sys.executable, "-m", "musix.serving.cli", "serve"], check=False, env=environment
     ).returncode
 
 

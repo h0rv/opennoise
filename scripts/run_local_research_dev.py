@@ -74,7 +74,7 @@ def main() -> int:
         ),
     }
     return subprocess.run(
-        [sys.executable, "-m", "musix.cli", "serve"], check=False, env=environment
+        [sys.executable, "-m", "musix.serving.cli", "serve"], check=False, env=environment
     ).returncode
 
 

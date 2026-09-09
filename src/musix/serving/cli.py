@@ -92,7 +92,7 @@ from musix.taxonomy.seeds.universe import (
 def _serve(args: argparse.Namespace) -> int:
     os.environ["MUSIX_DATABASE_PATH"] = str(args.database)
     with suppress(KeyboardInterrupt):
-        uvicorn.run("musix.app:app", host=args.host, port=args.port)
+        uvicorn.run("musix.serving.app:app", host=args.host, port=args.port)
     return 0
 
 

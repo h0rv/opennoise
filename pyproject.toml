@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-musix = "musix.cli:main"
+musix = "musix.serving.cli:main"
 
 [dependency-groups]
 dev = [
