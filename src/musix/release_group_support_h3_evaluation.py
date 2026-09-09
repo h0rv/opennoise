@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field
 
@@ -17,6 +17,7 @@ from musix.release_group_support_peer import (
     file_sha,
     logical_sha,
 )
+from musix.seed_reconciliation import load_seed_reconciliation
 from musix.spotify_bridge_artifact import (
     iter_accepted_spotify_to_musicbrainz,
     load_receipted_musicbrainz_spotify_bridge,
@@ -25,6 +26,9 @@ from musix.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+_SEED_COUNT: Final = 6_291
 
 
 class SupportPeerH3Metrics(FrozenModel):
@@ -66,6 +70,7 @@ class SupportPeerH3Report(FrozenModel):
     )
     candidate_output_sha256: Sha256
     candidate_component_kind: Literal["release_group_artist_overlap", "direct_artist_overlap"]
+    reconciliation_seed_count: Literal[6291] = 6291
     bridge_output_sha256: Sha256
     historical_database_sha256: Sha256
     k: Literal[25] = 25
@@ -94,6 +99,11 @@ def evaluate_support_peer_h3(  # noqa: PLR0913
         candidate.model_dump(mode="json", exclude={"output_sha256"})
     ):
         raise ValueError("candidate logical hash does not match its contents")
+    reconciliation = load_seed_reconciliation(reconciliation_path)
+    if reconciliation.seed_count != _SEED_COUNT:
+        raise ValueError("evaluation reconciliation must retain the complete 6291-seed universe")
+    if candidate.seed_count != reconciliation.seed_count:
+        raise ValueError("candidate seed count does not match evaluation reconciliation")
     public_input = PublicModelInput.model_validate_json(public_input_path.read_bytes())
     names: dict[str, list[str]] = defaultdict(list)
     for genre in public_input.genres:
@@ -153,6 +163,7 @@ def evaluate_support_peer_h3(  # noqa: PLR0913
     preliminary = SupportPeerH3Report(
         candidate_output_sha256=candidate.output_sha256,
         candidate_component_kind=candidate.component_kind,
+        reconciliation_seed_count=reconciliation.seed_count,
         bridge_output_sha256=bridge_sha,
         historical_database_sha256=database_sha,
         coverage=coverage,

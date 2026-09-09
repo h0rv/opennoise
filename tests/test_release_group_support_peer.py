@@ -51,6 +51,13 @@ class ReleaseGroupSupportPeerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "logical hash"):
                 _evaluate(path)
 
+    def test_evaluator_rejects_candidate_with_incomplete_seed_universe(self) -> None:
+        with TemporaryDirectory() as temporary:
+            path = Path(temporary) / "candidate.json"
+            path.write_text(_artifact(seed_count=2).model_dump_json())
+            with self.assertRaisesRegex(ValueError, "seed count"):
+                _evaluate(path, patched=True)
+
     def test_evaluator_replay_is_deterministic_with_fixed_adapter_inputs(self) -> None:
         with TemporaryDirectory() as temporary:
             path = Path(temporary) / "candidate.json"
@@ -62,7 +69,7 @@ class ReleaseGroupSupportPeerTests(unittest.TestCase):
         self.assertEqual(report.model_dump(mode="json"), replay.model_dump(mode="json"))
 
 
-def _artifact() -> SupportPeerArtifact:
+def _artifact(*, seed_count: int = 6291) -> SupportPeerArtifact:
     edge = SupportPeerEdge(
         source_genre_id="g1",
         target_genre_id="g2",
@@ -76,7 +83,7 @@ def _artifact() -> SupportPeerArtifact:
         reconciliation_sha256="b" * 64,
         membership_table="release_group_support",
         component_kind="release_group_artist_overlap",
-        seed_count=2,
+        seed_count=seed_count,
         support_membership_count=2,
         support_genre_count=2,
         empty_input_seed_count=0,
@@ -131,6 +138,10 @@ def _evaluate(path: Path, *, patched: bool = False) -> SupportPeerH3Report:
     }
     with (
         patch("musix.release_group_support_h3_evaluation.file_sha", return_value="b" * 64),
+        patch(
+            "musix.release_group_support_h3_evaluation.load_seed_reconciliation",
+            return_value=type("Reconciliation", (), {"seed_count": 6291})(),
+        ),
         patch("musix.release_group_support_h3_evaluation.PublicModelInput") as public,
         patch(
             "musix.release_group_support_h3_evaluation.load_receipted_musicbrainz_spotify_bridge",
