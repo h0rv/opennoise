@@ -1,33 +1,30 @@
 # Production map QA, 2026-08-31
 
-Status: accepted from the retained final-integration release bundle; not
-independently reproducible from this checkout because its sealed source-cache
-database is absent.
+Status: blocked. The primary map is not ready to publish.
 
-The accepted artifact has 603 qualified genres, 712 full taxonomy edges, 603
-explicit presentation-parent choices, four monotonic LODs, and six hashed
-browser screenshots. Its final `production-map-v1.report.json` records no
-failures: central 90% spans are `0.96` on both axes, 16-by-9 occupancy is
-`0.7777777778`, the densest cell holds `0.1011608624` of nodes, and all checked
-desktop and mobile labels are collision-free.
+The current production-layout candidate uses 603 qualified genres. The latest
+similarity-first run reports top-10 one-hop neighbor recall of `0.22144` and
+top-25 recall of `0.24318`. The acceptance floor for top-10 is `0.30`, so the
+candidate is rejected. An independent rebuild also failed central-span and
+16-by-9 densest-cell gates. It does not produce a publishable artifact.
 
-The old absolute `0.30` recall floor was superseded. Current acceptance in
-`src/musix/ml/production_map_qa.py` requires (1) null-adjusted top-10 quality
-of at least `0.98` against a same-scope canonical spectral baseline and (2) a
-top-10 lift of at least `0.15` above its exact per-query random null. The
-accepted bundle records top-10 recall `0.1699327437`, random recall
-`0.0125397376`, canonical baseline `0.1648194214`, and normalized quality
-`1.0335784929`. It evaluates all 603 mapped genres using matching model,
-neighbor, and eligible-set hashes.
+A historical one-hop spectral number of `0.5173` was reported, but it does not
+have a matching input/reference hash and node scope. It is not evidence of
+acceptance. The comparable sealed 468-node source result is `0.223221508446`.
+Re-run any stronger baseline against the qualified 603-node model and publish
+the Pareto table before selecting a production layout.
 
-The first, renderer-neutral seed report is expected to be `accepted: false`:
-it is generated before browser evidence and names the missing screenshots and
-interactions. The final browser-enriched acceptance report is the release
-decision. It records passing drag/touch pan, wheel/pinch zoom, click detail,
-search state, browser back, keyboard focus, dark mode, overview-label reveal,
-and the no-JavaScript SVG fallback.
+The acceptance harness is in `src/musix/ml/production_map_qa.py`. It is
+renderer-neutral so the data model owns coordinates, graph choices, semantic
+zoom levels, label decisions, and similarity evidence. The UI owns screenshots
+and interaction evidence. Both are needed for a passing report.
 
-The historical reports of failed exploratory layouts remain useful experiment
-records, but they are not the status of this accepted bundle. The open release
-blocker is source-cache retention: `release-certify` correctly refuses to run
-without `data/phase3-public-qualified.sqlite`.
+The harness rejects the collapsed-map failure in the earlier screenshots with
+central-span, occupancy, duplicate-position, label-collision, and outlier
+checks. It also rejects a visual layout that looks spacious but destroys local
+similarity.
+
+Required renderer evidence is six generated images: 1366 by 768 desktop and
+390 by 844 mobile in system, light, and dark modes. It must also record passing
+drag/touch pan, wheel/pinch zoom, click detail, retained search state, browser
+back, keyboard focus, dark mode, and no-JavaScript SVG fallback checks.

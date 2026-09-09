@@ -475,7 +475,12 @@ def _similarity_first_positions(
                 0.02 + 0.96 * (column + 0.5) / columns,
                 0.02 + 0.96 * (row + 0.5) / rows,
             )
-    return _global_force_positions(positions, similarity)
+    # A bounded spring refinement was evaluated independently, but it reduced
+    # the same-reference neighborhood quality of the source spectral plane.
+    # Keep production coordinates on the validated plane; hierarchy powers
+    # semantic zoom and explanation without bending similarity geometry.
+    del similarity
+    return positions
 
 
 def _global_force_positions(
