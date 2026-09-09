@@ -54,3 +54,47 @@ baseline had 36,654 abstained pairs.
 Both inputs have `export_allowed=false`. The peer gate also records
 `all_inputs_export_allowed=false`. These files are local research artifacts
 only. They must not replace the default public model or serving data.
+
+The peer evaluator used the existing H3 database only after construction. Its
+report is `.cache/reviewed-alias-combined-model-v1/peer-historical-evaluation.json`
+with hash `ccc0493e414a841383e7a308a77f688083de7011309ae132a63e654a13b8b5b5`.
+The evaluation receipt binds the peer artifact and records
+`historical_inputs_used_for_construction=false`. It matched 6,289 genres and
+measured micro Recall at 25 of `0.2535762686342418` with macro Recall at 25 of
+`0.20168792364977695`. H3 is positive-only, so absence is not a negative and
+the overlap rate is not a complete precision measurement. This run is not a
+measured improvement over the earlier peer result because that result was not
+rerun against the same current public database.
+
+The compact local index is
+`.cache/reviewed-alias-combined-model-v1/peer-similarity-local-research.sqlite`.
+Its file hash is `80e9519a6cf00218ed416ff4c0d6e29c824d52f65bc9ab067f777a7aa637405e`.
+It streams the combined peer candidate, binds the matching evaluation receipt,
+and does not replace the existing local peer index.
+
+Build the evaluation and index with these local commands:
+
+```bash
+uv run python scripts/run_genre_reconstruction_pipeline.py peer-evaluate \
+  --candidate .cache/reviewed-alias-combined-model-v1/peer-similarity.json \
+  --public-input .cache/reviewed-alias-combined-model-v1/public-model-input.json \
+  --public-database data/public.sqlite \
+  --historical-database .cache/historical-custody-vault/historical-h3/membership/sha256/098dc8780b3f4a8daf1240d36bec7eb7be563dc2275d998dbc7509c3fb1859df.sqlite \
+  --output .cache/reviewed-alias-combined-model-v1/peer-historical-evaluation.json \
+  --object-store .cache/reviewed-alias-combined-model-v1/objects \
+  --receipt .cache/reviewed-alias-combined-model-v1/peer-historical-evaluation.receipt.json
+
+uv run python scripts/local_peer_similarity.py build \
+  --artifact .cache/reviewed-alias-combined-model-v1/peer-similarity.json \
+  --gate .cache/reviewed-alias-combined-model-v1/peer-similarity.gate.json \
+  --historical-receipt .cache/reviewed-alias-combined-model-v1/peer-historical-evaluation.receipt.json \
+  --reconciliation .cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json \
+  --output .cache/reviewed-alias-combined-model-v1/peer-similarity-local-research.sqlite
+```
+
+The current evaluation uses public database hash
+`240047cabddbbebccd48a775c9967488dd2dd2968d38d27f31354b90f3a3e8fc` and
+historical database hash
+`098dc8780b3f4a8daf1240d36bec7eb7be563dc2275d998dbc7509c3fb1859df`.
+The earlier report used the same historical database but a different public
+database hash. Its result is therefore not a matched baseline comparison.
