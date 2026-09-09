@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.musicbrainz_reviewed_alias_context import (
+from musix.ingest.musicbrainz_reviewed_alias_context import (
     ReviewedAliasContextError,
     build_reviewed_alias_context,
     write_reviewed_alias_context,

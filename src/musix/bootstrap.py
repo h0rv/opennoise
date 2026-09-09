@@ -15,7 +15,7 @@ from musix.adapters.everynoise import (
 )
 from musix.db import Database
 from musix.genre_discovery import DiscoveryImportSummary, import_historical_representatives
-from musix.ingest import ImportOptions, ImportSummary, import_jsonl
+from musix.ingest.ingest import ImportOptions, ImportSummary, import_jsonl
 
 LAYOUT_KEY = "default"
 SOURCE_NAME = "Every Noise legacy genre map"

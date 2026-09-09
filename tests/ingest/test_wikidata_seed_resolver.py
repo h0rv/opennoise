@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from typing import Literal
 
-from musix.wikidata_seed_resolver import (
+from musix.ingest.wikidata_seed_resolver import (
     SparqlBinding,
     SparqlHead,
     SparqlResponse,
@@ -177,7 +177,7 @@ class WikidataSeedResolverTests(unittest.TestCase):
             self.assertEqual(artifact.counts.accepted_exact_unique_count, 0)
 
     def test_committed_projection_selects_a_bounded_ambiguous_or_unresolved_batch(self) -> None:
-        source = Path(__file__).parents[1] / "data/model/open-construction-graph-v1.json"
+        source = Path(__file__).parents[2] / "data/model/open-construction-graph-v1.json"
         selected = select_wikidata_seed_targets(
             source,
             WikidataResolverConfig(

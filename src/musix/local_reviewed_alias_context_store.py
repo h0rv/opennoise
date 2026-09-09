@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from pydantic import Field
 
 from musix.models import FrozenModel
-from musix.musicbrainz_reviewed_alias_context import (
+from musix.ingest.musicbrainz_reviewed_alias_context import (
     ReviewedAliasCombinedModelReceipt,
     ReviewedAliasContextArtifact,
     ReviewedAliasContextError,
@@ -21,7 +21,7 @@ from musix.musicbrainz_reviewed_alias_context import (
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from musix.musicbrainz_model_adapter import MusicBrainzModelAdapterReport
+    from musix.ingest.musicbrainz_model_adapter import MusicBrainzModelAdapterReport
     from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact
 
 

@@ -8,7 +8,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.musicbrainz_seed_targets import load_seed_target_artifact
+from musix.ingest.musicbrainz_seed_targets import load_seed_target_artifact
 from musix.taxonomy.open_tag_feature_matrix import (
     OpenTagFeatureMatrixSettings,
     build_open_tag_feature_matrix,

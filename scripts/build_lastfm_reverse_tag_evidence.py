@@ -8,7 +8,7 @@ import os
 import sys
 from pathlib import Path
 
-from musix.lastfm_reverse_tag import (
+from musix.ingest.lastfm_reverse_tag import (
     LastFmHttpClient,
     LastFmResponseCache,
     LastFmReverseTagAdapter,

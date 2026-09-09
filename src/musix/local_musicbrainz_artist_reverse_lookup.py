@@ -13,7 +13,7 @@ from uuid import uuid4
 from pydantic import ConfigDict, Field
 
 from musix.models import FrozenModel
-from musix.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     verify_release_group_evidence,
 )

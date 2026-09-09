@@ -20,14 +20,14 @@ from typing import TYPE_CHECKING, Literal
 import ijson
 from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
 
-from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
 from musix.models.modeling import DirectMembershipEvidence
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+from musix.taxonomy.genre_seed_universe import normalize_label
 
 if TYPE_CHECKING:
+    from musix.ingest.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
     from musix.models.modeling import PublicModelInput
-    from musix.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
     from musix.public_artist_membership import NameUniverse
 
 _SHA256 = r"^[0-9a-f]{64}$"

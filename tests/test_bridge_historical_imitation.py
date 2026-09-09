@@ -15,7 +15,7 @@ from musix.history.historical_imitation import (
     build_historical_imitation,
     verify_historical_imitation,
 )
-from musix.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz_seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,

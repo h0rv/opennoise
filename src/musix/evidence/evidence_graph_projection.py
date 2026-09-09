@@ -22,11 +22,11 @@ from musix.evidence.evidence_frontier import (
     verify_all_seed_evidence_frontier,
 )
 from musix.models import FrozenModel
-from musix.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     verify_release_group_evidence,
 )
-from musix.musicbrainz_reviewed_alias_context import (
+from musix.ingest.musicbrainz_reviewed_alias_context import (
     ReviewedAliasContextArtifact,
     verify_reviewed_alias_context_artifact,
 )

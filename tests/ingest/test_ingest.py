@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from musix.db import Database
-from musix.ingest import ImportOptions, RecordParseError, import_jsonl, parse_catalog_record
+from musix.ingest.ingest import ImportOptions, RecordParseError, import_jsonl, parse_catalog_record
 from tests._test_client import run_async
 
 

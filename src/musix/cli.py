@@ -27,13 +27,13 @@ from musix.history.historical_signal_publication import (
     build_historical_signal_publication,
     publish_historical_signal_publication,
 )
-from musix.ingest import ImportOptions, import_jsonl
+from musix.ingest.ingest import ImportOptions, import_jsonl
 from musix.ml.publish import publish_public_model, resolve_public_policy_id
 from musix.models import Settings
 from musix.models.historical import HistoricalCompatibilityReceipt
 from musix.models.historical_signal import HistoricalSignalArtifact
 from musix.models.pipeline import SourceLimits
-from musix.musicbrainz_release_hydration import (
+from musix.ingest.musicbrainz_release_hydration import (
     HydrationSettings,
     MusicBrainzReleaseHydrationArtifact,
     MusicBrainzReleaseTrackHydrationAdapter,
@@ -41,7 +41,7 @@ from musix.musicbrainz_release_hydration import (
     materialize_hydration_catalog,
     write_hydration_artifact,
 )
-from musix.musicbrainz_research_graph import (
+from musix.ingest.musicbrainz_research_graph import (
     ResearchGraphBuildConfig,
     build_gate,
     build_musicbrainz_research_graph,

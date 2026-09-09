@@ -23,19 +23,19 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
-from musix.taxonomy.genre_seed_universe import normalize_label
-from musix.models.sources import DownloadSource
-from musix.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
     load_seed_target_artifact,
     verify_seed_target_artifact,
 )
+from musix.models.sources import DownloadSource
 from musix.pipeline.source_cache import (
     SourceCacheError,
     SourceCacheReceipt,
     verify_source_cache_receipt,
 )
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+from musix.taxonomy.genre_seed_universe import normalize_label
 
 _REVISION: Final = "musicbrainz-release-group-artist-support-v1"
 _JSON: Final = TypeAdapter(dict[str, object])

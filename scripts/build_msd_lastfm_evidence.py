@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.msd_lastfm import (
+from musix.ingest.msd_lastfm import (
     build_msd_lastfm_evidence,
     cache_msd_lastfm_sqlite_files,
     load_msd_lastfm_source_cache,

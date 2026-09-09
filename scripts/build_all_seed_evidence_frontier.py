@@ -12,7 +12,7 @@ from musix.evidence.evidence_frontier import (
     publish_all_seed_evidence_frontier,
     upgrade_frontier_v4_with_listenbrainz_review,
 )
-from musix.listenbrainz_propagation import load_listenbrainz_propagation_frontier_summary
+from musix.ingest.listenbrainz_propagation import load_listenbrainz_propagation_frontier_summary
 from musix.storage import LocalObjectStore
 
 

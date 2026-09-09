@@ -31,7 +31,7 @@ from musix.taxonomy.genre_seed_universe import SeedInput, normalize_label
 
 if TYPE_CHECKING:
     from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs
-    from musix.musicbrainz_coverage import CoverageReport
+    from musix.ingest.musicbrainz_coverage import CoverageReport
     from musix.storage import ObjectStore, ObjectWrite
     from musix.taxonomy.genre_seed_taxonomy import (
         GenreSeedPublicTaxonomyArtifact,

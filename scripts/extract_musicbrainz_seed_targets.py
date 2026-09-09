@@ -10,7 +10,7 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from musix.taxonomy.genre_seed_universe import load_seed_input
-from musix.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz_seed_targets import (
     ReviewedSeedAlias,
     SeedTargetExtractorSettings,
     extract_musicbrainz_seed_targets,

@@ -6,17 +6,17 @@ from uuid import UUID
 import httpx
 
 from musix.db import Database
-from musix.metadata_representatives import (
-    MetadataRepresentativeArtifact,
-    MetadataRepresentativeItem,
-    RepresentativeRunProvenance,
-)
-from musix.musicbrainz_release_hydration import (
+from musix.ingest.musicbrainz_release_hydration import (
     HydrationSettings,
     MusicBrainzHydrationError,
     MusicBrainzReleaseTrackHydrationAdapter,
     materialize_hydration_catalog,
     write_hydration_artifact,
+)
+from musix.metadata_representatives import (
+    MetadataRepresentativeArtifact,
+    MetadataRepresentativeItem,
+    RepresentativeRunProvenance,
 )
 from musix.storage import LocalObjectStore
 from tests._test_client import PollingIsolatedAsyncioTestCase

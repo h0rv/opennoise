@@ -10,8 +10,8 @@ import tempfile
 from pathlib import Path
 
 from musix.models.modeling import PublicModelInput
-from musix.musicbrainz_model_adapter import MusicBrainzModelAdapterReport
-from musix.musicbrainz_reviewed_alias_context import (
+from musix.ingest.musicbrainz_model_adapter import MusicBrainzModelAdapterReport
+from musix.ingest.musicbrainz_reviewed_alias_context import (
     ReviewedAliasContextArtifact,
     combine_reviewed_alias_context_model_input,
 )

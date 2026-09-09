@@ -16,7 +16,7 @@ from pydantic import Field, model_validator
 from scipy.sparse import csr_matrix, diags
 
 from musix.models import FrozenModel
-from musix.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
     verify_seed_target_artifact,
 )

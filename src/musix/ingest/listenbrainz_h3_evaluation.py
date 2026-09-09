@@ -20,15 +20,18 @@ from typing import Final, Literal
 import ijson
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from musix.evidence.evidence_frontier import AllSeedEvidenceFrontierArtifact, EvidenceFrontierReceipt
-from musix.taxonomy.genre_seed_universe import normalize_label
-from musix.listenbrainz_propagation import ListenBrainzPropagationReceipt
+from musix.evidence.evidence_frontier import (
+    AllSeedEvidenceFrontierArtifact,
+    EvidenceFrontierReceipt,
+)
+from musix.ingest.listenbrainz_propagation import ListenBrainzPropagationReceipt
 from musix.models import FrozenModel
 from musix.spotify_bridge_artifact import (
     iter_accepted_spotify_to_musicbrainz,
     load_receipted_musicbrainz_spotify_bridge,
 )
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+from musix.taxonomy.genre_seed_universe import normalize_label
 
 _SHA256: Final = r"^[0-9a-f]{64}$"
 _ARTIST_PREFIX: Final = "musicbrainz:artist:"

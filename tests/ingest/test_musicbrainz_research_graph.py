@@ -4,15 +4,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.musicbrainz_coverage import CoverageMatch, CoverageReport
-from musix.musicbrainz_research_graph import (
+from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from musix.ingest.musicbrainz_coverage import CoverageMatch, CoverageReport
+from musix.ingest.musicbrainz_research_graph import (
     ResearchGraphBuildConfig,
     build_gate,
     build_musicbrainz_research_graph,
     evaluate_sealed_graph,
     write_research_graph,
 )
-from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
 
 
 class MusicBrainzResearchGraphTests(unittest.TestCase):

@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.musicbrainz_coverage import (
+from musix.ingest.musicbrainz_coverage import (
     BaselineReport,
     BaselineRun,
     ReconstructionArtifactReport,

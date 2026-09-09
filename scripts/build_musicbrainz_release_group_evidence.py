@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from musix.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceProgress,
     ReleaseGroupEvidenceSettings,
     build_release_group_evidence_from_seed_target_path,

@@ -24,7 +24,7 @@ from musix.taxonomy.asymmetric_genre_containment import (
 from musix.taxonomy.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
 from musix.taxonomy.genre_seed_universe import load_seed_input
 from musix.models.modeling import PublicModelInput
-from musix.musicbrainz_coverage import CoverageReport
+from musix.ingest.musicbrainz_coverage import CoverageReport
 from musix.peers.peer_similarity import (
     PeerSimilaritySettings,
     build_peer_similarity,

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from musix.taxonomy.genre_seed_universe import normalize_label
-from musix.musicbrainz_seed_targets import load_seed_target_artifact
+from musix.ingest.musicbrainz_seed_targets import load_seed_target_artifact
 from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 from musix.sources.musicbrainz import (
     AdapterLimits,
@@ -26,7 +26,7 @@ from musix.sources.musicbrainz import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from musix.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
+    from musix.ingest.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
     from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact
 
 RELEASE_GROUP_CONTEXT_PREFIX_REVISION = "release-group-context-prefix-pilot-v2"

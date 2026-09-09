@@ -21,10 +21,13 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from musix.common import sha256_file, sha256_json, write_durable_bytes
-from musix.taxonomy.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
-from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+from musix.taxonomy.genre_seed_universe import normalize_label
+from musix.taxonomy.seed_reconciliation import (
+    SeedReconciliationArtifact,
+    verify_seed_reconciliation,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path

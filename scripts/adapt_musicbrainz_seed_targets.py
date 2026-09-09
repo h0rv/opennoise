@@ -8,11 +8,11 @@ import os
 import tempfile
 from pathlib import Path
 
-from musix.musicbrainz_model_adapter import (
+from musix.ingest.musicbrainz_model_adapter import (
     MusicBrainzModelAdapterPolicy,
     adapt_musicbrainz_seed_targets,
 )
-from musix.musicbrainz_seed_targets import load_seed_target_artifact
+from musix.ingest.musicbrainz_seed_targets import load_seed_target_artifact
 from musix.taxonomy.seed_reconciliation import load_seed_reconciliation
 
 

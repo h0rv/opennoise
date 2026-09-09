@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.msd_lastfm import (
+from musix.ingest.msd_lastfm import (
     MsdLastFmError,
     MsdLastFmTarget,
     build_msd_lastfm_evidence,

@@ -3,14 +3,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.musicbrainz_coverage import (
+from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from musix.ingest.musicbrainz_coverage import (
     build_reconstruction_inputs,
     evaluate_coverage,
     normalize_label,
     run_source_baselines,
     write_reconstruction_inputs,
 )
-from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
 
 
 class MusicBrainzCoverageTests(unittest.TestCase):

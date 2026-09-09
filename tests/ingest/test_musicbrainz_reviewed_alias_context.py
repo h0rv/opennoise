@@ -8,23 +8,25 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
-from musix.musicbrainz_model_adapter import (
+from musix.ingest.musicbrainz_model_adapter import (
     MusicBrainzModelAdapterPolicy,
     adapt_musicbrainz_seed_targets,
 )
-from musix.musicbrainz_reviewed_alias_context import (
+from musix.ingest.musicbrainz_reviewed_alias_context import (
     ReviewedAliasContextError,
     adapt_reviewed_alias_context,
     build_reviewed_alias_context,
     combine_reviewed_alias_context_model_input,
 )
-from musix.musicbrainz_reviewed_alias_context import artifact_sha256 as context_artifact_sha256
-from musix.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz_reviewed_alias_context import (
+    artifact_sha256 as context_artifact_sha256,
+)
+from musix.ingest.musicbrainz_seed_targets import (
     ReviewedSeedAlias,
     extract_musicbrainz_seed_targets,
     write_seed_target_artifact,
 )
+from musix.taxonomy.genre_seed_universe import SeedInput, SeedName
 from musix.taxonomy.seed_reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,

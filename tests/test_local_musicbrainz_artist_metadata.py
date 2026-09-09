@@ -20,7 +20,7 @@ from musix.local_musicbrainz_artist_metadata import (
     exact_canonical_names,
     exact_certified_canonical_names,
 )
-from musix.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     ReleaseGroupEvidenceCounters,
     ReleaseGroupEvidenceCoverage,

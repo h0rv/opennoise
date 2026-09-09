@@ -23,7 +23,7 @@ from uuid import UUID
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from musix.musicbrainz_release_hydration import (
+from musix.ingest.musicbrainz_release_hydration import (
     CatalogHydrationResult,
     HydratedMedium,
     HydratedRelease,

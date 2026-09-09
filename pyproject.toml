@@ -65,7 +65,7 @@ ignore = [
     "C901", # Numerical evaluation and sparse component assembly are intentionally cohesive.
     "PLR0915", # The evaluator keeps every oracle-only calculation in one auditable boundary.
 ]
-"src/musix/musicbrainz_release_group_evidence.py" = [
+"src/musix/ingest/musicbrainz_release_group_evidence.py" = [
     "A001", # Raw MusicBrainz artist-credit payload is named by its source field.
     "D101", # Evidence schema field names make the small models self-describing.
     "D103", # Hash helper is intentionally a direct companion to the receipt model.

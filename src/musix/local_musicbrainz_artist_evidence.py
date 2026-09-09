@@ -34,11 +34,11 @@ from musix.local_musicbrainz_artist_reverse_lookup import (
     verify_artist_reverse_lookup_sources,
 )
 from musix.models import FrozenModel
-from musix.musicbrainz_model_adapter import (
+from musix.ingest.musicbrainz_model_adapter import (
     MusicBrainzModelAdapterReport,
     verify_musicbrainz_model_adapter_report,
 )
-from musix.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     verify_release_group_evidence,
 )

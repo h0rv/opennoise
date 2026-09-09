@@ -8,9 +8,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, TypeAdapter, model_validator
 
-from musix.models import FrozenModel
-from musix.models.modeling import DirectMembershipEvidence, PublicArtifact, PublicModelInput
-from musix.musicbrainz_model_adapter import (
+from musix.ingest.musicbrainz_model_adapter import (
     AdapterAggregate,
     AdapterFacet,
     MusicBrainzModelAdapterPolicy,
@@ -19,12 +17,14 @@ from musix.musicbrainz_model_adapter import (
     adapt_musicbrainz_seed_targets,
     verify_musicbrainz_model_adapter_report,
 )
-from musix.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz_seed_targets import (
     ReviewedSeedAlias,
     load_seed_target_artifact,
     normalize_label,
     verify_seed_target_artifact,
 )
+from musix.models import FrozenModel
+from musix.models.modeling import DirectMembershipEvidence, PublicArtifact, PublicModelInput
 from musix.types import Sha256  # noqa: TC001
 
 _MAX_ROWS: Final = 10_000
@@ -33,7 +33,7 @@ _REVISION: Final = "musicbrainz-reviewed-alias-context-v1"
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from musix.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
+    from musix.ingest.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
     from musix.taxonomy.seed_reconciliation import SeedReconciliationArtifact
 
 

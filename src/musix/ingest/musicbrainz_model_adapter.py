@@ -16,17 +16,17 @@ from typing import Final, Literal
 
 from pydantic import Field, FiniteFloat, model_validator
 
+from musix.ingest.musicbrainz_seed_targets import (
+    MusicBrainzSeedTargetArtifact,
+    SeedTargetEvidence,
+    verify_seed_target_artifact,
+)
 from musix.models import FrozenModel
 from musix.models.modeling import (
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
     PublicModelInput,
-)
-from musix.musicbrainz_seed_targets import (
-    MusicBrainzSeedTargetArtifact,
-    SeedTargetEvidence,
-    verify_seed_target_artifact,
 )
 from musix.taxonomy.seed_reconciliation import (
     SeedReconciliationArtifact,

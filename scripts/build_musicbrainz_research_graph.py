@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.musicbrainz_research_graph import (
+from musix.ingest.musicbrainz_research_graph import (
     ResearchGraphBuildConfig,
     build_gate,
     build_musicbrainz_research_graph,

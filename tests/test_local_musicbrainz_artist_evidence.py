@@ -29,12 +29,12 @@ from musix.local_musicbrainz_artist_reverse_lookup import (
     verify_artist_reverse_lookup_sources,
 )
 from musix.local_musicbrainz_peer_store import LocalMusicBrainzPeerStore
-from musix.musicbrainz_model_adapter import (
+from musix.ingest.musicbrainz_model_adapter import (
     AdapterSeedCoverage,
     MusicBrainzModelAdapterReport,
     adapter_report_sha256,
 )
-from musix.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     ReleaseGroupEvidenceCounters,
     ReleaseGroupEvidenceCoverage,
