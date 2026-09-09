@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.history.historical_hierarchy_release_gate import (
+from musix.history.hierarchy.historical_hierarchy_release_gate import (
     evaluate_historical_hierarchy_release_gate,
 )
 from musix.models.historical_signal import HistoricalSignalArtifact

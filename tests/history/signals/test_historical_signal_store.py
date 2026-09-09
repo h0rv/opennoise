@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from musix.history.historical_signal_store import (
+from musix.history.signals.historical_signal_store import (
     HistoricalSignalMapStore,
     HistoricalSignalMapStoreError,
 )

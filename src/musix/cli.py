@@ -23,7 +23,7 @@ from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
 from musix.catalog.registry import ProjectorRegistry
 from musix.db import Database
 from musix.taxonomy.seeds.genre_seed_universe import build_genre_seed_universe, write_genre_seed_universe
-from musix.history.historical_signal_publication import (
+from musix.history.signals.historical_signal_publication import (
     build_historical_signal_publication,
     publish_historical_signal_publication,
 )

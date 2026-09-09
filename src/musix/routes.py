@@ -26,7 +26,7 @@ from musix.history.historical_membership_store import (
     HistoricalMembershipStoreError,
     HistoricalSignalMembersApiResponse,
 )
-from musix.history.historical_signal_store import (
+from musix.history.signals.historical_signal_store import (
     HistoricalSignalMapApiResponse,
     HistoricalSignalMapStore,
     HistoricalSignalMapStoreError,

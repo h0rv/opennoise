@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 from pydantic import ValidationError
 
-from musix.history.historical_signal_model import (
+from musix.history.signals.historical_signal_model import (
     _family_hierarchy_representative,
     _genre_family_seed,
     _graph_hierarchy,
@@ -164,7 +164,7 @@ class HistoricalSignalModelTests(unittest.TestCase):
         """Set-backed memberships must not alter graph weights or top-k ties."""
         script = """
 import json
-from musix.history.historical_signal_model import _idf_candidates, _knn
+from musix.history.signals.historical_signal_model import _idf_candidates, _knn
 from musix.models.historical_signal import HistoricalSignalSettings
 
 memberships = {f"genre:{index:02d}": set() for index in range(40)}
@@ -216,7 +216,7 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-from musix.history.historical_signal_model import build_historical_signal_model
+from musix.history.signals.historical_signal_model import build_historical_signal_model
 from musix.models.historical_signal import HistoricalSignalSettings
 
 database = Path(sys.argv[1])

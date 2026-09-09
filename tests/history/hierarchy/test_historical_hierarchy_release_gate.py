@@ -1,10 +1,10 @@
 import unittest
 
-from musix.history.historical_hierarchy_release_gate import (
+from musix.history.hierarchy.historical_hierarchy_release_gate import (
     evaluate_historical_hierarchy_release_gate,
 )
 from musix.models.historical_signal import HistoricalSignalArtifact
-from tests.test_historical_hierarchy_evaluation import _artifact
+from tests.history.hierarchy.test_historical_hierarchy_evaluation import _artifact
 
 
 class HistoricalHierarchyReleaseGateTests(unittest.TestCase):

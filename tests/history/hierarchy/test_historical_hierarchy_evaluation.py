@@ -1,7 +1,7 @@
 import unittest
 from typing import Literal
 
-from musix.history.historical_hierarchy_evaluation import evaluate_historical_hierarchy
+from musix.history.hierarchy.historical_hierarchy_evaluation import evaluate_historical_hierarchy
 from musix.models.historical_signal import (
     HistoricalSignalArtifact,
     HistoricalSignalHierarchyNode,
