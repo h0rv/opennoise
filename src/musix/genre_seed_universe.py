@@ -9,8 +9,6 @@ candidates.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import re
 import sqlite3
 import unicodedata
@@ -19,6 +17,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
+
+from musix.common import sha256_file, sha256_hex, sha256_json
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -160,18 +160,6 @@ def normalize_label(value: str) -> str:
     return WHITESPACE.sub(" ", words).strip()
 
 
-def _sha256_bytes(payload: bytes) -> str:
-    return hashlib.sha256(payload).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _json_object(path: Path) -> dict[str, object]:
     return TypeAdapter(dict[str, object]).validate_json(path.read_bytes())
 
@@ -219,11 +207,7 @@ def load_seed_input(path: Path) -> SeedInput:
     return SeedInput(
         source_id=source_id,
         source_content_sha256=source_hash,
-        artifact_sha256=_sha256_bytes(
-            json.dumps(
-                name_projection, ensure_ascii=False, separators=(",", ":"), sort_keys=True
-            ).encode()
-        ),
+        artifact_sha256=sha256_json(name_projection),
         names=tuple(names),
     )
 
@@ -360,11 +344,6 @@ def _source_keys(connection: sqlite3.Connection) -> tuple[str, ...]:
     return ()
 
 
-def _canonical_json(artifact: GenreSeedUniverseArtifact) -> bytes:
-    payload = artifact.model_dump(mode="json", exclude={"output_sha256"})
-    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
-
-
 def build_genre_seed_universe(  # noqa: C901
     seed_artifact: Path, catalog_databases: Iterable[Path]
 ) -> GenreSeedUniverseArtifact:
@@ -396,7 +375,7 @@ def build_genre_seed_universe(  # noqa: C901
             catalog_inputs.append(
                 CatalogInput(
                     path=str(database_path),
-                    database_sha256=_sha256_file(database_path),
+                    database_sha256=sha256_file(database_path)[0],
                     source_keys=_source_keys(connection),
                 )
             )
@@ -492,7 +471,7 @@ def build_genre_seed_universe(  # noqa: C901
         direct_evidence_count=sum(item.direct_evidence_count for item in resolutions),
         output_sha256="0" * 64,
     )
-    output_hash = _sha256_bytes(_canonical_json(preliminary))
+    output_hash = sha256_json(preliminary.model_dump(mode="json", exclude={"output_sha256"}))
     return preliminary.model_copy(update={"output_sha256": output_hash})
 
 
@@ -501,4 +480,4 @@ def write_genre_seed_universe(artifact: GenreSeedUniverseArtifact, path: Path) -
     payload = artifact.model_dump_json(indent=2) + "\n"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(payload, encoding="utf-8")
-    return _sha256_bytes(payload.encode())
+    return sha256_hex(payload.encode())

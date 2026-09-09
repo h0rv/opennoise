@@ -9,8 +9,6 @@ MusicBrainz research inputs have no construction path in this module.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import sqlite3
 from collections import defaultdict, deque
 from contextlib import closing
@@ -19,6 +17,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, model_validator
 
+from musix.common import sha256_file, sha256_hex, sha256_json
 from musix.genre_seed_universe import SeedInput, load_seed_input, normalize_label
 from musix.models import FrozenModel
 
@@ -173,27 +172,6 @@ class _CatalogGenre:
 class _LabelMatch:
     genre: _CatalogGenre
     match_kind: Literal["canonical", "alias"]
-
-
-def _sha256_bytes(payload: bytes) -> str:
-    return hashlib.sha256(payload).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _canonical_json(artifact: GenreSeedPublicTaxonomyArtifact) -> bytes:
-    return json.dumps(
-        artifact.model_dump(mode="json", exclude={"output_sha256"}),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode()
 
 
 def _source_licenses(connection: sqlite3.Connection) -> tuple[str, ...]:
@@ -492,7 +470,7 @@ def build_genre_seed_public_taxonomy(
     preliminary = GenreSeedPublicTaxonomyArtifact(
         seed_input=seed,
         public_catalog=PublicCatalogInput(
-            database_sha256=_sha256_file(public_catalog_database), source_licenses=licenses
+            database_sha256=sha256_file(public_catalog_database)[0], source_licenses=licenses
         ),
         config=config,
         calibration=calibration,
@@ -501,15 +479,21 @@ def build_genre_seed_public_taxonomy(
         output_sha256="0" * 64,
     )
     return preliminary.model_copy(
-        update={"output_sha256": _sha256_bytes(_canonical_json(preliminary))}
+        update={
+            "output_sha256": sha256_json(
+                preliminary.model_dump(mode="json", exclude={"output_sha256"})
+            )
+        }
     )
 
 
 def write_genre_seed_public_taxonomy(artifact: GenreSeedPublicTaxonomyArtifact, path: Path) -> str:
     """Write an idempotent typed artifact and return its byte hash."""
-    if artifact.output_sha256 != _sha256_bytes(_canonical_json(artifact)):
+    if artifact.output_sha256 != sha256_json(
+        artifact.model_dump(mode="json", exclude={"output_sha256"})
+    ):
         raise ValueError("public taxonomy artifact logical hash does not match its content")
     payload = artifact.model_dump_json(indent=2) + "\n"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(payload, encoding="utf-8")
-    return _sha256_bytes(payload.encode())
+    return sha256_hex(payload.encode())

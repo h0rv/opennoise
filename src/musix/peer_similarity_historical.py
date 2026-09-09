@@ -8,7 +8,6 @@ candidate graph.  It never returns historical rows as model inputs.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import sqlite3
 from collections import defaultdict
@@ -17,6 +16,7 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field
 
+from musix.common import sha256_file, sha256_json
 from musix.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput
@@ -125,21 +125,6 @@ class HistoricalPeerPublicationReceipt(FrozenModel):
     content_policy: Literal["metadata_only_no_audio"] = "metadata_only_no_audio"
 
 
-def _sha256_file(path: Path) -> Sha256:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _sha256_json(value: object) -> Sha256:
-    encoded = json.dumps(
-        value, ensure_ascii=False, allow_nan=False, separators=(",", ":"), sort_keys=True
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
 def _sealed_candidate_output_sha256(candidate_path: Path) -> Sha256:
     """Recompute the hash from the candidate's serialized JSON shape.
 
@@ -156,7 +141,7 @@ def _sealed_candidate_output_sha256(candidate_path: Path) -> Sha256:
     if not isinstance(stored, str):
         raise TypeError("candidate output hash is missing")
     without_hash = {key: value for key, value in payload.items() if key != "output_sha256"}
-    recomputed = _sha256_json(without_hash)
+    recomputed = sha256_json(without_hash)
     if stored != recomputed:
         raise ValueError("candidate serialized output hash does not replay")
     return recomputed
@@ -164,7 +149,7 @@ def _sealed_candidate_output_sha256(candidate_path: Path) -> Sha256:
 
 def historical_peer_report_sha256(report: HistoricalPeerEvaluationReport) -> Sha256:
     """Recompute the report hash without trusting its stored value."""
-    return _sha256_json(report.model_dump(mode="json", exclude={"report_sha256"}))
+    return sha256_json(report.model_dump(mode="json", exclude={"report_sha256"}))
 
 
 def _strict_artist_name_crosswalk(
@@ -297,14 +282,14 @@ def evaluate_peer_similarity_historical(  # noqa: C901, PLR0912, PLR0913, PLR091
 ) -> HistoricalPeerEvaluationReport:
     """Compare public candidates to H3 overlap neighbors after construction."""
     resolved = settings or HistoricalPeerSettings()
-    candidate_file_hash = _sha256_file(candidate_path)
-    public_input_hash = _sha256_file(public_input_path)
-    public_hash = _sha256_file(public_database_path)
-    historical_hash = _sha256_file(historical_database_path)
+    candidate_file_hash = sha256_file(candidate_path)[0]
+    public_input_hash = sha256_file(public_input_path)[0]
+    public_hash = sha256_file(public_database_path)[0]
+    historical_hash = sha256_file(historical_database_path)[0]
     candidate_bytes_hash = _sealed_candidate_output_sha256(candidate_path)
     candidate = GenrePeerSimilarityArtifact.model_validate_json(candidate_path.read_bytes())
     public_input = PublicModelInput.model_validate_json(public_input_path.read_bytes())
-    if candidate.input_sha256 != _sha256_json(public_input.model_dump(mode="json")):
+    if candidate.input_sha256 != sha256_json(public_input.model_dump(mode="json")):
         raise ValueError("candidate input hash does not match public model input")
     normalized_output_hash = peer_similarity_output_sha256(candidate)
     if candidate_bytes_hash != candidate.output_sha256:
@@ -315,16 +300,16 @@ def evaluate_peer_similarity_historical(  # noqa: C901, PLR0912, PLR0913, PLR091
     gate = evaluate_peer_similarity_gate(gate_candidate, public_input, candidate_settings)
     if not gate.passed:
         raise ValueError("candidate peer gate failed: " + "; ".join(gate.failures))
-    if _sha256_file(candidate_path) != candidate_file_hash:
+    if sha256_file(candidate_path)[0] != candidate_file_hash:
         raise ValueError("candidate file changed while evaluating")
-    if _sha256_file(public_input_path) != public_input_hash:
+    if sha256_file(public_input_path)[0] != public_input_hash:
         raise ValueError("public input changed while evaluating")
     with closing(
         sqlite3.connect(f"file:{public_database_path.resolve()}?mode=ro", uri=True)
     ) as public:
         public.row_factory = sqlite3.Row
         crosswalk, ambiguous_artists = _strict_artist_name_crosswalk(public)
-    if _sha256_file(public_database_path) != public_hash:
+    if sha256_file(public_database_path)[0] != public_hash:
         raise ValueError("public database changed while evaluating")
     with closing(
         sqlite3.connect(f"file:{historical_database_path.resolve()}?mode=ro", uri=True)
@@ -333,7 +318,7 @@ def evaluate_peer_similarity_historical(  # noqa: C901, PLR0912, PLR0913, PLR091
         historical_sets, source_memberships, mapped_memberships = _historical_sets(
             historical, crosswalk
         )
-    if _sha256_file(historical_database_path) != historical_hash:
+    if sha256_file(historical_database_path)[0] != historical_hash:
         raise ValueError("historical database changed while evaluating")
 
     public_genres_by_name: dict[str, list[str]] = defaultdict(list)
@@ -423,7 +408,7 @@ def evaluate_peer_similarity_historical(  # noqa: C901, PLR0912, PLR0913, PLR091
             )
         )
     candidate_edge_count = len(candidate_pairs)
-    settings_hash = _sha256_json(resolved.model_dump(mode="json"))
+    settings_hash = sha256_json(resolved.model_dump(mode="json"))
     report = HistoricalPeerEvaluationReport(
         report_sha256="0" * 64,
         candidate_file_sha256=candidate_file_hash,
@@ -494,7 +479,7 @@ def publish_historical_peer_evaluation(
     store: ObjectStore,
 ) -> HistoricalPeerPublicationReceipt:
     """Persist one exact evaluation report through the generic object store."""
-    file_hash = _sha256_file(report_path)
+    file_hash = sha256_file(report_path)[0]
     persisted = HistoricalPeerEvaluationReport.model_validate_json(report_path.read_bytes())
     if persisted != report:
         raise ValueError("evaluation report file does not match the supplied report")

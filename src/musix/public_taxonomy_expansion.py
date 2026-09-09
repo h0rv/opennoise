@@ -10,19 +10,16 @@ parentage or artist membership.
 
 from __future__ import annotations
 
-import hashlib
 import json
-import os
 import sqlite3
-import tempfile
 from collections import deque
 from contextlib import closing
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Final, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, model_validator
 
+from musix.common import sha256_file, sha256_hex, sha256_json, write_durable_bytes
 from musix.genre_seed_taxonomy import (
     GenreSeedPublicTaxonomyArtifact,
     InferenceStatus,
@@ -30,6 +27,9 @@ from musix.genre_seed_taxonomy import (
 )
 from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _REVISION: Final = "public-taxonomy-expansion-v1"
 
@@ -285,29 +285,8 @@ class _LegacyExpansion:
     abstained_ids: frozenset[str]
 
 
-def _sha256_bytes(payload: bytes) -> str:
-    return hashlib.sha256(payload).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _canonical_payload(artifact: PublicTaxonomyExpansionArtifact) -> bytes:
-    return json.dumps(
-        artifact.model_dump(mode="json", exclude={"output_sha256"}),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode()
-
-
 def _edge_id(source: str, target: str, kind: str, evidence: ExpansionEdgeEvidence) -> str:
-    return _sha256_bytes(
+    return sha256_hex(
         json.dumps(
             {
                 "source": source,
@@ -595,7 +574,7 @@ def build_public_taxonomy_expansion(
             f"{config.expected_legacy_seed_count} legacy seeds, "
             f"found {len(taxonomy.seed_input.names)}"
         )
-    catalog_hash = _sha256_file(public_catalog_database)
+    catalog_hash = sha256_file(public_catalog_database)[0]
     if catalog_hash != taxonomy.public_catalog.database_sha256:
         raise ValueError("taxonomy artifact public catalog hash does not match expansion input")
     catalog, relations = _read_catalog(public_catalog_database)
@@ -630,7 +609,7 @@ def build_public_taxonomy_expansion(
             key=lambda item: item.node_id,
         )
     )
-    taxonomy_hash = _sha256_bytes(taxonomy_bytes)
+    taxonomy_hash = sha256_hex(taxonomy_bytes)
     legacy_expansion = _build_legacy_edges(
         taxonomy,
         catalog,
@@ -682,7 +661,11 @@ def build_public_taxonomy_expansion(
         output_sha256="0" * 64,
     )
     return preliminary.model_copy(
-        update={"output_sha256": _sha256_bytes(_canonical_payload(preliminary))}
+        update={
+            "output_sha256": sha256_json(
+                preliminary.model_dump(mode="json", exclude={"output_sha256"})
+            )
+        }
     )
 
 
@@ -690,9 +673,8 @@ def verify_public_taxonomy_expansion(
     artifact: PublicTaxonomyExpansionArtifact,
 ) -> PublicTaxonomyExpansionGate:
     """Fail closed unless the graph is complete, deterministic, and policy-safe."""
-    first_hash = _sha256_bytes(_canonical_payload(artifact))
-    second_hash = _sha256_bytes(_canonical_payload(artifact))
-    if artifact.output_sha256 != first_hash or first_hash != second_hash:
+    replayed = sha256_json(artifact.model_dump(mode="json", exclude={"output_sha256"}))
+    if artifact.output_sha256 != replayed:
         raise ValueError("public taxonomy expansion logical hash does not replay")
     if artifact.coverage.review_links_promoted_to_facts:
         raise ValueError("review links must not become factual relationships")
@@ -716,19 +698,8 @@ def write_public_taxonomy_expansion(
     verify_public_taxonomy_expansion(artifact)
     payload = (artifact.model_dump_json(indent=2) + "\n").encode()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, raw_temporary = tempfile.mkstemp(
-        prefix=f".{output_path.name}.", dir=output_path.parent
-    )
-    temporary = Path(raw_temporary)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-        temporary.replace(output_path)
-    finally:
-        temporary.unlink(missing_ok=True)
-    return _sha256_bytes(payload), len(payload)
+    write_durable_bytes(output_path, payload)
+    return sha256_hex(payload), len(payload)
 
 
 def publish_public_taxonomy_expansion(

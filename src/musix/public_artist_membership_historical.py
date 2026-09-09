@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import sqlite3
 from collections import defaultdict
 from contextlib import closing
@@ -10,6 +9,7 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field
 
+from musix.common import sha256_file
 from musix.genre_seed_universe import normalize_label
 from musix.public_artist_membership import (
     ApprovedPublicMembershipInput,
@@ -64,14 +64,6 @@ class HistoricalMembershipEvaluationReport(StrictFrozenModel):
     per_genre: tuple[HistoricalGenreEvaluation, ...]
 
 
-def _sha256_file(path: Path) -> Sha256:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _strict_name_map(
     connection: sqlite3.Connection,
 ) -> dict[str, str]:
@@ -103,9 +95,9 @@ def evaluate_public_artist_membership_historical(  # noqa: C901
     """Evaluate top-k candidate predictions against H3 positives; never construct."""
     if k < 1:
         raise ValueError("k must be positive")
-    candidate_file_hash = _sha256_file(candidate_path)
+    candidate_file_hash = sha256_file(candidate_path)[0]
     candidate_bytes = candidate_path.read_bytes()
-    approved_file_hash = _sha256_file(approved_input_path)
+    approved_file_hash = sha256_file(approved_input_path)[0]
     approved_bytes = approved_input_path.read_bytes()
     candidate = PublicArtistMembershipCandidateArtifact.model_validate_json(candidate_bytes)
     verify_public_artist_membership_candidate(candidate)
@@ -118,20 +110,20 @@ def evaluate_public_artist_membership_historical(  # noqa: C901
     )
     if candidate.input_sha256 != expected_input_sha:
         raise ValueError("candidate input hash does not match its parsed construction inputs")
-    if _sha256_file(candidate_path) != candidate_file_hash:
+    if sha256_file(candidate_path)[0] != candidate_file_hash:
         raise ValueError("candidate file changed while evaluating")
-    if _sha256_file(approved_input_path) != approved_file_hash:
+    if sha256_file(approved_input_path)[0] != approved_file_hash:
         raise ValueError("approved input file changed while evaluating")
-    public_hash = _sha256_file(public_database_path)
+    public_hash = sha256_file(public_database_path)[0]
     with closing(
         sqlite3.connect(f"file:{public_database_path.resolve()}?mode=ro", uri=True)
     ) as public:
         public.row_factory = sqlite3.Row
         strict_name_map = _strict_name_map(public)
-    if _sha256_file(public_database_path) != public_hash:
+    if sha256_file(public_database_path)[0] != public_hash:
         raise ValueError("public database changed while evaluating")
 
-    h3_hash = _sha256_file(historical_database_path)
+    h3_hash = sha256_file(historical_database_path)[0]
     with closing(
         sqlite3.connect(f"file:{historical_database_path.resolve()}?mode=ro", uri=True)
     ) as historical:
@@ -146,7 +138,7 @@ def evaluate_public_artist_membership_historical(  # noqa: C901
             """
         ):
             h3_by_genre[normalize_label(str(row[0]))].append(str(row[1]))
-    if _sha256_file(historical_database_path) != h3_hash:
+    if sha256_file(historical_database_path)[0] != h3_hash:
         raise ValueError("historical database changed while evaluating")
 
     genre_ids: dict[str, list[str]] = defaultdict(list)

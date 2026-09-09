@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-import os
-import tempfile
 import unicodedata
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,6 +17,7 @@ from musix.adapters.everynoise import (
     adapt_quint_historical_representatives,
     adapt_quint_html,
 )
+from musix.common import sha256_hex, write_durable_bytes
 from musix.db import Database
 from musix.models.historical import (
     HistoricalAdapterCheckpoint,
@@ -50,6 +47,9 @@ from musix.reconstruction import (
     align_to_historical_points,
 )
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 HISTORICAL_COMPATIBILITY_REVISION = "historical-compatibility-v1"
 HISTORICAL_REPORT_REVISION = "historical-compatibility-report-v1"
@@ -394,31 +394,15 @@ def build_historical_compatibility(
     )
 
 
-def _atomic_write(path: Path, payload: bytes) -> None:
-    """Atomically publish JSON without leaving partial compatibility artifacts."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
-    )
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-        temporary.replace(path)
-    finally:
-        temporary.unlink(missing_ok=True)
-
-
 def write_historical_compatibility(
     manifest: HistoricalCompatibilityManifest,
     output_path: Path,
 ) -> tuple[str, int]:
     """Serialize one deterministic compatibility manifest to an atomic JSON file."""
     payload = (manifest.model_dump_json(indent=2) + "\n").encode("utf-8")
-    _atomic_write(output_path, payload)
-    return hashlib.sha256(payload).hexdigest(), len(payload)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(output_path, payload)
+    return sha256_hex(payload), len(payload)
 
 
 def publish_historical_compatibility(
@@ -530,7 +514,8 @@ def write_compatibility_receipt(
     output_path: Path,
 ) -> None:
     """Atomically write the small receipt that links H2, H3, object storage, and SQLite."""
-    _atomic_write(output_path, (receipt.model_dump_json(indent=2) + "\n").encode())
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(output_path, (receipt.model_dump_json(indent=2) + "\n").encode())
 
 
 def _comparison_from_public_artifact(artifact: PublicModelArtifact) -> PublicComparisonModel:

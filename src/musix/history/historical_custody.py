@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-import hashlib
-import os
 import sqlite3
 import subprocess
 import sys
-import tempfile
-from pathlib import Path
-from typing import Final, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field
 
+from musix.common import sha256_file, write_durable_bytes
 from musix.models import FrozenModel
 from musix.models.historical_signal import HistoricalSignalSettings  # noqa: TC001
 from musix.storage import ObjectKey, ObjectStore
 from musix.types import Sha256  # noqa: TC001
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _CHUNK_BYTES: Final = 1024 * 1024
 _OBSERVATION_ROLE: Final = "genre_page_member"
@@ -61,30 +61,6 @@ class HistoricalH3RebuildReceipt(FrozenModel):
     rebuild_command: tuple[str, ...] = Field(min_length=1, max_length=64)
     python_version: str = Field(min_length=1, max_length=200)
     code_revision: str = Field(min_length=1, max_length=200)
-
-
-def _sha256_file(path: Path) -> tuple[str, int]:
-    digest = hashlib.sha256()
-    size = 0
-    with path.open("rb") as stream:
-        while chunk := stream.read(_CHUNK_BYTES):
-            digest.update(chunk)
-            size += len(chunk)
-    return digest.hexdigest(), size
-
-
-def _atomic_write(path: Path, payload: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-        temporary.replace(path)
-    finally:
-        temporary.unlink(missing_ok=True)
 
 
 def _sqlite_counts(path: Path, source_sha256: str) -> tuple[int, int, int]:
@@ -152,8 +128,8 @@ def custody_historical_inputs(  # noqa: PLR0913
     code_revision: str | None = None,
 ) -> HistoricalH3RebuildReceipt:
     """Verify and seal both H3 inputs, then atomically write their rebuild receipt."""
-    raw_sha256, raw_size = _sha256_file(raw_path)
-    sqlite_sha256, sqlite_size = _sha256_file(sqlite_path)
+    raw_sha256, raw_size = sha256_file(raw_path)
+    sqlite_sha256, sqlite_size = sha256_file(sqlite_path)
     if raw_sha256 != expected_h3_source_sha256 or raw_size != expected_h3_source_byte_size:
         raise HistoricalCustodyError("raw H3 bytes do not match the configured source manifest")
     stored_memberships, stored_genres, stored_artists = _sqlite_counts(sqlite_path, raw_sha256)
@@ -194,5 +170,6 @@ def custody_historical_inputs(  # noqa: PLR0913
         python_version=sys.version,
         code_revision=code_revision or _code_revision(),
     )
-    _atomic_write(receipt_path, (receipt.model_dump_json(indent=2) + "\n").encode("utf-8"))
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(receipt_path, (receipt.model_dump_json(indent=2) + "\n").encode("utf-8"))
     return receipt

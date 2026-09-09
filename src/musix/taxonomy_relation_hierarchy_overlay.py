@@ -14,6 +14,7 @@ from typing import Any, Literal
 import ijson
 from pydantic import Field, model_validator
 
+from musix.common import sha256_file, sha256_json
 from musix.genre_hierarchy_candidates import (  # noqa: TC001
     GenreHierarchyCandidatePublicationReceipt,
 )
@@ -27,24 +28,6 @@ from musix.types import Sha256  # noqa: TC001
 
 _REVISION = "taxonomy-relation-hierarchy-overlay-v1"
 _MAXIMUM_BASE_CANDIDATE_PAIR_COUNT = 250_000
-
-
-def _canonical(value: object) -> bytes:
-    return json.dumps(
-        value, ensure_ascii=False, allow_nan=False, separators=(",", ":"), sort_keys=True
-    ).encode()
-
-
-def _sha(value: object) -> Sha256:
-    return hashlib.sha256(_canonical(value)).hexdigest()
-
-
-def _sha_file(path: Path) -> Sha256:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while block := stream.read(1024 * 1024):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def _stream_base_logical_hash(path: Path) -> Sha256:
@@ -151,7 +134,10 @@ class TaxonomyRelationHierarchyOverlay(FrozenModel):
             raise ValueError("overlay base candidate pair count exceeds its explicit bound")
         if self.union_accepted_count < self.base_accepted_count:
             raise ValueError("overlay cannot remove accepted base edges")
-        if _sha(self.model_dump(mode="json", exclude={"output_sha256"})) != self.output_sha256:
+        if (
+            sha256_json(self.model_dump(mode="json", exclude={"output_sha256"}))
+            != self.output_sha256
+        ):
             raise ValueError("overlay logical hash does not replay")
         return self
 
@@ -201,7 +187,7 @@ def _verify_overlay_base(base: OverlayBaseInputs) -> None:
         or stored.byte_size != base.receipt.artifact.byte_size
     ):
         raise ValueError("base hierarchy object does not match its trusted receipt")
-    if _sha_file(base.hierarchy_path) != base.receipt.artifact_sha256:
+    if sha256_file(base.hierarchy_path)[0] != base.receipt.artifact_sha256:
         raise ValueError("base hierarchy bytes do not match its receipt")
     with base.hierarchy_path.open("rb") as stream:
         try:
@@ -283,11 +269,13 @@ def build_taxonomy_relation_hierarchy_overlay(
         "net_new_accepted_count": novel,
         "isolated_seed_reduction": len({x for pair in accepted_pairs for x in pair})
         - len({x for pair in base_accepted_pairs for x in pair}),
-        "union_pair_sha256": _sha(union_pairs),
+        "union_pair_sha256": sha256_json(union_pairs),
         "output_sha256": "0" * 64,
     }
     provisional = TaxonomyRelationHierarchyOverlay.model_construct(**payload)
-    payload["output_sha256"] = _sha(provisional.model_dump(mode="json", exclude={"output_sha256"}))
+    payload["output_sha256"] = sha256_json(
+        provisional.model_dump(mode="json", exclude={"output_sha256"})
+    )
     return TaxonomyRelationHierarchyOverlay.model_validate(payload)
 
 

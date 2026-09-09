@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import sqlite3
 from collections import defaultdict
 from contextlib import closing
 from typing import TYPE_CHECKING, Final
 
+from musix.common import sha256_file
 from musix.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     verify_release_group_evidence,
@@ -26,16 +26,6 @@ class LocalReleaseGroupNeighborComparisonError(ValueError):
     """Report an incomplete or mismatched local research input."""
 
 
-def _sha256_file(path: Path) -> tuple[str, int]:
-    digest = hashlib.sha256()
-    size = 0
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-            size += len(chunk)
-    return digest.hexdigest(), size
-
-
 def _read_only(path: Path) -> sqlite3.Connection:
     if not path.is_file():
         raise LocalReleaseGroupNeighborComparisonError(f"missing SQLite input: {path}")
@@ -50,7 +40,7 @@ def _verify_evidence(database: Path, artifact_path: Path) -> ReleaseGroupEvidenc
     except (OSError, ValueError) as error:
         raise LocalReleaseGroupNeighborComparisonError("invalid evidence artifact") from error
     verify_release_group_evidence(artifact)
-    if _sha256_file(database) != (
+    if sha256_file(database) != (
         artifact.evidence_database_sha256,
         artifact.evidence_database_bytes,
     ):
@@ -243,7 +233,7 @@ def compare_neighbors(
         },
         "evidence_artifact_sha256": artifact.output_sha256,
         "evidence_database_sha256": artifact.evidence_database_sha256,
-        "frozen_peer_index_sha256": _sha256_file(frozen_peer_index)[0],
+        "frozen_peer_index_sha256": sha256_file(frozen_peer_index)[0],
         "frozen_peer_artifact_output_sha256": frozen_artifact_sha,
         "support_seed_count": len(support_counts),
         "support_only_seed_count": len(support_only),

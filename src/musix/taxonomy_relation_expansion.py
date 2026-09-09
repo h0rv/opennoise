@@ -16,7 +16,6 @@ cycle are retained as abstentions with their provenance.
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import sqlite3
 import tempfile
@@ -28,6 +27,7 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, FiniteFloat, model_validator
 
+from musix.common import sha256_file, sha256_json
 from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 from musix.types import Sha256  # noqa: TC001  # Pydantic resolves this Annotated alias at runtime.
@@ -60,24 +60,6 @@ type EdgeReason = Literal[
 type FactualReplayKind = Literal["catalog_wikidata_p279_sqlite_v1"]
 
 
-def _canonical(value: object) -> bytes:
-    return json.dumps(
-        value, ensure_ascii=False, allow_nan=False, separators=(",", ":"), sort_keys=True
-    ).encode("utf-8")
-
-
-def _sha(value: object) -> Sha256:
-    return hashlib.sha256(_canonical(value)).hexdigest()
-
-
-def _sha_file(path: Path) -> Sha256:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 class ExactMusicBrainzGenreQidMapping(FrozenModel):
     """A direct identifier crosswalk, never a name-derived crosswalk."""
 
@@ -102,7 +84,7 @@ class RelationSourceCustodyReceipt(FrozenModel):
         """Make the response hash, byte object, and receipt identity agree."""
         if self.source_response_sha256 != self.object_sha256:
             raise ValueError("relation response hash must equal its immutable source object hash")
-        receipt = _sha(self.model_dump(mode="json", exclude={"receipt_sha256"}))
+        receipt = sha256_json(self.model_dump(mode="json", exclude={"receipt_sha256"}))
         if receipt != self.receipt_sha256:
             raise ValueError("relation source custody receipt hash does not replay")
         return self
@@ -124,7 +106,7 @@ def relation_source_custody_receipt(
         object_key=source_artifact.key,
         object_sha256=source_artifact.sha256,
         object_byte_size=source_artifact.byte_size,
-        receipt_sha256=_sha(provisional.model_dump(mode="json", exclude={"receipt_sha256"})),
+        receipt_sha256=sha256_json(provisional.model_dump(mode="json", exclude={"receipt_sha256"})),
     )
 
 
@@ -309,7 +291,7 @@ class TaxonomyRelationExpansionArtifact(FrozenModel):
     @model_validator(mode="after")
     def require_complete_artifact(self) -> TaxonomyRelationExpansionArtifact:
         """Bind policy, unique projection pairs, and the logical artifact hash."""
-        if _sha(self.policy.model_dump(mode="json")) != self.policy_sha256:
+        if sha256_json(self.policy.model_dump(mode="json")) != self.policy_sha256:
             raise ValueError("relation expansion policy hash does not replay")
         pairs = tuple((item.child_seed_id, item.parent_seed_id) for item in self.edges)
         if len(pairs) != len(set(pairs)):
@@ -419,7 +401,7 @@ class _ProjectedProposal:
 
 def taxonomy_relation_feed_output_sha256(feed: TaxonomyRelationFeed) -> Sha256:
     """Recompute an immutable relation-feed logical hash."""
-    return _sha(feed.model_dump(mode="json", exclude={"output_sha256"}))
+    return sha256_json(feed.model_dump(mode="json", exclude={"output_sha256"}))
 
 
 def build_taxonomy_relation_feed(
@@ -514,7 +496,7 @@ def _catalog_wikidata_p279_rows(path: Path) -> dict[int, tuple[str, str]]:
 
 def _catalog_row_sha256(relation_id: int, child_qid: str, parent_qid: str) -> Sha256:
     """Bind an observation to the exact canonical extraction record, not just source bytes."""
-    return _sha(
+    return sha256_json(
         {
             "revision": "catalog-wikidata-p279-sqlite-v1",
             "relation_id": relation_id,
@@ -584,7 +566,7 @@ def catalog_wikidata_p279_feed(path: Path, *, store: ObjectStore) -> TaxonomyRel
     relations.  Those can enter through a separately cached relation feed;
     this extractor deliberately does not invent them.
     """
-    database_sha = _sha_file(path)
+    database_sha = sha256_file(path)[0]
     source_write = store.push(
         path,
         ObjectKey(value=f"taxonomy-relation-expansion/source/sha256/{database_sha}.sqlite"),
@@ -828,7 +810,7 @@ def build_taxonomy_relation_expansion(
         factual_isolated_seed_count=isolated,
         factual_isolated_seed_reduction=len(seed_ids) - isolated,
     )
-    policy_sha = _sha(resolved.model_dump(mode="json"))
+    policy_sha = sha256_json(resolved.model_dump(mode="json"))
     preliminary = TaxonomyRelationExpansionArtifact.model_construct(
         taxonomy_output_sha256=taxonomy.output_sha256,
         relation_feed_output_sha256=feed.output_sha256,
@@ -855,7 +837,7 @@ def taxonomy_relation_expansion_output_sha256(
     artifact: TaxonomyRelationExpansionArtifact,
 ) -> Sha256:
     """Recompute the relation-expansion artifact's logical identity."""
-    return _sha(artifact.model_dump(mode="json", exclude={"output_sha256"}))
+    return sha256_json(artifact.model_dump(mode="json", exclude={"output_sha256"}))
 
 
 def _assert_dag(edges: tuple[TaxonomyRelationEdge, ...]) -> None:

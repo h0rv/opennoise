@@ -12,22 +12,22 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
-import os
-import tempfile
 import time
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Final, Literal, Protocol
+from typing import TYPE_CHECKING, Final, Literal, Protocol
 from uuid import UUID
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from musix.common import sha256_file, sha256_json, write_durable_bytes
 from musix.genre_seed_universe import normalize_label
 from musix.models import FrozenModel
 from musix.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _SHA256: Final = r"^[0-9a-f]{64}$"
 _REVIEW_DISPOSITIONS: Final = frozenset({"review_only", "ambiguous", "unresolved"})
@@ -60,38 +60,6 @@ class _LastFmResponseModel(BaseModel):
     """Parse an upstream response while ignoring fields outside this adapter."""
 
     model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
-
-
-def _canonical_json(value: object) -> bytes:
-    return json.dumps(
-        value, ensure_ascii=False, allow_nan=False, separators=(",", ":"), sort_keys=True
-    ).encode("utf-8")
-
-
-def _sha256(value: object) -> str:
-    return hashlib.sha256(_canonical_json(value)).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1_048_576):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _atomic_write(path: Path, payload: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, raw_temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary = Path(raw_temporary)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-        temporary.replace(path)
-    finally:
-        temporary.unlink(missing_ok=True)
 
 
 class LastFmReverseTagSettings(FrozenModel):
@@ -134,7 +102,7 @@ class LastFmReverseTagQuery(_StrictModel):
             self.source_item_id is not None or self.seed_name is not None
         ):
             raise ValueError("artist.getTopTags query cannot claim one seed")
-        expected = _sha256(self.model_dump(mode="json", exclude={"request_sha256"}))
+        expected = sha256_json(self.model_dump(mode="json", exclude={"request_sha256"}))
         if self.request_sha256 != expected:
             raise ValueError("Last.fm query hash does not match its descriptor")
         return self
@@ -151,7 +119,7 @@ def _tag_query(source_item_id: str, seed_name: str) -> LastFmReverseTagQuery:
     )
     return LastFmReverseTagQuery(
         **preliminary.model_dump(mode="python", exclude={"request_sha256"}),
-        request_sha256=_sha256(preliminary.model_dump(mode="json", exclude={"request_sha256"})),
+        request_sha256=sha256_json(preliminary.model_dump(mode="json", exclude={"request_sha256"})),
     )
 
 
@@ -166,7 +134,7 @@ def _artist_query(artist_mbid: str) -> LastFmReverseTagQuery:
     )
     return LastFmReverseTagQuery(
         **preliminary.model_dump(mode="python", exclude={"request_sha256"}),
-        request_sha256=_sha256(preliminary.model_dump(mode="json", exclude={"request_sha256"})),
+        request_sha256=sha256_json(preliminary.model_dump(mode="json", exclude={"request_sha256"})),
     )
 
 
@@ -186,7 +154,7 @@ class LastFmReverseTagQueryManifest(FrozenModel):
 
     @model_validator(mode="after")
     def _complete(self) -> LastFmReverseTagQueryManifest:
-        if self.settings_sha256 != _sha256(self.settings.model_dump(mode="json")):
+        if self.settings_sha256 != sha256_json(self.settings.model_dump(mode="json")):
             raise ValueError("Last.fm settings hash does not match settings")
         if len(self.queries) > self.settings.maximum_seed_labels:
             raise ValueError("Last.fm query manifest exceeds maximum_seed_labels")
@@ -195,7 +163,7 @@ class LastFmReverseTagQueryManifest(FrozenModel):
             raise ValueError("Last.fm tag queries must cover unique seed IDs")
         if any(query.method != "tag.getTopArtists" for query in self.queries):
             raise ValueError("initial Last.fm manifest may only contain tag queries")
-        expected = _sha256(self.model_dump(mode="json", exclude={"output_sha256"}))
+        expected = sha256_json(self.model_dump(mode="json", exclude={"output_sha256"}))
         if self.output_sha256 != expected:
             raise ValueError("Last.fm query manifest hash does not match its content")
         return self
@@ -284,7 +252,8 @@ class LastFmResponseCache:
             if existing.sha256 != hashlib.sha256(payload).hexdigest():
                 raise LastFmReverseTagError("Last.fm cache query maps to different immutable bytes")
             return existing
-        await asyncio.to_thread(_atomic_write, path, payload)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        await asyncio.to_thread(write_durable_bytes, path, payload)
         return CachedLastFmResponse(
             query=query,
             path=path,
@@ -755,13 +724,15 @@ class LastFmReverseTagAdapter:
             seed_reconciliation_output_sha256=reconciliation.output_sha256,
             seed_identity_sha256=reconciliation.seed_identity_sha256,
             settings=settings,
-            settings_sha256=_sha256(settings.model_dump(mode="json")),
+            settings_sha256=sha256_json(settings.model_dump(mode="json")),
             queries=queries,
             output_sha256="0" * 64,
         )
         return LastFmReverseTagQueryManifest(
             **preliminary.model_dump(mode="python", exclude={"output_sha256"}),
-            output_sha256=_sha256(preliminary.model_dump(mode="json", exclude={"output_sha256"})),
+            output_sha256=sha256_json(
+                preliminary.model_dump(mode="json", exclude={"output_sha256"})
+            ),
         )
 
     async def collect(
@@ -859,7 +830,7 @@ class LastFmReverseTagArtifact(FrozenModel):
 
     @model_validator(mode="after")
     def _complete(self) -> LastFmReverseTagArtifact:
-        if self.settings_sha256 != _sha256(self.settings.model_dump(mode="json")):
+        if self.settings_sha256 != sha256_json(self.settings.model_dump(mode="json")):
             raise ValueError("Last.fm artifact settings hash does not match settings")
         response_ids = tuple(item.query.request_sha256 for item in self.raw_responses)
         if len(response_ids) != len(set(response_ids)):
@@ -876,7 +847,7 @@ class LastFmReverseTagArtifact(FrozenModel):
             raise ValueError("Last.fm name-only review count does not match coverage")
         if len(self.abstentions) != self.coverage.abstention_count:
             raise ValueError("Last.fm abstention count does not match coverage")
-        expected = _sha256(self.model_dump(mode="json", exclude={"output_sha256"}))
+        expected = sha256_json(self.model_dump(mode="json", exclude={"output_sha256"}))
         if self.output_sha256 != expected:
             raise ValueError("Last.fm artifact hash does not match its content")
         return self
@@ -907,7 +878,8 @@ class LastFmReverseTagReceipt(FrozenModel):
 def write_lastfm_query_manifest(manifest: LastFmReverseTagQueryManifest, path: Path) -> str:
     """Write the initial reproducible query plan before any credentialed request."""
     payload = (manifest.model_dump_json(indent=2) + "\n").encode("utf-8")
-    _atomic_write(path, payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(path, payload)
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -925,7 +897,7 @@ def publish_lastfm_reverse_tag_evidence(
     store: ObjectStore,
 ) -> LastFmReverseTagReceipt:
     """Push raw responses first, then publish one review-only evidence artifact."""
-    manifest_sha256 = _sha256_file(query_manifest_path)
+    manifest_sha256 = sha256_file(query_manifest_path)[0]
     if (
         manifest_sha256
         != hashlib.sha256(
@@ -940,7 +912,7 @@ def publish_lastfm_reverse_tag_evidence(
     raw_rows: list[LastFmRawResponseObject] = []
     raw_writes: list[ObjectWrite] = []
     for response in collection.responses:
-        if _sha256_file(response.path) != response.sha256:
+        if sha256_file(response.path)[0] != response.sha256:
             raise LastFmReverseTagError("Last.fm cached raw response changed before publication")
         write = store.push(
             response.path,
@@ -965,11 +937,12 @@ def publish_lastfm_reverse_tag_evidence(
     )
     artifact = LastFmReverseTagArtifact(
         **preliminary.model_dump(mode="python", exclude={"output_sha256"}),
-        output_sha256=_sha256(preliminary.model_dump(mode="json", exclude={"output_sha256"})),
+        output_sha256=sha256_json(preliminary.model_dump(mode="json", exclude={"output_sha256"})),
     )
     gate = verify_lastfm_reverse_tag_artifact(artifact)
     payload = (artifact.model_dump_json(indent=2) + "\n").encode("utf-8")
-    _atomic_write(output_path, payload)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(output_path, payload)
     artifact_sha256 = hashlib.sha256(payload).hexdigest()
     artifact_write = store.push(
         output_path,

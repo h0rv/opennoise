@@ -13,20 +13,21 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-import os
 import re
-import tempfile
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Final, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Final, Literal, Protocol
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, model_validator
 
+from musix.common import canonical_json, sha256_file, sha256_hex, write_durable_bytes
 from musix.genre_seed_universe import SeedInput, normalize_label
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _REVISION: Final = "wikidata-genre-seed-resolver-v1"
 _SPARQL_ENDPOINT: Final = "https://query.wikidata.org/sparql"
@@ -304,7 +305,7 @@ class WikidataSparqlClient:
                 raise WikidataRequestError("cached SPARQL response is invalid") from error
             if cached.request_sha256 != request_sha256:
                 raise WikidataRequestError("cached SPARQL response does not match its request")
-            response_sha256 = self._hash(_canonical_json(cached.response))
+            response_sha256 = self._hash(canonical_json(cached.response))
             if cached.response_sha256 != response_sha256:
                 raise WikidataRequestError("cached SPARQL response hash is invalid")
             self.cache_hit_count += 1
@@ -347,14 +348,14 @@ class WikidataSparqlClient:
                     await self._backoff(attempt, None)
                     continue
                 break
-            response_sha256 = self._hash(_canonical_json(parsed))
+            response_sha256 = self._hash(canonical_json(parsed))
             cached = CachedSparqlResponse(
                 request_sha256=request_sha256,
                 response_sha256=response_sha256,
                 response=parsed,
             )
             cache_path.parent.mkdir(parents=True, exist_ok=True)
-            _write_atomic(cache_path, cached.model_dump_json(indent=2).encode() + b"\n")
+            write_durable_bytes(cache_path, cached.model_dump_json(indent=2).encode() + b"\n")
             return _RequestResult(parsed, request_sha256, response_sha256, cache_hit=False)
         raise WikidataRequestError(
             "Wikidata SPARQL request failed after bounded retries"
@@ -386,34 +387,6 @@ class _TaxonomyInference(_StrictModel):
 class _TaxonomyProjection(_StrictModel):
     seed_input: SeedInput
     inferences: tuple[_TaxonomyInference, ...]
-
-
-def _canonical_json(model: BaseModel) -> bytes:
-    return json.dumps(
-        model.model_dump(mode="json"), ensure_ascii=False, separators=(",", ":"), sort_keys=True
-    ).encode("utf-8")
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _write_atomic(path: Path, payload: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, raw_temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary = Path(raw_temporary)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-        temporary.replace(path)
-    finally:
-        temporary.unlink(missing_ok=True)
 
 
 def _projection(path: Path) -> tuple[SeedInput, dict[str, str]]:
@@ -508,7 +481,7 @@ def select_wikidata_seed_targets(
     if not targets:
         raise ValueError("source artifact has no unresolved or ambiguous names")
     return WikidataResolverInput(
-        source_artifact_sha256=_sha256_file(source_artifact),
+        source_artifact_sha256=sha256_file(source_artifact)[0],
         seed_artifact_sha256=seed.artifact_sha256,
         seed_count=len(seed.names),
         eligible_count=len(targets),
@@ -784,15 +757,18 @@ def write_wikidata_seed_resolution(
     candidates = output.with_name(f"{output.stem}.candidates.json")
     accepted = output.with_name(f"{output.stem}.accepted.json")
     abstentions = output.with_name(f"{output.stem}.abstentions.json")
-    _write_atomic(output, artifact.model_dump_json(indent=2).encode() + b"\n")
-    _write_atomic(
+    output.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(output, artifact.model_dump_json(indent=2).encode() + b"\n")
+    candidates.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(
         candidates,
         json.dumps(
             [item.model_dump(mode="json") for item in artifact.candidates], indent=2, sort_keys=True
         ).encode()
         + b"\n",
     )
-    _write_atomic(
+    accepted.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(
         accepted,
         json.dumps(
             [item.model_dump(mode="json") for item in artifact.accepted_exact_unique],
@@ -801,7 +777,8 @@ def write_wikidata_seed_resolution(
         ).encode()
         + b"\n",
     )
-    _write_atomic(
+    abstentions.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(
         abstentions,
         json.dumps(
             [item.model_dump(mode="json") for item in artifact.abstentions],
@@ -821,7 +798,7 @@ def publish_wikidata_seed_resolution(
     files = (main, candidates, accepted, abstentions)
     writes: list[ObjectWrite] = []
     for path in files:
-        digest = _sha256_file(path)
+        digest = sha256_file(path)[0]
         write = store.push(path, ObjectKey(value=f"wikidata-seed-resolution/{digest}/{path.name}"))
         if write.sha256 != digest:
             raise ValueError("object store changed Wikidata resolver artifact")
@@ -875,5 +852,6 @@ def write_wikidata_public_anchor_merge(
     if artifact.output_sha256 != expected:
         raise ValueError("Wikidata public anchor merge hash is invalid")
     payload = artifact.model_dump_json(indent=2).encode() + b"\n"
-    _write_atomic(output, payload)
-    return hashlib.sha256(payload).hexdigest(), len(payload)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    write_durable_bytes(output, payload)
+    return sha256_hex(payload), len(payload)

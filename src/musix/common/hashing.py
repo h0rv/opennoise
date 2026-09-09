@@ -24,6 +24,11 @@ def sha256_hex(payload: bytes) -> Sha256:
     return hashlib.sha256(payload).hexdigest()
 
 
+def sha256_json(value: object) -> Sha256:
+    """Hash a JSON-compatible value in canonical form."""
+    return sha256_hex(canonical_json(value))
+
+
 def sha256_file(path: Path) -> tuple[Sha256, int]:
     """Hash a file by streaming, returning its digest and byte count."""
     digest = hashlib.sha256()

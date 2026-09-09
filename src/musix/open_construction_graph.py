@@ -12,21 +12,22 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import os
 import sqlite3
-import tempfile
 from collections import defaultdict, deque
 from contextlib import closing
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Final, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, model_validator
 
+from musix.common import sha256_file, sha256_hex, sha256_json, write_durable_bytes
 from musix.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact, SeedTaxonomyInference
 from musix.genre_seed_universe import SeedInput, load_seed_input
 from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _REVISION: Final = "open-construction-graph-v1"
 _GENERIC_TOKENS: Final[frozenset[str]] = frozenset(
@@ -242,27 +243,6 @@ class _CatalogNode:
     name: str
 
 
-def _sha256_bytes(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _canonical_json(value: OpenConstructionGraphArtifact) -> bytes:
-    return json.dumps(
-        value.model_dump(mode="json", exclude={"output_sha256"}),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode()
-
-
 def assert_no_prohibited_construction_fields(value: object) -> None:
     """Fail if a constructed artifact contains a forbidden input-shaped field.
 
@@ -361,7 +341,7 @@ def _would_make_cycle(child: str, parent: str, parents: dict[str, set[str]]) -> 
 
 
 def _edge_id(source: str, target: str, kind: str, evidence: OpenGraphEdgeEvidence) -> str:
-    return _sha256_bytes(
+    return sha256_hex(
         json.dumps(
             {
                 "source": source,
@@ -408,7 +388,7 @@ def _components(
         ]
         components.append(
             OpenGraphComponent(
-                component_id=_sha256_bytes("\x1f".join(members).encode()),
+                component_id=sha256_hex("\x1f".join(members).encode()),
                 node_ids=members,
                 edge_count=len(component_edges),
                 factual_edge_count=sum(edge.factual_relationship for edge in component_edges),
@@ -507,7 +487,7 @@ def build_open_construction_graph(  # noqa: C901
     _assert_taxonomy_matches_seed(seed, taxonomy)
     assert_no_prohibited_construction_fields(taxonomy)
     catalog_nodes, relations = _read_public_catalog(public_catalog_database)
-    catalog_sha = _sha256_file(public_catalog_database)
+    catalog_sha = sha256_file(public_catalog_database)[0]
     if taxonomy.public_catalog.database_sha256 != catalog_sha:
         raise ValueError("taxonomy artifact public catalog hash does not match graph catalog input")
 
@@ -654,7 +634,11 @@ def build_open_construction_graph(  # noqa: C901
         output_sha256="0" * 64,
     )
     return preliminary.model_copy(
-        update={"output_sha256": _sha256_bytes(_canonical_json(preliminary))}
+        update={
+            "output_sha256": sha256_json(
+                preliminary.model_dump(mode="json", exclude={"output_sha256"})
+            )
+        }
     )
 
 
@@ -676,7 +660,9 @@ def verify_open_construction_graph(
     artifact: OpenConstructionGraphArtifact,
 ) -> OpenConstructionGraphGate:
     """Verify hash, coverage, review boundary, and deterministic serialization."""
-    if artifact.output_sha256 != _sha256_bytes(_canonical_json(artifact)):
+    if artifact.output_sha256 != sha256_json(
+        artifact.model_dump(mode="json", exclude={"output_sha256"})
+    ):
         raise ValueError("open construction graph logical hash does not match content")
     assert_no_prohibited_construction_fields(artifact)
     if (
@@ -691,9 +677,6 @@ def verify_open_construction_graph(
         for edge in artifact.edges
     ):
         raise ValueError("review anchor cannot point to itself")
-    # Hash twice to make a serialization replay failure observable before publication.
-    if _sha256_bytes(_canonical_json(artifact)) != _sha256_bytes(_canonical_json(artifact)):
-        raise ValueError("open construction graph serialization is not deterministic")
     return OpenConstructionGraphGate(
         artifact_output_sha256=artifact.output_sha256,
         node_count=len(artifact.nodes),
@@ -709,17 +692,8 @@ def write_open_construction_graph(
     verify_open_construction_graph(artifact)
     payload = (artifact.model_dump_json(indent=2) + "\n").encode()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, name = tempfile.mkstemp(prefix=f".{output_path.name}.", dir=output_path.parent)
-    temporary = Path(name)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-        temporary.replace(output_path)
-    finally:
-        temporary.unlink(missing_ok=True)
-    return _sha256_bytes(payload), len(payload)
+    write_durable_bytes(output_path, payload)
+    return sha256_hex(payload), len(payload)
 
 
 def publish_open_construction_graph(

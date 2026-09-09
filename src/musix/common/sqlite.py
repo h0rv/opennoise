@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
-from typing import TYPE_CHECKING
+import tempfile
+from pathlib import Path
 from uuid import uuid4
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def connect_readonly(path: Path) -> sqlite3.Connection:
@@ -28,3 +27,16 @@ def write_atomic_bytes(path: Path, payload: bytes) -> None:
         temporary.replace(path)
     finally:
         temporary.unlink(missing_ok=True)
+
+
+def write_durable_bytes(path: Path, payload: bytes) -> None:
+    """Write bytes atomically and fsync before publishing."""
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        Path(temporary_name).replace(path)
+    finally:
+        Path(temporary_name).unlink(missing_ok=True)

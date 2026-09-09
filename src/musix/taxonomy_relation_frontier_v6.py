@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import tempfile
 from dataclasses import dataclass
@@ -12,6 +11,7 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
+from musix.common import sha256_file, sha256_json
 from musix.evidence_frontier import (
     AllSeedEvidenceFrontierArtifact,
     EvidenceFrontierCoverage,
@@ -27,22 +27,6 @@ from musix.types import Sha256  # noqa: TC001
 
 _REVISION = "all-seed-evidence-frontier-v6-taxonomy-overlay"
 _SEED_COUNT = 6_291
-
-
-def _sha(value: object) -> Sha256:
-    return hashlib.sha256(
-        json.dumps(
-            value, ensure_ascii=False, allow_nan=False, separators=(",", ":"), sort_keys=True
-        ).encode()
-    ).hexdigest()
-
-
-def _sha_file(path: Path) -> Sha256:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while block := stream.read(1024 * 1024):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 class TaxonomyRelationFrontierSeedSupport(FrozenModel):
@@ -96,7 +80,7 @@ class TaxonomyRelationFrontierV6(FrozenModel):
         ids = tuple(row.source_item_id for row in self.support_rows)
         if ids != tuple(sorted(ids)) or len(set(ids)) != _SEED_COUNT:
             raise ValueError("v6 factual support must cover every v5 seed once in sorted order")
-        if self.preserved_v5_coverage_sha256 != _sha(
+        if self.preserved_v5_coverage_sha256 != sha256_json(
             self.preserved_v5_coverage.model_dump(mode="json")
         ):
             raise ValueError("v6 preserved v5 coverage hash does not replay")
@@ -108,7 +92,10 @@ class TaxonomyRelationFrontierV6(FrozenModel):
             self.hierarchy_base_candidate_count + self.hierarchy_net_new_accepted_count
         ):
             raise ValueError("v6 hierarchy candidate union must be monotonic and exact")
-        if _sha(self.model_dump(mode="json", exclude={"output_sha256"})) != self.output_sha256:
+        if (
+            sha256_json(self.model_dump(mode="json", exclude={"output_sha256"}))
+            != self.output_sha256
+        ):
             raise ValueError("v6 compact frontier logical hash does not replay")
         return self
 
@@ -144,7 +131,7 @@ def _verify_inputs(
         raise ValueError("v5 receipt does not match its explicit trust root")
     if inputs.overlay_receipt_sha256 != inputs.expected_overlay_receipt_sha256:
         raise ValueError("overlay receipt does not match its explicit trust root")
-    if inputs.v5_receipt.artifact_sha256 != _sha_file(inputs.v5_path):
+    if inputs.v5_receipt.artifact_sha256 != sha256_file(inputs.v5_path)[0]:
         raise ValueError("v5 local bytes do not match receipt")
     v5_meta = inputs.v5_object_store.inspect(ObjectKey(value=inputs.v5_receipt.object_key))
     if (
@@ -152,7 +139,7 @@ def _verify_inputs(
         or v5_meta.byte_size != inputs.v5_receipt.artifact_byte_size
     ):
         raise ValueError("v5 object does not match receipt")
-    if inputs.overlay_receipt.artifact_sha256 != _sha_file(inputs.overlay_path):
+    if inputs.overlay_receipt.artifact_sha256 != sha256_file(inputs.overlay_path)[0]:
         raise ValueError("overlay local bytes do not match receipt")
     overlay_meta = inputs.overlay_object_store.inspect(inputs.overlay_receipt.artifact.key)
     if (
@@ -195,7 +182,7 @@ def build_taxonomy_relation_frontier_v6(inputs: FrontierV6Inputs) -> TaxonomyRel
         "base_v5_object_sha256": inputs.v5_receipt.artifact_sha256,
         "base_v5_object_byte_size": inputs.v5_receipt.artifact_byte_size,
         "preserved_v5_coverage": v5.coverage,
-        "preserved_v5_coverage_sha256": _sha(v5.coverage.model_dump(mode="json")),
+        "preserved_v5_coverage_sha256": sha256_json(v5.coverage.model_dump(mode="json")),
         "hierarchy_overlay_logical_output_sha256": overlay.output_sha256,
         "hierarchy_overlay_receipt_sha256": inputs.overlay_receipt_sha256,
         "hierarchy_overlay_object_key": inputs.overlay_receipt.artifact.key,
@@ -211,7 +198,9 @@ def build_taxonomy_relation_frontier_v6(inputs: FrontierV6Inputs) -> TaxonomyRel
         "output_sha256": "0" * 64,
     }
     provisional = TaxonomyRelationFrontierV6.model_construct(**payload)
-    payload["output_sha256"] = _sha(provisional.model_dump(mode="json", exclude={"output_sha256"}))
+    payload["output_sha256"] = sha256_json(
+        provisional.model_dump(mode="json", exclude={"output_sha256"})
+    )
     return TaxonomyRelationFrontierV6.model_validate(payload)
 
 
