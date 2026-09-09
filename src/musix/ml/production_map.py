@@ -43,7 +43,6 @@ _MINIMUM_ORDERABLE_ITEMS = 2
 _LOCAL_LAYOUT_ITERATIONS = 80
 _LOCAL_LAYOUT_STEP = 0.035
 _LOCAL_LAYOUT_REPULSION = 0.00018
-_GLOBAL_LAYOUT_ITERATIONS = 180
 _QA_GRID_COLUMNS = 16
 _QA_GRID_ROWS = 9
 _NORMALIZED_LAYOUT_MARGIN = 0.02
@@ -481,48 +480,6 @@ def _similarity_first_positions(
     # semantic zoom and explanation without bending similarity geometry.
     del similarity
     return positions
-
-
-def _global_force_positions(
-    positions: Mapping[str, tuple[float, float]],
-    similarity: Mapping[EdgeKey, tuple[float, int]],
-) -> dict[str, tuple[float, float]]:
-    """Run a bounded deterministic weighted spring candidate on public affinity."""
-    result = dict(positions)
-    ordered = tuple(sorted(result))
-    for iteration in range(_GLOBAL_LAYOUT_ITERATIONS):
-        forces = {genre_id: [0.0, 0.0] for genre_id in ordered}
-        for (left, right), (weight, _shared) in similarity.items():
-            left_x, left_y = result[left]
-            right_x, right_y = result[right]
-            delta_x = right_x - left_x
-            delta_y = right_y - left_y
-            distance = math.hypot(delta_x, delta_y) + 1e-9
-            scale = weight * distance
-            forces[left][0] += delta_x / distance * scale
-            forces[left][1] += delta_y / distance * scale
-            forces[right][0] -= delta_x / distance * scale
-            forces[right][1] -= delta_y / distance * scale
-        for offset, left in enumerate(ordered):
-            left_x, left_y = result[left]
-            for right in ordered[offset + 1 :]:
-                right_x, right_y = result[right]
-                delta_x = left_x - right_x
-                delta_y = left_y - right_y
-                scale = _LOCAL_LAYOUT_REPULSION / (delta_x * delta_x + delta_y * delta_y + 1e-6)
-                forces[left][0] += delta_x * scale
-                forces[left][1] += delta_y * scale
-                forces[right][0] -= delta_x * scale
-                forces[right][1] -= delta_y * scale
-        step = _LOCAL_LAYOUT_STEP * (1 - iteration / _GLOBAL_LAYOUT_ITERATIONS)
-        for genre_id in ordered:
-            x, y = result[genre_id]
-            force_x, force_y = forces[genre_id]
-            result[genre_id] = (
-                min(_NORMALIZED_LAYOUT_MAXIMUM, max(_NORMALIZED_LAYOUT_MARGIN, x + force_x * step)),
-                min(_NORMALIZED_LAYOUT_MAXIMUM, max(_NORMALIZED_LAYOUT_MARGIN, y + force_y * step)),
-            )
-    return _separate_coordinate_collisions(result)
 
 
 def _separate_coordinate_collisions(
