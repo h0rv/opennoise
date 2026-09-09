@@ -21,7 +21,6 @@ from musix.evidence.evidence_frontier import (
     AllSeedEvidenceFrontierArtifact,
     verify_all_seed_evidence_frontier,
 )
-from musix.models import FrozenModel
 from musix.ingest.musicbrainz.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     verify_release_group_evidence,
@@ -30,6 +29,7 @@ from musix.ingest.musicbrainz.musicbrainz_reviewed_alias_context import (
     ReviewedAliasContextArtifact,
     verify_reviewed_alias_context_artifact,
 )
+from musix.models import FrozenModel
 from musix.peers.support.release_group_support_peer import SupportPeerArtifact, logical_sha
 from musix.taxonomy.relations.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionArtifact,

@@ -12,12 +12,11 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
-from musix.taxonomy.structure.genre_hierarchy_candidates import (
-    GenreHierarchyCandidateArtifact,
-    verify_genre_hierarchy_candidates,
-)
 from musix.models import FrozenModel
-from musix.peers.similarity.peer_similarity import GenrePeerSimilarityArtifact, peer_similarity_output_sha256
+from musix.peers.similarity.peer_similarity import (
+    GenrePeerSimilarityArtifact,
+    peer_similarity_output_sha256,
+)
 from musix.public_artist_membership import (
     ApprovedPublicMembershipInput,
     PublicArtistMembershipCandidateArtifact,
@@ -28,16 +27,22 @@ from musix.public_taxonomy_expansion import (
     PublicTaxonomyExpansionArtifact,
     verify_public_taxonomy_expansion,
 )
+from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 from musix.taxonomy.seeds.seed_reconciliation import (
     ReconciledIdentity,
     ReconciliationDisposition,
     SeedReconciliationArtifact,
     verify_seed_reconciliation,
 )
-from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+from musix.taxonomy.structure.genre_hierarchy_candidates import (
+    GenreHierarchyCandidateArtifact,
+    verify_genre_hierarchy_candidates,
+)
 
 if TYPE_CHECKING:
-    from musix.ingest.listenbrainz.listenbrainz_propagation import ListenBrainzPropagationFrontierSummary
+    from musix.ingest.listenbrainz.listenbrainz_propagation import (
+        ListenBrainzPropagationFrontierSummary,
+    )
     from musix.models.modeling import PublicModelInput
     from musix.public_artist_membership_adapter import CertifiedPublicMembershipAdapterReceipt
 

@@ -23,13 +23,16 @@ import numpy as np
 from pydantic import Field, model_validator
 from scipy.optimize import minimize
 
-from musix.models import FrozenModel
 from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
     verify_seed_target_artifact,
 )
-from musix.taxonomy.seeds.seed_reconciliation import SeedReconciliationArtifact, verify_seed_reconciliation
+from musix.models import FrozenModel
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
+from musix.taxonomy.seeds.seed_reconciliation import (
+    SeedReconciliationArtifact,
+    verify_seed_reconciliation,
+)
 
 _REVISION: Final = "learned-label-alignment-v1"
 _SHA256: Final = r"^[0-9a-f]{64}$"
