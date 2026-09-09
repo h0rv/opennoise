@@ -19,7 +19,7 @@ from musix.peers.support.release_group_support_peer import (
     file_sha,
     logical_sha,
 )
-from musix.spotify_bridge_artifact import (
+from musix.ingest.spotify.spotify_bridge_artifact import (
     iter_accepted_spotify_to_musicbrainz,
     load_receipted_musicbrainz_spotify_bridge,
 )

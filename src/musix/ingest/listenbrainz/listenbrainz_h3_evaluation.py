@@ -26,7 +26,7 @@ from musix.evidence.evidence_frontier import (
 )
 from musix.ingest.listenbrainz.listenbrainz_propagation import ListenBrainzPropagationReceipt
 from musix.models import FrozenModel
-from musix.spotify_bridge_artifact import (
+from musix.ingest.spotify.spotify_bridge_artifact import (
     iter_accepted_spotify_to_musicbrainz,
     load_receipted_musicbrainz_spotify_bridge,
 )

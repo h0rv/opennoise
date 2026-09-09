@@ -9,7 +9,6 @@ by the original file.  The loader never calls ``read_bytes`` on the artifact.
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import sqlite3
 import tempfile
@@ -22,8 +21,8 @@ from typing import TYPE_CHECKING, Final, Literal, overload, override
 import ijson
 from pydantic import Field
 
-from musix.models import FrozenModel
-from musix.musicbrainz_spotify_bridge import (
+from musix.common import canonical_json, sha256_file
+from musix.ingest.spotify.musicbrainz_spotify_bridge import (
     MusicBrainzSpotifyBridgeArtifact,
     SpotifyBridgeConflict,
     SpotifyBridgeCounters,
@@ -32,6 +31,7 @@ from musix.musicbrainz_spotify_bridge import (
     SpotifyBridgeSettings,
     settings_sha256,
 )
+from musix.models import FrozenModel
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -79,7 +79,7 @@ class _StreamingRows[T: FrozenModel](Sequence[T]):
         with self._path.open("rb") as stream:
             for raw in ijson.items(stream, f"{self._prefix}.item", use_float=True):
                 count += 1
-                yield self._model.model_validate_json(_canonical(raw))
+                yield self._model.model_validate_json(canonical_json(raw))
         if count != self._count:
             raise SpotifyBridgeArtifactError(
                 f"streamed {self._prefix} count {count} does not match parsed count {self._count}"
@@ -122,16 +122,6 @@ class LoadedSpotifyBridgeArtifact:
         """Remove the private verified snapshot when this artifact owns it."""
         if self.snapshot_owned:
             self.path.unlink(missing_ok=True)
-
-
-def _canonical(value: object) -> bytes:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        allow_nan=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
 
 
 @dataclass(slots=True)
@@ -190,7 +180,7 @@ def _logical_sha256(path: Path) -> str:  # noqa: C901, PLR0912, PLR0915
                 if not frame.first:
                     digest.update(b",")
                 frame.first = False
-                digest.update(_canonical(value))
+                digest.update(canonical_json(value))
                 digest.update(b":")
                 frame.expecting_value = True
                 continue
@@ -206,7 +196,7 @@ def _logical_sha256(path: Path) -> str:  # noqa: C901, PLR0912, PLR0915
                 continue
             if event in {"string", "number", "boolean", "null"}:
                 before_value()
-                digest.update(_canonical(value))
+                digest.update(canonical_json(value))
                 continue
             if event == "end_map":
                 if not frames or frames[-1].kind != "map" or frames[-1].expecting_value:
@@ -228,21 +218,13 @@ def _logical_sha256(path: Path) -> str:  # noqa: C901, PLR0912, PLR0915
     return digest.hexdigest()
 
 
-def _byte_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while block := stream.read(1_048_576):
-            digest.update(block)
-    return digest.hexdigest()
-
-
 def _require_expected_sha256(actual: str, expected: str) -> None:
     if actual != expected:
         raise SpotifyBridgeArtifactError("bridge changed while its receipt snapshot was copied")
 
 
 def _require_unchanged_bridge(path: Path, expected_sha256: str) -> None:
-    if _byte_sha256(path) != expected_sha256:
+    if sha256_file(path)[0] != expected_sha256:
         raise SpotifyBridgeArtifactError("bridge changed while it was being verified")
 
 
@@ -338,11 +320,11 @@ def load_receipted_musicbrainz_spotify_bridge(
     path: Path, receipt_path: Path, expected_receipt_sha256: str
 ) -> LoadedSpotifyBridgeArtifact:
     """Load only a bridge whose immutable publication receipt binds its bytes."""
-    if _byte_sha256(receipt_path) != expected_receipt_sha256:
+    if sha256_file(receipt_path)[0] != expected_receipt_sha256:
         raise SpotifyBridgeArtifactError("bridge receipt bytes do not match declared trust root")
     with receipt_path.open("rb") as stream:
         receipt = SpotifyBridgePublicationReceipt.model_validate_json(stream.read())
-    before = _byte_sha256(path)
+    before = sha256_file(path)[0]
     if before != receipt.artifact_sha256 or before != receipt.artifact.sha256:
         raise SpotifyBridgeArtifactError("bridge bytes do not match publication receipt")
     snapshot = _snapshot_file(path, before, prefix="musix-verified-bridge-")

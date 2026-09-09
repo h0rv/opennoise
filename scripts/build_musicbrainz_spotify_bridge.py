@@ -8,7 +8,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.musicbrainz_spotify_bridge import (
+from musix.ingest.spotify.musicbrainz_spotify_bridge import (
     SpotifyBridgeSettings,
     build_musicbrainz_spotify_bridge,
     publish_musicbrainz_spotify_bridge,

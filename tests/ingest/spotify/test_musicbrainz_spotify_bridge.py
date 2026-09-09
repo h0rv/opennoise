@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.musicbrainz_spotify_bridge import (
+from musix.ingest.spotify.musicbrainz_spotify_bridge import (
     MusicBrainzSpotifyBridgeError,
     SpotifyBridgeSettings,
     bridge_artifact_sha256,

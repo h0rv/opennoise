@@ -1,6 +1,5 @@
 """Build explainable artist-to-genre memberships from preserved source evidence."""
 
-import hashlib
 import json
 import math
 import sqlite3
@@ -8,14 +7,15 @@ from collections import defaultdict
 from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Literal
 
 from pydantic import Field, FiniteFloat, JsonValue, TypeAdapter, field_validator, model_validator
 
+from musix.common import sha256_hex
 from musix.models import FrozenModel
 from musix.sources.musicbrainz import ArtistGenreRelationship
+from musix.types import Sha256  # Pydantic resolves this Annotated alias at runtime.
 
-type Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 type EvidenceKind = Literal["direct_source_claim", "release_group_propagation"]
 type MembershipMethod = Literal["direct_evidence", "release_propagation"]
 type SimilarityMetric = Literal["weighted_jaccard", "weighted_cosine"]
@@ -25,10 +25,6 @@ MEMBERSHIP_METHOD_ADAPTER: TypeAdapter[MembershipMethod] = TypeAdapter(Membershi
 
 def _canonical_json(value: JsonValue) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-
-
-def _sha256(value: str) -> Sha256:
-    return hashlib.sha256(value.encode()).hexdigest()
 
 
 @contextmanager
@@ -76,7 +72,7 @@ class ArtistGenreEvidence(FrozenModel):
 
     def fingerprint(self) -> Sha256:
         """Hash the entire normalized claim so repeated ingestion is idempotent."""
-        return _sha256(_canonical_json(self.model_dump(mode="json")))
+        return sha256_hex(_canonical_json(self.model_dump(mode="json")).encode())
 
 
 class DirectArtistGenreProjection(FrozenModel):
@@ -301,7 +297,7 @@ def representation_similarity(
         left_ref=left.entity_ref,
         right_ref=right.entity_ref,
         score=score,
-        manifest_sha256=_sha256(manifest_json),
+        manifest_sha256=sha256_hex(manifest_json.encode()),
         contributing_features=ordered,
     )
 
@@ -545,7 +541,7 @@ class ArtistGenreRepository:
             (request.run_ref,),
         ).fetchone()
         manifest_json = _canonical_json(request.manifest.model_dump(mode="json"))
-        manifest_sha256 = _sha256(manifest_json)
+        manifest_sha256 = sha256_hex(manifest_json.encode())
         evidence_rows = self._eligible_evidence(request.manifest)
         input_fingerprint = self._input_fingerprint(
             request.manifest.method, manifest_sha256, evidence_rows
@@ -675,7 +671,7 @@ class ArtistGenreRepository:
             "manifest_sha256": manifest_sha256,
             "evidence": [[row[index] for index in range(len(row))] for row in rows],
         }
-        return _sha256(_canonical_json(payload))
+        return sha256_hex(_canonical_json(payload).encode())
 
     def _load_artifact(
         self,

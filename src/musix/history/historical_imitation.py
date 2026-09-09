@@ -33,7 +33,7 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     verify_seed_target_artifact,
 )
 from musix.models import FrozenModel
-from musix.spotify_bridge_artifact import (
+from musix.ingest.spotify.spotify_bridge_artifact import (
     LoadedSpotifyBridgeArtifact,
     iter_accepted_spotify_to_musicbrainz,
 )

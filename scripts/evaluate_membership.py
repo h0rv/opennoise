@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import Field, field_validator
 
-from musix.membership import (
+from musix.evidence.membership import (
     EvaluationClaim,
     EvaluationPrediction,
     MembershipEvaluation,

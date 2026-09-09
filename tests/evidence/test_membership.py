@@ -7,7 +7,7 @@ from typing import override
 
 from pydantic import ValidationError
 
-from musix.membership import (
+from musix.evidence.membership import (
     ArtistGenreEvidence,
     ArtistGenreRepository,
     DirectArtistGenreProjection,
@@ -27,7 +27,7 @@ from musix.membership import (
 from musix.sources.musicbrainz import AdapterLimits, iter_artist_jsonl
 from scripts.evaluate_membership import EvaluationDocument, evaluate_document
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 MIGRATIONS = tuple(sorted((ROOT / "migrations").glob("[0-9][0-9][0-9][0-9]_*.sql")))
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
 ARTIST_FIXTURE = ROOT / "tests" / "fixtures" / "musicbrainz_artists.jsonl"

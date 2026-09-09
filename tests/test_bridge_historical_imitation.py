@@ -25,7 +25,7 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.musicbrainz_spotify_bridge import (
+from musix.ingest.spotify.musicbrainz_spotify_bridge import (
     bridge_artifact_sha256,
     build_musicbrainz_spotify_bridge,
     write_musicbrainz_spotify_bridge,
@@ -37,7 +37,7 @@ from musix.taxonomy.open.open_tag_feature_matrix import (
     publish_open_tag_feature_matrix,
     write_open_tag_feature_matrix_artifact,
 )
-from musix.spotify_bridge_artifact import (
+from musix.ingest.spotify.spotify_bridge_artifact import (
     SpotifyBridgeArtifactError,
     load_musicbrainz_spotify_bridge,
 )

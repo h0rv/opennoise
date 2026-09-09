@@ -16,7 +16,7 @@ from musix.history.historical_imitation import (
 )
 from musix.ingest.musicbrainz.musicbrainz_seed_targets import load_seed_target_artifact
 from musix.taxonomy.open.open_tag_feature_matrix import load_receipted_open_tag_feature_matrix
-from musix.spotify_bridge_artifact import load_receipted_musicbrainz_spotify_bridge
+from musix.ingest.spotify.spotify_bridge_artifact import load_receipted_musicbrainz_spotify_bridge
 from musix.storage import LocalObjectStore
 
 
