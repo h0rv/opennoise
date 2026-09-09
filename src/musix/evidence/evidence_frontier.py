@@ -37,7 +37,7 @@ from musix.taxonomy.seed_reconciliation import (
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 
 if TYPE_CHECKING:
-    from musix.ingest.listenbrainz_propagation import ListenBrainzPropagationFrontierSummary
+    from musix.ingest.listenbrainz.listenbrainz_propagation import ListenBrainzPropagationFrontierSummary
     from musix.models.modeling import PublicModelInput
     from musix.public_artist_membership_adapter import CertifiedPublicMembershipAdapterReceipt
 

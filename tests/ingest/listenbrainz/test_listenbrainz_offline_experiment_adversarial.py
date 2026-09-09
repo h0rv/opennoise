@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from musix.ingest.listenbrainz_offline_experiment import (
+from musix.ingest.listenbrainz.listenbrainz_offline_experiment import (
     _is_musicbrainz_artist_id,
     _metrics_from_rankings,
     _pair_window_support,

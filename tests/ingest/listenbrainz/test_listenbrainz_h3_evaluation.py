@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from musix.ingest.listenbrainz_h3_evaluation import (
+from musix.ingest.listenbrainz.listenbrainz_h3_evaluation import (
     ListenBrainzH3EvaluationCoverage,
     ListenBrainzH3EvaluationMetrics,
 )

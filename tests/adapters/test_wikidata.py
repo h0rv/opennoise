@@ -17,7 +17,7 @@ from musix.adapters.wikidata import (
     parse_truthy_line,
     write_genre_outputs,
 )
-from musix.ingest.ingest import parse_catalog_record
+from musix.ingest.jsonl import parse_catalog_record
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"

@@ -26,7 +26,7 @@ from musix.history.historical_compatibility import (
     publish_historical_compatibility,
     write_compatibility_receipt,
 )
-from musix.ingest.ingest import ImportOptions, import_jsonl_sync
+from musix.ingest.jsonl import ImportOptions, import_jsonl_sync
 from musix.models.historical import HistoricalH3SourceManifest, HistoricalMembershipProjection
 from musix.storage import LocalObjectStore
 

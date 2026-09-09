@@ -6,7 +6,7 @@ from uuid import UUID
 import httpx
 
 from musix.db import Database
-from musix.ingest.musicbrainz_release_hydration import (
+from musix.ingest.musicbrainz.musicbrainz_release_hydration import (
     HydrationSettings,
     MusicBrainzHydrationError,
     MusicBrainzReleaseTrackHydrationAdapter,

@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from musix.storage import LocalObjectStore, ObjectKey
-from musix.ingest.wikidata_seed_resolver import (
+from musix.ingest.wikidata.wikidata_seed_resolver import (
     merge_wikidata_public_anchors,
     write_wikidata_public_anchor_merge,
 )

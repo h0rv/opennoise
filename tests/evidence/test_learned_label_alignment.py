@@ -9,7 +9,7 @@ from musix.evidence.learned_label_alignment import (
     build_learned_label_alignment,
     verify_learned_label_alignment,
 )
-from musix.ingest.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,

@@ -9,7 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Literal, cast
 
-from musix.ingest.listenbrainz_propagation import (
+from musix.ingest.listenbrainz.listenbrainz_propagation import (
     ListenBrainzPropagationSettings,
     PropagationInputFingerprint,
     build_listenbrainz_propagation,
@@ -18,7 +18,10 @@ from musix.ingest.listenbrainz_propagation import (
     publish_listenbrainz_propagation,
     verify_listenbrainz_propagation,
 )
-from musix.ingest.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact, SeedTargetEvidence
+from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
+    MusicBrainzSeedTargetArtifact,
+    SeedTargetEvidence,
+)
 from musix.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,

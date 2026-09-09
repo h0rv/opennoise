@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from musix.storage import LocalObjectStore
-from musix.ingest.wikidata_seed_resolver import (
+from musix.ingest.wikidata.wikidata_seed_resolver import (
     WikidataResolverConfig,
     publish_wikidata_seed_resolution,
     resolve_wikidata_seed_batch,

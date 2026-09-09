@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 
 from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
-from musix.ingest.musicbrainz_coverage import CoverageMatch, CoverageReport
-from musix.ingest.musicbrainz_research_graph import (
+from musix.ingest.musicbrainz.musicbrainz_coverage import CoverageMatch, CoverageReport
+from musix.ingest.musicbrainz.musicbrainz_research_graph import (
     ResearchGraphBuildConfig,
     build_gate,
     build_musicbrainz_research_graph,

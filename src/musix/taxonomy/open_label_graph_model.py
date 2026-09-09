@@ -27,7 +27,7 @@ from pydantic import Field, model_validator
 from scipy.optimize import minimize
 
 from musix.models import FrozenModel
-from musix.ingest.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,

@@ -16,7 +16,7 @@ from typing import Final, Literal
 
 from pydantic import Field, FiniteFloat, model_validator
 
-from musix.ingest.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
     SeedTargetEvidence,
     verify_seed_target_artifact,

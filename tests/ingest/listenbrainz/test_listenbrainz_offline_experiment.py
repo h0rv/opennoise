@@ -4,7 +4,9 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from musix.ingest.listenbrainz_offline_experiment import evaluate_listenbrainz_offline_experiment
+from musix.ingest.listenbrainz.listenbrainz_offline_experiment import (
+    evaluate_listenbrainz_offline_experiment,
+)
 
 _NOVEL_REFERENCE_COUNT = 2
 _A = "00000000-0000-4000-8000-000000000001"

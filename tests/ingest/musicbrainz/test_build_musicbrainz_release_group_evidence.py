@@ -4,7 +4,7 @@ import io
 import unittest
 from contextlib import redirect_stderr
 
-from musix.ingest.musicbrainz_release_group_evidence import ReleaseGroupEvidenceProgress
+from musix.ingest.musicbrainz.musicbrainz_release_group_evidence import ReleaseGroupEvidenceProgress
 from scripts.build_musicbrainz_release_group_evidence import _progress_reporter
 
 

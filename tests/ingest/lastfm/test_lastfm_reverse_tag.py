@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 
-from musix.ingest.lastfm_reverse_tag import (
+from musix.ingest.lastfm.lastfm_reverse_tag import (
     LastFmHttpClient,
     LastFmResponseCache,
     LastFmReverseTagAdapter,
@@ -213,7 +213,7 @@ class LastFmReverseTagAdapterTests(PollingIsolatedAsyncioTestCase):
             cache = LastFmResponseCache(Path(directory) / "cache")
             async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
                 with patch(
-                    "musix.ingest.lastfm_reverse_tag.asyncio.sleep", new=AsyncMock()
+                    "musix.ingest.lastfm.lastfm_reverse_tag.asyncio.sleep", new=AsyncMock()
                 ) as sleep:
                     response = await LastFmHttpClient(
                         api_key="fixture-key", cache=cache, settings=settings, client=http_client

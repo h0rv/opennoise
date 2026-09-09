@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.ingest.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,

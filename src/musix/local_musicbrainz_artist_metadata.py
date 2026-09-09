@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from musix.models.catalog import ReleaseGroupProjection
 from musix.models.pipeline import ParsedSourceRecord, SourceLimits
-from musix.ingest.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz.musicbrainz_release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     verify_release_group_evidence,
 )

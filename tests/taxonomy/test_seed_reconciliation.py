@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
-from musix.ingest.musicbrainz_coverage import CoverageMatch, CoverageReport
+from musix.ingest.musicbrainz.musicbrainz_coverage import CoverageMatch, CoverageReport
 from musix.storage import LocalObjectStore
 from musix.taxonomy.genre_seed_taxonomy import (
     CompositionCalibration,

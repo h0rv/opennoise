@@ -12,7 +12,7 @@ from pathlib import Path
 
 from pydantic import HttpUrl
 
-from musix.ingest.musicbrainz_release_group_evidence import (
+from musix.ingest.musicbrainz.musicbrainz_release_group_evidence import (
     MusicBrainzReleaseGroupEvidenceError,
     ReleaseGroupEvidenceProgress,
     ReleaseGroupEvidenceSettings,
@@ -20,7 +20,7 @@ from musix.ingest.musicbrainz_release_group_evidence import (
     build_release_group_evidence_from_seed_target_path,
     verify_release_group_evidence,
 )
-from musix.ingest.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
     SeedTargetEvidence,

@@ -26,7 +26,7 @@ from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 from musix.taxonomy.genre_seed_universe import normalize_label
 
 if TYPE_CHECKING:
-    from musix.ingest.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
+    from musix.ingest.musicbrainz.musicbrainz_seed_targets import MusicBrainzSeedTargetArtifact
     from musix.models.modeling import PublicModelInput
     from musix.public_artist_membership import NameUniverse
 

@@ -5,12 +5,12 @@ import json
 import unittest
 from typing import Literal
 
-from musix.ingest.musicbrainz_model_adapter import (
+from musix.ingest.musicbrainz.musicbrainz_model_adapter import (
     MusicBrainzModelAdapterPolicy,
     adapt_musicbrainz_seed_targets,
     verify_musicbrainz_model_adapter_report,
 )
-from musix.ingest.musicbrainz_seed_targets import (
+from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
     SeedTargetEvidence,

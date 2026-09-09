@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
-from musix.ingest.musicbrainz_coverage import (
+from musix.ingest.musicbrainz.musicbrainz_coverage import (
     build_reconstruction_inputs,
     evaluate_coverage,
     normalize_label,

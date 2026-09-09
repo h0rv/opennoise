@@ -9,7 +9,7 @@ from uuid import UUID
 import httpx
 from pydantic import ValidationError
 
-from musix.ingest.ingest import parse_catalog_record
+from musix.ingest.jsonl import parse_catalog_record
 from musix.sources.musicbrainz import (
     AdapterLimits,
     MusicBrainzAdapterError,

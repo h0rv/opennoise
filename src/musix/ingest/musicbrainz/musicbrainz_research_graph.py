@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Final, Literal
 from pydantic import Field, FiniteFloat, model_validator
 
 from musix.evidence.reconstruction import ReconstructionInputs
-from musix.ingest.musicbrainz_coverage import CoverageMatch, normalize_label
+from musix.ingest.musicbrainz.musicbrainz_coverage import CoverageMatch, normalize_label
 from musix.models import FrozenModel
 
 if TYPE_CHECKING:

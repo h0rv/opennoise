@@ -12,8 +12,8 @@ from musix.local_reviewed_alias_context_store import (
     LocalReviewedAliasContextStore,
     LocalReviewedAliasContextStoreError,
 )
-from musix.ingest.musicbrainz_model_adapter import MusicBrainzModelAdapterReport
-from musix.ingest.musicbrainz_reviewed_alias_context import (
+from musix.ingest.musicbrainz.musicbrainz_model_adapter import MusicBrainzModelAdapterReport
+from musix.ingest.musicbrainz.musicbrainz_reviewed_alias_context import (
     ReviewedAliasCombinedModelReceipt,
     ReviewedAliasContextArtifact,
     ReviewedAliasContextMembership,

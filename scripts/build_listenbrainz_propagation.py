@@ -9,7 +9,7 @@ import sys
 from contextlib import closing
 from pathlib import Path
 
-from musix.ingest.listenbrainz_propagation import (
+from musix.ingest.listenbrainz.listenbrainz_propagation import (
     ListenBrainzPropagationSettings,
     PropagationInputFingerprint,
     build_listenbrainz_propagation,
@@ -19,7 +19,7 @@ from musix.ingest.listenbrainz_propagation import (
     wikidata_name_universe_memberships,
 )
 from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
-from musix.ingest.musicbrainz_seed_targets import load_seed_target_artifact
+from musix.ingest.musicbrainz.musicbrainz_seed_targets import load_seed_target_artifact
 from musix.public_artist_membership import load_name_universe
 from musix.storage import LocalObjectStore
 

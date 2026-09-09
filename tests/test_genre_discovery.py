@@ -19,7 +19,7 @@ from musix.genre_discovery import (
     query_displayable_historical_genre_members,
     query_displayable_historical_genre_memberships,
 )
-from musix.ingest.ingest import ImportOptions, import_jsonl
+from musix.ingest.jsonl import ImportOptions, import_jsonl
 from tests._test_client import run_async
 
 
