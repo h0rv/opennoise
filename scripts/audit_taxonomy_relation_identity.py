@@ -7,7 +7,9 @@ import sys
 from pathlib import Path
 
 from musix.taxonomy.relations.taxonomy_relation_expansion import TaxonomyRelationExpansionArtifact
-from musix.taxonomy.relations.taxonomy_relation_identity_audit import audit_taxonomy_relation_identity
+from musix.taxonomy.relations.taxonomy_relation_identity_audit import (
+    audit_taxonomy_relation_identity,
+)
 
 
 def main() -> int:
