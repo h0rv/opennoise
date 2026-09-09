@@ -13,7 +13,7 @@ from musix.ingest.musicbrainz.musicbrainz_release_hydration import (
     materialize_hydration_catalog,
     write_hydration_artifact,
 )
-from musix.metadata_representatives import (
+from musix.serving.metadata.metadata_representatives import (
     MetadataRepresentativeArtifact,
     MetadataRepresentativeItem,
     RepresentativeRunProvenance,

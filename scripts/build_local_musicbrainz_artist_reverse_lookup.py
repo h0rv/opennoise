@@ -8,8 +8,8 @@ from pathlib import Path
 from time import monotonic
 from uuid import uuid4
 
-from musix.local_musicbrainz_artist_evidence import load_release_group_evidence_artifact
-from musix.local_musicbrainz_artist_reverse_lookup import (
+from musix.serving.local.local_musicbrainz_artist_evidence import load_release_group_evidence_artifact
+from musix.serving.local.local_musicbrainz_artist_reverse_lookup import (
     ArtistReverseLookupBuildInputs,
     build_artist_reverse_lookup,
 )

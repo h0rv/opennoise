@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
-from musix.release_group_context_prefix import (
+from musix.serving.release_group_context_prefix import (
     ReleaseGroupContextError,
     TargetMask,
     _iter_prefix,
@@ -71,13 +71,13 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
 
     def test_prefix_only_swallows_the_expected_cap_error(self) -> None:
         with patch(
-            "musix.release_group_context_prefix.iter_json_archive_lines",
+            "musix.serving.release_group_context_prefix.iter_json_archive_lines",
             side_effect=lambda *_args, **_kwargs: _cap_iterator(),
         ):
             self.assertEqual(list(_iter_prefix(Path("fixture"), 2)), [b"one", b"two"])
         with (
             patch(
-                "musix.release_group_context_prefix.iter_json_archive_lines",
+                "musix.serving.release_group_context_prefix.iter_json_archive_lines",
                 side_effect=lambda *_args, **_kwargs: _malformed_iterator(),
             ),
             self.assertRaisesRegex(MusicBrainzAdapterError, "invalid archive"),
@@ -89,13 +89,13 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
         target = _Artifact("seed", "other-source", "content", 2, ())
         with (
             patch(
-                "musix.release_group_context_prefix.load_seed_reconciliation",
+                "musix.serving.release_group_context_prefix.load_seed_reconciliation",
                 return_value=reconciliation,
             ),
             patch(
-                "musix.release_group_context_prefix.load_seed_target_artifact", return_value=target
+                "musix.serving.release_group_context_prefix.load_seed_target_artifact", return_value=target
             ),
-            patch("musix.release_group_context_prefix.file_sha256", return_value="a" * 64),
+            patch("musix.serving.release_group_context_prefix.file_sha256", return_value="a" * 64),
             self.assertRaisesRegex(ValueError, "complete seed binding"),
         ):
             load_target_mask(Path("reconciliation"), Path("target"), Path("aliases"))
@@ -105,11 +105,11 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
         target = _Artifact("seed", "source", "content", 2, ())
         with (
             patch(
-                "musix.release_group_context_prefix.load_seed_reconciliation",
+                "musix.serving.release_group_context_prefix.load_seed_reconciliation",
                 return_value=reconciliation,
             ),
             patch(
-                "musix.release_group_context_prefix.load_seed_target_artifact", return_value=target
+                "musix.serving.release_group_context_prefix.load_seed_target_artifact", return_value=target
             ),
             self.assertRaisesRegex(ValueError, "complete 6291-seed universe"),
         ):

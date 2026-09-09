@@ -3,10 +3,10 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from musix.exploration import GenreDetail
-from musix.layouts import DerivedCoordinateSpace, HistoricCoordinateSpace, PublishedLayout
+from musix.serving.exploration import GenreDetail
+from musix.serving.map.layouts import DerivedCoordinateSpace, HistoricCoordinateSpace, PublishedLayout
 from musix.models import MapPoint, SearchHit, map_view
-from musix.routes import resolve_layout
+from musix.serving.routes import resolve_layout
 
 TEMPLATE_ROOT = Path(__file__).resolve().parents[1] / "src" / "musix" / "templates"
 

@@ -20,7 +20,7 @@ from musix.ingest.listenbrainz.listenbrainz_propagation import (
 )
 from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
 from musix.ingest.musicbrainz.musicbrainz_seed_targets import load_seed_target_artifact
-from musix.public_artist_membership import load_name_universe
+from musix.serving.public.public_artist_membership import load_name_universe
 from musix.storage import LocalObjectStore
 
 

@@ -17,13 +17,13 @@ from musix.peers.similarity.peer_similarity import (
     GenrePeerSimilarityArtifact,
     peer_similarity_output_sha256,
 )
-from musix.public_artist_membership import (
+from musix.serving.public.public_artist_membership import (
     ApprovedPublicMembershipInput,
     PublicArtistMembershipCandidateArtifact,
     canonical_sha256,
     public_artist_membership_candidate_output_sha256,
 )
-from musix.public_taxonomy_expansion import (
+from musix.serving.public.public_taxonomy_expansion import (
     PublicTaxonomyExpansionArtifact,
     verify_public_taxonomy_expansion,
 )
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
         ListenBrainzPropagationFrontierSummary,
     )
     from musix.models.modeling import PublicModelInput
-    from musix.public_artist_membership_adapter import CertifiedPublicMembershipAdapterReceipt
+    musix.serving.public.public_artist_membership_adapter import CertifiedPublicMembershipAdapterReceipt
 
 _REVISION: Final = "all-seed-evidence-frontier-v5"
 _SEED_COUNT: Final = 6_291

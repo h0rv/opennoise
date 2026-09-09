@@ -8,7 +8,7 @@ from musix.models.modeling import (
     PublicArtifact,
     PublicModelInput,
 )
-from musix.one_hop_membership_candidate import (
+from musix.serving.one_hop_membership_candidate import (
     OneHopMembershipCandidatePolicy,
     build_one_hop_membership_candidate,
 )

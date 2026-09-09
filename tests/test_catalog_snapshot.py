@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.catalog_snapshot import CatalogSnapshotRestoreError, restore_catalog_snapshot
+from musix.serving.catalog_snapshot import CatalogSnapshotRestoreError, restore_catalog_snapshot
 
 
 def _sha256(path: Path) -> str:

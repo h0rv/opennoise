@@ -9,7 +9,7 @@ from contextlib import closing
 from pathlib import Path
 
 from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
-from musix.one_hop_membership_candidate import (
+from musix.serving.one_hop_membership_candidate import (
     OneHopMembershipCandidatePolicy,
     build_one_hop_membership_candidate,
 )

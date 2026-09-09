@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.metadata_representatives import MetadataRepresentativeSettings, metadata_representatives
+from musix.serving.metadata.metadata_representatives import MetadataRepresentativeSettings, metadata_representatives
 
 
 def main() -> int:

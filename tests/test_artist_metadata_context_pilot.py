@@ -11,7 +11,7 @@ from tempfile import TemporaryDirectory
 
 import httpx
 
-from musix.artist_metadata_context_pilot import CachedRequest, _load_or_fetch
+from musix.serving.artist_metadata_context_pilot import CachedRequest, _load_or_fetch
 from musix.sources.musicbrainz import MusicBrainzArtist, MusicBrainzClient
 
 _ARTIST = "00000000-0000-4000-8000-000000000001"

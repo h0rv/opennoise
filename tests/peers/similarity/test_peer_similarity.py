@@ -23,7 +23,7 @@ from musix.peers.similarity.peer_similarity import (
     public_model_input_from_reconstruction,
     replay_peer_similarity,
 )
-from musix.public_artist_membership import (
+from musix.serving.public.public_artist_membership import (
     CandidateCoverage,
     GenreDisposition,
     NameUniverse,

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pydantic import JsonValue, TypeAdapter
 
-from musix.exploration import (
+from musix.serving.exploration import (
     CatalogLens,
     GenreDetail,
     HydratedMediumMetadata,
@@ -21,7 +21,7 @@ from musix.exploration import (
     ProvenanceEvidence,
     Viewport,
 )
-from musix.layouts import (
+from musix.serving.map.layouts import (
     DerivedCoordinateSpace,
     HistoricCoordinateSpace,
     LayoutArtifactMetadata,

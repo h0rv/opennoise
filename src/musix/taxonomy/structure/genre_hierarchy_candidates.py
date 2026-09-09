@@ -21,7 +21,7 @@ from pydantic import Field, FiniteFloat, model_validator
 
 from musix.models import FrozenModel
 from musix.models.modeling import PublicModelInput  # noqa: TC001
-from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact  # noqa: TC001
+from musix.serving.public.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact  # noqa: TC001
 from musix.storage import ObjectKey, ObjectStore, ObjectWrite
 from musix.taxonomy.relations.taxonomy_relation_expansion import (
     TaxonomyRelationExpansionArtifact,

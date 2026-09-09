@@ -15,7 +15,7 @@ from musix.adapters.everynoise import (
     adapt_quint_html,
 )
 from musix.db import Database
-from musix.genre_discovery import (
+from musix.serving.genre_discovery import (
     import_historical_genre_memberships,
     query_displayable_historical_genre_memberships,
 )

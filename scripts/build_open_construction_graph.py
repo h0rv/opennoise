@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from musix.cli import main
+from musix.serving.cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

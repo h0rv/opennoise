@@ -35,7 +35,7 @@ from musix.peers.similarity.peer_similarity_historical import (
     evaluate_peer_similarity_historical,
     publish_historical_peer_evaluation,
 )
-from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact
+from musix.serving.public.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact
 from musix.evidence.reconstruction import ReconstructionInputs
 from musix.taxonomy.seeds.seed_reconciliation import (
     MusicBrainzIdentityInput,

@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.artist_metadata_context_pilot import PilotBuildInputs, run_pilot
+from musix.serving.artist_metadata_context_pilot import PilotBuildInputs, run_pilot
 
 
 def _report(message: str) -> None:

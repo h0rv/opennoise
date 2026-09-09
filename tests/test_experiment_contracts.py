@@ -10,8 +10,8 @@ from musix.evidence.contracts import (
     DirectGenreEvidence,
     RankingComponent,
 )
-from musix.layouts import LayoutBuildRequest, LayoutStrategyVersion
-from musix.map_presentation import (
+from musix.serving.map.layouts import LayoutBuildRequest, LayoutStrategyVersion
+from musix.serving.map.map_presentation import (
     CollisionBox,
     EvidenceEdge,
     LabelDecisionReason,

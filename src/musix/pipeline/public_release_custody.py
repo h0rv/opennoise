@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field
 
-from musix.artist_membership_evaluation import ArtistMembershipEvaluationReport
-from musix.metadata_representatives import MetadataRepresentativeArtifact
+from musix.serving.artist_membership_evaluation import ArtistMembershipEvaluationReport
+from musix.serving.metadata.metadata_representatives import MetadataRepresentativeArtifact
 from musix.ml.public_model_gate import PublicModelGateReport
 from musix.models import FrozenModel
 from musix.pipeline.public_release import PublicReleaseResult

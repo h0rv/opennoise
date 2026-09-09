@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from musix.db import Database
-from musix.exploration import CatalogLens, MapQuery, Viewport, optional_viewport
+from musix.serving.exploration import CatalogLens, MapQuery, Viewport, optional_viewport
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"

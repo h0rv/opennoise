@@ -34,7 +34,7 @@ from musix.ingest.musicbrainz.musicbrainz_release_hydration import (
     artifact_counts,
     materialize_hydration_catalog,
 )
-from musix.open_construction_graph import (
+from musix.serving.open.open_construction_graph import (
     OpenConstructionGraphArtifact,
     verify_open_construction_graph,
 )

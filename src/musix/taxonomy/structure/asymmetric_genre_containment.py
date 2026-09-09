@@ -28,11 +28,11 @@ from musix.models.modeling import (
     PublicArtifact,
     PublicModelInput,
 )
-from musix.public_artist_membership import (
+from musix.serving.public.public_artist_membership import (
     PublicArtistMembershipCandidateArtifact,
     verify_public_artist_membership_candidate,
 )
-from musix.public_taxonomy_expansion import (
+from musix.serving.public.public_taxonomy_expansion import (
     ExpansionEdge,
     PublicTaxonomyExpansionArtifact,
     verify_public_taxonomy_expansion,

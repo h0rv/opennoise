@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.artist_membership_evaluation import (
+from musix.serving.artist_membership_evaluation import (
     ArtistMembershipEvaluationStore,
     ArtistMembershipJudgmentSet,
     evaluate_artist_memberships,

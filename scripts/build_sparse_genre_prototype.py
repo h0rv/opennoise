@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from musix.ingest.musicbrainz.musicbrainz_seed_targets import load_seed_target_artifact
-from musix.sparse_genre_prototype import (
+from musix.serving.sparse_genre_prototype import (
     SparsePrototypeSettings,
     build_sparse_genre_prototype,
     publish_sparse_genre_prototype,

@@ -19,7 +19,7 @@ from musix.models.production_qa import (
     ProductionMapUmbrellaCentroid,
     hash_eligible_sets,
 )
-from musix.overview import build_overview_communities
+from musix.serving.map.overview import build_overview_communities
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping

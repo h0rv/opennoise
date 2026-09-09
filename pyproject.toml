@@ -57,7 +57,7 @@ ignore = [
     "PT027", # The project deliberately uses stdlib unittest, not pytest.
     "S101", # Assertions are the test contract.
 ]
-"src/musix/routes.py" = [
+"src/musix/serving/routes.py" = [
     "PLR0913", # Route signatures list the public query parameters explicitly.
     "PLR0917", # Litestar injects route parameters by name rather than positional calls.
 ]

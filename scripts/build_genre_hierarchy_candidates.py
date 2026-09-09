@@ -13,7 +13,7 @@ from musix.taxonomy.structure.genre_hierarchy_candidates import (
 )
 from musix.taxonomy.seeds.genre_seed_taxonomy import GenreSeedPublicTaxonomyArtifact
 from musix.models.modeling import PublicModelInput
-from musix.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact
+from musix.serving.public.public_taxonomy_expansion import PublicTaxonomyExpansionArtifact
 from musix.taxonomy.seeds.seed_reconciliation import SeedReconciliationArtifact
 from musix.storage import LocalObjectStore
 from musix.taxonomy.relations.taxonomy_relation_expansion import (

@@ -13,7 +13,7 @@ from musix.models.modeling import (
     PublicArtifact,
     PublicModelInput,
 )
-from musix.public_taxonomy_expansion import (
+from musix.serving.public.public_taxonomy_expansion import (
     ConnectivityCoverage,
     ExpansionEdge,
     ExpansionEdgeEvidence,

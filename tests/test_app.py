@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import override
 from unittest.mock import patch
 
-from musix.app import create_app
+from musix.serving.app import create_app
 from musix.db import Database
 from musix.ml.production_map import build_production_map
 from musix.ml.public_graph import build_public_model
@@ -13,7 +13,7 @@ from musix.models import MapPoint, map_view
 from musix.models.modeling import PublicModelSettings
 from musix.models.production import ProductionMapSettings
 from tests._test_client import create_test_client
-from tests.test_production_map import _inputs as production_inputs
+from tests.serving.map.test_production_map import _inputs as production_inputs
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"

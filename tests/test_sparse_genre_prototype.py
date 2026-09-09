@@ -10,7 +10,7 @@ from musix.ingest.musicbrainz.musicbrainz_seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.sparse_genre_prototype import (
+from musix.serving.sparse_genre_prototype import (
     SparsePrototypeSettings,
     _bounded_cosine,
     build_sparse_genre_prototype,

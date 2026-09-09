@@ -22,7 +22,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from musix.db import Database
-from musix.metadata_representatives import (
+from musix.serving.metadata.metadata_representatives import (
     MetadataRepresentativeArtifact,
     MetadataRepresentativeItem,
 )

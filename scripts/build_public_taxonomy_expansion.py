@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.public_taxonomy_expansion import (
+from musix.serving.public.public_taxonomy_expansion import (
     PublicTaxonomyExpansionConfig,
     build_public_taxonomy_expansion,
     publish_public_taxonomy_expansion,

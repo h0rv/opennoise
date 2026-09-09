@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.public_artist_membership import (
+from musix.serving.public.public_artist_membership import (
     ApprovedPublicMembershipInput,
     IndependentPublicGoldSet,
     PromotionPolicy,
@@ -16,7 +16,7 @@ from musix.public_artist_membership import (
     evaluate_public_artist_membership_promotion,
     write_public_artist_membership_candidate,
 )
-from musix.public_artist_membership_adapter import (
+from musix.serving.public.public_artist_membership_adapter import (
     CertifiedPublicMembershipAdapterPolicy,
     CertifiedPublicMembershipAdapterReceipt,
     verify_certified_public_membership_receipt,

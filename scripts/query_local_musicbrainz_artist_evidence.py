@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.local_musicbrainz_artist_evidence import (
+from musix.serving.local.local_musicbrainz_artist_evidence import (
     LocalMusicBrainzArtistEvidenceError,
     LocalMusicBrainzEvidenceSources,
     direct_artists_for_seed,
@@ -14,7 +14,7 @@ from musix.local_musicbrainz_artist_evidence import (
     load_musicbrainz_model_adapter_report,
     load_release_group_evidence_artifact,
 )
-from musix.local_musicbrainz_artist_metadata import (
+from musix.serving.local.local_musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     load_artist_metadata_artifact,
 )

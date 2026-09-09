@@ -29,7 +29,7 @@ from musix.models.modeling import (
     PublicArtifact,
     PublicModelInput,
 )
-from musix.public_artist_membership import NameUniverse, NameUniverseEntry
+from musix.serving.public.public_artist_membership import NameUniverse, NameUniverseEntry
 from musix.storage import LocalObjectStore
 from scripts.build_listenbrainz_propagation import _require_qualified_snapshot
 

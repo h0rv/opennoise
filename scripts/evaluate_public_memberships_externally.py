@@ -7,7 +7,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from musix.public_membership_external_evaluation import evaluate_public_memberships_externally
+from musix.serving.public.public_membership_external_evaluation import evaluate_public_memberships_externally
 
 
 def main() -> int:

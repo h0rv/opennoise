@@ -10,11 +10,11 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-from musix.open_construction_graph_v2 import (
+from musix.serving.open.open_construction_graph_v2 import (
     OpenConstructionGraphV2Artifact,
     verify_open_construction_graph_v2,
 )
-from musix.open_construction_store_v2 import (
+from musix.serving.open.open_construction_store_v2 import (
     OpenConstructionV2MapResponse,
     OpenConstructionV2NeighborResponse,
     OpenConstructionV2SearchResponse,

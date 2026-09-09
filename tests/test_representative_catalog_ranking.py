@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import override
 
 from musix.evidence.album_genres import AlbumGenreRepository, MembershipObservation
-from musix.representative_catalog_ranking import (
+from musix.serving.representative_catalog_ranking import (
     RepresentativeCatalogRankingConfig,
     RepresentativeCatalogRankingRepository,
 )

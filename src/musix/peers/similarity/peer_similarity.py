@@ -25,7 +25,7 @@ from musix.models.modeling import (
     PublicArtifact,
     PublicModelInput,
 )
-from musix.public_artist_membership import (
+from musix.serving.public.public_artist_membership import (
     GenreDisposition,
     PublicArtistMembershipCandidateArtifact,
     verify_public_artist_membership_candidate,

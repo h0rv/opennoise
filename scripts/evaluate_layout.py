@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from musix.layout_metrics import (
+from musix.serving.map.layout_metrics import (
     LayoutMetricPoint,
     LayoutMetricRequest,
     RenderBudgetInput,

@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.artist_membership_evaluation import (
+from musix.serving.artist_membership_evaluation import (
     ArtistMembershipEvaluationStore,
     evaluate_artist_memberships,
     load_judgment_set,

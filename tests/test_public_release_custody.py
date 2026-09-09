@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from musix.artist_membership_evaluation import evaluate_artist_memberships, load_judgment_set
+from musix.serving.artist_membership_evaluation import evaluate_artist_memberships, load_judgment_set
 from musix.pipeline.public_release import PublicReleaseResult
 from musix.pipeline.public_release_custody import (
     DatabaseCounts,

@@ -7,8 +7,8 @@ import sys
 from pathlib import Path
 from time import monotonic
 
-from musix.local_musicbrainz_artist_evidence import load_release_group_evidence_artifact
-from musix.local_musicbrainz_artist_metadata import (
+from musix.serving.local.local_musicbrainz_artist_evidence import load_release_group_evidence_artifact
+from musix.serving.local.local_musicbrainz_artist_metadata import (
     ArtistMetadataBuildInputs,
     ArtistMetadataProgress,
     ArtistMetadataSettings,

@@ -11,7 +11,7 @@ from musix.adapters.everynoise import (
     adapt_quint_historical_representatives,
     adapt_quint_html,
 )
-from musix.genre_discovery import (
+from musix.serving.genre_discovery import (
     HistoricalGenreMemberQuery,
     import_historical_genre_memberships,
     import_historical_representatives,

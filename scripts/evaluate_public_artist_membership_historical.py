@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.public_artist_membership_historical import (
+from musix.serving.public.public_artist_membership_historical import (
     evaluate_public_artist_membership_historical,
 )
 

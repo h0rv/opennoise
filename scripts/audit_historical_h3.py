@@ -11,8 +11,8 @@ from musix.adapters.everynoise import (
     adapt_historical_genre_artist_map,
     store_verified_bytes,
 )
-from musix.bootstrap import bootstrap_everynoise
-from musix.genre_discovery import import_historical_genre_memberships
+from musix.serving.bootstrap import bootstrap_everynoise
+from musix.serving.genre_discovery import import_historical_genre_memberships
 
 RESEARCH_DATE = "2026-09-04"
 

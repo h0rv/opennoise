@@ -13,7 +13,7 @@ from uuid import UUID
 
 import httpx
 
-from musix.artist_backed_release_expansion import (
+from musix.serving.artist_backed_release_expansion import (
     ArtistBackedReleaseExpansionAdapter,
     ArtistBackedReleaseExpansionError,
     ArtistBackedReleaseExpansionPlan,
