@@ -26,7 +26,7 @@ The sealed public database contains 1,331 artists, 746 genres, 4,948 direct arti
 
 The local peer research index is `.cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite`. It contains 6,291 retained seed rows and 28,508 canonical MusicBrainz peer edges. The community layout places 1,580 seeds and explicitly leaves 4,711 unplaced. It is local research only and is not a public similarity service. The loopback panel reads a bounded direct-overlap list from it and labels the shared artist count.
 
-The completed loopback HTTP smoke and renderer version 31 browser checks passed. The [MusicBrainz evidence checkpoint](MUSICBRAINZ_EVIDENCE_CHECKPOINT.md) contains the local input and policy details. The [Peer H3 bridge evaluation](PEER_H3_BRIDGE_EVALUATION.md) uses exact bridge IDs, while the older name-crosswalk evaluation uses a smaller and different cohort.
+The completed loopback HTTP smoke and renderer version 31 browser checks passed. The [MusicBrainz evidence checkpoint](../evidence/MUSICBRAINZ_EVIDENCE_CHECKPOINT.md contains the local input and policy details. The [Peer H3 bridge evaluation](../peers/PEER_H3_BRIDGE_EVALUATION.md uses exact bridge IDs, while the older name-crosswalk evaluation uses a smaller and different cohort.
 
 MusicBrainz identifies `Various Artists` and `[unknown]` as special purpose artists. A future derived overlap experiment may use an exact-ID policy for `89ad4ac3-39f7-470e-963a-56509c546377` and `125ec42a-7229-4250-afc5-e057484327fe`. The policy must leave the source rows and full control unchanged. [Official guidance](https://musicbrainz.org/doc/Style/Unknown_and_untitled/Special_purpose_artist) explains the classification.
 

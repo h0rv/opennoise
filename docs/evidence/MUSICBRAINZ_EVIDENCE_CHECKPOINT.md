@@ -33,7 +33,7 @@ The local query smoke checks also completed with matching sidecars and whole-fil
 
 The final artist metadata artifact has 552,283 target MusicBrainz IDs, with observed metadata for 515,896 and no observed metadata for 36,387; it reports zero conflicts. The loopback HTTP smoke and the visual browser checks for renderer version 31 passed. The alias overlay adds 683 reviewed IDM tag observations to `item887`. Its seven direct artists overlap five of those observations, so the exact observed union has 685 artist IDs. Album support remains a separate list.
 
-The bridge-resolved H3 evaluation is documented in [Peer H3 bridge evaluation](PEER_H3_BRIDGE_EVALUATION.md). It uses exact accepted MusicBrainz and Spotify IDs. It is not comparable to the older limited name-crosswalk result without running both candidates on the same bridge and H3 cohort.
+The bridge-resolved H3 evaluation is documented in [Peer H3 bridge evaluation](../peers/PEER_H3_BRIDGE_EVALUATION.md). It uses exact accepted MusicBrainz and Spotify IDs. It is not comparable to the older limited name-crosswalk result without running both candidates on the same bridge and H3 cohort.
 
 ## Remaining discovery gaps
 

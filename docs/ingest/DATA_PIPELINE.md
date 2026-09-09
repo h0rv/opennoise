@@ -2,7 +2,7 @@
 
 All source jobs are metadata-only. The enforced boundary and its archive,
 transport, storage, and dependency checks are documented in
-[`CONTENT_POLICY.md`](CONTENT_POLICY.md). Audio and music bytes are never valid
+[`CONTENT_POLICY.md`](../CONTENT_POLICY.md). Audio and music bytes are never valid
 source artifacts.
 
 The first Wikidata music slice is documented in
