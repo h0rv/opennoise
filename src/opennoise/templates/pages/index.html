@@ -12,12 +12,15 @@
     <label class="sr-only" for="query">Search names</label>
     <input id="query" name="q" type="search" placeholder="Search" autocomplete="off">
   </form>
-  <div id="static-map-viewport" class="static-map-zoom-{{ level }}">{{ svg | safe }}</div>
-  <nav id="static-map-levels" aria-label="Map detail">
-    {% if level > 0 %}<a href="{{ previous_href }}" aria-label="Less detail">−</a>{% endif %}
-    <a href="{{ fit_href }}" aria-label="Fit map">Fit</a>
-    {% if level < 3 %}<a href="{{ next_href }}" aria-label="More detail">+</a>{% endif %}
+  <div id="map-stage" data-map-url="assets/map-data.json" aria-label="Genre map">{{ svg | safe }}</div>
+  <nav id="map-controls" aria-label="Map controls">
+    <button type="button" data-map-action="back" hidden>Back</button>
+    <button type="button" data-map-action="fit">Fit</button>
+    <button type="button" data-map-action="out" aria-label="Zoom out">−</button>
+    <button type="button" data-map-action="in" aria-label="Zoom in">+</button>
   </nav>
+  <aside id="map-detail" aria-live="polite" hidden></aside>
 </main>
+<script src="assets/map.js" defer></script>
 </body>
 </html>

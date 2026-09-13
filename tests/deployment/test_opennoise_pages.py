@@ -54,23 +54,28 @@ class OpenNoisePagesTests(unittest.TestCase):
                 first.search.searchable_name_count,
             )
             self.assertTrue((root / "first" / "index.html").is_file())
-            self.assertTrue((root / "first" / "levels" / "1.html").is_file())
             self.assertTrue((root / "first" / "opennoise-static-manifest.json").is_file())
             self.assertFalse((root / "first" / "assets" / "production-map-v1.json").exists())
 
             index = (root / "first" / "index.html").read_text(encoding="utf-8")
-            level_one = (root / "first" / "levels" / "1.html").read_text(encoding="utf-8")
             self.assertIn('data-mapped-node-count="8"', index)
             self.assertIn('data-searchable-name-count="5"', index)
             self.assertIn('preserveAspectRatio="xMidYMid meet"', index)
-            self.assertIn('href="levels/1.html"', index)
+            self.assertIn('data-map-url="assets/map-data.json"', index)
+            self.assertIn('src="assets/map.js"', index)
             self.assertNotIn("cytoscape", index.casefold())
             self.assertNotIn("semantic-map", index)
             self.assertNotIn("<h1", index)
-            self.assertIn('href="../assets/opennoise.css"', level_one)
-            self.assertIn('action="../search.html"', level_one)
-            self.assertIn('href="../index.html"', level_one)
-            self.assertIn('href="../genres/', level_one)
+            self.assertFalse((root / "first" / "levels").exists())
+
+            map_data = json.loads((root / "first" / "assets" / "map-data.json").read_text())
+            self.assertEqual(map_data["revision"], "opennoise-map-v1")
+            self.assertEqual(len(map_data["nodes"]), 5)
+            self.assertEqual(set(map_data["lod"]), {"0", "1", "2", "3"})
+            self.assertTrue(
+                all(0 <= node["x"] <= 1 and 0 <= node["y"] <= 1 for node in map_data["nodes"])
+            )
+            self.assertLessEqual(len(map_data["lod"]["0"]), len(map_data["nodes"]))
 
             search_entries = json.loads(
                 (root / "first" / "assets" / "search-index.json").read_text(encoding="utf-8")

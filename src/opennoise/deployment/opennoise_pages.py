@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import json
+import math
 import shutil
 from dataclasses import dataclass
 from hashlib import sha256
@@ -22,7 +24,7 @@ from opennoise.serving.open.construction_graph_v2 import OpenConstructionGraphV2
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-_REVISION: Final = "opennoise-pages-static-v2"
+_REVISION: Final = "opennoise-pages-static-v3"
 _PACKAGE_ROOT: Final = Path(__file__).resolve().parents[1]
 _TEMPLATE_ROOT: Final = _PACKAGE_ROOT / "templates" / "pages"
 _STATIC_ROOT: Final = _PACKAGE_ROOT / "static" / "pages"
@@ -65,7 +67,7 @@ class OpenNoisePagesAsset(FrozenModel):
 class OpenNoisePagesExportManifest(FrozenModel):
     """Receipt for a fully static Pages export."""
 
-    revision: Literal["opennoise-pages-static-v2"] = _REVISION
+    revision: Literal["opennoise-pages-static-v3"] = _REVISION
     artifact: OpenNoisePagesArtifactBinding
     search: OpenNoisePagesSearchBinding
     explicit_backend_api_available: Literal[False] = False
@@ -88,34 +90,28 @@ def export_opennoise_pages(inputs: OpenNoisePagesExportInputs) -> OpenNoisePages
         raise OpenNoisePagesExportError("static Pages output directory must be empty")
     production, binding = _load_production_map(inputs.production_map_path)
     search_graph = _load_search_graph(inputs.open_construction_v2_path)
-    output, assets, details, levels = (
+    output, assets, details = (
         inputs.output_directory,
         inputs.output_directory / "assets",
         inputs.output_directory / "genres",
-        inputs.output_directory / "levels",
     )
     output.mkdir(parents=True, exist_ok=True)
     assets.mkdir()
     details.mkdir()
-    levels.mkdir()
     mapped = {node.genre_id: node for node in production.nodes}
     shutil.copyfile(_STATIC_ROOT / "opennoise.css", assets / "opennoise.css")
     shutil.copyfile(_STATIC_ROOT / "search.js", assets / "search.js")
+    shutil.copyfile(_STATIC_ROOT / "map.js", assets / "map.js")
     search_entries = _search_entries(search_graph, mapped)
     _write_json(assets / "search-index.json", search_entries)
-    for level in range(4):
-        _write_template(
-            output / "index.html" if level == 0 else levels / f"{level}.html",
-            "index.html",
-            mapped_node_count=len(mapped),
-            searchable_name_count=search_graph.coverage.legacy_seed_node_count,
-            svg=_map_svg(production, level, "" if level == 0 else "../"),
-            level=level,
-            fit_href="../index.html" if level else "index.html",
-            previous_href="../index.html" if level == 1 else f"{level - 1}.html",
-            next_href=f"levels/{level + 1}.html" if level == 0 else f"{level + 1}.html",
-            asset_prefix="" if level == 0 else "../",
-        )
+    _write_json(assets / "map-data.json", _staging_map_payload(production, search_graph))
+    _write_template(
+        output / "index.html",
+        "index.html",
+        mapped_node_count=len(mapped),
+        searchable_name_count=search_graph.coverage.legacy_seed_node_count,
+        svg=_map_svg(production, 0, ""),
+    )
     _write_template(
         output / "search.html",
         "search.html",
@@ -253,6 +249,64 @@ def _map_svg(artifact: ProductionMapArtifact, level: int, base_prefix: str) -> s
             )
             label.text = node.name
     return ET.tostring(svg, encoding="unicode")
+
+
+def _staging_map_payload(
+    artifact: ProductionMapArtifact, search_graph: OpenConstructionGraphV2Artifact
+) -> dict[str, object]:
+    """Build a deterministic seed-first staging map without inventing relations."""
+    catalog_by_seed = {
+        edge.source_node_id: edge.target_node_id.removeprefix("catalog:")
+        for edge in search_graph.edges
+        if edge.kind == "canonical_catalog_identity"
+        and edge.source_node_id.startswith("legacy:")
+        and edge.target_node_id.startswith("catalog:")
+    }
+    seed_by_catalog = {catalog: seed for seed, catalog in catalog_by_seed.items()}
+    seeds = sorted(
+        (node for node in search_graph.nodes if node.node_kind == "legacy_name_seed"),
+        key=lambda node: (node.name.casefold(), node.node_id),
+    )
+    # A compact landscape staging projection makes sparse public coordinates optional.
+    nodes = []
+    for index, node in enumerate(seeds):
+        digest = hashlib.sha256(node.node_id.encode()).digest()
+        radius = 0.08 + 0.40 * math.sqrt((index + 0.5) / len(seeds))
+        angle = int.from_bytes(digest[:8], "big") / 2**64 * math.tau
+        nodes.append(
+            {
+                "id": node.node_id,
+                "name": node.name,
+                "aliases": (
+                    [catalog_by_seed[node.node_id]] if node.node_id in catalog_by_seed else []
+                ),
+                "x": round(0.5 + radius * math.cos(angle), 6),
+                "y": round(0.5 + radius * math.sin(angle) * 0.48, 6),
+            }
+        )
+    peers = [
+        {
+            "source": seed_by_catalog[edge.source_genre_id],
+            "target": seed_by_catalog[edge.target_genre_id],
+            "weight": edge.weight,
+        }
+        for edge in artifact.edges
+        if edge.kind == "similarity"
+        and edge.source_genre_id in seed_by_catalog
+        and edge.target_genre_id in seed_by_catalog
+    ]
+    # Stable, importance-neutral overview sampling; later semantic artifacts can replace it.
+    lod = {
+        str(level): [node["id"] for node in nodes[:: max(1, 16 // (2**level))]]
+        for level in range(4)
+    }
+    return {
+        "revision": "opennoise-map-v1",
+        "world": {"min_x": 0, "min_y": 0.26, "max_x": 1, "max_y": 0.74},
+        "nodes": nodes,
+        "lod": lod,
+        "peers": peers,
+    }
 
 
 def _detail_peers(
