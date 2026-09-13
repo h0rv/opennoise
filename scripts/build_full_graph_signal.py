@@ -31,7 +31,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--split-seed", type=int, default=20260913)
     parser.add_argument("--heldout-fraction", type=float, default=0.2)
     parser.add_argument("--maximum-genre-neighbors", type=int, default=200)
-    parser.add_argument("--maximum-evaluation-artists", type=int, default=100_000)
+    parser.add_argument("--maximum-genres-per-artist-for-cooccurrence", type=int, default=32)
+    parser.add_argument("--maximum-cooccurrence-nnz", type=int, default=20_000_000)
+    parser.add_argument(
+        "--maximum-evaluation-artists",
+        type=int,
+        default=5_000,
+        help="Canonical laptop-safe checkpoint sample; override only for a new named run.",
+    )
     parser.add_argument("--maximum-containment-candidates", type=int, default=10_000)
     return parser
 
@@ -43,6 +50,10 @@ def main() -> int:
         split_seed=arguments.split_seed,
         heldout_fraction=arguments.heldout_fraction,
         maximum_genre_neighbors=arguments.maximum_genre_neighbors,
+        maximum_genres_per_artist_for_cooccurrence=(
+            arguments.maximum_genres_per_artist_for_cooccurrence
+        ),
+        maximum_cooccurrence_nnz=arguments.maximum_cooccurrence_nnz,
         maximum_evaluation_artists=arguments.maximum_evaluation_artists,
         maximum_containment_candidates=arguments.maximum_containment_candidates,
     )

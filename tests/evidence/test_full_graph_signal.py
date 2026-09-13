@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import json
+import os
 import sqlite3
+import subprocess
+import sys
 import tempfile
 import unittest
 from array import array
@@ -190,6 +194,61 @@ class FullGraphSignalTests(unittest.TestCase):
             ):
                 second = build_full_graph_signal(inputs, settings)
             self.assertEqual(first.output_sha256, second.output_sha256)
+
+    def test_replays_across_independent_python_hash_seeds(self) -> None:
+        """The sealed settings must not depend on interpreter hash iteration order."""
+        program = """
+import json
+import os
+from pathlib import Path
+from opennoise.ml.full_graph_signal import (
+    FullGraphSignalInputs,
+    FullGraphSignalSettings,
+    build_full_graph_signal,
+)
+payload = json.loads(os.environ['OPENNOISE_FULL_GRAPH_REPLAY_INPUTS'])
+artifact = build_full_graph_signal(
+    FullGraphSignalInputs(
+        graph_database=Path(payload['database']),
+        graph_receipt=Path(payload['receipt']),
+        construction_certificate=Path(payload['certificate']),
+        cache_directory=Path(payload['cache']),
+    ),
+    FullGraphSignalSettings(
+        split_seed=1,
+        heldout_fraction=0.4,
+        maximum_evaluation_artists=100,
+        maximum_genre_neighbors=10,
+    ),
+)
+print(artifact.output_sha256)
+"""
+        with tempfile.TemporaryDirectory() as raw_directory:
+            directory = Path(raw_directory)
+            inputs = self._inputs(directory)
+            hashes: list[str] = []
+            for hash_seed in ("1", "2"):
+                environment = os.environ | {
+                    "PYTHONHASHSEED": hash_seed,
+                    "OPENNOISE_FULL_GRAPH_REPLAY_INPUTS": json.dumps(
+                        {
+                            "database": str(inputs.graph_database),
+                            "receipt": str(inputs.graph_receipt),
+                            "certificate": str(inputs.construction_certificate),
+                            "cache": str(directory / f"cache-{hash_seed}"),
+                        }
+                    ),
+                }
+                completed = subprocess.run(  # noqa: S603 - fixed test interpreter and inline fixture
+                    [sys.executable, "-c", program],
+                    check=True,
+                    capture_output=True,
+                    cwd=Path(__file__).resolve().parents[2],
+                    env=environment,
+                    text=True,
+                )
+                hashes.append(completed.stdout.strip())
+            self.assertEqual(hashes, [hashes[0], hashes[0]])
 
     def test_tampered_cache_and_certificate_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as raw_directory:

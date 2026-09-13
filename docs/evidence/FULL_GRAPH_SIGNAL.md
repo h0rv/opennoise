@@ -46,23 +46,24 @@ Run with:
 uv run poe build-full-graph-signal
 ```
 
-The task uses `OPENNOISE_EVIDENCE_GRAPH_DATABASE`,
-`OPENNOISE_EVIDENCE_GRAPH_RECEIPT`,
-`OPENNOISE_EVIDENCE_GRAPH_CONSTRUCTION_CERTIFICATE`,
-`OPENNOISE_FULL_GRAPH_SIGNAL_CACHE`, `OPENNOISE_FULL_GRAPH_SIGNAL_OUTPUT`, and
-`OPENNOISE_FULL_GRAPH_SIGNAL_RECEIPT`, and `OPENNOISE_FULL_GRAPH_SIGNAL_RUN_REPORT`.
-The run report records elapsed time and peak process RSS separately from the
-replayable logical artifact.
+The checked-in task uses the sealed checkout-relative cache paths and the
+explicit laptop profile of 5,000 evaluation artists. Overrides remain CLI
+options. The run report records elapsed time and peak process RSS separately
+from the replayable logical artifact.
 
 ## Recorded capped v2 run
 
 The receipt-bound cached run at
-`.cache/full-graph-signal-v2/artifact.json` has logical hash
-`6b992c2faa3cfd41b90fd6b986905c2942d1cd4f8aedbf71242bc39ae5b609e0`.
+`.cache/hierarchy-fusion-v1/full-graph-signal.json` has logical hash
+`be46df2abe0a861c19f93edf8ec0fd9815348e32ec7fab0f5f1648baf13d0916`.
 It binds evidence-graph receipt
 `abb516066320039386517871eebb850d79f3c535c603411853f9c8eaf7dc7ce6` and
 construction certificate
 `a28768b0e121aea7a765dee255a87dcc60d304802da1f8ee922d44793fc894de`.
+Two independent 5,000-artist runs with different `PYTHONHASHSEED` values
+produced byte-identical JSON (`dc6621f27831b42bb167510f6e41b5d03a22d4fba5140a32245210c50669fdcb`).
+The previously documented `6b992…` value has no recoverable matching artifact
+and is superseded, not a supported reproducibility claim.
 
 It streamed 5,591,670 claims into 1,773,093 complete pairs (1,416,893 train;
 356,200 held out), across 552,283 artists. The bounded evaluation sampled
@@ -74,10 +75,10 @@ the useful signal.
 
 | Baseline | Anchored Recall@10 | Anchored Recall@25 |
 | --- | ---: | ---: |
-| Binary Jaccard, all open memberships | 0.5113 | 0.6755 |
-| Weighted cosine, all open memberships | 0.5059 | 0.6561 |
-| PPMI, all open memberships | 0.0590 | 0.1143 |
-| Binary Jaccard, direct-only ablation | 0.1646 | 0.2276 |
+| Binary Jaccard, all open memberships | 0.511009 | 0.676618 |
+| Weighted cosine, all open memberships | 0.506957 | 0.655950 |
+| PPMI, all open memberships | 0.063893 | 0.128597 |
+| Binary Jaccard, direct-only ablation | 0.164324 | 0.226757 |
 
 The same-artist held-out co-membership proxy recovered 17.95% at 10 and
 33.12% at 25 over 3,119 positive-only pairs; it is an open-evidence proxy, not
@@ -87,9 +88,7 @@ candidate was promoted to factual hierarchy. The corrected score ordering
 makes PPMI a clearly losing baseline; earlier stronger PPMI figures were not
 comparable because sparse column order had incorrectly been used as rank order.
 
-The initial cached run took 110.417 seconds and 485,096 KiB peak RSS. A warm
-replay reused the verified pair/matrix sidecars (without a claim scan), wrote
-an identical logical artifact, and took 56.198 seconds at 484,892 KiB peak
-RSS. These numbers are a membership-propagation checkpoint only: no
+The sealed cached run took 157.569 seconds and 486,680 KiB peak RSS. These
+numbers are a membership-propagation checkpoint only: no
 artist-level ListenBrainz similarity, regional/era overlay, or taxonomy review
 evidence is materialized in this graph yet.
