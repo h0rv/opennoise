@@ -34,6 +34,22 @@ class SemanticRendererNode(FrozenModel):
     y: float
     lod: Literal[0, 1, 2, 3]
     importance: float = Field(ge=0)
+    community_id: int = Field(ge=0)
+    display_parent_id: str | None = Field(default=None, min_length=1)
+    hierarchy_root_id: str | None = Field(default=None, min_length=1)
+    hierarchy_depth: int = Field(ge=0)
+
+
+class SemanticRendererRegion(FrozenModel):
+    """One artifact community exposed as a progressive map heading."""
+
+    community_id: int = Field(ge=0)
+    label: str = Field(min_length=1)
+    x: float
+    y: float
+    member_count: int = Field(ge=1)
+    overview_visible: bool
+    heading_lod: Literal[0, 1, 2, 3]
 
 
 class SemanticRendererLabelSet(FrozenModel):
@@ -57,16 +73,28 @@ class SemanticRendererResponse(FrozenModel):
     content_bounds: CameraBounds
     initial_camera: CameraBounds
     nodes: tuple[SemanticRendererNode, ...]
+    overview_regions: tuple[SemanticRendererRegion, ...] = ()
     labels: tuple[SemanticRendererLabelSet, ...]
     aliases: tuple[SemanticRendererAlias, ...]
 
     @model_validator(mode="after")
-    def _invariants(self) -> SemanticRendererResponse:
+    def _invariants(self) -> SemanticRendererResponse:  # noqa: C901
         if self.placed_node_count + self.unplaced_node_count != self.total_seed_count:
             raise ValueError("placed and unplaced counts must partition stable seeds")
         ids = {node.id for node in self.nodes}
         if len(ids) != self.placed_node_count or len(ids) != len(self.nodes):
             raise ValueError("renderer node IDs must be unique and complete")
+        regions = {region.community_id: region for region in self.overview_regions}
+        if len(regions) != len(self.overview_regions):
+            raise ValueError("renderer region IDs must be unique")
+        node_communities = {node.community_id for node in self.nodes}
+        if node_communities != set(regions):
+            raise ValueError("renderer regions must cover every placed node community")
+        for region in self.overview_regions:
+            if region.member_count != sum(
+                node.community_id == region.community_id for node in self.nodes
+            ):
+                raise ValueError("renderer region member count must replay")
         prior: set[str] = set()
         for cap, record in zip(_LABEL_BUDGETS, self.labels, strict=True):
             current = set(record.ids)
@@ -139,6 +167,18 @@ class SemanticMapStore:
                 y=coordinate.y,
                 lod=coordinate.lod,
                 importance=coordinate.importance,
+                community_id=coordinate.community_id,
+                display_parent_id=(
+                    f"legacy:{coordinate.display_parent_id}"
+                    if coordinate.display_parent_id
+                    else None
+                ),
+                hierarchy_root_id=(
+                    f"legacy:{coordinate.hierarchy_root_id}"
+                    if coordinate.hierarchy_root_id
+                    else None
+                ),
+                hierarchy_depth=coordinate.hierarchy_depth,
             )
             for coordinate in artifact.coordinates
         }
@@ -193,6 +233,26 @@ class SemanticMapStore:
                 SemanticRendererAlias(term="popular music", target="legacy:item1"),
             )
         )
+        overview_regions = tuple(
+            SemanticRendererRegion(
+                community_id=community.community_id,
+                label=community.label,
+                x=community.x,
+                y=community.y,
+                member_count=community.member_count,
+                overview_visible=community.overview_visible,
+                heading_lod=(
+                    0
+                    if community.overview_visible
+                    else min(
+                        node.lod
+                        for node in nodes.values()
+                        if node.community_id == community.community_id
+                    )
+                ),
+            )
+            for community in artifact.communities
+        )
         return SemanticRendererResponse(
             logical_output_sha256=artifact.output_sha256,
             total_seed_count=artifact.stable_seed_count,
@@ -202,6 +262,7 @@ class SemanticMapStore:
             content_bounds=artifact.content_bounds,
             initial_camera=artifact.initial_camera,
             nodes=tuple(sorted(nodes.values(), key=lambda node: node.id)),
+            overview_regions=overview_regions,
             labels=tuple(label_sets),
             aliases=tuple(
                 SemanticRendererAlias(term=term, target=target)

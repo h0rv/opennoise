@@ -50,7 +50,9 @@ def _fixture() -> SemanticLayoutArtifact:
             importance=1,
             label_priority=2,
             evidence_kinds=("peer",),
-            hierarchy_depth=0,
+            display_parent_id="item1",
+            hierarchy_root_id="item1",
+            hierarchy_depth=1,
         ),
     )
     unplaced = tuple(
@@ -125,6 +127,14 @@ class SemanticMapStoreFixtureTests(unittest.TestCase):
             store = SemanticMapStore(path)
             store.start()
         self.assertEqual(store.renderer().placed_node_count, 2)
+        renderer = store.renderer()
+        self.assertEqual(
+            {(node.id, node.community_id, node.hierarchy_depth) for node in renderer.nodes},
+            {("legacy:item1", 0, 0), ("legacy:item887", 0, 1)},
+        )
+        self.assertEqual(len(renderer.overview_regions), 1)
+        self.assertEqual(renderer.overview_regions[0].label, "pop")
+        self.assertEqual(renderer.overview_regions[0].heading_lod, 0)
         self.assertEqual(store.search("popular music")[0].node_id, "legacy:item1")
         self.assertEqual(len(store.neighbors("legacy:item887").edges), 1)
 
