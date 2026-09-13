@@ -269,7 +269,7 @@ async function run() {
     await wheel(cdp, 720, 450, -650);
     await waitForFrame(cdp, zoom1.frame_count - 1);
     const zoom2 = await diagnostics(cdp);
-    requireCheck(zoom1.points >= initial.points && zoom2.points >= zoom1.points, "zoom reveal is not monotonic", { initial, zoom1, zoom2 });
+    requireCheck(zoom2.points > initial.points && zoom2.points >= zoom1.points, "zoom reveal is not monotonic", { initial, zoom1, zoom2 });
 
     const beforePan = zoom2.point_extent;
     await drag(cdp, 720, 450, 240, 220);
@@ -278,16 +278,17 @@ async function run() {
     requireCheck(JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent), "pan did not move camera", { beforePan, afterPan });
     requireCheck(afterPan.point_extent?.min_x < 0 || afterPan.point_extent?.max_x > 1440 || afterPan.point_extent?.min_y < 0 || afterPan.point_extent?.max_y > 900, "pan did not reach outside initial quadrant", afterPan);
 
-    const clickPoint = afterPan.point_extent && await cdp.evaluate("window.__opennoiseMapQA.frames.at(-1)?.arcs?.[0] ?? null");
-    requireCheck(Boolean(clickPoint), "no visible point available for focus", afterPan);
-    await cdp.command("Input.dispatchMouseEvent", { type: "mouseMoved", x: clickPoint.x, y: clickPoint.y });
-    await cdp.command("Input.dispatchMouseEvent", { type: "mousePressed", x: clickPoint.x, y: clickPoint.y, button: "left", clickCount: 1 });
-    await cdp.command("Input.dispatchMouseEvent", { type: "mouseReleased", x: clickPoint.x, y: clickPoint.y, button: "left", clickCount: 1 });
+    await cdp.evaluate("(() => { const input=document.querySelector('#query'); input.value='idm'; input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})); })()");
     await waitForFrame(cdp, afterPan.frame_count - 1);
-    const focused = await diagnostics(cdp);
-    requireCheck(focused.edges <= 12, "focused neighborhood edge budget failed", focused);
+    let focused = await diagnostics(cdp);
+    for (let attempt = 0; attempt < 80 && focused.edges === 0; attempt += 1) {
+      await sleep(25);
+      focused = await diagnostics(cdp);
+    }
+    requireCheck(focused.edges > 0 && focused.edges <= 12, "focused neighborhood edge budget failed", focused);
     requireCheck(!focused.back_hidden, "Back control did not appear after focus", focused);
-    requireCheck(Boolean(focused.focus_url), "focus did not update browser history", focused);
+    requireCheck(focused.focus_url === "legacy:item887", "IDM alias did not focus its stable seed", focused);
+    screenshots.push(await screenshot(cdp, "desktop-idm-focus.png", "light", 1440, 900));
 
     await cdp.evaluate("document.querySelector('[data-map-action=\\\"back\\\"]')?.click()");
     await sleep(150);

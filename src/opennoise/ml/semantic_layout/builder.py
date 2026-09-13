@@ -684,15 +684,11 @@ def _overview_visibility(
     first, then evidence importance and max-min distance, so one large genre family
     cannot consume the overview budget. No genre names or families are special-cased.
     """
-    root_breadth: Counter[str] = Counter(
-        context.roots[node] or node for node in context.positions
-    )
+    root_breadth: Counter[str] = Counter(context.roots[node] or node for node in context.positions)
     max_degree = max(context.degree.values(), default=1.0)
     candidates: list[tuple[float, str, int, str]] = []
     for record, group in zip(records, groups, strict=True):
-        root_candidates = [
-            node for node in group if context.depths[node] == 0
-        ] or list(group)
+        root_candidates = [node for node in group if context.depths[node] == 0] or list(group)
         for node in root_candidates:
             root = context.roots[node] or node
             root_score = math.log1p(root_breadth[root])
@@ -980,9 +976,7 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
             budget=resolved.overview_label_budget,
         ),
     )
-    overview_anchors = {
-        record.anchor_seed_id for record in records if record.overview_visible
-    }
+    overview_anchors = {record.anchor_seed_id for record in records if record.overview_visible}
     max_degree = max(degree.values(), default=1.0)
     priority = {
         node: index
@@ -1050,9 +1044,7 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         (positions[record.anchor_seed_id][0], positions[record.anchor_seed_id][1])
         for record in overview_communities
     )
-    initial_camera = _initial_camera(
-        overview_anchors, resolved.world_width, resolved.world_height
-    )
+    initial_camera = _initial_camera(overview_anchors, resolved.world_width, resolved.world_height)
     overview_root_ids = {
         roots[record.anchor_seed_id] or record.anchor_seed_id for record in overview_communities
     }

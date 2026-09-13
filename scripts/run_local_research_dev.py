@@ -11,20 +11,13 @@ from pathlib import Path
 def main() -> int:
     """Start the normal dev app with completed local research inputs enabled."""
     root = Path.cwd()
-    inputs = {
-        "OPENNOISE_LOCAL_RESEARCH_SEED_RECONCILIATION": root
-        / ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json",
-        "OPENNOISE_LOCAL_RESEARCH_PEER_LAYOUT": root
-        / ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json",
-        "OPENNOISE_LOCAL_RESEARCH_MAP_PEER_INDEX": root
-        / ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite",
-    }
+    inputs = {"OPENNOISE_SEMANTIC_MAP_LAYOUT": root / ".cache/semantic-map-layout-v1/artifact.json"}
     missing = [str(path) for path in inputs.values() if not path.is_file()]
     if missing:
         sys.stderr.write("Local research inputs are unavailable:\n" + "\n".join(missing) + "\n")
         return 2
     sys.stderr.write(
-        "Semantic map source: local-research-peer-layout (1,580 placed / 6,291 seeds). "
+        "Semantic map source: semantic-map-layout-v1 (2,945 placed / 6,291 seeds). "
         "Artist detail is disabled unless explicitly configured.\n"
     )
     environment = os.environ | {

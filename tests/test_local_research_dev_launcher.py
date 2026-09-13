@@ -27,10 +27,10 @@ class LocalResearchDevLauncherTests(unittest.TestCase):
         environment = run.call_args.kwargs["env"]
         self.assertEqual(environment["OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED"], "false")
         self.assertNotIn("OPENNOISE_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_DATABASE", environment)
+        self.assertEqual(
+            environment["OPENNOISE_SEMANTIC_MAP_LAYOUT"],
+            str(root / ".cache/semantic-map-layout-v1/artifact.json"),
+        )
 
 
-_REQUIRED_INPUTS = (
-    ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json",
-    ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json",
-    ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite",
-)
+_REQUIRED_INPUTS = (".cache/semantic-map-layout-v1/artifact.json",)

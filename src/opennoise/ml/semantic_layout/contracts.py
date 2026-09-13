@@ -323,13 +323,11 @@ class SemanticLayoutArtifact(FrozenModel):
             for anchor in overview_anchors
         ):
             raise ValueError("initial camera must contain every overview anchor")
-        anchor_width = (
-            max((anchor.x for anchor in overview_anchors), default=0.0)
-            - min((anchor.x for anchor in overview_anchors), default=0.0)
+        anchor_width = max((anchor.x for anchor in overview_anchors), default=0.0) - min(
+            (anchor.x for anchor in overview_anchors), default=0.0
         )
-        anchor_height = (
-            max((anchor.y for anchor in overview_anchors), default=0.0)
-            - min((anchor.y for anchor in overview_anchors), default=0.0)
+        anchor_height = max((anchor.y for anchor in overview_anchors), default=0.0) - min(
+            (anchor.y for anchor in overview_anchors), default=0.0
         )
         expected_width_fraction = anchor_width / (self.initial_camera.x1 - self.initial_camera.x0)
         expected_height_fraction = anchor_height / (self.initial_camera.y1 - self.initial_camera.y0)

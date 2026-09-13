@@ -47,14 +47,14 @@ from opennoise.serving.local.musicbrainz_peer_store import (
     LocalMusicBrainzPeerStore,
     LocalMusicBrainzPeerStoreError,
 )
-from opennoise.serving.local.research_map_store import (
-    LocalResearchMapError,
-    LocalResearchMapResponse,
-    LocalResearchMapStore,
-    LocalResearchRendererResponse,
-)
 from opennoise.serving.local.reviewed_alias_context_store import LocalReviewedAliasContextStore
 from opennoise.serving.map.layouts import ExploredMap, LayoutArtifactMetadata, PublishedLayout
+from opennoise.serving.map.semantic_store import (
+    SemanticMapNeighbors,
+    SemanticMapStore,
+    SemanticMapStoreError,
+    SemanticRendererResponse,
+)
 from opennoise.serving.open.construction_store import (
     OpenConstructionMapResponse,
     OpenConstructionMapStore,
@@ -140,16 +140,21 @@ class CoreController(Controller):
         view: FromQuery[Literal["public", "open", "historical"] | None] = None,
     ) -> Template:
         """Render the current full map."""
-        selected_view = view or (
-            "open"
-            if isinstance(local_research_map, LocalResearchMapStore)
-            and local_research_map.configured
-            else "open"
-            if not production_map.configured
-            and (open_construction_graph_v2.configured or open_construction_graph.configured)
-            else "public"
+        local_map_active = (
+            isinstance(local_research_map, SemanticMapStore) and local_research_map.configured
         )
-        if level not in range(4) or zoom not in range(4):
+        selected_view = (
+            "open"
+            if local_map_active
+            else view
+            or (
+                "open"
+                if not production_map.configured
+                and (open_construction_graph_v2.configured or open_construction_graph.configured)
+                else "public"
+            )
+        )
+        if not local_map_active and (level not in range(4) or zoom not in range(4)):
             raise ValidationException(detail="production map level must be between 0 and 3")
         context = await workspace_context(
             database,
@@ -159,17 +164,14 @@ class CoreController(Controller):
             open_construction_graph,
             open_construction_graph_v2,
             local_research_map=(
-                local_research_map
-                if isinstance(local_research_map, LocalResearchMapStore)
-                else None
+                local_research_map if isinstance(local_research_map, SemanticMapStore) else None
             ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
                 and local_research_artists.configured
             ),
             local_research_map_configured=(
-                isinstance(local_research_map, LocalResearchMapStore)
-                and local_research_map.configured
+                isinstance(local_research_map, SemanticMapStore) and local_research_map.configured
             ),
             local_research_focus=open_focus,
             layout=layout,
@@ -206,17 +208,14 @@ class CoreController(Controller):
             open_construction_graph,
             open_construction_graph_v2,
             local_research_map=(
-                local_research_map
-                if isinstance(local_research_map, LocalResearchMapStore)
-                else None
+                local_research_map if isinstance(local_research_map, SemanticMapStore) else None
             ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
                 and local_research_artists.configured
             ),
             local_research_map_configured=(
-                isinstance(local_research_map, LocalResearchMapStore)
-                and local_research_map.configured
+                isinstance(local_research_map, SemanticMapStore) and local_research_map.configured
             ),
             layout="default",
             focus=None,
@@ -252,9 +251,7 @@ class CoreController(Controller):
             open_construction_graph,
             open_construction_graph_v2,
             local_research_map=(
-                local_research_map
-                if isinstance(local_research_map, LocalResearchMapStore)
-                else None
+                local_research_map if isinstance(local_research_map, SemanticMapStore) else None
             ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
@@ -298,9 +295,7 @@ class CoreController(Controller):
             open_construction_graph,
             open_construction_graph_v2,
             local_research_map=(
-                local_research_map
-                if isinstance(local_research_map, LocalResearchMapStore)
-                else None
+                local_research_map if isinstance(local_research_map, SemanticMapStore) else None
             ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
@@ -325,39 +320,20 @@ class CoreController(Controller):
 class MapController(Controller):
     """Serve stable and experimental map representations."""
 
-    @get("/api/local-research-map")
-    async def local_research_map_data(
-        self, local_research_map: NamedDependency[object], level: FromQuery[int] = 0
-    ) -> LocalResearchMapResponse:
-        """Return a bounded local-only peer layout cohort."""
-        if (
-            not isinstance(local_research_map, LocalResearchMapStore)
-            or not local_research_map.configured
-        ):
-            raise ServiceUnavailableException(detail="local research peer map is disabled")
-        try:
-            return local_research_map.response(level=level)
-        except LocalResearchMapError as error:
-            raise ServiceUnavailableException(
-                detail="local research peer map unavailable"
-            ) from error
-
     @get("/api/local-research-map/renderer")
     async def local_research_map_renderer(
         self, local_research_map: NamedDependency[object]
-    ) -> LocalResearchRendererResponse:
-        """Return all 1,580 placed points without globally truncating the viewport."""
+    ) -> SemanticRendererResponse:
+        """Return the complete LOD renderer contract without global edges."""
         if (
-            not isinstance(local_research_map, LocalResearchMapStore)
+            not isinstance(local_research_map, SemanticMapStore)
             or not local_research_map.configured
         ):
-            raise ServiceUnavailableException(detail="local research peer map is disabled")
+            raise ServiceUnavailableException(detail="semantic map is disabled")
         try:
             return local_research_map.renderer()
-        except LocalResearchMapError as error:
-            raise ServiceUnavailableException(
-                detail="local research peer map unavailable"
-            ) from error
+        except SemanticMapStoreError as error:
+            raise ServiceUnavailableException(detail="semantic map unavailable") from error
 
     @get("/api/local-research-map/neighbors/{node_id:str}")
     async def local_research_map_neighbors(
@@ -365,17 +341,17 @@ class MapController(Controller):
         local_research_map: NamedDependency[object],
         node_id: FromPath[str],
         offset: FromQuery[int] = 0,
-    ) -> LocalResearchMapResponse:
-        """Drill a display community or a direct evidence neighborhood."""
+    ) -> SemanticMapNeighbors:
+        """Return at most twelve exact structural neighbors for a focused seed."""
         if (
-            not isinstance(local_research_map, LocalResearchMapStore)
+            not isinstance(local_research_map, SemanticMapStore)
             or not local_research_map.configured
         ):
-            raise ServiceUnavailableException(detail="local research peer map is disabled")
+            raise ServiceUnavailableException(detail="semantic map is disabled")
         try:
             return local_research_map.neighbors(node_id, offset=offset)
-        except LocalResearchMapError as error:
-            raise NotFoundException(detail="local research peer node unavailable") from error
+        except SemanticMapStoreError as error:
+            raise NotFoundException(detail="semantic map node unavailable") from error
 
     @get("/api/map")
     async def map_data(
@@ -738,9 +714,7 @@ class MapController(Controller):
             open_construction_graph,
             open_construction_graph_v2,
             local_research_map=(
-                local_research_map
-                if isinstance(local_research_map, LocalResearchMapStore)
-                else None
+                local_research_map if isinstance(local_research_map, SemanticMapStore) else None
             ),
             local_research_artist_evidence_configured=(
                 isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
@@ -825,13 +799,13 @@ class SearchController(Controller):
     ) -> Template:
         """Render local-layout results without assigning missing coordinates."""
         if (
-            not isinstance(local_research_map, LocalResearchMapStore)
+            not isinstance(local_research_map, SemanticMapStore)
             or not local_research_map.configured
         ):
             raise ServiceUnavailableException(detail="local research peer map is disabled")
         try:
             hits = local_research_map.search(q[:500])
-        except LocalResearchMapError as error:
+        except SemanticMapStoreError as error:
             raise ServiceUnavailableException(
                 detail="local research peer map artifact unavailable"
             ) from error
@@ -1277,7 +1251,7 @@ async def workspace_context(
     historical_signal_map: HistoricalSignalMapStore,
     open_construction_graph: OpenConstructionMapStore,
     open_construction_graph_v2: OpenConstructionV2MapStore,
-    local_research_map: LocalResearchMapStore | None,
+    local_research_map: SemanticMapStore | None,
     *,
     layout: str,
     focus: int | None,
@@ -1291,7 +1265,7 @@ async def workspace_context(
     local_research_focus: str | None = None,
 ) -> dict[str, object]:
     """Build one consistent workspace from a published layout and optional genre."""
-    if view == "open" and local_research_map is not None and local_research_map.configured:
+    if local_research_map is not None and local_research_map.configured:
         bounded_search_query = search_query[:500]
         return {
             "active_layout": None,

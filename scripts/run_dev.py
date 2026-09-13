@@ -59,13 +59,8 @@ def resolve_production_paths(root: Path) -> ProductionLaunchPaths | None:
 def main() -> int:
     """Start the best receipt-bound local semantic map when it is available."""
     root = Path.cwd()
-    map_inputs = (
-        root / ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json",
-        root
-        / ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite",
-        root / ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json",
-    )
-    if all(path.is_file() for path in map_inputs):
+    semantic_layout = root / ".cache/semantic-map-layout-v1/artifact.json"
+    if semantic_layout.is_file():
         sys.stderr.write(
             "Starting receipt-bound local semantic map; public release certification remains "
             "opt-in.\n"

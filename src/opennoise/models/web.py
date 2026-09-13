@@ -81,11 +81,8 @@ class Settings(BaseSettings):
         ),
         validation_alias="OPENNOISE_LOCAL_RESEARCH_PEER_INDEX",
     )
-    local_research_peer_layout_path: Path | None = Field(
-        default=None, validation_alias="OPENNOISE_LOCAL_RESEARCH_PEER_LAYOUT"
-    )
-    local_research_map_peer_index_path: Path | None = Field(
-        default=None, validation_alias="OPENNOISE_LOCAL_RESEARCH_MAP_PEER_INDEX"
+    semantic_map_layout_path: Path | None = Field(
+        default=None, validation_alias="OPENNOISE_SEMANTIC_MAP_LAYOUT"
     )
     local_research_reviewed_alias_context_enabled: bool = Field(
         default=False, validation_alias="OPENNOISE_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ENABLED"

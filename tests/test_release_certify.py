@@ -2,7 +2,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.release_certify import ReleaseCertificationError, _require_file, resolve_cache_database
+from scripts.release_certify import (
+    ReleaseCertificationError,
+    _require_file,
+    _require_semantic_release_renderer,
+    resolve_cache_database,
+)
 
 
 class ReleaseCertificationTests(unittest.TestCase):
@@ -28,6 +33,10 @@ class ReleaseCertificationTests(unittest.TestCase):
                 ReleaseCertificationError, r"cache-only prerequisite missing: sealed cache database"
             ):
                 _require_file(missing, "sealed cache database")
+
+    def test_public_release_is_closed_until_semantic_canvas_is_publishable(self) -> None:
+        with self.assertRaisesRegex(ReleaseCertificationError, "publishable semantic-map artifact"):
+            _require_semantic_release_renderer()
 
 
 if __name__ == "__main__":

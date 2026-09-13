@@ -80,9 +80,9 @@ uv run poe dev
 
 Open <http://127.0.0.1:3001>.
 
-`release-certify` fails closed until the qualified source cache, public model,
-map artifact, and renderer evidence agree. The product only serves a configured
-map artifact that passes those checks. This checkout's retained sealed cache is
+`release-certify` is intentionally closed pending a publishable semantic Canvas
+artifact and its browser gate; it will not certify the retired production SVG.
+The product only serves a configured map artifact that passes those checks. This checkout's retained sealed cache is
 used automatically when `data/phase3-public-qualified.sqlite` is absent; see
 `docs/serving/PUBLIC_RELEASE_PIPELINE.md` for the release inputs and outputs.
 
@@ -93,9 +93,9 @@ used automatically when `data/phase3-public-qualified.sqlite` is absent; see
   SQLite persistence. If an ORM becomes necessary, the project choice is
   SQLModel rather than declarative SQLAlchemy.
 - HTMX 4 for search, detail fragments, ordinary URLs, and history.
-- Static, precomputed SVG/HTML map output with URL-addressable semantic levels
-  of detail. Browser code is limited to deferred search and navigation; it does
-  not calculate geometry, run a graph layout, or simulate physics.
+- One precomputed Canvas scatter map with URL-addressable semantic focus.
+Browser code only redraws supplied coordinates and performs search/navigation;
+it does not calculate geometry, run a graph layout, or simulate physics.
 - Local content-addressed object storage behind a small adapter. R2 or S3 can
   implement the same interface later.
 

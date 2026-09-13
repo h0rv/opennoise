@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import unittest
 from pathlib import Path
-
+from typing import override
 
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS = ROOT / "scripts/capture_semantic_map_browser.mjs"
@@ -15,6 +15,7 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
     """Keep the browser evidence checks focused on the product contract."""
 
     @classmethod
+    @override
     def setUpClass(cls) -> None:
         cls.source = HARNESS.read_text(encoding="utf-8")
 

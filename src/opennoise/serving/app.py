@@ -32,9 +32,9 @@ from opennoise.serving.local.musicbrainz_artist_reverse_lookup import (
     load_artist_reverse_lookup_artifact,
 )
 from opennoise.serving.local.musicbrainz_peer_store import LocalMusicBrainzPeerStore
-from opennoise.serving.local.research_map_store import LocalResearchMapStore
 from opennoise.serving.local.reviewed_alias_context_store import LocalReviewedAliasContextStore
 from opennoise.serving.map.production_store import ProductionMapStore
+from opennoise.serving.map.semantic_store import SemanticMapStore
 from opennoise.serving.open.construction_store import OpenConstructionMapStore
 from opennoise.serving.open.construction_store_v2 import OpenConstructionV2MapStore
 from opennoise.serving.public.artist_navigation_store import PublicArtistNavigationStore
@@ -100,7 +100,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     public_artist_navigation = PublicArtistNavigationStore(selected_path)
     local_research_artists: LocalMusicBrainzArtistEvidenceStore | None = None
     local_research_peers: LocalMusicBrainzPeerStore | None = None
-    local_research_map: LocalResearchMapStore | None = None
+    local_research_map: SemanticMapStore | None = None
     local_reviewed_alias_context: LocalReviewedAliasContextStore | None = None
     if settings.local_research_artist_evidence_enabled:
         if settings.host not in {"127.0.0.1", "::1", "localhost"}:
@@ -169,29 +169,20 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
             peer_index_path,
             local_research_artists.sources.reconciliation,
         )
-        if settings.local_research_peer_layout_path is not None:
-            local_research_map = LocalResearchMapStore(
-                settings.local_research_peer_layout_path,
-                settings.local_research_map_peer_index_path or peer_index_path,
-                local_research_artists.sources.reconciliation,
-            )
-    if (
-        local_research_map is None
-        and settings.local_research_peer_layout_path is not None
-        and settings.local_research_map_peer_index_path is not None
-        and settings.local_research_seed_reconciliation_path is not None
-    ):
-        local_research_map = LocalResearchMapStore(
-            settings.local_research_peer_layout_path,
-            settings.local_research_map_peer_index_path,
-            load_seed_reconciliation(settings.local_research_seed_reconciliation_path),
-        )
+    if settings.semantic_map_layout_path is not None:
+        local_research_map = SemanticMapStore(settings.semantic_map_layout_path)
+
+    # Map-only development has no database lifecycle. Parse the compact, verified
+    # renderer artifact before constructing ASGI so Uvicorn can acknowledge
+    # startup immediately and no optional evidence store is touched.
+    map_only = settings.map_only and local_research_map is not None
+    if map_only:
+        local_research_map.start()
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
         # The local semantic map binds only its three small receipt artifacts.
         # Do not create/certify a catalog database merely to draw that map.
-        map_only = settings.map_only and local_research_map is not None
         if not map_only:
             await database.start()
         if local_research_artists is not None:
@@ -200,7 +191,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
             await asyncio.to_thread(local_reviewed_alias_context.start)
         if local_research_peers is not None:
             await asyncio.to_thread(local_research_peers.start)
-        if local_research_map is not None:
+        if local_research_map is not None and not map_only:
             await asyncio.to_thread(local_research_map.start)
         try:
             yield
@@ -238,7 +229,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
     async def provide_local_research_peers() -> LocalMusicBrainzPeerStore | None:
         return local_research_peers
 
-    async def provide_local_research_map() -> LocalResearchMapStore | None:
+    async def provide_local_research_map() -> SemanticMapStore | None:
         return local_research_map
 
     async def provide_local_reviewed_alias_context() -> LocalReviewedAliasContextStore | None:
@@ -266,7 +257,7 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
             "local_research_map": Provide(provide_local_research_map),
             "local_reviewed_alias_context": Provide(provide_local_reviewed_alias_context),
         },
-        lifespan=[lifespan],
+        lifespan=[] if map_only else [lifespan],
         template_config=TemplateConfig(directory=TEMPLATE_ROOT, engine=JinjaTemplateEngine),
     )
 
