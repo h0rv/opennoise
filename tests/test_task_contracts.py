@@ -10,6 +10,12 @@ ROOT = Path(__file__).resolve().parents[1]
 class TaskContractTests(unittest.TestCase):
     """Keep Poe as the sole project task runner."""
 
+    def test_opennoise_distribution_keeps_the_internal_musix_module(self) -> None:
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+        self.assertEqual(project["project"]["name"], "opennoise")
+        self.assertEqual(project["tool"]["uv"]["build-backend"]["module-name"], "musix")
+
     def test_poe_exposes_required_project_tasks_without_mise_task_aliases(self) -> None:
         mise = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))

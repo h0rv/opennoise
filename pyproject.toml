@@ -2,6 +2,9 @@
 requires = ["uv_build>=0.8.22,<0.9"]
 build-backend = "uv_build"
 
+[tool.uv.build-backend]
+module-name = "musix"
+
 [project]
 name = "opennoise"
 version = "0.1.0"
