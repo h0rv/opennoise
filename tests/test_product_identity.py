@@ -30,6 +30,8 @@ class ProductIdentityTests(unittest.TestCase):
         self.assertTrue(all(_LEGACY_LOWER not in path.casefold() for path in relative_paths))
         for relative_path in relative_paths:
             path = ROOT / relative_path
+            if not path.exists():
+                continue
             try:
                 content = path.read_text(encoding="utf-8")
             except UnicodeDecodeError:

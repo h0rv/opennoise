@@ -1,6 +1,6 @@
 {% for hit in hits %}
-<a class="result" {% if hit.placed %}data-open-node-id="{{ hit.node_id }}"{% endif %}
-   href="{% if hit.placed %}/api/local-research-map/neighbors/{{ hit.node_id | urlencode }}{% else %}/fragments/local-research/musicbrainz/{{ hit.node_id | urlencode }}{% endif %}">
-  {{ hit.name }} <span class="result-kind">{% if hit.placed %}placed in this local evidence layout{% else %}not placed in this map{% endif %}</span>
-</a>
+<{% if hit.placed or local_research_artist_evidence_configured %}a{% else %}span{% endif %} class="result" {% if hit.placed %}data-open-node-id="{{ hit.node_id }}"{% endif %}
+   {% if hit.placed %}href="/?view=open&amp;open_focus={{ hit.node_id | urlencode }}"{% elif local_research_artist_evidence_configured %}href="/fragments/local-research/musicbrainz/{{ hit.node_id | urlencode }}"{% endif %}>
+  {{ hit.name }} <span class="result-kind">{% if hit.placed %}mapped{% else %}unplaced{% endif %}</span>
+</{% if hit.placed or local_research_artist_evidence_configured %}a{% else %}span{% endif %}>
 {% endfor %}

@@ -189,7 +189,11 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
-        await database.start()
+        # The local semantic map binds only its three small receipt artifacts.
+        # Do not create/certify a catalog database merely to draw that map.
+        map_only = settings.map_only and local_research_map is not None
+        if not map_only:
+            await database.start()
         if local_research_artists is not None:
             await asyncio.to_thread(local_research_artists.start)
         if local_reviewed_alias_context is not None:
@@ -201,7 +205,8 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
         try:
             yield
         finally:
-            await database.stop()
+            if not map_only:
+                await database.stop()
 
     async def provide_database() -> AsyncDatabase:
         return database

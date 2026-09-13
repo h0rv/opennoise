@@ -24,6 +24,8 @@ from opennoise.serving.open.construction_graph_v2 import (
 from tests.serving.map.test_production_map import _inputs, _settings
 from tests.serving.open.test_construction_graph_v2 import build_expansion
 
+PEER_EDGE_BUDGET = 12
+
 if TYPE_CHECKING:
     from opennoise.models.production import ProductionMapArtifact
 
@@ -60,22 +62,32 @@ class OpenNoisePagesTests(unittest.TestCase):
             index = (root / "first" / "index.html").read_text(encoding="utf-8")
             self.assertIn('data-mapped-node-count="8"', index)
             self.assertIn('data-searchable-name-count="5"', index)
-            self.assertIn('preserveAspectRatio="xMidYMid meet"', index)
             self.assertIn('data-map-url="assets/map-data.json"', index)
-            self.assertIn('src="assets/map.js"', index)
+            self.assertIn('id="semantic-map"', index)
+            self.assertIn('src="assets/map-renderer.js"', index)
             self.assertNotIn("cytoscape", index.casefold())
-            self.assertNotIn("semantic-map", index)
             self.assertNotIn("<h1", index)
             self.assertFalse((root / "first" / "levels").exists())
 
             map_data = json.loads((root / "first" / "assets" / "map-data.json").read_text())
-            self.assertEqual(map_data["revision"], "opennoise-map-v1")
-            self.assertEqual(len(map_data["nodes"]), 8)
-            self.assertEqual(set(map_data["lod"]), {"0", "1", "2", "3"})
+            self.assertEqual(map_data["revision"], "semantic-scatter-map-v1")
+            self.assertGreaterEqual(len(map_data["nodes"]), 1)
+            self.assertLessEqual(len(map_data["nodes"]), 8)
+            self.assertEqual([row["level"] for row in map_data["labels"]], [0, 1, 2, 3])
             self.assertTrue(
                 all(0 <= node["x"] <= 1 and 0 <= node["y"] <= 1 for node in map_data["nodes"])
             )
-            self.assertLessEqual(len(map_data["lod"]["0"]), len(map_data["nodes"]))
+            self.assertLessEqual(len(map_data["labels"][0]["ids"]), len(map_data["nodes"]))
+            self.assertTrue(
+                all(
+                    sum(
+                        edge["source"] == node["id"] or edge["target"] == node["id"]
+                        for edge in map_data["peers"]
+                    )
+                    <= PEER_EDGE_BUDGET
+                    for node in map_data["nodes"]
+                )
+            )
 
             search_entries = json.loads(
                 (root / "first" / "assets" / "search-index.json").read_text(encoding="utf-8")

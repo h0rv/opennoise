@@ -1,28 +1,15 @@
-import re
 import unittest
+from pathlib import Path
 
-from scripts.render_ui_qa import fixture_html, inspect_fixture
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class UiQaTests(unittest.TestCase):
-    def test_fixture_is_deterministic_accessible_and_bounded(self) -> None:
-        first = fixture_html()
-        second = fixture_html()
-        inspection = inspect_fixture(first)
-
-        self.assertEqual(first, second)
-        self.assertLess(inspection.html_bytes, 64 * 1024)
-        self.assertLess(inspection.css_bytes, 16 * 1024)
-        self.assertLess(inspection.element_count, 1_000)
-        self.assertLess(inspection.focusable_count, 200)
-        self.assertNotIn("<audio", first.casefold())
-        self.assertNotIn("<video", first.casefold())
-        self.assertNotIn("<canvas", first.casefold())
-        self.assertIsNone(re.search(r'href="/static/app\.css(?:\?[^" ]*)?"', first))
-        self.assertNotIn("player", first.casefold())
-        self.assertNotIn("preview", first.casefold())
-        self.assertEqual(first.count('id="semantic-map"'), 0)
-        self.assertEqual(first.count('id="layout-lenses"'), 0)
+    def test_one_canvas_renderer_replaces_the_retired_svg_fixture(self) -> None:
+        renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
+        self.assertIn("requestAnimationFrame", renderer)
+        self.assertIn("getContext('2d')", renderer)
+        self.assertNotIn("cytoscape", renderer.casefold())
 
 
 if __name__ == "__main__":

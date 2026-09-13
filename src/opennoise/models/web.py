@@ -26,6 +26,7 @@ class Settings(BaseSettings):
         default=Path("data/opennoise.sqlite"), validation_alias="OPENNOISE_DATABASE_PATH"
     )
     database_read_only: bool = Field(default=False, validation_alias="OPENNOISE_DATABASE_READ_ONLY")
+    map_only: bool = Field(default=False, validation_alias="OPENNOISE_MAP_ONLY")
     vault_path: Path = Field(default=Path("data/vault"), validation_alias="OPENNOISE_VAULT_PATH")
     production_map_path: Path | None = Field(
         default=Path(__file__).resolve().parents[3] / "data/model/production-map-v1.json",

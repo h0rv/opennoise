@@ -57,8 +57,22 @@ def resolve_production_paths(root: Path) -> ProductionLaunchPaths | None:
 
 
 def main() -> int:
-    """Start the production-first local app or explain the cacheable prerequisite."""
+    """Start the best receipt-bound local semantic map when it is available."""
     root = Path.cwd()
+    map_inputs = (
+        root / ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json",
+        root
+        / ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite",
+        root / ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json",
+    )
+    if all(path.is_file() for path in map_inputs):
+        sys.stderr.write(
+            "Starting receipt-bound local semantic map; public release certification remains "
+            "opt-in.\n"
+        )
+        return subprocess.run(
+            [sys.executable, "-m", "scripts.run_local_research_dev"], check=False
+        ).returncode
     paths = resolve_production_paths(root)
     if paths is None:
         sys.stderr.write(

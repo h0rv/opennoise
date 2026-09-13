@@ -76,6 +76,22 @@ class LocalResearchMapStoreTests(PollingIsolatedAsyncioTestCase):
             with self.assertRaisesRegex(LocalResearchMapError, "logical hash"):
                 store.start()
 
+    def test_renderer_contract_contains_all_placed_nodes_and_idm_alias(self) -> None:
+        renderer = _store().renderer()
+        self.assertEqual(renderer.placed_node_count, 1580)
+        self.assertEqual(renderer.total_seed_count, 6291)
+        self.assertEqual(renderer.placed_node_count + renderer.unplaced_node_count, 6291)
+        self.assertEqual(len({node.id for node in renderer.nodes}), renderer.placed_node_count)
+        self.assertEqual([row.level for row in renderer.labels], [0, 1, 2, 3])
+        self.assertTrue(
+            all(
+                set(left.ids) <= set(right.ids)
+                for left, right in zip(renderer.labels[:-1], renderer.labels[1:], strict=True)
+            )
+        )
+        aliases = {(row.term, row.target) for row in renderer.aliases}
+        self.assertIn(("idm", "legacy:item887"), aliases)
+
     async def test_local_search_fragment_keeps_layout_scope_for_unplaced_names(self) -> None:
         store = _store()
         assert store._nodes is not None

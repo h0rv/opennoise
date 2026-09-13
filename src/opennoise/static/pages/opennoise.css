@@ -1,11 +1,9 @@
-:root { color-scheme: light dark; --bg: #f6f6f2; --ink: #23231f; --node: #687169; }
-@media (prefers-color-scheme: dark) { :root { --bg: #171917; --ink: #f2f2eb; --node: #94ab92; } }
+:root { color-scheme: light dark; --bg: #f6f6f2; --canvas: var(--bg); --ink: #23231f; --node: #687169; --line: #c8c7bd; --focus: #005fcc; --similarity: #b6a989; }
+@media (prefers-color-scheme: dark) { :root { --bg: #171917; --ink: #f2f2eb; --node: #94ab92; --line: #555a52; --focus: #80baff; --similarity: #c7ac7a; } }
 * { box-sizing: border-box; }
 html, body, #map { width: 100%; height: 100%; margin: 0; background: var(--bg); color: var(--ink); font-family: ui-sans-serif, system-ui, sans-serif; }
-#map-stage { position: fixed; inset: 0; overflow: hidden; background: var(--bg); touch-action: none; }
-#plot { display: block; width: 100%; height: 100%; }
-.point circle { fill: var(--node); stroke: var(--bg); stroke-width: .002; }
-.point text { fill: var(--ink); paint-order: stroke; stroke: var(--bg); stroke-width: .003; pointer-events: none; }
+#semantic-map { position: fixed; inset: 0; display: block; width: 100%; height: 100%; background: var(--bg); touch-action: none; }
+#semantic-map:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 #search { position: fixed; z-index: 2; top: 14px; left: 14px; width: min(360px, calc(100vw - 28px)); }
 #map-controls { position: fixed; z-index: 2; right: 14px; bottom: 14px; display: flex; gap: 4px; padding: 4px; border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 7px; background: color-mix(in srgb, var(--bg) 94%, transparent); }
 #map-controls button { min-width: 32px; min-height: 32px; border: 0; border-radius: 4px; color: var(--ink); background: transparent; font: inherit; cursor: pointer; }
@@ -13,7 +11,7 @@ html, body, #map { width: 100%; height: 100%; margin: 0; background: var(--bg); 
 #map-detail { position: fixed; z-index: 2; right: 14px; top: 70px; width: min(280px, calc(100vw - 28px)); padding: 12px; border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 7px; background: color-mix(in srgb, var(--bg) 94%, transparent); }
 #map-detail h2 { margin: 0; font-size: 16px; }
 #map-detail ul { margin: 10px 0 0; padding: 0; list-style: none; }
-#map-detail button { padding: 2px 0; border: 0; color: var(--ink); background: transparent; font: inherit; text-align: left; cursor: pointer; }
+#map-detail a { display: inline-block; margin-top: 10px; color: var(--ink); }
 #query { width: 100%; height: 42px; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 7px; background: color-mix(in srgb, var(--bg) 94%, transparent); color: var(--ink); font: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; clip: rect(0 0 0 0); overflow: hidden; }
 .back { display: inline-block; margin: 14px; color: var(--ink); }

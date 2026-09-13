@@ -40,38 +40,26 @@ class AppTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn('<main id="map"', response.text)
-        self.assertIn('data-map-view="public"', response.text)
+        self.assertIn('data-map-view="open"', response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=15", response.text)
+        self.assertIn("/static/app.css?v=16", response.text)
         self.assertNotIn("cytoscape-3.34.0.min.js", response.text)
         self.assertNotIn("semantic-map.js", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertNotIn('id="map-view-switch"', response.text)
-        self.assertEqual(response.text.count('id="semantic-map"'), 0)
-        self.assertEqual(response.text.count('class="point genre"'), 116)
-        self.assertEqual(response.text.count('class="label-overview"'), 0)
-        self.assertGreaterEqual(response.text.count("<text "), 68)
-        self.assertIn('id="static-map-viewport" class="static-map-zoom-0"', response.text)
-        self.assertIn('href="/?level=0&amp;zoom=0" aria-label="Fit map"', response.text)
-        self.assertIn('href="/?level=1&amp;zoom=1" aria-label="More detail"', response.text)
+        self.assertIn("Semantic map unavailable.", response.text)
+        self.assertEqual(response.text.count('class="point genre"'), 0)
         self.assertNotIn("data-local-research-artist-url", response.text)
 
-    def test_static_zoom_is_server_rendered_and_scrollable_without_graph_javascript(self) -> None:
+    def test_retired_static_zoom_is_not_rendered(self) -> None:
         response = self.client.get("/", params={"level": 1, "zoom": 1})
         stylesheet = (Path(__file__).parents[2] / "src/opennoise/static/app.css").read_text(
             encoding="utf-8"
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('class="static-map-zoom-1"', response.text)
-        self.assertIn('href="/?level=0&amp;zoom=0" aria-label="Fit map"', response.text)
-        self.assertIn(
-            "#static-map-viewport { position: fixed; inset: 0; overflow: auto;", stylesheet
-        )
-        self.assertIn(
-            "#static-map-viewport.static-map-zoom-1 #plot { width: 160vw; height: 160vh; }",
-            stylesheet,
-        )
+        self.assertIn("Semantic map unavailable.", response.text)
+        self.assertNotIn("static-map-viewport", stylesheet)
         self.assertNotIn("semantic-map.js", response.text)
 
     def test_local_research_panel_rejects_non_loopback_startup(self) -> None:
@@ -92,8 +80,7 @@ class AppTests(unittest.TestCase):
 
         self.assertEqual(page.status_code, 200)
         self.assertIn('data-map-view="open"', page.text)
-        self.assertIn('id="open-fallback"', page.text)
-        self.assertIn('href="/api/open-construction-map?level=0"', page.text)
+        self.assertIn("Semantic map unavailable.", page.text)
         self.assertNotIn("semantic-map.js", page.text)
         for response, budget in ((overview, 240), (detail, 720)):
             self.assertEqual(response.status_code, 200)
@@ -118,8 +105,8 @@ class AppTests(unittest.TestCase):
         api = self.client.get("/api/historical-signal-map")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('data-map-view="historical"', response.text)
-        self.assertIn("Historical compatibility is unavailable.", response.text)
+        self.assertIn('data-map-view="open"', response.text)
+        self.assertIn("Semantic map unavailable.", response.text)
         self.assertNotIn('data-graph-url="/api/map"', response.text)
         self.assertEqual(api.status_code, 503)
 
@@ -130,9 +117,7 @@ class AppTests(unittest.TestCase):
 
     def test_default_production_map_search_and_fragment(self) -> None:
         response = self.client.get("/api/map")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()["graph"]["nodes"]), 603)
-        self.assertNotIn("legacy-layout", response.text)
+        self.assertEqual(response.status_code, 503)
         self.assertEqual(self.client.get("/api/search", params={"q": "---"}).json(), {"hits": []})
         fragment = self.client.get("/fragments/search", params={"q": "---"})
         self.assertEqual(fragment.status_code, 200)
@@ -400,16 +385,11 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/", params={"view": "public"})
 
         detail_href = "/genres/key/wikidata%3Agenre%3AQ1"
-        self.assertIn(f'href="{detail_href}"', response.text)
-        self.assertIn(f'hx-get="{detail_href}"', response.text)
-        self.assertIn('hx-target="#genre-detail-slot"', response.text)
-        self.assertIn(f'hx-push-url="{detail_href}"', response.text)
-        self.assertIn('preserveAspectRatio="none"', response.text)
+        self.assertNotIn(f'href="{detail_href}"', response.text)
         self.assertNotIn('id="semantic-map"', response.text)
         self.assertNotIn('id="map-controls"', response.text)
         self.assertNotIn('id="layout-lenses"', response.text)
-        self.assertIn('id="map-point-wikidata:genre:Q1"', response.text)
-        self.assertIn("<title>Electronic music</title>", response.text)
+        self.assertNotIn('id="map-point-wikidata:genre:Q1"', response.text)
         self.assertNotIn('id="count"', response.text)
 
     def test_published_layout_lenses_keep_source_and_generated_contracts_distinct(self) -> None:
@@ -434,7 +414,7 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/genres/1", params={"view": "public"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('data-selected-genre="1"', response.text)
+        self.assertNotIn('data-selected-genre="1"', response.text)
         self.assertIn('id="selection-clear"', response.text)
         self.assertIn('href="/" aria-label="Close IDM"', response.text)
         self.assertIn('id="genre-detail"', response.text)
@@ -458,7 +438,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertEqual(selected.text.count('id="workspace"'), 1)
         self.assertEqual(selected.text.count('id="search"'), 1)
         self.assertEqual(selected.text.count('id="results"'), 1)
-        self.assertIn('data-selected-genre="1"', selected.text)
+        self.assertNotIn('data-selected-genre="1"', selected.text)
         self.assertIn('id="selection-clear"', selected.text)
         self.assertIn('id="genre-detail"', selected.text)
         self.assertIn("Autechre", selected.text)

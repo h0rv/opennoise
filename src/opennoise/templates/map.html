@@ -1,124 +1,19 @@
-<main id="map" aria-label="Music map" data-map-view="{{ map_view_mode | default('public') }}"{% if genre %} data-selected-genre="{{ genre.entity_id }}"{% endif %}>
-{% if map_view_mode | default('public') == 'historical' %}
-  {% if historical_map_configured %}
-  <section id="historical-fallback" class="map-fallback" aria-label="Historical compatibility">
-    <p>Historical compatibility overview</p>
-    {% if historical_overview %}
-    <ul>
-      {% for node in historical_overview %}
-      <li><a href="/api/historical-signal-map?level=1&amp;parent_id={{ node.hierarchy_id | urlencode }}">{{ node.representative_label }}</a></li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <p><a href="/api/historical-signal-map">Source and provenance</a></p>
-  </section>
-  <aside id="historical-detail" aria-label="Historical details"></aside>
-  {% else %}
-  <section id="historical-fallback" class="map-fallback" aria-label="Historical compatibility">
-    <p>Historical compatibility is unavailable.</p>
-  </section>
-  {% endif %}
-{% elif map_view_mode | default('public') == 'open' %}
-  {% if local_research_map_configured %}
-  <section id="open-fallback" class="map-fallback"><p>Local evidence layout: 1,580 placed seeds. Names not placed in this indexed layout remain searchable and retain artist detail.</p></section>
-  {% elif open_construction_graph_v2_configured %}
-  {% if open_static_map %}
-  <section id="open-static-shell" aria-labelledby="open-map-title">
-    <h1 id="open-map-title" class="sr-only">Open map</h1>
-    <svg id="open-static-map" role="img" aria-labelledby="open-map-title open-map-description"
-         viewBox="{{ open_static_map.view_box }}" preserveAspectRatio="xMidYMid meet">
-      <desc id="open-map-description">A bounded, precomputed focused graph. Each point is a link.</desc>
-      <g class="open-static-edges" aria-hidden="true">
-        {% for edge in open_static_map.edges %}
-        <line x1="{{ edge.source_x }}" y1="{{ edge.source_y }}" x2="{{ edge.target_x }}" y2="{{ edge.target_y }}" class="{% if edge.factual %}factual{% else %}review{% endif %}"></line>
-        {% endfor %}
-      </g>
-      <g class="open-static-nodes">
-        {% for item in open_static_map.nodes %}
-        <a id="open-node-{{ loop.index }}" class="open-static-node{% if item.focused %} focused{% endif %}"
-           href="/open/{{ item.node.node_id | urlencode }}" aria-label="{{ item.node.name }}, open neighborhood">
-          <title>{{ item.node.name }}</title>
-          <circle cx="{{ item.x }}" cy="{{ item.y }}" r="{% if item.focused %}8{% else %}5{% endif %}"></circle>
-          {% if item.label_visible %}<text x="{{ item.x + 9 }}" y="{{ item.y + 4 }}">{{ item.node.name }}</text>{% endif %}
-        </a>
-        {% endfor %}
-      </g>
-    </svg>
-    {% if open_neighborhood %}
-    <aside id="open-neighborhood" aria-label="Focused neighborhood">
-      <a class="open-map-back" href="/?view=open">All</a>
-      <h2>{{ open_neighborhood.nodes | selectattr('node_id', 'equalto', open_neighborhood.node_id) | map(attribute='name') | first }}</h2>
-      {% if open_neighborhood.hierarchy.broader %}<section><h3>Broader genres</h3><ul>{% for node in open_neighborhood.hierarchy.broader %}<li><a href="/open/{{ node.node_id | urlencode }}">{{ node.name }}</a></li>{% endfor %}</ul></section>{% endif %}
-      {% if open_neighborhood.hierarchy.narrower %}<section><h3>Narrower genres</h3><ul>{% for node in open_neighborhood.hierarchy.narrower %}<li><a href="/open/{{ node.node_id | urlencode }}">{{ node.name }}</a></li>{% endfor %}</ul></section>{% endif %}
-      {% if open_neighborhood.hierarchy.siblings %}<section><h3>Peers</h3><ul>{% for node in open_neighborhood.hierarchy.siblings %}<li><a href="/open/{{ node.node_id | urlencode }}">{{ node.name }}</a></li>{% endfor %}</ul></section>{% endif %}
-      <a class="artist-link" href="/fragments/open-construction-map/v2/artists/{{ open_neighborhood.node_id | urlencode }}">Artists</a>
-    </aside>
-    {% endif %}
-  </section>
-  {% else %}
-  <section id="open-fallback" class="sr-only" aria-label="Open navigation"><p>Search for a name to open its factual navigation.</p></section>
-  {% endif %}
-  {% elif open_construction_graph_configured %}
-  <section id="open-fallback" class="map-fallback" aria-label="Open construction graph">
-    <p>Open 6,291-node landscape. Use the interactive map to reveal bounded detail.</p>
-    <p><a href="/api/open-construction-map?level=0">Open landscape overview</a></p>
-  </section>
-  {% else %}
-  <section id="open-fallback" class="map-fallback" aria-label="Open construction graph">
-    <p>Open 6,291 landscape is unavailable.</p>
-  </section>
-  {% endif %}
+<main id="map" aria-label="Music map" data-map-view="open">
+{% if local_research_map_configured %}
+  <canvas id="semantic-map" role="img" aria-label="Local semantic music map"
+          data-map-url="/api/local-research-map/renderer"
+          data-neighbors-url="/api/local-research-map/neighbors/"
+          {% if local_research_artist_evidence_configured %}data-artist-url="/fragments/local-research/musicbrainz/"{% endif %}
+          data-focus="{{ local_research_focus or '' }}"></canvas>
+  <nav id="map-controls" aria-label="Map controls">
+    <button type="button" data-map-action="back" hidden>Back</button>
+    <button type="button" data-map-action="fit">Fit</button>
+    <button type="button" data-map-action="out" aria-label="Zoom out">−</button>
+    <button type="button" data-map-action="in" aria-label="Zoom in">+</button>
+    <button type="button" data-map-action="theme" aria-label="Toggle color theme">◐</button>
+  </nav>
+  <aside id="map-detail" aria-live="polite" hidden></aside>
 {% else %}
-{% if production_graph %}<div id="static-map-viewport" class="static-map-zoom-{{ production_zoom }}">{% endif %}
-<svg id="plot" class="map-fallback" role="img" aria-label="Genre map"
-     viewBox="{% if production_graph %}-0.10 -0.10 1.20 1.20{% else %}{{ map.view_box }}{% endif %}" width="{{ map.view_width }}" height="{{ map.view_height }}"
-     preserveAspectRatio="none">
-{% if production_graph %}
-  {% for point in production_graph.graph.nodes %}
-  {% if point.genre_id in production_visible_node_ids %}
-  <a id="map-point-{{ point.genre_id }}" class="point genre" data-genre-id="{{ point.genre_id }}"
-     href="{{ production_graph.detail_hrefs[point.genre_id] }}" aria-label="{{ point.name }}, open details"
-     hx-get="{{ production_graph.detail_hrefs[point.genre_id] }}" hx-target="#genre-detail-slot" hx-swap="innerHTML"
-     hx-push-url="{{ production_graph.detail_hrefs[point.genre_id] }}" hx-sync="#search:abort">
-    <title>{{ point.name }}</title>
-    <circle class="production-point" cx="{{ point.x }}" cy="{{ point.y }}" r="0.005" fill="#77776f"></circle>
-    {% if point.genre_id in production_label_ids %}
-    <text x="{% if point.x > 0.78 %}{{ point.x - 0.008 }}{% else %}{{ point.x + 0.008 }}{% endif %}" y="{{ point.y + 0.004 }}" font-size="0.014"{% if point.x > 0.78 %} text-anchor="end"{% endif %}>{{ point.name }}</text>
-    {% endif %}
-  </a>
-  {% endif %}
-  {% endfor %}
-{% elif map.points and layout_key != 'default' %}
-  {% for point in map.points %}
-  <a id="map-point-{{ point.entity_id }}" class="point {{ point.entity_kind }}{% if point.entity_id == map.focused_entity_id %} selected{% endif %}"
-     data-genre-id="{{ point.entity_id }}"
-     href="/genres/{{ point.entity_id }}{% if layout_query %}?layout={{ layout_query }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}{% elif search_query %}?q={{ search_query | urlencode }}{% endif %}"
-     aria-label="{{ point.name }}{% if point.entity_id == map.focused_entity_id %}, details open{% else %}, open details{% endif %}"
-     {% if point.entity_id == map.focused_entity_id %}aria-current="location"{% endif %}
-     hx-get="/fragments/genres/{{ point.entity_id }}{% if layout_query %}?layout={{ layout_query }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}{% elif search_query %}?q={{ search_query | urlencode }}{% endif %}" hx-target="#genre-detail-slot"
-     hx-swap="innerHTML" hx-push-url="/genres/{{ point.entity_id }}{% if layout_query %}?layout={{ layout_query }}{% if search_query %}&amp;q={{ search_query | urlencode }}{% endif %}{% elif search_query %}?q={{ search_query | urlencode }}{% endif %}"
-     hx-sync="#search:abort">
-    <title>{{ point.name }}</title>
-    <circle cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"
-            fill="{{ point.color_hex or '#77776f' }}"></circle>
-    {% if map.show_labels %}
-    <text class="{% if point.entity_id in map.label_entity_ids %}label-overview{% elif point.entity_id in map.detail_label_entity_ids %}label-detail{% else %}label-all{% endif %}"
-          x="{% if point.x > map.horizontal_midpoint %}{{ point.x - 8 }}{% else %}{{ point.x + 8 }}{% endif %}"
-          y="{{ point.y + 3 }}"{% if point.x > map.horizontal_midpoint %} text-anchor="end"{% endif %}>{{ point.name }}</text>
-    {% endif %}
-  </a>
-  {% endfor %}
-{% else %}
-  <text x="50" y="50" class="empty" text-anchor="middle">Production map unavailable</text>
-{% endif %}
-</svg>
-{% if production_graph %}</div>{% endif %}
-{% if production_graph %}
-<nav id="static-map-levels" aria-label="Map detail">
-  {% if production_lod_level > 0 %}<a href="/?level={{ production_lod_level - 1 }}&amp;zoom={{ production_zoom - 1 if production_zoom > 0 else 0 }}" aria-label="Less detail">−</a>{% endif %}
-  <a href="/?level=0&amp;zoom=0" aria-label="Fit map">Fit</a>
-  {% if production_lod_level < 3 %}<a href="/?level={{ production_lod_level + 1 }}&amp;zoom={{ production_zoom + 1 if production_zoom < 3 else 3 }}" aria-label="More detail">+</a>{% endif %}
-</nav>
-{% endif %}
+  <p class="map-error">Semantic map unavailable.</p>
 {% endif %}
 </main>

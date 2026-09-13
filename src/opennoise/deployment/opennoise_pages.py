@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, Literal
-from xml.etree import ElementTree as ET
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import Field
@@ -26,6 +25,7 @@ _REVISION: Final = "opennoise-pages-static-v3"
 _PACKAGE_ROOT: Final = Path(__file__).resolve().parents[1]
 _TEMPLATE_ROOT: Final = _PACKAGE_ROOT / "templates" / "pages"
 _STATIC_ROOT: Final = _PACKAGE_ROOT / "static" / "pages"
+_STATIC_PEER_EDGE_BUDGET: Final = 12
 
 
 class OpenNoisePagesExportError(ValueError):
@@ -99,16 +99,15 @@ def export_opennoise_pages(inputs: OpenNoisePagesExportInputs) -> OpenNoisePages
     mapped = {node.genre_id: node for node in production.nodes}
     shutil.copyfile(_STATIC_ROOT / "opennoise.css", assets / "opennoise.css")
     shutil.copyfile(_STATIC_ROOT / "search.js", assets / "search.js")
-    shutil.copyfile(_STATIC_ROOT / "map.js", assets / "map.js")
+    shutil.copyfile(_PACKAGE_ROOT / "static" / "map-renderer.js", assets / "map-renderer.js")
     search_entries = _search_entries(search_graph, mapped)
     _write_json(assets / "search-index.json", search_entries)
-    _write_json(assets / "map-data.json", _map_payload(production))
+    _write_json(assets / "map-data.json", _map_payload(production, search_graph))
     _write_template(
         output / "index.html",
         "index.html",
         mapped_node_count=len(mapped),
         searchable_name_count=search_graph.coverage.legacy_seed_node_count,
-        svg=_map_svg(production, 0, ""),
     )
     _write_template(
         output / "search.html",
@@ -210,65 +209,74 @@ def _search_entries(
     return sorted(entries, key=lambda item: (item["name"].casefold(), item["id"]))
 
 
-def _map_svg(artifact: ProductionMapArtifact, level: int, base_prefix: str) -> str:
-    """Generate only SVG data; templates own every HTML page shell."""
-    lod = artifact.lods[level]
-    visible = set(lod.visible_node_ids)
-    labels = {item.genre_id for item in lod.desktop_labels if item.shown}
-    svg = ET.Element(
-        "svg",
-        {
-            "id": "plot",
-            "role": "img",
-            "aria-label": "Mapped genres",
-            "viewBox": "-.04 -.04 1.08 1.08",
-            "preserveAspectRatio": "xMidYMid meet",
-        },
-    )
-    for node in sorted(
-        (item for item in artifact.nodes if item.genre_id in visible),
-        key=lambda item: item.genre_id,
-    ):
-        anchor = ET.SubElement(
-            svg,
-            "a",
-            {
-                "class": "point",
-                "href": f"{base_prefix}genres/{_page_id(node.genre_id)}.html",
-                "aria-label": f"{node.name}, mapped genre",
-            },
-        )
-        ET.SubElement(anchor, "circle", {"cx": str(node.x), "cy": str(node.y), "r": ".004"})
-        if node.genre_id in labels:
-            label = ET.SubElement(
-                anchor,
-                "text",
-                {"x": str(node.x + 0.006), "y": str(node.y + 0.003), "font-size": ".012"},
+def _map_payload(
+    artifact: ProductionMapArtifact, search_graph: OpenConstructionGraphV2Artifact
+) -> dict[str, object]:
+    """Expose only legacy-seed geometry; public catalog IDs stay search-only."""
+    candidates: dict[str, list[tuple[str, str]]] = {}
+    for edge in search_graph.edges:
+        if (
+            edge.kind == "canonical_catalog_identity"
+            and edge.source_node_id.startswith("legacy:")
+            and edge.target_node_id.startswith("catalog:")
+        ):
+            candidates.setdefault(edge.target_node_id.removeprefix("catalog:"), []).append(
+                (edge.source_node_id, edge.source_node_id)
             )
-            label.text = node.name
-    return ET.tostring(svg, encoding="unicode")
-
-
-def _map_payload(artifact: ProductionMapArtifact) -> dict[str, object]:
-    """Expose only receipt-bound semantic geometry to the renderer."""
-    nodes = [
-        {"id": node.genre_id, "name": node.name, "x": node.x, "y": node.y}
-        for node in sorted(artifact.nodes, key=lambda node: node.genre_id)
-    ]
-    lod = {
-        str(level): [label.genre_id for label in item.desktop_labels if label.shown]
-        for level, item in enumerate(artifact.lods)
+    names = {node.node_id: node.name for node in search_graph.nodes}
+    stable = {
+        catalog: values[0][0]
+        for catalog, values in candidates.items()
+        if len(values) == 1 and values[0][0] in names
     }
+    source_nodes = {node.genre_id: node for node in artifact.nodes}
+    nodes = [
+        {
+            "id": stable[catalog],
+            "name": names[stable[catalog]],
+            "x": node.x,
+            "y": node.y,
+            "importance": 0,
+        }
+        for catalog, node in sorted(source_nodes.items())
+        if catalog in stable
+    ]
+    node_ids = {node["id"] for node in nodes}
+    labels = [
+        [
+            stable[label.genre_id]
+            for label in item.desktop_labels
+            if label.shown and label.genre_id in stable
+        ]
+        for item in artifact.lods
+    ]
+    peer_counts = dict.fromkeys(node_ids, 0)
+    peers = []
+    for edge in sorted(
+        (edge for edge in artifact.edges if edge.kind == "similarity"),
+        key=lambda edge: (-edge.weight, edge.source_genre_id, edge.target_genre_id),
+    ):
+        if edge.source_genre_id not in stable or edge.target_genre_id not in stable:
+            continue
+        source, target = stable[edge.source_genre_id], stable[edge.target_genre_id]
+        if (
+            peer_counts[source] >= _STATIC_PEER_EDGE_BUDGET
+            or peer_counts[target] >= _STATIC_PEER_EDGE_BUDGET
+        ):
+            continue
+        peers.append({"source": source, "target": target, "weight": edge.weight})
+        peer_counts[source] += 1
+        peer_counts[target] += 1
     return {
-        "revision": "opennoise-map-v1",
-        "world": {"min_x": 0, "min_y": 0, "max_x": 1, "max_y": 1},
+        "revision": "semantic-scatter-map-v1",
+        "source": "production-map",
+        "bounds": {"min_x": 0, "min_y": 0, "max_x": 1, "max_y": 1},
+        "fit_bounds": {"min_x": 0, "min_y": 0, "max_x": 1, "max_y": 1},
+        "display_transform": {"scale_x": 1.6, "scale_y": 1},
         "nodes": nodes,
-        "lod": lod,
-        "peers": [
-            {"source": edge.source_genre_id, "target": edge.target_genre_id, "weight": edge.weight}
-            for edge in artifact.edges
-            if edge.kind == "similarity"
-        ],
+        "labels": [{"level": level, "ids": ids} for level, ids in enumerate(labels)],
+        "aliases": [],
+        "peers": peers,
     }
 
 
