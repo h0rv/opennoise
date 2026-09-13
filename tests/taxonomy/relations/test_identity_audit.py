@@ -53,6 +53,7 @@ def _receipt() -> EvidenceGraphProjectionArtifact:
         database_sha256="b" * 64,
         database_bytes=1,
         identity_count=6291,
+        total_identity_count=6292,
         claim_count=0,
         abstention_count=0,
         factual_relation_count=0,

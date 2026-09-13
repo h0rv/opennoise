@@ -68,6 +68,7 @@ class EvidenceGraphProjectionArtifact(FrozenModel):
     database_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     database_bytes: int = Field(gt=0)
     identity_count: int = Field(ge=_SEEDS, le=_SEEDS)
+    total_identity_count: int = Field(ge=_SEEDS)
     claim_count: int = Field(ge=0)
     abstention_count: int = Field(ge=0)
     factual_relation_count: int = Field(ge=0)
@@ -78,7 +79,11 @@ class EvidenceGraphProjectionArtifact(FrozenModel):
     def complete(self) -> EvidenceGraphProjectionArtifact:
         """Require full stable identity accounting and every declared input."""
         roles = {item.role for item in self.inputs}
-        if self.identity_count != _SEEDS or len(roles) != _INPUT_COUNT:
+        if (
+            self.identity_count != _SEEDS
+            or self.total_identity_count < self.identity_count
+            or len(roles) != _INPUT_COUNT
+        ):
             raise ValueError("receipt must bind all inputs and 6291 stable identities")
         return self
 
@@ -368,7 +373,9 @@ def build_evidence_graph_projection(
                 "release_group_id FROM evidence_source.release_group_support",
                 (f"musicbrainz:{evidence.output_sha256}:",),
             )
-            database.execute("DETACH DATABASE evidence_source")
+            # The source stays attached until this temporary connection closes.
+            # Detaching during the active write transaction can lock SQLite even
+            # though the source was opened read-only.
             _many(
                 database,
                 "INSERT OR IGNORE INTO identity(namespace,identifier,label,disposition) "
@@ -432,7 +439,8 @@ def build_evidence_graph_projection(
         digest, size = sha256_file(temporary)
         with closing(connect_readonly(temporary)) as database:
             count_queries = {
-                "identity": "SELECT count(*) FROM identity",
+                "identity": "SELECT count(*) FROM identity WHERE namespace = 'stable_seed'",
+                "total_identity": "SELECT count(*) FROM identity",
                 "claim": "SELECT count(*) FROM claim",
                 "abstention": "SELECT count(*) FROM abstention",
                 "factual_relation": "SELECT count(*) FROM factual_relation",
@@ -447,6 +455,7 @@ def build_evidence_graph_projection(
             database_sha256=digest,
             database_bytes=size,
             identity_count=counts["identity"],
+            total_identity_count=counts["total_identity"],
             claim_count=counts["claim"],
             abstention_count=counts["abstention"],
             factual_relation_count=counts["factual_relation"],
