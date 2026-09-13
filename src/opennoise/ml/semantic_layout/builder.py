@@ -15,6 +15,7 @@ import numpy as np
 from scipy.spatial import KDTree
 
 from opennoise.ml.layout_lenses import build_weighted_spectral_coordinates
+from opennoise.ml.semantic_layout.atlas import AtlasPoint, build_rectangular_atlas
 
 from .contracts import (
     CameraBounds,
@@ -616,6 +617,28 @@ def _merge_weighted_edges(
         kinds[edge].add(kind)
 
 
+def _place_branch_children(
+    anchor: tuple[float, float], children: Iterable[str]
+) -> dict[str, tuple[float, float]]:
+    """Place a hierarchy branch in a compact lattice, never in radial spokes."""
+    ordered = tuple(sorted(children))
+    if not ordered:
+        return {}
+    columns = max(1, math.ceil(math.sqrt(len(ordered))))
+    rows = math.ceil(len(ordered) / columns)
+    spacing_x, spacing_y = 0.014, 0.014
+    output: dict[str, tuple[float, float]] = {}
+    for index, node in enumerate(ordered):
+        column, row = index % columns, index // columns
+        offset_x = (column - (columns - 1) / 2.0) * spacing_x
+        offset_y = (row - (rows - 1) / 2.0) * spacing_y
+        digest = hashlib.sha256(node.encode()).digest()
+        jitter_x = (int.from_bytes(digest[:2], "big") / 65535.0 - 0.5) * spacing_x * 0.35
+        jitter_y = (int.from_bytes(digest[2:4], "big") / 65535.0 - 0.5) * spacing_y * 0.35
+        output[node] = (anchor[0] + offset_x + jitter_x, anchor[1] + offset_y + jitter_y)
+    return output
+
+
 def _display_hierarchy(
     nodes: Iterable[str], directed: Mapping[str, Mapping[str, float]]
 ) -> tuple[dict[str, str | None], dict[str, str | None], dict[str, int]]:
@@ -793,6 +816,26 @@ def _initial_camera(
     return CameraBounds(x0=x0, y0=y0, x1=x0 + width, y1=y0 + height)
 
 
+def _content_bounds(
+    positions: Mapping[str, tuple[float, float]], world_width: float, world_height: float
+) -> CameraBounds:
+    """Return the padded content box without allowing an outlier to set the view."""
+    if not positions:
+        return CameraBounds(x0=0.0, y0=0.0, x1=world_width, y1=world_height)
+    minimum_x = min(point[0] for point in positions.values())
+    maximum_x = max(point[0] for point in positions.values())
+    minimum_y = min(point[1] for point in positions.values())
+    maximum_y = max(point[1] for point in positions.values())
+    padding_x = max((maximum_x - minimum_x) * 0.02, world_width * 0.01)
+    padding_y = max((maximum_y - minimum_y) * 0.02, world_height * 0.01)
+    return CameraBounds(
+        x0=max(0.0, minimum_x - padding_x),
+        y0=max(0.0, minimum_y - padding_y),
+        x1=min(world_width, maximum_x + padding_x),
+        y1=min(world_height, maximum_y + padding_y),
+    )
+
+
 def _quality_gate(metrics: GeometryMetrics) -> None:
     if (
         metrics.mean_peer_knn_preservation is None
@@ -829,24 +872,6 @@ def _quality_gate(metrics: GeometryMetrics) -> None:
         raise SemanticLayoutError("overview root diversity gate failed")
 
 
-def _equalize_peer_manifold(
-    source: Mapping[str, tuple[float, float, int]], peer: Mapping[Edge, float]
-) -> dict[str, tuple[float, float, int]]:
-    """Use monotone rank equalization to make the peer manifold readable at overview.
-
-    The edge argument documents that this transform is downstream of the peer
-    manifold; only its ranking is used here, so no taxonomy can move peer space.
-    """
-    del peer
-    nodes = tuple(sorted(source))
-    denominator = max(len(nodes) - 1, 1)
-    ranks: dict[str, list[float]] = {node: [0.0, 0.0] for node in nodes}
-    for axis in (0, 1):
-        for rank, node in enumerate(sorted(nodes, key=lambda item: (source[item][axis], item))):
-            ranks[node][axis] = rank / denominator
-    return {node: (ranks[node][0], ranks[node][1], source[node][2]) for node in nodes}
-
-
 def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
     inputs: SemanticLayoutInputs, *, settings: SemanticLayoutSettings | None = None
 ) -> SemanticLayoutArtifact:
@@ -856,7 +881,6 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
     manifold, manifold_binding = _peer_manifold_input(
         inputs.peer_manifold_artifact, names, peer_binding
     )
-    manifold = _equalize_peer_manifold(manifold, peer)
     seeds = set(names)
     hierarchy, directed, hierarchy_binding = _hierarchy_input(
         inputs.hierarchy_artifact, seeds, resolved
@@ -888,11 +912,16 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         )
         neighbors[left].append((right, weight, preferred))
         neighbors[right].append((left, weight, preferred))
-    # Same x/y scale in normalized viewport preserves the source manifold's neighbor ranks.
-    x0, x1, y0, y1 = 0.12, resolved.world_width - 0.12, 0.07, 0.93
-    positions = {
-        node: (x0 + x * (x1 - x0), y0 + y * (y1 - y0)) for node, (x, y, _c) in manifold.items()
-    }
+    # Fit the peer manifold into a centered landscape atlas before attaching
+    # hierarchy-only points.  This keeps the initial view broad and makes each
+    # peer component a bounded visual neighborhood without force simulation.
+    atlas = build_rectangular_atlas(
+        tuple(
+            AtlasPoint(node_id=node, x=x, y=y, group_id=f"component:{component_id}")
+            for node, (x, y, component_id) in sorted(manifold.items())
+        ),
+    )
+    positions = dict(atlas.positions)
     placement: dict[
         str, Literal["peer_manifold", "hierarchy_anchor", "colisten_anchor", "structural_component"]
     ] = dict.fromkeys(positions, "peer_manifold")
@@ -920,11 +949,9 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         for node, (anchor, _kind) in attach.items():
             children[anchor].append(node)
         for anchor, child_nodes in children.items():
-            px, py = positions[anchor]
-            for index, node in enumerate(sorted(child_nodes)):
-                ring, slot = divmod(index, 12)
-                radius, angle = 0.008 + 0.003 * ring, 2.0 * math.pi * slot / 12.0
-                positions[node] = (px + radius * math.cos(angle), py + radius * math.sin(angle))
+            branch_positions = _place_branch_children(positions[anchor], child_nodes)
+            for node, position in branch_positions.items():
+                positions[node] = position
                 component[node], placement[node] = component[anchor], attach[node][1]
         waiting -= set(attach)
     # Unsupported seeds stay unplaced; independent components are bounded evidence islands.
@@ -1044,7 +1071,12 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         (positions[record.anchor_seed_id][0], positions[record.anchor_seed_id][1])
         for record in overview_communities
     )
-    initial_camera = _initial_camera(overview_anchors, resolved.world_width, resolved.world_height)
+    # Fit the complete atlas, not only a sparse label subset.  This prevents a
+    # valid but tiny set of overview anchors from pinning the first viewport to
+    # one corner while preserving zoom-in navigation into their neighborhoods.
+    initial_camera = _initial_camera(
+        tuple(positions.values()), resolved.world_width, resolved.world_height
+    )
     overview_root_ids = {
         roots[record.anchor_seed_id] or record.anchor_seed_id for record in overview_communities
     }
@@ -1119,9 +1151,7 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         world_bounds=CameraBounds(
             x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
         ),
-        content_bounds=CameraBounds(
-            x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
-        ),
+        content_bounds=_content_bounds(positions, resolved.world_width, resolved.world_height),
         initial_camera=initial_camera,
         metrics=metrics,
         output_sha256="0" * 64,

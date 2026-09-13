@@ -1,0 +1,61 @@
+from __future__ import annotations
+
+import math
+import unittest
+
+from opennoise.ml.semantic_layout.atlas import AtlasPoint, build_rectangular_atlas
+from opennoise.ml.semantic_layout.builder import _place_branch_children
+
+_GROUP_SPLIT_INDEX = 3
+
+
+class SemanticAtlasTests(unittest.TestCase):
+    def test_global_affine_fit_preserves_neighborhood_order(self) -> None:
+        points = tuple(
+            AtlasPoint(
+                node_id=f"node-{index}",
+                x=value,
+                y=value * 0.8,
+                group_id="left" if index < _GROUP_SPLIT_INDEX else "right",
+            )
+            for index, value in enumerate((0.1, 0.2, 0.3, 0.7, 0.8, 0.9))
+        )
+        result = build_rectangular_atlas(points)
+        left = (
+            sum(result.positions[f"node-{index}"][0] for index in range(_GROUP_SPLIT_INDEX))
+            / _GROUP_SPLIT_INDEX
+        )
+        right = (
+            sum(result.positions[f"node-{index}"][0] for index in range(_GROUP_SPLIT_INDEX, 6))
+            / _GROUP_SPLIT_INDEX
+        )
+        self.assertLess(left, right)
+        self.assertGreater(result.local_neighbor_preservation or 0.0, 0.8)
+        self.assertGreaterEqual(min(x for x, _y in result.positions.values()), 0.055)
+        self.assertLessEqual(max(x for x, _y in result.positions.values()), 16 / 9 - 0.055)
+
+    def test_outlier_is_clipped_without_setting_the_view(self) -> None:
+        points = tuple(
+            AtlasPoint(node_id=f"node-{index}", x=value, y=value / 2, group_id="all")
+            for index, value in enumerate((0.1, 0.2, 0.3, 0.4, 0.5, 1000.0))
+        )
+        result = build_rectangular_atlas(points)
+        xs = [point[0] for point in result.positions.values()]
+        ys = [point[1] for point in result.positions.values()]
+        self.assertGreater(max(xs) - min(xs), 1.0)
+        self.assertGreater(max(ys) - min(ys), 0.5)
+        self.assertTrue(all(0.0 < x < 16 / 9 for x in xs))
+        self.assertTrue(all(0.0 < y < 1.0 for y in ys))
+
+    def test_hierarchy_branch_is_not_a_radial_spoke_pattern(self) -> None:
+        children = _place_branch_children((0.8, 0.5), (f"child-{index}" for index in range(12)))
+        distances = [math.dist((0.8, 0.5), point) for point in children.values()]
+        angles = sorted(math.atan2(y - 0.5, x - 0.8) for x, y in children.values())
+        gaps = [angles[index + 1] - angles[index] for index in range(len(angles) - 1)]
+        self.assertGreater(len({round(distance, 5) for distance in distances}), 3)
+        self.assertGreater(max(gaps) - min(gaps), 0.02)
+        self.assertLess(max(distances), 0.04)
+
+
+if __name__ == "__main__":
+    unittest.main()
