@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from contextlib import closing
 from dataclasses import dataclass
@@ -26,6 +27,7 @@ from opennoise.ingest.listenbrainz.propagation import (
     ListenBrainzPropagationSettings,
     PropagationCandidate,
     PropagationCoverage,
+    PropagationPath,
 )
 
 from .contracts import (
@@ -260,7 +262,9 @@ def verify_derived_review_overlay_sources(sources: DerivedReviewOverlaySources) 
     )
     with closing(connect_readonly(sources.database)) as database:
         _verify_sqlite(database, "derived-review overlay")
+        _verify_artifact_inputs(database, sources.artifact.inputs)
         _verify_review_counts(database, sources.artifact.coverage)
+        _verify_review_rows(database)
 
 
 def verify_colisten_overlay_sources(sources: CoListenOverlaySources) -> None:
@@ -271,7 +275,9 @@ def verify_colisten_overlay_sources(sources: CoListenOverlaySources) -> None:
     )
     with closing(connect_readonly(sources.database)) as database:
         _verify_sqlite(database, "co-listen overlay")
+        _verify_artifact_inputs(database, sources.artifact.inputs)
         _verify_colisten_counts(database, sources.artifact.coverage)
+        _verify_colisten_rows(database)
 
 
 def _load_graph(
@@ -759,6 +765,56 @@ def _verify_review_counts(database: sqlite3.Connection, coverage: ReviewCandidat
         raise ListenBrainzOverlayError("derived-review sidecar schema is incompatible")
 
 
+def _verify_artifact_inputs(database: sqlite3.Connection, inputs: tuple[SidecarInput, ...]) -> None:
+    """Require the sidecar's durable input ledger to replay its receipt exactly."""
+    expected = {
+        item.role: (
+            item.locator,
+            item.byte_sha256,
+            item.byte_count,
+            item.logical_sha256,
+        )
+        for item in inputs
+    }
+    actual = {
+        str(row[0]): (str(row[1]), str(row[2]), int(row[3]), str(row[4]))
+        for row in database.execute(
+            "SELECT role, locator, byte_sha256, byte_count, logical_sha256 FROM artifact_input"
+        )
+    }
+    if actual != expected:
+        raise ListenBrainzOverlayError("sidecar input ledger does not match receipt")
+
+
+def _verify_review_rows(database: sqlite3.Connection) -> None:
+    """Reject certified review rows that violate the canonical candidate contract."""
+    for row in database.execute(
+        """SELECT artist_mbid, artist_source_id, stable_seed_id, legacy_seed_id, score,
+                         genre_rank, paths_json, propagation_provenance_ref
+                  FROM review_candidate"""
+    ):
+        artist_mbid = str(row[0])
+        stable_seed_id = str(row[2])
+        if (
+            not _is_canonical_uuid(artist_mbid)
+            or str(row[1]) != f"{_ARTIST_PREFIX}{artist_mbid}"
+            or not stable_seed_id.startswith("item")
+            or str(row[3]) != f"legacy:{stable_seed_id}"
+        ):
+            raise ListenBrainzOverlayError("derived-review sidecar row has noncanonical IDs")
+        try:
+            raw_paths = json.loads(str(row[6]))
+        except (TypeError, ValueError, json.JSONDecodeError) as error:
+            raise ListenBrainzOverlayError("derived-review sidecar paths are malformed") from error
+        if not isinstance(raw_paths, list) or not raw_paths:
+            raise ListenBrainzOverlayError("derived-review sidecar paths are malformed")
+        try:
+            for path in raw_paths:
+                PropagationPath.model_validate_json(canonical_json(path))
+        except (TypeError, ValueError) as error:
+            raise ListenBrainzOverlayError("derived-review sidecar paths are malformed") from error
+
+
 def _verify_colisten_counts(database: sqlite3.Connection, coverage: CoListenCoverage) -> None:
     row_count = int(database.execute("SELECT count(*) FROM colisten_relation").fetchone()[0])
     if row_count != coverage.retained_relation_count:
@@ -777,3 +833,33 @@ def _verify_colisten_counts(database: sqlite3.Connection, coverage: CoListenCove
         <= schema
     ):
         raise ListenBrainzOverlayError("co-listen sidecar schema is incompatible")
+
+
+def _verify_colisten_rows(database: sqlite3.Connection) -> None:
+    """Reject certified aggregate rows that violate canonical, evidence-only shape."""
+    for row in database.execute(
+        """SELECT left_artist_mbid, right_artist_mbid, window_start, window_end,
+                         distinct_user_count, evidence_fingerprint, source_binding,
+                         source_provenance_ref
+                  FROM colisten_relation"""
+    ):
+        left_artist = str(row[0])
+        right_artist = str(row[1])
+        fingerprint = str(row[5])
+        if (
+            not _is_canonical_uuid(left_artist)
+            or not _is_canonical_uuid(right_artist)
+            or not left_artist < right_artist
+            or not isinstance(row[2], int)
+            or row[2] < 0
+            or not isinstance(row[3], int)
+            or row[3] <= row[2]
+            or not isinstance(row[4], int)
+            or row[4] <= 0
+            or len(fingerprint) != _SHA256_LENGTH
+            or fingerprint != fingerprint.lower()
+            or any(char not in "0123456789abcdef" for char in fingerprint)
+            or str(row[6]) == ""
+            or str(row[7]) != f"listenbrainz:aggregate:{fingerprint}"
+        ):
+            raise ListenBrainzOverlayError("co-listen sidecar row is noncanonical")

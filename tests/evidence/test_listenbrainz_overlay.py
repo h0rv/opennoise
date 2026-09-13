@@ -30,6 +30,7 @@ from opennoise.evidence.listenbrainz_overlay import (
     write_colisten_overlay,
     write_derived_review_overlay,
 )
+from opennoise.evidence.listenbrainz_overlay.contracts import derived_review_overlay_sha256
 from opennoise.ingest.listenbrainz.propagation import (
     ListenBrainzPropagationReceipt,
     ListenBrainzPropagationSettings,
@@ -157,6 +158,32 @@ class ListenBrainzOverlayTests(unittest.TestCase):
             with self.assertRaisesRegex(ListenBrainzOverlayError, "does not match receipt"):
                 certify_derived_review_overlay_sources(
                     DerivedReviewOverlaySources(review_database, review)
+                )
+
+    def test_certification_replays_the_persisted_input_ledger(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            graph, graph_receipt = _graph(root)
+            propagation, propagation_receipt = _propagation(root)
+            database = root / "review.sqlite"
+            review = build_derived_review_overlay(
+                DerivedReviewOverlayInputs(
+                    graph, graph_receipt, propagation, propagation_receipt, database
+                )
+            )
+            changed_inputs = tuple(
+                item.model_copy(update={"logical_sha256": "e" * 64})
+                if item.role == "evidence_graph_database"
+                else item
+                for item in review.inputs
+            )
+            forged = review.model_copy(update={"inputs": changed_inputs, "output_sha256": "0" * 64})
+            forged = forged.model_copy(
+                update={"output_sha256": derived_review_overlay_sha256(forged)}
+            )
+            with self.assertRaisesRegex(ListenBrainzOverlayError, "input ledger"):
+                certify_derived_review_overlay_sources(
+                    DerivedReviewOverlaySources(database, forged)
                 )
 
     def test_fresh_sidecars_replay_with_identical_bytes_and_logical_hashes(self) -> None:
