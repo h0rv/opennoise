@@ -69,8 +69,8 @@ def main() -> int:
         ),
         "HOST": "127.0.0.1",
         "PORT": os.environ.get("PORT", "3002"),
-        "OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true",
-        "OPENNOISE_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ENABLED": "true",
+        "OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "false",
+        "OPENNOISE_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ENABLED": "false",
         **{key: str(value) for key, value in inputs.items()},
         **(
             {key: str(value) for key, value in reverse_lookup.items()}

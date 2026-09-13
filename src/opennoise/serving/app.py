@@ -175,6 +175,17 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 settings.local_research_map_peer_index_path or peer_index_path,
                 local_research_artists.sources.reconciliation,
             )
+    if (
+        local_research_map is None
+        and settings.local_research_peer_layout_path is not None
+        and settings.local_research_map_peer_index_path is not None
+        and settings.local_research_seed_reconciliation_path is not None
+    ):
+        local_research_map = LocalResearchMapStore(
+            settings.local_research_peer_layout_path,
+            settings.local_research_map_peer_index_path,
+            load_seed_reconciliation(settings.local_research_seed_reconciliation_path),
+        )
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
