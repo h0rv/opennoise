@@ -19,26 +19,30 @@ from opennoise.checkpoints.source_neutral_certification import (
     certification_sha256,
 )
 from opennoise.common import sha256_file
-from opennoise.evidence.full_graph_signal import (
-    ChannelPairCounts,
-    FullGraphSignalInputs,
-    FullGraphSignalSettings,
-    _containment_candidates,
-    _cooccurrence,
-    _csr,
-    _evaluate_membership,
-    _heldout_by_artist,
-    _load_pairs,
-    _PairData,
-    _peer_recovery,
-    _trim_rows,
-    build_full_graph_signal,
-    verify_full_graph_signal,
-)
 from opennoise.evidence.graph_projection import (
     ArtifactInput,
     EvidenceGraphProjectionArtifact,
     artifact_sha256,
+)
+from opennoise.ml.full_graph_signal import (
+    ChannelPairCounts,
+    FullGraphSignalInputs,
+    FullGraphSignalSettings,
+    build_full_graph_signal,
+    verify_full_graph_signal,
+)
+from opennoise.ml.full_graph_signal.contracts import _PairData
+from opennoise.ml.full_graph_signal.evaluation import (
+    _containment_candidates,
+    _evaluate_membership,
+    _heldout_by_artist,
+    _peer_recovery,
+)
+from opennoise.ml.full_graph_signal.input_cache import _load_pairs
+from opennoise.ml.full_graph_signal.sparse_baselines import (
+    _cooccurrence,
+    _csr,
+    _trim_rows,
 )
 
 
@@ -182,7 +186,7 @@ class FullGraphSignalTests(unittest.TestCase):
                     },
                 )
             with patch(
-                "opennoise.evidence.full_graph_signal._load_pairs", side_effect=AssertionError
+                "opennoise.ml.full_graph_signal.input_cache._load_pairs", side_effect=AssertionError
             ):
                 second = build_full_graph_signal(inputs, settings)
             self.assertEqual(first.output_sha256, second.output_sha256)

@@ -6,6 +6,10 @@ graph. It streams and deduplicates positive
 artist--seed pairs. Pair splitting happens after that collapse, so every claim
 for a held-out pair stays out of train.
 
+Implementation is deliberately separated into typed contracts, sealed
+input/cache handling, sparse baselines, positive-only evaluation, and a small
+pipeline orchestrator under `opennoise.ml.full_graph_signal`.
+
 The builder writes train-only `float32` SciPy CSR matrices with shape
 `artist_count × 6,291`. Their cache filenames derive from the graph receipt,
 construction certificate, and settings hashes. The baseline compares binary

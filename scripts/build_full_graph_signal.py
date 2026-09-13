@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 from opennoise.common import write_atomic_bytes
-from opennoise.evidence.full_graph_signal import (
+from opennoise.ml.full_graph_signal import (
     FullGraphSignalInputs,
     FullGraphSignalRunReport,
     FullGraphSignalSettings,
