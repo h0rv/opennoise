@@ -19,16 +19,18 @@ with a denser flat batch.
 
 ## Renderer decision
 
-Cytoscape.js 3.34 is the graph island. It supports preset positions, pointer
-and touch pan, wheel and pinch zoom, selection, and graph level interaction.
-HTMX 4 stays responsible for search, detail fragments, browser history, and
-ordinary HTML links. This keeps direct manipulation local and keeps navigation
-inspectable.
+Use one small viewport renderer and one versioned map-data contract for local
+and static Pages. All coordinates, communities, LOD membership, aliases, and
+peer evidence are computed and receipt-bound offline. The browser only fits the
+actual rectangular bounds, culls labels by viewport collision and importance,
+and handles pointer/touch pan, zoom, focus, and history. It never runs physics
+or derives a relationship or coordinate.
 
-The server rendered SVG is a no script fallback. It is not expected to provide
-production pan or semantic zoom. Canvas, WebGL, workers, binary tiles, and edge
-bundling are deferred until measured need proves that Cytoscape cannot meet the
-target interaction budget.
+SVG is suitable while the visible point budget remains small; use Canvas only
+when measurement shows that DOM updates no longer meet the interaction budget.
+If full-scale delivery needs it, the same contract can be spatially tiled with
+coarser levels retaining landmarks from each previous level. Server-rendered
+markup remains the no-script overview, not a competing scroll-zoom renderer.
 
 ## Required map evidence
 
@@ -48,4 +50,3 @@ look more like a proprietary historical one.
 
 Sources: [Hackerverse map design](https://blog.wilsonl.in/hackerverse/),
 [Hackerverse map builder](https://github.com/wilsonzlin/hackerverse/blob/master/build-map/main.py),
-and [Cytoscape.js](https://js.cytoscape.org/).
