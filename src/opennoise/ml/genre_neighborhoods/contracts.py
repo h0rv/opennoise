@@ -122,15 +122,25 @@ class GenreNeighborhoodArtifact(FrozenModel):
 
     @model_validator(mode="after")
     def _inputs_are_exact(self) -> GenreNeighborhoodArtifact:
-        if {item.role for item in self.inputs} != {
+        if tuple(item.role for item in self.inputs) != (
             "graph_database",
             "graph_receipt",
             "colisten_database",
             "colisten_receipt",
-        }:
+        ):
             raise ValueError(
-                "artifact must bind exactly graph and co-listen database/receipt inputs"
+                "artifact must bind graph and co-listen database/receipt inputs in stable order"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _channels_are_exact(self) -> GenreNeighborhoodArtifact:
+        """Keep the two evidence channels present exactly once in stable order."""
+        if tuple(item.channel for item in self.channels) != (
+            "artist_direct",
+            "reviewed_alias_context",
+        ):
+            raise ValueError("artifact must contain both evidence channels once in stable order")
         return self
 
 
@@ -155,6 +165,18 @@ def artifact_sha256(artifact: GenreNeighborhoodArtifact) -> str:
 
 def verify_artifact(artifact: GenreNeighborhoodArtifact) -> None:
     """Fail closed unless settings and artifact logical digests replay."""
+    if tuple(item.role for item in artifact.inputs) != (
+        "graph_database",
+        "graph_receipt",
+        "colisten_database",
+        "colisten_receipt",
+    ):
+        raise GenreNeighborhoodError("artifact input roles do not replay")
+    if tuple(item.channel for item in artifact.channels) != (
+        "artist_direct",
+        "reviewed_alias_context",
+    ):
+        raise GenreNeighborhoodError("artifact channels do not replay")
     if artifact.settings_sha256 != settings_sha256(artifact.settings):
         raise GenreNeighborhoodError("settings hash does not replay")
     if artifact.output_sha256 != artifact_sha256(artifact):

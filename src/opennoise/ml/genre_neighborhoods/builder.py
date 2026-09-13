@@ -121,6 +121,16 @@ def _build_cache(
             memberships[channel] = {artist: tuple(seeds) for artist, seeds in grouped.items()}
     if len(base_state) != 6291:
         raise GenreNeighborhoodError("stable seed state accounting is incomplete")
+    known_seeds = set(base_state)
+    for channel in _CHANNELS:
+        unknown = {
+            seed
+            for artist_seeds in memberships[channel].values()
+            for seed in artist_seeds
+            if seed not in known_seeds
+        }
+        if unknown:
+            raise GenreNeighborhoodError(f"{channel} membership references unknown stable seeds")
     with closing(sqlite3.connect(path)) as cache, cache:
         _schema(cache)
         observed = _channel_observed_states(base_state, memberships)

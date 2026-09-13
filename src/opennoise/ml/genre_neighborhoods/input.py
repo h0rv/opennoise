@@ -50,9 +50,9 @@ def certify_inputs(inputs: GenreNeighborhoodInputs) -> CertifiedInputs:
         ).fetchone() != (6291,):
             raise GenreNeighborhoodError("graph does not contain the complete stable seed universe")
     bindings = (
-        _binding("graph_database", inputs.graph_database, graph.output_sha256),
+        _binding("graph_database", inputs.graph_database, graph.database_sha256),
         _binding("graph_receipt", inputs.graph_receipt, graph.output_sha256),
-        _binding("colisten_database", inputs.colisten_database, colisten.output_sha256),
+        _binding("colisten_database", inputs.colisten_database, colisten.database_sha256),
         _binding("colisten_receipt", inputs.colisten_receipt, colisten.output_sha256),
     )
     return CertifiedInputs(bindings, graph.output_sha256, colisten.output_sha256)

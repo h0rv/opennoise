@@ -8,9 +8,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from opennoise.common import sha256_file
+from opennoise.common import canonical_json, sha256_file, sha256_hex
 
-from .contracts import GenreNeighborhoodArtifact, GenreNeighborhoodError, verify_artifact
+from .contracts import (
+    GenreNeighborhoodArtifact,
+    GenreNeighborhoodError,
+    GenreNeighborhoodReceipt,
+    verify_artifact,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,10 +50,18 @@ class CertifiedNeighborhoodCache:
 
 
 def certify_neighborhood_cache(
-    database: Path, artifact: GenreNeighborhoodArtifact
+    database: Path, artifact: GenreNeighborhoodArtifact, receipt: GenreNeighborhoodReceipt
 ) -> CertifiedNeighborhoodCache:
-    """Verify the model's logical artifact and cache bytes before serving a query."""
+    """Verify custody receipt, logical artifact, and cache bytes before serving a query."""
     verify_artifact(artifact)
+    serialized = canonical_json(artifact.model_dump(mode="json")) + b"\n"
+    if (
+        receipt.artifact_sha256 != sha256_hex(serialized)
+        or receipt.artifact_byte_count != len(serialized)
+        or receipt.logical_output_sha256 != artifact.output_sha256
+        or receipt.cache_database_sha256 != artifact.cache_database_sha256
+    ):
+        raise GenreNeighborhoodError("neighborhood artifact does not bind its custody receipt")
     if sha256_file(database) != (
         artifact.cache_database_sha256,
         artifact.cache_database_byte_count,

@@ -89,7 +89,7 @@ def main() -> int:
     )
     custody = write_genre_neighborhoods(output, receipt, artifact)
     certified = certify_neighborhood_cache(
-        output_directory / "genre-neighborhoods.sqlite", artifact
+        output_directory / "genre-neighborhoods.sqlite", artifact, custody
     )
     write_quality_diagnostics(certified, args.graph_database, diagnostics)
     report = {
