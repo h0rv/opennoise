@@ -3,9 +3,9 @@ requires = ["uv_build>=0.8.22,<0.9"]
 build-backend = "uv_build"
 
 [project]
-name = "musix"
+name = "opennoise"
 version = "0.1.0"
-description = "A local map of music genres and artists"
+description = "OpenNoise: a local map of music genres and artists"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 license = "MIT"
@@ -22,7 +22,8 @@ dependencies = [
 ]
 
 [project.scripts]
-musix = "musix.serving.cli:main"
+opennoise = "musix.serving.cli:main"
+musix = "musix.serving.cli:main" # Transitional internal-package compatibility alias.
 
 [dependency-groups]
 dev = [

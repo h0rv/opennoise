@@ -295,7 +295,7 @@ wheels = [
 ]
 
 [[package]]
-name = "musix"
+name = "opennoise"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
