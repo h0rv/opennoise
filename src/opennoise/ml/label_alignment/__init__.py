@@ -1,0 +1,23 @@
+"""Source-neutral, abstention-first cold-label alignment."""
+
+from opennoise.ml.label_alignment.contracts import (
+    ColdLabelAlignmentArtifact,
+    ColdLabelAlignmentReceipt,
+    ColdLabelAlignmentSettings,
+)
+from opennoise.ml.label_alignment.pipeline import (
+    ColdLabelAlignmentInputs,
+    build_cold_label_alignment,
+    verify_cold_label_alignment,
+    write_cold_label_alignment,
+)
+
+__all__ = [
+    "ColdLabelAlignmentArtifact",
+    "ColdLabelAlignmentInputs",
+    "ColdLabelAlignmentReceipt",
+    "ColdLabelAlignmentSettings",
+    "build_cold_label_alignment",
+    "verify_cold_label_alignment",
+    "write_cold_label_alignment",
+]
