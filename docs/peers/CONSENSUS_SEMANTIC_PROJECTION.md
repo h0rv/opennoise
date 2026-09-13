@@ -44,3 +44,8 @@ uv run python scripts/build_consensus_semantic_projection.py \
   --exact-qid-taxonomy .cache/taxonomy-relation-expansion-v3-replay-candidate/artifact.json \
   --output .cache/consensus-semantic-projection-v1.json
 ```
+
+`publish_consensus_semantic_projection.py` then wraps only this already sealed
+projection in a UI-agnostic publication envelope. It adds no coordinates,
+edges, names, or historical inputs, and does not register a route or change a
+template.
