@@ -52,6 +52,15 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/opennoise/ml/genre_neighborhoods/**" = [
+    "E501", # Auditable SQLite statements retain their literal schema and query text.
+    "PLR0913", # Sparse accumulator arguments are the explicit evidence dimensions.
+    "PLR0917", # Sparse accumulator arguments are the explicit evidence dimensions.
+    "PLR2004", # Public bounded-query maximum is intentionally local.
+    "TC003", # Path annotations are Pydantic/runtime contract inputs.
+    "TRY300", # Existing validated cache returns directly from its replay branch.
+]
+"scripts/build_genre_colisten_neighborhoods.py" = ["S607"]
 "tests/**" = [
     "D100", # Test module names describe their scope.
     "D101", # Test case names describe their scope.
@@ -59,6 +68,7 @@ ignore = [
     "PT009", # The project deliberately uses stdlib unittest, not pytest.
     "PT027", # The project deliberately uses stdlib unittest, not pytest.
     "S101", # Assertions are the test contract.
+    "INP001", # Focused test directories need not be packages.
 ]
 "src/opennoise/serving/routes.py" = [
     "PLR0913", # Route signatures list the public query parameters explicitly.
@@ -153,6 +163,7 @@ build-evidence-graph-checkpoint = "python scripts/build_evidence_graph_projectio
 build-full-graph-signal = "python scripts/build_full_graph_signal.py --graph-database $OPENNOISE_EVIDENCE_GRAPH_DATABASE --graph-receipt $OPENNOISE_EVIDENCE_GRAPH_RECEIPT --construction-certificate $OPENNOISE_EVIDENCE_GRAPH_CONSTRUCTION_CERTIFICATE --cache-directory $OPENNOISE_FULL_GRAPH_SIGNAL_CACHE --output $OPENNOISE_FULL_GRAPH_SIGNAL_OUTPUT --receipt $OPENNOISE_FULL_GRAPH_SIGNAL_RECEIPT --run-report $OPENNOISE_FULL_GRAPH_SIGNAL_RUN_REPORT"
 build-evidence-graph-artist-identities = "python scripts/build_evidence_graph_artist_identity_overlay.py --graph-database $OPENNOISE_EVIDENCE_GRAPH_DATABASE --graph-receipt $OPENNOISE_EVIDENCE_GRAPH_RECEIPT --metadata-database $OPENNOISE_EVIDENCE_GRAPH_ARTIST_METADATA_DATABASE --metadata-receipt $OPENNOISE_EVIDENCE_GRAPH_ARTIST_METADATA_RECEIPT --output-database $OPENNOISE_EVIDENCE_GRAPH_ARTIST_IDENTITIES_DATABASE --receipt $OPENNOISE_EVIDENCE_GRAPH_ARTIST_IDENTITIES_RECEIPT"
 build-listenbrainz-dual-overlay = "python scripts/build_listenbrainz_dual_overlay.py"
+build-genre-colisten-neighborhoods = "python scripts/build_genre_colisten_neighborhoods.py"
 build-release-group-context-prefix-v2 = "python scripts/build_release_group_context_prefix_pilot.py --archive .cache/musicbrainz-release-group-source-objects/source-artifacts/sha256/6f153846228dc6034b2f8f43b472b088792cc2e242b09783a8968fa8d4bd7a43 --reconciliation .cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json --seed-target .cache/musicbrainz-full-seed-targets/musicbrainz-seed-targets-v1.json --alias-config config/reviewed_musicbrainz_seed_aliases_v1.json --output-root .cache/release-group-context-prefix-pilot-v2"
 ingest-musicbrainz-recordings = "opennoise ingest-source musicbrainz_json_recording_research_20260829 --partition-prefix 0 --max-archive-bytes 40000000 --max-record-bytes 2097152 --checkpoint-every 1000"
 ingest-wikidata = "python scripts/ingest_wikidata.py"
