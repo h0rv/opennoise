@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import gzip
-import hashlib
 import json
-import math
 import shutil
 from dataclasses import dataclass
 from hashlib import sha256
@@ -104,7 +102,7 @@ def export_opennoise_pages(inputs: OpenNoisePagesExportInputs) -> OpenNoisePages
     shutil.copyfile(_STATIC_ROOT / "map.js", assets / "map.js")
     search_entries = _search_entries(search_graph, mapped)
     _write_json(assets / "search-index.json", search_entries)
-    _write_json(assets / "map-data.json", _staging_map_payload(production, search_graph))
+    _write_json(assets / "map-data.json", _map_payload(production))
     _write_template(
         output / "index.html",
         "index.html",
@@ -251,61 +249,26 @@ def _map_svg(artifact: ProductionMapArtifact, level: int, base_prefix: str) -> s
     return ET.tostring(svg, encoding="unicode")
 
 
-def _staging_map_payload(
-    artifact: ProductionMapArtifact, search_graph: OpenConstructionGraphV2Artifact
-) -> dict[str, object]:
-    """Build a deterministic seed-first staging map without inventing relations."""
-    catalog_by_seed = {
-        edge.source_node_id: edge.target_node_id.removeprefix("catalog:")
-        for edge in search_graph.edges
-        if edge.kind == "canonical_catalog_identity"
-        and edge.source_node_id.startswith("legacy:")
-        and edge.target_node_id.startswith("catalog:")
-    }
-    seed_by_catalog = {catalog: seed for seed, catalog in catalog_by_seed.items()}
-    seeds = sorted(
-        (node for node in search_graph.nodes if node.node_kind == "legacy_name_seed"),
-        key=lambda node: (node.name.casefold(), node.node_id),
-    )
-    # A compact landscape staging projection makes sparse public coordinates optional.
-    nodes = []
-    for index, node in enumerate(seeds):
-        digest = hashlib.sha256(node.node_id.encode()).digest()
-        radius = 0.08 + 0.40 * math.sqrt((index + 0.5) / len(seeds))
-        angle = int.from_bytes(digest[:8], "big") / 2**64 * math.tau
-        nodes.append(
-            {
-                "id": node.node_id,
-                "name": node.name,
-                "aliases": (
-                    [catalog_by_seed[node.node_id]] if node.node_id in catalog_by_seed else []
-                ),
-                "x": round(0.5 + radius * math.cos(angle), 6),
-                "y": round(0.5 + radius * math.sin(angle) * 0.48, 6),
-            }
-        )
-    peers = [
-        {
-            "source": seed_by_catalog[edge.source_genre_id],
-            "target": seed_by_catalog[edge.target_genre_id],
-            "weight": edge.weight,
-        }
-        for edge in artifact.edges
-        if edge.kind == "similarity"
-        and edge.source_genre_id in seed_by_catalog
-        and edge.target_genre_id in seed_by_catalog
+def _map_payload(artifact: ProductionMapArtifact) -> dict[str, object]:
+    """Expose only receipt-bound semantic geometry to the renderer."""
+    nodes = [
+        {"id": node.genre_id, "name": node.name, "x": node.x, "y": node.y}
+        for node in sorted(artifact.nodes, key=lambda node: node.genre_id)
     ]
-    # Stable, importance-neutral overview sampling; later semantic artifacts can replace it.
     lod = {
-        str(level): [node["id"] for node in nodes[:: max(1, 16 // (2**level))]]
-        for level in range(4)
+        str(level): [label.genre_id for label in item.desktop_labels if label.shown]
+        for level, item in enumerate(artifact.lods)
     }
     return {
         "revision": "opennoise-map-v1",
-        "world": {"min_x": 0, "min_y": 0.26, "max_x": 1, "max_y": 0.74},
+        "world": {"min_x": 0, "min_y": 0, "max_x": 1, "max_y": 1},
         "nodes": nodes,
         "lod": lod,
-        "peers": peers,
+        "peers": [
+            {"source": edge.source_genre_id, "target": edge.target_genre_id, "weight": edge.weight}
+            for edge in artifact.edges
+            if edge.kind == "similarity"
+        ],
     }
 
 

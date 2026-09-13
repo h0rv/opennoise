@@ -70,7 +70,7 @@ class OpenNoisePagesTests(unittest.TestCase):
 
             map_data = json.loads((root / "first" / "assets" / "map-data.json").read_text())
             self.assertEqual(map_data["revision"], "opennoise-map-v1")
-            self.assertEqual(len(map_data["nodes"]), 5)
+            self.assertEqual(len(map_data["nodes"]), 8)
             self.assertEqual(set(map_data["lod"]), {"0", "1", "2", "3"})
             self.assertTrue(
                 all(0 <= node["x"] <= 1 and 0 <= node["y"] <= 1 for node in map_data["nodes"])
