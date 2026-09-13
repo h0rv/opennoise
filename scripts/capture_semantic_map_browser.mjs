@@ -1,0 +1,333 @@
+#!/usr/bin/env node
+
+/**
+ * Browser-only acceptance checks for the OpenNoise semantic map.
+ *
+ * The map stays untouched: Canvas drawing primitives are observed from a
+ * preload script so this harness can count points, labels, and focused edges
+ * without adding a production debug API.  The output is both a report and a
+ * useful pair of light/dark screenshots for human review.
+ */
+
+import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
+
+const args = process.argv.slice(2);
+const baseUrl = args[0];
+const output = args[1];
+if (!baseUrl || !output) {
+  throw new Error("usage: capture_semantic_map_browser.mjs URL OUTPUT [--captures DIR]");
+}
+const option = (name) => {
+  const index = args.indexOf(name);
+  return index < 0 ? null : args[index + 1] ?? null;
+};
+const captures = resolve(option("--captures") ?? "artifacts/semantic-map/captures");
+const port = Number(option("--port") ?? 9323);
+const sleep = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds));
+
+class Cdp {
+  constructor(url) {
+    this.socket = new WebSocket(url);
+    this.next = 0;
+    this.waiting = new Map();
+    this.runtimeErrors = [];
+    this.socket.addEventListener("message", ({ data }) => {
+      const message = JSON.parse(data);
+      if (message.method === "Runtime.exceptionThrown") {
+        this.runtimeErrors.push(message.params.exceptionDetails.text);
+      }
+      if (message.method === "Runtime.consoleAPICalled" && message.params.type === "error") {
+        this.runtimeErrors.push(
+          message.params.args.map((item) => item.value ?? item.description ?? "console error").join(" "),
+        );
+      }
+      const entry = this.waiting.get(message.id);
+      if (!entry) return;
+      this.waiting.delete(message.id);
+      if (message.error) entry.reject(new Error(`${entry.method}: ${JSON.stringify(message.error)}`));
+      else entry.resolve(message.result ?? {});
+    });
+  }
+
+  async connect() {
+    await new Promise((resolve_, reject) => {
+      this.socket.addEventListener("open", resolve_, { once: true });
+      this.socket.addEventListener("error", reject, { once: true });
+    });
+  }
+
+  command(method, params = {}) {
+    return new Promise((resolve_, reject) => {
+      const id = ++this.next;
+      const timeout = setTimeout(() => {
+        this.waiting.delete(id);
+        reject(new Error(`${method}: timed out`));
+      }, 15_000);
+      this.waiting.set(id, {
+        method,
+        resolve: (result) => { clearTimeout(timeout); resolve_(result); },
+        reject: (error) => { clearTimeout(timeout); reject(error); },
+      });
+      this.socket.send(JSON.stringify({ id, method, params }));
+    });
+  }
+
+  async evaluate(expression) {
+    const result = await this.command("Runtime.evaluate", {
+      expression,
+      returnByValue: true,
+      awaitPromise: true,
+    });
+    if (result.exceptionDetails) throw new Error(`page evaluation failed: ${result.exceptionDetails.text}`);
+    return result.result?.value;
+  }
+
+  close() { this.socket.close(); }
+}
+
+async function json(url, options = {}) {
+  const response = await fetch(url, options);
+  if (!response.ok) throw new Error(`${url} returned ${response.status}`);
+  return response.json();
+}
+
+async function launch() {
+  const profile = `${tmpdir()}/opennoise-semantic-map-${process.pid}`;
+  await rm(profile, { recursive: true, force: true });
+  const process_ = spawn("/usr/bin/chromium", [
+    "--headless=new", "--no-sandbox", "--disable-gpu", "--disable-background-networking",
+    "--disable-default-apps", "--no-first-run", `--remote-debugging-port=${port}`,
+    `--user-data-dir=${profile}`, "about:blank",
+  ], { stdio: "ignore" });
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try {
+      await json(`http://127.0.0.1:${port}/json/version`);
+      return { process_, profile };
+    } catch { await sleep(50); }
+  }
+  process_.kill("SIGKILL");
+  throw new Error("Chromium did not expose DevTools");
+}
+
+async function page() {
+  const target = await json(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" });
+  const cdp = new Cdp(target.webSocketDebuggerUrl);
+  await cdp.connect();
+  await cdp.command("Page.enable");
+  await cdp.command("Runtime.enable");
+  await cdp.command("Input.setIgnoreInputEvents", { ignore: false });
+  await cdp.command("Page.addScriptToEvaluateOnNewDocument", { source: PRELOAD });
+  return cdp;
+}
+
+async function navigate(cdp, width, height, colorScheme) {
+  await cdp.command("Emulation.setDeviceMetricsOverride", {
+    width, height, deviceScaleFactor: 1, mobile: false,
+    screenWidth: width, screenHeight: height,
+  });
+  await cdp.command("Emulation.setEmulatedMedia", {
+    media: "screen",
+    features: [{ name: "prefers-color-scheme", value: colorScheme }],
+  });
+  await cdp.command("Page.navigate", { url: baseUrl });
+  for (let attempt = 0; attempt < 240; attempt += 1) {
+    const ready = await cdp.evaluate(
+      "document.readyState === 'complete' && Boolean(document.querySelector('#semantic-map')) && Boolean(window.__opennoiseMapQA?.frames?.length)",
+    );
+    if (ready) return;
+    await sleep(25);
+  }
+  throw new Error("semantic map did not become renderer-ready");
+}
+
+async function waitForFrame(cdp, previousFrame = -1) {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const frame = await cdp.evaluate("window.__opennoiseMapQA?.frames?.length ?? 0");
+    if (frame > previousFrame) return frame;
+    await sleep(25);
+  }
+  throw new Error("semantic map did not redraw");
+}
+
+async function diagnostics(cdp) {
+  return cdp.evaluate(`(() => {
+    const qa = window.__opennoiseMapQA;
+    const canvas = document.querySelector('#semantic-map');
+    const rect = canvas?.getBoundingClientRect();
+    const frame = qa?.frames?.at(-1) ?? { arcs: [], labels: [], edges: 0 };
+    const extent = (items, x, y) => items.length ? {
+      min_x: Math.min(...items.map(item => item[x])), max_x: Math.max(...items.map(item => item[x])),
+      min_y: Math.min(...items.map(item => item[y])), max_y: Math.max(...items.map(item => item[y])),
+    } : null;
+    const style = canvas ? getComputedStyle(document.documentElement) : null;
+    return {
+      frame_count: qa?.frames?.length ?? 0,
+      viewport: rect ? { width: rect.width, height: rect.height } : null,
+      points: frame.arcs.length,
+      labels: frame.labels.length,
+      edges: frame.edges,
+      point_extent: extent(frame.arcs, 'x', 'y'),
+      background: style?.getPropertyValue('--canvas').trim() ?? '',
+      back_hidden: document.querySelector('[data-map-action="back"]')?.hidden ?? true,
+      focus_url: new URL(location.href).searchParams.get('open_focus'),
+      canvas_ready: Boolean(canvas),
+    };
+  })()`);
+}
+
+async function screenshot(cdp, name, colorScheme, width, height) {
+  const result = await cdp.command("Page.captureScreenshot", {
+    format: "png", captureBeyondViewport: false,
+  });
+  const bytes = Buffer.from(result.data, "base64");
+  const path = resolve(captures, name);
+  await writeFile(path, bytes);
+  return {
+    name, color_scheme: colorScheme, width, height, path,
+    byte_size: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex"),
+  };
+}
+
+function requireCheck(condition, message, details = {}) {
+  if (!condition) throw new Error(`${message}: ${JSON.stringify(details)}`);
+}
+
+async function wheel(cdp, x, y, deltaY) {
+  await cdp.command("Input.dispatchMouseEvent", { type: "mouseWheel", x, y, deltaY, deltaX: 0 });
+}
+
+async function drag(cdp, fromX, fromY, toX, toY) {
+  await cdp.command("Input.dispatchMouseEvent", { type: "mouseMoved", x: fromX, y: fromY });
+  await cdp.command("Input.dispatchMouseEvent", { type: "mousePressed", x: fromX, y: fromY, button: "left", clickCount: 1 });
+  await cdp.command("Input.dispatchMouseEvent", { type: "mouseMoved", x: toX, y: toY, button: "left", buttons: 1 });
+  await cdp.command("Input.dispatchMouseEvent", { type: "mouseReleased", x: toX, y: toY, button: "left", clickCount: 1 });
+}
+
+const PRELOAD = String.raw`(() => {
+  const original = {
+    arc: CanvasRenderingContext2D.prototype.arc,
+    fillText: CanvasRenderingContext2D.prototype.fillText,
+    lineTo: CanvasRenderingContext2D.prototype.lineTo,
+  };
+  const qa = { frames: [], current: { arcs: [], labels: [], edges: 0 } };
+  const finish = () => {
+    if (qa.current.arcs.length || qa.current.labels.length || qa.current.edges) {
+      qa.frames.push(qa.current);
+      if (qa.frames.length > 40) qa.frames.shift();
+    }
+    qa.current = { arcs: [], labels: [], edges: 0 };
+  };
+  CanvasRenderingContext2D.prototype.arc = function(x, y, radius, ...rest) {
+    if (this.canvas?.id === 'semantic-map') qa.current.arcs.push({ x, y, radius });
+    return original.arc.call(this, x, y, radius, ...rest);
+  };
+  CanvasRenderingContext2D.prototype.fillText = function(text, x, y, ...rest) {
+    if (this.canvas?.id === 'semantic-map') qa.current.labels.push({ text, x, y });
+    return original.fillText.call(this, text, x, y, ...rest);
+  };
+  CanvasRenderingContext2D.prototype.lineTo = function(x, y) {
+    if (this.canvas?.id === 'semantic-map') qa.current.edges += 1;
+    return original.lineTo.call(this, x, y);
+  };
+  const request = window.requestAnimationFrame;
+  window.requestAnimationFrame = (callback) => request.call(window, (timestamp) => {
+    finish();
+    callback(timestamp);
+    finish();
+  });
+  window.__opennoiseMapQA = qa;
+})();`;
+
+async function run() {
+  const chrome = await launch();
+  const screenshots = [];
+  try {
+    await mkdir(captures, { recursive: true });
+    const cdp = await page();
+    await navigate(cdp, 1440, 900, "light");
+    const initial = await diagnostics(cdp);
+    requireCheck(initial.canvas_ready, "canvas is missing", initial);
+    requireCheck(initial.viewport?.width === 1440 && initial.viewport?.height === 900, "viewport is wrong", initial);
+    requireCheck(initial.points >= 1 && initial.points <= 50, "overview point budget failed", initial);
+    requireCheck(initial.labels >= 1 && initial.labels <= 35, "overview label budget failed", initial);
+    requireCheck(initial.edges === 0, "overview must not draw global edges", initial);
+    const extent = initial.point_extent;
+    const widthFraction = extent ? (extent.max_x - extent.min_x) / initial.viewport.width : 0;
+    const heightFraction = extent ? (extent.max_y - extent.min_y) / initial.viewport.height : 0;
+    requireCheck(widthFraction >= 0.75, "overview does not use horizontal space", { initial, width_fraction: widthFraction });
+    requireCheck(heightFraction >= 0.70, "overview does not use vertical space", { initial, height_fraction: heightFraction });
+    screenshots.push(await screenshot(cdp, "desktop-light.png", "light", 1440, 900));
+
+    const firstFrame = initial.frame_count - 1;
+    await wheel(cdp, 720, 450, -650);
+    await waitForFrame(cdp, firstFrame);
+    const zoom1 = await diagnostics(cdp);
+    await wheel(cdp, 720, 450, -650);
+    await waitForFrame(cdp, zoom1.frame_count - 1);
+    const zoom2 = await diagnostics(cdp);
+    requireCheck(zoom1.points >= initial.points && zoom2.points >= zoom1.points, "zoom reveal is not monotonic", { initial, zoom1, zoom2 });
+
+    const beforePan = zoom2.point_extent;
+    await drag(cdp, 720, 450, 240, 220);
+    await waitForFrame(cdp, zoom2.frame_count - 1);
+    const afterPan = await diagnostics(cdp);
+    requireCheck(JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent), "pan did not move camera", { beforePan, afterPan });
+    requireCheck(afterPan.point_extent?.min_x < 0 || afterPan.point_extent?.max_x > 1440 || afterPan.point_extent?.min_y < 0 || afterPan.point_extent?.max_y > 900, "pan did not reach outside initial quadrant", afterPan);
+
+    const clickPoint = afterPan.point_extent && await cdp.evaluate("window.__opennoiseMapQA.frames.at(-1)?.arcs?.[0] ?? null");
+    requireCheck(Boolean(clickPoint), "no visible point available for focus", afterPan);
+    await cdp.command("Input.dispatchMouseEvent", { type: "mouseMoved", x: clickPoint.x, y: clickPoint.y });
+    await cdp.command("Input.dispatchMouseEvent", { type: "mousePressed", x: clickPoint.x, y: clickPoint.y, button: "left", clickCount: 1 });
+    await cdp.command("Input.dispatchMouseEvent", { type: "mouseReleased", x: clickPoint.x, y: clickPoint.y, button: "left", clickCount: 1 });
+    await waitForFrame(cdp, afterPan.frame_count - 1);
+    const focused = await diagnostics(cdp);
+    requireCheck(focused.edges <= 12, "focused neighborhood edge budget failed", focused);
+    requireCheck(!focused.back_hidden, "Back control did not appear after focus", focused);
+    requireCheck(Boolean(focused.focus_url), "focus did not update browser history", focused);
+
+    await cdp.evaluate("document.querySelector('[data-map-action=\\\"back\\\"]')?.click()");
+    await sleep(150);
+    const backed = await diagnostics(cdp);
+    requireCheck(backed.back_hidden && !backed.focus_url, "Back did not restore map state", backed);
+
+    await navigate(cdp, 1440, 900, "dark");
+    const dark = await diagnostics(cdp);
+    requireCheck(dark.background !== initial.background, "dark mode did not change the map palette", { initial, dark });
+    screenshots.push(await screenshot(cdp, "desktop-dark.png", "dark", 1440, 900));
+    requireCheck(cdp.runtimeErrors.length === 0, "browser errors detected", cdp.runtimeErrors);
+    const report = {
+      evidence_revision: "browser-semantic-map-v1",
+      capture_method: "Chrome DevTools Protocol with preload Canvas primitive instrumentation",
+      viewport: { width: 1440, height: 900 },
+      acceptance: {
+        overview_width_fraction: widthFraction,
+        overview_height_fraction: heightFraction,
+        overview_points: initial.points,
+        overview_labels: initial.labels,
+        overview_edges: initial.edges,
+        zoom_points: [initial.points, zoom1.points, zoom2.points],
+        focused_edges: focused.edges,
+        pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
+        back_restored: backed.back_hidden && !backed.focus_url,
+        dark_mode: dark.background !== initial.background,
+      },
+      diagnostics: { initial, zoom1, zoom2, afterPan, focused, backed, dark },
+      screenshots,
+    };
+    await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);
+  } finally {
+    chrome.process_.kill("SIGTERM");
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      try {
+        await rm(chrome.profile, { recursive: true, force: true, maxRetries: 1, retryDelay: 100 });
+        break;
+      } catch { await sleep(100); }
+    }
+  }
+}
+
+await run();
