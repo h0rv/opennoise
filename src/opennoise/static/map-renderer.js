@@ -10,10 +10,19 @@
   const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
   const pointRadius = 2.1;
   const labelCaps = [45, 96, 210, 420];
-  let data, state, pixels, frame = 0, drag, moved = false, focusedEdges = [], lookup, pointers = new Map(), pinchDistance = 0, measureContext, textWidths = new Map();
+  let data, state, pixels, frame = 0, drag, moved = false, focusedEdges = [], lookup, adjacency = new Map(), pointers = new Map(), pinchDistance = 0, measureContext, textWidths = new Map();
 
   const size = () => ({ width: canvas.clientWidth, height: canvas.clientHeight });
   const nodeMap = () => lookup;
+  const staticNeighborhood = (id) => {
+    const edges = (adjacency.get(id) || []).slice(0, 12);
+    const ids = new Set([id]);
+    for (const edge of edges) ids.add(edge.source === id ? edge.target : edge.source);
+    return {
+      nodes: [...ids].map((nodeId) => lookup.get(nodeId)).filter(Boolean).map((node) => ({ node_id: node.id, name: node.name })),
+      edges,
+    };
+  };
   const transform = (node) => ({ x: state.x + node.x * state.scale, y: state.y + node.y * state.scale });
   const level = () => clamp(Math.floor(Math.log2(state.scale / state.fitScale) + 0.5), 0, 3);
   const visible = (node, margin = 8) => {
@@ -117,7 +126,7 @@
     if (push) setUrl(id, true, priorCamera, priorFocus); schedule();
     const response = canvas.dataset.neighborsUrl
       ? await fetch(`${canvas.dataset.neighborsUrl}${encodeURIComponent(id)}`).then((result) => result.ok ? result.json() : null).catch(() => null)
-      : { nodes: data.nodes.filter((candidate) => candidate.id === id || (data.peers || []).some((edge) => (edge.source === id && edge.target === candidate.id) || (edge.target === id && edge.source === candidate.id))).map((candidate) => ({ node_id: candidate.id, name: candidate.name })), edges: (data.peers || []).filter((edge) => edge.source === id || edge.target === id).slice(0, 12) };
+      : staticNeighborhood(id);
     if (!response || state.focus !== id) return;
     focusedEdges = (response.edges || []).slice(0, 12); showDetail(node, response); schedule();
   };
@@ -137,5 +146,5 @@
   canvas.tabIndex = 0;
   canvas.addEventListener('keydown', (event) => { if (!data || !['ArrowLeft', 'ArrowRight', 'Enter'].includes(event.key)) return; event.preventDefault(); const choices = data.labels[0]?.ids || []; if (event.key === 'Enter' && state.focus) { void focus(state.focus, true); return; } const index = state.focus ? choices.indexOf(state.focus) : event.key === 'ArrowLeft' ? 0 : -1; const id = event.key === 'ArrowLeft' ? choices[(index + choices.length - 1) % choices.length] : choices[(index + 1) % choices.length]; if (id) void focus(id, true); });
   search?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !data) return; const target = new Map(data.aliases.map((alias) => [alias.term, alias.target])).get(search.value.trim().toLowerCase()); if (target) { event.preventDefault(); void focus(target, true); } });
-  fetch(canvas.dataset.mapUrl).then((response) => { if (!response.ok) throw new Error('map unavailable'); return response.json(); }).then((payload) => { data = payload; if (!data.initial_camera || !data.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y) && Number.isInteger(node.lod))) throw new Error('invalid map contract'); lookup = new Map(data.nodes.map((node) => [node.id, node])); textWidths = new Map(); state = { x: 0, y: 0, scale: 1, fitScale: 1, focus: null, viewport: size() }; fit(); const id = canvas.dataset.focus || new URL(location.href).searchParams.get('open_focus'); if (id) void focus(id); }).catch(() => { canvas.setAttribute('aria-label', 'Semantic map unavailable'); const message = document.createElement('p'); message.className = 'map-error'; message.textContent = 'Semantic map unavailable.'; stage?.append(message); });
+  fetch(canvas.dataset.mapUrl).then((response) => { if (!response.ok) throw new Error('map unavailable'); return response.json(); }).then((payload) => { data = payload; if (!data.initial_camera || !data.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y) && Number.isInteger(node.lod))) throw new Error('invalid map contract'); lookup = new Map(data.nodes.map((node) => [node.id, node])); adjacency = new Map(); for (const edge of data.peers || []) { for (const id of [edge.source, edge.target]) { const bucket = adjacency.get(id); if (bucket) bucket.push(edge); else adjacency.set(id, [edge]); } } textWidths = new Map(); state = { x: 0, y: 0, scale: 1, fitScale: 1, focus: null, viewport: size() }; fit(); const id = canvas.dataset.focus || new URL(location.href).searchParams.get('open_focus'); if (id) void focus(id); }).catch(() => { canvas.setAttribute('aria-label', 'Semantic map unavailable'); const message = document.createElement('p'); message.className = 'map-error'; message.textContent = 'Semantic map unavailable.'; stage?.append(message); });
 })();
