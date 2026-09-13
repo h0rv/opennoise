@@ -27,13 +27,13 @@ membership evidence, listening aggregates, and audio. The exporter consumes
 only its retained names and factual exact identity edges; it never uses its
 layout or historical data.
 
-Build into a new or empty directory:
+Set the explicit inputs and build into a new or empty directory with Poe:
 
 ```bash
-UV_OFFLINE=1 uv run --no-sync python scripts/export_opennoise_pages.py \
-  --production-map data/model/production-map-v1.json \
-  --open-construction-v2 data/model/open-construction-graph-v2.json \
-  --output dist
+export MUSIX_PRODUCTION_MAP_PATH=data/model/production-map-v1.json
+export MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH=data/model/open-construction-graph-v2.json
+export MUSIX_OPENNOISE_PAGES_OUTPUT=dist
+UV_OFFLINE=1 uv run --no-sync poe export-opennoise-pages
 ```
 
 `index.html` is the clean Fit view. `levels/1.html` through `levels/3.html`

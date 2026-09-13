@@ -29,6 +29,7 @@ class TaskContractTests(unittest.TestCase):
                 "dev",
                 "dev-research",
                 "dev-legacy",
+                "export-opennoise-pages",
                 "check",
                 "release-certify",
             }.issubset(poe_tasks)
@@ -42,6 +43,13 @@ class TaskContractTests(unittest.TestCase):
         self.assertEqual(
             poe_tasks["release-certify"]["cmd"],
             "python scripts/release_certify.py",
+        )
+        self.assertEqual(
+            poe_tasks["export-opennoise-pages"],
+            "python scripts/export_opennoise_pages.py "
+            "--production-map $MUSIX_PRODUCTION_MAP_PATH "
+            "--open-construction-v2 $MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH "
+            "--output $MUSIX_OPENNOISE_PAGES_OUTPUT",
         )
         self.assertNotIn("open-v2-browser-qa", poe_tasks)
 

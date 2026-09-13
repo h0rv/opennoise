@@ -109,6 +109,7 @@ cache-musicbrainz-release-group-20260905 = "musix acquire-source-cache musicbrai
 restore-source-cache = "musix restore-source-cache $MUSIX_SOURCE_CACHE_SOURCE_IDS --object-store $MUSIX_SOURCE_CACHE_OBJECT_STORE --receipt $MUSIX_SOURCE_CACHE_RECEIPT --destination $MUSIX_SOURCE_CACHE_DESTINATION"
 dev = "python scripts/run_dev.py"
 dev-research = "python -m scripts.run_local_research_dev"
+export-opennoise-pages = "python scripts/export_opennoise_pages.py --production-map $MUSIX_PRODUCTION_MAP_PATH --open-construction-v2 $MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH --output $MUSIX_OPENNOISE_PAGES_OUTPUT"
 build-local-musicbrainz-artist-reverse-lookup = "python scripts/build_local_musicbrainz_artist_reverse_lookup.py --evidence-db .cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite --evidence-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json --output-db .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup.sqlite --output-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup-artifact.json"
 dev-legacy = "musix serve"
 evaluate-layout = "python scripts/evaluate_layout.py data/musix.sqlite --layout default"
