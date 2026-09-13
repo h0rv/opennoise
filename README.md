@@ -1,8 +1,12 @@
-# Musix
+# OpenNoise
 
-Musix is an open, metadata-only music graph. It builds explainable genres,
+OpenNoise is an open, metadata-only music graph. It builds explainable genres,
 artist membership, similarity, hierarchy, and representative album and recording metadata examples,
 and a semantic map from bounded public data.
+
+OpenNoise is the product name. The transitional Python package, compatibility
+command, environment keys, and historical artifact identifiers remain `musix`
+until their separately versioned migrations.
 
 The default public model has 603 independently built genres. The 6,291 Every
 Noise labels and coordinates are a separate, dated historical reference. They
@@ -89,13 +93,14 @@ used automatically when `data/phase3-public-qualified.sqlite` is absent; see
   SQLite persistence. If an ORM becomes necessary, the project choice is
   SQLModel rather than declarative SQLAlchemy.
 - HTMX 4 for search, detail fragments, ordinary URLs, and history.
-- A vendored Cytoscape.js 3.34 island for pan, wheel or pinch zoom, graph
-  selection, and semantic level of detail.
+- Static, precomputed SVG/HTML map output with URL-addressable semantic levels
+  of detail. Browser code is limited to deferred search and navigation; it does
+  not calculate geometry, run a graph layout, or simulate physics.
 - Local content-addressed object storage behind a small adapter. R2 or S3 can
   implement the same interface later.
 
-The graph island is optional. Search and genre URLs remain ordinary HTML links.
-The server-rendered SVG is the no-script fallback, not the production renderer.
+Search and genre URLs remain ordinary HTML links. The static map output is
+fully precomputed before publishing.
 
 ## Data boundary
 

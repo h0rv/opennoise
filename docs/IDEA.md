@@ -1,6 +1,9 @@
-# Musix
+# OpenNoise
 
-Build an open music map from public metadata and privacy safe aggregates.
+Build OpenNoise, an open music map from public metadata and privacy safe aggregates.
+
+OpenNoise is the product name; the internal Python package and compatibility
+identifiers remain `musix` during the staged migration.
 
 The immediate product goal is coherent open music discovery: a user should be
 able to traverse a catalog genre to artists, an artist to its directly observed
@@ -111,14 +114,14 @@ The bounded representative catalog currently contains 51 retained releases
 and 491 unique track records across 40 genres. These are metadata records only.
 They are not claims about the defining or most important works for a genre.
 
-Musix never downloads, stores, serves, embeds, or trains on audio or music
+OpenNoise never downloads, stores, serves, embeds, or trains on audio or music
 files. Links and playback placeholders remain separate from metadata.
 
 McDonald documented broad inputs and behavior. He described overlapping music
 communities, cultural and acoustic signals, listener based discovery, human
 review, and readability adjusted map positions. The public record does not
 give the private feature vectors, complete source code, weights, thresholds,
-candidate rules, or final layout transform. Musix labels experiments as
+candidate rules, or final layout transform. OpenNoise labels experiments as
 approximations and reports what is observed, disclosed, inferred, or unknown.
 
 The pipeline is: immutable source snapshot, typed source claim, SQLite
@@ -128,6 +131,7 @@ code revision, seed, and content hash. Local object storage and future object
 stores use the same small abstraction.
 
 Keep the stack small: Python 3.13.14, uv, mise, Poe, Litestar, Pydantic,
-SQLite, HTMX 4, and vendored Cytoscape.js 3.34. The graph library handles
-direct map manipulation. HTML links, forms, and server rendered fragments
-handle the rest.
+SQLite, and HTMX 4. Static map releases precompute SVG geometry, labels, and
+semantic levels of detail; ordinary HTML links and forms handle navigation.
+Any browser search module remains small and must not perform graph layout,
+coordinate calculation, or physics simulation.
