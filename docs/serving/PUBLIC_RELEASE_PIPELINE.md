@@ -1,9 +1,7 @@
 # Public release pipeline
 
-`uv run poe release-certify` is intentionally closed while the semantic Canvas
-map is local-research-only. It refuses to certify the retired production SVG;
-re-enable it only with a publishable semantic artifact and the semantic Canvas
-browser gate. It must fail closed if any source, model, map, renderer, or
+`uv run poe release-certify` is the cache-only public release command. It builds a
+fresh serving release and fails closed if any source, model, map, renderer, or
 browser evidence is missing or inconsistent.
 
 It requires:

@@ -131,19 +131,9 @@ def _terminate(process: subprocess.Popen[bytes]) -> None:
         process.wait(timeout=5)
 
 
-def _require_semantic_release_renderer() -> None:
-    """Keep public certification closed until its visible Canvas input is publishable."""
-    raise ReleaseCertificationError(
-        "production-map-v1 has no visible map route after the semantic Canvas rewrite; "
-        "release certification remains closed until a publishable semantic-map artifact and "
-        "its Canvas browser gate are wired here"
-    )
-
-
 def main() -> int:
     """Run the sealed release build, data acceptance, and required browser acceptance."""
     arguments = _arguments()
-    _require_semantic_release_renderer()
     manifest = _require_file(
         arguments.release_directory / "release-manifest.json", "release manifest"
     )
@@ -215,6 +205,16 @@ def main() -> int:
     )
     try:
         _wait_for_server(arguments.host, arguments.port, server)
+        _run(
+            shutil.which("node") or "node",
+            "scripts/capture_production_map_browser.mjs",
+            f"http://{arguments.host}:{arguments.port}",
+            str(arguments.browser_evidence_output),
+            "--acceptance",
+            str(arguments.acceptance_output),
+            "--captures",
+            str(arguments.captures_directory),
+        )
         _run(
             sys.executable,
             "scripts/evaluate_production_map.py",

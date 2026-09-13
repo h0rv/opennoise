@@ -24,8 +24,6 @@ from opennoise.serving.open.construction_graph_v2 import (
 from tests.serving.map.test_production_map import _inputs, _settings
 from tests.serving.open.test_construction_graph_v2 import build_expansion
 
-PEER_EDGE_BUDGET = 12
-
 if TYPE_CHECKING:
     from opennoise.models.production import ProductionMapArtifact
 
@@ -56,38 +54,23 @@ class OpenNoisePagesTests(unittest.TestCase):
                 first.search.searchable_name_count,
             )
             self.assertTrue((root / "first" / "index.html").is_file())
+            self.assertTrue((root / "first" / "levels" / "1.html").is_file())
             self.assertTrue((root / "first" / "opennoise-static-manifest.json").is_file())
             self.assertFalse((root / "first" / "assets" / "production-map-v1.json").exists())
 
             index = (root / "first" / "index.html").read_text(encoding="utf-8")
+            level_one = (root / "first" / "levels" / "1.html").read_text(encoding="utf-8")
             self.assertIn('data-mapped-node-count="8"', index)
             self.assertIn('data-searchable-name-count="5"', index)
-            self.assertIn('data-map-url="assets/map-data.json"', index)
-            self.assertIn('id="semantic-map"', index)
-            self.assertIn('src="assets/map-renderer.js"', index)
+            self.assertIn('preserveAspectRatio="xMidYMid meet"', index)
+            self.assertIn('href="levels/1.html"', index)
             self.assertNotIn("cytoscape", index.casefold())
+            self.assertNotIn("semantic-map", index)
             self.assertNotIn("<h1", index)
-            self.assertFalse((root / "first" / "levels").exists())
-
-            map_data = json.loads((root / "first" / "assets" / "map-data.json").read_text())
-            self.assertEqual(map_data["revision"], "semantic-scatter-map-v1")
-            self.assertGreaterEqual(len(map_data["nodes"]), 1)
-            self.assertLessEqual(len(map_data["nodes"]), 8)
-            self.assertEqual([row["level"] for row in map_data["labels"]], [0, 1, 2, 3])
-            self.assertTrue(
-                all(0 <= node["x"] <= 1 and 0 <= node["y"] <= 1 for node in map_data["nodes"])
-            )
-            self.assertLessEqual(len(map_data["labels"][0]["ids"]), len(map_data["nodes"]))
-            self.assertTrue(
-                all(
-                    sum(
-                        edge["source"] == node["id"] or edge["target"] == node["id"]
-                        for edge in map_data["peers"]
-                    )
-                    <= PEER_EDGE_BUDGET
-                    for node in map_data["nodes"]
-                )
-            )
+            self.assertIn('href="../assets/opennoise.css"', level_one)
+            self.assertIn('action="../search.html"', level_one)
+            self.assertIn('href="../index.html"', level_one)
+            self.assertIn('href="../genres/', level_one)
 
             search_entries = json.loads(
                 (root / "first" / "assets" / "search-index.json").read_text(encoding="utf-8")
