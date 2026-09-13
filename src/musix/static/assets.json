@@ -7,15 +7,5 @@
     "bytes": 36717,
     "source_sha256": "e484d9171a9db30a39c8f16e3d709d4137f3211c659f8e6125816635033d593f",
     "note": "The vendored file adds one trailing newline to the exact distribution bytes."
-  },
-  "cytoscape": {
-    "version": "3.34.0",
-    "file": "cytoscape-3.34.0.min.js",
-    "license_file": "CYTOSCAPE-LICENSE",
-    "license": "MIT",
-    "source": "https://unpkg.com/cytoscape@3.34.0/dist/cytoscape.min.js",
-    "sha256": "9c2a3bf2592e0b14a1f7bec07c03a54f16dedf32af9cd0af155c716aa6c87bc3",
-    "bytes": 435328,
-    "license_sha256": "eb319c6e6f233607f71e8e2f450391751883cfc0eeb3ca7ef574c13d1d9c2203"
   }
 }

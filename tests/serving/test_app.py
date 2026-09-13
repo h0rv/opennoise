@@ -40,17 +40,39 @@ class AppTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn('<main id="map"', response.text)
-        self.assertNotIn("<h1", response.text)
+        self.assertIn('data-map-view="public"', response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
-        self.assertIn("/static/app.css?v=14", response.text)
-        self.assertIn("cytoscape-3.34.0.min.js", response.text)
-        self.assertIn("semantic-map.js?v=32", response.text)
+        self.assertIn("/static/app.css?v=15", response.text)
+        self.assertNotIn("cytoscape-3.34.0.min.js", response.text)
+        self.assertNotIn("semantic-map.js", response.text)
         self.assertNotIn('id="count"', response.text)
-        self.assertIn("Open 6,291", response.text)
-        self.assertIn('data-map-view="open"', response.text)
         self.assertNotIn('id="map-view-switch"', response.text)
-        self.assertEqual(response.text.count('id="semantic-map"'), 1)
+        self.assertEqual(response.text.count('id="semantic-map"'), 0)
+        self.assertEqual(response.text.count('class="point genre"'), 116)
+        self.assertEqual(response.text.count('class="label-overview"'), 0)
+        self.assertGreaterEqual(response.text.count("<text "), 68)
+        self.assertIn('id="static-map-viewport" class="static-map-zoom-0"', response.text)
+        self.assertIn('href="/?level=0&amp;zoom=0" aria-label="Fit map"', response.text)
+        self.assertIn('href="/?level=1&amp;zoom=1" aria-label="More detail"', response.text)
         self.assertNotIn("data-local-research-artist-url", response.text)
+
+    def test_static_zoom_is_server_rendered_and_scrollable_without_graph_javascript(self) -> None:
+        response = self.client.get("/", params={"level": 1, "zoom": 1})
+        stylesheet = (Path(__file__).parents[2] / "src/musix/static/app.css").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('class="static-map-zoom-1"', response.text)
+        self.assertIn('href="/?level=0&amp;zoom=0" aria-label="Fit map"', response.text)
+        self.assertIn(
+            "#static-map-viewport { position: fixed; inset: 0; overflow: auto;", stylesheet
+        )
+        self.assertIn(
+            "#static-map-viewport.static-map-zoom-1 #plot { width: 160vw; height: 160vh; }",
+            stylesheet,
+        )
+        self.assertNotIn("semantic-map.js", response.text)
 
     def test_local_research_panel_rejects_non_loopback_startup(self) -> None:
         with (
@@ -70,11 +92,9 @@ class AppTests(unittest.TestCase):
 
         self.assertEqual(page.status_code, 200)
         self.assertIn('data-map-view="open"', page.text)
-        self.assertIn('data-map-mode="open"', page.text)
-        self.assertIn('data-open-graph-version="v1"', page.text)
-        self.assertIn('data-graph-url="/api/open-construction-map?level=0"', page.text)
-        self.assertIn('data-neighbor-url="/api/open-construction-map/neighbors/"', page.text)
-        self.assertNotIn('data-graph-url="/api/map"', page.text)
+        self.assertIn('id="open-fallback"', page.text)
+        self.assertIn('href="/api/open-construction-map?level=0"', page.text)
+        self.assertNotIn("semantic-map.js", page.text)
         for response, budget in ((overview, 240), (detail, 720)):
             self.assertEqual(response.status_code, 200)
             payload = response.json()
@@ -108,9 +128,10 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, "ok")
 
-    def test_empty_map_search_and_fragment(self) -> None:
+    def test_default_production_map_search_and_fragment(self) -> None:
         response = self.client.get("/api/map")
-        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["graph"]["nodes"]), 603)
         self.assertNotIn("legacy-layout", response.text)
         self.assertEqual(self.client.get("/api/search", params={"q": "---"}).json(), {"hits": []})
         fragment = self.client.get("/fragments/search", params={"q": "---"})
@@ -383,10 +404,9 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertIn(f'hx-get="{detail_href}"', response.text)
         self.assertIn('hx-target="#genre-detail-slot"', response.text)
         self.assertIn(f'hx-push-url="{detail_href}"', response.text)
-        self.assertIn('preserveAspectRatio="xMidYMid meet"', response.text)
-        self.assertIn('id="semantic-map"', response.text)
-        self.assertIn('id="map-controls"', response.text)
-        self.assertIn('aria-describedby="map-pan-help"', response.text)
+        self.assertIn('preserveAspectRatio="none"', response.text)
+        self.assertNotIn('id="semantic-map"', response.text)
+        self.assertNotIn('id="map-controls"', response.text)
         self.assertNotIn('id="layout-lenses"', response.text)
         self.assertIn('id="map-point-wikidata:genre:Q1"', response.text)
         self.assertIn("<title>Electronic music</title>", response.text)
@@ -398,7 +418,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('id="layout-lenses"', response.text)
         self.assertNotIn("Map layout", response.text)
-        self.assertIn('id="semantic-map"', response.text)
+        self.assertNotIn('id="semantic-map"', response.text)
         self.assertNotIn("<audio", response.text)
         self.assertNotIn("player", response.text.casefold())
         self.assertNotIn("preview", response.text.casefold())
@@ -470,7 +490,7 @@ class PopulatedAppTests(unittest.TestCase):
         )
 
         self.assertIn('href="/genres/1?layout=classic&amp;q=idm"', search.text)
-        self.assertIn('id="semantic-map"', selected.text)
+        self.assertNotIn('id="semantic-map"', selected.text)
         self.assertIn('href="/?layout=classic" aria-label="Close IDM"', selected.text)
 
     def test_stable_public_genre_key_has_full_and_partial_routes(self) -> None:

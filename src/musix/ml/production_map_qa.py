@@ -422,7 +422,9 @@ def _interaction_failures(value: ProductionMapAcceptanceInput, failures: list[st
         failures.append("missing deterministic interaction/accessibility evidence")
         return
     failed = [
-        name for name, passed in value.interactions.model_dump(mode="python").items() if not passed
+        name
+        for name, passed in value.interactions.model_dump(mode="python").items()
+        if isinstance(passed, bool) and not passed
     ]
     if failed:
         failures.append(f"failed interaction/accessibility checks: {', '.join(failed)}")

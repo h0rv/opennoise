@@ -70,6 +70,7 @@ from musix.serving.open.construction_store_v2 import (
 
 if TYPE_CHECKING:
     from musix.models.historical_signal import HistoricalSignalHierarchyNode
+    from musix.serving.open.static_map import StaticOpenMap
 from musix.serving.map.production_store import (
     ProductionMapApiResponse,
     ProductionMapStore,
@@ -132,14 +133,19 @@ class CoreController(Controller):
         local_research_map: NamedDependency[object],
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
+        level: FromQuery[int] = 0,
+        zoom: FromQuery[int] = 0,
         view: FromQuery[Literal["public", "open", "historical"] | None] = None,
     ) -> Template:
         """Render the current full map."""
         selected_view = view or (
             "open"
-            if open_construction_graph_v2.configured or open_construction_graph.configured
+            if not production_map.configured
+            and (open_construction_graph_v2.configured or open_construction_graph.configured)
             else "public"
         )
+        if level not in range(4) or zoom not in range(4):
+            raise ValidationException(detail="production map level must be between 0 and 3")
         context = await workspace_context(
             database,
             genre_entries,
@@ -164,6 +170,53 @@ class CoreController(Controller):
             focus=None,
             search_query=q,
             view=selected_view,
+            production_lod_level=level,
+            production_zoom=zoom,
+        )
+        return Template(template_name="index.html", context=context)
+
+    @get("/open/{node_id:str}")
+    async def open_neighborhood(
+        self,
+        database: NamedDependency[AsyncDatabase],
+        genre_entries: NamedDependency[GenreEntryRepository],
+        production_map: NamedDependency[ProductionMapStore],
+        historical_signal_map: NamedDependency[HistoricalSignalMapStore],
+        open_construction_graph: NamedDependency[OpenConstructionMapStore],
+        open_construction_graph_v2: NamedDependency[OpenConstructionV2MapStore],
+        local_research_artists: NamedDependency[object],
+        local_research_map: NamedDependency[object],
+        node_id: FromPath[str],
+        q: FromQuery[str] = "",
+    ) -> Template:
+        """Render one shareable, bounded Open v2 neighborhood as a normal page."""
+        if not open_construction_graph_v2.configured:
+            raise NotFoundException(detail="open construction v2 graph is unavailable")
+        context = await workspace_context(
+            database,
+            genre_entries,
+            production_map,
+            historical_signal_map,
+            open_construction_graph,
+            open_construction_graph_v2,
+            local_research_map=(
+                local_research_map
+                if isinstance(local_research_map, LocalResearchMapStore)
+                else None
+            ),
+            local_research_artist_evidence_configured=(
+                isinstance(local_research_artists, LocalMusicBrainzArtistEvidenceStore)
+                and local_research_artists.configured
+            ),
+            local_research_map_configured=(
+                isinstance(local_research_map, LocalResearchMapStore)
+                and local_research_map.configured
+            ),
+            layout="default",
+            focus=None,
+            search_query=q,
+            view="open",
+            open_node_id=node_id,
         )
         return Template(template_name="index.html", context=context)
 
@@ -640,14 +693,19 @@ class MapController(Controller):
         focus: FromQuery[int | None] = None,
         layout: FromQuery[str] = "default",
         q: FromQuery[str] = "",
+        level: FromQuery[int] = 0,
+        zoom: FromQuery[int] = 0,
         view: FromQuery[Literal["public", "open", "historical"] | None] = None,
     ) -> Template:
         """Render one coherent map selection and detail fragment."""
         selected_view = view or (
             "open"
-            if open_construction_graph_v2.configured or open_construction_graph.configured
+            if not production_map.configured
+            and (open_construction_graph_v2.configured or open_construction_graph.configured)
             else "public"
         )
+        if level not in range(4) or zoom not in range(4):
+            raise ValidationException(detail="production map level must be between 0 and 3")
         context = await workspace_context(
             database,
             genre_entries,
@@ -668,6 +726,8 @@ class MapController(Controller):
             focus=focus,
             search_query=q,
             view=selected_view,
+            production_lod_level=level,
+            production_zoom=zoom,
         )
         return Template(
             template_name="workspace.html",
@@ -1186,7 +1246,7 @@ def resolve_layout(
     return layout_key, None
 
 
-async def workspace_context(
+async def workspace_context(  # noqa: C901
     database: AsyncDatabase,
     genre_entries: GenreEntryRepository,
     production_map: ProductionMapStore,
@@ -1201,6 +1261,9 @@ async def workspace_context(
     view: Literal["public", "open", "historical"],
     local_research_artist_evidence_configured: bool = False,
     local_research_map_configured: bool = False,
+    open_node_id: str | None = None,
+    production_lod_level: int = 0,
+    production_zoom: int = 0,
 ) -> dict[str, object]:
     """Build one consistent workspace from a published layout and optional genre."""
     layouts = await database.published_layouts()
@@ -1215,7 +1278,11 @@ async def workspace_context(
         placement = await database.genre_placement(focus, layout_key)
     bounded_search_query = search_query[:500]
     production_graph: ProductionMapApiResponse | None = None
+    production_label_ids = frozenset[str]()
+    production_visible_node_ids = frozenset[str]()
     historical_overview: tuple[HistoricalSignalHierarchyNode, ...] = ()
+    open_static_map: StaticOpenMap | None = None
+    open_neighborhood_response: OpenConstructionV2NeighborResponse | None = None
     if production_map.configured and layout == "default":
         try:
             production_graph = production_map.response()
@@ -1223,6 +1290,12 @@ async def workspace_context(
             raise ServiceUnavailableException(
                 detail="production map artifact unavailable"
             ) from error
+        if production_graph is not None:
+            selected_lod = production_graph.graph.lods[production_lod_level]
+            production_label_ids = frozenset(
+                label.genre_id for label in selected_lod.desktop_labels if label.shown
+            )
+            production_visible_node_ids = frozenset(selected_lod.visible_node_ids)
     if view == "historical" and historical_signal_map.configured:
         try:
             historical_response = historical_signal_map.response(level=0)
@@ -1230,6 +1303,19 @@ async def workspace_context(
         except HistoricalSignalMapStoreError:
             # A malformed optional artifact must not turn the no-JS shell into a 500.
             historical_overview = ()
+    if view == "open" and open_construction_graph_v2.configured:
+        try:
+            if open_node_id is not None:
+                open_neighborhood_response = open_construction_graph_v2.neighbors(open_node_id)
+                open_static_map = open_construction_graph_v2.static_neighborhood(open_node_id)
+        except OpenConstructionV2MapStoreError as error:
+            if open_node_id is not None:
+                raise NotFoundException(
+                    detail="open construction v2 graph node unavailable"
+                ) from error
+            raise ServiceUnavailableException(
+                detail="open construction v2 graph artifact unavailable"
+            ) from error
     return {
         "active_layout": active_layout,
         "genre": genre,
@@ -1240,6 +1326,10 @@ async def workspace_context(
         "map": map_view(await database.map_points(layout_key), focus),
         "placement": placement,
         "production_graph": production_graph,
+        "production_label_ids": production_label_ids,
+        "production_lod_level": production_lod_level,
+        "production_zoom": production_zoom,
+        "production_visible_node_ids": production_visible_node_ids,
         "hits": (
             local_research_map.search(bounded_search_query)
             if view == "open"
@@ -1258,6 +1348,11 @@ async def workspace_context(
         "historical_overview": historical_overview,
         "open_construction_graph_configured": open_construction_graph.configured,
         "open_construction_graph_v2_configured": open_construction_graph_v2.configured,
+        # V2 taxonomy coordinates are receipt-safe but not a peer-neighborhood
+        # projection. They intentionally remain focused-navigation-only until a
+        # separately verified peer presentation provider is configured.
+        "open_static_map": open_static_map,
+        "open_neighborhood": open_neighborhood_response,
         "local_research_artist_evidence_configured": local_research_artist_evidence_configured,
         "local_research_map_configured": local_research_map_configured,
     }

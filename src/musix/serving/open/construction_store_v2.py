@@ -14,6 +14,7 @@ from musix.serving.open.construction_graph_v2 import (
     OpenGraphV2Edge,
     verify_open_construction_graph_v2,
 )
+from musix.serving.open.static_map import StaticOpenMap, build_static_open_map
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -145,6 +146,8 @@ class OpenConstructionV2MapStore:
         self._artifact: OpenConstructionGraphV2Artifact | None = None
         self._nodes: dict[str, OpenConstructionV2MapNode] = {}
         self._edges_by_node: dict[str, tuple[OpenGraphV2Edge, ...]] = {}
+        self._static_overview: StaticOpenMap | None = None
+        self._static_neighborhoods: dict[str, StaticOpenMap] = {}
 
     @property
     def configured(self) -> bool:
@@ -197,8 +200,60 @@ class OpenConstructionV2MapStore:
             node_id: tuple(sorted(edges, key=lambda item: item.edge_id))
             for node_id, edges in by_node.items()
         }
+        self._prepare_static_presentations(artifact)
         self._artifact = artifact
         return artifact
+
+    def _prepare_static_presentations(self, artifact: OpenConstructionGraphV2Artifact) -> None:
+        """Freeze SVG geometry and label choices at artifact bootstrap, not request time."""
+        overview_nodes = tuple(self._ranked_nodes(0)[: _LEVEL_BUDGETS[0]])
+        self._static_overview = build_static_open_map(
+            overview_nodes,
+            # The overview is a wayfinder, not an edge hairball. Typed links
+            # appear only after following a real neighborhood URL.
+            (),
+            total_node_count=len(artifact.nodes),
+            label_budget=18,
+        )
+
+    def static_overview(self) -> StaticOpenMap:
+        """Return the artifact-startup SVG overview presentation without rebuilding it."""
+        self._require_artifact()
+        if self._static_overview is None:
+            raise RuntimeError("configured v2 store omitted its static overview")
+        return self._static_overview
+
+    def static_neighborhood(self, node_id: str) -> StaticOpenMap:
+        """Memoize one bounded one-hop SVG; it never invokes a layout engine."""
+        artifact = self._require_artifact()
+        try:
+            return self._static_neighborhoods[node_id]
+        except KeyError:
+            pass
+        node = self._nodes.get(node_id)
+        if node is None:
+            raise OpenConstructionV2MapStoreError(
+                "open construction v2 graph node unavailable"
+            )
+        edges = tuple(
+            edge
+            for edge in self._edges_by_node.get(node_id, ())
+            if not _is_generic_music_review_anchor(node, edge)
+        )[:24]
+        visible_ids = {node_id}
+        for edge in edges:
+            visible_ids.add(
+                edge.target_node_id if edge.source_node_id == node_id else edge.source_node_id
+            )
+        presentation = build_static_open_map(
+            tuple(self._nodes[value] for value in sorted(visible_ids)),
+            tuple(self._edge(edge) for edge in edges),
+            total_node_count=len(artifact.nodes),
+            focused_node_id=node_id,
+            label_budget=25,
+        )
+        self._static_neighborhoods[node_id] = presentation
+        return presentation
 
     def _ranked_nodes(self, level: int) -> list[OpenConstructionV2MapNode]:
         candidates = list(self._nodes.values())

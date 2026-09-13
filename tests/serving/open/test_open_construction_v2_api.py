@@ -25,16 +25,18 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertIn("v2 graph is disabled", response.text)
 
-    def test_invalid_configured_v2_artifact_fails_startup(self) -> None:
+    def test_invalid_configured_v2_artifact_fails_when_its_route_is_opened(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             invalid = root / "invalid-v2.json"
             invalid.write_text("{}", encoding="utf-8")
             app = create_app(root / "app.sqlite", open_construction_graph_v2_path=invalid)
-            with self.assertRaises(ExceptionGroup), create_test_client(app):
-                pass
+            with create_test_client(app) as client:
+                response = client.get("/api/open-construction-map/v2")
 
-    def test_configured_v2_routes_are_bounded_and_preserve_edge_semantics(self) -> None:
+        self.assertEqual(response.status_code, 503)
+
+    def test_configured_v2_routes_are_bounded_and_preserve_edge_semantics(self) -> None:  # noqa: PLR0915
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             graph = build_open_construction_graph_v2(
@@ -59,6 +61,7 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
                 page = client.get("/", params={"view": "open", "q": "rock"})
                 node_id = overview.json()["nodes"][0]["node_id"]
                 drill = client.get(f"/api/open-construction-map/v2/neighbors/{node_id}")
+                focused = client.get(f"/open/{node_id}")
 
         self.assertEqual(overview.status_code, 200)
         payload = overview.json()
@@ -73,16 +76,19 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
         self.assertEqual(search.status_code, 200)
         self.assertIn("Rock Music", [hit["name"] for hit in search.json()["hits"]])
         self.assertEqual(search_fragment.status_code, 200)
-        self.assertIn('data-map-view="open"', default_page.text)
-        self.assertIn('data-open-graph-version="v2"', default_page.text)
+        self.assertIn('data-map-view="public"', default_page.text)
+        self.assertNotIn('data-open-graph-version="v2"', default_page.text)
         self.assertNotIn('id="map-view-switch"', default_page.text)
-        self.assertIn('data-open-node-id="legacy:1"', search_fragment.text)
-        self.assertIn('data-map-mode="open"', page.text)
-        self.assertIn('data-open-graph-version="v2"', page.text)
-        self.assertIn('data-graph-url="/api/open-construction-map/v2?level=0"', page.text)
-        self.assertIn('data-neighbor-url="/api/open-construction-map/v2/neighbors/"', page.text)
+        self.assertIn('href="/open/legacy%3A1"', search_fragment.text)
+        self.assertNotIn('data-map-mode="open"', page.text)
+        self.assertNotIn('data-open-graph-version="v2"', page.text)
+        self.assertNotIn('data-graph-url="/api/open-construction-map/v2?level=0"', page.text)
+        self.assertNotIn('data-neighbor-url="/api/open-construction-map/v2/neighbors/"', page.text)
         self.assertIn('hx-get="/fragments/open-construction-map/v2/search"', page.text)
-        self.assertIn('data-open-node-id="legacy:1"', page.text)
+        self.assertIn('href="/open/legacy%3A1"', page.text)
+        self.assertEqual(focused.status_code, 200)
+        self.assertIn('id="open-static-map"', focused.text)
+        self.assertIn('href="/?view=open"', focused.text)
         self.assertEqual(drill.status_code, 200)
         self.assertLessEqual(len(drill.json()["nodes"]), 25)
         self.assertLessEqual(len(drill.json()["edges"]), 24)

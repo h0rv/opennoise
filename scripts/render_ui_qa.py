@@ -167,10 +167,7 @@ def inspect_fixture(html: str) -> UiInspection:
     required_ids = (
         "workspace",
         "map",
-        "semantic-map",
         "plot",
-        "map-controls",
-        "map-status",
         "search",
         "query",
         "results",

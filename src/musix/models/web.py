@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     database_read_only: bool = Field(default=False, validation_alias="MUSIX_DATABASE_READ_ONLY")
     vault_path: Path = Field(default=Path("data/vault"), validation_alias="MUSIX_VAULT_PATH")
     production_map_path: Path | None = Field(
-        default=None, validation_alias="MUSIX_PRODUCTION_MAP_PATH"
+        default=Path(__file__).resolve().parents[3] / "data/model/production-map-v1.json",
+        validation_alias="MUSIX_PRODUCTION_MAP_PATH",
     )
     historical_signal_map_path: Path | None = Field(
         default=None, validation_alias="MUSIX_HISTORICAL_SIGNAL_MAP_PATH"

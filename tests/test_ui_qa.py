@@ -21,10 +21,8 @@ class UiQaTests(unittest.TestCase):
         self.assertIsNone(re.search(r'href="/static/app\.css(?:\?[^" ]*)?"', first))
         self.assertNotIn("player", first.casefold())
         self.assertNotIn("preview", first.casefold())
-        self.assertEqual(first.count('id="semantic-map"'), 1)
-        self.assertEqual(first.count('id="layout-lenses"'), 1)
-        for layout_key in ("public", "public-direct", "public-community", "public-taxonomy"):
-            self.assertIn(f'href="/?layout={layout_key}"', first)
+        self.assertEqual(first.count('id="semantic-map"'), 0)
+        self.assertEqual(first.count('id="layout-lenses"'), 0)
 
 
 if __name__ == "__main__":

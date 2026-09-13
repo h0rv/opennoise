@@ -76,25 +76,15 @@ class WorkspaceTemplateTests(unittest.TestCase):
             search_query="idm & glitch",
         )
 
-        self.assertIn('id="layout-lenses"', rendered)
-        self.assertIn('aria-label="Public map layout"', rendered)
-        for layout_key in ("public", "public-direct", "public-community", "public-taxonomy"):
-            with self.subTest(layout_key=layout_key):
-                self.assertIn(
-                    f'href="/genres/7?layout={layout_key}&amp;q=idm%20%26%20glitch"',
-                    rendered,
-                )
-        self.assertIn('aria-current="page"', rendered)
-        self.assertIn('id="semantic-map"', rendered)
-        self.assertIn('data-graph-url="/api/map?layout=public-direct"', rendered)
+        self.assertNotIn('id="layout-lenses"', rendered)
+        self.assertNotIn('id="semantic-map"', rendered)
         self.assertIn('id="genre-detail-slot"', rendered)
         self.assertIn('value="idm &amp; glitch" hx-get="/fragments/search"', rendered)
         self.assertIn('href="/genres/7?layout=public-direct&amp;q=idm%20%26%20glitch"', rendered)
         self.assertIn('hx-target="#genre-detail-slot"', rendered)
         self.assertEqual(rendered.count('id="search"'), 1)
         self.assertEqual(rendered.count('id="results"'), 1)
-        self.assertEqual(rendered.count('id="semantic-map"'), 1)
-        self.assertIn('aria-describedby="map-pan-help"', rendered)
+        self.assertEqual(rendered.count('id="semantic-map"'), 0)
         self.assertNotIn("<audio", rendered)
 
     def test_historical_workspace_hides_public_layout_selector(self) -> None:

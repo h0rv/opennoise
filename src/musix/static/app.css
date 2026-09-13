@@ -52,16 +52,35 @@ button, input, select { font: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 #map { position: fixed; inset: 0; background: var(--canvas); }
-#semantic-map { position: absolute; inset: 0; display: none; outline: none; touch-action: none; }
-#semantic-map:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
-#semantic-map.keyboard-focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
-html.js-map-ready #semantic-map { display: block; }
-html.js-map-ready #plot { display: none; }
-html.js-map-ready #historical-fallback { display: none; }
-html.js-map-ready #open-fallback { display: none; }
-html:not(.js-map-ready) #search, html:not(.js-map-ready) #map-controls { display: none; }
 
 #plot { display: block; width: 100%; height: 100%; background: var(--canvas); }
+#static-map-viewport { position: fixed; inset: 0; overflow: auto; background: var(--canvas); }
+#static-map-viewport #plot { min-width: 100%; min-height: 100%; }
+#static-map-viewport.static-map-zoom-1 #plot { width: 160vw; height: 160vh; }
+#static-map-viewport.static-map-zoom-2 #plot { width: 220vw; height: 220vh; }
+#static-map-viewport.static-map-zoom-3 #plot { width: 300vw; height: 300vh; }
+#open-static-shell { position: absolute; inset: 0; overflow: hidden; background: var(--canvas); }
+#open-static-map { display: block; width: 100%; height: 100%; background: var(--canvas); }
+#open-neighborhood {
+  position: fixed; z-index: 4; border: 1px solid var(--line); border-radius: 7px;
+  background: var(--panel); box-shadow: 0 8px 28px rgb(0 0 0 / 8%);
+}
+#open-neighborhood a { color: var(--ink); }
+.open-static-edges line { stroke: var(--edge); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.open-static-edges .review { stroke: var(--similarity); stroke-dasharray: 5 4; }
+.open-static-node { cursor: pointer; }
+.open-static-node circle { fill: var(--node); stroke: var(--canvas); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.open-static-node.focused circle { fill: var(--focus); stroke-width: 4; }
+.open-static-node text { fill: var(--ink); font-size: 17px; paint-order: stroke; pointer-events: none; stroke: var(--canvas); stroke-linejoin: round; stroke-width: 5px; }
+.open-static-node:focus-visible { outline: none; }
+.open-static-node:focus-visible circle { stroke: var(--focus); stroke-width: 6; }
+#open-neighborhood { top: 70px; right: 14px; width: min(310px, calc(100vw - 28px)); max-height: min(60vh, 520px); padding: 14px; overflow: auto; }
+#open-neighborhood h2 { margin: 0; font-size: 18px; line-height: 1.25; }
+#open-neighborhood .open-map-back { display: inline-block; margin-bottom: 6px; font-size: 12px; }
+#open-neighborhood h3 { margin: 14px 0 5px; color: var(--muted); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+#open-neighborhood ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+#open-neighborhood li, #open-neighborhood a { overflow-wrap: anywhere; }
+#open-neighborhood .artist-link { display: inline-block; margin-top: 16px; font-size: 13px; }
 #historical-fallback { padding: 74px 14px 14px; color: var(--muted); }
 #historical-fallback p { margin: 0 0 8px; }
 #historical-fallback a { color: var(--ink); }
@@ -70,15 +89,18 @@ html:not(.js-map-ready) #search, html:not(.js-map-ready) #map-controls { display
 #historical-fallback a { overflow-wrap: anywhere; }
 .point { cursor: pointer; }
 .point circle { stroke: var(--canvas); stroke-width: 1.5; }
-.point text { fill: var(--ink); font-size: 11px; paint-order: stroke; stroke: var(--canvas); stroke-width: 3px; stroke-linejoin: round; }
+.point .production-point { stroke-width: 0.002; }
+.point text { fill: var(--ink); paint-order: stroke; stroke: var(--canvas); stroke-width: 0.003px; stroke-linejoin: round; }
 .point.selected circle { stroke: var(--focus); stroke-width: 4; }
 
-#map-controls, #map-view-switch, #layout-lenses, #search, #results, #genre-detail, #historical-detail {
+#map-view-switch, #layout-lenses, #static-map-levels, #search, #results, #genre-detail, #historical-detail {
   position: fixed; z-index: 4; border: 1px solid var(--line); border-radius: 7px;
   background: var(--panel);
 }
 
-#map-controls { right: 14px; bottom: 14px; display: flex; align-items: center; gap: 4px; padding: 4px; }
+#static-map-levels { right: 14px; bottom: 14px; display: flex; gap: 4px; padding: 4px; }
+#static-map-levels a { min-width: 32px; min-height: 32px; padding: 4px 8px; border-radius: 4px; color: var(--ink); font-size: 20px; line-height: 22px; text-align: center; text-decoration: none; }
+#static-map-levels a:hover, #static-map-levels a:focus-visible { background: color-mix(in srgb, var(--line) 35%, transparent); outline: none; }
 #map-view-switch { top: 14px; right: 14px; display: flex; padding: 4px; }
 #map-view-switch a { padding: 6px 8px; border-radius: 4px; color: var(--ink); font-size: 12px; text-decoration: none; }
 #map-view-switch a[aria-current="page"] { background: color-mix(in srgb, var(--line) 45%, transparent); }
@@ -87,11 +109,6 @@ html:not(.js-map-ready) #search, html:not(.js-map-ready) #map-controls { display
 #layout-lenses a { padding: 6px 8px; border-radius: 4px; color: var(--ink); font-size: 12px; text-decoration: none; white-space: nowrap; }
 #layout-lenses a[aria-current="page"] { background: color-mix(in srgb, var(--line) 45%, transparent); }
 #layout-lenses a:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
-#map-controls button, #map-controls select { min-height: 32px; border: 0; border-radius: 4px; color: var(--ink); background: transparent; cursor: pointer; }
-#map-controls button { min-width: 32px; padding: 4px 8px; }
-#map-controls button:hover, #map-controls button:focus-visible { background: color-mix(in srgb, var(--line) 35%, transparent); outline: none; }
-#map-controls label { padding-left: 6px; color: var(--muted); font-size: 12px; }
-#map-controls select { max-width: 86px; padding: 0 4px; }
 
 #search { top: 14px; left: 14px; width: min(360px, calc(100vw - 28px)); padding: 0; }
 #query { width: 100%; height: 42px; padding: 0 12px; border: 0; border-radius: 7px; outline: none; color: var(--ink); background: transparent; }
@@ -143,13 +160,13 @@ html:not(.js-map-ready) #search, html:not(.js-map-ready) #map-controls { display
 @media (max-width: 600px) {
   #search { top: 10px; left: 10px; width: calc(100vw - 20px); }
   #results { top: 96px; left: 10px; width: calc(100vw - 20px); }
-  #map-controls { right: 10px; bottom: 10px; }
+  #static-map-levels { right: 10px; bottom: 10px; }
   #map-view-switch { top: 60px; right: 10px; }
   #layout-lenses { top: 60px; left: 10px; max-width: calc(100vw - 20px); transform: none; overflow-x: auto; }
   #map-view-switch a { padding: 5px 6px; font-size: 11px; }
-  #map-controls label { display: none; }
   #genre-detail { top: auto; right: 10px; bottom: 54px; left: 10px; width: auto; max-height: 38vh; }
   #historical-detail { top: auto; right: 10px; bottom: 54px; left: 10px; width: auto; max-height: 38vh; }
+  #open-neighborhood { top: auto; right: 10px; bottom: 118px; left: 10px; width: auto; max-height: 34vh; }
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }

@@ -283,6 +283,31 @@ class ProductionMapInteractionEvidence(FrozenModel):
         return self
 
 
+class StaticProductionMapInteractionEvidence(FrozenModel):
+    """Browser proof for the no-runtime-layout public SVG renderer."""
+
+    evidence_kind: Literal["static_public_map"] = "static_public_map"
+    fit_route: bool
+    url_lod_control: bool
+    native_scroll: bool
+    programmatic_scroll: bool
+    ordinary_genre_link: bool
+    no_runtime_graph_assets: bool
+    no_browser_errors: bool
+
+    @model_validator(mode="after")
+    def require_every_static_check_to_pass(self) -> StaticProductionMapInteractionEvidence:
+        """Keep static evidence as fail-closed as the legacy interaction contract."""
+        failed = [
+            name
+            for name, passed in self.model_dump(mode="python").items()
+            if isinstance(passed, bool) and not passed
+        ]
+        if failed:
+            raise ValueError("static map evidence contains failed checks: " + ", ".join(failed))
+        return self
+
+
 def _validate_hierarchy_regions(
     regions: tuple[ProductionMapRegion, ...],
     coordinate_ids: set[str],
@@ -505,7 +530,9 @@ class ProductionMapAcceptanceInput(FrozenModel):
     lods: tuple[ProductionMapLod, ...] = Field(min_length=1, max_length=11)
     similarity: ProductionMapSimilarityEvidence
     screenshots: tuple[ProductionMapScreenshot, ...] = Field(default=(), max_length=12)
-    interactions: ProductionMapInteractionEvidence | None = None
+    interactions: (
+        ProductionMapInteractionEvidence | StaticProductionMapInteractionEvidence | None
+    ) = None
 
     @model_validator(mode="after")
     def require_consistent_production_map(self) -> ProductionMapAcceptanceInput:

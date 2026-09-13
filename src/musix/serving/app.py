@@ -173,10 +173,6 @@ def create_app(  # noqa: C901, PLR0913, PLR0915, PLR0917
 
     @asynccontextmanager
     async def lifespan(_: Litestar) -> AsyncIterator[None]:
-        await historical_signal_map.start()
-        await historical_memberships.start(historical_signal_map.publication_artifact())
-        await open_construction_graph.start()
-        await open_construction_graph_v2.start()
         await database.start()
         if local_research_artists is not None:
             await asyncio.to_thread(local_research_artists.start)
