@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -105,6 +106,45 @@ class WorkspaceTemplateTests(unittest.TestCase):
         )
 
         self.assertNotIn('id="layout-lenses"', rendered)
+
+    def test_nonsemantic_historical_map_branch_renders_overview(self) -> None:
+        environment = Environment(
+            loader=FileSystemLoader(TEMPLATE_ROOT),
+            autoescape=select_autoescape(enabled_extensions=("html",)),
+        )
+        rendered = environment.get_template("map.html").render(
+            map_view_mode="historical",
+            historical_map_configured=True,
+            historical_overview=(
+                SimpleNamespace(hierarchy_id="era:1", representative_label="Early signals"),
+            ),
+        )
+
+        self.assertIn("Historical compatibility overview", rendered)
+        self.assertIn("Early signals", rendered)
+        self.assertIn("/api/historical-signal-map", rendered)
+
+    def test_nonsemantic_open_map_branch_renders_focused_graph(self) -> None:
+        environment = Environment(
+            loader=FileSystemLoader(TEMPLATE_ROOT),
+            autoescape=select_autoescape(enabled_extensions=("html",)),
+        )
+        node = SimpleNamespace(node_id="genre:1", name="Electronic")
+        edge = SimpleNamespace(source_x=10, source_y=20, target_x=30, target_y=40, factual=True)
+        static_map = SimpleNamespace(
+            view_box="0 0 100 100",
+            edges=(edge,),
+            nodes=(SimpleNamespace(node=node, focused=True, x=10, y=20, label_visible=True),),
+        )
+        rendered = environment.get_template("map.html").render(
+            map_view_mode="open",
+            open_construction_graph_v2_configured=True,
+            open_static_map=static_map,
+        )
+
+        self.assertIn('id="open-static-map"', rendered)
+        self.assertIn("Electronic", rendered)
+        self.assertIn("/open/genre%3A1", rendered)
 
     def test_public_layout_keys_have_compact_product_labels(self) -> None:
         labels = {

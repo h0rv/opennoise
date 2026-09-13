@@ -1244,10 +1244,10 @@ def resolve_layout(
     return layout_key, None
 
 
-async def workspace_context(
+async def workspace_context(  # noqa: C901
     database: AsyncDatabase,
     genre_entries: GenreEntryRepository,
-    _production_map: ProductionMapStore,
+    production_map: ProductionMapStore,
     historical_signal_map: HistoricalSignalMapStore,
     open_construction_graph: OpenConstructionMapStore,
     open_construction_graph_v2: OpenConstructionV2MapStore,
@@ -1259,7 +1259,7 @@ async def workspace_context(
     view: Literal["public", "open", "historical"],
     local_research_artist_evidence_configured: bool = False,
     local_research_map_configured: bool = False,
-    open_node_id: str | None = None,  # noqa: ARG001
+    open_node_id: str | None = None,
     production_lod_level: int = 0,
     production_zoom: int = 0,
     local_research_focus: str | None = None,
@@ -1311,6 +1311,39 @@ async def workspace_context(
     historical_overview: tuple[HistoricalSignalHierarchyNode, ...] = ()
     open_static_map: StaticOpenMap | None = None
     open_neighborhood_response: OpenConstructionV2NeighborResponse | None = None
+    if production_map.configured and layout == "default":
+        try:
+            production_graph = production_map.response()
+        except ProductionMapStoreError:
+            # The HTML shell stays usable while an optional production artifact is rebuilt.
+            # The explicit JSON route below remains strict and reports the 503.
+            production_graph = None
+        if production_graph is not None:
+            selected_lod = production_graph.graph.lods[production_lod_level]
+            production_label_ids = frozenset(
+                label.genre_id for label in selected_lod.desktop_labels if label.shown
+            )
+            production_visible_node_ids = frozenset(selected_lod.visible_node_ids)
+    if view == "historical" and historical_signal_map.configured:
+        try:
+            historical_response = historical_signal_map.response(level=0)
+            historical_overview = historical_response.hierarchy if historical_response else ()
+        except HistoricalSignalMapStoreError:
+            # A malformed optional artifact must not turn the no-JS shell into a 500.
+            historical_overview = ()
+    if view == "open" and open_construction_graph_v2.configured:
+        try:
+            if open_node_id is not None:
+                open_neighborhood_response = open_construction_graph_v2.neighbors(open_node_id)
+                open_static_map = open_construction_graph_v2.static_neighborhood(open_node_id)
+        except OpenConstructionV2MapStoreError as error:
+            if open_node_id is not None:
+                raise NotFoundException(
+                    detail="open construction v2 graph node unavailable"
+                ) from error
+            raise ServiceUnavailableException(
+                detail="open construction v2 graph artifact unavailable"
+            ) from error
     return {
         "active_layout": active_layout,
         "genre": genre,

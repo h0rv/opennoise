@@ -36,7 +36,9 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 503)
 
-    def test_configured_v2_routes_are_bounded_and_preserve_edge_semantics(self) -> None:
+    def test_configured_v2_routes_are_bounded_and_preserve_edge_semantics(  # noqa: PLR0915
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             graph = build_open_construction_graph_v2(
@@ -76,7 +78,7 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
         self.assertEqual(search.status_code, 200)
         self.assertIn("Rock Music", [hit["name"] for hit in search.json()["hits"]])
         self.assertEqual(search_fragment.status_code, 200)
-        self.assertIn('data-map-view="open"', default_page.text)
+        self.assertIn('data-map-view="public"', default_page.text)
         self.assertNotIn('data-open-graph-version="v2"', default_page.text)
         self.assertNotIn('id="map-view-switch"', default_page.text)
         self.assertIn('href="/open/legacy%3A1"', search_fragment.text)
@@ -87,7 +89,8 @@ class OpenConstructionV2ApiTests(unittest.TestCase):
         self.assertIn('hx-get="/fragments/open-construction-map/v2/search"', page.text)
         self.assertIn('href="/open/legacy%3A1"', page.text)
         self.assertEqual(focused.status_code, 200)
-        self.assertIn("Semantic map unavailable.", focused.text)
+        self.assertIn('id="open-static-map"', focused.text)
+        self.assertIn("jazz", focused.text)
         self.assertEqual(drill.status_code, 200)
         self.assertLessEqual(len(drill.json()["nodes"]), 25)
         self.assertLessEqual(len(drill.json()["edges"]), 24)

@@ -15,6 +15,9 @@ ROOT = Path(__file__).parents[3]
 SEMANTIC_LAYOUT = ROOT / ".cache/semantic-map-layout-v1/artifact.json"
 
 
+@unittest.skipUnless(
+    SEMANTIC_LAYOUT.is_file(), "semantic-layout integration artifact is not provisioned"
+)
 class LocalResearchMapAppTests(unittest.TestCase):
     def test_map_only_app_serves_all_placed_points_without_catalog_startup(self) -> None:
         environment = {

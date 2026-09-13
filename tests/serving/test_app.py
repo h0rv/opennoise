@@ -40,15 +40,14 @@ class AppTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn('<main id="map"', response.text)
-        self.assertIn('data-map-view="open"', response.text)
+        self.assertIn('data-map-view="public"', response.text)
         self.assertIn("htmx-4.0.0.min.js", response.text)
         self.assertIn("/static/app.css?v=16", response.text)
         self.assertNotIn("cytoscape-3.34.0.min.js", response.text)
         self.assertNotIn("semantic-map.js", response.text)
         self.assertNotIn('id="count"', response.text)
         self.assertNotIn('id="map-view-switch"', response.text)
-        self.assertIn("Semantic map unavailable.", response.text)
-        self.assertEqual(response.text.count('class="point genre"'), 0)
+        self.assertIn('id="plot"', response.text)
         self.assertNotIn("data-local-research-artist-url", response.text)
 
     def test_retired_static_zoom_is_not_rendered(self) -> None:
@@ -58,8 +57,8 @@ class AppTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Semantic map unavailable.", response.text)
-        self.assertNotIn("static-map-viewport", stylesheet)
+        self.assertIn('id="plot"', response.text)
+        self.assertIn("static-map-viewport", stylesheet)
         self.assertNotIn("semantic-map.js", response.text)
 
     def test_local_research_panel_rejects_non_loopback_startup(self) -> None:
@@ -80,7 +79,7 @@ class AppTests(unittest.TestCase):
 
         self.assertEqual(page.status_code, 200)
         self.assertIn('data-map-view="open"', page.text)
-        self.assertIn("Semantic map unavailable.", page.text)
+        self.assertNotIn("Semantic map unavailable.", page.text)
         self.assertNotIn("semantic-map.js", page.text)
         for response, budget in ((overview, 240), (detail, 720)):
             self.assertEqual(response.status_code, 200)
@@ -105,8 +104,8 @@ class AppTests(unittest.TestCase):
         api = self.client.get("/api/historical-signal-map")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('data-map-view="open"', response.text)
-        self.assertIn("Semantic map unavailable.", response.text)
+        self.assertIn('data-map-view="historical"', response.text)
+        self.assertIn('id="historical-fallback"', response.text)
         self.assertNotIn('data-graph-url="/api/map"', response.text)
         self.assertEqual(api.status_code, 503)
 
@@ -385,11 +384,11 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/", params={"view": "public"})
 
         detail_href = "/genres/key/wikidata%3Agenre%3AQ1"
-        self.assertNotIn(f'href="{detail_href}"', response.text)
+        self.assertIn(f'href="{detail_href}"', response.text)
         self.assertNotIn('id="semantic-map"', response.text)
         self.assertNotIn('id="map-controls"', response.text)
         self.assertNotIn('id="layout-lenses"', response.text)
-        self.assertNotIn('id="map-point-wikidata:genre:Q1"', response.text)
+        self.assertIn('id="map-point-wikidata:genre:Q1"', response.text)
         self.assertNotIn('id="count"', response.text)
 
     def test_published_layout_lenses_keep_source_and_generated_contracts_distinct(self) -> None:
@@ -414,7 +413,7 @@ class PopulatedAppTests(unittest.TestCase):
         response = self.client.get("/genres/1", params={"view": "public"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn('data-selected-genre="1"', response.text)
+        self.assertIn('data-selected-genre="1"', response.text)
         self.assertIn('id="selection-clear"', response.text)
         self.assertIn('href="/" aria-label="Close IDM"', response.text)
         self.assertIn('id="genre-detail"', response.text)
@@ -438,7 +437,7 @@ class PopulatedAppTests(unittest.TestCase):
         self.assertEqual(selected.text.count('id="workspace"'), 1)
         self.assertEqual(selected.text.count('id="search"'), 1)
         self.assertEqual(selected.text.count('id="results"'), 1)
-        self.assertNotIn('data-selected-genre="1"', selected.text)
+        self.assertIn('data-selected-genre="1"', selected.text)
         self.assertIn('id="selection-clear"', selected.text)
         self.assertIn('id="genre-detail"', selected.text)
         self.assertIn("Autechre", selected.text)
