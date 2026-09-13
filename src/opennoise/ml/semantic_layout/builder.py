@@ -1,0 +1,1223 @@
+"""Build a compact landscape map from public structural evidence only."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import sqlite3
+from collections import defaultdict
+from contextlib import closing
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal, cast
+
+import numpy as np
+from scipy.spatial import KDTree
+
+from opennoise.ml.layout_lenses import build_weighted_spectral_coordinates
+
+from .contracts import (
+    CameraBounds,
+    EvidenceKind,
+    GeometryMetrics,
+    InputBinding,
+    OverviewCommunity,
+    SemanticCoordinate,
+    SemanticLayoutArtifact,
+    SemanticLayoutError,
+    SemanticLayoutInputs,
+    SemanticLayoutSettings,
+    StructuralEdge,
+    UnplacedSeed,
+    semantic_layout_settings_sha256,
+    semantic_layout_sha256,
+    verify_semantic_map_layout,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+    from pathlib import Path
+
+type Edge = tuple[str, str]
+type EdgeKinds = frozenset[str]
+
+_SHA256_LENGTH = 64
+_SEED_COUNT = 6_291
+_PAIR_NODE_COUNT = 2
+_LOD_TWO_IMPORTANCE_FRACTION = 0.1
+_MINIMUM_PEER_KNN = 0.16
+_MINIMUM_COLISTEN_SEEDS = 400
+_MINIMUM_COLISTEN_KNN = 0.10
+_MAXIMUM_HIERARCHY_DISTANCE = 0.16
+_MINIMUM_WIDTH_OCCUPANCY = 0.70
+_MINIMUM_HEIGHT_OCCUPANCY = 0.65
+_MAXIMUM_OCCUPANCY = 0.90
+_QUALITY_GATE_MINIMUM_SEEDS = 100
+_OVERVIEW_REGION_MAXIMUM_SEEDS = 100
+
+
+@dataclass(frozen=True, slots=True)
+class _Region:
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+
+    @property
+    def width(self) -> float:
+        return self.x1 - self.x0
+
+    @property
+    def height(self) -> float:
+        return self.y1 - self.y0
+
+
+def _canonical_sha256(value: object) -> str:
+    payload = json.dumps(
+        value, ensure_ascii=False, allow_nan=False, separators=(",", ":"), sort_keys=True
+    ).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _file_binding(role: str, path: Path, logical_sha256: str | None = None) -> InputBinding:
+    digest = hashlib.sha256()
+    size = 0
+    with path.open("rb") as stream:
+        while block := stream.read(1024 * 1024):
+            digest.update(block)
+            size += len(block)
+    return InputBinding(
+        role=role,
+        byte_sha256=digest.hexdigest(),
+        byte_count=size,
+        logical_sha256=logical_sha256,
+    )
+
+
+def _verified_json(path: Path, *, digest_key: str = "output_sha256") -> dict[str, object]:
+    try:
+        value = json.loads(path.read_bytes())
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SemanticLayoutError(f"cannot parse JSON artifact: {path}") from error
+    if not isinstance(value, dict):
+        raise SemanticLayoutError(f"JSON artifact must be an object: {path}")
+    claimed = value.get(digest_key)
+    without_digest = {key: item for key, item in value.items() if key != digest_key}
+    if not isinstance(claimed, str) or claimed != _canonical_sha256(without_digest):
+        raise SemanticLayoutError(f"JSON artifact digest does not replay: {path}")
+    return {str(key): item for key, item in value.items()}
+
+
+def _canonical_edge(left: str, right: str) -> Edge:
+    if left == right:
+        raise SemanticLayoutError("self relations are not drawable structural edges")
+    return (left, right) if left < right else (right, left)
+
+
+def _peer_input(path: Path) -> tuple[dict[str, str], dict[Edge, float], InputBinding]:
+    """Read only stable seeds and peer scores, not any historical-evaluation metadata."""
+    try:
+        with closing(sqlite3.connect(f"file:{path.resolve()}?mode=ro&immutable=1", uri=True)) as db:
+            metadata = {
+                str(key): str(value) for key, value in db.execute("SELECT key, value FROM metadata")
+            }
+            if metadata.get("non_production_candidate") != "true":
+                raise SemanticLayoutError("peer index must identify itself as a bounded candidate")
+            logical = metadata.get("artifact_output_sha256")
+            if logical is None or len(logical) != _SHA256_LENGTH:
+                raise SemanticLayoutError("peer index has no valid source logical digest")
+            names = {
+                str(seed_id): str(name)
+                for seed_id, name in db.execute("SELECT source_item_id, seed_name FROM seed")
+            }
+            weights = {
+                _canonical_edge(str(left), str(right)): math.sqrt(float(score))
+                for left, right, score in db.execute(
+                    "SELECT source_genre_id, target_genre_id, score FROM peer_edge"
+                )
+                if math.isfinite(float(score)) and float(score) > 0.0
+            }
+    except sqlite3.Error as error:
+        raise SemanticLayoutError("peer index schema or rows are invalid") from error
+    if len(names) != _SEED_COUNT:
+        raise SemanticLayoutError(
+            f"peer index must contain exactly 6291 stable seeds, got {len(names)}"
+        )
+    if len(weights) == 0:
+        raise SemanticLayoutError("peer index has no positive structural edges")
+    return names, weights, _file_binding("peer_index", path, logical)
+
+
+def _hierarchy_input(
+    path: Path, seed_ids: set[str], settings: SemanticLayoutSettings
+) -> tuple[dict[Edge, float], dict[str, dict[str, float]], InputBinding]:
+    value = _verified_json(path)
+    if value.get("historical_inputs_used_for_construction") is not False:
+        raise SemanticLayoutError("hierarchy artifact is not source-neutral")
+    claimed = str(value["output_sha256"])
+    raw_edges = value.get("edges")
+    if not isinstance(raw_edges, list):
+        raise SemanticLayoutError("hierarchy artifact has no edge list")
+    weights: dict[Edge, float] = {}
+    directed: dict[str, dict[str, float]] = defaultdict(dict)
+    for raw in raw_edges:
+        if not isinstance(raw, dict) or raw.get("included_in_dag") is not True:
+            continue
+        child = raw.get("child_seed_id")
+        parent = raw.get("parent_seed_id")
+        score = raw.get("review_score")
+        if (
+            not isinstance(child, str)
+            or not isinstance(parent, str)
+            or child not in seed_ids
+            or parent not in seed_ids
+        ):
+            raise SemanticLayoutError("hierarchy edge endpoint is outside stable seed universe")
+        if not isinstance(score, (int, float)) or not math.isfinite(float(score)):
+            raise SemanticLayoutError("hierarchy edge score is invalid")
+        edge = _canonical_edge(child, parent)
+        weight = settings.hierarchy_weight_floor + settings.hierarchy_weight_scale * float(score)
+        weights[edge] = max(weights.get(edge, 0.0), weight)
+        directed[child][parent] = max(directed[child].get(parent, 0.0), weight)
+    if not weights:
+        raise SemanticLayoutError("hierarchy artifact has no included DAG relations")
+    return weights, directed, _file_binding("hierarchy_artifact", path, claimed)
+
+
+def _colisten_input(
+    artifact_path: Path, cache_path: Path, seed_ids: set[str], scale: float
+) -> tuple[dict[Edge, float], InputBinding, InputBinding]:
+    value = _verified_json(artifact_path)
+    if (
+        value.get("historical_inputs_read_for_construction") is not False
+        or value.get("audio_read_for_construction") is not False
+        or value.get("listener_identifiers_read_for_construction") is not False
+    ):
+        raise SemanticLayoutError("co-listen artifact violates the open structural input policy")
+    cache_hash = value.get("cache_database_sha256")
+    if (
+        not isinstance(cache_hash, str)
+        or _file_binding("cache", cache_path).byte_sha256 != cache_hash
+    ):
+        raise SemanticLayoutError("co-listen cache bytes do not bind the sealed artifact")
+    claimed = str(value["output_sha256"])
+    try:
+        with closing(
+            sqlite3.connect(f"file:{cache_path.resolve()}?mode=ro&immutable=1", uri=True)
+        ) as db:
+            rows = db.execute(
+                "SELECT seed_id, neighbor_seed_id, shrunk_npmi FROM neighbor "
+                "WHERE channel = 'artist_direct'"
+            )
+            weights: dict[Edge, float] = {}
+            for left, right, score in rows:
+                left_id, right_id, raw_score = str(left), str(right), float(score)
+                if left_id not in seed_ids or right_id not in seed_ids:
+                    raise SemanticLayoutError("co-listen relation endpoint is outside stable seeds")
+                if raw_score <= 0.0 or not math.isfinite(raw_score):
+                    continue
+                edge = _canonical_edge(left_id, right_id)
+                weights[edge] = max(weights.get(edge, 0.0), scale * math.sqrt(raw_score))
+    except sqlite3.Error as error:
+        raise SemanticLayoutError("co-listen cache schema or rows are invalid") from error
+    if not weights:
+        raise SemanticLayoutError("co-listen cache contains no usable direct channel relations")
+    return (
+        weights,
+        _file_binding("colisten_artifact", artifact_path, claimed),
+        _file_binding("colisten_cache", cache_path, cache_hash),
+    )
+
+
+def _peer_manifold_input(
+    path: Path, names: Mapping[str, str], peer_binding: InputBinding
+) -> tuple[dict[str, tuple[float, float, int]], InputBinding]:
+    """Read the peer-only manifold, which is public-evidence layout input, not history."""
+    value = _verified_json(path)
+    if (
+        value.get("publication_scope") != "local_research_only"
+        or value.get("export_allowed") is not False
+    ):
+        raise SemanticLayoutError("peer manifold must be the sealed local research artifact")
+    if value.get("source_index_sha256") != peer_binding.byte_sha256:
+        raise SemanticLayoutError("peer manifold was not built from the bound peer index bytes")
+    if value.get("source_peer_similarity_output_sha256") != peer_binding.logical_sha256:
+        raise SemanticLayoutError("peer manifold logical source does not match peer index")
+    rows = value.get("coordinates")
+    if not isinstance(rows, list):
+        raise SemanticLayoutError("peer manifold has no coordinate rows")
+    positions: dict[str, tuple[float, float, int]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise SemanticLayoutError("peer manifold coordinate is not an object")
+        node, x, y, component = (
+            row.get("genre_id"),
+            row.get("x"),
+            row.get("y"),
+            row.get("component"),
+        )
+        if (
+            not isinstance(node, str)
+            or node not in names
+            or not isinstance(x, (int, float))
+            or not isinstance(y, (int, float))
+            or not isinstance(component, int)
+            or not math.isfinite(float(x))
+            or not math.isfinite(float(y))
+            or not 0.0 <= float(x) <= 1.0
+            or not 0.0 <= float(y) <= 1.0
+            or node in positions
+        ):
+            raise SemanticLayoutError("peer manifold coordinate is invalid")
+        positions[node] = (float(x), float(y), component)
+    if len(positions) < _PAIR_NODE_COUNT:
+        raise SemanticLayoutError("peer manifold has insufficient placed seeds")
+    return positions, _file_binding("peer_manifold_artifact", path, str(value["output_sha256"]))
+
+
+def _components(nodes: Iterable[str], weights: Mapping[Edge, float]) -> tuple[tuple[str, ...], ...]:
+    adjacency: dict[str, set[str]] = {node: set() for node in nodes}
+    for left, right in weights:
+        adjacency[left].add(right)
+        adjacency[right].add(left)
+    remaining = set(adjacency)
+    output: list[tuple[str, ...]] = []
+    while remaining:
+        pending = [min(remaining)]
+        component: set[str] = set()
+        while pending:
+            node = pending.pop()
+            if node in component:
+                continue
+            component.add(node)
+            remaining.discard(node)
+            pending.extend(sorted(adjacency[node] - component, reverse=True))
+        output.append(tuple(sorted(component)))
+    return tuple(sorted(output, key=lambda item: (-len(item), item[0])))
+
+
+def _communities(
+    nodes: tuple[str, ...],
+    weights: Mapping[Edge, float],
+    maximum_iterations: int,
+    tie_seed: int,
+) -> dict[str, str]:
+    """Deterministic weighted label propagation, used only as map partitioning."""
+    adjacency: dict[str, dict[str, float]] = {node: {} for node in nodes}
+    for (left, right), weight in weights.items():
+        if left in adjacency and right in adjacency:
+            adjacency[left][right] = weight
+            adjacency[right][left] = weight
+    labels = {node: node for node in nodes}
+
+    def tie_key(value: str) -> tuple[str, str]:
+        return hashlib.sha256(f"{tie_seed}\0{value}".encode()).hexdigest(), value
+
+    for _ in range(maximum_iterations):
+        changed = False
+        for node in sorted(nodes, key=tie_key):
+            scores: dict[str, float] = defaultdict(float)
+            for neighbor, weight in adjacency[node].items():
+                scores[labels[neighbor]] += weight
+            if scores:
+                maximum = max(scores.values())
+                selected = min(
+                    (label for label, score in scores.items() if score == maximum), key=tie_key
+                )
+                if selected != labels[node]:
+                    labels[node] = selected
+                    changed = True
+        if not changed:
+            break
+    return labels
+
+
+def _attach_empty_communities(
+    labels: dict[str, str], weights: Mapping[Edge, float]
+) -> dict[str, str]:
+    """Attach hierarchy-only leaves to an evidenced neighbor community, never a synthetic cell."""
+    adjacency: dict[str, list[tuple[str, float]]] = defaultdict(list)
+    for (left, right), weight in weights.items():
+        adjacency[left].append((right, weight))
+        adjacency[right].append((left, weight))
+    for _ in range(len(labels)):
+        changed = False
+        for node in sorted(labels):
+            neighbors = adjacency[node]
+            if any(labels[neighbor] == labels[node] for neighbor, _weight in neighbors):
+                continue
+            if not neighbors:
+                raise SemanticLayoutError("community has no relation to an evidenced neighbor")
+            labels[node] = min(
+                (-weight, labels[neighbor], neighbor) for neighbor, weight in neighbors
+            )[1]
+            changed = True
+        if not changed:
+            break
+    groups: dict[str, set[str]] = defaultdict(set)
+    for node, label in labels.items():
+        groups[label].add(node)
+    if any(not _induced_weights(nodes, weights) for nodes in groups.values()):
+        raise SemanticLayoutError("community attachment did not create internal evidence")
+    return labels
+
+
+def _separate_coincident_points(
+    coordinates: Mapping[str, tuple[float, float]],
+) -> dict[str, tuple[float, float]]:
+    """Apply a tiny deterministic readability offset only where structural points coincide."""
+    groups: dict[tuple[float, float], list[str]] = defaultdict(list)
+    for node, point in coordinates.items():
+        # Artifact coordinates round to 12 decimals. Split near-coincident source points first.
+        groups[(round(point[0], 10), round(point[1], 10))].append(node)
+    output = dict(coordinates)
+    for point, nodes in groups.items():
+        if len(nodes) < _PAIR_NODE_COUNT:
+            continue
+        radius = min(0.03, 0.004 * math.sqrt(len(nodes)))
+        for index, node in enumerate(sorted(nodes)):
+            angle = 2.0 * math.pi * index / len(nodes)
+            output[node] = (
+                point[0] + radius * math.cos(angle),
+                point[1] + radius * math.sin(angle),
+            )
+    return output
+
+
+def _split_large_communities(
+    groups: Mapping[str, list[str]], weights: Mapping[Edge, float], maximum_size: int
+) -> dict[str, list[str]]:
+    """Recursively expose coarse-to-fine structural neighborhoods from spectral order."""
+    output: dict[str, list[str]] = {}
+    for label, members in sorted(groups.items()):
+        if len(members) <= maximum_size:
+            output[label] = members
+            continue
+        ordered = sorted(
+            _local_coordinates(tuple(sorted(members)), _induced_weights(members, weights)).items(),
+            key=lambda item: (item[1][0], item[1][1], item[0]),
+        )
+        blocks = [
+            [node for node, _point in ordered[index : index + maximum_size]]
+            for index in range(0, len(ordered), maximum_size)
+        ]
+        connected = [
+            part
+            for block in blocks
+            for part in _components(tuple(block), _induced_weights(block, weights))
+        ]
+        connected_groups = [list(part) for part in connected if len(part) > 1]
+        singletons = [part[0] for part in connected if len(part) == 1]
+        if not connected_groups:
+            raise SemanticLayoutError("spectral community split has no connected local groups")
+        membership = {node: index for index, group in enumerate(connected_groups) for node in group}
+        adjacency: dict[str, list[tuple[str, float]]] = defaultdict(list)
+        for (left, right), weight in weights.items():
+            adjacency[left].append((right, weight))
+            adjacency[right].append((left, weight))
+        for node in singletons:
+            candidates = [
+                (-weight, membership[neighbor], neighbor)
+                for neighbor, weight in adjacency[node]
+                if neighbor in membership
+            ]
+            if not candidates:
+                raise SemanticLayoutError("isolated spectral split node has no structural group")
+            group_index = min(candidates)[1]
+            connected_groups[group_index].append(node)
+            membership[node] = group_index
+        for index, block in enumerate(connected_groups):
+            if not _induced_weights(block, weights):
+                raise SemanticLayoutError(
+                    "spectral community split lost its bounded local evidence"
+                )
+            output[f"{label}:{index}"] = block
+    return output
+
+
+def _preserve_hierarchy_only_clusters(
+    labels: dict[str, str],
+    component: tuple[str, ...],
+    community_signal: Mapping[Edge, float],
+    hierarchy: Mapping[Edge, float],
+) -> dict[str, str]:
+    """Keep hierarchy-only branches as map neighborhoods instead of one peer hub."""
+    peer_supported = {node for edge in community_signal for node in edge}
+    hierarchy_only = tuple(sorted(set(component) - peer_supported))
+    for branch in _components(hierarchy_only, _induced_weights(hierarchy_only, hierarchy)):
+        if len(branch) > 1:
+            branch_label = f"hierarchy:{branch[0]}"
+            for node in branch:
+                labels[node] = branch_label
+    return labels
+
+
+def _pack(
+    region: _Region, ordered: tuple[str, ...], masses: Mapping[str, float]
+) -> dict[str, _Region]:
+    """Bisect weighted items across the longest visual side, avoiding thin strips."""
+    if not ordered:
+        return {}
+    if len(ordered) == 1:
+        return {ordered[0]: region}
+    total = sum(masses[item] for item in ordered)
+    if total <= 0.0:
+        raise SemanticLayoutError("layout pack requires positive component mass")
+    target, cumulative, split, best = total / 2.0, 0.0, 1, math.inf
+    for index, item in enumerate(ordered[:-1], start=1):
+        cumulative += masses[item]
+        distance = abs(target - cumulative)
+        if distance <= best:
+            split, best = index, distance
+    left, right = ordered[:split], ordered[split:]
+    left_mass = sum(masses[item] for item in left)
+    if region.width / 1.777777777778 >= region.height:
+        boundary = region.x0 + region.width * left_mass / total
+        left_region = _Region(region.x0, region.y0, boundary, region.y1)
+        right_region = _Region(boundary, region.y0, region.x1, region.y1)
+    else:
+        boundary = region.y0 + region.height * left_mass / total
+        left_region = _Region(region.x0, region.y0, region.x1, boundary)
+        right_region = _Region(region.x0, boundary, region.x1, region.y1)
+    return _pack(left_region, left, masses) | _pack(right_region, right, masses)
+
+
+def _induced_weights(nodes: Iterable[str], weights: Mapping[Edge, float]) -> dict[Edge, float]:
+    included = set(nodes)
+    return {
+        edge: weight
+        for edge, weight in weights.items()
+        if edge[0] in included and edge[1] in included
+    }
+
+
+def _local_coordinates(
+    nodes: tuple[str, ...], weights: Mapping[Edge, float]
+) -> dict[str, tuple[float, float]]:
+    """Use structural spectral coordinates; no grid, random, or hash placement exists."""
+    if len(nodes) == _PAIR_NODE_COUNT:
+        return {nodes[0]: (0.2, 0.5), nodes[1]: (0.8, 0.5)}
+    coordinates = build_weighted_spectral_coordinates(nodes, weights)
+    return {item.genre_id: (float(item.x), float(item.y)) for item in coordinates}
+
+
+def _place_in_region(point: tuple[float, float], region: _Region) -> tuple[float, float]:
+    """Preserve a local square's visual scale inside a landscape sub-region."""
+    side = min(region.width, region.height)
+    x_pad = (region.width - side) / 2.0
+    y_pad = (region.height - side) / 2.0
+    return region.x0 + x_pad + point[0] * side, region.y0 + y_pad + point[1] * side
+
+
+def _neighbor_preservation(
+    coordinates: Mapping[str, tuple[float, float]],
+    weights: Mapping[Edge, float],
+    world_width: float,
+    limit: int,
+) -> float | None:
+    nodes = tuple(sorted(coordinates))
+    if len(nodes) < _PAIR_NODE_COUNT:
+        return None
+    source: dict[str, list[tuple[float, str]]] = defaultdict(list)
+    for (left, right), weight in weights.items():
+        if left in coordinates and right in coordinates:
+            source[left].append((weight, right))
+            source[right].append((weight, left))
+    points = np.array(
+        [(coordinates[node][0] / world_width, coordinates[node][1]) for node in nodes]
+    )
+    indexes = KDTree(points).query(points, k=min(limit + 1, len(nodes)))[1]
+    if indexes.ndim == 1:
+        indexes = indexes[:, np.newaxis]
+    values: list[float] = []
+    for index, node in enumerate(nodes):
+        expected = tuple(
+            neighbor
+            for _weight, neighbor in sorted(source[node], key=lambda item: (-item[0], item[1]))[
+                :limit
+            ]
+        )
+        if not expected:
+            continue
+        actual = tuple(
+            nodes[int(candidate)] for candidate in indexes[index] if nodes[int(candidate)] != node
+        )[:limit]
+        values.append(
+            len(set(expected) & set(actual)) / min(len(expected), len(actual))
+        ) if actual else None
+    return sum(values) / len(values) if values else None
+
+
+def _hierarchy_distance(
+    coordinates: Mapping[str, tuple[float, float]],
+    hierarchy: Mapping[Edge, float],
+    world_width: float,
+) -> float | None:
+    values = [
+        math.dist(
+            (coordinates[left][0] / world_width, coordinates[left][1]),
+            (coordinates[right][0] / world_width, coordinates[right][1]),
+        )
+        for left, right in hierarchy
+        if left in coordinates and right in coordinates
+    ]
+    return sum(values) / len(values) if values else None
+
+
+def _coordinate_collisions(coordinates: Mapping[str, tuple[float, float]]) -> int:
+    return len(coordinates) - len({(round(x, 12), round(y, 12)) for x, y in coordinates.values()})
+
+
+def _label_collisions(
+    communities: tuple[OverviewCommunity, ...], world_width: float, budget: int
+) -> int:
+    selected = sorted(
+        communities, key=lambda item: (-item.member_count, item.label, item.community_id)
+    )[:budget]
+    boxes: list[tuple[float, float, float, float]] = []
+    collisions = 0
+    for item in selected:
+        width = min(len(item.label), 42) * 0.0105
+        box = (item.x / world_width, item.y, item.x / world_width + width, item.y + 0.025)
+        if any(
+            box[0] < other[2] and box[2] > other[0] and box[1] < other[3] and box[3] > other[1]
+            for other in boxes
+        ):
+            collisions += 1
+        else:
+            boxes.append(box)
+    return collisions
+
+
+def _merge_weighted_edges(
+    combined: dict[Edge, float],
+    kinds: dict[Edge, set[EvidenceKind]],
+    source: Mapping[Edge, float],
+    scale: float,
+    kind: EvidenceKind,
+) -> None:
+    """Add one visibly named evidence channel without erasing its provenance."""
+    for edge, value in source.items():
+        combined[edge] = combined.get(edge, 0.0) + value * scale
+        kinds[edge].add(kind)
+
+
+def _display_hierarchy(
+    nodes: Iterable[str], directed: Mapping[str, Mapping[str, float]]
+) -> tuple[dict[str, str | None], dict[str, str | None], dict[str, int]]:
+    """Choose one factual/review parent for navigation without flattening the source DAG."""
+    parents: dict[str, str | None] = {}
+    for node in sorted(nodes):
+        candidates = directed.get(node, {})
+        parents[node] = (
+            min(candidates, key=lambda parent: (-candidates[parent], parent))
+            if candidates
+            else None
+        )
+    roots: dict[str, str | None] = {}
+    depths: dict[str, int] = {}
+
+    def resolve(node: str, visiting: set[str]) -> tuple[str | None, int]:
+        if node in roots:
+            return roots[node], depths[node]
+        parent = parents[node]
+        if parent is None:
+            roots[node], depths[node] = None, 0
+        elif parent in visiting:
+            raise SemanticLayoutError("display parent selection introduced a hierarchy cycle")
+        else:
+            root, depth = resolve(parent, visiting | {node})
+            roots[node] = parent if root is None else root
+            depths[node] = depth + 1
+        return roots[node], depths[node]
+
+    for node in sorted(parents):
+        resolve(node, set())
+    return parents, roots, depths
+
+
+def _spatial_buckets(
+    positions: Mapping[str, tuple[float, float]], maximum_size: int
+) -> tuple[tuple[str, ...], ...]:
+    """Bounded spatial LOD buckets, not a claim that label propagation is taxonomy."""
+    pending = [tuple(sorted(positions))]
+    output: list[tuple[str, ...]] = []
+    while pending:
+        members = pending.pop()
+        if len(members) <= maximum_size:
+            output.append(members)
+            continue
+        axis = int(
+            max(positions[item][0] for item in members)
+            - min(positions[item][0] for item in members)
+            < max(positions[item][1] for item in members)
+            - min(positions[item][1] for item in members)
+        )
+        ordered = sorted(members, key=lambda item: (positions[item][axis], item))
+        middle = len(ordered) // 2
+        pending.extend((tuple(ordered[:middle]), tuple(ordered[middle:])))
+    return tuple(sorted(output, key=lambda members: (min(members), len(members))))
+
+
+def _overview_visibility(
+    records: list[OverviewCommunity], world_width: float, budget: int
+) -> list[OverviewCommunity]:
+    """Emit only non-overlapping overview labels; all LOD buckets remain in the contract."""
+    chosen: set[int] = set()
+    boxes: list[tuple[float, float, float, float]] = []
+    for record in sorted(
+        records, key=lambda item: (-item.member_count, item.label, item.community_id)
+    ):
+        if " ".join(record.label.casefold().split()) == "music":
+            continue
+        if len(chosen) >= budget:
+            break
+        label_width = min(len(record.label), 42) * 0.0105
+        box = (
+            record.x / world_width,
+            record.y,
+            record.x / world_width + label_width,
+            record.y + 0.025,
+        )
+        if not any(
+            box[0] < old[2] and box[2] > old[0] and box[1] < old[3] and box[3] > old[1]
+            for old in boxes
+        ):
+            boxes.append(box)
+            chosen.add(record.community_id)
+    return [
+        record.model_copy(update={"overview_visible": record.community_id in chosen})
+        for record in records
+    ]
+
+
+def _quality_gate(metrics: GeometryMetrics) -> None:
+    if (
+        metrics.mean_peer_knn_preservation is None
+        or metrics.mean_peer_knn_preservation < _MINIMUM_PEER_KNN
+    ):
+        raise SemanticLayoutError("peer manifold kNN preservation gate failed")
+    if (
+        metrics.colisten_evaluable_seed_count < _MINIMUM_COLISTEN_SEEDS
+        or metrics.mean_colisten_knn_preservation is None
+        or metrics.mean_colisten_knn_preservation < _MINIMUM_COLISTEN_KNN
+    ):
+        raise SemanticLayoutError("co-listen structural preservation gate failed")
+    if (
+        metrics.mean_hierarchy_endpoint_distance is None
+        or metrics.mean_hierarchy_endpoint_distance > _MAXIMUM_HIERARCHY_DISTANCE
+    ):
+        raise SemanticLayoutError("hierarchy-anchor coherence gate failed")
+    if metrics.exact_coordinate_collision_count or metrics.overview_label_collision_count:
+        raise SemanticLayoutError("coordinate or overview-label collision gate failed")
+    if not _MINIMUM_WIDTH_OCCUPANCY <= metrics.occupied_world_width_fraction <= _MAXIMUM_OCCUPANCY:
+        raise SemanticLayoutError("landscape width utilization gate failed")
+    if (
+        not _MINIMUM_HEIGHT_OCCUPANCY
+        <= metrics.occupied_world_height_fraction
+        <= _MAXIMUM_OCCUPANCY
+    ):
+        raise SemanticLayoutError("landscape height utilization gate failed")
+    if metrics.largest_community_member_count > SemanticLayoutSettings().maximum_community_size:
+        raise SemanticLayoutError("spatial LOD bucket size gate failed")
+
+
+def _equalize_peer_manifold(
+    source: Mapping[str, tuple[float, float, int]], peer: Mapping[Edge, float]
+) -> dict[str, tuple[float, float, int]]:
+    """Use monotone rank equalization to make the peer manifold readable at overview.
+
+    The edge argument documents that this transform is downstream of the peer
+    manifold; only its ranking is used here, so no taxonomy can move peer space.
+    """
+    del peer
+    nodes = tuple(sorted(source))
+    denominator = max(len(nodes) - 1, 1)
+    ranks: dict[str, list[float]] = {node: [0.0, 0.0] for node in nodes}
+    for axis in (0, 1):
+        for rank, node in enumerate(sorted(nodes, key=lambda item: (source[item][axis], item))):
+            ranks[node][axis] = rank / denominator
+    return {node: (ranks[node][0], ranks[node][1], source[node][2]) for node in nodes}
+
+
+def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
+    inputs: SemanticLayoutInputs, *, settings: SemanticLayoutSettings | None = None
+) -> SemanticLayoutArtifact:
+    """Preserve the peer-only open manifold; add other evidence as local anchors only."""
+    resolved = settings or SemanticLayoutSettings()
+    names, peer, peer_binding = _peer_input(inputs.peer_index)
+    manifold, manifold_binding = _peer_manifold_input(
+        inputs.peer_manifold_artifact, names, peer_binding
+    )
+    manifold = _equalize_peer_manifold(manifold, peer)
+    seeds = set(names)
+    hierarchy, directed, hierarchy_binding = _hierarchy_input(
+        inputs.hierarchy_artifact, seeds, resolved
+    )
+    colisten, colisten_artifact_binding, colisten_cache_binding = _colisten_input(
+        inputs.colisten_artifact, inputs.colisten_cache, seeds, resolved.colisten_weight_scale
+    )
+    combined: dict[Edge, float] = {}
+    kinds: dict[Edge, set[EvidenceKind]] = defaultdict(set)
+    _merge_weighted_edges(combined, kinds, peer, resolved.peer_weight_scale, "peer")
+    _merge_weighted_edges(combined, kinds, colisten, 1.0, "colisten")
+    _merge_weighted_edges(combined, kinds, hierarchy, 1.0, "hierarchy")
+    supported = tuple(sorted({node for edge in combined for node in edge}))
+    parents, roots, depths = _display_hierarchy(supported, directed)
+    degree: dict[str, float] = defaultdict(float)
+    evidence: dict[str, set[EvidenceKind]] = defaultdict(set)
+    neighbors: dict[str, list[tuple[str, float, EvidenceKind]]] = defaultdict(list)
+    for (left, right), weight in combined.items():
+        degree[left] += weight
+        degree[right] += weight
+        evidence[left].update(kinds[(left, right)])
+        evidence[right].update(kinds[(left, right)])
+        preferred: EvidenceKind = (
+            "hierarchy"
+            if "hierarchy" in kinds[(left, right)]
+            else "colisten"
+            if "colisten" in kinds[(left, right)]
+            else "peer"
+        )
+        neighbors[left].append((right, weight, preferred))
+        neighbors[right].append((left, weight, preferred))
+    # Same x/y scale in normalized viewport preserves the source manifold's neighbor ranks.
+    x0, x1, y0, y1 = 0.12, resolved.world_width - 0.12, 0.07, 0.93
+    positions = {
+        node: (x0 + x * (x1 - x0), y0 + y * (y1 - y0)) for node, (x, y, _c) in manifold.items()
+    }
+    placement: dict[
+        str, Literal["peer_manifold", "hierarchy_anchor", "colisten_anchor", "structural_component"]
+    ] = dict.fromkeys(positions, "peer_manifold")
+    component = {node: item[2] for node, item in manifold.items()}
+    waiting = set(supported) - set(positions)
+    for _ in range(len(waiting) + 1):
+        attach: dict[str, tuple[str, Literal["hierarchy_anchor", "colisten_anchor"]]] = {}
+        for node in sorted(waiting):
+            parent = parents[node]
+            if parent is not None and parent in positions:
+                attach[node] = (parent, "hierarchy_anchor")
+                continue
+            candidates = [item for item in neighbors[node] if item[0] in positions]
+            if candidates:
+                anchor, _weight, kind = min(
+                    candidates, key=lambda item: (item[2] != "colisten", -item[1], item[0])
+                )
+                attach[node] = (
+                    anchor,
+                    "colisten_anchor" if kind == "colisten" else "hierarchy_anchor",
+                )
+        if not attach:
+            break
+        children: dict[str, list[str]] = defaultdict(list)
+        for node, (anchor, _kind) in attach.items():
+            children[anchor].append(node)
+        for anchor, child_nodes in children.items():
+            px, py = positions[anchor]
+            for index, node in enumerate(sorted(child_nodes)):
+                ring, slot = divmod(index, 12)
+                radius, angle = 0.008 + 0.003 * ring, 2.0 * math.pi * slot / 12.0
+                positions[node] = (px + radius * math.cos(angle), py + radius * math.sin(angle))
+                component[node], placement[node] = component[anchor], attach[node][1]
+        waiting -= set(attach)
+    # Unsupported seeds stay unplaced; independent components are bounded evidence islands.
+    for index, members in enumerate(
+        _components(tuple(sorted(waiting)), _induced_weights(waiting, combined)), start=1
+    ):
+        local = _separate_coincident_points(
+            _local_coordinates(members, _induced_weights(members, combined))
+        )
+        region = _Region(0.13 + 0.14 * (index - 1), 0.74, 0.23 + 0.14 * (index - 1), 0.84)
+        for node, point in local.items():
+            positions[node] = _place_in_region(point, region)
+            component[node], placement[node] = (
+                max(component.values(), default=-1) + index,
+                "structural_component",
+            )
+    positions = _separate_coincident_points(positions)
+    groups = _spatial_buckets(
+        positions, min(resolved.maximum_community_size, _OVERVIEW_REGION_MAXIMUM_SEEDS)
+    )
+    community = {node: index for index, group in enumerate(groups) for node in group}
+    records = []
+    for index, group in enumerate(groups):
+        anchor = min(
+            group, key=lambda node: (-degree[node], len(names[node]), names[node].casefold(), node)
+        )
+        records.append(
+            OverviewCommunity(
+                community_id=index,
+                label=names[anchor],
+                anchor_seed_id=anchor,
+                member_count=len(group),
+                component_id=min(component[node] for node in group),
+                x=round(positions[anchor][0], 12),
+                y=round(positions[anchor][1], 12),
+                overview_visible=False,
+            )
+        )
+    records = _overview_visibility(records, resolved.world_width, resolved.overview_label_budget)
+    overview_anchors = {record.anchor_seed_id for record in records if record.overview_visible}
+    max_degree = max(degree.values(), default=1.0)
+    priority = {
+        node: index
+        for index, node in enumerate(
+            sorted(positions, key=lambda node: (-degree[node], names[node].casefold(), node))
+        )
+    }
+    region_anchors = {record.anchor_seed_id for record in records}
+    lod_by_node: dict[str, Literal[0, 1, 2, 3]] = {}
+    for node in sorted(positions, key=lambda item: (depths[item], priority[item], item)):
+        if node in overview_anchors:
+            lod: Literal[0, 1, 2, 3] = 0
+        elif parents[node] is not None:
+            lod = min(3, max(1, depths[node] + 1))
+        elif node in region_anchors or degree[node] / max_degree >= _LOD_TWO_IMPORTANCE_FRACTION:
+            lod = 1
+        else:
+            lod = 3
+        parent = parents[node]
+        if parent is not None:
+            lod = cast("Literal[0, 1, 2, 3]", max(lod, lod_by_node[parent]))
+        lod_by_node[node] = cast("Literal[0, 1, 2, 3]", lod)
+    records = [
+        record.model_copy(
+            update={
+                "overview_visible": record.overview_visible
+                and lod_by_node[record.anchor_seed_id] == 0
+            }
+        )
+        for record in records
+    ]
+    coordinates = tuple(
+        SemanticCoordinate(
+            seed_id=node,
+            name=names[node],
+            x=round(positions[node][0], 12),
+            y=round(positions[node][1], 12),
+            component_id=component[node],
+            community_id=community[node],
+            lod=lod_by_node[node],
+            importance=round(degree[node], 12),
+            label_priority=priority[node],
+            evidence_kinds=tuple(sorted(evidence[node])),
+            display_parent_id=parents[node],
+            hierarchy_root_id=roots[node],
+            hierarchy_depth=depths[node],
+            placement_kind=placement[node],
+        )
+        for node in sorted(positions)
+    )
+    unplaced = tuple(
+        UnplacedSeed(seed_id=node, name=names[node]) for node in sorted(seeds - set(positions))
+    )
+    structural_edges = tuple(
+        StructuralEdge(
+            left_seed_id=left,
+            right_seed_id=right,
+            weight=round(weight, 12),
+            evidence_kinds=tuple(sorted(kinds[(left, right)])),
+        )
+        for (left, right), weight in sorted(combined.items())
+    )
+    peer_positions = {node: positions[node] for node in manifold}
+    colisten_nodes = {node for edge in colisten for node in edge} & set(positions)
+    metrics = GeometryMetrics(
+        placed_seed_count=len(coordinates),
+        unplaced_seed_count=len(unplaced),
+        component_count=len(set(component.values())),
+        community_count=len(records),
+        source_peer_edge_count=len(peer),
+        source_colisten_edge_count=len(colisten),
+        source_hierarchy_edge_count=len(hierarchy),
+        mean_peer_knn_preservation=_neighbor_preservation(
+            peer_positions, peer, resolved.world_width, resolved.peers_per_genre
+        ),
+        peer_manifold_seed_count=len(peer_positions),
+        mean_colisten_knn_preservation=_neighbor_preservation(
+            {node: positions[node] for node in colisten_nodes},
+            colisten,
+            resolved.world_width,
+            resolved.peers_per_genre,
+        ),
+        colisten_evaluable_seed_count=len(colisten_nodes),
+        mean_hierarchy_endpoint_distance=_hierarchy_distance(
+            positions, hierarchy, resolved.world_width
+        ),
+        occupied_world_width_fraction=(
+            max(x for x, _y in positions.values()) - min(x for x, _y in positions.values())
+        )
+        / resolved.world_width,
+        occupied_world_height_fraction=max(y for _x, y in positions.values())
+        - min(y for _x, y in positions.values()),
+        exact_coordinate_collision_count=_coordinate_collisions(positions),
+        overview_label_collision_count=_label_collisions(
+            tuple(record for record in records if record.overview_visible),
+            resolved.world_width,
+            resolved.overview_label_budget,
+        ),
+        largest_community_member_count=max(record.member_count for record in records),
+    )
+    if len(manifold) >= _QUALITY_GATE_MINIMUM_SEEDS:
+        _quality_gate(metrics)
+    preliminary = SemanticLayoutArtifact(
+        inputs=(
+            peer_binding,
+            manifold_binding,
+            hierarchy_binding,
+            colisten_artifact_binding,
+            colisten_cache_binding,
+        ),
+        settings=resolved,
+        settings_sha256=semantic_layout_settings_sha256(resolved),
+        coordinates=coordinates,
+        unplaced=unplaced,
+        communities=tuple(records),
+        structural_edges=structural_edges,
+        world_bounds=CameraBounds(
+            x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
+        ),
+        content_bounds=CameraBounds(
+            x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
+        ),
+        initial_camera=CameraBounds(
+            x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
+        ),
+        metrics=metrics,
+        output_sha256="0" * 64,
+    )
+    artifact = preliminary.model_copy(update={"output_sha256": semantic_layout_sha256(preliminary)})
+    verify_semantic_map_layout(artifact)
+    return artifact
+
+
+def _rejected_packed_layout(  # noqa: PLR0915
+    inputs: SemanticLayoutInputs, *, settings: SemanticLayoutSettings | None = None
+) -> SemanticLayoutArtifact:
+    """Build a stable 16:9 structural map from receipt-bound open-evidence adapters."""
+    resolved = settings or SemanticLayoutSettings()
+    names, peer, peer_binding = _peer_input(inputs.peer_index)
+    seed_ids = set(names)
+    hierarchy, directed_hierarchy, hierarchy_binding = _hierarchy_input(
+        inputs.hierarchy_artifact, seed_ids, resolved
+    )
+    colisten, colisten_artifact_binding, colisten_cache_binding = _colisten_input(
+        inputs.colisten_artifact, inputs.colisten_cache, seed_ids, resolved.colisten_weight_scale
+    )
+    combined: dict[Edge, float] = {}
+    kinds: dict[Edge, set[EvidenceKind]] = defaultdict(set)
+    _merge_weighted_edges(combined, kinds, peer, resolved.peer_weight_scale, "peer")
+    _merge_weighted_edges(
+        combined,
+        kinds,
+        colisten,
+        1.0,
+        "colisten",
+    )
+    _merge_weighted_edges(combined, kinds, hierarchy, 1.0, "hierarchy")
+    community_signal: dict[Edge, float] = dict(peer)
+    for edge, weight in colisten.items():
+        community_signal[edge] = community_signal.get(edge, 0.0) + weight
+    supported = tuple(sorted({node for edge in combined for node in edge}))
+    components = _components(supported, combined)
+    world = _Region(
+        resolved.margin * resolved.world_width,
+        resolved.margin,
+        resolved.world_width * (1.0 - resolved.margin),
+        1.0 - resolved.margin,
+    )
+    component_keys = tuple(f"component:{index}" for index in range(len(components)))
+    component_mass = {
+        key: float(len(components[index])) for index, key in enumerate(component_keys)
+    }
+    component_regions = _pack(world, component_keys, component_mass)
+    raw_positions: dict[str, tuple[float, float]] = {}
+    community_records: list[OverviewCommunity] = []
+    community_ids: dict[str, int] = {}
+    component_ids: dict[str, int] = {}
+    degree: dict[str, float] = defaultdict(float)
+    evidence: dict[str, set[EvidenceKind]] = defaultdict(set)
+    for edge, weight in combined.items():
+        degree[edge[0]] += weight
+        degree[edge[1]] += weight
+        evidence[edge[0]].update(kinds[edge])
+        evidence[edge[1]].update(kinds[edge])
+    next_community_id = 0
+    for component_id, component in enumerate(components):
+        local_weights = _induced_weights(component, combined)
+        labels = _communities(
+            component,
+            _induced_weights(component, community_signal),
+            resolved.maximum_community_iterations,
+            resolved.community_tie_seed,
+        )
+        labels = _preserve_hierarchy_only_clusters(
+            labels,
+            component,
+            _induced_weights(component, community_signal),
+            _induced_weights(component, hierarchy),
+        )
+        labels = _attach_empty_communities(labels, local_weights)
+        groups: dict[str, list[str]] = defaultdict(list)
+        for node in component:
+            groups[labels[node]].append(node)
+        groups = _split_large_communities(groups, local_weights, resolved.maximum_community_size)
+        ordered_groups = tuple(
+            sorted(groups, key=lambda label: (-len(groups[label]), min(groups[label])))
+        )
+        key_for_label = {
+            label: f"community:{component_id}:{index}" for index, label in enumerate(ordered_groups)
+        }
+        group_mass = {key_for_label[label]: float(len(groups[label])) for label in ordered_groups}
+        group_regions = _pack(
+            component_regions[component_keys[component_id]], tuple(group_mass), group_mass
+        )
+        for label in ordered_groups:
+            members = tuple(sorted(groups[label]))
+            group_weights = _induced_weights(members, local_weights)
+            if not group_weights:
+                # Label propagation cannot create a disconnected group.
+                raise SemanticLayoutError("community has no internal evidence edges")
+            local = _separate_coincident_points(_local_coordinates(members, group_weights))
+            region = group_regions[key_for_label[label]]
+            community_id = next_community_id
+            next_community_id += 1
+            for node in members:
+                raw_positions[node] = _place_in_region(local[node], region)
+                community_ids[node] = community_id
+                component_ids[node] = component_id
+            parents = {right for left, right in hierarchy if left in members and right in members}
+            label_node = min(
+                members,
+                key=lambda node: (
+                    node not in parents,
+                    -degree[node],
+                    len(names[node]),
+                    names[node].casefold(),
+                    node,
+                ),
+            )
+            center_x = sum(raw_positions[node][0] for node in members) / len(members)
+            center_y = sum(raw_positions[node][1] for node in members) / len(members)
+            community_records.append(
+                OverviewCommunity(
+                    community_id=community_id,
+                    label=names[label_node],
+                    member_count=len(members),
+                    component_id=component_id,
+                    x=round(center_x, 12),
+                    y=round(center_y, 12),
+                )
+            )
+    max_degree = max(degree.values(), default=1.0)
+    display_parents, hierarchy_roots, hierarchy_depths = _display_hierarchy(
+        raw_positions, directed_hierarchy
+    )
+    ordered_nodes = sorted(
+        raw_positions, key=lambda node: (-degree[node], names[node].casefold(), node)
+    )
+    label_priority = {node: rank for rank, node in enumerate(ordered_nodes)}
+    coordinates = tuple(
+        SemanticCoordinate(
+            seed_id=node,
+            name=names[node],
+            x=round(raw_positions[node][0], 12),
+            y=round(raw_positions[node][1], 12),
+            component_id=component_ids[node],
+            community_id=community_ids[node],
+            lod=1
+            if label_priority[node] < len(community_records)
+            else 2
+            if degree[node] / max_degree >= _LOD_TWO_IMPORTANCE_FRACTION
+            else 3,
+            importance=round(degree[node], 12),
+            label_priority=label_priority[node],
+            evidence_kinds=tuple(sorted(evidence[node])),
+            display_parent_id=display_parents[node],
+            hierarchy_root_id=hierarchy_roots[node],
+            hierarchy_depth=hierarchy_depths[node],
+        )
+        for node in sorted(raw_positions)
+    )
+    unplaced = tuple(
+        UnplacedSeed(seed_id=node, name=names[node])
+        for node in sorted(seed_ids - set(raw_positions))
+    )
+    positions = {item.seed_id: (float(item.x), float(item.y)) for item in coordinates}
+    structural_edges = tuple(
+        StructuralEdge(
+            left_seed_id=left,
+            right_seed_id=right,
+            weight=round(weight, 12),
+            evidence_kinds=tuple(sorted(kinds[(left, right)])),
+        )
+        for (left, right), weight in sorted(combined.items())
+    )
+    x_values = [point[0] for point in positions.values()]
+    y_values = [point[1] for point in positions.values()]
+    width = resolved.world_width
+    height = resolved.world_height
+    metrics = GeometryMetrics(
+        placed_seed_count=len(coordinates),
+        unplaced_seed_count=len(unplaced),
+        component_count=len(components),
+        community_count=len(community_records),
+        source_peer_edge_count=len(peer),
+        source_colisten_edge_count=len(colisten),
+        source_hierarchy_edge_count=len(hierarchy),
+        mean_peer_knn_preservation=_neighbor_preservation(
+            positions, peer, resolved.world_width, resolved.peers_per_genre
+        ),
+        mean_colisten_knn_preservation=_neighbor_preservation(
+            positions, colisten, resolved.world_width, resolved.peers_per_genre
+        ),
+        mean_hierarchy_endpoint_distance=_hierarchy_distance(
+            positions, hierarchy, resolved.world_width
+        ),
+        occupied_world_width_fraction=(max(x_values) - min(x_values)) / width if x_values else 0.0,
+        occupied_world_height_fraction=(max(y_values) - min(y_values)) / height
+        if y_values
+        else 0.0,
+        exact_coordinate_collision_count=_coordinate_collisions(positions),
+        overview_label_collision_count=_label_collisions(
+            tuple(community_records), resolved.world_width, resolved.overview_label_budget
+        ),
+        largest_community_member_count=max(
+            (item.member_count for item in community_records), default=0
+        ),
+    )
+    preliminary = SemanticLayoutArtifact(
+        inputs=(peer_binding, hierarchy_binding, colisten_artifact_binding, colisten_cache_binding),
+        settings=resolved,
+        settings_sha256=semantic_layout_settings_sha256(resolved),
+        coordinates=coordinates,
+        unplaced=unplaced,
+        communities=tuple(sorted(community_records, key=lambda item: item.community_id)),
+        structural_edges=structural_edges,
+        world_bounds=CameraBounds(
+            x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
+        ),
+        content_bounds=CameraBounds(
+            x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
+        ),
+        initial_camera=CameraBounds(
+            x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
+        ),
+        metrics=metrics,
+        output_sha256="0" * 64,
+    )
+    artifact = preliminary.model_copy(update={"output_sha256": semantic_layout_sha256(preliminary)})
+    verify_semantic_map_layout(artifact)
+    return artifact
+
+
+def write_semantic_map_layout(output: Path, artifact: SemanticLayoutArtifact) -> None:
+    """Write one canonical JSON artifact after replaying its logical digest."""
+    verify_semantic_map_layout(artifact)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(
+        artifact.model_dump(mode="json"), ensure_ascii=False, separators=(",", ":"), sort_keys=True
+    )
+    temporary = output.with_suffix(f"{output.suffix}.tmp")
+    temporary.write_text(payload, encoding="utf-8")
+    temporary.replace(output)
