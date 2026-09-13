@@ -10,6 +10,9 @@ from musix.checkpoints.source_neutral_certification import (
     PeerCertification,
     SourceNeutralCheckpointCertification,
     SourceNeutralCheckpointInputs,
+    _historical_seed_id,
+    _validate_historical_neighbor_endpoints,
+    _validate_historical_seed_universe,
     _validate_seed_accounting,
     certification_sha256,
     verify_source_neutral_checkpoint_certification,
@@ -26,6 +29,21 @@ from musix.taxonomy.relations.expansion import (
 
 
 class SourceNeutralCheckpointCertificationTests(unittest.TestCase):
+    def test_historical_namespace_bridge_is_exact_and_rejects_malformed_values(self) -> None:
+        self.assertEqual(_historical_seed_id("enao-legacy:item1"), "item1")
+        for value in ("item1", "enao-legacy:", "enao-legacy:enao-legacy:item1"):
+            with self.assertRaises(CheckpointCertificationError):
+                _historical_seed_id(value)
+
+    def test_historical_universe_and_neighbors_reject_substitution_and_dangling_rows(self) -> None:
+        seeds = {"item1", "item2"}
+        _validate_historical_seed_universe(set(seeds), seeds)
+        _validate_historical_neighbor_endpoints({("item1", "item2")}, seeds)
+        with self.assertRaisesRegex(CheckpointCertificationError, "does not match"):
+            _validate_historical_seed_universe({"item1", "item3"}, seeds)
+        with self.assertRaisesRegex(CheckpointCertificationError, "dangling"):
+            _validate_historical_neighbor_endpoints({("item1", "item3")}, seeds)
+
     def test_seed_accounting_requires_explicit_consensus_partition(self) -> None:
         seed_ids = {f"seed-{index}" for index in range(6_291)}
         consensus = _consensus(tuple(sorted(seed_ids)))

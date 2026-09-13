@@ -109,8 +109,8 @@ class SourceNeutralCheckpointCertification(FrozenModel):
 class HistoricalCheckpointEvaluation(FrozenModel):
     """A separately invoked blind comparison with a historical output."""
 
-    revision: Literal["source-neutral-checkpoint-historical-evaluation-v1"] = (
-        "source-neutral-checkpoint-historical-evaluation-v1"
+    revision: Literal["source-neutral-checkpoint-historical-evaluation-v2"] = (
+        "source-neutral-checkpoint-historical-evaluation-v2"
     )
     certification_output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     historical_input: InputBinding
@@ -122,7 +122,7 @@ class HistoricalCheckpointEvaluation(FrozenModel):
     observed_membership_seed_overlap_count: int = Field(ge=0, le=_SEED_COUNT)
     historical_observed_peer_pair_count: int = Field(ge=0)
     observed_peer_pair_overlap_count: int = Field(ge=0)
-    historical_hierarchy_covered_seed_count: int = Field(ge=0, le=_SEED_COUNT)
+    historical_seed_count: int = Field(ge=0, le=_SEED_COUNT)
     output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
@@ -209,22 +209,24 @@ def evaluate_source_neutral_checkpoint_against_historical(
     if replayed.output_sha256 != certification.output_sha256:
         raise CheckpointCertificationError("provided final inputs do not replay certification")
     graph_receipt, _ = _load_graph_receipt(certified_inputs.graph_receipt)
-    _, _, graph_membership_ids = _load_graph_database(
+    graph_seed_ids, _, graph_membership_ids = _load_graph_database(
         certified_inputs.graph_database, graph_receipt
     )
     consensus, _ = _load_consensus(certified_inputs.consensus_micro_neighborhoods)
     historical, historical_binding = _load_historical(historical_path)
-    historical_ids = {node.genre_id for node in historical.nodes}
-    if len(historical_ids) != _SEED_COUNT:
-        raise CheckpointCertificationError(
-            "historical evaluation artifact lacks unique full seed coverage"
-        )
+    historical_ids = {_historical_seed_id(node.genre_id) for node in historical.nodes}
+    _validate_historical_seed_universe(historical_ids, graph_seed_ids)
     historical_membership_ids = {
-        node.genre_id for node in historical.nodes if node.membership_count > 0
+        _historical_seed_id(node.genre_id) for node in historical.nodes if node.membership_count > 0
     }
     historical_pairs = {
-        _pair(neighbor.genre_id, neighbor.neighbor_genre_id) for neighbor in historical.neighbors
+        _pair(
+            _historical_seed_id(neighbor.genre_id),
+            _historical_seed_id(neighbor.neighbor_genre_id),
+        )
+        for neighbor in historical.neighbors
     }
+    _validate_historical_neighbor_endpoints(historical_pairs, historical_ids)
     consensus_pairs = {
         _pair(pair.source_genre_id, pair.target_genre_id) for pair in consensus.stable_pairs
     }
@@ -237,7 +239,7 @@ def evaluate_source_neutral_checkpoint_against_historical(
         ),
         historical_observed_peer_pair_count=len(historical_pairs),
         observed_peer_pair_overlap_count=len(consensus_pairs & historical_pairs),
-        historical_hierarchy_covered_seed_count=len(historical_ids),
+        historical_seed_count=len(historical_ids),
         output_sha256="0" * 64,
     )
     return base.model_copy(update={"output_sha256": _evaluation_sha256(base)})
@@ -442,3 +444,30 @@ def _evaluation_sha256(evaluation: HistoricalCheckpointEvaluation) -> str:
 
 def _pair(left: str, right: str) -> tuple[str, str]:
     return (left, right) if left <= right else (right, left)
+
+
+def _historical_seed_id(value: str) -> str:
+    """Bridge the sole declared historical namespace into stable seed IDs."""
+    prefix = "enao-legacy:"
+    if not value.startswith(prefix):
+        raise CheckpointCertificationError("historical evaluation ID lacks enao-legacy namespace")
+    stable_id = value.removeprefix(prefix)
+    if not stable_id or stable_id.startswith(prefix):
+        raise CheckpointCertificationError("historical evaluation ID is malformed")
+    return stable_id
+
+
+def _validate_historical_seed_universe(historical_ids: set[str], graph_seed_ids: set[str]) -> None:
+    """Require a one-to-one historical namespace bridge, not just equal cardinality."""
+    if historical_ids != graph_seed_ids:
+        raise CheckpointCertificationError(
+            "historical evaluation artifact does not match the graph seed universe"
+        )
+
+
+def _validate_historical_neighbor_endpoints(
+    historical_pairs: set[tuple[str, str]], historical_ids: set[str]
+) -> None:
+    """Reject historical neighbor rows outside the validated bridged universe."""
+    if any(endpoint not in historical_ids for pair in historical_pairs for endpoint in pair):
+        raise CheckpointCertificationError("historical evaluation has a dangling neighbor endpoint")
