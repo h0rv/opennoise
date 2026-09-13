@@ -37,6 +37,7 @@ class TaskContractTests(unittest.TestCase):
             poe_tasks["release-certify"]["cmd"],
             "python scripts/release_certify.py",
         )
+        self.assertNotIn("open-v2-browser-qa", poe_tasks)
 
     def test_production_startup_error_names_the_direct_certification_command(self) -> None:
         startup_script = (ROOT / "scripts" / "run_dev.py").read_text(encoding="utf-8")
