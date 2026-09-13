@@ -6,7 +6,7 @@ import hashlib
 import json
 import math
 import sqlite3
-from collections import defaultdict
+from collections import Counter, defaultdict
 from contextlib import closing
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal, cast
@@ -54,6 +54,9 @@ _MINIMUM_HEIGHT_OCCUPANCY = 0.65
 _MAXIMUM_OCCUPANCY = 0.90
 _QUALITY_GATE_MINIMUM_SEEDS = 100
 _OVERVIEW_REGION_MAXIMUM_SEEDS = 100
+_MINIMUM_OVERVIEW_ROOT_COVERAGE = 0.75
+_INITIAL_CAMERA_PADDING_FRACTION = 0.04
+_MINIMUM_OVERVIEW_ANCHORS = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,6 +73,17 @@ class _Region:
     @property
     def height(self) -> float:
         return self.y1 - self.y0
+
+
+@dataclass(frozen=True, slots=True)
+class _OverviewSelectionContext:
+    names: Mapping[str, str]
+    positions: Mapping[str, tuple[float, float]]
+    roots: Mapping[str, str | None]
+    depths: Mapping[str, int]
+    degree: Mapping[str, float]
+    world_width: float
+    budget: int
 
 
 def _canonical_sha256(value: object) -> str:
@@ -660,35 +674,127 @@ def _spatial_buckets(
 
 
 def _overview_visibility(
-    records: list[OverviewCommunity], world_width: float, budget: int
+    records: list[OverviewCommunity],
+    groups: tuple[tuple[str, ...], ...],
+    context: _OverviewSelectionContext,
 ) -> list[OverviewCommunity]:
-    """Emit only non-overlapping overview labels; all LOD buckets remain in the contract."""
-    chosen: set[int] = set()
+    """Select sparse overview labels by evidence roots and spatial diversity.
+
+    Every candidate is a real point in its spatial bucket. Root novelty is weighted
+    first, then evidence importance and max-min distance, so one large genre family
+    cannot consume the overview budget. No genre names or families are special-cased.
+    """
+    root_breadth: Counter[str] = Counter(
+        context.roots[node] or node for node in context.positions
+    )
+    max_degree = max(context.degree.values(), default=1.0)
+    candidates: list[tuple[float, str, int, str]] = []
+    for record, group in zip(records, groups, strict=True):
+        root_candidates = [
+            node for node in group if context.depths[node] == 0
+        ] or list(group)
+        for node in root_candidates:
+            root = context.roots[node] or node
+            root_score = math.log1p(root_breadth[root])
+            importance = context.degree[node] / max_degree
+            shallow = 1.0 / (1.0 + context.depths[node])
+            # Favor specific, evidenced labels without turning names into rules.
+            specificity = min(len(context.names[node].split()), 6) / 6.0
+            base = 0.55 * root_score + 0.30 * importance + 0.10 * shallow + 0.05 * specificity
+            candidates.append((base, node, record.community_id, root))
+    candidates.sort(key=lambda item: (-item[0], item[1], item[2], item[3]))
+    selected: list[tuple[float, str, int, str]] = []
+    selected_communities: set[int] = set()
+    selected_roots: set[str] = set()
     boxes: list[tuple[float, float, float, float]] = []
-    for record in sorted(
-        records, key=lambda item: (-item.member_count, item.label, item.community_id)
-    ):
-        if " ".join(record.label.casefold().split()) == "music":
-            continue
-        if len(chosen) >= budget:
-            break
-        label_width = min(len(record.label), 42) * 0.0105
-        box = (
-            record.x / world_width,
-            record.y,
-            record.x / world_width + label_width,
-            record.y + 0.025,
-        )
-        if not any(
+
+    def label_box(node: str) -> tuple[float, float, float, float]:
+        x, y = context.positions[node]
+        label_width = min(len(context.names[node]), 42) * 0.0105
+        return (x / context.world_width, y, x / context.world_width + label_width, y + 0.025)
+
+    def collides(box: tuple[float, float, float, float]) -> bool:
+        return any(
             box[0] < old[2] and box[2] > old[0] and box[1] < old[3] and box[3] > old[1]
             for old in boxes
-        ):
-            boxes.append(box)
-            chosen.add(record.community_id)
+        )
+
+    while len(selected) < context.budget:
+        eligible = [
+            item
+            for item in candidates
+            if item[2] not in selected_communities and not collides(label_box(item[1]))
+        ]
+        if not eligible:
+            break
+        best = max(
+            eligible,
+            key=lambda item: (
+                item[3] not in selected_roots,
+                item[0],
+                min(
+                    math.dist(
+                        (
+                            context.positions[item[1]][0] / context.world_width,
+                            context.positions[item[1]][1],
+                        ),
+                        (
+                            context.positions[other[1]][0] / context.world_width,
+                            context.positions[other[1]][1],
+                        ),
+                    )
+                    for other in selected
+                )
+                if selected
+                else 1.0,
+                item[1],
+                -item[2],
+            ),
+        )
+        selected.append(best)
+        selected_communities.add(best[2])
+        selected_roots.add(best[3])
+        boxes.append(label_box(best[1]))
+    chosen = {community_id: node for _score, node, community_id, _root in selected}
     return [
-        record.model_copy(update={"overview_visible": record.community_id in chosen})
+        record.model_copy(
+            update={
+                "overview_visible": record.community_id in chosen,
+                "anchor_seed_id": chosen.get(record.community_id, record.anchor_seed_id),
+                "label": context.names[chosen[record.community_id]]
+                if record.community_id in chosen
+                else record.label,
+                "x": round(context.positions[chosen[record.community_id]][0], 12)
+                if record.community_id in chosen
+                else record.x,
+                "y": round(context.positions[chosen[record.community_id]][1], 12)
+                if record.community_id in chosen
+                else record.y,
+            }
+        )
         for record in records
     ]
+
+
+def _initial_camera(
+    anchors: Iterable[tuple[float, float]], world_width: float, world_height: float
+) -> CameraBounds:
+    """Fit overview anchors into a padded camera while preserving world aspect."""
+    points = tuple(anchors)
+    if not points:
+        return CameraBounds(x0=0.0, y0=0.0, x1=world_width, y1=world_height)
+    min_x, max_x = min(point[0] for point in points), max(point[0] for point in points)
+    min_y, max_y = min(point[1] for point in points), max(point[1] for point in points)
+    padding_x = max((max_x - min_x) * _INITIAL_CAMERA_PADDING_FRACTION, world_width * 0.01)
+    padding_y = max((max_y - min_y) * _INITIAL_CAMERA_PADDING_FRACTION, world_height * 0.01)
+    width = max(max_x - min_x + 2.0 * padding_x, (max_y - min_y + 2.0 * padding_y) * world_width)
+    height = width / world_width
+    if width > world_width or height > world_height:
+        width, height = world_width, world_height
+    center_x, center_y = (min_x + max_x) / 2.0, (min_y + max_y) / 2.0
+    x0 = min(max(center_x - width / 2.0, 0.0), world_width - width)
+    y0 = min(max(center_y - height / 2.0, 0.0), world_height - height)
+    return CameraBounds(x0=x0, y0=y0, x1=x0 + width, y1=y0 + height)
 
 
 def _quality_gate(metrics: GeometryMetrics) -> None:
@@ -720,6 +826,11 @@ def _quality_gate(metrics: GeometryMetrics) -> None:
         raise SemanticLayoutError("landscape height utilization gate failed")
     if metrics.largest_community_member_count > SemanticLayoutSettings().maximum_community_size:
         raise SemanticLayoutError("spatial LOD bucket size gate failed")
+    if (
+        metrics.overview_visible_count >= _MINIMUM_OVERVIEW_ANCHORS
+        and metrics.overview_root_coverage_fraction < _MINIMUM_OVERVIEW_ROOT_COVERAGE
+    ):
+        raise SemanticLayoutError("overview root diversity gate failed")
 
 
 def _equalize_peer_manifold(
@@ -856,8 +967,22 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
                 overview_visible=False,
             )
         )
-    records = _overview_visibility(records, resolved.world_width, resolved.overview_label_budget)
-    overview_anchors = {record.anchor_seed_id for record in records if record.overview_visible}
+    records = _overview_visibility(
+        records,
+        groups,
+        _OverviewSelectionContext(
+            names=names,
+            positions=positions,
+            roots=roots,
+            depths=depths,
+            degree=degree,
+            world_width=resolved.world_width,
+            budget=resolved.overview_label_budget,
+        ),
+    )
+    overview_anchors = {
+        record.anchor_seed_id for record in records if record.overview_visible
+    }
     max_degree = max(degree.values(), default=1.0)
     priority = {
         node: index
@@ -920,6 +1045,23 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         )
         for (left, right), weight in sorted(combined.items())
     )
+    overview_communities = tuple(record for record in records if record.overview_visible)
+    overview_anchors = tuple(
+        (positions[record.anchor_seed_id][0], positions[record.anchor_seed_id][1])
+        for record in overview_communities
+    )
+    initial_camera = _initial_camera(
+        overview_anchors, resolved.world_width, resolved.world_height
+    )
+    overview_root_ids = {
+        roots[record.anchor_seed_id] or record.anchor_seed_id for record in overview_communities
+    }
+    anchor_width = max((point[0] for point in overview_anchors), default=0.0) - min(
+        (point[0] for point in overview_anchors), default=0.0
+    )
+    anchor_height = max((point[1] for point in overview_anchors), default=0.0) - min(
+        (point[1] for point in overview_anchors), default=0.0
+    )
     peer_positions = {node: positions[node] for node in manifold}
     colisten_nodes = {node for edge in colisten for node in edge} & set(positions)
     metrics = GeometryMetrics(
@@ -957,6 +1099,14 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
             resolved.overview_label_budget,
         ),
         largest_community_member_count=max(record.member_count for record in records),
+        overview_visible_count=len(overview_communities),
+        overview_root_count=len(overview_root_ids),
+        overview_root_coverage_fraction=(
+            len(overview_root_ids) / len(overview_communities) if overview_communities else 0.0
+        ),
+        initial_camera_anchor_width_fraction=anchor_width / (initial_camera.x1 - initial_camera.x0),
+        initial_camera_anchor_height_fraction=anchor_height
+        / (initial_camera.y1 - initial_camera.y0),
     )
     if len(manifold) >= _QUALITY_GATE_MINIMUM_SEEDS:
         _quality_gate(metrics)
@@ -980,9 +1130,7 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         content_bounds=CameraBounds(
             x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
         ),
-        initial_camera=CameraBounds(
-            x0=0.0, y0=0.0, x1=resolved.world_width, y1=resolved.world_height
-        ),
+        initial_camera=initial_camera,
         metrics=metrics,
         output_sha256="0" * 64,
     )

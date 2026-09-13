@@ -60,6 +60,22 @@ def main() -> int:
         "world_bounds": artifact.world_bounds.model_dump(mode="json"),
         "content_bounds": artifact.content_bounds.model_dump(mode="json"),
         "initial_camera": artifact.initial_camera.model_dump(mode="json"),
+        "overview": {
+            "visible_labels": [
+                community.label
+                for community in artifact.communities
+                if community.overview_visible
+            ],
+            "visible_count": artifact.metrics.overview_visible_count,
+            "root_count": artifact.metrics.overview_root_count,
+            "root_coverage_fraction": artifact.metrics.overview_root_coverage_fraction,
+            "initial_camera_anchor_width_fraction": (
+                artifact.metrics.initial_camera_anchor_width_fraction
+            ),
+            "initial_camera_anchor_height_fraction": (
+                artifact.metrics.initial_camera_anchor_height_fraction
+            ),
+        },
         "metrics": artifact.metrics.model_dump(mode="json"),
         "quadrants": quadrants,
         "paths": path_rows,

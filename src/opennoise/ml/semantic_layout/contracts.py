@@ -176,6 +176,11 @@ class GeometryMetrics(FrozenModel):
     exact_coordinate_collision_count: int = Field(ge=0)
     overview_label_collision_count: int = Field(ge=0)
     largest_community_member_count: int = Field(ge=0)
+    overview_visible_count: int = Field(default=0, ge=0)
+    overview_root_count: int = Field(default=0, ge=0)
+    overview_root_coverage_fraction: float = Field(default=0.0, ge=0.0, le=1.0)
+    initial_camera_anchor_width_fraction: float = Field(default=0.0, ge=0.0, le=1.0)
+    initial_camera_anchor_height_fraction: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class SemanticLayoutArtifact(FrozenModel):
@@ -285,6 +290,61 @@ class SemanticLayoutArtifact(FrozenModel):
                 raise ValueError("LOD region anchor must be a member coordinate")
             if anchor.name != community.label or anchor.x != community.x or anchor.y != community.y:
                 raise ValueError("LOD region label must be anchored to its real genre point")
+        overview_communities = tuple(
+            community for community in self.communities if community.overview_visible
+        )
+        if self.metrics.overview_visible_count != len(overview_communities):
+            raise ValueError("overview visible metric does not replay")
+        overview_anchors = tuple(
+            coordinate_by_id[community.anchor_seed_id] for community in overview_communities
+        )
+        overview_roots = {
+            coordinate.hierarchy_root_id or coordinate.seed_id for coordinate in overview_anchors
+        }
+        if self.metrics.overview_root_count != len(overview_roots):
+            raise ValueError("overview root metric does not replay")
+        expected_root_fraction = (
+            len(overview_roots) / len(overview_anchors) if overview_anchors else 0.0
+        )
+        if not math.isclose(
+            self.metrics.overview_root_coverage_fraction,
+            expected_root_fraction,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
+            raise ValueError("overview root coverage metric does not replay")
+        if any(anchor.lod != 0 for anchor in overview_anchors):
+            raise ValueError("overview anchors must be visible at LOD zero")
+        if any(
+            not (
+                self.initial_camera.x0 <= anchor.x <= self.initial_camera.x1
+                and self.initial_camera.y0 <= anchor.y <= self.initial_camera.y1
+            )
+            for anchor in overview_anchors
+        ):
+            raise ValueError("initial camera must contain every overview anchor")
+        anchor_width = (
+            max((anchor.x for anchor in overview_anchors), default=0.0)
+            - min((anchor.x for anchor in overview_anchors), default=0.0)
+        )
+        anchor_height = (
+            max((anchor.y for anchor in overview_anchors), default=0.0)
+            - min((anchor.y for anchor in overview_anchors), default=0.0)
+        )
+        expected_width_fraction = anchor_width / (self.initial_camera.x1 - self.initial_camera.x0)
+        expected_height_fraction = anchor_height / (self.initial_camera.y1 - self.initial_camera.y0)
+        if not math.isclose(
+            self.metrics.initial_camera_anchor_width_fraction,
+            expected_width_fraction,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ) or not math.isclose(
+            self.metrics.initial_camera_anchor_height_fraction,
+            expected_height_fraction,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
+            raise ValueError("initial camera anchor occupancy metrics do not replay")
         for item in self.coordinates:
             if (item.display_parent_id is None) != (item.hierarchy_depth == 0):
                 raise ValueError("display parent must match positive hierarchy depth")

@@ -16,7 +16,13 @@ from opennoise.ml.semantic_layout import (
     build_semantic_map_layout,
     verify_semantic_map_layout,
 )
+from opennoise.ml.semantic_layout.builder import (
+    _initial_camera,
+    _overview_visibility,
+    _OverviewSelectionContext,
+)
 from opennoise.ml.semantic_layout.contracts import (
+    OverviewCommunity,
     SemanticLayoutArtifact,
     SemanticLayoutError,
 )
@@ -144,3 +150,52 @@ class SemanticLayoutTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             SemanticLayoutArtifact.model_validate(forged)
+
+    def test_initial_camera_is_padded_aspect_envelope(self) -> None:
+        camera = _initial_camera(((0.2, 0.2), (1.4, 0.75)), 1.777777777778, 1.0)
+        self.assertLessEqual(camera.x0, 0.2)
+        self.assertGreaterEqual(camera.x1, 1.4)
+        self.assertLessEqual(camera.y0, 0.2)
+        self.assertGreaterEqual(camera.y1, 0.75)
+        self.assertAlmostEqual(
+            (camera.x1 - camera.x0) / (camera.y1 - camera.y0),
+            1.777777777778,
+            places=10,
+        )
+
+    def test_overview_selection_spreads_across_structural_roots(self) -> None:
+        names = {
+            "a": "rock",
+            "b": "jazz",
+            "c": "electro",
+        }
+        positions = {"a": (0.1, 0.1), "b": (0.5, 0.5), "c": (0.9, 0.9)}
+        records = [
+            OverviewCommunity(
+                community_id=index,
+                label=name,
+                anchor_seed_id=node,
+                member_count=1,
+                component_id=0,
+                x=positions[node][0],
+                y=positions[node][1],
+            )
+            for index, (node, name) in enumerate(names.items())
+        ]
+        selected = _overview_visibility(
+            records,
+            tuple((node,) for node in names),
+            _OverviewSelectionContext(
+                names=names,
+                positions=positions,
+                roots={"a": "rock-root", "b": "jazz-root", "c": "electro-root"},
+                depths={"a": 0, "b": 0, "c": 0},
+                degree={"a": 100.0, "b": 2.0, "c": 1.0},
+                world_width=1.777777777778,
+                budget=3,
+            ),
+        )
+        self.assertEqual(
+            {item.anchor_seed_id for item in selected if item.overview_visible},
+            {"a", "b", "c"},
+        )
