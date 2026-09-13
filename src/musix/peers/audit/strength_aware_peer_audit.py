@@ -52,6 +52,17 @@ class ChannelInput(FrozenModel):
     candidates: tuple[PeerCandidate, ...]
 
 
+class ConsensusChannelInput(ChannelInput):
+    """The producer coverage claims needed to replay a consensus channel."""
+
+    reconciliation_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    seed_count: int = Field(ge=1)
+    support_genre_count: int = Field(ge=0)
+    support_membership_count: int = Field(ge=0)
+    empty_input_seed_count: int = Field(ge=0)
+    seeds_without_qualifying_neighbors_count: int = Field(ge=0)
+
+
 class CoreMetric(FrozenModel):
     min_shared_artists: GridMinimum
     min_jaccard: float = Field(ge=0, le=1)
@@ -244,6 +255,9 @@ def build_consensus_micro_neighborhood_audit(
         raise PeerAuditError("seed reconciliation contains duplicate stable IDs")
     if direct_binding.seed_count != len(seed_ids) or support_binding.seed_count != len(seed_ids):
         raise PeerAuditError("channel seed count does not match seed reconciliation")
+    seed_id_set = set(seed_ids)
+    _validate_candidate_endpoints(direct.candidates, seed_id_set, "direct")
+    _validate_candidate_endpoints(support.candidates, seed_id_set, "support")
     reconciliation_bytes_sha256 = _file_sha256(seed_reconciliation_path)
     if seed_reconciliation_path in {direct_path, support_path}:
         raise PeerAuditError("seed reconciliation must be distinct from channel artifacts")
@@ -321,7 +335,7 @@ def build_consensus_micro_neighborhood_audit(
     return base.model_copy(update={"output_sha256": _hash(base)})
 
 
-def _load_consensus_channel(path: Path, kind: str) -> tuple[ChannelInput, ArtifactBinding]:
+def _load_consensus_channel(path: Path, kind: str) -> tuple[ConsensusChannelInput, ArtifactBinding]:
     """Verify an input's raw bytes and its producer's logical checksum."""
     raw_bytes = path.read_bytes()
     try:
@@ -330,38 +344,48 @@ def _load_consensus_channel(path: Path, kind: str) -> tuple[ChannelInput, Artifa
         raise PeerAuditError("candidate channel is not valid JSON") from error
     if not isinstance(raw_value, dict):
         raise PeerAuditError("candidate channel must be a JSON object")
-    value = ChannelInput.model_validate_json(raw_bytes)
+    value = ConsensusChannelInput.model_validate_json(raw_bytes)
     if value.component_kind != kind:
         raise PeerAuditError("candidate channel does not match audit role")
     declared_hash = raw_value.get("output_sha256")
     if not isinstance(declared_hash, str) or declared_hash != _logical_sha256(raw_value):
         raise PeerAuditError("candidate channel logical hash does not match its content")
-    required_metrics = (
-        "seed_count",
-        "support_genre_count",
-        "support_membership_count",
-        "empty_input_seed_count",
-        "seeds_without_qualifying_neighbors_count",
+    if value.support_genre_count + value.empty_input_seed_count != value.seed_count:
+        raise PeerAuditError("candidate channel coverage counts do not partition its seed count")
+    endpoint_count = len(_endpoint_ids(value.candidates))
+    expected_endpoint_count = (
+        value.support_genre_count - value.seeds_without_qualifying_neighbors_count
     )
-    if any(not isinstance(raw_value.get(metric), int) for metric in required_metrics):
-        raise PeerAuditError("candidate channel lacks required source evidence metrics")
-    reconciliation_hash = raw_value["reconciliation_sha256"]
-    if not isinstance(reconciliation_hash, str):
-        raise PeerAuditError("candidate channel lacks a seed reconciliation hash")
+    if endpoint_count != expected_endpoint_count:
+        raise PeerAuditError("candidate channel endpoint count does not match its coverage counts")
     return value, ArtifactBinding(
         artifact_bytes_sha256=hashlib.sha256(raw_bytes).hexdigest(),
         artifact_logical_sha256=declared_hash,
-        source_seed_reconciliation_bytes_sha256=reconciliation_hash,
+        source_seed_reconciliation_bytes_sha256=value.reconciliation_sha256,
         artifact_bytes=len(raw_bytes),
-        seed_count=raw_value["seed_count"],
-        support_genre_count=raw_value["support_genre_count"],
-        support_membership_count=raw_value["support_membership_count"],
-        empty_input_seed_count=raw_value["empty_input_seed_count"],
-        seeds_without_qualifying_neighbors_count=raw_value[
-            "seeds_without_qualifying_neighbors_count"
-        ],
+        seed_count=value.seed_count,
+        support_genre_count=value.support_genre_count,
+        support_membership_count=value.support_membership_count,
+        empty_input_seed_count=value.empty_input_seed_count,
+        seeds_without_qualifying_neighbors_count=value.seeds_without_qualifying_neighbors_count,
         candidate_edge_count=len(value.candidates),
     )
+
+
+def _validate_candidate_endpoints(
+    edges: tuple[PeerCandidate, ...], seed_ids: set[str], channel_name: str
+) -> None:
+    """Reject non-canonical pairs and endpoints outside the bound seed universe."""
+    pairs = tuple(_pair(edge) for edge in edges)
+    if any(left == right for left, right in pairs):
+        raise PeerAuditError(f"{channel_name} channel contains a self-referential candidate")
+    if len(pairs) != len(set(pairs)):
+        raise PeerAuditError(f"{channel_name} channel contains duplicate candidate pairs")
+    unexpected = _endpoint_ids(edges) - seed_ids
+    if unexpected:
+        raise PeerAuditError(
+            f"{channel_name} channel contains endpoints outside seed reconciliation"
+        )
 
 
 def _coassignment_counts(

@@ -136,6 +136,49 @@ class StrengthAwarePeerAuditTests(unittest.TestCase):
             with self.assertRaisesRegex(PeerAuditError, "logical hash"):
                 build_consensus_micro_neighborhood_audit(direct, support, reconciliation)
 
+    def test_consensus_rejects_endpoints_outside_the_reconciled_seed_universe(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            direct, support, reconciliation = (
+                root / "direct.json",
+                root / "support.json",
+                root / "r.json",
+            )
+            _write_reconciliation(reconciliation, ("a", "b"))
+            reconciliation_hash = _file_sha256(reconciliation)
+            _write(
+                direct, "direct_artist_overlap", [("a", "outside", 0.1, 4)], reconciliation_hash, 2
+            )
+            _write(
+                support,
+                "release_group_artist_overlap",
+                [("a", "b", 0.2, 5)],
+                reconciliation_hash,
+                2,
+            )
+            with self.assertRaisesRegex(PeerAuditError, "outside seed reconciliation"):
+                build_consensus_micro_neighborhood_audit(direct, support, reconciliation)
+
+    def test_consensus_rejects_coverage_counts_inconsistent_with_endpoints(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            direct, support, reconciliation = (
+                root / "direct.json",
+                root / "support.json",
+                root / "r.json",
+            )
+            _write_reconciliation(reconciliation, ("a", "b", "c"))
+            reconciliation_hash = _file_sha256(reconciliation)
+            edges = [("a", "b", 0.1, 4)]
+            _write(direct, "direct_artist_overlap", edges, reconciliation_hash, 3)
+            _write(support, "release_group_artist_overlap", edges, reconciliation_hash, 3)
+            raw = json.loads(direct.read_text())
+            raw["seeds_without_qualifying_neighbors_count"] = 1
+            raw["output_sha256"] = _logical_sha256(raw)
+            direct.write_text(json.dumps(raw))
+            with self.assertRaisesRegex(PeerAuditError, "endpoint count"):
+                build_consensus_micro_neighborhood_audit(direct, support, reconciliation)
+
     def test_consensus_ego_memberships_overlap_and_every_seed_is_accounted_for(self) -> None:
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -166,12 +209,13 @@ def _write(
     reconciliation_sha256: str = "a" * 64,
     seed_count: int = 1,
 ) -> None:
+    endpoint_count = len({genre_id for edge in edges for genre_id in edge[:2]})
     payload = {
         "component_kind": kind,
         "seed_count": seed_count,
-        "support_genre_count": seed_count,
+        "support_genre_count": endpoint_count,
         "support_membership_count": len(edges),
-        "empty_input_seed_count": 0,
+        "empty_input_seed_count": seed_count - endpoint_count,
         "seeds_without_qualifying_neighbors_count": 0,
         "reconciliation_sha256": reconciliation_sha256,
         "candidates": [

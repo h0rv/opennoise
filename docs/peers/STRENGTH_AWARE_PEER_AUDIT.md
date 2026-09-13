@@ -22,7 +22,10 @@ Consensus micro-neighborhoods are a separate local-only `v2` artifact. It
 binds both direct and release-group-support inputs twice: the exact file-byte
 SHA-256 and the producer's logical output SHA-256. It also binds the seed
 reconciliation file that enumerates every stable seed, so coverage is not
-inferred from candidate endpoints.
+inferred from candidate endpoints. Candidate endpoints must be members of that
+reconciled seed universe, and each producer's reported support, empty-input,
+and no-qualifying-neighbor counts must reconcile with its actual endpoint set.
+No historical Every Noise construction data is read.
 
 The preregistered perturbation contract is five fixed seeds (`1979`, `2027`,
 `2039`, `2063`, and `2081`), deterministic SHA-256 edge buckets, and a 20%
