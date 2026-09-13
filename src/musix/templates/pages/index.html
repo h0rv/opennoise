@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OpenNoise</title>
+  <link rel="stylesheet" href="{{ asset_prefix }}assets/opennoise.css">
+</head>
+<body>
+<main id="map" data-mapped-node-count="{{ mapped_node_count }}" data-searchable-name-count="{{ searchable_name_count }}">
+  <form id="search" action="{{ asset_prefix }}search.html" role="search">
+    <label class="sr-only" for="query">Search names</label>
+    <input id="query" name="q" type="search" placeholder="Search" autocomplete="off">
+  </form>
+  <div id="static-map-viewport" class="static-map-zoom-{{ level }}">{{ svg | safe }}</div>
+  <nav id="static-map-levels" aria-label="Map detail">
+    {% if level > 0 %}<a href="{{ previous_href }}" aria-label="Less detail">−</a>{% endif %}
+    <a href="{{ fit_href }}" aria-label="Fit map">Fit</a>
+    {% if level < 3 %}<a href="{{ next_href }}" aria-label="More detail">+</a>{% endif %}
+  </nav>
+</main>
+</body>
+</html>
