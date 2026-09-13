@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { fitCamera, levelForScale, normaliseAtlasPayload, zoomAt } from '../../src/opennoise/static/map-atlas.mjs';
+
+const payload = {
+  revision: 'semantic-scatter-map-v2',
+  initial_camera: { x0: 0, y0: 0, x1: 16, y1: 9 },
+  nodes: [
+    { id: 'a', name: 'electronic', x: 2, y: 2, lod: 0, importance: 1 },
+    { id: 'b', name: 'idm', x: 4, y: 3, lod: 1, importance: 1, display_parent_id: 'a' },
+    { id: 'c', name: 'glitch', x: 5, y: 4, lod: 2, importance: 1, parent_id: 'b' },
+    { id: 'd', name: 'micro', x: 6, y: 5, lod: 3, importance: 1, parent_id: 'c' },
+  ],
+  labels: [
+    { level: 0, ids: ['a'] }, { level: 1, ids: ['a', 'b'] },
+    { level: 2, ids: ['a', 'b', 'c'] }, { level: 3, ids: ['a', 'b', 'c', 'd'] },
+  ],
+  aliases: [{ term: 'intelligent dance music', target: 'b' }],
+  overview_regions: [{ label: 'Electronic', x: 3, y: 3 }],
+};
+
+test('atlas retains monotonic zoom labels and optional region metadata', () => {
+  const atlas = normaliseAtlasPayload(payload);
+  assert.equal(atlas.regions[0].title, 'Electronic');
+  assert.deepEqual(atlas.labels.map((labels) => labels.length), [1, 2, 3, 4]);
+  assert.deepEqual(atlas.childrenByParent.get('b'), ['c']);
+});
+
+test('fit camera centers a landscape overview and zoom preserves its cursor world point', () => {
+  const camera = fitCamera(payload.initial_camera, { width: 1600, height: 900 });
+  assert.equal(camera.scale, 94);
+  assert.equal(camera.x, 48);
+  assert.equal(camera.y, 27);
+  const before = { x: (800 - camera.x) / camera.scale, y: (450 - camera.y) / camera.scale };
+  const zoomed = zoomAt(camera, { x: 800, y: 450 }, 2, { min: 1, max: 1000 });
+  assert.deepEqual({ x: (800 - zoomed.x) / zoomed.scale, y: (450 - zoomed.y) / zoomed.scale }, before);
+});
+
+test('zoom levels disclose labels monotonically without a focused node', () => {
+  const levels = [1, 1.7, 3.5, 8].map((scale) => levelForScale(scale, 1));
+  assert.deepEqual(levels, [0, 1, 2, 3]);
+});

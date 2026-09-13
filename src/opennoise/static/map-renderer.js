@@ -1,150 +1,89 @@
-/* Receipt-bound scatter-map viewport. It draws only supplied geometry. */
-(() => {
-  const canvas = document.querySelector('#semantic-map');
-  if (!canvas) return;
-  const controls = document.querySelector('#map-controls');
-  const detail = document.querySelector('#map-detail');
-  const search = document.querySelector('#query');
-  const stage = canvas.parentElement;
-  const readColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
-  const pointRadius = 2.1;
-  const labelCaps = [45, 96, 210, 420];
-  let data, state, pixels, frame = 0, drag, moved = false, focusedEdges = [], lookup, adjacency = new Map(), pointers = new Map(), pinchDistance = 0, measureContext, textWidths = new Map();
+/* Static atlas viewport: supplied coordinates only, no graph simulation. */
+import { boundsForNodes, clamp, fitCamera, levelForScale, normaliseAtlasPayload, zoomAt } from './map-atlas.mjs';
 
-  const size = () => ({ width: canvas.clientWidth, height: canvas.clientHeight });
-  const nodeMap = () => lookup;
-  const staticNeighborhood = (id) => {
-    const edges = (adjacency.get(id) || []).slice(0, 12);
-    const ids = new Set([id]);
-    for (const edge of edges) ids.add(edge.source === id ? edge.target : edge.source);
-    return {
-      nodes: [...ids].map((nodeId) => lookup.get(nodeId)).filter(Boolean).map((node) => ({ node_id: node.id, name: node.name })),
-      edges,
-    };
-  };
-  const transform = (node) => ({ x: state.x + node.x * state.scale, y: state.y + node.y * state.scale });
-  const level = () => clamp(Math.floor(Math.log2(state.scale / state.fitScale) + 0.5), 0, 3);
-  const visible = (node, margin = 8) => {
-    const point = transform(node), viewport = state.viewport;
-    return point.x >= -margin && point.y >= -margin && point.x <= viewport.width + margin && point.y <= viewport.height + margin;
-  };
-  const schedule = () => { if (!frame) frame = requestAnimationFrame(render); };
+const canvas = document.querySelector('#semantic-map');
+
+if (canvas instanceof HTMLCanvasElement) {
+  const controls = document.querySelector('#map-controls');
+  const back = controls?.querySelector('[data-map-action="back"]');
+  const detail = document.querySelector('#map-detail');
+  const query = document.querySelector('#query');
+  const endpoint = canvas.dataset.mapUrl;
+  const neighborUrl = canvas.dataset.neighborsUrl;
+  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], frame: 0, drag: null, moved: false, request: 0 };
+  const palette = () => { const css = getComputedStyle(document.documentElement); return Object.fromEntries(['canvas', 'node', 'ink', 'edge', 'focus'].map((key) => [key, css.getPropertyValue(`--${key}`).trim()])); };
+  const point = (node) => ({ x: state.camera.x + node.x * state.camera.scale, y: state.camera.y + node.y * state.camera.scale });
+  const level = () => levelForScale(state.camera.scale, state.fitScale);
+  const visible = (node) => { const screen = point(node); return screen.x >= -8 && screen.y >= -8 && screen.x <= state.viewport.width + 8 && screen.y <= state.viewport.height + 8; };
+  const schedule = () => { if (!state.frame) state.frame = requestAnimationFrame(draw); };
   const fit = () => {
-    const viewport = size(), camera = data.initial_camera, minX = camera.x0, minY = camera.y0, maxX = camera.x1, maxY = camera.y1;
-    const scale = Math.min(viewport.width / (maxX - minX), viewport.height / (maxY - minY));
-    state.fitScale = Math.max(scale, .001);
-    state.scale = state.fitScale;
-    state.x = viewport.width / 2 - ((minX + maxX) / 2) * state.scale;
-    state.y = viewport.height / 2 - ((minY + maxY) / 2) * state.scale;
+    if (!state.atlas || !state.viewport.width || !state.viewport.height) return;
+    state.camera = fitCamera(state.atlas.initialCamera, state.viewport);
+    state.fitScale = state.camera.scale;
+    state.focus = null; state.edges = [];
+    if (back) back.hidden = true;
+    if (detail) detail.hidden = true;
     schedule();
   };
-  const labels = () => {
-    const labelSet = data.labels[Math.min(level(), data.labels.length - 1)] || { ids: [] };
-    const ids = new Set(labelSet.ids);
-    const lookup = nodeMap(), occupied = new Map(), shown = [];
-    const canvasRect = canvas.getBoundingClientRect();
-    for (const element of [search, controls, detail]) {
-      if (!element || element.hidden) continue;
-      const rect = element.getBoundingClientRect(), box = [rect.left - canvasRect.left, rect.top - canvasRect.top, rect.right - canvasRect.left, rect.bottom - canvasRect.top];
-      for (let x = Math.floor(box[0] / 32); x <= Math.floor(box[2] / 32); x += 1) for (let y = Math.floor(box[1] / 32); y <= Math.floor(box[3] / 32); y += 1) occupied.set(`${x}:${y}`, [box]);
-    }
-    measureContext ||= canvas.getContext('2d'); measureContext.font = '12px ui-sans-serif, system-ui, sans-serif';
-    for (const id of labelSet.ids) {
-      const node = lookup.get(id);
-      if (!node || !visible(node)) continue;
-      const width = textWidths.get(node.id) ?? Math.min(176, measureContext.measureText(node.name).width + 12);
-      textWidths.set(node.id, width);
-      const p = transform(node);
-      const box = [p.x + 5, p.y - 10, p.x + width, p.y + 8], cells = [];
-      for (let x = Math.floor(box[0] / 32); x <= Math.floor(box[2] / 32); x += 1) for (let y = Math.floor(box[1] / 32); y <= Math.floor(box[3] / 32); y += 1) cells.push(`${x}:${y}`);
-      const overlaps = cells.some((cell) => (occupied.get(cell) || []).some((other) => box[0] < other[2] && box[2] > other[0] && box[1] < other[3] && box[3] > other[1]));
-      if (!overlaps) {
-        for (const cell of cells) occupied.set(cell, [...(occupied.get(cell) || []), box]);
-        shown.push(node); if (shown.length >= labelCaps[level()]) break;
-      }
-    }
-    const focus = state.focus && lookup.get(state.focus);
-    if (focus && !ids.has(focus.id)) shown.push(focus);
-    return shown;
+  const headings = () => state.atlas.regions.length
+    ? state.atlas.regions.filter((region) => typeof region.title === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
+    : state.atlas.labels[0].map((id) => state.atlas.byId.get(id)).filter(Boolean).map((node) => ({ title: node.name, x: node.x, y: node.y }));
+  const label = (context, name, screen, colors) => {
+    context.fillStyle = colors.ink; context.strokeStyle = colors.canvas; context.lineWidth = 4;
+    context.strokeText(name, screen.x + 6, screen.y - 6); context.fillText(name, screen.x + 6, screen.y - 6);
   };
-  const render = () => {
-    frame = 0;
-    const viewport = size(), dpr = Math.min(window.devicePixelRatio || 1, 2); state.viewport = viewport;
-    if (canvas.width !== Math.round(viewport.width * dpr) || canvas.height !== Math.round(viewport.height * dpr)) {
-      canvas.width = Math.round(viewport.width * dpr); canvas.height = Math.round(viewport.height * dpr);
+  const draw = () => {
+    state.frame = 0;
+    if (!state.atlas || !state.camera) return;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    const context = canvas.getContext('2d'); if (!context) return;
+    if (canvas.width !== Math.round(state.viewport.width * ratio) || canvas.height !== Math.round(state.viewport.height * ratio)) { canvas.width = Math.round(state.viewport.width * ratio); canvas.height = Math.round(state.viewport.height * ratio); }
+    context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, state.viewport.width, state.viewport.height);
+    const colors = palette(); const lod = level(); context.font = lod === 0 ? '600 15px ui-sans-serif, system-ui, sans-serif' : '13px ui-sans-serif, system-ui, sans-serif';
+    if (lod === 0) {
+      for (const region of headings()) { const screen = { x: state.camera.x + region.x * state.camera.scale, y: state.camera.y + region.y * state.camera.scale }; if (screen.x < -80 || screen.y < -20 || screen.x > state.viewport.width + 80 || screen.y > state.viewport.height + 20) continue; context.fillStyle = colors.node; context.beginPath(); context.arc(screen.x, screen.y, 3.5, 0, Math.PI * 2); context.fill(); label(context, region.title, screen, colors); }
+      return;
     }
-    const context = canvas.getContext('2d');
-    context.setTransform(dpr, 0, 0, dpr, 0, 0);
-    context.clearRect(0, 0, viewport.width, viewport.height);
-    const map = nodeMap(), focusIDs = new Set([state.focus, ...focusedEdges.flatMap((edge) => [edge.source, edge.target])]), nodes = data.nodes.filter((node) => (node.lod <= level() || focusIDs.has(node.id)) && visible(node));
-    context.strokeStyle = readColor('--similarity') || '#b6a989'; context.globalAlpha = .62; context.lineWidth = 1;
-    for (const edge of focusedEdges) {
-      const left = map.get(edge.source), right = map.get(edge.target);
-      if (!left || !right) continue;
-      const a = transform(left), b = transform(right), margin = 20;
-      if (a.x < -margin || a.x > viewport.width + margin || a.y < -margin || a.y > viewport.height + margin || b.x < -margin || b.x > viewport.width + margin || b.y < -margin || b.y > viewport.height + margin) continue;
-      context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y); context.stroke();
-    }
-    context.globalAlpha = 1; context.fillStyle = readColor('--node') || '#687169';
-    for (const node of nodes) {
-      const p = transform(node); context.beginPath(); context.arc(p.x, p.y, node.id === state.focus ? 4.8 : pointRadius, 0, Math.PI * 2); context.fill();
-    }
-    context.font = '12px ui-sans-serif, system-ui, sans-serif'; context.textBaseline = 'middle';
-    const shownLabels = labels();
-    for (const node of shownLabels) {
-      const p = transform(node); context.lineWidth = 3; context.strokeStyle = readColor('--canvas') || '#f6f6f2'; context.strokeText(node.name, p.x + 6, p.y); context.fillStyle = readColor('--ink') || '#23231f'; context.fillText(node.name, p.x + 6, p.y);
-    }
-    const back = controls?.querySelector('[data-map-action="back"]'); if (back) back.hidden = !state.focus;
-    pixels = nodes;
+    for (const edge of state.edges) { const left = state.atlas.byId.get(edge.source); const right = state.atlas.byId.get(edge.target); if (!left || !right) continue; const start = point(left); const end = point(right); context.strokeStyle = colors.edge; context.globalAlpha = .55; context.lineWidth = 1.5; context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); }
+    const shown = new Set(state.atlas.labels[lod]); if (state.focus) shown.add(state.focus);
+    for (const node of state.atlas.nodes) { if (!visible(node) || (node.lod > lod && node.id !== state.focus)) continue; const screen = point(node); context.globalAlpha = shown.has(node.id) ? 1 : .4; context.fillStyle = node.id === state.focus ? colors.focus : colors.node; context.beginPath(); context.arc(screen.x, screen.y, shown.has(node.id) ? 3.2 : 1.35, 0, Math.PI * 2); context.fill(); }
+    context.globalAlpha = 1;
+    for (const id of shown) { const node = state.atlas.byId.get(id); if (node && visible(node)) label(context, node.name, point(node), colors); }
   };
-  const nearby = (x, y) => {
-    let hit, distance = 15 * 15;
-    for (const node of pixels || []) { const p = transform(node), next = (p.x - x) ** 2 + (p.y - y) ** 2; if (next < distance) { hit = node; distance = next; } }
-    return hit;
+  const setUrl = (id) => { const url = new URL(window.location.href); if (id) url.searchParams.set('open_focus', id); else url.searchParams.delete('open_focus'); history.pushState({ opennoiseFocus: id }, '', url); };
+  const showDetail = (id, neighborhood) => {
+    if (!detail) return;
+    detail.replaceChildren();
+    const heading = document.createElement('h2'); heading.textContent = state.atlas.byId.get(id).name; detail.append(heading);
+    const peers = Array.isArray(neighborhood?.nodes) ? neighborhood.nodes.filter((node) => node.node_id !== id) : [];
+    if (peers.length) { const list = document.createElement('ul'); for (const peer of peers) { const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.node_id)}`; link.dataset.openNodeId = peer.node_id; link.textContent = peer.name; item.append(link); list.append(item); } detail.append(list); }
+    if (canvas.dataset.artistUrl) { const artists = document.createElement('a'); artists.className = 'artist-link'; artists.href = `${canvas.dataset.artistUrl}${encodeURIComponent(id)}`; artists.textContent = 'Artist evidence'; detail.append(artists); }
+    detail.hidden = false;
   };
-  const camera = () => ({ x: state.x, y: state.y, scale: state.scale });
-  const setUrl = (id, push, priorCamera, priorFocus) => {
-    const url = new URL(location.href); if (id) { url.searchParams.set('view', 'open'); url.searchParams.set('open_focus', id); } else url.searchParams.delete('open_focus');
-    if (push) { history.replaceState({ focus: priorFocus || null, camera: priorCamera || camera() }, '', location.href); history.pushState({ focus: id, camera: camera() }, '', url); }
+  const focus = async (id, push = true) => {
+    if (!state.atlas?.byId.has(id)) return;
+    state.focus = id; state.edges = []; if (back) back.hidden = false; if (push) setUrl(id);
+    const request = ++state.request;
+    let neighborhood = null;
+    if (neighborUrl) try { const response = await fetch(`${neighborUrl}${encodeURIComponent(id)}`); neighborhood = await response.json(); if (request === state.request) state.edges = Array.isArray(neighborhood.edges) ? neighborhood.edges : []; } catch { /* a point remains focusable when detail is unavailable */ }
+    if (request !== state.request) return;
+    const ids = [id, ...state.edges.flatMap((edge) => [edge.source, edge.target])];
+    const nodes = [...new Set(ids)].map((key) => state.atlas.byId.get(key)).filter(Boolean);
+    const camera = fitCamera(boundsForNodes(nodes, state.atlas.initialCamera), state.viewport, .72);
+    state.camera = { ...camera, scale: clamp(camera.scale, state.fitScale, state.fitScale * 32) };
+    showDetail(id, neighborhood);
+    schedule();
   };
-  const showDetail = (node, response) => {
-    detail.hidden = false; detail.replaceChildren();
-    const heading = document.createElement('h2'); heading.textContent = node.name; detail.append(heading);
-    if (canvas.dataset.artistUrl) { const artist = document.createElement('a'); artist.href = `${canvas.dataset.artistUrl}${encodeURIComponent(node.id)}`; artist.textContent = 'Artist evidence'; artist.className = 'artist-link'; detail.append(artist); }
-    const peers = response.nodes.filter((item) => item.node_id !== node.id);
-    if (peers.length) {
-      const list = document.createElement('ul');
-      for (const peer of peers.slice(0, 12)) { const item = document.createElement('li'), link = document.createElement('a'); link.href = `?view=open&open_focus=${encodeURIComponent(peer.node_id)}`; link.dataset.openNodeId = peer.node_id; link.textContent = peer.name; item.append(link); list.append(item); }
-      detail.append(list);
-    }
-  };
-  const focus = async (id, push = false, restoredCamera) => {
-    const node = nodeMap().get(id); if (!node) return;
-    const priorCamera = camera(), priorFocus = state.focus; state.focus = id;
-    if (restoredCamera) { state.x = restoredCamera.x; state.y = restoredCamera.y; state.scale = restoredCamera.scale; } else { const viewport = size(); state.scale = Math.max(state.scale, state.fitScale * 2.1); state.x = viewport.width / 2 - node.x * state.scale; state.y = viewport.height / 2 - node.y * state.scale; }
-    if (push) setUrl(id, true, priorCamera, priorFocus); schedule();
-    const response = canvas.dataset.neighborsUrl
-      ? await fetch(`${canvas.dataset.neighborsUrl}${encodeURIComponent(id)}`).then((result) => result.ok ? result.json() : null).catch(() => null)
-      : staticNeighborhood(id);
-    if (!response || state.focus !== id) return;
-    focusedEdges = (response.edges || []).slice(0, 12); showDetail(node, response); schedule();
-  };
-  const clearFocus = (push = false, restoredCamera) => { const priorCamera = camera(), priorFocus = state.focus; state.focus = null; focusedEdges = []; detail.hidden = true; if (restoredCamera) { state.x = restoredCamera.x; state.y = restoredCamera.y; state.scale = restoredCamera.scale; schedule(); } else fit(); if (push) setUrl(null, true, priorCamera, priorFocus); };
-  const zoom = (factor, x, y) => { const next = clamp(state.scale * factor, state.fitScale * .7, state.fitScale * 30); state.x = x - (x - state.x) * next / state.scale; state.y = y - (y - state.y) * next / state.scale; state.scale = next; schedule(); };
-  const setTheme = () => { const root = document.documentElement, dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; root.dataset.theme = dark ? 'light' : 'dark'; schedule(); };
-  canvas.addEventListener('wheel', (event) => { event.preventDefault(); const rect = canvas.getBoundingClientRect(), factor = Math.pow(1.18, Math.max(1, Math.abs(event.deltaY) / 120)); zoom(event.deltaY < 0 ? factor : 1 / factor, event.clientX - rect.left, event.clientY - rect.top); }, { passive: false });
-  canvas.addEventListener('pointerdown', (event) => { canvas.setPointerCapture(event.pointerId); pointers.set(event.pointerId, [event.clientX, event.clientY]); drag = [event.clientX, event.clientY]; moved = false; if (pointers.size === 2) { const pair = [...pointers.values()]; pinchDistance = Math.hypot(pair[0][0] - pair[1][0], pair[0][1] - pair[1][1]); } });
-  canvas.addEventListener('pointermove', (event) => { if (!pointers.has(event.pointerId)) return; pointers.set(event.pointerId, [event.clientX, event.clientY]); if (pointers.size === 2) { const pair = [...pointers.values()], now = Math.hypot(pair[0][0] - pair[1][0], pair[0][1] - pair[1][1]); if (pinchDistance) zoom(now / pinchDistance, (pair[0][0] + pair[1][0]) / 2, (pair[0][1] + pair[1][1]) / 2); pinchDistance = now; return; } if (!drag) return; const dx = event.clientX - drag[0], dy = event.clientY - drag[1]; moved ||= Math.abs(dx) + Math.abs(dy) > 3; state.x += dx; state.y += dy; drag = [event.clientX, event.clientY]; schedule(); });
-  const endPointer = (event) => { const wasSinglePointer = pointers.size === 1; pointers.delete(event.pointerId); pinchDistance = 0; if (!drag) return; const rect = canvas.getBoundingClientRect(), node = wasSinglePointer && !moved && nearby(event.clientX - rect.left, event.clientY - rect.top); drag = undefined; if (node) void focus(node.id, true); };
-  canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
-  controls?.addEventListener('click', (event) => { const action = event.target.closest('[data-map-action]')?.dataset.mapAction; if (action === 'fit') clearFocus(true); if (action === 'back') { if (history.state?.focus) history.back(); else clearFocus(false); } if (action === 'in') { const viewport = size(); zoom(1.35, viewport.width / 2, viewport.height / 2); } if (action === 'out') { const viewport = size(); zoom(1 / 1.35, viewport.width / 2, viewport.height / 2); } if (action === 'theme') setTheme(); });
-  detail?.addEventListener('click', (event) => { const id = event.target.closest('[data-open-node-id]')?.dataset.openNodeId; if (id) { event.preventDefault(); void focus(id, true); } });
-  stage?.addEventListener('click', (event) => { const id = event.target.closest('[data-open-node-id]')?.dataset.openNodeId; if (id) { event.preventDefault(); void focus(id, true); } });
-  document.querySelector('#results')?.addEventListener('click', (event) => { const id = event.target.closest('[data-open-node-id]')?.dataset.openNodeId; if (id) { event.preventDefault(); void focus(id, true); } });
-  window.addEventListener('resize', () => { if (data) fit(); }); window.addEventListener('popstate', () => { const id = new URL(location.href).searchParams.get('open_focus'), restoredCamera = history.state?.camera; if (id) void focus(id, false, restoredCamera); else clearFocus(false, restoredCamera); });
-  canvas.tabIndex = 0;
-  canvas.addEventListener('keydown', (event) => { if (!data || !['ArrowLeft', 'ArrowRight', 'Enter'].includes(event.key)) return; event.preventDefault(); const choices = data.labels[0]?.ids || []; if (event.key === 'Enter' && state.focus) { void focus(state.focus, true); return; } const index = state.focus ? choices.indexOf(state.focus) : event.key === 'ArrowLeft' ? 0 : -1; const id = event.key === 'ArrowLeft' ? choices[(index + choices.length - 1) % choices.length] : choices[(index + 1) % choices.length]; if (id) void focus(id, true); });
-  search?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !data) return; const target = new Map(data.aliases.map((alias) => [alias.term, alias.target])).get(search.value.trim().toLowerCase()); if (target) { event.preventDefault(); void focus(target, true); } });
-  fetch(canvas.dataset.mapUrl).then((response) => { if (!response.ok) throw new Error('map unavailable'); return response.json(); }).then((payload) => { data = payload; if (!data.initial_camera || !data.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y) && Number.isInteger(node.lod))) throw new Error('invalid map contract'); lookup = new Map(data.nodes.map((node) => [node.id, node])); adjacency = new Map(); for (const edge of data.peers || []) { for (const id of [edge.source, edge.target]) { const bucket = adjacency.get(id); if (bucket) bucket.push(edge); else adjacency.set(id, [edge]); } } textWidths = new Map(); state = { x: 0, y: 0, scale: 1, fitScale: 1, focus: null, viewport: size() }; fit(); const id = canvas.dataset.focus || new URL(location.href).searchParams.get('open_focus'); if (id) void focus(id); }).catch(() => { canvas.setAttribute('aria-label', 'Semantic map unavailable'); const message = document.createElement('p'); message.className = 'map-error'; message.textContent = 'Semantic map unavailable.'; stage?.append(message); });
-})();
+  const nearest = (cursor) => { let hit = null; let distance = 15; for (const node of state.atlas.nodes) { const screen = point(node); const next = Math.hypot(screen.x - cursor.x, screen.y - cursor.y); if (next < distance) { hit = node; distance = next; } } return hit; };
+  new ResizeObserver(() => { const viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; if (!viewport.width || !viewport.height) return; const center = state.camera ? { x: (viewport.width / 2 - state.camera.x) / state.camera.scale, y: (viewport.height / 2 - state.camera.y) / state.camera.scale } : null; state.viewport = viewport; if (!state.camera) fit(); else { state.camera.x = viewport.width / 2 - center.x * state.camera.scale; state.camera.y = viewport.height / 2 - center.y * state.camera.scale; schedule(); } }).observe(canvas);
+  canvas.addEventListener('wheel', (event) => { event.preventDefault(); if (!state.camera) return; state.camera = zoomAt(state.camera, { x: event.offsetX, y: event.offsetY }, event.deltaY < 0 ? 1.25 : .8, { min: state.fitScale, max: state.fitScale * 64 }); schedule(); }, { passive: false });
+  canvas.addEventListener('pointerdown', (event) => { canvas.setPointerCapture(event.pointerId); state.drag = { x: event.clientX, y: event.clientY }; state.moved = false; });
+  canvas.addEventListener('pointermove', (event) => { if (!state.drag || !state.camera) return; const dx = event.clientX - state.drag.x; const dy = event.clientY - state.drag.y; state.drag = { x: event.clientX, y: event.clientY }; if (Math.hypot(dx, dy) > 2) state.moved = true; state.camera.x += dx; state.camera.y += dy; schedule(); });
+  canvas.addEventListener('pointerup', (event) => { const hit = !state.moved && state.atlas ? nearest({ x: event.offsetX, y: event.offsetY }) : null; state.drag = null; if (hit) void focus(hit.id); });
+  canvas.addEventListener('pointercancel', () => { state.drag = null; });
+  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in' || action === 'out') { state.camera = zoomAt(state.camera, { x: state.viewport.width / 2, y: state.viewport.height / 2 }, action === 'in' ? 1.5 : 1 / 1.5, { min: state.fitScale, max: state.fitScale * 64 }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
+  document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (!target) return; event.preventDefault(); void focus(target.dataset.openNodeId); });
+  query?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !state.atlas) return; const id = state.atlas.aliases.get(query.value.trim().toLocaleLowerCase()); if (!id) return; event.preventDefault(); void focus(id); });
+  window.addEventListener('popstate', () => { const id = new URL(window.location.href).searchParams.get('open_focus'); if (id) void focus(id, false); else fit(); });
+  fetch(endpoint).then((response) => response.json()).then((payload) => { state.atlas = normaliseAtlasPayload(payload); state.viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; fit(); const initial = canvas.dataset.focus || new URL(window.location.href).searchParams.get('open_focus'); if (initial) void focus(initial, false); }).catch(() => { const error = document.createElement('p'); error.className = 'map-error'; error.textContent = 'Map data is unavailable.'; canvas.after(error); });
+}
