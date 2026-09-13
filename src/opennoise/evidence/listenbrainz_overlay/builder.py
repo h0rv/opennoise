@@ -486,7 +486,9 @@ def _insert_inputs(database: sqlite3.Connection, inputs: tuple[SidecarInput, ...
 
 
 def _attach_readonly(database: sqlite3.Connection, alias: str, path: Path) -> None:
-    database.execute(f"ATTACH DATABASE ? AS {alias}", (f"file:{path.resolve()}?mode=ro&immutable=1",))
+    database.execute(
+        f"ATTACH DATABASE ? AS {alias}", (f"file:{path.resolve()}?mode=ro&immutable=1",)
+    )
 
 
 def _materialize_review_candidates(

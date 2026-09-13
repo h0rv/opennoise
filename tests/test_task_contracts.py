@@ -72,6 +72,27 @@ class TaskContractTests(unittest.TestCase):
             documentation,
         )
 
+    def test_listenbrainz_dual_overlay_has_a_no_environment_replay_contract(self) -> None:
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        environment = (ROOT / ".env.example").read_text(encoding="utf-8")
+        builder = (ROOT / "scripts/build_listenbrainz_dual_overlay.py").read_text(encoding="utf-8")
+
+        self.assertEqual(
+            project["tool"]["poe"]["tasks"]["build-listenbrainz-dual-overlay"],
+            "python scripts/build_listenbrainz_dual_overlay.py",
+        )
+        self.assertNotIn(
+            "$OPENNOISE_LB_DUAL",
+            project["tool"]["poe"]["tasks"]["build-listenbrainz-dual-overlay"],
+        )
+        self.assertIn(".cache/listenbrainz-dual-overlay-v1/derived-review.sqlite", builder)
+        self.assertIn(".cache/listenbrainz-dual-overlay-v1/colisten.sqlite", builder)
+        self.assertIn(
+            ".cache/evidence-graph-v2.artist-identities-v1/"
+            "evidence-graph-v2.artist-identities.sqlite",
+            environment,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

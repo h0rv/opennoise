@@ -154,7 +154,9 @@ def _review_candidate_from_row(row: tuple[object, ...]) -> DerivedReviewCandidat
     if not isinstance(raw_paths, list):
         raise ListenBrainzOverlayError("review candidate paths are malformed")
     try:
-        paths = tuple(PropagationPath.model_validate_json(canonical_json(item)) for item in raw_paths)
+        paths = tuple(
+            PropagationPath.model_validate_json(canonical_json(item)) for item in raw_paths
+        )
     except ValueError as error:
         raise ListenBrainzOverlayError("review candidate paths are invalid") from error
     if not paths:

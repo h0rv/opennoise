@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import sqlite3
 import unittest
 from contextlib import closing
@@ -36,6 +35,7 @@ from opennoise.ingest.listenbrainz.propagation import (
     ListenBrainzPropagationSettings,
     PropagationCandidate,
     PropagationCoverage,
+    PropagationInputFingerprint,
     PropagationPath,
 )
 from opennoise.storage import ObjectKey, ObjectWrite
@@ -86,11 +86,11 @@ class ListenBrainzOverlayTests(unittest.TestCase):
             self.assertEqual(review.coverage.rejected_stable_seed_not_in_graph_count, 1)
             self.assertEqual(review.coverage.rejected_invalid_identifier_count, 1)
             self.assertFalse(review.coverage.factual_memberships_written)
-            self.assertEqual(colisten.coverage.source_row_count, 4)
+            self.assertEqual(colisten.coverage.source_row_count, 5)
             self.assertEqual(colisten.coverage.retained_relation_count, 1)
             self.assertEqual(colisten.coverage.abstained_endpoint_not_in_graph_count, 1)
             self.assertEqual(colisten.coverage.rejected_below_privacy_threshold_count, 1)
-            self.assertEqual(colisten.coverage.rejected_noncanonical_endpoint_count, 1)
+            self.assertEqual(colisten.coverage.rejected_noncanonical_endpoint_count, 2)
             self.assertFalse(colisten.coverage.inferred_artist_similarity_written)
 
             review_sources = certify_derived_review_overlay_sources(
@@ -100,7 +100,9 @@ class ListenBrainzOverlayTests(unittest.TestCase):
             self.assertEqual(review_page.total_candidate_count, 1)
             self.assertEqual(review_page.candidates[0].artist_mbid, _ARTIST_A)
             self.assertEqual(len(review_page.candidates[0].paths), 1)
-            self.assertIn(_PROPAGATION_LOGICAL, review_page.candidates[0].propagation_provenance_ref)
+            self.assertIn(
+                _PROPAGATION_LOGICAL, review_page.candidates[0].propagation_provenance_ref
+            )
 
             colisten_sources = certify_colisten_overlay_sources(
                 CoListenOverlaySources(colisten_database, colisten)
@@ -110,9 +112,7 @@ class ListenBrainzOverlayTests(unittest.TestCase):
             self.assertEqual(colisten_page.relations[0].neighbor_artist_mbid, _ARTIST_B)
             self.assertEqual(colisten_page.relations[0].distinct_user_count, 5)
             self.assertEqual(colisten_page.relations[0].window_start, 10)
-            self.assertTrue(
-                colisten_page.relations[0].source_binding.endswith(qualified_sha)
-            )
+            self.assertTrue(colisten_page.relations[0].source_binding.endswith(qualified_sha))
 
     def test_propagation_receipt_and_artifact_bytes_are_fail_closed(self) -> None:
         with TemporaryDirectory() as temporary:
@@ -158,6 +158,43 @@ class ListenBrainzOverlayTests(unittest.TestCase):
                 certify_derived_review_overlay_sources(
                     DerivedReviewOverlaySources(review_database, review)
                 )
+
+    def test_fresh_sidecars_replay_with_identical_bytes_and_logical_hashes(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            graph, graph_receipt = _graph(root)
+            propagation, propagation_receipt = _propagation(root)
+            qualified = _qualified_listenbrainz(root)
+            qualified_sha, _ = sha256_file(qualified)
+            first_review = root / "first-review.sqlite"
+            second_review = root / "second-review.sqlite"
+            first_review_artifact = build_derived_review_overlay(
+                DerivedReviewOverlayInputs(
+                    graph, graph_receipt, propagation, propagation_receipt, first_review
+                )
+            )
+            second_review_artifact = build_derived_review_overlay(
+                DerivedReviewOverlayInputs(
+                    graph, graph_receipt, propagation, propagation_receipt, second_review
+                )
+            )
+            first_colisten = root / "first-colisten.sqlite"
+            second_colisten = root / "second-colisten.sqlite"
+            first_colisten_artifact = build_colisten_overlay(
+                CoListenOverlayInputs(
+                    graph, graph_receipt, qualified, qualified_sha, first_colisten
+                )
+            )
+            second_colisten_artifact = build_colisten_overlay(
+                CoListenOverlayInputs(
+                    graph, graph_receipt, qualified, qualified_sha, second_colisten
+                )
+            )
+
+            self.assertEqual(first_review_artifact, second_review_artifact)
+            self.assertEqual(first_colisten_artifact, second_colisten_artifact)
+            self.assertEqual(sha256_file(first_review), sha256_file(second_review))
+            self.assertEqual(sha256_file(first_colisten), sha256_file(second_colisten))
 
 
 def _graph(root: Path) -> tuple[Path, Path]:
@@ -254,14 +291,14 @@ def _propagation(root: Path) -> tuple[Path, Path]:
         ),
         artifact_sha256=artifact_sha,
         logical_output_sha256=_PROPAGATION_LOGICAL,
-        inputs={
-            "catalog_database_sha256": _QUALIFIED_SHA,
-            "listenbrainz_database_sha256": _QUALIFIED_SHA,
-            "name_universe_source_sha256": "c" * 64,
-            "musicbrainz_seed_target_output_sha256": "d" * 64,
-            "musicbrainz_seed_target_file_sha256": "e" * 64,
-            "public_input_sha256": "f" * 64,
-        },
+        inputs=PropagationInputFingerprint(
+            catalog_database_sha256=_QUALIFIED_SHA,
+            listenbrainz_database_sha256=_QUALIFIED_SHA,
+            name_universe_source_sha256="c" * 64,
+            musicbrainz_seed_target_output_sha256="d" * 64,
+            musicbrainz_seed_target_file_sha256="e" * 64,
+            public_input_sha256="f" * 64,
+        ),
     )
     receipt_path = root / "propagation.receipt.json"
     receipt_path.write_text(receipt.model_dump_json(), encoding="utf-8")
@@ -311,6 +348,14 @@ def _qualified_listenbrainz(root: Path) -> Path:
                 (a, missing, 20, 21, 5, "2" * 64),
                 (a, b, 30, 31, 4, "3" * 64),
                 (b, a, 40, 41, 5, "4" * 64),
+                (
+                    a,
+                    "musicbrainz:artist:gggggggg-gggg-4ggg-8ggg-gggggggggggg",
+                    50,
+                    51,
+                    5,
+                    "5" * 64,
+                ),
             ),
         )
     return database
