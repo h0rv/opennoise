@@ -10,7 +10,9 @@ The projected run reads three sealed inputs: the evidence-graph database and
 receipt, plus the complete seed reconciliation artifact. Target-side matching
 uses only each immutable seed name. Reconciliation's already-known open
 identities are emitted as `existing_open_identity` for accounting, never as
-incremental lift.
+incremental lift. The sealed artifact also carries every reconciliation seed
+row and checks each output row against that partition and its stable identity
+hash, so a rehashed row swap cannot cross the boundary.
 
 The matcher permits only:
 
@@ -32,7 +34,7 @@ means the masked split happened to contain no safe acronym prediction.
 ## Measured projected baseline
 
 The sealed projected-only artifact is
-`c45ba790c2e9e4c9c7f9294e28ef64219c6c8178c9a11b1b5cb060d3cdd86029` in
+`063d9b4b94d8800e1170579ba5e1db49200090146d9f8ab18d6eec93094614af` in
 the shared `.cache/cold-label-alignment-v1/sha256/` custody root. It binds the
 3,057,729,536-byte evidence graph, its 2,736-byte receipt, and the
 3,509,380-byte reconciliation artifact.
@@ -81,7 +83,7 @@ It must not be described as the full MusicBrainz vocabulary. The task accepts
 an explicit larger bound for a later measured run.
 
 When that sidecar is supplied to the alignment task, the receipt-bound artifact
-`ca5b9340cdaa4ed44ec3524096ba0b30a2d15351fcbdf012d25d9347976383d2`
+`c72436db6bca581de16cd8b3e25def3d9865bda062c0d5ec9e63e98dec06ae01`
 binds the exact 701,718-byte sidecar and its 388-byte receipt. It reports
 2,261 projected + 7,229 supplemental identities, 240 net-new exact accepts,
 786 review seeds, and 4,193 abstentions. The 167 extra accepts over the
@@ -96,7 +98,7 @@ post-punk → post punk` remain review-only. Generic-root and acronym-collision
 negatives are enforced by unit tests; no unsafe acronym is accepted.
 
 The terminal historical diagnostic is separately sealed as
-`2b828aecaf4dc5e960ad4a85c730839251c534cfa28cd336601754e2eef0eb18`.
+`90d5f09cbfe1c6224d1ed9d94bd54e60f9f759c0c3d66e3dd0dcbaf23e373ff0`.
 It runs only after alignment sealing and accesses only historical membership
 counts and peer endpoints: accepted 1,312/1,303 membership-positive/peer
 endpoint seeds, review 786/773, abstentions 4,191/4,067. It does not access

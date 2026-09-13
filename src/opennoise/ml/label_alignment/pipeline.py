@@ -39,6 +39,7 @@ from opennoise.ml.label_alignment.contracts import (
     MaskedEvaluation,
     OpenIdentityNamespace,
     OpenIdentityReference,
+    SeedPartitionRow,
 )
 from opennoise.ml.label_alignment.normalize import (
     character_ngram_cosine,
@@ -302,6 +303,15 @@ def build_cold_label_alignment(  # noqa: PLR0915 - complete partition accounting
             )
         ),
         vocabulary_sha256=vocabulary_sha,
+        seed_partition=tuple(
+            SeedPartitionRow(
+                source_item_id=seed.source_item_id,
+                source_external_id=seed.source_external_id,
+                seed_name=seed.seed_name,
+                disposition=seed.disposition,
+            )
+            for seed in sorted(reconciliation.dispositions, key=lambda item: item.source_item_id)
+        ),
         accepted=tuple(sorted(accepted, key=lambda candidate: candidate.source_item_id)),
         review=tuple(
             sorted(

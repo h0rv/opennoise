@@ -6,6 +6,7 @@ from typing import Final, Literal
 
 from pydantic import Field, model_validator
 
+from opennoise.common import canonical_json, sha256_hex
 from opennoise.models import FrozenModel
 
 _SHA: Final = r"^[0-9a-f]{64}$"
@@ -61,6 +62,15 @@ class InputBinding(FrozenModel):
     byte_sha256: str = Field(pattern=_SHA)
     byte_count: int = Field(gt=0)
     logical_sha256: str | None = Field(default=None, pattern=_SHA)
+
+
+class SeedPartitionRow(FrozenModel):
+    """The immutable seed row that every alignment output must reference."""
+
+    source_item_id: str = Field(min_length=1, max_length=200)
+    source_external_id: str = Field(min_length=1, max_length=300)
+    seed_name: str = Field(min_length=1, max_length=500)
+    disposition: SeedDisposition
 
 
 class OpenIdentityReference(FrozenModel):
@@ -191,6 +201,7 @@ class ColdLabelAlignmentArtifact(FrozenModel):
     settings_sha256: str = Field(pattern=_SHA)
     input_sha256: str = Field(pattern=_SHA)
     vocabulary_sha256: str = Field(pattern=_SHA)
+    seed_partition: tuple[SeedPartitionRow, ...] = Field(min_length=1)
     accepted: tuple[LabelAlignmentCandidate, ...]
     review: tuple[LabelAlignmentCandidate, ...]
     abstentions: tuple[LabelAlignmentAbstention, ...]
@@ -200,7 +211,7 @@ class ColdLabelAlignmentArtifact(FrozenModel):
     output_sha256: str = Field(pattern=_SHA)
 
     @model_validator(mode="after")
-    def _complete(  # noqa: C901, PLR0912 - receipt invariants are atomic.
+    def _complete(  # noqa: C901, PLR0912, PLR0915 - receipt invariants are atomic.
         self,
     ) -> ColdLabelAlignmentArtifact:
         roles = {binding.role for binding in self.inputs}
@@ -221,6 +232,25 @@ class ColdLabelAlignmentArtifact(FrozenModel):
             raise ValueError("construction input roles must be unique")
         if roles != required_roles and roles != required_roles | supplemental_roles:
             raise ValueError("construction input roles must be an exact supported role set")
+        partition_by_id = {row.source_item_id: row for row in self.seed_partition}
+        if len(partition_by_id) != len(self.seed_partition):
+            raise ValueError("seed partition rows must have unique source item IDs")
+        if len(self.seed_partition) != self.coverage.seed_count:
+            raise ValueError("seed partition count must match coverage")
+        expected_seed_identity = sha256_hex(
+            canonical_json(
+                [
+                    {
+                        "source_item_id": row.source_item_id,
+                        "source_external_id": row.source_external_id,
+                        "name": row.seed_name,
+                    }
+                    for row in sorted(self.seed_partition, key=lambda item: item.source_item_id)
+                ]
+            )
+        )
+        if expected_seed_identity != self.seed_identity_sha256:
+            raise ValueError("seed partition does not match the immutable seed identity hash")
         accepted_ids = {candidate.source_item_id for candidate in self.accepted}
         review_ids = {candidate.source_item_id for candidate in self.review}
         abstained_ids = {abstention.source_item_id for abstention in self.abstentions}
@@ -281,6 +311,15 @@ class ColdLabelAlignmentArtifact(FrozenModel):
         ):
             raise ValueError("generic-root abstention count does not match coverage")
         identity_rows = [*self.accepted, *self.review, *self.abstentions]
+        if any(
+            (
+                row.source_item_id not in partition_by_id
+                or row.seed_name != partition_by_id[row.source_item_id].seed_name
+                or row.reconciliation_disposition != partition_by_id[row.source_item_id].disposition
+            )
+            for row in identity_rows
+        ):
+            raise ValueError("alignment rows must match the immutable seed partition")
         if any(
             len(
                 {

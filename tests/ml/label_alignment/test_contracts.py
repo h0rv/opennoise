@@ -7,6 +7,7 @@ import unittest
 
 from pydantic import ValidationError
 
+from opennoise.common import canonical_json, sha256_hex
 from opennoise.ml.label_alignment.contracts import (
     ColdLabelAlignmentArtifact,
     ColdLabelAlignmentCoverage,
@@ -14,6 +15,7 @@ from opennoise.ml.label_alignment.contracts import (
     DispositionCoverage,
     LabelAlignmentAbstention,
     MaskedEvaluation,
+    SeedPartitionRow,
 )
 from opennoise.ml.label_alignment.normalize import (
     initialism_forms,
@@ -66,6 +68,20 @@ class LabelAlignmentContractTests(unittest.TestCase):
         )
 
     def test_artifact_rejects_an_incomplete_seed_partition(self) -> None:
+        seed_partition = [
+            SeedPartitionRow(
+                source_item_id="one",
+                source_external_id="external-one",
+                seed_name="one",
+                disposition="unresolved",
+            ),
+            SeedPartitionRow(
+                source_item_id="two",
+                source_external_id="external-two",
+                seed_name="two",
+                disposition="unresolved",
+            ),
+        ]
         coverage = ColdLabelAlignmentCoverage(
             seed_count=2,
             reconciliation=DispositionCoverage(
@@ -102,11 +118,12 @@ class LabelAlignmentContractTests(unittest.TestCase):
                 },
                 {"role": "seed_reconciliation", "byte_sha256": _SHA, "byte_count": 1},
             ],
-            "seed_identity_sha256": _SHA,
+            "seed_identity_sha256": _seed_identity_hash(seed_partition),
             "settings": ColdLabelAlignmentSettings().model_dump(mode="json"),
             "settings_sha256": _SHA,
             "input_sha256": _SHA,
             "vocabulary_sha256": _SHA,
+            "seed_partition": [row.model_dump(mode="json") for row in seed_partition],
             "accepted": [],
             "review": [],
             "abstentions": [
@@ -176,7 +193,27 @@ class LabelAlignmentContractTests(unittest.TestCase):
         with self.assertRaises(ColdLabelAlignmentError):
             verify_cold_label_alignment(forged)
 
+    def test_rehashed_swapped_seed_id_cannot_cross_the_partition_boundary(self) -> None:
+        artifact = ColdLabelAlignmentArtifact.model_validate_json(
+            json.dumps(self._one_seed_artifact())
+        )
+        swapped = artifact.abstentions[0].model_copy(update={"source_item_id": "other"})
+        forged = artifact.model_copy(update={"abstentions": (swapped,), "output_sha256": _SHA})
+        forged = forged.model_copy(
+            update={"output_sha256": cold_label_alignment_artifact_sha256(forged)}
+        )
+        with self.assertRaises(ColdLabelAlignmentError):
+            verify_cold_label_alignment(forged)
+
     def _one_seed_artifact(self) -> dict[str, object]:
+        seed_partition = [
+            SeedPartitionRow(
+                source_item_id="one",
+                source_external_id="external-one",
+                seed_name="one",
+                disposition="unresolved",
+            )
+        ]
         return {
             "inputs": [
                 {
@@ -191,11 +228,12 @@ class LabelAlignmentContractTests(unittest.TestCase):
                 },
                 {"role": "seed_reconciliation", "byte_sha256": _SHA, "byte_count": 1},
             ],
-            "seed_identity_sha256": _SHA,
+            "seed_identity_sha256": _seed_identity_hash(seed_partition),
             "settings": ColdLabelAlignmentSettings().model_dump(mode="json"),
             "settings_sha256": _SHA,
             "input_sha256": _SHA,
             "vocabulary_sha256": _SHA,
+            "seed_partition": [row.model_dump(mode="json") for row in seed_partition],
             "accepted": [],
             "review": [],
             "abstentions": [
@@ -243,6 +281,21 @@ class LabelAlignmentContractTests(unittest.TestCase):
             ).model_dump(mode="json"),
             "output_sha256": _SHA,
         }
+
+
+def _seed_identity_hash(rows: list[SeedPartitionRow]) -> str:
+    return sha256_hex(
+        canonical_json(
+            [
+                {
+                    "source_item_id": row.source_item_id,
+                    "source_external_id": row.source_external_id,
+                    "name": row.seed_name,
+                }
+                for row in sorted(rows, key=lambda item: item.source_item_id)
+            ]
+        )
+    )
 
 
 if __name__ == "__main__":

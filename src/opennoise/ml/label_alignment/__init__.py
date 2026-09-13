@@ -4,6 +4,7 @@ from opennoise.ml.label_alignment.contracts import (
     ColdLabelAlignmentArtifact,
     ColdLabelAlignmentReceipt,
     ColdLabelAlignmentSettings,
+    SeedPartitionRow,
 )
 from opennoise.ml.label_alignment.pipeline import (
     ColdLabelAlignmentInputs,
@@ -17,6 +18,7 @@ __all__ = [
     "ColdLabelAlignmentInputs",
     "ColdLabelAlignmentReceipt",
     "ColdLabelAlignmentSettings",
+    "SeedPartitionRow",
     "build_cold_label_alignment",
     "verify_cold_label_alignment",
     "write_cold_label_alignment",
