@@ -14,9 +14,6 @@ def main() -> int:
     """Start the normal dev app with completed local research inputs enabled."""
     root = Path.cwd()
     production = resolve_production_paths(root)
-    if production is None:
-        sys.stderr.write("Production map unavailable. Run `uv run poe release-certify` first.\n")
-        return 2
     inputs = {
         "OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_DATABASE": root
         / ".cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite",
@@ -59,9 +56,17 @@ def main() -> int:
         sys.stderr.write("Local artist reverse lookup requires both database and artifact files.\n")
         return 2
     environment = os.environ | {
-        "OPENNOISE_DATABASE_PATH": str(production.database),
-        "OPENNOISE_DATABASE_READ_ONLY": "true",
-        "OPENNOISE_PRODUCTION_MAP_PATH": str(production.map_artifact),
+        # Local research has its own sealed map input; it must remain usable
+        # when a public release pair is intentionally absent.
+        "OPENNOISE_DATABASE_PATH": str(
+            production.database if production else root / ".cache/local-research-dev.sqlite"
+        ),
+        "OPENNOISE_DATABASE_READ_ONLY": "true" if production else "false",
+        **(
+            {"OPENNOISE_PRODUCTION_MAP_PATH": str(production.map_artifact)}
+            if production
+            else {}
+        ),
         "HOST": "127.0.0.1",
         "PORT": os.environ.get("PORT", "3002"),
         "OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true",
