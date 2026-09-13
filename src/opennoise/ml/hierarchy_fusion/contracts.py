@@ -12,6 +12,18 @@ from opennoise.models import FrozenModel
 _REVISION: Final = "hierarchy-fusion-v1"
 _SEED_COUNT: Final = 6_291
 _SHA_PATTERN: Final = r"^[0-9a-f]{64}$"
+_INPUT_ROLES: Final = frozenset(
+    {
+        "seed_reconciliation",
+        "evidence_graph_database",
+        "evidence_graph_receipt",
+        "wikidata_p279",
+        "public_candidate_corpus",
+        "public_candidate_receipt",
+        "full_graph_containment",
+        "full_graph_containment_receipt",
+    }
+)
 
 type EdgeDisposition = Literal["factual", "review", "abstained", "self_rejected", "cycle_rejected"]
 type SeedState = Literal["observed", "review", "abstained", "isolated"]
@@ -43,9 +55,7 @@ class HierarchyFusionSettings(FrozenModel):
             raise ValueError("review score thresholds cannot be empty")
         if any(not 0.0 <= value <= 1.0 for value in self.review_score_thresholds):
             raise ValueError("review score thresholds must be within [0, 1]")
-        if tuple(sorted(set(self.review_score_thresholds))).__len__() != len(
-            self.review_score_thresholds
-        ):
+        if tuple(self.review_score_thresholds) != tuple(sorted(self.review_score_thresholds)):
             raise ValueError("review score thresholds must be distinct and sorted")
         if self.factual_calibration_fraction + self.factual_holdout_fraction >= 1.0:
             raise ValueError("factual calibration and holdout fractions must leave training facts")
@@ -230,6 +240,8 @@ class HierarchyFusionArtifact(FrozenModel):
         seed_ids = tuple(row.seed_id for row in self.seed_states)
         if len(seed_ids) != len(set(seed_ids)):
             raise ValueError("seed states must be unique")
+        if {item.role for item in self.inputs} != _INPUT_ROLES:
+            raise ValueError("hierarchy fusion inputs must have the exact required roles")
         pairs = tuple((row.child_seed_id, row.parent_seed_id) for row in self.edges)
         if len(pairs) != len(set(pairs)):
             raise ValueError("fused edges must be unique")

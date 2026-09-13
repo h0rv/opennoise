@@ -139,6 +139,8 @@ def _calibrate(
 ) -> FactualHoldoutEvaluation:
     calibration = {edge for edge in factual if _split_factual(edge, settings) == "calibration"}
     holdout = {edge for edge in factual if _split_factual(edge, settings) == "holdout"}
+    if not calibration:
+        raise HierarchyFusionError("factual calibration split is empty")
     metrics = tuple(
         ThresholdMetric(
             threshold=threshold,
@@ -419,8 +421,185 @@ def verify_hierarchy_fusion(artifact: HierarchyFusionArtifact) -> None:
     """Recompute the hash and validate the accepted factual-plus-review DAG."""
     if hierarchy_fusion_artifact_sha256(artifact) != artifact.output_sha256:
         raise HierarchyFusionError("hierarchy fusion artifact hash does not replay")
-    parents: dict[str, set[str]] = defaultdict(set)
+    _verify_artifact_consistency(artifact)
+
+
+def _verify_artifact_consistency(artifact: HierarchyFusionArtifact) -> None:
+    """Recompute small graph, state, and calibration ledgers without source replay."""
+    seed_ids = tuple(row.seed_id for row in artifact.seed_states)
+    seed_set = set(seed_ids)
+    if seed_ids != tuple(sorted(seed_ids)):
+        raise HierarchyFusionError("seed states are not deterministically sorted")
+    ordered_edges = tuple(
+        sorted(artifact.edges, key=lambda row: (row.child_seed_id, row.parent_seed_id))
+    )
+    if tuple(artifact.edges) != ordered_edges:
+        raise HierarchyFusionError("hierarchy edges are not deterministically sorted")
+    _verify_edge_shape(artifact, seed_set)
+    parents, incidents = _recompute_incidents(artifact)
+    _assert_acyclic(parents, seed_ids)
+    _verify_states(artifact, seed_ids, incidents)
+    _verify_coverage(artifact, seed_ids, parents)
+    _verify_spotchecks(artifact, seed_set)
+    _verify_calibration(artifact)
+
+
+def _verify_edge_shape(artifact: HierarchyFusionArtifact, seed_set: set[str]) -> None:
+    """Ensure every sealed edge is a valid member of the declared seed universe."""
     for edge in artifact.edges:
-        if edge.disposition in {"factual", "review"}:
+        if edge.child_seed_id not in seed_set or edge.parent_seed_id not in seed_set:
+            raise HierarchyFusionError(
+                "hierarchy edge endpoint is outside the stable seed universe"
+            )
+        if edge.included_in_dag != (edge.disposition in {"factual", "review"}):
+            raise HierarchyFusionError("edge DAG inclusion does not match disposition")
+
+
+def _recompute_incidents(
+    artifact: HierarchyFusionArtifact,
+) -> tuple[dict[str, set[str]], tuple[dict[str, int], dict[str, int], dict[str, int]]]:
+    """Return the accepted DAG and each mutually exclusive incident ledger."""
+    parents: dict[str, set[str]] = defaultdict(set)
+    factual_incident: dict[str, int] = defaultdict(int)
+    review_incident: dict[str, int] = defaultdict(int)
+    rejected_incident: dict[str, int] = defaultdict(int)
+    for edge in artifact.edges:
+        if edge.factual_source:
+            if edge.child_seed_id == edge.parent_seed_id:
+                factual_incident[edge.child_seed_id] += 2
+            else:
+                factual_incident[edge.child_seed_id] += 1
+                factual_incident[edge.parent_seed_id] += 1
+        if edge.disposition == "review":
+            review_incident[edge.child_seed_id] += 1
+            review_incident[edge.parent_seed_id] += 1
+        if edge.disposition in {"abstained", "self_rejected", "cycle_rejected"}:
+            rejected_incident[edge.child_seed_id] += 1
+            rejected_incident[edge.parent_seed_id] += 1
+        if edge.included_in_dag:
             parents[edge.child_seed_id].add(edge.parent_seed_id)
-    _assert_acyclic(parents, tuple(row.seed_id for row in artifact.seed_states))
+    return parents, (factual_incident, review_incident, rejected_incident)
+
+
+def _verify_states(
+    artifact: HierarchyFusionArtifact,
+    seed_ids: tuple[str, ...],
+    incidents: tuple[dict[str, int], dict[str, int], dict[str, int]],
+) -> None:
+    """Check every state row against incident counts recomputed from edges."""
+    factual_incident, review_incident, rejected_incident = incidents
+    expected_states = {
+        seed_id: (
+            "observed"
+            if factual_incident[seed_id]
+            else "review"
+            if review_incident[seed_id]
+            else "abstained"
+            if rejected_incident[seed_id]
+            else "isolated"
+        )
+        for seed_id in seed_ids
+    }
+    for state in artifact.seed_states:
+        if (
+            state.factual_incident_edge_count != factual_incident[state.seed_id]
+            or state.accepted_review_incident_edge_count != review_incident[state.seed_id]
+            or state.rejected_candidate_incident_edge_count != rejected_incident[state.seed_id]
+            or state.state != expected_states[state.seed_id]
+        ):
+            raise HierarchyFusionError("seed state ledger does not replay hierarchy edges")
+
+
+def _verify_coverage(
+    artifact: HierarchyFusionArtifact, seed_ids: tuple[str, ...], parents: dict[str, set[str]]
+) -> None:
+    """Check graph-level edge, component, depth, and state counts."""
+    coverage = artifact.coverage
+    expected_coverage = {
+        "factual_source_edge_count": sum(edge.factual_source for edge in artifact.edges),
+        "factual_dag_edge_count": sum(edge.disposition == "factual" for edge in artifact.edges),
+        "review_edge_count": sum(edge.disposition == "review" for edge in artifact.edges),
+        "abstained_edge_count": sum(edge.disposition == "abstained" for edge in artifact.edges),
+        "self_rejected_edge_count": sum(
+            edge.disposition == "self_rejected" for edge in artifact.edges
+        ),
+        "cycle_rejected_edge_count": sum(
+            edge.disposition == "cycle_rejected" for edge in artifact.edges
+        ),
+        "multi_parent_child_count": sum(len(values) > 1 for values in parents.values()),
+        "component_count": _component_count(seed_ids, parents),
+        "maximum_depth": _maximum_depth(seed_ids, parents),
+        "observed_seed_count": sum(state.state == "observed" for state in artifact.seed_states),
+        "review_seed_count": sum(state.state == "review" for state in artifact.seed_states),
+        "abstained_seed_count": sum(state.state == "abstained" for state in artifact.seed_states),
+        "isolated_seed_count": sum(state.state == "isolated" for state in artifact.seed_states),
+    }
+    if any(getattr(coverage, key) != value for key, value in expected_coverage.items()):
+        raise HierarchyFusionError("hierarchy coverage ledger does not replay edges")
+
+
+def _verify_spotchecks(artifact: HierarchyFusionArtifact, seed_set: set[str]) -> None:
+    """Check semantic diagnostic rows remain bounded and path aligned."""
+    for spotcheck in artifact.semantic_spotchecks:
+        if len(spotcheck.resolved_seed_ids) != len(spotcheck.path):
+            raise HierarchyFusionError("semantic spotcheck resolution is incomplete")
+        if any(
+            seed_id is not None and seed_id not in seed_set
+            for seed_id in spotcheck.resolved_seed_ids
+        ):
+            raise HierarchyFusionError(
+                "semantic spotcheck resolves outside the stable seed universe"
+            )
+        if spotcheck.supported_adjacent_hops > len(spotcheck.path) - 1:
+            raise HierarchyFusionError("semantic spotcheck hop count is invalid")
+
+
+def _verify_calibration(artifact: HierarchyFusionArtifact) -> None:
+    """Recompute positive-only split metrics from sealed edges and settings."""
+    factual_edges = {
+        (edge.child_seed_id, edge.parent_seed_id): edge
+        for edge in artifact.edges
+        if edge.factual_source
+    }
+    calibration = {
+        pair for pair in factual_edges if _split_factual(pair, artifact.settings) == "calibration"
+    }
+    holdout = {
+        pair for pair in factual_edges if _split_factual(pair, artifact.settings) == "holdout"
+    }
+    evaluation = artifact.factual_holdout_evaluation
+    thresholds = tuple(metric.threshold for metric in evaluation.threshold_metrics)
+    if thresholds != artifact.settings.review_score_thresholds:
+        raise HierarchyFusionError("calibration thresholds do not match settings")
+    if artifact.selected_review_threshold != evaluation.selected_threshold:
+        raise HierarchyFusionError("selected review threshold does not match evaluation")
+    if evaluation.selected_threshold not in thresholds:
+        raise HierarchyFusionError("selected review threshold is not configured")
+    for metric in evaluation.threshold_metrics:
+        recovered = sum(
+            pair in calibration and factual_edges[pair].review_score >= metric.threshold
+            for pair in factual_edges
+        )
+        review_count = sum(
+            not edge.factual_source and edge.review_score >= metric.threshold
+            for edge in artifact.edges
+        )
+        recovery = recovered / len(calibration) if calibration else None
+        if (
+            metric.calibration_factual_edge_count != len(calibration)
+            or metric.recovered_factual_edge_count != recovered
+            or metric.review_edge_count != review_count
+            or metric.recovery != recovery
+        ):
+            raise HierarchyFusionError("calibration metric does not replay sealed edges")
+    selected = evaluation.selected_threshold
+    holdout_recovered = sum(
+        pair in holdout and factual_edges[pair].review_score >= selected for pair in factual_edges
+    )
+    if (
+        evaluation.calibration_factual_edge_count != len(calibration)
+        or evaluation.holdout_factual_edge_count != len(holdout)
+        or evaluation.holdout_recovered_edge_count != holdout_recovered
+        or evaluation.holdout_recovery != (holdout_recovered / len(holdout) if holdout else None)
+    ):
+        raise HierarchyFusionError("holdout evaluation does not replay sealed edges")

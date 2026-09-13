@@ -31,6 +31,10 @@ def _review(score: float, *, artists: int = 10) -> EdgeProvenance:
 
 
 class HierarchyFusionTests(unittest.TestCase):
+    def test_settings_reject_unsorted_review_thresholds(self) -> None:
+        with self.assertRaisesRegex(ValueError, "distinct and sorted"):
+            HierarchyFusionSettings(review_score_thresholds=(0.8, 0.2))
+
     def test_calibration_does_not_select_using_holdout_facts(self) -> None:
         settings = HierarchyFusionSettings(
             factual_split_seed=9,

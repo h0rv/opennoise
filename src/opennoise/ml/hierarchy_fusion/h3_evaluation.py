@@ -97,9 +97,7 @@ def _relation_overlap(
     )
 
 
-def evaluate_h3_overlap(
-    artifact: HierarchyFusionArtifact, h3_path: Path
-) -> H3OverlapReport:
+def evaluate_h3_overlap(artifact: HierarchyFusionArtifact, h3_path: Path) -> H3OverlapReport:
     """Compare accepted DAG links to H3 neighborhood co-assignment after build."""
     try:
         h3 = HistoricalSignalArtifact.model_validate_json(h3_path.read_bytes())
