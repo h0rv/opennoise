@@ -12,8 +12,9 @@ import re
 import unicodedata
 from typing import Final
 
-_TOKEN: Final = re.compile(r"[^\W_]+", re.UNICODE)
+_TOKEN: Final[re.Pattern[str]] = re.compile(r"[^\W_]+", re.UNICODE)
 _GENERIC_ROOTS: Final = frozenset({"music", "popular music", "genre", "genres", "style"})
+_SEMANTIC_ALIAS_TARGETS: Final = {"pop music": "pop", "popular music": "pop"}
 _ACRONYM_IGNORED: Final = frozenset({"the", "a", "an", "of", "for", "to", "in", "on"})
 _CONJUNCTION: Final = "and"
 _MIN_ACRONYM_TERMS: Final = 2
@@ -27,7 +28,8 @@ def normalized_label(value: str) -> str:
     decomposed = unicodedata.normalize("NFKD", value.casefold())
     without_marks = "".join(char for char in decomposed if not unicodedata.combining(char))
     expanded = without_marks.replace("&", " and ")
-    return " ".join(_TOKEN.findall(expanded))
+    terms: list[str] = [str(match) for match in _TOKEN.findall(expanded)]
+    return " ".join(terms)
 
 
 def tokens(value: str) -> tuple[str, ...]:
@@ -38,6 +40,16 @@ def tokens(value: str) -> tuple[str, ...]:
 def is_generic_root(value: str) -> bool:
     """Reject target-to-root mappings that communicate no genre distinction."""
     return normalized_label(value) in _GENERIC_ROOTS
+
+
+def semantic_alias_target(value: str) -> str | None:
+    """Return a narrowly declared, review-only identity alias target.
+
+    This preserves the product-level `pop music`/`popular music` equivalence
+    without allowing the generic-root rule to turn either phrase into a forced
+    graph edge. The caller must still require one unambiguous open target.
+    """
+    return _SEMANTIC_ALIAS_TARGETS.get(normalized_label(value))
 
 
 def token_jaccard(left: str, right: str) -> float:
@@ -84,7 +96,7 @@ def initialism_forms(value: str) -> frozenset[str]:
     """
     label_tokens = tuple(token for token in tokens(value) if token not in _ACRONYM_IGNORED)
     if len(label_tokens) < _MIN_ACRONYM_TERMS:
-        return frozenset()
+        return frozenset[str]()
     normal = "".join("n" if token == _CONJUNCTION else token[0] for token in label_tokens)
     compact = normalized_label(value).replace(" ", "")
     forms = {normal}

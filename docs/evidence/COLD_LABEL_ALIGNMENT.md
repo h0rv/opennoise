@@ -1,0 +1,125 @@
+# Cold label alignment
+
+This checkpoint turns immutable target names into conservative links to open
+genre/tag labels. It is a vocabulary bridge, not a membership, peer, layout,
+or taxonomy model. It never promotes an identity or creates an artist edge.
+
+## Construction boundary
+
+The projected run reads three sealed inputs: the evidence-graph database and
+receipt, plus the complete seed reconciliation artifact. Target-side matching
+uses only each immutable seed name. Reconciliation's already-known open
+identities are emitted as `existing_open_identity` for accounting, never as
+incremental lift.
+
+The matcher permits only:
+
+- unique Unicode/token-normalized exact labels;
+- same-head, token-overlap compositional candidates for review; and
+- a unique seed-side initialism to a unique compact open label, also review.
+
+It does not use edit distance, coordinates, historical memberships, historical
+peers, or Every Noise taxonomy. `music`, `popular music`, and other generic
+roots abstain. Duplicate normalized target names abstain instead of silently
+collapsing onto one open cluster. Review records retain every score and signal;
+they are not graph edges.
+
+The deterministic masked evaluation hides a stable 20% split of trusted open
+reconciliation identities, then reruns the same cold matcher. Held-out edges
+are evaluation truth only. The acronym precision field is separate; `null`
+means the masked split happened to contain no safe acronym prediction.
+
+## Measured projected baseline
+
+The sealed projected-only artifact is
+`c45ba790c2e9e4c9c7f9294e28ef64219c6c8178c9a11b1b5cb060d3cdd86029` in
+the shared `.cache/cold-label-alignment-v1/sha256/` custody root. It binds the
+3,057,729,536-byte evidence graph, its 2,736-byte receipt, and the
+3,509,380-byte reconciliation artifact.
+
+It accounts for all 6,291 seeds without collapsing reconciliation states:
+
+| State | Seeds |
+| --- | ---: |
+| reconciled | 359 |
+| public only | 82 |
+| MusicBrainz only | 704 |
+| review only | 2,037 |
+| ambiguous | 37 |
+| unresolved | 3,072 |
+
+The graph-projected vocabulary contains 2,261 identities in 1,222 normalized
+label clusters. The result has 1,072 existing open-identity accepts, **73
+net-new exact-normalized accepts**, 172 review seeds, and 4,974 abstentions.
+Review breakdown is 133 compositional, 2 acronym, and 37 pre-existing
+ambiguous identity groups.
+The deterministic mask contains 240 of 1,145 eligible trusted mappings: top-1
+and top-k recall are 0.9417, with 226 accepted predictions at 1.0 precision.
+No acronym prediction occurred in that held-out split, so acronym precision is
+not estimated.
+
+## Bounded supplemental vocabulary
+
+`uv run poe build-release-group-label-vocabulary` performs an explicitly
+bounded streaming scan of the canonically custodied MusicBrainz release-group
+archive. It validates the source-cache admission receipt and archive bytes,
+reads only top-level release-group `genres` and `tags`, and stores only
+distinct labels plus bounded per-kind observation counts. It never stores raw
+release rows, artist aliases, or nested artist metadata.
+
+The current supplemental sidecar is deliberately **partial**:
+
+- archive: `6f153846…d7a43`, admitted by
+  `.cache/musicbrainz-release-group-source-receipt.json`;
+- exactly 200,000 rows, not the 18.1 GB member in full;
+- 6,228 normalized labels / 7,229 source-kind references;
+- 42.868 seconds and 102,192 KiB peak RSS;
+- sidecar logical hash:
+  `2fb784684c3e32180f19c126cc68c1cdbf7f994e86011ce7198bfa0a61d3e3f1`.
+
+It must not be described as the full MusicBrainz vocabulary. The task accepts
+an explicit larger bound for a later measured run.
+
+When that sidecar is supplied to the alignment task, the receipt-bound artifact
+`ca5b9340cdaa4ed44ec3524096ba0b30a2d15351fcbdf012d25d9347976383d2`
+binds the exact 701,718-byte sidecar and its 388-byte receipt. It reports
+2,261 projected + 7,229 supplemental identities, 240 net-new exact accepts,
+786 review seeds, and 4,193 abstentions. The 167 extra accepts over the
+projected baseline are a partial-vocabulary lift, not a claim of a complete
+corpus scan. Its masked accepted precision is 0.9956 (227 predictions); no
+masked acronym example occurred, so acronym precision remains unestimated.
+
+Observed exact candidates span cultures and eras, including `forró`/`forro`,
+`qawwali`, `mpb`, `maloya`, `ethio-jazz`, `danzón`/`danzon`, and `j-rock`.
+Compositional candidates such as `thai indie pop → indie pop` and `russian
+post-punk → post punk` remain review-only. Generic-root and acronym-collision
+negatives are enforced by unit tests; no unsafe acronym is accepted.
+
+The terminal historical diagnostic is separately sealed as
+`2b828aecaf4dc5e960ad4a85c730839251c534cfa28cd336601754e2eef0eb18`.
+It runs only after alignment sealing and accesses only historical membership
+counts and peer endpoints: accepted 1,312/1,303 membership-positive/peer
+endpoint seeds, review 786/773, abstentions 4,191/4,067. It does not access
+coordinates, communities, labels, or use history in construction.
+
+`item1` is the single immutable `pop` seed. Its reconciliation is ambiguous:
+exact MusicBrainz `pop` plus Wikidata `pop music` and `popular music`. The
+artifact keeps all three open identity clusters as `ambiguous_existing_identity`
+review candidates. It does not choose a Wikidata alias or create a hierarchy
+edge from that ambiguity.
+
+## Run
+
+```sh
+uv run poe build-cold-label-alignment
+uv run poe build-release-group-label-vocabulary
+uv run poe build-cold-label-alignment \
+  --supplemental-vocabulary .cache/release-group-label-vocabulary-v1/sha256/<hash>.json \
+  --supplemental-vocabulary-receipt .cache/release-group-label-vocabulary-v1/sha256/<hash>.receipt.json
+uv run poe audit-cold-label-alignment-historical \
+  .cache/cold-label-alignment-v1/sha256/<alignment-hash>.json
+```
+
+The artifact and receipt live under a shared main-checkout content-addressed
+cache even when the task is called from a linked worktree. Re-running identical
+inputs and settings reuses the same logical object hash.

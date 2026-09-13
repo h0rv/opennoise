@@ -30,6 +30,9 @@ class TaskContractTests(unittest.TestCase):
                 "dev-research",
                 "dev-legacy",
                 "export-opennoise-pages",
+                "build-cold-label-alignment",
+                "build-release-group-label-vocabulary",
+                "audit-cold-label-alignment-historical",
                 "check",
                 "release-certify",
             }.issubset(poe_tasks)
@@ -38,6 +41,18 @@ class TaskContractTests(unittest.TestCase):
         self.assertEqual(
             poe_tasks["dev-research"],
             "python -m scripts.run_local_research_dev",
+        )
+        self.assertEqual(
+            poe_tasks["build-cold-label-alignment"],
+            "python scripts/build_cold_label_alignment.py",
+        )
+        self.assertEqual(
+            poe_tasks["build-release-group-label-vocabulary"],
+            "python scripts/build_release_group_label_vocabulary.py",
+        )
+        self.assertEqual(
+            poe_tasks["audit-cold-label-alignment-historical"],
+            "python scripts/audit_cold_label_alignment_historical.py",
         )
 
         self.assertEqual(
