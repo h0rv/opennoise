@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.taxonomy.seeds.taxonomy import (
+from opennoise.taxonomy.seeds.taxonomy import (
     PublicTaxonomyConfig,
     build_genre_seed_public_taxonomy,
     write_genre_seed_public_taxonomy,

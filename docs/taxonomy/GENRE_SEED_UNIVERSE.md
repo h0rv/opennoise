@@ -25,7 +25,7 @@ H2 representatives, H3 data, or compositional tokens.
 Build the artifact with:
 
 ```sh
-musix build-genre-seed-universe \
+opennoise build-genre-seed-universe \
   --seed-artifact data/historical/historical-compatibility-v1.json \
   --catalog-database data/public.sqlite \
   --output data/model/genre-seed-universe-v1.json
@@ -39,8 +39,8 @@ counts, distinct artist counts, evidence IDs and source references, input
 hashes, and a deterministic output hash.
 
 The Poe task `build-genre-seed-universe` reads
-`MUSIX_H2_SEED_ARTIFACT`, `MUSIX_PUBLIC_DATABASE`, and
-`MUSIX_GENRE_SEED_UNIVERSE_OUTPUT`. The command accepts a future imported
+`OPENNOISE_H2_SEED_ARTIFACT`, `OPENNOISE_PUBLIC_DATABASE`, and
+`OPENNOISE_GENRE_SEED_UNIVERSE_OUTPUT`. The command accepts a future imported
 MusicBrainz v3 research SQLite database through the same repeatable option;
 it does not open or inspect an active research database as part of this
 release.

@@ -10,7 +10,7 @@ The first Wikidata music slice is documented in
 artifacts. The shared runner owns source snapshots, attempts, checkpoints, quarantine, policies,
 transactions, provenance, and idempotency. Catalog projectors own direct SQLite normalization.
 
-Musix uses SQLite for source metadata, import history, normalized music data,
+OpenNoise uses SQLite for source metadata, import history, normalized music data,
 search text, model evidence, and map publication. Migrations are ordered under
 `migrations/`. A sealed public release copies verified local inputs into a
 serving database. Application requests do not fetch sources or rebuild models.
@@ -38,7 +38,7 @@ permissions cannot change after they are sealed. A review creates a new policy
 version. A policy marked `local_only` cannot allow export.
 
 Anna's Archive input is treated as user supplied local data. The user must be
-authorized to use that data. Musix does not download it or provide a way to
+authorized to use that data. OpenNoise does not download it or provide a way to
 redistribute it. Its policy should use `user_authorized_local` and
 `local_only = 1`.
 

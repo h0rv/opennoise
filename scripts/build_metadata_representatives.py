@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.serving.metadata.representatives import (
+from opennoise.serving.metadata.representatives import (
     MetadataRepresentativeSettings,
     metadata_representatives,
 )

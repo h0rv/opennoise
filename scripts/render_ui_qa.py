@@ -13,12 +13,12 @@ from typing import override
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import Field
 
-from musix.models import FrozenModel, MapPoint, map_view
-from musix.serving.map.layouts import DerivedCoordinateSpace, PublishedLayout
+from opennoise.models import FrozenModel, MapPoint, map_view
+from opennoise.serving.map.layouts import DerivedCoordinateSpace, PublishedLayout
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATES = ROOT / "src" / "musix" / "templates"
-CSS = ROOT / "src" / "musix" / "static" / "app.css"
+TEMPLATES = ROOT / "src" / "opennoise" / "templates"
+CSS = ROOT / "src" / "opennoise" / "static" / "app.css"
 MAX_HTML_BYTES = 512 * 1024
 MAX_CSS_BYTES = 16 * 1024
 MAX_ELEMENTS = 4_000

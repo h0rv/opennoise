@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.ingest.musicbrainz.seed_targets import (
+from opennoise.ingest.musicbrainz.seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
@@ -18,14 +18,14 @@ from musix.ingest.musicbrainz.seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.taxonomy.open.label_graph_model import (
+from opennoise.taxonomy.open.label_graph_model import (
     OpenLabelGraphSettings,
     _split,
     build_open_label_graph_model,
     build_open_label_graph_model_from_path,
     verify_open_label_graph_model,
 )
-from musix.taxonomy.seeds.reconciliation import (
+from opennoise.taxonomy.seeds.reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,

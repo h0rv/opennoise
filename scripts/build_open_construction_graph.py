@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from musix.serving.cli import main
+from opennoise.serving.cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

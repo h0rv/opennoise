@@ -33,14 +33,14 @@ class LocalResearchDevLauncherTests(unittest.TestCase):
 
         environment = run.call_args.kwargs["env"]
         self.assertEqual(
-            environment["MUSIX_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_DATABASE"],
+            environment["OPENNOISE_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_DATABASE"],
             str(root / _REQUIRED_INPUTS[2]),
         )
         self.assertEqual(
-            environment["MUSIX_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_ARTIFACT"],
+            environment["OPENNOISE_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_ARTIFACT"],
             str(root / _REQUIRED_INPUTS[3]),
         )
-        self.assertEqual(environment["MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED"], "true")
+        self.assertEqual(environment["OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED"], "true")
 
     def test_launcher_rejects_a_partial_reverse_sidecar(self) -> None:
         with TemporaryDirectory() as temporary:

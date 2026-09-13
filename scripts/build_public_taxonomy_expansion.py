@@ -6,12 +6,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.serving.public.taxonomy_expansion import (
+from opennoise.serving.public.taxonomy_expansion import (
     PublicTaxonomyExpansionConfig,
     build_public_taxonomy_expansion,
     publish_public_taxonomy_expansion,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def main() -> None:

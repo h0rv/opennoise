@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.evidence.reconstruction import (
+from opennoise.evidence.reconstruction import (
     ReconstructionExperimentManifest,
     run_reconstruction_experiment,
 )

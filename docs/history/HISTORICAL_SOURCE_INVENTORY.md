@@ -2,7 +2,7 @@
 
 Research date: 2026-09-04.
 
-This is an acquisition record, not a coverage claim. Musix keeps metadata only. It does not fetch, retain, serve, or link to audio files or previews.
+This is an acquisition record, not a coverage claim. OpenNoise keeps metadata only. It does not fetch, retain, serve, or link to audio files or previews.
 
 | Source | Date and status | Coverage | Adapter and decision |
 | --- | --- | --- | --- |
@@ -11,7 +11,7 @@ This is an acquisition record, not a coverage claim. Musix keeps metadata only. 
 | [Scottsdaaale genre list](https://github.com/Scottsdaaale/List-of-All-Spotify-Genres) | Current repository advertises 6,044 names; license/status must be checked at the selected commit | Genre names only | Candidate taxonomy seed. Not acquired here. It cannot unlock artist or playlist stages. |
 | [NeroYuki genre/artist map](https://github.com/NeroYuki/everynoise_enhancement_script) | Commit `88bd6f6cac0be49cf58af364af5db6f323065375`, 2024-11-16; repository MIT, source-data license unspecified | Sealed local file: 81,672,845 bytes, SHA-256 `863a513a6da89735a69373a46ba58f6975eddb5d065964c577dfcacf18fffe20` | `enao_genre_artist_map_v1`. H3 source-scoped evidence. Default policy is discovery-only; an explicit flag enables local display. |
 | [ben-tanen map](https://github.com/ben-tanen/spotify-genre-map) | Public repository; license/status not relied on | Genre coordinates | Candidate H2 comparison only. Not acquired. |
-| [andreantonacci scraper](https://github.com/andreantonacci/everynoise_scraper) | Code repository; no frozen output accepted | Potential lists/release endpoints | Discovery only. A scraper is not an archive and is not run by Musix. |
+| [andreantonacci scraper](https://github.com/andreantonacci/everynoise_scraper) | Code repository; no frozen output accepted | Potential lists/release endpoints | Discovery only. A scraper is not an archive and is not run by OpenNoise. |
 | [Internet Archive CDX](https://web.archive.org/cdx/) | One bounded request on 2026-09-04 returned HTTP 429 | H3/H4/H5 unknown | No retry in this research round. No archive bytes acquired. |
 | [Every Noise public mirror](https://furia.com/everynoise_public/engenremap.html) | One `engenremap-techtrance.html` HEAD request on 2026-09-04 returned HTTP 403 | H3/H4/H5 unknown | No bypass or retry. No mirror bytes acquired. |
 
@@ -35,4 +35,4 @@ Do not infer missing membership, recordings, ordering, or playlists from this in
 
 ## Excluded material
 
-Reports of a large Every Noise dump containing thousands of HTML pages plus hundreds of thousands of MP3 previews are excluded. The media content violates Musix policy and the bundle cannot establish its own source provenance. Other repositories that expose only code, live scraping, black-box Spotify data, or unpinned generated output are discovery leads, not accepted data.
+Reports of a large Every Noise dump containing thousands of HTML pages plus hundreds of thousands of MP3 previews are excluded. The media content violates OpenNoise policy and the bundle cannot establish its own source provenance. Other repositories that expose only code, live scraping, black-box Spotify data, or unpinned generated output are discovery leads, not accepted data.

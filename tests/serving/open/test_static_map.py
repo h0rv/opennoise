@@ -9,10 +9,10 @@ import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from musix.serving.open.construction_store_v2 import OpenConstructionV2MapStore
+from opennoise.serving.open.construction_store_v2 import OpenConstructionV2MapStore
 
 if TYPE_CHECKING:
-    from musix.serving.open.static_map import StaticOpenMap
+    from opennoise.serving.open.static_map import StaticOpenMap
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -23,12 +23,10 @@ def _presentation_digest(value: StaticOpenMap) -> str:
         json.dumps(
             {
                 "nodes": [
-                    (node.node.node_id, node.x, node.y, node.label_visible)
-                    for node in value.nodes
+                    (node.node.node_id, node.x, node.y, node.label_visible) for node in value.nodes
                 ],
                 "edges": [
-                    (edge.source.node_id, edge.target.node_id, edge.factual)
-                    for edge in value.edges
+                    (edge.source.node_id, edge.target.node_id, edge.factual) for edge in value.edges
                 ],
             },
             sort_keys=True,

@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.ml.representative_coverage import (
+from opennoise.ml.representative_coverage import (
     RepresentativeCoverageSettings,
     representative_coverage,
 )

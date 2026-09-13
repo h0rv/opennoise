@@ -7,10 +7,10 @@ from pathlib import Path
 
 from pydantic import HttpUrl, ValidationError
 
-from musix.models.sources import DownloadSource
-from musix.policy import AudioContentRejectedError, require_metadata_prefix
-from musix.sources.musicbrainz import AdapterLimits, iter_artist_archive
-from musix.storage import LocalObjectStore, ObjectKey
+from opennoise.models.sources import DownloadSource
+from opennoise.policy import AudioContentRejectedError, require_metadata_prefix
+from opennoise.sources.musicbrainz import AdapterLimits, iter_artist_archive
+from opennoise.storage import LocalObjectStore, ObjectKey
 
 ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN_DEPENDENCIES = frozenset(

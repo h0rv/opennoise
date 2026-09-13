@@ -1,8 +1,8 @@
 import unittest
 from typing import Literal
 
-from musix.history.hierarchy.evaluation import evaluate_historical_hierarchy
-from musix.models.historical_signal import (
+from opennoise.history.hierarchy.evaluation import evaluate_historical_hierarchy
+from opennoise.models.historical_signal import (
     HistoricalSignalArtifact,
     HistoricalSignalHierarchyNode,
     HistoricalSignalNeighbor,

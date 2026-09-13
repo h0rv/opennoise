@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
-from musix.ingest.musicbrainz.coverage import (
+from opennoise.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from opennoise.ingest.musicbrainz.coverage import (
     build_reconstruction_inputs,
     evaluate_coverage,
     normalize_label,

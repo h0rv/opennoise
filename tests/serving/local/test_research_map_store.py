@@ -5,12 +5,12 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.serving.local.research_map_store import (
+from opennoise.serving.local.research_map_store import (
     LocalResearchMapError,
     LocalResearchMapStore,
 )
-from musix.serving.routes import SearchController
-from musix.taxonomy.seeds.reconciliation import load_seed_reconciliation
+from opennoise.serving.routes import SearchController
+from opennoise.taxonomy.seeds.reconciliation import load_seed_reconciliation
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ROOT = Path(__file__).parents[3]

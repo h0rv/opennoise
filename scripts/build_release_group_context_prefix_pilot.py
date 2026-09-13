@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.serving.release_group_context_prefix import (
+from opennoise.serving.release_group_context_prefix import (
     DEFAULT_ARCHIVE_SHA256,
     DEFAULT_RECORD_CAP,
     build_context_prefix,

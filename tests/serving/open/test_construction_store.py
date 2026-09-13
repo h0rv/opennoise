@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from musix.serving.open.construction_store import (
+from opennoise.serving.open.construction_store import (
     OpenConstructionMapStore,
     OpenConstructionMapStoreError,
 )

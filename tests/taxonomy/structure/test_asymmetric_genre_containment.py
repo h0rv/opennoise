@@ -6,14 +6,14 @@ import unittest
 
 from pydantic import ValidationError
 
-from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
-from musix.models.modeling import (
+from opennoise.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from opennoise.models.modeling import (
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
     PublicModelInput,
 )
-from musix.serving.public.taxonomy_expansion import (
+from opennoise.serving.public.taxonomy_expansion import (
     ConnectivityCoverage,
     ExpansionEdge,
     ExpansionEdgeEvidence,
@@ -22,7 +22,7 @@ from musix.serving.public.taxonomy_expansion import (
     PublicTaxonomyExpansionConfig,
     PublicTaxonomyExpansionCoverage,
 )
-from musix.taxonomy.structure.asymmetric_genre_containment import (
+from opennoise.taxonomy.structure.asymmetric_genre_containment import (
     AsymmetricGenreContainmentPolicy,
     GenreContainmentBridge,
     GenreContainmentBridgeEntry,

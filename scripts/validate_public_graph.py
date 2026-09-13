@@ -9,23 +9,23 @@ from collections import defaultdict
 from datetime import UTC, date, datetime
 from pathlib import Path
 
-from musix.clients.downloads import download_verified
-from musix.ml.public_graph import build_public_model
-from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
-from musix.ml.validation import build_graph_validation, build_temporal_public_input
-from musix.ml.validation_repository import GraphValidationRepository, ValidationLoadSettings
-from musix.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
-from musix.models.listenbrainz import JointListenArtifact, ListenBrainzAggregationConfig
-from musix.models.modeling import ArtistPairEvidence, PublicArtifact, PublicModelSettings
-from musix.models.pipeline import ParsedSourceRecord, SourceLimits
-from musix.models.sources import DownloadResult, DownloadSource
-from musix.models.validation import (
+from opennoise.clients.downloads import download_verified
+from opennoise.ml.public_graph import build_public_model
+from opennoise.ml.repository import PublicInputLoadSettings, PublicModelRepository
+from opennoise.ml.validation import build_graph_validation, build_temporal_public_input
+from opennoise.ml.validation_repository import GraphValidationRepository, ValidationLoadSettings
+from opennoise.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
+from opennoise.models.listenbrainz import JointListenArtifact, ListenBrainzAggregationConfig
+from opennoise.models.modeling import ArtistPairEvidence, PublicArtifact, PublicModelSettings
+from opennoise.models.pipeline import ParsedSourceRecord, SourceLimits
+from opennoise.models.sources import DownloadResult, DownloadSource
+from opennoise.models.validation import (
     GraphValidationInput,
     GraphValidationSettings,
     TemporalPairWindow,
 )
-from musix.pipeline.manifest import load_download_source
-from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter
+from opennoise.pipeline.manifest import load_download_source
+from opennoise.sources.listenbrainz import ListenBrainzIncrementalAdapter
 
 _SOURCE_IDS = tuple(f"listenbrainz_incremental_202608{day:02d}" for day in range(24, 31))
 _FIRST_WINDOW = datetime(2026, 8, 23, tzinfo=UTC)
@@ -37,7 +37,7 @@ _MINIMUM_DISTINCT_USERS = 5
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, default=Path("config/data_sources.toml"))
-    parser.add_argument("--catalog-db", type=Path, default=Path("data/musix.sqlite"))
+    parser.add_argument("--catalog-db", type=Path, default=Path("data/opennoise.sqlite"))
     parser.add_argument("--vault", type=Path, default=Path("data/vault"))
     parser.add_argument(
         "--output", type=Path, default=Path("data/model/public-graph-validation-v1.json")

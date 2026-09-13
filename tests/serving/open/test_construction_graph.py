@@ -4,15 +4,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.serving.open.construction_graph import (
+from opennoise.serving.open.construction_graph import (
     OpenConstructionGraphConfig,
     assert_no_prohibited_construction_fields,
     build_open_construction_graph,
     publish_open_construction_graph,
     verify_open_construction_graph,
 )
-from musix.storage import LocalObjectStore
-from musix.taxonomy.seeds.taxonomy import (
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.seeds.taxonomy import (
     PublicTaxonomyConfig,
     build_genre_seed_public_taxonomy,
     write_genre_seed_public_taxonomy,

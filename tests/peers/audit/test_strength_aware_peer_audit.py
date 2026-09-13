@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.peers.audit.strength_aware_peer_audit import (
+from opennoise.peers.audit.strength_aware_peer_audit import (
     PeerAuditError,
     build_consensus_micro_neighborhood_audit,
     build_corroborated_peer_audit,

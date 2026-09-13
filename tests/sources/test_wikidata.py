@@ -4,9 +4,9 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from musix.models.catalog import EntityProjection
-from musix.models.pipeline import ParsedSourceRecord, SourceLimits
-from musix.sources.wikidata import WikidataSliceError, WikidataSourceAdapter
+from opennoise.models.catalog import EntityProjection
+from opennoise.models.pipeline import ParsedSourceRecord, SourceLimits
+from opennoise.sources.wikidata import WikidataSliceError, WikidataSourceAdapter
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "wikidata_music_slice.json"
 QUERY = Path(__file__).resolve().parents[2] / "config" / "wikidata_public_genres_20260831.rq"

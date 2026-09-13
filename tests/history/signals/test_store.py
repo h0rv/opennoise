@@ -1,11 +1,11 @@
 import unittest
 from pathlib import Path
 
-from musix.history.signals.store import (
+from opennoise.history.signals.store import (
     HistoricalSignalMapStore,
     HistoricalSignalMapStoreError,
 )
-from musix.models.historical_signal import (
+from opennoise.models.historical_signal import (
     HistoricalSignalArtifact,
     HistoricalSignalHierarchyNode,
     HistoricalSignalLOD,

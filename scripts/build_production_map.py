@@ -6,10 +6,10 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.ml.production_map import build_production_map
-from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
-from musix.models.modeling import PublicModelArtifact
-from musix.models.production import ProductionMapSettings
+from opennoise.ml.production_map import build_production_map
+from opennoise.ml.repository import PublicInputLoadSettings, PublicModelRepository
+from opennoise.models.modeling import PublicModelArtifact
+from opennoise.models.production import ProductionMapSettings
 
 
 def _arguments() -> argparse.Namespace:

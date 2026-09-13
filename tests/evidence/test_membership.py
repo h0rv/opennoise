@@ -7,7 +7,7 @@ from typing import override
 
 from pydantic import ValidationError
 
-from musix.evidence.membership import (
+from opennoise.evidence.membership import (
     ArtistGenreEvidence,
     ArtistGenreRepository,
     DirectArtistGenreProjection,
@@ -24,7 +24,7 @@ from musix.evidence.membership import (
     evidence_from_musicbrainz,
     representation_similarity,
 )
-from musix.sources.musicbrainz import AdapterLimits, iter_artist_jsonl
+from opennoise.sources.musicbrainz import AdapterLimits, iter_artist_jsonl
 from scripts.evaluate_membership import EvaluationDocument, evaluate_document
 
 ROOT = Path(__file__).resolve().parents[2]

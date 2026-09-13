@@ -9,13 +9,13 @@ same selected rows. Build it from the selected serving database, then publish it
 through any `ObjectStore` implementation:
 
 ```sh
-MUSIX_PUBLIC_DATABASE=data/public.sqlite \
-MUSIX_METADATA_REPRESENTATIVES_OUTPUT=data/model/metadata-representatives-v1.json \
+OPENNOISE_PUBLIC_DATABASE=data/public.sqlite \
+OPENNOISE_METADATA_REPRESENTATIVES_OUTPUT=data/model/metadata-representatives-v1.json \
 uv run poe build-metadata-representatives
 
-MUSIX_METADATA_REPRESENTATIVES_ARTIFACT=data/model/metadata-representatives-v1.json \
-MUSIX_METADATA_REPRESENTATIVES_OBJECT_STORE=data/objects \
-MUSIX_METADATA_REPRESENTATIVES_RECEIPT=data/model/metadata-representatives-publication-v1.json \
+OPENNOISE_METADATA_REPRESENTATIVES_ARTIFACT=data/model/metadata-representatives-v1.json \
+OPENNOISE_METADATA_REPRESENTATIVES_OBJECT_STORE=data/objects \
+OPENNOISE_METADATA_REPRESENTATIVES_RECEIPT=data/model/metadata-representatives-publication-v1.json \
 uv run poe publish-metadata-representatives
 ```
 

@@ -2,12 +2,12 @@ import unittest
 
 from pydantic import ValidationError
 
-from musix.ml.public_graph import (
+from opennoise.ml.public_graph import (
     PublicModelLimitError,
     build_public_model,
     public_model_output_sha256,
 )
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
     GenreHierarchyEdge,

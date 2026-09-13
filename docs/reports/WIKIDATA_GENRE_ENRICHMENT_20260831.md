@@ -32,7 +32,7 @@ search, display, embedding, training, and metadata export. The enriched SQLite c
 bytes.
 
 Rebuilding against the same ListenBrainz evidence produced
-`/tmp/musix-release-public-model-enriched.json`. It contains 127 named genre identities and zero
+`/tmp/opennoise-release-public-model-enriched.json`. It contains 127 named genre identities and zero
 QID placeholder names. Its logical output SHA256 is
 `efc50be59ca4562481a975a0cdcf7ec898484cff48eba946d0a6a3453a6976bb`; its complete file SHA256 is
 `86960bf72ee2016f67e23ae98959bbd3c899bc6cc003102b65b439089700e4ec`. The model build took 2.265

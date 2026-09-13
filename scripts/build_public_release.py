@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.pipeline.public_release import PublicReleaseSettings, build_public_release
+from opennoise.pipeline.public_release import PublicReleaseSettings, build_public_release
 
 
 def main() -> int:

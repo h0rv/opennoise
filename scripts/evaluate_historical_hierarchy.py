@@ -6,8 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.history.hierarchy.evaluation import evaluate_historical_hierarchy
-from musix.models.historical_signal import HistoricalSignalArtifact
+from opennoise.history.hierarchy.evaluation import evaluate_historical_hierarchy
+from opennoise.models.historical_signal import HistoricalSignalArtifact
 
 
 def _arguments() -> argparse.Namespace:

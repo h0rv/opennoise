@@ -5,20 +5,20 @@ from uuid import UUID
 
 import httpx
 
-from musix.db import Database
-from musix.ingest.musicbrainz.release_hydration import (
+from opennoise.db import Database
+from opennoise.ingest.musicbrainz.release_hydration import (
     HydrationSettings,
     MusicBrainzHydrationError,
     MusicBrainzReleaseTrackHydrationAdapter,
     materialize_hydration_catalog,
     write_hydration_artifact,
 )
-from musix.serving.metadata.representatives import (
+from opennoise.serving.metadata.representatives import (
     MetadataRepresentativeArtifact,
     MetadataRepresentativeItem,
     RepresentativeRunProvenance,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 RELEASE_GROUP_ID = "10000000-0000-4000-8000-000000000001"
@@ -111,7 +111,7 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
                 adapter = MusicBrainzReleaseTrackHydrationAdapter(
                     client,
                     settings,
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                     sleep=lambda _: _no_sleep(),
                 )
                 artifact = await adapter.hydrate(_representatives(), source_sha256="b" * 64)
@@ -129,7 +129,7 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
                 offline = MusicBrainzReleaseTrackHydrationAdapter(
                     offline_client,
                     HydrationSettings(cache_directory=root / "cache", max_genres=1, offline=True),
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                 )
                 replay = await offline.hydrate(_representatives(), source_sha256="b" * 64)
             self.assertEqual(replay, artifact)
@@ -191,7 +191,7 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
                 adapter = MusicBrainzReleaseTrackHydrationAdapter(
                     client,
                     HydrationSettings(cache_directory=Path(directory) / "cache", offline=True),
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                 )
                 with self.assertRaisesRegex(MusicBrainzHydrationError, "offline replay cache miss"):
                     await adapter.hydrate(_representatives(), source_sha256="b" * 64)

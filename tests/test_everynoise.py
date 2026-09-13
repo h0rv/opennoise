@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.adapters.everynoise import (
+from opennoise.adapters.everynoise import (
     QUINT_SOURCE,
     SourceSpec,
     SourceVerificationError,

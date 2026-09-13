@@ -4,11 +4,11 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from musix.ml.layout_lenses import (
+from opennoise.ml.layout_lenses import (
     build_weighted_community_spectral_coordinates,
     weighted_spectral_quality,
 )
-from musix.serving.local.research_peer_layout import (
+from opennoise.serving.local.research_peer_layout import (
     LocalResearchPeerLayoutSettings,
     build_local_research_peer_layout,
     local_research_peer_layout_output_sha256,

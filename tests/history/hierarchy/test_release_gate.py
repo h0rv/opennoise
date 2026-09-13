@@ -1,9 +1,9 @@
 import unittest
 
-from musix.history.hierarchy.release_gate import (
+from opennoise.history.hierarchy.release_gate import (
     evaluate_historical_hierarchy_release_gate,
 )
-from musix.models.historical_signal import HistoricalSignalArtifact
+from opennoise.models.historical_signal import HistoricalSignalArtifact
 from tests.history.hierarchy.test_evaluation import _artifact
 
 

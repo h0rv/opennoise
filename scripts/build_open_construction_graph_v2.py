@@ -6,12 +6,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.serving.open.construction_graph_v2 import (
+from opennoise.serving.open.construction_graph_v2 import (
     OpenConstructionGraphV2Config,
     build_open_construction_graph_v2,
     publish_open_construction_graph_v2,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def main() -> None:

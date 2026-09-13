@@ -11,7 +11,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from musix.models import FrozenModel
+from opennoise.models import FrozenModel
 
 MBID_PATTERN = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 MAX_SHARD_SIZE = 500

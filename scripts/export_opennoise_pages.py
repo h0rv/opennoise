@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.deployment.opennoise_pages import OpenNoisePagesExportInputs, export_opennoise_pages
+from opennoise.deployment.opennoise_pages import OpenNoisePagesExportInputs, export_opennoise_pages
 
 
 def main() -> int:

@@ -6,16 +6,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.storage import LocalObjectStore, ObjectKey
-from musix.taxonomy.relations.expansion import (
+from opennoise.storage import LocalObjectStore, ObjectKey
+from opennoise.taxonomy.relations.expansion import (
     TaxonomyRelationExpansionPolicy,
     build_taxonomy_relation_expansion,
 )
-from musix.taxonomy.relations.hierarchy_overlay import (
+from opennoise.taxonomy.relations.hierarchy_overlay import (
     OverlayBaseInputs,
     build_taxonomy_relation_hierarchy_overlay,
 )
-from musix.taxonomy.structure.hierarchy_candidates import (
+from opennoise.taxonomy.structure.hierarchy_candidates import (
     GenreHierarchyCandidatePublicationReceipt,
 )
 from tests.taxonomy.relations.test_expansion import _feed, _taxonomy

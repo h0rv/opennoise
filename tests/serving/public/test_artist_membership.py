@@ -8,14 +8,14 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
     PublicModelInput,
 )
-from musix.serving.public.artist_membership import (
+from opennoise.serving.public.artist_membership import (
     ApprovedPublicMembershipInput,
     IndependentPublicGoldLabel,
     IndependentPublicGoldSet,
@@ -32,7 +32,7 @@ from musix.serving.public.artist_membership import (
     verify_public_artist_membership_candidate,
     write_public_artist_membership_candidate,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def _sha256(value: object) -> str:

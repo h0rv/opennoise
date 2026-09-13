@@ -8,8 +8,8 @@ import sys
 from contextlib import closing
 from pathlib import Path
 
-from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
-from musix.serving.one_hop_membership_candidate import (
+from opennoise.ml.repository import PublicInputLoadSettings, PublicModelRepository
+from opennoise.serving.one_hop_membership_candidate import (
     OneHopMembershipCandidatePolicy,
     build_one_hop_membership_candidate,
 )

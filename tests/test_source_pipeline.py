@@ -9,19 +9,19 @@ from pathlib import Path
 import httpx
 from pydantic import HttpUrl, ValidationError
 
-from musix.catalog.artists import ArtistProjector, _genre_slug
-from musix.catalog.registry import ProjectorRegistry
-from musix.clients.downloads import download_verified
-from musix.models.pipeline import SourceLimits
-from musix.models.sources import DownloadSource
-from musix.pipeline.manifest import load_download_source
-from musix.pipeline.runner import (
+from opennoise.catalog.artists import ArtistProjector, _genre_slug
+from opennoise.catalog.registry import ProjectorRegistry
+from opennoise.clients.downloads import download_verified
+from opennoise.models.pipeline import SourceLimits
+from opennoise.models.sources import DownloadSource
+from opennoise.pipeline.manifest import load_download_source
+from opennoise.pipeline.runner import (
     DeterministicPartition,
     PipelineOptions,
     run_source_pipeline,
 )
-from musix.sources.musicbrainz import MusicBrainzArtistDumpAdapter
-from musix.sources.registry import AdapterRegistry
+from opennoise.sources.musicbrainz import MusicBrainzArtistDumpAdapter
+from opennoise.sources.registry import AdapterRegistry
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ROOT = Path(__file__).resolve().parents[1]

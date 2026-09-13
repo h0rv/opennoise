@@ -25,23 +25,23 @@ build and publish commands available for diagnosis; for the normal cache-friendl
 the explicit input and output paths below and run one Poe task.
 
 ```sh
-export MUSIX_HISTORICAL_MANIFEST=path/to/historical-compatibility.json
-export MUSIX_HISTORICAL_MEMBERSHIP_DATABASE=path/to/local-memberships.sqlite
-export MUSIX_HISTORICAL_H3_ARTIFACT_SHA256=the-verified-h3-sha256
-export MUSIX_HISTORICAL_COMPATIBILITY_RECEIPT=path/to/compatibility-receipt.json
-export MUSIX_HISTORICAL_SIGNAL_ARTIFACT=path/to/cache/historical-signal.json
-export MUSIX_HISTORICAL_SIGNAL_BUILD_REPORT=path/to/cache/historical-signal.build.json
-export MUSIX_HISTORICAL_SIGNAL_PUBLICATION=path/to/cache/historical-signal.publication.json
-export MUSIX_HISTORICAL_OBJECT_STORE=path/to/local-object-store
-export MUSIX_HISTORICAL_SIGNAL_RECEIPT=path/to/cache/historical-signal.receipt.json
-export MUSIX_HISTORICAL_SIGNAL_PUBLISH_REPORT=path/to/cache/historical-signal.publish.json
+export OPENNOISE_HISTORICAL_MANIFEST=path/to/historical-compatibility.json
+export OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE=path/to/local-memberships.sqlite
+export OPENNOISE_HISTORICAL_H3_ARTIFACT_SHA256=the-verified-h3-sha256
+export OPENNOISE_HISTORICAL_COMPATIBILITY_RECEIPT=path/to/compatibility-receipt.json
+export OPENNOISE_HISTORICAL_SIGNAL_ARTIFACT=path/to/cache/historical-signal.json
+export OPENNOISE_HISTORICAL_SIGNAL_BUILD_REPORT=path/to/cache/historical-signal.build.json
+export OPENNOISE_HISTORICAL_SIGNAL_PUBLICATION=path/to/cache/historical-signal.publication.json
+export OPENNOISE_HISTORICAL_OBJECT_STORE=path/to/local-object-store
+export OPENNOISE_HISTORICAL_SIGNAL_RECEIPT=path/to/cache/historical-signal.receipt.json
+export OPENNOISE_HISTORICAL_SIGNAL_PUBLISH_REPORT=path/to/cache/historical-signal.publish.json
 poe historical-signal-release
 ```
 
 Serve the resulting publication only through the explicit local setting:
 
 ```sh
-MUSIX_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json uv run poe dev
+OPENNOISE_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json uv run poe dev
 ```
 
 Member detail remains independently opt-in. It requires only the separately configured local
@@ -49,8 +49,8 @@ membership database; startup hashes it and checks its sealed source, policy, and
 It is unavailable rather than inferred when the database setting is absent.
 
 ```sh
-MUSIX_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json \
-MUSIX_HISTORICAL_MEMBERSHIP_DATABASE_PATH=path/to/local-memberships.sqlite \
+OPENNOISE_HISTORICAL_SIGNAL_MAP_PATH=path/to/cache/historical-signal.publication.json \
+OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE_PATH=path/to/local-memberships.sqlite \
 uv run poe dev
 ```
 

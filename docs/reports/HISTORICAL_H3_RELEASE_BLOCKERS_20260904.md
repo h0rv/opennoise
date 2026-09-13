@@ -6,11 +6,11 @@ The operator can now seal the two operator-supplied H3 inputs without adding eit
 blob to the checkout:
 
 ```sh
-export MUSIX_HISTORICAL_H3_SOURCE=/path/to/spotify_genres_artists_map.json
-export MUSIX_HISTORICAL_MEMBERSHIP_DATABASE=/path/to/historical-memberships.sqlite
-export MUSIX_HISTORICAL_OBJECT_STORE=/path/to/local-vault
-export MUSIX_HISTORICAL_CUSTODY_RECEIPT=/path/to/historical-h3-rebuild.receipt.json
-export MUSIX_HISTORICAL_MANIFEST=/path/to/historical-compatibility.json
+export OPENNOISE_HISTORICAL_H3_SOURCE=/path/to/spotify_genres_artists_map.json
+export OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE=/path/to/historical-memberships.sqlite
+export OPENNOISE_HISTORICAL_OBJECT_STORE=/path/to/local-vault
+export OPENNOISE_HISTORICAL_CUSTODY_RECEIPT=/path/to/historical-h3-rebuild.receipt.json
+export OPENNOISE_HISTORICAL_MANIFEST=/path/to/historical-compatibility.json
 poe custody-historical-inputs
 ```
 

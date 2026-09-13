@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.storage import LocalObjectStore, ObjectConflictError, ObjectKey
+from opennoise.storage import LocalObjectStore, ObjectConflictError, ObjectKey
 
 
 class ObjectKeyTests(unittest.TestCase):

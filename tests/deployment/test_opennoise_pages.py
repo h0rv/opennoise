@@ -8,15 +8,15 @@ import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from musix.deployment.opennoise_pages import (
+from opennoise.deployment.opennoise_pages import (
     OpenNoisePagesExportError,
     OpenNoisePagesExportInputs,
     export_opennoise_pages,
 )
-from musix.ml.production_map import build_production_map
-from musix.ml.public_graph import build_public_model
-from musix.models.modeling import PublicModelSettings
-from musix.serving.open.construction_graph_v2 import (
+from opennoise.ml.production_map import build_production_map
+from opennoise.ml.public_graph import build_public_model
+from opennoise.models.modeling import PublicModelSettings
+from opennoise.serving.open.construction_graph_v2 import (
     OpenConstructionGraphV2Config,
     build_open_construction_graph_v2,
     write_open_construction_graph_v2,
@@ -25,7 +25,7 @@ from tests.serving.map.test_production_map import _inputs, _settings
 from tests.serving.open.test_construction_graph_v2 import build_expansion
 
 if TYPE_CHECKING:
-    from musix.models.production import ProductionMapArtifact
+    from opennoise.models.production import ProductionMapArtifact
 
 
 class OpenNoisePagesTests(unittest.TestCase):

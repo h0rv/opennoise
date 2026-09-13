@@ -8,8 +8,8 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from musix.ml.production_map_qa import evaluate_production_map
-from musix.models.production_qa import ProductionMapAcceptanceInput
+from opennoise.ml.production_map_qa import evaluate_production_map
+from opennoise.models.production_qa import ProductionMapAcceptanceInput
 
 
 def main() -> int:

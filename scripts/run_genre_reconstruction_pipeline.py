@@ -15,22 +15,22 @@ import tempfile
 from pathlib import Path
 from typing import Protocol, TypeVar
 
-from musix.evidence.reconstruction import ReconstructionInputs
-from musix.ingest.musicbrainz.coverage import CoverageReport
-from musix.models.modeling import PublicModelInput
-from musix.peers.similarity.historical import (
+from opennoise.evidence.reconstruction import ReconstructionInputs
+from opennoise.ingest.musicbrainz.coverage import CoverageReport
+from opennoise.models.modeling import PublicModelInput
+from opennoise.peers.similarity.historical import (
     HistoricalPeerSettings,
     evaluate_peer_similarity_historical,
     publish_historical_peer_evaluation,
 )
-from musix.peers.similarity.similarity import (
+from opennoise.peers.similarity.similarity import (
     PeerSimilaritySettings,
     build_peer_similarity,
     evaluate_peer_similarity_gate,
 )
-from musix.serving.public.taxonomy_expansion import PublicTaxonomyExpansionArtifact
-from musix.storage import LocalObjectStore
-from musix.taxonomy.seeds.reconciliation import (
+from opennoise.serving.public.taxonomy_expansion import PublicTaxonomyExpansionArtifact
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.seeds.reconciliation import (
     MusicBrainzIdentityInput,
     build_seed_reconciliation,
     load_seed_reconciliation,
@@ -39,9 +39,9 @@ from musix.taxonomy.seeds.reconciliation import (
     publish_seed_reconciliation,
     write_seed_reconciliation,
 )
-from musix.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
-from musix.taxonomy.seeds.universe import load_seed_input
-from musix.taxonomy.structure.asymmetric_genre_containment import (
+from opennoise.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
+from opennoise.taxonomy.seeds.universe import load_seed_input
+from opennoise.taxonomy.structure.asymmetric_genre_containment import (
     AsymmetricGenreContainmentPolicy,
     GenreContainmentBridge,
     build_asymmetric_genre_containment_from_reconstruction_inputs,

@@ -11,7 +11,7 @@ class OpenConstructionGraphV2DocumentationTests(unittest.TestCase):
         )
 
         self.assertIn("public-taxonomy-expansion-v1", document)
-        self.assertIn("MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH", document)
+        self.assertIn("OPENNOISE_CONSTRUCTION_GRAPH_V2_PATH", document)
         self.assertIn("/api/open-construction-map/v2", document)
         self.assertIn("remain v1", document)
         self.assertIn("never scans `.cache`", document)

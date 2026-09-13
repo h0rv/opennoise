@@ -21,7 +21,7 @@ def validate_public_database(database: Path) -> None:
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'data_sources'"
         ).fetchone()
         if table is None:
-            raise RuntimeError("existing release database has no Musix catalog schema")
+            raise RuntimeError("existing release database has no OpenNoise catalog schema")
         source_keys = {
             str(row[0]) for row in connection.execute("SELECT source_key FROM data_sources")
         }

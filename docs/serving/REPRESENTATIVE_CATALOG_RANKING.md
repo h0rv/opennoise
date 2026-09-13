@@ -1,6 +1,6 @@
 # Representative catalog candidates
 
-`musix build-representative-catalog-candidates` writes bounded, deterministic
+`opennoise build-representative-catalog-candidates` writes bounded, deterministic
 release-group *representative candidates*. It does not identify definitive,
 quintessential, popular, influential, or high-quality albums or tracks.
 
@@ -25,7 +25,7 @@ their only use here is the bounded completeness component for a selected
 release.
 
 ```sh
-musix build-representative-catalog-candidates \
+opennoise build-representative-catalog-candidates \
   --database data/public.sqlite \
   --run-ref local-representatives-20260904 \
   --policy-id 1 \

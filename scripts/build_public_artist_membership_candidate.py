@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.serving.public.artist_membership import (
+from opennoise.serving.public.artist_membership import (
     ApprovedPublicMembershipInput,
     IndependentPublicGoldSet,
     PromotionPolicy,
@@ -16,12 +16,12 @@ from musix.serving.public.artist_membership import (
     evaluate_public_artist_membership_promotion,
     write_public_artist_membership_candidate,
 )
-from musix.serving.public.artist_membership_adapter import (
+from opennoise.serving.public.artist_membership_adapter import (
     CertifiedPublicMembershipAdapterPolicy,
     CertifiedPublicMembershipAdapterReceipt,
     verify_certified_public_membership_receipt,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def _approved_input(path: Path) -> ApprovedPublicMembershipInput:

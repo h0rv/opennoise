@@ -8,14 +8,14 @@ from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
 
-from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
-from musix.catalog.registry import ProjectorRegistry
-from musix.models.listenbrainz import JointListenArtifact, ListenBrainzAggregationConfig
-from musix.models.pipeline import SourceLimits, SourceRecord
-from musix.models.sources import DownloadResult, DownloadSource
-from musix.pipeline.manifest import load_download_source
-from musix.pipeline.multi_source import MultiArtifactOptions, run_multi_artifact_pipeline
-from musix.sources.listenbrainz import ListenBrainzIncrementalAdapter
+from opennoise.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
+from opennoise.catalog.registry import ProjectorRegistry
+from opennoise.models.listenbrainz import JointListenArtifact, ListenBrainzAggregationConfig
+from opennoise.models.pipeline import SourceLimits, SourceRecord
+from opennoise.models.sources import DownloadResult, DownloadSource
+from opennoise.pipeline.manifest import load_download_source
+from opennoise.pipeline.multi_source import MultiArtifactOptions, run_multi_artifact_pipeline
+from opennoise.sources.listenbrainz import ListenBrainzIncrementalAdapter
 
 SOURCE_IDS = tuple(f"listenbrainz_incremental_202608{day:02d}" for day in range(24, 31))
 

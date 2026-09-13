@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.ml.representative_coverage import (
+from opennoise.ml.representative_coverage import (
     RepresentativeCoverageSettings,
     representative_coverage,
 )

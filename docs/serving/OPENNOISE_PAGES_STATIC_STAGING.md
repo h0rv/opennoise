@@ -30,9 +30,9 @@ layout or historical data.
 Set the explicit inputs and build into a new or empty directory with Poe:
 
 ```bash
-export MUSIX_PRODUCTION_MAP_PATH=data/model/production-map-v1.json
-export MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH=data/model/open-construction-graph-v2.json
-export MUSIX_OPENNOISE_PAGES_OUTPUT=dist
+export OPENNOISE_PRODUCTION_MAP_PATH=data/model/production-map-v1.json
+export OPENNOISE_CONSTRUCTION_GRAPH_V2_PATH=data/model/open-construction-graph-v2.json
+export OPENNOISE_PAGES_OUTPUT=dist
 UV_OFFLINE=1 uv run --no-sync poe export-opennoise-pages
 ```
 

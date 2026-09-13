@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.serving.public.artist_membership_historical import (
+from opennoise.serving.public.artist_membership_historical import (
     evaluate_public_artist_membership_historical,
 )
 

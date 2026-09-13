@@ -1,6 +1,6 @@
 import unittest
 
-from musix.history.historical_membership_store import (
+from opennoise.history.historical_membership_store import (
     HistoricalMembershipStore,
     HistoricalMembershipStoreError,
 )

@@ -9,14 +9,14 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from musix.ingest.musicbrainz.release_group_evidence import (
+from opennoise.ingest.musicbrainz.release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     ReleaseGroupEvidenceCounters,
     ReleaseGroupEvidenceCoverage,
     ReleaseGroupEvidenceSettings,
     artifact_sha256,
 )
-from musix.serving.local.musicbrainz_artist_metadata import (
+from opennoise.serving.local.musicbrainz_artist_metadata import (
     ArtistMetadataBuildInputs,
     ArtistMetadataSettings,
     CertifiedLocalArtistMetadataSources,
@@ -49,7 +49,7 @@ class LocalMusicBrainzArtistMetadataTests(unittest.TestCase):
             sources = LocalArtistMetadataSources(database=root / "names.sqlite", artifact=artifact)
             certified = certify_local_artist_metadata_sources(sources)
             with patch(
-                "musix.serving.local.musicbrainz_artist_metadata._exact_canonical_names",
+                "opennoise.serving.local.musicbrainz_artist_metadata._exact_canonical_names",
                 return_value={},
             ) as lookup:
                 exact_certified_canonical_names(certified, (_ARTIST_A,))

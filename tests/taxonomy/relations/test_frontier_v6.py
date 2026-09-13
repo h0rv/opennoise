@@ -8,18 +8,18 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from musix.evidence.frontier import (
+from opennoise.evidence.frontier import (
     AllSeedEvidenceFrontierArtifact,
     EvidenceFrontierCoverage,
     EvidenceFrontierGate,
     EvidenceFrontierReceipt,
 )
-from musix.storage import LocalObjectStore, ObjectKey
-from musix.taxonomy.relations.frontier_v6 import (
+from opennoise.storage import LocalObjectStore, ObjectKey
+from opennoise.taxonomy.relations.frontier_v6 import (
     FrontierV6Inputs,
     build_taxonomy_relation_frontier_v6,
 )
-from musix.taxonomy.relations.hierarchy_overlay import (
+from opennoise.taxonomy.relations.hierarchy_overlay import (
     TaxonomyRelationHierarchyOverlay,
     TaxonomyRelationHierarchyOverlayEdge,
     TaxonomyRelationHierarchyOverlayReceipt,

@@ -8,15 +8,15 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from musix.pipeline.public_release import PublicReleaseResult
-from musix.pipeline.public_release_custody import (
+from opennoise.pipeline.public_release import PublicReleaseResult
+from opennoise.pipeline.public_release_custody import (
     DatabaseCounts,
     PublicReleaseCustodyError,
     PublicReleaseCustodySettings,
     _verify_objective_evidence,
     custody_public_release,
 )
-from musix.serving.artist_membership_evaluation import (
+from opennoise.serving.artist_membership_evaluation import (
     evaluate_artist_memberships,
     load_judgment_set,
 )
@@ -93,15 +93,15 @@ class PublicReleaseCustodyTests(unittest.TestCase):
             )
             with (
                 patch(
-                    "musix.pipeline.public_release_custody._verify_cache",
+                    "opennoise.pipeline.public_release_custody._verify_cache",
                     return_value=(hashlib.sha256(b"cache").hexdigest(), 5, expected_counts),
                 ),
                 patch(
-                    "musix.pipeline.public_release_custody._load_release_receipt",
+                    "opennoise.pipeline.public_release_custody._load_release_receipt",
                     return_value=release_receipt,
                 ),
                 patch(
-                    "musix.pipeline.public_release_custody._source_rows",
+                    "opennoise.pipeline.public_release_custody._source_rows",
                     return_value=iter([("test-source", "f" * 64, 12, "f" * 64)]),
                 ),
             ):

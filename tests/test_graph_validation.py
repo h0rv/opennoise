@@ -2,9 +2,9 @@ import unittest
 
 from pydantic import ValidationError
 
-from musix.ml.validation import build_graph_validation
-from musix.models.catalog import ArtistCoListenRunProjection
-from musix.models.modeling import (
+from opennoise.ml.validation import build_graph_validation
+from opennoise.models.catalog import ArtistCoListenRunProjection
+from opennoise.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
     GenreIdentity,
@@ -12,7 +12,7 @@ from musix.models.modeling import (
     PublicModelInput,
     PublicModelSettings,
 )
-from musix.models.validation import (
+from opennoise.models.validation import (
     GenreHierarchyEdge,
     GraphValidationInput,
     GraphValidationSettings,

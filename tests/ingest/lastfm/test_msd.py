@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.ingest.lastfm.msd import (
+from opennoise.ingest.lastfm.msd import (
     MsdLastFmError,
     MsdLastFmTarget,
     build_msd_lastfm_evidence,
@@ -13,7 +13,7 @@ from musix.ingest.lastfm.msd import (
     load_msd_lastfm_source_cache,
     publish_msd_lastfm_evidence,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 class MsdLastFmEvidenceTests(unittest.TestCase):

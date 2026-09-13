@@ -9,14 +9,14 @@ import sys
 import time
 from pathlib import Path
 
-from musix.history.signals.publication import (
+from opennoise.history.signals.publication import (
     HistoricalSignalPublicationError,
     build_historical_signal_publication,
     publish_historical_signal_publication,
 )
-from musix.models.historical import HistoricalCompatibilityReceipt
-from musix.models.historical_signal import HistoricalSignalArtifact
-from musix.storage import LocalObjectStore
+from opennoise.models.historical import HistoricalCompatibilityReceipt
+from opennoise.models.historical_signal import HistoricalSignalArtifact
+from opennoise.storage import LocalObjectStore
 
 
 def _arguments() -> argparse.Namespace:

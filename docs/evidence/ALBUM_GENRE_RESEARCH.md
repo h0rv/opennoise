@@ -4,7 +4,7 @@ Status: research proposal as of 2026-08-30. No model is implemented here.
 
 ## Recommendation
 
-Musix should treat album membership and album ranking as two different questions.
+OpenNoise should treat album membership and album ranking as two different questions.
 Membership asks whether a release group belongs to a genre. Ranking asks which
 eligible release groups are the best examples of that genre. A popular album can
 rank highly only after it has enough membership evidence.
@@ -24,7 +24,7 @@ optional view after the user chooses and approves its weights.
 
 ## What quintessential means
 
-The word can refer to several different qualities. Musix should keep them visible
+The word can refer to several different qualities. OpenNoise should keep them visible
 instead of hiding them in one unexplained number.
 
 1. Genre specificity measures how directly and consistently an album is tagged
@@ -39,7 +39,7 @@ Young genres such as hyperpop also change while people argue about their names a
 boundaries. Research on Wikipedia's hyperpop debates shows that online genre
 formation involves contested definitions and exclusion. See
 [Assembling Hyperpop: Genre Formation on Wikipedia](https://academicworks.cuny.edu/gc_pubs/1137/).
-Musix should therefore preserve the source, date, and method behind each claim.
+OpenNoise should therefore preserve the source, date, and method behind each claim.
 
 ## Source and rights review
 
@@ -51,21 +51,21 @@ Musix should therefore preserve the source, date, and method behind each claim.
 | ListenBrainz | Release group listen count, unique listener count, time windows, and mapped release group MBIDs | User listen data and text is CC0. See the [terms](https://listenbrainz.org/terms-of-service/), [data dumps](https://listenbrainz.readthedocs.io/en/latest/users/listenbrainz-dumps.html), and [popularity API](https://listenbrainz.readthedocs.io/en/latest/users/api/popularity.html). | Use for audience features after the direct membership import works. Keep user names transient. |
 | CritiqueBrainz | Reviews and ratings linked to MusicBrainz entities | MetaBrainz publishes separate CC BY-SA 3.0 and CC BY-NC-SA 3.0 archives. See the [dataset description](https://metabrainz.org/datasets) and [JSON archive index](https://data.metabrainz.org/pub/musicbrainz/critiquebrainz/json/). | Optional second phase. Keep the two license groups separate. Review counts and ratings are enough for ranking. Review text is not needed. |
 | Discogs | Master and release grouping, editions, formats, credits, and catalogue terms such as genre and style | The API mixes CC0 catalogue fields with restricted user, marketplace, and image data. It also limits caching and requires attribution for API display. See the [Discogs API terms](https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use). The dump site denied automated inspection during this review. | Defer. Approve each field and exact dump license before import. Do not ingest marketplace, collection, want list, price, sales, or image data. |
-| Rate Your Music | Community genre labels, charts, lists, and ratings | No public developer API or open bulk dataset was found. The official terms page blocked automated access during this review. | Do not scrape or ingest. People may use the site when forming their own Musix judgments, but copied charts and ratings must not become source data. |
+| Rate Your Music | Community genre labels, charts, lists, and ratings | No public developer API or open bulk dataset was found. The official terms page blocked automated access during this review. | Do not scrape or ingest. People may use the site when forming their own OpenNoise judgments, but copied charts and ratings must not become source data. |
 | Open awards and lists | Award membership, dated list placement, and critic selections | Rights vary by publisher. MusicBrainz supports release group award series as open structured data. See the [MusicBrainz series documentation](https://musicbrainz.org/doc/Series). | Use MusicBrainz series first. Add another list only after its license and exact version are recorded. Do not copy review text. |
 
 Discogs deserves a strict boundary. Its terms name many catalogue fields as CC0,
-but genre and style are not separately named in the current CC0 field list. Musix
+but genre and style are not separately named in the current CC0 field list. OpenNoise
 should not infer that every API field is CC0. It should admit an exact dump only
 after a manifest records its license and approved fields.
 
 Rate Your Music is not an MVP source. A missing license is not enough when a site
-also restricts automated access. Musix can ask the user for pairwise judgments
+also restricts automated access. OpenNoise can ask the user for pairwise judgments
 that reflect their own knowledge, without copying the site's charts or values.
 
 ## Membership evidence
 
-Musix should keep each observation append only. A later snapshot can add or revoke
+OpenNoise should keep each observation append only. A later snapshot can add or revoke
 a claim without rewriting history.
 
 ### Direct evidence
@@ -74,10 +74,10 @@ MusicBrainz release group genres and positive release group tag counts are direc
 community claims. The API exposes genres as tags that match the official genre
 list, while broader tags remain available separately. The database dump stores
 aggregate tag count and update time, but it does not publish each editor's raw
-vote. Musix should retain the raw count, update time, and whether the value came
+vote. OpenNoise should retain the raw count, update time, and whether the value came
 from the official genre list.
 
-Wikidata P136 on an album is another direct claim. Musix should join the item to a
+Wikidata P136 on an album is another direct claim. OpenNoise should join the item to a
 MusicBrainz release group through P436. It should retain statement rank,
 qualifiers, references, and retrieval time. P436 declares that coverage is always
 incomplete, so the lack of a join cannot reject an album.
@@ -120,7 +120,7 @@ raw value and a bounded value used by a ranking view.
 Influence needs a narrow definition. MusicBrainz release group relations cover
 remixes, covers, live versions, re-recordings, and inclusion. See the
 [release group relationship guide](https://musicbrainz.org/doc/Artist_Relationship_Guide_for_Artists).
-Musix can also count later linked works or artists, but every count needs age and
+OpenNoise can also count later linked works or artists, but every count needs age and
 popularity controls. A general graph connection is not proof of musical influence.
 
 No run should silently rescale around missing data. Each result should show which
@@ -130,7 +130,7 @@ available."
 
 ## Edition and reissue rules
 
-Musix should rank a release group once. It should choose a representative release
+OpenNoise should rank a release group once. It should choose a representative release
 for display, based on official status, completeness, territory preference, and
 cover availability. MusicBrainz also publishes a CC0 canonical release mapping,
 which can supply a reproducible default. See the
@@ -139,7 +139,7 @@ which can supply a reproducible default. See the
 Deluxe editions, remasters, bonus editions, and format changes normally stay in
 the same release group. Remix albums, covers, live albums, and studio
 re-recordings can be separate groups. The [MusicBrainz release group style guide](https://musicbrainz.org/doc/Style/Release_Group)
-defines these cases. Musix should keep their relations and allow a view to include
+defines these cases. OpenNoise should keep their relations and allow a view to include
 or exclude each type.
 
 Compilations need an explicit rule. Artist album views should exclude compilations
@@ -155,7 +155,7 @@ calculation.
 ## Bias and failure risks
 
 Popularity is the largest scoring risk. Raw listen count, rating count, link
-degree, and review count all rise with fame. Musix should use logarithms or bounded
+degree, and review count all rise with fame. OpenNoise should use logarithms or bounded
 percentiles, compare audience share within a genre cohort, and keep popularity as
 a visible component. Research has found popularity and exposure bias in music
 recommendation. See [Unfair Exposure of Artists in Music Recommendation](https://arxiv.org/abs/2003.11634)
@@ -171,14 +171,14 @@ while current streaming can favor them. Every ranking should offer a time window
 and an as of date. Young internet genres need a recent window and a separate all
 time view.
 
-Gaming is possible in tags, ratings, and listens. Musix should use minimum support,
+Gaming is possible in tags, ratings, and listens. OpenNoise should use minimum support,
 unique contributors where available, per user caps for listening aggregates, and
 snapshot comparisons for sudden changes. The public MusicBrainz dump does not
 include raw voters, so strong anti gaming claims are not possible there.
 
 Circularity can create false confidence. For example, an artist genre tag can
 generate album candidates, and a listener cohort made from those same albums can
-then appear to confirm them. Musix must record each feature's source family and
+then appear to confirm them. OpenNoise must record each feature's source family and
 candidate generation path. Evaluation labels must not come from a source used as
 an input feature.
 
@@ -410,13 +410,13 @@ also supply evaluation labels.
 
 ### Option 1: Evidence facets only
 
-Musix shows eligible albums with genre specificity, history, consensus, audience,
+OpenNoise shows eligible albums with genre specificity, history, consensus, audience,
 and coverage. The user sorts by a facet and sees the evidence. There is no single
 claim about the definitive order. This option is the safest first release.
 
 ### Option 2: Transparent weighted rank
 
-Musix publishes one default order from the five visible components. The user
+OpenNoise publishes one default order from the five visible components. The user
 reviews the proposed 30, 20, 20, 15, and 15 percent weights before they become a
 versioned configuration. The UI can offer saved weight presets without changing
 the raw evidence. This option is the recommended MVP when the product needs a
@@ -424,7 +424,7 @@ ranked list.
 
 ### Option 3: User trained pairwise rank
 
-The user compares two eligible albums at a time. Musix later fits a small linear
+The user compares two eligible albums at a time. OpenNoise later fits a small linear
 or pairwise ranking model on the laptop and shows its coefficients. Whole genres
 and artists remain held out for evaluation. This option directly supports learning
 about ranking models, but it should follow the evidence baseline and evaluation

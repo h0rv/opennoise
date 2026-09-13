@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.projections.consensus_publication import (
+from opennoise.projections.consensus_publication import (
     ConsensusSemanticPublication,
     ConsensusSemanticPublicationError,
     ConsensusSemanticPublicationInputs,

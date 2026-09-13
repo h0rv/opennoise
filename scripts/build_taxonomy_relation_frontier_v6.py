@@ -7,14 +7,14 @@ import hashlib
 import sys
 from pathlib import Path
 
-from musix.evidence.frontier import EvidenceFrontierReceipt
-from musix.storage import LocalObjectStore
-from musix.taxonomy.relations.frontier_v6 import (
+from opennoise.evidence.frontier import EvidenceFrontierReceipt
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.relations.frontier_v6 import (
     FrontierV6Inputs,
     build_taxonomy_relation_frontier_v6,
     publish_taxonomy_relation_frontier_v6,
 )
-from musix.taxonomy.relations.hierarchy_overlay import TaxonomyRelationHierarchyOverlayReceipt
+from opennoise.taxonomy.relations.hierarchy_overlay import TaxonomyRelationHierarchyOverlayReceipt
 
 
 def main() -> int:

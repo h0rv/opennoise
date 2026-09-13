@@ -12,7 +12,7 @@ from pathlib import Path
 
 from pydantic import HttpUrl
 
-from musix.ingest.musicbrainz.release_group_evidence import (
+from opennoise.ingest.musicbrainz.release_group_evidence import (
     MusicBrainzReleaseGroupEvidenceError,
     ReleaseGroupEvidenceProgress,
     ReleaseGroupEvidenceSettings,
@@ -20,7 +20,7 @@ from musix.ingest.musicbrainz.release_group_evidence import (
     build_release_group_evidence_from_seed_target_path,
     verify_release_group_evidence,
 )
-from musix.ingest.musicbrainz.seed_targets import (
+from opennoise.ingest.musicbrainz.seed_targets import (
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
     SeedTargetEvidence,
@@ -30,9 +30,9 @@ from musix.ingest.musicbrainz.seed_targets import (
     settings_sha256,
     write_seed_target_artifact,
 )
-from musix.models.sources import DownloadSource
-from musix.pipeline.source_cache import SourceCacheEntry, SourceCacheReceipt
-from musix.storage import ObjectKey
+from opennoise.models.sources import DownloadSource
+from opennoise.pipeline.source_cache import SourceCacheEntry, SourceCacheReceipt
+from opennoise.storage import ObjectKey
 
 
 def _target() -> MusicBrainzSeedTargetArtifact:

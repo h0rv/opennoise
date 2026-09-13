@@ -7,10 +7,10 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from musix.ml.production_map_evidence import build_production_map_acceptance_evidence
-from musix.ml.production_map_qa import evaluate_production_map
-from musix.models.modeling import PublicModelArtifact
-from musix.models.production import ProductionMapArtifact
+from opennoise.ml.production_map_evidence import build_production_map_acceptance_evidence
+from opennoise.ml.production_map_qa import evaluate_production_map
+from opennoise.models.modeling import PublicModelArtifact
+from opennoise.models.production import ProductionMapArtifact
 
 
 def _arguments() -> argparse.Namespace:

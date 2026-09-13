@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.serving.local.musicbrainz_artist_evidence import (
+from opennoise.serving.local.musicbrainz_artist_evidence import (
     LocalMusicBrainzArtistEvidenceError,
     LocalMusicBrainzEvidenceSources,
     direct_artists_for_seed,
@@ -14,11 +14,11 @@ from musix.serving.local.musicbrainz_artist_evidence import (
     load_musicbrainz_model_adapter_report,
     load_release_group_evidence_artifact,
 )
-from musix.serving.local.musicbrainz_artist_metadata import (
+from opennoise.serving.local.musicbrainz_artist_metadata import (
     LocalArtistMetadataSources,
     load_artist_metadata_artifact,
 )
-from musix.taxonomy.seeds.reconciliation import load_seed_reconciliation
+from opennoise.taxonomy.seeds.reconciliation import load_seed_reconciliation
 
 
 def _parser() -> argparse.ArgumentParser:

@@ -4,8 +4,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-from musix.evidence.album_genres import AlbumGenreRepository, MembershipObservation
-from musix.serving.representative_catalog_ranking import (
+from opennoise.evidence.album_genres import AlbumGenreRepository, MembershipObservation
+from opennoise.serving.representative_catalog_ranking import (
     RepresentativeCatalogRankingConfig,
     RepresentativeCatalogRankingRepository,
 )

@@ -6,7 +6,7 @@ These modules define small interfaces for product work after the first map. None
 
 Status: standalone experiment support.
 
-`src/musix/reconstruction.py` accepts versioned genre to artist membership observations,
+`src/opennoise/reconstruction.py` accepts versioned genre to artist membership observations,
 candidate coordinates, historical coordinates, colors, and neighbor lists. The metadata-only
 boundary intentionally has no audio descriptor or audio artifact contract. It records historical
 claims as disclosed, observed, inferred, or unknown. The first baselines calculate weighted
@@ -25,7 +25,7 @@ Delete path: remove `reconstruction.py`, `tests/test_reconstruction.py`, and `sc
 
 Status: active groundwork.
 
-`src/musix/exploration.py` defines viewport, source, time, lens, and level of detail parameters. `GET /api/explore/map` returns the exact query, the published layout revision and input hash, the effective bounds, stable point fields, and whether the result was cut off by the requested limit. `GET /fragments/map` accepts the same parameters and can return points with or without labels.
+`src/opennoise/exploration.py` defines viewport, source, time, lens, and level of detail parameters. `GET /api/explore/map` returns the exact query, the published layout revision and input hash, the effective bounds, stable point fields, and whether the result was cut off by the requested limit. `GET /fragments/map` accepts the same parameters and can return points with or without labels.
 
 Delete path: remove `exploration.py`, `ExploredMap`, the two experimental route paths, and the `Database.query_map` methods. The stable `/api/map` route and the main map do not depend on these query options.
 
@@ -35,7 +35,7 @@ The current database has 6,291 map points. A local full query took about 70 mill
 
 Status: contract only.
 
-`src/musix/layouts.py` defines a versioned strategy protocol, explicit build inputs, artifact metadata, and a complete artifact output. Every artifact records its strategy revision, parameters, input fingerprint, seed, policy, point count, and bounds. No strategy is registered as the default.
+`src/opennoise/layouts.py` defines a versioned strategy protocol, explicit build inputs, artifact metadata, and a complete artifact output. Every artifact records its strategy revision, parameters, input fingerprint, seed, policy, point count, and bounds. No strategy is registered as the default.
 
 Historical source coordinates and derived coordinates are separate model variants. The historical variant records its source artifact fingerprint and source units. A derived layout records its own units and strategy revision.
 
@@ -45,7 +45,7 @@ Delete path: remove `layouts.py`, the layout metadata route, and the `Database.l
 
 Status: standalone measurement support.
 
-`src/musix/layout_metrics.py` evaluates a versioned point layout without creating a layout, selecting a method, training a model, or writing database state. It accepts typed optional source neighbor lists, label boxes, community memberships and edges, a previous revision, and a repeated result. The evaluator reports neighbor preservation and conservative trustworthiness, bounded label collisions, viewport density and entropy, within-community fragmentation, direct revision movement, coordinate hashes, repeat agreement, and simple SVG and Canvas budgets. `scripts/evaluate_layout.py` loads a published local layout and reports only metrics that need no additional evidence.
+`src/opennoise/layout_metrics.py` evaluates a versioned point layout without creating a layout, selecting a method, training a model, or writing database state. It accepts typed optional source neighbor lists, label boxes, community memberships and edges, a previous revision, and a repeated result. The evaluator reports neighbor preservation and conservative trustworthiness, bounded label collisions, viewport density and entropy, within-community fragmentation, direct revision movement, coordinate hashes, repeat agreement, and simple SVG and Canvas budgets. `scripts/evaluate_layout.py` loads a published local layout and reports only metrics that need no additional evidence.
 
 Delete path: remove `layout_metrics.py`, `tests/test_layout_metrics.py`, `scripts/evaluate_layout.py`, and the `evaluate-layout` Poe task. The map, routes, schema, and layout strategy interface do not depend on the harness.
 
@@ -53,7 +53,7 @@ Delete path: remove `layout_metrics.py`, `tests/test_layout_metrics.py`, `script
 
 Status: contract only.
 
-`src/musix/map_presentation.py` defines the inputs and outputs for later label selection. The contract records named priority inputs, landmark evidence, measured collision boxes, visible and hidden label decisions, exact density cell counts, and evidence backed edges. An inferred edge must name its method and version. No collision, landmark, density, or edge strategy is selected.
+`src/opennoise/map_presentation.py` defines the inputs and outputs for later label selection. The contract records named priority inputs, landmark evidence, measured collision boxes, visible and hidden label decisions, exact density cell counts, and evidence backed edges. An inferred edge must name its method and version. No collision, landmark, density, or edge strategy is selected.
 
 Delete path: remove `map_presentation.py`. No route, database table, or current template imports it.
 
@@ -69,7 +69,7 @@ Delete path: remove `genre_detail.html`, `EvidenceController`, the provenance mo
 
 Status: local vertical slice with synthetic source records.
 
-`src/musix/evidence.py` treats a MusicBrainz release group as the album and keeps edition selection separate. `src/musix/album_genres.py` stores typed membership observations and publishes an unweighted evidence baseline. The baseline sorts eligible albums by independent direct source count, then by direct observation count. It records every component and says that no weights were applied.
+`src/opennoise/evidence.py` treats a MusicBrainz release group as the album and keeps edition selection separate. `src/opennoise/album_genres.py` stores typed membership observations and publishes an unweighted evidence baseline. The baseline sorts eligible albums by independent direct source count, then by direct observation count. It records every component and says that no weights were applied.
 
 The strategy contract also accepts transparent user weights and pairwise user judgments, but neither strategy selects default weights or trains a model. MusicBrainz adapters parse release groups and concrete releases. The Wikidata adapter parses direct P136 claims linked through MusicBrainz release group or release IDs.
 

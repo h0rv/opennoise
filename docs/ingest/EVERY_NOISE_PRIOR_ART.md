@@ -6,14 +6,14 @@ This report reviews open projects and public research related to Every Noise at 
 
 ## Decision summary
 
-Musix should reproduce the exploration model, not copy the Spotify corpus.
+OpenNoise should reproduce the exploration model, not copy the Spotify corpus.
 
 The useful ideas are a spatial genre browser, a genre and artist graph, active search, explainable similarity, and a clear record of where every fact came from. None of the supplied repositories offers a current, licensed, reproducible copy of the Every Noise system. Most are old scrapers or static snapshots. Several have no license. The largest current corpus found in this review is derived from Spotify data obtained through Anna's Archive. Its availability does not make it licensed or compatible with Spotify policy.
 
 The safe starting point is a Python metadata pipeline built from MusicBrainz core data, Wikidata, and ListenBrainz public listens. SQLite FTS5 supports search. Weighted overlap and cooccurrence can support an initial similarity graph. A deterministic graph layout can support the first map. The first map does not require audio or model training.
 
 The user should stay in charge of later model choices. Good research candidates include
-hyperbolic genre embeddings and Word2Vec style cooccurrence over approved metadata. Musix does
+hyperbolic genre embeddings and Word2Vec style cooccurrence over approved metadata. OpenNoise does
 not ingest audio or audio-derived feature data.
 
 ## What the original project exposed
@@ -26,13 +26,13 @@ McDonald's 2013 technical notes add two details. The small related genre maps co
 
 This sets an important boundary. Public page positions are display coordinates. Color is also a display output. Neither is a disclosed embedding or a reproducible account of the internal analytical space. A scraper can preserve the old picture, but it cannot recreate the original model.
 
-The one dimensional public views add useful product ideas. They sort genres by popularity, emergence, modernity, youth, femininity, engagement, background, tempo, duration, color, name, and date added. They can also sort by similarity to a selected genre. These ranks should be treated as historical Spotify derived outputs, not as fields that Musix can refresh from public Spotify APIs.
+The one dimensional public views add useful product ideas. They sort genres by popularity, emergence, modernity, youth, femininity, engagement, background, tempo, duration, color, name, and date added. They can also sort by similarity to a selected genre. These ranks should be treated as historical Spotify derived outputs, not as fields that OpenNoise can refresh from public Spotify APIs.
 
 ## Audit of the supplied projects
 
 Activity dates below are repository push dates. A recent documentation or format commit does not imply fresh source data.
 
-| Project | Last meaningful activity and stack | Actual input, method, and output | Code license | Data license and current limits | Musix decision |
+| Project | Last meaningful activity and stack | Actual input, method, and output | Code license | Data license and current limits | OpenNoise decision |
 | --- | --- | --- | --- | --- | --- |
 | [Scottsdaaale/List-of-All-Spotify-Genres](https://github.com/Scottsdaaale/List-of-All-Spotify-Genres) | 2026-05-02. Generated wrappers for JSON, CSV, SQL, JavaScript, TypeScript, Python, PHP, Ruby, Go, YAML, XML, Markdown, and text. | Packages one list of 6,044 genre strings into multiple syntaxes. It has no coordinates, artists, edges, ranks, collection date, source hash, or update procedure. The README says 12 formats but lists 13. The May 2026 work mostly reorganized and reformatted the same list. | No detected license. | No separate data license. The list is smaller than the final 6,291 genre map and its source date is unclear. | Do not use as canonical data. It can be a historical comparison or parser fixture after a rights review. |
 | [AyrtonB/EveryNoise-Watch](https://github.com/AyrtonB/EveryNoise-Watch) | 2021-05-21. Python notebooks and batch files. | Uses Requests and Beautiful Soup on the Every Noise map HTML. It reads CSS `left`, `top`, and `color`, reverses the vertical pixel coordinate, and writes `genre`, `x_coord`, `y_coord`, `hex_code`, `r`, `g`, and `b` to CSV plus a Frictionless data package descriptor. | MIT. | The derived snapshot has no separate upstream data license. It depends on old page structure. The README calls this three dimensional, but RGB plus x and y are five numeric display values. | Reuse the parser and provenance concepts only. The typed Python adapter uses the pinned CSV as a verified comparison source. |
@@ -60,9 +60,9 @@ The summary overstates several projects:
 
 Seven of the eight supplied repositories have no GitHub release. EveryNoise-Watch has one release, `v1.0.0` from 2021-05-19, and its open issue asks for a migration from Goodtables to Frictionless. The project networks are small, with zero to five forks each. No fork provides a maintained replacement for the map pipeline.
 
-The only materially renamed recent fork is [hannesdatta/data-spotify-promotions-releases](https://github.com/hannesdatta/data-spotify-promotions-releases), last pushed 2023-01-04. It documents the same two Everynoise scrapers for new releases and world browser playlists and points to [Dataverse DOI 10.34894/0RK0KK](https://doi.org/10.34894/0RK0KK). The repository has no license. Its README still says raw data is confidential and that a public release was expected in 2021, so neither current availability nor reuse rights are clear. It is not an approved Musix input.
+The only materially renamed recent fork is [hannesdatta/data-spotify-promotions-releases](https://github.com/hannesdatta/data-spotify-promotions-releases), last pushed 2023-01-04. It documents the same two Everynoise scrapers for new releases and world browser playlists and points to [Dataverse DOI 10.34894/0RK0KK](https://doi.org/10.34894/0RK0KK). The repository has no license. Its README still says raw data is confidential and that a public release was expected in 2021, so neither current availability nor reuse rights are clear. It is not an approved OpenNoise input.
 
-A targeted search of PyPI and npm did not find a maintained Every Noise parser or dataset package tied to these projects. The supplied repositories are source snapshots rather than versioned dependencies. Musix implements small typed adapters directly instead of taking an unmaintained package dependency.
+A targeted search of PyPI and npm did not find a maintained Every Noise parser or dataset package tied to these projects. The supplied repositories are source snapshots rather than versioned dependencies. OpenNoise implements small typed adapters directly instead of taking an unmaintained package dependency.
 
 ## Other reproductions and archival work
 
@@ -93,7 +93,7 @@ The table separates methods that only need metadata from methods that use audio 
 | Force directed, spectral, or multidimensional scaling layout | Weighted graph or distance matrix | Two dimensional display positions | No | Good choices for the first computed map. Fix ordering, seed, parameters, and collision handling for deterministic builds. Layout coordinates should be versioned separately from semantic evidence. |
 | Artist barycenter | Weighted artist to genre edges and genre positions | Artist location on the genre map | No | Simple and explainable. Show uncertainty or spread when an artist belongs to distant genres. Do not force one genre label. |
 | SQLite FTS5 with aliases | Canonical names, aliases, normalized names, and source IDs | Fast prefix and text search | No | Appropriate for the first product. Ranking can blend exact name, alias, source quality, and graph importance without ML. |
-| Embeat dual tower and Track2Vec | Spotify audio features, metadata, related items, and playlist sequences | Track vectors and retrieval candidates | Uses audio features and proprietary derived data | Architecturally interesting, but its source corpus and policy status make it unsuitable for Musix. The user should choose any later model and training data. |
+| Embeat dual tower and Track2Vec | Spotify audio features, metadata, related items, and playlist sequences | Track vectors and retrieval candidates | Uses audio features and proprietary derived data | Architecturally interesting, but its source corpus and policy status make it unsuitable for OpenNoise. The user should choose any later model and training data. |
 
 The first map should not label its axes as organic, mechanical, dense, or spiky unless those properties are computed from explicit, reviewable features. A generic graph embedding can resemble the old map while having completely different meaning. An affine fit to old coordinates preserves the old orientation but does not recover the original model.
 
@@ -105,7 +105,7 @@ The first map should not label its axes as organic, mechanical, dense, or spiky 
 | [Wikidata](https://www.wikidata.org/wiki/Wikidata:Licensing) | Genre names, aliases, subclass relations, countries, scenes, artists, and links to other identifiers. | Structured data is CC0. Individual linked media and external pages have separate terms. | Best open source for genre aliases and a seed hierarchy. Statements need ranks, references, and conflict handling. |
 | [ListenBrainz public dumps](https://listenbrainz.readthedocs.io/en/latest/users/listenbrainz-dumps.html) | Public listening events that can form co listen and artist transition graphs. | Public listen data is released under CC0 according to the [ListenBrainz terms](https://listenbrainz.org/terms-of-service/). User supplied text or linked content may need separate treatment. | Good open collaborative signal. Full and incremental dumps support repeatable snapshots. Apply privacy thresholds before exposing rare user patterns. |
 | [AcousticBrainz](https://acousticbrainz.org/) | Precomputed low and high level acoustic features keyed to MusicBrainz recordings. | The project states that submitted data is CC0. | Collection stopped on 2022-07-06. The final data covers about 7.56 million unique recordings and has duplicate submissions and model version variation. Useful only as an optional later audio derived feature source. |
-| [Free Music Archive dataset](https://github.com/mdeff/fma) | 106,574 tracks, 163 hierarchical genres, metadata, features, and licensed audio. | Repository code is MIT. Dataset documentation and paper are CC BY 4.0. Each audio item has its own Creative Commons license. | The taxonomy is useful prior art, but Musix does not ingest its audio or audio-derived columns. See the [FMA paper](https://arxiv.org/abs/1612.01840). |
+| [Free Music Archive dataset](https://github.com/mdeff/fma) | 106,574 tracks, 163 hierarchical genres, metadata, features, and licensed audio. | Repository code is MIT. Dataset documentation and paper are CC BY 4.0. Each audio item has its own Creative Commons license. | The taxonomy is useful prior art, but OpenNoise does not ingest its audio or audio-derived columns. See the [FMA paper](https://arxiv.org/abs/1612.01840). |
 
 Sources that are not safe defaults include the [Tagtraum genre annotations](https://www.tagtraum.com/msd_genre_datasets.html), which are limited to research use, and the [AcousticBrainz Genre Dataset](https://mtg.github.io/acousticbrainz-genre-dataset/), which includes CC BY-NC-SA and AllMusic research only portions. The [Million Song Dataset](http://millionsongdataset.com/) is useful for historical research but combines components with different licenses. [Discogs terms](https://support.discogs.com/hc/en-us/articles/360009334333-Terms-of-Service) restrict scraping, data mining, and some reuse, so its dump should not be assumed open merely because a third party repository says so.
 
@@ -115,9 +115,9 @@ Spotify cannot be the corpus foundation for this project. Its [Developer Policy]
 
 Current Development Mode is also too narrow for corpus construction. As of August 2026, an owner needs Premium, an app is limited to five authorized users, and 25 client IDs share one account quota. Spotify removed batch catalog fetches for this mode, reduced search results, removed several browse and artist endpoints and fields, and limits playlist contents to playlists the user owns or collaborates on. Sources: [February 2026 migration guide](https://developer.spotify.com/documentation/web-api/tutorials/february-2026-migration-guide), [February 2026 change list](https://developer.spotify.com/documentation/web-api/references/changes/february-2026), and [July 2026 quota update](https://developer.spotify.com/blog/2026-07-23-web-api-quota-updates).
 
-Spotify may later be an optional user connected lookup or outbound link if the exact feature complies with current policy, attribution, retention, and quota rules. It should not populate the durable Musix genre graph. The same principle applies to Apple Music. A connector can improve a user's playback flow, but it does not provide a reusable metadata license.
+Spotify may later be an optional user connected lookup or outbound link if the exact feature complies with current policy, attribution, retention, and quota rules. It should not populate the durable OpenNoise genre graph. The same principle applies to Apple Music. A connector can improve a user's playback flow, but it does not provide a reusable metadata license.
 
-Anna's Archive is a location, not permission. The Embeat project shows that a large Spotify derived collection is circulating there. Musix should not download or ingest it. A claimed CC BY-NC label added by a republisher does not establish authority to relicense Spotify content. Internet Archive access has the same distinction. It can establish what a page looked like at a date, but it does not erase the rights attached to page data, images, or audio.
+Anna's Archive is a location, not permission. The Embeat project shows that a large Spotify derived collection is circulating there. OpenNoise should not download or ingest it. A claimed CC BY-NC label added by a republisher does not establish authority to relicense Spotify content. Internet Archive access has the same distinction. It can establish what a page looked like at a date, but it does not erase the rights attached to page data, images, or audio.
 
 This is an engineering risk assessment, not legal advice. Any planned release of a copied historical snapshot should receive a specific rights review.
 

@@ -8,27 +8,27 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.adapters.everynoise import (
+from opennoise.adapters.everynoise import (
     NEROYUKI_H3_SOURCE,
     QUINT_SOURCE,
     adapt_historical_genre_artist_map,
     adapt_quint_html,
 )
-from musix.db import Database
-from musix.history.historical_compatibility import (
+from opennoise.db import Database
+from opennoise.history.historical_compatibility import (
     build_historical_compatibility,
     compatibility_receipt,
     coverage_quality_report,
     publish_historical_compatibility,
     write_compatibility_receipt,
 )
-from musix.ingest.jsonl import ImportOptions, import_jsonl_sync
-from musix.models.historical import HistoricalH3SourceManifest, HistoricalMembershipProjection
-from musix.serving.genre_discovery import (
+from opennoise.ingest.jsonl import ImportOptions, import_jsonl_sync
+from opennoise.models.historical import HistoricalH3SourceManifest, HistoricalMembershipProjection
+from opennoise.serving.genre_discovery import (
     import_historical_genre_memberships,
     query_displayable_historical_genre_memberships,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def _arguments() -> argparse.Namespace:
@@ -48,7 +48,7 @@ def _arguments() -> argparse.Namespace:
         default=Path("config/historical_sources/neroyuki_h3_20241116.json"),
     )
     parser.add_argument("--enable-local-display", action="store_true")
-    parser.add_argument("--database", type=Path, default=Path("data/musix.sqlite"))
+    parser.add_argument("--database", type=Path, default=Path("data/opennoise.sqlite"))
     parser.add_argument("--object-store", type=Path, default=Path("data/objects"))
     parser.add_argument(
         "--receipt",

@@ -9,17 +9,17 @@ from pathlib import Path
 
 from pydantic import HttpUrl
 
-from musix.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
-from musix.catalog.registry import ProjectorRegistry
-from musix.models.pipeline import SourceLimits
-from musix.models.sources import DownloadSource
-from musix.pipeline.manifest import load_download_source
-from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
-from musix.sources.musicbrainz import (
+from opennoise.catalog.musicbrainz import RecordingProjector, ReleaseGroupProjector
+from opennoise.catalog.registry import ProjectorRegistry
+from opennoise.models.pipeline import SourceLimits
+from opennoise.models.sources import DownloadSource
+from opennoise.pipeline.manifest import load_download_source
+from opennoise.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
+from opennoise.sources.musicbrainz import (
     MusicBrainzRecordingDumpAdapter,
     MusicBrainzReleaseGroupDumpAdapter,
 )
-from musix.sources.registry import AdapterRegistry
+from opennoise.sources.registry import AdapterRegistry
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ARTIST_ID = "30238ead-59fa-41e2-a7ab-b7f6e6363c4b"

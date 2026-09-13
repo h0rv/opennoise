@@ -10,11 +10,11 @@ ROOT = Path(__file__).resolve().parents[1]
 class TaskContractTests(unittest.TestCase):
     """Keep Poe as the sole project task runner."""
 
-    def test_opennoise_distribution_keeps_the_internal_musix_module(self) -> None:
+    def test_opennoise_distribution_keeps_the_internal_opennoise_module(self) -> None:
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
         self.assertEqual(project["project"]["name"], "opennoise")
-        self.assertEqual(project["tool"]["uv"]["build-backend"]["module-name"], "musix")
+        self.assertEqual(project["tool"]["uv"]["build-backend"]["module-name"], "opennoise")
 
     def test_poe_exposes_required_project_tasks_without_mise_task_aliases(self) -> None:
         mise = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))
@@ -47,9 +47,9 @@ class TaskContractTests(unittest.TestCase):
         self.assertEqual(
             poe_tasks["export-opennoise-pages"],
             "python scripts/export_opennoise_pages.py "
-            "--production-map $MUSIX_PRODUCTION_MAP_PATH "
-            "--open-construction-v2 $MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH "
-            "--output $MUSIX_OPENNOISE_PAGES_OUTPUT",
+            "--production-map $OPENNOISE_PRODUCTION_MAP_PATH "
+            "--open-construction-v2 $OPENNOISE_CONSTRUCTION_GRAPH_V2_PATH "
+            "--output $OPENNOISE_PAGES_OUTPUT",
         )
         self.assertNotIn("open-v2-browser-qa", poe_tasks)
 

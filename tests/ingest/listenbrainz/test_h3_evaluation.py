@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from musix.ingest.listenbrainz.h3_evaluation import (
+from opennoise.ingest.listenbrainz.h3_evaluation import (
     ListenBrainzH3EvaluationCoverage,
     ListenBrainzH3EvaluationMetrics,
 )

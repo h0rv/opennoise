@@ -8,14 +8,14 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from musix.history.historical_imitation import (
+from opennoise.history.historical_imitation import (
     H3CustodyInput,
     HistoricalImitationSettings,
     _split_historical,
     build_historical_imitation,
     verify_historical_imitation,
 )
-from musix.ingest.musicbrainz.seed_targets import (
+from opennoise.ingest.musicbrainz.seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
@@ -25,17 +25,17 @@ from musix.ingest.musicbrainz.seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.ingest.spotify.artifact import (
+from opennoise.ingest.spotify.artifact import (
     SpotifyBridgeArtifactError,
     load_musicbrainz_spotify_bridge,
 )
-from musix.ingest.spotify.bridge import (
+from opennoise.ingest.spotify.bridge import (
     bridge_artifact_sha256,
     build_musicbrainz_spotify_bridge,
     write_musicbrainz_spotify_bridge,
 )
-from musix.storage import LocalObjectStore
-from musix.taxonomy.open.tag_feature_matrix import (
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.open.tag_feature_matrix import (
     build_open_tag_feature_matrix,
     load_open_tag_feature_matrix,
     load_receipted_open_tag_feature_matrix,

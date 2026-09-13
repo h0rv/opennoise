@@ -74,7 +74,7 @@ The published SQLite database is 153,231,360 bytes with file SHA-256
 integrity `ok`, and no foreign key violations. Repeating publication returned the same logical
 output hash and reported a duplicate instead of creating another model run.
 
-The generated screenshots are `/tmp/musix-phase3-public.png` and
-`/tmp/musix-phase3-taxonomy.png`. They confirm that excluded cross domain labels are gone. They
+The generated screenshots are `/tmp/opennoise-phase3-public.png` and
+`/tmp/opennoise-phase3-taxonomy.png`. They confirm that excluded cross domain labels are gone. They
 also show dense label overlap in the largest components, which remains a visualization issue and
 does not change the evidence or layout hashes above.

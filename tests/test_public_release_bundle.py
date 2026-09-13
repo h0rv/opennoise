@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.pipeline.public_release_bundle import (
+from opennoise.pipeline.public_release_bundle import (
     PublicReleaseBundleDestinations,
     PublicReleaseBundleError,
     PublicReleaseCustodyBundleReceipt,
@@ -18,13 +18,13 @@ from musix.pipeline.public_release_bundle import (
     restore_public_release_bundle,
     verify_public_release_bundle,
 )
-from musix.pipeline.public_release_custody import (
+from opennoise.pipeline.public_release_custody import (
     CustodyObject,
     DatabaseCounts,
     EvidenceBinding,
     PublicReleaseCustodyReceipt,
 )
-from musix.storage import LocalObjectStore, ObjectKey
+from opennoise.storage import LocalObjectStore, ObjectKey
 
 
 class PublicReleaseBundleTests(unittest.TestCase):

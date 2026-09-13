@@ -9,12 +9,12 @@ from unittest.mock import AsyncMock, patch
 import httpx
 from pydantic import HttpUrl, ValidationError
 
-from musix.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
-from musix.catalog.registry import ProjectorRegistry
-from musix.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
-from musix.models.pipeline import ParsedSourceRecord, SourceLimits, SourceRecord
-from musix.models.sources import DownloadResult, DownloadSource
-from musix.pipeline.multi_source import MultiArtifactOptions, run_multi_artifact_pipeline
+from opennoise.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
+from opennoise.catalog.registry import ProjectorRegistry
+from opennoise.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
+from opennoise.models.pipeline import ParsedSourceRecord, SourceLimits, SourceRecord
+from opennoise.models.sources import DownloadResult, DownloadSource
+from opennoise.pipeline.multi_source import MultiArtifactOptions, run_multi_artifact_pipeline
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 
@@ -157,7 +157,7 @@ class MultiSourcePipelineTests(PollingIsolatedAsyncioTestCase):
     async def test_atomic_lineage_and_exact_replay(self) -> None:
         projectors = ProjectorRegistry((ArtistCoListenProjector(), ArtistCoListenRunProjector()))
         downloader = AsyncMock(side_effect=(*self.downloads, *self.downloads))
-        with patch("musix.pipeline.multi_source.download_verified", downloader):
+        with patch("opennoise.pipeline.multi_source.download_verified", downloader):
             first = await run_multi_artifact_pipeline(
                 self.sources, _Adapter(), projectors, self._records, self.options
             )
@@ -190,7 +190,7 @@ class MultiSourcePipelineTests(PollingIsolatedAsyncioTestCase):
 
         downloader = AsyncMock(side_effect=self.downloads)
         with (
-            patch("musix.pipeline.multi_source.download_verified", downloader),
+            patch("opennoise.pipeline.multi_source.download_verified", downloader),
             self.assertRaisesRegex(RuntimeError, "fixture failure"),
         ):
             await run_multi_artifact_pipeline(
@@ -220,8 +220,8 @@ class MultiSourcePipelineTests(PollingIsolatedAsyncioTestCase):
             )
         )
         with (
-            patch("musix.pipeline.multi_source.download_verified", downloader),
-            patch("musix.pipeline.multi_source.asyncio.sleep", new=AsyncMock()) as sleep,
+            patch("opennoise.pipeline.multi_source.download_verified", downloader),
+            patch("opennoise.pipeline.multi_source.asyncio.sleep", new=AsyncMock()) as sleep,
         ):
             result = await run_multi_artifact_pipeline(
                 self.sources,

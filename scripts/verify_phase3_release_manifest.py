@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.pipeline.release_manifest import (
+from opennoise.pipeline.release_manifest import (
     load_release_manifest,
     verify_manifest_against_database,
 )

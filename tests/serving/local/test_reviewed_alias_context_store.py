@@ -8,18 +8,18 @@ from tempfile import TemporaryDirectory
 from typing import NamedTuple
 from unittest.mock import patch
 
-from musix.ingest.musicbrainz.model_adapter import MusicBrainzModelAdapterReport
-from musix.ingest.musicbrainz.reviewed_alias_context import (
+from opennoise.ingest.musicbrainz.model_adapter import MusicBrainzModelAdapterReport
+from opennoise.ingest.musicbrainz.reviewed_alias_context import (
     ReviewedAliasCombinedModelReceipt,
     ReviewedAliasContextArtifact,
     ReviewedAliasContextMembership,
 )
-from musix.serving.local.reviewed_alias_context_store import (
+from opennoise.serving.local.reviewed_alias_context_store import (
     LocalReviewedAliasContextStore,
     LocalReviewedAliasContextStoreError,
 )
-from musix.serving.routes import _union_observed_artists, _union_observed_seeds
-from musix.taxonomy.seeds.reconciliation import (
+from opennoise.serving.routes import _union_observed_artists, _union_observed_seeds
+from opennoise.taxonomy.seeds.reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationDisposition,
 )
@@ -69,19 +69,19 @@ class LocalReviewedAliasContextStoreTests(unittest.TestCase):
             store = _store(artifact_path, receipt_path, peer_index)
             with (
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.ReviewedAliasContextArtifact.model_validate_json",
+                    "opennoise.serving.local.reviewed_alias_context_store.ReviewedAliasContextArtifact.model_validate_json",
                     return_value=_artifact(),
                 ),
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.ReviewedAliasCombinedModelReceipt.model_validate_json",
+                    "opennoise.serving.local.reviewed_alias_context_store.ReviewedAliasCombinedModelReceipt.model_validate_json",
                     return_value=_receipt(),
                 ),
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store."
+                    "opennoise.serving.local.reviewed_alias_context_store."
                     "verify_reviewed_alias_context_artifact"
                 ) as verify_artifact,
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store."
+                    "opennoise.serving.local.reviewed_alias_context_store."
                     "verify_reviewed_alias_combined_model_receipt"
                 ) as verify_receipt,
             ):
@@ -111,18 +111,18 @@ class LocalReviewedAliasContextStoreTests(unittest.TestCase):
             wrong = _receipt().model_copy(update={"reviewed_alias_context_output_sha256": "b" * 64})
             with (
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.ReviewedAliasContextArtifact.model_validate_json",
+                    "opennoise.serving.local.reviewed_alias_context_store.ReviewedAliasContextArtifact.model_validate_json",
                     return_value=_artifact(),
                 ),
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.ReviewedAliasCombinedModelReceipt.model_validate_json",
+                    "opennoise.serving.local.reviewed_alias_context_store.ReviewedAliasCombinedModelReceipt.model_validate_json",
                     return_value=wrong,
                 ),
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.verify_reviewed_alias_context_artifact"
+                    "opennoise.serving.local.reviewed_alias_context_store.verify_reviewed_alias_context_artifact"
                 ),
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.verify_reviewed_alias_combined_model_receipt"
+                    "opennoise.serving.local.reviewed_alias_context_store.verify_reviewed_alias_combined_model_receipt"
                 ),
                 self.assertRaisesRegex(LocalReviewedAliasContextStoreError, "binding is invalid"),
             ):
@@ -140,18 +140,18 @@ class LocalReviewedAliasContextStoreTests(unittest.TestCase):
             )
             with (
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.ReviewedAliasContextArtifact.model_validate_json",
+                    "opennoise.serving.local.reviewed_alias_context_store.ReviewedAliasContextArtifact.model_validate_json",
                     return_value=_artifact(),
                 ),
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.ReviewedAliasCombinedModelReceipt.model_validate_json",
+                    "opennoise.serving.local.reviewed_alias_context_store.ReviewedAliasCombinedModelReceipt.model_validate_json",
                     return_value=_receipt(),
                 ),
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.verify_reviewed_alias_context_artifact"
+                    "opennoise.serving.local.reviewed_alias_context_store.verify_reviewed_alias_context_artifact"
                 ),
                 patch(
-                    "musix.serving.local.reviewed_alias_context_store.verify_reviewed_alias_combined_model_receipt"
+                    "opennoise.serving.local.reviewed_alias_context_store.verify_reviewed_alias_combined_model_receipt"
                 ),
                 self.assertRaisesRegex(LocalReviewedAliasContextStoreError, "does not match"),
             ):

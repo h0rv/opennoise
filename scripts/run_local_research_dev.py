@@ -18,33 +18,33 @@ def main() -> int:
         sys.stderr.write("Production map unavailable. Run `uv run poe release-certify` first.\n")
         return 2
     inputs = {
-        "MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_DATABASE": root
+        "OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_DATABASE": root
         / ".cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite",
-        "MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ARTIFACT": root
+        "OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ARTIFACT": root
         / ".cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json",
-        "MUSIX_LOCAL_RESEARCH_SEED_RECONCILIATION": root
+        "OPENNOISE_LOCAL_RESEARCH_SEED_RECONCILIATION": root
         / ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json",
-        "MUSIX_LOCAL_RESEARCH_ADAPTER_REPORT": root
+        "OPENNOISE_LOCAL_RESEARCH_ADAPTER_REPORT": root
         / ".cache/musicbrainz-full-seed-targets/pipeline/musicbrainz-model-adapter-report.json",
-        "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ARTIFACT": root
+        "OPENNOISE_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ARTIFACT": root
         / ".cache/reviewed-alias-context-v1/artifact-v1.json",
-        "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_RECEIPT": root
+        "OPENNOISE_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_RECEIPT": root
         / ".cache/reviewed-alias-combined-model-v1/receipt.json",
-        "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_PEER_INDEX": root
+        "OPENNOISE_LOCAL_RESEARCH_REVIEWED_ALIAS_PEER_INDEX": root
         / ".cache/reviewed-alias-combined-model-v1/peer-similarity-local-research.sqlite",
-        "MUSIX_LOCAL_RESEARCH_PEER_LAYOUT": root
+        "OPENNOISE_LOCAL_RESEARCH_PEER_LAYOUT": root
         / ".cache/musicbrainz-full-seed-targets/pipeline/peer-community-layout-v1.json",
-        "MUSIX_LOCAL_RESEARCH_MAP_PEER_INDEX": root
+        "OPENNOISE_LOCAL_RESEARCH_MAP_PEER_INDEX": root
         / ".cache/musicbrainz-full-seed-targets/pipeline/peer-similarity-local-research.sqlite",
-        "MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_DATABASE": root
+        "OPENNOISE_LOCAL_RESEARCH_ARTIST_METADATA_DATABASE": root
         / ".cache/musicbrainz-release-group-artist-metadata-v1/metadata.sqlite",
-        "MUSIX_LOCAL_RESEARCH_ARTIST_METADATA_ARTIFACT": root
+        "OPENNOISE_LOCAL_RESEARCH_ARTIST_METADATA_ARTIFACT": root
         / ".cache/musicbrainz-release-group-artist-metadata-v1/artifact.json",
     }
     reverse_lookup = {
-        "MUSIX_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_DATABASE": root
+        "OPENNOISE_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_DATABASE": root
         / ".cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup.sqlite",
-        "MUSIX_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_ARTIFACT": root
+        "OPENNOISE_LOCAL_RESEARCH_ARTIST_REVERSE_LOOKUP_ARTIFACT": root
         / (
             ".cache/musicbrainz-release-group-evidence-candidate-v1/"
             "artist-reverse-lookup-artifact.json"
@@ -59,13 +59,13 @@ def main() -> int:
         sys.stderr.write("Local artist reverse lookup requires both database and artifact files.\n")
         return 2
     environment = os.environ | {
-        "MUSIX_DATABASE_PATH": str(production.database),
-        "MUSIX_DATABASE_READ_ONLY": "true",
-        "MUSIX_PRODUCTION_MAP_PATH": str(production.map_artifact),
+        "OPENNOISE_DATABASE_PATH": str(production.database),
+        "OPENNOISE_DATABASE_READ_ONLY": "true",
+        "OPENNOISE_PRODUCTION_MAP_PATH": str(production.map_artifact),
         "HOST": "127.0.0.1",
         "PORT": os.environ.get("PORT", "3002"),
-        "MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true",
-        "MUSIX_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ENABLED": "true",
+        "OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true",
+        "OPENNOISE_LOCAL_RESEARCH_REVIEWED_ALIAS_CONTEXT_ENABLED": "true",
         **{key: str(value) for key, value in inputs.items()},
         **(
             {key: str(value) for key, value in reverse_lookup.items()}
@@ -74,7 +74,7 @@ def main() -> int:
         ),
     }
     return subprocess.run(
-        [sys.executable, "-m", "musix.serving.cli", "serve"], check=False, env=environment
+        [sys.executable, "-m", "opennoise.serving.cli", "serve"], check=False, env=environment
     ).returncode
 
 

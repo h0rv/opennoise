@@ -6,14 +6,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.ml.publish import load_public_model
-from musix.serving.artist_membership_evaluation import (
+from opennoise.ml.publish import load_public_model
+from opennoise.serving.artist_membership_evaluation import (
     ArtistMembershipEvaluationStore,
     evaluate_artist_memberships,
     load_judgment_set,
     publish_evaluation_evidence,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def main() -> int:

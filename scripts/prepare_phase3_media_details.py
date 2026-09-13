@@ -11,7 +11,7 @@ from typing import Literal
 
 from pydantic import Field, TypeAdapter
 
-from musix.models import FrozenModel
+from opennoise.models import FrozenModel
 
 type MediaKind = Literal["release_group", "recording"]
 QID_PATTERN = r"^Q[1-9][0-9]*$"

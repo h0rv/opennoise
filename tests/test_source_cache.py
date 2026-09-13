@@ -5,9 +5,9 @@ from pathlib import Path
 import httpx
 from pydantic import HttpUrl
 
-from musix.models.sources import DownloadSource
-from musix.pipeline.manifest import source_acquisition_status
-from musix.pipeline.source_cache import (
+from opennoise.models.sources import DownloadSource
+from opennoise.pipeline.manifest import source_acquisition_status
+from opennoise.pipeline.source_cache import (
     SourceCacheAcquisition,
     SourceCacheEntry,
     SourceCacheError,
@@ -20,7 +20,7 @@ from musix.pipeline.source_cache import (
     restore_source_cache,
     verify_source_cache_receipt,
 )
-from musix.storage import LocalObjectStore, ObjectKey
+from opennoise.storage import LocalObjectStore, ObjectKey
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ROOT = Path(__file__).resolve().parents[1]

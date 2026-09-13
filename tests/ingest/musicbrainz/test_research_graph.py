@@ -4,9 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
-from musix.ingest.musicbrainz.coverage import CoverageMatch, CoverageReport
-from musix.ingest.musicbrainz.research_graph import (
+from opennoise.evidence.reconstruction import GenreArtistEdge, ReconstructionInputs, VersionedInput
+from opennoise.ingest.musicbrainz.coverage import CoverageMatch, CoverageReport
+from opennoise.ingest.musicbrainz.research_graph import (
     ResearchGraphBuildConfig,
     build_gate,
     build_musicbrainz_research_graph,

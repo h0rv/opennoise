@@ -6,14 +6,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.pipeline.public_release_bundle import (
+from opennoise.pipeline.public_release_bundle import (
     PublicReleaseBundleDestinations,
     PublicReleaseBundleError,
     export_public_release_bundle,
     restore_public_release_bundle,
     verify_public_release_bundle,
 )
-from musix.storage import LocalObjectStore, ObjectKey
+from opennoise.storage import LocalObjectStore, ObjectKey
 
 
 def _arguments() -> argparse.Namespace:

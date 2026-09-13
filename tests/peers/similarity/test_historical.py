@@ -11,21 +11,21 @@ from contextlib import closing
 from pathlib import Path
 from typing import override
 
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
     PublicModelInput,
 )
-from musix.peers.similarity.historical import (
+from opennoise.peers.similarity.historical import (
     HistoricalPeerSettings,
     evaluate_peer_similarity_historical,
     historical_peer_report_sha256,
     publish_historical_peer_evaluation,
     verify_historical_peer_report,
 )
-from musix.peers.similarity.similarity import PeerSimilaritySettings, build_peer_similarity
-from musix.storage import LocalObjectStore
+from opennoise.peers.similarity.similarity import PeerSimilaritySettings, build_peer_similarity
+from opennoise.storage import LocalObjectStore
 
 
 class HistoricalPeerEvaluationTests(unittest.TestCase):

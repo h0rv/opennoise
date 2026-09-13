@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.peers.audit.local_release_group_neighbor_comparison import (
+from opennoise.peers.audit.local_release_group_neighbor_comparison import (
     _frozen_metadata,
     _frozen_neighbors,
     _memberships,

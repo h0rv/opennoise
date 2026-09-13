@@ -10,7 +10,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from musix.models import FrozenModel
+from opennoise.models import FrozenModel
 
 QID_PATTERN = r"^Q[1-9][0-9]*$"
 GENRE_SHARD_SIZE = 200

@@ -4,8 +4,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.ml.public_model_gate import evaluate_public_model
-from musix.ml.publish import load_public_model
+from opennoise.ml.public_model_gate import evaluate_public_model
+from opennoise.ml.publish import load_public_model
 
 
 def main() -> int:

@@ -1,7 +1,7 @@
 # Goal completion audit
 
 Audit basis: main `b768b64`, inspected in the current checkout. The statuses
-describe the current Musix implementation. They do not claim that historical
+describe the current OpenNoise implementation. They do not claim that historical
 Every Noise output or any lexical label is ground truth.
 
 | Requirement | Status | Evidence and measured result |
@@ -12,7 +12,7 @@ Every Noise output or any lexical label is ground truth.
 | Explainable genre, artist membership, and similarity | Proven | The public model persists direct and one hop profiles, components, evidence references, scores, and ranks. The retained release evidence has 4,434 direct profiles, 22,091 one hop profiles, 26,525 total profiles, and 34,348 neighbors. |
 | Public landscape map | Proven | The accepted production artifact has 603 nodes, 712 taxonomy edges, 4 monotonic LODs, and accepted desktop and mobile browser evidence. The current landscape map is served from the versioned artifact. |
 | Open 6,291 graph | Proven, bounded | `data/model/open-construction-graph-v1.json` has 6,291 nodes and 1,059 edges. It has 5,243 components, 5,173 isolates, 216 factual taxonomy edges, 843 lexical review edges, 3,539 abstentions, 371 ambiguous names, and 0 inferred memberships. The graph does not use historical geometry, neighbours, artists, H3, or supplementary MusicBrainz genre data. |
-| View selector | Proven, bounded | `src/musix/templates/map.html:1-7` exposes Public, Open 6,291, and Historical 6,291. Open has bounded landscape endpoints. Historical remains unavailable without its separately configured local artifact and rights decision. |
+| View selector | Proven, bounded | `src/opennoise/templates/map.html:1-7` exposes Public, Open 6,291, and Historical 6,291. Open has bounded landscape endpoints. Historical remains unavailable without its separately configured local artifact and rights decision. |
 | Local MusicBrainz research graph | Proven, local only | `docs/MUSICBRAINZ_RESEARCH_GRAPH.md` defines the local scope. The current research coverage is 724 matched names. Its scores, evidence, and landscape are not exportable public model input. |
 | Bridge-backed historical membership imitation | Measured, local only | The sealed `historical-imitation-v1` run joins only receipt-bound MusicBrainz-to-Spotify identities to H3's 306,136 unranked positive observations. It maps 120,288 observations to 78,954 MusicBrainz artists. Its open-only and edge-holdout Recall@50 results are 0.01582 and 0.03059 micro, respectively; 1,172 whole-label cold genres explicitly abstain. This is a bounded reconstruction experiment, not a complete membership, rank, or Every Noise parity claim. |
 | Representative metadata | Partial | Candidate retrieval and published metadata examples are separate. `docs/reports/METADATA_REPRESENTATIVES_20260904.md` records 871 release group examples and 498 recording proxy examples from bounded candidates. The examples do not claim defining, popular, or quintessential works. The hydration report records 20 releases and 237 track listings. Every hydrated track is marked `track_metadata_not_playable_media`; no audio or preview data is included. |

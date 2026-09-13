@@ -8,9 +8,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.ingest.musicbrainz.seed_targets import load_seed_target_artifact
-from musix.storage import LocalObjectStore
-from musix.taxonomy.open.tag_feature_matrix import (
+from opennoise.ingest.musicbrainz.seed_targets import load_seed_target_artifact
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.open.tag_feature_matrix import (
     OpenTagFeatureMatrixSettings,
     build_open_tag_feature_matrix,
     publish_open_tag_feature_matrix,

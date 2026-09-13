@@ -2,20 +2,20 @@ import unittest
 
 from pydantic import ValidationError
 
-from musix.evidence.reconstruction import (
+from opennoise.evidence.reconstruction import (
     GenreArtistEdge,
     HistoricalGenrePoint,
     ReconstructionInputs,
     VersionedInput,
 )
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
     PublicModelInput,
 )
-from musix.peers.similarity.similarity import (
+from opennoise.peers.similarity.similarity import (
     PeerSimilaritySettings,
     build_peer_similarity,
     build_peer_similarity_receipt,
@@ -23,7 +23,7 @@ from musix.peers.similarity.similarity import (
     public_model_input_from_reconstruction,
     replay_peer_similarity,
 )
-from musix.serving.public.artist_membership import (
+from opennoise.serving.public.artist_membership import (
     CandidateCoverage,
     GenreDisposition,
     NameUniverse,

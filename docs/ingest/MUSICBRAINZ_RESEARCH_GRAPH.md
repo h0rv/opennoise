@@ -1,6 +1,6 @@
 # MusicBrainz name-seed research graph
 
-This is a deliberately local research artifact, not an addition to Musix's
+This is a deliberately local research artifact, not an addition to OpenNoise's
 exportable public model. It is built from the completed prefix-0 MusicBrainz
 research artifacts:
 
@@ -44,4 +44,4 @@ artist assignments. Its report is limited to name overlap and top-k neighbor
 topology recall, and it never modifies the graph artifact.
 
 Use the two Poe tasks from the README. Keep the logical hash from the build
-output in `MUSIX_MB_RESEARCH_GRAPH_SHA256` for evaluation.
+output in `OPENNOISE_MB_RESEARCH_GRAPH_SHA256` for evaluation.

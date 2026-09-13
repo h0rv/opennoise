@@ -7,13 +7,13 @@ import json
 import sys
 from pathlib import Path
 
-from musix.evidence.frontier import (
+from opennoise.evidence.frontier import (
     load_frontier_v4_source,
     publish_all_seed_evidence_frontier,
     upgrade_frontier_v4_with_listenbrainz_review,
 )
-from musix.ingest.listenbrainz.propagation import load_listenbrainz_propagation_frontier_summary
-from musix.storage import LocalObjectStore
+from opennoise.ingest.listenbrainz.propagation import load_listenbrainz_propagation_frontier_summary
+from opennoise.storage import LocalObjectStore
 
 
 def build_parser() -> argparse.ArgumentParser:

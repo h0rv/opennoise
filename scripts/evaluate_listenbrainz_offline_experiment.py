@@ -8,7 +8,9 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from musix.ingest.listenbrainz.offline_experiment import evaluate_listenbrainz_offline_experiment
+from opennoise.ingest.listenbrainz.offline_experiment import (
+    evaluate_listenbrainz_offline_experiment,
+)
 
 
 def _arguments() -> argparse.Namespace:

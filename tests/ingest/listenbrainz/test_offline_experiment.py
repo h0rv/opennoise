@@ -4,7 +4,7 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from musix.ingest.listenbrainz.offline_experiment import (
+from opennoise.ingest.listenbrainz.offline_experiment import (
     evaluate_listenbrainz_offline_experiment,
 )
 

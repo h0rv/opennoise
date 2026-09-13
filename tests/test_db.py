@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from musix.db import AsyncDatabase, Database, UnsupportedSchemaError, fts_prefix_query
+from opennoise.db import AsyncDatabase, Database, UnsupportedSchemaError, fts_prefix_query
 from tests._test_client import run_async
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,7 +29,7 @@ class DatabaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "catalog.sqlite"
             Database(path).initialize()
-            with patch("musix.db.sqlite3.connect", wraps=sqlite3.connect) as connect:
+            with patch("opennoise.db.sqlite3.connect", wraps=sqlite3.connect) as connect:
                 run_async(AsyncDatabase(path, read_only=True).start())
 
             self.assertTrue(connect.call_args.kwargs["uri"])

@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 from pydantic import ValidationError
 
-from musix.history.signals.model import (
+from opennoise.history.signals.model import (
     _family_hierarchy_representative,
     _genre_family_seed,
     _graph_hierarchy,
@@ -19,7 +19,7 @@ from musix.history.signals.model import (
     _idf_candidates,
     _knn,
 )
-from musix.models.historical_signal import HistoricalSignalSettings
+from opennoise.models.historical_signal import HistoricalSignalSettings
 
 _MICROGENRE_LEVEL = 2
 _MICROGENRE_MAX_MEMBERS = 2
@@ -164,8 +164,8 @@ class HistoricalSignalModelTests(unittest.TestCase):
         """Set-backed memberships must not alter graph weights or top-k ties."""
         script = """
 import json
-from musix.history.signals.model import _idf_candidates, _knn
-from musix.models.historical_signal import HistoricalSignalSettings
+from opennoise.history.signals.model import _idf_candidates, _knn
+from opennoise.models.historical_signal import HistoricalSignalSettings
 
 memberships = {f"genre:{index:02d}": set() for index in range(40)}
 for index in range(5_000):
@@ -216,8 +216,8 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-from musix.history.signals.model import build_historical_signal_model
-from musix.models.historical_signal import HistoricalSignalSettings
+from opennoise.history.signals.model import build_historical_signal_model
+from opennoise.models.historical_signal import HistoricalSignalSettings
 
 database = Path(sys.argv[1])
 genres = tuple(

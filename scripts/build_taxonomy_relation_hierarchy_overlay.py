@@ -7,14 +7,16 @@ import hashlib
 import sys
 from pathlib import Path
 
-from musix.storage import LocalObjectStore
-from musix.taxonomy.relations.expansion import TaxonomyRelationExpansionArtifact
-from musix.taxonomy.relations.hierarchy_overlay import (
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.relations.expansion import TaxonomyRelationExpansionArtifact
+from opennoise.taxonomy.relations.hierarchy_overlay import (
     OverlayBaseInputs,
     build_taxonomy_relation_hierarchy_overlay,
     publish_taxonomy_relation_hierarchy_overlay,
 )
-from musix.taxonomy.structure.hierarchy_candidates import GenreHierarchyCandidatePublicationReceipt
+from opennoise.taxonomy.structure.hierarchy_candidates import (
+    GenreHierarchyCandidatePublicationReceipt,
+)
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--base-hierarchy", type=Path, required=True)

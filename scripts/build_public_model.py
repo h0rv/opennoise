@@ -7,15 +7,15 @@ import tempfile
 from contextlib import closing
 from pathlib import Path
 
-from musix.ml.public_graph import build_public_model
-from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
-from musix.models.modeling import PublicModelSettings
+from opennoise.ml.public_graph import build_public_model
+from opennoise.ml.repository import PublicInputLoadSettings, PublicModelRepository
+from opennoise.models.modeling import PublicModelSettings
 
 
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--catalog-db", type=Path, default=Path("data/musix.sqlite"))
-    parser.add_argument("--listenbrainz-db", type=Path, default=Path("data/musix.sqlite"))
+    parser.add_argument("--catalog-db", type=Path, default=Path("data/opennoise.sqlite"))
+    parser.add_argument("--listenbrainz-db", type=Path, default=Path("data/opennoise.sqlite"))
     parser.add_argument("--output", type=Path, default=Path("data/model/public-model-v1.json"))
     parser.add_argument("--max-direct-memberships", type=int, default=100_000)
     parser.add_argument("--max-artist-pairs", type=int, default=250_000)

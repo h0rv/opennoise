@@ -34,7 +34,7 @@ The license statement is usable evidence for that CSV, although it does not esta
 
 The Scottsdale JSON list has 6,043 values, despite the repository's claim of 6,044. The file is 120,730 bytes and has SHA256 `9e9834811bdadfa90f19653a4ad522a4e8b5ac1a3321c1d1ac6b7e2738a73712`. The repository has no license file and no separate data license.
 
-The reviewed Geeoon output has no separate data license. Its repository level CC0 file does not say that the upstream genre data is CC0. The official public mirror also gives no data license. The mirror was visible in a browser during this review, but it returned HTTP 403 to an ordinary `curl` request. Musix must not work around that block.
+The reviewed Geeoon output has no separate data license. Its repository level CC0 file does not say that the upstream genre data is CC0. The official public mirror also gives no data license. The mirror was visible in a browser during this review, but it returned HTTP 403 to an ordinary `curl` request. OpenNoise must not work around that block.
 
 The default Every Noise policy is `user_authorized_local`. It permits local normalization, search, display, embedding, and training. It denies raw export, metadata export, and redistribution. The user can review later model work before any local training runs.
 
@@ -65,7 +65,7 @@ The first adapter should use the Wikidata Query Service and store its response a
 
 The complete dump is an offline fallback, not an MVP download. The verified dated JSON dump is `wikidata-20260824-all.json.bz2`. It is 102,835,325,297 bytes and its official SHA1 is `d951e647609249d1dc2e351ac5590d631d78008e`. The JSON file is one large array, so the adapter must stream array elements instead of loading the file into memory.
 
-The verified truthy RDF alternative is `wikidata-20260826-truthy-BETA.nt.bz2`. It is 43,329,477,419 bytes and its official SHA1 is `84766f420cf03af0e307fc48ed466f9a0c25bae9`. Truthy RDF omits deprecated statements and keeps the best ranked value, so it is smaller but loses qualifiers, references, and competing claims. Musix should use the JSON dump when statement detail is required.
+The verified truthy RDF alternative is `wikidata-20260826-truthy-BETA.nt.bz2`. It is 43,329,477,419 bytes and its official SHA1 is `84766f420cf03af0e307fc48ed466f9a0c25bae9`. Truthy RDF omits deprecated statements and keeps the best ranked value, so it is smaller but loses qualifiers, references, and competing claims. OpenNoise should use the JSON dump when statement detail is required.
 
 Wikidata finishes different formats on different dates. A resolver must select the dated directory that actually contains the chosen file and its checksum. It must not assume that every `latest-*` link belongs to the same snapshot date. The official [entity dump index](https://dumps.wikimedia.org/wikidatawiki/entities/) shows the current files and sizes.
 

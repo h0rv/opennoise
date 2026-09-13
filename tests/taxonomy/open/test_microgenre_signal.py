@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.taxonomy.open.microgenre_signal import (
+from opennoise.taxonomy.open.microgenre_signal import (
     MicrogenreSignalSettings,
     OpenEvidenceRef,
     SourceNeutralMicrogenreInput,

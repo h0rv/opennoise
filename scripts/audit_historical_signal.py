@@ -8,8 +8,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.history.signals.audit import audit_historical_signal
-from musix.models.historical_signal import HistoricalSignalArtifact
+from opennoise.history.signals.audit import audit_historical_signal
+from opennoise.models.historical_signal import HistoricalSignalArtifact
 
 
 def _arguments() -> argparse.Namespace:

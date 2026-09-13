@@ -8,7 +8,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from musix.models.production import ProductionMapArtifact
+from opennoise.models.production import ProductionMapArtifact
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,8 +21,8 @@ class ProductionLaunchPaths:
 
 def resolve_production_paths(root: Path) -> ProductionLaunchPaths | None:
     """Prefer explicit environment paths, then cacheable release outputs."""
-    configured_database = os.environ.get("MUSIX_DATABASE_PATH")
-    configured_map = os.environ.get("MUSIX_PRODUCTION_MAP_PATH")
+    configured_database = os.environ.get("OPENNOISE_DATABASE_PATH")
+    configured_map = os.environ.get("OPENNOISE_PRODUCTION_MAP_PATH")
     candidates = (
         ProductionLaunchPaths(
             database=Path(configured_database),
@@ -67,12 +67,12 @@ def main() -> int:
         )
         return 2
     environment = os.environ | {
-        "MUSIX_DATABASE_PATH": str(paths.database),
-        "MUSIX_DATABASE_READ_ONLY": "true",
-        "MUSIX_PRODUCTION_MAP_PATH": str(paths.map_artifact),
+        "OPENNOISE_DATABASE_PATH": str(paths.database),
+        "OPENNOISE_DATABASE_READ_ONLY": "true",
+        "OPENNOISE_PRODUCTION_MAP_PATH": str(paths.map_artifact),
     }
     return subprocess.run(
-        [sys.executable, "-m", "musix.serving.cli", "serve"], check=False, env=environment
+        [sys.executable, "-m", "opennoise.serving.cli", "serve"], check=False, env=environment
     ).returncode
 
 

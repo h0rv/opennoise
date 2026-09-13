@@ -1,6 +1,6 @@
 import unittest
 
-from musix.ingest.musicbrainz.seed_targets import (
+from opennoise.ingest.musicbrainz.seed_targets import (
     ContextualArtistTag,
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
@@ -10,7 +10,7 @@ from musix.ingest.musicbrainz.seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.serving.sparse_genre_prototype import (
+from opennoise.serving.sparse_genre_prototype import (
     SparsePrototypeSettings,
     _bounded_cosine,
     build_sparse_genre_prototype,

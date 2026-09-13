@@ -6,12 +6,12 @@ from typing import Literal
 
 from pydantic import ValidationError
 
-from musix.ml.production_map_qa import (
+from opennoise.ml.production_map_qa import (
     ProductionMapAcceptanceError,
     evaluate_production_map,
     require_accepted_production_map,
 )
-from musix.models.production_qa import (
+from opennoise.models.production_qa import (
     ProductionMapAcceptanceInput,
     ProductionMapCoordinate,
     ProductionMapEligibleSet,

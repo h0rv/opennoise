@@ -8,14 +8,14 @@ from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
-from musix.serving.release_group_context_prefix import (
+from opennoise.serving.release_group_context_prefix import (
     ReleaseGroupContextError,
     TargetMask,
     _iter_prefix,
     _rows_for_release_group,
     load_target_mask,
 )
-from musix.sources.musicbrainz import MusicBrainzAdapterError, MusicBrainzReleaseGroup
+from opennoise.sources.musicbrainz import MusicBrainzAdapterError, MusicBrainzReleaseGroup
 
 
 class ReleaseGroupContextPrefixTests(unittest.TestCase):
@@ -71,13 +71,13 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
 
     def test_prefix_only_swallows_the_expected_cap_error(self) -> None:
         with patch(
-            "musix.serving.release_group_context_prefix.iter_json_archive_lines",
+            "opennoise.serving.release_group_context_prefix.iter_json_archive_lines",
             side_effect=lambda *_args, **_kwargs: _cap_iterator(),
         ):
             self.assertEqual(list(_iter_prefix(Path("fixture"), 2)), [b"one", b"two"])
         with (
             patch(
-                "musix.serving.release_group_context_prefix.iter_json_archive_lines",
+                "opennoise.serving.release_group_context_prefix.iter_json_archive_lines",
                 side_effect=lambda *_args, **_kwargs: _malformed_iterator(),
             ),
             self.assertRaisesRegex(MusicBrainzAdapterError, "invalid archive"),
@@ -89,15 +89,15 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
         target = _Artifact("seed", "other-source", "content", 2, ())
         with (
             patch(
-                "musix.serving.release_group_context_prefix.load_seed_reconciliation",
+                "opennoise.serving.release_group_context_prefix.load_seed_reconciliation",
                 return_value=reconciliation,
             ),
             patch(
-                "musix.serving.release_group_context_prefix.load_seed_target_artifact",
+                "opennoise.serving.release_group_context_prefix.load_seed_target_artifact",
                 return_value=target,
             ),
             patch(
-                "musix.serving.release_group_context_prefix.file_sha256",
+                "opennoise.serving.release_group_context_prefix.file_sha256",
                 return_value="a" * 64,
             ),
             self.assertRaisesRegex(ValueError, "complete seed binding"),
@@ -109,11 +109,11 @@ class ReleaseGroupContextPrefixTests(unittest.TestCase):
         target = _Artifact("seed", "source", "content", 2, ())
         with (
             patch(
-                "musix.serving.release_group_context_prefix.load_seed_reconciliation",
+                "opennoise.serving.release_group_context_prefix.load_seed_reconciliation",
                 return_value=reconciliation,
             ),
             patch(
-                "musix.serving.release_group_context_prefix.load_seed_target_artifact",
+                "opennoise.serving.release_group_context_prefix.load_seed_target_artifact",
                 return_value=target,
             ),
             self.assertRaisesRegex(ValueError, "complete 6291-seed universe"),

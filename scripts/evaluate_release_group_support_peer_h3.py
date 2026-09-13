@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.peers.support.h3_evaluation import evaluate_support_peer_h3
+from opennoise.peers.support.h3_evaluation import evaluate_support_peer_h3
 
 
 def main() -> int:

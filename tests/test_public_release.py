@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.pipeline.public_release import _snapshot_cache
+from opennoise.pipeline.public_release import _snapshot_cache
 
 
 class PublicReleaseStorageTests(unittest.TestCase):

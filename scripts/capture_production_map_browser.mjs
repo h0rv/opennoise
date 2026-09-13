@@ -83,7 +83,7 @@ async function json(url, options = {}) {
 }
 
 async function launch() {
-  const profile = `${tmpdir()}/musix-static-map-${process.pid}`;
+  const profile = `${tmpdir()}/opennoise-static-map-${process.pid}`;
   await rm(profile, { recursive: true, force: true });
   const process_ = spawn("/usr/bin/chromium", [
     "--headless=new", "--no-sandbox", "--disable-gpu", "--disable-background-networking",

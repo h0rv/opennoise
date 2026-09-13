@@ -7,11 +7,11 @@ import json
 import sys
 from pathlib import Path
 
-from musix.ingest.wikidata.resolver import (
+from opennoise.ingest.wikidata.resolver import (
     merge_wikidata_public_anchors,
     write_wikidata_public_anchor_merge,
 )
-from musix.storage import LocalObjectStore, ObjectKey
+from opennoise.storage import LocalObjectStore, ObjectKey
 
 
 def main() -> int:

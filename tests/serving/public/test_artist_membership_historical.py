@@ -8,29 +8,29 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
     PublicModelInput,
 )
-from musix.serving.public.artist_membership import (
+from opennoise.serving.public.artist_membership import (
     ApprovedPublicMembershipInput,
     NameUniverse,
     NameUniverseEntry,
     PublicArtistMembershipSourcePolicy,
     build_public_artist_membership_candidate,
 )
-from musix.serving.public.artist_membership_historical import (
+from opennoise.serving.public.artist_membership_historical import (
     evaluate_public_artist_membership_historical,
 )
 
 _PUBLIC_DATABASE = Path(
-    "/home/h0rv/projects/musix/.cache/public-release-custody-integrated/objects/cache/sha256/"
+    "/home/h0rv/projects/opennoise/.cache/public-release-custody-integrated/objects/cache/sha256/"
     "282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite"
 )
 _HISTORICAL_DATABASE = Path(
-    "/home/h0rv/projects/musix/.cache/historical-custody-vault/historical-h3/membership/sha256/"
+    "/home/h0rv/projects/opennoise/.cache/historical-custody-vault/historical-h3/membership/sha256/"
     "098dc8780b3f4a8daf1240d36bec7eb7be563dc2275d998dbc7509c3fb1859df.sqlite"
 )
 

@@ -17,9 +17,9 @@ does not use aliases, taxonomy, semantic mapping, or fuzzy matching.
 Run the task with explicit local destinations:
 
 ```sh
-MUSIX_CERTIFIED_PUBLIC_DATABASE=.cache/musicbrainz-20-catalog/public.sqlite \
-MUSIX_MUSICBRAINZ_RESEARCH_DATABASE=.cache/musicbrainz-v3-research/musicbrainz-v3.sqlite \
-MUSIX_PUBLIC_MEMBERSHIP_EXTERNAL_EVALUATION_REPORT=.cache/musicbrainz-v3-research/public-membership-external-evaluation-v1.json \
+OPENNOISE_CERTIFIED_PUBLIC_DATABASE=.cache/musicbrainz-20-catalog/public.sqlite \
+OPENNOISE_MUSICBRAINZ_RESEARCH_DATABASE=.cache/musicbrainz-v3-research/musicbrainz-v3.sqlite \
+OPENNOISE_PUBLIC_MEMBERSHIP_EXTERNAL_EVALUATION_REPORT=.cache/musicbrainz-v3-research/public-membership-external-evaluation-v1.json \
 uv run poe evaluate-public-memberships-externally
 ```
 

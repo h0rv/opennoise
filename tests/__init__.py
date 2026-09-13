@@ -1,1 +1,1 @@
-"""Musix tests."""
+"""OpenNoise tests."""

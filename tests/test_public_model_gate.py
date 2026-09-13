@@ -1,12 +1,12 @@
 import unittest
 
-from musix.ml.public_graph import build_public_model, public_model_output_sha256
-from musix.ml.public_model_gate import (
+from opennoise.ml.public_graph import build_public_model, public_model_output_sha256
+from opennoise.ml.public_model_gate import (
     PublicModelGateError,
     evaluate_public_model,
     require_public_model_gate,
 )
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
     GenreIdentity,

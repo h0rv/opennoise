@@ -11,8 +11,8 @@ from tempfile import TemporaryDirectory
 
 import httpx
 
-from musix.serving.artist_metadata_context_pilot import CachedRequest, _load_or_fetch
-from musix.sources.musicbrainz import MusicBrainzArtist, MusicBrainzClient
+from opennoise.serving.artist_metadata_context_pilot import CachedRequest, _load_or_fetch
+from opennoise.sources.musicbrainz import MusicBrainzArtist, MusicBrainzClient
 
 _ARTIST = "00000000-0000-4000-8000-000000000001"
 _AREA = "00000000-0000-4000-8000-000000000002"
@@ -97,5 +97,5 @@ def _artist_payload() -> dict[str, object]:
 
 async def _cached_load(root: Path) -> tuple[MusicBrainzArtist | None, CachedRequest, bool]:
     async with httpx.AsyncClient() as http_client:
-        client = MusicBrainzClient(http_client, user_agent="musix/0.1 (test@example.test)")
+        client = MusicBrainzClient(http_client, user_agent="opennoise/0.1 (test@example.test)")
         return await _load_or_fetch(client, root, _ARTIST)

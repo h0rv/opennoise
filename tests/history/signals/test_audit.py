@@ -1,7 +1,7 @@
 import unittest
 
-from musix.history.signals.audit import _histogram, _knn_audit
-from musix.models.historical_signal import HistoricalSignalArtifact, HistoricalSignalNeighbor
+from opennoise.history.signals.audit import _histogram, _knn_audit
+from opennoise.models.historical_signal import HistoricalSignalArtifact, HistoricalSignalNeighbor
 
 
 class HistoricalSignalAuditTests(unittest.TestCase):

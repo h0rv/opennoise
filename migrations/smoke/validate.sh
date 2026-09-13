@@ -2,9 +2,9 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-audit_dir=$(mktemp -d /tmp/musix-schema-smoke.XXXXXX)
+audit_dir=$(mktemp -d /tmp/opennoise-schema-smoke.XXXXXX)
 trap 'rm -rf "$audit_dir"' EXIT
-database="$audit_dir/musix.sqlite"
+database="$audit_dir/opennoise.sqlite"
 
 sqlite3 -bail "$database" < "$repo_root/migrations/0001_initial.sql"
 sqlite3 -bail "$database" < "$repo_root/migrations/0002_album_genres.sql"

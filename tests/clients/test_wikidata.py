@@ -4,7 +4,11 @@ from pathlib import Path
 
 import httpx
 
-from musix.clients.wikidata import WikidataClientError, WikidataQueryRequest, fetch_wikidata_query
+from opennoise.clients.wikidata import (
+    WikidataClientError,
+    WikidataQueryRequest,
+    fetch_wikidata_query,
+)
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 
@@ -28,7 +32,7 @@ class WikidataClientTests(PollingIsolatedAsyncioTestCase):
             request = WikidataQueryRequest(
                 query_path=query,
                 destination=destination,
-                user_agent="musix/0.1 (maintainer@example.test)",
+                user_agent="opennoise/0.1 (maintainer@example.test)",
             )
             async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
                 result = await fetch_wikidata_query(request, client=client)
@@ -54,7 +58,7 @@ class WikidataClientTests(PollingIsolatedAsyncioTestCase):
             request = WikidataQueryRequest(
                 query_path=query,
                 destination=destination,
-                user_agent="musix/0.1 (maintainer@example.test)",
+                user_agent="opennoise/0.1 (maintainer@example.test)",
                 max_response_bytes=1,
             )
             async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:

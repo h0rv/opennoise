@@ -7,14 +7,14 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.serving.artist_membership_evaluation import (
+from opennoise.serving.artist_membership_evaluation import (
     ArtistMembershipEvaluationStore,
     ArtistMembershipJudgmentSet,
     evaluate_artist_memberships,
     load_judgment_set,
     publish_evaluation_evidence,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 from tests.test_public_model_gate import _artifact
 
 

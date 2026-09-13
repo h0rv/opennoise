@@ -7,7 +7,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from musix.serving.artist_backed_release_expansion import (
+from opennoise.serving.artist_backed_release_expansion import (
     ExpansionBuildRequest,
     build_artist_backed_release_expansion,
 )

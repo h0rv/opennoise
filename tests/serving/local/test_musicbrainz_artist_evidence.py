@@ -7,41 +7,41 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from musix.ingest.musicbrainz.model_adapter import (
+from opennoise.ingest.musicbrainz.model_adapter import (
     AdapterSeedCoverage,
     MusicBrainzModelAdapterReport,
     adapter_report_sha256,
 )
-from musix.ingest.musicbrainz.release_group_evidence import (
+from opennoise.ingest.musicbrainz.release_group_evidence import (
     ReleaseGroupEvidenceArtifact,
     ReleaseGroupEvidenceCounters,
     ReleaseGroupEvidenceCoverage,
     ReleaseGroupEvidenceSettings,
     artifact_sha256,
 )
-from musix.serving.local.musicbrainz_artist_evidence import (
+from opennoise.serving.local.musicbrainz_artist_evidence import (
     LocalMusicBrainzArtistEvidenceError,
     LocalMusicBrainzArtistEvidenceStore,
     LocalMusicBrainzEvidenceSources,
     direct_artists_for_seed,
     direct_seeds_for_artist,
 )
-from musix.serving.local.musicbrainz_artist_metadata import (
+from opennoise.serving.local.musicbrainz_artist_metadata import (
     ArtistMetadataArtifact,
     ArtistMetadataCounters,
     ArtistMetadataSettings,
     LocalArtistMetadataSources,
     artist_metadata_artifact_sha256,
 )
-from musix.serving.local.musicbrainz_artist_reverse_lookup import (
+from opennoise.serving.local.musicbrainz_artist_reverse_lookup import (
     ArtistReverseLookupBuildInputs,
     LocalArtistReverseLookupSources,
     LocalMusicBrainzArtistReverseLookupError,
     build_artist_reverse_lookup,
     verify_artist_reverse_lookup_sources,
 )
-from musix.serving.local.musicbrainz_peer_store import LocalMusicBrainzPeerStore
-from musix.taxonomy.seeds.reconciliation import (
+from opennoise.serving.local.musicbrainz_peer_store import LocalMusicBrainzPeerStore
+from opennoise.taxonomy.seeds.reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationDisposition,
 )
@@ -114,7 +114,7 @@ class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
             reverse_database = root / "reverse.sqlite"
             with (
                 patch(
-                    "musix.serving.local.musicbrainz_artist_reverse_lookup._copy_projection",
+                    "opennoise.serving.local.musicbrainz_artist_reverse_lookup._copy_projection",
                     side_effect=sqlite3.DatabaseError("interrupted"),
                 ),
                 self.assertRaisesRegex(sqlite3.DatabaseError, "interrupted"),
@@ -150,7 +150,7 @@ class LocalMusicBrainzArtistEvidenceTests(unittest.TestCase):
             database = _database(Path(temporary) / "evidence.sqlite")
             store = LocalMusicBrainzArtistEvidenceStore(_sources(database))
             with patch(
-                "musix.serving.local.musicbrainz_artist_evidence._file_sha256",
+                "opennoise.serving.local.musicbrainz_artist_evidence._file_sha256",
                 wraps=lambda path: (
                     hashlib.sha256(path.read_bytes()).hexdigest(),
                     path.stat().st_size,

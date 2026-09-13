@@ -13,8 +13,8 @@ from uuid import UUID
 
 import httpx
 
-from musix.ingest.musicbrainz.release_hydration import CatalogHydrationResult
-from musix.serving.artist_backed_release_expansion import (
+from opennoise.ingest.musicbrainz.release_hydration import CatalogHydrationResult
+from opennoise.serving.artist_backed_release_expansion import (
     ArtistBackedReleaseExpansionAdapter,
     ArtistBackedReleaseExpansionError,
     ArtistBackedReleaseExpansionPlan,
@@ -33,7 +33,7 @@ from musix.serving.artist_backed_release_expansion import (
     materialize_expansion_catalog,
     write_expansion_artifact,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -185,7 +185,7 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
                 adapter = ArtistBackedReleaseExpansionAdapter(
                     client,
                     plan.settings,
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                 )
                 artifact = await adapter.hydrate(plan)
             self.assertEqual(len(requests), 2)
@@ -200,7 +200,7 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
                 replay = ArtistBackedReleaseExpansionAdapter(
                     client,
                     plan.settings.model_copy(update={"offline": True}),
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                 )
                 replayed = await replay.hydrate(plan)
             self.assertEqual(replayed, artifact)
@@ -214,7 +214,7 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
                 tampered = ArtistBackedReleaseExpansionAdapter(
                     client,
                     plan.settings.model_copy(update={"offline": True}),
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                 )
                 tampered_artifact = await tampered.hydrate(plan)
             self.assertEqual(tampered_artifact.coverage.metadata_unavailable_count, 1)
@@ -241,7 +241,7 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
                 other_adapter = ArtistBackedReleaseExpansionAdapter(
                     client,
                     other_plan.settings,
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                 )
                 other_artifact = await other_adapter.hydrate(other_plan)
             self.assertEqual(other_artifact, artifact)
@@ -276,7 +276,7 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
                 plan = _plan(root)
                 async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
                     adapter = ArtistBackedReleaseExpansionAdapter(
-                        client, plan.settings, user_agent="musix/0.1 (maintainer@example.test)"
+                        client, plan.settings, user_agent="opennoise/0.1 (maintainer@example.test)"
                     )
                     artifact = await adapter.hydrate(plan)
                 self.assertEqual(artifact.coverage.unique_release_count, 0)
@@ -346,7 +346,7 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
             plan = _plan(root)
             async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
                 adapter = ArtistBackedReleaseExpansionAdapter(
-                    client, plan.settings, user_agent="musix/0.1 (maintainer@example.test)"
+                    client, plan.settings, user_agent="opennoise/0.1 (maintainer@example.test)"
                 )
                 artifact = await adapter.hydrate(plan)
             counts = materialize_expansion_catalog(
@@ -413,7 +413,7 @@ class ArtistBackedReleaseExpansionTests(PollingIsolatedAsyncioTestCase):
                 adapter = ArtistBackedReleaseExpansionAdapter(
                     client,
                     plan.settings,
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                 )
                 artifact = await adapter.hydrate(plan)
             self.assertEqual(len(artifact.results), 1)

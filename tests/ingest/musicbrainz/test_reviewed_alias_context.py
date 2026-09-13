@@ -8,30 +8,30 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.ingest.musicbrainz.model_adapter import (
+from opennoise.ingest.musicbrainz.model_adapter import (
     MusicBrainzModelAdapterPolicy,
     adapt_musicbrainz_seed_targets,
 )
-from musix.ingest.musicbrainz.reviewed_alias_context import (
+from opennoise.ingest.musicbrainz.reviewed_alias_context import (
     ReviewedAliasContextError,
     adapt_reviewed_alias_context,
     build_reviewed_alias_context,
     combine_reviewed_alias_context_model_input,
 )
-from musix.ingest.musicbrainz.reviewed_alias_context import (
+from opennoise.ingest.musicbrainz.reviewed_alias_context import (
     artifact_sha256 as context_artifact_sha256,
 )
-from musix.ingest.musicbrainz.seed_targets import (
+from opennoise.ingest.musicbrainz.seed_targets import (
     ReviewedSeedAlias,
     extract_musicbrainz_seed_targets,
     write_seed_target_artifact,
 )
-from musix.taxonomy.seeds.reconciliation import (
+from opennoise.taxonomy.seeds.reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,
 )
-from musix.taxonomy.seeds.universe import SeedInput, SeedName
+from opennoise.taxonomy.seeds.universe import SeedInput, SeedName
 
 _ARTIST = "00000000-0000-4000-8000-000000000001"
 

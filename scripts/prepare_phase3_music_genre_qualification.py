@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from musix.models import FrozenModel
+from opennoise.models import FrozenModel
 from scripts.prepare_phase3_genre_enrichment import GenreTarget, load_targets
 
 MUSIC_GENRE_ROOT_QID = "Q188451"

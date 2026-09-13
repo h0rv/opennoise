@@ -8,7 +8,7 @@ It requires:
 
 - `config/releases/phase3-public-20260831/release-manifest.json`
 - the sealed cache passed with `--cache-database`
-- Chromium at `/usr/bin/chromium`, Node, and the `musix` CLI
+- Chromium at `/usr/bin/chromium`, Node, and the `opennoise` CLI
 
 It never fetches a source, reads music or audio files, or calls a live data API.
 
@@ -31,7 +31,7 @@ certify a different explicit cache.
 
 The command verifies the sealed cache, materializes a serving database and
 public model, builds the production map, writes acceptance evidence, starts a
-local app with `MUSIX_PRODUCTION_MAP_PATH`, runs raw-CDP browser QA, and checks
+local app with `OPENNOISE_PRODUCTION_MAP_PATH`, runs raw-CDP browser QA, and checks
 the final evidence bundle.
 
 Default outputs:
@@ -72,8 +72,8 @@ available.
 ## Serving
 
 ```sh
-MUSIX_DATABASE_PATH=data/public.sqlite \
-MUSIX_PRODUCTION_MAP_PATH=data/model/production-map-v1.json \
+OPENNOISE_DATABASE_PATH=data/public.sqlite \
+OPENNOISE_PRODUCTION_MAP_PATH=data/model/production-map-v1.json \
 uv run poe dev
 ```
 

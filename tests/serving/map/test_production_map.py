@@ -2,9 +2,9 @@ import unittest
 from types import SimpleNamespace
 from typing import Any
 
-from musix.ml.production_map import ProductionMapGeometryError, build_production_map
-from musix.ml.public_graph import build_public_model
-from musix.models.modeling import (
+from opennoise.ml.production_map import ProductionMapGeometryError, build_production_map
+from opennoise.ml.public_graph import build_public_model
+from opennoise.models.modeling import (
     DirectMembershipEvidence,
     GenreHierarchyEdge,
     GenreIdentity,
@@ -12,8 +12,8 @@ from musix.models.modeling import (
     PublicModelInput,
     PublicModelSettings,
 )
-from musix.models.production import ProductionMapSettings
-from musix.serving.map.overview import _distinct_overview_names, build_overview_communities
+from opennoise.models.production import ProductionMapSettings
+from opennoise.serving.map.overview import _distinct_overview_names, build_overview_communities
 
 
 def _inputs() -> PublicModelInput:

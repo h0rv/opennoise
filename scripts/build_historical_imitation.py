@@ -8,16 +8,16 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.history.historical_imitation import (
+from opennoise.history.historical_imitation import (
     H3CustodyInput,
     HistoricalImitationSettings,
     build_historical_imitation,
     publish_historical_imitation,
 )
-from musix.ingest.musicbrainz.seed_targets import load_seed_target_artifact
-from musix.ingest.spotify.artifact import load_receipted_musicbrainz_spotify_bridge
-from musix.storage import LocalObjectStore
-from musix.taxonomy.open.tag_feature_matrix import load_receipted_open_tag_feature_matrix
+from opennoise.ingest.musicbrainz.seed_targets import load_seed_target_artifact
+from opennoise.ingest.spotify.artifact import load_receipted_musicbrainz_spotify_bridge
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.open.tag_feature_matrix import load_receipted_open_tag_feature_matrix
 
 
 def _parser() -> argparse.ArgumentParser:

@@ -3,7 +3,7 @@
 Build OpenNoise, an open music map from public metadata and privacy safe aggregates.
 
 OpenNoise is the product name; the internal Python package and compatibility
-identifiers remain `musix` during the staged migration.
+identifiers remain `opennoise` during the staged migration.
 
 The immediate product goal is coherent open music discovery: a user should be
 able to traverse a catalog genre to artists, an artist to its directly observed

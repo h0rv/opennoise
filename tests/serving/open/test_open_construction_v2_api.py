@@ -2,9 +2,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.models import Settings
-from musix.serving.app import create_app
-from musix.serving.open.construction_graph_v2 import (
+from opennoise.models import Settings
+from opennoise.serving.app import create_app
+from opennoise.serving.open.construction_graph_v2 import (
     OpenConstructionGraphV2Config,
     build_open_construction_graph_v2,
     write_open_construction_graph_v2,

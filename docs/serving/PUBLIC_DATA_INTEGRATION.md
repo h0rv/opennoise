@@ -87,7 +87,7 @@ inputs unless output attribution and ShareAlike terms receive a separate review.
   result contains 294 P136 observations across forty artists and 104 genres,
   plus 98 P136 observations across 45 of fifty release groups and 56 genres.
   SQLite integrity and foreign-key checks passed. The 2.1 MiB database is
-  `/tmp/musix-wikidata-overlap-v2.sqlite`; it is a local reproducible artifact,
+  `/tmp/opennoise-wikidata-overlap-v2.sqlite`; it is a local reproducible artifact,
   not a committed fixture.
 - ListenBrainz ingestion stores only MusicBrainz-qualified aggregate artist pairs.
   It does not retain listener identities or submitted track and artist text, and

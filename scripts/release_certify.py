@@ -93,13 +93,13 @@ def _run(*command: str) -> None:
     subprocess.run(command, check=True)  # noqa: S603
 
 
-def _musix_command() -> str:
-    candidate = Path(sys.executable).with_name("musix")
+def _opennoise_command() -> str:
+    candidate = Path(sys.executable).with_name("opennoise")
     if candidate.is_file():
         return str(candidate)
-    command = shutil.which("musix")
+    command = shutil.which("opennoise")
     if command is None:
-        raise ReleaseCertificationError("cache-only prerequisite missing: musix command")
+        raise ReleaseCertificationError("cache-only prerequisite missing: opennoise command")
     return command
 
 
@@ -188,11 +188,11 @@ def main() -> int:
         str(arguments.seed_report_output),
     )
     environment = os.environ.copy()
-    environment["MUSIX_DATABASE_READ_ONLY"] = "true"
-    environment["MUSIX_PRODUCTION_MAP_PATH"] = str(arguments.map_output.resolve())
+    environment["OPENNOISE_DATABASE_READ_ONLY"] = "true"
+    environment["OPENNOISE_PRODUCTION_MAP_PATH"] = str(arguments.map_output.resolve())
     server = subprocess.Popen(  # noqa: S603
         [
-            _musix_command(),
+            _opennoise_command(),
             "serve",
             "--database",
             str(arguments.serving_database),

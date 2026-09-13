@@ -6,16 +6,16 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.models.modeling import PublicModelInput
-from musix.serving.public.taxonomy_expansion import PublicTaxonomyExpansionArtifact
-from musix.storage import LocalObjectStore
-from musix.taxonomy.relations.expansion import (
+from opennoise.models.modeling import PublicModelInput
+from opennoise.serving.public.taxonomy_expansion import PublicTaxonomyExpansionArtifact
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.relations.expansion import (
     TaxonomyRelationExpansionArtifact,
     TaxonomyRelationExpansionReceipt,
 )
-from musix.taxonomy.seeds.reconciliation import SeedReconciliationArtifact
-from musix.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
-from musix.taxonomy.structure.hierarchy_candidates import (
+from opennoise.taxonomy.seeds.reconciliation import SeedReconciliationArtifact
+from opennoise.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
+from opennoise.taxonomy.structure.hierarchy_candidates import (
     GenreHierarchyCandidatePolicy,
     build_genre_hierarchy_candidates,
     publish_genre_hierarchy_candidates,

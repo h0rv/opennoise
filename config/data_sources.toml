@@ -1,6 +1,6 @@
 manifest_version = 1
 verified_at = "2026-08-30T23:40:00Z"
-default_user_agent = "musix-data-bootstrap/0.1 (local research; contact required before network ingest)"
+default_user_agent = "opennoise-data-bootstrap/0.1 (local research; contact required before network ingest)"
 download_root = "data/source-cache"
 adapter_output_root = "data/staging"
 deny_unlisted_uses = true

@@ -3,15 +3,15 @@ from datetime import UTC, datetime
 
 from pydantic import TypeAdapter, ValidationError
 
-from musix.evidence.contracts import (
+from opennoise.evidence.contracts import (
     AlbumGenreEvidence,
     AlbumGenreRankingArtifact,
     AlbumGenreRankingItem,
     DirectGenreEvidence,
     RankingComponent,
 )
-from musix.serving.map.layouts import LayoutBuildRequest, LayoutStrategyVersion
-from musix.serving.map.map_presentation import (
+from opennoise.serving.map.layouts import LayoutBuildRequest, LayoutStrategyVersion
+from opennoise.serving.map.map_presentation import (
     CollisionBox,
     EvidenceEdge,
     LabelDecisionReason,

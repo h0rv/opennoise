@@ -66,7 +66,7 @@ The JSON output is local research only. It has `export_allowed=false` and `servi
 ## Loopback discovery panel
 
 The development app keeps this panel disabled by default. Set
-`MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED=true` only with a loopback host.
+`OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED=true` only with a loopback host.
 Startup verifies the artifact binding, complete evidence database hash and SQLite
 integrity once, then opens bounded read-only queries. It does not repeat a full
 database hash for each panel request. Non-loopback startup and non-loopback

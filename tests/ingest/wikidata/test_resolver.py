@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from typing import Literal
 
-from musix.ingest.wikidata.resolver import (
+from opennoise.ingest.wikidata.resolver import (
     SparqlBinding,
     SparqlHead,
     SparqlResponse,
@@ -87,7 +87,7 @@ class WikidataSeedResolverTests(unittest.TestCase):
             expected_seed_count=4,
             batch_limit=3,
             sparql_terms_per_request=3,
-            user_agent="musix-test/1.0 (test@example.invalid)",
+            user_agent="opennoise-test/1.0 (test@example.invalid)",
         )
 
     def test_exact_unique_music_genre_only_is_accepted_and_merge_has_no_memberships(self) -> None:
@@ -181,7 +181,7 @@ class WikidataSeedResolverTests(unittest.TestCase):
         selected = select_wikidata_seed_targets(
             source,
             WikidataResolverConfig(
-                batch_limit=250, user_agent="musix-test/1.0 (test@example.invalid)"
+                batch_limit=250, user_agent="opennoise-test/1.0 (test@example.invalid)"
             ),
         )
         self.assertEqual(selected.seed_count, 6291)

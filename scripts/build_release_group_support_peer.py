@@ -8,7 +8,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from musix.peers.support.peer import (
+from opennoise.peers.support.peer import (
     ReleaseGroupSupportPeerError,
     build_support_peer_artifact,
     write_artifact_and_receipt,

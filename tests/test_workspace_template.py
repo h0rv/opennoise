@@ -3,16 +3,16 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from musix.models import MapPoint, SearchHit, map_view
-from musix.serving.exploration import GenreDetail
-from musix.serving.map.layouts import (
+from opennoise.models import MapPoint, SearchHit, map_view
+from opennoise.serving.exploration import GenreDetail
+from opennoise.serving.map.layouts import (
     DerivedCoordinateSpace,
     HistoricCoordinateSpace,
     PublishedLayout,
 )
-from musix.serving.routes import resolve_layout
+from opennoise.serving.routes import resolve_layout
 
-TEMPLATE_ROOT = Path(__file__).resolve().parents[1] / "src" / "musix" / "templates"
+TEMPLATE_ROOT = Path(__file__).resolve().parents[1] / "src" / "opennoise" / "templates"
 
 
 class WorkspaceTemplateTests(unittest.TestCase):

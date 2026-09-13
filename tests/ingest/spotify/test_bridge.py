@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.ingest.spotify.bridge import (
+from opennoise.ingest.spotify.bridge import (
     MusicBrainzSpotifyBridgeError,
     SpotifyBridgeSettings,
     bridge_artifact_sha256,
@@ -16,7 +16,7 @@ from musix.ingest.spotify.bridge import (
     publish_musicbrainz_spotify_bridge,
     verify_musicbrainz_spotify_bridge,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 MBID_ONE = "00000000-0000-0000-0000-000000000001"
 MBID_TWO = "00000000-0000-0000-0000-000000000002"

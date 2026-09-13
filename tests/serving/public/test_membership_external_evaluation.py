@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.serving.public.membership_external_evaluation import (
+from opennoise.serving.public.membership_external_evaluation import (
     evaluate_public_memberships_externally,
 )
 

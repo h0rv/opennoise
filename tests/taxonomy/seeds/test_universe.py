@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.taxonomy.seeds.universe import build_genre_seed_universe, load_seed_input
+from opennoise.taxonomy.seeds.universe import build_genre_seed_universe, load_seed_input
 
 
 class GenreSeedUniverseTests(unittest.TestCase):

@@ -7,8 +7,8 @@ import json
 import sys
 from pathlib import Path
 
-from musix.storage import LocalObjectStore
-from musix.taxonomy.relations.expansion import (
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.relations.expansion import (
     TaxonomyRelationEvaluationInputs,
     TaxonomyRelationExpansionArtifact,
     TaxonomyRelationHoldoutPolicy,
@@ -17,8 +17,8 @@ from musix.taxonomy.relations.expansion import (
     load_taxonomy_relation_feed,
     merge_taxonomy_relation_feeds,
 )
-from musix.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
-from musix.taxonomy.structure.hierarchy_candidates import GenreHierarchyCandidateArtifact
+from opennoise.taxonomy.seeds.taxonomy import GenreSeedPublicTaxonomyArtifact
+from opennoise.taxonomy.structure.hierarchy_candidates import GenreHierarchyCandidateArtifact
 
 _EDGE_ENDPOINT_COUNT = 2
 

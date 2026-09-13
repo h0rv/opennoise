@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.taxonomy.open.microgenre_signal import (
+from opennoise.taxonomy.open.microgenre_signal import (
     MicrogenreSignalSettings,
     build_microgenre_signal_checkpoint,
     load_source_neutral_microgenre_input,

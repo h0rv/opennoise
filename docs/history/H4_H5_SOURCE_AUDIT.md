@@ -1,6 +1,6 @@
 # H4 and H5 bounded source audit
 
-Research date: 2026-09-04. This records what Musix can prove. It does not authorize crawling,
+Research date: 2026-09-04. This records what OpenNoise can prove. It does not authorize crawling,
 retain audio, or turn a third-party repository into historical Every Noise artist-page or playlist
 evidence.
 

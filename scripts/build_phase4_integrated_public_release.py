@@ -28,17 +28,17 @@ from urllib.request import urlopen
 
 from pydantic import Field, model_validator
 
-from musix.ingest.musicbrainz.release_hydration import (
+from opennoise.ingest.musicbrainz.release_hydration import (
     MusicBrainzReleaseHydrationArtifact,
     artifact_counts,
     materialize_hydration_catalog,
 )
-from musix.models import FrozenModel
-from musix.serving.open.construction_graph import (
+from opennoise.models import FrozenModel
+from opennoise.serving.open.construction_graph import (
     OpenConstructionGraphArtifact,
     verify_open_construction_graph,
 )
-from musix.storage import LocalObjectStore, ObjectKey, ObjectWrite
+from opennoise.storage import LocalObjectStore, ObjectKey, ObjectWrite
 
 _CACHE_SHA256 = "282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866"
 _CACHE_BYTES = 153_231_360
@@ -172,13 +172,13 @@ def _policy_id(database: Path) -> int:
 def _api_qa(database: Path, map_path: Path, graph_path: Path, output: Path, port: int) -> None:
     """Record source/API proof separately from the renderer-owned browser proof."""
     environment = os.environ.copy()
-    environment["MUSIX_PRODUCTION_MAP_PATH"] = str(map_path.resolve())
-    environment["MUSIX_OPEN_CONSTRUCTION_GRAPH_PATH"] = str(graph_path.resolve())
+    environment["OPENNOISE_PRODUCTION_MAP_PATH"] = str(map_path.resolve())
+    environment["OPENNOISE_OPEN_CONSTRUCTION_GRAPH_PATH"] = str(graph_path.resolve())
     process = subprocess.Popen(  # noqa: S603
         [
             sys.executable,
             "-m",
-            "musix.serving.cli",
+            "opennoise.serving.cli",
             "serve",
             "--database",
             str(database),
@@ -491,7 +491,7 @@ def main() -> int:
     _run(
         sys.executable,
         "-m",
-        "musix.serving.cli",
+        "opennoise.serving.cli",
         "build-representative-catalog-candidates",
         "--database",
         str(derived),

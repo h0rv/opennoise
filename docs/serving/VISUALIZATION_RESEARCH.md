@@ -1,6 +1,6 @@
 # Visualization research
 
-Musix uses a map as navigation, not as proof that two genres are equivalent.
+OpenNoise uses a map as navigation, not as proof that two genres are equivalent.
 The data artifact explains every displayed relation.
 
 ## Chosen pattern
@@ -12,7 +12,7 @@ evidence, nearby genres, artists, albums, and tracks.
 
 Hackerverse is the useful reference for this interaction model. It uses a map
 camera, persistent context through levels of detail, sparse labels, and stable
-spatial sampling. Musix adapts those interaction ideas, not its terrain
+spatial sampling. OpenNoise adapts those interaction ideas, not its terrain
 renderer, embedding, tile format, or data pipeline. The view must reveal finer
 neighborhood structure as the camera moves. It must not replace one flat batch
 with a denser flat batch.

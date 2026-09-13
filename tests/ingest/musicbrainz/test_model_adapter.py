@@ -5,12 +5,12 @@ import json
 import unittest
 from typing import Literal
 
-from musix.ingest.musicbrainz.model_adapter import (
+from opennoise.ingest.musicbrainz.model_adapter import (
     MusicBrainzModelAdapterPolicy,
     adapt_musicbrainz_seed_targets,
     verify_musicbrainz_model_adapter_report,
 )
-from musix.ingest.musicbrainz.seed_targets import (
+from opennoise.ingest.musicbrainz.seed_targets import (
     MusicBrainzSeedTargetArtifact,
     SeedTargetCoverage,
     SeedTargetEvidence,
@@ -19,8 +19,8 @@ from musix.ingest.musicbrainz.seed_targets import (
     artifact_sha256,
     settings_sha256,
 )
-from musix.models.modeling import PublicModelInput
-from musix.taxonomy.seeds.reconciliation import (
+from opennoise.models.modeling import PublicModelInput
+from opennoise.taxonomy.seeds.reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,

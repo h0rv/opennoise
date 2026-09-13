@@ -8,7 +8,7 @@ import os
 import sys
 from pathlib import Path
 
-from musix.ingest.lastfm.reverse_tag import (
+from opennoise.ingest.lastfm.reverse_tag import (
     LastFmHttpClient,
     LastFmResponseCache,
     LastFmReverseTagAdapter,
@@ -17,8 +17,8 @@ from musix.ingest.lastfm.reverse_tag import (
     publish_lastfm_reverse_tag_evidence,
     write_lastfm_query_manifest,
 )
-from musix.storage import LocalObjectStore
-from musix.taxonomy.seeds.reconciliation import load_seed_reconciliation
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.seeds.reconciliation import load_seed_reconciliation
 
 
 def build_parser() -> argparse.ArgumentParser:

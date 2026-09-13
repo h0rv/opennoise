@@ -8,8 +8,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Literal
 
-from musix.common import sha256_hex
-from musix.peers.audit.strength_aware_peer_audit import (
+from opennoise.common import sha256_hex
+from opennoise.peers.audit.strength_aware_peer_audit import (
     ArtifactBinding,
     ConsensusAbstention,
     ConsensusMicroNeighborhoodAudit,
@@ -18,7 +18,7 @@ from musix.peers.audit.strength_aware_peer_audit import (
     EgoAffiliation,
     StableConsensusPair,
 )
-from musix.projections.consensus_semantic import (
+from opennoise.projections.consensus_semantic import (
     ConsensusSemanticCommunity,
     ConsensusSemanticCoverage,
     ConsensusSemanticEdge,

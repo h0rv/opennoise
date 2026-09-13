@@ -9,15 +9,15 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from musix.ingest.musicbrainz.release_group_evidence import (
+from opennoise.ingest.musicbrainz.release_group_evidence import (
     ReleaseGroupEvidenceProgress,
     ReleaseGroupEvidenceSettings,
     build_release_group_evidence_from_seed_target_path,
     publish_release_group_evidence,
 )
-from musix.pipeline.manifest import load_download_source
-from musix.pipeline.source_cache import load_source_cache_receipt
-from musix.storage import LocalObjectStore
+from opennoise.pipeline.manifest import load_download_source
+from opennoise.pipeline.source_cache import load_source_cache_receipt
+from opennoise.storage import LocalObjectStore
 
 if TYPE_CHECKING:
     from collections.abc import Callable

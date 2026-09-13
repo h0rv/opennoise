@@ -15,7 +15,7 @@ no network request.
 Check the policy state before acquiring anything:
 
 ```sh
-uv run musix source-cache-status \
+uv run opennoise source-cache-status \
   enao_quint_legacy_map_2025 \
   musicbrainz_postgres_core_20260829 \
   enao_official_public_mirror
@@ -32,7 +32,7 @@ MiB, so large dumps require an intentional limit increase. The following 8 GB
 example is illustrative only and was not run as part of this change.
 
 ```sh
-uv run musix acquire-source-cache musicbrainz_postgres_core_20260829 \
+uv run opennoise acquire-source-cache musicbrainz_postgres_core_20260829 \
   --storage-scope portable_object_store \
   --max-total-bytes 8000000000 \
   --object-store data/source-object-store \
@@ -44,7 +44,7 @@ For a local-only source, use `--storage-scope local_vault`. Its receipt stays
 local and its ObjectStore must be the local implementation:
 
 ```sh
-uv run musix acquire-source-cache enao_quint_legacy_map_2025 \
+uv run opennoise acquire-source-cache enao_quint_legacy_map_2025 \
   --storage-scope local_vault \
   --object-store data/local-source-vault \
   --work-directory data/source-work \
@@ -55,7 +55,7 @@ Restore from a supplied receipt after cloning. This verifies the current
 manifest hash and every selected declaration before copying any bytes:
 
 ```sh
-uv run musix restore-source-cache musicbrainz_postgres_core_20260829 \
+uv run opennoise restore-source-cache musicbrainz_postgres_core_20260829 \
   --object-store data/source-object-store \
   --receipt data/source-cache-receipt.json \
   --destination data/source-cache

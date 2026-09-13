@@ -1,6 +1,6 @@
 # Public artist membership candidate
 
-`musix.public_artist_membership` produces a bounded, non-serving candidate for
+`opennoise.public_artist_membership` produces a bounded, non-serving candidate for
 artist-to-genre evidence across all 6,291 retained names. Production callers
 use `build_public_artist_membership_candidate_from_seed_artifact()`, which
 loads the name universe with `load_name_universe()` and delegates to the

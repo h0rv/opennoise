@@ -6,13 +6,13 @@ from pathlib import Path
 
 from pydantic import Field, field_validator
 
-from musix.evidence.membership import (
+from opennoise.evidence.membership import (
     EvaluationClaim,
     EvaluationPrediction,
     MembershipEvaluation,
     evaluate_predictions,
 )
-from musix.models import FrozenModel
+from opennoise.models import FrozenModel
 
 MAX_EVALUATION_BYTES = 1_000_000
 MAX_EVALUATION_ITEMS = 100_000

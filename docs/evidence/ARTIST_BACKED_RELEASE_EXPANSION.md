@@ -35,13 +35,13 @@ part of the semantic plan hash, so identical source and bounds have identical
 artifact identity across cache locations.
 
 ```sh
-MUSIX_ARTIST_BACKED_RELEASE_SOURCE_DATABASE=/path/to/phase3-public-qualified.sqlite \
-MUSIX_ARTIST_BACKED_RELEASE_DATABASE=out/artist-backed-serving.sqlite \
-MUSIX_ARTIST_BACKED_RELEASE_OUTPUT=out/artist-backed-releases.json \
-MUSIX_ARTIST_BACKED_RELEASE_OBJECT_STORE=out/objects \
-MUSIX_ARTIST_BACKED_RELEASE_CACHE=out/musicbrainz-cache \
-MUSIX_ARTIST_BACKED_RELEASE_REPORT=out/report.json \
-MUSIX_MUSICBRAINZ_USER_AGENT='musix/0.1 (maintainer@example.org)' \
+OPENNOISE_ARTIST_BACKED_RELEASE_SOURCE_DATABASE=/path/to/phase3-public-qualified.sqlite \
+OPENNOISE_ARTIST_BACKED_RELEASE_DATABASE=out/artist-backed-serving.sqlite \
+OPENNOISE_ARTIST_BACKED_RELEASE_OUTPUT=out/artist-backed-releases.json \
+OPENNOISE_ARTIST_BACKED_RELEASE_OBJECT_STORE=out/objects \
+OPENNOISE_ARTIST_BACKED_RELEASE_CACHE=out/musicbrainz-cache \
+OPENNOISE_ARTIST_BACKED_RELEASE_REPORT=out/report.json \
+OPENNOISE_MUSICBRAINZ_USER_AGENT='opennoise/0.1 (maintainer@example.org)' \
 uv run poe build-artist-backed-release-expansion
 ```
 

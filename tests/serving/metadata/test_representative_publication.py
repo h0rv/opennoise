@@ -5,17 +5,17 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.serving.metadata.representative_publication import (
+from opennoise.serving.metadata.representative_publication import (
     MetadataRepresentativePublicationError,
     load_metadata_representative_artifact,
     publish_metadata_representatives,
 )
-from musix.serving.metadata.representatives import (
+from opennoise.serving.metadata.representatives import (
     MetadataRepresentativeArtifact,
     MetadataRepresentativeItem,
     RepresentativeRunProvenance,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def _artifact() -> MetadataRepresentativeArtifact:

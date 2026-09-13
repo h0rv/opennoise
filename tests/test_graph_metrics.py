@@ -1,6 +1,6 @@
 import unittest
 
-from musix.ml.graph_metrics import weighted_undirected_modularity
+from opennoise.ml.graph_metrics import weighted_undirected_modularity
 
 
 class GraphMetricTests(unittest.TestCase):

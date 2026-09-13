@@ -13,14 +13,14 @@ from pathlib import Path
 
 import httpx
 
-from musix.ingest.musicbrainz.release_hydration import (
+from opennoise.ingest.musicbrainz.release_hydration import (
     HydrationSettings,
     MusicBrainzReleaseTrackHydrationAdapter,
     load_representative_artifact,
     materialize_hydration_catalog,
     write_hydration_artifact,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def _sha256(path: Path) -> str:

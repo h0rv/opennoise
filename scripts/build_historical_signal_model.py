@@ -12,9 +12,9 @@ import tempfile
 import time
 from pathlib import Path
 
-from musix.history.signals.model import build_historical_signal_model
-from musix.models.historical import HistoricalCompatibilityManifest
-from musix.models.historical_signal import HistoricalSignalSettings
+from opennoise.history.signals.model import build_historical_signal_model
+from opennoise.models.historical import HistoricalCompatibilityManifest
+from opennoise.models.historical_signal import HistoricalSignalSettings
 
 
 def _arguments() -> argparse.Namespace:

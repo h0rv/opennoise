@@ -4,15 +4,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.serving.public.taxonomy_expansion import (
+from opennoise.serving.public.taxonomy_expansion import (
     PublicTaxonomyExpansionConfig,
     _read_catalog,
     build_public_taxonomy_expansion,
     publish_public_taxonomy_expansion,
     verify_public_taxonomy_expansion,
 )
-from musix.storage import LocalObjectStore
-from musix.taxonomy.seeds.taxonomy import (
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.seeds.taxonomy import (
     PublicTaxonomyConfig,
     build_genre_seed_public_taxonomy,
     write_genre_seed_public_taxonomy,

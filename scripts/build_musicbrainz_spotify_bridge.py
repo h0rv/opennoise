@@ -8,12 +8,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-from musix.ingest.spotify.bridge import (
+from opennoise.ingest.spotify.bridge import (
     SpotifyBridgeSettings,
     build_musicbrainz_spotify_bridge,
     publish_musicbrainz_spotify_bridge,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def build_parser() -> argparse.ArgumentParser:

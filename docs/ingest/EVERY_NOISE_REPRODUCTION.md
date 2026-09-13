@@ -4,20 +4,20 @@ Research date: 2026-08-31
 
 ## Goal
 
-Musix should support two separate results.
+OpenNoise should support two separate results.
 
 The historical result reproduces what Every Noise at Once published. It preserves the final map, artist pages, examples, links, ranks, and playlists as dated observations. It does not claim to recreate Spotify's private calculations.
 
 The open result rebuilds the system from public metadata. It starts with open music identities,
-tags, relationships, and privacy-safe public listening aggregates. Musix does not ingest audio or
+tags, relationships, and privacy-safe public listening aggregates. OpenNoise does not ingest audio or
 audio-derived feature data. Every stage records its inputs, method, version, and output. The open
 result can be measured against the historical result, but it remains a different map.
 
-An exact reproduction of the private model is not possible from the public record. Glenn McDonald disclosed several inputs and design choices, but he did not publish the source code, complete feature vectors, thresholds, weights, or the final layout transform. Musix should show the difference between a disclosed fact and a fitted approximation.
+An exact reproduction of the private model is not possible from the public record. Glenn McDonald disclosed several inputs and design choices, but he did not publish the source code, complete feature vectors, thresholds, weights, or the final layout transform. OpenNoise should show the difference between a disclosed fact and a fitted approximation.
 
 ## Current open construction contract
 
-The immutable 6,291 seed IDs are the join boundary. An explicit bridge maps each seed to public identities and separate MusicBrainz genre or tag identities. Direct artist sets produce canonical symmetric peer candidates and a directional top-k view. Public taxonomy supplies directed containment candidates. Every output is versioned, hashed, evidence-backed, and able to abstain. H3 data is evaluation-only. Musix stores metadata, never audio or music files.
+The immutable 6,291 seed IDs are the join boundary. An explicit bridge maps each seed to public identities and separate MusicBrainz genre or tag identities. Direct artist sets produce canonical symmetric peer candidates and a directional top-k view. Public taxonomy supplies directed containment candidates. Every output is versioned, hashed, evidence-backed, and able to abstain. H3 data is evaluation-only. OpenNoise stores metadata, never audio or music files.
 
 ## Claim labels
 
@@ -78,7 +78,7 @@ The horizontal direction is bounciness. The vertical direction is organism, disp
 
 Status: directly observed as output and otherwise unknown.
 
-Every genre has a hexadecimal color. The color varies smoothly enough to suggest that it represents one or more analytical values, but the input, color space, transform, and purpose were not found in a primary source. Musix must not describe color as a third axis unless an experiment supports that wording, and even then it must be labeled as an approximation.
+Every genre has a hexadecimal color. The color varies smoothly enough to suggest that it represents one or more analytical values, but the input, color space, transform, and purpose were not found in a primary source. OpenNoise must not describe color as a third axis unless an experiment supports that wording, and even then it must be labeled as an approximation.
 
 ### Audio features
 
@@ -162,7 +162,7 @@ The output must contain exactly 6,291 unique source item IDs. The parser must no
 
 The parser emits genre to artist membership observations, artist display positions, artist source order, sample metadata, external artist links, page date, and the related genre blocks shown on the page. It preserves whether each related genre was shown through artist overlap or audio similarity when the page exposes that distinction.
 
-Each membership remains an observation from one page. McDonald said that these pages showed only a couple hundred representative artists, so absence from a page is not negative membership evidence. Musix must not convert presence into an unqualified canonical fact. If two dated pages disagree, both observations remain available. Artist display coordinates belong to that genre page's local normalized coordinate system.
+Each membership remains an observation from one page. McDonald said that these pages showed only a couple hundred representative artists, so absence from a page is not negative membership evidence. OpenNoise must not convert presence into an unqualified canonical fact. If two dated pages disagree, both observations remain available. Artist display coordinates belong to that genre page's local normalized coordinate system.
 
 ### Stage H4: artist pages and recordings
 
@@ -213,7 +213,7 @@ A later scored run can combine normalized facets. The run records all weights an
 
 ### Stage O6: genre similarity
 
-Musix should publish two independent neighbor lists before it publishes a blend.
+OpenNoise should publish two independent neighbor lists before it publishes a blend.
 
 The cultural list uses weighted artist membership and listener overlap. Candidate measures are weighted cosine, weighted Jaccard, and positive pointwise mutual information with support shrinkage. The acoustic list uses standardized genre feature distributions rather than only a mean. Candidate distances are cosine over means, Wasserstein distance per feature, and a regularized covariance distance.
 
@@ -239,7 +239,7 @@ No popularity field can silently stand in for genre fit. Each list has its own v
 
 The application stores links separately from playable media. MusicBrainz URL relationships can provide official sites, purchase pages, streaming pages, Bandcamp, SoundCloud, and other entity specific destinations. ListenBrainz can expose resolved recording metadata and external origins. Jamendo can supply licensed streams for tracks whose license permits the requested use. FMA can supply evaluation audio under each track's license.
 
-Musix should not proxy a third party preview unless its policy permits that use. A sample control should prefer an approved playable asset, then an approved embed, then an external link. It should always name the source and availability time.
+OpenNoise should not proxy a third party preview unless its policy permits that use. A sample control should prefer an approved playable asset, then an approved embed, then an external link. It should always name the source and availability time.
 
 ### Stage O11: publication
 

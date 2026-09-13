@@ -1,7 +1,7 @@
 import sqlite3
 import unittest
 
-from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
+from opennoise.ml.repository import PublicInputLoadSettings, PublicModelRepository
 
 _WD_SHA = "a" * 64
 _LB_SHA = "b" * 64

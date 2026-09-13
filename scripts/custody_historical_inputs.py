@@ -7,10 +7,10 @@ import hashlib
 import sys
 from pathlib import Path
 
-from musix.history.historical_custody import custody_historical_inputs
-from musix.models.historical import HistoricalH3SourceManifest
-from musix.models.historical_signal import HistoricalSignalSettings
-from musix.storage import LocalObjectStore
+from opennoise.history.historical_custody import custody_historical_inputs
+from opennoise.models.historical import HistoricalH3SourceManifest
+from opennoise.models.historical_signal import HistoricalSignalSettings
+from opennoise.storage import LocalObjectStore
 
 _DEFAULT_H3_MANIFEST = Path("config/historical_sources/neroyuki_h3_20241116.json")
 _DEFAULT_H2_MANIFEST = Path("data/historical/historical-compatibility-v1.json")

@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.common import canonical_json, sha256_hex
-from musix.evidence.graph_projection import (
+from opennoise.common import canonical_json, sha256_hex
+from opennoise.evidence.graph_projection import (
     ArtifactInput,
     EvidenceGraphProjectionArtifact,
     EvidenceGraphProjectionError,
@@ -13,11 +13,11 @@ from musix.evidence.graph_projection import (
     verify_evidence_graph_projection,
     write_evidence_graph_projection,
 )
-from musix.taxonomy.relations.expansion import (
+from opennoise.taxonomy.relations.expansion import (
     RelationExpansionCoverage,
     TaxonomyRelationExpansionArtifact,
 )
-from musix.taxonomy.relations.identity_audit import (
+from opennoise.taxonomy.relations.identity_audit import (
     audit_taxonomy_relation_identity,
     qids_from_query,
 )

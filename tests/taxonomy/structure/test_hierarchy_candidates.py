@@ -6,24 +6,24 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
     PublicModelInput,
 )
-from musix.storage import LocalObjectStore
-from musix.taxonomy.relations.expansion import (
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.relations.expansion import (
     TaxonomyRelationExpansionPolicy,
     build_taxonomy_relation_expansion,
     catalog_wikidata_p279_feed,
 )
-from musix.taxonomy.seeds.reconciliation import (
+from opennoise.taxonomy.seeds.reconciliation import (
     SeedReconciliationArtifact,
     SeedReconciliationCoverage,
     SeedReconciliationDisposition,
 )
-from musix.taxonomy.seeds.taxonomy import (
+from opennoise.taxonomy.seeds.taxonomy import (
     CompositionCalibration,
     GenreSeedPublicTaxonomyArtifact,
     PublicCatalogInput,
@@ -32,8 +32,8 @@ from musix.taxonomy.seeds.taxonomy import (
     SeedTaxonomyInference,
     TaxonomyCoverageReport,
 )
-from musix.taxonomy.seeds.universe import SeedInput, SeedName
-from musix.taxonomy.structure.hierarchy_candidates import (
+from opennoise.taxonomy.seeds.universe import SeedInput, SeedName
+from opennoise.taxonomy.structure.hierarchy_candidates import (
     GenreHierarchyCandidatePolicy,
     build_genre_hierarchy_candidates,
     verify_genre_hierarchy_candidates,

@@ -5,14 +5,14 @@ import asyncio
 import json
 from pathlib import Path
 
-from musix.adapters.everynoise import (
+from opennoise.adapters.everynoise import (
     NEROYUKI_H3_SOURCE,
     QUINT_SOURCE,
     adapt_historical_genre_artist_map,
     store_verified_bytes,
 )
-from musix.serving.bootstrap import bootstrap_everynoise
-from musix.serving.genre_discovery import import_historical_genre_memberships
+from opennoise.serving.bootstrap import bootstrap_everynoise
+from opennoise.serving.genre_discovery import import_historical_genre_memberships
 
 RESEARCH_DATE = "2026-09-04"
 

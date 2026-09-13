@@ -25,11 +25,11 @@ The API credential is never written to a manifest, cache path, artifact,
 receipt, or command output.
 
 ```bash
-export MUSIX_LASTFM_REVERSE_TAG_QUERY_MANIFEST=.cache/lastfm-reverse-tag/query-manifest-v1.json
-export MUSIX_LASTFM_REVERSE_TAG_RESPONSE_CACHE=.cache/lastfm-reverse-tag/responses
-export MUSIX_LASTFM_REVERSE_TAG_OUTPUT=.cache/lastfm-reverse-tag/lastfm-reverse-tag-evidence-v1.json
-export MUSIX_LASTFM_REVERSE_TAG_OBJECT_STORE=.cache/lastfm-reverse-tag/objects
-export MUSIX_LASTFM_REVERSE_TAG_RECEIPT=.cache/lastfm-reverse-tag/lastfm-reverse-tag-evidence-v1.receipt.json
+export OPENNOISE_LASTFM_REVERSE_TAG_QUERY_MANIFEST=.cache/lastfm-reverse-tag/query-manifest-v1.json
+export OPENNOISE_LASTFM_REVERSE_TAG_RESPONSE_CACHE=.cache/lastfm-reverse-tag/responses
+export OPENNOISE_LASTFM_REVERSE_TAG_OUTPUT=.cache/lastfm-reverse-tag/lastfm-reverse-tag-evidence-v1.json
+export OPENNOISE_LASTFM_REVERSE_TAG_OBJECT_STORE=.cache/lastfm-reverse-tag/objects
+export OPENNOISE_LASTFM_REVERSE_TAG_RECEIPT=.cache/lastfm-reverse-tag/lastfm-reverse-tag-evidence-v1.receipt.json
 uv run poe build-lastfm-reverse-tag-evidence
 ```
 

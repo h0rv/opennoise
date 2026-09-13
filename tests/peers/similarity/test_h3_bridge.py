@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from musix.peers.similarity.h3_bridge import (
+from opennoise.peers.similarity.h3_bridge import (
     _historical_jaccard_neighbors,
     _load_positives,
 )

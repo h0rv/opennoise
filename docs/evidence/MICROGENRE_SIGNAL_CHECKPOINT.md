@@ -38,4 +38,4 @@ Run the sealed JSON checkpoint with:
 uv run poe build-microgenre-signal-checkpoint
 ```
 
-Set `MUSIX_MICROGENRE_SIGNAL_INPUT` and `MUSIX_MICROGENRE_SIGNAL_OUTPUT`.
+Set `OPENNOISE_MICROGENRE_SIGNAL_INPUT` and `OPENNOISE_MICROGENRE_SIGNAL_OUTPUT`.

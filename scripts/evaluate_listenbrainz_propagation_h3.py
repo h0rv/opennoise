@@ -6,13 +6,13 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.ingest.listenbrainz.h3_evaluation import (
+from opennoise.ingest.listenbrainz.h3_evaluation import (
     ListenBrainzH3EvaluationInputs,
     ListenBrainzH3EvaluationSettings,
     evaluate_listenbrainz_propagation_h3,
     publish_listenbrainz_h3_evaluation,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def build_parser() -> argparse.ArgumentParser:

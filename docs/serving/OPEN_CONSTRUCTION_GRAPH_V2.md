@@ -38,7 +38,7 @@ uv run poe build-open-construction-graph-v2
 The second command writes the graph and an immutable `LocalObjectStore` copy.
 Its receipt contains the byte hash, content-addressed object key, logical hash,
 and fail-closed gate. Do not commit a full derived v2 graph just to enable the
-server; set `MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH` to the retained, verified
+server; set `OPENNOISE_CONSTRUCTION_GRAPH_V2_PATH` to the retained, verified
 artifact path instead.
 
 ## Serving and migration
@@ -46,7 +46,7 @@ artifact path instead.
 `/api/open-construction-map` and `/api/open-construction-map/neighbors/{id}`
 remain v1. The v2 paths are `/api/open-construction-map/v2` and
 `/api/open-construction-map/v2/neighbors/{id}`. They are disabled unless
-`MUSIX_OPEN_CONSTRUCTION_GRAPH_V2_PATH` is explicitly configured. An absent
+`OPENNOISE_CONSTRUCTION_GRAPH_V2_PATH` is explicitly configured. An absent
 configuration returns unavailable. A configured unreadable, malformed, or
 failed-gate artifact fails application startup; neither case falls back to v1.
 Every response is limited to one of the declared LOD budgets (240, 480, 720,

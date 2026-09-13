@@ -8,11 +8,11 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from musix.history.historical_compatibility import (
+from opennoise.history.historical_compatibility import (
     evaluate_historical_compatibility,
     load_public_comparison,
 )
-from musix.models.historical import HistoricalCompatibilityManifest
+from opennoise.models.historical import HistoricalCompatibilityManifest
 
 
 def _arguments() -> argparse.Namespace:

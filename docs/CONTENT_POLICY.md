@@ -1,6 +1,6 @@
 # Metadata-only content policy
 
-Musix never downloads, stores, parses, serves, embeds, or trains on audio or
+OpenNoise never downloads, stores, parses, serves, embeds, or trains on audio or
 music bytes. Source artifacts must declare `content_kind = "metadata"`.
 Download URLs, response media types, local files, and archive members are
 checked before their contents enter a parser or immutable object store. Known
@@ -9,7 +9,7 @@ fail closed and quarantine the source attempt.
 
 Track names, release titles, recording identifiers, preview state, and outbound
 HTTP links are metadata. They may be retained when their source policy permits
-it. Musix does not follow preview or stream links. ListenBrainz parsing discards
+it. OpenNoise does not follow preview or stream links. ListenBrainz parsing discards
 submitted track and artist text and retains only MusicBrainz artist identifiers
 needed for privacy-thresholded aggregate evidence.
 

@@ -4,14 +4,14 @@ import unittest
 from pathlib import Path
 from typing import override
 
-from musix.db import Database
-from musix.ml.public_graph import build_public_model, public_model_output_sha256
-from musix.ml.publish import (
+from opennoise.db import Database
+from opennoise.ml.public_graph import build_public_model, public_model_output_sha256
+from opennoise.ml.publish import (
     PublicModelPublishError,
     publish_public_model,
     resolve_public_policy_id,
 )
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     DirectMembershipEvidence,
     GenreHierarchyEdge,
     GenreIdentity,
@@ -20,8 +20,8 @@ from musix.models.modeling import (
     PublicModelInput,
     PublicModelSettings,
 )
-from musix.serving.app import create_app
-from musix.serving.genre_entry import GenreEntryRepository
+from opennoise.serving.app import create_app
+from opennoise.serving.genre_entry import GenreEntryRepository
 from tests._test_client import create_test_client
 
 ROOT = Path(__file__).resolve().parents[1]

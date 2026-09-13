@@ -7,7 +7,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from musix.serving.catalog_snapshot import CatalogSnapshotRestoreError, restore_catalog_snapshot
+from opennoise.serving.catalog_snapshot import CatalogSnapshotRestoreError, restore_catalog_snapshot
 
 
 def main() -> int:

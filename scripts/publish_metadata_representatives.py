@@ -5,8 +5,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.serving.metadata.representative_publication import publish_metadata_representatives
-from musix.storage import LocalObjectStore
+from opennoise.serving.metadata.representative_publication import publish_metadata_representatives
+from opennoise.storage import LocalObjectStore
 
 
 def main() -> int:

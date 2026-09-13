@@ -7,7 +7,7 @@ import os
 import sys
 from pathlib import Path
 
-from musix.pipeline.public_release_custody import (
+from opennoise.pipeline.public_release_custody import (
     PublicReleaseCustodySettings,
     custody_public_release,
 )
@@ -26,20 +26,20 @@ def _default_path(name: str, fallback: Path) -> Path:
 
 def main() -> int:
     """Run one offline custody operation and print its atomic receipt."""
-    root = _default_path("MUSIX_PUBLIC_RELEASE_ROOT", _project_root())
+    root = _default_path("OPENNOISE_PUBLIC_RELEASE_ROOT", _project_root())
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--release-directory",
         type=Path,
         default=_default_path(
-            "MUSIX_PUBLIC_RELEASE_DIRECTORY", root / "config/releases/phase3-public-20260831"
+            "OPENNOISE_PUBLIC_RELEASE_DIRECTORY", root / "config/releases/phase3-public-20260831"
         ),
     )
     parser.add_argument(
         "--cache-database",
         type=Path,
         default=_default_path(
-            "MUSIX_PUBLIC_RELEASE_CACHE",
+            "OPENNOISE_PUBLIC_RELEASE_CACHE",
             root / ".worktrees/phase3-public-evidence/data/phase3-public-qualified.sqlite",
         ),
     )
@@ -47,7 +47,7 @@ def main() -> int:
         "--source-vault",
         type=Path,
         default=_default_path(
-            "MUSIX_PUBLIC_RELEASE_SOURCE_VAULT",
+            "OPENNOISE_PUBLIC_RELEASE_SOURCE_VAULT",
             root / ".worktrees/phase3-public-evidence/data/phase3-final-vault",
         ),
     )
@@ -55,7 +55,7 @@ def main() -> int:
         "--evidence-directory",
         type=Path,
         default=_default_path(
-            "MUSIX_PUBLIC_RELEASE_EVIDENCE",
+            "OPENNOISE_PUBLIC_RELEASE_EVIDENCE",
             root / ".worktrees/final-integration/.cache/release-certify",
         ),
     )
@@ -63,14 +63,14 @@ def main() -> int:
         "--output-directory",
         type=Path,
         default=_default_path(
-            "MUSIX_PUBLIC_RELEASE_CUSTODY_OUTPUT", root / ".cache/public-release-custody"
+            "OPENNOISE_PUBLIC_RELEASE_CUSTODY_OUTPUT", root / ".cache/public-release-custody"
         ),
     )
     parser.add_argument(
         "--objective-gates-directory",
         type=Path,
         default=_default_path(
-            "MUSIX_PUBLIC_RELEASE_OBJECTIVE_GATES", root / ".cache/objective-gates"
+            "OPENNOISE_PUBLIC_RELEASE_OBJECTIVE_GATES", root / ".cache/objective-gates"
         ),
     )
     parser.add_argument("--skip-objective-gates", action="store_true")

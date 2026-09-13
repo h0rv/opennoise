@@ -6,7 +6,7 @@ from pathlib import Path
 
 import httpx
 
-from musix.adapters.wikidata import (
+from opennoise.adapters.wikidata import (
     AdapterLimits,
     WikidataAdapterError,
     fetch_sparql_snapshot,
@@ -17,7 +17,7 @@ from musix.adapters.wikidata import (
     parse_truthy_line,
     write_genre_outputs,
 )
-from musix.ingest.jsonl import parse_catalog_record
+from opennoise.ingest.jsonl import parse_catalog_record
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
@@ -209,14 +209,16 @@ class WikidataNetworkTests(PollingIsolatedAsyncioTestCase):
                     client,
                     query="SELECT * WHERE {}",
                     destination=destination,
-                    user_agent="musix/0.1 (maintainer@example.test)",
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
                     max_response_bytes=1024,
                 )
             payload = json.loads(destination.read_text(encoding="utf-8"))
 
         self.assertGreater(size, 0)
         self.assertEqual(payload["results"]["bindings"], [])
-        self.assertEqual(requests[0].headers["user-agent"], "musix/0.1 (maintainer@example.test)")
+        self.assertEqual(
+            requests[0].headers["user-agent"], "opennoise/0.1 (maintainer@example.test)"
+        )
 
 
 if __name__ == "__main__":

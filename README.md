@@ -5,7 +5,7 @@ artist membership, similarity, hierarchy, and representative album and recording
 and a semantic map from bounded public data.
 
 OpenNoise is the product name. The transitional Python package, compatibility
-command, environment keys, and historical artifact identifiers remain `musix`
+command, environment keys, and historical artifact identifiers remain `opennoise`
 until their separately versioned migrations.
 
 The default public model has 603 independently built genres. The 6,291 Every
@@ -27,7 +27,7 @@ the compatibility fallback when v2 is explicitly disabled. Run
 `uv run poe open-v2-qa -- --base-url http://127.0.0.1:3001` against a running
 app to write a bounded API and no-script fallback report.
 
-For repeatable Chromium evidence, set `MUSIX_OPEN_V2_BROWSER_URL` to the local
+For repeatable Chromium evidence, set `OPENNOISE_OPEN_V2_BROWSER_URL` to the local
 app URL and run `uv run poe open-v2-browser-qa`; the task writes desktop light,
 mobile dark, and no-JavaScript captures plus interaction checks under the
 configured output directory.
@@ -48,7 +48,7 @@ and never contains audio or music files.
 
 ```sh
 uv run poe build-musicbrainz-research-graph
-MUSIX_MB_RESEARCH_GRAPH_SHA256=<logical-output-sha256> \
+OPENNOISE_MB_RESEARCH_GRAPH_SHA256=<logical-output-sha256> \
   uv run poe evaluate-musicbrainz-research-graph
 ```
 
@@ -73,8 +73,8 @@ release uses only its local cache and never fetches data during serving.
 
 ```sh
 uv run poe release-certify
-MUSIX_DATABASE_PATH=data/public.sqlite \
-MUSIX_PRODUCTION_MAP_PATH=data/model/production-map-v1.json \
+OPENNOISE_DATABASE_PATH=data/public.sqlite \
+OPENNOISE_PRODUCTION_MAP_PATH=data/model/production-map-v1.json \
 uv run poe dev
 ```
 

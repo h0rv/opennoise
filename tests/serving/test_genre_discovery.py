@@ -5,14 +5,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.adapters.everynoise import (
+from opennoise.adapters.everynoise import (
     SourceSpec,
     adapt_historical_genre_artist_map,
     adapt_quint_historical_representatives,
     adapt_quint_html,
 )
-from musix.ingest.jsonl import ImportOptions, import_jsonl
-from musix.serving.genre_discovery import (
+from opennoise.ingest.jsonl import ImportOptions, import_jsonl
+from opennoise.serving.genre_discovery import (
     HistoricalGenreMemberQuery,
     import_historical_genre_memberships,
     import_historical_representatives,
@@ -135,7 +135,7 @@ class GenreDiscoveryTests(unittest.TestCase):
             root = Path(directory)
             catalog_path = root / "catalog.jsonl"
             catalog_path.write_bytes(catalog.catalog_jsonl())
-            database_path = root / "musix.sqlite"
+            database_path = root / "opennoise.sqlite"
             run_async(
                 import_jsonl(
                     ImportOptions(
@@ -266,7 +266,7 @@ class GenreDiscoveryTests(unittest.TestCase):
             root = Path(directory)
             catalog_path = root / "catalog.jsonl"
             catalog_path.write_bytes(catalog.catalog_jsonl())
-            database_path = root / "musix.sqlite"
+            database_path = root / "opennoise.sqlite"
             run_async(
                 import_jsonl(
                     ImportOptions(

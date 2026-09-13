@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from musix.models.modeling import MetadataCandidate
-from musix.serving.metadata.representatives import metadata_representatives
+from opennoise.models.modeling import MetadataCandidate
+from opennoise.serving.metadata.representatives import metadata_representatives
 
 
 def _database(path: Path) -> None:
@@ -67,7 +67,7 @@ class MetadataRepresentativesTests(unittest.TestCase):
             database = Path(temporary) / "catalog.sqlite"
             _database(database)
             with patch(
-                "musix.serving.metadata.representatives._metadata_candidates",
+                "opennoise.serving.metadata.representatives._metadata_candidates",
                 return_value=candidates,
             ):
                 artifact = metadata_representatives(database)
@@ -86,7 +86,7 @@ class MetadataRepresentativesTests(unittest.TestCase):
             _database(database)
             with (
                 patch(
-                    "musix.serving.metadata.representatives._metadata_candidates",
+                    "opennoise.serving.metadata.representatives._metadata_candidates",
                     return_value=(),
                 ),
                 self.assertRaisesRegex(RuntimeError, "absent from the canonical candidate loader"),

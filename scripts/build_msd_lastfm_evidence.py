@@ -6,14 +6,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.ingest.lastfm.msd import (
+from opennoise.ingest.lastfm.msd import (
     build_msd_lastfm_evidence,
     cache_msd_lastfm_sqlite_files,
     load_msd_lastfm_source_cache,
     publish_msd_lastfm_evidence,
     targets_from_seed_reconciliation,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def parser() -> argparse.ArgumentParser:

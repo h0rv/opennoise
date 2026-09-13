@@ -29,8 +29,8 @@ copied in bounded chunks and are never loaded into memory as byte strings.
 
 The CLI and Poe task resolve defaults from the repository root, so running from
 the project root uses `.worktrees/phase3-public-evidence` and
-`.worktrees/final-integration` correctly. Set `MUSIX_PUBLIC_RELEASE_ROOT` or
-the per-path `MUSIX_PUBLIC_RELEASE_*` variables to use another layout. For
+`.worktrees/final-integration` correctly. Set `OPENNOISE_PUBLIC_RELEASE_ROOT` or
+the per-path `OPENNOISE_PUBLIC_RELEASE_*` variables to use another layout. For
 another checkout, pass `--cache-database`, `--source-vault`,
 `--evidence-directory`, and `--output-directory` explicitly.
 The default run writes objects and the receipt below the ignored project cache:

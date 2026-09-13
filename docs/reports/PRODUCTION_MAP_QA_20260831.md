@@ -12,7 +12,7 @@ failures: central 90% spans are `0.96` on both axes, 16-by-9 occupancy is
 desktop and mobile labels are collision-free.
 
 The old absolute `0.30` recall floor was superseded. Current acceptance in
-`src/musix/ml/production_map_qa.py` requires (1) null-adjusted top-10 quality
+`src/opennoise/ml/production_map_qa.py` requires (1) null-adjusted top-10 quality
 of at least `0.98` against a same-scope canonical spectral baseline and (2) a
 top-10 lift of at least `0.15` above its exact per-query random null. The
 accepted bundle records top-10 recall `0.1699327437`, random recall

@@ -8,12 +8,12 @@ import json
 import sys
 from pathlib import Path
 
-from musix.ingest.wikidata.resolver import (
+from opennoise.ingest.wikidata.resolver import (
     WikidataResolverConfig,
     publish_wikidata_seed_resolution,
     resolve_wikidata_seed_batch,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def parser() -> argparse.ArgumentParser:

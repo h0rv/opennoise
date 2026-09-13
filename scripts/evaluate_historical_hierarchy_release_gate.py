@@ -6,10 +6,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.history.hierarchy.release_gate import (
+from opennoise.history.hierarchy.release_gate import (
     evaluate_historical_hierarchy_release_gate,
 )
-from musix.models.historical_signal import HistoricalSignalArtifact
+from opennoise.models.historical_signal import HistoricalSignalArtifact
 
 
 def main() -> int:

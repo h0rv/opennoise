@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.checkpoints.source_neutral_certification import (
+from opennoise.checkpoints.source_neutral_certification import (
     SourceNeutralCheckpointInputs,
     build_source_neutral_checkpoint_certification,
     evaluate_source_neutral_checkpoint_against_historical,

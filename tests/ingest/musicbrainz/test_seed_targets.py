@@ -8,7 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
 
-from musix.ingest.musicbrainz.seed_targets import (
+from opennoise.ingest.musicbrainz.seed_targets import (
     MusicBrainzSeedTargetExtractorError,
     ReviewedSeedAlias,
     SeedTargetExtractorSettings,
@@ -19,7 +19,7 @@ from musix.ingest.musicbrainz.seed_targets import (
     verify_seed_target_artifact,
     write_seed_target_artifact,
 )
-from musix.taxonomy.seeds.universe import SeedInput, SeedName
+from opennoise.taxonomy.seeds.universe import SeedInput, SeedName
 
 
 def _seed() -> SeedInput:

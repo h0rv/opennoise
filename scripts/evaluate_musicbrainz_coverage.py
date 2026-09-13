@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from musix.ingest.musicbrainz.coverage import (
+from opennoise.ingest.musicbrainz.coverage import (
     BaselineReport,
     BaselineRun,
     ReconstructionArtifactReport,
@@ -22,7 +22,7 @@ def main() -> int:
     """Parse options, evaluate coverage, and optionally run source-only baselines."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--research-database", type=Path, required=True)
-    parser.add_argument("--seed-database", type=Path, default=Path("data/musix.sqlite"))
+    parser.add_argument("--seed-database", type=Path, default=Path("data/opennoise.sqlite"))
     parser.add_argument("--source-key", default="musicbrainz_json_artist_research_20260829")
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--inputs", type=Path)

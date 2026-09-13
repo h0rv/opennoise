@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from musix.common.hashing import canonical_json, sha256_file, sha256_hex, sha256_json
-from musix.common.sqlite import write_atomic_bytes, write_durable_bytes
+from opennoise.common.hashing import canonical_json, sha256_file, sha256_hex, sha256_json
+from opennoise.common.sqlite import write_atomic_bytes, write_durable_bytes
 
 
 class CommonHashingTests(unittest.TestCase):
@@ -16,7 +16,7 @@ class CommonHashingTests(unittest.TestCase):
         self.assertEqual(first, b'{"a":[2,3],"b":1}')
 
     def test_sha256_hex_matches_hashlib(self) -> None:
-        payload = b"musix-boundary-fixture"
+        payload = b"opennoise-boundary-fixture"
         self.assertEqual(sha256_hex(payload), hashlib.sha256(payload).hexdigest())
 
     def test_sha256_file_streams_bytes(self) -> None:
@@ -31,8 +31,8 @@ class CommonHashingTests(unittest.TestCase):
     def test_write_atomic_bytes_round_trips_without_partial(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "out.bin"
-            write_atomic_bytes(path, b"\x00\xffmusix")
-            self.assertEqual(path.read_bytes(), b"\x00\xffmusix")
+            write_atomic_bytes(path, b"\x00\xffopennoise")
+            self.assertEqual(path.read_bytes(), b"\x00\xffopennoise")
             self.assertEqual(list(Path(tmp).glob("*.partial")), [])
 
     def test_sha256_json_composes_canonical_hash(self) -> None:
@@ -42,8 +42,8 @@ class CommonHashingTests(unittest.TestCase):
     def test_write_durable_bytes_round_trips_without_partial(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "out.bin"
-            write_durable_bytes(path, b"\x00\xffmusix")
-            self.assertEqual(path.read_bytes(), b"\x00\xffmusix")
+            write_durable_bytes(path, b"\x00\xffopennoise")
+            self.assertEqual(path.read_bytes(), b"\x00\xffopennoise")
             self.assertEqual(list(Path(tmp).glob(".out.bin.*")), [])
 
 

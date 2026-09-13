@@ -8,12 +8,12 @@ from typing import Literal
 
 from pydantic import AnyHttpUrl, ValidationError
 
-from musix.history.historical_compatibility import (
+from opennoise.history.historical_compatibility import (
     coverage_quality_report,
     evaluate_historical_compatibility,
     publish_historical_compatibility,
 )
-from musix.models.historical import (
+from opennoise.models.historical import (
     HistoricalAdapterCheckpoint,
     HistoricalAdapterContract,
     HistoricalArtifact,
@@ -32,7 +32,7 @@ from musix.models.historical import (
     PublicComparisonModel,
     PublicComparisonRelation,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 SHA = "a" * 64
 PUBLIC_SHA = "b" * 64

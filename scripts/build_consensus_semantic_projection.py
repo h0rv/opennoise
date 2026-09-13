@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from musix.projections.consensus_semantic import (
+from opennoise.projections.consensus_semantic import (
     ConsensusSemanticProjectionInputs,
     build_consensus_semantic_projection,
     write_consensus_semantic_projection,

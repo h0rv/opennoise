@@ -9,7 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Literal, cast
 
-from musix.ingest.listenbrainz.propagation import (
+from opennoise.ingest.listenbrainz.propagation import (
     ListenBrainzPropagationSettings,
     PropagationInputFingerprint,
     build_listenbrainz_propagation,
@@ -18,19 +18,19 @@ from musix.ingest.listenbrainz.propagation import (
     publish_listenbrainz_propagation,
     verify_listenbrainz_propagation,
 )
-from musix.ingest.musicbrainz.seed_targets import (
+from opennoise.ingest.musicbrainz.seed_targets import (
     MusicBrainzSeedTargetArtifact,
     SeedTargetEvidence,
 )
-from musix.models.modeling import (
+from opennoise.models.modeling import (
     ArtistPairEvidence,
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
     PublicModelInput,
 )
-from musix.serving.public.artist_membership import NameUniverse, NameUniverseEntry
-from musix.storage import LocalObjectStore
+from opennoise.serving.public.artist_membership import NameUniverse, NameUniverseEntry
+from opennoise.storage import LocalObjectStore
 from scripts.build_listenbrainz_propagation import _require_qualified_snapshot
 
 if TYPE_CHECKING:

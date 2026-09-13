@@ -8,7 +8,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from musix.peers.audit.local_release_group_neighbor_comparison import (
+from opennoise.peers.audit.local_release_group_neighbor_comparison import (
     LocalReleaseGroupNeighborComparisonError,
     compare_neighbors,
 )

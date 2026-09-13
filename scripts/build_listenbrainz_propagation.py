@@ -9,7 +9,7 @@ import sys
 from contextlib import closing
 from pathlib import Path
 
-from musix.ingest.listenbrainz.propagation import (
+from opennoise.ingest.listenbrainz.propagation import (
     ListenBrainzPropagationSettings,
     PropagationInputFingerprint,
     build_listenbrainz_propagation,
@@ -18,10 +18,10 @@ from musix.ingest.listenbrainz.propagation import (
     publish_listenbrainz_propagation,
     wikidata_name_universe_memberships,
 )
-from musix.ingest.musicbrainz.seed_targets import load_seed_target_artifact
-from musix.ml.repository import PublicInputLoadSettings, PublicModelRepository
-from musix.serving.public.artist_membership import load_name_universe
-from musix.storage import LocalObjectStore
+from opennoise.ingest.musicbrainz.seed_targets import load_seed_target_artifact
+from opennoise.ml.repository import PublicInputLoadSettings, PublicModelRepository
+from opennoise.serving.public.artist_membership import load_name_universe
+from opennoise.storage import LocalObjectStore
 
 
 def _sha256_file(path: Path) -> str:

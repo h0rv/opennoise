@@ -5,13 +5,13 @@ from pathlib import Path
 from typing import override
 from unittest.mock import patch
 
-from musix.db import Database
-from musix.ml.production_map import build_production_map
-from musix.ml.public_graph import build_public_model
-from musix.models import MapPoint, map_view
-from musix.models.modeling import PublicModelSettings
-from musix.models.production import ProductionMapSettings
-from musix.serving.app import create_app
+from opennoise.db import Database
+from opennoise.ml.production_map import build_production_map
+from opennoise.ml.public_graph import build_public_model
+from opennoise.models import MapPoint, map_view
+from opennoise.models.modeling import PublicModelSettings
+from opennoise.models.production import ProductionMapSettings
+from opennoise.serving.app import create_app
 from tests._test_client import create_test_client
 from tests.serving.map.test_production_map import _inputs as production_inputs
 
@@ -58,7 +58,7 @@ class AppTests(unittest.TestCase):
 
     def test_static_zoom_is_server_rendered_and_scrollable_without_graph_javascript(self) -> None:
         response = self.client.get("/", params={"level": 1, "zoom": 1})
-        stylesheet = (Path(__file__).parents[2] / "src/musix/static/app.css").read_text(
+        stylesheet = (Path(__file__).parents[2] / "src/opennoise/static/app.css").read_text(
             encoding="utf-8"
         )
 
@@ -78,7 +78,7 @@ class AppTests(unittest.TestCase):
         with (
             patch.dict(
                 environ,
-                {"MUSIX_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true", "HOST": "0.0.0.0"},  # noqa: S104
+                {"OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED": "true", "HOST": "0.0.0.0"},  # noqa: S104
                 clear=False,
             ),
             self.assertRaisesRegex(ValueError, "loopback host"),

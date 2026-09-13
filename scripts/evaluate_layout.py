@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from musix.serving.map.layout_metrics import (
+from opennoise.serving.map.layout_metrics import (
     LayoutMetricPoint,
     LayoutMetricRequest,
     RenderBudgetInput,
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 def _arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("database", type=Path, help="Path to a Musix SQLite database.")
+    parser.add_argument("database", type=Path, help="Path to a OpenNoise SQLite database.")
     parser.add_argument("--layout", default="default", help="Published layout key to evaluate.")
     return parser.parse_args(argv)
 

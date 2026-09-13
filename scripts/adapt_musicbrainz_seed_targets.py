@@ -8,12 +8,12 @@ import os
 import tempfile
 from pathlib import Path
 
-from musix.ingest.musicbrainz.model_adapter import (
+from opennoise.ingest.musicbrainz.model_adapter import (
     MusicBrainzModelAdapterPolicy,
     adapt_musicbrainz_seed_targets,
 )
-from musix.ingest.musicbrainz.seed_targets import load_seed_target_artifact
-from musix.taxonomy.seeds.reconciliation import load_seed_reconciliation
+from opennoise.ingest.musicbrainz.seed_targets import load_seed_target_artifact
+from opennoise.taxonomy.seeds.reconciliation import load_seed_reconciliation
 
 
 def _atomic_write_text(path: Path, payload: str) -> None:

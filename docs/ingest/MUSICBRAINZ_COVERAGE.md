@@ -31,8 +31,8 @@ Use a new output path for a future reviewed-alias extraction:
 
 ```bash
 uv run python scripts/extract_musicbrainz_seed_targets.py \
-  --archive "$MUSIX_MB_ARTIST_ARCHIVE" \
-  --seed-artifact "$MUSIX_H2_SEED_ARTIFACT" \
+  --archive "$OPENNOISE_MB_ARTIST_ARCHIVE" \
+  --seed-artifact "$OPENNOISE_H2_SEED_ARTIFACT" \
   --reviewed-aliases config/reviewed_musicbrainz_seed_aliases_v1.json \
   --output .cache/musicbrainz-full-seed-targets/pipeline/musicbrainz-seed-target-reviewed-aliases-v1.json
 ```
@@ -41,16 +41,16 @@ Run it with explicit paths after the research import. The example uses the
 current v4 research run; another snapshot only needs different values:
 
 ```bash
-export MUSIX_MB_RESEARCH_DATABASE=.cache/musicbrainz-v4-research/musicbrainz-v4.sqlite
-export MUSIX_MB_SOURCE_KEY=musicbrainz_json_artist_research_20260829
-export MUSIX_SEED_DATABASE=data/musix.sqlite
-export MUSIX_MB_COVERAGE=.cache/musicbrainz-v4-research/coverage.json
-export MUSIX_RECONSTRUCTION_INPUTS=.cache/musicbrainz-v4-research/reconstruction-inputs.json
-export MUSIX_MB_BASELINE_REPORT=.cache/musicbrainz-v4-research/baseline.json
+export OPENNOISE_MB_RESEARCH_DATABASE=.cache/musicbrainz-v4-research/musicbrainz-v4.sqlite
+export OPENNOISE_MB_SOURCE_KEY=musicbrainz_json_artist_research_20260829
+export OPENNOISE_SEED_DATABASE=data/opennoise.sqlite
+export OPENNOISE_MB_COVERAGE=.cache/musicbrainz-v4-research/coverage.json
+export OPENNOISE_RECONSTRUCTION_INPUTS=.cache/musicbrainz-v4-research/reconstruction-inputs.json
+export OPENNOISE_MB_BASELINE_REPORT=.cache/musicbrainz-v4-research/baseline.json
 uv run poe evaluate-musicbrainz-coverage
 ```
 
-`MUSIX_H2_SEED_ARTIFACT` is required by the identity and reconciliation
+`OPENNOISE_H2_SEED_ARTIFACT` is required by the identity and reconciliation
 stages. Set it to the path of an immutable retained Every Noise seed artifact
 before running those stages. No seed artifact is checked into this checkout,
 so the Poe tasks fail immediately when that value is empty.
@@ -67,10 +67,10 @@ backward-compatible summaries.
 The next stages are explicit and can be run independently:
 
 ```bash
-export MUSIX_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT=.worktrees/open-construction-graph/data/model/genre-seed-public-taxonomy-v1.json
-export MUSIX_MB_SEED_IDENTITIES=.cache/musicbrainz-v4-research/seed-identities.json
-export MUSIX_SEED_RECONCILIATION_OUTPUT=.cache/musicbrainz-v4-research/seed-reconciliation.json
-export MUSIX_RECONSTRUCTION_OBJECT_STORE=.cache/musicbrainz-v4-research/objects
+export OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT=.worktrees/open-construction-graph/data/model/genre-seed-public-taxonomy-v1.json
+export OPENNOISE_MB_SEED_IDENTITIES=.cache/musicbrainz-v4-research/seed-identities.json
+export OPENNOISE_SEED_RECONCILIATION_OUTPUT=.cache/musicbrainz-v4-research/seed-reconciliation.json
+export OPENNOISE_RECONSTRUCTION_OBJECT_STORE=.cache/musicbrainz-v4-research/objects
 uv run poe build-musicbrainz-seed-identities
 uv run poe reconcile-genre-seeds
 ```
@@ -199,9 +199,9 @@ v1 artifact or receipt paths. The generic Poe task is safe only when pointed
 at the v2 paths below (or a newly versioned path with its own verified receipt).
 
 ```bash
-export MUSIX_OPEN_LABEL_GRAPH_MODEL_OUTPUT=.cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v2.json
-export MUSIX_OPEN_LABEL_GRAPH_MODEL_OBJECT_STORE=.cache/musicbrainz-full-seed-targets/pipeline/objects
-export MUSIX_OPEN_LABEL_GRAPH_MODEL_RECEIPT=.cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v2.receipt.json
+export OPENNOISE_OPEN_LABEL_GRAPH_MODEL_OUTPUT=.cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v2.json
+export OPENNOISE_OPEN_LABEL_GRAPH_MODEL_OBJECT_STORE=.cache/musicbrainz-full-seed-targets/pipeline/objects
+export OPENNOISE_OPEN_LABEL_GRAPH_MODEL_RECEIPT=.cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v2.receipt.json
 uv run poe build-open-label-graph-model
 ```
 

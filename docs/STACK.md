@@ -11,7 +11,7 @@
 ## Application
 
 - Litestar provides async routes and lifecycle.
-- Jinja renders templates from `src/musix/templates`.
+- Jinja renders templates from `src/opennoise/templates`.
 - HTMX 4 updates search and detail regions while every action keeps a normal
   URL and HTML fallback.
 - Vendored Cytoscape.js 3.34 is a bounded map island. It owns pan, zoom,

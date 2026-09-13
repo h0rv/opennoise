@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from musix.checkpoints.source_neutral_certification import (
+from opennoise.checkpoints.source_neutral_certification import (
     CheckpointCertificationError,
     HierarchyCertification,
     InputBinding,
@@ -17,12 +17,12 @@ from musix.checkpoints.source_neutral_certification import (
     certification_sha256,
     verify_source_neutral_checkpoint_certification,
 )
-from musix.peers.audit.strength_aware_peer_audit import (
+from opennoise.peers.audit.strength_aware_peer_audit import (
     ConsensusAbstention,
     ConsensusMicroNeighborhoodAudit,
     EgoAffiliation,
 )
-from musix.taxonomy.relations.expansion import (
+from opennoise.taxonomy.relations.expansion import (
     RelationExpansionCoverage,
     TaxonomyRelationExpansionArtifact,
 )

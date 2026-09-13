@@ -9,8 +9,8 @@ from uuid import UUID
 import httpx
 from pydantic import ValidationError
 
-from musix.ingest.jsonl import parse_catalog_record
-from musix.sources.musicbrainz import (
+from opennoise.ingest.jsonl import parse_catalog_record
+from opennoise.sources.musicbrainz import (
     AdapterLimits,
     MusicBrainzAdapterError,
     MusicBrainzArtist,
@@ -198,13 +198,15 @@ class MusicBrainzClientTests(PollingIsolatedAsyncioTestCase):
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
             client = MusicBrainzClient(
                 http_client,
-                user_agent="musix/0.1 (maintainer@example.test)",
+                user_agent="opennoise/0.1 (maintainer@example.test)",
             )
             artist = await client.fetch_artist(ARTIST_ID)
 
         self.assertEqual(artist.id, ARTIST_ID)
         self.assertEqual(len(requests), 1)
-        self.assertEqual(requests[0].headers["user-agent"], "musix/0.1 (maintainer@example.test)")
+        self.assertEqual(
+            requests[0].headers["user-agent"], "opennoise/0.1 (maintainer@example.test)"
+        )
         self.assertIn("inc=aliases%2Bgenres", str(requests[0].url))
 
 

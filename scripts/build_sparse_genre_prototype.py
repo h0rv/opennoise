@@ -6,13 +6,13 @@ import argparse
 import sys
 from pathlib import Path
 
-from musix.ingest.musicbrainz.seed_targets import load_seed_target_artifact
-from musix.serving.sparse_genre_prototype import (
+from opennoise.ingest.musicbrainz.seed_targets import load_seed_target_artifact
+from opennoise.serving.sparse_genre_prototype import (
     SparsePrototypeSettings,
     build_sparse_genre_prototype,
     publish_sparse_genre_prototype,
 )
-from musix.storage import LocalObjectStore
+from opennoise.storage import LocalObjectStore
 
 
 def build_parser() -> argparse.ArgumentParser:

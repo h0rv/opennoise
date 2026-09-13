@@ -7,8 +7,8 @@ from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
-from musix.serving.public.artist_membership import canonical_sha256
-from musix.serving.public.artist_membership_adapter import (
+from opennoise.serving.public.artist_membership import canonical_sha256
+from opennoise.serving.public.artist_membership_adapter import (
     CertifiedPublicDirectSelector,
     CertifiedPublicMembershipAdapterPolicy,
     CertifiedPublicMembershipAdapterReceipt,
@@ -216,7 +216,7 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
             self._synthetic_database(database)
             with (
                 patch(
-                    "musix.serving.public.artist_membership_adapter._file_sha256",
+                    "opennoise.serving.public.artist_membership_adapter._file_sha256",
                     side_effect=("a" * 64, "b" * 64),
                 ),
                 self.assertRaisesRegex(ValueError, "changed while adapting"),
@@ -337,7 +337,7 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
 
     def test_certified_release_counts_and_provenance_bindings(self) -> None:
         database = Path(
-            "/home/h0rv/projects/musix/.cache/public-release-custody-integrated/objects/"
+            "/home/h0rv/projects/opennoise/.cache/public-release-custody-integrated/objects/"
             "cache/sha256/282bf216f0e56a44766353bf41e33d4069e162332b936ae15234ddf6f7d62866.sqlite"
         )
         if not database.exists():

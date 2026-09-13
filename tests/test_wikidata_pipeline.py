@@ -6,12 +6,12 @@ from pathlib import Path
 
 from pydantic import HttpUrl
 
-from musix.catalog.entities import EntityProjector
-from musix.catalog.registry import ProjectorRegistry
-from musix.models.sources import DownloadSource
-from musix.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
-from musix.sources.registry import AdapterRegistry
-from musix.sources.wikidata import WikidataSourceAdapter
+from opennoise.catalog.entities import EntityProjector
+from opennoise.catalog.registry import ProjectorRegistry
+from opennoise.models.sources import DownloadSource
+from opennoise.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
+from opennoise.sources.registry import AdapterRegistry
+from opennoise.sources.wikidata import WikidataSourceAdapter
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 FIXTURE = Path(__file__).parent / "fixtures" / "wikidata_music_slice.json"

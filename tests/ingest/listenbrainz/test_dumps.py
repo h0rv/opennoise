@@ -7,7 +7,7 @@ from pathlib import Path
 
 import zstandard
 
-from musix.ingest.listenbrainz.dumps import (
+from opennoise.ingest.listenbrainz.dumps import (
     AdapterLimits,
     CooccurrenceConfig,
     ListenBrainzAdapterError,

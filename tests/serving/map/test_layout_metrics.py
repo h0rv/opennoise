@@ -2,7 +2,7 @@ import unittest
 
 from pydantic import ValidationError
 
-from musix.serving.map.layout_metrics import (
+from opennoise.serving.map.layout_metrics import (
     CommunityEdge,
     CommunityMembership,
     DensityGrid,

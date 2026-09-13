@@ -21,7 +21,7 @@ Git. It returned `ok` from `PRAGMA integrity_check` and no rows from
 ## Coverage
 
 The Every Noise side contributes only 6,291 retained genre names from
-`data/musix.sqlite`. Coordinates, historical memberships, representatives,
+`data/opennoise.sqlite`. Coordinates, historical memberships, representatives,
 and source ordering are not read by the evaluator or baseline.
 
 | Measure | Prefix-0 result |

@@ -71,10 +71,10 @@ cmp -s config/wikidata_public_genres_20260831.rq \
 sha256sum config/wikidata_public_genres_20260831.rq \
   .worktrees/phase3-public-evidence/data/phase3-final-vault/raw/sha256/6e25bf1c044594aecfb9a7ed15838ef6bb62c8d7cbe2d3daf68ec920c6c8397f \
   .cache/catalog-snapshots/sha256/240047cabddbbebccd48a775c9967488dd2dd2968d38d27f31354b90f3a3e8fc.sqlite
-UV_CACHE_DIR=/tmp/musix-wikidata-uv UV_OFFLINE=1 uv run --no-sync python -c '
+UV_CACHE_DIR=/tmp/opennoise-wikidata-uv UV_OFFLINE=1 uv run --no-sync python -c '
 from pathlib import Path
-from musix.storage import LocalObjectStore
-from musix.taxonomy.relations.expansion import TaxonomyRelationExpansionArtifact, verify_taxonomy_relation_expansion
+from opennoise.storage import LocalObjectStore
+from opennoise.taxonomy.relations.expansion import TaxonomyRelationExpansionArtifact, verify_taxonomy_relation_expansion
 artifact = TaxonomyRelationExpansionArtifact.model_validate_json(Path(".cache/taxonomy-relation-expansion-v3-replay-candidate/artifact.json").read_bytes())
 print(verify_taxonomy_relation_expansion(artifact, source_store=LocalObjectStore(Path(".cache/taxonomy-relation-expansion-v3-replay-candidate/objects"))).model_dump_json(indent=2))
 '

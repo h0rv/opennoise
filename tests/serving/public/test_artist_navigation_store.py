@@ -6,7 +6,7 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from musix.serving.public.artist_navigation_store import (
+from opennoise.serving.public.artist_navigation_store import (
     PublicArtistNavigationStore,
     PublicArtistNavigationStoreError,
 )
