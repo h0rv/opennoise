@@ -15,7 +15,7 @@ import numpy as np
 from scipy.spatial import KDTree
 
 from opennoise.ml.layout_lenses import build_weighted_spectral_coordinates
-from opennoise.ml.semantic_layout.atlas import AtlasPoint, build_rectangular_atlas
+from opennoise.ml.semantic_layout.atlas import AtlasPoint, AtlasSettings, build_rectangular_atlas
 
 from .contracts import (
     CameraBounds,
@@ -58,6 +58,7 @@ _OVERVIEW_REGION_MAXIMUM_SEEDS = 100
 _MINIMUM_OVERVIEW_ROOT_COVERAGE = 0.75
 _INITIAL_CAMERA_PADDING_FRACTION = 0.04
 _MINIMUM_OVERVIEW_ANCHORS = 2
+_ATLAS_MARGIN = 0.085
 
 
 @dataclass(frozen=True, slots=True)
@@ -921,10 +922,16 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
     # Fit the peer manifold into a centered landscape atlas before attaching
     # hierarchy-only points.  This keeps the initial view broad and makes each
     # peer component a bounded visual neighborhood without force simulation.
+    atlas_margin = max(resolved.margin, _ATLAS_MARGIN)
     atlas = build_rectangular_atlas(
         tuple(
             AtlasPoint(node_id=node, x=x, y=y, group_id=f"component:{component_id}")
             for node, (x, y, component_id) in sorted(manifold.items())
+        ),
+        settings=AtlasSettings(
+            world_width=resolved.world_width,
+            world_height=resolved.world_height,
+            margin=atlas_margin,
         ),
     )
     positions = dict(atlas.positions)
@@ -959,10 +966,10 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
                 positions[anchor],
                 child_nodes,
                 bounds=(
-                    resolved.margin,
-                    resolved.margin,
-                    resolved.world_width - resolved.margin,
-                    resolved.world_height - resolved.margin,
+                    atlas_margin,
+                    atlas_margin,
+                    resolved.world_width - atlas_margin,
+                    resolved.world_height - atlas_margin,
                 ),
             )
             for node, position in branch_positions.items():
