@@ -8,6 +8,12 @@ export function clamp(value, lower, upper) {
   return Math.max(lower, Math.min(upper, value));
 }
 
+/** Add one independent circle subpath to a batched Canvas Path2D. */
+export function appendCirclePath(path, x, y, radius) {
+  path.moveTo(x + radius, y);
+  path.arc(x, y, radius, 0, Math.PI * 2);
+}
+
 function finiteNumber(value, label) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new TypeError(`${label} must be a finite number`);
@@ -166,6 +172,26 @@ export function fitCamera(bounds, viewport, padding = 0.94) {
   };
 }
 
+/** Fit a focused neighborhood while keeping its bounds centered after scaling. */
+export function focusCamera(
+  bounds,
+  viewport,
+  minimumScale,
+  maximumScale,
+  padding = 0.72,
+  anchor = null,
+) {
+  const area = normaliseBounds(bounds, 'focus bounds');
+  const fitted = fitCamera(area, viewport, padding);
+  const scale = clamp(fitted.scale, minimumScale, maximumScale);
+  const center = anchor ?? { x: (area.x0 + area.x1) / 2, y: (area.y0 + area.y1) / 2 };
+  return {
+    scale,
+    x: viewport.width / 2 - center.x * scale,
+    y: viewport.height / 2 - center.y * scale,
+  };
+}
+
 export function zoomAt(camera, point, factor, limits) {
   const scale = clamp(camera.scale * factor, limits.min, limits.max);
   const worldX = (point.x - camera.x) / camera.scale;
@@ -230,7 +256,7 @@ export function placeLabel(screen, width, viewport, options = {}) {
   };
 }
 
-function alternateLabelPlacements(screen, width, viewport, options = {}) {
+function alternateLabelPlacements(screen, width, viewport, options = {}, maxRing = 8) {
   const offset = options.offset ?? 6;
   const height = options.height ?? 16;
   const padding = options.padding ?? 3;
@@ -252,7 +278,7 @@ function alternateLabelPlacements(screen, width, viewport, options = {}) {
       placements.push(callout ? { ...placement, callout: true } : placement);
     }
   };
-  for (let ring = 0; ring <= 8; ring += 1) {
+  for (let ring = 0; ring <= maxRing; ring += 1) {
     const distance = offset + ring * (height + padding * 2);
     add(screen.x + distance, screen.y - 6, ring > 0);
     add(screen.x - distance - width, screen.y - 6, ring > 0);
@@ -318,8 +344,14 @@ export function declutterLabels(candidates, viewport, measureText, options = {})
     const screen = candidate.screen;
     if (!screen || !Number.isFinite(screen.x) || !Number.isFinite(screen.y)) continue;
     const width = Math.max(1, Number(measureText(candidate.text)) || 1);
-    const placements = alternateLabelPlacements(screen, width, viewport, options);
-    const attempts = candidate.required ? placements : placements.slice(0, 4);
+    const placements = alternateLabelPlacements(
+      screen,
+      width,
+      viewport,
+      options,
+      candidate.required ? 8 : 0,
+    );
+    const attempts = placements;
     const placement = attempts.find((item) => !overlapsOccupied(item.box));
     if (!placement && !candidate.required) continue;
     // Required context and edge labels must remain addressable even when their
@@ -407,11 +439,11 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     && screen.x <= viewport.width + margin && screen.y <= viewport.height + margin
   );
   const contextIds = new Set();
-  // Keep a bounded local oversample for collision selection. One and a half
-  // budget-widths preserve semantic-group round-robin coverage while avoiding
-  // a full atlas scan when LOD3 is already showing hundreds of labels.
+  // Keep a bounded local candidate window for collision selection. The cap
+  // preserves semantic-group round-robin coverage while avoiding a large
+  // allocation when LOD3 is already showing hundreds of labels.
   const candidateLimit = options.candidateLimit
-    ?? Math.max(Math.floor((options.maximum ?? 420) * 1.5), 512);
+    ?? Math.min(Math.max(options.maximum ?? 420, 128), 350);
   const localNodes = indexedNodeCandidates(atlas, options.camera, viewport, margin, candidateLimit);
   for (const node of localNodes) {
     if (node.lod > level && !required.has(node.id)) continue;

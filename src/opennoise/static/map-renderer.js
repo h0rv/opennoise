@@ -4,8 +4,10 @@ import {
   clamp,
   declutterLabels,
   fitCamera,
+  focusCamera,
   levelForScale,
   normaliseAtlasPayload,
+  appendCirclePath,
   visibleNodeLabels,
   zoomAt,
 } from './map-atlas.mjs';
@@ -40,8 +42,11 @@ if (canvas instanceof HTMLCanvasElement) {
     ? state.atlas.regions.filter((region) => (region.overview_visible ?? true) === true && typeof region.title === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
     : state.atlas.labels[0].map((id) => state.atlas.byId.get(id)).filter(Boolean).map((node) => ({ title: node.name, x: node.x, y: node.y }));
   const drawLabel = (context, name, placement, colors) => {
+    const width = placement.width ?? context.measureText(name).width;
+    const viewportWidth = canvas.clientWidth || context.canvas.width;
+    const x = clamp(placement.x, 4, Math.max(4, viewportWidth - width - 4));
     context.fillStyle = colors.ink; context.strokeStyle = colors.canvas; context.lineWidth = 4;
-    context.strokeText(name, placement.x, placement.y); context.fillText(name, placement.x, placement.y);
+    context.strokeText(name, x, placement.y); context.fillText(name, x, placement.y);
   };
   const draw = () => {
     state.frame = 0;
@@ -107,9 +112,9 @@ if (canvas instanceof HTMLCanvasElement) {
     for (const node of state.atlas.nodes) {
       if (!visible(node) || (node.lod > lod && node.id !== state.focus && !required.has(node.id))) continue;
       const screen = point(node);
-      if (node.id === state.focus) focusPath.arc(screen.x, screen.y, 3.2, 0, Math.PI * 2);
-      else if (shown.has(node.id)) labelPath.arc(screen.x, screen.y, 3.2, 0, Math.PI * 2);
-      else faintPath.arc(screen.x, screen.y, 1.35, 0, Math.PI * 2);
+      if (node.id === state.focus) appendCirclePath(focusPath, screen.x, screen.y, 3.2);
+      else if (shown.has(node.id)) appendCirclePath(labelPath, screen.x, screen.y, 3.2);
+      else appendCirclePath(faintPath, screen.x, screen.y, 1.35);
     }
     context.globalAlpha = .4; context.fillStyle = colors.node; context.fill(faintPath);
     context.globalAlpha = 1; context.fillStyle = colors.node; context.fill(labelPath);
@@ -121,7 +126,7 @@ if (canvas instanceof HTMLCanvasElement) {
         context.beginPath(); context.moveTo(item.screen.x, item.screen.y); context.lineTo(item.placement.x, item.placement.y - 4); context.stroke();
         context.globalAlpha = 1;
       }
-      drawLabel(context, item.text, item.placement, colors);
+      drawLabel(context, item.text, { ...item.placement, width: item.width }, colors);
     }
   };
   const setUrl = (id) => { const url = new URL(window.location.href); if (id) url.searchParams.set('open_focus', id); else url.searchParams.delete('open_focus'); history.pushState({ opennoiseFocus: id }, '', url); };
@@ -143,10 +148,17 @@ if (canvas instanceof HTMLCanvasElement) {
     if (request !== state.request) return;
     const ids = [id, ...state.edges.flatMap((edge) => [edge.source, edge.target])];
     const nodes = [...new Set(ids)].map((key) => state.atlas.byId.get(key)).filter(Boolean);
-    const camera = fitCamera(boundsForNodes(nodes, state.atlas.initialCamera), state.viewport, .72);
+    const focusBounds = boundsForNodes(nodes, state.atlas.initialCamera);
     // Focused neighborhoods must use a detail LOD so their verified edges are
     // visible. A broad neighborhood can otherwise fit at the overview scale.
-    state.camera = { ...camera, scale: clamp(camera.scale, state.fitScale * 1.5, state.fitScale * 32) };
+    state.camera = focusCamera(
+      focusBounds,
+      state.viewport,
+      state.fitScale * 1.5,
+      state.fitScale * 32,
+      .72,
+      { x: state.atlas.byId.get(id).x, y: state.atlas.byId.get(id).y },
+    );
     showDetail(id, neighborhood);
     schedule();
   };

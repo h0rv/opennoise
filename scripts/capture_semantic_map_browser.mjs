@@ -126,7 +126,7 @@ async function page() {
 
 async function navigate(cdp, width, height, colorScheme) {
   await cdp.command("Emulation.setDeviceMetricsOverride", {
-    width, height, deviceScaleFactor: 1, mobile: false,
+    width, height, deviceScaleFactor: 1, mobile: width <= 500,
     screenWidth: width, screenHeight: height,
   });
   await cdp.command("Emulation.setEmulatedMedia", {
@@ -158,7 +158,7 @@ async function diagnostics(cdp) {
     const qa = window.__opennoiseMapQA;
     const canvas = document.querySelector('#semantic-map');
     const rect = canvas?.getBoundingClientRect();
-    const frame = qa?.frames?.at(-1) ?? { arcs: [], labels: [], edges: 0 };
+    const frame = qa?.frames?.at(-1) ?? { arcs: [], labels: [], edges: 0, connected_path_arcs: 0, path_fills: 0 };
     const extent = (items, x, y) => items.length ? {
       min_x: Math.min(...items.map(item => item[x])), max_x: Math.max(...items.map(item => item[x])),
       min_y: Math.min(...items.map(item => item[y])), max_y: Math.max(...items.map(item => item[y])),
@@ -170,6 +170,8 @@ async function diagnostics(cdp) {
       points: frame.arcs.length,
       labels: frame.labels.length,
       edges: frame.edges,
+      connected_path_arcs: frame.connected_path_arcs,
+      path_fills: frame.path_fills,
       point_extent: extent(frame.arcs, 'x', 'y'),
       background: style?.getPropertyValue('--canvas').trim() ?? '',
       back_hidden: document.querySelector('[data-map-action="back"]')?.hidden ?? true,
@@ -211,15 +213,40 @@ const PRELOAD = String.raw`(() => {
   const original = {
     arc: CanvasRenderingContext2D.prototype.arc,
     fillText: CanvasRenderingContext2D.prototype.fillText,
+    fill: CanvasRenderingContext2D.prototype.fill,
     lineTo: CanvasRenderingContext2D.prototype.lineTo,
+    stroke: CanvasRenderingContext2D.prototype.stroke,
   };
-  const qa = { frames: [], current: { arcs: [], labels: [], edges: 0 } };
+  const NativePath2D = window.Path2D;
+  const pathStates = new WeakMap();
+  class QAPath2D extends NativePath2D {
+    constructor(...args) {
+      super(...args);
+      pathStates.set(this, { arcs: [], connectedArcs: 0, lastCommand: null });
+    }
+    moveTo(...args) {
+      const state = pathStates.get(this);
+      if (state) state.lastCommand = "moveTo";
+      return super.moveTo(...args);
+    }
+    arc(x, y, radius, ...rest) {
+      const state = pathStates.get(this);
+      if (state) {
+        if (state.lastCommand !== "moveTo") state.connectedArcs += 1;
+        state.arcs.push({ x, y, radius });
+        state.lastCommand = "arc";
+      }
+      return super.arc(x, y, radius, ...rest);
+    }
+  }
+  window.Path2D = QAPath2D;
+  const qa = { frames: [], current: { arcs: [], labels: [], edges: 0, line_segments: 0, connected_path_arcs: 0, path_fills: 0 } };
   const finish = () => {
-    if (qa.current.arcs.length || qa.current.labels.length || qa.current.edges) {
+    if (qa.current.arcs.length || qa.current.labels.length || qa.current.edges || qa.current.path_fills) {
       qa.frames.push(qa.current);
       if (qa.frames.length > 40) qa.frames.shift();
     }
-    qa.current = { arcs: [], labels: [], edges: 0 };
+    qa.current = { arcs: [], labels: [], edges: 0, line_segments: 0, connected_path_arcs: 0, path_fills: 0 };
   };
   CanvasRenderingContext2D.prototype.arc = function(x, y, radius, ...rest) {
     if (this.canvas?.id === 'semantic-map') qa.current.arcs.push({ x, y, radius });
@@ -229,9 +256,26 @@ const PRELOAD = String.raw`(() => {
     if (this.canvas?.id === 'semantic-map') qa.current.labels.push({ text, x, y });
     return original.fillText.call(this, text, x, y, ...rest);
   };
+  CanvasRenderingContext2D.prototype.fill = function(pathOrRule, ...rest) {
+    if (this.canvas?.id === "semantic-map" && pathOrRule instanceof QAPath2D) {
+      const state = pathStates.get(pathOrRule);
+      if (state) {
+        qa.current.arcs.push(...state.arcs);
+        qa.current.connected_path_arcs += state.connectedArcs;
+        qa.current.path_fills += 1;
+      }
+    }
+    return original.fill.call(this, pathOrRule, ...rest);
+  };
   CanvasRenderingContext2D.prototype.lineTo = function(x, y) {
-    if (this.canvas?.id === 'semantic-map') qa.current.edges += 1;
+    if (this.canvas?.id === 'semantic-map') qa.current.line_segments += 1;
     return original.lineTo.call(this, x, y);
+  };
+  CanvasRenderingContext2D.prototype.stroke = function(...args) {
+    // Network edges use the dedicated 1.5px stroke. One-pixel strokes are
+    // label callouts and should not inflate the focused graph edge budget.
+    if (this.canvas?.id === 'semantic-map' && this.lineWidth === 1.5) qa.current.edges += 1;
+    return original.stroke.call(this, ...args);
   };
   const request = window.requestAnimationFrame;
   window.requestAnimationFrame = (callback) => request.call(window, (timestamp) => {
@@ -269,7 +313,16 @@ async function run() {
     await wheel(cdp, 720, 450, -650);
     await waitForFrame(cdp, zoom1.frame_count - 1);
     const zoom2 = await diagnostics(cdp);
-    requireCheck(zoom2.points > initial.points && zoom2.points >= zoom1.points, "zoom reveal is not monotonic", { initial, zoom1, zoom2 });
+    // A closer camera can legitimately move past sparse nodes, so visible
+    // point count need not increase on every wheel tick. Both zoom tiers must
+    // still reveal more than the overview and render their batched primitives.
+    requireCheck(
+      zoom1.points > initial.points && zoom2.points > initial.points
+        && zoom1.labels > 0 && zoom2.labels > 0
+        && zoom1.path_fills > 0 && zoom2.path_fills > 0,
+      "zoom reveal is unavailable",
+      { initial, zoom1, zoom2 },
+    );
 
     const beforePan = zoom2.point_extent;
     await drag(cdp, 720, 450, 240, 220);
@@ -286,6 +339,7 @@ async function run() {
       focused = await diagnostics(cdp);
     }
     requireCheck(focused.edges > 0 && focused.edges <= 12, "focused neighborhood edge budget failed", focused);
+    requireCheck(focused.connected_path_arcs === 0, "batched dots formed connected polygons", focused);
     requireCheck(!focused.back_hidden, "Back control did not appear after focus", focused);
     requireCheck(focused.focus_url === "legacy:item887", "IDM alias did not focus its stable seed", focused);
     screenshots.push(await screenshot(cdp, "desktop-idm-focus.png", "light", 1440, 900));
@@ -299,6 +353,11 @@ async function run() {
     const dark = await diagnostics(cdp);
     requireCheck(dark.background !== initial.background, "dark mode did not change the map palette", { initial, dark });
     screenshots.push(await screenshot(cdp, "desktop-dark.png", "dark", 1440, 900));
+    await navigate(cdp, 390, 844, "light");
+    const mobile = await diagnostics(cdp);
+    requireCheck(mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844, "mobile viewport failed", mobile);
+    requireCheck(mobile.connected_path_arcs === 0, "mobile batched dots formed connected polygons", mobile);
+    screenshots.push(await screenshot(cdp, "mobile-light.png", "light", 390, 844));
     requireCheck(cdp.runtimeErrors.length === 0, "browser errors detected", cdp.runtimeErrors);
     const report = {
       evidence_revision: "browser-semantic-map-v1",
@@ -315,8 +374,9 @@ async function run() {
         pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
         back_restored: backed.back_hidden && !backed.focus_url,
         dark_mode: dark.background !== initial.background,
+        mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
       },
-      diagnostics: { initial, zoom1, zoom2, afterPan, focused, backed, dark },
+      diagnostics: { initial, zoom1, zoom2, afterPan, focused, backed, dark, mobile },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

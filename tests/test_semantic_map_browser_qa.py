@@ -33,7 +33,7 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("heightFraction >= 0.70", self.source)
 
     def test_harness_checks_zoom_pan_focus_back_and_theme(self) -> None:
-        self.assertIn("zoom reveal is not monotonic", self.source)
+        self.assertIn("zoom reveal is unavailable", self.source)
         self.assertIn("pan did not move camera", self.source)
         self.assertIn("focused.edges <= 12", self.source)
         self.assertIn("Back did not restore map state", self.source)
@@ -42,6 +42,9 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
     def test_preload_observes_canvas_without_production_debug_code(self) -> None:
         self.assertIn("Page.addScriptToEvaluateOnNewDocument", self.source)
         self.assertIn("CanvasRenderingContext2D.prototype.arc", self.source)
+        self.assertIn("class QAPath2D", self.source)
+        self.assertIn("connected_path_arcs", self.source)
+        self.assertIn("mobile-light.png", self.source)
         self.assertIn("CanvasRenderingContext2D.prototype.fillText", self.source)
         self.assertIn("CanvasRenderingContext2D.prototype.lineTo", self.source)
         self.assertNotIn("src/opennoise/", self.source)

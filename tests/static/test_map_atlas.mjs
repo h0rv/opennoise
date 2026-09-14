@@ -4,6 +4,8 @@ import {
   compareCodepoints,
   declutterLabels,
   fitCamera,
+  focusCamera,
+  appendCirclePath,
   levelForScale,
   normaliseAtlasPayload,
   visibleNodeLabels,
@@ -42,6 +44,42 @@ test('fit camera centers a landscape overview and zoom preserves its cursor worl
   const before = { x: (800 - camera.x) / camera.scale, y: (450 - camera.y) / camera.scale };
   const zoomed = zoomAt(camera, { x: 800, y: 450 }, 2, { min: 1, max: 1000 });
   assert.deepEqual({ x: (800 - zoomed.x) / zoomed.scale, y: (450 - zoomed.y) / zoomed.scale }, before);
+});
+
+test('focused camera remains centered when its detail scale is clamped', () => {
+  const camera = focusCamera(
+    { x0: 4, y0: 2, x1: 5, y1: 3 },
+    { width: 1000, height: 600 },
+    900,
+    1200,
+  );
+  assert.equal(camera.scale, 900);
+  assert.equal((4.5 * camera.scale) + camera.x, 500);
+  assert.equal((2.5 * camera.scale) + camera.y, 300);
+  const anchored = focusCamera(
+    { x0: 4, y0: 2, x1: 5, y1: 3 },
+    { width: 1000, height: 600 },
+    900,
+    1200,
+    0.72,
+    { x: 4, y: 2 },
+  );
+  assert.equal((4 * anchored.scale) + anchored.x, 500);
+  assert.equal((2 * anchored.scale) + anchored.y, 300);
+});
+
+test('batched circles are independent subpaths, never connected polygons', () => {
+  const commands = [];
+  const path = {
+    moveTo: (...values) => commands.push(['moveTo', ...values]),
+    arc: (...values) => commands.push(['arc', ...values]),
+  };
+  appendCirclePath(path, 10, 20, 3);
+  appendCirclePath(path, 30, 40, 2);
+  assert.deepEqual(commands.map(([name]) => name), ['moveTo', 'arc', 'moveTo', 'arc']);
+  for (let index = 0; index < commands.length; index += 1) {
+    if (commands[index][0] === 'arc') assert.equal(commands[index - 1][0], 'moveTo');
+  }
 });
 
 test('zoom levels disclose labels monotonically without a focused node', () => {
