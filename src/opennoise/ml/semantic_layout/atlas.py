@@ -18,13 +18,10 @@ if TYPE_CHECKING:
 
 _MIN_POINTS = 2
 _MAX_MARGIN = 0.25
-# A mostly rank-based transform prevents a dense source component from
-# collapsing into one viewport quadrant. The de-grid pass below handles tied
-# coordinates, so this blend does not create a Cartesian lattice.
-# A mostly rank-based transform prevents a dense source component from
-# collapsing into one viewport quadrant. The de-grid pass below handles tied
-# coordinates, so this blend does not create a Cartesian lattice.
-_QUANTILE_BLEND = 0.90
+# The earlier rank-heavy transform made a dense viewport at the cost of the
+# source manifold: independent x/y ranks turn a continuous neighborhood into
+# a Cartesian lattice. Keep robust clipping, but retain the affine axes.
+_QUANTILE_BLEND = 0.0
 _TIED_AXIS_JITTER_FRACTION = 0.22
 
 

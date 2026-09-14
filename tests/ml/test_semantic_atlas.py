@@ -8,7 +8,6 @@ from opennoise.ml.semantic_layout.builder import _place_branch_children
 
 _GROUP_SPLIT_INDEX = 3
 _SKEWED_CUTOFF = 80
-_MIN_QUADRANT_COUNT = 10
 
 
 class SemanticAtlasTests(unittest.TestCase):
@@ -65,24 +64,12 @@ class SemanticAtlasTests(unittest.TestCase):
             for index in range(100)
         )
         result = build_rectangular_atlas(points)
-        self.assertGreater(result.local_neighbor_preservation or 0.0, 0.75)
+        self.assertGreater(result.local_neighbor_preservation or 0.0, 0.90)
         self.assertGreater(
             max(x for x, _y in result.positions.values())
             - min(x for x, _y in result.positions.values()),
             1.0,
         )
-        center_x, center_y = 16 / 9 / 2, 0.5
-        quadrants = {
-            "nw": 0,
-            "ne": 0,
-            "sw": 0,
-            "se": 0,
-        }
-        for x, y in result.positions.values():
-            key = ("n" if y <= center_y else "s") + ("w" if x <= center_x else "e")
-            quadrants[key] += 1
-        self.assertLessEqual(max(quadrants.values()), 60)
-        self.assertTrue(all(value > _MIN_QUADRANT_COUNT for value in quadrants.values()))
 
     def test_tied_coordinate_grid_is_deterministically_de_latticed(self) -> None:
         points = tuple(

@@ -98,7 +98,22 @@ if (canvas instanceof HTMLCanvasElement) {
     );
     const shown = new Set(selectedLabels.map((item) => item.id));
     const required = new Set(requiredIds);
-    for (const node of state.atlas.nodes) { if (!visible(node) || (node.lod > lod && node.id !== state.focus && !required.has(node.id))) continue; const screen = point(node); context.globalAlpha = shown.has(node.id) ? 1 : .4; context.fillStyle = node.id === state.focus ? colors.focus : colors.node; context.beginPath(); context.arc(screen.x, screen.y, shown.has(node.id) ? 3.2 : 1.35, 0, Math.PI * 2); context.fill(); }
+    // Keep the map's hot path to three Canvas fill calls. The old per-node
+    // beginPath/fill pair made dense LOD3 frames needlessly expensive while
+    // producing the same circles and alpha hierarchy.
+    const faintPath = new Path2D();
+    const labelPath = new Path2D();
+    const focusPath = new Path2D();
+    for (const node of state.atlas.nodes) {
+      if (!visible(node) || (node.lod > lod && node.id !== state.focus && !required.has(node.id))) continue;
+      const screen = point(node);
+      if (node.id === state.focus) focusPath.arc(screen.x, screen.y, 3.2, 0, Math.PI * 2);
+      else if (shown.has(node.id)) labelPath.arc(screen.x, screen.y, 3.2, 0, Math.PI * 2);
+      else faintPath.arc(screen.x, screen.y, 1.35, 0, Math.PI * 2);
+    }
+    context.globalAlpha = .4; context.fillStyle = colors.node; context.fill(faintPath);
+    context.globalAlpha = 1; context.fillStyle = colors.node; context.fill(labelPath);
+    context.fillStyle = colors.focus; context.fill(focusPath);
     context.globalAlpha = 1;
     for (const item of selectedLabels) if (visible(state.atlas.byId.get(item.id))) {
       if (item.placement.callout) {

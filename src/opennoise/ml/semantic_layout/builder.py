@@ -640,24 +640,30 @@ def _place_branch_children(
     *,
     bounds: tuple[float, float, float, float],
 ) -> dict[str, tuple[float, float]]:
-    """Place a branch in a bounded compact lattice, never in radial spokes."""
-    ordered = tuple(sorted(children))
+    """Place a branch as a compact deterministic phyllotactic neighborhood.
+
+    This is local packing, not a force simulation: a stable hash determines
+    the order and rotation, while a golden-angle spiral avoids conspicuous rows
+    and columns. Every child remains close enough to read as part of its parent.
+    """
+    ordered = tuple(
+        sorted(children, key=lambda node: (hashlib.sha256(node.encode()).digest(), node))
+    )
     if not ordered:
         return {}
-    columns = max(1, math.ceil(math.sqrt(len(ordered))))
-    rows = math.ceil(len(ordered) / columns)
-    spacing_x, spacing_y = 0.014, 0.014
+    outer_radius = min(0.034, 0.009 + 0.0055 * math.sqrt(len(ordered)))
+    center_x = min(max(anchor[0], bounds[0] + outer_radius), bounds[2] - outer_radius)
+    center_y = min(max(anchor[1], bounds[1] + outer_radius), bounds[3] - outer_radius)
+    rotation = int.from_bytes(hashlib.sha256("\0".join(ordered).encode()).digest()[:8], "big")
+    rotation = rotation / 2**64 * 2.0 * math.pi
+    golden_angle = math.pi * (3.0 - math.sqrt(5.0))
     output: dict[str, tuple[float, float]] = {}
     for index, node in enumerate(ordered):
-        column, row = index % columns, index // columns
-        offset_x = (column - (columns - 1) / 2.0) * spacing_x
-        offset_y = (row - (rows - 1) / 2.0) * spacing_y
-        digest = hashlib.sha256(node.encode()).digest()
-        jitter_x = (int.from_bytes(digest[:2], "big") / 65535.0 - 0.5) * spacing_x * 0.35
-        jitter_y = (int.from_bytes(digest[2:4], "big") / 65535.0 - 0.5) * spacing_y * 0.35
+        radius = outer_radius * math.sqrt((index + 0.5) / len(ordered))
+        angle = rotation + index * golden_angle
         output[node] = (
-            min(max(anchor[0] + offset_x + jitter_x, bounds[0]), bounds[2]),
-            min(max(anchor[1] + offset_y + jitter_y, bounds[1]), bounds[3]),
+            min(max(center_x + radius * math.cos(angle), bounds[0]), bounds[2]),
+            min(max(center_y + radius * math.sin(angle), bounds[1]), bounds[3]),
         )
     return output
 

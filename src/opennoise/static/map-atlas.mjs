@@ -275,6 +275,41 @@ export function declutterLabels(candidates, viewport, measureText, options = {})
   const maximum = options.maximum ?? candidates.length;
   const selected = [];
   const occupied = [];
+  // Most labels only need the four adjacent placements. Required context and
+  // edge labels may use the wider callout search, but ordinary labels should
+  // not scan every occupied box for every possible placement at LOD3.
+  const cellSize = options.collisionCellSize ?? 64;
+  const columns = Math.max(1, Math.ceil(viewport.width / cellSize));
+  const rows = Math.max(1, Math.ceil(viewport.height / cellSize));
+  const occupiedCells = new Map();
+  const cellRange = (box) => ({
+    x0: clamp(Math.floor(box.x0 / cellSize), 0, columns - 1),
+    y0: clamp(Math.floor(box.y0 / cellSize), 0, rows - 1),
+    x1: clamp(Math.floor(box.x1 / cellSize), 0, columns - 1),
+    y1: clamp(Math.floor(box.y1 / cellSize), 0, rows - 1),
+  });
+  const overlapsOccupied = (box) => {
+    const range = cellRange(box);
+    for (let row = range.y0; row <= range.y1; row += 1) {
+      for (let column = range.x0; column <= range.x1; column += 1) {
+        for (const occupiedBox of occupiedCells.get(row * columns + column) ?? []) {
+          if (boxesOverlap(occupiedBox, box)) return true;
+        }
+      }
+    }
+    return false;
+  };
+  const recordOccupied = (box) => {
+    const range = cellRange(box);
+    for (let row = range.y0; row <= range.y1; row += 1) {
+      for (let column = range.x0; column <= range.x1; column += 1) {
+        const key = row * columns + column;
+        const bucket = occupiedCells.get(key);
+        if (bucket) bucket.push(box);
+        else occupiedCells.set(key, [box]);
+      }
+    }
+  };
   const ordered = [...candidates]
     .filter((candidate) => candidate && typeof candidate.id === 'string' && candidate.id)
     .sort((left, right) => (left.priority ?? 0) - (right.priority ?? 0) || compareCodepoints(left.id, right.id));
@@ -284,7 +319,8 @@ export function declutterLabels(candidates, viewport, measureText, options = {})
     if (!screen || !Number.isFinite(screen.x) || !Number.isFinite(screen.y)) continue;
     const width = Math.max(1, Number(measureText(candidate.text)) || 1);
     const placements = alternateLabelPlacements(screen, width, viewport, options);
-    const placement = placements.find((item) => !occupied.some((box) => boxesOverlap(box, item.box)));
+    const attempts = candidate.required ? placements : placements.slice(0, 4);
+    const placement = attempts.find((item) => !overlapsOccupied(item.box));
     if (!placement && !candidate.required) continue;
     // Required context and edge labels must remain addressable even when their
     // anchor points coincide. Search deterministic viewport callout slots before
@@ -292,6 +328,7 @@ export function declutterLabels(candidates, viewport, measureText, options = {})
     const fallback = placement ?? fallbackLabelPlacement(width, viewport, occupied, options);
     if (!fallback) continue;
     occupied.push(fallback.box);
+    recordOccupied(fallback.box);
     selected.push({ ...candidate, width, placement: fallback });
   }
   return selected;
@@ -370,7 +407,11 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     && screen.x <= viewport.width + margin && screen.y <= viewport.height + margin
   );
   const contextIds = new Set();
-  const candidateLimit = options.candidateLimit ?? Math.max((options.maximum ?? 420) * 3, 512);
+  // Keep a bounded local oversample for collision selection. One and a half
+  // budget-widths preserve semantic-group round-robin coverage while avoiding
+  // a full atlas scan when LOD3 is already showing hundreds of labels.
+  const candidateLimit = options.candidateLimit
+    ?? Math.max(Math.floor((options.maximum ?? 420) * 1.5), 512);
   const localNodes = indexedNodeCandidates(atlas, options.camera, viewport, margin, candidateLimit);
   for (const node of localNodes) {
     if (node.lod > level && !required.has(node.id)) continue;
