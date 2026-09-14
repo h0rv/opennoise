@@ -1093,11 +1093,11 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         (positions[record.anchor_seed_id][0], positions[record.anchor_seed_id][1])
         for record in overview_communities
     )
-    # Fit the complete atlas, not only a sparse label subset.  This prevents a
-    # valid but tiny set of overview anchors from pinning the first viewport to
-    # one corner while preserving zoom-in navigation into their neighborhoods.
+    # Fit the overview anchors. Deeper nodes remain available through zoom, but
+    # must not inflate the first viewport and make the headings look vertically
+    # compressed.
     initial_camera = _initial_camera(
-        tuple(positions.values()), resolved.world_width, resolved.world_height
+        overview_anchors, resolved.world_width, resolved.world_height
     )
     overview_root_ids = {
         roots[record.anchor_seed_id] or record.anchor_seed_id for record in overview_communities

@@ -18,7 +18,9 @@ if (canvas instanceof HTMLCanvasElement) {
   const schedule = () => { if (!state.frame) state.frame = requestAnimationFrame(draw); };
   const fit = () => {
     if (!state.atlas || !state.viewport.width || !state.viewport.height) return;
-    state.camera = fitCamera(state.atlas.initialCamera, state.viewport);
+    // Use a slightly fuller initial frame so the overview remains legible in
+    // the fixed desktop viewport while retaining its centered camera.
+    state.camera = fitCamera(state.atlas.initialCamera, state.viewport, 1.05);
     state.fitScale = state.camera.scale;
     state.focus = null; state.edges = [];
     if (back) back.hidden = true;
@@ -29,8 +31,11 @@ if (canvas instanceof HTMLCanvasElement) {
     ? state.atlas.regions.filter((region) => (region.overview_visible ?? true) === true && typeof region.title === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
     : state.atlas.labels[0].map((id) => state.atlas.byId.get(id)).filter(Boolean).map((node) => ({ title: node.name, x: node.x, y: node.y }));
   const label = (context, name, screen, colors) => {
+    const width = context.measureText(name).width;
+    const x = screen.x + 6 + width > state.viewport.width ? screen.x - width - 6 : screen.x + 6;
+    const y = screen.y < 24 ? screen.y + 18 : screen.y - 6;
     context.fillStyle = colors.ink; context.strokeStyle = colors.canvas; context.lineWidth = 4;
-    context.strokeText(name, screen.x + 6, screen.y - 6); context.fillText(name, screen.x + 6, screen.y - 6);
+    context.strokeText(name, x, y); context.fillText(name, x, y);
   };
   const draw = () => {
     state.frame = 0;
@@ -70,7 +75,9 @@ if (canvas instanceof HTMLCanvasElement) {
     const ids = [id, ...state.edges.flatMap((edge) => [edge.source, edge.target])];
     const nodes = [...new Set(ids)].map((key) => state.atlas.byId.get(key)).filter(Boolean);
     const camera = fitCamera(boundsForNodes(nodes, state.atlas.initialCamera), state.viewport, .72);
-    state.camera = { ...camera, scale: clamp(camera.scale, state.fitScale, state.fitScale * 32) };
+    // Focused neighborhoods must use a detail LOD so their verified edges are
+    // visible. A broad neighborhood can otherwise fit at the overview scale.
+    state.camera = { ...camera, scale: clamp(camera.scale, state.fitScale * 1.5, state.fitScale * 32) };
     showDetail(id, neighborhood);
     schedule();
   };
