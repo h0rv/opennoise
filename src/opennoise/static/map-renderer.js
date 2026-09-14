@@ -9,6 +9,7 @@ import {
   normaliseAtlasPayload,
   appendCirclePath,
   visibleNodeLabels,
+  zoomAtCenter,
   zoomAt,
 } from './map-atlas.mjs';
 
@@ -169,7 +170,7 @@ if (canvas instanceof HTMLCanvasElement) {
   canvas.addEventListener('pointermove', (event) => { if (!state.drag || !state.camera) return; const dx = event.clientX - state.drag.x; const dy = event.clientY - state.drag.y; state.drag = { x: event.clientX, y: event.clientY }; if (Math.hypot(dx, dy) > 2) state.moved = true; state.camera.x += dx; state.camera.y += dy; schedule(); });
   canvas.addEventListener('pointerup', (event) => { const hit = !state.moved && state.atlas ? nearest({ x: event.offsetX, y: event.offsetY }) : null; state.drag = null; if (hit) void focus(hit.id); });
   canvas.addEventListener('pointercancel', () => { state.drag = null; });
-  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in' || action === 'out') { state.camera = zoomAt(state.camera, { x: state.viewport.width / 2, y: state.viewport.height / 2 }, action === 'in' ? 1.5 : 1 / 1.5, { min: state.fitScale, max: state.fitScale * 64 }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
+  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in' || action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, action === 'in' ? 1.5 : 1 / 1.5, { min: state.fitScale, max: state.fitScale * 64 }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
   document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (!target) return; event.preventDefault(); void focus(target.dataset.openNodeId); });
   query?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !state.atlas) return; const id = state.atlas.aliases.get(query.value.trim().toLowerCase()); if (!id) return; event.preventDefault(); void focus(id); });
   window.addEventListener('popstate', () => { const id = new URL(window.location.href).searchParams.get('open_focus'); if (id) void focus(id, false); else fit(); });

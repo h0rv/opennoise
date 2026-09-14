@@ -199,6 +199,11 @@ export function zoomAt(camera, point, factor, limits) {
   return { scale, x: point.x - worldX * scale, y: point.y - worldY * scale };
 }
 
+/** Zoom controls use the current canvas center; wheel input supplies its own point. */
+export function zoomAtCenter(camera, viewport, factor, limits) {
+  return zoomAt(camera, { x: viewport.width / 2, y: viewport.height / 2 }, factor, limits);
+}
+
 export function levelForScale(scale, fitScale) {
   // Reveal the next semantic neighborhood shortly after the user begins
   // zooming. This keeps the first wheel gesture informative without making the

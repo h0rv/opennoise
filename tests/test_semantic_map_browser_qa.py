@@ -44,6 +44,8 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("CanvasRenderingContext2D.prototype.arc", self.source)
         self.assertIn("class QAPath2D", self.source)
         self.assertIn("connected_path_arcs", self.source)
+        self.assertIn("label_boxes", self.source)
+        self.assertIn("edge_endpoints", self.source)
         self.assertIn("mobile-light.png", self.source)
         self.assertIn("CanvasRenderingContext2D.prototype.fillText", self.source)
         self.assertIn("CanvasRenderingContext2D.prototype.lineTo", self.source)

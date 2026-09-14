@@ -158,7 +158,10 @@ async function diagnostics(cdp) {
     const qa = window.__opennoiseMapQA;
     const canvas = document.querySelector('#semantic-map');
     const rect = canvas?.getBoundingClientRect();
-    const frame = qa?.frames?.at(-1) ?? { arcs: [], labels: [], edges: 0, connected_path_arcs: 0, path_fills: 0 };
+    const frame = qa?.frames?.at(-1) ?? {
+      arcs: [], labels: [], label_boxes: [], edges: 0, edge_endpoints: [],
+      connected_path_arcs: 0, path_fills: 0,
+    };
     const extent = (items, x, y) => items.length ? {
       min_x: Math.min(...items.map(item => item[x])), max_x: Math.max(...items.map(item => item[x])),
       min_y: Math.min(...items.map(item => item[y])), max_y: Math.max(...items.map(item => item[y])),
@@ -169,7 +172,9 @@ async function diagnostics(cdp) {
       viewport: rect ? { width: rect.width, height: rect.height } : null,
       points: frame.arcs.length,
       labels: frame.labels.length,
+      label_boxes: frame.label_boxes,
       edges: frame.edges,
+      edge_endpoints: frame.edge_endpoints,
       connected_path_arcs: frame.connected_path_arcs,
       path_fills: frame.path_fills,
       point_extent: extent(frame.arcs, 'x', 'y'),
@@ -198,6 +203,18 @@ function requireCheck(condition, message, details = {}) {
   if (!condition) throw new Error(`${message}: ${JSON.stringify(details)}`);
 }
 
+function boxesInViewport(items, viewport) {
+  return items.every((box) => box.x0 >= 0 && box.y0 >= 0
+    && box.x1 <= viewport.width && box.y1 <= viewport.height);
+}
+
+function edgesInViewport(items, viewport) {
+  return items.every((edge) => edge.x0 >= 0 && edge.y0 >= 0
+    && edge.x1 >= 0 && edge.y1 >= 0
+    && edge.x0 <= viewport.width && edge.y0 <= viewport.height
+    && edge.x1 <= viewport.width && edge.y1 <= viewport.height);
+}
+
 async function wheel(cdp, x, y, deltaY) {
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseWheel", x, y, deltaY, deltaX: 0 });
 }
@@ -216,6 +233,7 @@ const PRELOAD = String.raw`(() => {
     fill: CanvasRenderingContext2D.prototype.fill,
     lineTo: CanvasRenderingContext2D.prototype.lineTo,
     stroke: CanvasRenderingContext2D.prototype.stroke,
+    moveTo: CanvasRenderingContext2D.prototype.moveTo,
   };
   const NativePath2D = window.Path2D;
   const pathStates = new WeakMap();
@@ -240,20 +258,33 @@ const PRELOAD = String.raw`(() => {
     }
   }
   window.Path2D = QAPath2D;
-  const qa = { frames: [], current: { arcs: [], labels: [], edges: 0, line_segments: 0, connected_path_arcs: 0, path_fills: 0 } };
+  const qa = {
+    frames: [],
+    current: {
+      arcs: [], labels: [], label_boxes: [], edges: 0, edge_endpoints: [],
+      line_segments: 0, connected_path_arcs: 0, path_fills: 0,
+    },
+  };
   const finish = () => {
     if (qa.current.arcs.length || qa.current.labels.length || qa.current.edges || qa.current.path_fills) {
       qa.frames.push(qa.current);
       if (qa.frames.length > 40) qa.frames.shift();
     }
-    qa.current = { arcs: [], labels: [], edges: 0, line_segments: 0, connected_path_arcs: 0, path_fills: 0 };
+    qa.current = {
+      arcs: [], labels: [], label_boxes: [], edges: 0, edge_endpoints: [],
+      line_segments: 0, connected_path_arcs: 0, path_fills: 0,
+    };
   };
   CanvasRenderingContext2D.prototype.arc = function(x, y, radius, ...rest) {
     if (this.canvas?.id === 'semantic-map') qa.current.arcs.push({ x, y, radius });
     return original.arc.call(this, x, y, radius, ...rest);
   };
   CanvasRenderingContext2D.prototype.fillText = function(text, x, y, ...rest) {
-    if (this.canvas?.id === 'semantic-map') qa.current.labels.push({ text, x, y });
+    if (this.canvas?.id === 'semantic-map') {
+      const width = this.measureText(text).width;
+      qa.current.labels.push({ text, x, y });
+      qa.current.label_boxes.push({ x0: x - 3, y0: y - 19, x1: x + width + 3, y1: y + 3 });
+    }
     return original.fillText.call(this, text, x, y, ...rest);
   };
   CanvasRenderingContext2D.prototype.fill = function(pathOrRule, ...rest) {
@@ -268,8 +299,18 @@ const PRELOAD = String.raw`(() => {
     return original.fill.call(this, pathOrRule, ...rest);
   };
   CanvasRenderingContext2D.prototype.lineTo = function(x, y) {
-    if (this.canvas?.id === 'semantic-map') qa.current.line_segments += 1;
+    if (this.canvas?.id === 'semantic-map') {
+      qa.current.line_segments += 1;
+      if (this.lineWidth === 1.5) {
+        const start = this.__opennoiseQaMoveTo;
+        if (start) qa.current.edge_endpoints.push({ x0: start.x, y0: start.y, x1: x, y1: y });
+      }
+    }
     return original.lineTo.call(this, x, y);
+  };
+  CanvasRenderingContext2D.prototype.moveTo = function(x, y) {
+    if (this.canvas?.id === 'semantic-map') this.__opennoiseQaMoveTo = { x, y };
+    return original.moveTo.call(this, x, y);
   };
   CanvasRenderingContext2D.prototype.stroke = function(...args) {
     // Network edges use the dedicated 1.5px stroke. One-pixel strokes are
@@ -304,6 +345,7 @@ async function run() {
     const heightFraction = extent ? (extent.max_y - extent.min_y) / initial.viewport.height : 0;
     requireCheck(widthFraction >= 0.75, "overview does not use horizontal space", { initial, width_fraction: widthFraction });
     requireCheck(heightFraction >= 0.70, "overview does not use vertical space", { initial, height_fraction: heightFraction });
+    requireCheck(boxesInViewport(initial.label_boxes, initial.viewport), "overview label box escaped viewport", initial);
     screenshots.push(await screenshot(cdp, "desktop-light.png", "light", 1440, 900));
 
     const firstFrame = initial.frame_count - 1;
@@ -340,6 +382,8 @@ async function run() {
     }
     requireCheck(focused.edges > 0 && focused.edges <= 12, "focused neighborhood edge budget failed", focused);
     requireCheck(focused.connected_path_arcs === 0, "batched dots formed connected polygons", focused);
+    requireCheck(boxesInViewport(focused.label_boxes, focused.viewport), "focused label box escaped viewport", focused);
+    requireCheck(edgesInViewport(focused.edge_endpoints, focused.viewport), "focused edge endpoint escaped viewport", focused);
     requireCheck(!focused.back_hidden, "Back control did not appear after focus", focused);
     requireCheck(focused.focus_url === "legacy:item887", "IDM alias did not focus its stable seed", focused);
     screenshots.push(await screenshot(cdp, "desktop-idm-focus.png", "light", 1440, 900));
@@ -357,6 +401,7 @@ async function run() {
     const mobile = await diagnostics(cdp);
     requireCheck(mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844, "mobile viewport failed", mobile);
     requireCheck(mobile.connected_path_arcs === 0, "mobile batched dots formed connected polygons", mobile);
+    requireCheck(boxesInViewport(mobile.label_boxes, mobile.viewport), "mobile label box escaped viewport", mobile);
     screenshots.push(await screenshot(cdp, "mobile-light.png", "light", 390, 844));
     requireCheck(cdp.runtimeErrors.length === 0, "browser errors detected", cdp.runtimeErrors);
     const report = {

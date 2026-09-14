@@ -9,6 +9,7 @@ import {
   levelForScale,
   normaliseAtlasPayload,
   visibleNodeLabels,
+  zoomAtCenter,
   zoomAt,
 } from '../../src/opennoise/static/map-atlas.mjs';
 
@@ -66,6 +67,13 @@ test('focused camera remains centered when its detail scale is clamped', () => {
   );
   assert.equal((4 * anchored.scale) + anchored.x, 500);
   assert.equal((2 * anchored.scale) + anchored.y, 300);
+});
+
+test('control zoom is anchored to the current viewport center', () => {
+  const camera = { x: 10, y: 20, scale: 100 };
+  const zoomed = zoomAtCenter(camera, { width: 800, height: 600 }, 2, { min: 1, max: 1000 });
+  assert.equal((400 - zoomed.x) / zoomed.scale, (400 - camera.x) / camera.scale);
+  assert.equal((300 - zoomed.y) / zoomed.scale, (300 - camera.y) / camera.scale);
 });
 
 test('batched circles are independent subpaths, never connected polygons', () => {
