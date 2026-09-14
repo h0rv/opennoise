@@ -7,6 +7,8 @@ from opennoise.ml.semantic_layout.atlas import AtlasPoint, build_rectangular_atl
 from opennoise.ml.semantic_layout.builder import _place_branch_children
 
 _GROUP_SPLIT_INDEX = 3
+_SKEWED_CUTOFF = 80
+_MIN_QUADRANT_COUNT = 10
 
 
 class SemanticAtlasTests(unittest.TestCase):
@@ -46,6 +48,36 @@ class SemanticAtlasTests(unittest.TestCase):
         self.assertGreater(max(ys) - min(ys), 0.5)
         self.assertTrue(all(0.0 < x < 16 / 9 for x in xs))
         self.assertTrue(all(0.0 < y < 1.0 for y in ys))
+
+    def test_skewed_density_is_centered_without_a_community_grid(self) -> None:
+        points = tuple(
+            AtlasPoint(
+                node_id=f"node-{index}",
+                x=0.01 + (index / 20 if index < _SKEWED_CUTOFF else index / 100),
+                y=0.01
+                + (
+                    ((index * 37) % 100) / 30
+                    if ((index * 37) % 100) < _SKEWED_CUTOFF
+                    else ((index * 37) % 100) / 120
+                ),
+                group_id="left" if index % 2 else "right",
+            )
+            for index in range(100)
+        )
+        result = build_rectangular_atlas(points)
+        center_x, center_y = 16 / 9 / 2, 0.5
+        quadrants = {
+            "nw": 0,
+            "ne": 0,
+            "sw": 0,
+            "se": 0,
+        }
+        for x, y in result.positions.values():
+            key = ("n" if y <= center_y else "s") + ("w" if x <= center_x else "e")
+            quadrants[key] += 1
+        self.assertLessEqual(max(quadrants.values()), 60)
+        self.assertTrue(all(value > _MIN_QUADRANT_COUNT for value in quadrants.values()))
+        self.assertGreater(result.local_neighbor_preservation or 0.0, 0.7)
 
     def test_hierarchy_branch_is_not_a_radial_spoke_pattern(self) -> None:
         children = _place_branch_children(

@@ -8,6 +8,7 @@ layout regions, not claims that groups are genres or parents.
 from __future__ import annotations
 
 import math
+from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import TYPE_CHECKING
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 
 _MIN_POINTS = 2
 _MAX_MARGIN = 0.25
+_QUANTILE_BLEND = 0.90
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +73,14 @@ class AtlasResult:
     local_neighbor_preservation: float | None
 
 
+@dataclass(frozen=True, slots=True)
+class _AxisRange:
+    source_min: float
+    source_max: float
+    target_min: float
+    target_max: float
+
+
 def build_rectangular_atlas(
     points: tuple[AtlasPoint, ...], *, settings: AtlasSettings | None = None
 ) -> AtlasResult:
@@ -96,14 +106,24 @@ def build_rectangular_atlas(
         raise ValueError("atlas points must have finite identities and coordinates")
     x_values = tuple(point.x for point in points)
     y_values = tuple(point.y for point in points)
-    x_low, x_high = _quantile(x_values, resolved.clip_low), _quantile(x_values, resolved.clip_high)
-    y_low, y_high = _quantile(y_values, resolved.clip_low), _quantile(y_values, resolved.clip_high)
+    ordered_x = tuple(sorted(x_values))
+    ordered_y = tuple(sorted(y_values))
+    x_low, x_high = (
+        _quantile(ordered_x, resolved.clip_low),
+        _quantile(ordered_x, resolved.clip_high),
+    )
+    y_low, y_high = (
+        _quantile(ordered_y, resolved.clip_low),
+        _quantile(ordered_y, resolved.clip_high),
+    )
     x0, x1 = resolved.margin, resolved.world_width - resolved.margin
     y0, y1 = resolved.margin, resolved.world_height - resolved.margin
+    x_range = _AxisRange(x_low, x_high, x0, x1)
+    y_range = _AxisRange(y_low, y_high, y0, y1)
     positions = {
         point.node_id: (
-            _scale(_clip(point.x, x_low, x_high), x_low, x_high, x0, x1),
-            _scale(_clip(point.y, y_low, y_high), y_low, y_high, y0, y1),
+            _axis_position(point.x, ordered_x, x_range),
+            _axis_position(point.y, ordered_y, y_range),
         )
         for point in points
     }
@@ -169,6 +189,27 @@ def _quantile(values: tuple[float, ...], fraction: float) -> float:
 
 def _clip(value: float, minimum: float, maximum: float) -> float:
     return min(max(value, minimum), maximum)
+
+
+def _axis_position(
+    value: float,
+    ordered_values: tuple[float, ...],
+    axis_range: _AxisRange,
+) -> float:
+    """Blend a winsorized affine coordinate with its monotonic empirical rank."""
+    clipped = _clip(value, axis_range.source_min, axis_range.source_max)
+    affine = _scale(
+        clipped,
+        axis_range.source_min,
+        axis_range.source_max,
+        axis_range.target_min,
+        axis_range.target_max,
+    )
+    left = bisect_left(ordered_values, clipped)
+    right = bisect_right(ordered_values, clipped)
+    rank = (left + right - 1) / (2.0 * max(len(ordered_values) - 1, 1))
+    quantile = axis_range.target_min + rank * (axis_range.target_max - axis_range.target_min)
+    return _QUANTILE_BLEND * quantile + (1.0 - _QUANTILE_BLEND) * affine
 
 
 def _scale(
