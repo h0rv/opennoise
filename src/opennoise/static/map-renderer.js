@@ -26,7 +26,7 @@ if (canvas instanceof HTMLCanvasElement) {
     schedule();
   };
   const headings = () => state.atlas.regions.length
-    ? state.atlas.regions.filter((region) => typeof region.title === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
+    ? state.atlas.regions.filter((region) => (region.overview_visible ?? true) === true && typeof region.title === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
     : state.atlas.labels[0].map((id) => state.atlas.byId.get(id)).filter(Boolean).map((node) => ({ title: node.name, x: node.x, y: node.y }));
   const label = (context, name, screen, colors) => {
     context.fillStyle = colors.ink; context.strokeStyle = colors.canvas; context.lineWidth = 4;

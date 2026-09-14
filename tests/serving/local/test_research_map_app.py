@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import unittest
 from http import HTTPStatus
 from os import environ
@@ -40,6 +41,11 @@ class LocalResearchMapAppTests(unittest.TestCase):
         self.assertEqual(payload["placed_node_count"], 2945)
         self.assertEqual(payload["total_seed_count"], 6291)
         self.assertEqual(len(payload["nodes"]), 2945)
+        artifact = json.loads(SEMANTIC_LAYOUT.read_text(encoding="utf-8"))
+        visible_headings = sum(
+            community["overview_visible"] for community in artifact["communities"]
+        )
+        self.assertEqual(len(payload["labels"][0]["ids"]), visible_headings)
         self.assertLessEqual(len(payload["labels"][0]["ids"]), 45)
         self.assertIn({"term": "idm", "target": "legacy:item887"}, payload["aliases"])
         self.assertIn({"term": "pop music", "target": "legacy:item1"}, payload["aliases"])

@@ -147,7 +147,12 @@ class SemanticMapStoreTests(PollingIsolatedAsyncioTestCase):
         renderer = store.renderer()
 
         self.assertEqual((renderer.placed_node_count, renderer.unplaced_node_count), (2945, 3346))
-        self.assertEqual(next(len(record.ids) for record in renderer.labels), 30)
+        overview_heading_count = sum(
+            region.overview_visible for region in renderer.overview_regions
+        )
+        first_tier_count = next(len(record.ids) for record in renderer.labels)
+        self.assertEqual(first_tier_count, overview_heading_count)
+        self.assertLessEqual(first_tier_count, 45)
         self.assertTrue(
             all(node.lod == 0 for node in renderer.nodes if node.id in renderer.labels[0].ids)
         )
