@@ -142,6 +142,27 @@ test('detail disclosure keeps members of a few meaningful cohorts together', () 
   assert.ok([...level2Cohorts.values()].some((count) => count >= 2));
 });
 
+test('canonical disclosure prefers supported umbrellas over isolated leaf seeds', () => {
+  const canonical = normaliseAtlasPayload({
+    initial_camera: { x0: 0, y0: 0, x1: 16, y1: 9 },
+    nodes: [
+      { id: 'electronic', name: 'electronic', x: 1, y: 1, lod: 0 },
+      { id: 'idm', name: 'intelligent dance music', x: 2, y: 2, lod: 2, parent_id: 'electronic' },
+      { id: 'braindance', name: 'braindance', x: 3, y: 3, lod: 2, parent_id: 'idm' },
+      { id: 'leaf', name: 'microtonal', x: 8, y: 4, lod: 1, community_id: 99 },
+    ],
+    labels: [],
+  });
+  const project = (node) => ({ x: node.x * 100, y: node.y * 100 });
+  const options = { maximum: 20, candidateLimit: 20, camera: { x: 0, y: 0, scale: 100 } };
+  const labels = visibleNodeLabels(canonical, 1, { width: 1600, height: 900 }, project, (name) => name.length * 5, options);
+  const counts = new Map();
+  for (const item of labels) counts.set(item.cohortKey, (counts.get(item.cohortKey) ?? 0) + 1);
+  assert.ok([...counts.values()].some((count) => count >= 2), 'an umbrella should disclose multiple members');
+  assert.ok(!labels.some((item) => item.id === 'leaf'), 'an isolated leaf should not displace an umbrella');
+  assert.ok(labels.some((item) => item.id === 'electronic') && labels.some((item) => item.id === 'idm'));
+});
+
 test('local zoom labels reveal nearby subgenres even when global label sets are sparse', () => {
   const sparse = normaliseAtlasPayload({
     ...payload,

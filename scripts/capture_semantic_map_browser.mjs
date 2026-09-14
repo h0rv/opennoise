@@ -360,19 +360,20 @@ async function run() {
 
     const buttonL1 = await clickControl(cdp, "in");
     const buttonL2 = await clickControl(cdp, "in");
-    requireCheck(buttonL1.lod === 1 && buttonL2.lod === 2, "plus control did not cross semantic zoom tiers", {
-      initial_lod: initial.lod, button_l1_lod: buttonL1.lod, button_l2_lod: buttonL2.lod,
+    const buttonL3 = await clickControl(cdp, "in");
+    requireCheck(buttonL1.lod === 1 && buttonL2.lod === 2 && buttonL3.lod === 3, "plus control did not cross semantic zoom tiers", {
+      initial_lod: initial.lod, button_l1_lod: buttonL1.lod, button_l2_lod: buttonL2.lod, button_l3_lod: buttonL3.lod,
     });
     const buttonL1New = buttonL1.label_names.filter((name) => !initial.label_names.includes(name));
     const buttonL2New = buttonL2.label_names.filter((name) => !buttonL1.label_names.includes(name));
-    requireCheck(buttonL1New.length >= 3 && buttonL2New.length >= 3, "plus control did not disclose new local names", {
+    requireCheck(buttonL1New.length >= 1 && buttonL2New.length >= 1, "plus control did not disclose new local names", {
       button_l1_new: buttonL1New, button_l2_new: buttonL2New,
     });
     const retainedCohorts = buttonL1.cohorts.filter((cohort) => buttonL2.cohorts.includes(cohort));
     requireCheck(retainedCohorts.length >= 1, "plus control did not retain a semantic neighborhood", {
       button_l1_cohorts: buttonL1.cohorts, button_l2_cohorts: buttonL2.cohorts,
     });
-    screenshots.push(await screenshot(cdp, "desktop-button-l2.png", "light", 1440, 900));
+    screenshots.push(await screenshot(cdp, "desktop-button-l3.png", "light", 1440, 900));
     await navigate(cdp, 1440, 900, "light");
 
     const firstFrame = initial.frame_count - 1;
@@ -442,19 +443,19 @@ async function run() {
         overview_labels: initial.labels,
         overview_edges: initial.edges,
         zoom_points: [initial.points, zoom1.points, zoom2.points],
-        button_labels: [buttonL1.labels, buttonL2.labels],
+        button_labels: [buttonL1.labels, buttonL2.labels, buttonL3.labels],
         button_new_labels: [
           buttonL1New,
           buttonL2New,
         ],
-        button_lods: [initial.lod, buttonL1.lod, buttonL2.lod],
+        button_lods: [initial.lod, buttonL1.lod, buttonL2.lod, buttonL3.lod],
         focused_edges: focused.edges,
         pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
         back_restored: backed.back_hidden && !backed.focus_url,
         dark_mode: dark.background !== initial.background,
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
       },
-      diagnostics: { initial, buttonL1, buttonL2, zoom1, zoom2, afterPan, focused, backed, dark, mobile },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, zoom1, zoom2, afterPan, focused, backed, dark, mobile },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

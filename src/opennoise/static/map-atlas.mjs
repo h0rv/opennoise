@@ -128,9 +128,23 @@ export function normaliseAtlasPayload(payload) {
   }
   for (const children of childrenByParent.values()) children.sort((left, right) => compareCodepoints(byId.get(left).name, byId.get(right).name));
   const spatialIndex = buildSpatialIndex(nodes, worldBounds);
+  const cohortKeys = new Map();
+  for (const node of nodes) {
+    let root = node.hierarchyRootId;
+    if (!root && (node.parentId || childrenByParent.has(node.id))) {
+      let current = node;
+      const seen = new Set();
+      while (current.parentId && byId.has(current.parentId) && !seen.has(current.id)) {
+        seen.add(current.id);
+        current = byId.get(current.parentId);
+      }
+      root = current.id;
+    }
+    cohortKeys.set(node.id, root ? `hierarchy:${root}` : nodeCohortKey(node));
+  }
   const cohorts = new Map();
   for (const node of nodes) {
-    const key = nodeCohortKey(node);
+    const key = cohortKeys.get(node.id);
     const members = cohorts.get(key) ?? [];
     members.push(node);
     cohorts.set(key, members);
@@ -145,6 +159,7 @@ export function normaliseAtlasPayload(payload) {
     aliases: normaliseAliases(source.aliases, nodeIds),
     childrenByParent,
     spatialIndex,
+    cohortKeys,
     cohorts,
     regions: (Array.isArray(source.overview_regions) ? source.overview_regions : source.regions ?? [])
       .filter((region) => region && typeof region === 'object')
@@ -475,6 +490,8 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     ?? Math.min(Math.max(options.maximum ?? 420, 128), 350);
   const localNodes = indexedNodeCandidates(atlas, options.camera, viewport, margin, candidateLimit);
   const requestedCohorts = new Set(options.cohortIds ?? []);
+  const disclosureLevel = level < 3 ? level + 1 : level;
+  const lookaheadIds = new Set();
   const futureCamera = options.nextCamera;
   const futurePoint = futureCamera
     ? (node) => ({ x: futureCamera.x + node.x * futureCamera.scale, y: futureCamera.y + node.y * futureCamera.scale })
@@ -494,7 +511,9 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     const continuityLimit = Math.max(8, Math.min(candidateLimit, 24));
     for (const key of requestedCohorts) {
       for (const node of atlas.cohorts.get(key) ?? []) {
-        if (seen.has(node.id) || node.lod > level) continue;
+        if (node.lod > disclosureLevel) continue;
+        if (node.lod > level) lookaheadIds.add(node.id);
+        if (seen.has(node.id)) continue;
         seen.add(node.id);
         localNodes.push(node);
         if (localNodes.length >= candidateLimit + continuityLimit) break;
@@ -508,7 +527,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     // from hiding an entire neighborhood before semantic ranking can consider
     // it. Deeper members are added only for the retained cohorts above.
     for (const members of atlas.cohorts.values()) {
-      const representative = members.find((node) => node.lod <= level && inRange(
+      const representative = members.find((node) => node.lod <= disclosureLevel && inRange(
         project(node),
       ));
       if (representative && !seen.has(representative.id)) {
@@ -517,8 +536,26 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
       }
     }
   }
+  if (level <= 2 && atlas.cohorts) {
+    const seen = new Set(localNodes.map((node) => node.id));
+    // Include a small, visible lookahead so an umbrella can disclose its first
+    // descendants in the same camera step. This avoids promoting isolated
+    // leaf labels simply because their parent is still one tier away.
+    for (const members of atlas.cohorts.values()) {
+      let added = 0;
+      for (const node of members) {
+        if (node.lod > disclosureLevel || !inRange(project(node))) continue;
+        if (node.lod > level) lookaheadIds.add(node.id);
+        if (seen.has(node.id)) continue;
+        seen.add(node.id);
+        localNodes.push(node);
+        added += 1;
+        if (added >= (level === 1 ? 6 : 10)) break;
+      }
+    }
+  }
   for (const node of localNodes) {
-    if (node.lod > level && !required.has(node.id)) continue;
+    if (node.lod > level && !required.has(node.id) && !lookaheadIds.has(node.id)) continue;
     const screen = project(node);
     projected.set(node.id, screen);
     if (inRange(screen)) ids.add(node.id);
@@ -546,7 +583,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   // neighborhood into one group per parent, which made the disclosure look
   // like unrelated dots. Keep a stable cohort key so adjacent zoom tiers can
   // retain the same neighborhoods while revealing their members.
-  const cohortKey = nodeCohortKey;
+  const cohortKey = (node) => atlas.cohortKeys?.get(node.id) ?? nodeCohortKey(node);
   const distance = (node) => {
     const screen = projected.get(node.id) ?? project(node);
     return Math.hypot(screen.x - center.x, screen.y - center.y);
@@ -591,9 +628,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
       || compareCodepoints(leftKey, rightKey);
   });
   const cohortLimit = level === 1 ? 3 : (level === 2 ? 3 : Number.MAX_SAFE_INTEGER);
-  const meaningfulCohorts = rankedCohorts.filter(([, group]) => (
-    group.length > 1 || group.some((node) => node.lod === level)
-  ));
+  const meaningfulCohorts = rankedCohorts.filter(([, group]) => group.length > 1);
   const requestedInView = [...requestedCohorts].filter((key) => groups.has(key));
   const rankedFallback = (meaningfulCohorts.length ? meaningfulCohorts : rankedCohorts)
     .map(([key]) => key)
