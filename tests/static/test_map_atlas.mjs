@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { fitCamera, levelForScale, normaliseAtlasPayload, zoomAt } from '../../src/opennoise/static/map-atlas.mjs';
+import {
+  declutterLabels,
+  fitCamera,
+  levelForScale,
+  normaliseAtlasPayload,
+  visibleNodeLabels,
+  zoomAt,
+} from '../../src/opennoise/static/map-atlas.mjs';
 
 const payload = {
   revision: 'semantic-scatter-map-v2',
@@ -39,4 +46,34 @@ test('fit camera centers a landscape overview and zoom preserves its cursor worl
 test('zoom levels disclose labels monotonically without a focused node', () => {
   const levels = [1, 1.7, 3.5, 8].map((scale) => levelForScale(scale, 1));
   assert.deepEqual(levels, [0, 1, 2, 3]);
+});
+
+test('local zoom labels reveal nearby subgenres even when global label sets are sparse', () => {
+  const sparse = normaliseAtlasPayload({
+    ...payload,
+    labels: [
+      { level: 0, ids: ['a'] },
+      { level: 1, ids: ['a'] },
+      { level: 2, ids: ['a'] },
+      { level: 3, ids: ['a'] },
+    ],
+  });
+  const project = (node) => ({ x: node.x * 100, y: node.y * 100 });
+  const textWidth = (name) => name.length * 7;
+  const level1 = visibleNodeLabels(sparse, 1, { width: 1600, height: 900 }, project, textWidth, { maximum: 20 });
+  const level2 = visibleNodeLabels(sparse, 2, { width: 1600, height: 900 }, project, textWidth, { maximum: 20 });
+  assert.ok(level1.some((item) => item.id === 'b'), 'level one should reveal the nearby subgenre');
+  assert.ok(level2.some((item) => item.id === 'c'), 'level two should reveal the deeper subgenre');
+});
+
+test('label decluttering is deterministic and keeps the higher-priority name', () => {
+  const candidates = [
+    { id: 'low', text: 'lower priority', screen: { x: 100, y: 100 }, priority: 20 },
+    { id: 'high', text: 'higher priority', screen: { x: 100, y: 100 }, priority: 1 },
+  ];
+  const options = { maximum: 10, height: 16, padding: 3 };
+  const once = declutterLabels(candidates, { width: 800, height: 500 }, (name) => name.length * 7, options);
+  const twice = declutterLabels(candidates, { width: 800, height: 500 }, (name) => name.length * 7, options);
+  assert.deepEqual(once.map((item) => item.id), ['high']);
+  assert.deepEqual(twice.map((item) => item.id), ['high']);
 });

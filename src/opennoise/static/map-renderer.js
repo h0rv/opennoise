@@ -1,5 +1,14 @@
 /* Static atlas viewport: supplied coordinates only, no graph simulation. */
-import { boundsForNodes, clamp, fitCamera, levelForScale, normaliseAtlasPayload, zoomAt } from './map-atlas.mjs';
+import {
+  boundsForNodes,
+  clamp,
+  declutterLabels,
+  fitCamera,
+  levelForScale,
+  normaliseAtlasPayload,
+  visibleNodeLabels,
+  zoomAt,
+} from './map-atlas.mjs';
 
 const canvas = document.querySelector('#semantic-map');
 
@@ -30,12 +39,9 @@ if (canvas instanceof HTMLCanvasElement) {
   const headings = () => state.atlas.regions.length
     ? state.atlas.regions.filter((region) => (region.overview_visible ?? true) === true && typeof region.title === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
     : state.atlas.labels[0].map((id) => state.atlas.byId.get(id)).filter(Boolean).map((node) => ({ title: node.name, x: node.x, y: node.y }));
-  const label = (context, name, screen, colors) => {
-    const width = context.measureText(name).width;
-    const x = screen.x + 6 + width > state.viewport.width ? screen.x - width - 6 : screen.x + 6;
-    const y = screen.y < 24 ? screen.y + 18 : screen.y - 6;
+  const drawLabel = (context, name, placement, colors) => {
     context.fillStyle = colors.ink; context.strokeStyle = colors.canvas; context.lineWidth = 4;
-    context.strokeText(name, x, y); context.fillText(name, x, y);
+    context.strokeText(name, placement.x, placement.y); context.fillText(name, placement.x, placement.y);
   };
   const draw = () => {
     state.frame = 0;
@@ -46,14 +52,46 @@ if (canvas instanceof HTMLCanvasElement) {
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, state.viewport.width, state.viewport.height);
     const colors = palette(); const lod = level(); context.font = lod === 0 ? '600 15px ui-sans-serif, system-ui, sans-serif' : '13px ui-sans-serif, system-ui, sans-serif';
     if (lod === 0) {
-      for (const region of headings()) { const screen = { x: state.camera.x + region.x * state.camera.scale, y: state.camera.y + region.y * state.camera.scale }; if (screen.x < -80 || screen.y < -20 || screen.x > state.viewport.width + 80 || screen.y > state.viewport.height + 20) continue; context.fillStyle = colors.node; context.beginPath(); context.arc(screen.x, screen.y, 3.5, 0, Math.PI * 2); context.fill(); label(context, region.title, screen, colors); }
+      const regions = headings().map((region, index) => ({
+        id: `region:${region.community_id ?? index}`,
+        text: region.title,
+        screen: { x: state.camera.x + region.x * state.camera.scale, y: state.camera.y + region.y * state.camera.scale },
+        priority: index,
+      }));
+      const visibleRegions = declutterLabels(
+        regions,
+        state.viewport,
+        (name) => context.measureText(name).width,
+        { maximum: 35, height: 18, padding: 4, margin: 40 },
+      );
+      for (const region of visibleRegions) {
+        context.fillStyle = colors.node; context.beginPath(); context.arc(region.screen.x, region.screen.y, 3.5, 0, Math.PI * 2); context.fill();
+        drawLabel(context, region.text, region.placement, colors);
+      }
       return;
     }
     for (const edge of state.edges) { const left = state.atlas.byId.get(edge.source); const right = state.atlas.byId.get(edge.target); if (!left || !right) continue; const start = point(left); const end = point(right); context.strokeStyle = colors.edge; context.globalAlpha = .55; context.lineWidth = 1.5; context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); }
-    const shown = new Set(state.atlas.labels[lod]); if (state.focus) shown.add(state.focus);
-    for (const node of state.atlas.nodes) { if (!visible(node) || (node.lod > lod && node.id !== state.focus)) continue; const screen = point(node); context.globalAlpha = shown.has(node.id) ? 1 : .4; context.fillStyle = node.id === state.focus ? colors.focus : colors.node; context.beginPath(); context.arc(screen.x, screen.y, shown.has(node.id) ? 3.2 : 1.35, 0, Math.PI * 2); context.fill(); }
+    const requiredIds = state.edges.flatMap((edge) => [edge.source, edge.target]);
+    const selectedLabels = visibleNodeLabels(
+      state.atlas,
+      lod,
+      state.viewport,
+      point,
+      (name) => context.measureText(name).width,
+      {
+        maximum: [45, 96, 210, 420][lod],
+        focusId: state.focus,
+        requiredIds,
+        height: 16,
+        padding: 3,
+        margin: 160,
+      },
+    );
+    const shown = new Set(selectedLabels.map((item) => item.id));
+    const required = new Set(requiredIds);
+    for (const node of state.atlas.nodes) { if (!visible(node) || (node.lod > lod && node.id !== state.focus && !required.has(node.id))) continue; const screen = point(node); context.globalAlpha = shown.has(node.id) ? 1 : .4; context.fillStyle = node.id === state.focus ? colors.focus : colors.node; context.beginPath(); context.arc(screen.x, screen.y, shown.has(node.id) ? 3.2 : 1.35, 0, Math.PI * 2); context.fill(); }
     context.globalAlpha = 1;
-    for (const id of shown) { const node = state.atlas.byId.get(id); if (node && visible(node)) label(context, node.name, point(node), colors); }
+    for (const item of selectedLabels) if (visible(state.atlas.byId.get(item.id))) drawLabel(context, item.text, item.placement, colors);
   };
   const setUrl = (id) => { const url = new URL(window.location.href); if (id) url.searchParams.set('open_focus', id); else url.searchParams.delete('open_focus'); history.pushState({ opennoiseFocus: id }, '', url); };
   const showDetail = (id, neighborhood) => {
