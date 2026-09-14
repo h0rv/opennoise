@@ -119,6 +119,7 @@ restore-source-cache = "opennoise restore-source-cache $OPENNOISE_SOURCE_CACHE_S
 dev = "python scripts/run_dev.py"
 dev-research = "python -m scripts.run_local_research_dev"
 export-opennoise-pages = "python scripts/export_opennoise_pages.py --production-map $OPENNOISE_PRODUCTION_MAP_PATH --open-construction-v2 $OPENNOISE_CONSTRUCTION_GRAPH_V2_PATH --output $OPENNOISE_PAGES_OUTPUT"
+export-semantic-pages = "python scripts/export_semantic_pages.py --semantic-layout $OPENNOISE_SEMANTIC_MAP_LAYOUT --output $OPENNOISE_PAGES_OUTPUT"
 build-local-musicbrainz-artist-reverse-lookup = "python scripts/build_local_musicbrainz_artist_reverse_lookup.py --evidence-db .cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite --evidence-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json --output-db .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup.sqlite --output-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup-artifact.json"
 dev-legacy = "opennoise serve"
 evaluate-layout = "python scripts/evaluate_layout.py data/opennoise.sqlite --layout default"

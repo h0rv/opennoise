@@ -23,7 +23,7 @@ if (canvas instanceof HTMLCanvasElement) {
   const query = document.querySelector('#query');
   const endpoint = canvas.dataset.mapUrl;
   const neighborUrl = canvas.dataset.neighborsUrl;
-  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], frame: 0, drag: null, moved: false, request: 0, labelWidths: new Map(), disclosedCohorts: new Set() };
+  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], edgeIndex: new Map(), frame: 0, drag: null, moved: false, request: 0, labelWidths: new Map(), disclosedCohorts: new Set() };
   const palette = () => { const css = getComputedStyle(document.documentElement); return Object.fromEntries(['canvas', 'node', 'ink', 'edge', 'focus'].map((key) => [key, css.getPropertyValue(`--${key}`).trim()])); };
   const point = (node) => ({ x: state.camera.x + node.x * state.camera.scale, y: state.camera.y + node.y * state.camera.scale });
   const level = () => levelForScale(state.camera.scale, state.fitScale);
@@ -156,6 +156,18 @@ if (canvas instanceof HTMLCanvasElement) {
     const request = ++state.request;
     let neighborhood = null;
     if (neighborUrl) try { const response = await fetch(`${neighborUrl}${encodeURIComponent(id)}`); neighborhood = await response.json(); if (request === state.request) state.edges = Array.isArray(neighborhood.edges) ? neighborhood.edges : []; } catch { /* a point remains focusable when detail is unavailable */ }
+    else {
+      const edges = state.edgeIndex.get(id) ?? [];
+      neighborhood = {
+        node_id: id,
+        edges,
+        nodes: [...new Set([id, ...edges.flatMap((edge) => [edge.source, edge.target])])]
+          .map((nodeId) => state.atlas.byId.get(nodeId))
+          .filter(Boolean)
+          .map((node) => ({ node_id: node.id, name: node.name })),
+      };
+      state.edges = edges;
+    }
     if (request !== state.request) return;
     const ids = [id, ...state.edges.flatMap((edge) => [edge.source, edge.target])];
     const nodes = [...new Set(ids)].map((key) => state.atlas.byId.get(key)).filter(Boolean);
@@ -184,5 +196,18 @@ if (canvas instanceof HTMLCanvasElement) {
   document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (!target) return; event.preventDefault(); void focus(target.dataset.openNodeId); });
   query?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !state.atlas) return; const id = state.atlas.aliases.get(query.value.trim().toLowerCase()); if (!id) return; event.preventDefault(); void focus(id); });
   window.addEventListener('popstate', () => { const id = new URL(window.location.href).searchParams.get('open_focus'); if (id) void focus(id, false); else fit(); });
-  fetch(endpoint).then((response) => response.json()).then((payload) => { state.atlas = normaliseAtlasPayload(payload); state.viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; fit(); const initial = canvas.dataset.focus || new URL(window.location.href).searchParams.get('open_focus'); if (initial) void focus(initial, false); }).catch(() => { const error = document.createElement('p'); error.className = 'map-error'; error.textContent = 'Map data is unavailable.'; canvas.after(error); });
+  fetch(endpoint).then((response) => response.json()).then((payload) => {
+    state.atlas = normaliseAtlasPayload(payload);
+    const indexed = new Map();
+    for (const edge of Array.isArray(payload.edges) ? payload.edges : []) {
+      for (const nodeId of [edge.source, edge.target]) {
+        const candidates = indexed.get(nodeId) ?? [];
+        candidates.push(edge);
+        indexed.set(nodeId, candidates);
+      }
+    }
+    for (const candidates of indexed.values()) candidates.sort((left, right) => (right.confidence - left.confidence) || left.source.localeCompare(right.source) || left.target.localeCompare(right.target));
+    state.edgeIndex = new Map([...indexed].map(([nodeId, candidates]) => [nodeId, candidates.slice(0, 12)]));
+    state.viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; fit(); const initial = canvas.dataset.focus || new URL(window.location.href).searchParams.get('open_focus'); if (initial) void focus(initial, false);
+  }).catch(() => { const error = document.createElement('p'); error.className = 'map-error'; error.textContent = 'Map data is unavailable.'; canvas.after(error); });
 }

@@ -59,3 +59,20 @@ precomputed presentation and search index.
 `wrangler.jsonc` declares `./dist` as a static Pages output directory and no
 backend bindings. Deployment, remote renaming, and custom-domain work remain
 separate authorized actions.
+
+## Semantic atlas release
+
+The current product map is the verified local semantic atlas rather than the
+older 603-node public-model SVG. Its static exporter preserves the Canvas
+renderer, all 2,945 placed nodes, 24 overview regions, and its bounded local
+structural edge index without adding a backend API:
+
+```bash
+export OPENNOISE_SEMANTIC_MAP_LAYOUT=.cache/semantic-map-layout-v1/artifact.json
+export OPENNOISE_PAGES_OUTPUT=dist
+UV_OFFLINE=1 uv run --no-sync poe export-semantic-pages
+```
+
+Its `opennoise-static-manifest.json` binds the sealed atlas byte and logical
+hashes, the 6,291/2,945/3,346 accounting, 24 overview regions, 34,937 structural
+edges, and every served static asset. Use this path for the public map release.

@@ -1,0 +1,147 @@
+"""Export the verified semantic atlas as a backend-free Pages directory."""
+
+from __future__ import annotations
+
+import gzip
+import json
+import shutil
+from dataclasses import dataclass
+from hashlib import sha256
+from pathlib import Path
+from typing import Final
+
+from opennoise.common import canonical_json, sha256_file, sha256_hex, write_atomic_bytes
+from opennoise.ml.semantic_layout.contracts import (
+    SemanticLayoutArtifact,
+    verify_semantic_map_layout,
+)
+from opennoise.serving.map.semantic_store import SemanticMapStore
+
+_REVISION: Final = "opennoise-semantic-pages-v1"
+_PACKAGE_ROOT: Final = Path(__file__).resolve().parents[1]
+_STATIC_ROOT: Final = _PACKAGE_ROOT / "static"
+
+
+class SemanticPagesExportError(ValueError):
+    """The canonical semantic atlas cannot be published safely."""
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticPagesExportInputs:
+    """One sealed atlas and a new, empty static deployment directory."""
+
+    semantic_layout_path: Path
+    output_directory: Path
+
+
+def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object]:
+    """Materialize the 2,945-node atlas and its static Canvas client."""
+    if inputs.output_directory.exists() and any(inputs.output_directory.iterdir()):
+        raise SemanticPagesExportError("static Pages output directory must be empty")
+    try:
+        artifact = SemanticLayoutArtifact.model_validate_json(
+            inputs.semantic_layout_path.read_bytes()
+        )
+        verify_semantic_map_layout(artifact)
+    except (OSError, ValueError) as error:
+        raise SemanticPagesExportError("invalid semantic map layout artifact") from error
+    store = SemanticMapStore(inputs.semantic_layout_path)
+    store.start()
+    renderer = store.renderer().model_dump(mode="json")
+    renderer["edges"] = [
+        {
+            "source": f"legacy:{edge.left_seed_id}",
+            "target": f"legacy:{edge.right_seed_id}",
+            "confidence": edge.weight,
+        }
+        for edge in artifact.structural_edges
+    ]
+    output = inputs.output_directory
+    assets = output / "assets"
+    output.mkdir(parents=True, exist_ok=True)
+    assets.mkdir()
+    for name in ("app.css", "map-atlas.mjs", "map-renderer.js"):
+        shutil.copyfile(_STATIC_ROOT / name, assets / name)
+    _write_json(assets / "semantic-atlas.json", renderer)
+    _write(output / "index.html", _html())
+    _write(output / "_headers", "/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n")
+    _write(output / "_redirects", "/ /index.html 200\n")
+    file_sha256, file_byte_count = sha256_file(inputs.semantic_layout_path)
+    manifest: dict[str, object] = {
+        "revision": _REVISION,
+        "explicit_backend_api_available": False,
+        "semantic_layout": {
+            "file_sha256": file_sha256,
+            "file_byte_count": file_byte_count,
+            "logical_output_sha256": artifact.output_sha256,
+            "total_seed_count": artifact.stable_seed_count,
+            "placed_node_count": len(artifact.coordinates),
+            "unplaced_node_count": len(artifact.unplaced),
+            "overview_region_count": sum(
+                community.overview_visible for community in artifact.communities
+            ),
+            "structural_edge_count": len(artifact.structural_edges),
+        },
+        "asset_budget": _asset_budget(output),
+    }
+    manifest["output_sha256"] = sha256_hex(canonical_json(manifest))
+    _write_json(output / "opennoise-static-manifest.json", manifest)
+    return manifest
+
+
+def _html() -> str:
+    return """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="An open structural atlas of music genres.">
+  <title>OpenNoise</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+  <main id="map" aria-label="Music map">
+    <canvas id="semantic-map" role="img" aria-label="OpenNoise semantic music map"
+            data-map-url="assets/semantic-atlas.json"></canvas>
+    <nav id="map-controls" aria-label="Map controls">
+      <button type="button" data-map-action="back" hidden>Back</button>
+      <button type="button" data-map-action="fit">Fit</button>
+      <button type="button" data-map-action="out" aria-label="Zoom out">-</button>
+      <button type="button" data-map-action="in" aria-label="Zoom in">+</button>
+      <button type="button" data-map-action="theme" aria-label="Toggle color theme">Theme</button>
+    </nav>
+    <aside id="map-detail" aria-live="polite" hidden></aside>
+  </main>
+  <form id="search" role="search">
+    <label class="sr-only" for="query">Search map</label>
+    <input id="query" type="search" placeholder="Search a genre, e.g. IDM" autocomplete="off">
+  </form>
+  <script type="module" src="assets/map-renderer.js"></script>
+</body>
+</html>
+"""
+
+
+def _asset_budget(directory: Path) -> list[dict[str, object]]:
+    return [
+        {
+            "path": str(path.relative_to(directory)),
+            "raw_bytes": len(data),
+            "gzip_bytes": len(gzip.compress(data, mtime=0)),
+            "sha256": sha256(data).hexdigest(),
+        }
+        for path in sorted(item for item in directory.rglob("*") if item.is_file())
+        for data in (path.read_bytes(),)
+    ]
+
+
+def _write(path: Path, value: str) -> None:
+    write_atomic_bytes(path, value.encode())
+
+
+def _write_json(path: Path, value: object) -> None:
+    write_atomic_bytes(
+        path,
+        json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
+        + b"\n",
+    )
