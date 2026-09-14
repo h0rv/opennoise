@@ -46,7 +46,7 @@ class SemanticLayoutSettings(FrozenModel):
     maximum_community_iterations: int = Field(default=60, ge=1, le=500)
     community_tie_seed: int = Field(default=20260913, ge=0)
     maximum_community_size: int = Field(default=240, ge=2, le=2_000)
-    overview_label_budget: int = Field(default=42, ge=1, le=200)
+    overview_label_budget: int = Field(default=24, ge=1, le=200)
 
 
 class InputBinding(FrozenModel):

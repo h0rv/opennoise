@@ -20,6 +20,7 @@ from opennoise.ml.semantic_layout.builder import (
     _initial_camera,
     _overview_visibility,
     _OverviewSelectionContext,
+    _semantic_regions,
 )
 from opennoise.ml.semantic_layout.contracts import (
     OverviewCommunity,
@@ -199,3 +200,42 @@ class SemanticLayoutTests(unittest.TestCase):
             {item.anchor_seed_id for item in selected if item.overview_visible},
             {"a", "b", "c"},
         )
+
+    def test_semantic_regions_keep_electronic_family_together_without_equal_cells(self) -> None:
+        """Hierarchy families must survive even when their coordinates are interleaved."""
+        parents = {
+            "electronic": None,
+            "idm": "electronic",
+            "braindance": "idm",
+            "deep-house": "electronic",
+            "rock": None,
+            "post-punk": "rock",
+            "orphan-a": None,
+            "orphan-b": None,
+            "orphan-c": None,
+        }
+        components = {
+            "electronic": 0,
+            "idm": 0,
+            "braindance": 0,
+            "deep-house": 0,
+            "rock": 1,
+            "post-punk": 1,
+            "orphan-a": 8,
+            "orphan-b": 8,
+            "orphan-c": 8,
+        }
+        regions = _semantic_regions(
+            parents,
+            parents,
+            components,
+            dict.fromkeys(parents, 1.0),
+        )
+        by_anchor = {region.anchor: region for region in regions}
+        self.assertEqual(
+            by_anchor["electronic"].members,
+            ("braindance", "deep-house", "electronic", "idm"),
+        )
+        self.assertEqual(by_anchor["rock"].members, ("post-punk", "rock"))
+        self.assertEqual(by_anchor["orphan-a"].members, ("orphan-a", "orphan-b", "orphan-c"))
+        self.assertEqual({len(region.members) for region in regions}, {2, 3, 4})

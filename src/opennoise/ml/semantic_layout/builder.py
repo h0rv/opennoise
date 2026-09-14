@@ -54,7 +54,6 @@ _MINIMUM_WIDTH_OCCUPANCY = 0.70
 _MINIMUM_HEIGHT_OCCUPANCY = 0.65
 _MAXIMUM_OCCUPANCY = 0.90
 _QUALITY_GATE_MINIMUM_SEEDS = 100
-_OVERVIEW_REGION_MAXIMUM_SEEDS = 100
 _MINIMUM_OVERVIEW_ROOT_COVERAGE = 0.75
 _INITIAL_CAMERA_PADDING_FRACTION = 0.04
 _MINIMUM_OVERVIEW_ANCHORS = 2
@@ -86,6 +85,23 @@ class _OverviewSelectionContext:
     degree: Mapping[str, float]
     world_width: float
     budget: int
+
+
+@dataclass(frozen=True, slots=True)
+class _SemanticRegion:
+    """One non-geometric map region with a real structural membership rule.
+
+    Hierarchy regions contain an entire display-tree family rooted at an
+    evidenced umbrella.  Remaining nodes have no display-tree family and are
+    grouped only by their existing peer-manifold component.  Neither case is
+    a screen-space partition: a region cannot be created by slicing a
+    rectangle into equally sized cells.
+    """
+
+    kind: Literal["hierarchy", "component"]
+    key: str
+    members: tuple[str, ...]
+    anchor: str
 
 
 def _canonical_sha256(value: object) -> str:
@@ -680,27 +696,94 @@ def _display_hierarchy(
     return parents, roots, depths
 
 
-def _spatial_buckets(
-    positions: Mapping[str, tuple[float, float]], maximum_size: int
-) -> tuple[tuple[str, ...], ...]:
-    """Bounded spatial LOD buckets, not a claim that label propagation is taxonomy."""
-    pending = [tuple(sorted(positions))]
-    output: list[tuple[str, ...]] = []
-    while pending:
-        members = pending.pop()
-        if len(members) <= maximum_size:
-            output.append(members)
+def _hierarchy_region_members(
+    node_set: set[str], parents: Mapping[str, str | None]
+) -> tuple[dict[str, list[str]], set[str]]:
+    """Return complete display-tree families and nodes not in any such family."""
+    children: dict[str, set[str]] = defaultdict(set)
+    for node, parent in parents.items():
+        if parent is None:
             continue
-        axis = int(
-            max(positions[item][0] for item in members)
-            - min(positions[item][0] for item in members)
-            < max(positions[item][1] for item in members)
-            - min(positions[item][1] for item in members)
+        if parent not in node_set:
+            raise SemanticLayoutError("semantic region parent is outside positioned nodes")
+        children[parent].add(node)
+
+    def family_root(node: str) -> str | None:
+        current = node
+        seen: set[str] = set()
+        while (parent := parents[current]) is not None:
+            if current in seen:
+                raise SemanticLayoutError("semantic region display parents contain a cycle")
+            seen.add(current)
+            current = parent
+        return current if current in children else None
+
+    hierarchy_members: dict[str, list[str]] = defaultdict(list)
+    residual: set[str] = set()
+    for node in sorted(node_set):
+        root = family_root(node)
+        if root is None:
+            residual.add(node)
+        else:
+            hierarchy_members[root].append(node)
+    return hierarchy_members, residual
+
+
+def _component_regions(
+    residual: Iterable[str], components: Mapping[str, int], degree: Mapping[str, float]
+) -> list[_SemanticRegion]:
+    """Keep rootless positioned nodes in their pre-existing structural components."""
+    residual_by_component: dict[int, list[str]] = defaultdict(list)
+    for node in sorted(residual):
+        residual_by_component[components[node]].append(node)
+    return [
+        _SemanticRegion(
+            kind="component",
+            key=str(component_id),
+            members=(ordered := tuple(sorted(members))),
+            anchor=min(ordered, key=lambda node: (-degree[node], node)),
         )
-        ordered = sorted(members, key=lambda item: (positions[item][axis], item))
-        middle = len(ordered) // 2
-        pending.extend((tuple(ordered[:middle]), tuple(ordered[middle:])))
-    return tuple(sorted(output, key=lambda members: (min(members), len(members))))
+        for component_id, members in residual_by_component.items()
+    ]
+
+
+def _semantic_regions(
+    nodes: Iterable[str],
+    parents: Mapping[str, str | None],
+    components: Mapping[str, int],
+    degree: Mapping[str, float],
+) -> tuple[_SemanticRegion, ...]:
+    """Build hierarchy families, then residual peer components, never spatial tiles.
+
+    A display-tree root is eligible only when it actually has a child.  This
+    keeps a real umbrella and every descendant together.  Nodes without a
+    display-tree relation are not made into synthetic parents: they retain the
+    connected peer-manifold component that supplied their position.
+    """
+    node_set = set(nodes)
+    if node_set != set(parents) or node_set != set(components):
+        raise SemanticLayoutError("semantic region inputs must cover identical nodes")
+    hierarchy_members, residual = _hierarchy_region_members(node_set, parents)
+    regions: list[_SemanticRegion] = [
+        _SemanticRegion(
+            kind="hierarchy",
+            key=root,
+            members=tuple(sorted(members)),
+            anchor=root,
+        )
+        for root, members in hierarchy_members.items()
+    ]
+    regions.extend(_component_regions(residual, components, degree))
+    if set().union(*(set(region.members) for region in regions)) != node_set:
+        raise SemanticLayoutError("semantic regions must partition positioned nodes")
+    if sum(len(region.members) for region in regions) != len(node_set):
+        raise SemanticLayoutError("semantic regions overlap")
+    return tuple(
+        sorted(
+            regions,
+            key=lambda region: (region.kind, region.key, region.members),
+        )
+    )
 
 
 def _overview_visibility(
@@ -870,8 +953,6 @@ def _quality_gate(metrics: GeometryMetrics) -> None:
         <= _MAXIMUM_OCCUPANCY
     ):
         raise SemanticLayoutError("landscape height utilization gate failed")
-    if metrics.largest_community_member_count > SemanticLayoutSettings().maximum_community_size:
-        raise SemanticLayoutError("spatial LOD bucket size gate failed")
     if (
         metrics.overview_visible_count >= _MINIMUM_OVERVIEW_ANCHORS
         and metrics.overview_root_coverage_fraction < _MINIMUM_OVERVIEW_ROOT_COVERAGE
@@ -991,22 +1072,18 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
                 "structural_component",
             )
     positions = _separate_coincident_points(positions)
-    groups = _spatial_buckets(
-        positions, min(resolved.maximum_community_size, _OVERVIEW_REGION_MAXIMUM_SEEDS)
-    )
-    community = {node: index for index, group in enumerate(groups) for node in group}
+    regions = _semantic_regions(positions, parents, component, degree)
+    community = {node: index for index, region in enumerate(regions) for node in region.members}
     records = []
-    for index, group in enumerate(groups):
-        anchor = min(
-            group, key=lambda node: (-degree[node], len(names[node]), names[node].casefold(), node)
-        )
+    for index, region in enumerate(regions):
+        anchor = region.anchor
         records.append(
             OverviewCommunity(
                 community_id=index,
                 label=names[anchor],
                 anchor_seed_id=anchor,
-                member_count=len(group),
-                component_id=min(component[node] for node in group),
+                member_count=len(region.members),
+                component_id=min(component[node] for node in region.members),
                 x=round(positions[anchor][0], 12),
                 y=round(positions[anchor][1], 12),
                 overview_visible=False,
@@ -1014,7 +1091,7 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         )
     records = _overview_visibility(
         records,
-        groups,
+        tuple(region.members for region in regions),
         _OverviewSelectionContext(
             names=names,
             positions=positions,
@@ -1090,15 +1167,16 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
     )
     overview_communities = tuple(record for record in records if record.overview_visible)
     overview_anchors = tuple(
-        (positions[record.anchor_seed_id][0], positions[record.anchor_seed_id][1])
+        (
+            round(positions[record.anchor_seed_id][0], 12),
+            round(positions[record.anchor_seed_id][1], 12),
+        )
         for record in overview_communities
     )
     # Fit the overview anchors. Deeper nodes remain available through zoom, but
     # must not inflate the first viewport and make the headings look vertically
     # compressed.
-    initial_camera = _initial_camera(
-        overview_anchors, resolved.world_width, resolved.world_height
-    )
+    initial_camera = _initial_camera(overview_anchors, resolved.world_width, resolved.world_height)
     overview_root_ids = {
         roots[record.anchor_seed_id] or record.anchor_seed_id for record in overview_communities
     }
