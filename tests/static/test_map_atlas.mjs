@@ -7,6 +7,7 @@ import {
   focusCamera,
   appendCirclePath,
   levelForScale,
+  nextLodScale,
   normaliseAtlasPayload,
   visibleNodeLabels,
   zoomAtCenter,
@@ -93,6 +94,52 @@ test('batched circles are independent subpaths, never connected polygons', () =>
 test('zoom levels disclose labels monotonically without a focused node', () => {
   const levels = [1, 1.7, 3.5, 8].map((scale) => levelForScale(scale, 1));
   assert.deepEqual(levels, [0, 1, 2, 3]);
+});
+
+test('plus control targets the next semantic tier instead of an arbitrary ratio', () => {
+  const first = nextLodScale(1, 1, 64);
+  const second = nextLodScale(first, 1, 64);
+  const third = nextLodScale(second, 1, 64);
+  assert.equal(levelForScale(first, 1), 1);
+  assert.equal(levelForScale(second, 1), 2);
+  assert.equal(levelForScale(third, 1), 3);
+});
+
+test('detail disclosure keeps members of a few meaningful cohorts together', () => {
+  const cohortPayload = {
+    ...payload,
+    nodes: [
+      { id: 'root-a', name: 'electronic', x: 1, y: 1, lod: 0, community_id: 1 },
+      { id: 'sub-a', name: 'idm', x: 2, y: 2, lod: 1, parent_id: 'root-a', community_id: 1 },
+      { id: 'micro-a', name: 'braindance', x: 3, y: 3, lod: 2, parent_id: 'sub-a', community_id: 1 },
+      { id: 'root-b', name: 'rock', x: 8, y: 1, lod: 0, community_id: 2 },
+      { id: 'sub-b', name: 'post-punk', x: 9, y: 2, lod: 1, parent_id: 'root-b', community_id: 2 },
+      { id: 'micro-b', name: 'gothic rock', x: 10, y: 3, lod: 2, parent_id: 'sub-b', community_id: 2 },
+      { id: 'root-c', name: 'jazz', x: 1, y: 7, lod: 0, community_id: 3 },
+      { id: 'sub-c', name: 'modal jazz', x: 2, y: 8, lod: 1, parent_id: 'root-c', community_id: 3 },
+      { id: 'micro-c', name: 'spiritual jazz', x: 3, y: 8.5, lod: 2, parent_id: 'sub-c', community_id: 3 },
+      { id: 'root-d', name: 'folk', x: 12, y: 7, lod: 0, community_id: 4 },
+      { id: 'sub-d', name: 'indie folk', x: 13, y: 8, lod: 1, parent_id: 'root-d', community_id: 4 },
+    ],
+    labels: [],
+  };
+  const cohortAtlas = normaliseAtlasPayload(cohortPayload);
+  const project = (node) => ({ x: node.x * 100, y: node.y * 100 });
+  const textWidth = (name) => name.length * 5;
+  const options = { maximum: 30, candidateLimit: 30, camera: { x: 0, y: 0, scale: 100 } };
+  const level1 = visibleNodeLabels(cohortAtlas, 1, { width: 1600, height: 900 }, project, textWidth, options);
+  const level2 = visibleNodeLabels(cohortAtlas, 2, { width: 1600, height: 900 }, project, textWidth, options);
+  const countCohorts = (items) => {
+    const counts = new Map();
+    for (const item of items) counts.set(item.cohortKey, (counts.get(item.cohortKey) ?? 0) + 1);
+    return counts;
+  };
+  const level1Cohorts = countCohorts(level1);
+  const level2Cohorts = countCohorts(level2);
+  assert.ok(level1Cohorts.size <= 3);
+  assert.ok([...level1Cohorts.values()].some((count) => count >= 2));
+  assert.ok([...level2Cohorts.keys()].some((key) => level1Cohorts.has(key)));
+  assert.ok([...level2Cohorts.values()].some((count) => count >= 2));
 });
 
 test('local zoom labels reveal nearby subgenres even when global label sets are sparse', () => {

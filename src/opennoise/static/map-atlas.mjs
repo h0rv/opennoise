@@ -74,6 +74,14 @@ function normaliseNode(value) {
   };
 }
 
+function nodeCohortKey(node) {
+  return node.regionId
+    ? `region:${node.regionId}`
+    : (node.communityId === null
+      ? (node.hierarchyRootId ?? 'unparented')
+      : `community:${node.communityId}`);
+}
+
 function normaliseLabelSets(value, nodeIds) {
   const raw = Array.isArray(value) ? value : [];
   const byLevel = new Map(raw.map((record) => [record?.level, record?.ids]));
@@ -120,6 +128,13 @@ export function normaliseAtlasPayload(payload) {
   }
   for (const children of childrenByParent.values()) children.sort((left, right) => compareCodepoints(byId.get(left).name, byId.get(right).name));
   const spatialIndex = buildSpatialIndex(nodes, worldBounds);
+  const cohorts = new Map();
+  for (const node of nodes) {
+    const key = nodeCohortKey(node);
+    const members = cohorts.get(key) ?? [];
+    members.push(node);
+    cohorts.set(key, members);
+  }
   return {
     revision: typeof source.revision === 'string' ? source.revision : 'static-atlas-v1',
     nodes,
@@ -130,6 +145,7 @@ export function normaliseAtlasPayload(payload) {
     aliases: normaliseAliases(source.aliases, nodeIds),
     childrenByParent,
     spatialIndex,
+    cohorts,
     regions: (Array.isArray(source.overview_regions) ? source.overview_regions : source.regions ?? [])
       .filter((region) => region && typeof region === 'object')
       .map((region) => ({ ...region, title: region.title ?? region.label ?? region.name })),
@@ -202,6 +218,14 @@ export function zoomAt(camera, point, factor, limits) {
 /** Zoom controls use the current canvas center; wheel input supplies its own point. */
 export function zoomAtCenter(camera, viewport, factor, limits) {
   return zoomAt(camera, { x: viewport.width / 2, y: viewport.height / 2 }, factor, limits);
+}
+
+/** Select the next semantic zoom tier for the map's explicit + control. */
+export function nextLodScale(scale, fitScale, maximumScale) {
+  const current = levelForScale(scale, fitScale);
+  if (current >= LEVEL_COUNT - 1) return Math.min(scale, maximumScale);
+  const target = fitScale * 2 ** (current + 0.3);
+  return Math.min(target, maximumScale);
 }
 
 export function levelForScale(scale, fitScale) {
@@ -450,6 +474,49 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   const candidateLimit = options.candidateLimit
     ?? Math.min(Math.max(options.maximum ?? 420, 128), 350);
   const localNodes = indexedNodeCandidates(atlas, options.camera, viewport, margin, candidateLimit);
+  const requestedCohorts = new Set(options.cohortIds ?? []);
+  const futureCamera = options.nextCamera;
+  const futurePoint = futureCamera
+    ? (node) => ({ x: futureCamera.x + node.x * futureCamera.scale, y: futureCamera.y + node.y * futureCamera.scale })
+    : null;
+  const futureInRange = futurePoint
+    ? (node) => {
+      const screen = futurePoint(node);
+      return inRange(screen);
+    }
+    : () => false;
+  // The previous tier's cohort seeds are a small continuity budget. Pull a
+  // bounded number of their members into the local candidate window so a
+  // semantic neighborhood survives a camera step even when the spatial cell
+  // round-robin would otherwise replace it with unrelated dots.
+  if (requestedCohorts.size && atlas.cohorts) {
+    const seen = new Set(localNodes.map((node) => node.id));
+    const continuityLimit = Math.max(8, Math.min(candidateLimit, 24));
+    for (const key of requestedCohorts) {
+      for (const node of atlas.cohorts.get(key) ?? []) {
+        if (seen.has(node.id) || node.lod > level) continue;
+        seen.add(node.id);
+        localNodes.push(node);
+        if (localNodes.length >= candidateLimit + continuityLimit) break;
+      }
+      if (localNodes.length >= candidateLimit + continuityLimit) break;
+    }
+  }
+  if (level <= 2 && atlas.cohorts) {
+    const seen = new Set(localNodes.map((node) => node.id));
+    // One visible representative per cohort prevents the spatial-cell budget
+    // from hiding an entire neighborhood before semantic ranking can consider
+    // it. Deeper members are added only for the retained cohorts above.
+    for (const members of atlas.cohorts.values()) {
+      const representative = members.find((node) => node.lod <= level && inRange(
+        project(node),
+      ));
+      if (representative && !seen.has(representative.id)) {
+        seen.add(representative.id);
+        localNodes.push(representative);
+      }
+    }
+  }
   for (const node of localNodes) {
     if (node.lod > level && !required.has(node.id)) continue;
     const screen = project(node);
@@ -475,14 +542,11 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
       if (!projected.has(id)) projected.set(id, project(node));
     }
   }
-  const groupKey = (node) => {
-    const scope = node.regionId
-      ? `region:${node.regionId}`
-      : (node.communityId === null
-        ? (node.hierarchyRootId ?? 'unparented')
-        : `community:${node.communityId}`);
-    return node.parentId ? `${scope}|parent:${node.parentId}` : scope;
-  };
+  // A cohort is a semantic neighborhood. Parent suffixes used to split one
+  // neighborhood into one group per parent, which made the disclosure look
+  // like unrelated dots. Keep a stable cohort key so adjacent zoom tiers can
+  // retain the same neighborhoods while revealing their members.
+  const cohortKey = nodeCohortKey;
   const distance = (node) => {
     const screen = projected.get(node.id) ?? project(node);
     return Math.hypot(screen.x - center.x, screen.y - center.y);
@@ -500,21 +564,67 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   for (const id of ids) {
     const node = atlas.byId.get(id);
     if (!node) continue;
-    const group = groups.get(groupKey(node)) ?? [];
+    const key = cohortKey(node);
+    const group = groups.get(key) ?? [];
     group.push(node);
-    groups.set(groupKey(node), group);
+    groups.set(key, group);
   }
-  const orderedGroups = [...groups.values()].map((group) => group.sort((left, right) => (
+  const rankedCohorts = [...groups.entries()].map(([key, group]) => [key, group.sort((left, right) => (
     score(left) - score(right) || compareCodepoints(left.id, right.id)
-  ))).sort((left, right) => (
-    score(left[0]) - score(right[0]) || compareCodepoints(left[0].id, right[0].id)
+  ))]).sort((left, right) => {
+    const [leftKey, leftGroup] = left;
+    const [rightKey, rightGroup] = right;
+    // Cohort mass is a useful, cheap proxy for a meaningful neighborhood.
+    // Stable tie-breaking keeps screenshots and generated artifacts repeatable.
+    const leftContinues = futurePoint && (atlas.cohorts?.get(leftKey) ?? []).some(
+      (node) => node.lod <= level + 1 && futureInRange(node),
+    );
+    const rightContinues = futurePoint && (atlas.cohorts?.get(rightKey) ?? []).some(
+      (node) => node.lod <= level + 1 && futureInRange(node),
+    );
+    const leftHasCurrent = leftGroup.some((node) => node.lod === level);
+    const rightHasCurrent = rightGroup.some((node) => node.lod === level);
+    return Number(rightHasCurrent) - Number(leftHasCurrent)
+      || Number(rightContinues) - Number(leftContinues)
+      || rightGroup.length - leftGroup.length
+      || score(leftGroup[0]) - score(rightGroup[0])
+      || compareCodepoints(leftKey, rightKey);
+  });
+  const cohortLimit = level === 1 ? 3 : (level === 2 ? 3 : Number.MAX_SAFE_INTEGER);
+  const meaningfulCohorts = rankedCohorts.filter(([, group]) => (
+    group.length > 1 || group.some((node) => node.lod === level)
+  ));
+  const requestedInView = [...requestedCohorts].filter((key) => groups.has(key));
+  const rankedFallback = (meaningfulCohorts.length ? meaningfulCohorts : rankedCohorts)
+    .map(([key]) => key)
+    .filter((key) => !requestedCohorts.has(key));
+  const preferredKeys = [...requestedInView, ...rankedFallback].slice(0, cohortLimit);
+  const preferredCohorts = new Set(
+    preferredKeys,
+  );
+  // At the first two detail tiers, prefer a few nontrivial neighborhoods over
+  // a one-label-per-community sampler. Required edge endpoints and ancestors
+  // remain addressable even when their cohort is outside this local shortlist.
+  const disclosedCohorts = rankedCohorts.map(([key, group]) => [
+    key,
+    preferredCohorts.has(key)
+      ? group
+      : group.filter((node) => required.has(node.id)),
+  ]).filter(([, group]) => group.length > 0);
+  const preferredOrder = new Map([...preferredCohorts].map((key, index) => [key, index]));
+  const orderedGroups = disclosedCohorts.map(([key, group]) => ({ key, group })).sort((left, right) => (
+    (preferredCohorts.has(left.key) ? 0 : 1) - (preferredCohorts.has(right.key) ? 0 : 1)
+      || (preferredOrder.get(left.key) ?? Number.MAX_SAFE_INTEGER)
+        - (preferredOrder.get(right.key) ?? Number.MAX_SAFE_INTEGER)
+      || score(left.group[0]) - score(right.group[0])
+      || compareCodepoints(left.key, right.key)
   ));
   // Round-robin over local semantic groups so one dense parent cannot consume
   // the entire label budget. Collision culling still decides final readability.
   const interleaved = [];
   for (let index = 0; ; index += 1) {
     let added = false;
-    for (const group of orderedGroups) {
+    for (const { key, group } of orderedGroups) {
       const node = group[index];
       if (!node) continue;
       added = true;
@@ -522,6 +632,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
       interleaved.push({
         id: node.id,
         text: node.name,
+        cohortKey: key,
         screen,
         required: required.has(node.id) || contextIds.has(node.id),
         priority: score(node) + index * 0.001,

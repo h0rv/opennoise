@@ -7,6 +7,7 @@ import {
   focusCamera,
   levelForScale,
   normaliseAtlasPayload,
+  nextLodScale,
   appendCirclePath,
   visibleNodeLabels,
   zoomAtCenter,
@@ -22,7 +23,7 @@ if (canvas instanceof HTMLCanvasElement) {
   const query = document.querySelector('#query');
   const endpoint = canvas.dataset.mapUrl;
   const neighborUrl = canvas.dataset.neighborsUrl;
-  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], frame: 0, drag: null, moved: false, request: 0, labelWidths: new Map() };
+  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], frame: 0, drag: null, moved: false, request: 0, labelWidths: new Map(), disclosedCohorts: new Set() };
   const palette = () => { const css = getComputedStyle(document.documentElement); return Object.fromEntries(['canvas', 'node', 'ink', 'edge', 'focus'].map((key) => [key, css.getPropertyValue(`--${key}`).trim()])); };
   const point = (node) => ({ x: state.camera.x + node.x * state.camera.scale, y: state.camera.y + node.y * state.camera.scale });
   const level = () => levelForScale(state.camera.scale, state.fitScale);
@@ -34,7 +35,7 @@ if (canvas instanceof HTMLCanvasElement) {
     // the fixed desktop viewport while retaining its centered camera.
     state.camera = fitCamera(state.atlas.initialCamera, state.viewport, 1.05);
     state.fitScale = state.camera.scale;
-    state.focus = null; state.edges = [];
+    state.focus = null; state.edges = []; state.disclosedCohorts.clear();
     if (back) back.hidden = true;
     if (detail) detail.hidden = true;
     schedule();
@@ -56,7 +57,7 @@ if (canvas instanceof HTMLCanvasElement) {
     const context = canvas.getContext('2d'); if (!context) return;
     if (canvas.width !== Math.round(state.viewport.width * ratio) || canvas.height !== Math.round(state.viewport.height * ratio)) { canvas.width = Math.round(state.viewport.width * ratio); canvas.height = Math.round(state.viewport.height * ratio); }
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, state.viewport.width, state.viewport.height);
-    const colors = palette(); const lod = level(); context.font = lod === 0 ? '600 15px ui-sans-serif, system-ui, sans-serif' : '13px ui-sans-serif, system-ui, sans-serif';
+    const colors = palette(); const lod = level(); canvas.dataset.mapLod = String(lod); canvas.dataset.mapCohorts = ''; context.font = lod === 0 ? '600 15px ui-sans-serif, system-ui, sans-serif' : '13px ui-sans-serif, system-ui, sans-serif';
     const measureLabel = (name) => {
       const key = `${context.font}\u0000${name}`;
       const cached = state.labelWidths.get(key);
@@ -97,12 +98,21 @@ if (canvas instanceof HTMLCanvasElement) {
         focusId: state.focus,
         requiredIds,
         camera: state.camera,
+        cohortIds: [...state.disclosedCohorts],
+        nextCamera: (() => {
+          const nextScale = nextLodScale(state.camera.scale, state.fitScale, state.fitScale * 64);
+          return nextScale > state.camera.scale
+            ? zoomAtCenter(state.camera, state.viewport, nextScale / state.camera.scale, { min: state.fitScale, max: state.fitScale * 64 })
+            : null;
+        })(),
         height: 16,
         padding: 3,
         margin: 160,
       },
     );
     const shown = new Set(selectedLabels.map((item) => item.id));
+    canvas.dataset.mapCohorts = [...new Set(selectedLabels.map((item) => item.cohortKey).filter(Boolean))].join('|');
+    for (const item of selectedLabels) if (item.cohortKey) state.disclosedCohorts.add(item.cohortKey);
     const required = new Set(requiredIds);
     // Keep the map's hot path to three Canvas fill calls. The old per-node
     // beginPath/fill pair made dense LOD3 frames needlessly expensive while
@@ -170,7 +180,7 @@ if (canvas instanceof HTMLCanvasElement) {
   canvas.addEventListener('pointermove', (event) => { if (!state.drag || !state.camera) return; const dx = event.clientX - state.drag.x; const dy = event.clientY - state.drag.y; state.drag = { x: event.clientX, y: event.clientY }; if (Math.hypot(dx, dy) > 2) state.moved = true; state.camera.x += dx; state.camera.y += dy; schedule(); });
   canvas.addEventListener('pointerup', (event) => { const hit = !state.moved && state.atlas ? nearest({ x: event.offsetX, y: event.offsetY }) : null; state.drag = null; if (hit) void focus(hit.id); });
   canvas.addEventListener('pointercancel', () => { state.drag = null; });
-  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in' || action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, action === 'in' ? 1.5 : 1 / 1.5, { min: state.fitScale, max: state.fitScale * 64 }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
+  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in') { const maximum = state.fitScale * 64; const target = nextLodScale(state.camera.scale, state.fitScale, maximum); if (target > state.camera.scale) state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, target / state.camera.scale, { min: state.fitScale, max: maximum }); schedule(); } else if (action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, 1 / 1.5, { min: state.fitScale, max: state.fitScale * 64 }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
   document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (!target) return; event.preventDefault(); void focus(target.dataset.openNodeId); });
   query?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !state.atlas) return; const id = state.atlas.aliases.get(query.value.trim().toLowerCase()); if (!id) return; event.preventDefault(); void focus(id); });
   window.addEventListener('popstate', () => { const id = new URL(window.location.href).searchParams.get('open_focus'); if (id) void focus(id, false); else fit(); });
