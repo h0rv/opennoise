@@ -618,9 +618,12 @@ def _merge_weighted_edges(
 
 
 def _place_branch_children(
-    anchor: tuple[float, float], children: Iterable[str]
+    anchor: tuple[float, float],
+    children: Iterable[str],
+    *,
+    bounds: tuple[float, float, float, float],
 ) -> dict[str, tuple[float, float]]:
-    """Place a hierarchy branch in a compact lattice, never in radial spokes."""
+    """Place a branch in a bounded compact lattice, never in radial spokes."""
     ordered = tuple(sorted(children))
     if not ordered:
         return {}
@@ -635,7 +638,10 @@ def _place_branch_children(
         digest = hashlib.sha256(node.encode()).digest()
         jitter_x = (int.from_bytes(digest[:2], "big") / 65535.0 - 0.5) * spacing_x * 0.35
         jitter_y = (int.from_bytes(digest[2:4], "big") / 65535.0 - 0.5) * spacing_y * 0.35
-        output[node] = (anchor[0] + offset_x + jitter_x, anchor[1] + offset_y + jitter_y)
+        output[node] = (
+            min(max(anchor[0] + offset_x + jitter_x, bounds[0]), bounds[2]),
+            min(max(anchor[1] + offset_y + jitter_y, bounds[1]), bounds[3]),
+        )
     return output
 
 
@@ -949,7 +955,16 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         for node, (anchor, _kind) in attach.items():
             children[anchor].append(node)
         for anchor, child_nodes in children.items():
-            branch_positions = _place_branch_children(positions[anchor], child_nodes)
+            branch_positions = _place_branch_children(
+                positions[anchor],
+                child_nodes,
+                bounds=(
+                    resolved.margin,
+                    resolved.margin,
+                    resolved.world_width - resolved.margin,
+                    resolved.world_height - resolved.margin,
+                ),
+            )
             for node, position in branch_positions.items():
                 positions[node] = position
                 component[node], placement[node] = component[anchor], attach[node][1]

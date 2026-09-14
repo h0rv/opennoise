@@ -48,13 +48,27 @@ class SemanticAtlasTests(unittest.TestCase):
         self.assertTrue(all(0.0 < y < 1.0 for y in ys))
 
     def test_hierarchy_branch_is_not_a_radial_spoke_pattern(self) -> None:
-        children = _place_branch_children((0.8, 0.5), (f"child-{index}" for index in range(12)))
+        children = _place_branch_children(
+            (0.8, 0.5),
+            (f"child-{index}" for index in range(12)),
+            bounds=(0.055, 0.055, 16 / 9 - 0.055, 0.945),
+        )
         distances = [math.dist((0.8, 0.5), point) for point in children.values()]
         angles = sorted(math.atan2(y - 0.5, x - 0.8) for x, y in children.values())
         gaps = [angles[index + 1] - angles[index] for index in range(len(angles) - 1)]
         self.assertGreater(len({round(distance, 5) for distance in distances}), 3)
         self.assertGreater(max(gaps) - min(gaps), 0.02)
         self.assertLess(max(distances), 0.04)
+
+    def test_edge_anchor_keeps_branch_inside_inner_world(self) -> None:
+        bounds = (0.055, 0.055, 16 / 9 - 0.055, 0.945)
+        children = _place_branch_children(
+            (bounds[0], bounds[1]),
+            (f"edge-child-{index}" for index in range(20)),
+            bounds=bounds,
+        )
+        self.assertTrue(all(bounds[0] <= x <= bounds[2] for x, _y in children.values()))
+        self.assertTrue(all(bounds[1] <= y <= bounds[3] for _x, y in children.values()))
 
 
 if __name__ == "__main__":
