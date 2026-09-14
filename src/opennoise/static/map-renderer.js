@@ -19,7 +19,7 @@ if (canvas instanceof HTMLCanvasElement) {
   const query = document.querySelector('#query');
   const endpoint = canvas.dataset.mapUrl;
   const neighborUrl = canvas.dataset.neighborsUrl;
-  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], frame: 0, drag: null, moved: false, request: 0 };
+  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], frame: 0, drag: null, moved: false, request: 0, labelWidths: new Map() };
   const palette = () => { const css = getComputedStyle(document.documentElement); return Object.fromEntries(['canvas', 'node', 'ink', 'edge', 'focus'].map((key) => [key, css.getPropertyValue(`--${key}`).trim()])); };
   const point = (node) => ({ x: state.camera.x + node.x * state.camera.scale, y: state.camera.y + node.y * state.camera.scale });
   const level = () => levelForScale(state.camera.scale, state.fitScale);
@@ -51,6 +51,14 @@ if (canvas instanceof HTMLCanvasElement) {
     if (canvas.width !== Math.round(state.viewport.width * ratio) || canvas.height !== Math.round(state.viewport.height * ratio)) { canvas.width = Math.round(state.viewport.width * ratio); canvas.height = Math.round(state.viewport.height * ratio); }
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, state.viewport.width, state.viewport.height);
     const colors = palette(); const lod = level(); context.font = lod === 0 ? '600 15px ui-sans-serif, system-ui, sans-serif' : '13px ui-sans-serif, system-ui, sans-serif';
+    const measureLabel = (name) => {
+      const key = `${context.font}\u0000${name}`;
+      const cached = state.labelWidths.get(key);
+      if (cached !== undefined) return cached;
+      const width = context.measureText(name).width;
+      state.labelWidths.set(key, width);
+      return width;
+    };
     if (lod === 0) {
       const regions = headings().map((region, index) => ({
         id: `region:${region.community_id ?? index}`,
@@ -61,7 +69,7 @@ if (canvas instanceof HTMLCanvasElement) {
       const visibleRegions = declutterLabels(
         regions,
         state.viewport,
-        (name) => context.measureText(name).width,
+        measureLabel,
         { maximum: 35, height: 18, padding: 4, margin: 40 },
       );
       for (const region of visibleRegions) {
@@ -77,11 +85,12 @@ if (canvas instanceof HTMLCanvasElement) {
       lod,
       state.viewport,
       point,
-      (name) => context.measureText(name).width,
+      measureLabel,
       {
         maximum: [45, 96, 210, 420][lod],
         focusId: state.focus,
         requiredIds,
+        camera: state.camera,
         height: 16,
         padding: 3,
         margin: 160,
@@ -91,7 +100,14 @@ if (canvas instanceof HTMLCanvasElement) {
     const required = new Set(requiredIds);
     for (const node of state.atlas.nodes) { if (!visible(node) || (node.lod > lod && node.id !== state.focus && !required.has(node.id))) continue; const screen = point(node); context.globalAlpha = shown.has(node.id) ? 1 : .4; context.fillStyle = node.id === state.focus ? colors.focus : colors.node; context.beginPath(); context.arc(screen.x, screen.y, shown.has(node.id) ? 3.2 : 1.35, 0, Math.PI * 2); context.fill(); }
     context.globalAlpha = 1;
-    for (const item of selectedLabels) if (visible(state.atlas.byId.get(item.id))) drawLabel(context, item.text, item.placement, colors);
+    for (const item of selectedLabels) if (visible(state.atlas.byId.get(item.id))) {
+      if (item.placement.callout) {
+        context.strokeStyle = colors.edge; context.globalAlpha = .35; context.lineWidth = 1;
+        context.beginPath(); context.moveTo(item.screen.x, item.screen.y); context.lineTo(item.placement.x, item.placement.y - 4); context.stroke();
+        context.globalAlpha = 1;
+      }
+      drawLabel(context, item.text, item.placement, colors);
+    }
   };
   const setUrl = (id) => { const url = new URL(window.location.href); if (id) url.searchParams.set('open_focus', id); else url.searchParams.delete('open_focus'); history.pushState({ opennoiseFocus: id }, '', url); };
   const showDetail = (id, neighborhood) => {
@@ -128,7 +144,7 @@ if (canvas instanceof HTMLCanvasElement) {
   canvas.addEventListener('pointercancel', () => { state.drag = null; });
   controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in' || action === 'out') { state.camera = zoomAt(state.camera, { x: state.viewport.width / 2, y: state.viewport.height / 2 }, action === 'in' ? 1.5 : 1 / 1.5, { min: state.fitScale, max: state.fitScale * 64 }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
   document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (!target) return; event.preventDefault(); void focus(target.dataset.openNodeId); });
-  query?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !state.atlas) return; const id = state.atlas.aliases.get(query.value.trim().toLocaleLowerCase()); if (!id) return; event.preventDefault(); void focus(id); });
+  query?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !state.atlas) return; const id = state.atlas.aliases.get(query.value.trim().toLowerCase()); if (!id) return; event.preventDefault(); void focus(id); });
   window.addEventListener('popstate', () => { const id = new URL(window.location.href).searchParams.get('open_focus'); if (id) void focus(id, false); else fit(); });
   fetch(endpoint).then((response) => response.json()).then((payload) => { state.atlas = normaliseAtlasPayload(payload); state.viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; fit(); const initial = canvas.dataset.focus || new URL(window.location.href).searchParams.get('open_focus'); if (initial) void focus(initial, false); }).catch(() => { const error = document.createElement('p'); error.className = 'map-error'; error.textContent = 'Map data is unavailable.'; canvas.after(error); });
 }

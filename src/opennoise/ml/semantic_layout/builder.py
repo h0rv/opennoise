@@ -786,7 +786,7 @@ def _semantic_regions(
     )
 
 
-def _overview_visibility(
+def _overview_visibility(  # noqa: C901
     records: list[OverviewCommunity],
     groups: tuple[tuple[str, ...], ...],
     context: _OverviewSelectionContext,
@@ -827,6 +827,36 @@ def _overview_visibility(
             box[0] < old[2] and box[2] > old[0] and box[1] < old[3] and box[3] > old[1]
             for old in boxes
         )
+
+    # Keep the first frame geographically legible even when structural-family
+    # anchors are heavily skewed. These are still real region candidates; the
+    # boundary pass only reserves deterministic edge coverage before evidence
+    # and root diversity fill the remaining label budget.
+    boundary_candidates: list[tuple[float, str, int, str]] = []
+    for axis, direction in ((1, False), (1, True), (0, False), (0, True)):
+        ordered = sorted(
+            candidates,
+            key=lambda item: (
+                context.positions[item[1]][axis] * (-1 if direction else 1),
+                item[1],
+                item[2],
+                item[3],
+            ),
+        )
+        for candidate in ordered:
+            if candidate[2] not in {item[2] for item in boundary_candidates}:
+                boundary_candidates.append(candidate)
+                break
+
+    for candidate in boundary_candidates:
+        if len(selected) >= context.budget or candidate[2] in selected_communities:
+            continue
+        if collides(label_box(candidate[1])):
+            continue
+        selected.append(candidate)
+        selected_communities.add(candidate[2])
+        selected_roots.add(candidate[3])
+        boxes.append(label_box(candidate[1]))
 
     while len(selected) < context.budget:
         eligible = [

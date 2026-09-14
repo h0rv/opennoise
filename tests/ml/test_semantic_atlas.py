@@ -32,7 +32,7 @@ class SemanticAtlasTests(unittest.TestCase):
             / _GROUP_SPLIT_INDEX
         )
         self.assertLess(left, right)
-        self.assertGreater(result.local_neighbor_preservation or 0.0, 0.8)
+        self.assertGreater(result.local_neighbor_preservation or 0.0, 0.95)
         self.assertGreaterEqual(min(x for x, _y in result.positions.values()), 0.055)
         self.assertLessEqual(max(x for x, _y in result.positions.values()), 16 / 9 - 0.055)
 
@@ -49,7 +49,7 @@ class SemanticAtlasTests(unittest.TestCase):
         self.assertTrue(all(0.0 < x < 16 / 9 for x in xs))
         self.assertTrue(all(0.0 < y < 1.0 for y in ys))
 
-    def test_skewed_density_is_centered_without_a_community_grid(self) -> None:
+    def test_skewed_density_preserves_source_neighbors_without_rank_lattice(self) -> None:
         points = tuple(
             AtlasPoint(
                 node_id=f"node-{index}",
@@ -65,6 +65,12 @@ class SemanticAtlasTests(unittest.TestCase):
             for index in range(100)
         )
         result = build_rectangular_atlas(points)
+        self.assertGreater(result.local_neighbor_preservation or 0.0, 0.75)
+        self.assertGreater(
+            max(x for x, _y in result.positions.values())
+            - min(x for x, _y in result.positions.values()),
+            1.0,
+        )
         center_x, center_y = 16 / 9 / 2, 0.5
         quadrants = {
             "nw": 0,
@@ -77,7 +83,27 @@ class SemanticAtlasTests(unittest.TestCase):
             quadrants[key] += 1
         self.assertLessEqual(max(quadrants.values()), 60)
         self.assertTrue(all(value > _MIN_QUADRANT_COUNT for value in quadrants.values()))
-        self.assertGreater(result.local_neighbor_preservation or 0.0, 0.7)
+
+    def test_tied_coordinate_grid_is_deterministically_de_latticed(self) -> None:
+        points = tuple(
+            AtlasPoint(
+                node_id=f"grid-{row}-{column}",
+                x=float(column),
+                y=float(row),
+                group_id="grid",
+            )
+            for row in range(12)
+            for column in range(12)
+        )
+        first = build_rectangular_atlas(points)
+        second = build_rectangular_atlas(points)
+        self.assertEqual(first.positions, second.positions)
+        self.assertEqual(len({round(x, 8) for x, _y in first.positions.values()}), len(points))
+        self.assertEqual(len({round(y, 8) for _x, y in first.positions.values()}), len(points))
+        # A Cartesian grid has tied nearest-neighbor distances, so this is a
+        # conservative regression floor. The non-tied fixtures above protect
+        # the substantially higher topology-preservation path.
+        self.assertGreater(first.local_neighbor_preservation or 0.0, 0.80)
 
     def test_hierarchy_branch_is_not_a_radial_spoke_pattern(self) -> None:
         children = _place_branch_children(
@@ -91,6 +117,8 @@ class SemanticAtlasTests(unittest.TestCase):
         self.assertGreater(len({round(distance, 5) for distance in distances}), 3)
         self.assertGreater(max(gaps) - min(gaps), 0.02)
         self.assertLess(max(distances), 0.04)
+        self.assertEqual(len({round(x, 8) for x, _y in children.values()}), len(children))
+        self.assertEqual(len({round(y, 8) for _x, y in children.values()}), len(children))
 
     def test_edge_anchor_keeps_branch_inside_inner_world(self) -> None:
         bounds = (0.055, 0.055, 16 / 9 - 0.055, 0.945)

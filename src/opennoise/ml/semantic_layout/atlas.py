@@ -18,7 +18,14 @@ if TYPE_CHECKING:
 
 _MIN_POINTS = 2
 _MAX_MARGIN = 0.25
+# A mostly rank-based transform prevents a dense source component from
+# collapsing into one viewport quadrant. The de-grid pass below handles tied
+# coordinates, so this blend does not create a Cartesian lattice.
+# A mostly rank-based transform prevents a dense source component from
+# collapsing into one viewport quadrant. The de-grid pass below handles tied
+# coordinates, so this blend does not create a Cartesian lattice.
 _QUANTILE_BLEND = 0.90
+_TIED_AXIS_JITTER_FRACTION = 0.22
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,6 +134,7 @@ def build_rectangular_atlas(
         )
         for point in points
     }
+    positions = _degrid_tied_axes(positions, resolved)
     positions = _separate_collisions(positions)
     regions = _derive_regions(points, positions, resolved)
     preservation = _local_neighbor_preservation(points, positions, resolved.world_width)
@@ -196,7 +204,7 @@ def _axis_position(
     ordered_values: tuple[float, ...],
     axis_range: _AxisRange,
 ) -> float:
-    """Blend a winsorized affine coordinate with its monotonic empirical rank."""
+    """Use a winsorized affine coordinate without independently ranking axes."""
     clipped = _clip(value, axis_range.source_min, axis_range.source_max)
     affine = _scale(
         clipped,
@@ -210,6 +218,84 @@ def _axis_position(
     rank = (left + right - 1) / (2.0 * max(len(ordered_values) - 1, 1))
     quantile = axis_range.target_min + rank * (axis_range.target_max - axis_range.target_min)
     return _QUANTILE_BLEND * quantile + (1.0 - _QUANTILE_BLEND) * affine
+
+
+def _degrid_tied_axes(
+    positions: Mapping[str, tuple[float, float]], settings: AtlasSettings
+) -> dict[str, tuple[float, float]]:
+    """Break only tied coordinate rows/columns with deterministic local offsets.
+
+    Spectral and hierarchy inputs sometimes quantize one or both axes. A fixed
+    grid is not meaningful topology and is conspicuous at overview scale. The
+    offset is bounded by the nearest distinct coordinate on each axis, so it
+    cannot reorder distinct local neighborhoods. It comes only from the stable
+    node ID; no random state or browser-time simulation is involved.
+    """
+    if len(positions) < _MIN_POINTS:
+        return dict(positions)
+    x_counts: dict[float, int] = {}
+    y_counts: dict[float, int] = {}
+    for x, y in positions.values():
+        x_counts[x] = x_counts.get(x, 0) + 1
+        y_counts[y] = y_counts.get(y, 0) + 1
+    x_spacing = _axis_spacing(tuple(x_counts), settings.world_width - 2.0 * settings.margin)
+    y_spacing = _axis_spacing(tuple(y_counts), settings.world_height - 2.0 * settings.margin)
+    output: dict[str, tuple[float, float]] = {}
+    for node_id, (x, y) in positions.items():
+        digest = sha256(node_id.encode()).digest()
+        angle = (int.from_bytes(digest[:8], "big") / 2**64) * 2.0 * math.pi
+        magnitude = 0.65 + 0.35 * (int.from_bytes(digest[8:16], "big") / 2**64)
+        offset_x = (
+            math.cos(angle) * x_spacing[x] * _TIED_AXIS_JITTER_FRACTION * magnitude
+            if x_counts[x] > 1
+            else 0.0
+        )
+        offset_y = (
+            math.sin(angle) * y_spacing[y] * _TIED_AXIS_JITTER_FRACTION * magnitude
+            if y_counts[y] > 1
+            else 0.0
+        )
+        output[node_id] = (
+            _inward_offset(
+                x,
+                offset_x,
+                settings.margin,
+                settings.world_width - settings.margin,
+            ),
+            _inward_offset(
+                y,
+                offset_y,
+                settings.margin,
+                settings.world_height - settings.margin,
+            ),
+        )
+    return output
+
+
+def _inward_offset(value: float, offset: float, minimum: float, maximum: float) -> float:
+    """Keep an edge tie inside the viewport instead of reclamping it to one line."""
+    candidate = value + offset
+    if candidate < minimum:
+        candidate = minimum + abs(offset)
+    elif candidate > maximum:
+        candidate = maximum - abs(offset)
+    return _clip(candidate, minimum, maximum)
+
+
+def _axis_spacing(values: tuple[float, ...], fallback_span: float) -> dict[float, float]:
+    """Return a local safe displacement scale for every distinct coordinate."""
+    ordered = tuple(sorted(values))
+    if len(ordered) == 1:
+        return {ordered[0]: fallback_span / math.sqrt(max(_MIN_POINTS, 2))}
+    output: dict[float, float] = {}
+    for index, value in enumerate(ordered):
+        gaps = []
+        if index:
+            gaps.append(value - ordered[index - 1])
+        if index + 1 < len(ordered):
+            gaps.append(ordered[index + 1] - value)
+        output[value] = min(gap for gap in gaps if gap > 0.0)
+    return output
 
 
 def _scale(

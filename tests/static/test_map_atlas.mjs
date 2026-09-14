@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  compareCodepoints,
   declutterLabels,
   fitCamera,
   levelForScale,
@@ -74,6 +75,72 @@ test('label decluttering is deterministic and keeps the higher-priority name', (
   const options = { maximum: 10, height: 16, padding: 3 };
   const once = declutterLabels(candidates, { width: 800, height: 500 }, (name) => name.length * 7, options);
   const twice = declutterLabels(candidates, { width: 800, height: 500 }, (name) => name.length * 7, options);
-  assert.deepEqual(once.map((item) => item.id), ['high']);
-  assert.deepEqual(twice.map((item) => item.id), ['high']);
+  assert.deepEqual(once.map((item) => item.id), ['high', 'low']);
+  assert.deepEqual(twice.map((item) => item.id), ['high', 'low']);
+  assert.ok(once[0].placement.box.x1 <= once[1].placement.box.x0
+    || once[1].placement.box.x1 <= once[0].placement.box.x0
+    || once[0].placement.box.y1 <= once[1].placement.box.y0
+    || once[1].placement.box.y1 <= once[0].placement.box.y0);
+});
+
+test('required edge endpoints and nearest ancestors survive coincident label anchors', () => {
+  const atlas = normaliseAtlasPayload({
+    ...payload,
+    nodes: payload.nodes.map((node) => ({ ...node, x: 3, y: 3 })),
+    labels: [{ level: 0, ids: ['a'] }, { level: 1, ids: ['a'] }, { level: 2, ids: ['a'] }, { level: 3, ids: ['a'] }],
+  });
+  const project = (node) => ({ x: node.x * 100, y: node.y * 100 });
+  const labels = visibleNodeLabels(
+    atlas,
+    1,
+    { width: 1600, height: 900 },
+    project,
+    (name) => name.length * 7,
+    { maximum: 20, requiredIds: ['b', 'c'], camera: { x: 0, y: 0, scale: 100 } },
+  );
+  const ids = new Set(labels.map((item) => item.id));
+  assert.ok(ids.has('a'), 'the displayed parent should remain labelled');
+  assert.ok(ids.has('b'), 'the focused edge endpoint should remain labelled');
+  assert.ok(ids.has('c'), 'a deeper edge endpoint should remain labelled');
+  for (let left = 0; left < labels.length; left += 1) {
+    for (let right = left + 1; right < labels.length; right += 1) {
+      const a = labels[left].placement.box;
+      const b = labels[right].placement.box;
+      assert.ok(a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0);
+    }
+  }
+});
+
+test('label ordering is locale-independent', () => {
+  assert.ok(compareCodepoints('z', 'ä') < 0);
+  assert.ok(compareCodepoints('😀', 'z') > 0);
+  assert.equal(compareCodepoints('same', 'same'), 0);
+});
+
+test('spatial index pre-budgets large atlas label candidates', () => {
+  const nodes = Array.from({ length: 2945 }, (_, index) => ({
+    id: `large-${index}`,
+    name: `genre-${index}`,
+    x: (index % 65) / 4,
+    y: Math.floor(index / 65) / 4,
+    lod: 3,
+    importance: 1,
+  }));
+  const atlas = normaliseAtlasPayload({
+    initial_camera: { x0: 0, y0: 0, x1: 16, y1: 12 },
+    world_bounds: { x0: 0, y0: 0, x1: 16, y1: 12 },
+    nodes,
+    labels: [],
+  });
+  let projections = 0;
+  const labels = visibleNodeLabels(
+    atlas,
+    3,
+    { width: 1600, height: 1200 },
+    (node) => { projections += 1; return { x: node.x * 100, y: node.y * 100 }; },
+    (name) => name.length * 6,
+    { maximum: 10, candidateLimit: 64, camera: { x: 0, y: 0, scale: 100 } },
+  );
+  assert.ok(labels.length <= 10);
+  assert.ok(projections <= 64, `projected ${projections} nodes instead of the local candidate budget`);
 });

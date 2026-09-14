@@ -1,6 +1,8 @@
 /** Pure atlas parsing and camera maths shared by the Canvas renderer and Node tests. */
 
 const LEVEL_COUNT = 4;
+const SPATIAL_COLUMNS = 48;
+const SPATIAL_ROWS = 28;
 
 export function clamp(value, lower, upper) {
   return Math.max(lower, Math.min(upper, value));
@@ -11,6 +13,22 @@ function finiteNumber(value, label) {
     throw new TypeError(`${label} must be a finite number`);
   }
   return value;
+}
+
+/** Stable ordering independent of locale or browser ICU data. */
+export function compareCodepoints(left, right) {
+  const first = String(left);
+  const second = String(right);
+  let firstIndex = 0;
+  let secondIndex = 0;
+  while (firstIndex < first.length && secondIndex < second.length) {
+    const firstCodepoint = first.codePointAt(firstIndex);
+    const secondCodepoint = second.codePointAt(secondIndex);
+    if (firstCodepoint !== secondCodepoint) return firstCodepoint - secondCodepoint;
+    firstIndex += firstCodepoint > 0xffff ? 2 : 1;
+    secondIndex += secondCodepoint > 0xffff ? 2 : 1;
+  }
+  return (first.length - firstIndex) - (second.length - secondIndex);
 }
 
 export function normaliseBounds(value, label = 'bounds') {
@@ -65,7 +83,7 @@ function normaliseAliases(value, nodeIds) {
   const aliases = new Map();
   for (const record of Array.isArray(value) ? value : []) {
     if (!record || typeof record.term !== 'string' || typeof record.target !== 'string') continue;
-    if (nodeIds.has(record.target)) aliases.set(record.term.trim().toLocaleLowerCase(), record.target);
+    if (nodeIds.has(record.target)) aliases.set(record.term.trim().toLowerCase(), record.target);
   }
   return aliases;
 }
@@ -94,7 +112,8 @@ export function normaliseAtlasPayload(payload) {
     children.push(node.id);
     childrenByParent.set(node.parentId, children);
   }
-  for (const children of childrenByParent.values()) children.sort((left, right) => byId.get(left).name.localeCompare(byId.get(right).name));
+  for (const children of childrenByParent.values()) children.sort((left, right) => compareCodepoints(byId.get(left).name, byId.get(right).name));
+  const spatialIndex = buildSpatialIndex(nodes, worldBounds);
   return {
     revision: typeof source.revision === 'string' ? source.revision : 'static-atlas-v1',
     nodes,
@@ -104,11 +123,34 @@ export function normaliseAtlasPayload(payload) {
     labels: normaliseLabelSets(source.labels ?? source.label_sets, nodeIds),
     aliases: normaliseAliases(source.aliases, nodeIds),
     childrenByParent,
+    spatialIndex,
     regions: (Array.isArray(source.overview_regions) ? source.overview_regions : source.regions ?? [])
       .filter((region) => region && typeof region === 'object')
       .map((region) => ({ ...region, title: region.title ?? region.label ?? region.name })),
     neighborsUrl: typeof source.neighbors_url === 'string' ? source.neighbors_url : null,
   };
+}
+
+function buildSpatialIndex(nodes, bounds) {
+  const buckets = Array.from({ length: SPATIAL_COLUMNS * SPATIAL_ROWS }, () => []);
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const xSpan = bounds.x1 - bounds.x0;
+  const ySpan = bounds.y1 - bounds.y0;
+  const columnFor = (x) => clamp(Math.floor((x - bounds.x0) / xSpan * SPATIAL_COLUMNS), 0, SPATIAL_COLUMNS - 1);
+  const rowFor = (y) => clamp(Math.floor((y - bounds.y0) / ySpan * SPATIAL_ROWS), 0, SPATIAL_ROWS - 1);
+  for (const node of nodes) {
+    const column = columnFor(node.x);
+    const row = rowFor(node.y);
+    buckets[row * SPATIAL_COLUMNS + column].push(node.id);
+  }
+  for (const bucket of buckets) bucket.sort((left, right) => {
+    const first = byId.get(left);
+    const second = byId.get(right);
+    return first.lod - second.lod
+      || (second.importance - first.importance)
+      || compareCodepoints(left, right);
+  });
+  return { columns: SPATIAL_COLUMNS, rows: SPATIAL_ROWS, bounds, buckets };
 }
 
 export function fitCamera(bounds, viewport, padding = 0.94) {
@@ -139,13 +181,13 @@ export function levelForScale(scale, fitScale) {
 }
 
 export function findAtlasTarget(atlas, term) {
-  const query = term.trim().toLocaleLowerCase();
+  const query = term.trim().toLowerCase();
   if (!query) return null;
   const alias = atlas.aliases.get(query);
   if (alias) return alias;
-  const exact = atlas.nodes.find((node) => node.name.toLocaleLowerCase() === query);
+  const exact = atlas.nodes.find((node) => node.name.toLowerCase() === query);
   if (exact) return exact.id;
-  const prefix = atlas.nodes.find((node) => node.name.toLocaleLowerCase().startsWith(query));
+  const prefix = atlas.nodes.find((node) => node.name.toLowerCase().startsWith(query));
   return prefix?.id ?? null;
 }
 
@@ -170,10 +212,12 @@ export function placeLabel(screen, width, viewport, options = {}) {
   const offset = options.offset ?? 6;
   const height = options.height ?? 16;
   const padding = options.padding ?? 3;
-  const x = screen.x + offset + width <= viewport.width - padding
+  const preferredX = screen.x + offset + width <= viewport.width - padding
     ? screen.x + offset
     : screen.x - offset - width;
-  const y = screen.y < height + padding ? screen.y + height : screen.y - 6;
+  const preferredY = screen.y < height + padding ? screen.y + height : screen.y - 6;
+  const x = clamp(preferredX, padding, Math.max(padding, viewport.width - padding - width));
+  const y = clamp(preferredY, height + padding, Math.max(height + padding, viewport.height - padding));
   return {
     x,
     y,
@@ -184,6 +228,38 @@ export function placeLabel(screen, width, viewport, options = {}) {
       y1: y + padding,
     },
   };
+}
+
+function alternateLabelPlacements(screen, width, viewport, options = {}) {
+  const offset = options.offset ?? 6;
+  const height = options.height ?? 16;
+  const padding = options.padding ?? 3;
+  const placements = [];
+  const add = (x, y, callout = false) => {
+    const clampedX = clamp(x, padding, Math.max(padding, viewport.width - padding - width));
+    const clampedY = clamp(y, height + padding, Math.max(height + padding, viewport.height - padding));
+    const placement = {
+      x: clampedX,
+      y: clampedY,
+      box: {
+        x0: clampedX - padding,
+        y0: clampedY - height - padding,
+        x1: clampedX + width + padding,
+        y1: clampedY + padding,
+      },
+    };
+    if (!placements.some((item) => item.x === placement.x && item.y === placement.y)) {
+      placements.push(callout ? { ...placement, callout: true } : placement);
+    }
+  };
+  for (let ring = 0; ring <= 8; ring += 1) {
+    const distance = offset + ring * (height + padding * 2);
+    add(screen.x + distance, screen.y - 6, ring > 0);
+    add(screen.x - distance - width, screen.y - 6, ring > 0);
+    add(screen.x - width / 2, screen.y - distance, ring > 0);
+    add(screen.x - width / 2, screen.y + distance + height, ring > 0);
+  }
+  return placements;
 }
 
 function boxesOverlap(left, right) {
@@ -201,18 +277,78 @@ export function declutterLabels(candidates, viewport, measureText, options = {})
   const occupied = [];
   const ordered = [...candidates]
     .filter((candidate) => candidate && typeof candidate.id === 'string' && candidate.id)
-    .sort((left, right) => (left.priority ?? 0) - (right.priority ?? 0) || left.id.localeCompare(right.id));
+    .sort((left, right) => (left.priority ?? 0) - (right.priority ?? 0) || compareCodepoints(left.id, right.id));
   for (const candidate of ordered) {
     if (selected.length >= maximum) break;
     const screen = candidate.screen;
     if (!screen || !Number.isFinite(screen.x) || !Number.isFinite(screen.y)) continue;
     const width = Math.max(1, Number(measureText(candidate.text)) || 1);
-    const placement = placeLabel(screen, width, viewport, options);
-    if (occupied.some((box) => boxesOverlap(box, placement.box))) continue;
-    occupied.push(placement.box);
-    selected.push({ ...candidate, width, placement });
+    const placements = alternateLabelPlacements(screen, width, viewport, options);
+    const placement = placements.find((item) => !occupied.some((box) => boxesOverlap(box, item.box)));
+    if (!placement && !candidate.required) continue;
+    // Required context and edge labels must remain addressable even when their
+    // anchor points coincide. Search deterministic viewport callout slots before
+    // giving up; this preserves the no-overlap invariant without hiding context.
+    const fallback = placement ?? fallbackLabelPlacement(width, viewport, occupied, options);
+    if (!fallback) continue;
+    occupied.push(fallback.box);
+    selected.push({ ...candidate, width, placement: fallback });
   }
   return selected;
+}
+
+function fallbackLabelPlacement(width, viewport, occupied, options = {}) {
+  const height = options.height ?? 16;
+  const padding = options.padding ?? 3;
+  const stepX = Math.max(width + padding * 2, 48);
+  const stepY = height + padding * 2;
+  for (let y = height + padding; y <= viewport.height - padding; y += stepY) {
+    for (let x = padding; x <= viewport.width - padding - width; x += stepX) {
+      const placement = {
+        x,
+        y,
+        callout: true,
+        box: { x0: x - padding, y0: y - height - padding, x1: x + width + padding, y1: y + padding },
+      };
+      if (!occupied.some((box) => boxesOverlap(box, placement.box))) return placement;
+    }
+  }
+  return null;
+}
+
+function indexedNodeCandidates(atlas, camera, viewport, margin, limit = Number.MAX_SAFE_INTEGER) {
+  if (!camera || !atlas.spatialIndex) return atlas.nodes;
+  const { columns, rows, bounds, buckets } = atlas.spatialIndex;
+  const worldX0 = (0 - margin - camera.x) / camera.scale;
+  const worldY0 = (0 - margin - camera.y) / camera.scale;
+  const worldX1 = (viewport.width + margin - camera.x) / camera.scale;
+  const worldY1 = (viewport.height + margin - camera.y) / camera.scale;
+  const xSpan = bounds.x1 - bounds.x0;
+  const ySpan = bounds.y1 - bounds.y0;
+  const x0 = clamp(Math.floor((worldX0 - bounds.x0) / xSpan * columns), 0, columns - 1);
+  const y0 = clamp(Math.floor((worldY0 - bounds.y0) / ySpan * rows), 0, rows - 1);
+  const x1 = clamp(Math.floor((worldX1 - bounds.x0) / xSpan * columns), 0, columns - 1);
+  const y1 = clamp(Math.floor((worldY1 - bounds.y0) / ySpan * rows), 0, rows - 1);
+  const bucketsInView = [];
+  for (let row = Math.min(y0, y1); row <= Math.max(y0, y1); row += 1) {
+    for (let column = Math.min(x0, x1); column <= Math.max(x0, x1); column += 1) {
+      const bucket = buckets[row * columns + column];
+      if (bucket.length) bucketsInView.push(bucket);
+    }
+  }
+  const ids = [];
+  const seen = new Set();
+  for (let offset = 0; ids.length < limit; offset += 1) {
+    let added = false;
+    for (const bucket of bucketsInView) {
+      const id = bucket[offset];
+      if (!id || seen.has(id)) continue;
+      seen.add(id); ids.push(id); added = true;
+      if (ids.length >= limit) break;
+    }
+    if (!added) break;
+  }
+  return ids.map((id) => atlas.byId.get(id)).filter(Boolean);
 }
 
 /**
@@ -233,8 +369,11 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     screen.x >= -margin && screen.y >= -margin
     && screen.x <= viewport.width + margin && screen.y <= viewport.height + margin
   );
-  for (const node of atlas.nodes) {
-    if (node.lod > level) continue;
+  const contextIds = new Set();
+  const candidateLimit = options.candidateLimit ?? Math.max((options.maximum ?? 420) * 3, 512);
+  const localNodes = indexedNodeCandidates(atlas, options.camera, viewport, margin, candidateLimit);
+  for (const node of localNodes) {
+    if (node.lod > level && !required.has(node.id)) continue;
     const screen = project(node);
     projected.set(node.id, screen);
     if (inRange(screen)) ids.add(node.id);
@@ -245,7 +384,10 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     let node = atlas.byId.get(id);
     while (node?.parentId && atlas.byId.has(node.parentId)) {
       node = atlas.byId.get(node.parentId);
-      if (node.lod <= level && inRange(projected.get(node.id) ?? project(node))) ids.add(node.id);
+      if (node.lod <= level && inRange(projected.get(node.id) ?? project(node))) {
+        ids.add(node.id);
+        if (node.lod < level) contextIds.add(node.id);
+      }
     }
   }
   for (const id of required) {
@@ -255,13 +397,14 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
       if (!projected.has(id)) projected.set(id, project(node));
     }
   }
-  const groupKey = (node) => (
-    node.parentId
-    ?? (node.regionId ? `region:${node.regionId}` : null)
-    ?? (node.communityId === null ? null : `community:${node.communityId}`)
-    ?? node.hierarchyRootId
-    ?? 'unparented'
-  );
+  const groupKey = (node) => {
+    const scope = node.regionId
+      ? `region:${node.regionId}`
+      : (node.communityId === null
+        ? (node.hierarchyRootId ?? 'unparented')
+        : `community:${node.communityId}`);
+    return node.parentId ? `${scope}|parent:${node.parentId}` : scope;
+  };
   const distance = (node) => {
     const screen = projected.get(node.id) ?? project(node);
     return Math.hypot(screen.x - center.x, screen.y - center.y);
@@ -269,6 +412,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   const score = (node) => (
     (required.has(node.id) ? -1e9 : 0)
     + (node.id === focus ? -1e8 : 0)
+    + (contextIds.has(node.id) ? -5e7 : 0)
     + (node.lod === level ? -1e5 : 0)
     + distance(node) * 0.01
     + (node.labelPriority ?? globalOrder.get(node.id) ?? 10_000) * 1e-4
@@ -283,9 +427,9 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     groups.set(groupKey(node), group);
   }
   const orderedGroups = [...groups.values()].map((group) => group.sort((left, right) => (
-    score(left) - score(right) || left.id.localeCompare(right.id)
+    score(left) - score(right) || compareCodepoints(left.id, right.id)
   ))).sort((left, right) => (
-    score(left[0]) - score(right[0]) || left[0].id.localeCompare(right[0].id)
+    score(left[0]) - score(right[0]) || compareCodepoints(left[0].id, right[0].id)
   ));
   // Round-robin over local semantic groups so one dense parent cannot consume
   // the entire label budget. Collision culling still decides final readability.
@@ -301,6 +445,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
         id: node.id,
         text: node.name,
         screen,
+        required: required.has(node.id) || contextIds.has(node.id),
         priority: score(node) + index * 0.001,
       });
     }
