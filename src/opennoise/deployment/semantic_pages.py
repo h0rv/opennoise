@@ -225,18 +225,18 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
             }
             for community in artifact.communities
         ],
-        "hierarchy_regions": _hierarchy_regions(nodes),
+        "browse_landmarks": _browse_landmarks(nodes),
         "labels": labels,
         "aliases": [{"term": term, "target": target} for term, target in sorted(aliases)],
     }
 
 
-def _hierarchy_regions(nodes: list[dict[str, object]]) -> list[dict[str, object]]:
-    """Select only spatially supported root neighborhoods for overview landmarks.
+def _browse_landmarks(nodes: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Select presentation-only root labels from locally co-located browse groups.
 
-    A display parent relation is never moved to make it fit the semantic map.
-    Instead, a root earns a region only when at least three of its existing
-    descendants already occupy its local semantic neighborhood.
+    ``display_parent_id`` is presentation metadata, not a factual claim. A
+    label earns a landmark only when at least three associated labels already
+    occupy its local semantic neighborhood; no coordinates or edges are made.
     """
     by_id = {str(node["id"]): node for node in nodes}
     children: dict[str, list[str]] = {}
@@ -248,7 +248,7 @@ def _hierarchy_regions(nodes: list[dict[str, object]]) -> list[dict[str, object]
     regions: list[dict[str, object]] = []
     for root_id in children:
         root = by_id[root_id]
-        if root.get("display_parent_id") is not None:
+        if root.get("display_parent_id") is not None or root.get("lod") != 0:
             continue
         members = [
             node
@@ -280,7 +280,6 @@ def _hierarchy_regions(nodes: list[dict[str, object]]) -> list[dict[str, object]
                 "label": root["name"],
                 "x": root["x"],
                 "y": root["y"],
-                "radius": radius,
                 "member_count": len(owned),
                 "member_ids": sorted(str(node["id"]) for node in owned),
             }

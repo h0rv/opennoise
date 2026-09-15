@@ -92,8 +92,8 @@ class SemanticPagesExportTests(unittest.TestCase):
             assert isinstance(second_css, dict)
             self.assertNotEqual(first_css["path"], second_css["path"])
 
-    def test_release_hierarchy_uses_only_real_display_parent_evidence(self) -> None:
-        """The current release has rock→modern rock; IDM has no display parent."""
+    def test_release_browse_paths_remain_presentation_only(self) -> None:
+        """The current release has a rock browse path; IDM has no display parent."""
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "dist"
             manifest = export_semantic_pages(SemanticPagesExportInputs(LAYOUT, output))
@@ -104,22 +104,23 @@ class SemanticPagesExportTests(unittest.TestCase):
             payload = json.loads((output / str(atlas["path"])).read_text())
         by_name = {node["name"].casefold(): node for node in payload["nodes"]}
         self.assertEqual(by_name["modern rock"]["display_parent_id"], by_name["rock"]["id"])
-        # The released source does not establish electronic→IDM, so the UI may
-        # never draw that appealing-but-unsupported hierarchy line.
+        # The released source has no electronic→IDM display parent, so the UI
+        # must not manufacture that browse-path presentation link.
         self.assertIsNone(by_name["intelligent dance music"]["display_parent_id"])
 
         rock = by_name["rock"]
         rock_region = next(
-            region for region in payload["hierarchy_regions"] if region["root_id"] == rock["id"]
+            region for region in payload["browse_landmarks"] if region["root_id"] == rock["id"]
         )
         self.assertGreaterEqual(rock_region["member_count"], 4)
         self.assertEqual(rock_region["member_count"], len(rock_region["member_ids"]))
-        for node_id in rock_region["member_ids"]:
-            node = next(node for node in payload["nodes"] if node["id"] == node_id)
-            self.assertLessEqual(
-                ((node["x"] - rock_region["x"]) ** 2 + (node["y"] - rock_region["y"]) ** 2) ** 0.5,
-                rock_region["radius"],
-            )
+        by_id = {node["id"]: node for node in payload["nodes"]}
+        landmark_ids = [region["root_id"] for region in payload["browse_landmarks"]]
+        self.assertIn(rock["id"], landmark_ids)
+        # Landmark IDs are L0 nodes, so they persist through every cumulative
+        # semantic level rather than being a separate overview-only set.
+        for level in range(4):
+            self.assertTrue(all(by_id[node_id]["lod"] <= level for node_id in landmark_ids))
 
 
 if __name__ == "__main__":

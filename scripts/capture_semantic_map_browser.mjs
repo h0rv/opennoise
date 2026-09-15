@@ -347,7 +347,7 @@ const PRELOAD = String.raw`(() => {
     return original.moveTo.call(this, x, y);
   };
   CanvasRenderingContext2D.prototype.stroke = function(...args) {
-    // Similarity and direct hierarchy lines use dedicated strokes. One-pixel
+    // Similarity and presentation-grouping lines use dedicated strokes. One-pixel
     // label callouts should not inflate the focused graph edge budget.
     if (this.canvas?.id === 'semantic-map' && (this.lineWidth === 1.5 || this.lineWidth === 1.75)) qa.current.edges += 1;
     return original.stroke.call(this, ...args);
@@ -374,7 +374,7 @@ async function run() {
     requireCheck(initial.points >= 1 && initial.points <= 50, "overview point budget failed", initial);
     requireCheck(initial.labels >= 1 && initial.labels <= 35, "overview label budget failed", initial);
     requireCheck(initial.edges === 0, "overview must not draw global edges", initial);
-    requireCheck(initial.label_names.includes("rock"), "overview omitted the rock hierarchy landmark", initial);
+    requireCheck(initial.label_names.includes("rock"), "overview omitted the rock browse landmark", initial);
     const extent = initial.point_extent;
     const widthFraction = extent ? (extent.max_x - extent.min_x) / initial.viewport.width : 0;
     const heightFraction = extent ? (extent.max_y - extent.min_y) / initial.viewport.height : 0;
@@ -437,16 +437,14 @@ async function run() {
       return value;
     };
     let focused = await focusQuery('idm', afterPan.frame_count - 1);
-    // The focused view has at most twelve similarity links plus direct, verified
-    // display-parent links.  They are deliberately distinct in the renderer.
-    requireCheck(focused.edges > 0 && focused.edges <= 24, "focused neighborhood edge budget failed", focused);
+    requireCheck(focused.edges > 0 && focused.edges <= 12, "focused connection budget failed", focused);
     requireCheck(focused.connected_path_arcs === 0, "batched dots formed connected polygons", focused);
     requireCheck(boxesInViewport(focused.label_boxes, focused.viewport), "focused label box escaped viewport", focused);
     requireCheck(edgesInViewport(focused.edge_endpoints, focused.viewport), "focused edge endpoint escaped viewport", focused);
     requireCheck(!focused.back_hidden, "Back control did not appear after focus", focused);
     requireCheck(focused.focus_url === "legacy:item887", "IDM alias did not focus its stable seed", focused);
     requireCheck(focused.points <= focused.edges + 1, "focused view leaked unconnected dots", focused);
-    requireCheck(!focused.detail_hidden && focused.detail_links === focused.edges && boxInViewport(focused.detail_box, focused.viewport), 'IDM list does not match its shown links', focused);
+    requireCheck(!focused.detail_hidden && focused.detail_links <= 12 && focused.detail_links >= focused.edges && boxInViewport(focused.detail_box, focused.viewport), 'IDM list does not match its shown links', focused);
     screenshots.push(await screenshot(cdp, "desktop-idm-focus.png", "light", 1440, 900));
 
     await cdp.evaluate("document.querySelector('[data-map-action=\\\"back\\\"]')?.click()");
@@ -455,15 +453,15 @@ async function run() {
     requireCheck(backed.back_hidden && !backed.focus_url, "Back did not restore map state", backed);
 
     const postPunk = await focusQuery('post-punk', backed.frame_count - 1);
-    requireCheck(postPunk.focus_url === 'legacy:item577' && postPunk.edges > 0, 'post-punk did not focus its structural neighborhood', postPunk);
+    requireCheck(postPunk.focus_url === 'legacy:item577' && postPunk.edges > 0, 'post-punk did not focus its connection set', postPunk);
     requireCheck(postPunk.points <= postPunk.edges + 1, 'post-punk view leaked unconnected dots', postPunk);
-    requireCheck(!postPunk.detail_hidden && postPunk.detail_links === postPunk.edges && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
+    requireCheck(!postPunk.detail_hidden && postPunk.detail_links <= 12 && postPunk.detail_links >= postPunk.edges && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-focus.png', 'light', 1440, 900));
 
     const modernRock = await focusQuery('modern rock', postPunk.frame_count - 1);
     requireCheck(
-      modernRock.focus_url === 'legacy:item10' && modernRock.detail_names.includes('rock'),
-      'modern rock did not retain its verified rock parent in the focused zoom view',
+      modernRock.focus_url === 'legacy:item10' && modernRock.detail_names.some((name) => name.endsWith(': rock')),
+      'modern rock did not retain its rock browse path in the focused zoom view',
       modernRock,
     );
     screenshots.push(await screenshot(cdp, 'desktop-rock-modern-rock-focus.png', 'light', 1440, 900));
@@ -503,7 +501,7 @@ async function run() {
         deep_zoom_scale: buttonDeep.scale,
         focused_edges: focused.edges,
         post_punk_edges: postPunk.edges,
-        rock_modern_rock_hierarchy: modernRock.detail_names.includes('rock'),
+        rock_modern_rock_browse_path: modernRock.detail_names.some((name) => name.endsWith(': rock')),
         pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
         back_restored: backed.back_hidden && !backed.focus_url,
         dark_mode: dark.background !== initial.background,

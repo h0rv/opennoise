@@ -35,11 +35,11 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
     def test_harness_checks_zoom_pan_focus_back_and_theme(self) -> None:
         self.assertIn("zoom reveal is unavailable", self.source)
         self.assertIn("pan did not move camera", self.source)
-        self.assertIn("focused.edges <= 24", self.source)
+        self.assertIn("focused.edges <= 12", self.source)
         self.assertIn("Back did not restore map state", self.source)
         self.assertIn("dark mode did not change the map palette", self.source)
-        self.assertIn("post-punk did not focus its structural neighborhood", self.source)
-        self.assertIn("rock_modern_rock_hierarchy", self.source)
+        self.assertIn("post-punk did not focus its connection set", self.source)
+        self.assertIn("rock_modern_rock_browse_path", self.source)
         self.assertIn("focused view leaked unconnected dots", self.source)
         self.assertIn("IDM list does not match its shown links", self.source)
         self.assertIn("mobile pinch did not zoom the map", self.source)
@@ -47,10 +47,10 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
 
     def test_renderer_keeps_focus_static_and_cleans_pointer_capture(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
-        self.assertIn("structuralNeighborhood(state.atlas, id)", renderer)
+        self.assertIn("focusedConnections(state.atlas, id)", renderer)
         self.assertNotIn("dataset.neighborsUrl", renderer)
         self.assertNotIn("neighborUrl", renderer)
-        self.assertIn("Structural connections", renderer)
+        self.assertIn("Connections", renderer)
         self.assertIn("pointercancel", renderer)
         self.assertIn("lostpointercapture", renderer)
         self.assertIn("state.displayedIds", renderer)

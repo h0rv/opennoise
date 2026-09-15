@@ -125,8 +125,8 @@ function normaliseEdges(value, nodeIds) {
     || compareCodepoints(left.target, right.target));
 }
 
-/** Existing display-parent relations only; no proximity-derived containment. */
-function hierarchyEdges(nodes, nodeIds) {
+/** Presentation grouping links only; no proximity-derived containment. */
+function groupingEdges(nodes, nodeIds) {
   const edges = [];
   for (const node of nodes) {
     if (!node.parentId || !nodeIds.has(node.parentId) || node.parentId === node.id) continue;
@@ -152,7 +152,7 @@ export function normaliseAtlasPayload(payload) {
   }
   const nodeIds = new Set(byId.keys());
   const edges = normaliseEdges(source.edges, nodeIds);
-  const parentEdges = hierarchyEdges(nodes, nodeIds);
+  const parentEdges = groupingEdges(nodes, nodeIds);
   const edgesById = new Map();
   for (const edge of edges) {
     for (const id of [edge.source, edge.target]) {
@@ -202,13 +202,13 @@ export function normaliseAtlasPayload(payload) {
     labels: normaliseLabelSets(source.labels ?? source.label_sets, nodeIds),
     aliases: normaliseAliases(source.aliases, nodeIds),
     edges,
-    hierarchyEdges: parentEdges,
+    groupingEdges: parentEdges,
     edgesById,
     childrenByParent,
     spatialIndex,
     cohortKeys,
     cohorts,
-    hierarchyRegions: (Array.isArray(source.hierarchy_regions) ? source.hierarchy_regions : [])
+    browseLandmarks: (Array.isArray(source.browse_landmarks) ? source.browse_landmarks : [])
       .filter((region) => region && typeof region === 'object' && typeof region.root_id === 'string'
         && typeof region.label === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
       .map((region) => ({ ...region, title: region.label })),
@@ -218,15 +218,43 @@ export function normaliseAtlasPayload(payload) {
   };
 }
 
-/** The local display hierarchy around one node, preserving its explicit direction. */
-export function hierarchyNeighborhood(atlas, focusId, limit = 12) {
+/** Local presentation-only grouping links around one node. */
+export function groupingNeighborhood(atlas, focusId, limit = 12) {
   if (!atlas?.byId?.has(focusId)) return { edges: [], nodeIds: [] };
-  const parents = (atlas.hierarchyEdges ?? []).filter((edge) => edge.target === focusId);
-  const children = (atlas.hierarchyEdges ?? []).filter((edge) => edge.source === focusId);
+  const parents = (atlas.groupingEdges ?? []).filter((edge) => edge.target === focusId);
+  const children = (atlas.groupingEdges ?? []).filter((edge) => edge.source === focusId);
   const edges = [...parents, ...children].slice(0, Math.max(0, limit));
   const nodeIds = new Set([focusId]);
   for (const edge of edges) { nodeIds.add(edge.source); nodeIds.add(edge.target); }
   return { edges, nodeIds: [...nodeIds] };
+}
+
+/**
+ * One bounded focus contract combines grouping and structural links. A pair
+ * represented by both sources remains one entry with both type markers.
+ */
+export function focusedConnections(atlas, focusId, limit = 12) {
+  if (!atlas?.byId?.has(focusId)) return { connections: [], nodeIds: [] };
+  const byPair = new Map();
+  const record = (edge, kind) => {
+    const source = edge.source < edge.target ? edge.source : edge.target;
+    const target = edge.source < edge.target ? edge.target : edge.source;
+    const key = `${source}\u0000${target}`;
+    const current = byPair.get(key) ?? { source: edge.source, target: edge.target, grouping: false, structural: false };
+    current[kind] = true;
+    byPair.set(key, current);
+  };
+  for (const edge of groupingNeighborhood(atlas, focusId, limit).edges) record(edge, 'grouping');
+  for (const edge of structuralNeighborhood(atlas, focusId, atlas.edges, limit).edges) record(edge, 'structural');
+  const connections = [...byPair.values()]
+    .sort((left, right) => Number(right.grouping) - Number(left.grouping)
+      || Number(right.structural) - Number(left.structural)
+      || compareCodepoints(left.source, right.source)
+      || compareCodepoints(left.target, right.target))
+    .slice(0, Math.max(0, limit));
+  const nodeIds = new Set([focusId]);
+  for (const connection of connections) { nodeIds.add(connection.source); nodeIds.add(connection.target); }
+  return { connections, nodeIds: [...nodeIds] };
 }
 
 /**
@@ -687,7 +715,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
     if (inRange(screen)) ids.add(node.id);
   }
   // Preserve the semantic context around each local window. Parent chains are
-  // cheap to follow because the atlas already contains the immutable hierarchy.
+  // cheap to follow because the atlas already contains immutable grouping metadata.
   for (const id of [...ids]) {
     let node = atlas.byId.get(id);
     while (node?.parentId && atlas.byId.has(node.parentId)) {

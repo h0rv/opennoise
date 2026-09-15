@@ -5,7 +5,7 @@ import {
   declutterLabels,
   fitCamera,
   focusCamera,
-  hierarchyNeighborhood,
+  focusedConnections,
   isNodeRevealed,
   labelBudgetForScale,
   levelForScale,
@@ -13,7 +13,6 @@ import {
   nextLodScale,
   appendCirclePath,
   MAX_SCALE,
-  structuralNeighborhood,
   visibleNodeLabels,
   zoomAtCenter,
   zoomAt,
@@ -27,7 +26,7 @@ if (canvas instanceof HTMLCanvasElement) {
   const detail = document.querySelector('#map-detail');
   const query = document.querySelector('#query');
   const endpoint = canvas.dataset.mapUrl;
-  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], hierarchyEdges: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map(), disclosedCohorts: new Set() };
+  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, connections: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map(), disclosedCohorts: new Set() };
   const overviewPadding = () => {
     const bounds = state.atlas.worldBounds;
     const density = state.atlas.nodes.length / ((bounds.x1 - bounds.x0) * (bounds.y1 - bounds.y0));
@@ -44,14 +43,14 @@ if (canvas instanceof HTMLCanvasElement) {
     // breathing room without changing their persisted geometry.
     state.camera = fitCamera(state.atlas.initialCamera, state.viewport, overviewPadding());
     state.fitScale = state.camera.scale;
-    state.focus = null; state.edges = []; state.hierarchyEdges = []; state.neighborhoodIds = null; state.disclosedCohorts.clear();
+    state.focus = null; state.connections = []; state.neighborhoodIds = null; state.disclosedCohorts.clear();
     state.displayedIds.clear();
     if (back) back.hidden = true;
     if (detail) detail.hidden = true;
     schedule();
   };
   const headings = () => {
-    const roots = state.atlas.hierarchyRegions;
+    const roots = state.atlas.browseLandmarks;
     const regions = state.atlas.regions.length
       ? state.atlas.regions.filter((region) => (region.overview_visible ?? true) === true && typeof region.title === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
       : state.atlas.labels[0].map((id) => state.atlas.byId.get(id)).filter(Boolean).map((node) => ({ title: node.name, x: node.x, y: node.y }));
@@ -92,7 +91,6 @@ if (canvas instanceof HTMLCanvasElement) {
         id: `region:${region.root_id ?? region.community_id ?? index}`,
         text: region.title,
         screen: { x: state.camera.x + region.x * state.camera.scale, y: state.camera.y + region.y * state.camera.scale },
-        radius: Number.isFinite(region.radius) ? region.radius * state.camera.scale : 0,
         priority: index,
       }));
       const visibleRegions = declutterLabels(
@@ -102,15 +100,13 @@ if (canvas instanceof HTMLCanvasElement) {
         { maximum: 35, height: 18, padding: 4, margin: 40 },
       );
       for (const region of visibleRegions) {
-        if (region.radius > 0) { context.strokeStyle = colors.parent; context.globalAlpha = .35; context.lineWidth = 1; context.beginPath(); context.arc(region.screen.x, region.screen.y, region.radius, 0, Math.PI * 2); context.stroke(); context.globalAlpha = 1; }
         context.fillStyle = colors.node; context.beginPath(); context.arc(region.screen.x, region.screen.y, 3.5, 0, Math.PI * 2); context.fill();
         drawLabel(context, region.text, region.placement, colors);
       }
       return;
     }
-    for (const edge of state.hierarchyEdges) { const left = state.atlas.byId.get(edge.source); const right = state.atlas.byId.get(edge.target); if (!left || !right) continue; const start = point(left); const end = point(right); context.strokeStyle = colors.parent; context.globalAlpha = .85; context.lineWidth = 1.75; context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); }
-    for (const edge of state.edges) { const left = state.atlas.byId.get(edge.source); const right = state.atlas.byId.get(edge.target); if (!left || !right) continue; const start = point(left); const end = point(right); context.strokeStyle = colors.similarity; context.globalAlpha = .7; context.lineWidth = 1.5; context.setLineDash([4, 3]); context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); context.setLineDash([]); }
-    const requiredIds = [...state.edges, ...state.hierarchyEdges].flatMap((edge) => [edge.source, edge.target]);
+    for (const connection of state.connections) { const left = state.atlas.byId.get(connection.source); const right = state.atlas.byId.get(connection.target); if (!left || !right) continue; const start = point(left); const end = point(right); const local = Math.hypot(start.x - end.x, start.y - end.y) <= 280; if (!local && connection.grouping) continue; context.strokeStyle = connection.grouping ? colors.parent : colors.similarity; context.globalAlpha = connection.grouping ? .85 : .7; context.lineWidth = connection.grouping ? 1.75 : 1.5; if (!connection.grouping) context.setLineDash([4, 3]); context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); context.setLineDash([]); }
+    const requiredIds = state.connections.flatMap((connection) => [connection.source, connection.target]);
     const selectedLabels = visibleNodeLabels(
       state.atlas,
       lod,
@@ -141,7 +137,7 @@ if (canvas instanceof HTMLCanvasElement) {
     const required = new Set(requiredIds);
     // Keep the map's hot path to three Canvas fill calls. The old per-node
     // beginPath/fill pair made dense LOD3 frames needlessly expensive while
-    // producing the same circles and alpha hierarchy.
+    // producing the same circles and alpha ordering.
     const faintPath = new Path2D();
     const labelPath = new Path2D();
     const focusPath = new Path2D();
@@ -170,33 +166,24 @@ if (canvas instanceof HTMLCanvasElement) {
     }
   };
   const setUrl = (id) => { const url = new URL(window.location.href); if (id) url.searchParams.set('open_focus', id); else url.searchParams.delete('open_focus'); history.pushState({ opennoiseFocus: id }, '', url); };
-  const showDetail = (id, neighborhood, hierarchy) => {
+  const showDetail = (id, connections) => {
     if (!detail) return;
     detail.replaceChildren();
     const heading = document.createElement('h2'); heading.textContent = state.atlas.byId.get(id).name; detail.append(heading);
-    const relatives = Array.isArray(hierarchy?.nodeIds)
-      ? hierarchy.nodeIds.filter((nodeId) => nodeId !== id).map((nodeId) => state.atlas.byId.get(nodeId)).filter(Boolean)
-      : [];
-    if (relatives.length) { const label = document.createElement('h3'); label.textContent = 'Hierarchy'; detail.append(label); const list = document.createElement('ul'); for (const relative of relatives) { const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(relative.id)}`; link.dataset.openNodeId = relative.id; link.textContent = relative.name; item.append(link); list.append(item); } detail.append(list); }
-    const peers = Array.isArray(neighborhood?.nodeIds)
-      ? neighborhood.nodeIds.filter((nodeId) => nodeId !== id).map((nodeId) => state.atlas.byId.get(nodeId)).filter(Boolean)
-      : [];
-    if (peers.length) { const label = document.createElement('h3'); label.textContent = 'Structural connections'; detail.append(label); const list = document.createElement('ul'); for (const peer of peers) { const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; link.textContent = peer.name; item.append(link); list.append(item); } detail.append(list); }
+    if (connections.length) { const label = document.createElement('h3'); label.textContent = 'Connections'; detail.append(label); const list = document.createElement('ul'); for (const connection of connections) { const nodeId = connection.source === id ? connection.target : connection.source; const peer = state.atlas.byId.get(nodeId); if (!peer) continue; const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; const marker = connection.grouping && connection.structural ? 'Grouping + structural' : connection.grouping ? 'Grouping' : 'Structural'; link.textContent = `${marker}: ${peer.name}`; item.append(link); list.append(item); } detail.append(list); }
     if (canvas.dataset.artistUrl) { const artists = document.createElement('a'); artists.className = 'artist-link'; artists.href = `${canvas.dataset.artistUrl}${encodeURIComponent(id)}`; artists.textContent = 'Artist evidence'; detail.append(artists); }
     detail.hidden = false;
   };
   const focus = (id, push = true) => {
     if (!state.atlas?.byId.has(id)) return;
-    state.focus = id; state.edges = []; state.hierarchyEdges = []; state.neighborhoodIds = new Set([id]); state.disclosedCohorts.clear(); if (back) back.hidden = false; if (push) setUrl(id);
-    const neighborhood = structuralNeighborhood(state.atlas, id);
-    const hierarchy = hierarchyNeighborhood(state.atlas, id);
-    state.edges = neighborhood.edges;
-    state.hierarchyEdges = hierarchy.edges;
-    state.neighborhoodIds = new Set([...neighborhood.nodeIds, ...hierarchy.nodeIds]);
+    state.focus = id; state.connections = []; state.neighborhoodIds = new Set([id]); state.disclosedCohorts.clear(); if (back) back.hidden = false; if (push) setUrl(id);
+    const neighborhood = focusedConnections(state.atlas, id);
+    state.connections = neighborhood.connections;
+    state.neighborhoodIds = new Set(neighborhood.nodeIds);
     const nodes = [...state.neighborhoodIds].map((key) => state.atlas.byId.get(key)).filter(Boolean);
     const focusBounds = boundsForNodes(nodes, state.atlas.initialCamera);
-    // Focused neighborhoods must use a detail LOD so their verified edges are
-    // visible. A broad neighborhood can otherwise fit at the overview scale.
+    // Focused connection sets need a detail LOD. A broad set can otherwise fit
+    // at the overview scale.
     state.camera = focusCamera(
       focusBounds,
       state.viewport,
@@ -205,7 +192,7 @@ if (canvas instanceof HTMLCanvasElement) {
       .72,
       { x: state.atlas.byId.get(id).x, y: state.atlas.byId.get(id).y },
     );
-    showDetail(id, neighborhood, hierarchy);
+    showDetail(id, neighborhood.connections);
     schedule();
   };
   const nearest = (cursor) => { let hit = null; let distance = 15; for (const id of state.displayedIds) { const node = state.atlas.byId.get(id); if (!node) continue; const screen = point(node); const next = Math.hypot(screen.x - cursor.x, screen.y - cursor.y); if (next < distance) { hit = node; distance = next; } } return hit; };
