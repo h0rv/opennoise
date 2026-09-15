@@ -13,6 +13,8 @@ from opennoise.deployment import semantic_pages
 from opennoise.deployment.semantic_pages import (
     SemanticPagesExportError,
     SemanticPagesExportInputs,
+    StaticLabelPayload,
+    _label_reveal_scale,
     _PublicIdMapper,
     export_semantic_pages,
 )
@@ -21,7 +23,9 @@ LAYOUT = Path(".cache/semantic-map-layout-v2/artifact.json")
 STATIC_ROOT = Path(__file__).resolve().parents[2] / "src" / "opennoise" / "static"
 
 
-def _assert_public_payload(test: unittest.TestCase, payload: dict[str, object]) -> None:
+def _assert_public_payload(test: unittest.TestCase, payload: dict[str, object]) -> None:  # noqa: C901
+    public_bytes = json.dumps(payload, sort_keys=True)
+    test.assertNotIn("legacy:", public_bytes)
     nodes = payload["nodes"]
     assert isinstance(nodes, list)
     node_ids: set[str] = set()
@@ -67,6 +71,20 @@ def _assert_public_payload(test: unittest.TestCase, payload: dict[str, object]) 
         test.assertTrue(set(landmark["member_ids"]).issubset(node_ids))
         test.assertNotIn(":", landmark["root_id"])
         test.assertTrue(all(":" not in node_id for node_id in landmark["member_ids"]))
+    label_atlas = payload["label_atlas"]
+    assert isinstance(label_atlas, list)
+    test.assertEqual(len(label_atlas), len(nodes))
+    label_ids = set()
+    for label in label_atlas:
+        assert isinstance(label, dict)
+        label_ids.add(label["id"])
+        test.assertIn(label["id"], node_ids)
+        test.assertEqual(label["side"], "right")
+        for field in ("offset_x", "offset_y", "width_px", "height_px", "reveal_scale"):
+            test.assertIsInstance(label[field], (int, float))
+        test.assertGreaterEqual(label["width_px"], 16)
+        test.assertGreaterEqual(label["reveal_scale"], 0)
+    test.assertEqual(label_ids, node_ids)
 
 
 class PublicIdMapperTests(unittest.TestCase):
@@ -82,6 +100,46 @@ class PublicIdMapperTests(unittest.TestCase):
         self.assertEqual(mapper.public("item6291"), "item6291")
         with self.assertRaises(SemanticPagesExportError):
             _PublicIdMapper.from_ids((*ids, "archive:item1"))
+
+
+class StaticLabelAtlasTests(unittest.TestCase):
+    def test_fixed_label_reveal_is_deterministic_and_clear_forever(self) -> None:
+        root = StaticLabelPayload(
+            id="root",
+            side="right",
+            offset_x=12,
+            offset_y=5,
+            width_px=42,
+            priority=0,
+            reveal_scale=0,
+        )
+        candidate = StaticLabelPayload(
+            id="child",
+            side="right",
+            offset_x=12,
+            offset_y=5,
+            width_px=54,
+            priority=1,
+            reveal_scale=900,
+        )
+        reveal = _label_reveal_scale(candidate, 0.001, 0, ((0, 0, root),), 900)
+        repeat = _label_reveal_scale(candidate, 0.001, 0, ((0, 0, root),), 900)
+        self.assertEqual(reveal, repeat)
+        self.assertGreaterEqual(reveal, 900)
+        for scale in (reveal, reveal * 2, reveal * 100):
+            left = (12, 5 - 14, 12 + 42, 5)
+            right = (
+                0.001 * scale + 12,
+                0.001 * scale + 5 - 14,
+                0.001 * scale + 12 + 54,
+                0.001 * scale + 5,
+            )
+            self.assertTrue(
+                left[2] <= right[0]
+                or right[2] <= left[0]
+                or left[3] <= right[1]
+                or right[3] <= left[1]
+            )
 
 
 @unittest.skipUnless(LAYOUT.is_file(), "semantic-layout integration artifact is not provisioned")

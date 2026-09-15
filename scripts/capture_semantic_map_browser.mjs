@@ -38,7 +38,8 @@ class Cdp {
     this.socket.addEventListener("message", ({ data }) => {
       const message = JSON.parse(data);
       if (message.method === "Runtime.exceptionThrown") {
-        this.runtimeErrors.push(message.params.exceptionDetails.text);
+        const details = message.params.exceptionDetails;
+        this.runtimeErrors.push(details.exception?.description ?? details.text);
       }
       if (message.method === "Runtime.consoleAPICalled" && message.params.type === "error") {
         this.runtimeErrors.push(

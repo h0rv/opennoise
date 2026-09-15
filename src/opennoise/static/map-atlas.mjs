@@ -5,7 +5,7 @@ const SPATIAL_COLUMNS = 48;
 const SPATIAL_ROWS = 28;
 // Keep every camera operation bounded by a concrete value. A finite cap makes
 // repeated wheel, button, and pinch gestures safe to serialize and inspect.
-export const MAX_SCALE = 1_000_000;
+export const MAX_SCALE = 1_000_000_000_000;
 
 export function clamp(value, lower, upper) {
   return Math.max(lower, Math.min(upper, value));
@@ -100,6 +100,26 @@ function normaliseLabelSets(value, nodeIds) {
     for (const id of ids) if (typeof id === 'string' && nodeIds.has(id)) prior.add(id);
     return [...prior];
   });
+}
+
+function normaliseStaticLabels(value, nodeIds) {
+  return (Array.isArray(value) ? value : [])
+    .filter((label) => label && typeof label.id === 'string' && nodeIds.has(label.id)
+      && label.side === 'right'
+      && [label.offset_x, label.offset_y, label.width_px, label.height_px, label.reveal_scale]
+        .every((number) => typeof number === 'number' && Number.isFinite(number))
+      && Number.isInteger(label.priority))
+    .map((label) => ({
+      id: label.id,
+      side: label.side,
+      offsetX: label.offset_x,
+      offsetY: label.offset_y,
+      width: Math.max(1, label.width_px),
+      height: Math.max(1, label.height_px),
+      revealScale: Math.max(0, label.reveal_scale),
+      priority: label.priority,
+    }))
+    .sort((left, right) => left.priority - right.priority || compareCodepoints(left.id, right.id));
 }
 
 function normaliseAliases(value, nodeIds) {
@@ -202,6 +222,7 @@ export function normaliseAtlasPayload(payload) {
     initialCamera,
     worldBounds,
     labels: normaliseLabelSets(source.labels ?? source.label_sets, nodeIds),
+    staticLabels: normaliseStaticLabels(source.label_atlas ?? source.static_labels, nodeIds),
     aliases: normaliseAliases(source.aliases, nodeIds),
     edges,
     edgesById,
@@ -318,7 +339,7 @@ export function nextLodScale(scale, fitScale, maximumScale = MAX_SCALE) {
   // Semantic tiers end at L3, not camera navigation. Beyond L3 the content is
   // stable and each explicit + remains a conventional, continuous zoom step.
   if (current >= LEVEL_COUNT - 1) return Math.min(scale * 1.6, maximum);
-  const target = fitScale * 2 ** (current + 0.3);
+  const target = fitScale * 2 ** (current + 0.35);
   return Math.min(target, maximum);
 }
 
