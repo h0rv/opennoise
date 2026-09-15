@@ -53,45 +53,14 @@ derived database hash and size. The source database is read-only and is never
 modified. The projection retains per-facet distinct release-group counts and a
 cross-facet deduplicated count.
 
-When both sidecar files exist, `uv run poe dev-research` verifies them with the
-source at loopback startup and uses them for artist-to-seed requests. A missing
-pair leaves the completed-source query path available. A configured incomplete,
-tampered, or source-mismatched pair fails startup; it never silently uses the
-sidecar. Startup deliberately includes whole-file SHA-256 and SQLite integrity
-checks for the multi-gigabyte source, so wait for the loopback server to report
-that startup is complete before measuring request latency.
+The query command verifies both sidecar files against the source when they are
+provided. A missing pair leaves the completed-source query path available. A
+configured incomplete, tampered, or source-mismatched pair fails the command;
+it never silently uses the sidecar. Verification deliberately includes
+whole-file SHA-256 and SQLite integrity checks for the multi-gigabyte source.
 
 The JSON output is local research only. It has `export_allowed=false` and `serving_allowed=false`. It is not a public API, a UI result, or an artist similarity claim.
 
-## Loopback discovery panel
-
-The development app keeps this panel disabled by default. Set
-`OPENNOISE_LOCAL_RESEARCH_ARTIST_EVIDENCE_ENABLED=true` only with a loopback host.
-Startup verifies the artifact binding, complete evidence database hash and SQLite
-integrity once, then opens bounded read-only queries. It does not repeat a full
-database hash for each panel request. Non-loopback startup and non-loopback
-fragment requests are rejected.
-
-The panel is available only from an explicit `legacy:itemN` map selection. It
-does not infer a legacy seed from a catalog QID. It lists direct artists and
-album-supported artists separately. An artist link returns exact stable seed
-links with the same separation. Configure the optional metadata database and
-receipt together to show conflict-free exact MusicBrainz credit names; otherwise
-the panel displays the exact MBID. These routes remain local research only and
-do not alter public routes or export policy.
-
-Run the completed local discovery mode with one command:
-
-```sh
-uv run poe dev-research
-```
-
-It uses the completed evidence, peer-index, and metadata paths shown in
-`.env.example`, and automatically adds the reverse sidecar when both files are
-present. It fails with the required missing paths if any are absent. It listens
-on `127.0.0.1:3002` by default, so it leaves the standard `poe dev` port alone.
-Set `PORT` before the command to use a different loopback port. It keeps the
-standard `poe dev` and public routes unchanged.
 
 ## Candidate smoke checks
 

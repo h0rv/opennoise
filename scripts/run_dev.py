@@ -1,88 +1,29 @@
-"""Launch the local app only with a validated production map pair."""
+"""Serve a pre-exported static OpenNoise directory on loopback."""
 
 from __future__ import annotations
 
-import os
-import subprocess
-import sys
-from dataclasses import dataclass
+import argparse
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-
-from opennoise.models.production import ProductionMapArtifact
-
-
-@dataclass(frozen=True, slots=True)
-class ProductionLaunchPaths:
-    """One compatible serving database and semantic map artifact."""
-
-    database: Path
-    map_artifact: Path
-
-
-def resolve_production_paths(root: Path) -> ProductionLaunchPaths | None:
-    """Prefer explicit environment paths, then cacheable release outputs."""
-    configured_database = os.environ.get("OPENNOISE_DATABASE_PATH")
-    configured_map = os.environ.get("OPENNOISE_PRODUCTION_MAP_PATH")
-    candidates = (
-        ProductionLaunchPaths(
-            database=Path(configured_database),
-            map_artifact=Path(configured_map),
-        )
-        if configured_database and configured_map
-        else None,
-        ProductionLaunchPaths(
-            database=root / "data/public.sqlite",
-            map_artifact=root / "data/model/production-map-v1.json",
-        ),
-        ProductionLaunchPaths(
-            database=root / ".cache/release-certify/public.sqlite",
-            map_artifact=root / ".cache/release-certify/production-map-v1.json",
-        ),
-    )
-    for candidate in candidates:
-        if (
-            candidate is None
-            or not candidate.database.is_file()
-            or not candidate.map_artifact.is_file()
-        ):
-            continue
-        try:
-            ProductionMapArtifact.model_validate_json(
-                candidate.map_artifact.read_text(encoding="utf-8")
-            )
-        except (OSError, ValueError):
-            continue
-        return candidate
-    return None
 
 
 def main() -> int:
-    """Start the best receipt-bound local semantic map when it is available."""
-    root = Path.cwd()
-    semantic_layout = root / ".cache/semantic-map-layout-v1/artifact.json"
-    if semantic_layout.is_file():
-        sys.stderr.write(
-            "Starting receipt-bound local semantic map; public release certification remains "
-            "opt-in.\n"
+    """Run the sole local delivery path without constructing an application backend."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--directory", type=Path, default=Path("dist"))
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=3001)
+    arguments = parser.parse_args()
+    if not (arguments.directory / "index.html").is_file():
+        parser.error(
+            f"{arguments.directory} has no static export; "
+            "run `uv run poe export-semantic-pages` first"
         )
-        return subprocess.run(
-            [sys.executable, "-m", "scripts.run_local_research_dev"], check=False
-        ).returncode
-    paths = resolve_production_paths(root)
-    if paths is None:
-        sys.stderr.write(
-            "Production map unavailable. Run `uv run poe release-certify` first "
-            "(requires the sealed cache; see docs/serving/PUBLIC_RELEASE_PIPELINE.md).\n"
-        )
-        return 2
-    environment = os.environ | {
-        "OPENNOISE_DATABASE_PATH": str(paths.database),
-        "OPENNOISE_DATABASE_READ_ONLY": "true",
-        "OPENNOISE_PRODUCTION_MAP_PATH": str(paths.map_artifact),
-    }
-    return subprocess.run(
-        [sys.executable, "-m", "opennoise.serving.cli", "serve"], check=False, env=environment
-    ).returncode
+    handler = partial(SimpleHTTPRequestHandler, directory=str(arguments.directory))
+    with ThreadingHTTPServer((arguments.host, arguments.port), handler) as server:
+        server.serve_forever()
+    return 0
 
 
 if __name__ == "__main__":

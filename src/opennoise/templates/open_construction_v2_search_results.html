@@ -1,5 +1,0 @@
-{% for hit in hits %}
-<a class="result" href="/open/{{ hit.node_id | urlencode }}">
-  {{ hit.name }} <span class="result-kind">{% if hit.node_kind == 'legacy_name_seed' %}source name{% else %}public taxonomy{% endif %}</span>
-</a>
-{% endfor %}

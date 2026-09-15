@@ -12,7 +12,7 @@ from collections import defaultdict
 from contextlib import closing
 from dataclasses import dataclass
 from hashlib import sha256
-from pathlib import Path  # noqa: TC003  # Litestar resolves dependency dataclass annotations.
+from pathlib import Path  # noqa: TC003
 from time import monotonic
 from typing import TYPE_CHECKING, Final, Literal
 
@@ -41,7 +41,6 @@ from opennoise.serving.local.musicbrainz_artist_reverse_lookup import (
     open_trusted_reverse_lookup,
     verify_artist_reverse_lookup_sources,
 )
-from opennoise.serving.open.construction_store_v2 import _ALIASES_BY_NODE_ID
 from opennoise.taxonomy.seeds.universe import normalize_label
 
 if TYPE_CHECKING:
@@ -58,6 +57,7 @@ _EXPECTED_DIRECT_COLUMNS: Final = frozenset({"genre_id", "artist_id", "facet", "
 _EXPECTED_SUPPORT_COLUMNS: Final = frozenset(
     {"genre_id", "artist_id", "facet", "release_group_id", "evidence_ref"}
 )
+_SEED_SEARCH_ALIASES: Final = {"item887": ("idm", "intelligent dance music")}
 
 type DirectFacet = Literal["musicbrainz_genre", "musicbrainz_tag"]
 
@@ -777,8 +777,7 @@ def _group_aggregated_supported_seeds(
 
 
 def _seed_search_terms(source_item_id: str, name: str, normalized_name: str) -> frozenset[str]:
-    alias = _ALIASES_BY_NODE_ID.get(f"legacy:{source_item_id}")
-    alias_terms = alias.search_terms if alias is not None else ()
+    alias_terms = _SEED_SEARCH_ALIASES.get(source_item_id, ())
     return frozenset(
         normalize_label(value) for value in (source_item_id, name, normalized_name, *alias_terms)
     )

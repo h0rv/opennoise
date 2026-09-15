@@ -21,15 +21,14 @@ approximations and do not claim exact recovery of private historical weights.
 
 Delete path: remove `reconstruction.py`, `tests/test_reconstruction.py`, and `scripts/evaluate_reconstruction.py`. The application, database, import jobs, and published layouts do not import the harness.
 
-## Map exploration queries
+## Map exploration data
 
-Status: active groundwork.
+Status: offline groundwork.
 
-`src/opennoise/exploration.py` defines viewport, source, time, lens, and level of detail parameters. `GET /api/explore/map` returns the exact query, the published layout revision and input hash, the effective bounds, stable point fields, and whether the result was cut off by the requested limit. `GET /fragments/map` accepts the same parameters and can return points with or without labels.
-
-Delete path: remove `exploration.py`, `ExploredMap`, the two experimental route paths, and the `Database.query_map` methods. The stable `/api/map` route and the main map do not depend on these query options.
-
-The current database has 6,291 map points. A local full query took about 70 milliseconds, while a viewport containing 833 points took about 28 milliseconds. These measurements do not justify a cache or a spatial index yet. We should measure again after adding more layouts or enough points to make viewport requests slow.
+`src/opennoise/serving/exploration.py` defines typed viewport, source, time,
+lens, and level-of-detail records used by offline database analysis. It does
+not expose a browser route. The public map is generated from the independent
+semantic-layout artifact by the static Pages exporter.
 
 ## Layout strategy interface
 
@@ -59,11 +58,11 @@ Delete path: remove `map_presentation.py`. No route, database table, or current 
 
 ## Genre detail and provenance
 
-Status: API and fragment groundwork.
+Status: offline catalog groundwork.
 
-`GET /api/genres/{id}` returns a genre with its display-safe source evidence. `GET /api/entities/{id}/provenance` returns the same evidence without assuming the entity is a genre. `GET /fragments/genres/{id}` renders a bounded HTML detail region. The main map does not open this region yet.
-
-Delete path: remove `genre_detail.html`, `EvidenceController`, the provenance models in `exploration.py`, and the matching database methods. No catalog or import tables change.
+The catalog stores display-safe source evidence and genre-detail records for
+model construction and audit. The static map does not query a genre-detail API
+or render server fragments.
 
 ## Albums within a genre
 

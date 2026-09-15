@@ -1,4 +1,4 @@
-"""Test-client support for environments without cross-thread socket wakeups."""
+"""Async test helpers for environments without cross-thread socket wakeups."""
 
 from __future__ import annotations
 
@@ -7,12 +7,8 @@ import selectors
 import unittest
 from typing import TYPE_CHECKING, Any, override
 
-from litestar.testing import TestClient
-
 if TYPE_CHECKING:
     from collections.abc import Coroutine
-
-    from litestar import Litestar
 
 
 class _PollingSelector(selectors.SelectSelector):
@@ -20,7 +16,7 @@ class _PollingSelector(selectors.SelectSelector):
 
     @override
     def select(self, timeout: float | None = None) -> list[tuple[selectors.SelectorKey, int]]:
-        """Bound idle waits so portal callbacks are observed without a socket wakeup."""
+        """Bound idle waits so callbacks are observed without a socket wakeup."""
         bounded_timeout = 0.01 if timeout is None else min(timeout, 0.01)
         return super().select(bounded_timeout)
 
@@ -40,8 +36,3 @@ class PollingIsolatedAsyncioTestCase(unittest.IsolatedAsyncioTestCase):
     """Use polling event loops for async tests in restricted runners."""
 
     loop_factory = staticmethod(_polling_loop_factory)
-
-
-def create_test_client(app: Litestar) -> TestClient[Litestar]:
-    """Create a Litestar client with bounded polling for the test sandbox."""
-    return TestClient(app, backend_options={"loop_factory": _polling_loop_factory})

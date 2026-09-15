@@ -130,8 +130,8 @@ adapter writes provenance and each model run records its inputs, parameters,
 code revision, seed, and content hash. Local object storage and future object
 stores use the same small abstraction.
 
-Keep the stack small: Python 3.13.14, uv, mise, Poe, Litestar, Pydantic,
-SQLite, and HTMX 4. Static map releases precompute SVG geometry, labels, and
-semantic levels of detail; ordinary HTML links and forms handle navigation.
-Any browser search module remains small and must not perform graph layout,
-coordinate calculation, or physics simulation.
+Keep the stack small: Python 3.13.14, uv, mise, Poe, Pydantic, SQLite, and
+Cloudflare Pages. Offline tools construct source-bound artifacts, then one
+static exporter writes the complete browser surface. The browser receives
+precomputed HTML, JSON, CSS, and JavaScript only: it has no OpenNoise API,
+application server, server-rendered route, or graph-layout calculation.

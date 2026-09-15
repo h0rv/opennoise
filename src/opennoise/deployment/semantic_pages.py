@@ -15,7 +15,6 @@ from opennoise.ml.semantic_layout.contracts import (
     SemanticLayoutArtifact,
     verify_semantic_map_layout,
 )
-from opennoise.serving.map.semantic_store import SemanticMapStore
 
 _REVISION: Final = "opennoise-semantic-pages-v1"
 _PACKAGE_ROOT: Final = Path(__file__).resolve().parents[1]
@@ -45,9 +44,7 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
         verify_semantic_map_layout(artifact)
     except (OSError, ValueError) as error:
         raise SemanticPagesExportError("invalid semantic map layout artifact") from error
-    store = SemanticMapStore(inputs.semantic_layout_path)
-    store.start()
-    renderer = store.renderer().model_dump(mode="json")
+    renderer = _renderer_payload(artifact)
     renderer["edges"] = [
         {
             "source": f"legacy:{edge.left_seed_id}",
@@ -87,6 +84,100 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
     manifest["output_sha256"] = sha256_hex(canonical_json(manifest))
     _write_json(output / "opennoise-static-manifest.json", manifest)
     return manifest
+
+
+def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
+    """Project a verified atlas into the sole static browser payload."""
+    nodes = [
+        {
+            "id": f"legacy:{coordinate.seed_id}",
+            "name": coordinate.name,
+            "x": coordinate.x,
+            "y": coordinate.y,
+            "lod": coordinate.lod,
+            "importance": coordinate.importance,
+            "community_id": coordinate.community_id,
+            "display_parent_id": (
+                f"legacy:{coordinate.display_parent_id}"
+                if coordinate.display_parent_id is not None
+                else None
+            ),
+            "hierarchy_root_id": (
+                f"legacy:{coordinate.hierarchy_root_id}"
+                if coordinate.hierarchy_root_id is not None
+                else None
+            ),
+            "hierarchy_depth": coordinate.hierarchy_depth,
+        }
+        for coordinate in sorted(artifact.coordinates, key=lambda value: value.seed_id)
+    ]
+    anchors = {
+        f"legacy:{community.anchor_seed_id}"
+        for community in artifact.communities
+        if community.overview_visible
+    }
+    ranked_coordinates = sorted(
+        artifact.coordinates,
+        key=lambda coordinate: (
+            -coordinate.importance,
+            coordinate.name.casefold(),
+            coordinate.seed_id,
+        ),
+    )
+    labels: list[dict[str, object]] = []
+    prior = sorted(anchors)
+    for level, budget in enumerate((45, 96, 210, 420)):
+        candidates = [
+            f"legacy:{coordinate.seed_id}"
+            for coordinate in ranked_coordinates
+            if coordinate.lod <= level and f"legacy:{coordinate.seed_id}" not in prior
+        ]
+        prior.extend(candidates[: max(0, budget - len(prior))])
+        labels.append({"level": level, "ids": list(prior)})
+    aliases = {
+        (coordinate.name.casefold(), f"legacy:{coordinate.seed_id}")
+        for coordinate in artifact.coordinates
+    }
+    aliases.update(
+        {
+            ("idm", "legacy:item887"),
+            ("intelligent dance", "legacy:item887"),
+            ("pop music", "legacy:item1"),
+            ("popular music", "legacy:item1"),
+        }
+    )
+    return {
+        "revision": "semantic-scatter-map-v2",
+        "source": "semantic-map-layout-v1",
+        "logical_output_sha256": artifact.output_sha256,
+        "total_seed_count": artifact.stable_seed_count,
+        "placed_node_count": len(nodes),
+        "unplaced_node_count": len(artifact.unplaced),
+        "world_bounds": artifact.world_bounds.model_dump(mode="json"),
+        "content_bounds": artifact.content_bounds.model_dump(mode="json"),
+        "initial_camera": artifact.initial_camera.model_dump(mode="json"),
+        "nodes": nodes,
+        "overview_regions": [
+            {
+                "community_id": community.community_id,
+                "label": community.label,
+                "x": community.x,
+                "y": community.y,
+                "member_count": community.member_count,
+                "overview_visible": community.overview_visible,
+                "heading_lod": 0
+                if community.overview_visible
+                else min(
+                    coordinate.lod
+                    for coordinate in artifact.coordinates
+                    if coordinate.community_id == community.community_id
+                ),
+            }
+            for community in artifact.communities
+        ],
+        "labels": labels,
+        "aliases": [{"term": term, "target": target} for term, target in sorted(aliases)],
+    }
 
 
 def _html() -> str:

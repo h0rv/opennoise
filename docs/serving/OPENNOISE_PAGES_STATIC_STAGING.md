@@ -1,78 +1,43 @@
-# OpenNoise static Pages export
+# OpenNoise static Pages release
 
-`export_opennoise_pages.py` builds the entire OpenNoise public surface into an
-empty directory for Cloudflare Pages. It creates no Pages Functions, API, or
-runtime graph library. The browser receives pre-rendered SVG, ordinary links,
-and one small deferred search module that filters a static name index.
+OpenNoise has one delivery path: the semantic atlas exported as a static
+Cloudflare Pages directory. The export creates no Functions, server-side
+routes, API endpoints, database connection, or runtime graph service.
 
-The visible map is bound to the sealed, export-allowed
-`production-map-v1.json` receipt. At this checkpoint that receipt contains 603
-public mapped genre nodes, 3,274 similarity edges, and 712 taxonomy edges. Its
-byte SHA-256 is
-`7b92fc8a2f45fc721d12eafc7ae117260045143282e36bde41938f8d602481df`; its
-logical SHA-256 is
-`017fc6f0eeebbac1f59df907b69f1229083ad221a36a64986ad878fa47ee02fc`.
+## Export
 
-Search has a deliberately different contract. It retains all 6,291 permitted
-legacy names from `open-construction-graph-v2`, but a result gets a map link
-only when its sealed factual `canonical_catalog_identity` edge resolves to a
-node in the production map. The export receipt records the two counts
-separately. In the current inputs, 433 names are directly mapped and 5,858 are
-searchable only. A searchable-only name has no coordinate, neighborhood, or
-implied genre identity.
-
-The v2 input is accepted only when every historical-construction input-audit
-field is false, including coordinates, memberships, neighbors, artist
-membership evidence, listening aggregates, and audio. The exporter consumes
-only its retained names and factual exact identity edges; it never uses its
-layout or historical data.
-
-Set the explicit inputs and build into a new or empty directory with Poe:
-
-```bash
-export OPENNOISE_PRODUCTION_MAP_PATH=data/model/production-map-v1.json
-export OPENNOISE_CONSTRUCTION_GRAPH_V2_PATH=data/model/open-construction-graph-v2.json
-export OPENNOISE_PAGES_OUTPUT=dist
-UV_OFFLINE=1 uv run --no-sync poe export-opennoise-pages
-```
-
-`index.html` is the clean Fit view. `levels/1.html` through `levels/3.html`
-are ordinary, back-navigable detail links. Each level pre-renders a cumulative
-LOD set from the sealed artifact, while higher levels enlarge the SVG in an
-`overflow:auto` viewport for native mouse, keyboard, and touch scrolling.
-Genre pages are ordinary URLs and list bounded production-map similarity peers.
-All level, genre, stylesheet, and search paths are relative, so the directory
-also works under a plain static server.
-
-This is a static navigation preview, not a claim that the current source
-projection has solved map-quality review. The sealed input still has visible
-boundary pileups and a level-3 vertical concentration. Those are upstream
-model/layout defects and are deliberately not hidden or reinterpreted by this
-exporter's CSS.
-
-`opennoise-static-manifest.json` is the release receipt. It binds the input
-artifacts, counts, deterministic output hash, and raw/gzip bytes of every
-served file. The full production input is not copied into `dist`: the receipt
-binds it by byte and logical hash, while the public output contains only the
-precomputed presentation and search index.
-
-`wrangler.jsonc` declares `./dist` as a static Pages output directory and no
-backend bindings. Deployment, remote renaming, and custom-domain work remain
-separate authorized actions.
-
-## Semantic atlas release
-
-The current product map is the verified local semantic atlas rather than the
-older 603-node public-model SVG. Its static exporter preserves the Canvas
-renderer, all 2,945 placed nodes, 24 overview regions, and its bounded local
-structural edge index without adding a backend API:
-
-```bash
+```sh
 export OPENNOISE_SEMANTIC_MAP_LAYOUT=.cache/semantic-map-layout-v1/artifact.json
 export OPENNOISE_PAGES_OUTPUT=dist
 UV_OFFLINE=1 uv run --no-sync poe export-semantic-pages
 ```
 
-Its `opennoise-static-manifest.json` binds the sealed atlas byte and logical
-hashes, the 6,291/2,945/3,346 accounting, 24 overview regions, 34,937 structural
-edges, and every served static asset. Use this path for the public map release.
+The input is verified before export. The resulting static payload contains the
+complete renderer view: 6,291 total names, 2,945 placed nodes, 3,346 unplaced
+names, 24 overview regions, and 34,937 bounded structural edges. The map client
+loads only `assets/semantic-atlas.json`; focused neighborhoods are selected from
+the checked-in edge index in the browser.
+
+`opennoise-static-manifest.json` binds the exact input byte and logical hashes,
+coverage accounting, and checksums for every emitted file. It is the release
+receipt.
+
+## Local verification
+
+```sh
+uv run poe dev
+```
+
+This starts a loopback static file server for `dist` at
+<http://127.0.0.1:3001>. It fails clearly when no export exists. It does not
+build an application backend.
+
+## Deploy
+
+Cloudflare Pages uses `wrangler.jsonc` and uploads `./dist` directly:
+
+```sh
+wrangler pages deploy dist --project-name opennoise --branch main
+```
+
+The same directory is used locally and in production.

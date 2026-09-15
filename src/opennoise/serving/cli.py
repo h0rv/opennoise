@@ -1,19 +1,16 @@
-"""Command line entry points for the local app and importer."""
+"""Command-line entry points for offline ingestion, modeling, and export work."""
 
 import argparse
 import asyncio
 import hashlib
 import json
-import os
 import resource
 import sys
 import time
-from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 
 import httpx
-import uvicorn
 
 from opennoise.adapters.everynoise import QUINT_SOURCE, fetch_verified_source
 from opennoise.catalog.artists import ArtistProjector
@@ -87,13 +84,6 @@ from opennoise.taxonomy.seeds.universe import (
     build_genre_seed_universe,
     write_genre_seed_universe,
 )
-
-
-def _serve(args: argparse.Namespace) -> int:
-    os.environ["OPENNOISE_DATABASE_PATH"] = str(args.database)
-    with suppress(KeyboardInterrupt):
-        uvicorn.run("opennoise.serving.app:app", host=args.host, port=args.port)
-    return 0
 
 
 def _ingest(args: argparse.Namespace) -> int:
@@ -471,15 +461,6 @@ def parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     settings = Settings()
     command_parser = argparse.ArgumentParser(prog="opennoise")
     commands = command_parser.add_subparsers(dest="command", required=True)
-    serve = commands.add_parser("serve", help="run the local web app")
-    serve.add_argument("--host", default=settings.host)
-    serve.add_argument("--port", type=int, default=settings.port)
-    serve.add_argument(
-        "--database",
-        type=Path,
-        default=settings.database_path,
-    )
-    serve.set_defaults(handler=_serve)
     ingest = commands.add_parser("ingest", help="import local JSONL metadata")
     ingest.add_argument("input", type=Path)
     ingest.add_argument("--source-key", required=True)
@@ -670,8 +651,6 @@ def main() -> int:  # noqa: C901, PLR0911, PLR0912
     """Run the selected command."""
     args = parser().parse_args()
     match args.command:
-        case "serve":
-            return _serve(args)
         case "ingest":
             return _ingest(args)
         case "bootstrap-everynoise":

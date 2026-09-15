@@ -56,7 +56,7 @@ def main() -> int:
         type=Path,
         default=_default_path(
             "OPENNOISE_PUBLIC_RELEASE_EVIDENCE",
-            root / ".worktrees/final-integration/.cache/release-certify",
+            root / ".cache/public-release-evidence",
         ),
     )
     parser.add_argument(

@@ -15,12 +15,9 @@ license = "MIT"
 dependencies = [
     "httpx>=0.28.1",
     "ijson>=3.5.1",
-    "jinja2==3.1.6",
-    "litestar==2.24.0",
     "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
     "scipy>=1.18.1",
-    "uvicorn==0.52.4",
     "zstandard>=0.25.0",
 ]
 
@@ -70,10 +67,6 @@ ignore = [
     "S101", # Assertions are the test contract.
     "INP001", # Focused test directories need not be packages.
 ]
-"src/opennoise/serving/routes.py" = [
-    "PLR0913", # Route signatures list the public query parameters explicitly.
-    "PLR0917", # Litestar injects route parameters by name rather than positional calls.
-]
 "src/opennoise/history/signals/model.py" = [
     "C901", # Numerical evaluation and sparse component assembly are intentionally cohesive.
     "PLR0915", # The evaluator keeps every oracle-only calculation in one auditable boundary.
@@ -117,11 +110,8 @@ acquire-source-cache = "opennoise acquire-source-cache $OPENNOISE_SOURCE_CACHE_S
 cache-musicbrainz-release-group-20260905 = "opennoise acquire-source-cache musicbrainz_json_release_group_research_20260905 --object-store $OPENNOISE_MB_RELEASE_GROUP_CACHE_OBJECT_STORE --work-directory $OPENNOISE_MB_RELEASE_GROUP_CACHE_WORK_DIRECTORY --receipt $OPENNOISE_MB_RELEASE_GROUP_CACHE_RECEIPT --max-sources 1 --max-total-bytes 1200000000 --max-concurrency 1 --timeout-seconds 3600"
 restore-source-cache = "opennoise restore-source-cache $OPENNOISE_SOURCE_CACHE_SOURCE_IDS --object-store $OPENNOISE_SOURCE_CACHE_OBJECT_STORE --receipt $OPENNOISE_SOURCE_CACHE_RECEIPT --destination $OPENNOISE_SOURCE_CACHE_DESTINATION"
 dev = "python scripts/run_dev.py"
-dev-research = "python -m scripts.run_local_research_dev"
-export-opennoise-pages = "python scripts/export_opennoise_pages.py --production-map $OPENNOISE_PRODUCTION_MAP_PATH --open-construction-v2 $OPENNOISE_CONSTRUCTION_GRAPH_V2_PATH --output $OPENNOISE_PAGES_OUTPUT"
 export-semantic-pages = "python scripts/export_semantic_pages.py --semantic-layout $OPENNOISE_SEMANTIC_MAP_LAYOUT --output $OPENNOISE_PAGES_OUTPUT"
 build-local-musicbrainz-artist-reverse-lookup = "python scripts/build_local_musicbrainz_artist_reverse_lookup.py --evidence-db .cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite --evidence-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json --output-db .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup.sqlite --output-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup-artifact.json"
-dev-legacy = "opennoise serve"
 evaluate-layout = "python scripts/evaluate_layout.py data/opennoise.sqlite --layout default"
 evaluate-membership = "python scripts/evaluate_membership.py tests/fixtures/membership_evaluation.json"
 evaluate-artist-memberships = "python scripts/evaluate_artist_memberships.py $OPENNOISE_PUBLIC_MODEL_ARTIFACT --judgments $OPENNOISE_ARTIST_MEMBERSHIP_JUDGMENTS --report $OPENNOISE_ARTIST_MEMBERSHIP_EVALUATION_REPORT --database $OPENNOISE_ARTIST_MEMBERSHIP_EVALUATION_DATABASE --object-store $OPENNOISE_ARTIST_MEMBERSHIP_EVALUATION_OBJECT_STORE"
@@ -179,8 +169,6 @@ publish-public-model = "opennoise publish-public-model"
 validate-public-graph = "python scripts/validate_public_graph.py"
 evaluate-public-model-gate = "python scripts/evaluate_public_model_gate.py"
 verify-phase3-release-manifest = "python scripts/verify_phase3_release_manifest.py"
-ui-qa = "python scripts/render_ui_qa.py"
-open-v2-qa = "python scripts/qa_open_construction_v2.py"
 evaluate-production-map = "python scripts/evaluate_production_map.py"
 build-historical-compatibility = "python scripts/build_historical_compatibility.py"
 evaluate-historical-compatibility = "python scripts/evaluate_historical_compatibility.py"
@@ -217,9 +205,6 @@ sequence = [
     { cmd = "python scripts/build_production_map.py --database data/public.sqlite --source-model data/model/phase3-public-model.json --output data/model/production-map-v1.json" },
 ]
 
-
-[tool.poe.tasks.release-certify]
-cmd = "python scripts/release_certify.py"
 
 [tool.poe.tasks.public-release-custody]
 cmd = "python scripts/custody_public_release.py"

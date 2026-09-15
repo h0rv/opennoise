@@ -51,13 +51,12 @@ are satisfied.
 ## Publication
 
 `poe build-public-model` creates a versioned model artifact from local,
-verified inputs. `uv run poe release-certify` is the release boundary. It validates the
-qualified cache, serving database, model artifact, production-map artifact, and
-their manifests before a server can use them.
+verified inputs. It remains offline tooling. The public website is built only
+from the sealed semantic-layout artifact by `poe export-semantic-pages`; Pages
+serves the resulting files without a database or application server.
 
-The serving database persists names, representatives, profile memberships,
-neighbor rows, and evidence. Genre detail exposes a compact `Signals` section:
-direct and one-hop membership components plus ranked similarity scores.
+The offline catalog database persists names, representatives, profile
+memberships, neighbor rows, and evidence for model construction and auditing.
 
 Publication is deterministic for the logical model output. File-level runtime
 measurements are recorded separately because elapsed time and peak memory vary.

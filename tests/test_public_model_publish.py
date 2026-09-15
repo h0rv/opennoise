@@ -20,9 +20,6 @@ from opennoise.models.modeling import (
     PublicModelInput,
     PublicModelSettings,
 )
-from opennoise.serving.app import create_app
-from opennoise.serving.genre_entry import GenreEntryRepository
-from tests._test_client import create_test_client
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "migrations" / "smoke" / "fixture.sql"
@@ -209,7 +206,6 @@ class PublicModelPublishTests(unittest.TestCase):
             resolve_public_policy_id(self.database_path, "wrong-policy-source")
 
     def test_publish_is_atomic_idempotent_and_queryable(self) -> None:
-        self.assertEqual(GenreEntryRepository(self.database_path)._read(1)[2], ())  # noqa: SLF001
         first = publish_public_model(
             self.database_path,
             self.artifact_path,
@@ -261,6 +257,12 @@ class PublicModelPublishTests(unittest.TestCase):
             neighbor_count = connection.execute(
                 "SELECT count(*) FROM public_genre_neighbors"
             ).fetchone()
+            representatives = connection.execute(
+                """SELECT entity_kind, display_name
+                   FROM displayable_public_genre_representatives
+                   WHERE genre_id = 1
+                   ORDER BY entity_kind, rank"""
+            ).fetchall()
         self.assertEqual(selections, [(sentinel,), (sentinel,)])
         self.assertEqual(map_name, ("Public IDM",))
         self.assertEqual(profile_count, (first.profile_memberships,))
@@ -289,68 +291,14 @@ class PublicModelPublishTests(unittest.TestCase):
         self.assertIsNotNone(detail)
         assert detail is not None
         self.assertEqual(detail.name, "Public IDM")
-        enriched = GenreEntryRepository(self.database_path)._read(detail.entity_id)  # noqa: SLF001
-        self.assertEqual(enriched[1][0].name, "Representative Artist")
-        self.assertEqual(enriched[2][0].name, "Defining Album")
-        self.assertEqual(enriched[3][0].name, "Defining Track")
-        self.assertEqual(enriched[1][0].ranking.rank, 1)
-        self.assertEqual(enriched[1][0].ranking.direct_evidence_value, 3.0)
-        self.assertEqual(enriched[1][0].ranking.source_count, 1)
-        self.assertEqual(enriched[1][0].ranking.evidence_refs, ("wd:artist",))
         self.assertEqual(
-            enriched[2][0].href,
-            f"https://musicbrainz.org/release-group/{ALBUM_ID}",
+            representatives,
+            [
+                ("artist", "Representative Artist"),
+                ("recording", "Defining Track"),
+                ("release_group", "Defining Album"),
+            ],
         )
-        self.assertEqual(enriched[2][0].classification, "metadata_example")
-        self.assertEqual(enriched[3][0].entity_kind, "recording")
-        self.assertIsNotNone(enriched[5])
-        assert enriched[5] is not None
-        self.assertTrue(enriched[5].profiles)
-        self.assertTrue(enriched[5].neighbors)
-
-    def test_genre_api_exposes_persisted_model_explanation(self) -> None:
-        publish_public_model(self.database_path, self.artifact_path, policy_id=3)
-
-        with create_test_client(create_app(self.database_path)) as client:
-            response = client.get("/api/genres/1")
-
-        self.assertEqual(response.status_code, 200)
-        explanation = response.json()["model_explanation"]
-        self.assertIsNotNone(explanation)
-        assert explanation is not None
-        self.assertTrue(explanation["profiles"])
-        self.assertTrue(explanation["neighbors"])
-        artist = response.json()["representative_artists"][0]
-        self.assertEqual(
-            artist["ranking"],
-            {
-                "rank": 1,
-                "direct_evidence_value": 3.0,
-                "source_count": 1,
-                "evidence_refs": ["wd:artist"],
-            },
-        )
-        album = response.json()["representative_album_metadata"][0]
-        self.assertEqual(album["classification"], "metadata_example")
-        self.assertEqual(album["entity_kind"], "release_group")
-        self.assertNotIn("defining_albums", response.json())
-
-    def test_genre_fragment_renders_compact_model_signals(self) -> None:
-        publish_public_model(self.database_path, self.artifact_path, policy_id=3)
-
-        with create_test_client(create_app(self.database_path)) as client:
-            response = client.get("/fragments/genres/1")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('id="genre-signals"', response.text)
-        self.assertIn("direct membership", response.text)
-        self.assertIn("weighted jaccard", response.text)
-        self.assertIn("musicbrainz:artist:", response.text)
-        self.assertIn("rank 1", response.text)
-        self.assertIn("wd:artist", response.text)
-        self.assertIn("Representative album metadata examples", response.text)
-        self.assertIn("Representative recording metadata examples", response.text)
-        self.assertIn("track-level metadata proxies", response.text)
 
     def test_active_input_and_output_suppressions_retract_public_rows(self) -> None:
         publish_public_model(self.database_path, self.artifact_path, policy_id=3)
@@ -386,15 +334,6 @@ class PublicModelPublishTests(unittest.TestCase):
                 )
                 connection.commit()
                 self.assertIsNone(Database(self.database_path).genre_detail(1))
-                if target_kind == "source":
-                    with create_test_client(create_app(self.database_path)) as client:
-                        self.assertEqual(client.get("/api/genres/1").status_code, 404)
-                        self.assertEqual(
-                            client.get(
-                                "/fragments/genres/1", params={"layout": "public"}
-                            ).status_code,
-                            404,
-                        )
                 self.assertEqual(
                     connection.execute(
                         "SELECT count(*) FROM displayable_map_points WHERE layout_key = 'public'"
