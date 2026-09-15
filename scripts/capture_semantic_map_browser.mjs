@@ -188,6 +188,8 @@ async function diagnostics(cdp) {
       back_hidden: document.querySelector('[data-map-action="back"]')?.hidden ?? true,
       detail_hidden: document.querySelector('#map-detail')?.hidden ?? true,
       detail_links: document.querySelectorAll('#map-detail [data-open-node-id]').length,
+      detail_names: [...document.querySelectorAll('#map-detail [data-open-node-id]')]
+        .map((link) => link.textContent),
       detail_box: detailRect ? { x: detailRect.x, y: detailRect.y, width: detailRect.width, height: detailRect.height } : null,
       focus_url: new URL(location.href).searchParams.get('open_focus'),
       canvas_ready: Boolean(canvas),
@@ -333,7 +335,7 @@ const PRELOAD = String.raw`(() => {
   CanvasRenderingContext2D.prototype.lineTo = function(x, y) {
     if (this.canvas?.id === 'semantic-map') {
       qa.current.line_segments += 1;
-      if (this.lineWidth === 1.5) {
+      if (this.lineWidth === 1.5 || this.lineWidth === 1.75) {
         const start = this.__opennoiseQaMoveTo;
         if (start) qa.current.edge_endpoints.push({ x0: start.x, y0: start.y, x1: x, y1: y });
       }
@@ -345,9 +347,9 @@ const PRELOAD = String.raw`(() => {
     return original.moveTo.call(this, x, y);
   };
   CanvasRenderingContext2D.prototype.stroke = function(...args) {
-    // Network edges use the dedicated 1.5px stroke. One-pixel strokes are
-    // label callouts and should not inflate the focused graph edge budget.
-    if (this.canvas?.id === 'semantic-map' && this.lineWidth === 1.5) qa.current.edges += 1;
+    // Similarity and direct hierarchy lines use dedicated strokes. One-pixel
+    // label callouts should not inflate the focused graph edge budget.
+    if (this.canvas?.id === 'semantic-map' && (this.lineWidth === 1.5 || this.lineWidth === 1.75)) qa.current.edges += 1;
     return original.stroke.call(this, ...args);
   };
   const request = window.requestAnimationFrame;
@@ -372,6 +374,7 @@ async function run() {
     requireCheck(initial.points >= 1 && initial.points <= 50, "overview point budget failed", initial);
     requireCheck(initial.labels >= 1 && initial.labels <= 35, "overview label budget failed", initial);
     requireCheck(initial.edges === 0, "overview must not draw global edges", initial);
+    requireCheck(initial.label_names.includes("rock"), "overview omitted the rock hierarchy landmark", initial);
     const extent = initial.point_extent;
     const widthFraction = extent ? (extent.max_x - extent.min_x) / initial.viewport.width : 0;
     const heightFraction = extent ? (extent.max_y - extent.min_y) / initial.viewport.height : 0;
@@ -434,7 +437,9 @@ async function run() {
       return value;
     };
     let focused = await focusQuery('idm', afterPan.frame_count - 1);
-    requireCheck(focused.edges > 0 && focused.edges <= 12, "focused neighborhood edge budget failed", focused);
+    // The focused view has at most twelve similarity links plus direct, verified
+    // display-parent links.  They are deliberately distinct in the renderer.
+    requireCheck(focused.edges > 0 && focused.edges <= 24, "focused neighborhood edge budget failed", focused);
     requireCheck(focused.connected_path_arcs === 0, "batched dots formed connected polygons", focused);
     requireCheck(boxesInViewport(focused.label_boxes, focused.viewport), "focused label box escaped viewport", focused);
     requireCheck(edgesInViewport(focused.edge_endpoints, focused.viewport), "focused edge endpoint escaped viewport", focused);
@@ -454,6 +459,14 @@ async function run() {
     requireCheck(postPunk.points <= postPunk.edges + 1, 'post-punk view leaked unconnected dots', postPunk);
     requireCheck(!postPunk.detail_hidden && postPunk.detail_links === postPunk.edges && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-focus.png', 'light', 1440, 900));
+
+    const modernRock = await focusQuery('modern rock', postPunk.frame_count - 1);
+    requireCheck(
+      modernRock.focus_url === 'legacy:item10' && modernRock.detail_names.includes('rock'),
+      'modern rock did not retain its verified rock parent in the focused zoom view',
+      modernRock,
+    );
+    screenshots.push(await screenshot(cdp, 'desktop-rock-modern-rock-focus.png', 'light', 1440, 900));
 
     await navigate(cdp, 1440, 900, "dark");
     const dark = await diagnostics(cdp);
@@ -490,13 +503,14 @@ async function run() {
         deep_zoom_scale: buttonDeep.scale,
         focused_edges: focused.edges,
         post_punk_edges: postPunk.edges,
+        rock_modern_rock_hierarchy: modernRock.detail_names.includes('rock'),
         pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
         back_restored: backed.back_hidden && !backed.focus_url,
         dark_mode: dark.background !== initial.background,
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, zoom1, zoom2, afterPan, focused, backed, postPunk, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, zoom1, zoom2, afterPan, focused, backed, postPunk, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

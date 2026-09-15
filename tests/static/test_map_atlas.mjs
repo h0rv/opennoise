@@ -5,6 +5,7 @@ import {
   declutterLabels,
   fitCamera,
   focusCamera,
+  hierarchyNeighborhood,
   appendCirclePath,
   MAX_SCALE,
   isNodeRevealed,
@@ -40,6 +41,10 @@ test('atlas retains monotonic zoom labels and optional region metadata', () => {
   assert.equal(atlas.regions[0].title, 'Electronic');
   assert.deepEqual(atlas.labels.map((labels) => labels.length), [1, 2, 3, 4]);
   assert.deepEqual(atlas.childrenByParent.get('b'), ['c']);
+  assert.deepEqual(hierarchyNeighborhood(atlas, 'b'), {
+    edges: [{ source: 'a', target: 'b' }, { source: 'b', target: 'c' }],
+    nodeIds: ['b', 'a', 'c'],
+  });
 });
 
 test('fit camera centers a landscape overview and zoom preserves its cursor world point', () => {
@@ -98,6 +103,14 @@ test('batched circles are independent subpaths, never connected polygons', () =>
 test('zoom levels disclose labels monotonically without a focused node', () => {
   const levels = [1, 1.7, 3.5, 8].map((scale) => levelForScale(scale, 1));
   assert.deepEqual(levels, [0, 1, 2, 3]);
+});
+
+test('a root stays visible while its supported child is cumulatively disclosed', () => {
+  const rock = { id: 'rock', lod: 0 };
+  const modernRock = { id: 'modern-rock', lod: 2 };
+  const scales = [1, 2, 4, 8];
+  assert.deepEqual(scales.map((scale) => isNodeRevealed(rock, scale, 1)), [true, true, true, true]);
+  assert.deepEqual(scales.map((scale) => isNodeRevealed(modernRock, scale, 1)), [false, false, true, true]);
 });
 
 test('plus control targets the next semantic tier instead of an arbitrary ratio', () => {

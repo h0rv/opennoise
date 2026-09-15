@@ -125,6 +125,17 @@ function normaliseEdges(value, nodeIds) {
     || compareCodepoints(left.target, right.target));
 }
 
+/** Existing display-parent relations only; no proximity-derived containment. */
+function hierarchyEdges(nodes, nodeIds) {
+  const edges = [];
+  for (const node of nodes) {
+    if (!node.parentId || !nodeIds.has(node.parentId) || node.parentId === node.id) continue;
+    edges.push({ source: node.parentId, target: node.id });
+  }
+  return edges.sort((left, right) => compareCodepoints(left.source, right.source)
+    || compareCodepoints(left.target, right.target));
+}
+
 /**
  * Accept the current semantic-scatter payload and the forward-compatible static atlas shape.
  * Regions are metadata over a single continuous coordinate plane; they never replace geometry.
@@ -141,6 +152,7 @@ export function normaliseAtlasPayload(payload) {
   }
   const nodeIds = new Set(byId.keys());
   const edges = normaliseEdges(source.edges, nodeIds);
+  const parentEdges = hierarchyEdges(nodes, nodeIds);
   const edgesById = new Map();
   for (const edge of edges) {
     for (const id of [edge.source, edge.target]) {
@@ -190,15 +202,31 @@ export function normaliseAtlasPayload(payload) {
     labels: normaliseLabelSets(source.labels ?? source.label_sets, nodeIds),
     aliases: normaliseAliases(source.aliases, nodeIds),
     edges,
+    hierarchyEdges: parentEdges,
     edgesById,
     childrenByParent,
     spatialIndex,
     cohortKeys,
     cohorts,
+    hierarchyRegions: (Array.isArray(source.hierarchy_regions) ? source.hierarchy_regions : [])
+      .filter((region) => region && typeof region === 'object' && typeof region.root_id === 'string'
+        && typeof region.label === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
+      .map((region) => ({ ...region, title: region.label })),
     regions: (Array.isArray(source.overview_regions) ? source.overview_regions : source.regions ?? [])
       .filter((region) => region && typeof region === 'object')
       .map((region) => ({ ...region, title: region.title ?? region.label ?? region.name })),
   };
+}
+
+/** The local display hierarchy around one node, preserving its explicit direction. */
+export function hierarchyNeighborhood(atlas, focusId, limit = 12) {
+  if (!atlas?.byId?.has(focusId)) return { edges: [], nodeIds: [] };
+  const parents = (atlas.hierarchyEdges ?? []).filter((edge) => edge.target === focusId);
+  const children = (atlas.hierarchyEdges ?? []).filter((edge) => edge.source === focusId);
+  const edges = [...parents, ...children].slice(0, Math.max(0, limit));
+  const nodeIds = new Set([focusId]);
+  for (const edge of edges) { nodeIds.add(edge.source); nodeIds.add(edge.target); }
+  return { edges, nodeIds: [...nodeIds] };
 }
 
 /**

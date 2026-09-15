@@ -35,10 +35,11 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
     def test_harness_checks_zoom_pan_focus_back_and_theme(self) -> None:
         self.assertIn("zoom reveal is unavailable", self.source)
         self.assertIn("pan did not move camera", self.source)
-        self.assertIn("focused.edges <= 12", self.source)
+        self.assertIn("focused.edges <= 24", self.source)
         self.assertIn("Back did not restore map state", self.source)
         self.assertIn("dark mode did not change the map palette", self.source)
         self.assertIn("post-punk did not focus its structural neighborhood", self.source)
+        self.assertIn("rock_modern_rock_hierarchy", self.source)
         self.assertIn("focused view leaked unconnected dots", self.source)
         self.assertIn("IDM list does not match its shown links", self.source)
         self.assertIn("mobile pinch did not zoom the map", self.source)

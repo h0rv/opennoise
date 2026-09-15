@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import math
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
@@ -18,6 +19,8 @@ from opennoise.ml.semantic_layout.contracts import (
 _REVISION: Final = "opennoise-semantic-pages-v1"
 _PACKAGE_ROOT: Final = Path(__file__).resolve().parents[1]
 _STATIC_ROOT: Final = _PACKAGE_ROOT / "static"
+_HIERARCHY_REGION_MAX_DISTANCE: Final = 0.08
+_HIERARCHY_REGION_MIN_MEMBERS: Final = 4
 
 
 class SemanticPagesExportError(ValueError):
@@ -222,9 +225,74 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
             }
             for community in artifact.communities
         ],
+        "hierarchy_regions": _hierarchy_regions(nodes),
         "labels": labels,
         "aliases": [{"term": term, "target": target} for term, target in sorted(aliases)],
     }
+
+
+def _hierarchy_regions(nodes: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Select only spatially supported root neighborhoods for overview landmarks.
+
+    A display parent relation is never moved to make it fit the semantic map.
+    Instead, a root earns a region only when at least three of its existing
+    descendants already occupy its local semantic neighborhood.
+    """
+    by_id = {str(node["id"]): node for node in nodes}
+    children: dict[str, list[str]] = {}
+    for node in nodes:
+        parent_id = node.get("display_parent_id")
+        node_id = str(node["id"])
+        if isinstance(parent_id, str) and parent_id in by_id and parent_id != node_id:
+            children.setdefault(parent_id, []).append(node_id)
+    regions: list[dict[str, object]] = []
+    for root_id in children:
+        root = by_id[root_id]
+        if root.get("display_parent_id") is not None:
+            continue
+        members = [
+            node
+            for node in nodes
+            if node["id"] == root_id or node.get("hierarchy_root_id") == root_id
+        ]
+        nearby = [
+            node
+            for node in members
+            if math.hypot(float(node["x"]) - float(root["x"]), float(node["y"]) - float(root["y"]))
+            <= _HIERARCHY_REGION_MAX_DISTANCE
+        ]
+        if len(nearby) < _HIERARCHY_REGION_MIN_MEMBERS:
+            continue
+        distances = sorted(
+            math.hypot(float(node["x"]) - float(root["x"]), float(node["y"]) - float(root["y"]))
+            for node in nearby
+        )
+        radius = max(0.018, min(0.09, distances[int(len(distances) * 0.9)] + 0.008))
+        owned = [
+            node
+            for node in nearby
+            if math.hypot(float(node["x"]) - float(root["x"]), float(node["y"]) - float(root["y"]))
+            <= radius
+        ]
+        regions.append(
+            {
+                "root_id": root_id,
+                "label": root["name"],
+                "x": root["x"],
+                "y": root["y"],
+                "radius": radius,
+                "member_count": len(owned),
+                "member_ids": sorted(str(node["id"]) for node in owned),
+            }
+        )
+    return sorted(
+        regions,
+        key=lambda region: (
+            -int(region["member_count"]),
+            str(region["label"]).casefold(),
+            str(region["root_id"]),
+        ),
+    )[:35]
 
 
 def _html(asset_paths: dict[str, Path]) -> str:
