@@ -102,6 +102,26 @@ function normaliseAliases(value, nodeIds) {
   return aliases;
 }
 
+function normaliseEdges(value, nodeIds) {
+  const edges = [];
+  const seen = new Set();
+  for (const record of Array.isArray(value) ? value : []) {
+    if (!record || typeof record.source !== 'string' || typeof record.target !== 'string') continue;
+    if (record.source === record.target || !nodeIds.has(record.source) || !nodeIds.has(record.target)) continue;
+    const confidence = typeof record.confidence === 'number' && Number.isFinite(record.confidence)
+      ? record.confidence
+      : 0;
+    if (!(confidence > 0)) continue;
+    const key = `${record.source}\u0000${record.target}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    edges.push({ source: record.source, target: record.target, confidence });
+  }
+  return edges.sort((left, right) => (right.confidence - left.confidence)
+    || compareCodepoints(left.source, right.source)
+    || compareCodepoints(left.target, right.target));
+}
+
 /**
  * Accept the current semantic-scatter payload and the forward-compatible static atlas shape.
  * Regions are metadata over a single continuous coordinate plane; they never replace geometry.
@@ -117,6 +137,15 @@ export function normaliseAtlasPayload(payload) {
     byId.set(node.id, node);
   }
   const nodeIds = new Set(byId.keys());
+  const edges = normaliseEdges(source.edges, nodeIds);
+  const edgesById = new Map();
+  for (const edge of edges) {
+    for (const id of [edge.source, edge.target]) {
+      const incident = edgesById.get(id) ?? [];
+      incident.push(edge);
+      edgesById.set(id, incident);
+    }
+  }
   const initialCamera = normaliseBounds(source.initial_camera ?? source.initialCamera, 'initial_camera');
   const worldBounds = normaliseBounds(source.world_bounds ?? source.worldBounds ?? initialCamera, 'world_bounds');
   const childrenByParent = new Map();
@@ -157,6 +186,8 @@ export function normaliseAtlasPayload(payload) {
     worldBounds,
     labels: normaliseLabelSets(source.labels ?? source.label_sets, nodeIds),
     aliases: normaliseAliases(source.aliases, nodeIds),
+    edges,
+    edgesById,
     childrenByParent,
     spatialIndex,
     cohortKeys,
@@ -166,6 +197,27 @@ export function normaliseAtlasPayload(payload) {
       .map((region) => ({ ...region, title: region.title ?? region.label ?? region.name })),
     neighborsUrl: typeof source.neighbors_url === 'string' ? source.neighbors_url : null,
   };
+}
+
+/**
+ * The focused view has one contract: its dots, links, and list all derive from
+ * the same bounded, confidence-ranked structural edge set. Coordinate distance
+ * is deliberately not folded into this ranking: the two-dimensional layout is
+ * a lossy global projection, while an edge is an explicit relation.
+ */
+export function structuralNeighborhood(atlas, focusId, edges = atlas.edges, limit = 12) {
+  if (!atlas?.byId?.has(focusId)) return { edges: [], nodeIds: [] };
+  const candidates = edges === atlas.edges
+    ? (atlas.edgesById?.get(focusId) ?? [])
+    : normaliseEdges(edges, new Set(atlas.byId.keys()))
+      .filter((edge) => edge.source === focusId || edge.target === focusId);
+  const selected = candidates.slice(0, Math.max(0, limit));
+  const nodeIds = [focusId];
+  for (const edge of selected) {
+    const neighborId = edge.source === focusId ? edge.target : edge.source;
+    if (!nodeIds.includes(neighborId)) nodeIds.push(neighborId);
+  }
+  return { edges: selected, nodeIds };
 }
 
 function buildSpatialIndex(nodes, bounds) {
@@ -238,7 +290,9 @@ export function zoomAtCenter(camera, viewport, factor, limits) {
 /** Select the next semantic zoom tier for the map's explicit + control. */
 export function nextLodScale(scale, fitScale, maximumScale) {
   const current = levelForScale(scale, fitScale);
-  if (current >= LEVEL_COUNT - 1) return Math.min(scale, maximumScale);
+  // Semantic tiers end at L3, not camera navigation. Beyond L3 the content is
+  // stable and each explicit + remains a conventional, continuous zoom step.
+  if (current >= LEVEL_COUNT - 1) return Math.min(scale * 1.6, maximumScale);
   const target = fitScale * 2 ** (current + 0.3);
   return Math.min(target, maximumScale);
 }
@@ -248,6 +302,38 @@ export function levelForScale(scale, fitScale) {
   // zooming. This keeps the first wheel gesture informative without making the
   // initial overview noisy.
   return clamp(Math.floor(Math.log2(scale / fitScale) + 0.8), 0, LEVEL_COUNT - 1);
+}
+
+/** Fraction of the current semantic tier that has been revealed. */
+export function lodReveal(scale, fitScale, lod = levelForScale(scale, fitScale)) {
+  if (lod <= 0) return 1;
+  const exponent = Math.log2(scale / fitScale);
+  return clamp((exponent - (lod - 0.8)) / 0.55, 0, 1);
+}
+
+function stableNodeFraction(id) {
+  let hash = 2166136261;
+  for (let index = 0; index < id.length; index += 1) {
+    hash ^= id.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 0x1_0000_0000;
+}
+
+/** Deterministic density ramp for the incoming LOD, stable across redraws. */
+export function isNodeRevealed(node, scale, fitScale) {
+  const lod = levelForScale(scale, fitScale);
+  if (node.lod < lod) return true;
+  if (node.lod > lod) return false;
+  return stableNodeFraction(node.id) <= lodReveal(scale, fitScale, lod);
+}
+
+/** A continuous cap prevents a wheel threshold from disclosing a label wall. */
+export function labelBudgetForScale(scale, fitScale) {
+  const lod = levelForScale(scale, fitScale);
+  const previous = [12, 12, 72, 156][lod];
+  const current = [35, 72, 156, 300][lod];
+  return Math.round(previous + (current - previous) * lodReveal(scale, fitScale, lod));
 }
 
 export function findAtlasTarget(atlas, term) {
@@ -473,6 +559,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   const ids = new Set();
   const focus = options.focusId;
   const required = new Set(options.requiredIds ?? []);
+  const allowedIds = options.allowedIds ? new Set(options.allowedIds) : null;
   if (focus && atlas.byId.has(focus)) required.add(focus);
   const globalOrder = new Map((atlas.labels[level] ?? []).map((id, index) => [id, index]));
   const margin = options.margin ?? 120;
@@ -488,7 +575,9 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   // allocation when LOD3 is already showing hundreds of labels.
   const candidateLimit = options.candidateLimit
     ?? Math.min(Math.max(options.maximum ?? 420, 128), 350);
-  const localNodes = indexedNodeCandidates(atlas, options.camera, viewport, margin, candidateLimit);
+  const localNodes = allowedIds
+    ? [...allowedIds].map((id) => atlas.byId.get(id)).filter(Boolean)
+    : indexedNodeCandidates(atlas, options.camera, viewport, margin, candidateLimit);
   const requestedCohorts = new Set(options.cohortIds ?? []);
   const disclosureLevel = level < 3 ? level + 1 : level;
   const lookaheadIds = new Set();
@@ -506,7 +595,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   // bounded number of their members into the local candidate window so a
   // semantic neighborhood survives a camera step even when the spatial cell
   // round-robin would otherwise replace it with unrelated dots.
-  if (requestedCohorts.size && atlas.cohorts) {
+  if (!allowedIds && requestedCohorts.size && atlas.cohorts) {
     const seen = new Set(localNodes.map((node) => node.id));
     const continuityLimit = Math.max(8, Math.min(candidateLimit, 24));
     for (const key of requestedCohorts) {
@@ -521,7 +610,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
       if (localNodes.length >= candidateLimit + continuityLimit) break;
     }
   }
-  if (level <= 2 && atlas.cohorts) {
+  if (!allowedIds && level <= 2 && atlas.cohorts) {
     const seen = new Set(localNodes.map((node) => node.id));
     // One visible representative per cohort prevents the spatial-cell budget
     // from hiding an entire neighborhood before semantic ranking can consider
@@ -536,7 +625,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
       }
     }
   }
-  if (level <= 2 && atlas.cohorts) {
+  if (!allowedIds && level <= 2 && atlas.cohorts) {
     const seen = new Set(localNodes.map((node) => node.id));
     // Include a small, visible lookahead so an umbrella can disclose its first
     // descendants in the same camera step. This avoids promoting isolated
@@ -565,6 +654,7 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   for (const id of [...ids]) {
     let node = atlas.byId.get(id);
     while (node?.parentId && atlas.byId.has(node.parentId)) {
+      if (allowedIds && !allowedIds.has(node.parentId)) break;
       node = atlas.byId.get(node.parentId);
       if (node.lod <= level && inRange(projected.get(node.id) ?? project(node))) {
         ids.add(node.id);

@@ -38,6 +38,11 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("focused.edges <= 12", self.source)
         self.assertIn("Back did not restore map state", self.source)
         self.assertIn("dark mode did not change the map palette", self.source)
+        self.assertIn("post-punk did not focus its structural neighborhood", self.source)
+        self.assertIn("focused view leaked unconnected dots", self.source)
+        self.assertIn("IDM list does not match its shown links", self.source)
+        self.assertIn("mobile pinch did not zoom the map", self.source)
+        self.assertIn("L3 imposed a camera zoom wall", self.source)
 
     def test_preload_observes_canvas_without_production_debug_code(self) -> None:
         self.assertIn("Page.addScriptToEvaluateOnNewDocument", self.source)
@@ -49,6 +54,7 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("mobile-light.png", self.source)
         self.assertIn("CanvasRenderingContext2D.prototype.fillText", self.source)
         self.assertIn("CanvasRenderingContext2D.prototype.lineTo", self.source)
+        self.assertIn("Input.dispatchTouchEvent", self.source)
         self.assertNotIn("src/opennoise/", self.source)
 
 

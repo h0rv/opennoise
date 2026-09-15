@@ -95,7 +95,7 @@ button, input, select { font: inherit; }
 #semantic-map:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 .map-error { position: fixed; top: 74px; left: 14px; z-index: 5; padding: 10px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); }
 
-#map-view-switch, #layout-lenses, #static-map-levels, #map-controls, #search, #results, #genre-detail, #historical-detail {
+#map-view-switch, #layout-lenses, #static-map-levels, #map-controls, #search, #results, #map-detail, #genre-detail, #historical-detail {
   position: fixed; z-index: 4; border: 1px solid var(--line); border-radius: 7px;
   background: var(--panel);
 }

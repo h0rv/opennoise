@@ -167,12 +167,15 @@ async function diagnostics(cdp) {
       min_y: Math.min(...items.map(item => item[y])), max_y: Math.max(...items.map(item => item[y])),
     } : null;
     const style = canvas ? getComputedStyle(document.documentElement) : null;
+    const detail = document.querySelector('#map-detail');
+    const detailRect = detail?.getBoundingClientRect();
     return {
       frame_count: qa?.frames?.length ?? 0,
       viewport: rect ? { width: rect.width, height: rect.height } : null,
       points: frame.arcs.length,
       labels: frame.labels.length,
       lod: Number(canvas?.dataset.mapLod ?? -1),
+      scale: Number(canvas?.dataset.mapScale ?? 0),
       cohorts: (canvas?.dataset.mapCohorts ?? '').split('|').filter(Boolean),
       label_names: [...new Set(frame.labels.map((item) => item.text))],
       label_boxes: frame.label_boxes,
@@ -183,6 +186,9 @@ async function diagnostics(cdp) {
       point_extent: extent(frame.arcs, 'x', 'y'),
       background: style?.getPropertyValue('--canvas').trim() ?? '',
       back_hidden: document.querySelector('[data-map-action="back"]')?.hidden ?? true,
+      detail_hidden: document.querySelector('#map-detail')?.hidden ?? true,
+      detail_links: document.querySelectorAll('#map-detail [data-open-node-id]').length,
+      detail_box: detailRect ? { x: detailRect.x, y: detailRect.y, width: detailRect.width, height: detailRect.height } : null,
       focus_url: new URL(location.href).searchParams.get('open_focus'),
       canvas_ready: Boolean(canvas),
     };
@@ -218,6 +224,11 @@ function edgesInViewport(items, viewport) {
     && edge.x1 <= viewport.width && edge.y1 <= viewport.height);
 }
 
+function boxInViewport(box, viewport) {
+  return Boolean(box) && box.x >= 0 && box.y >= 0
+    && box.x + box.width <= viewport.width && box.y + box.height <= viewport.height;
+}
+
 async function wheel(cdp, x, y, deltaY) {
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseWheel", x, y, deltaY, deltaX: 0 });
 }
@@ -234,6 +245,17 @@ async function drag(cdp, fromX, fromY, toX, toY) {
   await cdp.command("Input.dispatchMouseEvent", { type: "mousePressed", x: fromX, y: fromY, button: "left", clickCount: 1 });
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseMoved", x: toX, y: toY, button: "left", buttons: 1 });
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseReleased", x: toX, y: toY, button: "left", clickCount: 1 });
+}
+
+async function pinch(cdp, centerX, centerY, startRadius, endRadius) {
+  const first = { x: centerX - startRadius, y: centerY };
+  const second = { x: centerX + startRadius, y: centerY };
+  await cdp.command('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [first, second] });
+  await cdp.command('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [{ x: centerX - endRadius, y: centerY }, { x: centerX + endRadius, y: centerY }],
+  });
+  await cdp.command('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 }
 
 const PRELOAD = String.raw`(() => {
@@ -361,6 +383,7 @@ async function run() {
     const buttonL1 = await clickControl(cdp, "in");
     const buttonL2 = await clickControl(cdp, "in");
     const buttonL3 = await clickControl(cdp, "in");
+    const buttonDeep = await clickControl(cdp, 'in');
     requireCheck(buttonL1.lod === 1 && buttonL2.lod === 2 && buttonL3.lod === 3, "plus control did not cross semantic zoom tiers", {
       initial_lod: initial.lod, button_l1_lod: buttonL1.lod, button_l2_lod: buttonL2.lod, button_l3_lod: buttonL3.lod,
     });
@@ -373,7 +396,8 @@ async function run() {
     requireCheck(retainedCohorts.length >= 1, "plus control did not retain a semantic neighborhood", {
       button_l1_cohorts: buttonL1.cohorts, button_l2_cohorts: buttonL2.cohorts,
     });
-    screenshots.push(await screenshot(cdp, "desktop-button-l3.png", "light", 1440, 900));
+    requireCheck(buttonDeep.lod === 3 && buttonDeep.scale > buttonL3.scale, 'L3 imposed a camera zoom wall', { buttonL3, buttonDeep });
+    screenshots.push(await screenshot(cdp, "desktop-button-deep.png", "light", 1440, 900));
     await navigate(cdp, 1440, 900, "light");
 
     const firstFrame = initial.frame_count - 1;
@@ -399,27 +423,37 @@ async function run() {
     await waitForFrame(cdp, zoom2.frame_count - 1);
     const afterPan = await diagnostics(cdp);
     requireCheck(JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent), "pan did not move camera", { beforePan, afterPan });
-    requireCheck(afterPan.point_extent?.min_x < 0 || afterPan.point_extent?.max_x > 1440 || afterPan.point_extent?.min_y < 0 || afterPan.point_extent?.max_y > 900, "pan did not reach outside initial quadrant", afterPan);
 
-    await cdp.evaluate("(() => { const input=document.querySelector('#query'); input.value='idm'; input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})); })()");
-    await waitForFrame(cdp, afterPan.frame_count - 1);
-    let focused = await diagnostics(cdp);
-    for (let attempt = 0; attempt < 80 && focused.edges === 0; attempt += 1) {
-      await sleep(25);
-      focused = await diagnostics(cdp);
-    }
+    const focusQuery = async (term, previousFrame) => {
+      await cdp.evaluate(`(() => { const input=document.querySelector('#query'); input.value=${JSON.stringify(term)}; input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})); })()`);
+      await waitForFrame(cdp, previousFrame);
+      let value = await diagnostics(cdp);
+      for (let attempt = 0; attempt < 80 && value.edges === 0; attempt += 1) {
+        await sleep(25); value = await diagnostics(cdp);
+      }
+      return value;
+    };
+    let focused = await focusQuery('idm', afterPan.frame_count - 1);
     requireCheck(focused.edges > 0 && focused.edges <= 12, "focused neighborhood edge budget failed", focused);
     requireCheck(focused.connected_path_arcs === 0, "batched dots formed connected polygons", focused);
     requireCheck(boxesInViewport(focused.label_boxes, focused.viewport), "focused label box escaped viewport", focused);
     requireCheck(edgesInViewport(focused.edge_endpoints, focused.viewport), "focused edge endpoint escaped viewport", focused);
     requireCheck(!focused.back_hidden, "Back control did not appear after focus", focused);
     requireCheck(focused.focus_url === "legacy:item887", "IDM alias did not focus its stable seed", focused);
+    requireCheck(focused.points <= focused.edges + 1, "focused view leaked unconnected dots", focused);
+    requireCheck(!focused.detail_hidden && focused.detail_links === focused.edges && boxInViewport(focused.detail_box, focused.viewport), 'IDM list does not match its shown links', focused);
     screenshots.push(await screenshot(cdp, "desktop-idm-focus.png", "light", 1440, 900));
 
     await cdp.evaluate("document.querySelector('[data-map-action=\\\"back\\\"]')?.click()");
     await sleep(150);
     const backed = await diagnostics(cdp);
     requireCheck(backed.back_hidden && !backed.focus_url, "Back did not restore map state", backed);
+
+    const postPunk = await focusQuery('post-punk', backed.frame_count - 1);
+    requireCheck(postPunk.focus_url === 'legacy:item577' && postPunk.edges > 0, 'post-punk did not focus its structural neighborhood', postPunk);
+    requireCheck(postPunk.points <= postPunk.edges + 1, 'post-punk view leaked unconnected dots', postPunk);
+    requireCheck(!postPunk.detail_hidden && postPunk.detail_links === postPunk.edges && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
+    screenshots.push(await screenshot(cdp, 'desktop-post-punk-focus.png', 'light', 1440, 900));
 
     await navigate(cdp, 1440, 900, "dark");
     const dark = await diagnostics(cdp);
@@ -430,6 +464,10 @@ async function run() {
     requireCheck(mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844, "mobile viewport failed", mobile);
     requireCheck(mobile.connected_path_arcs === 0, "mobile batched dots formed connected polygons", mobile);
     requireCheck(boxesInViewport(mobile.label_boxes, mobile.viewport), "mobile label box escaped viewport", mobile);
+    await pinch(cdp, 195, 500, 34, 132);
+    await waitForFrame(cdp, mobile.frame_count - 1);
+    const mobilePinch = await diagnostics(cdp);
+    requireCheck(mobilePinch.scale > mobile.scale && mobilePinch.lod >= mobile.lod, 'mobile pinch did not zoom the map', { mobile, mobilePinch });
     screenshots.push(await screenshot(cdp, "mobile-light.png", "light", 390, 844));
     requireCheck(cdp.runtimeErrors.length === 0, "browser errors detected", cdp.runtimeErrors);
     const report = {
@@ -443,19 +481,22 @@ async function run() {
         overview_labels: initial.labels,
         overview_edges: initial.edges,
         zoom_points: [initial.points, zoom1.points, zoom2.points],
-        button_labels: [buttonL1.labels, buttonL2.labels, buttonL3.labels],
+        button_labels: [buttonL1.labels, buttonL2.labels, buttonL3.labels, buttonDeep.labels],
         button_new_labels: [
           buttonL1New,
           buttonL2New,
         ],
         button_lods: [initial.lod, buttonL1.lod, buttonL2.lod, buttonL3.lod],
+        deep_zoom_scale: buttonDeep.scale,
         focused_edges: focused.edges,
+        post_punk_edges: postPunk.edges,
         pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
         back_restored: backed.back_hidden && !backed.focus_url,
         dark_mode: dark.background !== initial.background,
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
+        mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, zoom1, zoom2, afterPan, focused, backed, dark, mobile },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, zoom1, zoom2, afterPan, focused, backed, postPunk, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

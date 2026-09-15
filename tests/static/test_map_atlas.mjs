@@ -6,9 +6,12 @@ import {
   fitCamera,
   focusCamera,
   appendCirclePath,
+  isNodeRevealed,
+  labelBudgetForScale,
   levelForScale,
   nextLodScale,
   normaliseAtlasPayload,
+  structuralNeighborhood,
   visibleNodeLabels,
   zoomAtCenter,
   zoomAt,
@@ -103,6 +106,52 @@ test('plus control targets the next semantic tier instead of an arbitrary ratio'
   assert.equal(levelForScale(first, 1), 1);
   assert.equal(levelForScale(second, 1), 2);
   assert.equal(levelForScale(third, 1), 3);
+  const deep = nextLodScale(third, 1, Number.POSITIVE_INFINITY);
+  assert.ok(deep > third, 'L3 must not impose an arbitrary camera wall');
+  assert.equal(levelForScale(deep, 1), 3, 'deep zoom retains stable L3 semantics');
+});
+
+test('edge nodes can remain naturally centered at arbitrary deep scale', () => {
+  const camera = focusCamera(
+    { x0: 0, y0: 0, x1: .001, y1: .001 },
+    { width: 1000, height: 600 }, 1, Number.POSITIVE_INFINITY, .72, { x: 0, y: 0 },
+  );
+  assert.ok(camera.scale > 100_000);
+  assert.equal(camera.x, 500);
+  assert.equal(camera.y, 300);
+});
+
+test('focused structural neighborhood excludes visually close but unlinked dots', () => {
+  const atlas = normaliseAtlasPayload({
+    initial_camera: { x0: 0, y0: 0, x1: 16, y1: 9 },
+    nodes: [
+      { id: 'idm', name: 'intelligent dance music', x: 1, y: 1, lod: 1 },
+      { id: 'nightcore', name: 'nightcore', x: 1.001, y: 1, lod: 1 },
+      { id: 'future-garage', name: 'future garage', x: 1.1, y: 1, lod: 1 },
+    ],
+    edges: [
+      { source: 'idm', target: 'future-garage', confidence: 0.2 },
+    ],
+  });
+  const neighborhood = structuralNeighborhood(atlas, 'idm');
+  assert.deepEqual(neighborhood.nodeIds, ['idm', 'future-garage']);
+  assert.deepEqual(neighborhood.edges, [{ source: 'idm', target: 'future-garage', confidence: 0.2 }]);
+  const labels = visibleNodeLabels(
+    atlas, 1, { width: 1600, height: 900 },
+    (node) => ({ x: node.x * 100, y: node.y * 100 }), (name) => name.length * 6,
+    { maximum: 10, allowedIds: new Set(neighborhood.nodeIds), requiredIds: neighborhood.nodeIds },
+  );
+  assert.deepEqual(new Set(labels.map((item) => item.id)), new Set(neighborhood.nodeIds));
+});
+
+test('incoming density and label budgets increase continuously within every zoom tier', () => {
+  const node = { id: 'stable-node', lod: 1 };
+  const scales = [2 ** 0.2, 2 ** 0.35, 2 ** 0.55, 2 ** 0.75];
+  const budgets = scales.map((scale) => labelBudgetForScale(scale, 1));
+  assert.deepEqual(budgets, [...budgets].sort((left, right) => left - right));
+  assert.equal(isNodeRevealed(node, scales[0], 1), false);
+  assert.equal(isNodeRevealed(node, scales.at(-1), 1), true);
+  assert.equal(labelBudgetForScale(2 ** 1.2, 1), labelBudgetForScale(2 ** 0.75, 1));
 });
 
 test('detail disclosure keeps members of a few meaningful cohorts together', () => {
