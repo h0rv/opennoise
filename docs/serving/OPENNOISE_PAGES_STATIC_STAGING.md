@@ -15,8 +15,9 @@ UV_OFFLINE=1 uv run --no-sync poe export-semantic-pages
 The input is verified before export. The resulting static payload contains the
 complete renderer view: 6,291 total names, 2,945 placed nodes, 3,346 unplaced
 names, 24 overview regions, and 34,937 bounded structural edges. The map client
-loads only `assets/semantic-atlas.json`; focused neighborhoods are selected from
-the checked-in edge index in the browser.
+loads the content-addressed semantic-atlas path recorded under `semantic_atlas`
+in `opennoise-static-manifest.json`; focused neighborhoods are selected from the
+checked-in edge index in the browser.
 
 `opennoise-static-manifest.json` binds the exact input byte and logical hashes,
 coverage accounting, and checksums for every emitted file. It is the release
