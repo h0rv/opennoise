@@ -11,6 +11,7 @@ import {
   normaliseAtlasPayload,
   nextLodScale,
   appendCirclePath,
+  MAX_SCALE,
   structuralNeighborhood,
   visibleNodeLabels,
   zoomAtCenter,
@@ -25,8 +26,7 @@ if (canvas instanceof HTMLCanvasElement) {
   const detail = document.querySelector('#map-detail');
   const query = document.querySelector('#query');
   const endpoint = canvas.dataset.mapUrl;
-  const neighborUrl = canvas.dataset.neighborsUrl;
-  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], neighborhoodIds: null, frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, request: 0, labelWidths: new Map(), disclosedCohorts: new Set() };
+  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map(), disclosedCohorts: new Set() };
   const overviewPadding = () => {
     const bounds = state.atlas.worldBounds;
     const density = state.atlas.nodes.length / ((bounds.x1 - bounds.x0) * (bounds.y1 - bounds.y0));
@@ -44,6 +44,7 @@ if (canvas instanceof HTMLCanvasElement) {
     state.camera = fitCamera(state.atlas.initialCamera, state.viewport, overviewPadding());
     state.fitScale = state.camera.scale;
     state.focus = null; state.edges = []; state.neighborhoodIds = null; state.disclosedCohorts.clear();
+    state.displayedIds.clear();
     if (back) back.hidden = true;
     if (detail) detail.hidden = true;
     schedule();
@@ -66,6 +67,7 @@ if (canvas instanceof HTMLCanvasElement) {
     if (canvas.width !== Math.round(state.viewport.width * ratio) || canvas.height !== Math.round(state.viewport.height * ratio)) { canvas.width = Math.round(state.viewport.width * ratio); canvas.height = Math.round(state.viewport.height * ratio); }
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, state.viewport.width, state.viewport.height);
     const colors = palette(); const lod = level(); canvas.dataset.mapLod = String(lod); canvas.dataset.mapScale = String(state.camera.scale); canvas.dataset.mapCohorts = ''; context.font = lod === 0 ? '600 15px ui-sans-serif, system-ui, sans-serif' : '13px ui-sans-serif, system-ui, sans-serif';
+    state.displayedIds.clear();
     const measureLabel = (name) => {
       const key = `${context.font}\u0000${name}`;
       const cached = state.labelWidths.get(key);
@@ -109,9 +111,9 @@ if (canvas instanceof HTMLCanvasElement) {
         camera: state.camera,
         cohortIds: [...state.disclosedCohorts],
         nextCamera: (() => {
-          const nextScale = nextLodScale(state.camera.scale, state.fitScale, Number.POSITIVE_INFINITY);
+          const nextScale = nextLodScale(state.camera.scale, state.fitScale, MAX_SCALE);
           return nextScale > state.camera.scale
-            ? zoomAtCenter(state.camera, state.viewport, nextScale / state.camera.scale, { min: state.fitScale, max: Number.POSITIVE_INFINITY })
+            ? zoomAtCenter(state.camera, state.viewport, nextScale / state.camera.scale, { min: state.fitScale, max: MAX_SCALE })
             : null;
         })(),
         height: 16,
@@ -134,6 +136,7 @@ if (canvas instanceof HTMLCanvasElement) {
       if (!visible(node) || (node.lod > lod && node.id !== state.focus && !required.has(node.id))) continue;
       if (!shown.has(node.id) && node.id !== state.focus && !required.has(node.id)
         && !isNodeRevealed(node, state.camera.scale, state.fitScale)) continue;
+      state.displayedIds.add(node.id);
       const screen = point(node);
       if (node.id === state.focus) appendCirclePath(focusPath, screen.x, screen.y, 3.2);
       else if (shown.has(node.id)) appendCirclePath(labelPath, screen.x, screen.y, 3.2);
@@ -160,21 +163,14 @@ if (canvas instanceof HTMLCanvasElement) {
     const peers = Array.isArray(neighborhood?.nodeIds)
       ? neighborhood.nodeIds.filter((nodeId) => nodeId !== id).map((nodeId) => state.atlas.byId.get(nodeId)).filter(Boolean)
       : [];
-    if (peers.length) { const list = document.createElement('ul'); for (const peer of peers) { const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; link.textContent = peer.name; item.append(link); list.append(item); } detail.append(list); }
+    if (peers.length) { const label = document.createElement('h3'); label.textContent = 'Structural connections'; detail.append(label); const list = document.createElement('ul'); for (const peer of peers) { const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; link.textContent = peer.name; item.append(link); list.append(item); } detail.append(list); }
     if (canvas.dataset.artistUrl) { const artists = document.createElement('a'); artists.className = 'artist-link'; artists.href = `${canvas.dataset.artistUrl}${encodeURIComponent(id)}`; artists.textContent = 'Artist evidence'; detail.append(artists); }
     detail.hidden = false;
   };
-  const focus = async (id, push = true) => {
+  const focus = (id, push = true) => {
     if (!state.atlas?.byId.has(id)) return;
     state.focus = id; state.edges = []; state.neighborhoodIds = new Set([id]); state.disclosedCohorts.clear(); if (back) back.hidden = false; if (push) setUrl(id);
-    const request = ++state.request;
-    let neighborhood = null;
-    if (neighborUrl) try { const response = await fetch(`${neighborUrl}${encodeURIComponent(id)}`); neighborhood = await response.json(); } catch { /* a point remains focusable when detail is unavailable */ }
-    else {
-      neighborhood = structuralNeighborhood(state.atlas, id);
-    }
-    if (request !== state.request) return;
-    neighborhood = structuralNeighborhood(state.atlas, id, neighborhood?.edges);
+    const neighborhood = structuralNeighborhood(state.atlas, id);
     state.edges = neighborhood.edges;
     state.neighborhoodIds = new Set(neighborhood.nodeIds);
     const nodes = neighborhood.nodeIds.map((key) => state.atlas.byId.get(key)).filter(Boolean);
@@ -185,16 +181,16 @@ if (canvas instanceof HTMLCanvasElement) {
       focusBounds,
       state.viewport,
       state.fitScale * 1.5,
-      Number.POSITIVE_INFINITY,
+      MAX_SCALE,
       .72,
       { x: state.atlas.byId.get(id).x, y: state.atlas.byId.get(id).y },
     );
     showDetail(id, neighborhood);
     schedule();
   };
-  const nearest = (cursor) => { let hit = null; let distance = 15; for (const node of state.atlas.nodes) { const screen = point(node); const next = Math.hypot(screen.x - cursor.x, screen.y - cursor.y); if (next < distance) { hit = node; distance = next; } } return hit; };
+  const nearest = (cursor) => { let hit = null; let distance = 15; for (const id of state.displayedIds) { const node = state.atlas.byId.get(id); if (!node) continue; const screen = point(node); const next = Math.hypot(screen.x - cursor.x, screen.y - cursor.y); if (next < distance) { hit = node; distance = next; } } return hit; };
   new ResizeObserver(() => { const viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; if (!viewport.width || !viewport.height) return; const center = state.camera ? { x: (viewport.width / 2 - state.camera.x) / state.camera.scale, y: (viewport.height / 2 - state.camera.y) / state.camera.scale } : null; state.viewport = viewport; if (!state.camera) fit(); else { state.camera.x = viewport.width / 2 - center.x * state.camera.scale; state.camera.y = viewport.height / 2 - center.y * state.camera.scale; schedule(); } }).observe(canvas);
-  canvas.addEventListener('wheel', (event) => { event.preventDefault(); if (!state.camera) return; state.camera = zoomAt(state.camera, { x: event.offsetX, y: event.offsetY }, event.deltaY < 0 ? 1.25 : .8, { min: state.fitScale, max: Number.POSITIVE_INFINITY }); schedule(); }, { passive: false });
+  canvas.addEventListener('wheel', (event) => { event.preventDefault(); if (!state.camera) return; state.camera = zoomAt(state.camera, { x: event.offsetX, y: event.offsetY }, event.deltaY < 0 ? 1.25 : .8, { min: state.fitScale, max: MAX_SCALE }); schedule(); }, { passive: false });
   const pointerPair = () => [...state.pointers.values()].slice(0, 2);
   const midpoint = ([first, second]) => ({ x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 });
   const separation = ([first, second]) => Math.hypot(first.x - second.x, first.y - second.y);
@@ -218,7 +214,7 @@ if (canvas instanceof HTMLCanvasElement) {
       const pair = pointerPair(); const current = state.pinch;
       if (!current || pair.length !== 2) return;
       const center = midpoint(pair);
-      const scale = clamp(current.camera.scale * separation(pair) / current.distance, state.fitScale, Number.POSITIVE_INFINITY);
+      const scale = clamp(current.camera.scale * separation(pair) / current.distance, state.fitScale, MAX_SCALE);
       const worldX = (current.center.x - current.camera.x) / current.camera.scale;
       const worldY = (current.center.y - current.camera.y) / current.camera.scale;
       state.camera = { scale, x: center.x - worldX * scale, y: center.y - worldY * scale };
@@ -230,19 +226,27 @@ if (canvas instanceof HTMLCanvasElement) {
     if (Math.hypot(dx, dy) > 2) { state.moved = true; state.disclosedCohorts.clear(); }
     state.camera.x += dx; state.camera.y += dy; schedule();
   });
-  const finishPointer = (event, cancelled = false) => {
-    const hit = !cancelled && !state.moved && state.atlas ? nearest({ x: event.offsetX, y: event.offsetY }) : null;
-    state.pointers.delete(event.pointerId);
+  const clearPointer = (pointerId) => {
+    state.pointers.delete(pointerId);
     state.pinch = null;
     if (state.pointers.size === 1) {
       const [remaining] = pointerPair();
       state.drag = { ...remaining };
-    } else state.drag = null;
+    } else {
+      state.drag = null;
+      if (state.pointers.size === 0) state.moved = false;
+    }
+  };
+  const finishPointer = (event, cancelled = false) => {
+    const hit = !cancelled && !state.moved && state.atlas ? nearest({ x: event.offsetX, y: event.offsetY }) : null;
+    clearPointer(event.pointerId);
+    if (canvas.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
     if (hit) void focus(hit.id);
   };
   canvas.addEventListener('pointerup', (event) => { finishPointer(event); });
   canvas.addEventListener('pointercancel', (event) => { finishPointer(event, true); });
-  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in') { const target = nextLodScale(state.camera.scale, state.fitScale, Number.POSITIVE_INFINITY); if (target > state.camera.scale) state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, target / state.camera.scale, { min: state.fitScale, max: Number.POSITIVE_INFINITY }); schedule(); } else if (action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, 1 / 1.5, { min: state.fitScale, max: Number.POSITIVE_INFINITY }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
+  canvas.addEventListener('lostpointercapture', (event) => { clearPointer(event.pointerId); });
+  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in') { const target = nextLodScale(state.camera.scale, state.fitScale, MAX_SCALE); if (target > state.camera.scale) state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, target / state.camera.scale, { min: state.fitScale, max: MAX_SCALE }); schedule(); } else if (action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, 1 / 1.5, { min: state.fitScale, max: MAX_SCALE }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
   document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (!target) return; event.preventDefault(); void focus(target.dataset.openNodeId); });
   query?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !state.atlas) return; const id = state.atlas.aliases.get(query.value.trim().toLowerCase()); if (!id) return; event.preventDefault(); void focus(id); });
   window.addEventListener('popstate', () => { const id = new URL(window.location.href).searchParams.get('open_focus'); if (id) void focus(id, false); else fit(); });

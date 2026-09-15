@@ -32,6 +32,19 @@ This starts a loopback static file server for `dist` at
 <http://127.0.0.1:3001>. It fails clearly when no export exists. It does not
 build an application backend.
 
+The release gate combines sealed semantic-layout verification, static export,
+the loopback server, and the CDP browser harness:
+
+```sh
+uv run poe certify-static-pages
+```
+
+Set `OPENNOISE_SEMANTIC_MAP_LAYOUT` and `OPENNOISE_PAGES_OUTPUT` first. The
+gate writes `artifacts/semantic-map/browser.json` and screenshots, and uses
+port 3001 for the loopback server. To inspect an export manually, use
+`uv run poe dev -- --port 3010` (or run `python scripts/run_dev.py --port
+3010` directly).
+
 ## Deploy
 
 Cloudflare Pages uses `wrangler.jsonc` and uploads `./dist` directly:

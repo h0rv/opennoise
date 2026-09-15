@@ -3,6 +3,9 @@
 const LEVEL_COUNT = 4;
 const SPATIAL_COLUMNS = 48;
 const SPATIAL_ROWS = 28;
+// Keep every camera operation bounded by a concrete value. A finite cap makes
+// repeated wheel, button, and pinch gestures safe to serialize and inspect.
+export const MAX_SCALE = 1_000_000;
 
 export function clamp(value, lower, upper) {
   return Math.max(lower, Math.min(upper, value));
@@ -195,7 +198,6 @@ export function normaliseAtlasPayload(payload) {
     regions: (Array.isArray(source.overview_regions) ? source.overview_regions : source.regions ?? [])
       .filter((region) => region && typeof region === 'object')
       .map((region) => ({ ...region, title: region.title ?? region.label ?? region.name })),
-    neighborsUrl: typeof source.neighbors_url === 'string' ? source.neighbors_url : null,
   };
 }
 
@@ -260,13 +262,13 @@ export function focusCamera(
   bounds,
   viewport,
   minimumScale,
-  maximumScale,
+  maximumScale = MAX_SCALE,
   padding = 0.72,
   anchor = null,
 ) {
   const area = normaliseBounds(bounds, 'focus bounds');
   const fitted = fitCamera(area, viewport, padding);
-  const scale = clamp(fitted.scale, minimumScale, maximumScale);
+  const scale = clamp(fitted.scale, minimumScale, finiteScaleLimit(maximumScale));
   const center = anchor ?? { x: (area.x0 + area.x1) / 2, y: (area.y0 + area.y1) / 2 };
   return {
     scale,
@@ -275,26 +277,33 @@ export function focusCamera(
   };
 }
 
-export function zoomAt(camera, point, factor, limits) {
-  const scale = clamp(camera.scale * factor, limits.min, limits.max);
+function finiteScaleLimit(value) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.min(value, MAX_SCALE)
+    : MAX_SCALE;
+}
+
+export function zoomAt(camera, point, factor, limits = { min: 1, max: MAX_SCALE }) {
+  const scale = clamp(camera.scale * factor, limits.min, finiteScaleLimit(limits.max));
   const worldX = (point.x - camera.x) / camera.scale;
   const worldY = (point.y - camera.y) / camera.scale;
   return { scale, x: point.x - worldX * scale, y: point.y - worldY * scale };
 }
 
 /** Zoom controls use the current canvas center; wheel input supplies its own point. */
-export function zoomAtCenter(camera, viewport, factor, limits) {
+export function zoomAtCenter(camera, viewport, factor, limits = { min: 1, max: MAX_SCALE }) {
   return zoomAt(camera, { x: viewport.width / 2, y: viewport.height / 2 }, factor, limits);
 }
 
 /** Select the next semantic zoom tier for the map's explicit + control. */
-export function nextLodScale(scale, fitScale, maximumScale) {
+export function nextLodScale(scale, fitScale, maximumScale = MAX_SCALE) {
+  const maximum = finiteScaleLimit(maximumScale);
   const current = levelForScale(scale, fitScale);
   // Semantic tiers end at L3, not camera navigation. Beyond L3 the content is
   // stable and each explicit + remains a conventional, continuous zoom step.
-  if (current >= LEVEL_COUNT - 1) return Math.min(scale * 1.6, maximumScale);
+  if (current >= LEVEL_COUNT - 1) return Math.min(scale * 1.6, maximum);
   const target = fitScale * 2 ** (current + 0.3);
-  return Math.min(target, maximumScale);
+  return Math.min(target, maximum);
 }
 
 export function levelForScale(scale, fitScale) {

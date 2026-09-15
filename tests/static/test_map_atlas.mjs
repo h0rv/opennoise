@@ -6,6 +6,7 @@ import {
   fitCamera,
   focusCamera,
   appendCirclePath,
+  MAX_SCALE,
   isNodeRevealed,
   labelBudgetForScale,
   levelForScale,
@@ -106,7 +107,7 @@ test('plus control targets the next semantic tier instead of an arbitrary ratio'
   assert.equal(levelForScale(first, 1), 1);
   assert.equal(levelForScale(second, 1), 2);
   assert.equal(levelForScale(third, 1), 3);
-  const deep = nextLodScale(third, 1, Number.POSITIVE_INFINITY);
+  const deep = nextLodScale(third, 1, MAX_SCALE);
   assert.ok(deep > third, 'L3 must not impose an arbitrary camera wall');
   assert.equal(levelForScale(deep, 1), 3, 'deep zoom retains stable L3 semantics');
 });
@@ -114,11 +115,38 @@ test('plus control targets the next semantic tier instead of an arbitrary ratio'
 test('edge nodes can remain naturally centered at arbitrary deep scale', () => {
   const camera = focusCamera(
     { x0: 0, y0: 0, x1: .001, y1: .001 },
-    { width: 1000, height: 600 }, 1, Number.POSITIVE_INFINITY, .72, { x: 0, y: 0 },
+    { width: 1000, height: 600 }, 1, MAX_SCALE, .72, { x: 0, y: 0 },
   );
   assert.ok(camera.scale > 100_000);
   assert.equal(camera.x, 500);
   assert.equal(camera.y, 300);
+});
+
+test('repeated controls and touch zoom remain finite at the explicit camera cap', () => {
+  const viewport = { width: 1440, height: 900 };
+  const base = fitCamera(payload.initial_camera, viewport);
+  let buttonCamera = base;
+  for (let index = 0; index < 1_000; index += 1) {
+    const target = nextLodScale(buttonCamera.scale, base.scale, MAX_SCALE);
+    buttonCamera = target > buttonCamera.scale
+      ? zoomAtCenter(buttonCamera, viewport, target / buttonCamera.scale, { min: base.scale, max: MAX_SCALE })
+      : zoomAtCenter(buttonCamera, viewport, 1.25, { min: base.scale, max: MAX_SCALE });
+  }
+  let wheelCamera = base;
+  for (let index = 0; index < 1_000; index += 1) {
+    wheelCamera = zoomAt(wheelCamera, { x: 227, y: 401 }, 1.25, { min: base.scale, max: MAX_SCALE });
+  }
+  let pinchCamera = base;
+  for (let index = 0; index < 1_000; index += 1) {
+    pinchCamera = zoomAt(pinchCamera, { x: 711, y: 449 }, 1.35, { min: base.scale, max: MAX_SCALE });
+  }
+  for (const camera of [buttonCamera, wheelCamera, pinchCamera]) {
+    assert.ok(Number.isFinite(camera.scale) && camera.scale <= MAX_SCALE);
+    assert.ok(Number.isFinite(camera.x) && Number.isFinite(camera.y));
+  }
+  assert.equal(buttonCamera.scale, MAX_SCALE);
+  assert.equal(wheelCamera.scale, MAX_SCALE);
+  assert.equal(pinchCamera.scale, MAX_SCALE);
 });
 
 test('focused structural neighborhood excludes visually close but unlinked dots', () => {

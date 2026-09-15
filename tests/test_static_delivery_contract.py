@@ -17,6 +17,8 @@ class StaticDeliveryContractTests(unittest.TestCase):
         tasks = project["tool"]["poe"]["tasks"]
         self.assertEqual(tasks["dev"], "python scripts/run_dev.py")
         self.assertIn("export-semantic-pages", tasks)
+        self.assertIn("certify-static-pages", tasks)
+        self.assertIn("scripts/certify_static_pages.py", tasks["certify-static-pages"])
         for removed in (
             "dev-research",
             "dev-legacy",
@@ -33,6 +35,13 @@ class StaticDeliveryContractTests(unittest.TestCase):
         self.assertIn("ThreadingHTTPServer", source)
         self.assertNotIn("opennoise.serving", source)
         self.assertNotIn("uvicorn", source)
+
+    def test_static_certification_documents_the_loopback_gate(self) -> None:
+        documentation = (ROOT / "docs/serving/OPENNOISE_PAGES_STATIC_STAGING.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("uv run poe certify-static-pages", documentation)
+        self.assertIn("uv run poe dev -- --port 3010", documentation)
 
     def test_runtime_framework_dependencies_are_absent(self) -> None:
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))

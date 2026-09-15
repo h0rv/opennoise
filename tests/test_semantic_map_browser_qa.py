@@ -44,6 +44,16 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("mobile pinch did not zoom the map", self.source)
         self.assertIn("L3 imposed a camera zoom wall", self.source)
 
+    def test_renderer_keeps_focus_static_and_cleans_pointer_capture(self) -> None:
+        renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
+        self.assertIn("structuralNeighborhood(state.atlas, id)", renderer)
+        self.assertNotIn("dataset.neighborsUrl", renderer)
+        self.assertNotIn("neighborUrl", renderer)
+        self.assertIn("Structural connections", renderer)
+        self.assertIn("pointercancel", renderer)
+        self.assertIn("lostpointercapture", renderer)
+        self.assertIn("state.displayedIds", renderer)
+
     def test_preload_observes_canvas_without_production_debug_code(self) -> None:
         self.assertIn("Page.addScriptToEvaluateOnNewDocument", self.source)
         self.assertIn("CanvasRenderingContext2D.prototype.arc", self.source)

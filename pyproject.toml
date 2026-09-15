@@ -111,6 +111,7 @@ cache-musicbrainz-release-group-20260905 = "opennoise acquire-source-cache music
 restore-source-cache = "opennoise restore-source-cache $OPENNOISE_SOURCE_CACHE_SOURCE_IDS --object-store $OPENNOISE_SOURCE_CACHE_OBJECT_STORE --receipt $OPENNOISE_SOURCE_CACHE_RECEIPT --destination $OPENNOISE_SOURCE_CACHE_DESTINATION"
 dev = "python scripts/run_dev.py"
 export-semantic-pages = "python scripts/export_semantic_pages.py --semantic-layout $OPENNOISE_SEMANTIC_MAP_LAYOUT --output $OPENNOISE_PAGES_OUTPUT"
+certify-static-pages = "python scripts/certify_static_pages.py --semantic-layout $OPENNOISE_SEMANTIC_MAP_LAYOUT --output $OPENNOISE_PAGES_OUTPUT"
 build-local-musicbrainz-artist-reverse-lookup = "python scripts/build_local_musicbrainz_artist_reverse_lookup.py --evidence-db .cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite --evidence-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json --output-db .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup.sqlite --output-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup-artifact.json"
 evaluate-layout = "python scripts/evaluate_layout.py data/opennoise.sqlite --layout default"
 evaluate-membership = "python scripts/evaluate_membership.py tests/fixtures/membership_evaluation.json"
