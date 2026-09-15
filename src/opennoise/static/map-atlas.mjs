@@ -193,6 +193,13 @@ export function normaliseAtlasPayload(payload) {
     members.push(node);
     cohorts.set(key, members);
   }
+  const browseLandmarks = (Array.isArray(source.browse_landmarks) ? source.browse_landmarks : [])
+    .filter((region) => region && typeof region === 'object' && typeof region.root_id === 'string'
+      && typeof region.label === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
+    .map((region) => ({ ...region, title: region.label }));
+  const browseLandmarkIds = browseLandmarks
+    .map((landmark) => landmark.root_id)
+    .filter((id) => byId.has(id));
   return {
     revision: typeof source.revision === 'string' ? source.revision : 'static-atlas-v1',
     nodes,
@@ -208,10 +215,8 @@ export function normaliseAtlasPayload(payload) {
     spatialIndex,
     cohortKeys,
     cohorts,
-    browseLandmarks: (Array.isArray(source.browse_landmarks) ? source.browse_landmarks : [])
-      .filter((region) => region && typeof region === 'object' && typeof region.root_id === 'string'
-        && typeof region.label === 'string' && Number.isFinite(region.x) && Number.isFinite(region.y))
-      .map((region) => ({ ...region, title: region.label })),
+    browseLandmarks,
+    browseLandmarkIds,
     regions: (Array.isArray(source.overview_regions) ? source.overview_regions : source.regions ?? [])
       .filter((region) => region && typeof region === 'object')
       .map((region) => ({ ...region, title: region.title ?? region.label ?? region.name })),
@@ -624,6 +629,8 @@ export function visibleNodeLabels(atlas, level, viewport, project, measureText, 
   const ids = new Set();
   const focus = options.focusId;
   const required = new Set(options.requiredIds ?? []);
+  const mandatory = new Set(options.mandatoryIds ?? []);
+  for (const id of mandatory) if (atlas.byId.has(id)) required.add(id);
   const allowedIds = options.allowedIds ? new Set(options.allowedIds) : null;
   if (focus && atlas.byId.has(focus)) required.add(focus);
   const globalOrder = new Map((atlas.labels[level] ?? []).map((id, index) => [id, index]));

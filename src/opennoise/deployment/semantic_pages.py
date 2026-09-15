@@ -12,6 +12,7 @@ from typing import Final
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex, write_atomic_bytes
 from opennoise.ml.semantic_layout.contracts import (
+    SemanticCoordinate,
     SemanticLayoutArtifact,
     verify_semantic_map_layout,
 )
@@ -33,6 +34,27 @@ class SemanticPagesExportInputs:
 
     semantic_layout_path: Path
     output_directory: Path
+
+
+@dataclass(frozen=True, slots=True)
+class _BrowseLandmark:
+    """Typed, presentation-only landmark emitted into the static payload."""
+
+    root_id: str
+    label: str
+    x: float
+    y: float
+    member_ids: tuple[str, ...]
+
+    def payload(self) -> dict[str, object]:
+        return {
+            "root_id": self.root_id,
+            "label": self.label,
+            "x": self.x,
+            "y": self.y,
+            "member_count": len(self.member_ids),
+            "member_ids": list(self.member_ids),
+        }
 
 
 def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object]:
@@ -225,71 +247,74 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
             }
             for community in artifact.communities
         ],
-        "browse_landmarks": _browse_landmarks(nodes),
+        "browse_landmarks": [
+            landmark.payload() for landmark in _browse_landmarks(artifact.coordinates)
+        ],
         "labels": labels,
         "aliases": [{"term": term, "target": target} for term, target in sorted(aliases)],
     }
 
 
-def _browse_landmarks(nodes: list[dict[str, object]]) -> list[dict[str, object]]:
+def _browse_landmarks(
+    coordinates: tuple[SemanticCoordinate, ...],
+) -> tuple[_BrowseLandmark, ...]:
     """Select presentation-only root labels from locally co-located browse groups.
 
     ``display_parent_id`` is presentation metadata, not a factual claim. A
     label earns a landmark only when at least three associated labels already
     occupy its local semantic neighborhood; no coordinates or edges are made.
     """
-    by_id = {str(node["id"]): node for node in nodes}
+    by_id = {coordinate.seed_id: coordinate for coordinate in coordinates}
     children: dict[str, list[str]] = {}
-    for node in nodes:
-        parent_id = node.get("display_parent_id")
-        node_id = str(node["id"])
-        if isinstance(parent_id, str) and parent_id in by_id and parent_id != node_id:
-            children.setdefault(parent_id, []).append(node_id)
-    regions: list[dict[str, object]] = []
+    for coordinate in coordinates:
+        parent_id = coordinate.display_parent_id
+        if parent_id is not None and parent_id in by_id and parent_id != coordinate.seed_id:
+            children.setdefault(parent_id, []).append(coordinate.seed_id)
+    landmarks: list[_BrowseLandmark] = []
     for root_id in children:
         root = by_id[root_id]
-        if root.get("display_parent_id") is not None or root.get("lod") != 0:
+        if root.display_parent_id is not None or root.lod != 0:
             continue
+        root_members = {root_id}
         members = [
-            node
-            for node in nodes
-            if node["id"] == root_id or node.get("hierarchy_root_id") == root_id
+            coordinate
+            for coordinate in coordinates
+            if coordinate.seed_id in root_members or coordinate.hierarchy_root_id in root_members
         ]
         nearby = [
-            node
-            for node in members
-            if math.hypot(float(node["x"]) - float(root["x"]), float(node["y"]) - float(root["y"]))
+            coordinate
+            for coordinate in members
+            if math.hypot(coordinate.x - root.x, coordinate.y - root.y)
             <= _HIERARCHY_REGION_MAX_DISTANCE
         ]
         if len(nearby) < _HIERARCHY_REGION_MIN_MEMBERS:
             continue
         distances = sorted(
-            math.hypot(float(node["x"]) - float(root["x"]), float(node["y"]) - float(root["y"]))
-            for node in nearby
+            math.hypot(coordinate.x - root.x, coordinate.y - root.y) for coordinate in nearby
         )
         radius = max(0.018, min(0.09, distances[int(len(distances) * 0.9)] + 0.008))
         owned = [
-            node
-            for node in nearby
-            if math.hypot(float(node["x"]) - float(root["x"]), float(node["y"]) - float(root["y"]))
-            <= radius
+            coordinate
+            for coordinate in nearby
+            if math.hypot(coordinate.x - root.x, coordinate.y - root.y) <= radius
         ]
-        regions.append(
-            {
-                "root_id": root_id,
-                "label": root["name"],
-                "x": root["x"],
-                "y": root["y"],
-                "member_count": len(owned),
-                "member_ids": sorted(str(node["id"]) for node in owned),
-            }
+        landmarks.append(
+            _BrowseLandmark(
+                root_id=root_id,
+                label=root.name,
+                x=root.x,
+                y=root.y,
+                member_ids=tuple(sorted(coordinate.seed_id for coordinate in owned)),
+            )
         )
-    return sorted(
-        regions,
-        key=lambda region: (
-            -int(region["member_count"]),
-            str(region["label"]).casefold(),
-            str(region["root_id"]),
+    return tuple(
+        sorted(
+            landmarks,
+            key=lambda landmark: (
+                -len(landmark.member_ids),
+                landmark.label.casefold(),
+                landmark.root_id,
+            ),
         ),
     )[:35]
 

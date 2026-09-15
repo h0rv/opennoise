@@ -91,6 +91,7 @@ if (canvas instanceof HTMLCanvasElement) {
         id: `region:${region.root_id ?? region.community_id ?? index}`,
         text: region.title,
         screen: { x: state.camera.x + region.x * state.camera.scale, y: state.camera.y + region.y * state.camera.scale },
+        required: typeof region.root_id === 'string',
         priority: index,
       }));
       const visibleRegions = declutterLabels(
@@ -105,7 +106,7 @@ if (canvas instanceof HTMLCanvasElement) {
       }
       return;
     }
-    for (const connection of state.connections) { const left = state.atlas.byId.get(connection.source); const right = state.atlas.byId.get(connection.target); if (!left || !right) continue; const start = point(left); const end = point(right); const local = Math.hypot(start.x - end.x, start.y - end.y) <= 280; if (!local && connection.grouping) continue; context.strokeStyle = connection.grouping ? colors.parent : colors.similarity; context.globalAlpha = connection.grouping ? .85 : .7; context.lineWidth = connection.grouping ? 1.75 : 1.5; if (!connection.grouping) context.setLineDash([4, 3]); context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); context.setLineDash([]); }
+    for (const connection of state.connections) { const left = state.atlas.byId.get(connection.source); const right = state.atlas.byId.get(connection.target); if (!left || !right) continue; const start = point(left); const end = point(right); context.strokeStyle = connection.grouping ? colors.parent : colors.similarity; context.globalAlpha = connection.grouping ? .85 : .7; context.lineWidth = connection.grouping ? 1.75 : 1.5; if (!connection.grouping) context.setLineDash([4, 3]); context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); context.setLineDash([]); }
     const requiredIds = state.connections.flatMap((connection) => [connection.source, connection.target]);
     const selectedLabels = visibleNodeLabels(
       state.atlas,
@@ -117,6 +118,7 @@ if (canvas instanceof HTMLCanvasElement) {
         maximum: labelBudgetForScale(state.camera.scale, state.fitScale),
         focusId: state.focus,
         requiredIds,
+        mandatoryIds: state.focus ? [] : state.atlas.browseLandmarkIds,
         allowedIds: state.neighborhoodIds,
         camera: state.camera,
         cohortIds: [...state.disclosedCohorts],
@@ -178,21 +180,37 @@ if (canvas instanceof HTMLCanvasElement) {
     if (!state.atlas?.byId.has(id)) return;
     state.focus = id; state.connections = []; state.neighborhoodIds = new Set([id]); state.disclosedCohorts.clear(); if (back) back.hidden = false; if (push) setUrl(id);
     const neighborhood = focusedConnections(state.atlas, id);
-    state.connections = neighborhood.connections;
-    state.neighborhoodIds = new Set(neighborhood.nodeIds);
-    const nodes = [...state.neighborhoodIds].map((key) => state.atlas.byId.get(key)).filter(Boolean);
-    const focusBounds = boundsForNodes(nodes, state.atlas.initialCamera);
+    const cameraFor = (connections) => {
+      const ids = new Set([id]); for (const connection of connections) { ids.add(connection.source); ids.add(connection.target); }
+      const nodes = [...ids].map((key) => state.atlas.byId.get(key)).filter(Boolean);
+      const focusBounds = boundsForNodes(nodes, state.atlas.initialCamera);
+      return focusCamera(
+        focusBounds,
+        state.viewport,
+        state.fitScale * 1.5,
+        MAX_SCALE,
+        .72,
+        { x: state.atlas.byId.get(id).x, y: state.atlas.byId.get(id).y },
+      );
+    };
     // Focused connection sets need a detail LOD. A broad set can otherwise fit
     // at the overview scale.
-    state.camera = focusCamera(
-      focusBounds,
-      state.viewport,
-      state.fitScale * 1.5,
-      MAX_SCALE,
-      .72,
-      { x: state.atlas.byId.get(id).x, y: state.atlas.byId.get(id).y },
-    );
-    showDetail(id, neighborhood.connections);
+    state.camera = cameraFor(neighborhood.connections);
+    state.connections = neighborhood.connections.filter((connection) => {
+      if (!connection.grouping) return true;
+      const start = point(state.atlas.byId.get(connection.source)); const end = point(state.atlas.byId.get(connection.target));
+      return Math.hypot(start.x - end.x, start.y - end.y) <= 280;
+    });
+    state.camera = cameraFor(state.connections);
+    state.connections = state.connections.filter((connection) => {
+      if (!connection.grouping) return true;
+      const start = point(state.atlas.byId.get(connection.source)); const end = point(state.atlas.byId.get(connection.target));
+      return Math.hypot(start.x - end.x, start.y - end.y) <= 280;
+    });
+    state.camera = cameraFor(state.connections);
+    state.neighborhoodIds = new Set([id]);
+    for (const connection of state.connections) { state.neighborhoodIds.add(connection.source); state.neighborhoodIds.add(connection.target); }
+    showDetail(id, state.connections);
     schedule();
   };
   const nearest = (cursor) => { let hit = null; let distance = 15; for (const id of state.displayedIds) { const node = state.atlas.byId.get(id); if (!node) continue; const screen = point(node); const next = Math.hypot(screen.x - cursor.x, screen.y - cursor.y); if (next < distance) { hit = node; distance = next; } } return hit; };

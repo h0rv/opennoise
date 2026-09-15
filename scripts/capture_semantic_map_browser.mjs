@@ -434,6 +434,11 @@ async function run() {
       for (let attempt = 0; attempt < 80 && value.edges === 0; attempt += 1) {
         await sleep(25); value = await diagnostics(cdp);
       }
+      // Detail DOM updates synchronously, while the canvas paints on the next
+      // animation frame. Read after that frame so dots, links, and lines share
+      // one observed focus contract.
+      await sleep(75);
+      value = await diagnostics(cdp);
       return value;
     };
     let focused = await focusQuery('idm', afterPan.frame_count - 1);
@@ -458,10 +463,22 @@ async function run() {
     requireCheck(!postPunk.detail_hidden && postPunk.detail_links <= 12 && postPunk.detail_links >= postPunk.edges && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-focus.png', 'light', 1440, 900));
 
-    const modernRock = await focusQuery('modern rock', postPunk.frame_count - 1);
+    const rock = await focusQuery('rock', postPunk.frame_count - 1);
+    const rockL1 = await clickControl(cdp, 'in');
+    const rockL2 = await clickControl(cdp, 'in');
+    const rockL3 = await clickControl(cdp, 'in');
     requireCheck(
-      modernRock.focus_url === 'legacy:item10' && modernRock.detail_names.some((name) => name.endsWith(': rock')),
-      'modern rock did not retain its rock browse path in the focused zoom view',
+      rock.focus_url === 'legacy:item3'
+        && [rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
+      'rock browse landmark did not persist after every plus control',
+      { rock, rockL1, rockL2, rockL3 },
+    );
+
+    const modernRock = await focusQuery('modern rock', rockL3.frame_count - 1);
+    requireCheck(modernRock.focus_url === 'legacy:item10', 'modern rock did not focus', modernRock);
+    requireCheck(
+      modernRock.points === modernRock.edges + 1 && modernRock.points === modernRock.detail_links + 1,
+      'modern rock focus did not keep dots, links, and connections in one contract',
       modernRock,
     );
     screenshots.push(await screenshot(cdp, 'desktop-rock-modern-rock-focus.png', 'light', 1440, 900));
@@ -501,14 +518,16 @@ async function run() {
         deep_zoom_scale: buttonDeep.scale,
         focused_edges: focused.edges,
         post_punk_edges: postPunk.edges,
-        rock_modern_rock_browse_path: modernRock.detail_names.some((name) => name.endsWith(': rock')),
+        modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
+          && modernRock.points === modernRock.detail_links + 1,
+        rock_landmark_retained_after_plus: [rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
         pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
         back_restored: backed.back_hidden && !backed.focus_url,
         dark_mode: dark.background !== initial.background,
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, zoom1, zoom2, afterPan, focused, backed, postPunk, modernRock, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, zoom1, zoom2, afterPan, focused, backed, postPunk, rock, rockL1, rockL2, rockL3, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

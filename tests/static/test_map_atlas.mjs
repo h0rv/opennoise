@@ -133,6 +133,26 @@ test('a root stays visible while its supported child is cumulatively disclosed',
   assert.deepEqual(scales.map((scale) => isNodeRevealed(modernRock, scale, 1)), [false, false, true, true]);
 });
 
+test('exported browse landmark IDs are mandatory label candidates at every LOD', () => {
+  const atlas = normaliseAtlasPayload({
+    initial_camera: { x0: 0, y0: 0, x1: 10, y1: 10 },
+    nodes: [
+      { id: 'rock', name: 'rock', x: 2, y: 2, lod: 0 },
+      { id: 'modern-rock', name: 'modern rock', x: 3, y: 3, lod: 2, display_parent_id: 'rock' },
+    ],
+    browse_landmarks: [{ root_id: 'rock', label: 'rock', x: 2, y: 2 }],
+  });
+  assert.deepEqual(atlas.browseLandmarkIds, ['rock']);
+  for (const lod of [0, 1, 2, 3]) {
+    const labels = visibleNodeLabels(
+      atlas, lod, { width: 1000, height: 600 }, (node) => ({ x: node.x * 50, y: node.y * 50 }),
+      (name) => name.length * 6,
+      { maximum: 10, mandatoryIds: atlas.browseLandmarkIds },
+    );
+    assert.ok(labels.some((label) => label.id === 'rock'));
+  }
+});
+
 test('plus control targets the next semantic tier instead of an arbitrary ratio', () => {
   const first = nextLodScale(1, 1, 64);
   const second = nextLodScale(first, 1, 64);
