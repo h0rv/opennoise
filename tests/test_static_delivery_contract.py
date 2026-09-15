@@ -18,7 +18,11 @@ class StaticDeliveryContractTests(unittest.TestCase):
         self.assertEqual(tasks["dev"], "python scripts/run_dev.py")
         self.assertIn("export-semantic-pages", tasks)
         self.assertIn("certify-static-pages", tasks)
-        self.assertIn("scripts/certify_static_pages.py", tasks["certify-static-pages"])
+        self.assertEqual(tasks["certify-static-pages"], "python scripts/certify_static_pages.py")
+        self.assertEqual(
+            tasks["rebuild-certify-semantic-pages"],
+            {"sequence": ["rebuild-semantic-map-layout", "certify-static-pages"]},
+        )
         for removed in (
             "dev-research",
             "dev-legacy",

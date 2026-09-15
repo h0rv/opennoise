@@ -41,11 +41,14 @@ the loopback server, and the CDP browser harness:
 uv run poe certify-static-pages
 ```
 
-Set `OPENNOISE_SEMANTIC_MAP_LAYOUT` and `OPENNOISE_PAGES_OUTPUT` first. The
-gate writes `artifacts/semantic-map/browser.json` and screenshots, uses port
-3001 for the loopback server, and atomically replaces an existing validated
-output after the gate passes. To inspect an export manually on another port,
-use `uv run poe dev -- --port 3010` (the passthrough separator is supported).
+The gate defaults to the canonical v2 layout and `dist`; set
+`OPENNOISE_SEMANTIC_MAP_LAYOUT` or `OPENNOISE_PAGES_OUTPUT` to override either
+path. It writes `artifacts/semantic-map/browser.json` and screenshots, uses
+port 3001 for the loopback server, and atomically replaces an existing
+validated output after the gate passes. Set `OPENNOISE_PAGES_CERTIFY_PORT` to
+use another certification port when 3001 is occupied. To inspect an export
+manually on another port, use `uv run poe dev -- --port 3010` (the passthrough
+separator is supported).
 
 ## Deploy
 

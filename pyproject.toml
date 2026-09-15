@@ -113,7 +113,7 @@ dev = "python scripts/run_dev.py"
 rebuild-semantic-map-layout = "python scripts/rebuild_semantic_map_layout.py"
 rebuild-certify-semantic-pages = { sequence = ["rebuild-semantic-map-layout", "certify-static-pages"] }
 export-semantic-pages = "python scripts/export_semantic_pages.py --semantic-layout $OPENNOISE_SEMANTIC_MAP_LAYOUT --output $OPENNOISE_PAGES_OUTPUT"
-certify-static-pages = "python scripts/certify_static_pages.py --semantic-layout $OPENNOISE_SEMANTIC_MAP_LAYOUT --output $OPENNOISE_PAGES_OUTPUT"
+certify-static-pages = "python scripts/certify_static_pages.py"
 build-local-musicbrainz-artist-reverse-lookup = "python scripts/build_local_musicbrainz_artist_reverse_lookup.py --evidence-db .cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite --evidence-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json --output-db .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup.sqlite --output-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup-artifact.json"
 evaluate-layout = "python scripts/evaluate_layout.py data/opennoise.sqlite --layout default"
 evaluate-membership = "python scripts/evaluate_membership.py tests/fixtures/membership_evaluation.json"

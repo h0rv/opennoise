@@ -39,7 +39,11 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--report", type=Path, default=Path("artifacts/semantic-map/browser.json"))
     parser.add_argument("--captures", type=Path, default=Path("artifacts/semantic-map/captures"))
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=3001)
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("OPENNOISE_PAGES_CERTIFY_PORT", "3001")),
+    )
     arguments = sys.argv[1:]
     if arguments[:1] == ["--"]:
         arguments = arguments[1:]
