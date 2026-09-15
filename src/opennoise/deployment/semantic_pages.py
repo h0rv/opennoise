@@ -29,6 +29,41 @@ class SemanticPagesExportError(ValueError):
 
 
 @dataclass(frozen=True, slots=True)
+class _PublicIdMapper:
+    """Deterministically remove the internal transport prefix at publication."""
+
+    internal_ids: frozenset[str]
+
+    @classmethod
+    def from_artifact(cls, artifact: SemanticLayoutArtifact) -> _PublicIdMapper:
+        """Seal the mapping against every seed, including unplaced evidence IDs."""
+        return cls.from_ids(
+            tuple(coordinate.seed_id for coordinate in artifact.coordinates)
+            + tuple(seed.seed_id for seed in artifact.unplaced)
+        )
+
+    @classmethod
+    def from_ids(cls, values: tuple[str, ...]) -> _PublicIdMapper:
+        internal_ids = frozenset(values)
+        public_ids = tuple(cls._public_id(value) for value in internal_ids)
+        if len(internal_ids) != len(public_ids) or len(set(public_ids)) != len(public_ids):
+            raise SemanticPagesExportError("public static ID mapping has a collision")
+        return cls(internal_ids)
+
+    @staticmethod
+    def _public_id(value: str) -> str:
+        return value.removeprefix("legacy:")
+
+    def public(self, value: str) -> str:
+        if value not in self.internal_ids:
+            raise SemanticPagesExportError("public static ID is outside the sealed seed universe")
+        public_id = self._public_id(value)
+        if not public_id or public_id.startswith("legacy:"):
+            raise SemanticPagesExportError("public static ID retains an internal prefix")
+        return public_id
+
+
+@dataclass(frozen=True, slots=True)
 class SemanticPagesExportInputs:
     """One sealed atlas and a new, empty static deployment directory."""
 
@@ -68,11 +103,12 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
         verify_semantic_map_layout(artifact)
     except (OSError, ValueError) as error:
         raise SemanticPagesExportError("invalid semantic map layout artifact") from error
-    atlas_payload = _renderer_payload(artifact)
+    mapper = _PublicIdMapper.from_artifact(artifact)
+    atlas_payload = _renderer_payload(artifact, mapper)
     atlas_payload["edges"] = [
         {
-            "source": f"legacy:{edge.left_seed_id}",
-            "target": f"legacy:{edge.right_seed_id}",
+            "source": mapper.public(edge.left_seed_id),
+            "target": mapper.public(edge.right_seed_id),
             "confidence": edge.weight,
         }
         for edge in artifact.structural_edges
@@ -158,11 +194,13 @@ def _write_fingerprinted_asset(assets: Path, stem: str, suffix: str, data: bytes
     return path
 
 
-def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
+def _renderer_payload(
+    artifact: SemanticLayoutArtifact, mapper: _PublicIdMapper
+) -> dict[str, object]:
     """Project a verified atlas into the sole static browser payload."""
     nodes = [
         {
-            "id": f"legacy:{coordinate.seed_id}",
+            "id": mapper.public(coordinate.seed_id),
             "name": coordinate.name,
             "x": coordinate.x,
             "y": coordinate.y,
@@ -170,12 +208,12 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
             "importance": coordinate.importance,
             "community_id": coordinate.community_id,
             "display_parent_id": (
-                f"legacy:{coordinate.display_parent_id}"
+                mapper.public(coordinate.display_parent_id)
                 if coordinate.display_parent_id is not None
                 else None
             ),
             "hierarchy_root_id": (
-                f"legacy:{coordinate.hierarchy_root_id}"
+                mapper.public(coordinate.hierarchy_root_id)
                 if coordinate.hierarchy_root_id is not None
                 else None
             ),
@@ -184,7 +222,7 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
         for coordinate in sorted(artifact.coordinates, key=lambda value: value.seed_id)
     ]
     anchors = {
-        f"legacy:{community.anchor_seed_id}"
+        mapper.public(community.anchor_seed_id)
         for community in artifact.communities
         if community.overview_visible
     }
@@ -200,22 +238,22 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
     prior = sorted(anchors)
     for level, budget in enumerate((45, 96, 210, 420)):
         candidates = [
-            f"legacy:{coordinate.seed_id}"
+            mapper.public(coordinate.seed_id)
             for coordinate in ranked_coordinates
-            if coordinate.lod <= level and f"legacy:{coordinate.seed_id}" not in prior
+            if coordinate.lod <= level and mapper.public(coordinate.seed_id) not in prior
         ]
         prior.extend(candidates[: max(0, budget - len(prior))])
         labels.append({"level": level, "ids": list(prior)})
     aliases = {
-        (coordinate.name.casefold(), f"legacy:{coordinate.seed_id}")
+        (coordinate.name.casefold(), mapper.public(coordinate.seed_id))
         for coordinate in artifact.coordinates
     }
     aliases.update(
         {
-            ("idm", "legacy:item887"),
-            ("intelligent dance", "legacy:item887"),
-            ("pop music", "legacy:item1"),
-            ("popular music", "legacy:item1"),
+            ("idm", mapper.public("item887")),
+            ("intelligent dance", mapper.public("item887")),
+            ("pop music", mapper.public("item1")),
+            ("popular music", mapper.public("item1")),
         }
     )
     return {
@@ -250,8 +288,8 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
         "browse_landmarks": [
             {
                 **landmark.payload(),
-                "root_id": f"legacy:{landmark.root_id}",
-                "member_ids": [f"legacy:{member_id}" for member_id in landmark.member_ids],
+                "root_id": mapper.public(landmark.root_id),
+                "member_ids": [mapper.public(member_id) for member_id in landmark.member_ids],
             }
             for landmark in _browse_landmarks(artifact.coordinates)
         ],

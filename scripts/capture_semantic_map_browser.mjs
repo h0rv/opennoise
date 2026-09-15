@@ -396,6 +396,17 @@ async function run() {
     requireCheck(boxesInViewport(initial.label_boxes, initial.viewport), "overview label box escaped viewport", initial);
     screenshots.push(await screenshot(cdp, "desktop-light.png", "light", 1440, 900));
 
+    await cdp.command('Page.navigate', { url: `${baseUrl}?open_focus=legacy%3Aitem887` });
+    for (let attempt = 0; attempt < 240; attempt += 1) {
+      const normalized = await cdp.evaluate("new URL(location.href).searchParams.get('open_focus') === 'item887' && !document.querySelector('#map-detail')?.hidden");
+      if (normalized) break;
+      await sleep(25);
+      if (attempt === 239) throw new Error('legacy focus URL did not normalize to the public ID');
+    }
+    const normalizedLegacy = await diagnostics(cdp);
+    requireCheck(normalizedLegacy.focus_url === 'item887' && normalizedLegacy.edges > 0 && normalizedLegacy.detail_links === normalizedLegacy.edges, 'legacy focus URL did not preserve the focus contract', normalizedLegacy);
+    await navigate(cdp, 1440, 900, "light");
+
     const buttonL1 = await clickControl(cdp, "in");
     const buttonL2 = await clickControl(cdp, "in");
     const buttonL3 = await clickControl(cdp, "in");
@@ -461,7 +472,7 @@ async function run() {
     requireCheck(boxesInViewport(focused.label_boxes, focused.viewport), "focused label box escaped viewport", focused);
     requireCheck(edgesInViewport(focused.edge_endpoints, focused.viewport), "focused edge endpoint escaped viewport", focused);
     requireCheck(!focused.back_hidden, "Back control did not appear after focus", focused);
-    requireCheck(focused.focus_url === "legacy:item887", "IDM alias did not focus its stable seed", focused);
+    requireCheck(focused.focus_url === "item887", "IDM alias did not focus its public seed", focused);
     requireCheck(focused.points === focused.edges + 1, "focused view leaked unconnected dots", focused);
     requireCheck(!focused.detail_hidden && focused.detail_links === focused.edges && focused.detail_links <= 12 && boxInViewport(focused.detail_box, focused.viewport), 'IDM list does not match its shown links', focused);
     screenshots.push(await screenshot(cdp, "desktop-idm-focus.png", "light", 1440, 900));
@@ -472,7 +483,7 @@ async function run() {
     requireCheck(backed.back_hidden && !backed.focus_url, "Back did not restore map state", backed);
 
     const postPunk = await focusQuery('post-punk', backed.frame_count - 1);
-    requireCheck(postPunk.focus_url === 'legacy:item577' && postPunk.edges > 0, 'post-punk did not focus its connection set', postPunk);
+    requireCheck(postPunk.focus_url === 'item577' && postPunk.edges > 0, 'post-punk did not focus its connection set', postPunk);
     requireCheck(postPunk.points === postPunk.edges + 1, 'post-punk view leaked unconnected dots', postPunk);
     requireCheck(!postPunk.detail_hidden && postPunk.detail_links === postPunk.edges && postPunk.detail_links <= 12 && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-focus.png', 'light', 1440, 900));
@@ -498,7 +509,7 @@ async function run() {
     requireCheck(!rockL2.label_names.includes('hip hop'), 'viewport-local browse landmarks should not be forced on screen', { rockL2 });
 
     const modernRock = await focusQuery('modern rock', rockL3.frame_count - 1);
-    requireCheck(modernRock.focus_url === 'legacy:item10', 'modern rock did not focus', modernRock);
+    requireCheck(modernRock.focus_url === 'item10', 'modern rock did not focus', modernRock);
     requireCheck(
       modernRock.points === modernRock.edges + 1 && modernRock.points === modernRock.detail_links + 1,
       'modern rock focus did not keep dots, links, and connections in one contract',

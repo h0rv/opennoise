@@ -10,10 +10,72 @@ from pathlib import Path
 from unittest.mock import patch
 
 from opennoise.deployment import semantic_pages
-from opennoise.deployment.semantic_pages import SemanticPagesExportInputs, export_semantic_pages
+from opennoise.deployment.semantic_pages import (
+    SemanticPagesExportError,
+    SemanticPagesExportInputs,
+    _PublicIdMapper,
+    export_semantic_pages,
+)
 
 LAYOUT = Path(".cache/semantic-map-layout-v2/artifact.json")
 STATIC_ROOT = Path(__file__).resolve().parents[2] / "src" / "opennoise" / "static"
+
+
+def _assert_public_payload(test: unittest.TestCase, payload: dict[str, object]) -> None:
+    public_bytes = json.dumps(payload, sort_keys=True)
+    test.assertNotIn("legacy:", public_bytes)
+    nodes = payload["nodes"]
+    assert isinstance(nodes, list)
+    node_ids: set[str] = set()
+    for node in nodes:
+        assert isinstance(node, dict)
+        node_id = node["id"]
+        assert isinstance(node_id, str)
+        node_ids.add(node_id)
+    test.assertEqual(len(node_ids), len(nodes))
+    test.assertTrue(all(node_id for node_id in node_ids))
+    edges = payload["edges"]
+    assert isinstance(edges, list)
+    for edge in edges:
+        assert isinstance(edge, dict)
+        test.assertIn(edge["source"], node_ids)
+        test.assertIn(edge["target"], node_ids)
+    for node in nodes:
+        assert isinstance(node, dict)
+        for field in ("display_parent_id", "hierarchy_root_id"):
+            if node[field] is not None:
+                test.assertIn(node[field], node_ids)
+    labels = payload["labels"]
+    assert isinstance(labels, list)
+    for level in labels:
+        assert isinstance(level, dict)
+        test.assertTrue(set(level["ids"]).issubset(node_ids))
+    aliases = payload["aliases"]
+    assert isinstance(aliases, list)
+    for alias in aliases:
+        assert isinstance(alias, dict)
+        test.assertIn(alias["target"], node_ids)
+    browse_landmarks = payload["browse_landmarks"]
+    assert isinstance(browse_landmarks, list)
+    for landmark in browse_landmarks:
+        assert isinstance(landmark, dict)
+        test.assertIn(landmark["root_id"], node_ids)
+        test.assertTrue(set(landmark["member_ids"]).issubset(node_ids))
+
+
+class PublicIdMapperTests(unittest.TestCase):
+    def test_public_id_mapper_is_deterministic_and_rejects_collisions(self) -> None:
+        mapper = _PublicIdMapper.from_ids(("item1", "item887"))
+        self.assertEqual(mapper.public("item887"), "item887")
+        with self.assertRaises(SemanticPagesExportError):
+            _PublicIdMapper.from_ids(("item1", "legacy:item1"))
+
+    def test_public_id_mapper_checks_the_full_seed_cardinality(self) -> None:
+        ids = tuple(f"item{number}" for number in range(1, 6292))
+        mapper = _PublicIdMapper.from_ids(ids)
+        self.assertEqual(mapper.public("item6291"), "item6291")
+        with self.assertRaises(SemanticPagesExportError):
+            _PublicIdMapper.from_ids((*ids, "legacy:item1"))
 
 
 @unittest.skipUnless(LAYOUT.is_file(), "semantic-layout integration artifact is not provisioned")
@@ -39,6 +101,7 @@ class SemanticPagesExportTests(unittest.TestCase):
             payload = json.loads(atlas_path.read_text())
             self.assertEqual(len(payload["nodes"]), 2945)
             self.assertEqual(len(payload["edges"]), 34937)
+            _assert_public_payload(self, payload)
             index = (output / "index.html").read_text()
             self.assertIn('id="semantic-map"', index)
             self.assertFalse((output / "assets" / "production-map-v1.json").exists())

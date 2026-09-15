@@ -34,6 +34,13 @@ if (canvas instanceof HTMLCanvasElement) {
   };
   const palette = () => { const css = getComputedStyle(document.documentElement); return Object.fromEntries(['canvas', 'node', 'ink', 'edge', 'focus', 'parent', 'similarity'].map((key) => [key, css.getPropertyValue(`--${key}`).trim()])); };
   const point = (node) => ({ x: state.camera.x + node.x * state.camera.scale, y: state.camera.y + node.y * state.camera.scale });
+  const publicId = (id) => typeof id === 'string' ? id.replace(/^legacy:/, '') : id;
+  const canonicalizeFocusUrl = () => {
+    const url = new URL(window.location.href);
+    const raw = url.searchParams.get('open_focus'); const clean = publicId(raw);
+    if (raw && clean !== raw) { url.searchParams.set('open_focus', clean); history.replaceState({ opennoiseFocus: clean }, '', url); }
+    return clean;
+  };
   const level = () => levelForScale(state.camera.scale, state.fitScale);
   const visible = (node) => { const screen = point(node); return screen.x >= -8 && screen.y >= -8 && screen.x <= state.viewport.width + 8 && screen.y <= state.viewport.height + 8; };
   const schedule = () => { if (!state.frame) state.frame = requestAnimationFrame(draw); };
@@ -274,9 +281,10 @@ if (canvas instanceof HTMLCanvasElement) {
   controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') history.back(); else if (action === 'in') { const target = nextLodScale(state.camera.scale, state.fitScale, MAX_SCALE); if (target > state.camera.scale) state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, target / state.camera.scale, { min: state.fitScale, max: MAX_SCALE }); schedule(); } else if (action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, 1 / 1.5, { min: state.fitScale, max: MAX_SCALE }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
   document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (!target) return; event.preventDefault(); void focus(target.dataset.openNodeId); });
   query?.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || !state.atlas) return; const id = state.atlas.aliases.get(query.value.trim().toLowerCase()); if (!id) return; event.preventDefault(); void focus(id); });
-  window.addEventListener('popstate', () => { const id = new URL(window.location.href).searchParams.get('open_focus'); if (id) void focus(id, false); else fit(); });
+  window.addEventListener('popstate', () => { const id = canonicalizeFocusUrl(); if (id) void focus(id, false); else fit(); });
+  const initialFocus = publicId(canvas.dataset.focus) || canonicalizeFocusUrl();
   fetch(endpoint).then((response) => response.json()).then((payload) => {
     state.atlas = normaliseAtlasPayload(payload);
-    state.viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; fit(); const initial = canvas.dataset.focus || new URL(window.location.href).searchParams.get('open_focus'); if (initial) void focus(initial, false);
+    state.viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; fit(); if (initialFocus) void focus(initialFocus, false);
   }).catch(() => { const error = document.createElement('p'); error.className = 'map-error'; error.textContent = 'Map data is unavailable.'; canvas.after(error); });
 }
