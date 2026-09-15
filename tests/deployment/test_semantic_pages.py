@@ -12,7 +12,7 @@ from unittest.mock import patch
 from opennoise.deployment import semantic_pages
 from opennoise.deployment.semantic_pages import SemanticPagesExportInputs, export_semantic_pages
 
-LAYOUT = Path(".cache/semantic-map-layout-v1/artifact.json")
+LAYOUT = Path(".cache/semantic-map-layout-v2/artifact.json")
 STATIC_ROOT = Path(__file__).resolve().parents[2] / "src" / "opennoise" / "static"
 
 

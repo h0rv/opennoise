@@ -195,7 +195,7 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
     )
     return {
         "revision": "semantic-scatter-map-v2",
-        "source": "semantic-map-layout-v1",
+        "source": "semantic-map-layout-v2",
         "logical_output_sha256": artifact.output_sha256,
         "total_seed_count": artifact.stable_seed_count,
         "placed_node_count": len(nodes),

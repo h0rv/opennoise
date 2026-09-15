@@ -12,7 +12,7 @@ from pydantic import Field, model_validator
 
 from opennoise.models import FrozenModel
 
-_REVISION = "semantic-map-layout-v1"
+_REVISION = "semantic-map-layout-v2"
 _SEED_COUNT = 6_291
 _SHA256 = r"^[0-9a-f]{64}$"
 
@@ -34,7 +34,7 @@ class SemanticLayoutError(ValueError):
 class SemanticLayoutSettings(FrozenModel):
     """Small, explicit layout policy; all weights remain structural, not audio axes."""
 
-    revision: Literal["semantic-map-layout-settings-v1"] = "semantic-map-layout-settings-v1"
+    revision: Literal["semantic-map-layout-settings-v2"] = "semantic-map-layout-settings-v2"
     world_width: float = Field(default=1.777777777778, gt=1.0, le=3.0)
     world_height: float = Field(default=1.0, gt=0.0, le=1.0)
     margin: float = Field(default=0.035, gt=0.0, lt=0.15)
@@ -173,8 +173,16 @@ class GeometryMetrics(FrozenModel):
     mean_colisten_knn_preservation: float | None = Field(default=None, ge=0.0, le=1.0)
     colisten_evaluable_seed_count: int = Field(default=0, ge=0)
     mean_hierarchy_endpoint_distance: float | None = Field(default=None, ge=0.0)
-    confidence_weighted_structural_edge_distance: float | None = Field(default=None, ge=0.0)
-    structural_edge_distance_p95: float | None = Field(default=None, ge=0.0)
+    raw_confidence_weighted_structural_edge_distance: float | None = Field(
+        default=None,
+        ge=0.0,
+        description="Confidence-weighted structural-edge distance in raw 16:9 world units.",
+    )
+    raw_structural_edge_distance_p95: float | None = Field(
+        default=None,
+        ge=0.0,
+        description="95th percentile structural-edge distance in raw 16:9 world units.",
+    )
     occupied_world_width_fraction: float = Field(ge=0.0, le=1.0)
     occupied_world_height_fraction: float = Field(ge=0.0, le=1.0)
     exact_coordinate_collision_count: int = Field(ge=0)
@@ -190,7 +198,7 @@ class GeometryMetrics(FrozenModel):
 class SemanticLayoutArtifact(FrozenModel):
     """One compact renderer-neutral open-evidence structural map layout."""
 
-    revision: Literal["semantic-map-layout-v1"] = _REVISION
+    revision: Literal["semantic-map-layout-v2"] = _REVISION
     coordinate_semantics: Literal["public_structural_proximity_not_audio_axes"] = (
         "public_structural_proximity_not_audio_axes"
     )
@@ -295,7 +303,7 @@ class SemanticLayoutArtifact(FrozenModel):
             )
             for edge in self.structural_edges
         )
-        if self.metrics.confidence_weighted_structural_edge_distance is not None:
+        if self.metrics.raw_confidence_weighted_structural_edge_distance is not None:
             total_weight = sum(edge.weight for edge in self.structural_edges)
             expected_weighted_distance = (
                 sum(
@@ -307,13 +315,13 @@ class SemanticLayoutArtifact(FrozenModel):
                 else 0.0
             )
             if not math.isclose(
-                self.metrics.confidence_weighted_structural_edge_distance,
+                self.metrics.raw_confidence_weighted_structural_edge_distance,
                 expected_weighted_distance,
                 rel_tol=0.0,
                 abs_tol=1e-10,
             ):
                 raise ValueError("confidence-weighted structural distance does not replay")
-        if self.metrics.structural_edge_distance_p95 is not None:
+        if self.metrics.raw_structural_edge_distance_p95 is not None:
             if not edge_distances:
                 raise ValueError("structural distance p95 requires structural edges")
             ordered_distances = sorted(edge_distances)
@@ -321,7 +329,7 @@ class SemanticLayoutArtifact(FrozenModel):
                 min(len(ordered_distances) - 1, math.ceil(0.95 * len(ordered_distances)) - 1)
             ]
             if not math.isclose(
-                self.metrics.structural_edge_distance_p95,
+                self.metrics.raw_structural_edge_distance_p95,
                 expected_p95,
                 rel_tol=0.0,
                 abs_tol=1e-10,

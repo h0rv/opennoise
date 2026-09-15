@@ -19,7 +19,8 @@ mise install
 uv run poe sync
 uv run poe check
 
-export OPENNOISE_SEMANTIC_MAP_LAYOUT=.cache/semantic-map-layout-v1/artifact.json
+uv run poe rebuild-semantic-map-layout
+export OPENNOISE_SEMANTIC_MAP_LAYOUT=.cache/semantic-map-layout-v2/artifact.json
 export OPENNOISE_PAGES_OUTPUT=dist
 UV_OFFLINE=1 uv run --no-sync poe export-semantic-pages
 uv run poe dev

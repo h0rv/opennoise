@@ -130,8 +130,8 @@ class SemanticLayoutTests(unittest.TestCase):
         self.assertGreater(artifact.metrics.occupied_world_width_fraction, 0.0)
         self.assertGreater(artifact.metrics.occupied_world_height_fraction, 0.0)
         self.assertEqual(artifact.metrics.exact_coordinate_collision_count, 0)
-        self.assertIsNotNone(artifact.metrics.confidence_weighted_structural_edge_distance)
-        self.assertIsNotNone(artifact.metrics.structural_edge_distance_p95)
+        self.assertIsNotNone(artifact.metrics.raw_confidence_weighted_structural_edge_distance)
+        self.assertIsNotNone(artifact.metrics.raw_structural_edge_distance_p95)
 
     def test_rejects_historical_construction_input(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -155,6 +155,16 @@ class SemanticLayoutTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             SemanticLayoutArtifact.model_validate(forged)
+
+    def test_rejects_superseded_v1_artifact_instead_of_reinterpreting_coordinates(self) -> None:
+        """A schema bump requires a rebuild from inputs, never a v1 relabel."""
+        with tempfile.TemporaryDirectory() as temporary:
+            artifact = build_semantic_map_layout(self._inputs(Path(temporary)))
+        superseded = artifact.model_dump(mode="json")
+        superseded["revision"] = "semantic-map-layout-v1"
+        superseded["settings"]["revision"] = "semantic-map-layout-settings-v1"
+        with self.assertRaises(ValueError):
+            SemanticLayoutArtifact.model_validate(superseded)
 
     def test_initial_camera_is_padded_aspect_envelope(self) -> None:
         camera = _initial_camera(((0.2, 0.2), (1.4, 0.75)), 1.777777777778, 1.0)
@@ -263,3 +273,16 @@ class SemanticLayoutTests(unittest.TestCase):
         self.assertLess(shortened, baseline)
         self.assertEqual(refined, replay)
         self.assertEqual(refined["unrelated"], positions["unrelated"])
+
+    def test_structural_refinement_is_independent_of_edge_mapping_order(self) -> None:
+        """Artifact coordinates cannot depend on incidental SQLite or mapping order."""
+        positions = {"a": (0.1, 0.1), "b": (0.8, 0.3), "c": (0.4, 0.9)}
+        forward = {("a", "b"): 0.9, ("a", "c"): 0.2}
+        reverse = dict(reversed(tuple(forward.items())))
+        refined = _refine_structural_positions(positions, forward, iterations=3, strength=0.08)
+        replay = _refine_structural_positions(positions, reverse, iterations=3, strength=0.08)
+        self.assertEqual(refined, replay)
+        self.assertEqual(
+            _structural_edge_distance_metrics(positions, forward),
+            _structural_edge_distance_metrics(positions, reverse),
+        )

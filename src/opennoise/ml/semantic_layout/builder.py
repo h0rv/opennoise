@@ -619,11 +619,14 @@ def _refine_structural_positions(
             continue
         adjacency[left].append((right, weight))
         adjacency[right].append((left, weight))
+    for neighbors in adjacency.values():
+        neighbors.sort(key=lambda item: item[0])
     anchored = dict(positions)
     refined = dict(positions)
     for _ in range(iterations):
         next_positions: dict[str, tuple[float, float]] = {}
-        for node, point in refined.items():
+        for node in sorted(refined):
+            point = refined[node]
             neighbors = adjacency.get(node, ())
             total_weight = sum(weight for _neighbor, weight in neighbors)
             if total_weight == 0.0:
@@ -642,10 +645,15 @@ def _refine_structural_positions(
 def _structural_edge_distance_metrics(
     coordinates: Mapping[str, tuple[float, float]], weights: Mapping[Edge, float]
 ) -> tuple[float | None, float | None]:
-    """Measure the confidence-weighted edge geometry supplied to the renderer."""
+    """Measure renderer geometry in raw 16:9 world units, not normalized-axis units.
+
+    These values compare candidate layouts using the same declared world. They
+    intentionally differ in units from ``_hierarchy_distance``, which normalizes
+    horizontal distance by ``world_width`` before evaluating hierarchy locality.
+    """
     distances = [
-        (weight, math.dist(coordinates[left], coordinates[right]))
-        for (left, right), weight in weights.items()
+        (weights[(left, right)], math.dist(coordinates[left], coordinates[right]))
+        for left, right in sorted(weights)
         if left in coordinates and right in coordinates
     ]
     if not distances:
@@ -1291,7 +1299,7 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
     )
     peer_positions = {node: positions[node] for node in manifold}
     colisten_nodes = {node for edge in colisten for node in edge} & set(positions)
-    confidence_weighted_structural_edge_distance, structural_edge_distance_p95 = (
+    raw_confidence_weighted_structural_edge_distance, raw_structural_edge_distance_p95 = (
         _structural_edge_distance_metrics(positions, combined)
     )
     metrics = GeometryMetrics(
@@ -1316,8 +1324,10 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         mean_hierarchy_endpoint_distance=_hierarchy_distance(
             positions, hierarchy, resolved.world_width
         ),
-        confidence_weighted_structural_edge_distance=confidence_weighted_structural_edge_distance,
-        structural_edge_distance_p95=structural_edge_distance_p95,
+        raw_confidence_weighted_structural_edge_distance=(
+            raw_confidence_weighted_structural_edge_distance
+        ),
+        raw_structural_edge_distance_p95=raw_structural_edge_distance_p95,
         occupied_world_width_fraction=(
             max(x for x, _y in positions.values()) - min(x for x, _y in positions.values())
         )

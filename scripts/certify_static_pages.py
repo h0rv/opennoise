@@ -27,7 +27,7 @@ def _arguments() -> argparse.Namespace:
         type=Path,
         default=Path(
             os.environ.get(
-                "OPENNOISE_SEMANTIC_MAP_LAYOUT", ".cache/semantic-map-layout-v1/artifact.json"
+                "OPENNOISE_SEMANTIC_MAP_LAYOUT", ".cache/semantic-map-layout-v2/artifact.json"
             )
         ),
     )
