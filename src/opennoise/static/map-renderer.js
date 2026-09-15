@@ -34,7 +34,7 @@ if (canvas instanceof HTMLCanvasElement) {
   };
   const palette = () => { const css = getComputedStyle(document.documentElement); return Object.fromEntries(['canvas', 'node', 'ink', 'edge', 'focus', 'parent', 'similarity'].map((key) => [key, css.getPropertyValue(`--${key}`).trim()])); };
   const point = (node) => ({ x: state.camera.x + node.x * state.camera.scale, y: state.camera.y + node.y * state.camera.scale });
-  const publicId = (id) => typeof id === 'string' ? id.replace(/^legacy:/, '') : id;
+  const publicId = (id) => typeof id === 'string' ? id.slice(id.lastIndexOf(':') + 1) : id;
   const canonicalizeFocusUrl = () => {
     const url = new URL(window.location.href);
     const raw = url.searchParams.get('open_focus'); const clean = publicId(raw);

@@ -63,7 +63,7 @@ unique positives (global positive-only recall 0.14896%). It abstains on 5,644
 of 6,069 H3-positive genres. Precision is intentionally unavailable because
 an H3 absence is unknown, not a negative.
 
-Legacy taxonomy overlay and v6 frontier files are present locally but are
+Historical taxonomy overlay and v6 frontier files are present locally but are
 superseded and unverified under the current row-bound provenance schema. The
 checked-in Poe workflow writes any replay to separate candidate directories.
 Its source is the sealed catalog snapshot, not an undeclared relation-feed

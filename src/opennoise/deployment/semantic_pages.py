@@ -30,7 +30,7 @@ class SemanticPagesExportError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class _PublicIdMapper:
-    """Deterministically remove the internal transport prefix at publication."""
+    """Deterministically publish the terminal segment of internal IDs."""
 
     internal_ids: frozenset[str]
 
@@ -52,14 +52,14 @@ class _PublicIdMapper:
 
     @staticmethod
     def _public_id(value: str) -> str:
-        return value.removeprefix("legacy:")
+        return value.rsplit(":", maxsplit=1)[-1]
 
     def public(self, value: str) -> str:
         if value not in self.internal_ids:
             raise SemanticPagesExportError("public static ID is outside the sealed seed universe")
         public_id = self._public_id(value)
-        if not public_id or public_id.startswith("legacy:"):
-            raise SemanticPagesExportError("public static ID retains an internal prefix")
+        if not public_id or ":" in public_id:
+            raise SemanticPagesExportError("public static ID retains an internal namespace")
         return public_id
 
 

@@ -396,15 +396,15 @@ async function run() {
     requireCheck(boxesInViewport(initial.label_boxes, initial.viewport), "overview label box escaped viewport", initial);
     screenshots.push(await screenshot(cdp, "desktop-light.png", "light", 1440, 900));
 
-    await cdp.command('Page.navigate', { url: `${baseUrl}?open_focus=legacy%3Aitem887` });
+    await cdp.command('Page.navigate', { url: `${baseUrl}?open_focus=archive%3Aitem887` });
     for (let attempt = 0; attempt < 240; attempt += 1) {
       const normalized = await cdp.evaluate("new URL(location.href).searchParams.get('open_focus') === 'item887' && !document.querySelector('#map-detail')?.hidden");
       if (normalized) break;
       await sleep(25);
-      if (attempt === 239) throw new Error('legacy focus URL did not normalize to the public ID');
+      if (attempt === 239) throw new Error('prefixed focus URL did not normalize to the public ID');
     }
-    const normalizedLegacy = await diagnostics(cdp);
-    requireCheck(normalizedLegacy.focus_url === 'item887' && normalizedLegacy.edges > 0 && normalizedLegacy.detail_links === normalizedLegacy.edges, 'legacy focus URL did not preserve the focus contract', normalizedLegacy);
+    const normalizedPrefixed = await diagnostics(cdp);
+    requireCheck(normalizedPrefixed.focus_url === 'item887' && normalizedPrefixed.edges > 0 && normalizedPrefixed.detail_links === normalizedPrefixed.edges, 'prefixed focus URL did not preserve the focus contract', normalizedPrefixed);
     await navigate(cdp, 1440, 900, "light");
 
     const buttonL1 = await clickControl(cdp, "in");

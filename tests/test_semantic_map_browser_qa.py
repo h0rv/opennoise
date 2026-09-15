@@ -57,13 +57,13 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("lostpointercapture", renderer)
         self.assertIn("state.displayedIds", renderer)
 
-    def test_old_focus_bookmarks_are_normalized_without_public_legacy_ids(self) -> None:
+    def test_prefixed_focus_bookmarks_are_normalized_to_public_ids(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
         self.assertIn("canonicalizeFocusUrl", renderer)
         self.assertIn("history.replaceState", renderer)
-        self.assertNotIn("legacy:item", renderer)
-        self.assertIn("open_focus=legacy%3Aitem887", self.source)
-        self.assertIn("normalizedLegacy.focus_url === 'item887'", self.source)
+        self.assertIn("lastIndexOf(':')", renderer)
+        self.assertIn("open_focus=archive%3Aitem887", self.source)
+        self.assertIn("normalizedPrefixed.focus_url === 'item887'", self.source)
 
     def test_preload_observes_canvas_without_production_debug_code(self) -> None:
         self.assertIn("Page.addScriptToEvaluateOnNewDocument", self.source)
