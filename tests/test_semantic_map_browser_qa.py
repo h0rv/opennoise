@@ -49,10 +49,10 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
 
     def test_renderer_keeps_focus_static_and_cleans_pointer_capture(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
-        self.assertIn("focusedConnections(state.atlas, id)", renderer)
+        self.assertIn("structuralNeighborhood(state.atlas, id)", renderer)
         self.assertNotIn("dataset.neighborsUrl", renderer)
         self.assertNotIn("neighborUrl", renderer)
-        self.assertIn("Connections", renderer)
+        self.assertIn("Structural connections", renderer)
         self.assertIn("pointercancel", renderer)
         self.assertIn("lostpointercapture", renderer)
         self.assertIn("state.displayedIds", renderer)

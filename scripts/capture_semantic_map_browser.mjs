@@ -178,6 +178,7 @@ async function diagnostics(cdp) {
       scale: Number(canvas?.dataset.mapScale ?? 0),
       cohorts: (canvas?.dataset.mapCohorts ?? '').split('|').filter(Boolean),
       label_names: [...new Set(frame.labels.map((item) => item.text))],
+      label_positions: frame.labels,
       label_boxes: frame.label_boxes,
       edges: frame.edges,
       edge_endpoints: frame.edge_endpoints,
@@ -192,6 +193,10 @@ async function diagnostics(cdp) {
         .map((link) => link.textContent),
       detail_box: detailRect ? { x: detailRect.x, y: detailRect.y, width: detailRect.width, height: detailRect.height } : null,
       focus_url: new URL(location.href).searchParams.get('open_focus'),
+      renderer_p95_ms: qa?.render_ms?.length
+        ? [...qa.render_ms].sort((left, right) => left - right)[Math.ceil(qa.render_ms.length * .95) - 1]
+        : null,
+      renderer_samples: qa?.render_ms?.length ?? 0,
       canvas_ready: Boolean(canvas),
     };
   })()`);
@@ -294,6 +299,7 @@ const PRELOAD = String.raw`(() => {
   window.Path2D = QAPath2D;
   const qa = {
     frames: [],
+    render_ms: [],
     current: {
       arcs: [], labels: [], label_boxes: [], edges: 0, edge_endpoints: [],
       line_segments: 0, connected_path_arcs: 0, path_fills: 0,
@@ -354,9 +360,16 @@ const PRELOAD = String.raw`(() => {
   };
   const request = window.requestAnimationFrame;
   window.requestAnimationFrame = (callback) => request.call(window, (timestamp) => {
+    const before = qa.frames.length;
     finish();
+    const started = performance.now();
     callback(timestamp);
+    const elapsed = performance.now() - started;
     finish();
+    if (qa.frames.length !== before) {
+      qa.render_ms.push(elapsed);
+      if (qa.render_ms.length > 120) qa.render_ms.shift();
+    }
   });
   window.__opennoiseMapQA = qa;
 })();`;
@@ -400,6 +413,7 @@ async function run() {
       button_l1_cohorts: buttonL1.cohorts, button_l2_cohorts: buttonL2.cohorts,
     });
     requireCheck(buttonDeep.lod === 3 && buttonDeep.scale > buttonL3.scale, 'L3 imposed a camera zoom wall', { buttonL3, buttonDeep });
+    requireCheck(buttonDeep.renderer_samples >= 5 && buttonDeep.renderer_p95_ms <= 50, 'renderer p95 frame gate failed', buttonDeep);
     screenshots.push(await screenshot(cdp, "desktop-button-deep.png", "light", 1440, 900));
     await navigate(cdp, 1440, 900, "light");
 
@@ -448,8 +462,8 @@ async function run() {
     requireCheck(edgesInViewport(focused.edge_endpoints, focused.viewport), "focused edge endpoint escaped viewport", focused);
     requireCheck(!focused.back_hidden, "Back control did not appear after focus", focused);
     requireCheck(focused.focus_url === "legacy:item887", "IDM alias did not focus its stable seed", focused);
-    requireCheck(focused.points <= focused.edges + 1, "focused view leaked unconnected dots", focused);
-    requireCheck(!focused.detail_hidden && focused.detail_links <= 12 && focused.detail_links >= focused.edges && boxInViewport(focused.detail_box, focused.viewport), 'IDM list does not match its shown links', focused);
+    requireCheck(focused.points === focused.edges + 1, "focused view leaked unconnected dots", focused);
+    requireCheck(!focused.detail_hidden && focused.detail_links === focused.edges && focused.detail_links <= 12 && boxInViewport(focused.detail_box, focused.viewport), 'IDM list does not match its shown links', focused);
     screenshots.push(await screenshot(cdp, "desktop-idm-focus.png", "light", 1440, 900));
 
     await cdp.evaluate("document.querySelector('[data-map-action=\\\"back\\\"]')?.click()");
@@ -459,20 +473,29 @@ async function run() {
 
     const postPunk = await focusQuery('post-punk', backed.frame_count - 1);
     requireCheck(postPunk.focus_url === 'legacy:item577' && postPunk.edges > 0, 'post-punk did not focus its connection set', postPunk);
-    requireCheck(postPunk.points <= postPunk.edges + 1, 'post-punk view leaked unconnected dots', postPunk);
-    requireCheck(!postPunk.detail_hidden && postPunk.detail_links <= 12 && postPunk.detail_links >= postPunk.edges && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
+    requireCheck(postPunk.points === postPunk.edges + 1, 'post-punk view leaked unconnected dots', postPunk);
+    requireCheck(!postPunk.detail_hidden && postPunk.detail_links === postPunk.edges && postPunk.detail_links <= 12 && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-focus.png', 'light', 1440, 900));
 
-    const rock = await focusQuery('rock', postPunk.frame_count - 1);
+    // This is a global-map camera test, not a focus layout: pan the actual
+    // L0 rock browse label to center, then cross every + tier.
+    await navigate(cdp, 1440, 900, 'light');
+    const rockOverview = await diagnostics(cdp);
+    const rockLabel = rockOverview.label_positions.find((label) => label.text === 'rock');
+    requireCheck(Boolean(rockLabel), 'rock browse landmark is unavailable for global camera evidence', rockOverview);
+    await drag(cdp, rockLabel.x, rockLabel.y, 720, 450);
+    await waitForFrame(cdp, rockOverview.frame_count - 1);
+    const rockL0 = await diagnostics(cdp);
     const rockL1 = await clickControl(cdp, 'in');
     const rockL2 = await clickControl(cdp, 'in');
     const rockL3 = await clickControl(cdp, 'in');
     requireCheck(
-      rock.focus_url === 'legacy:item3'
-        && [rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
+      !rockL0.focus_url && [rockL0, rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
       'rock browse landmark did not persist after every plus control',
-      { rock, rockL1, rockL2, rockL3 },
+      { rockL0, rockL1, rockL2, rockL3 },
     );
+    requireCheck(rockL2.label_names.includes('instrumental rock'), 'rock browse region did not disclose its supported local descendant', { rockL1, rockL2 });
+    requireCheck(!rockL2.label_names.includes('hip hop'), 'viewport-local browse landmarks should not be forced on screen', { rockL2 });
 
     const modernRock = await focusQuery('modern rock', rockL3.frame_count - 1);
     requireCheck(modernRock.focus_url === 'legacy:item10', 'modern rock did not focus', modernRock);
@@ -520,14 +543,16 @@ async function run() {
         post_punk_edges: postPunk.edges,
         modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
           && modernRock.points === modernRock.detail_links + 1,
-        rock_landmark_retained_after_plus: [rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
+        rock_landmark_retained_after_plus: [rockL0, rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
+        rock_global_camera: !rockL0.focus_url && rockL2.label_names.includes('instrumental rock'),
+        renderer_p95_ms: buttonDeep.renderer_p95_ms,
         pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
         back_restored: backed.back_hidden && !backed.focus_url,
         dark_mode: dark.background !== initial.background,
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, zoom1, zoom2, afterPan, focused, backed, postPunk, rock, rockL1, rockL2, rockL3, modernRock, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, zoom1, zoom2, afterPan, focused, backed, postPunk, rockOverview, rockL0, rockL1, rockL2, rockL3, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

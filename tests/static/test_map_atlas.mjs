@@ -5,8 +5,6 @@ import {
   declutterLabels,
   fitCamera,
   focusCamera,
-  focusedConnections,
-  groupingNeighborhood,
   appendCirclePath,
   MAX_SCALE,
   isNodeRevealed,
@@ -42,13 +40,9 @@ test('atlas retains monotonic zoom labels and optional region metadata', () => {
   assert.equal(atlas.regions[0].title, 'Electronic');
   assert.deepEqual(atlas.labels.map((labels) => labels.length), [1, 2, 3, 4]);
   assert.deepEqual(atlas.childrenByParent.get('b'), ['c']);
-  assert.deepEqual(groupingNeighborhood(atlas, 'b'), {
-    edges: [{ source: 'a', target: 'b' }, { source: 'b', target: 'c' }],
-    nodeIds: ['b', 'a', 'c'],
-  });
 });
 
-test('focus has one deduplicated twelve-connection contract across grouping and structure', () => {
+test('focus has one deduplicated twelve-edge structural contract', () => {
   const atlas = normaliseAtlasPayload({
     initial_camera: { x0: 0, y0: 0, x1: 10, y1: 10 },
     nodes: [
@@ -61,10 +55,10 @@ test('focus has one deduplicated twelve-connection contract across grouping and 
       ...Array.from({ length: 16 }, (_, index) => ({ source: 'focus', target: `child-${index}`, confidence: .5 })),
     ],
   });
-  const focused = focusedConnections(atlas, 'focus');
-  assert.ok(focused.connections.length <= 12);
-  assert.ok(focused.connections.some((edge) => edge.grouping && edge.structural));
-  assert.equal(new Set(focused.connections.map((edge) => [edge.source, edge.target].sort().join('\u0000'))).size, focused.connections.length);
+  const focused = structuralNeighborhood(atlas, 'focus');
+  assert.equal(focused.edges.length, 12);
+  assert.equal(focused.nodeIds.length, focused.edges.length + 1);
+  assert.equal(new Set(focused.edges.map((edge) => [edge.source, edge.target].sort().join('\u0000'))).size, focused.edges.length);
 });
 
 test('fit camera centers a landscape overview and zoom preserves its cursor world point', () => {

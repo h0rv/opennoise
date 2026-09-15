@@ -248,7 +248,12 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
             for community in artifact.communities
         ],
         "browse_landmarks": [
-            landmark.payload() for landmark in _browse_landmarks(artifact.coordinates)
+            {
+                **landmark.payload(),
+                "root_id": f"legacy:{landmark.root_id}",
+                "member_ids": [f"legacy:{member_id}" for member_id in landmark.member_ids],
+            }
+            for landmark in _browse_landmarks(artifact.coordinates)
         ],
         "labels": labels,
         "aliases": [{"term": term, "target": target} for term, target in sorted(aliases)],

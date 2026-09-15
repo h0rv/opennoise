@@ -5,7 +5,7 @@ import {
   declutterLabels,
   fitCamera,
   focusCamera,
-  focusedConnections,
+  structuralNeighborhood,
   isNodeRevealed,
   labelBudgetForScale,
   levelForScale,
@@ -26,7 +26,7 @@ if (canvas instanceof HTMLCanvasElement) {
   const detail = document.querySelector('#map-detail');
   const query = document.querySelector('#query');
   const endpoint = canvas.dataset.mapUrl;
-  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, connections: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map(), disclosedCohorts: new Set() };
+  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map(), disclosedCohorts: new Set() };
   const overviewPadding = () => {
     const bounds = state.atlas.worldBounds;
     const density = state.atlas.nodes.length / ((bounds.x1 - bounds.x0) * (bounds.y1 - bounds.y0));
@@ -43,7 +43,7 @@ if (canvas instanceof HTMLCanvasElement) {
     // breathing room without changing their persisted geometry.
     state.camera = fitCamera(state.atlas.initialCamera, state.viewport, overviewPadding());
     state.fitScale = state.camera.scale;
-    state.focus = null; state.connections = []; state.neighborhoodIds = null; state.disclosedCohorts.clear();
+    state.focus = null; state.edges = []; state.neighborhoodIds = null; state.disclosedCohorts.clear();
     state.displayedIds.clear();
     if (back) back.hidden = true;
     if (detail) detail.hidden = true;
@@ -106,8 +106,20 @@ if (canvas instanceof HTMLCanvasElement) {
       }
       return;
     }
-    for (const connection of state.connections) { const left = state.atlas.byId.get(connection.source); const right = state.atlas.byId.get(connection.target); if (!left || !right) continue; const start = point(left); const end = point(right); context.strokeStyle = connection.grouping ? colors.parent : colors.similarity; context.globalAlpha = connection.grouping ? .85 : .7; context.lineWidth = connection.grouping ? 1.75 : 1.5; if (!connection.grouping) context.setLineDash([4, 3]); context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); context.setLineDash([]); }
-    const requiredIds = state.connections.flatMap((connection) => [connection.source, connection.target]);
+    for (const edge of state.edges) { const left = state.atlas.byId.get(edge.source); const right = state.atlas.byId.get(edge.target); if (!left || !right) continue; const start = point(left); const end = point(right); context.strokeStyle = colors.similarity; context.globalAlpha = .7; context.lineWidth = 1.5; context.setLineDash([4, 3]); context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); context.setLineDash([]); }
+    const browseContextIds = !state.focus && lod >= 2
+      ? state.atlas.browseLandmarks.flatMap((landmark) => {
+        const root = state.atlas.byId.get(landmark.root_id);
+        if (!root || Math.hypot(point(root).x - state.viewport.width / 2, point(root).y - state.viewport.height / 2) > 160) return [];
+        return (Array.isArray(landmark.member_ids) ? landmark.member_ids : [])
+          .map((id) => state.atlas.byId.get(id))
+          .filter((node) => node && node.id !== root.id && node.lod <= lod && visible(node))
+          .sort((left, right) => left.lod - right.lod || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))
+          .slice(0, 8)
+          .map((node) => node.id);
+      })
+      : [];
+    const requiredIds = [...state.edges.flatMap((edge) => [edge.source, edge.target]), ...browseContextIds];
     const selectedLabels = visibleNodeLabels(
       state.atlas,
       lod,
@@ -168,20 +180,20 @@ if (canvas instanceof HTMLCanvasElement) {
     }
   };
   const setUrl = (id) => { const url = new URL(window.location.href); if (id) url.searchParams.set('open_focus', id); else url.searchParams.delete('open_focus'); history.pushState({ opennoiseFocus: id }, '', url); };
-  const showDetail = (id, connections) => {
+  const showDetail = (id, edges) => {
     if (!detail) return;
     detail.replaceChildren();
     const heading = document.createElement('h2'); heading.textContent = state.atlas.byId.get(id).name; detail.append(heading);
-    if (connections.length) { const label = document.createElement('h3'); label.textContent = 'Connections'; detail.append(label); const list = document.createElement('ul'); for (const connection of connections) { const nodeId = connection.source === id ? connection.target : connection.source; const peer = state.atlas.byId.get(nodeId); if (!peer) continue; const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; const marker = connection.grouping && connection.structural ? 'Grouping + structural' : connection.grouping ? 'Grouping' : 'Structural'; link.textContent = `${marker}: ${peer.name}`; item.append(link); list.append(item); } detail.append(list); }
+    if (edges.length) { const label = document.createElement('h3'); label.textContent = 'Structural connections'; detail.append(label); const list = document.createElement('ul'); for (const edge of edges) { const nodeId = edge.source === id ? edge.target : edge.source; const peer = state.atlas.byId.get(nodeId); if (!peer) continue; const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; link.textContent = peer.name; item.append(link); list.append(item); } detail.append(list); }
     if (canvas.dataset.artistUrl) { const artists = document.createElement('a'); artists.className = 'artist-link'; artists.href = `${canvas.dataset.artistUrl}${encodeURIComponent(id)}`; artists.textContent = 'Artist evidence'; detail.append(artists); }
     detail.hidden = false;
   };
   const focus = (id, push = true) => {
     if (!state.atlas?.byId.has(id)) return;
-    state.focus = id; state.connections = []; state.neighborhoodIds = new Set([id]); state.disclosedCohorts.clear(); if (back) back.hidden = false; if (push) setUrl(id);
-    const neighborhood = focusedConnections(state.atlas, id);
-    const cameraFor = (connections) => {
-      const ids = new Set([id]); for (const connection of connections) { ids.add(connection.source); ids.add(connection.target); }
+    state.focus = id; state.edges = []; state.neighborhoodIds = new Set([id]); state.disclosedCohorts.clear(); if (back) back.hidden = false; if (push) setUrl(id);
+    const neighborhood = structuralNeighborhood(state.atlas, id);
+    const cameraFor = (edges) => {
+      const ids = new Set([id]); for (const edge of edges) { ids.add(edge.source); ids.add(edge.target); }
       const nodes = [...ids].map((key) => state.atlas.byId.get(key)).filter(Boolean);
       const focusBounds = boundsForNodes(nodes, state.atlas.initialCamera);
       return focusCamera(
@@ -195,22 +207,10 @@ if (canvas instanceof HTMLCanvasElement) {
     };
     // Focused connection sets need a detail LOD. A broad set can otherwise fit
     // at the overview scale.
-    state.camera = cameraFor(neighborhood.connections);
-    state.connections = neighborhood.connections.filter((connection) => {
-      if (!connection.grouping) return true;
-      const start = point(state.atlas.byId.get(connection.source)); const end = point(state.atlas.byId.get(connection.target));
-      return Math.hypot(start.x - end.x, start.y - end.y) <= 280;
-    });
-    state.camera = cameraFor(state.connections);
-    state.connections = state.connections.filter((connection) => {
-      if (!connection.grouping) return true;
-      const start = point(state.atlas.byId.get(connection.source)); const end = point(state.atlas.byId.get(connection.target));
-      return Math.hypot(start.x - end.x, start.y - end.y) <= 280;
-    });
-    state.camera = cameraFor(state.connections);
-    state.neighborhoodIds = new Set([id]);
-    for (const connection of state.connections) { state.neighborhoodIds.add(connection.source); state.neighborhoodIds.add(connection.target); }
-    showDetail(id, state.connections);
+    state.edges = neighborhood.edges;
+    state.camera = cameraFor(state.edges);
+    state.neighborhoodIds = new Set(neighborhood.nodeIds);
+    showDetail(id, state.edges);
     schedule();
   };
   const nearest = (cursor) => { let hit = null; let distance = 15; for (const id of state.displayedIds) { const node = state.atlas.byId.get(id); if (!node) continue; const screen = point(node); const next = Math.hypot(screen.x - cursor.x, screen.y - cursor.y); if (next < distance) { hit = node; distance = next; } } return hit; };

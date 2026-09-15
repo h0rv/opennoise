@@ -56,6 +56,9 @@ function normaliseNode(value) {
   }
   if (typeof value.name !== 'string' || !value.name) throw new TypeError('atlas node must have a name');
   const lod = Number.isInteger(value.lod) ? clamp(value.lod, 0, LEVEL_COUNT - 1) : 0;
+  const browseParentId = typeof value.parent_id === 'string'
+    ? value.parent_id
+    : (typeof value.display_parent_id === 'string' ? value.display_parent_id : null);
   return {
     id: value.id,
     name: value.name,
@@ -66,9 +69,12 @@ function normaliseNode(value) {
       ? value.importance
       : 0,
     labelPriority: Number.isInteger(value.label_priority) ? value.label_priority : null,
-    parentId: typeof value.parent_id === 'string'
-      ? value.parent_id
-      : (typeof value.display_parent_id === 'string' ? value.display_parent_id : null),
+    // This is a UI browse hint from the static export, not an asserted
+    // taxonomy edge. It is intentionally kept out of focused connections.
+    browseParentId,
+    // Compatibility for local label selection only. This must never become a
+    // canvas link or a focused structural connection.
+    parentId: browseParentId,
     regionId: typeof value.region_id === 'string' ? value.region_id : null,
     communityId: Number.isInteger(value.community_id) ? value.community_id : null,
     hierarchyDepth: Number.isInteger(value.hierarchy_depth) ? Math.max(0, value.hierarchy_depth) : 0,
@@ -126,16 +132,6 @@ function normaliseEdges(value, nodeIds) {
 }
 
 /** Presentation grouping links only; no proximity-derived containment. */
-function groupingEdges(nodes, nodeIds) {
-  const edges = [];
-  for (const node of nodes) {
-    if (!node.parentId || !nodeIds.has(node.parentId) || node.parentId === node.id) continue;
-    edges.push({ source: node.parentId, target: node.id });
-  }
-  return edges.sort((left, right) => compareCodepoints(left.source, right.source)
-    || compareCodepoints(left.target, right.target));
-}
-
 /**
  * Accept the current semantic-scatter payload and the forward-compatible static atlas shape.
  * Regions are metadata over a single continuous coordinate plane; they never replace geometry.
@@ -152,7 +148,6 @@ export function normaliseAtlasPayload(payload) {
   }
   const nodeIds = new Set(byId.keys());
   const edges = normaliseEdges(source.edges, nodeIds);
-  const parentEdges = groupingEdges(nodes, nodeIds);
   const edgesById = new Map();
   for (const edge of edges) {
     for (const id of [edge.source, edge.target]) {
@@ -165,22 +160,22 @@ export function normaliseAtlasPayload(payload) {
   const worldBounds = normaliseBounds(source.world_bounds ?? source.worldBounds ?? initialCamera, 'world_bounds');
   const childrenByParent = new Map();
   for (const node of nodes) {
-    if (!node.parentId || !nodeIds.has(node.parentId)) continue;
-    const children = childrenByParent.get(node.parentId) ?? [];
+    if (!node.browseParentId || !nodeIds.has(node.browseParentId)) continue;
+    const children = childrenByParent.get(node.browseParentId) ?? [];
     children.push(node.id);
-    childrenByParent.set(node.parentId, children);
+    childrenByParent.set(node.browseParentId, children);
   }
   for (const children of childrenByParent.values()) children.sort((left, right) => compareCodepoints(byId.get(left).name, byId.get(right).name));
   const spatialIndex = buildSpatialIndex(nodes, worldBounds);
   const cohortKeys = new Map();
   for (const node of nodes) {
     let root = node.hierarchyRootId;
-    if (!root && (node.parentId || childrenByParent.has(node.id))) {
+    if (!root && (node.browseParentId || childrenByParent.has(node.id))) {
       let current = node;
       const seen = new Set();
-      while (current.parentId && byId.has(current.parentId) && !seen.has(current.id)) {
+      while (current.browseParentId && byId.has(current.browseParentId) && !seen.has(current.id)) {
         seen.add(current.id);
-        current = byId.get(current.parentId);
+        current = byId.get(current.browseParentId);
       }
       root = current.id;
     }
@@ -209,7 +204,6 @@ export function normaliseAtlasPayload(payload) {
     labels: normaliseLabelSets(source.labels ?? source.label_sets, nodeIds),
     aliases: normaliseAliases(source.aliases, nodeIds),
     edges,
-    groupingEdges: parentEdges,
     edgesById,
     childrenByParent,
     spatialIndex,
@@ -221,45 +215,6 @@ export function normaliseAtlasPayload(payload) {
       .filter((region) => region && typeof region === 'object')
       .map((region) => ({ ...region, title: region.title ?? region.label ?? region.name })),
   };
-}
-
-/** Local presentation-only grouping links around one node. */
-export function groupingNeighborhood(atlas, focusId, limit = 12) {
-  if (!atlas?.byId?.has(focusId)) return { edges: [], nodeIds: [] };
-  const parents = (atlas.groupingEdges ?? []).filter((edge) => edge.target === focusId);
-  const children = (atlas.groupingEdges ?? []).filter((edge) => edge.source === focusId);
-  const edges = [...parents, ...children].slice(0, Math.max(0, limit));
-  const nodeIds = new Set([focusId]);
-  for (const edge of edges) { nodeIds.add(edge.source); nodeIds.add(edge.target); }
-  return { edges, nodeIds: [...nodeIds] };
-}
-
-/**
- * One bounded focus contract combines grouping and structural links. A pair
- * represented by both sources remains one entry with both type markers.
- */
-export function focusedConnections(atlas, focusId, limit = 12) {
-  if (!atlas?.byId?.has(focusId)) return { connections: [], nodeIds: [] };
-  const byPair = new Map();
-  const record = (edge, kind) => {
-    const source = edge.source < edge.target ? edge.source : edge.target;
-    const target = edge.source < edge.target ? edge.target : edge.source;
-    const key = `${source}\u0000${target}`;
-    const current = byPair.get(key) ?? { source: edge.source, target: edge.target, grouping: false, structural: false };
-    current[kind] = true;
-    byPair.set(key, current);
-  };
-  for (const edge of groupingNeighborhood(atlas, focusId, limit).edges) record(edge, 'grouping');
-  for (const edge of structuralNeighborhood(atlas, focusId, atlas.edges, limit).edges) record(edge, 'structural');
-  const connections = [...byPair.values()]
-    .sort((left, right) => Number(right.grouping) - Number(left.grouping)
-      || Number(right.structural) - Number(left.structural)
-      || compareCodepoints(left.source, right.source)
-      || compareCodepoints(left.target, right.target))
-    .slice(0, Math.max(0, limit));
-  const nodeIds = new Set([focusId]);
-  for (const connection of connections) { nodeIds.add(connection.source); nodeIds.add(connection.target); }
-  return { connections, nodeIds: [...nodeIds] };
 }
 
 /**
