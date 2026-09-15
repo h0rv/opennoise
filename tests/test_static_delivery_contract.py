@@ -23,7 +23,6 @@ class StaticDeliveryContractTests(unittest.TestCase):
             "dev-research",
             "dev-legacy",
             "export-opennoise-pages",
-            "release-certify",
             "ui-qa",
             "open-v2-qa",
         ):
@@ -33,8 +32,8 @@ class StaticDeliveryContractTests(unittest.TestCase):
         source = (ROOT / "scripts" / "run_dev.py").read_text(encoding="utf-8")
         self.assertIn("SimpleHTTPRequestHandler", source)
         self.assertIn("ThreadingHTTPServer", source)
+        self.assertIn('raw_arguments[:1] == ["--"]', source)
         self.assertNotIn("opennoise.serving", source)
-        self.assertNotIn("uvicorn", source)
 
     def test_static_certification_documents_the_loopback_gate(self) -> None:
         documentation = (ROOT / "docs/serving/OPENNOISE_PAGES_STATIC_STAGING.md").read_text(
@@ -45,10 +44,13 @@ class StaticDeliveryContractTests(unittest.TestCase):
 
     def test_runtime_framework_dependencies_are_absent(self) -> None:
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-        dependencies = set(project["project"]["dependencies"])
-        self.assertFalse(
-            {dependency.split("=", 1)[0].split(">", 1)[0] for dependency in dependencies}
-            & {"jinja2", "litestar", "uvicorn"}
+        dependencies = {
+            dependency.split("=", 1)[0].split(">", 1)[0]
+            for dependency in project["project"]["dependencies"]
+        }
+        self.assertLessEqual(
+            dependencies,
+            {"httpx", "ijson", "pydantic", "pydantic-settings", "scipy", "zstandard"},
         )
 
 

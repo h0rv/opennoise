@@ -87,7 +87,7 @@ class PublicReleaseBundleTests(unittest.TestCase):
             representative_items=3344,
             profile_memberships=26525,
             neighbor_rows=34348,
-            rebuild_command=("release-certify",),
+            rebuild_command=("certify-static-pages",),
             python_version="test",
             code_revision="test",
             created_at="2026-09-04T00:00:00.000Z",

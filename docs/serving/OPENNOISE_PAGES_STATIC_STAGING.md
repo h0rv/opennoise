@@ -40,10 +40,10 @@ uv run poe certify-static-pages
 ```
 
 Set `OPENNOISE_SEMANTIC_MAP_LAYOUT` and `OPENNOISE_PAGES_OUTPUT` first. The
-gate writes `artifacts/semantic-map/browser.json` and screenshots, and uses
-port 3001 for the loopback server. To inspect an export manually, use
-`uv run poe dev -- --port 3010` (or run `python scripts/run_dev.py --port
-3010` directly).
+gate writes `artifacts/semantic-map/browser.json` and screenshots, uses port
+3001 for the loopback server, and atomically replaces an existing validated
+output after the gate passes. To inspect an export manually on another port,
+use `uv run poe dev -- --port 3010` (the passthrough separator is supported).
 
 ## Deploy
 

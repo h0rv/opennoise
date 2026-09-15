@@ -1,4 +1,4 @@
-# ruff: noqa: C901, E501, PLR2004
+# ruff: noqa: C901, E501
 """Build a custody-ready Phase 4 release from one sealed source-cache copy.
 
 This is deliberately an integration command, not an ingestion command.  It
@@ -13,18 +13,15 @@ import argparse
 import fcntl
 import hashlib
 import json
-import os
 import shutil
 import sqlite3
 import subprocess
 import sys
 import tempfile
-import time
 from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
-from urllib.request import urlopen
 
 from pydantic import Field, model_validator
 
@@ -54,7 +51,6 @@ _ADDITIONAL_EVIDENCE = (
     ("open-construction-graph", "open-construction-graph-v1.json"),
     ("open-construction-graph-gate", "open-construction-graph-v1.gate.json"),
     ("open-construction-graph-receipt", "open-construction-graph-v1.receipt.json"),
-    ("phase4-api-source-qa", "phase4-api-source-qa.json"),
     ("phase4-integration-report", "phase4-integration-report.json"),
 )
 
@@ -169,67 +165,6 @@ def _policy_id(database: Path) -> int:
     return int(row[0])
 
 
-def _api_qa(database: Path, map_path: Path, graph_path: Path, output: Path, port: int) -> None:
-    """Record source/API proof separately from the renderer-owned browser proof."""
-    environment = os.environ.copy()
-    environment["OPENNOISE_PRODUCTION_MAP_PATH"] = str(map_path.resolve())
-    environment["OPENNOISE_OPEN_CONSTRUCTION_GRAPH_PATH"] = str(graph_path.resolve())
-    process = subprocess.Popen(  # noqa: S603
-        [
-            sys.executable,
-            "-m",
-            "opennoise.serving.cli",
-            "serve",
-            "--database",
-            str(database),
-            "--port",
-            str(port),
-        ],
-        env=environment,
-    )
-    base = f"http://127.0.0.1:{port}"
-    try:
-        deadline = time.monotonic() + 20
-        while True:
-            try:
-                with urlopen(f"{base}/api/health", timeout=0.5) as response:  # noqa: S310
-                    if response.status == 200:
-                        break
-            except OSError:
-                if time.monotonic() >= deadline:
-                    raise Phase4ReleaseError("Phase 4 API server did not become healthy") from None
-                time.sleep(0.1)
-        with closing(sqlite3.connect(database)) as connection:
-            row = connection.execute(
-                "SELECT release_group_id FROM releases ORDER BY id LIMIT 1"
-            ).fetchone()
-        if row is None:
-            raise Phase4ReleaseError("hydrated catalog API probe has no release group")
-        endpoints = (
-            "/api/health",
-            "/api/map",
-            "/api/open-construction-map?level=0",
-            f"/api/entities/{int(row[0])}/hydrated-release",
-        )
-        responses: dict[str, object] = {}
-        for endpoint in endpoints:
-            with urlopen(f"{base}{endpoint}", timeout=10) as response:  # noqa: S310
-                payload = response.read()
-                responses[endpoint] = {
-                    "status": response.status,
-                    "sha256": hashlib.sha256(payload).hexdigest(),
-                    "byte_size": len(payload),
-                }
-        _write_json(output, {"verified": True, "endpoints": responses})
-    finally:
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
-
-
 def _bundle_phase4_release(  # noqa: PLR0915
     root: Path, source_cache: Path, derived: Path, evidence: Path, gates: Path
 ) -> dict[str, object]:
@@ -264,8 +199,6 @@ def _bundle_phase4_release(  # noqa: PLR0915
             "production-map-v1.json",
             "production-map-v1.acceptance.json",
             "production-map-v1.seed-report.json",
-            "production-map-v1.browser.json",
-            "production-map-v1.report.json",
             "receipt.json",
         )
     )
@@ -385,7 +318,6 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument(
         "--output-directory", type=Path, default=Path(".cache/phase4-integrated-public")
     )
-    parser.add_argument("--port", type=int, default=3014)
     parser.add_argument("--generated-at", default="2026-09-04T00:00:00+00:00")
     return parser.parse_args()
 
@@ -419,16 +351,8 @@ def main() -> int:
         str(evidence / "production-map-v1.json"),
         "--acceptance-output",
         str(evidence / "production-map-v1.acceptance.json"),
-        "--seed-report-output",
-        str(evidence / "production-map-v1.seed-report.json"),
-        "--browser-evidence-output",
-        str(evidence / "production-map-v1.browser.json"),
         "--report-output",
-        str(evidence / "production-map-v1.report.json"),
-        "--captures-directory",
-        str(root / "captures"),
-        "--port",
-        str(arguments.port),
+        str(evidence / "production-map-v1.seed-report.json"),
     )
     _run(
         sys.executable,
@@ -526,13 +450,6 @@ def main() -> int:
         (arguments.graph_receipt.resolve(strict=True), "open-construction-graph-v1.receipt.json"),
     ):
         _clone_file(source, evidence / filename)
-    _api_qa(
-        derived,
-        evidence / "production-map-v1.json",
-        graph,
-        evidence / "phase4-api-source-qa.json",
-        arguments.port + 1,
-    )
     database_checks = _sqlite_checks(derived)
     if database_checks["integrity_check"] != ("ok",) or database_checks["foreign_key_violations"]:
         raise Phase4ReleaseError(
@@ -547,11 +464,6 @@ def main() -> int:
             "certified_source_cache": {"sha256": _CACHE_SHA256, "byte_size": _CACHE_BYTES},
             "derived_database_sha256": _sha256(derived),
             "database_checks": database_checks,
-            "browser_verified": bool(
-                json.loads(
-                    (evidence / "production-map-v1.browser.json").read_text(encoding="utf-8")
-                ).get("labels")
-            ),
             "source_policy": "exportable public inputs only; MusicBrainz CC0 core metadata; no supplementary genre research or audio",
         },
     )

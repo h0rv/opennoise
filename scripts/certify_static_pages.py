@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from urllib.error import URLError
@@ -39,7 +40,10 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--captures", type=Path, default=Path("artifacts/semantic-map/captures"))
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=3001)
-    return parser.parse_args()
+    arguments = sys.argv[1:]
+    if arguments[:1] == ["--"]:
+        arguments = arguments[1:]
+    return parser.parse_args(arguments)
 
 
 def _wait_for_server(url: str, process: subprocess.Popen[bytes]) -> None:
@@ -54,6 +58,25 @@ def _wait_for_server(url: str, process: subprocess.Popen[bytes]) -> None:
     raise RuntimeError("static loopback server did not become ready")
 
 
+def _atomic_install(staged: Path, output: Path) -> None:
+    """Replace an existing export only after the staged browser gate passes."""
+    backup: Path | None = None
+    if output.exists():
+        if output.is_symlink() or not output.is_dir():
+            raise RuntimeError(f"static Pages output is not a directory: {output}")
+        backup = Path(tempfile.mkdtemp(prefix=f".{output.name}.previous-", dir=output.parent))
+        backup.rmdir()
+        output.rename(backup)
+    try:
+        staged.replace(output)
+    except BaseException:
+        if backup is not None and not output.exists():
+            backup.rename(output)
+        raise
+    if backup is not None:
+        shutil.rmtree(backup)
+
+
 def main() -> int:
     """Run the sealed layout, static export, loopback, and browser gates."""
     arguments = _arguments()
@@ -62,45 +85,54 @@ def main() -> int:
         raise RuntimeError("Node.js is required for browser certification")
     artifact = SemanticLayoutArtifact.model_validate_json(arguments.semantic_layout.read_bytes())
     verify_semantic_map_layout(artifact)
-    export_semantic_pages(SemanticPagesExportInputs(arguments.semantic_layout, arguments.output))
-    arguments.report.parent.mkdir(parents=True, exist_ok=True)
-    arguments.captures.mkdir(parents=True, exist_ok=True)
-    server = subprocess.Popen(  # noqa: S603
-        [
-            sys.executable,
-            "scripts/run_dev.py",
-            "--directory",
-            str(arguments.output),
-            "--host",
-            arguments.host,
-            "--port",
-            str(arguments.port),
-        ],
-        stdin=subprocess.DEVNULL,
-    )
-    base_url = f"http://{arguments.host}:{arguments.port}/"
-    try:
-        _wait_for_server(base_url, server)
-        subprocess.run(  # noqa: S603
+    output = arguments.output.resolve()
+    report = arguments.report.resolve()
+    captures = arguments.captures.resolve()
+    if report.is_relative_to(output) or captures.is_relative_to(output):
+        raise RuntimeError("browser report and captures must live outside the Pages output")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f".{output.name}.certify-", dir=output.parent) as root:
+        staged = Path(root) / "dist"
+        export_semantic_pages(SemanticPagesExportInputs(arguments.semantic_layout, staged))
+        arguments.report.parent.mkdir(parents=True, exist_ok=True)
+        arguments.captures.mkdir(parents=True, exist_ok=True)
+        server = subprocess.Popen(  # noqa: S603
             [
-                node,
-                "scripts/capture_semantic_map_browser.mjs",
-                base_url,
-                str(arguments.report),
-                "--captures",
-                str(arguments.captures),
+                sys.executable,
+                "scripts/run_dev.py",
+                "--directory",
+                str(staged),
+                "--host",
+                arguments.host,
                 "--port",
-                str(arguments.port + 1),
+                str(arguments.port),
             ],
-            check=True,
+            stdin=subprocess.DEVNULL,
         )
-    finally:
-        server.terminate()
+        base_url = f"http://{arguments.host}:{arguments.port}/"
         try:
-            server.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            server.kill()
-            server.wait()
+            _wait_for_server(base_url, server)
+            subprocess.run(  # noqa: S603
+                [
+                    node,
+                    "scripts/capture_semantic_map_browser.mjs",
+                    base_url,
+                    str(arguments.report),
+                    "--captures",
+                    str(arguments.captures),
+                    "--port",
+                    str(arguments.port + 1),
+                ],
+                check=True,
+            )
+        finally:
+            server.terminate()
+            try:
+                server.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                server.kill()
+                server.wait()
+        _atomic_install(staged, output)
     print(  # noqa: T201
         f"static certification passed: {len(artifact.coordinates)} nodes, "
         f"browser report {arguments.report}"

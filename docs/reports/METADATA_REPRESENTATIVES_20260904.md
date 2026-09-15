@@ -14,7 +14,7 @@ recordings are explicitly labelled as the track-level metadata proxy for this MV
 database has no `tracks` rows.
 
 Against the release-certified public cache at
-`/home/h0rv/projects/opennoise/.worktrees/final-integration/.cache/release-certify/public.sqlite`, the
+`.cache/static-release/public.sqlite`, the
 selected public-model run `1` with output SHA-256
 `e327045074fc6bb4e3b2e1c14410b3f337b6822e048c6038aa18703a11d2108b`. It exported 871 release-group
 examples across 246 genres (569 distinct release groups) and 498 recording-proxy examples across 140
@@ -35,7 +35,7 @@ it does not fetch adapters, source catalogs, audio, previews, or media URLs. The
 the existing `displayable_public_genre_representatives` projection, so current source, policy, and
 suppression checks remain authoritative.
 
-The `/api/genres/{id}` and genre-detail fragment expose
+The static release's genre-detail payload exposes
 `representative_album_metadata` and `representative_recording_metadata` rather than calling them
 defining or quintessential works. Each visible item is explicitly `metadata_example`, includes rank,
 direct-evidence value, source count, and evidence references, and only receives a MusicBrainz or

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -14,7 +15,10 @@ def main() -> int:
     parser.add_argument("--directory", type=Path, default=Path("dist"))
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=3001)
-    arguments = parser.parse_args()
+    raw_arguments = sys.argv[1:]
+    if raw_arguments[:1] == ["--"]:
+        raw_arguments = raw_arguments[1:]
+    arguments = parser.parse_args(raw_arguments)
     if not (arguments.directory / "index.html").is_file():
         parser.error(
             f"{arguments.directory} has no static export; "

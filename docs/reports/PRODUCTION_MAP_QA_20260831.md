@@ -29,5 +29,5 @@ and the no-JavaScript SVG fallback.
 
 The historical reports of failed exploratory layouts remain useful experiment
 records, but they are not the status of this accepted bundle. The open release
-blocker is source-cache retention: `release-certify` correctly refuses to run
+blocker is source-cache retention: cache-only certification correctly refuses to run
 without `data/phase3-public-qualified.sqlite`.

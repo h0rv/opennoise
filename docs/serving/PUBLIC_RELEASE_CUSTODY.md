@@ -88,7 +88,9 @@ the boundary, rejects traversal and omitted required members, checks every
 object digest and size, validates the nested custody receipt bindings, and
 loads the restored release configuration. `restore` verifies before pulling and
 uses the atomic object-store pull for every named destination. Running it again
-is a byte-for-byte idempotent replacement. After restore,
-`uv run poe release-certify -- --cache-database data/phase3-public-qualified.sqlite`
-has its exact required cache and release configuration; it can produce fresh
-serving/browser outputs, but does not claim to re-ingest the original sources.
+is a byte-for-byte idempotent replacement. After restore, the cache-only model
+and map builder can verify the exact local release boundary without starting a
+runtime service. The public web release is certified separately with
+`uv run poe certify-static-pages`, which verifies the sealed semantic layout,
+exports Pages assets, and runs the loopback browser gate. Neither command
+re-ingests the original sources.
