@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gzip
 import json
-import shutil
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
@@ -44,8 +43,8 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
         verify_semantic_map_layout(artifact)
     except (OSError, ValueError) as error:
         raise SemanticPagesExportError("invalid semantic map layout artifact") from error
-    renderer = _renderer_payload(artifact)
-    renderer["edges"] = [
+    atlas_payload = _renderer_payload(artifact)
+    atlas_payload["edges"] = [
         {
             "source": f"legacy:{edge.left_seed_id}",
             "target": f"legacy:{edge.right_seed_id}",
@@ -57,11 +56,19 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
     assets = output / "assets"
     output.mkdir(parents=True, exist_ok=True)
     assets.mkdir()
-    for name in ("app.css", "map-atlas.mjs", "map-renderer.js"):
-        shutil.copyfile(_STATIC_ROOT / name, assets / name)
-    _write_json(assets / "semantic-atlas.json", renderer)
-    _write(output / "index.html", _html())
-    _write(output / "_headers", "/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n")
+    asset_paths = _export_fingerprinted_assets(assets, atlas_payload)
+    _write(output / "index.html", _html(asset_paths))
+    _write(
+        output / "_headers",
+        "/\n"
+        "  Cache-Control: no-cache\n"
+        "/index.html\n"
+        "  Cache-Control: no-cache\n"
+        "/opennoise-static-manifest.json\n"
+        "  Cache-Control: no-cache\n"
+        "/assets/*\n"
+        "  Cache-Control: public, max-age=31536000, immutable\n",
+    )
     _write(output / "_redirects", "/ /index.html 200\n")
     file_sha256, file_byte_count = sha256_file(inputs.semantic_layout_path)
     manifest: dict[str, object] = {
@@ -79,11 +86,51 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
             ),
             "structural_edge_count": len(artifact.structural_edges),
         },
+        "assets": {
+            role: {
+                "path": str(path.relative_to(output)),
+                "sha256": sha256(path.read_bytes()).hexdigest(),
+            }
+            for role, path in asset_paths.items()
+        },
         "asset_budget": _asset_budget(output),
     }
     manifest["output_sha256"] = sha256_hex(canonical_json(manifest))
     _write_json(output / "opennoise-static-manifest.json", manifest)
     return manifest
+
+
+def _export_fingerprinted_assets(assets: Path, atlas_payload: dict[str, object]) -> dict[str, Path]:
+    """Write one immutable URL per content-addressed browser asset."""
+    app_css = _write_fingerprinted_asset(
+        assets, "app", ".css", (_STATIC_ROOT / "app.css").read_bytes()
+    )
+    atlas_module = _write_fingerprinted_asset(
+        assets, "map-atlas", ".mjs", (_STATIC_ROOT / "map-atlas.mjs").read_bytes()
+    )
+    renderer_source = (_STATIC_ROOT / "map-renderer.js").read_text(encoding="utf-8")
+    renderer_source = renderer_source.replace("'./map-atlas.mjs'", f"'./{atlas_module.name}'", 1)
+    if "./map-atlas.mjs" in renderer_source:
+        raise SemanticPagesExportError("static renderer has an unresolved atlas import")
+    renderer_module = _write_fingerprinted_asset(
+        assets, "map-renderer", ".js", renderer_source.encode()
+    )
+    semantic_atlas = _write_fingerprinted_asset(
+        assets, "semantic-atlas", ".json", _json_bytes(atlas_payload)
+    )
+    return {
+        "app_css": app_css,
+        "map_atlas_module": atlas_module,
+        "map_renderer_module": renderer_module,
+        "semantic_atlas": semantic_atlas,
+    }
+
+
+def _write_fingerprinted_asset(assets: Path, stem: str, suffix: str, data: bytes) -> Path:
+    """Persist an asset under a URL derived from its exact published bytes."""
+    path = assets / f"{stem}.{sha256(data).hexdigest()}{suffix}"
+    write_atomic_bytes(path, data)
+    return path
 
 
 def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
@@ -180,20 +227,24 @@ def _renderer_payload(artifact: SemanticLayoutArtifact) -> dict[str, object]:
     }
 
 
-def _html() -> str:
-    return """<!doctype html>
+def _html(asset_paths: dict[str, Path]) -> str:
+    """Bind the stable document shell to its immutable content-addressed assets."""
+    app_css = asset_paths["app_css"].name
+    semantic_atlas = asset_paths["semantic_atlas"].name
+    renderer_module = asset_paths["map_renderer_module"].name
+    return f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="An open structural atlas of music genres.">
   <title>OpenNoise</title>
-  <link rel="stylesheet" href="assets/app.css">
+  <link rel="stylesheet" href="assets/{app_css}">
 </head>
 <body>
   <main id="map" aria-label="Music map">
     <canvas id="semantic-map" role="img" aria-label="OpenNoise semantic music map"
-            data-map-url="assets/semantic-atlas.json"></canvas>
+            data-map-url="assets/{semantic_atlas}"></canvas>
     <nav id="map-controls" aria-label="Map controls">
       <button type="button" data-map-action="back" hidden>Back</button>
       <button type="button" data-map-action="fit">Fit</button>
@@ -207,7 +258,7 @@ def _html() -> str:
     <label class="sr-only" for="query">Search map</label>
     <input id="query" type="search" placeholder="Search a genre, e.g. IDM" autocomplete="off">
   </form>
-  <script type="module" src="assets/map-renderer.js"></script>
+  <script type="module" src="assets/{renderer_module}"></script>
 </body>
 </html>
 """
@@ -231,8 +282,11 @@ def _write(path: Path, value: str) -> None:
 
 
 def _write_json(path: Path, value: object) -> None:
-    write_atomic_bytes(
-        path,
+    write_atomic_bytes(path, _json_bytes(value))
+
+
+def _json_bytes(value: object) -> bytes:
+    return (
         json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
-        + b"\n",
+        + b"\n"
     )
