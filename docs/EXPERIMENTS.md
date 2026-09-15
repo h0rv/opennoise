@@ -48,14 +48,6 @@ Status: standalone measurement support.
 
 Delete path: remove `layout_metrics.py`, `tests/test_layout_metrics.py`, `scripts/evaluate_layout.py`, and the `evaluate-layout` Poe task. The map, routes, schema, and layout strategy interface do not depend on the harness.
 
-## Sparse map presentation
-
-Status: contract only.
-
-`src/opennoise/map_presentation.py` defines the inputs and outputs for later label selection. The contract records named priority inputs, landmark evidence, measured collision boxes, visible and hidden label decisions, exact density cell counts, and evidence backed edges. An inferred edge must name its method and version. No collision, landmark, density, or edge strategy is selected.
-
-Delete path: remove `map_presentation.py`. No route, database table, or current template imports it.
-
 ## Genre detail and provenance
 
 Status: offline catalog groundwork.

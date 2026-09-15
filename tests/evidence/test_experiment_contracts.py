@@ -11,12 +11,6 @@ from opennoise.evidence.contracts import (
     RankingComponent,
 )
 from opennoise.serving.map.layouts import LayoutBuildRequest, LayoutStrategyVersion
-from opennoise.serving.map.map_presentation import (
-    CollisionBox,
-    EvidenceEdge,
-    LabelDecisionReason,
-    LabelPlacement,
-)
 
 
 class ExperimentContractTests(unittest.TestCase):
@@ -83,36 +77,6 @@ class ExperimentContractTests(unittest.TestCase):
         parsed = TypeAdapter(AlbumGenreEvidence).validate_python(evidence)
         self.assertEqual(parsed.evidence_kind, "direct")
         self.assertEqual(artifact.items[0].components[0].raw_value, 12.0)
-
-    def test_sparse_map_contract_rejects_opaque_collision_and_inference(self) -> None:
-        with self.assertRaises(ValidationError):
-            LabelPlacement(
-                entity_id=1,
-                visible=False,
-                reason=LabelDecisionReason.COLLISION,
-                box=None,
-            )
-        with self.assertRaises(ValidationError):
-            EvidenceEdge(
-                subject_entity_id=1,
-                object_entity_id=2,
-                relation_key="genre_related_to",
-                evidence_kind="inferred",
-                evidence_refs=("relation:1",),
-            )
-
-        placement = LabelPlacement(
-            entity_id=1,
-            visible=True,
-            reason=LabelDecisionReason.LANDMARK,
-            box=CollisionBox(
-                minimum_x=0.0,
-                minimum_y=0.0,
-                maximum_x=10.0,
-                maximum_y=4.0,
-            ),
-        )
-        self.assertTrue(placement.visible)
 
 
 if __name__ == "__main__":

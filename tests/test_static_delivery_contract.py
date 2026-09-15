@@ -57,6 +57,19 @@ class StaticDeliveryContractTests(unittest.TestCase):
             {"httpx", "ijson", "pydantic", "pydantic-settings", "scipy", "zstandard"},
         )
 
+    def test_retired_static_svg_surface_is_absent(self) -> None:
+        stylesheet = (ROOT / "src/opennoise/static/app.css").read_text(encoding="utf-8")
+        for selector in (
+            "#static-map-viewport",
+            "#open-static-map",
+            "#map-view-switch",
+            "#layout-lenses",
+            "#historical-fallback",
+        ):
+            self.assertNotIn(selector, stylesheet)
+        self.assertFalse((ROOT / "scripts/capture_production_map_browser.mjs").exists())
+        self.assertFalse((ROOT / "docs/serving/STATIC_PUBLIC_MAP.md").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
