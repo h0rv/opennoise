@@ -47,6 +47,8 @@ class SemanticLayoutSettings(FrozenModel):
     community_tie_seed: int = Field(default=20260913, ge=0)
     maximum_community_size: int = Field(default=240, ge=2, le=2_000)
     overview_label_budget: int = Field(default=24, ge=1, le=200)
+    structural_refinement_iterations: int = Field(default=3, ge=0, le=32)
+    structural_refinement_strength: float = Field(default=0.08, gt=0.0, le=0.25)
 
 
 class InputBinding(FrozenModel):
@@ -171,6 +173,8 @@ class GeometryMetrics(FrozenModel):
     mean_colisten_knn_preservation: float | None = Field(default=None, ge=0.0, le=1.0)
     colisten_evaluable_seed_count: int = Field(default=0, ge=0)
     mean_hierarchy_endpoint_distance: float | None = Field(default=None, ge=0.0)
+    confidence_weighted_structural_edge_distance: float | None = Field(default=None, ge=0.0)
+    structural_edge_distance_p95: float | None = Field(default=None, ge=0.0)
     occupied_world_width_fraction: float = Field(ge=0.0, le=1.0)
     occupied_world_height_fraction: float = Field(ge=0.0, le=1.0)
     exact_coordinate_collision_count: int = Field(ge=0)
@@ -284,6 +288,45 @@ class SemanticLayoutArtifact(FrozenModel):
         ):
             raise ValueError("source channel counts must replay from structural edges")
         coordinate_by_id = {item.seed_id: item for item in self.coordinates}
+        edge_distances = tuple(
+            math.dist(
+                (coordinate_by_id[edge.left_seed_id].x, coordinate_by_id[edge.left_seed_id].y),
+                (coordinate_by_id[edge.right_seed_id].x, coordinate_by_id[edge.right_seed_id].y),
+            )
+            for edge in self.structural_edges
+        )
+        if self.metrics.confidence_weighted_structural_edge_distance is not None:
+            total_weight = sum(edge.weight for edge in self.structural_edges)
+            expected_weighted_distance = (
+                sum(
+                    edge.weight * distance
+                    for edge, distance in zip(self.structural_edges, edge_distances, strict=True)
+                )
+                / total_weight
+                if total_weight > 0.0
+                else 0.0
+            )
+            if not math.isclose(
+                self.metrics.confidence_weighted_structural_edge_distance,
+                expected_weighted_distance,
+                rel_tol=0.0,
+                abs_tol=1e-10,
+            ):
+                raise ValueError("confidence-weighted structural distance does not replay")
+        if self.metrics.structural_edge_distance_p95 is not None:
+            if not edge_distances:
+                raise ValueError("structural distance p95 requires structural edges")
+            ordered_distances = sorted(edge_distances)
+            expected_p95 = ordered_distances[
+                min(len(ordered_distances) - 1, math.ceil(0.95 * len(ordered_distances)) - 1)
+            ]
+            if not math.isclose(
+                self.metrics.structural_edge_distance_p95,
+                expected_p95,
+                rel_tol=0.0,
+                abs_tol=1e-10,
+            ):
+                raise ValueError("structural distance p95 does not replay")
         for community in self.communities:
             anchor = coordinate_by_id.get(community.anchor_seed_id)
             if anchor is None or anchor.community_id != community.community_id:

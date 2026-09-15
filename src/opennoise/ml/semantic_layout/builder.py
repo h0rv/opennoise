@@ -596,6 +596,67 @@ def _hierarchy_distance(
     return sum(values) / len(values) if values else None
 
 
+def _refine_structural_positions(
+    positions: Mapping[str, tuple[float, float]],
+    weights: Mapping[Edge, float],
+    *,
+    iterations: int,
+    strength: float,
+) -> dict[str, tuple[float, float]]:
+    """Apply a bounded, deterministic Laplacian refinement to observed edges only.
+
+    The atlas is the global prior.  Each Jacobi step moves a node a small
+    distance toward its confidence-weighted existing neighbours, then anchors
+    it back to that prior.  This improves the visual contract for static edge
+    neighborhoods without creating an edge, changing its weight, or turning
+    the browser into a layout engine.
+    """
+    if iterations == 0 or not positions or not weights:
+        return dict(positions)
+    adjacency: dict[str, list[tuple[str, float]]] = defaultdict(list)
+    for (left, right), weight in weights.items():
+        if left not in positions or right not in positions:
+            continue
+        adjacency[left].append((right, weight))
+        adjacency[right].append((left, weight))
+    anchored = dict(positions)
+    refined = dict(positions)
+    for _ in range(iterations):
+        next_positions: dict[str, tuple[float, float]] = {}
+        for node, point in refined.items():
+            neighbors = adjacency.get(node, ())
+            total_weight = sum(weight for _neighbor, weight in neighbors)
+            if total_weight == 0.0:
+                next_positions[node] = point
+                continue
+            mean_x = sum(refined[neighbor][0] * weight for neighbor, weight in neighbors)
+            mean_y = sum(refined[neighbor][1] * weight for neighbor, weight in neighbors)
+            next_positions[node] = (
+                (1.0 - strength) * anchored[node][0] + strength * mean_x / total_weight,
+                (1.0 - strength) * anchored[node][1] + strength * mean_y / total_weight,
+            )
+        refined = next_positions
+    return refined
+
+
+def _structural_edge_distance_metrics(
+    coordinates: Mapping[str, tuple[float, float]], weights: Mapping[Edge, float]
+) -> tuple[float | None, float | None]:
+    """Measure the confidence-weighted edge geometry supplied to the renderer."""
+    distances = [
+        (weight, math.dist(coordinates[left], coordinates[right]))
+        for (left, right), weight in weights.items()
+        if left in coordinates and right in coordinates
+    ]
+    if not distances:
+        return None, None
+    total_weight = sum(weight for weight, _distance in distances)
+    weighted_mean = sum(weight * distance for weight, distance in distances) / total_weight
+    ordered = sorted(distance for _weight, distance in distances)
+    percentile_index = min(len(ordered) - 1, math.ceil(0.95 * len(ordered)) - 1)
+    return weighted_mean, ordered[percentile_index]
+
+
 def _coordinate_collisions(coordinates: Mapping[str, tuple[float, float]]) -> int:
     return len(coordinates) - len({(round(x, 12), round(y, 12)) for x, y in coordinates.values()})
 
@@ -1107,6 +1168,12 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
                 max(component.values(), default=-1) + index,
                 "structural_component",
             )
+    positions = _refine_structural_positions(
+        positions,
+        combined,
+        iterations=resolved.structural_refinement_iterations,
+        strength=resolved.structural_refinement_strength,
+    )
     positions = _separate_coincident_points(positions)
     regions = _semantic_regions(positions, parents, component, degree)
     community = {node: index for index, region in enumerate(regions) for node in region.members}
@@ -1224,6 +1291,9 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
     )
     peer_positions = {node: positions[node] for node in manifold}
     colisten_nodes = {node for edge in colisten for node in edge} & set(positions)
+    confidence_weighted_structural_edge_distance, structural_edge_distance_p95 = (
+        _structural_edge_distance_metrics(positions, combined)
+    )
     metrics = GeometryMetrics(
         placed_seed_count=len(coordinates),
         unplaced_seed_count=len(unplaced),
@@ -1246,6 +1316,8 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         mean_hierarchy_endpoint_distance=_hierarchy_distance(
             positions, hierarchy, resolved.world_width
         ),
+        confidence_weighted_structural_edge_distance=confidence_weighted_structural_edge_distance,
+        structural_edge_distance_p95=structural_edge_distance_p95,
         occupied_world_width_fraction=(
             max(x for x, _y in positions.values()) - min(x for x, _y in positions.values())
         )

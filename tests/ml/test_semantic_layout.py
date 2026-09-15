@@ -20,7 +20,9 @@ from opennoise.ml.semantic_layout.builder import (
     _initial_camera,
     _overview_visibility,
     _OverviewSelectionContext,
+    _refine_structural_positions,
     _semantic_regions,
+    _structural_edge_distance_metrics,
 )
 from opennoise.ml.semantic_layout.contracts import (
     OverviewCommunity,
@@ -128,6 +130,8 @@ class SemanticLayoutTests(unittest.TestCase):
         self.assertGreater(artifact.metrics.occupied_world_width_fraction, 0.0)
         self.assertGreater(artifact.metrics.occupied_world_height_fraction, 0.0)
         self.assertEqual(artifact.metrics.exact_coordinate_collision_count, 0)
+        self.assertIsNotNone(artifact.metrics.confidence_weighted_structural_edge_distance)
+        self.assertIsNotNone(artifact.metrics.structural_edge_distance_p95)
 
     def test_rejects_historical_construction_input(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -239,3 +243,23 @@ class SemanticLayoutTests(unittest.TestCase):
         self.assertEqual(by_anchor["rock"].members, ("post-punk", "rock"))
         self.assertEqual(by_anchor["orphan-a"].members, ("orphan-a", "orphan-b", "orphan-c"))
         self.assertEqual({len(region.members) for region in regions}, {2, 3, 4})
+
+    def test_structural_refinement_shortens_observed_edges_without_moving_unrelated_nodes(
+        self,
+    ) -> None:
+        """A static refinement can use evidence only; it cannot invent a relation."""
+        positions = {
+            "electronic": (0.10, 0.50),
+            "idm": (0.90, 0.50),
+            "unrelated": (0.10, 0.90),
+        }
+        observed = {("electronic", "idm"): 1.0}
+        baseline, _ = _structural_edge_distance_metrics(positions, observed)
+        refined = _refine_structural_positions(positions, observed, iterations=3, strength=0.08)
+        replay = _refine_structural_positions(positions, observed, iterations=3, strength=0.08)
+        shortened, _ = _structural_edge_distance_metrics(refined, observed)
+        if baseline is None or shortened is None:
+            self.fail("an observed edge must produce a distance metric")
+        self.assertLess(shortened, baseline)
+        self.assertEqual(refined, replay)
+        self.assertEqual(refined["unrelated"], positions["unrelated"])
