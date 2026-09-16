@@ -13,6 +13,13 @@ from typing import Final, Literal
 from pydantic import BaseModel, ConfigDict
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex, write_atomic_bytes
+from opennoise.deployment.static_discovery import (
+    StaticDiscoveryNode,
+    StaticDiscoveryPayload,
+    build_static_discovery_payload,
+    static_discovery_json,
+    unavailable_static_discovery_payload,
+)
 from opennoise.ml.semantic_layout.contracts import (
     SemanticCoordinate,
     SemanticLayoutArtifact,
@@ -105,6 +112,7 @@ class SemanticPagesExportInputs:
 
     semantic_layout_path: Path
     output_directory: Path
+    discovery_database: Path | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,6 +149,7 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
         raise SemanticPagesExportError("invalid semantic map layout artifact") from error
     mapper = _PublicIdMapper.from_artifact(artifact)
     atlas_payload = _renderer_payload(artifact, mapper)
+    discovery_payload = _discovery_payload(artifact, mapper, inputs.discovery_database)
     atlas_payload["edges"] = [
         {
             "source": mapper.public(edge.left_seed_id),
@@ -153,7 +162,7 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
     assets = output / "assets"
     output.mkdir(parents=True, exist_ok=True)
     assets.mkdir()
-    asset_paths = _export_fingerprinted_assets(assets, atlas_payload)
+    asset_paths = _export_fingerprinted_assets(assets, atlas_payload, discovery_payload)
     _write(output / "index.html", _html(asset_paths))
     _write(
         output / "_headers",
@@ -183,6 +192,11 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
             ),
             "structural_edge_count": len(artifact.structural_edges),
         },
+        "discovery": {
+            "availability": discovery_payload.availability,
+            "revision": discovery_payload.revision,
+            "coverage": _discovery_manifest_coverage(discovery_payload),
+        },
         "assets": {
             role: {
                 "path": str(path.relative_to(output)),
@@ -197,7 +211,11 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
     return manifest
 
 
-def _export_fingerprinted_assets(assets: Path, atlas_payload: dict[str, object]) -> dict[str, Path]:
+def _export_fingerprinted_assets(
+    assets: Path,
+    atlas_payload: dict[str, object],
+    discovery_payload: StaticDiscoveryPayload,
+) -> dict[str, Path]:
     """Write one immutable URL per content-addressed browser asset."""
     app_css = _write_fingerprinted_asset(
         assets, "app", ".css", (_STATIC_ROOT / "app.css").read_bytes()
@@ -215,11 +233,45 @@ def _export_fingerprinted_assets(assets: Path, atlas_payload: dict[str, object])
     semantic_atlas = _write_fingerprinted_asset(
         assets, "semantic-atlas", ".json", _json_bytes(atlas_payload)
     )
+    static_discovery = _write_fingerprinted_asset(
+        assets, "static-discovery", ".json", static_discovery_json(discovery_payload)
+    )
     return {
         "app_css": app_css,
         "map_atlas_module": atlas_module,
         "map_renderer_module": renderer_module,
         "semantic_atlas": semantic_atlas,
+        "static_discovery": static_discovery,
+    }
+
+
+def _discovery_payload(
+    artifact: SemanticLayoutArtifact,
+    mapper: _PublicIdMapper,
+    database: Path | None,
+) -> StaticDiscoveryPayload:
+    """Project display-authorized direct catalog observations into a separate asset."""
+    if database is None:
+        return unavailable_static_discovery_payload()
+    nodes = tuple(
+        StaticDiscoveryNode(node_id=mapper.public(coordinate.seed_id), name=coordinate.name)
+        for coordinate in artifact.coordinates
+    )
+    return build_static_discovery_payload(database, nodes)
+
+
+def _discovery_manifest_coverage(payload: StaticDiscoveryPayload) -> dict[str, object] | None:
+    """Keep the release manifest small while binding the discovery availability state."""
+    coverage = payload.coverage
+    if coverage is None:
+        return None
+    return {
+        "placed_map_node_count": coverage.placed_map_node_count,
+        "exact_label_bound_catalog_genre_count": coverage.exact_label_bound_catalog_genre_count,
+        "genres_with_direct_artists": coverage.genres_with_direct_artists,
+        "artists_with_direct_map_genres": coverage.artists_with_direct_map_genres,
+        "bound_direct_observation_count": coverage.bound_direct_observation_count,
+        "artist_relation_method": coverage.artist_relation_method,
     }
 
 
@@ -565,6 +617,7 @@ def _html(asset_paths: dict[str, Path]) -> str:
     """Bind the stable document shell to its immutable content-addressed assets."""
     app_css = asset_paths["app_css"].name
     semantic_atlas = asset_paths["semantic_atlas"].name
+    static_discovery = asset_paths["static_discovery"].name
     renderer_module = asset_paths["map_renderer_module"].name
     return f"""<!doctype html>
 <html lang="en">
@@ -578,7 +631,8 @@ def _html(asset_paths: dict[str, Path]) -> str:
 <body>
   <main id="map" aria-label="Music map">
     <canvas id="semantic-map" role="img" aria-label="OpenNoise semantic music map"
-            data-map-url="assets/{semantic_atlas}"></canvas>
+            data-map-url="assets/{semantic_atlas}"
+            data-discovery-url="assets/{static_discovery}"></canvas>
     <nav id="map-controls" aria-label="Map controls">
       <button type="button" data-map-action="back" hidden>Back</button>
       <button type="button" data-map-action="fit">Fit</button>

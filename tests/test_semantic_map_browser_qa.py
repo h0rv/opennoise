@@ -39,6 +39,12 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("Back did not restore map state", self.source)
         self.assertIn("dark mode did not change the map palette", self.source)
         self.assertIn("post-punk did not focus its connection set", self.source)
+        self.assertIn("post-punk direct artist discovery did not load", self.source)
+        self.assertIn(
+            "artist discovery did not expose direct genres and explained artist overlap",
+            self.source,
+        )
+        self.assertIn("artist detail back did not restore the genre discovery panel", self.source)
         self.assertIn("modern_rock_connection_contract", self.source)
         self.assertIn("rock_landmark_retained_after_plus", self.source)
         self.assertIn("modernRock.points === modernRock.edges + 1", self.source)
@@ -74,6 +80,12 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("state.displayedIds", renderer)
         self.assertIn("Zoom here", renderer)
         self.assertIn("state.worldCenter", renderer)
+        self.assertIn("loadDiscovery", renderer)
+        self.assertIn("Shared genres", renderer)
+        self.assertIn("No direct catalog observations for this map label.", renderer)
+        self.assertIn(
+            "state.artist = null; showDetail(state.focus, state.edges); schedule();", renderer
+        )
 
     def test_prefixed_focus_bookmarks_are_normalized_to_public_ids(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")

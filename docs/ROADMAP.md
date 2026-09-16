@@ -2,20 +2,22 @@
 
 ## Current product
 
-The default map uses the versioned open construction graph. It retains all
-6,291 historical names and adds 746 public catalog anchors. The map has one
-landscape surface with stable neighborhoods, semantic zoom, genre detail,
-search, pan, zoom, and dark mode.
+The default static map retains 6,291 immutable names; 2,945 have placed map
+coordinates and 3,346 remain preserved but unplaced. It has one landscape
+surface with stable neighborhoods, semantic zoom, genre detail, search, pan,
+zoom, and dark mode.
+
+Static discovery is a separate, lazy JSON asset, not a backend API. The current
+sealed public catalog has 4,948 export- and display-authorized direct Wikidata
+P136 observations. An exact, one-to-one label bridge puts 2,900 of them on 260
+map genres for 1,008 artists. Artist overlap is explicitly shared direct mapped
+genres, never an unexplained similarity claim. See
+[static discovery status](evidence/STATIC_DISCOVERY_STATUS.md) for the current
+source coverage and exclusions.
 
 The historical Every Noise result is a separate local reference. It preserves
-dated observed output for evaluation and does not provide inputs to the open
-model.
-
-The open graph contains 7,037 nodes and 3,317 edges. It has 441 exact identity
-edges, 853 factual taxonomy edges, 1,940 compositional review edges, and 83
-ambiguous review edges. It has no inferred artist memberships. Review edges
-remain review candidates until a later evidence or human review run promotes
-them.
+dated observed output for blind evaluation and does not provide inputs to the
+open model.
 
 ## Release gates
 
@@ -35,9 +37,10 @@ are not yet reproducible from this workflow.
 
 ## Next data work
 
-- Enrich the 6,291 immutable name seeds with public identities, hierarchy,
-  overlapping communities, artist membership, and similarity while preserving
-  each source claim.
+- Expand direct artist and catalog coverage, preserving source claims and
+  rejecting ambiguous presentation identity bridges.
+- Add independently evaluated, versioned promotion paths for derived
+  memberships and similarity; keep direct observations separate until then.
 - Complete the MusicBrainz release and track catalog chain beyond the current
   bounded 51 release and 491 track metadata slice.
 - Keep metadata candidates separate from published metadata examples.

@@ -70,7 +70,9 @@ button, input { font: inherit; }
 #map-detail h3 { margin: 14px 0 5px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
 #map-detail ul { display: grid; gap: 4px; margin: 12px 0 0; padding: 0; list-style: none; }
 #map-detail a { color: var(--ink); }
-#map-detail .artist-link { display: inline-block; margin-top: 12px; font-size: 13px; }
+#map-detail .detail-action, #map-detail .detail-back { padding: 0; border: 0; color: var(--ink); background: transparent; font: inherit; text-align: left; text-decoration: underline; cursor: pointer; }
+#map-detail .detail-back { margin: 0 0 10px; font-size: 12px; }
+#map-detail .detail-empty { margin: 8px 0 0; color: color-mix(in srgb, var(--ink) 72%, var(--canvas)); font-size: 13px; }
 
 .map-error { position: fixed; top: 74px; left: 14px; z-index: 5; padding: 10px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); }
 

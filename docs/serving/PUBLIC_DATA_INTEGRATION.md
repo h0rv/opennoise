@@ -4,6 +4,11 @@ Branch: `integration/public-data`
 
 Base: main `719c427`
 
+> Current static discovery coverage is tracked separately in
+> [static discovery status](../evidence/STATIC_DISCOVERY_STATUS.md). This report
+> preserves the dated integration history below; adapter capability is not a
+> statement of what the current static product serves.
+
 ## Stages
 
 | Stage | Commit | Result |

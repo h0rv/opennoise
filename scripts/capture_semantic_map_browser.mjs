@@ -192,6 +192,9 @@ async function diagnostics(cdp) {
       detail_links: document.querySelectorAll('#map-detail [data-open-node-id]').length,
       detail_names: [...document.querySelectorAll('#map-detail [data-open-node-id]')]
         .map((link) => link.textContent),
+      detail_artist_buttons: document.querySelectorAll('#map-detail [data-open-artist-id]').length,
+      detail_artist_name: document.querySelector('#map-detail h2')?.textContent ?? '',
+      detail_headings: [...document.querySelectorAll('#map-detail h3')].map((heading) => heading.textContent),
       detail_box: detailRect ? { x: detailRect.x, y: detailRect.y, width: detailRect.width, height: detailRect.height } : null,
       focus_url: new URL(location.href).searchParams.get('open_focus'),
       renderer_p95_ms: qa?.render_ms?.length
@@ -592,6 +595,34 @@ async function run() {
     requireCheck(postPunk.focus_url === 'item577' && postPunk.edges > 0, 'post-punk did not focus its connection set', postPunk);
     requireCheck(postPunk.points === postPunk.edges + 1, 'post-punk view leaked unconnected dots', postPunk);
     requireCheck(!postPunk.detail_hidden && postPunk.detail_links === postPunk.edges && postPunk.detail_links <= 12 && boxInViewport(postPunk.detail_box, postPunk.viewport), 'post-punk list does not match its shown links', postPunk);
+    let postPunkDiscovery = postPunk;
+    for (let attempt = 0; attempt < 240 && postPunkDiscovery.detail_artist_buttons === 0; attempt += 1) {
+      await sleep(25); postPunkDiscovery = await diagnostics(cdp);
+    }
+    requireCheck(
+      postPunkDiscovery.detail_headings.includes('Artists') && postPunkDiscovery.detail_artist_buttons > 0,
+      'post-punk direct artist discovery did not load',
+      postPunkDiscovery,
+    );
+    await cdp.evaluate("document.querySelector('#map-detail [data-open-artist-id]')?.click()");
+    await sleep(50);
+    const postPunkArtist = await diagnostics(cdp);
+    requireCheck(
+      postPunkArtist.detail_headings.includes('Direct genres')
+        && postPunkArtist.detail_headings.includes('Shared genres')
+        && postPunkArtist.detail_artist_name !== 'post-punk',
+      'artist discovery did not expose direct genres and explained artist overlap',
+      postPunkArtist,
+    );
+    await cdp.evaluate("document.querySelector('[data-map-action=\"genre-detail\"]')?.click()");
+    await sleep(50);
+    const postPunkBackToGenre = await diagnostics(cdp);
+    requireCheck(
+      postPunkBackToGenre.detail_headings.includes('Artists')
+        && postPunkBackToGenre.detail_artist_buttons > 0,
+      'artist detail back did not restore the genre discovery panel',
+      postPunkBackToGenre,
+    );
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-focus.png', 'light', 1440, 900));
 
     // This is a global-map camera test, not a focus layout: pan the actual
@@ -735,6 +766,8 @@ async function run() {
         },
         focused_edges: focused.edges,
         post_punk_edges: postPunk.edges,
+        post_punk_direct_artists: postPunkDiscovery.detail_artist_buttons,
+        artist_discovery_back: postPunkBackToGenre.detail_headings.includes('Artists'),
         modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
           && modernRock.points === modernRock.detail_links + 1,
         rock_landmark_retained_after_plus: [rockL0, rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
@@ -746,7 +779,7 @@ async function run() {
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, rockOverview, rockL0, rockL1, rockL2, rockL3, rockDeep, capOverview, capSelected, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, postPunkDiscovery, postPunkArtist, postPunkBackToGenre, rockOverview, rockL0, rockL1, rockL2, rockL3, rockDeep, capOverview, capSelected, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

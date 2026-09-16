@@ -32,6 +32,11 @@ def _arguments() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--discovery-database",
+        type=Path,
+        default=Path(os.environ.get("OPENNOISE_DISCOVERY_DATABASE", "data/public.sqlite")),
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=Path(os.environ.get("OPENNOISE_PAGES_OUTPUT", "dist")),
@@ -97,7 +102,13 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=f".{output.name}.certify-", dir=output.parent) as root:
         staged = Path(root) / "dist"
-        export_semantic_pages(SemanticPagesExportInputs(arguments.semantic_layout, staged))
+        export_semantic_pages(
+            SemanticPagesExportInputs(
+                arguments.semantic_layout,
+                staged,
+                arguments.discovery_database,
+            )
+        )
         arguments.report.parent.mkdir(parents=True, exist_ok=True)
         arguments.captures.mkdir(parents=True, exist_ok=True)
         server = subprocess.Popen(  # noqa: S603
