@@ -46,6 +46,14 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("IDM list does not match its shown links", self.source)
         self.assertIn("mobile pinch did not zoom the map", self.source)
         self.assertIn("L3 imposed a camera zoom wall", self.source)
+        self.assertIn(
+            "one-pixel pan changed retained label identity or world-anchor offset", self.source
+        )
+        self.assertIn("equivalent zoom paths changed label admission or placement", self.source)
+        self.assertIn("deep reveal labels overlap", self.source)
+        self.assertIn("mobile pinch labels are unreadable", self.source)
+        self.assertIn("desktop-one-pixel-pan.png", self.source)
+        self.assertIn("desktop-zoom-path-equivalent.png", self.source)
 
     def test_renderer_keeps_focus_static_and_cleans_pointer_capture(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")

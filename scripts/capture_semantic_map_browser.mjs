@@ -237,6 +237,58 @@ function boxInViewport(box, viewport) {
     && box.x + box.width <= viewport.width && box.y + box.height <= viewport.height;
 }
 
+function boxesDoNotOverlap(boxes) {
+  return boxes.every((left, index) => boxes.slice(index + 1).every((right) => (
+    left.x1 <= right.x0 || right.x1 <= left.x0 || left.y1 <= right.y0 || right.y1 <= left.y0
+  )));
+}
+
+function uniqueInteriorLabels(frame, margin = 80) {
+  const labels = frame.label_positions.map((position, index) => ({
+    ...position,
+    box: frame.label_boxes[index],
+  })).filter((label) => label.box
+    && label.box.x0 >= margin && label.box.y0 >= margin
+    && label.box.x1 <= frame.viewport.width - margin && label.box.y1 <= frame.viewport.height - margin);
+  const counts = new Map();
+  for (const label of labels) counts.set(label.text, (counts.get(label.text) ?? 0) + 1);
+  return new Map(labels.filter((label) => counts.get(label.text) === 1).map((label) => [label.text, label]));
+}
+
+function labelMotionMetrics(before, after, expectedDx, expectedDy) {
+  const prior = uniqueInteriorLabels(before);
+  const next = uniqueInteriorLabels(after);
+  const retained = [...prior.keys()].filter((name) => next.has(name));
+  const maximumError = retained.length ? Math.max(...retained.map((name) => {
+    const left = prior.get(name); const right = next.get(name);
+    return Math.hypot(right.x - left.x - expectedDx, right.y - left.y - expectedDy);
+  })) : Infinity;
+  return {
+    interior_before: prior.size,
+    interior_after: next.size,
+    retained: retained.length,
+    retention: prior.size ? retained.length / prior.size : 0,
+    maximum_screen_offset_error: maximumError,
+  };
+}
+
+function equivalentLabelMetrics(left, right) {
+  const first = uniqueInteriorLabels(left);
+  const second = uniqueInteriorLabels(right);
+  const shared = [...first.keys()].filter((name) => second.has(name));
+  const maximumPositionError = shared.length ? Math.max(...shared.map((name) => {
+    const before = first.get(name); const after = second.get(name);
+    return Math.hypot(after.x - before.x, after.y - before.y);
+  })) : Infinity;
+  return {
+    first_labels: first.size,
+    second_labels: second.size,
+    shared: shared.length,
+    same_admitted_set: shared.length === first.size && shared.length === second.size,
+    maximum_position_error: maximumPositionError,
+  };
+}
+
 async function wheel(cdp, x, y, deltaY) {
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseWheel", x, y, deltaY, deltaX: 0 });
 }
@@ -426,7 +478,19 @@ async function run() {
     });
     requireCheck(buttonDeep.lod === 3 && buttonDeep.scale > buttonL3.scale, 'L3 imposed a camera zoom wall', { buttonL3, buttonDeep });
     requireCheck(buttonDeep.renderer_samples >= 5 && buttonDeep.renderer_p95_ms <= 50, 'renderer p95 frame gate failed', buttonDeep);
+    requireCheck(boxesDoNotOverlap(buttonDeep.label_boxes), 'deep reveal labels overlap', buttonDeep);
     screenshots.push(await screenshot(cdp, "desktop-button-deep.png", "light", 1440, 900));
+    await navigate(cdp, 1440, 900, "light");
+
+    const pinchBase = await diagnostics(cdp);
+    const buttonFactor = buttonL1.scale / initial.scale;
+    await pinch(cdp, 720, 450, 100, 100 * buttonFactor);
+    await waitForFrame(cdp, pinchBase.frame_count - 1);
+    const pinchL1 = await diagnostics(cdp);
+    const zoomPath = equivalentLabelMetrics(buttonL1, pinchL1);
+    requireCheck(Math.abs(pinchL1.scale / buttonL1.scale - 1) <= .001, 'equivalent zoom paths reached different scales', { buttonL1, pinchL1 });
+    requireCheck(zoomPath.same_admitted_set && zoomPath.maximum_position_error <= .01, 'equivalent zoom paths changed label admission or placement', { buttonL1, pinchL1, zoom_path: zoomPath });
+    screenshots.push(await screenshot(cdp, "desktop-zoom-path-equivalent.png", "light", 1440, 900));
     await navigate(cdp, 1440, 900, "light");
 
     const firstFrame = initial.frame_count - 1;
@@ -447,9 +511,17 @@ async function run() {
       { initial, zoom1, zoom2 },
     );
 
-    const beforePan = zoom2.point_extent;
+    const beforeTinyPan = zoom2;
+    await drag(cdp, 720, 450, 721, 451);
+    await waitForFrame(cdp, beforeTinyPan.frame_count - 1);
+    const tinyPan = await diagnostics(cdp);
+    const tinyPanLabels = labelMotionMetrics(beforeTinyPan, tinyPan, 1, 1);
+    requireCheck(tinyPanLabels.interior_before >= 3 && tinyPanLabels.retention >= .8 && tinyPanLabels.maximum_screen_offset_error <= .01, 'one-pixel pan changed retained label identity or world-anchor offset', { beforeTinyPan, tinyPan, tiny_pan_labels: tinyPanLabels });
+    screenshots.push(await screenshot(cdp, "desktop-one-pixel-pan.png", "light", 1440, 900));
+
+    const beforePan = tinyPan.point_extent;
     await drag(cdp, 720, 450, 240, 220);
-    await waitForFrame(cdp, zoom2.frame_count - 1);
+    await waitForFrame(cdp, tinyPan.frame_count - 1);
     const afterPan = await diagnostics(cdp);
     requireCheck(JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent), "pan did not move camera", { beforePan, afterPan });
 
@@ -527,10 +599,12 @@ async function run() {
     requireCheck(mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844, "mobile viewport failed", mobile);
     requireCheck(mobile.connected_path_arcs === 0, "mobile batched dots formed connected polygons", mobile);
     requireCheck(boxesInViewport(mobile.label_boxes, mobile.viewport), "mobile label box escaped viewport", mobile);
+    requireCheck(boxesDoNotOverlap(mobile.label_boxes), "mobile labels overlap", mobile);
     await pinch(cdp, 195, 500, 34, 132);
     await waitForFrame(cdp, mobile.frame_count - 1);
     const mobilePinch = await diagnostics(cdp);
     requireCheck(mobilePinch.scale > mobile.scale && mobilePinch.lod >= mobile.lod, 'mobile pinch did not zoom the map', { mobile, mobilePinch });
+    requireCheck(boxesInViewport(mobilePinch.label_boxes, mobilePinch.viewport) && boxesDoNotOverlap(mobilePinch.label_boxes), 'mobile pinch labels are unreadable', mobilePinch);
     screenshots.push(await screenshot(cdp, "mobile-light.png", "light", 390, 844));
     requireCheck(cdp.runtimeErrors.length === 0, "browser errors detected", cdp.runtimeErrors);
     const report = {
@@ -551,6 +625,9 @@ async function run() {
         ],
         button_lods: [initial.lod, buttonL1.lod, buttonL2.lod, buttonL3.lod],
         deep_zoom_scale: buttonDeep.scale,
+        deep_labels_readable: boxesDoNotOverlap(buttonDeep.label_boxes),
+        one_pixel_pan: tinyPanLabels,
+        zoom_path: zoomPath,
         focused_edges: focused.edges,
         post_punk_edges: postPunk.edges,
         modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
@@ -564,7 +641,7 @@ async function run() {
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, zoom1, zoom2, afterPan, focused, backed, postPunk, rockOverview, rockL0, rockL1, rockL2, rockL3, modernRock, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, rockOverview, rockL0, rockL1, rockL2, rockL3, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);
