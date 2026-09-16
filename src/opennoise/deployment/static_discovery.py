@@ -261,7 +261,10 @@ def _direct_evidence(
                     SELECT name.entity_id, name.name,
                            row_number() OVER (
                                PARTITION BY name.entity_id
-                               ORDER BY name.is_preferred DESC, name.id
+                           ORDER BY (name.language_tag = 'en') DESC,
+                                    name.is_preferred DESC,
+                                    (name.language_tag = 'und') DESC,
+                                    name.id
                            ) AS row_number
                     FROM displayable_entity_names AS name
                     JOIN artists AS artist ON artist.id = name.entity_id

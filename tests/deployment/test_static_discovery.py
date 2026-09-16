@@ -47,6 +47,8 @@ class StaticDiscoveryTests(unittest.TestCase):
         self.assertNotIn("artist:6", artists, "export-denied observations must not publish")
         self.assertNotIn("artist:7", artists, "display-denied observations must not publish")
         alpha = artists["artist:1"]
+        self.assertEqual(alpha.name, "Alpha", "English display names take precedence")
+        self.assertEqual(artists["artist:2"].name, "Beta", "native names remain the fallback")
         self.assertEqual(
             {item.node_id for item in alpha.memberships}, {"item-post-punk", "item-jazz"}
         )
@@ -82,6 +84,7 @@ def _fixture(path: Path) -> None:
             CREATE TABLE artists (id INTEGER PRIMARY KEY);
             CREATE TABLE displayable_entity_names (
                 id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL, name TEXT NOT NULL,
+                language_tag TEXT NOT NULL,
                 is_preferred INTEGER NOT NULL
             );
             CREATE TABLE provenance_records (id INTEGER PRIMARY KEY, policy_id INTEGER NOT NULL);
@@ -99,9 +102,10 @@ def _fixture(path: Path) -> None:
                 (40, 'catalog only');
             INSERT INTO artists VALUES (1), (2), (3), (4), (5), (6), (7);
             INSERT INTO displayable_entity_names VALUES
-                (1, 1, 'Alpha', 1), (2, 2, 'Beta', 1), (3, 3, 'Gamma', 1),
-                (4, 4, 'Unmapped', 1), (5, 5, 'Ambiguous', 1), (6, 6, 'Denied', 1),
-                (7, 7, 'Display denied', 1);
+                (1, 1, 'ألفا', 'ar', 1), (8, 1, 'Alpha', 'en', 0),
+                (2, 2, 'Beta', 'no', 1), (3, 3, 'Gamma', 'und', 1),
+                (4, 4, 'Unmapped', 'en', 1), (5, 5, 'Ambiguous', 'en', 1),
+                (6, 6, 'Denied', 'en', 1), (7, 7, 'Display denied', 'en', 1);
             INSERT INTO provenance_records VALUES (1, 100), (2, 200), (3, 300);
             INSERT INTO active_rights_policy_permissions VALUES
                 (100, 'export', 'allow'), (100, 'display', 'allow'),
