@@ -9,6 +9,7 @@ import {
   labelBudgetForScale,
   levelForScale,
   normaliseAtlasPayload,
+  nextLodScale,
   appendCirclePath,
   visibleNodeLabels,
   zoomAtCenter,
