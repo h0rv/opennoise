@@ -44,25 +44,25 @@ retired identifier text. A clean `open_focus=item…` bookmark works, while an
 old prefixed bookmark is accepted only as input and immediately canonicalized
 to its clean URL.
 
-The offline static-label-atlas experiment is not released. Its initial lint,
-type, and focused unit checks passed, but the canonical export did not finish
-within an independent 120-second bounded run and it predates the strict
-public-ID boundary. It must be rebased and made bounded before it can enter a
-release candidate.
+The next static Pages release has a deterministic, offline label atlas rather
+than a per-frame label grid. It uses finite, data-derived reveal scales and
+one stable near-dot placement per public map node. Disclosure can only be
+delayed to smooth density; it does not rerank labels while navigating. A
+selected genre offers `Zoom here`, which enters the same static browse view at
+its exact world position and preserves Back to the structural detail.
 
-Before any such deployment, require all of the following evidence:
+The release candidate has passed a fresh sealed-layout rebuild, all-scale
+label-box clearance for 2,945 labels, and loopback browser certification. The
+browser evidence covers one-pixel pan anchoring, equivalent button and pinch
+paths, gradual fixed-center admission, deep selected-label readability,
+hierarchy landmarks, structural focus and Back, direct artist discovery, and
+mobile pinch. The known remaining layout debt is extremely near-coincident
+source coordinates; it is documented as a model/readability limitation rather
+than hidden by detached labels.
 
-- a completed canonical export and static/browser certification from the
-  rebased candidate;
-- all-scale label-box clearance over the emitted atlas, including cross-tier
-  labels, with finite numerical zoom bounds;
-- runtime measurements showing one-pixel pan preserves retained label
-  screen offsets, world-anchor label identity remains invariant, and equivalent
-  zoom paths yield the same admitted labels and placements;
-- desktop and mobile/pinch captures that show the deepest revealed labels
-  remain readable, attached to their dots, and clear of search/detail/control
-  overlays; and
-- a fresh custom-domain manifest/hash scan before release.
+Before publishing, deploy only that certified fingerprinted export and verify
+the Pages deployment and custom domain serve the manifest-referenced hashes,
+clean public IDs, the static discovery asset, and the same browser flows.
 
 Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
 pruned on 2026-09-16. Active offline-atlas, discovery, and data worktrees are
