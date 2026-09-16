@@ -604,36 +604,38 @@ async function run() {
     await waitForFrame(cdp, rockOverview.frame_count - 1);
     const rockL0 = await diagnostics(cdp);
     const rockL1 = await clickControl(cdp, 'in');
+    screenshots.push(await screenshot(cdp, 'desktop-rock-l1.png', 'light', 1440, 900));
     const rockL2 = await clickControl(cdp, 'in');
+    screenshots.push(await screenshot(cdp, 'desktop-rock-l2.png', 'light', 1440, 900));
     const rockL3 = await clickControl(cdp, 'in');
+    screenshots.push(await screenshot(cdp, 'desktop-rock-l3.png', 'light', 1440, 900));
+    const rockDeep = await clickControl(cdp, 'in');
+    screenshots.push(await screenshot(cdp, 'desktop-rock-deep.png', 'light', 1440, 900));
     requireCheck(
       !rockL0.focus_url && [rockL0, rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
       'rock browse landmark did not persist after every plus control',
       { rockL0, rockL1, rockL2, rockL3 },
     );
-    requireCheck(rockL2.label_names.includes('instrumental rock'), 'rock browse region did not disclose its supported local descendant', { rockL1, rockL2 });
-    requireCheck(!rockL2.label_names.includes('hip hop'), 'viewport-local browse landmarks should not be forced on screen', { rockL2 });
+    const rockDescendants = ['euskal rock', 'norwegian rock', 'australian garage punk', 'estonian rock'];
+    requireCheck(
+      rockL3.label_names.includes('australian garage punk')
+        && rockDescendants.filter((name) => rockDeep.label_names.includes(name)).length >= 3,
+      'rock browse region did not disclose enough supported local descendants',
+      { rockL2, rockL3, rockDeep, rock_descendants: rockDescendants },
+    );
+    requireCheck(!rockL3.label_names.includes('hip hop'), 'viewport-local browse landmarks should not be forced on screen', { rockL3 });
 
-    // Pan the actual deepest static label under the center before repeated
-    // wheel input.  This exercises the finite data-derived cap and proves the
-    // smallest certified cluster caption can be read, not merely exported.
+    // The public selected-node action uses an exact world center. It is the
+    // reachable route for a very tight cluster, where a user cannot preserve
+    // a sub-pixel wheel anchor through dozens of zoom ticks.
     await navigate(cdp, 1440, 900, 'light');
     const capOverview = await diagnostics(cdp);
-    const capAnchor = capOverview.label_positions.find((label) => label.text === 'rock');
-    const rockNode = publishedAtlas.nodes.find((node) => node.name === 'rock');
-    const rockStaticLabel = publishedAtlas.label_atlas.find((label) => label.id === rockNode?.id);
-    requireCheck(Boolean(capAnchor && rockNode && rockStaticLabel), 'cannot derive global camera for cap evidence', {
-      capOverview,
+    const capSelected = await focusQuery(deepestNode.name, capOverview.frame_count - 1);
+    requireCheck(capSelected.focus_url === deepestNode.id, 'deepest static label cannot be selected by its public ID', {
+      deepestNode, capSelected,
     });
-    const cameraX = capAnchor.x - rockStaticLabel.offset_x - rockNode.x * capOverview.scale;
-    const cameraY = capAnchor.y - rockStaticLabel.offset_y - rockNode.y * capOverview.scale;
-    const targetX = cameraX + deepestNode.x * capOverview.scale;
-    const targetY = cameraY + deepestNode.y * capOverview.scale;
-    await drag(cdp, 720, 450, 720 + (720 - targetX), 450 + (450 - targetY));
-    await waitForFrame(cdp, capOverview.frame_count - 1);
-    const capCentered = await diagnostics(cdp);
-    for (let step = 0; step < 128; step += 1) await wheel(cdp, 720, 450, -400);
-    await waitForFrame(cdp, capCentered.frame_count - 1);
+    await cdp.evaluate("document.querySelector('#map-detail .zoom-here')?.click()");
+    await waitForFrame(cdp, capSelected.frame_count - 1);
     const deepestAtCap = await diagnostics(cdp);
     requireCheck(
       Number.isFinite(deepestAtCap.scale)
@@ -643,12 +645,14 @@ async function run() {
     );
     requireCheck(
       deepestAtCap.label_names.includes(deepestNode.name)
+        && deepestAtCap.focus_url === null
+        && deepestAtCap.points >= 1
         && boxesInViewport(deepestAtCap.label_boxes, deepestAtCap.viewport)
         && boxesDoNotOverlap(deepestAtCap.label_boxes),
-      'deepest certified static label is not readable at the camera cap',
+      'deepest certified selected label is not readable at the camera cap',
       { deepestStaticLabel, deepestNode, deepestAtCap },
     );
-    screenshots.push(await screenshot(cdp, 'desktop-deepest-static-label.png', 'light', 1440, 900));
+    screenshots.push(await screenshot(cdp, 'desktop-deepest-selected-label.png', 'light', 1440, 900));
 
     await navigate(cdp, 1440, 900, 'light');
     const trajectoryOverview = await diagnostics(cdp);
@@ -674,7 +678,7 @@ async function run() {
     requireCheck(centeredTrajectory.cumulative_admitted >= rockTrajectory[0].labels, 'fixed-center zoom did not retain cumulative label identity evidence', centeredTrajectory);
     screenshots.push(await screenshot(cdp, 'desktop-rock-fixed-center-trajectory.png', 'light', 1440, 900));
 
-    const modernRock = await focusQuery('modern rock', rockL3.frame_count - 1);
+    const modernRock = await focusQuery('modern rock', rockDeep.frame_count - 1);
     requireCheck(modernRock.focus_url === 'item10', 'modern rock did not focus', modernRock);
     requireCheck(
       modernRock.points === modernRock.edges + 1 && modernRock.points === modernRock.detail_links + 1,
@@ -734,7 +738,7 @@ async function run() {
         modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
           && modernRock.points === modernRock.detail_links + 1,
         rock_landmark_retained_after_plus: [rockL0, rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
-        rock_global_camera: !rockL0.focus_url && rockL2.label_names.includes('instrumental rock'),
+        rock_global_camera: !rockL0.focus_url && rockDeep.label_names.includes('australian garage punk'),
         renderer_p95_ms: buttonDeep.renderer_p95_ms,
         pan_changed_extent: JSON.stringify(beforePan) !== JSON.stringify(afterPan.point_extent),
         back_restored: backed.back_hidden && !backed.focus_url,
@@ -742,7 +746,7 @@ async function run() {
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, rockOverview, rockL0, rockL1, rockL2, rockL3, capOverview, capCentered, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, rockOverview, rockL0, rockL1, rockL2, rockL3, rockDeep, capOverview, capSelected, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

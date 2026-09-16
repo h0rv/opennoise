@@ -18,11 +18,15 @@ from opennoise.deployment.semantic_pages import (
     _label_reveal_scale,
     _overlap_scale_interval,
     _PublicIdMapper,
+    _spread_static_label_reveals,
     export_semantic_pages,
 )
 
 LAYOUT = Path(".cache/semantic-map-layout-v2/artifact.json")
 STATIC_ROOT = Path(__file__).resolve().parents[2] / "src" / "opennoise" / "static"
+REFERENCE_FIT_SCALE = 900.0
+BASELINE_LABEL_COUNT = 4
+LABEL_BOX_HEIGHT = 22.0
 
 
 def _assert_public_payload(test: unittest.TestCase, payload: dict[str, object]) -> None:  # noqa: C901, PLR0915
@@ -129,10 +133,10 @@ class StaticLabelAtlasTests(unittest.TestCase):
         self.assertEqual(reveal, repeat)
         self.assertGreaterEqual(reveal, 900)
         for scale in (reveal, reveal * 2, reveal * 100):
-            left = (12, 5 - 14, 12 + 42, 5)
+            left = (12, 5 - LABEL_BOX_HEIGHT, 12 + 42, 5)
             right = (
                 0.001 * scale + 12,
-                0.001 * scale + 5 - 14,
+                0.001 * scale + 5 - LABEL_BOX_HEIGHT,
                 0.001 * scale + 12 + 54,
                 0.001 * scale + 5,
             )
@@ -188,6 +192,35 @@ class StaticLabelAtlasTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(SemanticPagesExportError, "coincident static label"):
             _label_reveal_scale(candidate, 0.0, 0.0, ((0.0, 0.0, prior),), 900.0)
+
+    def test_admission_spread_delays_without_dropping_or_advancing_labels(self) -> None:
+        labels = [
+            StaticLabelPayload(
+                id=f"item{index}",
+                side="right",
+                offset_x=12.0,
+                offset_y=5.0,
+                width_px=42.0,
+                priority=index,
+                reveal_scale=0.0 if index < BASELINE_LABEL_COUNT else 1_000.0,
+            )
+            for index in range(10)
+        ]
+        spread = _spread_static_label_reveals(labels)
+        self.assertEqual({label.id for label in spread}, {label.id for label in labels})
+        self.assertTrue(
+            all(
+                after.reveal_scale >= before.reveal_scale
+                for before, after in zip(labels, spread, strict=True)
+            ),
+        )
+        admitted = BASELINE_LABEL_COUNT
+        for scale in sorted(
+            {label.reveal_scale for label in spread if label.reveal_scale > REFERENCE_FIT_SCALE}
+        ):
+            next_admitted = sum(label.reveal_scale <= scale for label in spread)
+            self.assertLessEqual(next_admitted, admitted + max(1, math.floor(admitted * 0.5)))
+            admitted = next_admitted
 
 
 @unittest.skipUnless(LAYOUT.is_file(), "semantic-layout integration artifact is not provisioned")
@@ -302,6 +335,17 @@ class SemanticPagesExportTests(unittest.TestCase):
             all(float(label["reveal_scale"]) <= maximum_scale for label in labels),
             "the finite camera cap must admit the certified deepest label",
         )
+        admitted = sum(float(label["reveal_scale"]) <= REFERENCE_FIT_SCALE for label in labels)
+        for scale in sorted(
+            {
+                float(label["reveal_scale"])
+                for label in labels
+                if float(label["reveal_scale"]) > REFERENCE_FIT_SCALE
+            }
+        ):
+            next_admitted = sum(float(label["reveal_scale"]) <= scale for label in labels)
+            self.assertLessEqual(next_admitted, admitted + max(1, math.floor(admitted * 0.5)))
+            admitted = next_admitted
 
     def test_changed_static_bytes_get_a_new_immutable_url(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

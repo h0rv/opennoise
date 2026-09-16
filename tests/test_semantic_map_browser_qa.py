@@ -59,9 +59,9 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         )
         self.assertIn("desktop-rock-fixed-center-trajectory.png", self.source)
         self.assertIn(
-            "deepest certified static label is not readable at the camera cap", self.source
+            "deepest certified selected label is not readable at the camera cap", self.source
         )
-        self.assertIn("desktop-deepest-static-label.png", self.source)
+        self.assertIn("desktop-deepest-selected-label.png", self.source)
 
     def test_renderer_keeps_focus_static_and_cleans_pointer_capture(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
@@ -72,6 +72,8 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("pointercancel", renderer)
         self.assertIn("lostpointercapture", renderer)
         self.assertIn("state.displayedIds", renderer)
+        self.assertIn("Zoom here", renderer)
+        self.assertIn("state.worldCenter", renderer)
 
     def test_prefixed_focus_bookmarks_are_normalized_to_public_ids(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")

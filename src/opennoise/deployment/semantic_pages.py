@@ -25,7 +25,10 @@ _STATIC_ROOT: Final = _PACKAGE_ROOT / "static"
 _HIERARCHY_REGION_MAX_DISTANCE: Final = 0.08
 _HIERARCHY_REGION_MIN_MEMBERS: Final = 4
 _LABEL_FONT_PX: Final = 14.0
-_LABEL_HEIGHT_PX: Final = _LABEL_FONT_PX
+# Canvas records a 14px baseline plus the 4px stroke halo.  Reserve the full
+# 22px observed box so export certification and actual browser collision tests
+# use the same geometry.
+_LABEL_HEIGHT_PX: Final = 22.0
 _LABEL_PADDING_PX: Final = 3.0
 _LABEL_ANCHOR_GAP_PX: Final = 12.0
 _REFERENCE_FIT_SCALE: Final = 900.0
@@ -37,6 +40,9 @@ _LABEL_REVEAL_BY_LOD: Final = (
     _REFERENCE_FIT_SCALE * 2**1.2,
     _REFERENCE_FIT_SCALE * 2**2.2,
 )
+_LABEL_ADMISSION_FACTOR: Final = 1.25
+_LABEL_ADMISSION_GROWTH: Final = 0.5
+_FIRST_LABEL_ADMISSION_SCALE: Final = _LABEL_REVEAL_BY_LOD[1]
 
 
 class SemanticPagesExportError(ValueError):
@@ -277,9 +283,54 @@ def _estimated_label_width(name: str) -> float:
     return max(16.0, sum(9.5 if ord(char) > _WIDE_GLYPH_BOUNDARY else 8.5 for char in name) + 2.0)
 
 
+def _spread_static_label_reveals(labels: list[StaticLabelPayload]) -> list[StaticLabelPayload]:
+    """Delay, but never advance, admissions into stable 1.25x steps.
+
+    Each non-overview step admits no more than half of the captions already
+    visible.  Collision clearance is a lower bound, so delaying a caption
+    cannot introduce an overlap.  This is one bounded pass, rather than an
+    open-ended search over scale buckets.
+    """
+    ordered = sorted(labels, key=lambda label: (label.reveal_scale, label.priority, label.id))
+    baseline = sum(label.reveal_scale <= _REFERENCE_FIT_SCALE for label in ordered)
+    visible = baseline
+    bucket = 0
+    remaining = max(1, math.floor(max(1, visible) * _LABEL_ADMISSION_GROWTH))
+    result: dict[str, StaticLabelPayload] = {}
+    for label in ordered:
+        if label.reveal_scale <= _REFERENCE_FIT_SCALE:
+            result[label.id] = label
+            continue
+        raw_bucket = max(
+            1,
+            1
+            + math.ceil(
+                math.log(
+                    label.reveal_scale / _FIRST_LABEL_ADMISSION_SCALE,
+                    _LABEL_ADMISSION_FACTOR,
+                )
+            ),
+        )
+        if raw_bucket > bucket:
+            bucket = raw_bucket
+            remaining = max(1, math.floor(max(1, visible) * _LABEL_ADMISSION_GROWTH))
+        elif remaining == 0:
+            bucket += 1
+            remaining = max(1, math.floor(max(1, visible) * _LABEL_ADMISSION_GROWTH))
+        result[label.id] = label.model_copy(
+            update={
+                "reveal_scale": _FIRST_LABEL_ADMISSION_SCALE
+                * _LABEL_ADMISSION_FACTOR ** (bucket - 1)
+            }
+        )
+        visible += 1
+        remaining -= 1
+    return [result[label.id] for label in labels]
+
+
 def _static_label_atlas(
     artifact: SemanticLayoutArtifact, mapper: _PublicIdMapper
-) -> list[dict[str, object]]:
+) -> list[StaticLabelPayload]:
     """Build deterministic fixed-world label metadata and reveal thresholds."""
     anchors = {
         community.anchor_seed_id for community in artifact.communities if community.overview_visible
@@ -298,7 +349,7 @@ def _static_label_atlas(
     )
     prior: list[tuple[float, float, StaticLabelPayload]] = []
     duplicate_positions: dict[tuple[float, float], int] = {}
-    labels: list[dict[str, object]] = []
+    labels: list[StaticLabelPayload] = []
     for priority, coordinate in enumerate(ranked):
         position = (coordinate.x, coordinate.y)
         duplicate_index = duplicate_positions.get(position, 0)
@@ -308,8 +359,8 @@ def _static_label_atlas(
             side="right",
             offset_x=_LABEL_ANCHOR_GAP_PX,
             # Coordinates are unique in the certified artifact.  Keep the
-            # exception explicit: only exact duplicate dots use a 20px lane,
-            # which is wider than the 14px text box and cannot collide.
+            # exception explicit: only exact duplicate dots use a 28px lane,
+            # which is wider than the 22px certified text box and cannot collide.
             offset_y=5.0 + duplicate_index * (_LABEL_HEIGHT_PX + _LABEL_PADDING_PX * 2),
             width_px=_estimated_label_width(coordinate.name),
             priority=priority,
@@ -320,8 +371,8 @@ def _static_label_atlas(
         )
         payload = payload.model_copy(update={"reveal_scale": reveal})
         prior.append((coordinate.x, coordinate.y, payload))
-        labels.append(payload.model_dump(mode="json"))
-    return labels
+        labels.append(payload)
+    return _spread_static_label_reveals(labels)
 
 
 def _write_fingerprinted_asset(assets: Path, stem: str, suffix: str, data: bytes) -> Path:
@@ -335,7 +386,8 @@ def _renderer_payload(
     artifact: SemanticLayoutArtifact, mapper: _PublicIdMapper
 ) -> dict[str, object]:
     """Project a verified atlas into the sole static browser payload."""
-    label_atlas = _static_label_atlas(artifact, mapper)
+    static_labels = _static_label_atlas(artifact, mapper)
+    label_atlas = [label.model_dump(mode="json") for label in static_labels]
     nodes = [
         {
             "id": mapper.public(coordinate.seed_id),
@@ -412,7 +464,7 @@ def _renderer_payload(
         # operation can never grow beyond a concrete value.
         "maximum_scale": max(
             _REFERENCE_FIT_SCALE,
-            max(float(label["reveal_scale"]) for label in label_atlas) * 1.05,
+            max(label.reveal_scale for label in static_labels) * 1.05,
         ),
         "overview_regions": [
             {

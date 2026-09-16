@@ -25,14 +25,27 @@ if (canvas instanceof HTMLCanvasElement) {
   const detail = document.querySelector('#map-detail');
   const query = document.querySelector('#query');
   const endpoint = canvas.dataset.mapUrl;
-  const state = { atlas: null, camera: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map() };
+  const state = { atlas: null, camera: null, worldCenter: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map() };
   const overviewPadding = () => {
     const bounds = state.atlas.worldBounds;
     const density = state.atlas.nodes.length / ((bounds.x1 - bounds.x0) * (bounds.y1 - bounds.y0));
     return density >= 1000 ? .95 : (density >= 250 ? .9 : .94);
   };
   const palette = () => { const css = getComputedStyle(document.documentElement); return Object.fromEntries(['canvas', 'node', 'ink', 'edge', 'focus', 'parent', 'similarity'].map((key) => [key, css.getPropertyValue(`--${key}`).trim()])); };
-  const point = (node) => ({ x: state.camera.x + node.x * state.camera.scale, y: state.camera.y + node.y * state.camera.scale });
+  const syncWorldCenter = () => {
+    state.worldCenter = {
+      x: (state.viewport.width / 2 - state.camera.x) / state.camera.scale,
+      y: (state.viewport.height / 2 - state.camera.y) / state.camera.scale,
+    };
+  };
+  const worldAt = (screen) => ({
+    x: state.worldCenter.x + (screen.x - state.viewport.width / 2) / state.camera.scale,
+    y: state.worldCenter.y + (screen.y - state.viewport.height / 2) / state.camera.scale,
+  });
+  const point = (node) => ({
+    x: state.viewport.width / 2 + (node.x - state.worldCenter.x) * state.camera.scale,
+    y: state.viewport.height / 2 + (node.y - state.worldCenter.y) * state.camera.scale,
+  });
   const publicId = (id) => typeof id === 'string' ? id.slice(id.lastIndexOf(':') + 1) : id;
   const canonicalizeFocusUrl = () => {
     const url = new URL(window.location.href);
@@ -48,6 +61,7 @@ if (canvas instanceof HTMLCanvasElement) {
     // Scale dense atlases down slightly so labels and edge communities have
     // breathing room without changing their persisted geometry.
     state.camera = fitCamera(state.atlas.initialCamera, state.viewport, overviewPadding());
+    syncWorldCenter();
     state.fitScale = state.camera.scale;
     state.focus = null; state.edges = []; state.neighborhoodIds = null;
     state.displayedIds.clear();
@@ -184,10 +198,35 @@ if (canvas instanceof HTMLCanvasElement) {
     }
   };
   const setUrl = (id) => { const url = new URL(window.location.href); if (id) url.searchParams.set('open_focus', id); else url.searchParams.delete('open_focus'); history.pushState({ opennoiseFocus: id }, '', url); };
+  const zoomHere = () => {
+    const node = state.focus ? state.atlas?.byId.get(state.focus) : null;
+    if (!node || !state.camera) return;
+    const staticLabel = state.atlas.staticLabels.find((label) => label.id === node.id);
+    const scale = clamp(
+      Math.max(state.camera.scale * 1.5, (staticLabel?.revealScale ?? state.camera.scale) * 1.05),
+      state.fitScale,
+      state.atlas.maximumScale,
+    );
+    state.camera = {
+      scale,
+      x: state.viewport.width / 2 - node.x * scale,
+      y: state.viewport.height / 2 - node.y * scale,
+    };
+    // Return to the normal static browse renderer at an exact selected world
+    // center. Browser Back restores the focused connection detail that led
+    // here, while this view proves the atlas's own label placement.
+    state.worldCenter = { x: node.x, y: node.y };
+    state.focus = null; state.edges = []; state.neighborhoodIds = null;
+    state.displayedIds.clear();
+    if (detail) detail.hidden = true;
+    setUrl(null);
+    schedule();
+  };
   const showDetail = (id, edges) => {
     if (!detail) return;
     detail.replaceChildren();
     const heading = document.createElement('h2'); heading.textContent = state.atlas.byId.get(id).name; detail.append(heading);
+    const zoom = document.createElement('button'); zoom.type = 'button'; zoom.className = 'zoom-here'; zoom.textContent = 'Zoom here'; zoom.addEventListener('click', zoomHere); detail.append(zoom);
     if (edges.length) { const label = document.createElement('h3'); label.textContent = 'Structural connections'; detail.append(label); const list = document.createElement('ul'); for (const edge of edges) { const nodeId = edge.source === id ? edge.target : edge.source; const peer = state.atlas.byId.get(nodeId); if (!peer) continue; const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; link.textContent = peer.name; item.append(link); list.append(item); } detail.append(list); }
     if (canvas.dataset.artistUrl) { const artists = document.createElement('a'); artists.className = 'artist-link'; artists.href = `${canvas.dataset.artistUrl}${encodeURIComponent(id)}`; artists.textContent = 'Artist evidence'; detail.append(artists); }
     detail.hidden = false;
@@ -213,13 +252,14 @@ if (canvas instanceof HTMLCanvasElement) {
     // at the overview scale.
     state.edges = neighborhood.edges;
     state.camera = cameraFor(state.edges);
+    syncWorldCenter();
     state.neighborhoodIds = new Set(neighborhood.nodeIds);
     showDetail(id, state.edges);
     schedule();
   };
   const nearest = (cursor) => { let hit = null; let distance = 15; for (const id of state.displayedIds) { const node = state.atlas.byId.get(id); if (!node) continue; const screen = point(node); const next = Math.hypot(screen.x - cursor.x, screen.y - cursor.y); if (next < distance) { hit = node; distance = next; } } return hit; };
-  new ResizeObserver(() => { const viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; if (!viewport.width || !viewport.height) return; const center = state.camera ? { x: (viewport.width / 2 - state.camera.x) / state.camera.scale, y: (viewport.height / 2 - state.camera.y) / state.camera.scale } : null; state.viewport = viewport; if (!state.camera) fit(); else { state.camera.x = viewport.width / 2 - center.x * state.camera.scale; state.camera.y = viewport.height / 2 - center.y * state.camera.scale; schedule(); } }).observe(canvas);
-  canvas.addEventListener('wheel', (event) => { event.preventDefault(); if (!state.camera) return; state.camera = zoomAt(state.camera, { x: event.offsetX, y: event.offsetY }, event.deltaY < 0 ? 1.25 : .8, { min: state.fitScale, max: state.atlas.maximumScale }); schedule(); }, { passive: false });
+  new ResizeObserver(() => { const viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; if (!viewport.width || !viewport.height) return; const center = state.worldCenter; state.viewport = viewport; if (!state.camera) fit(); else { state.camera.x = viewport.width / 2 - center.x * state.camera.scale; state.camera.y = viewport.height / 2 - center.y * state.camera.scale; state.worldCenter = center; schedule(); } }).observe(canvas);
+  canvas.addEventListener('wheel', (event) => { event.preventDefault(); if (!state.camera) return; const cursor = { x: event.offsetX, y: event.offsetY }; const anchor = worldAt(cursor); state.camera = zoomAt(state.camera, cursor, event.deltaY < 0 ? 1.25 : .8, { min: state.fitScale, max: state.atlas.maximumScale }); state.worldCenter = { x: anchor.x - (cursor.x - state.viewport.width / 2) / state.camera.scale, y: anchor.y - (cursor.y - state.viewport.height / 2) / state.camera.scale }; schedule(); }, { passive: false });
   const pointerPair = () => [...state.pointers.values()].slice(0, 2);
   const midpoint = ([first, second]) => ({ x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 });
   const separation = ([first, second]) => Math.hypot(first.x - second.x, first.y - second.y);
@@ -227,7 +267,8 @@ if (canvas instanceof HTMLCanvasElement) {
     const pair = pointerPair();
     if (pair.length !== 2 || !state.camera) return;
     state.drag = null; state.moved = true;
-    state.pinch = { camera: { ...state.camera }, center: midpoint(pair), distance: Math.max(1, separation(pair)) };
+    const center = midpoint(pair);
+    state.pinch = { camera: { ...state.camera }, center, world: worldAt(center), distance: Math.max(1, separation(pair)) };
   };
   canvas.addEventListener('pointerdown', (event) => {
     canvas.setPointerCapture(event.pointerId);
@@ -247,13 +288,14 @@ if (canvas instanceof HTMLCanvasElement) {
       const worldX = (current.center.x - current.camera.x) / current.camera.scale;
       const worldY = (current.center.y - current.camera.y) / current.camera.scale;
       state.camera = { scale, x: center.x - worldX * scale, y: center.y - worldY * scale };
+      state.worldCenter = { x: current.world.x - (center.x - state.viewport.width / 2) / scale, y: current.world.y - (center.y - state.viewport.height / 2) / scale };
       schedule(); return;
     }
     if (!state.drag) return;
     const dx = event.clientX - state.drag.x; const dy = event.clientY - state.drag.y;
     state.drag = { x: event.clientX, y: event.clientY };
     if (Math.hypot(dx, dy) > 2) state.moved = true;
-    state.camera.x += dx; state.camera.y += dy; schedule();
+    state.camera.x += dx; state.camera.y += dy; state.worldCenter.x -= dx / state.camera.scale; state.worldCenter.y -= dy / state.camera.scale; schedule();
   });
   const clearPointer = (pointerId) => {
     state.pointers.delete(pointerId);

@@ -5,7 +5,7 @@ const SPATIAL_COLUMNS = 48;
 const SPATIAL_ROWS = 28;
 // Keep every camera operation bounded by a concrete value. A finite cap makes
 // repeated wheel, button, and pinch gestures safe to serialize and inspect.
-export const MAX_SCALE = 1_000_000_000_000;
+export const MAX_SCALE = 10_000_000_000_000;
 
 export function clamp(value, lower, upper) {
   return Math.max(lower, Math.min(upper, value));

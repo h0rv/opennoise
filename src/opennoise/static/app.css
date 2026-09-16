@@ -65,6 +65,8 @@ button, input { font: inherit; }
 
 #map-detail { top: 70px; right: 14px; width: min(310px, calc(100vw - 28px)); max-height: min(60vh, 520px); padding: 14px; overflow: auto; }
 #map-detail h2 { margin: 0; font-size: 18px; }
+#map-detail .zoom-here { margin-top: 10px; border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; color: var(--ink); background: transparent; cursor: pointer; }
+#map-detail .zoom-here:hover, #map-detail .zoom-here:focus-visible { border-color: var(--focus); outline: 2px solid var(--focus); }
 #map-detail h3 { margin: 14px 0 5px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
 #map-detail ul { display: grid; gap: 4px; margin: 12px 0 0; padding: 0; list-style: none; }
 #map-detail a { color: var(--ink); }
