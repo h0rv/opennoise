@@ -35,6 +35,39 @@ receipt. Raw bytes with local only or non redistributable policy never enter a
 portable store. The full release manifest source vault and derived database
 are not yet reproducible from this workflow.
 
+## Static Pages delivery status
+
+The currently deployed static release is main commit `aabda66`. Its certified
+atlas has 2,945 placed nodes and 34,937 structural edges. The Pages manifest,
+HTML, JavaScript, JSON, asset names, and rendered focus links contain no
+retired identifier text. A clean `open_focus=item…` bookmark works, while an
+old prefixed bookmark is accepted only as input and immediately canonicalized
+to its clean URL.
+
+The offline static-label-atlas experiment is not released. Its initial lint,
+type, and focused unit checks passed, but the canonical export did not finish
+within an independent 120-second bounded run and it predates the strict
+public-ID boundary. It must be rebased and made bounded before it can enter a
+release candidate.
+
+Before any such deployment, require all of the following evidence:
+
+- a completed canonical export and static/browser certification from the
+  rebased candidate;
+- all-scale label-box clearance over the emitted atlas, including cross-tier
+  labels, with finite numerical zoom bounds;
+- runtime measurements showing one-pixel pan preserves retained label
+  screen offsets, world-anchor label identity remains invariant, and equivalent
+  zoom paths yield the same admitted labels and placements;
+- desktop and mobile/pinch captures that show the deepest revealed labels
+  remain readable, attached to their dots, and clear of search/detail/control
+  overlays; and
+- a fresh custom-domain manifest/hash scan before release.
+
+Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
+pruned on 2026-09-16. Active offline-atlas, discovery, and data worktrees are
+retained until their own evidence gates conclude.
+
 ## Next data work
 
 - Expand direct artist and catalog coverage, preserving source claims and
