@@ -54,6 +54,14 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("mobile pinch labels are unreadable", self.source)
         self.assertIn("desktop-one-pixel-pan.png", self.source)
         self.assertIn("desktop-zoom-path-equivalent.png", self.source)
+        self.assertIn(
+            "fixed-center zoom path lost labels without a matching visible-point exit", self.source
+        )
+        self.assertIn("desktop-rock-fixed-center-trajectory.png", self.source)
+        self.assertIn(
+            "deepest certified static label is not readable at the camera cap", self.source
+        )
+        self.assertIn("desktop-deepest-static-label.png", self.source)
 
     def test_renderer_keeps_focus_static_and_cleans_pointer_capture(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")

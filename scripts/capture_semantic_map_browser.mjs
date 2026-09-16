@@ -289,6 +289,29 @@ function equivalentLabelMetrics(left, right) {
   };
 }
 
+function centeredZoomTrajectoryMetrics(frames) {
+  const admitted = new Set();
+  const steps = frames.map((frame, index) => {
+    const prior = frames[index - 1];
+    const priorNames = new Set(prior?.label_names ?? []);
+    const names = new Set(frame.label_names);
+    for (const name of names) admitted.add(name);
+    const exited = [...priorNames].filter((name) => !names.has(name));
+    const pointExit = Boolean(prior) && frame.points < prior.points * .8;
+    return {
+      scale: frame.scale,
+      lod: frame.lod,
+      points: frame.points,
+      labels: frame.labels,
+      newly_admitted: [...names].filter((name) => !priorNames.has(name)).length,
+      exited: exited.length,
+      point_supported_exit: pointExit,
+      density_collapse: Boolean(prior) && !pointExit && frame.labels < prior.labels * .65,
+    };
+  });
+  return { cumulative_admitted: admitted.size, steps };
+}
+
 async function wheel(cdp, x, y, deltaY) {
   await cdp.command("Input.dispatchMouseEvent", { type: "mouseWheel", x, y, deltaY, deltaX: 0 });
 }
@@ -435,6 +458,16 @@ async function run() {
     const cdp = await page();
     await navigate(cdp, 1440, 900, "light");
     const initial = await diagnostics(cdp);
+    const manifest = await json(new URL("opennoise-static-manifest.json", baseUrl));
+    const atlasPath = manifest?.assets?.semantic_atlas?.path;
+    requireCheck(typeof atlasPath === "string", "manifest omitted semantic atlas", manifest);
+    const publishedAtlas = await json(new URL(atlasPath, baseUrl));
+    const deepestStaticLabel = [...publishedAtlas.label_atlas]
+      .sort((left, right) => right.reveal_scale - left.reveal_scale)[0];
+    const deepestNode = publishedAtlas.nodes.find((node) => node.id === deepestStaticLabel?.id);
+    requireCheck(Boolean(deepestStaticLabel && deepestNode), "static atlas omitted its deepest label node", {
+      deepestStaticLabel,
+    });
     requireCheck(initial.canvas_ready, "canvas is missing", initial);
     requireCheck(initial.viewport?.width === 1440 && initial.viewport?.height === 900, "viewport is wrong", initial);
     requireCheck(initial.points >= 1 && initial.points <= 50, "overview point budget failed", initial);
@@ -581,6 +614,66 @@ async function run() {
     requireCheck(rockL2.label_names.includes('instrumental rock'), 'rock browse region did not disclose its supported local descendant', { rockL1, rockL2 });
     requireCheck(!rockL2.label_names.includes('hip hop'), 'viewport-local browse landmarks should not be forced on screen', { rockL2 });
 
+    // Pan the actual deepest static label under the center before repeated
+    // wheel input.  This exercises the finite data-derived cap and proves the
+    // smallest certified cluster caption can be read, not merely exported.
+    await navigate(cdp, 1440, 900, 'light');
+    const capOverview = await diagnostics(cdp);
+    const capAnchor = capOverview.label_positions.find((label) => label.text === 'rock');
+    const rockNode = publishedAtlas.nodes.find((node) => node.name === 'rock');
+    const rockStaticLabel = publishedAtlas.label_atlas.find((label) => label.id === rockNode?.id);
+    requireCheck(Boolean(capAnchor && rockNode && rockStaticLabel), 'cannot derive global camera for cap evidence', {
+      capOverview,
+    });
+    const cameraX = capAnchor.x - rockStaticLabel.offset_x - rockNode.x * capOverview.scale;
+    const cameraY = capAnchor.y - rockStaticLabel.offset_y - rockNode.y * capOverview.scale;
+    const targetX = cameraX + deepestNode.x * capOverview.scale;
+    const targetY = cameraY + deepestNode.y * capOverview.scale;
+    await drag(cdp, 720, 450, 720 + (720 - targetX), 450 + (450 - targetY));
+    await waitForFrame(cdp, capOverview.frame_count - 1);
+    const capCentered = await diagnostics(cdp);
+    for (let step = 0; step < 128; step += 1) await wheel(cdp, 720, 450, -400);
+    await waitForFrame(cdp, capCentered.frame_count - 1);
+    const deepestAtCap = await diagnostics(cdp);
+    requireCheck(
+      Number.isFinite(deepestAtCap.scale)
+        && Math.abs(deepestAtCap.scale / publishedAtlas.maximum_scale - 1) <= .001,
+      'wheel did not stop at the finite certified camera cap',
+      { deepestAtCap, maximum_scale: publishedAtlas.maximum_scale },
+    );
+    requireCheck(
+      deepestAtCap.label_names.includes(deepestNode.name)
+        && boxesInViewport(deepestAtCap.label_boxes, deepestAtCap.viewport)
+        && boxesDoNotOverlap(deepestAtCap.label_boxes),
+      'deepest certified static label is not readable at the camera cap',
+      { deepestStaticLabel, deepestNode, deepestAtCap },
+    );
+    screenshots.push(await screenshot(cdp, 'desktop-deepest-static-label.png', 'light', 1440, 900));
+
+    await navigate(cdp, 1440, 900, 'light');
+    const trajectoryOverview = await diagnostics(cdp);
+    const trajectoryRock = trajectoryOverview.label_positions.find((label) => label.text === 'rock');
+    requireCheck(Boolean(trajectoryRock), 'rock is unavailable for fixed-center zoom evidence', trajectoryOverview);
+    await drag(cdp, trajectoryRock.x, trajectoryRock.y, 720, 450);
+    await waitForFrame(cdp, trajectoryOverview.frame_count - 1);
+    const rockTrajectory = [await diagnostics(cdp)];
+    for (let step = 0; step < 9; step += 1) {
+      await wheel(cdp, 720, 450, -400);
+      await waitForFrame(cdp, rockTrajectory.at(-1).frame_count - 1);
+      rockTrajectory.push(await diagnostics(cdp));
+    }
+    const centeredTrajectory = centeredZoomTrajectoryMetrics(rockTrajectory);
+    requireCheck(
+      centeredTrajectory.steps.every((step, index) => index === 0
+        || (step.scale > centeredTrajectory.steps[index - 1].scale
+          && step.lod >= centeredTrajectory.steps[index - 1].lod
+          && !step.density_collapse)),
+      'fixed-center zoom path lost labels without a matching visible-point exit',
+      centeredTrajectory,
+    );
+    requireCheck(centeredTrajectory.cumulative_admitted >= rockTrajectory[0].labels, 'fixed-center zoom did not retain cumulative label identity evidence', centeredTrajectory);
+    screenshots.push(await screenshot(cdp, 'desktop-rock-fixed-center-trajectory.png', 'light', 1440, 900));
+
     const modernRock = await focusQuery('modern rock', rockL3.frame_count - 1);
     requireCheck(modernRock.focus_url === 'item10', 'modern rock did not focus', modernRock);
     requireCheck(
@@ -628,6 +721,14 @@ async function run() {
         deep_labels_readable: boxesDoNotOverlap(buttonDeep.label_boxes),
         one_pixel_pan: tinyPanLabels,
         zoom_path: zoomPath,
+        fixed_center_trajectory: centeredTrajectory,
+        deepest_static_label: {
+          id: deepestStaticLabel.id,
+          name: deepestNode.name,
+          reveal_scale: deepestStaticLabel.reveal_scale,
+          maximum_scale: publishedAtlas.maximum_scale,
+          readable_at_cap: deepestAtCap.label_names.includes(deepestNode.name),
+        },
         focused_edges: focused.edges,
         post_punk_edges: postPunk.edges,
         modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
@@ -641,7 +742,7 @@ async function run() {
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, rockOverview, rockL0, rockL1, rockL2, rockL3, modernRock, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, rockOverview, rockL0, rockL1, rockL2, rockL3, capOverview, capCentered, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

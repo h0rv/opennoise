@@ -24,13 +24,19 @@ _PACKAGE_ROOT: Final = Path(__file__).resolve().parents[1]
 _STATIC_ROOT: Final = _PACKAGE_ROOT / "static"
 _HIERARCHY_REGION_MAX_DISTANCE: Final = 0.08
 _HIERARCHY_REGION_MIN_MEMBERS: Final = 4
-_LABEL_HEIGHT_PX: Final = 14.0
+_LABEL_FONT_PX: Final = 14.0
+_LABEL_HEIGHT_PX: Final = _LABEL_FONT_PX
 _LABEL_PADDING_PX: Final = 3.0
 _LABEL_ANCHOR_GAP_PX: Final = 12.0
 _REFERENCE_FIT_SCALE: Final = 900.0
 _LABEL_FLOAT_EPSILON: Final = 1e-15
 _WIDE_GLYPH_BOUNDARY: Final = 0x2FF
-_MAX_LABEL_REVEAL_SCALE: Final = 1_000_000_000_000.0
+_LABEL_REVEAL_BY_LOD: Final = (
+    0.0,
+    _REFERENCE_FIT_SCALE * 2**0.2,
+    _REFERENCE_FIT_SCALE * 2**1.2,
+    _REFERENCE_FIT_SCALE * 2**2.2,
+)
 
 
 class SemanticPagesExportError(ValueError):
@@ -40,7 +46,7 @@ class SemanticPagesExportError(ValueError):
 class StaticLabelPayload(BaseModel):
     """One immutable, collision-certified label placement in the atlas."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     id: str
     side: Literal["right"]
@@ -232,7 +238,13 @@ def _label_reveal_scale(
     prior: tuple[tuple[float, float, StaticLabelPayload], ...],
     base_scale: float,
 ) -> float:
-    """Find the first scale at which this fixed box stays clear forever."""
+    """Find the first scale at which this fixed box stays clear forever.
+
+    Every earlier placement participates, including later semantic tiers.  A
+    prior label can only collide after it is admitted, so that threshold is
+    part of the interval check.  The result is immutable export metadata;
+    there is no redraw-time re-ranking or placement search.
+    """
     reveal = base_scale
     for x, y, label in prior:
         x_interval = _overlap_scale_interval(
@@ -251,43 +263,18 @@ def _label_reveal_scale(
             continue
         low = max(x_interval[0], y_interval[0], 0.0)
         high = min(x_interval[1], y_interval[1])
-        if high <= low or high < reveal:
+        active_from = max(low, base_scale, label.reveal_scale)
+        if high <= active_from:
             continue
         if math.isinf(high):
-            reveal = _MAX_LABEL_REVEAL_SCALE
-        else:
-            reveal = max(reveal, high + max(0.01, abs(high) * 0.0001))
+            raise SemanticPagesExportError("coincident static label placements")
+        reveal = max(reveal, math.nextafter(high, math.inf))
     return reveal
 
 
 def _estimated_label_width(name: str) -> float:
     """Use a conservative 14px sans-serif width estimate for certification."""
     return max(16.0, sum(9.5 if ord(char) > _WIDE_GLYPH_BOUNDARY else 8.5 for char in name) + 2.0)
-
-
-def _smooth_static_label_reveals(labels: list[StaticLabelPayload]) -> list[StaticLabelPayload]:
-    """Spread admissions over deterministic 1.25x scale buckets."""
-    ordered = sorted(labels, key=lambda label: (label.reveal_scale, label.priority))
-    cumulative = sum(label.reveal_scale <= _REFERENCE_FIT_SCALE for label in ordered)
-    lower = _REFERENCE_FIT_SCALE * 1.1
-    upper = _REFERENCE_FIT_SCALE * 1.5625
-    capacity = max(cumulative + 1, math.floor(cumulative * 1.45))
-    index_by_id = {label.id: index for index, label in enumerate(labels)}
-    for label in ordered:
-        if label.reveal_scale <= _REFERENCE_FIT_SCALE:
-            continue
-        while label.reveal_scale > upper or cumulative >= capacity:
-            lower = upper
-            upper *= 1.25
-            capacity = max(cumulative + 1, math.floor(cumulative * 1.45))
-        label_index = index_by_id[label.id]
-        labels[label_index] = label.model_copy(
-            update={
-                "reveal_scale": max(label.reveal_scale, lower),
-            }
-        )
-        cumulative += 1
-    return labels
 
 
 def _static_label_atlas(
@@ -310,32 +297,23 @@ def _static_label_atlas(
         ),
     )
     prior: list[tuple[float, float, StaticLabelPayload]] = []
-    same_position_counts: dict[tuple[float, float], int] = {}
+    duplicate_positions: dict[tuple[float, float], int] = {}
     labels: list[dict[str, object]] = []
-    base_by_lod = (
-        0.0,
-        _REFERENCE_FIT_SCALE * 2**0.2,
-        _REFERENCE_FIT_SCALE * 2**1.2,
-        _REFERENCE_FIT_SCALE * 2**2.2,
-    )
     for priority, coordinate in enumerate(ranked):
         position = (coordinate.x, coordinate.y)
-        duplicate_index = same_position_counts.get(position, 0)
-        same_position_counts[position] = duplicate_index + 1
+        duplicate_index = duplicate_positions.get(position, 0)
+        duplicate_positions[position] = duplicate_index + 1
         payload = StaticLabelPayload(
             id=mapper.public(coordinate.seed_id),
             side="right",
             offset_x=_LABEL_ANCHOR_GAP_PX,
-            # Keep hierarchy children on a stable, slightly elevated lane. A
-            # negative lane is intentional: when a child is already above its
-            # parent in world space, its box then remains separated for every
-            # larger scale instead of crossing through the parent later.
-            offset_y=5.0
-            - coordinate.hierarchy_depth * 20.0
-            + duplicate_index * (_LABEL_HEIGHT_PX + _LABEL_PADDING_PX * 2),
+            # Coordinates are unique in the certified artifact.  Keep the
+            # exception explicit: only exact duplicate dots use a 20px lane,
+            # which is wider than the 14px text box and cannot collide.
+            offset_y=5.0 + duplicate_index * (_LABEL_HEIGHT_PX + _LABEL_PADDING_PX * 2),
             width_px=_estimated_label_width(coordinate.name),
             priority=priority,
-            reveal_scale=base_by_lod[coordinate.lod],
+            reveal_scale=_LABEL_REVEAL_BY_LOD[coordinate.lod],
         )
         reveal = _label_reveal_scale(
             payload, coordinate.x, coordinate.y, tuple(prior), payload.reveal_scale
@@ -343,8 +321,7 @@ def _static_label_atlas(
         payload = payload.model_copy(update={"reveal_scale": reveal})
         prior.append((coordinate.x, coordinate.y, payload))
         labels.append(payload.model_dump(mode="json"))
-    typed = [StaticLabelPayload.model_validate(label) for label in labels]
-    return [label.model_dump(mode="json") for label in _smooth_static_label_reveals(typed)]
+    return labels
 
 
 def _write_fingerprinted_asset(assets: Path, stem: str, suffix: str, data: bytes) -> Path:
@@ -358,6 +335,7 @@ def _renderer_payload(
     artifact: SemanticLayoutArtifact, mapper: _PublicIdMapper
 ) -> dict[str, object]:
     """Project a verified atlas into the sole static browser payload."""
+    label_atlas = _static_label_atlas(artifact, mapper)
     nodes = [
         {
             "id": mapper.public(coordinate.seed_id),
@@ -427,7 +405,15 @@ def _renderer_payload(
         "content_bounds": artifact.content_bounds.model_dump(mode="json"),
         "initial_camera": artifact.initial_camera.model_dump(mode="json"),
         "nodes": nodes,
-        "label_atlas": _static_label_atlas(artifact, mapper),
+        "label_atlas": label_atlas,
+        # This cap is the first finite scale that admits every certified
+        # caption, plus floating-point breathing room.  It is data-derived:
+        # a tiny but real cluster remains inspectable, while a wheel/pinch
+        # operation can never grow beyond a concrete value.
+        "maximum_scale": max(
+            _REFERENCE_FIT_SCALE,
+            max(float(label["reveal_scale"]) for label in label_atlas) * 1.05,
+        ),
         "overview_regions": [
             {
                 "community_id": community.community_id,

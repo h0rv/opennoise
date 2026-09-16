@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 import tempfile
 import unittest
@@ -15,6 +16,7 @@ from opennoise.deployment.semantic_pages import (
     SemanticPagesExportInputs,
     StaticLabelPayload,
     _label_reveal_scale,
+    _overlap_scale_interval,
     _PublicIdMapper,
     export_semantic_pages,
 )
@@ -23,7 +25,7 @@ LAYOUT = Path(".cache/semantic-map-layout-v2/artifact.json")
 STATIC_ROOT = Path(__file__).resolve().parents[2] / "src" / "opennoise" / "static"
 
 
-def _assert_public_payload(test: unittest.TestCase, payload: dict[str, object]) -> None:  # noqa: C901
+def _assert_public_payload(test: unittest.TestCase, payload: dict[str, object]) -> None:  # noqa: C901, PLR0915
     public_bytes = json.dumps(payload, sort_keys=True)
     test.assertNotIn("legacy:", public_bytes)
     nodes = payload["nodes"]
@@ -141,6 +143,52 @@ class StaticLabelAtlasTests(unittest.TestCase):
                 or right[3] <= left[1]
             )
 
+    def test_prior_label_is_checked_even_when_its_tier_reveals_later(self) -> None:
+        prior = StaticLabelPayload(
+            id="prior",
+            side="right",
+            offset_x=12.0,
+            offset_y=5.0,
+            width_px=42.0,
+            priority=0,
+            reveal_scale=1_500.0,
+        )
+        candidate = StaticLabelPayload(
+            id="candidate",
+            side="right",
+            offset_x=12.0,
+            offset_y=5.0,
+            width_px=54.0,
+            priority=1,
+            reveal_scale=900.0,
+        )
+        # The boxes overlap from zero through roughly 1,680.  A later-tier
+        # prior is therefore active for the final part of that interval.
+        reveal = _label_reveal_scale(candidate, 0.025, 0.0, ((0.0, 0.0, prior),), 900.0)
+        self.assertGreater(reveal, prior.reveal_scale)
+
+    def test_coincident_right_labels_are_rejected_without_a_duplicate_lane(self) -> None:
+        prior = StaticLabelPayload(
+            id="prior",
+            side="right",
+            offset_x=12.0,
+            offset_y=5.0,
+            width_px=42.0,
+            priority=0,
+            reveal_scale=0.0,
+        )
+        candidate = StaticLabelPayload(
+            id="candidate",
+            side="right",
+            offset_x=12.0,
+            offset_y=5.0,
+            width_px=54.0,
+            priority=1,
+            reveal_scale=900.0,
+        )
+        with self.assertRaisesRegex(SemanticPagesExportError, "coincident static label"):
+            _label_reveal_scale(candidate, 0.0, 0.0, ((0.0, 0.0, prior),), 900.0)
+
 
 @unittest.skipUnless(LAYOUT.is_file(), "semantic-layout integration artifact is not provisioned")
 class SemanticPagesExportTests(unittest.TestCase):
@@ -166,6 +214,7 @@ class SemanticPagesExportTests(unittest.TestCase):
             self.assertEqual(len(payload["nodes"]), 2945)
             self.assertEqual(len(payload["edges"]), 34937)
             _assert_public_payload(self, payload)
+            self._assert_static_labels_do_not_collide_at_any_admitted_scale(payload)
             index = (output / "index.html").read_text()
             self.assertIn('id="semantic-map"', index)
             self.assertFalse((output / "assets" / "production-map-v1.json").exists())
@@ -199,6 +248,60 @@ class SemanticPagesExportTests(unittest.TestCase):
             renderer_text = (output / str(renderer_entry["path"])).read_text()
             self.assertIn(Path(str(atlas_module_entry["path"])).name, renderer_text)
             self.assertNotIn("./map-atlas.mjs", renderer_text)
+
+    def _assert_static_labels_do_not_collide_at_any_admitted_scale(
+        self, payload: dict[str, object]
+    ) -> None:
+        """Certify every pair over the full finite delivery scale range."""
+        nodes = payload["nodes"]
+        labels = payload["label_atlas"]
+        maximum_scale = payload["maximum_scale"]
+        assert isinstance(nodes, list)
+        assert isinstance(labels, list)
+        assert isinstance(maximum_scale, float)
+        self.assertTrue(math.isfinite(maximum_scale))
+        self.assertGreaterEqual(maximum_scale, 900.0)
+        self.assertGreaterEqual(
+            maximum_scale,
+            max(float(label["reveal_scale"]) for label in labels),
+        )
+        by_id = {node["id"]: node for node in nodes if isinstance(node, dict)}
+        for index, candidate in enumerate(labels):
+            assert isinstance(candidate, dict)
+            candidate_node = by_id[candidate["id"]]
+            for prior in labels[:index]:
+                assert isinstance(prior, dict)
+                prior_node = by_id[prior["id"]]
+                x_interval = _overlap_scale_interval(
+                    float(candidate_node["x"]) - float(prior_node["x"]),
+                    float(candidate["offset_x"]) - float(prior["offset_x"]),
+                    -float(candidate["width_px"]),
+                    float(prior["width_px"]),
+                )
+                y_interval = _overlap_scale_interval(
+                    float(candidate_node["y"]) - float(prior_node["y"]),
+                    float(candidate["offset_y"]) - float(prior["offset_y"]),
+                    -float(candidate["height_px"]),
+                    float(prior["height_px"]),
+                )
+                if x_interval is None or y_interval is None:
+                    continue
+                active_from = max(
+                    x_interval[0],
+                    y_interval[0],
+                    float(candidate["reveal_scale"]),
+                    float(prior["reveal_scale"]),
+                )
+                active_until = min(x_interval[1], y_interval[1], maximum_scale)
+                self.assertLessEqual(
+                    active_until,
+                    active_from,
+                    f"static labels {candidate['id']} and {prior['id']} overlap in delivery range",
+                )
+        self.assertTrue(
+            all(float(label["reveal_scale"]) <= maximum_scale for label in labels),
+            "the finite camera cap must admit the certified deepest label",
+        )
 
     def test_changed_static_bytes_get_a_new_immutable_url(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

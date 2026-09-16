@@ -223,6 +223,9 @@ export function normaliseAtlasPayload(payload) {
     worldBounds,
     labels: normaliseLabelSets(source.labels ?? source.label_sets, nodeIds),
     staticLabels: normaliseStaticLabels(source.label_atlas ?? source.static_labels, nodeIds),
+    maximumScale: Number.isFinite(source.maximum_scale)
+      ? Math.min(MAX_SCALE, Math.max(1, source.maximum_scale))
+      : MAX_SCALE,
     aliases: normaliseAliases(source.aliases, nodeIds),
     edges,
     edgesById,
