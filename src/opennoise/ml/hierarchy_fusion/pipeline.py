@@ -514,27 +514,26 @@ def _verify_coverage(
     artifact: HierarchyFusionArtifact, seed_ids: tuple[str, ...], parents: dict[str, set[str]]
 ) -> None:
     """Check graph-level edge, component, depth, and state counts."""
-    coverage = artifact.coverage
-    expected_coverage = {
-        "factual_source_edge_count": sum(edge.factual_source for edge in artifact.edges),
-        "factual_dag_edge_count": sum(edge.disposition == "factual" for edge in artifact.edges),
-        "review_edge_count": sum(edge.disposition == "review" for edge in artifact.edges),
-        "abstained_edge_count": sum(edge.disposition == "abstained" for edge in artifact.edges),
-        "self_rejected_edge_count": sum(
+    expected_coverage = HierarchyCoverage(
+        factual_source_edge_count=sum(edge.factual_source for edge in artifact.edges),
+        factual_dag_edge_count=sum(edge.disposition == "factual" for edge in artifact.edges),
+        review_edge_count=sum(edge.disposition == "review" for edge in artifact.edges),
+        abstained_edge_count=sum(edge.disposition == "abstained" for edge in artifact.edges),
+        self_rejected_edge_count=sum(
             edge.disposition == "self_rejected" for edge in artifact.edges
         ),
-        "cycle_rejected_edge_count": sum(
+        cycle_rejected_edge_count=sum(
             edge.disposition == "cycle_rejected" for edge in artifact.edges
         ),
-        "multi_parent_child_count": sum(len(values) > 1 for values in parents.values()),
-        "component_count": _component_count(seed_ids, parents),
-        "maximum_depth": _maximum_depth(seed_ids, parents),
-        "observed_seed_count": sum(state.state == "observed" for state in artifact.seed_states),
-        "review_seed_count": sum(state.state == "review" for state in artifact.seed_states),
-        "abstained_seed_count": sum(state.state == "abstained" for state in artifact.seed_states),
-        "isolated_seed_count": sum(state.state == "isolated" for state in artifact.seed_states),
-    }
-    if any(getattr(coverage, key) != value for key, value in expected_coverage.items()):
+        multi_parent_child_count=sum(len(values) > 1 for values in parents.values()),
+        component_count=_component_count(seed_ids, parents),
+        maximum_depth=_maximum_depth(seed_ids, parents),
+        observed_seed_count=sum(state.state == "observed" for state in artifact.seed_states),
+        review_seed_count=sum(state.state == "review" for state in artifact.seed_states),
+        abstained_seed_count=sum(state.state == "abstained" for state in artifact.seed_states),
+        isolated_seed_count=sum(state.state == "isolated" for state in artifact.seed_states),
+    )
+    if artifact.coverage != expected_coverage:
         raise HierarchyFusionError("hierarchy coverage ledger does not replay edges")
 
 
