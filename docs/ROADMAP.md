@@ -37,14 +37,14 @@ are not yet reproducible from this workflow.
 
 ## Static Pages delivery status
 
-The currently deployed static release is main commit `aabda66`. Its certified
+The currently deployed static release is main commit `c8a908d`. Its certified
 atlas has 2,945 placed nodes and 34,937 structural edges. The Pages manifest,
 HTML, JavaScript, JSON, asset names, and rendered focus links contain no
 retired identifier text. A clean `open_focus=item…` bookmark works, while an
 old prefixed bookmark is accepted only as input and immediately canonicalized
 to its clean URL.
 
-The next static Pages release has a deterministic, offline label atlas rather
+The deployed static Pages release has a deterministic, offline label atlas rather
 than a per-frame label grid. It uses finite, data-derived reveal scales and
 one stable near-dot placement per public map node. Disclosure can only be
 delayed to smooth density; it does not rerank labels while navigating. A
@@ -60,8 +60,7 @@ mobile pinch. The known remaining layout debt is extremely near-coincident
 source coordinates; it is documented as a model/readability limitation rather
 than hidden by detached labels.
 
-Before publishing, deploy only that certified fingerprinted export and verify
-the Pages deployment and custom domain serve the manifest-referenced hashes,
+The deployed fingerprinted export has been checked against the manifest,
 clean public IDs, the static discovery asset, and the same browser flows.
 
 Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
@@ -89,7 +88,7 @@ retained until their own evidence gates conclude.
 - Evaluate alternative graph and hierarchy aware layouts against fixed
   evidence, then expose accepted layouts through the versioned public map
   contract.
-- Evaluate historical output only after the open model is sealed and the local
-  rights and rebuild gates pass.
+- Keep historical output as a terminal, evaluation-only reference after each
+  open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files
   or audio derived data enter the default pipeline.
