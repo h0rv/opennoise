@@ -5,6 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 import resource
+import shutil
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -17,18 +20,67 @@ from opennoise.ml.hierarchy_fusion import (
 )
 
 
-def _parser() -> argparse.ArgumentParser:
+def shared_cache_root() -> Path:
+    """Find the common checkout cache from main or a linked worktree."""
+    git = shutil.which("git")
+    if git is None:
+        raise RuntimeError("git is required to locate the shared OpenNoise cache")
+    completed = subprocess.run(  # noqa: S603 - fixed git subcommand after absolute PATH lookup.
+        [git, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return Path(completed.stdout.strip()).parent / ".cache"
+
+
+def build_parser(cache_root: Path) -> argparse.ArgumentParser:
+    """Build the CLI with deterministic shared-cache defaults."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--reconciliation", type=Path, required=True)
-    parser.add_argument("--evidence-graph-database", type=Path, required=True)
-    parser.add_argument("--evidence-graph-receipt", type=Path, required=True)
-    parser.add_argument("--factual-taxonomy", type=Path, required=True)
-    parser.add_argument("--public-candidate-corpus", type=Path, required=True)
-    parser.add_argument("--public-candidate-receipt", type=Path, required=True)
-    parser.add_argument("--full-graph-signal", type=Path, required=True)
-    parser.add_argument("--full-graph-signal-receipt", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--run-report", type=Path, required=True)
+    parser.add_argument(
+        "--reconciliation",
+        type=Path,
+        default=cache_root / "musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json",
+    )
+    parser.add_argument(
+        "--evidence-graph-database", type=Path, default=cache_root / "evidence-graph-v2.sqlite"
+    )
+    parser.add_argument(
+        "--evidence-graph-receipt", type=Path, default=cache_root / "evidence-graph-v2.receipt.json"
+    )
+    parser.add_argument(
+        "--factual-taxonomy",
+        type=Path,
+        default=cache_root / "taxonomy-relation-expansion-v3-replay-candidate/artifact.json",
+    )
+    parser.add_argument(
+        "--public-candidate-corpus",
+        type=Path,
+        default=cache_root
+        / "musicbrainz-full-seed-targets/pipeline/genre-hierarchy-candidates.json",
+    )
+    parser.add_argument(
+        "--public-candidate-receipt",
+        type=Path,
+        default=cache_root
+        / "musicbrainz-full-seed-targets/pipeline/genre-hierarchy-candidates.receipt.json",
+    )
+    parser.add_argument(
+        "--full-graph-signal",
+        type=Path,
+        default=cache_root / "hierarchy-fusion-v1/full-graph-signal.json",
+    )
+    parser.add_argument(
+        "--full-graph-signal-receipt",
+        type=Path,
+        default=cache_root / "hierarchy-fusion-v1/full-graph-signal.receipt.json",
+    )
+    parser.add_argument(
+        "--output", type=Path, default=cache_root / "hierarchy-fusion-v1/artifact.json"
+    )
+    parser.add_argument(
+        "--run-report", type=Path, default=cache_root / "hierarchy-fusion-v1/run-report.json"
+    )
     parser.add_argument("--factual-split-seed", type=int, default=20260913)
     parser.add_argument("--calibration-recovery-tolerance", type=float, default=0.02)
     return parser
@@ -36,7 +88,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     """Stream source evidence once and write a hash-bound checkpoint."""
-    arguments = _parser().parse_args()
+    arguments = build_parser(shared_cache_root()).parse_args()
     started = time.monotonic()
     artifact = build_hierarchy_fusion(
         HierarchyFusionInputs(
@@ -68,6 +120,7 @@ def main() -> int:
         arguments.run_report,
         (json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode(),
     )
+    sys.stdout.write(json.dumps(report, ensure_ascii=False, sort_keys=True) + "\n")
     return 0
 
 

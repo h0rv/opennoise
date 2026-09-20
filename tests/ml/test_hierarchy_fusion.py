@@ -15,6 +15,7 @@ from opennoise.ml.hierarchy_fusion.pipeline import (
     _seed_states,
     _split_factual,
 )
+from scripts import build_hierarchy_fusion, evaluate_hierarchy_fusion_h3
 
 
 def _review(score: float, *, artists: int = 10) -> EdgeProvenance:
@@ -31,6 +32,21 @@ def _review(score: float, *, artists: int = 10) -> EdgeProvenance:
 
 
 class HierarchyFusionTests(unittest.TestCase):
+    def test_cli_defaults_resolve_the_shared_cache_from_a_linked_worktree(self) -> None:
+        cache = build_hierarchy_fusion.shared_cache_root()
+        build_arguments = build_hierarchy_fusion.build_parser(cache).parse_args([])
+        evaluation_arguments = evaluate_hierarchy_fusion_h3.build_parser(cache).parse_args([])
+
+        self.assertEqual(evaluate_hierarchy_fusion_h3.shared_cache_root(), cache)
+        self.assertEqual(build_arguments.output, cache / "hierarchy-fusion-v1/artifact.json")
+        self.assertEqual(
+            build_arguments.public_candidate_corpus,
+            cache / "musicbrainz-full-seed-targets/pipeline/genre-hierarchy-candidates.json",
+        )
+        self.assertEqual(
+            evaluation_arguments.output, cache / "hierarchy-fusion-v1/h3-overlap-report.json"
+        )
+
     def test_settings_reject_unsorted_review_thresholds(self) -> None:
         with self.assertRaisesRegex(ValueError, "distinct and sorted"):
             HierarchyFusionSettings(review_score_thresholds=(0.8, 0.2))
