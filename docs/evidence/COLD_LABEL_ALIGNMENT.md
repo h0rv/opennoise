@@ -82,6 +82,11 @@ The current supplemental sidecar is deliberately **partial**:
 It must not be described as the full MusicBrainz vocabulary. The task accepts
 an explicit larger bound for a later measured run.
 
+Partial supplemental vocabulary is now an explicit experimental mode. The
+alignment builder defaults to `complete_only` selection and rejects a sidecar
+whose `completed_source_member` is false. The CLI requires
+`--allow-partial-supplemental-vocabulary` to replay this 200,000-row prefix.
+
 When that sidecar is supplied to the alignment task, the receipt-bound artifact
 `c72436db6bca581de16cd8b3e25def3d9865bda062c0d5ec9e63e98dec06ae01`
 binds the exact 701,718-byte sidecar and its 388-byte receipt. It reports
@@ -109,6 +114,51 @@ exact MusicBrainz `pop` plus Wikidata `pop music` and `popular music`. The
 artifact keeps all three open identity clusters as `ambiguous_existing_identity`
 review candidates. It does not choose a Wikidata alias or create a hierarchy
 edge from that ambiguity.
+
+## Complete release-group vocabulary checkpoint
+
+The complete archive-member scan is sealed separately from the old prefix so
+the earlier sample remains reproducible. It binds the same admitted archive
+(`6f153846\u2026d7a43`) and exhausted its release-group member:
+
+| Measure | Partial 200k prefix | Complete member |
+| --- | ---: | ---: |
+| release-group records | 200,000 | 4,499,326 |
+| normalized labels | 6,228 | 37,090 |
+| elapsed time | 42.868 s | 843.916 s |
+| peak RSS | 102,192 KiB | 166,900 KiB |
+| `completed_source_member` | false | true |
+
+The complete vocabulary logical hash is
+`20773899d2b817464b3fcda405c744917e5a2f9366010bab9cecdf733db94fbd`; its
+artifact-byte hash is
+`a52655d402303ecb607d6eccc77a3244a4a0c2fb9d8ed08f12c47a1e3c918f3d`.
+
+The corresponding alignment is in the new
+`.cache/cold-label-alignment-v1-full-vocabulary-20260920/` custody root. Its
+logical hash is
+`b7482d6e3a9805bf62b484df4ce65b05480761a7661b7ffbf19491ce167f32b9`, and
+its artifact-byte hash is
+`cdc5040bb8b78a232e876c058f26375221a99916aaf763057087e6949e03f9ce`.
+It binds the graph database and receipt, full reconciliation, complete
+vocabulary artifact, and vocabulary receipt by both byte and logical hashes.
+
+| Alignment measure | Partial prefix | Complete vocabulary | Delta |
+| --- | ---: | ---: | ---: |
+| open identities | 9,490 | 41,037 | +31,547 |
+| accepted seed mappings | 1,312 | 2,032 | +720 |
+| net-new exact-normalized accepts | 240 | 960 | +720 |
+| review seeds | 786 | 834 | +48 |
+| abstentions | 4,193 | 3,425 | -768 |
+
+The complete run has 906 compositional review rows, 37 acronym review rows,
+and 88 ambiguous-existing-identity rows; its remaining abstentions are 2,560
+weak/ambiguous compositions and 865 labels with no open candidate. The masked
+evaluation keeps the same 240 held-out trusted mappings and 0.9417 top-1/top-k
+recall. Its accepted precision is **98.26%** (230 predictions), down from the
+partial prefix's 99.56% (227 predictions). This is a measured tradeoff, not a
+promotion gate: the sidecar remains a vocabulary bridge, creates no artist
+memberships, promotes no identities, and reads no historical input.
 
 ## Run
 

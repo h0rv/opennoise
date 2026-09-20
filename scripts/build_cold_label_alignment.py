@@ -47,6 +47,14 @@ def _parser(cache_root: Path) -> argparse.ArgumentParser:
     parser.add_argument("--output-root", type=Path, default=cache_root / "cold-label-alignment-v1")
     parser.add_argument("--supplemental-vocabulary", type=Path)
     parser.add_argument("--supplemental-vocabulary-receipt", type=Path)
+    parser.add_argument(
+        "--allow-partial-supplemental-vocabulary",
+        action="store_true",
+        help=(
+            "allow a bounded prefix only for an exploratory run; default checkpoint selection "
+            "requires completed_source_member=true"
+        ),
+    )
     parser.add_argument("--split-seed", type=int, default=20260913)
     parser.add_argument("--masked-evaluation-fraction", type=float, default=0.2)
     parser.add_argument("--candidates-per-seed", type=int, default=5)
@@ -65,6 +73,11 @@ def main() -> int:
             reconciliation=arguments.reconciliation,
             supplemental_vocabulary=arguments.supplemental_vocabulary,
             supplemental_vocabulary_receipt=arguments.supplemental_vocabulary_receipt,
+            supplemental_vocabulary_selection=(
+                "allow_partial"
+                if arguments.allow_partial_supplemental_vocabulary
+                else "complete_only"
+            ),
         ),
         ColdLabelAlignmentSettings(
             split_seed=arguments.split_seed,

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from pydantic import ValidationError
 
@@ -25,12 +27,19 @@ from opennoise.ml.label_alignment.normalize import (
 )
 from opennoise.ml.label_alignment.pipeline import (
     ColdLabelAlignmentError,
+    ColdLabelAlignmentInputs,
+    _load_supplemental_vocabulary,
     cold_label_alignment_artifact_sha256,
     verify_cold_label_alignment,
 )
 from opennoise.ml.label_alignment.release_group_vocabulary import (
+    ReleaseGroupVocabularyArtifact,
+    ReleaseGroupVocabularyLabel,
+    ReleaseGroupVocabularySettings,
     SourceKind,
     _collect_labels,
+    release_group_vocabulary_artifact_sha256,
+    write_release_group_vocabulary,
 )
 
 _SHA = "0" * 64
@@ -66,6 +75,61 @@ class LabelAlignmentContractTests(unittest.TestCase):
                 "brazil\x00Brazil": {"musicbrainz_release_group_tag_name": 2},
             },
         )
+
+    def test_default_checkpoint_selection_rejects_incomplete_vocabulary(self) -> None:
+        """A bounded prefix is an opt-in experiment, never a full checkpoint input."""
+        label = ReleaseGroupVocabularyLabel(
+            normalized="forro",
+            label="Forr\u00f3",
+            genre_observation_count=1,
+            tag_observation_count=0,
+        )
+        settings = ReleaseGroupVocabularySettings(maximum_records=1)
+        base = ReleaseGroupVocabularyArtifact(
+            source_archive_sha256=_SHA,
+            source_archive_bytes=1,
+            source_cache_receipt_sha256=_SHA,
+            source_cache_receipt_bytes=1,
+            source_cache_receipt_logical_sha256=_SHA,
+            source_member_bytes=1,
+            settings=settings,
+            records_seen=1,
+            records_parsed=1,
+            oversized_records=0,
+            malformed_records=0,
+            completed_source_member=False,
+            labels=(label,),
+            vocabulary_sha256=sha256_hex(canonical_json([label.model_dump(mode="json")])),
+            output_sha256=_SHA,
+        )
+        artifact = base.model_copy(
+            update={"output_sha256": release_group_vocabulary_artifact_sha256(base)}
+        )
+        with TemporaryDirectory() as directory:
+            _receipt, vocabulary, vocabulary_receipt = write_release_group_vocabulary(
+                artifact, Path(directory)
+            )
+            inputs = ColdLabelAlignmentInputs(
+                graph_database=Path("graph.sqlite"),
+                graph_receipt=Path("graph.receipt.json"),
+                reconciliation=Path("reconciliation.json"),
+                supplemental_vocabulary=vocabulary,
+                supplemental_vocabulary_receipt=vocabulary_receipt,
+            )
+            with self.assertRaisesRegex(ColdLabelAlignmentError, "completed supplemental"):
+                _load_supplemental_vocabulary(inputs)
+
+            experimental_inputs = ColdLabelAlignmentInputs(
+                graph_database=inputs.graph_database,
+                graph_receipt=inputs.graph_receipt,
+                reconciliation=inputs.reconciliation,
+                supplemental_vocabulary=vocabulary,
+                supplemental_vocabulary_receipt=vocabulary_receipt,
+                supplemental_vocabulary_selection="allow_partial",
+            )
+            references, bindings = _load_supplemental_vocabulary(experimental_inputs)
+            self.assertEqual(len(references), 1)
+            self.assertEqual(len(bindings), 2)
 
     def test_artifact_rejects_an_incomplete_seed_partition(self) -> None:
         seed_partition = [

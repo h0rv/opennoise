@@ -73,6 +73,8 @@ _OPEN_NAMESPACES: Final = frozenset(
 _TRUSTED_DISPOSITIONS: Final = frozenset({"reconciled", "public_only", "musicbrainz_only"})
 _COMPOSITIONAL_HEAD_MINIMUM: Final = 0.6
 
+type SupplementalVocabularySelection = Literal["complete_only", "allow_partial"]
+
 
 class ColdLabelAlignmentError(ValueError):
     """A source cannot support a safe, replayable cold-label alignment."""
@@ -80,13 +82,19 @@ class ColdLabelAlignmentError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class ColdLabelAlignmentInputs:
-    """The sealed graph and complete reconciliation required for one run."""
+    """The sealed graph, reconciliation, and optional vocabulary for one run.
+
+    Supplemental release-group vocabulary is complete-only by default.  A
+    bounded prefix remains useful for an explicitly exploratory comparison,
+    but it must never be selected accidentally as a full-corpus checkpoint.
+    """
 
     graph_database: Path
     graph_receipt: Path
     reconciliation: Path
     supplemental_vocabulary: Path | None = None
     supplemental_vocabulary_receipt: Path | None = None
+    supplemental_vocabulary_selection: SupplementalVocabularySelection = "complete_only"
 
 
 @dataclass(frozen=True, slots=True)
@@ -422,6 +430,13 @@ def _load_supplemental_vocabulary(
         or receipt.artifact_byte_count != vocabulary_size
     ):
         raise ColdLabelAlignmentError("supplemental vocabulary receipt does not bind its artifact")
+    if (
+        inputs.supplemental_vocabulary_selection == "complete_only"
+        and not artifact.completed_source_member
+    ):
+        raise ColdLabelAlignmentError(
+            "full checkpoint selection requires a completed supplemental vocabulary source member"
+        )
     references = tuple(
         OpenIdentityReference(
             namespace=kind,
