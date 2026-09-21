@@ -153,3 +153,8 @@ The run2 candidate, replay receipt, and detached binding still hash to the
 values recorded above. No sealed, public, static, or source-vault file changed.
 The artifact-size limit is a separate local publication boundary. It needs a
 reviewed design change before another projection may run.
+
+A read-only size audit measured the rejected v2 model at 38,823,505 bytes. One
+269-byte verbose source reference appeared 44,182 times. The v3 experiment
+keeps the same source identity but uses a compact hashed token for that
+reference. It does not alter the failed v2 result or authorize another v2 run.

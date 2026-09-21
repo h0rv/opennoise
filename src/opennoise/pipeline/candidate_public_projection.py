@@ -16,12 +16,16 @@ from urllib.parse import quote
 from pydantic import Field
 
 from opennoise.db import Database
+from opennoise.ml.artist_pair_refs import (
+    artist_pair_source_artifact_ref_v3,
+    resolve_artist_pair_source_artifact_ref_v3,
+)
 from opennoise.ml.public_graph import build_public_model
 from opennoise.ml.public_model_gate import PublicModelGateReport, require_public_model_gate
-from opennoise.ml.publish import PublicModelPublishSummary, publish_public_model
+from opennoise.ml.publish import MAX_ARTIFACT_BYTES, PublicModelPublishSummary, publish_public_model
 from opennoise.ml.repository import PublicInputLoadSettings, PublicModelRepository
 from opennoise.models import FrozenModel
-from opennoise.models.modeling import PublicModelArtifact, PublicModelSettings
+from opennoise.models.modeling import MembershipScore, PublicModelArtifact, PublicModelSettings
 from opennoise.pipeline.historical_candidate_binding import (
     HistoricalCandidateBindingError,
     verify_historical_candidate_binding,
@@ -34,6 +38,7 @@ from opennoise.types import Sha256  # noqa: TC001
 _CANDIDATE_SCHEMA_VERSION = 12
 _SOURCE_ARTIFACT_COUNT = 62
 _V2_RECEIPT_REVISION = "phase3-candidate-public-projection-v2"
+_V3_RECEIPT_REVISION = "phase3-candidate-public-projection-v3"
 _EXPECTED_LAYOUT_POINTS = {
     "public": 468,
     "public-direct": 468,
@@ -143,6 +148,39 @@ class CandidatePublicProjectionV2Report(FrozenModel):
     serving_database_schema_version: int = Field(ge=1)
     certified_database: Literal[False] = False
     byte_identical_database_replay: Literal[False] = False
+    receipt_logical_sha256: Sha256
+
+
+class CandidatePublicProjectionV3Settings(CandidatePublicProjectionV2Settings):
+    """Inputs and fresh local destinations for compact source-artifact-v3 refs."""
+
+
+class CandidatePublicProjectionV3Report(FrozenModel):
+    """Logical receipt for an uncertified local source-artifact-v3 projection."""
+
+    revision: Literal["phase3-candidate-public-projection-v3"] = _V3_RECEIPT_REVISION
+    release_id: str
+    manifest_sha256: Sha256
+    historical_candidate_binding_sha256: Sha256
+    replay_receipt_sha256: Sha256
+    candidate_sha256: Sha256
+    candidate_schema_version: Literal[12] = 12
+    source_artifact_count: Literal[62] = 62
+    source_artifact_set_sha256: Sha256
+    input_load_settings: dict[str, Any]
+    input_load_settings_sha256: Sha256
+    model_settings: dict[str, Any]
+    model_input_sha256: Sha256
+    model_settings_sha256: Sha256
+    model_logical_sha256: Sha256
+    model_file_sha256: Sha256
+    graph_v3_evidence_refs: int = Field(ge=1)
+    gate: PublicModelGateReport
+    serving_database_sha256: Sha256
+    serving_database_schema_version: int = Field(ge=1)
+    certified_database: Literal[False] = False
+    byte_identical_database_replay: Literal[False] = False
+    model_byte_size: int = Field(gt=0)
     receipt_logical_sha256: Sha256
 
 
@@ -476,6 +514,32 @@ def _build_model_v2(
     return artifact.model_dump_json().encode(), artifact, load_settings, model_settings
 
 
+def _build_model_v3(
+    database: Path,
+) -> tuple[bytes, PublicModelArtifact, PublicInputLoadSettings, PublicModelSettings]:
+    """Build only with compact, stable source-artifact-v3 pair references."""
+    load_settings, model_settings = _v2_settings()
+    load_settings = load_settings.model_copy(
+        update={"artist_pair_evidence_ref_version": "source_artifacts_v3"}
+    )
+    with closing(
+        sqlite3.connect(f"file:{database.as_posix()}?mode=ro&immutable=1", uri=True)
+    ) as connection:
+        connection.row_factory = sqlite3.Row
+        inputs = PublicModelRepository(connection, connection).load(load_settings)
+    artifact = build_public_model(inputs, model_settings)
+    payload = artifact.model_dump_json().encode()
+    _require_v3_model_size(payload)
+    return payload, artifact, load_settings, model_settings
+
+
+def _require_v3_model_size(payload: bytes) -> None:
+    if len(payload) > MAX_ARTIFACT_BYTES:
+        raise CandidatePublicProjectionError(
+            f"v3 model artifact exceeds the {MAX_ARTIFACT_BYTES} byte limit"
+        )
+
+
 def _v2_evidence_reference(source_key: str, snapshot_ref: str, artifact_sha256: str) -> str:
     return (
         "listenbrainz:v2:source_key="
@@ -587,6 +651,94 @@ def _verify_v2_graph_attestation(
     return reference_count
 
 
+def _v3_inventory(
+    artifact: PublicModelArtifact, manifest: dict[str, Any]
+) -> set[tuple[str, str, str]]:
+    expected = _v2_source_artifacts(manifest)
+    inventory = {
+        (item.artifact_key.rpartition(":")[0], item.snapshot, item.content_sha256)
+        for item in artifact.artifacts
+        if item.artifact_key.rpartition(":")[1] == ":"
+        and item.artifact_key.rpartition(":")[2] == item.content_sha256
+    }
+    if inventory != expected or len(artifact.artifacts) != _SOURCE_ARTIFACT_COUNT:
+        raise CandidatePublicProjectionError(
+            "model artifacts do not exactly attest all 62 release source artifacts"
+        )
+    return inventory
+
+
+def _v3_tokens(inventory: set[tuple[str, str, str]]) -> dict[str, tuple[str, str, str]]:
+    token_map: dict[str, tuple[str, str, str]] = {}
+    for identity in inventory:
+        token = artist_pair_source_artifact_ref_v3(*identity)
+        if token in token_map:
+            raise CandidatePublicProjectionError("v3 source-artifact token collision")
+        token_map[token] = identity
+    return token_map
+
+
+def _verify_v3_membership(
+    membership: MembershipScore,
+    direct_refs: set[str],
+    token_map: dict[str, tuple[str, str, str]],
+    inventory: set[tuple[str, str, str]],
+) -> int:
+    if len(membership.components) != 1 or membership.components[0].component_kind != (
+        "listenbrainz_one_hop"
+    ):
+        raise CandidatePublicProjectionError("one-hop graph has an unexpected component")
+    references = membership.components[0].evidence_refs
+    if references != membership.evidence_refs:
+        raise CandidatePublicProjectionError("one-hop component refs do not match membership refs")
+    tokens = tuple(reference for reference in references if reference.startswith("lb:v3:"))
+    if not tokens:
+        raise CandidatePublicProjectionError("one-hop graph lacks source_artifacts_v3 evidence")
+    if len(tokens) != len(set(tokens)):
+        raise CandidatePublicProjectionError(
+            "one-hop graph has duplicate v3 source-artifact tokens"
+        )
+    if set(references) - set(tokens) - direct_refs:
+        raise CandidatePublicProjectionError(
+            "one-hop graph evidence is outside the release source attestation"
+        )
+    for token in tokens:
+        try:
+            resolved = resolve_artist_pair_source_artifact_ref_v3(token, inventory)
+        except ValueError as error:
+            raise CandidatePublicProjectionError(
+                "one-hop graph has an unknown v3 source-artifact token"
+            ) from error
+        if token_map.get(token) != resolved:
+            raise CandidatePublicProjectionError("v3 source-artifact token collision")
+    return len(tokens)
+
+
+def _verify_v3_graph_attestation(
+    artifact: PublicModelArtifact, manifest: dict[str, Any], database: Path
+) -> int:
+    """Verify compact pair tokens against the exact 62-artifact model inventory."""
+    inventory = _v3_inventory(artifact, manifest)
+    token_map = _v3_tokens(inventory)
+    direct_refs = _v2_direct_evidence_refs(database, manifest) & {
+        reference
+        for profile in artifact.profiles
+        if profile.profile_kind == "direct"
+        for membership in profile.memberships
+        for reference in membership.evidence_refs
+        if reference.startswith("catalog:artist-genre:")
+    }
+    reference_count = 0
+    for profile in artifact.profiles:
+        if profile.profile_kind != "one_hop":
+            continue
+        for membership in profile.memberships:
+            reference_count += _verify_v3_membership(membership, direct_refs, token_map, inventory)
+    if reference_count == 0:
+        raise CandidatePublicProjectionError("v3 graph contains no source_artifacts_v3 evidence")
+    return reference_count
+
+
 def _database_schema_version(path: Path) -> int:
     with closing(
         sqlite3.connect(f"file:{path.as_posix()}?mode=ro&immutable=1", uri=True)
@@ -598,6 +750,10 @@ def _database_schema_version(path: Path) -> int:
 
 
 def _v2_receipt_logical_sha256(report: CandidatePublicProjectionV2Report) -> Sha256:
+    return _logical_sha256(report.model_dump(mode="json", exclude={"receipt_logical_sha256"}))
+
+
+def _v3_receipt_logical_sha256(report: CandidatePublicProjectionV3Report) -> Sha256:
     return _logical_sha256(report.model_dump(mode="json", exclude={"receipt_logical_sha256"}))
 
 
@@ -819,6 +975,87 @@ def project_candidate_public_model_v2(
         )
         report = report.model_copy(
             update={"receipt_logical_sha256": _v2_receipt_logical_sha256(report)}
+        )
+        staged_report.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        _publish_no_replace(staged_database, settings.output_database)
+        _publish_no_replace(staged_model, settings.model_output)
+        _publish_no_replace(staged_report, settings.report_output)
+        return report
+    finally:
+        staged_database.unlink(missing_ok=True)
+        staged_model.unlink(missing_ok=True)
+        staged_report.unlink(missing_ok=True)
+
+
+def project_candidate_public_model_v3(
+    settings: CandidatePublicProjectionV3Settings,
+) -> CandidatePublicProjectionV3Report:
+    """Project an independently attested compact-reference model into fresh local files."""
+    legacy_settings = CandidatePublicProjectionSettings(**settings.model_dump())
+    _require_fresh_outputs(legacy_settings)
+    manifest, receipt, manifest_sha256, candidate_sha256 = _verify_candidate_boundary(
+        legacy_settings
+    )
+    source_artifact_set_sha256 = _verify_v2_database_source_attestation(
+        settings.candidate_database.resolve(strict=True), manifest
+    )
+    staged_database = _temporary_file(settings.output_database)
+    staged_model = _temporary_file(settings.model_output)
+    staged_report = _temporary_file(settings.report_output)
+    try:
+        _copy_candidate(
+            settings.candidate_database.resolve(strict=True),
+            staged_database,
+            settings.expected_candidate_sha256,
+        )
+        Database(staged_database).initialize()
+        model_payload, artifact, load_settings, model_settings = _build_model_v3(staged_database)
+        _verify_v3_graph_attestation(artifact, manifest, staged_database)
+        staged_model.write_bytes(model_payload)
+        gate = require_public_model_gate(
+            artifact,
+            artifact_file_sha256=_sha256(staged_model),
+            artifact_byte_size=len(model_payload),
+        )
+        if gate.passed is False:
+            raise CandidatePublicProjectionError("public model gate did not pass")
+        with Database(staged_database).connect() as connection, connection:
+            policy_id = _release_policy_id(connection, receipt.release_id)
+        summary = publish_public_model(staged_database, staged_model, policy_id=policy_id)
+        if (
+            summary.output_sha256 != artifact.output_sha256
+            or summary.profile_memberships
+            != sum(len(profile.memberships) for profile in artifact.profiles)
+            or summary.neighbor_rows != len(artifact.neighbors)
+        ):
+            raise CandidatePublicProjectionError("persisted graph does not match the v3 model")
+        _checkpoint_database(staged_database)
+        _verify_projected_database(staged_database)
+        report = CandidatePublicProjectionV3Report(
+            release_id=receipt.release_id,
+            manifest_sha256=manifest_sha256,
+            historical_candidate_binding_sha256=settings.expected_historical_candidate_binding_sha256,
+            replay_receipt_sha256=settings.expected_replay_receipt_sha256,
+            candidate_sha256=candidate_sha256,
+            source_artifact_set_sha256=source_artifact_set_sha256,
+            input_load_settings=load_settings.model_dump(mode="json"),
+            input_load_settings_sha256=_logical_sha256(load_settings.model_dump(mode="json")),
+            model_settings=model_settings.model_dump(mode="json"),
+            model_input_sha256=artifact.input_sha256,
+            model_settings_sha256=artifact.settings_sha256,
+            model_logical_sha256=artifact.output_sha256,
+            model_file_sha256=_sha256(staged_model),
+            graph_v3_evidence_refs=_verify_v3_graph_attestation(
+                artifact, manifest, staged_database
+            ),
+            gate=gate,
+            serving_database_sha256=_sha256(staged_database),
+            serving_database_schema_version=_database_schema_version(staged_database),
+            model_byte_size=len(model_payload),
+            receipt_logical_sha256="0" * 64,
+        )
+        report = report.model_copy(
+            update={"receipt_logical_sha256": _v3_receipt_logical_sha256(report)}
         )
         staged_report.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
         _publish_no_replace(staged_database, settings.output_database)

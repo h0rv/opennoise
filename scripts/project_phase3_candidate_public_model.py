@@ -10,8 +10,10 @@ from opennoise.pipeline.candidate_public_projection import (
     CandidatePublicProjectionError,
     CandidatePublicProjectionSettings,
     CandidatePublicProjectionV2Settings,
+    CandidatePublicProjectionV3Settings,
     project_candidate_public_model,
     project_candidate_public_model_v2,
+    project_candidate_public_model_v3,
 )
 
 
@@ -33,7 +35,14 @@ def main() -> int:
         action="store_true",
         help="run the isolated local-only source-artifact-v2 projector",
     )
+    parser.add_argument(
+        "--source-artifacts-v3",
+        action="store_true",
+        help="run the isolated local-only compact source-artifact-v3 projector",
+    )
     arguments = parser.parse_args()
+    if arguments.source_artifacts_v2 and arguments.source_artifacts_v3:
+        parser.error("choose only one source-artifact projector version")
     try:
         settings_kwargs = {
             "release_directory": arguments.release_directory,
@@ -50,12 +59,18 @@ def main() -> int:
             "report_output": arguments.report_output,
         }
         report = (
-            project_candidate_public_model_v2(
-                CandidatePublicProjectionV2Settings(**settings_kwargs)
+            project_candidate_public_model_v3(
+                CandidatePublicProjectionV3Settings(**settings_kwargs)
             )
-            if arguments.source_artifacts_v2
-            else project_candidate_public_model(
-                CandidatePublicProjectionSettings(**settings_kwargs)
+            if arguments.source_artifacts_v3
+            else (
+                project_candidate_public_model_v2(
+                    CandidatePublicProjectionV2Settings(**settings_kwargs)
+                )
+                if arguments.source_artifacts_v2
+                else project_candidate_public_model(
+                    CandidatePublicProjectionSettings(**settings_kwargs)
+                )
             )
         )
     except CandidatePublicProjectionError as error:

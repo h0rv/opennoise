@@ -14,6 +14,7 @@ from typing import override
 from unittest.mock import patch
 
 from opennoise.db import Database
+from opennoise.ml.artist_pair_refs import artist_pair_source_artifact_ref_v3
 from opennoise.ml.public_graph import build_public_model, public_model_output_sha256
 from opennoise.ml.publish import PublicModelPublishSummary, PublishedLensSummary
 from opennoise.models.modeling import (
@@ -28,12 +29,17 @@ from opennoise.pipeline.candidate_public_projection import (
     CandidatePublicProjectionError,
     CandidatePublicProjectionSettings,
     CandidatePublicProjectionV2Settings,
+    CandidatePublicProjectionV3Settings,
+    _require_v3_model_size,
     _v2_receipt_logical_sha256,
     _v2_settings,
+    _v3_receipt_logical_sha256,
     _verify_candidate_boundary,
     _verify_v2_graph_attestation,
+    _verify_v3_graph_attestation,
     project_candidate_public_model,
     project_candidate_public_model_v2,
+    project_candidate_public_model_v3,
 )
 from opennoise.pipeline.historical_candidate_binding import (
     HistoricalCandidateBindingError,
@@ -257,6 +263,9 @@ class CandidatePublicProjectionTests(unittest.TestCase):
     def _v2_settings(self) -> CandidatePublicProjectionV2Settings:
         return CandidatePublicProjectionV2Settings(**self._settings().model_dump())
 
+    def _v3_settings(self) -> CandidatePublicProjectionV3Settings:
+        return CandidatePublicProjectionV3Settings(**self._settings().model_dump())
+
     def _write_binding(self) -> None:
         create_historical_candidate_binding(
             HistoricalCandidateBindingSettings(
@@ -373,6 +382,51 @@ class CandidatePublicProjectionTests(unittest.TestCase):
             for item in manifest["inputs"]
         )
         artifact = artifact.model_copy(update={"artifacts": artifacts})
+        return artifact.model_copy(update={"output_sha256": public_model_output_sha256(artifact)})
+
+    def _v3_graph_artifact(self):  # noqa: ANN202
+        artifact = self._v2_graph_artifact()
+        manifest = json.loads((RELEASE / "release-manifest.json").read_text())
+        joint = next(
+            item
+            for item in manifest["inputs"]
+            if item["source_key"] == "listenbrainz_joint_20260824_20260830"
+        )
+        token = artist_pair_source_artifact_ref_v3(
+            joint["source_key"], joint["snapshot_ref"], joint["artifact_sha256"]
+        )
+        profiles = tuple(
+            profile.model_copy(
+                update={
+                    "memberships": tuple(
+                        membership.model_copy(
+                            update={
+                                "evidence_refs": tuple(
+                                    token if reference.startswith("listenbrainz:v2:") else reference
+                                    for reference in membership.evidence_refs
+                                ),
+                                "components": tuple(
+                                    component.model_copy(
+                                        update={
+                                            "evidence_refs": tuple(
+                                                token
+                                                if reference.startswith("listenbrainz:v2:")
+                                                else reference
+                                                for reference in component.evidence_refs
+                                            )
+                                        }
+                                    )
+                                    for component in membership.components
+                                ),
+                            }
+                        )
+                        for membership in profile.memberships
+                    )
+                }
+            )
+            for profile in artifact.profiles
+        )
+        artifact = artifact.model_copy(update={"profiles": profiles})
         return artifact.model_copy(update={"output_sha256": public_model_output_sha256(artifact)})
 
     def test_accepts_current_candidate_source_keys_and_artifact_hashes_without_old_snapshot_hashes(
@@ -714,6 +768,161 @@ class CandidatePublicProjectionTests(unittest.TestCase):
                 json.loads((RELEASE / "release-manifest.json").read_text()),
                 self.candidate,
             )
+
+    def test_v3_graph_permits_compact_attested_pair_and_direct_seed_refs(self) -> None:
+        with patch(
+            "opennoise.pipeline.candidate_public_projection._v2_direct_evidence_refs",
+            return_value={"catalog:artist-genre:1:fixture"},
+        ):
+            self.assertGreater(
+                _verify_v3_graph_attestation(
+                    self._v3_graph_artifact(),
+                    json.loads((RELEASE / "release-manifest.json").read_text()),
+                    self.candidate,
+                ),
+                0,
+            )
+
+    def test_v3_projects_and_records_compact_reference_receipt(self) -> None:
+        settings = self._v3_settings()
+        artifact = self._v3_graph_artifact()
+        summary = PublicModelPublishSummary(
+            output_sha256=artifact.output_sha256,
+            layouts=tuple(
+                PublishedLensSummary(
+                    layout_key=item.layout_key,
+                    layout_revision=1,
+                    coordinate_genres=len(item.coordinates),
+                )
+                for item in artifact.layouts
+            ),
+            representative_items=len(artifact.representatives),
+            profile_memberships=sum(len(item.memberships) for item in artifact.profiles),
+            neighbor_rows=len(artifact.neighbors),
+            duplicate=False,
+        )
+        load_settings, model_settings = _v2_settings()
+        load_settings = load_settings.model_copy(
+            update={"artist_pair_evidence_ref_version": "source_artifacts_v3"}
+        )
+        payload = artifact.model_dump_json().encode()
+
+        def build_v3(_database: Path):  # noqa: ANN202
+            require_size(payload)
+            return payload, artifact, load_settings, model_settings
+
+        with (
+            patch(
+                "opennoise.pipeline.candidate_public_projection._require_v3_model_size",
+                wraps=_require_v3_model_size,
+            ) as require_size,
+            patch(
+                "opennoise.pipeline.candidate_public_projection._build_model_v3",
+                side_effect=build_v3,
+            ),
+            patch(
+                "opennoise.pipeline.candidate_public_projection._verify_v3_graph_attestation",
+                return_value=1,
+            ),
+            patch(
+                "opennoise.pipeline.candidate_public_projection._release_policy_id", return_value=1
+            ),
+            patch(
+                "opennoise.pipeline.candidate_public_projection.publish_public_model",
+                return_value=summary,
+            ),
+        ):
+            report = project_candidate_public_model_v3(settings)
+        self.assertEqual(report.revision, "phase3-candidate-public-projection-v3")
+        self.assertEqual(report.graph_v3_evidence_refs, 1)
+        self.assertEqual(
+            report.input_load_settings["artist_pair_evidence_ref_version"], "source_artifacts_v3"
+        )
+        self.assertLessEqual(report.model_byte_size, 32 * 1024 * 1024)
+        require_size.assert_called_once_with(payload)
+        self.assertEqual(report.receipt_logical_sha256, _v3_receipt_logical_sha256(report))
+
+    def test_v3_graph_rejects_unknown_token(self) -> None:
+        artifact = self._v3_graph_artifact()
+        profile = next(item for item in artifact.profiles if item.profile_kind == "one_hop")
+        membership = profile.memberships[0]
+        component = membership.components[0].model_copy(
+            update={
+                "evidence_refs": tuple(
+                    "lb:v3:" + "0" * 64 if reference.startswith("lb:v3:") else reference
+                    for reference in membership.components[0].evidence_refs
+                )
+            }
+        )
+        replacement = membership.model_copy(
+            update={"components": (component,), "evidence_refs": component.evidence_refs}
+        )
+        tampered = artifact.model_copy(
+            update={
+                "profiles": tuple(
+                    profile.model_copy(update={"memberships": (replacement,)})
+                    if item == profile
+                    else item
+                    for item in artifact.profiles
+                )
+            }
+        )
+        with (
+            patch(
+                "opennoise.pipeline.candidate_public_projection._v2_direct_evidence_refs",
+                return_value={"catalog:artist-genre:1:fixture"},
+            ),
+            self.assertRaisesRegex(
+                CandidatePublicProjectionError, "unknown v3 source-artifact token"
+            ),
+        ):
+            _verify_v3_graph_attestation(
+                tampered,
+                json.loads((RELEASE / "release-manifest.json").read_text()),
+                self.candidate,
+            )
+
+    def test_v3_graph_rejects_duplicate_token(self) -> None:
+        artifact = self._v3_graph_artifact()
+        profile = next(item for item in artifact.profiles if item.profile_kind == "one_hop")
+        membership = profile.memberships[0]
+        token = next(
+            reference
+            for reference in membership.components[0].evidence_refs
+            if reference.startswith("lb:v3:")
+        )
+        component = membership.components[0].model_copy(
+            update={"evidence_refs": (*membership.components[0].evidence_refs, token)}
+        )
+        replacement = membership.model_copy(
+            update={"components": (component,), "evidence_refs": component.evidence_refs}
+        )
+        tampered = artifact.model_copy(
+            update={
+                "profiles": tuple(
+                    profile.model_copy(update={"memberships": (replacement,)})
+                    if item == profile
+                    else item
+                    for item in artifact.profiles
+                )
+            }
+        )
+        with (
+            patch(
+                "opennoise.pipeline.candidate_public_projection._v2_direct_evidence_refs",
+                return_value={"catalog:artist-genre:1:fixture"},
+            ),
+            self.assertRaisesRegex(CandidatePublicProjectionError, "duplicate v3"),
+        ):
+            _verify_v3_graph_attestation(
+                tampered,
+                json.loads((RELEASE / "release-manifest.json").read_text()),
+                self.candidate,
+            )
+
+    def test_v3_model_size_rejects_oversized_payload(self) -> None:
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "v3 model artifact exceeds"):
+            _require_v3_model_size(b"x" * (32 * 1024 * 1024 + 1))
 
     def test_v2_rejects_database_snapshot_not_in_release_before_outputs(self) -> None:
         self.candidate.unlink()
