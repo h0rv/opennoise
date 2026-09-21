@@ -128,6 +128,8 @@ gate is open.
   [materialized credit checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_MATERIALIZED_CANDIDATE.md),
   [artist-credit checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_REFRESH_CANDIDATE.md) and
   [materialization checkpoint](checkpoints/MUSICBRAINZ_CATALOG_MATERIALIZATION_CANDIDATE.md).
+  The local-only [exact-ID static-overlap checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_STATIC_OVERLAP_20260921.md)
+  measures 121 public-direct and 101 static-discovery artist overlaps without transferring memberships.
 - Keep metadata candidates separate from published metadata examples.
 - Review the 484 source-bound genre candidates now queued by the versioned
   workflow, then design a separate publication gate. None is published.
