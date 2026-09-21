@@ -35,6 +35,26 @@ co-listen candidates. Identity, hierarchy, and coordinate axes likewise remain
 candidate lineage. Missing historical positives are unknown, not negatives,
 and no axis is converted into an Every Noise parity claim.
 
+For the exact current-lineage terminal comparison, run the separate task after
+the construction-only checkpoint has been written:
+
+```sh
+uv run poe evaluate-current-lineage-historical
+```
+
+This reads the sealed construction manifest first and then reads the held-out
+`historical-signal-v1` reference only for evaluation. The report binds the
+current graph database and receipt, full-graph signal and receipt, co-listen
+artifact, receipt and SQLite cache, and hierarchy artifact by relative locator,
+byte hash, and logical hash. Seed-presence overlap and canonical co-listen pair
+overlap therefore have explicit historical positive denominators; this is not
+artist-by-genre membership accuracy. Hierarchy reports
+H3 co-assignment ratios over mapped current DAG edges; the historical directed
+parent-child denominator and hierarchy precision remain unavailable because H3
+does not expose that label. Coordinate parity and all absence-based metrics
+remain unavailable. The terminal report never changes the construction
+checkpoint or supplies data to construction.
+
 The separate `membership_transfer` section reports 402 review candidates, 60
 eligible cold artists, 6 abstentions, and positive-only held-out recall beside
 the train-only popularity baseline. These are review diagnostics, not factual
