@@ -484,7 +484,49 @@ def _v2_evidence_reference(source_key: str, snapshot_ref: str, artifact_sha256: 
     )
 
 
-def _verify_v2_graph_attestation(artifact: PublicModelArtifact, manifest: dict[str, Any]) -> int:
+def _v2_direct_evidence_refs(database: Path, manifest: dict[str, Any]) -> set[str]:
+    """Return only direct seed refs backed by an attested catalog provenance row."""
+    expected = _v2_source_artifacts(manifest)
+    refs: set[str] = set()
+    with closing(
+        sqlite3.connect(f"file:{database.as_posix()}?mode=ro&immutable=1", uri=True)
+    ) as connection:
+        for (
+            evidence_id,
+            source_record_id,
+            source_key,
+            snapshot_ref,
+            artifact_sha256,
+        ) in connection.execute(
+            """SELECT evidence.id, evidence.source_record_id,
+                          source.source_key, snapshot.snapshot_ref, artifact.sha256
+                   FROM normalizable_artist_genre_evidence AS evidence
+                   JOIN provenance_records AS provenance ON provenance.id = evidence.provenance_id
+                   JOIN data_sources AS source ON source.id = provenance.source_id
+                   JOIN source_snapshots AS snapshot
+                     ON snapshot.source_id = source.id
+                    AND snapshot.snapshot_ref = provenance.snapshot_ref
+                   JOIN source_artifacts AS artifact
+                     ON artifact.snapshot_id = snapshot.id
+                    AND artifact.sha256 = provenance.artifact_sha256
+                   JOIN active_rights_policy_permissions AS embed_permission
+                     ON embed_permission.policy_id = evidence.policy_id
+                    AND embed_permission.use_kind = 'embed'
+                    AND embed_permission.decision = 'allow'
+                   WHERE evidence.evidence_kind = 'direct_source_claim'
+                     AND evidence.method_key IN (
+                       'direct_musicbrainz_artist_genre',
+                       'musicbrainz_artist_genre', 'wikidata_p136'
+                     )"""
+        ):
+            if (str(source_key), str(snapshot_ref), str(artifact_sha256)) in expected:
+                refs.add(f"catalog:artist-genre:{int(evidence_id)}:{source_record_id!s}")
+    return refs
+
+
+def _verify_v2_graph_attestation(
+    artifact: PublicModelArtifact, manifest: dict[str, Any], database: Path
+) -> int:
     """Require the model's artifacts and one-hop graph references to name release inputs."""
     expected = _v2_source_artifacts(manifest)
     # rpartition returns (source_key, separator, declared_hash); source_key and the
@@ -501,27 +543,47 @@ def _verify_v2_graph_attestation(artifact: PublicModelArtifact, manifest: dict[s
         )
 
     allowed_refs = {_v2_evidence_reference(*item) for item in expected}
+    direct_refs = _v2_direct_evidence_refs(database, manifest) & {
+        reference
+        for profile in artifact.profiles
+        if profile.profile_kind == "direct"
+        for membership in profile.memberships
+        for reference in membership.evidence_refs
+        if reference.startswith("catalog:artist-genre:")
+    }
     reference_count = 0
     for profile in artifact.profiles:
         if profile.profile_kind != "one_hop":
             continue
-        references = {
-            reference
-            for membership in profile.memberships
-            for component in membership.components
-            if component.component_kind == "listenbrainz_one_hop"
-            for reference in component.evidence_refs
-        }
-        v2_references = {
-            reference for reference in references if reference.startswith("listenbrainz:v2:")
-        }
-        if not v2_references:
-            raise CandidatePublicProjectionError("one-hop graph lacks source_artifacts_v2 evidence")
-        if references - v2_references or not v2_references <= allowed_refs:
-            raise CandidatePublicProjectionError(
-                "one-hop graph evidence is outside the release source attestation"
-            )
-        reference_count += len(v2_references)
+        for membership in profile.memberships:
+            if {component.component_kind for component in membership.components} != {
+                "listenbrainz_one_hop"
+            }:
+                raise CandidatePublicProjectionError("one-hop graph has an unexpected component")
+            references = {
+                reference
+                for component in membership.components
+                if component.component_kind == "listenbrainz_one_hop"
+                for reference in component.evidence_refs
+            }
+            if references != set(membership.evidence_refs):
+                raise CandidatePublicProjectionError(
+                    "one-hop component refs do not match membership refs"
+                )
+            v2_references = {
+                reference for reference in references if reference.startswith("listenbrainz:v2:")
+            }
+            if not v2_references:
+                raise CandidatePublicProjectionError(
+                    "one-hop graph lacks source_artifacts_v2 evidence"
+                )
+            if not v2_references <= allowed_refs or references - v2_references - direct_refs:
+                raise CandidatePublicProjectionError(
+                    "one-hop graph evidence is outside the release source attestation"
+                )
+            reference_count += len(v2_references)
+    if reference_count == 0:
+        raise CandidatePublicProjectionError("v2 graph contains no source_artifacts_v2 evidence")
     return reference_count
 
 
@@ -712,7 +774,7 @@ def project_candidate_public_model_v2(
         )
         Database(staged_database).initialize()
         model_payload, artifact, load_settings, model_settings = _build_model_v2(staged_database)
-        _verify_v2_graph_attestation(artifact, manifest)
+        _verify_v2_graph_attestation(artifact, manifest, staged_database)
         staged_model.write_bytes(model_payload)
         gate = require_public_model_gate(
             artifact,
@@ -747,7 +809,9 @@ def project_candidate_public_model_v2(
             model_settings_sha256=artifact.settings_sha256,
             model_logical_sha256=artifact.output_sha256,
             model_file_sha256=_sha256(staged_model),
-            graph_v2_evidence_refs=_verify_v2_graph_attestation(artifact, manifest),
+            graph_v2_evidence_refs=_verify_v2_graph_attestation(
+                artifact, manifest, staged_database
+            ),
             gate=gate,
             serving_database_sha256=_sha256(staged_database),
             serving_database_schema_version=_database_schema_version(staged_database),

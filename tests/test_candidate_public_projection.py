@@ -17,6 +17,7 @@ from opennoise.db import Database
 from opennoise.ml.public_graph import build_public_model, public_model_output_sha256
 from opennoise.ml.publish import PublicModelPublishSummary, PublishedLensSummary
 from opennoise.models.modeling import (
+    ArtistPairEvidence,
     DirectMembershipEvidence,
     GenreIdentity,
     PublicArtifact,
@@ -30,6 +31,7 @@ from opennoise.pipeline.candidate_public_projection import (
     _v2_receipt_logical_sha256,
     _v2_settings,
     _verify_candidate_boundary,
+    _verify_v2_graph_attestation,
     project_candidate_public_model,
     project_candidate_public_model_v2,
 )
@@ -318,6 +320,61 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         )
         return artifact.model_copy(update={"output_sha256": public_model_output_sha256(artifact)})
 
+    def _v2_graph_artifact(self):  # noqa: ANN202
+        manifest = json.loads((RELEASE / "release-manifest.json").read_text())
+        pair_ref = (
+            "listenbrainz:v2:source_key=listenbrainz_joint_20260824_20260830&"
+            "snapshot_ref=listenbrainz_joint_20260824_20260830%3Ajoint%3A"
+            "6c30524486b47af9fe0fe554830b50639f716ba39e265c7560d60b84124208b7&"
+            "artifact_sha256=6c30524486b47af9fe0fe554830b50639f716ba39e265c7560d60b84124208b7"
+        )
+        direct_ref = "catalog:artist-genre:1:fixture"
+        artist_a = "musicbrainz:artist:11111111-1111-4111-8111-111111111111"
+        artist_b = "musicbrainz:artist:22222222-2222-4222-8222-222222222222"
+        inputs = PublicModelInput(
+            artifacts=(
+                PublicArtifact(
+                    source="wikidata",
+                    snapshot="fixture",
+                    artifact_key=f"fixture:{'a' * 64}",
+                    content_sha256="a" * 64,
+                    export_allowed=True,
+                ),
+            ),
+            genres=(GenreIdentity(genre_id="wikidata:genre:Q1", name="One", evidence_refs=("x",)),),
+            direct_memberships=(
+                DirectMembershipEvidence(
+                    artist_id=artist_a,
+                    genre_id="wikidata:genre:Q1",
+                    facet="wikidata_p136",
+                    value=1,
+                    evidence_ref=direct_ref,
+                ),
+            ),
+            artist_pairs=(
+                ArtistPairEvidence(
+                    left_artist_id=artist_a,
+                    right_artist_id=artist_b,
+                    listener_day_support=2,
+                    supporting_windows=1,
+                    evidence_refs=(pair_ref,),
+                ),
+            ),
+        )
+        artifact = build_public_model(inputs, PublicModelSettings())
+        artifacts = tuple(
+            PublicArtifact(
+                source="listenbrainz" if "listenbrainz" in item["source_key"] else "wikidata",
+                snapshot=item["snapshot_ref"],
+                artifact_key=f"{item['source_key']}:{item['artifact_sha256']}",
+                content_sha256=item["artifact_sha256"],
+                export_allowed=True,
+            )
+            for item in manifest["inputs"]
+        )
+        artifact = artifact.model_copy(update={"artifacts": artifacts})
+        return artifact.model_copy(update={"output_sha256": public_model_output_sha256(artifact)})
+
     def test_accepts_current_candidate_source_keys_and_artifact_hashes_without_old_snapshot_hashes(
         self,
     ) -> None:
@@ -508,6 +565,10 @@ class CandidatePublicProjectionTests(unittest.TestCase):
                 "opennoise.pipeline.candidate_public_projection.publish_public_model",
                 return_value=summary,
             ),
+            patch(
+                "opennoise.pipeline.candidate_public_projection._verify_v2_graph_attestation",
+                return_value=0,
+            ),
         ):
             report = project_candidate_public_model_v2(settings)
         self.assertEqual(report.revision, "phase3-candidate-public-projection-v2")
@@ -520,6 +581,139 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         self.assertEqual(report.model_settings["max_artist_pairs"], 250_000)
         self.assertEqual(report.model_settings["neighbors_per_genre"], 25)
         self.assertEqual(report.receipt_logical_sha256, _v2_receipt_logical_sha256(report))
+
+    def test_v2_graph_permits_attested_pair_and_direct_seed_refs(self) -> None:
+        artifact = self._v2_graph_artifact()
+        with patch(
+            "opennoise.pipeline.candidate_public_projection._v2_direct_evidence_refs",
+            return_value={"catalog:artist-genre:1:fixture"},
+        ):
+            self.assertGreater(
+                _verify_v2_graph_attestation(
+                    artifact,
+                    json.loads((RELEASE / "release-manifest.json").read_text()),
+                    self.candidate,
+                ),
+                0,
+            )
+
+    def test_v2_graph_rejects_unknown_one_hop_reference(self) -> None:
+        artifact = self._v2_graph_artifact()
+        profile = next(item for item in artifact.profiles if item.profile_kind == "one_hop")
+        membership = profile.memberships[0]
+        component = membership.components[0].model_copy(
+            update={"evidence_refs": (*membership.components[0].evidence_refs, "unknown:ref")}
+        )
+        replacement = membership.model_copy(
+            update={
+                "components": (component,),
+                "evidence_refs": (*membership.evidence_refs, "unknown:ref"),
+            }
+        )
+        replacement_profile = profile.model_copy(update={"memberships": (replacement,)})
+        tampered = artifact.model_copy(
+            update={
+                "profiles": tuple(
+                    replacement_profile if item == profile else item for item in artifact.profiles
+                )
+            }
+        )
+        with (
+            patch(
+                "opennoise.pipeline.candidate_public_projection._v2_direct_evidence_refs",
+                return_value={"catalog:artist-genre:1:fixture"},
+            ),
+            self.assertRaisesRegex(
+                CandidatePublicProjectionError, "outside the release source attestation"
+            ),
+        ):
+            _verify_v2_graph_attestation(
+                tampered,
+                json.loads((RELEASE / "release-manifest.json").read_text()),
+                self.candidate,
+            )
+
+    def test_v2_graph_rejects_unknown_catalog_seed_reference(self) -> None:
+        artifact = self._v2_graph_artifact()
+        profile = next(item for item in artifact.profiles if item.profile_kind == "one_hop")
+        membership = profile.memberships[0]
+        original = membership.components[0]
+        replacement_refs = tuple(
+            "catalog:artist-genre:999:unknown"
+            if reference.startswith("catalog:artist-genre:")
+            else reference
+            for reference in original.evidence_refs
+        )
+        component = original.model_copy(update={"evidence_refs": replacement_refs})
+        replacement = membership.model_copy(
+            update={"components": (component,), "evidence_refs": replacement_refs}
+        )
+        replacement_profile = profile.model_copy(update={"memberships": (replacement,)})
+        tampered = artifact.model_copy(
+            update={
+                "profiles": tuple(
+                    replacement_profile if item == profile else item for item in artifact.profiles
+                )
+            }
+        )
+        with (
+            patch(
+                "opennoise.pipeline.candidate_public_projection._v2_direct_evidence_refs",
+                return_value={"catalog:artist-genre:1:fixture"},
+            ),
+            self.assertRaisesRegex(
+                CandidatePublicProjectionError, "outside the release source attestation"
+            ),
+        ):
+            _verify_v2_graph_attestation(
+                tampered,
+                json.loads((RELEASE / "release-manifest.json").read_text()),
+                self.candidate,
+            )
+
+    def test_v2_graph_rejects_membership_without_v2_pair_reference(self) -> None:
+        artifact = self._v2_graph_artifact()
+        profile = next(item for item in artifact.profiles if item.profile_kind == "one_hop")
+        membership = profile.memberships[0]
+        direct_refs = tuple(
+            reference
+            for reference in membership.components[0].evidence_refs
+            if reference.startswith("catalog:artist-genre:")
+        )
+        component = membership.components[0].model_copy(update={"evidence_refs": direct_refs})
+        replacement = membership.model_copy(
+            update={"components": (component,), "evidence_refs": direct_refs}
+        )
+        replacement_profile = profile.model_copy(update={"memberships": (replacement,)})
+        tampered = artifact.model_copy(
+            update={
+                "profiles": tuple(
+                    replacement_profile if item == profile else item for item in artifact.profiles
+                )
+            }
+        )
+        with (
+            patch(
+                "opennoise.pipeline.candidate_public_projection._v2_direct_evidence_refs",
+                return_value={"catalog:artist-genre:1:fixture"},
+            ),
+            self.assertRaisesRegex(CandidatePublicProjectionError, "lacks source_artifacts_v2"),
+        ):
+            _verify_v2_graph_attestation(
+                tampered,
+                json.loads((RELEASE / "release-manifest.json").read_text()),
+                self.candidate,
+            )
+
+    def test_v2_graph_rejects_no_one_hop_evidence(self) -> None:
+        with self.assertRaisesRegex(
+            CandidatePublicProjectionError, "contains no source_artifacts_v2"
+        ):
+            _verify_v2_graph_attestation(
+                self._v2_artifact(),
+                json.loads((RELEASE / "release-manifest.json").read_text()),
+                self.candidate,
+            )
 
     def test_v2_rejects_database_snapshot_not_in_release_before_outputs(self) -> None:
         self.candidate.unlink()
