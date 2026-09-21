@@ -113,6 +113,15 @@ model.
 The bounded representative catalog currently contains 51 retained releases
 and 491 unique track records across 40 genres. These are metadata records only.
 They are not claims about the defining or most important works for a genre.
+A separate local run hydrated 55 releases and 660 tracks from already selected
+metadata examples. It replays both accepted and rejected API results offline,
+but it is not the published catalog or a complete MusicBrainz crawl.
+
+Generated genre labels and catalog identity bridges have separate review
+queues. The current local candidate queue has 484 unreviewed genre proposals
+bound to 189 retained source claims. The bridge audit has 164 non-exact
+catalog mappings awaiting review. Neither queue publishes a genre or changes an
+artist membership by itself.
 
 OpenNoise never downloads, stores, serves, embeds, or trains on audio or music
 files. Links and playback placeholders remain separate from metadata.

@@ -377,6 +377,8 @@ class MusicBrainzReleaseTrackHydrationAdapter:
                 raise MusicBrainzHydrationError(f"invalid hydration cache entry: {path}") from error
             if failed.endpoint != endpoint:
                 raise MusicBrainzHydrationError("hydration cache endpoint mismatch") from None
+            if not self._settings.offline:
+                return None
             raise MusicBrainzHydrationError(failed.message) from None
         except (OSError, ValueError) as error:
             raise MusicBrainzHydrationError(f"invalid hydration cache entry: {path}") from error

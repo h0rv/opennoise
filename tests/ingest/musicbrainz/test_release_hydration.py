@@ -287,6 +287,38 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
             self.assertEqual(offline.failures, online.failures)
             self.assertEqual(offline_adapter.upstream_request_count, 0)
 
+            refreshed_requests: list[httpx.Request] = []
+
+            async def recovered_handler(request: httpx.Request) -> httpx.Response:
+                refreshed_requests.append(request)
+                if request.url.path.endswith(RELEASE_GROUP_ID):
+                    return httpx.Response(
+                        200,
+                        json={
+                            "id": RELEASE_GROUP_ID,
+                            "releases": [{"id": RELEASE_ID, "title": "Synthetic Album"}],
+                        },
+                    )
+                if request.url.path.endswith(RELEASE_ID):
+                    return httpx.Response(200, json=_release_payload())
+                return httpx.Response(404)
+
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(recovered_handler)
+            ) as client:
+                recovered_adapter = MusicBrainzReleaseTrackHydrationAdapter(
+                    client,
+                    settings,
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
+                )
+                recovered = await recovered_adapter.hydrate_batch(
+                    _representatives(), source_sha256="b" * 64
+                )
+            self.assertEqual(len(refreshed_requests), 2)
+            self.assertFalse(recovered.failures)
+            self.assertEqual(len(recovered.artifact.releases), 1)
+            self.assertEqual(json.loads(cache_entry.read_bytes())["record_kind"], "success")
+
 
 async def _no_sleep() -> None:
     return None
