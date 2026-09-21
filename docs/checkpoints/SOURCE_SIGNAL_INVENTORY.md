@@ -15,7 +15,7 @@ receipt or checked artifact binds the input used by a build or evaluation.
 | Last.fm reverse tags | Adapter and tests exist, but no response cache or evidence receipt exists. | No current graph or membership use. | Review only after an approved API key, query manifest, exact MBID input, and response receipt. |
 | MSD and Last.fm offline files | The adapter and blocked manifest exist, but the required SQLite files and verified receipt are absent. | No use. | No use until all listed files and their hashes are supplied. |
 | MusicBrainz to Spotify bridge and H3 | Receipt bound bridge and sealed H3 projection exist for historical compatibility. | Prohibited from construction and from public membership. | Evaluation only. H3 absence is unknown, not a negative label. |
-| FMA, Discogs, and AcousticBrainz | No adapter, retained cache, or receipt exists for these sources. | No use. | Feasibility research only. FMA and Discogs lack a documented exact bridge to the model artist and genre IDs. AcousticBrainz has recording MBIDs but no genre labels. |
+| FMA, Discogs, and AcousticBrainz | No adapter, retained cache, or receipt exists for these sources. | No use. | Feasibility research only. FMA and Discogs lack a documented exact bridge to the model artist and genre IDs. The separate AcousticBrainz Genre Dataset has recording MBIDs and genre annotations, but no artist MBIDs. Its annotations were later imported into MusicBrainz recording tags, so it is not approved as independent production gold. |
 
 ## Signal boundaries
 
@@ -59,3 +59,4 @@ joins, license scope, and a declared signal role before it enters a build.
 - [Open construction graph v2](../reports/OPEN_CONSTRUCTION_GRAPH_V2_20260904.md)
 - [Public artist membership candidate](../reports/PUBLIC_ARTIST_MEMBERSHIP_REAL_INPUT_20260905.md)
 - [Production map audit](../reports/PRODUCTION_MAP_20260831.md)
+- [AcousticBrainz Genre Dataset evaluation audit](ACOUSTICBRAINZ_GENRE_DATASET_EVALUATION_AUDIT.md)

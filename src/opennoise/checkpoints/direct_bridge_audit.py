@@ -6,6 +6,7 @@ import hashlib
 import sqlite3
 import unicodedata
 from collections import Counter, defaultdict
+from contextlib import closing
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final, Literal
 
@@ -271,7 +272,7 @@ def _load_discovery(
 
 def _genre_ids_and_direct_counts(database: Path) -> tuple[dict[str, int], dict[int, int]]:
     database_uri = f"file:{database.resolve(strict=True).as_posix()}?mode=ro"
-    with sqlite3.connect(database_uri, uri=True) as db:
+    with closing(sqlite3.connect(database_uri, uri=True)) as db:
         genre_ids = {
             str(value): int(genre_id)
             for genre_id, value in db.execute(
@@ -369,6 +370,189 @@ def audit_direct_bridges(
         "potential_direct_observation_lift": potential_observation_lift,
         "edges": rows,
     }
+
+
+def direct_bridge_review_packet(
+    graph_path: Path, discovery_path: Path, database_path: Path
+) -> dict[str, object]:
+    """Build a deterministic, read-only human packet for identity-edge review.
+
+    This is deliberately an evidence view, not a bridge-edit command: every
+    candidate observation remains tied to its sealed public-catalog provenance.
+    """
+    audit = parse_direct_bridge_audit_report(
+        audit_direct_bridges(graph_path, discovery_path, database_path)
+    )
+    observations = _review_observations(database_path, audit.edges)
+    legacy_counts = Counter(edge.legacy_id for edge in audit.edges)
+    catalog_counts = Counter(edge.catalog_id for edge in audit.edges)
+    ranked_entries: list[tuple[int, str, str, dict[str, object]]] = []
+    for edge in audit.edges:
+        reasons = _review_ambiguity_reasons(edge, legacy_counts, catalog_counts)
+        candidates = (
+            observations.get(edge.catalog_genre_id, ())
+            if edge.potential_direct_observation_lift
+            else ()
+        )
+        ranked_entries.append(
+            (
+                edge.potential_direct_observation_lift,
+                edge.legacy_name.casefold(),
+                edge.edge_id,
+                {
+                    **edge.model_dump(mode="json"),
+                    "ambiguity_reasons": reasons,
+                    "candidate_observations": candidates,
+                    "review_disposition": "pending_human_review",
+                },
+            )
+        )
+    ranked_entries.sort(key=lambda item: (-item[0], item[1], item[2]))
+    return {
+        "revision": "direct-bridge-human-review-packet-v1",
+        "inputs": {
+            **audit.inputs.model_dump(mode="json"),
+            "audit_sha256": direct_bridge_audit_sha256(audit),
+        },
+        "edge_count": audit.edge_count,
+        "potential_direct_observation_lift": audit.potential_direct_observation_lift,
+        "entries": [item[3] for item in ranked_entries],
+        "catalog_mutated": False,
+        "static_discovery_mutated": False,
+        "static_bridge_published": False,
+    }
+
+
+def _review_ambiguity_reasons(
+    edge: DirectBridgeAuditEdge,
+    legacy_counts: Counter[str],
+    catalog_counts: Counter[str],
+) -> list[str]:
+    reasons = []
+    if legacy_counts[edge.legacy_id] > 1:
+        reasons.append("legacy_genre_has_multiple_catalog_identity_edges")
+    if catalog_counts[edge.catalog_id] > 1:
+        reasons.append("catalog_genre_has_multiple_legacy_identity_edges")
+    if (
+        edge.currently_static_catalog_genre_id is not None
+        and edge.catalog_genre_id is not None
+        and edge.currently_static_catalog_genre_id != edge.catalog_genre_id
+    ):
+        reasons.append("existing_static_bridge_targets_a_different_catalog_genre")
+    if edge.classification == "safe_exact":
+        reasons.append("one_to_one_casefolded_labels_match")
+    elif edge.classification == "safe_typography_equivalent":
+        reasons.append("one_to_one_nfkc_casefolded_labels_match")
+    elif edge.classification == "review_only":
+        reasons.append("catalog_and_legacy_labels_differ")
+    return reasons
+
+
+def _review_observations(
+    database: Path, edges: tuple[DirectBridgeAuditEdge, ...]
+) -> dict[int | None, tuple[dict[str, object], ...]]:
+    genre_ids = sorted(
+        {edge.catalog_genre_id for edge in edges if edge.catalog_genre_id is not None}
+    )
+    if not genre_ids:
+        return {}
+    marks = ",".join("?" for _ in genre_ids)
+    database_uri = f"file:{database.resolve(strict=True).as_posix()}?mode=ro"
+    with sqlite3.connect(database_uri, uri=True) as db:
+        db.row_factory = sqlite3.Row
+        rows = db.execute(
+            f"""WITH preferred_artist_names AS (
+                    SELECT entity_id, name FROM (
+                        SELECT name.entity_id, name.name,
+                               row_number() OVER (PARTITION BY name.entity_id ORDER BY
+                                   (name.language_tag = 'en') DESC, name.is_preferred DESC,
+                                   (name.language_tag = 'und') DESC, name.id) AS row_number
+                        FROM displayable_entity_names AS name
+                        JOIN artists AS artist ON artist.id = name.entity_id
+                    ) WHERE row_number = 1
+                )
+                SELECT evidence.genre_id, evidence.id AS evidence_id, evidence.artist_id,
+                       artist_name.name AS artist_name, evidence.source_key,
+                       evidence.source_record_id, evidence.method_key,
+                       evidence.method_version, evidence.provenance_id
+                FROM displayable_artist_genre_evidence AS evidence
+                JOIN preferred_artist_names AS artist_name
+                  ON artist_name.entity_id = evidence.artist_id
+                JOIN provenance_records AS provenance ON provenance.id = evidence.provenance_id
+                JOIN active_rights_policy_permissions AS export_permission
+                  ON export_permission.policy_id = provenance.policy_id
+                 AND export_permission.use_kind = 'export' AND export_permission.decision = 'allow'
+                JOIN active_rights_policy_permissions AS display_permission
+                  ON display_permission.policy_id = provenance.policy_id
+                 AND display_permission.use_kind = 'display'
+                 AND display_permission.decision = 'allow'
+                WHERE evidence.evidence_kind = 'direct_source_claim'
+                  AND evidence.genre_id IN ({marks})
+                ORDER BY evidence.genre_id, artist_name.name COLLATE NOCASE,
+                         evidence.artist_id, evidence.id""",  # noqa: S608
+            tuple(genre_ids),
+        ).fetchall()
+        artist_ids = sorted({int(row["artist_id"]) for row in rows})
+        identifiers = _review_artist_identifiers(db, artist_ids)
+    result: dict[int | None, list[dict[str, object]]] = defaultdict(list)
+    for row in rows:
+        artist_id = int(row["artist_id"])
+        result[int(row["genre_id"])].append(
+            {
+                "artist_id": f"artist:{artist_id}",
+                "artist_name": str(row["artist_name"]),
+                "identifiers": identifiers.get(artist_id, ()),
+                "provenance": {
+                    "evidence_id": int(row["evidence_id"]),
+                    "source_key": str(row["source_key"]),
+                    "source_record_id": str(row["source_record_id"]),
+                    "method_key": str(row["method_key"]),
+                    "method_version": str(row["method_version"]),
+                    "provenance_id": int(row["provenance_id"]),
+                },
+            }
+        )
+    return {genre_id: tuple(items) for genre_id, items in result.items()}
+
+
+def _review_artist_identifiers(
+    db: sqlite3.Connection, artist_ids: list[int]
+) -> dict[int, tuple[dict[str, str], ...]]:
+    if not artist_ids:
+        return {}
+    marks = ",".join("?" for _ in artist_ids)
+    rows = db.execute(
+        f"""SELECT identifier.entity_id, identifier_type.type_key, identifier.namespace,
+                   identifier.normalized_value, identifier.provenance_id
+            FROM entity_identifiers AS identifier
+            JOIN identifier_types AS identifier_type
+              ON identifier_type.id = identifier.identifier_type_id
+            JOIN provenance_records AS provenance ON provenance.id = identifier.provenance_id
+            JOIN active_rights_policy_permissions AS export_permission
+              ON export_permission.policy_id = provenance.policy_id
+             AND export_permission.use_kind = 'export' AND export_permission.decision = 'allow'
+            JOIN active_rights_policy_permissions AS display_permission
+              ON display_permission.policy_id = provenance.policy_id
+             AND display_permission.use_kind = 'display' AND display_permission.decision = 'allow'
+            WHERE identifier.entity_id IN ({marks})
+              AND identifier_type.type_key IN (
+                  'musicbrainz_artist_id', 'wikidata_qid', 'wikidata_artist_qid'
+              )
+            ORDER BY identifier.entity_id, identifier_type.type_key,
+                     identifier.normalized_value, identifier.provenance_id""",  # noqa: S608
+        tuple(artist_ids),
+    ).fetchall()
+    result: dict[int, list[dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        result[int(row["entity_id"])].append(
+            {
+                "type_key": str(row["type_key"]),
+                "namespace": str(row["namespace"]),
+                "normalized_value": str(row["normalized_value"]),
+                "provenance_id": str(row["provenance_id"]),
+            }
+        )
+    return {artist_id: tuple(items) for artist_id, items in result.items()}
 
 
 def parse_direct_bridge_audit_report(report: object) -> DirectBridgeAuditReport:

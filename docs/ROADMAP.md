@@ -104,12 +104,17 @@ gate is open.
 - The local, non-publishing identity-bridge audit now separates 245 one-to-one
   exact label matches, 101 non-exact mappings needing review, and 95
   conflicting or ambiguous edges. Its append-only typed review ledger does not
-  auto-promote exact matches or change the public bridge.
+  auto-promote exact matches or change the public bridge. A deterministic
+  human-review packet now ranks all 441 edges by potential direct-observation
+  lift and carries source-bound artist evidence. It does not publish anything.
 - Add independently evaluated, versioned promotion paths for derived
   memberships and similarity; keep direct observations separate until then.
 - Complete the MusicBrainz release and track catalog chain. A larger local
-  bounded run has 55 releases and 660 tracks, with offline-identical success
-  and failure replay; it is not yet the published catalog or a full crawl.
+  bounded run now has 94 releases and 1,115 tracks, up from 55 and 660. It
+  passed offline-identical success and failure replay with zero upstream
+  requests; one stale recording stayed an explicit abstention. This is a
+  metadata-only candidate, not yet the published catalog or a full crawl. See
+  the [candidate checkpoint](checkpoints/MUSICBRAINZ_CATALOG_EXPANSION_CANDIDATE.md).
 - Keep metadata candidates separate from published metadata examples.
 - Review the 484 source-bound genre candidates now queued by the versioned
   workflow, then design a separate publication gate. None is published.
@@ -118,8 +123,13 @@ gate is open.
   evaluator abstains on its synthetic fixture; no retained source or accepted
   threshold policy qualifies yet. FMA metadata is an independent candidate,
   but exact artist and genre bridges are not present, so it cannot yet score
-  the model. See the [gold-set workflow](evidence/INDEPENDENT_ARTIST_GENRE_GOLD.md)
-  and [FMA source audit](checkpoints/INDEPENDENT_GOLD_SOURCE_AUDIT.md).
+  the model. The separate AcousticBrainz Genre Dataset offers recording-level
+  metadata labels, but its labels were imported into MusicBrainz recording
+  tags, so it is diagnostic only without a source-level leakage audit and an
+  exact recording-to-artist bridge. See the
+  [gold-set workflow](evidence/INDEPENDENT_ARTIST_GENRE_GOLD.md),
+  [source audit](checkpoints/INDEPENDENT_GOLD_SOURCE_AUDIT.md), and
+  [AcousticBrainz audit](checkpoints/ACOUSTICBRAINZ_GENRE_DATASET_EVALUATION_AUDIT.md).
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
   The 54-object Wikidata candidate replay is not this certification.

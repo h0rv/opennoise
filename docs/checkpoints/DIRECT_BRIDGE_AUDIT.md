@@ -9,7 +9,7 @@ edge.
 
 ```sh
 poe audit-direct-bridges \
-  --discovery dist/assets/static-discovery.8310a95109d9f33d08c0f2b6bc934c8e84246d1bf911d986395f84a2ed49c0fc.json \
+  --discovery dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json \
   --output .cache/direct-bridge-audit-v1.json
 ```
 
@@ -27,6 +27,24 @@ is a review queue estimate, not a publication recommendation: names such as
 The report binds the graph hash, static discovery hash, and public database
 hash. It verifies the graph's logical hash and requires each identity edge's
 public-catalog hash to equal the database bytes used for the audit.
+
+## Human review packet
+
+Generate a source-bound, ranked packet for manual review with:
+
+```sh
+poe direct-bridge-review-packet \
+  --discovery dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json \
+  --output .cache/direct-bridge-human-review-packet-v1.json
+```
+
+The packet is deterministic for its sealed graph, discovery asset, and public
+database hashes. It ranks every edge by potential additional direct
+observations and retains its exact legacy/catalog IDs and labels, classification
+and ambiguity reasons, plus source-authorized artist identifiers and each
+candidate observation's evidence and provenance references. Every entry is
+`pending_human_review`; the packet is not an approval, bridge edit, catalog
+mutation, static-discovery mutation, or publication command.
 
 ## Review-only decision ledger
 
@@ -55,7 +73,7 @@ stale or edited audit JSON from becoming a review source:
 ```sh
 poe direct-bridge-review queue \
   --audit .cache/direct-bridge-audit-v1.json \
-  --discovery dist/assets/static-discovery.8310a95109d9f33d08c0f2b6bc934c8e84246d1bf911d986395f84a2ed49c0fc.json \
+  --discovery dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json \
   --output .cache/direct-bridge-review/queue.json
 ```
 
@@ -64,7 +82,7 @@ Append one or more new decisions to that predecessor ledger with:
 ```sh
 poe direct-bridge-review apply \
   --audit .cache/direct-bridge-audit-v1.json \
-  --discovery dist/assets/static-discovery.8310a95109d9f33d08c0f2b6bc934c8e84246d1bf911d986395f84a2ed49c0fc.json \
+  --discovery dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json \
   --predecessor .cache/direct-bridge-review/queue.json \
   --decisions review-decisions.json \
   --output .cache/direct-bridge-review/reviewed.json

@@ -116,6 +116,7 @@ replay-release-source-vault-listenbrainz-candidate = "python scripts/replay_sour
 genre-candidate-review = "python scripts/manage_genre_candidate_review.py"
 direct-bridge-review = "python scripts/manage_direct_bridge_review.py"
 audit-direct-bridges = "python scripts/audit_direct_bridges.py"
+direct-bridge-review-packet = "python scripts/build_direct_bridge_review_packet.py"
 dev = "python scripts/run_dev.py"
 rebuild-semantic-map-layout = "python scripts/rebuild_semantic_map_layout.py"
 rebuild-certify-semantic-pages = { sequence = ["rebuild-semantic-map-layout", "certify-static-pages"] }

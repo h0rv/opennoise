@@ -91,20 +91,44 @@ ready to serve as a production gold source.
 | --- | --- | --- |
 | Last.fm artist API | `artist.getTopTags` accepts a MusicBrainz artist ID and returns popularity ordered tags. The API needs a key, has rate limits, and its terms limit stored data to 100 MB unless Last.fm grants permission. | Conditional pilot only. It has the best exact artist join, but it is a live API rather than a pinned public snapshot. A receipt bound cache, terms approval, tag to genre policy, and a negative sampling rule are required. |
 | Discogs database | Discogs assigns its own artist and release IDs and documents release genres and styles. The official genre guidance does not document a MusicBrainz artist crosswalk. Dump terms also need a separate review. | No-go for an exact MusicBrainz join. It could support a reviewed release level study after an explicit identity bridge, but that is the same unresolved bridge problem as FMA. |
-| AcousticBrainz | The archive is keyed by exact MusicBrainz recording IDs and contains low and high level acoustic features. The official data page describes features, not artist genre labels. | No-go for artist genre gold. It is metadata and exact ID compatible, but it has no independent genre judgments. |
+| AcousticBrainz feature dump | The archive is keyed by exact MusicBrainz recording IDs and contains low and high level acoustic features. | No-go. Audio-derived features are outside the default pipeline, and features alone are not independent genre judgments. |
+| AcousticBrainz Genre Dataset annotations | Separate TSV archives have exact MusicBrainz recording IDs, release-group IDs, and genre/subgenre labels from Discogs, Last.fm, and Tagtraum. The smallest validation archive is 4.0 MB compressed. | Diagnostic only, not approved as independent gold. MetaBrainz later imported tags from these same archives into MusicBrainz, a retained model candidate. The exact recording-to-artist join and reviewed genre bridge are also missing. |
 
 The Last.fm documentation is at
 [artist.getTopTags](https://www.last.fm/api/show/artist.getTopTags) and
 [the API terms](https://www.last.fm/api/tos). The Discogs evidence is in the
 [genre and style guidelines](https://support.discogs.com/hc/en-us/articles/360005055213-Database-Guidelines-9-Genres-Styles).
-The AcousticBrainz evidence is in its [data documentation](https://acousticbrainz.org/data)
-and [download documentation](https://acousticbrainz.org/download).
+The AcousticBrainz feature evidence is in its [data documentation](https://acousticbrainz.org/data)
+and [download documentation](https://acousticbrainz.org/download). The separate
+[AcousticBrainz Genre Dataset format](https://mtg.github.io/acousticbrainz-genre-dataset/data/)
+and [Zenodo deposit](https://zenodo.org/records/2553414) document the annotation-only
+TSV files. The dataset authors state that Discogs labels came from release
+metadata and Last.fm and Tagtraum labels from community tags. The audio-derived
+feature archives are separate and are not needed for an annotation pilot.
+The [MetaBrainz genre-matching project](https://github.com/metabrainz/genre-matching)
+states that in 2021 it submitted almost six million genre tags for over 1.3
+million MusicBrainz recordings from the same Discogs, Last.fm, and Tagtraum
+annotations. It explicitly used both training and validation TSV files. This
+creates a leakage risk for any candidate trained or evaluated using MusicBrainz
+tags, even if a validation recording was absent from our current local catalog.
 
 Last.fm is the only candidate that currently has a documented direct
 MusicBrainz artist input and a returned artist tag result. It still cannot be
 called gold without a pinned response artifact and a policy that says which
 tags count as a positive label. Its tags are community annotations, and an
-absent tag is not a negative label. The next low cost research step is a small
-Last.fm request pilot against already known MusicBrainz artist UUIDs, subject
-to a confirmed API key and terms review. This does not justify a bulk download
-or a production gate.
+absent tag is not a negative label.
+
+The AcousticBrainz Genre Dataset is a small, pinned, offline diagnostic pilot,
+but not an approved production gold source under the current policy. Its
+public annotation archives are distinct from the AcousticBrainz feature dump.
+An exact recording-to-artist join could measure overlap and expose failure
+cases, but would not remove the historical MusicBrainz leakage risk. A recording
+label is not automatically an artist membership judgment, and a missing label
+is not a negative. Keep all annotations out of model construction and the
+public release. The larger Zenodo music knowledge graph is not suitable as independent
+gold without a field-level provenance audit: it combines MusicBrainz tables
+already used in construction with Last.fm listening records, and its only
+download is a 3.1 GB ZIP. Its
+[deposit](https://zenodo.org/records/20394102) and
+[pipeline README](https://github.com/rhermosoUZ/EARS-data-project) describe
+those inputs.

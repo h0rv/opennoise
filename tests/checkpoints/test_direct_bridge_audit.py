@@ -17,6 +17,7 @@ from opennoise.checkpoints.direct_bridge_audit import (
     DirectBridgeReviewPolicy,
     audit_direct_bridges,
     build_direct_bridge_review_artifact,
+    direct_bridge_review_packet,
     parse_direct_bridge_audit_report,
     verify_direct_bridge_review_artifact,
 )
@@ -59,11 +60,40 @@ def _audit() -> DirectBridgeAuditReport:
 
 
 class DirectBridgeAuditTests(unittest.TestCase):
+    def test_human_packet_is_ranked_read_only_and_source_bound(self) -> None:
+        packet = direct_bridge_review_packet(
+            Path("data/model/open-construction-graph-v2.json"),
+            Path(
+                "dist/assets/"
+                "static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
+            ),
+            Path("data/public.sqlite"),
+        )
+        self.assertEqual(packet["edge_count"], 441)
+        self.assertEqual(packet["potential_direct_observation_lift"], 1520)
+        self.assertFalse(packet["catalog_mutated"])
+        self.assertFalse(packet["static_discovery_mutated"])
+        self.assertFalse(packet["static_bridge_published"])
+        entries = packet["entries"]
+        if not isinstance(entries, list):
+            self.fail("review packet entries must be a list")
+        first = entries[0]
+        last = entries[-1]
+        if not isinstance(first, dict) or not isinstance(last, dict):
+            self.fail("review packet entries must be dictionaries")
+        self.assertEqual(first["review_disposition"], "pending_human_review")
+        self.assertIn("ambiguity_reasons", first)
+        self.assertIn("candidate_observations", first)
+        self.assertGreaterEqual(
+            first["potential_direct_observation_lift"],
+            last["potential_direct_observation_lift"],
+        )
+
     def test_current_inputs_are_verified_and_source_bound(self) -> None:
         report = audit_direct_bridges(
             Path("data/model/open-construction-graph-v2.json"),
             Path(
-                "dist/assets/static-discovery.8310a95109d9f33d08c0f2b6bc934c8e84246d1bf911d986395f84a2ed49c0fc.json"
+                "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
             ),
             Path("data/public.sqlite"),
         )
@@ -153,7 +183,7 @@ class DirectBridgeAuditTests(unittest.TestCase):
 
     def test_review_cli_queues_verified_audit_then_appends_decision(self) -> None:
         discovery = Path(
-            "dist/assets/static-discovery.8310a95109d9f33d08c0f2b6bc934c8e84246d1bf911d986395f84a2ed49c0fc.json"
+            "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
         )
         report = audit_direct_bridges(
             Path("data/model/open-construction-graph-v2.json"),
