@@ -133,8 +133,13 @@ promotion gate explicit. The local static v2 build and browser certification
 now pass with 344 genres, 1,126 artists, and 3,859 observations. The v2
 discovery asset file SHA-256 is
 `4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c`.
-No deployment is approved or performed. The nested static v1 compatibility
-payload is not a release schema. See the [local batch checkpoint](checkpoints/SEALED_QID_DIRECT_BRIDGE_LOCAL_BATCH_20260921.md).
+`poe deploy` deployed commit `2721688` to
+[`https://opennoise.horv.co`](https://opennoise.horv.co). A read-only
+production manifest check returned v2 with promotion receipt hash
+`955ac09ab3534754810da8929709722cfcc739e20055201adc9be0a61e878f74` and the
+same discovery asset hash. Fetching the public asset again produced the same
+SHA-256 value. The nested static v1 compatibility payload is not a release
+schema. See the [local batch checkpoint](checkpoints/SEALED_QID_DIRECT_BRIDGE_LOCAL_BATCH_20260921.md).
 
 The fixed v3 candidate also has one terminal observed-positive-only comparison
 to the retained historical signal. It accepts only one-to-one exact normalized
@@ -156,7 +161,8 @@ is authorized by that result; see
 
 ## Static Pages delivery status
 
-The deployed static release is main commit `7f4e21f`. Its certified v3
+The deployed static release is commit `2721688` and is available at
+[`https://opennoise.horv.co`](https://opennoise.horv.co). Its certified v3
 atlas has 2,945 placed nodes and 34,937 structural edges. The Pages manifest,
 HTML, JavaScript, JSON, asset names, and rendered focus links contain no
 retired identifier text. A clean `open_focus=item…` bookmark works, while an
@@ -185,10 +191,11 @@ correct or that every name has a placed coordinate.
 The deployed fingerprinted export has been checked against the manifest,
 clean public IDs, the static discovery asset, and the same browser flows.
 The artist-search export now carries exact, source-backed MusicBrainz and
-Wikidata links for all 1,008 exported artists. The Pages deployment URL
-and `opennoise.horv.co` both serve the same SHA-256 manifest as the certified
-local `dist`. Its output SHA-256 is
-`0c0672cfd7687beea8e60369d6c67e0382dac40f5996b0bb1a9c4b4a39f4660b`.
+Wikidata links for all 1,126 exported artists. The production manifest reports
+the v2 promotion receipt hash
+`955ac09ab3534754810da8929709722cfcc739e20055201adc9be0a61e878f74`, and its
+public discovery asset matches file SHA-256
+`4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c`.
 
 The deployed static artist detail includes a `Similar artists` section,
 explained solely by shared directly observed genres and navigable within the

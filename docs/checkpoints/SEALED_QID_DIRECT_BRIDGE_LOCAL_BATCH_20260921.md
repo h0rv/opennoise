@@ -23,5 +23,12 @@ payload's logical and file SHA-256 values, byte count, coverage, and sealed
 input chain. The local static v2 build and browser certification passed with
 344 genres, 1,126 artists, and 3,859 observations. The v2 discovery asset has
 file SHA-256 `4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c`.
-The result is not deployed. The nested static v1 compatibility payload is not
-a release schema.
+`poe deploy` deployed commit `2721688` to
+[`https://opennoise.horv.co`](https://opennoise.horv.co), with the Pages
+deployment at [`https://6275accd.opennoise.pages.dev`](https://6275accd.opennoise.pages.dev).
+A read-only check of the production manifest returned v2, promotion receipt
+hash `955ac09ab3534754810da8929709722cfcc739e20055201adc9be0a61e878f74`, and
+the recorded discovery asset hash. Fetching that public asset again produced
+the same `4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c`
+SHA-256 value. The nested static v1 compatibility payload is not a release
+schema.
