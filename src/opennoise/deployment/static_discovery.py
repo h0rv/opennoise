@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from collections import Counter, defaultdict
 from contextlib import closing
@@ -20,6 +21,12 @@ if TYPE_CHECKING:
 
 _REVISION = "static-direct-discovery-v1"
 _RELATED_LIMIT = 8
+_WIKIDATA_QID_PATTERN = re.compile(r"Q[1-9][0-9]*\Z")
+_MUSICBRAINZ_ARTIST_ID_PATTERN = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z"
+)
+_WIKIDATA_ARTIST_URL_PREFIX = "https://www.wikidata.org/wiki/"
+_MUSICBRAINZ_ARTIST_URL_PREFIX = "https://musicbrainz.org/artist/"
 
 
 class StaticDiscoveryExportError(ValueError):
@@ -62,6 +69,17 @@ class StaticDiscoveryArtistPayload(FrozenModel):
 
     artist_id: str
     name: str
+    musicbrainz_url: str | None = Field(
+        default=None,
+        pattern=(
+            r"^https://musicbrainz\.org/artist/"
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        ),
+    )
+    wikidata_url: str | None = Field(
+        default=None,
+        pattern=r"^https://www\.wikidata\.org/wiki/Q[1-9][0-9]*$",
+    )
     memberships: tuple[StaticDiscoveryMembershipPayload, ...]
     shared_genre_artists: tuple[StaticDiscoveryArtistOverlapPayload, ...]
 
@@ -150,6 +168,16 @@ class _DirectEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class _DirectDiscovery:
+    """The direct evidence and optional public identifiers selected for export."""
+
+    evidence: tuple[_DirectEvidence, ...]
+    total_count: int
+    artist_musicbrainz_urls: dict[int, str]
+    artist_wikidata_urls: dict[int, str]
+
+
+@dataclass(frozen=True, slots=True)
 class _ArtistMembership:
     """A direct artist observation projected through one exact label bridge."""
 
@@ -184,16 +212,19 @@ def build_static_discovery_payload(
     try:
         with closing(_connect_read_only(database)) as connection:
             catalog_genres = _catalog_genres(connection, nodes_by_name)
-            evidence, total_direct_count = _direct_evidence(connection, catalog_genres)
+            direct_discovery = _direct_discovery(
+                connection,
+                catalog_genres,
+            )
     except sqlite3.Error as error:
         raise StaticDiscoveryExportError("catalog snapshot lacks direct discovery data") from error
-    memberships = _memberships(evidence, catalog_genres)
+    memberships = _memberships(direct_discovery.evidence, catalog_genres)
     return _payload(
         database=database,
         nodes=nodes,
         catalog_genres=catalog_genres,
         memberships=memberships,
-        total_direct_count=total_direct_count,
+        direct_discovery=direct_discovery,
     )
 
 
@@ -233,10 +264,10 @@ def _catalog_genres(
     }
 
 
-def _direct_evidence(
+def _direct_discovery(
     connection: sqlite3.Connection,
     catalog_genres: dict[int, _CatalogGenre],
-) -> tuple[tuple[_DirectEvidence, ...], int]:
+) -> _DirectDiscovery:
     total_direct_count = int(
         connection.execute(
             """SELECT count(*) FROM displayable_artist_genre_evidence AS evidence
@@ -253,7 +284,12 @@ def _direct_evidence(
         ).fetchone()[0]
     )
     if not catalog_genres:
-        return (), total_direct_count
+        return _DirectDiscovery(
+            evidence=(),
+            total_count=total_direct_count,
+            artist_musicbrainz_urls={},
+            artist_wikidata_urls={},
+        )
     genre_marks = ",".join("?" for _ in catalog_genres)
     rows = connection.execute(
         f"""WITH preferred_artist_names AS (
@@ -289,22 +325,28 @@ def _direct_evidence(
             ORDER BY evidence.artist_id, evidence.genre_id, evidence.id""",  # noqa: S608 - integer placeholders only.
         tuple(catalog_genres),
     ).fetchall()
-    return (
-        tuple(
-            _DirectEvidence(
-                evidence_id=int(row["id"]),
-                artist_id=int(row["artist_id"]),
-                artist_name=str(row["name"]),
-                catalog_genre_id=int(row["genre_id"]),
-                source_key=str(row["source_key"]),
-                source_record_id=str(row["source_record_id"]),
-                method_key=str(row["method_key"]),
-                method_version=str(row["method_version"]),
-                provenance_id=int(row["provenance_id"]),
-            )
-            for row in rows
-        ),
-        total_direct_count,
+    evidence = tuple(
+        _DirectEvidence(
+            evidence_id=int(row["id"]),
+            artist_id=int(row["artist_id"]),
+            artist_name=str(row["name"]),
+            catalog_genre_id=int(row["genre_id"]),
+            source_key=str(row["source_key"]),
+            source_record_id=str(row["source_record_id"]),
+            method_key=str(row["method_key"]),
+            method_version=str(row["method_version"]),
+            provenance_id=int(row["provenance_id"]),
+        )
+        for row in rows
+    )
+    artist_musicbrainz_urls, artist_wikidata_urls = _authorized_artist_urls(
+        connection, {item.artist_id for item in evidence}
+    )
+    return _DirectDiscovery(
+        evidence=evidence,
+        total_count=total_direct_count,
+        artist_musicbrainz_urls=artist_musicbrainz_urls,
+        artist_wikidata_urls=artist_wikidata_urls,
     )
 
 
@@ -326,13 +368,77 @@ def _memberships(
     )
 
 
+def _authorized_artist_urls(
+    connection: sqlite3.Connection,
+    artist_ids: set[int],
+) -> tuple[dict[int, str], dict[int, str]]:
+    """Return policy-authorized, unambiguous MusicBrainz and Wikidata URLs.
+
+    The public discovery artifact never infers an external destination from a
+    display name or evidence record. It may carry a URL only from the exact
+    source identifier and authorized for both display and export by that
+    identifier's provenance.
+    """
+    if not artist_ids:
+        return {}, {}
+    placeholders = ",".join("?" for _ in artist_ids)
+    rows = connection.execute(
+        f"""SELECT identifier.entity_id, identifier_type.type_key,
+                   identifier.normalized_value
+            FROM entity_identifiers AS identifier
+            JOIN identifier_types AS identifier_type
+              ON identifier_type.id = identifier.identifier_type_id
+            JOIN provenance_records AS provenance ON provenance.id = identifier.provenance_id
+            JOIN active_rights_policy_permissions AS export_permission
+              ON export_permission.policy_id = provenance.policy_id
+             AND export_permission.use_kind = 'export'
+             AND export_permission.decision = 'allow'
+            JOIN active_rights_policy_permissions AS display_permission
+              ON display_permission.policy_id = provenance.policy_id
+             AND display_permission.use_kind = 'display'
+             AND display_permission.decision = 'allow'
+            WHERE identifier.entity_id IN ({placeholders})
+              AND (
+                  (identifier_type.type_key IN ('wikidata_qid', 'wikidata_artist_qid')
+                   AND identifier.namespace = 'wikidata')
+                  OR (identifier_type.type_key = 'musicbrainz_artist_id'
+                      AND identifier.namespace = 'musicbrainz')
+              )
+            ORDER BY identifier.entity_id, identifier_type.type_key,
+                     identifier.normalized_value""",  # noqa: S608 - integer placeholders only.
+        tuple(sorted(artist_ids)),
+    ).fetchall()
+    musicbrainz_candidates: dict[int, set[str]] = defaultdict(set)
+    wikidata_candidates: dict[int, set[str]] = defaultdict(set)
+    for row in rows:
+        artist_id = int(row["entity_id"])
+        identifier = str(row["normalized_value"])
+        if row["type_key"] == "musicbrainz_artist_id":
+            if _MUSICBRAINZ_ARTIST_ID_PATTERN.fullmatch(identifier):
+                musicbrainz_candidates[artist_id].add(identifier)
+        elif _WIKIDATA_QID_PATTERN.fullmatch(identifier):
+            wikidata_candidates[artist_id].add(identifier)
+    return (
+        {
+            artist_id: f"{_MUSICBRAINZ_ARTIST_URL_PREFIX}{next(iter(identifiers))}"
+            for artist_id, identifiers in musicbrainz_candidates.items()
+            if len(identifiers) == 1
+        },
+        {
+            artist_id: f"{_WIKIDATA_ARTIST_URL_PREFIX}{next(iter(identifiers))}"
+            for artist_id, identifiers in wikidata_candidates.items()
+            if len(identifiers) == 1
+        },
+    )
+
+
 def _payload(
     *,
     database: Path,
     nodes: tuple[StaticDiscoveryNode, ...],
     catalog_genres: dict[int, _CatalogGenre],
     memberships: tuple[_ArtistMembership, ...],
-    total_direct_count: int,
+    direct_discovery: _DirectDiscovery,
 ) -> StaticDiscoveryPayload:
     by_artist: dict[int, list[_ArtistMembership]] = defaultdict(list)
     by_node: dict[str, list[_ArtistMembership]] = defaultdict(list)
@@ -361,7 +467,7 @@ def _payload(
             exact_label_bound_catalog_genre_count=len(catalog_genres),
             genres_with_direct_artists=len(by_node),
             artists_with_direct_map_genres=len(by_artist),
-            direct_catalog_observation_count=total_direct_count,
+            direct_catalog_observation_count=direct_discovery.total_count,
             bound_direct_observation_count=sum(
                 len(membership.evidence) for membership in memberships
             ),
@@ -384,6 +490,8 @@ def _payload(
             StaticDiscoveryArtistPayload(
                 artist_id=_artist_key(artist_id),
                 name=_artist_name(artist_memberships),
+                musicbrainz_url=direct_discovery.artist_musicbrainz_urls.get(artist_id),
+                wikidata_url=direct_discovery.artist_wikidata_urls.get(artist_id),
                 memberships=tuple(
                     _membership_payload(membership)
                     for membership in _sorted_memberships(artist_memberships)

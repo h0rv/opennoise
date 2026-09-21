@@ -48,7 +48,18 @@ class StaticDiscoveryTests(unittest.TestCase):
         self.assertNotIn("artist:7", artists, "display-denied observations must not publish")
         alpha = artists["artist:1"]
         self.assertEqual(alpha.name, "Alpha", "English display names take precedence")
+        self.assertEqual(
+            alpha.musicbrainz_url,
+            "https://musicbrainz.org/artist/12345678-1234-1234-1234-123456789abc",
+        )
+        self.assertEqual(alpha.wikidata_url, "https://www.wikidata.org/wiki/Q101")
         self.assertEqual(artists["artist:2"].name, "Beta", "native names remain the fallback")
+        self.assertIsNone(
+            artists["artist:2"].musicbrainz_url,
+            "invalid MusicBrainz identifiers must not link",
+        )
+        self.assertIsNone(artists["artist:2"].wikidata_url, "invalid identifiers must not link")
+        self.assertIsNone(artists["artist:3"].wikidata_url, "ambiguous identifiers must not link")
         self.assertEqual(
             {item.node_id for item in alpha.memberships}, {"item-post-punk", "item-jazz"}
         )
@@ -82,6 +93,13 @@ def _fixture(path: Path) -> None:
             """
             CREATE TABLE genres (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
             CREATE TABLE artists (id INTEGER PRIMARY KEY);
+            CREATE TABLE identifier_types (id INTEGER PRIMARY KEY, type_key TEXT NOT NULL);
+            CREATE TABLE entity_identifiers (
+                id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL,
+                identifier_type_id INTEGER NOT NULL,
+                namespace TEXT NOT NULL, value TEXT NOT NULL, normalized_value TEXT NOT NULL,
+                provenance_id INTEGER NOT NULL
+            );
             CREATE TABLE displayable_entity_names (
                 id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL, name TEXT NOT NULL,
                 language_tag TEXT NOT NULL,
@@ -101,6 +119,19 @@ def _fixture(path: Path) -> None:
                 (10, 'post-punk'), (20, 'jazz'), (30, 'hyperpop'), (31, 'Hyperpop'),
                 (40, 'catalog only');
             INSERT INTO artists VALUES (1), (2), (3), (4), (5), (6), (7);
+            INSERT INTO identifier_types VALUES
+                (1, 'wikidata_qid'), (2, 'wikidata_artist_qid'),
+                (3, 'musicbrainz_artist_id');
+            INSERT INTO entity_identifiers VALUES
+                (1, 1, 2, 'wikidata', 'Q101', 'Q101', 1),
+                (2, 2, 1, 'wikidata', 'not-a-qid', 'not-a-qid', 1),
+                (3, 3, 1, 'wikidata', 'Q103', 'Q103', 1),
+                (4, 3, 1, 'wikidata', 'Q104', 'Q104', 1),
+                (5, 6, 1, 'wikidata', 'Q106', 'Q106', 2),
+                (6, 1, 1, 'wikidata', 'Q999', 'Q999', 2),
+                (7, 1, 3, 'musicbrainz', '12345678-1234-1234-1234-123456789abc',
+                 '12345678-1234-1234-1234-123456789abc', 1),
+                (8, 1, 3, 'musicbrainz', 'bad-id', 'bad-id', 2);
             INSERT INTO displayable_entity_names VALUES
                 (1, 1, 'ألفا', 'ar', 1), (8, 1, 'Alpha', 'en', 0),
                 (2, 2, 'Beta', 'no', 1), (3, 3, 'Gamma', 'und', 1),

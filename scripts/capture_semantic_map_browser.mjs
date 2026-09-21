@@ -212,6 +212,8 @@ async function diagnostics(cdp) {
         .map((button) => button.textContent),
       detail_artist_name: document.querySelector('#map-detail h2')?.textContent ?? '',
       detail_headings: [...document.querySelectorAll('#map-detail h3')].map((heading) => heading.textContent),
+      artist_source_links: [...document.querySelectorAll('#map-detail .artist-sources a')]
+        .map((link) => ({ text: link.textContent, href: link.href })),
       search_results: [...document.querySelectorAll('#search-results [data-search-match]')]
         .map((button) => button.textContent),
       detail_box: detailRect ? { x: detailRect.x, y: detailRect.y, width: detailRect.width, height: detailRect.height } : null,
@@ -684,6 +686,12 @@ async function run() {
         && postPunkArtist.detail_headings.includes('Also in post-punk')
         && postPunkArtist.detail_artist_name !== 'post-punk',
       'artist discovery did not expose direct genres and explained artist overlap',
+      postPunkArtist,
+    );
+    requireCheck(
+      postPunkArtist.artist_source_links.some((link) => /^https:\/\/musicbrainz\.org\/artist\/[0-9a-f-]+$/.test(link.href))
+        && postPunkArtist.artist_source_links.some((link) => /^https:\/\/www\.wikidata\.org\/wiki\/Q[1-9][0-9]*$/.test(link.href)),
+      'artist detail did not expose exact source-backed outbound links',
       postPunkArtist,
     );
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-artist.png', 'light', 1440, 900));

@@ -8,7 +8,7 @@ routes, API endpoints, database connection, or runtime graph service.
 
 ```sh
 uv run poe rebuild-semantic-map-layout
-export OPENNOISE_SEMANTIC_MAP_LAYOUT=.cache/semantic-map-layout-v2/artifact.json
+export OPENNOISE_SEMANTIC_MAP_LAYOUT=.cache/semantic-map-layout-v3/artifact.json
 export OPENNOISE_PAGES_OUTPUT=dist
 UV_OFFLINE=1 uv run --no-sync poe export-semantic-pages
 ```
@@ -48,7 +48,7 @@ the loopback server, and the CDP browser harness:
 uv run poe certify-static-pages
 ```
 
-The gate defaults to the canonical v2 layout and `dist`; set
+The gate defaults to the canonical v3 layout and `dist`; set
 `OPENNOISE_SEMANTIC_MAP_LAYOUT` or `OPENNOISE_PAGES_OUTPUT` to override either
 path. It writes `artifacts/semantic-map/browser.json` and screenshots, uses
 port 3001 for the loopback server, and atomically replaces an existing

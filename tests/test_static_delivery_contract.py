@@ -5,6 +5,9 @@ from __future__ import annotations
 import tomllib
 import unittest
 from pathlib import Path
+from runpy import run_path
+
+from opennoise.ml.semantic_layout.contracts import semantic_layout_settings_sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,6 +48,23 @@ class StaticDeliveryContractTests(unittest.TestCase):
         )
         self.assertIn("uv run poe certify-static-pages", documentation)
         self.assertIn("uv run poe dev -- --port 3010", documentation)
+
+    def test_selected_v3_layout_settings_have_the_certified_digest(self) -> None:
+        namespace = run_path(str(ROOT / "scripts" / "rebuild_semantic_map_layout.py"))
+        settings = namespace["_SETTINGS"]
+        output = namespace["_OUTPUT"]
+        self.assertEqual(output, Path(".cache/semantic-map-layout-v3/artifact.json"))
+        self.assertEqual(settings.minimum_coordinate_separation, 0.00032)
+        self.assertEqual(settings.maximum_separation_iterations, 128)
+        self.assertEqual(
+            semantic_layout_settings_sha256(settings),
+            "17bcc83100219b10fbb41adb08847eaa1ed3dafbaa396738e2daae9e760a76a9",
+        )
+
+    def test_static_certification_requires_conditional_strict_label_exit_gate(self) -> None:
+        source = (ROOT / "scripts" / "certify_static_pages.py").read_text(encoding="utf-8")
+        self.assertIn('"--require-label-point-exit"', source)
+        self.assertIn(".cache/semantic-map-layout-v3/artifact.json", source)
 
     def test_runtime_framework_dependencies_are_absent(self) -> None:
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))

@@ -27,7 +27,7 @@ def _arguments() -> argparse.Namespace:
         type=Path,
         default=Path(
             os.environ.get(
-                "OPENNOISE_SEMANTIC_MAP_LAYOUT", ".cache/semantic-map-layout-v2/artifact.json"
+                "OPENNOISE_SEMANTIC_MAP_LAYOUT", ".cache/semantic-map-layout-v3/artifact.json"
             )
         ),
     )
@@ -137,6 +137,7 @@ def main() -> int:
                     str(arguments.captures),
                     "--port",
                     str(arguments.port + 1),
+                    "--require-label-point-exit",
                 ],
                 check=True,
             )

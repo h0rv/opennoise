@@ -91,8 +91,10 @@ and `opennoise.horv.co` both serve the same SHA-256 manifest as the certified
 local `dist`: `eec1c5a761ff5bda0235f4b1bc011092c2421b051a191a384c9740eb4652c3db`.
 
 Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
-pruned on 2026-09-16. Active offline-atlas, discovery, and data worktrees are
-retained until their own evidence gates conclude.
+pruned on 2026-09-16. A read-only worktree check on 2026-09-21 found only the
+main tree and the Phase 3 public-evidence worktree. The latter retains the
+sealed raw source vault needed for replay and must not be removed while that
+gate is open.
 
 ## Next data work
 

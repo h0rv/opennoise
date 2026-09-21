@@ -314,6 +314,14 @@ if (canvas instanceof HTMLCanvasElement) {
   const artistButton = (artist) => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'detail-action'; button.dataset.openArtistId = artist.artist_id; button.textContent = artist.name; return button;
   };
+  const authorizedWikidataUrl = (artist) => {
+    const value = artist?.wikidata_url;
+    return typeof value === 'string' && /^https:\/\/www\.wikidata\.org\/wiki\/Q[1-9][0-9]*$/.test(value) ? value : null;
+  };
+  const authorizedMusicBrainzUrl = (artist) => {
+    const value = artist?.musicbrainz_url;
+    return typeof value === 'string' && /^https:\/\/musicbrainz\.org\/artist\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value) ? value : null;
+  };
   const showDetail = (id, edges) => {
     if (!detail) return;
     detail.replaceChildren();
@@ -342,6 +350,16 @@ if (canvas instanceof HTMLCanvasElement) {
     const backToGenre = document.createElement('button'); backToGenre.type = 'button'; backToGenre.className = 'detail-back'; backToGenre.dataset.mapAction = 'genre-detail'; backToGenre.textContent = `← ${state.atlas.byId.get(state.focus).name}`; detail.append(backToGenre);
     const selected = document.createElement('section'); selected.className = 'selected-artist'; detail.append(selected);
     const heading = document.createElement('h2'); heading.textContent = artist.name; selected.append(heading);
+    const sourceLinks = document.createElement('nav'); sourceLinks.className = 'artist-sources'; sourceLinks.setAttribute('aria-label', 'Artist sources');
+    const musicbrainzUrl = authorizedMusicBrainzUrl(artist);
+    if (musicbrainzUrl) {
+      const source = document.createElement('a'); source.href = musicbrainzUrl; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = 'MusicBrainz'; sourceLinks.append(source);
+    }
+    const wikidataUrl = authorizedWikidataUrl(artist);
+    if (wikidataUrl) {
+      const source = document.createElement('a'); source.href = wikidataUrl; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = 'Wikidata'; sourceLinks.append(source);
+    }
+    if (sourceLinks.childElementCount) selected.append(sourceLinks);
     const context = document.createElement('p'); context.className = 'artist-context'; context.textContent = `Directly observed in ${state.atlas.byId.get(state.focus).name}`; selected.append(context);
     detailHeading('Direct genres');
     const genres = detailList();

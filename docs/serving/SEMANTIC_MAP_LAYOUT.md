@@ -1,6 +1,6 @@
 # Semantic map layout
 
-`semantic-map-layout-v2` is a renderer-neutral, local research artifact for a
+`semantic-map-layout-v3` is the selected renderer-neutral, local research artifact for a
 16:9 landscape map. Its coordinates mean public structural proximity from
 genre-peer evidence, privacy-safe aggregate co-listens, and the factual plus
 review hierarchy. They are not bounciness or organism axes, and they do not
@@ -38,8 +38,8 @@ Run it against the currently sealed inputs:
 uv run poe rebuild-semantic-map-layout
 ```
 
-The v1 artifact is deliberately not migrated: it encodes older coordinates and
-an older settings digest. Rebuild v2 from its sealed inputs, then run
+Earlier artifacts are deliberately not migrated: they encode older coordinates and
+settings digests. Rebuild v3 from its sealed inputs, then run
 `uv run poe rebuild-certify-semantic-pages` to rebuild and browser-certify the
 static Pages directory in one sequence.
 
