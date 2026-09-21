@@ -1,6 +1,6 @@
 # Public release custody
 
-`poe public-release-custody` verifies and seals the qualified Phase 3 public
+This is archived custody guidance; `public-release-custody` is not a current Poe task. It verifies and seals the qualified Phase 3 public
 release without downloading or rebuilding any source. The command is
 cache-only: it opens the SQLite cache read-only, checks its declared SHA-256,
 size, schema, SQLite integrity, manifest boundary, and expected source-table
@@ -51,7 +51,7 @@ the object.
 
 ## Portable cache-only bundle
 
-`poe public-release-bundle` moves the **sealed derived cache**, release
+The retired bundle workflow moves the **sealed derived cache**, release
 configuration, original custody receipt, public model, map, acceptance and
 browser evidence, final report, and the paired objective-gate reports between
 object stores. It is deliberately not a raw-source archive: the bundle receipt
@@ -63,17 +63,17 @@ All paths below are explicit. The current known-good source is the retained
 store must not be used because its cache bytes no longer match its receipt.
 
 ```sh
-uv run poe public-release-bundle -- export \
+python scripts/public_release_bundle.py export \
   --custody-receipt .cache/public-release-custody-hardening/public-release-custody-receipt.json \
   --release-directory config/releases/phase3-public-20260831 \
   --custody-store .cache/public-release-custody-hardening/objects \
   --bundle-store /portable/public-release-objects
 
-uv run poe public-release-bundle -- verify \
+python scripts/public_release_bundle.py verify \
   --bundle-store /portable/public-release-objects \
   --receipt-key bundles/public-release/v1/<custody-receipt-sha256>/receipt.json
 
-uv run poe public-release-bundle -- restore \
+python scripts/public_release_bundle.py restore \
   --bundle-store /portable/public-release-objects \
   --receipt-key bundles/public-release/v1/<custody-receipt-sha256>/receipt.json \
   --cache-database data/phase3-public-qualified.sqlite \
@@ -91,6 +91,6 @@ uses the atomic object-store pull for every named destination. Running it again
 is a byte-for-byte idempotent replacement. After restore, the cache-only model
 and map builder can verify the exact local release boundary without starting a
 runtime service. The public web release is certified separately with
-`uv run poe certify-static-pages`, which verifies the sealed semantic layout,
+`poe build`, which verifies the sealed semantic layout,
 exports Pages assets, and runs the loopback browser gate. Neither command
 re-ingests the original sources.

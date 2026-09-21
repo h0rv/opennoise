@@ -5,7 +5,7 @@ from the approved cached MusicBrainz archive. It writes only to
 `.cache/release-group-context-prefix-pilot-v2` through the Poe task:
 
 ```bash
-uv run poe build-release-group-context-prefix-v2
+Archived workflow; this retired Poe task has no retained direct script.
 ```
 
 The builder refuses an existing output root and writes a sibling staging

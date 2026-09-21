@@ -14,6 +14,7 @@ import {
   nextLodScale,
   normaliseAtlasPayload,
   searchAtlas,
+  sharedArtistContext,
   structuralNeighborhood,
   visibleNodeLabels,
   zoomAtCenter,
@@ -80,7 +81,7 @@ test('genre artist view ranks same-genre artists by shared memberships', () => {
       ['electronic', { node_id: 'electronic', artist_ids: ['artist-b', 'artist-a', 'artist-c'] }],
     ]),
     artists: new Map([
-      ['artist-a', { artist_id: 'artist-a', name: 'Artist A', memberships: [{ node_id: 'electronic' }, { node_id: 'idm' }], shared_genre_artists: [{ artist_id: 'artist-b' }] }],
+      ['artist-a', { artist_id: 'artist-a', name: 'Artist A', memberships: [{ node_id: 'electronic' }, { node_id: 'idm' }], shared_genre_artists: [{ artist_id: 'artist-b', shared_genre_ids: ['electronic', 'idm'], shared_genre_count: 2 }] }],
       ['artist-b', { artist_id: 'artist-b', name: 'Artist B', memberships: [{ node_id: 'electronic' }, { node_id: 'idm' }, { node_id: 'glitch' }] }],
       ['artist-c', { artist_id: 'artist-c', name: 'Artist C', memberships: [{ node_id: 'electronic' }] }],
     ]),
@@ -91,6 +92,10 @@ test('genre artist view ranks same-genre artists by shared memberships', () => {
     { id: 'artist-c', name: 'Artist C', sharedGenreIds: ['electronic'], score: 0.5 },
   ]);
   assert.deepEqual(artistsInGenre(discovery, 'missing'), []);
+  assert.deepEqual(sharedArtistContext(discovery, 'artist-a', 'artist-b'), {
+    artistId: 'artist-b', genreId: 'electronic', relation: { artist_id: 'artist-b', shared_genre_ids: ['electronic', 'idm'], shared_genre_count: 2 },
+  });
+  assert.equal(sharedArtistContext(discovery, 'artist-a', 'artist-c'), null);
 });
 
 test('focus has one deduplicated twelve-edge structural contract', () => {

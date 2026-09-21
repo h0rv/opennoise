@@ -41,9 +41,10 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("post-punk did not focus its connection set", self.source)
         self.assertIn("post-punk direct artist discovery did not load", self.source)
         self.assertIn(
-            "artist discovery did not expose direct genres and explained artist overlap",
+            "artist discovery did not expose direct genres and direct-overlap similar artists",
             self.source,
         )
+        self.assertIn("artist_direct_overlap_similar", self.source)
         self.assertIn("artist detail back did not restore the genre discovery panel", self.source)
         self.assertIn(
             "artist detail did not expose exact source-backed outbound links", self.source
@@ -96,6 +97,9 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("loadDiscovery", renderer)
         self.assertIn("Artists in this genre", renderer)
         self.assertIn("Also in ", renderer)
+        self.assertIn("Similar artists", renderer)
+        self.assertIn("shared directly observed genres", renderer)
+        self.assertIn("sharedArtistContext", renderer)
         self.assertIn("No direct catalog observations for this map label.", renderer)
         self.assertIn(
             "state.artist = null; showDetail(state.focus, state.edges); "

@@ -51,7 +51,7 @@ Build through the executable path after an operator has prepared the approved
 row file and policy documents:
 
 ```sh
-uv run poe build-public-artist-membership-candidate
+python scripts/build_public_artist_membership_candidate.py  # archived workflow; not a Poe task
 ```
 
 The task reads the sealed name artifact and an approved public-input JSON. The

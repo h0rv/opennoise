@@ -12,6 +12,7 @@ import {
   nextLodScale,
   appendCirclePath,
   artistsInGenre,
+  sharedArtistContext,
   searchAtlas,
   visibleNodeLabels,
   zoomAtCenter,
@@ -314,6 +315,12 @@ if (canvas instanceof HTMLCanvasElement) {
   const artistButton = (artist) => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'detail-action'; button.dataset.openArtistId = artist.artist_id; button.textContent = artist.name; return button;
   };
+  const similarArtistButton = (artist, relation) => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'detail-action'; button.dataset.openSimilarArtistId = artist.artist_id; button.textContent = artist.name;
+    const shared = relation.shared_genre_count;
+    const detail = document.createElement('small'); detail.textContent = `${shared} shared directly observed ${shared === 1 ? 'genre' : 'genres'}`; button.append(detail);
+    return button;
+  };
   const authorizedWikidataUrl = (artist) => {
     const value = artist?.wikidata_url;
     return typeof value === 'string' && /^https:\/\/www\.wikidata\.org\/wiki\/Q[1-9][0-9]*$/.test(value) ? value : null;
@@ -365,6 +372,20 @@ if (canvas instanceof HTMLCanvasElement) {
     const genres = detailList();
     for (const membership of artist.memberships) {
       const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(membership.node_id)}`; link.dataset.openNodeId = membership.node_id; link.textContent = membership.catalog_genre_name; item.append(link); genres.append(item);
+    }
+    const similarEntries = (Array.isArray(artist.shared_genre_artists)
+      ? artist.shared_genre_artists : []).map((relation) => {
+      const peer = state.discovery.artists.get(relation.artist_id);
+      const context = peer ? sharedArtistContext(state.discovery, artistId, peer.artist_id) : null;
+      return context ? { peer, relation } : null;
+    }).filter(Boolean);
+    if (similarEntries.length) {
+      detailHeading('Similar artists');
+      const explanation = document.createElement('p'); explanation.className = 'artist-context'; explanation.textContent = 'Ranked by shared directly observed genres.'; detail.append(explanation);
+      const similar = detailList(); similar.className = 'genre-artists';
+      for (const { peer, relation } of similarEntries) {
+        const item = document.createElement('li'); item.append(similarArtistButton(peer, relation)); similar.append(item);
+      }
     }
     const peers = artistsInGenre(state.discovery, state.focus, artistId);
     detailHeading(`Also in ${state.atlas.byId.get(state.focus).name}`);
@@ -473,8 +494,16 @@ if (canvas instanceof HTMLCanvasElement) {
     if (!state.focus) return;
     state.artist = null; showDetail(state.focus, state.edges); replaceUrl(state.focus); schedule();
   };
+  const openSimilarArtist = (relatedArtistId) => {
+    if (!state.artist) return;
+    const context = sharedArtistContext(state.discovery, state.artist, relatedArtistId);
+    if (!context || !state.atlas?.byId.has(context.genreId)) return;
+    // Retain an exact shared direct-genre context so the target detail passes
+    // the same membership guard as genre-list and search navigation.
+    void focus(context.genreId, true, context.artistId);
+  };
   controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') { if (state.artist) returnToGenreDetail(); else history.back(); } else if (action === 'in') { const target = nextLodScale(state.camera.scale, state.fitScale, state.atlas.maximumScale); if (target > state.camera.scale) state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, target / state.camera.scale, { min: state.fitScale, max: state.atlas.maximumScale }); schedule(); } else if (action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, 1 / 1.5, { min: state.fitScale, max: state.atlas.maximumScale }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
-  document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (target) { event.preventDefault(); closeSearchResults(); void focus(target.dataset.openNodeId); return; } const artist = event.target.closest('[data-open-artist-id]'); if (artist) { event.preventDefault(); closeSearchResults(); showArtist(artist.dataset.openArtistId); return; } if (event.target.closest('[data-map-action="genre-detail"]') && state.focus) { event.preventDefault(); returnToGenreDetail(); } });
+  document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (target) { event.preventDefault(); closeSearchResults(); void focus(target.dataset.openNodeId); return; } const similarArtist = event.target.closest('[data-open-similar-artist-id]'); if (similarArtist) { event.preventDefault(); closeSearchResults(); openSimilarArtist(similarArtist.dataset.openSimilarArtistId); return; } const artist = event.target.closest('[data-open-artist-id]'); if (artist) { event.preventDefault(); closeSearchResults(); showArtist(artist.dataset.openArtistId); return; } if (event.target.closest('[data-map-action="genre-detail"]') && state.focus) { event.preventDefault(); returnToGenreDetail(); } });
   searchResults?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-search-match]'); if (!button) return;
     activateSearchMatch(state.searchMatches[Number(button.dataset.searchMatch)]);

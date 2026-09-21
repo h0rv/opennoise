@@ -16,14 +16,11 @@ overview regions, and bounded local structural edges.
 
 ```sh
 mise install
-uv run poe sync
-uv run poe check
+poe sync
+poe check
 
-uv run poe rebuild-semantic-map-layout
-export OPENNOISE_SEMANTIC_MAP_LAYOUT=.cache/semantic-map-layout-v3/artifact.json
-export OPENNOISE_PAGES_OUTPUT=dist
-UV_OFFLINE=1 uv run --no-sync poe export-semantic-pages
-uv run poe dev
+poe build
+poe dev
 ```
 
 Open <http://127.0.0.1:3001>. `poe dev` is a loopback file server for the
@@ -32,6 +29,8 @@ there is no application server, server-side route, or backend API to configure.
 
 `dist/opennoise-static-manifest.json` is the release receipt. It binds the
 semantic-layout input hashes, coverage accounting, and every served asset.
+
+Deploy a certified `dist` directory with `poe deploy`.
 
 ## Offline construction
 

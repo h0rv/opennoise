@@ -35,12 +35,12 @@ The coordinate parent/root/depth chain remains the taxonomy navigation model.
 Run it against the currently sealed inputs:
 
 ```sh
-uv run poe rebuild-semantic-map-layout
+python scripts/rebuild_semantic_map_layout.py  # archived workflow; not a Poe task
 ```
 
 Earlier artifacts are deliberately not migrated: they encode older coordinates and
 settings digests. Rebuild v3 from its sealed inputs, then run
-`uv run poe rebuild-certify-semantic-pages` to rebuild and browser-certify the
+`poe build` to rebuild and browser-certify the
 static Pages directory in one sequence.
 
 The static renderer should fit the declared landscape world rather than raw

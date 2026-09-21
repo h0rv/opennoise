@@ -17,14 +17,30 @@ class StaticDeliveryContractTests(unittest.TestCase):
 
     def test_poe_exposes_one_static_export_and_a_file_server(self) -> None:
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        poe = project["tool"]["poe"]
         tasks = project["tool"]["poe"]["tasks"]
-        self.assertEqual(tasks["dev"], "python scripts/run_dev.py")
-        self.assertIn("export-semantic-pages", tasks)
-        self.assertIn("certify-static-pages", tasks)
-        self.assertEqual(tasks["certify-static-pages"], "python scripts/certify_static_pages.py")
+        self.assertEqual(poe["executor"], {"type": "simple"})
+        self.assertEqual(set(tasks), {"sync", "bootstrap", "check", "dev", "build", "deploy"})
         self.assertEqual(
-            tasks["rebuild-certify-semantic-pages"],
-            {"sequence": ["rebuild-semantic-map-layout", "certify-static-pages"]},
+            tasks["sync"], {"cmd": "uv sync --locked", "env": {"UV_CACHE_DIR": ".cache/uv"}}
+        )
+        self.assertEqual(tasks["dev"], ".venv/bin/python scripts/run_dev.py")
+        self.assertEqual(tasks["build"], ".venv/bin/python scripts/certify_static_pages.py")
+        self.assertEqual(
+            tasks["check"]["env"], {"TMPDIR": ".cache/test-tmp", "UV_CACHE_DIR": ".cache/uv"}
+        )
+        self.assertIn("set -e", tasks["check"]["shell"])
+        self.assertIn("set -e", tasks["deploy"]["shell"])
+        self.assertIn(
+            ".venv/bin/python scripts/certify_static_pages.py --sealed-deploy",
+            tasks["deploy"]["shell"],
+        )
+        self.assertIn(
+            "wrangler pages deploy dist --project-name opennoise --branch main",
+            tasks["deploy"]["shell"],
+        )
+        self.assertEqual(
+            tasks["deploy"]["env"], {"WRANGLER_LOG_PATH": ".cache/wrangler-deploy.log"}
         )
         for removed in (
             "dev-research",
@@ -46,8 +62,8 @@ class StaticDeliveryContractTests(unittest.TestCase):
         documentation = (ROOT / "docs/serving/OPENNOISE_PAGES_STATIC_STAGING.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("uv run poe certify-static-pages", documentation)
-        self.assertIn("uv run poe dev -- --port 3010", documentation)
+        self.assertIn("poe build", documentation)
+        self.assertIn("poe dev -- --port 3010", documentation)
 
     def test_selected_v3_layout_settings_have_the_certified_digest(self) -> None:
         namespace = run_path(str(ROOT / "scripts" / "rebuild_semantic_map_layout.py"))

@@ -50,9 +50,9 @@ are satisfied.
 
 ## Publication
 
-`poe build-public-model` creates a versioned model artifact from local,
+The archived direct implementation `scripts/build_public_model.py` creates a versioned model artifact from local,
 verified inputs. It remains offline tooling. The public website is built only
-from the sealed semantic-layout artifact by `poe export-semantic-pages`; Pages
+from the sealed semantic-layout artifact by `poe build`; Pages
 serves the resulting files without a database or application server.
 
 The offline catalog database persists names, representatives, profile
@@ -63,7 +63,7 @@ measurements are recorded separately because elapsed time and peak memory vary.
 
 ## Independent publication gate
 
-Run `poe evaluate-public-model-gate -- data/model/public-model-v1.json` before
+Run the archived direct implementation `scripts/evaluate_public_model_gate.py` before
 publishing a model. The gate accepts only the typed public sources above and
 rejects historical or Every Noise vocabulary in the artifact. It recomputes
 every directed neighbor score and shared-artist count from the sparse profile

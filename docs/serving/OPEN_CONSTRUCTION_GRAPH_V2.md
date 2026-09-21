@@ -31,8 +31,8 @@ or guesses a source path, so a fresh checkout either builds from an explicitly
 provided expansion artifact or fails before writing output.
 
 ```sh
-uv run poe build-public-taxonomy-expansion
-uv run poe build-open-construction-graph-v2
+python scripts/build_public_taxonomy_expansion.py  # archived workflow; not a Poe task
+python scripts/build_open_construction_graph_v2.py
 ```
 
 The second command writes the graph and an immutable `LocalObjectStore` copy.

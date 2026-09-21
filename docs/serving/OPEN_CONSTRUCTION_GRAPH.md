@@ -26,8 +26,8 @@ coverage/ambiguity diagnostics, and a deterministic landscape plus an
 independent DAG hierarchy layout. Neither layout uses historical coordinates.
 
 ```sh
-uv run poe build-genre-seed-public-taxonomy
-uv run poe build-open-construction-graph
+python scripts/build_genre_seed_public_taxonomy.py  # archived workflow; not a Poe task
+python scripts/build_open_construction_graph.py
 ```
 
 The second command writes an immutable object-store copy, a receipt, and a

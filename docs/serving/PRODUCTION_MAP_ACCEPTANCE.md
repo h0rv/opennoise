@@ -3,7 +3,7 @@
 The app has one production map. It is a persistent semantic-zoom graph, not a
 choice of layout lenses.
 
-`poe evaluate-production-map <evidence.json> --report <report.json>` accepts
+The archived direct implementation, `scripts/evaluate_production_map.py`, accepts
 only an evidence bundle that passes every gate below. A failed gate exits nonzero
 and blocks publication.
 

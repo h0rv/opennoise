@@ -20,7 +20,7 @@ Run the task with explicit local destinations:
 OPENNOISE_CERTIFIED_PUBLIC_DATABASE=.cache/musicbrainz-20-catalog/public.sqlite \
 OPENNOISE_MUSICBRAINZ_RESEARCH_DATABASE=.cache/musicbrainz-v3-research/musicbrainz-v3.sqlite \
 OPENNOISE_PUBLIC_MEMBERSHIP_EXTERNAL_EVALUATION_REPORT=.cache/musicbrainz-v3-research/public-membership-external-evaluation-v1.json \
-uv run poe evaluate-public-memberships-externally
+python scripts/evaluate_public_memberships_externally.py  # archived workflow; not a Poe task
 ```
 
 Or call the script directly. The default tag-weight sensitivity thresholds are

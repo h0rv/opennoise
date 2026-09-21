@@ -44,7 +44,7 @@ ignore = [
     "D213",   # Incompatible with D212.
     "EM101",  # Typed boundary errors keep their local, specific messages.
     "EM102",  # Typed boundary errors keep their local, specific messages.
-    "ISC001", # Ruff formatter can conflict with this rule.
+    "ISC001", # Ruff formatter can conflict with the formatter.
     "TRY003", # Boundary context belongs at the raise site, not in generic exception classes.
 ]
 
@@ -91,147 +91,24 @@ python-version = "3.13"
 [tool.ty.rules]
 all = "error"
 
+[tool.poe]
+executor = { type = "simple" }
+
 [tool.poe.tasks]
-sync = "uv sync --locked"
-format = "ruff format ."
-format-check = "ruff format --check ."
-lint = "ruff check ."
-typecheck = "ty check"
-"prepare-test-runtime" = "mkdir -p .cache/test-tmp .cache/uv"
-test = { sequence = [
-    "prepare-test-runtime",
-    { cmd = "python -m unittest discover -s tests -v", env = { TMPDIR = ".cache/test-tmp", UV_CACHE_DIR = ".cache/uv" } },
-] }
-schema = "python -m unittest tests.test_schema -v"
-"import" = "opennoise ingest"
-bootstrap = "opennoise bootstrap-everynoise"
-source-cache-status = "opennoise source-cache-status $OPENNOISE_SOURCE_CACHE_SOURCE_IDS"
-acquire-source-cache = "opennoise acquire-source-cache $OPENNOISE_SOURCE_CACHE_SOURCE_IDS --object-store $OPENNOISE_SOURCE_CACHE_OBJECT_STORE --work-directory $OPENNOISE_SOURCE_CACHE_WORK_DIRECTORY --receipt $OPENNOISE_SOURCE_CACHE_RECEIPT"
-cache-musicbrainz-release-group-20260905 = "opennoise acquire-source-cache musicbrainz_json_release_group_research_20260905 --object-store $OPENNOISE_MB_RELEASE_GROUP_CACHE_OBJECT_STORE --work-directory $OPENNOISE_MB_RELEASE_GROUP_CACHE_WORK_DIRECTORY --receipt $OPENNOISE_MB_RELEASE_GROUP_CACHE_RECEIPT --max-sources 1 --max-total-bytes 1200000000 --max-concurrency 1 --timeout-seconds 3600"
-restore-source-cache = "opennoise restore-source-cache $OPENNOISE_SOURCE_CACHE_SOURCE_IDS --object-store $OPENNOISE_SOURCE_CACHE_OBJECT_STORE --receipt $OPENNOISE_SOURCE_CACHE_RECEIPT --destination $OPENNOISE_SOURCE_CACHE_DESTINATION"
-verify-release-source-vault = "python scripts/replay_source_vault.py verify --manifest config/releases/phase3-public-20260831/release-manifest.json"
-restore-release-source-vault = "python scripts/replay_source_vault.py restore --manifest config/releases/phase3-public-20260831/release-manifest.json"
-replay-release-source-vault-candidate = "python scripts/replay_source_vault.py candidate-database --manifest config/releases/phase3-public-20260831/release-manifest.json"
-replay-release-source-vault-listenbrainz-candidate = "python scripts/replay_source_vault.py candidate-listenbrainz-database --manifest config/releases/phase3-public-20260831/release-manifest.json --source-manifest config/data_sources.toml"
-genre-candidate-review = "python scripts/manage_genre_candidate_review.py"
-audit-genre-candidate-triage = "python scripts/audit_genre_candidate_triage.py"
-evaluate-lastfm-artisttags2007-overlap = "python scripts/evaluate_lastfm_artisttags2007_overlap.py"
-direct-bridge-review = "python scripts/manage_direct_bridge_review.py"
-audit-direct-bridges = "python scripts/audit_direct_bridges.py"
-direct-bridge-review-packet = "python scripts/build_direct_bridge_review_packet.py"
-dev = "python scripts/run_dev.py"
-rebuild-semantic-map-layout = "python scripts/rebuild_semantic_map_layout.py"
-rebuild-certify-semantic-pages = { sequence = ["rebuild-semantic-map-layout", "certify-static-pages"] }
-export-semantic-pages = "python scripts/export_semantic_pages.py --semantic-layout $OPENNOISE_SEMANTIC_MAP_LAYOUT --output $OPENNOISE_PAGES_OUTPUT"
-certify-static-pages = "python scripts/certify_static_pages.py"
-build-local-musicbrainz-artist-reverse-lookup = "python scripts/build_local_musicbrainz_artist_reverse_lookup.py --evidence-db .cache/musicbrainz-release-group-evidence-candidate-v1/evidence.sqlite --evidence-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artifact.json --output-db .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup.sqlite --output-artifact .cache/musicbrainz-release-group-evidence-candidate-v1/artist-reverse-lookup-artifact.json"
-evaluate-layout = "python scripts/evaluate_layout.py data/opennoise.sqlite --layout default"
-evaluate-membership = "python scripts/evaluate_membership.py tests/fixtures/membership_evaluation.json"
-evaluate-artist-memberships = "python scripts/evaluate_artist_memberships.py $OPENNOISE_PUBLIC_MODEL_ARTIFACT --judgments $OPENNOISE_ARTIST_MEMBERSHIP_JUDGMENTS --report $OPENNOISE_ARTIST_MEMBERSHIP_EVALUATION_REPORT --database $OPENNOISE_ARTIST_MEMBERSHIP_EVALUATION_DATABASE --object-store $OPENNOISE_ARTIST_MEMBERSHIP_EVALUATION_OBJECT_STORE"
-evaluate-independent-artist-genre-gold = "python scripts/evaluate_independent_artist_genre_gold.py --gold $OPENNOISE_INDEPENDENT_ARTIST_GENRE_GOLD --predictions $OPENNOISE_INDEPENDENT_ARTIST_GENRE_PREDICTIONS --report $OPENNOISE_INDEPENDENT_ARTIST_GENRE_GOLD_REPORT"
-evaluate-public-memberships-externally = "python scripts/evaluate_public_memberships_externally.py --public-database $OPENNOISE_CERTIFIED_PUBLIC_DATABASE --musicbrainz-research-database $OPENNOISE_MUSICBRAINZ_RESEARCH_DATABASE --report $OPENNOISE_PUBLIC_MEMBERSHIP_EXTERNAL_EVALUATION_REPORT"
-ingest-musicbrainz-artists = "opennoise ingest-source musicbrainz_json_artist_20260829 --partition-prefix 0 --max-record-bytes 67108864"
-ingest-musicbrainz-research = "opennoise ingest-source musicbrainz_json_artist_research_20260829 --partition-prefix 0 --max-record-bytes 67108864"
-evaluate-musicbrainz-coverage = "python scripts/evaluate_musicbrainz_coverage.py --research-database $OPENNOISE_MB_RESEARCH_DATABASE --seed-database $OPENNOISE_SEED_DATABASE --source-key $OPENNOISE_MB_SOURCE_KEY --report $OPENNOISE_MB_COVERAGE --inputs $OPENNOISE_RECONSTRUCTION_INPUTS --baseline-report $OPENNOISE_MB_BASELINE_REPORT"
-build-musicbrainz-seed-identities = "python scripts/run_genre_reconstruction_pipeline.py musicbrainz-input --coverage $OPENNOISE_MB_COVERAGE --seed-artifact $OPENNOISE_H2_SEED_ARTIFACT --output $OPENNOISE_MB_SEED_IDENTITIES"
-extract-musicbrainz-seed-targets = "python scripts/extract_musicbrainz_seed_targets.py --archive $OPENNOISE_MB_ARTIST_ARCHIVE --seed-artifact $OPENNOISE_H2_SEED_ARTIFACT --output $OPENNOISE_MB_SEED_TARGET_ARTIFACT"
-adapt-musicbrainz-seed-targets = "python scripts/adapt_musicbrainz_seed_targets.py --seed-target-artifact $OPENNOISE_MB_SEED_TARGET_ARTIFACT --reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --model-input $OPENNOISE_PUBLIC_MODEL_INPUT --report $OPENNOISE_MB_SEED_TARGET_ADAPTER_REPORT"
-build-musicbrainz-spotify-bridge = "python scripts/build_musicbrainz_spotify_bridge.py --archive $OPENNOISE_MB_ARTIST_ARCHIVE --historical-database $OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE --output $OPENNOISE_MB_SPOTIFY_BRIDGE_OUTPUT --object-store $OPENNOISE_MB_SPOTIFY_BRIDGE_OBJECT_STORE --receipt $OPENNOISE_MB_SPOTIFY_BRIDGE_RECEIPT"
-build-open-tag-feature-matrix = "python scripts/build_open_tag_feature_matrix.py --source-artifact $OPENNOISE_MB_SEED_TARGET_ARTIFACT --matrix $OPENNOISE_OPEN_TAG_FEATURE_MATRIX --output $OPENNOISE_OPEN_TAG_FEATURE_MANIFEST --object-store $OPENNOISE_OPEN_TAG_FEATURE_OBJECT_STORE --receipt $OPENNOISE_OPEN_TAG_FEATURE_RECEIPT"
-build-historical-imitation = "python scripts/build_historical_imitation.py --source-artifact $OPENNOISE_MB_SEED_TARGET_ARTIFACT --bridge $OPENNOISE_MB_SPOTIFY_BRIDGE_OUTPUT --bridge-receipt $OPENNOISE_MB_SPOTIFY_BRIDGE_RECEIPT --bridge-receipt-sha256 $OPENNOISE_MB_SPOTIFY_BRIDGE_RECEIPT_SHA256 --feature-manifest $OPENNOISE_OPEN_TAG_FEATURE_MANIFEST --feature-matrix $OPENNOISE_OPEN_TAG_FEATURE_MATRIX --feature-receipt $OPENNOISE_OPEN_TAG_FEATURE_RECEIPT --feature-receipt-sha256 $OPENNOISE_OPEN_TAG_FEATURE_RECEIPT_SHA256 --historical-database $OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE --output $OPENNOISE_HISTORICAL_IMITATION_OUTPUT --object-store $OPENNOISE_HISTORICAL_IMITATION_OBJECT_STORE --receipt $OPENNOISE_HISTORICAL_IMITATION_RECEIPT"
-build-sparse-genre-prototype = "python scripts/build_sparse_genre_prototype.py --source-artifact $OPENNOISE_MB_SEED_TARGET_ARTIFACT --output $OPENNOISE_SPARSE_GENRE_PROTOTYPE_OUTPUT --object-store $OPENNOISE_SPARSE_GENRE_PROTOTYPE_OBJECT_STORE --receipt $OPENNOISE_SPARSE_GENRE_PROTOTYPE_RECEIPT"
-build-learned-label-alignment = "python scripts/build_learned_label_alignment.py --seed-target-artifact $OPENNOISE_MB_SEED_TARGET_ARTIFACT --seed-reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --output $OPENNOISE_LEARNED_LABEL_ALIGNMENT_OUTPUT --object-store $OPENNOISE_LEARNED_LABEL_ALIGNMENT_OBJECT_STORE --receipt $OPENNOISE_LEARNED_LABEL_ALIGNMENT_RECEIPT"
-build-open-label-graph-model = "python scripts/build_open_label_graph_model.py --seed-target-artifact $OPENNOISE_MB_SEED_TARGET_ARTIFACT --seed-reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --output $OPENNOISE_OPEN_LABEL_GRAPH_MODEL_OUTPUT --object-store $OPENNOISE_OPEN_LABEL_GRAPH_MODEL_OBJECT_STORE --receipt $OPENNOISE_OPEN_LABEL_GRAPH_MODEL_RECEIPT"
-build-microgenre-signal-checkpoint = "python scripts/build_microgenre_signal_checkpoint.py --input $OPENNOISE_MICROGENRE_SIGNAL_INPUT --output $OPENNOISE_MICROGENRE_SIGNAL_OUTPUT"
-build-lastfm-reverse-tag-evidence = "python scripts/build_lastfm_reverse_tag_evidence.py --seed-reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --query-manifest $OPENNOISE_LASTFM_REVERSE_TAG_QUERY_MANIFEST --response-cache $OPENNOISE_LASTFM_REVERSE_TAG_RESPONSE_CACHE --output $OPENNOISE_LASTFM_REVERSE_TAG_OUTPUT --object-store $OPENNOISE_LASTFM_REVERSE_TAG_OBJECT_STORE --receipt $OPENNOISE_LASTFM_REVERSE_TAG_RECEIPT"
-build-msd-lastfm-evidence = "python scripts/build_msd_lastfm_evidence.py --metadata-db $OPENNOISE_MSD_TRACK_METADATA_DB --tags-db $OPENNOISE_MSD_LASTFM_TAGS_DB --similarity-db $OPENNOISE_MSD_LASTFM_SIMILARITY_DB --cache-root $OPENNOISE_MSD_LASTFM_CACHE_ROOT --source-cache-receipt $OPENNOISE_MSD_LASTFM_SOURCE_CACHE_RECEIPT --seed-reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --output $OPENNOISE_MSD_LASTFM_EVIDENCE_OUTPUT --object-store $OPENNOISE_MSD_LASTFM_OBJECT_STORE --receipt $OPENNOISE_MSD_LASTFM_EVIDENCE_RECEIPT"
-build-listenbrainz-propagation = "python scripts/build_listenbrainz_propagation.py --seed-artifact $OPENNOISE_H2_SEED_ARTIFACT --musicbrainz-seed-target-artifact $OPENNOISE_MB_SEED_TARGET_ARTIFACT --catalog-db $OPENNOISE_LB_PROPAGATION_CATALOG_DB --catalog-db-sha256 $OPENNOISE_LB_PROPAGATION_QUALIFIED_DB_SHA256 --listenbrainz-db $OPENNOISE_LB_PROPAGATION_LISTENBRAINZ_DB --listenbrainz-db-sha256 $OPENNOISE_LB_PROPAGATION_QUALIFIED_DB_SHA256 --output $OPENNOISE_LB_PROPAGATION_OUTPUT --object-store $OPENNOISE_LB_PROPAGATION_OBJECT_STORE --receipt $OPENNOISE_LB_PROPAGATION_RECEIPT"
-reconcile-genre-seeds = "python scripts/run_genre_reconstruction_pipeline.py reconcile --seed-artifact $OPENNOISE_H2_SEED_ARTIFACT --taxonomy-artifact $OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT --musicbrainz-input $OPENNOISE_MB_SEED_IDENTITIES --output $OPENNOISE_SEED_RECONCILIATION_OUTPUT --object-store $OPENNOISE_RECONSTRUCTION_OBJECT_STORE"
-bridge-reconstruction-input = "python scripts/run_genre_reconstruction_pipeline.py bridge-input --reconstruction-inputs $OPENNOISE_RECONSTRUCTION_INPUTS --reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --output $OPENNOISE_PUBLIC_MODEL_INPUT --report $OPENNOISE_RECONSTRUCTION_BRIDGE_REPORT"
-build-all-seed-evidence-frontier = "python scripts/build_all_seed_evidence_frontier.py --previous-frontier-v4 $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_V4_OUTPUT --previous-frontier-v4-receipt $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_V4_RECEIPT --listenbrainz-propagation $OPENNOISE_LB_PROPAGATION_OUTPUT --listenbrainz-propagation-receipt $OPENNOISE_LB_PROPAGATION_RECEIPT --output $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_OUTPUT --object-store $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_OBJECT_STORE --receipt $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_RECEIPT"
-evaluate-listenbrainz-propagation-h3 = "python scripts/evaluate_listenbrainz_propagation_h3.py --frontier-v5 $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_OUTPUT --frontier-v5-receipt $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_RECEIPT --listenbrainz-propagation $OPENNOISE_LB_PROPAGATION_OUTPUT --listenbrainz-propagation-receipt $OPENNOISE_LB_PROPAGATION_RECEIPT --bridge $OPENNOISE_MB_SPOTIFY_BRIDGE_OUTPUT --bridge-receipt $OPENNOISE_MB_SPOTIFY_BRIDGE_RECEIPT --bridge-receipt-sha256 $OPENNOISE_MB_SPOTIFY_BRIDGE_RECEIPT_SHA256 --historical-database $OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE --output $OPENNOISE_LB_H3_EVALUATION_OUTPUT --object-store $OPENNOISE_LB_H3_EVALUATION_OBJECT_STORE --receipt $OPENNOISE_LB_H3_EVALUATION_RECEIPT"
-build-genre-containment-candidates = "python scripts/run_genre_reconstruction_pipeline.py containment --taxonomy-artifact $OPENNOISE_PUBLIC_TAXONOMY_EXPANSION_OUTPUT --reconstruction-inputs $OPENNOISE_RECONSTRUCTION_INPUTS --bridge $OPENNOISE_GENRE_CONTAINMENT_BRIDGE --output $OPENNOISE_GENRE_CONTAINMENT_OUTPUT --object-store $OPENNOISE_RECONSTRUCTION_OBJECT_STORE --receipt $OPENNOISE_GENRE_CONTAINMENT_RECEIPT"
-build-genre-peer-similarity = "python scripts/run_genre_reconstruction_pipeline.py peer --public-input $OPENNOISE_PUBLIC_MODEL_INPUT --seed-reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --output $OPENNOISE_GENRE_PEER_OUTPUT --gate-report $OPENNOISE_GENRE_PEER_GATE"
-build-genre-hierarchy-candidates = "python scripts/build_genre_hierarchy_candidates.py --reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --taxonomy $OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT --public-model-input $OPENNOISE_PUBLIC_MODEL_INPUT --output $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_OUTPUT --object-store $OPENNOISE_RECONSTRUCTION_OBJECT_STORE --receipt $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_RECEIPT"
-build-genre-hierarchy-candidates-with-taxonomy-relations = "python scripts/build_genre_hierarchy_candidates.py --reconciliation $OPENNOISE_SEED_RECONCILIATION_OUTPUT --taxonomy $OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT --public-model-input $OPENNOISE_PUBLIC_MODEL_INPUT --taxonomy-relation-expansion $OPENNOISE_TAXONOMY_RELATION_EXPANSION_OUTPUT --taxonomy-relation-expansion-receipt $OPENNOISE_TAXONOMY_RELATION_EXPANSION_RECEIPT --taxonomy-relation-source-object-store $OPENNOISE_TAXONOMY_RELATION_EXPANSION_OBJECT_STORE --output $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_OUTPUT --object-store $OPENNOISE_RECONSTRUCTION_OBJECT_STORE --receipt $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_RECEIPT"
-build-taxonomy-relation-hierarchy-overlay = "python scripts/build_taxonomy_relation_hierarchy_overlay.py --base-hierarchy $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_OUTPUT --base-receipt $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_RECEIPT --base-object-store $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_OBJECT_STORE --expected-base-receipt-sha256 $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_RECEIPT_SHA256 --relation-expansion $OPENNOISE_TAXONOMY_RELATION_EXPANSION_OUTPUT --relation-source-object-store $OPENNOISE_TAXONOMY_RELATION_EXPANSION_OBJECT_STORE --output $OPENNOISE_TAXONOMY_RELATION_HIERARCHY_OVERLAY_OUTPUT --object-store $OPENNOISE_TAXONOMY_RELATION_HIERARCHY_OVERLAY_OBJECT_STORE --receipt $OPENNOISE_TAXONOMY_RELATION_HIERARCHY_OVERLAY_RECEIPT"
-build-taxonomy-relation-frontier-v6 = "python scripts/build_taxonomy_relation_frontier_v6.py --v5-frontier $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_OUTPUT --v5-receipt $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_RECEIPT --v5-object-store $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_OBJECT_STORE --expected-v5-receipt-sha256 $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_RECEIPT_SHA256 --overlay $OPENNOISE_TAXONOMY_RELATION_HIERARCHY_OVERLAY_OUTPUT --overlay-receipt $OPENNOISE_TAXONOMY_RELATION_HIERARCHY_OVERLAY_RECEIPT --overlay-object-store $OPENNOISE_TAXONOMY_RELATION_HIERARCHY_OVERLAY_OBJECT_STORE --expected-overlay-receipt-sha256 $OPENNOISE_TAXONOMY_RELATION_HIERARCHY_OVERLAY_EXPECTED_RECEIPT_SHA256 --output $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_V6_OUTPUT --object-store $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_V6_OBJECT_STORE --receipt $OPENNOISE_ALL_SEED_EVIDENCE_FRONTIER_V6_RECEIPT"
-build-taxonomy-relation-expansion = "python scripts/build_taxonomy_relation_expansion.py --taxonomy $OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT --catalog-snapshot $OPENNOISE_TAXONOMY_RELATION_CATALOG_SNAPSHOT --output $OPENNOISE_TAXONOMY_RELATION_EXPANSION_OUTPUT --object-store $OPENNOISE_TAXONOMY_RELATION_EXPANSION_OBJECT_STORE --receipt $OPENNOISE_TAXONOMY_RELATION_EXPANSION_RECEIPT"
-evaluate-taxonomy-relation-expansion = "python scripts/evaluate_taxonomy_relation_expansion.py --expansion $OPENNOISE_TAXONOMY_RELATION_EXPANSION_OUTPUT --taxonomy $OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT --reference-candidates $OPENNOISE_GENRE_HIERARCHY_CANDIDATES_OUTPUT --catalog-snapshot $OPENNOISE_TAXONOMY_RELATION_CATALOG_SNAPSHOT --source-object-store $OPENNOISE_TAXONOMY_RELATION_EXPANSION_OBJECT_STORE --output $OPENNOISE_TAXONOMY_RELATION_EXPANSION_EVALUATION_OUTPUT"
-evaluate-genre-peer-similarity-historical = "python scripts/run_genre_reconstruction_pipeline.py peer-evaluate --candidate $OPENNOISE_GENRE_PEER_OUTPUT --public-input $OPENNOISE_PUBLIC_MODEL_INPUT --public-database $OPENNOISE_CERTIFIED_PUBLIC_DATABASE --historical-database $OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE --output $OPENNOISE_GENRE_PEER_HISTORICAL_REPORT --object-store $OPENNOISE_RECONSTRUCTION_OBJECT_STORE --receipt $OPENNOISE_GENRE_PEER_HISTORICAL_RECEIPT"
-evaluate-genre-peer-similarity-h3-bridge = "python scripts/evaluate_peer_similarity_h3_bridge.py --candidate $OPENNOISE_GENRE_PEER_OUTPUT --public-input $OPENNOISE_PUBLIC_MODEL_INPUT --bridge $OPENNOISE_MB_SPOTIFY_BRIDGE_OUTPUT --bridge-receipt $OPENNOISE_MB_SPOTIFY_BRIDGE_RECEIPT --bridge-receipt-sha256 $OPENNOISE_MB_SPOTIFY_BRIDGE_RECEIPT_SHA256 --historical-database $OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE --output $OPENNOISE_GENRE_PEER_H3_BRIDGE_EVALUATION_OUTPUT"
-build-musicbrainz-research-graph = "python scripts/build_musicbrainz_research_graph.py build --coverage .cache/musicbrainz-v3-research/coverage-prefix0.json --reconstruction-inputs .cache/musicbrainz-v3-research/reconstruction-inputs-prefix0.json --research-database .cache/musicbrainz-v3-research/musicbrainz-v3.sqlite --output .cache/musicbrainz-v3-research/name-seed-research-graph-v1.json --gate-report .cache/musicbrainz-v3-research/name-seed-research-graph-v1.gate.json"
-evaluate-musicbrainz-research-graph = "python scripts/build_musicbrainz_research_graph.py evaluate --graph .cache/musicbrainz-v3-research/name-seed-research-graph-v1.json --expected-graph-sha256 $OPENNOISE_MB_RESEARCH_GRAPH_SHA256 --historical-benchmark .cache/historical-signal-final/historical-signal-semantic-v1.json --output .cache/musicbrainz-v3-research/name-seed-research-graph-v1.evaluation.json"
-ingest-musicbrainz-release-groups = "opennoise ingest-source musicbrainz_json_release_group_research_20260829 --partition-prefix 00 --max-archive-bytes 1250000000 --max-record-bytes 2097152 --checkpoint-every 1000"
-build-musicbrainz-release-group-evidence = "python scripts/build_musicbrainz_release_group_evidence.py --archive $OPENNOISE_MB_RELEASE_GROUP_ARCHIVE --source-cache-receipt $OPENNOISE_MB_RELEASE_GROUP_SOURCE_RECEIPT --seed-target-artifact $OPENNOISE_MB_SEED_TARGET_ARTIFACT --database $OPENNOISE_MB_RELEASE_GROUP_EVIDENCE_DATABASE --output $OPENNOISE_MB_RELEASE_GROUP_EVIDENCE_OUTPUT --object-store $OPENNOISE_MB_RELEASE_GROUP_EVIDENCE_OBJECT_STORE --receipt $OPENNOISE_MB_RELEASE_GROUP_EVIDENCE_RECEIPT"
-build-evidence-graph-checkpoint = "python scripts/build_evidence_graph_projection.py --frontier $OPENNOISE_EVIDENCE_GRAPH_FRONTIER --musicbrainz-database $OPENNOISE_EVIDENCE_GRAPH_MUSICBRAINZ_DATABASE --musicbrainz-artifact $OPENNOISE_EVIDENCE_GRAPH_MUSICBRAINZ_ARTIFACT --reviewed-alias-context $OPENNOISE_EVIDENCE_GRAPH_REVIEWED_ALIAS_CONTEXT --taxonomy-relation $OPENNOISE_EVIDENCE_GRAPH_TAXONOMY_RELATION --direct-peer $OPENNOISE_EVIDENCE_GRAPH_DIRECT_PEER --support-peer $OPENNOISE_EVIDENCE_GRAPH_SUPPORT_PEER --filtered-support-peer $OPENNOISE_EVIDENCE_GRAPH_FILTERED_SUPPORT_PEER --output-database $OPENNOISE_EVIDENCE_GRAPH_DATABASE --receipt $OPENNOISE_EVIDENCE_GRAPH_RECEIPT"
-build-full-graph-signal = "python scripts/build_full_graph_signal.py --graph-database $OPENNOISE_EVIDENCE_GRAPH_DATABASE --graph-receipt $OPENNOISE_EVIDENCE_GRAPH_RECEIPT --construction-certificate $OPENNOISE_EVIDENCE_GRAPH_CONSTRUCTION_CERTIFICATE --cache-directory $OPENNOISE_FULL_GRAPH_SIGNAL_CACHE --output $OPENNOISE_FULL_GRAPH_SIGNAL_OUTPUT --receipt $OPENNOISE_FULL_GRAPH_SIGNAL_RECEIPT --run-report $OPENNOISE_FULL_GRAPH_SIGNAL_RUN_REPORT"
-build-latent-genre-similarity = "python scripts/build_latent_genre_similarity.py"
-certify-reconstruction-checkpoint = "python scripts/certify_reconstruction_checkpoint.py"
-evaluate-current-lineage-historical = "python scripts/evaluate_current_lineage_historical.py"
-audit-source-coverage = "python scripts/audit_source_coverage.py"
-build-cold-label-alignment = "python scripts/build_cold_label_alignment.py"
-build-release-group-label-vocabulary = "python scripts/build_release_group_label_vocabulary.py"
-audit-cold-label-alignment-historical = "python scripts/audit_cold_label_alignment_historical.py"
-build-hierarchy-fusion = "python scripts/build_hierarchy_fusion.py"
-evaluate-hierarchy-fusion-h3 = "python scripts/evaluate_hierarchy_fusion_h3.py"
-build-evidence-graph-artist-identities = "python scripts/build_evidence_graph_artist_identity_overlay.py --graph-database $OPENNOISE_EVIDENCE_GRAPH_DATABASE --graph-receipt $OPENNOISE_EVIDENCE_GRAPH_RECEIPT --metadata-database $OPENNOISE_EVIDENCE_GRAPH_ARTIST_METADATA_DATABASE --metadata-receipt $OPENNOISE_EVIDENCE_GRAPH_ARTIST_METADATA_RECEIPT --output-database $OPENNOISE_EVIDENCE_GRAPH_ARTIST_IDENTITIES_DATABASE --receipt $OPENNOISE_EVIDENCE_GRAPH_ARTIST_IDENTITIES_RECEIPT"
-build-listenbrainz-dual-overlay = "python scripts/build_listenbrainz_dual_overlay.py"
-build-genre-colisten-neighborhoods = "python scripts/build_genre_colisten_neighborhoods.py"
-build-colisten-membership-transfer = "python scripts/build_colisten_membership_transfer.py"
-build-release-group-context-prefix-v2 = "python scripts/build_release_group_context_prefix_pilot.py --archive .cache/musicbrainz-release-group-source-objects/source-artifacts/sha256/6f153846228dc6034b2f8f43b472b088792cc2e242b09783a8968fa8d4bd7a43 --reconciliation .cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json --seed-target .cache/musicbrainz-full-seed-targets/musicbrainz-seed-targets-v1.json --alias-config config/reviewed_musicbrainz_seed_aliases_v1.json --output-root .cache/release-group-context-prefix-pilot-v2"
-ingest-musicbrainz-recordings = "opennoise ingest-source musicbrainz_json_recording_research_20260829 --partition-prefix 0 --max-archive-bytes 40000000 --max-record-bytes 2097152 --checkpoint-every 1000"
-ingest-wikidata = "python scripts/ingest_wikidata.py"
-enrich-wikidata-public-genres = "python scripts/ingest_wikidata.py --query config/wikidata_public_genres_20260831.rq --source-id wikidata_public_genres_20260831 --max-records 50000"
-ingest-listenbrainz = "opennoise ingest-source listenbrainz_incremental_20260830 --max-archive-bytes 300000000 --max-records 6000000 --checkpoint-every 5000"
-ingest-listenbrainz-joint = "python scripts/ingest_joint_listenbrainz.py"
-build-public-model = "python scripts/build_public_model.py"
-publish-public-model = "opennoise publish-public-model"
-validate-public-graph = "python scripts/validate_public_graph.py"
-evaluate-public-model-gate = "python scripts/evaluate_public_model_gate.py"
-verify-phase3-release-manifest = "python scripts/verify_phase3_release_manifest.py"
-evaluate-production-map = "python scripts/evaluate_production_map.py"
-build-historical-compatibility = "python scripts/build_historical_compatibility.py"
-evaluate-historical-compatibility = "python scripts/evaluate_historical_compatibility.py"
-build-historical-signal-model = "python scripts/build_historical_signal_model.py"
-custody-historical-inputs = "python scripts/custody_historical_inputs.py --h3-source $OPENNOISE_HISTORICAL_H3_SOURCE --membership-database $OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE --object-store $OPENNOISE_HISTORICAL_OBJECT_STORE --receipt $OPENNOISE_HISTORICAL_CUSTODY_RECEIPT --h2-manifest $OPENNOISE_HISTORICAL_MANIFEST"
-audit-historical-signal = "python scripts/audit_historical_signal.py"
-publish-historical-signal-map = "python scripts/publish_historical_signal_map.py"
-evaluate-historical-hierarchy = "python scripts/evaluate_historical_hierarchy.py"
-evaluate-historical-hierarchy-gate = "python scripts/evaluate_historical_hierarchy_release_gate.py"
-build-metadata-representatives = "python scripts/build_metadata_representatives.py $OPENNOISE_PUBLIC_DATABASE --output $OPENNOISE_METADATA_REPRESENTATIVES_OUTPUT"
-publish-metadata-representatives = "python scripts/publish_metadata_representatives.py $OPENNOISE_METADATA_REPRESENTATIVES_ARTIFACT --object-store $OPENNOISE_METADATA_REPRESENTATIVES_OBJECT_STORE --output $OPENNOISE_METADATA_REPRESENTATIVES_RECEIPT"
-hydrate-musicbrainz-releases = "opennoise hydrate-musicbrainz-releases --representatives $OPENNOISE_METADATA_REPRESENTATIVES_ARTIFACT --output $OPENNOISE_MUSICBRAINZ_HYDRATION_OUTPUT --object-store $OPENNOISE_MUSICBRAINZ_HYDRATION_OBJECT_STORE --cache-directory $OPENNOISE_MUSICBRAINZ_HYDRATION_CACHE --user-agent $OPENNOISE_MUSICBRAINZ_USER_AGENT"
-build-representative-catalog-candidates = "opennoise build-representative-catalog-candidates --database $OPENNOISE_REPRESENTATIVE_CATALOG_DATABASE --run-ref $OPENNOISE_REPRESENTATIVE_CATALOG_RUN_REF --policy-id $OPENNOISE_REPRESENTATIVE_CATALOG_POLICY_ID --generated-at $OPENNOISE_REPRESENTATIVE_CATALOG_GENERATED_AT --output $OPENNOISE_REPRESENTATIVE_CATALOG_OUTPUT --object-store $OPENNOISE_REPRESENTATIVE_CATALOG_OBJECT_STORE --report $OPENNOISE_REPRESENTATIVE_CATALOG_REPORT"
-build-artist-backed-release-expansion = "python scripts/build_artist_backed_release_expansion.py --source-database $OPENNOISE_ARTIST_BACKED_RELEASE_SOURCE_DATABASE --database $OPENNOISE_ARTIST_BACKED_RELEASE_DATABASE --output $OPENNOISE_ARTIST_BACKED_RELEASE_OUTPUT --object-store $OPENNOISE_ARTIST_BACKED_RELEASE_OBJECT_STORE --cache-directory $OPENNOISE_ARTIST_BACKED_RELEASE_CACHE --report $OPENNOISE_ARTIST_BACKED_RELEASE_REPORT --user-agent $OPENNOISE_MUSICBRAINZ_USER_AGENT"
-build-genre-seed-universe = "opennoise build-genre-seed-universe --seed-artifact $OPENNOISE_H2_SEED_ARTIFACT --catalog-database $OPENNOISE_PUBLIC_DATABASE --output $OPENNOISE_GENRE_SEED_UNIVERSE_OUTPUT"
-build-genre-seed-public-taxonomy = "python scripts/build_genre_seed_public_taxonomy.py --seed-artifact $OPENNOISE_H2_SEED_ARTIFACT --public-catalog-database $OPENNOISE_PUBLIC_DATABASE --output $OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT"
-build-open-construction-graph = "opennoise build-open-construction-graph --seed-artifact $OPENNOISE_H2_SEED_ARTIFACT --taxonomy-artifact $OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT --public-catalog-database $OPENNOISE_PUBLIC_DATABASE --output $OPENNOISE_OPEN_CONSTRUCTION_GRAPH_OUTPUT --object-store $OPENNOISE_OPEN_CONSTRUCTION_GRAPH_OBJECT_STORE --receipt $OPENNOISE_OPEN_CONSTRUCTION_GRAPH_RECEIPT --gate-report $OPENNOISE_OPEN_CONSTRUCTION_GRAPH_GATE"
-build-public-taxonomy-expansion = "python scripts/build_public_taxonomy_expansion.py --taxonomy-artifact $OPENNOISE_GENRE_SEED_PUBLIC_TAXONOMY_OUTPUT --public-catalog-database $OPENNOISE_PUBLIC_DATABASE --output $OPENNOISE_PUBLIC_TAXONOMY_EXPANSION_OUTPUT --object-store $OPENNOISE_PUBLIC_TAXONOMY_EXPANSION_OBJECT_STORE --receipt $OPENNOISE_PUBLIC_TAXONOMY_EXPANSION_RECEIPT"
-build-public-artist-membership-candidate = "python scripts/build_public_artist_membership_candidate.py --seed-artifact $OPENNOISE_H2_SEED_ARTIFACT --approved-input $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_APPROVED_INPUT --adapter-receipt $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_ADAPTER_RECEIPT --certified-database $OPENNOISE_CERTIFIED_PUBLIC_DATABASE --adapter-policy $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_ADAPTER_POLICY --source-policy $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_SOURCE_POLICY --output $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_OUTPUT --object-store $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_OBJECT_STORE --receipt $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_RECEIPT --promotion-policy $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_PROMOTION_POLICY --promotion-report $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_PROMOTION_REPORT"
-adapt-public-artist-membership-input = "python scripts/adapt_public_artist_membership_input.py --database $OPENNOISE_CERTIFIED_PUBLIC_DATABASE --policy $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_ADAPTER_POLICY --approved-input $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_APPROVED_INPUT --receipt $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_ADAPTER_RECEIPT"
-build-public-artist-membership-real-input = { sequence = ["adapt-public-artist-membership-input", "build-public-artist-membership-candidate"] }
-evaluate-public-artist-membership-historical = "python scripts/evaluate_public_artist_membership_historical.py --candidate $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_OUTPUT --approved-input $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_APPROVED_INPUT --public-database $OPENNOISE_CERTIFIED_PUBLIC_DATABASE --historical-database $OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE --report $OPENNOISE_PUBLIC_ARTIST_MEMBERSHIP_HISTORICAL_REPORT"
-build-open-construction-graph-v2 = "python scripts/build_open_construction_graph_v2.py --taxonomy-expansion $OPENNOISE_PUBLIC_TAXONOMY_EXPANSION_OUTPUT --output $OPENNOISE_OPEN_CONSTRUCTION_GRAPH_V2_OUTPUT --object-store $OPENNOISE_OPEN_CONSTRUCTION_GRAPH_V2_OBJECT_STORE --receipt $OPENNOISE_OPEN_CONSTRUCTION_GRAPH_V2_RECEIPT"
-
-[tool.poe.tasks.historical-signal-release]
-sequence = [
-    { cmd = "python scripts/build_historical_signal_model.py --historical-manifest $OPENNOISE_HISTORICAL_MANIFEST --membership-database $OPENNOISE_HISTORICAL_MEMBERSHIP_DATABASE --h3-artifact-sha256 $OPENNOISE_HISTORICAL_H3_ARTIFACT_SHA256 --output $OPENNOISE_HISTORICAL_SIGNAL_ARTIFACT --report $OPENNOISE_HISTORICAL_SIGNAL_BUILD_REPORT" },
-    { cmd = "python scripts/publish_historical_signal_map.py --signal-artifact $OPENNOISE_HISTORICAL_SIGNAL_ARTIFACT --compatibility-receipt $OPENNOISE_HISTORICAL_COMPATIBILITY_RECEIPT --output $OPENNOISE_HISTORICAL_SIGNAL_PUBLICATION --object-store $OPENNOISE_HISTORICAL_OBJECT_STORE --receipt $OPENNOISE_HISTORICAL_SIGNAL_RECEIPT --report $OPENNOISE_HISTORICAL_SIGNAL_PUBLISH_REPORT" },
-]
-
-[tool.poe.tasks.build-public-release]
-sequence = [
-    { cmd = "python scripts/build_public_release.py" },
-    { cmd = "python scripts/build_production_map.py --database data/public.sqlite --source-model data/model/phase3-public-model.json --output data/model/production-map-v1.json" },
-]
-
-
-[tool.poe.tasks.public-release-custody]
-cmd = "python scripts/custody_public_release.py"
-
-[tool.poe.tasks.public-release-bundle]
-cmd = "python scripts/public_release_bundle.py"
-
-[tool.poe.tasks.check]
-sequence = ["format-check", "lint", "typecheck", "test", "schema"]
+sync = { cmd = "uv sync --locked", env = { UV_CACHE_DIR = ".cache/uv" } }
+bootstrap = ".venv/bin/opennoise bootstrap-everynoise"
+check = { shell = """
+set -e
+.venv/bin/ruff format --check .
+.venv/bin/ruff check .
+.venv/bin/ty check
+mkdir -p .cache/test-tmp
+.venv/bin/python -m unittest discover -s tests -q
+""", env = { TMPDIR = ".cache/test-tmp", UV_CACHE_DIR = ".cache/uv" } }
+dev = ".venv/bin/python scripts/run_dev.py"
+build = ".venv/bin/python scripts/certify_static_pages.py"
+deploy = { shell = """
+set -e
+.venv/bin/python scripts/certify_static_pages.py --sealed-deploy
+wrangler pages deploy dist --project-name opennoise --branch main
+""", env = { WRANGLER_LOG_PATH = ".cache/wrangler-deploy.log" } }

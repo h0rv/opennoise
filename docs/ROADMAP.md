@@ -84,6 +84,38 @@ model, passed the public-model gate, and persisted four layouts. The result is
 local, non-certified, and undeployed. It does not change any sealed, public,
 static, or deployed artifact. See [the v3 projection result](checkpoints/PHASE3_HISTORICAL_RUN2_LOCAL_PROJECTION_20260921.md).
 
+A read-only canonical comparison then established that the v3 projection and
+the sealed Phase 3 model are semantically equal for the bounded public model:
+all 62 source identities, 603 genre identities, 4,434 direct memberships,
+13,175 artist pairs, 22,091 one-hop memberships, 34,348 neighbors, 3,344
+representatives, and 2,002 layout coordinates match after canonicalization.
+Only compacted v3 one-hop evidence-reference strings and run metadata differ.
+This is not byte-identical replay, certification, or publication authorization;
+see [the semantic comparison checkpoint](checkpoints/PHASE3_HISTORICAL_V3_SEMANTIC_COMPARISON_20260921.md).
+
+The v3-to-static-map bridge remains local and audit-only. Of 603 v3 Wikidata
+genre references, 314 have unique non-ambiguous reconciliation links and 305
+already point to positioned canonical map seeds; none changes the 6,291 seed
+names, 2,945 positions, or 3,346 abstentions. The local-only adapter audit
+reads these facts without writing output; it remains pending final integration
+review and is neither a map overlay nor a release input. See [the bridge audit](checkpoints/PHASE3_V3_STATIC_MAP_BRIDGE_AUDIT_20260921.md).
+
+A separate sealed-public-DB direct-bridge candidate abstains from 25 catalog
+genres that resolve to multiple positioned seeds. Its remaining local-only
+frontier contains 84 newly positioned direct genres, 959 exact direct rows,
+and 118 net-new artists with exactly one authorized MusicBrainz ID. It is not
+published or promoted; see [the pinned checkpoint](checkpoints/PUBLIC_DIRECT_BRIDGE_FRONTIER_20260921.md).
+
+The fixed v3 candidate also has one terminal observed-positive-only comparison
+to the retained historical signal. It accepts only one-to-one exact normalized
+name matches: 288 matched names, 315 candidate abstentions, and 6,003
+historical abstentions. Membership presence overlaps 257 of 6,289 historical
+observed positives; canonical neighborhoods overlap 532 of 37,517. These are
+coverage diagnostics with no precision, negative inference, parity, or release
+claim. Its adapter pins the reviewed v3 and evaluation-only historical custody
+hashes and permits only fresh local report files. See [the terminal evaluation
+checkpoint](checkpoints/PHASE3_V3_TERMINAL_HISTORICAL_EVALUATION_20260921.md).
+
 A single subsequent local-only public-model/layout projection attempt used a
 fresh copy of that candidate and stopped before artifact or database output.
 The replay candidate has 4,948 direct-source evidence rows, but its intentionally
@@ -126,6 +158,10 @@ The artist-search export now carries exact, source-backed MusicBrainz and
 Wikidata links for all 1,008 exported artists. The Pages deployment URL
 and `opennoise.horv.co` both serve the same SHA-256 manifest as the certified
 local `dist`: `99f2079f85b8889501d40dfb0a98bcb48e98c036655bd4369c8c102a4f33e3aa`.
+
+The working-tree static artist detail now adds a `Similar artists` section,
+explained solely by shared directly observed genres and navigable within the
+existing local discovery data. This UI change is not deployed or certified.
 
 Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
 pruned on 2026-09-16. A read-only worktree check on 2026-09-21 found only the
@@ -184,6 +220,11 @@ gate is open.
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
   Historical declaration replay does not provide that database certification.
+- Before any v3 promotion, require a reviewed local overlay adapter report,
+  an independently reviewed artist identity/display bridge, a fresh sealed
+  source-cache replay, and the existing public-model, static-export, and
+  browser certification gates. Terminal historical coverage is not a substitute
+  for any of these gates.
 
 ## Later experiments
 

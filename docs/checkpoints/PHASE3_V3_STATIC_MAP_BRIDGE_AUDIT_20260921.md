@@ -79,10 +79,15 @@ static discovery asset, and it is not an artist map.
 
 ## Next bounded task
 
-Specify and test a local-only v3 overlay adapter contract. It must verify the
-v3 receipt and all declared hashes, load the serving SQLite read-only, admit
-only the 314 unique non-ambiguous reconciliation rows (and report the 305
-already-positioned subset), preserve canonical seed coverage verbatim, and
-emit no public/static output. A separate reviewed artist bridge is required
-before any artist data can enter that candidate. Historical EveryNoise
-construction remains outside this adapter's inputs.
+The local-only pinned overlay audit adapter is now implemented and its retained
+input smoke test passes. It pins the v3 receipt, model, serving SQLite,
+reconciliation, and canonical-layout hashes; verifies receipt/model/database
+integrity; admits only the 314 unique non-ambiguous reconciliation rows; and
+reports the 305 already-positioned links. It verifies that the reconciliation
+and canonical layout have the identical 6,291 seed IDs. It creates no layout,
+static payload, artist projection, public output, or deployment artifact.
+
+The next bounded task is a separately reviewed artist identity and
+display-authorization bridge. No artist data may enter a local candidate until
+that bridge is receipt-bound. Historical EveryNoise construction remains
+outside this adapter's inputs.

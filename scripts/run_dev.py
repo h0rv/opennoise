@@ -20,10 +20,7 @@ def main() -> int:
         raw_arguments = raw_arguments[1:]
     arguments = parser.parse_args(raw_arguments)
     if not (arguments.directory / "index.html").is_file():
-        parser.error(
-            f"{arguments.directory} has no static export; "
-            "run `uv run poe export-semantic-pages` first"
-        )
+        parser.error(f"{arguments.directory} has no static export; run `poe build` first")
     handler = partial(SimpleHTTPRequestHandler, directory=str(arguments.directory))
     with ThreadingHTTPServer((arguments.host, arguments.port), handler) as server:
         server.serve_forever()

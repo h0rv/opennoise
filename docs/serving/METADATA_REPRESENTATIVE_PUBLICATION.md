@@ -11,12 +11,12 @@ through any `ObjectStore` implementation:
 ```sh
 OPENNOISE_PUBLIC_DATABASE=data/public.sqlite \
 OPENNOISE_METADATA_REPRESENTATIVES_OUTPUT=data/model/metadata-representatives-v1.json \
-uv run poe build-metadata-representatives
+python scripts/build_metadata_representatives.py  # archived workflow; not a Poe task
 
 OPENNOISE_METADATA_REPRESENTATIVES_ARTIFACT=data/model/metadata-representatives-v1.json \
 OPENNOISE_METADATA_REPRESENTATIVES_OBJECT_STORE=data/objects \
 OPENNOISE_METADATA_REPRESENTATIVES_RECEIPT=data/model/metadata-representatives-publication-v1.json \
-uv run poe publish-metadata-representatives
+python scripts/publish_metadata_representatives.py  # archived workflow; not a Poe task
 ```
 
 Publication parses the JSON with its Pydantic boundary model before writing.

@@ -210,8 +210,13 @@ async function diagnostics(cdp) {
       detail_artist_buttons: document.querySelectorAll('#map-detail [data-open-artist-id]').length,
       detail_artist_names: [...document.querySelectorAll('#map-detail [data-open-artist-id]')]
         .map((button) => button.textContent),
+      similar_artist_buttons: document.querySelectorAll('#map-detail [data-open-similar-artist-id]').length,
+      similar_artist_names: [...document.querySelectorAll('#map-detail [data-open-similar-artist-id]')]
+        .map((button) => button.textContent),
       detail_artist_name: document.querySelector('#map-detail h2')?.textContent ?? '',
       detail_headings: [...document.querySelectorAll('#map-detail h3')].map((heading) => heading.textContent),
+      artist_contexts: [...document.querySelectorAll('#map-detail .artist-context')]
+        .map((context) => context.textContent),
       artist_source_links: [...document.querySelectorAll('#map-detail .artist-sources a')]
         .map((link) => ({ text: link.textContent, href: link.href })),
       search_results: [...document.querySelectorAll('#search-results [data-search-match]')]
@@ -684,8 +689,10 @@ async function run() {
     requireCheck(
       postPunkArtist.detail_headings.includes('Direct genres')
         && postPunkArtist.detail_headings.includes('Also in post-punk')
+        && postPunkArtist.detail_headings.includes('Similar artists')
+        && postPunkArtist.similar_artist_buttons > 0
         && postPunkArtist.detail_artist_name !== 'post-punk',
-      'artist discovery did not expose direct genres and explained artist overlap',
+      'artist discovery did not expose direct genres and direct-overlap similar artists',
       postPunkArtist,
     );
     requireCheck(
@@ -695,6 +702,36 @@ async function run() {
       postPunkArtist,
     );
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-artist.png', 'light', 1440, 900));
+    const similarExpected = await cdp.evaluate(`(async () => {
+      const canvas = document.querySelector('#semantic-map');
+      const currentArtistId = new URL(location.href).searchParams.get('open_artist');
+      const payload = await fetch(canvas.dataset.discoveryUrl).then((response) => response.json());
+      const artist = payload.artists?.find((item) => item.artist_id === currentArtistId);
+      const relation = artist?.shared_genre_artists?.[0];
+      const peer = payload.artists?.find((item) => item.artist_id === relation?.artist_id);
+      const sourceGenres = new Set(artist?.memberships?.map((item) => item.node_id) ?? []);
+      const peerGenres = new Set(peer?.memberships?.map((item) => item.node_id) ?? []);
+      const genreId = relation?.shared_genre_ids?.find((id) => sourceGenres.has(id) && peerGenres.has(id));
+      const genre = payload.genres?.find((item) => item.node_id === genreId);
+      return relation && peer && genre ? {
+        artist_id: peer.artist_id,
+        genre_id: genreId,
+        genre_name: genre.catalog_genre_name,
+      } : null;
+    })()`);
+    requireCheck(Boolean(similarExpected), 'artist detail has no exported shared-direct peer context', { postPunkArtist, similarExpected });
+    await cdp.evaluate(`document.querySelector('[data-open-similar-artist-id=${JSON.stringify(similarExpected.artist_id)}]')?.click()`);
+    await sleep(100);
+    const similarArtist = await diagnostics(cdp);
+    requireCheck(
+      similarArtist.artist_url === similarExpected.artist_id
+        && similarArtist.focus_url === similarExpected.genre_id
+        && similarArtist.artist_contexts.includes(`Directly observed in ${similarExpected.genre_name}`)
+        && similarArtist.detail_headings.includes(`Also in ${similarExpected.genre_name}`),
+      'similar artist did not retain its exact shared direct-genre context',
+      { postPunkArtist, similarExpected, similarArtist },
+    );
+    screenshots.push(await screenshot(cdp, 'desktop-similar-artist.png', 'light', 1440, 900));
     await cdp.evaluate("document.querySelector('[data-map-action=\"genre-detail\"]')?.click()");
     await sleep(50);
     const postPunkBackToGenre = await diagnostics(cdp);
@@ -918,6 +955,9 @@ async function run() {
         focused_edges: focused.edges,
         post_punk_edges: postPunk.edges,
         post_punk_direct_artists: postPunkDiscovery.detail_artist_buttons,
+        artist_direct_overlap_similar: postPunkArtist.similar_artist_buttons,
+        artist_direct_overlap_navigation: similarArtist.artist_url === similarExpected.artist_id
+          && similarArtist.focus_url === similarExpected.genre_id,
         artist_discovery_back: postPunkBackToGenre.detail_headings.includes('Artists in this genre'),
         artist_search: artistSearch.search_results,
         artist_search_deep_link: deepLinkedArtist.artist_url === searchedArtistId,

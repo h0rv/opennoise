@@ -92,6 +92,25 @@ export function artistsInGenre(discovery, genreId, selectedArtistId = null) {
       || compareCodepoints(left.id, right.id));
 }
 
+/**
+ * Return the stable direct-genre context required to open one exported related artist.
+ *
+ * `shared_genre_artists` is built at export time from direct catalog observations.
+ * Do not fall back to a name, a map edge, or a calculated browser similarity when
+ * the stated relation lacks an exact shared direct-genre context.
+ */
+export function sharedArtistContext(discovery, artistId, relatedArtistId) {
+  const artist = discovery?.artists?.get(artistId);
+  const related = discovery?.artists?.get(relatedArtistId);
+  if (!artist || !related) return null;
+  const relation = artist.shared_genre_artists?.find((item) => item?.artist_id === relatedArtistId);
+  if (!relation || !Array.isArray(relation.shared_genre_ids)) return null;
+  const artistGenres = new Set(artist.memberships?.map((item) => item.node_id) ?? []);
+  const relatedGenres = new Set(related.memberships?.map((item) => item.node_id) ?? []);
+  const genreId = relation.shared_genre_ids.find((id) => artistGenres.has(id) && relatedGenres.has(id));
+  return typeof genreId === 'string' ? { artistId: relatedArtistId, genreId, relation } : null;
+}
+
 export function normaliseBounds(value, label = 'bounds') {
   if (!value || typeof value !== 'object') throw new TypeError(`${label} is required`);
   const x0 = finiteNumber(value.x0, `${label}.x0`);
