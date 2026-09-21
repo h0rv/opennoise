@@ -373,14 +373,8 @@ async def run_multi_artifact_pipeline_from_verified_downloads(  # noqa: PLR0913,
     after the caller has bound every supplied ``DownloadResult`` to a verified
     report; ordinary acquisition continues to use :func:`run_multi_artifact_pipeline`.
     """
-    if len(sources) < MINIMUM_INPUT_ARTIFACTS or len(downloads) != len(sources):
-        raise ValueError("verified multi-artifact replay requires matching inputs")
-    if len({source.id for source in sources}) != len(sources):
-        raise ValueError("multi-artifact source IDs must be unique")
-    for source, download in zip(sources, downloads, strict=True):
-        _require_verified_download(source, download)
     return await asyncio.to_thread(
-        _persist_joint,
+        run_multi_artifact_pipeline_from_verified_downloads_sync,
         sources,
         downloads,
         adapter,
@@ -388,3 +382,26 @@ async def run_multi_artifact_pipeline_from_verified_downloads(  # noqa: PLR0913,
         record_factory,
         options,
     )
+
+
+def run_multi_artifact_pipeline_from_verified_downloads_sync(  # noqa: PLR0913, PLR0917
+    sources: tuple[DownloadSource, ...],
+    downloads: tuple[DownloadResult, ...],
+    adapter: SourceAdapter,
+    projectors: ProjectorRegistry,
+    record_factory: RecordFactory,
+    options: MultiArtifactOptions,
+) -> MultiArtifactSummary:
+    """Persist a verified local aggregate without an event-loop thread bridge.
+
+    Source-vault replay already runs in synchronous orchestration and has no
+    concurrent downloads to protect.  It uses this entry point so a completed
+    SQLite transaction returns directly to its receipt and atomic-publish work.
+    """
+    if len(sources) < MINIMUM_INPUT_ARTIFACTS or len(downloads) != len(sources):
+        raise ValueError("verified multi-artifact replay requires matching inputs")
+    if len({source.id for source in sources}) != len(sources):
+        raise ValueError("multi-artifact source IDs must be unique")
+    for source, download in zip(sources, downloads, strict=True):
+        _require_verified_download(source, download)
+    return _persist_joint(sources, downloads, adapter, projectors, record_factory, options)

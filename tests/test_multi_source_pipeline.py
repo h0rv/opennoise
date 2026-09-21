@@ -18,6 +18,7 @@ from opennoise.pipeline.multi_source import (
     MultiArtifactOptions,
     run_multi_artifact_pipeline,
     run_multi_artifact_pipeline_from_verified_downloads,
+    run_multi_artifact_pipeline_from_verified_downloads_sync,
 )
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
@@ -258,3 +259,17 @@ class MultiSourcePipelineTests(PollingIsolatedAsyncioTestCase):
                 self.options,
             )
         self.assertFalse(self.options.database_path.exists())
+
+    def test_verified_download_replay_sync_returns_after_persistence(self) -> None:
+        """The local replay path does not need an asyncio-to-thread bridge."""
+        result = run_multi_artifact_pipeline_from_verified_downloads_sync(
+            self.sources,
+            self.downloads,
+            _Adapter(),
+            ProjectorRegistry((ArtistCoListenProjector(), ArtistCoListenRunProjector())),
+            self._records,
+            self.options,
+        )
+
+        self.assertFalse(result.reused_attempt)
+        self.assertEqual(result.accepted, 2)
