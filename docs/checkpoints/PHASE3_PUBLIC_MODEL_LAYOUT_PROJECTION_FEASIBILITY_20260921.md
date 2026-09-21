@@ -6,12 +6,16 @@ the candidate, writes a public/static artifact, or scans the source vault.
 
 ## Result
 
-The missing derived-release stage is feasible from a fresh, independently
-writable copy of the candidate.  No raw objects are needed: the candidate has
+The projector mechanics are available for a fresh, independently writable copy
+of the candidate, but the missing derived-release stage is currently blocked by
+the candidate's local-only policy/qualification state (see the recorded attempt
+below). No raw objects are needed for the attempted boundary check: the candidate has
 the exact 62 `(source_key, artifact_sha256)` rows in
 `config/releases/phase3-public-20260831/release-manifest.json`; its current
 snapshot/declaration hashes intentionally differ from the historical manifest.
-The replay receipt binds the manifest and completed candidate replay. Its source
+The combined replay receipt binds the manifest, verified raw objects, and the
+completed candidate replay; historical declaration-hash verification belongs to
+the separate declaration-replay report. Its source
 database hash is `6dea0c5d81e690b2ee7e9ff989f71d596f218b71dc992e2b86294381122c3972`.
 It is schema 12, has clean integrity and foreign-key checks, and has no public
 model, layout, current-selection, or public graph rows.
@@ -118,3 +122,31 @@ timestamps, policy/provenance rows, SQLite page allocation and FTS/WAL state.
 Without a separately fixed timestamp, policy-row identity, serializer, SQLite
 build, journal/checkpoint, and vacuum contract, a copied candidate cannot
 meaningfully be required to match the sealed database bytes.
+
+## 2026-09-21 local projection attempt
+
+One authorized projection invocation used the command above with the pinned
+candidate hash `6dea0c5d…c3972` and receipt hash `e29e9962…ecf2`, writing only
+to the previously absent `/tmp/phase3-public-projection-46cfc23` directory.
+It failed before model artifact creation, publication, layout persistence, or
+final output publication after 4.60 seconds (`user` 5.79 seconds, `sys` 0.62
+seconds). The output directory contains no files; the candidate and receipt
+still hash to their pinned values.
+
+The source candidate remained `PRAGMA integrity_check: ok` with no
+`foreign_key_check` rows after the attempt. Process peak RSS is unavailable in
+this environment because `/usr/bin/time` is absent; no model-build resource
+record exists because construction stopped during input loading.
+
+`PublicModelRepository` found zero eligible genres and direct memberships, so
+`PublicModelInput` rejected the empty input. Small read-only checks found
+4,948 direct-source evidence rows but zero `modelable_music_genres` rows and
+zero evidence rows with an allowed `embed` permission. The replayed source
+policies are `local_only=1` and deny `display`, `embed`, and `export`; that is
+the correct current candidate policy boundary, not a projector malfunction.
+
+This gate is **blocked**, not a logical-equality result. No model hash, layout
+hashes/counts, graph counts, public-model gate report, or serving SQLite output
+exists. Do not rerun this projector until a separately approved, receipt-bound
+policy/qualification projection defines how the replay candidate may acquire
+the required modelable genres and public embedding permissions.

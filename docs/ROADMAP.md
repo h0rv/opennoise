@@ -61,6 +61,14 @@ seven ListenBrainz dailies, and wrote the receipt-bound candidate documented in
 remains local only, non-byte-identical, and explicitly uncertified; it does not
 replace or certify the Phase 3 public database.
 
+A single subsequent local-only public-model/layout projection attempt used a
+fresh copy of that candidate and stopped before artifact or database output.
+The replay candidate has 4,948 direct-source evidence rows, but its intentionally
+local-only policies deny embedding/export and it has zero modelable genres, so
+the public model loader fails closed on empty inputs. No retry or policy change
+is authorized by that result; see
+`checkpoints/PHASE3_PUBLIC_MODEL_LAYOUT_PROJECTION_FEASIBILITY_20260921.md`.
+
 ## Static Pages delivery status
 
 The deployed static release is main commit `592fe7c`. Its certified v3
