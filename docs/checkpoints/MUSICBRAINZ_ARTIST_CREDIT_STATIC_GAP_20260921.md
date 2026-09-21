@@ -62,7 +62,7 @@ The excluded exact MBIDs and their direct-observation counts are:
 ## Reproduction
 
 ```sh
-UV_CACHE_DIR=/tmp/musix-uv-cache uv run python \
+UV_CACHE_DIR=/tmp/opennoise-uv-cache uv run python \
   scripts/audit_musicbrainz_artist_credit_static_gap.py \
   --candidate .cache/musicbrainz-catalog-expansion-v1/artist-credit-materialized-v2-final.sqlite \
   --public-database data/public.sqlite \
