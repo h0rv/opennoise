@@ -28,11 +28,21 @@ The release manifest names 62 raw source inputs. The source vault replay gate
 verified every object's byte count and SHA-256 in the retained Phase 3 vault.
 The 62 objects total 1,541,940,352 bytes. The gate also supports a checked
 restore from a supplied local object store. A raw-source-to-certified-database
-replay remains unproven.
+replay remains unproven. A fresh offline candidate database has now ingested
+the 54 Wikidata objects from that vault. It has the same 1,331 artist rows
+and 746 genre slug/name pairs as the sealed public database and passes SQLite
+integrity and foreign-key checks. Its sorted Wikidata-ID and normalized-claim
+projection also hashes identically to the sealed database. The seven
+ListenBrainz daily objects and their joint artifact remain unsupported, so
+the candidate is not certified.
 
 The public artist membership promotion gate has no independent public gold
 set. The existing MusicBrainz tag comparison is a diagnostic and cannot serve
-as a production quality gate. A bounded catalog expansion has now materialized
+as a production quality gate. A versioned independent-gold evaluator now has a
+four-judgment synthetic fixture; its Poe command exits 2 with
+`release_quality_eligible: false`. No retained source qualifies as real
+independent artist-membership gold, and no production threshold policy is
+accepted. A bounded catalog expansion has now materialized
 55 releases and 660 tracks in a local copied database. Its successful and
 failed endpoint results both replay offline with zero requests. The MusicBrainz
 catalog is much larger, so that run does not close the full-catalog item.
@@ -42,8 +52,12 @@ from 189 immutable source claims. All 484 remain pending. The workflow cannot
 publish a generated genre or alter source data; a separate publication gate
 and actual independent reviews are still needed.
 
-A read-only direct bridge audit found 441 claimed catalog identity edges,
-including 277 exact label matches and 164 non-exact review-only mappings. It
+A read-only direct bridge audit found 441 claimed catalog identity edges:
+245 exact one-to-one matches, 101 non-exact review-only mappings, and 95
+conflicting or ambiguous mappings. It
 estimates 1,520 potentially reachable direct observations summed across
 unbridged edges, with possible repeated counts. It has not promoted any bridge
-or changed the static map.
+or changed the static map. A hash-sealed, append-only review ledger now accepts
+human decisions, but no edge is auto-published, including exact matches.
+The local Poe queue proof has all 441 edges pending, zero review decisions,
+and `static_bridge_published: false`.

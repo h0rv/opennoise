@@ -1,0 +1,29 @@
+{
+  "revision": "independent-artist-genre-gold-v1",
+  "purpose": "independent_artist_genre_quality_evaluation",
+  "independent_public_gold_labels": false,
+  "production_threshold_claimed": false,
+  "threshold_policy_accepted": false,
+  "source_custody": {
+    "source_kind": "fixture_only",
+    "source_locator": "repository:tests/fixtures/independent_artist_genre_gold_fixture_v1.json",
+    "source_version": "fixture-v1",
+    "source_payload_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "license_or_terms_ref": "fixture-only; no external source material",
+    "identity_bridge_kind": "not_applicable_fixture",
+    "identity_bridge_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "judgment_method": "fixture_only",
+    "excluded_provenance": ["every_noise", "musicbrainz", "wikidata", "listenbrainz", "model_prediction"]
+  },
+  "split": {
+    "revision": "sha256-judgment-id-modulo-20-v1",
+    "evaluation_buckets": [0, 1, 2, 3],
+    "training_buckets": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+  },
+  "judgments": [
+    {"judgment_id": "fixture-0", "artist_external_id": "fixture:artist:one", "genre_external_id": "fixture:genre:rock", "expected_member": true, "source_record_sha256": "1111111111111111111111111111111111111111111111111111111111111111", "split_bucket": 0},
+    {"judgment_id": "fixture-10", "artist_external_id": "fixture:artist:one", "genre_external_id": "fixture:genre:jazz", "expected_member": false, "source_record_sha256": "2222222222222222222222222222222222222222222222222222222222222222", "split_bucket": 3},
+    {"judgment_id": "fixture-17", "artist_external_id": "fixture:artist:two", "genre_external_id": "fixture:genre:jazz", "expected_member": true, "source_record_sha256": "3333333333333333333333333333333333333333333333333333333333333333", "split_bucket": 1},
+    {"judgment_id": "fixture-75", "artist_external_id": "fixture:artist:two", "genre_external_id": "fixture:genre:rock", "expected_member": false, "source_record_sha256": "4444444444444444444444444444444444444444444444444444444444444444", "split_bucket": 2}
+  ]
+}

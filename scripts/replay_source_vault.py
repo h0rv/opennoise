@@ -9,8 +9,10 @@ from pathlib import Path
 from opennoise.pipeline.source_vault_replay import (
     SourceVaultReplayError,
     load_report,
+    replay_source_vault_to_candidate_database,
     restore_source_vault,
     verify_source_vault,
+    write_candidate_database_report,
     write_report,
 )
 from opennoise.storage import LocalObjectStore
@@ -29,6 +31,12 @@ def _parser() -> argparse.ArgumentParser:
     restore.add_argument("--report", type=Path, required=True)
     restore.add_argument("--object-store", type=Path, required=True)
     restore.add_argument("--destination", type=Path, required=True)
+    candidate = subparsers.add_parser("candidate-database")
+    candidate.add_argument("--manifest", type=Path, required=True)
+    candidate.add_argument("--report", type=Path, required=True)
+    candidate.add_argument("--vault", type=Path, required=True)
+    candidate.add_argument("--candidate-database", type=Path, required=True)
+    candidate.add_argument("--replay-report", type=Path, required=True)
     return parser
 
 
@@ -41,7 +49,7 @@ def main() -> int:
             report = verify_source_vault(arguments.manifest, arguments.vault, object_store=store)
             write_report(report, arguments.report)
             sys.stdout.write(f"{report.model_dump_json(indent=2)}\n")
-        else:
+        elif arguments.command == "restore":
             restore_source_vault(
                 load_report(arguments.report),
                 LocalObjectStore(arguments.object_store),
@@ -49,6 +57,15 @@ def main() -> int:
                 manifest_path=arguments.manifest,
             )
             sys.stdout.write(f"restored {arguments.report} to {arguments.destination}\n")
+        else:
+            candidate = replay_source_vault_to_candidate_database(
+                load_report(arguments.report),
+                arguments.vault,
+                arguments.candidate_database,
+                manifest_path=arguments.manifest,
+            )
+            write_candidate_database_report(candidate, arguments.replay_report)
+            sys.stdout.write(f"{candidate.model_dump_json(indent=2)}\n")
     except SourceVaultReplayError as error:
         sys.stderr.write(f"source vault replay failed: {error}\n")
         return 2

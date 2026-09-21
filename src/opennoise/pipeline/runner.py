@@ -49,6 +49,7 @@ class PipelineOptions(_FrozenModel):
     partition: DeterministicPartition = DeterministicPartition()
     limits: SourceLimits = SourceLimits()
     checkpoint_every: int = Field(default=10_000, gt=0)
+    offline: bool = False
 
     @model_validator(mode="after")
     def artifact_limit_covers_manifest_later(self) -> "PipelineOptions":
@@ -751,5 +752,5 @@ async def run_source_pipeline(
     if source.expected_bytes > options.limits.max_archive_bytes:
         raise ValueError("source expected_bytes exceeds max_archive_bytes")
     adapter = registry.resolve(source)
-    download = await download_verified(source, options.vault_path)
+    download = await download_verified(source, options.vault_path, offline=options.offline)
     return _ingest_sync(source, download, adapter, projectors, options)

@@ -75,6 +75,7 @@ async def download_verified(
     *,
     timeout_seconds: float = 120.0,
     client: httpx.AsyncClient | None = None,
+    offline: bool = False,
 ) -> DownloadResult:
     """Resume one bounded download and publish it only after SHA256 verification."""
     expected_sha256 = source.verified_sha256()
@@ -98,6 +99,8 @@ async def download_verified(
             resumed_from=size,
             reused=True,
         )
+    if offline:
+        raise SourceManifestError("offline replay source object is missing from the raw vault")
 
     resumed_from = partial.stat().st_size if partial.exists() else 0
     if resumed_from:

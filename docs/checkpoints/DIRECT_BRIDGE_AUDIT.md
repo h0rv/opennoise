@@ -13,15 +13,63 @@ poe audit-direct-bridges \
   --output .cache/direct-bridge-audit-v1.json
 ```
 
-The current retained inputs produce 441 claimed identity edges. Of these, 277
-are exact casefolded-label matches, 164 are non-exact review-only mappings,
-and 244 edges currently have an exact static discovery bridge. The not-yet-bridged
-edges have 1,520 potentially reachable direct P136 observations summed across
-edges under the existing display policy. This can count an observation more
-than once. It is a review queue estimate, not a
-publication recommendation: names such as `dub techno → dubtronica` remain
-review-only.
+The current retained inputs produce 441 claimed identity edges. Of these, 245
+are exact casefolded-label matches with one-to-one graph endpoints, 101 are
+non-exact review-only mappings, and 95 have conflicting or ambiguous graph or
+static-discovery evidence. Every classification, including `safe_exact`, is a
+review subject, not an automatic bridge promotion. There are currently 244
+edges with an exact static discovery bridge. The not-yet-bridged edges have
+1,520 potentially reachable direct P136 observations summed across edges under
+the existing display policy. This can count an observation more than once. It
+is a review queue estimate, not a publication recommendation: names such as
+`dub techno → dubtronica` remain review-only.
 
 The report binds the graph hash, static discovery hash, and public database
 hash. It verifies the graph's logical hash and requires each identity edge's
 public-catalog hash to equal the database bytes used for the audit.
+
+## Review-only decision ledger
+
+`opennoise.checkpoints.direct_bridge_audit` also provides a typed,
+deterministically sealed decision workflow on top of a parsed audit report.
+Each `DirectBridgeReviewDecision` names an existing audit edge, reviewer,
+review-guide revision, disposition (`approve`, `reject`, or `needs_evidence`),
+and rationale. Decisions are retained in sequence. A successor artifact must
+preserve every predecessor decision as a prefix and append at least one new
+event, so it cannot rewrite a prior review ledger.
+
+The artifact hashes the full audit, its edge set, policy, decisions, and its
+own logical contents. It derives each edge as `pending_review`,
+`needs_evidence`, `rejected`, or `ready_for_separate_publication`; rejection
+wins. An exact one-to-one label match starts `pending_review` just like every
+other edge. Even the latter state has no serving effect: the artifact records
+false catalog-mutation, static-discovery-mutation, and static-bridge-publication
+flags, and verification returns only a gate requiring separate publication.
+No function in this workflow writes a catalog row, modifies static discovery,
+or publishes a bridge.
+
+Create an empty queue from a previously written audit only after recomputing it
+against the supplied graph, discovery asset, and database. This prevents a
+stale or edited audit JSON from becoming a review source:
+
+```sh
+poe direct-bridge-review queue \
+  --audit .cache/direct-bridge-audit-v1.json \
+  --discovery dist/assets/static-discovery.8310a95109d9f33d08c0f2b6bc934c8e84246d1bf911d986395f84a2ed49c0fc.json \
+  --output .cache/direct-bridge-review/queue.json
+```
+
+Append one or more new decisions to that predecessor ledger with:
+
+```sh
+poe direct-bridge-review apply \
+  --audit .cache/direct-bridge-audit-v1.json \
+  --discovery dist/assets/static-discovery.8310a95109d9f33d08c0f2b6bc934c8e84246d1bf911d986395f84a2ed49c0fc.json \
+  --predecessor .cache/direct-bridge-review/queue.json \
+  --decisions review-decisions.json \
+  --output .cache/direct-bridge-review/reviewed.json
+```
+
+The decisions file is a JSON array, or an object with a `review_decisions`
+array. `apply` rejects a predecessor tied to another verified audit and rejects
+a non-appending decision sequence.

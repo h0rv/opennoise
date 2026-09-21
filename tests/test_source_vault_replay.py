@@ -13,6 +13,7 @@ from opennoise.pipeline.source_vault_replay import (
     SourceVaultReplayError,
     SourceVaultReplayReport,
     load_report,
+    replay_source_vault_to_candidate_database,
     restore_source_vault,
     verify_source_vault,
     write_report,
@@ -134,3 +135,69 @@ class SourceVaultReplayTests(unittest.TestCase):
             forged["objects"][0]["object_key"]["value"] = "raw/sha256/not-the-artifact"
             with self.assertRaises(ValueError):
                 SourceVaultReplayReport.model_validate(forged)
+
+    def test_candidate_database_replays_only_available_wikidata_adapter(self) -> None:
+        wikidata_payload = (
+            Path(__file__).parent / "fixtures" / "wikidata_music_slice.json"
+        ).read_bytes()
+        listenbrainz_payload = b"not an adapter fixture"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            vault = root / "vault"
+            raw = vault / "raw" / "sha256"
+            raw.mkdir(parents=True)
+            wikidata_sha = hashlib.sha256(wikidata_payload).hexdigest()
+            listenbrainz_sha = hashlib.sha256(listenbrainz_payload).hexdigest()
+            (raw / wikidata_sha).write_bytes(wikidata_payload)
+            (raw / listenbrainz_sha).write_bytes(listenbrainz_payload)
+            manifest = root / "release-manifest.json"
+            manifest.write_text("{}", encoding="utf-8")
+            payload = {
+                "release_id": "test-release",
+                "inputs": [
+                    {
+                        "source_key": "wikidata_phase3_artists_00",
+                        "snapshot_ref": "wikidata_phase3_artists_00:query:test:artifact:test",
+                        "artifact_sha256": wikidata_sha,
+                        "byte_size": len(wikidata_payload),
+                    },
+                    {
+                        "source_key": "listenbrainz_incremental_20260824",
+                        "snapshot_ref": "listenbrainz_incremental_20260824:test",
+                        "artifact_sha256": listenbrainz_sha,
+                        "byte_size": len(listenbrainz_payload),
+                    },
+                ],
+            }
+            with patch(
+                "opennoise.pipeline.source_vault_replay.load_release_manifest", return_value=payload
+            ):
+                report = verify_source_vault(manifest, vault)
+                candidate = replay_source_vault_to_candidate_database(
+                    report,
+                    vault,
+                    root / "candidate.sqlite",
+                    manifest_path=manifest,
+                )
+            self.assertEqual(
+                (candidate.ingested_object_count, candidate.unsupported_object_count), (1, 1)
+            )
+            self.assertFalse(candidate.certified_database)
+            self.assertTrue((root / "candidate.sqlite").is_file())
+            (raw / wikidata_sha).unlink()
+            with (
+                patch(
+                    "opennoise.pipeline.source_vault_replay.load_release_manifest",
+                    return_value=payload,
+                ),
+                patch("opennoise.clients.downloads.httpx.AsyncClient") as client_factory,
+                self.assertRaises(SourceVaultReplayError),
+            ):
+                replay_source_vault_to_candidate_database(
+                    report,
+                    vault,
+                    root / "missing-source.sqlite",
+                    manifest_path=manifest,
+                )
+            client_factory.assert_not_called()
+            self.assertFalse((root / "missing-source.sqlite").exists())

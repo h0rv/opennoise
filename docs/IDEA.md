@@ -119,8 +119,9 @@ but it is not the published catalog or a complete MusicBrainz crawl.
 
 Generated genre labels and catalog identity bridges have separate review
 queues. The current local candidate queue has 484 unreviewed genre proposals
-bound to 189 retained source claims. The bridge audit has 164 non-exact
-catalog mappings awaiting review. Neither queue publishes a genre or changes an
+bound to 189 retained source claims. The bridge audit has 101 non-exact
+catalog mappings and 95 conflicting or ambiguous mappings awaiting review.
+Neither queue publishes a genre or changes an
 artist membership by itself.
 
 OpenNoise never downloads, stores, serves, embeds, or trains on audio or music

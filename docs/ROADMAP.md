@@ -40,8 +40,12 @@ receipt. Raw bytes with local only or non redistributable policy never enter a
 portable store. The full release manifest source vault and derived database
 are not yet reproducible from this workflow. A separate local replay check now
 verifies all 62 raw objects named by the Phase 3 manifest, a total of
-1,541,940,352 bytes, and can restore a supplied verified object store. It does
-not yet ingest those objects into a new certified SQLite database.
+1,541,940,352 bytes, and can restore a supplied verified object store. A
+second local step replays the 54 Wikidata SPARQL objects into a fresh, explicitly
+uncertified local candidate SQLite database. The seven ListenBrainz
+incrementals and their generated joint object remain unsupported until their
+historical joint configuration and source declarations can be bound. The
+candidate is not a certified database.
 
 ## Static Pages delivery status
 
@@ -67,6 +71,10 @@ hierarchy landmarks, structural focus and Back, direct artist discovery, and
 mobile pinch. The known remaining layout debt is extremely near-coincident
 source coordinates; it is documented as a model/readability limitation rather
 than hidden by detached labels.
+The acceptance gate is mechanical, not a claim that every deep label is easy
+to reach: 117 of the 2,945 label entries require a reveal scale above `1e6`,
+40 require above `1e9`, and the worst requires above `1e12`. A new layout
+needs a human-scale navigation check before replacing this one.
 
 The deployed fingerprinted export has been checked against the manifest,
 clean public IDs, the static discovery asset, and the same browser flows.
@@ -82,9 +90,10 @@ retained until their own evidence gates conclude.
 
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
-- The local, non-publishing identity-bridge audit now separates 277 exact
-  label matches from 164 non-exact mappings needing review. It estimates
-  potential direct-observation coverage but does not change the public bridge.
+- The local, non-publishing identity-bridge audit now separates 245 one-to-one
+  exact label matches, 101 non-exact mappings needing review, and 95
+  conflicting or ambiguous edges. Its append-only typed review ledger does not
+  auto-promote exact matches or change the public bridge.
 - Add independently evaluated, versioned promotion paths for derived
   memberships and similarity; keep direct observations separate until then.
 - Complete the MusicBrainz release and track catalog chain. A larger local
@@ -94,15 +103,21 @@ retained until their own evidence gates conclude.
 - Review the 484 source-bound genre candidates now queued by the versioned
   workflow, then design a separate publication gate. None is published.
 - Replace calibration only artist membership evidence with an independent
-  public gold set before using it as a production quality gate.
+  public gold set before using it as a production quality gate. The new
+  evaluator abstains on its synthetic fixture; no retained source or accepted
+  threshold policy qualifies yet. See the
+  [gold-set workflow](evidence/INDEPENDENT_ARTIST_GENRE_GOLD.md).
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
+  The 54-object Wikidata candidate replay is not this certification.
 
 ## Later experiments
 
 - Evaluate alternative graph and hierarchy aware layouts against fixed
-  evidence, then expose accepted layouts through the versioned public map
-  contract.
+  evidence, including a practical maximum zoom and stable readable labels,
+  then expose accepted layouts through the versioned public map contract. The
+  measured baseline and candidate gate are in
+  [the layout navigation audit](checkpoints/LAYOUT_NAVIGATION_AUDIT.md).
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files

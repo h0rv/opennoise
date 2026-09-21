@@ -1,0 +1,9 @@
+{
+  "revision": "artist-genre-predictions-v1",
+  "predictions": [
+    {"artist_external_id": "fixture:artist:one", "genre_external_id": "fixture:genre:rock", "predicted_member": true},
+    {"artist_external_id": "fixture:artist:one", "genre_external_id": "fixture:genre:jazz", "predicted_member": true},
+    {"artist_external_id": "fixture:artist:two", "genre_external_id": "fixture:genre:jazz", "predicted_member": false},
+    {"artist_external_id": "fixture:artist:two", "genre_external_id": "fixture:genre:rock", "predicted_member": false}
+  ]
+}
