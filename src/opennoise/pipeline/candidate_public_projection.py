@@ -20,7 +20,7 @@ from opennoise.models import FrozenModel
 from opennoise.models.modeling import PublicModelArtifact, PublicModelSettings
 from opennoise.pipeline.public_release import _release_policy_id
 from opennoise.pipeline.release_manifest import load_release_manifest
-from opennoise.pipeline.source_vault_replay import CandidateCombinedReplayReport
+from opennoise.pipeline.source_vault_replay import HistoricalDeclarationCombinedReplayReport
 from opennoise.types import Sha256  # noqa: TC001
 
 _CANDIDATE_SCHEMA_VERSION = 12
@@ -33,6 +33,22 @@ _EXPECTED_LAYOUT_POINTS = {
 _EXPECTED_REPRESENTATIVE_ITEMS = 3_344
 _EXPECTED_PROFILE_MEMBERSHIPS = 26_525
 _EXPECTED_NEIGHBOR_ROWS = 34_348
+_HISTORICAL_WIKIDATA_PERMISSIONS = {
+    "normalize": "allow",
+    "local_search": "allow",
+    "display": "allow",
+    "embed": "allow",
+    "train": "allow",
+    "export": "allow",
+}
+_HISTORICAL_LISTENBRAINZ_PERMISSIONS = {
+    "normalize": "allow",
+    "local_search": "deny",
+    "display": "deny",
+    "embed": "allow",
+    "train": "allow",
+    "export": "allow",
+}
 
 
 class CandidatePublicProjectionError(RuntimeError):
@@ -95,16 +111,24 @@ def _require_fresh_outputs(settings: CandidatePublicProjectionSettings) -> None:
             )
 
 
-def _load_receipt(path: Path, expected_sha256: Sha256) -> CandidateCombinedReplayReport:
+def _load_receipt(path: Path, expected_sha256: Sha256) -> HistoricalDeclarationCombinedReplayReport:
+    """Load only the declaration-qualified replay receipt.
+
+    The older combined receipt describes a deliberately local-only replay.  It
+    is not evidence that the reconstructed candidate carries the historical
+    source declarations required at this public projection boundary.
+    """
     actual_sha256 = _sha256(path)
     if actual_sha256 != expected_sha256:
         raise CandidatePublicProjectionError(
             "replay receipt hash does not match the requested input"
         )
     try:
-        return CandidateCombinedReplayReport.model_validate_json(path.read_bytes())
+        return HistoricalDeclarationCombinedReplayReport.model_validate_json(path.read_bytes())
     except (OSError, ValueError) as error:
-        raise CandidatePublicProjectionError("combined replay receipt is invalid") from error
+        raise CandidatePublicProjectionError(
+            "replay receipt is not a historical-declaration-qualified combined replay"
+        ) from error
 
 
 def _manifest_source_artifacts(manifest: dict[str, Any]) -> set[tuple[str, str]]:
@@ -118,7 +142,7 @@ def _manifest_source_artifacts(manifest: dict[str, Any]) -> set[tuple[str, str]]
     }
 
 
-def _receipt_artifact_hashes(receipt: CandidateCombinedReplayReport) -> set[str]:
+def _receipt_artifact_hashes(receipt: HistoricalDeclarationCombinedReplayReport) -> set[str]:
     return {
         *(item.artifact_sha256 for item in receipt.wikidata_objects),
         *(item.artifact_sha256 for item in receipt.listenbrainz_daily_objects),
@@ -126,9 +150,132 @@ def _receipt_artifact_hashes(receipt: CandidateCombinedReplayReport) -> set[str]
     }
 
 
+def _verify_historical_declarations(
+    manifest: dict[str, Any], receipt: HistoricalDeclarationCombinedReplayReport
+) -> None:
+    """Require a complete exact replay of each manifest declaration digest."""
+    expected = {
+        str(item["source_key"]): str(item["source_manifest_sha256"])
+        for item in manifest["inputs"]
+        if isinstance(item, dict)
+    }
+    declarations = receipt.historical_declarations
+    actual = {
+        item.source_key: (item.expected_sha256, item.replayed_sha256)
+        for item in declarations.objects
+    }
+    if declarations.object_count != len(expected) or len(actual) != len(expected):
+        raise CandidatePublicProjectionError(
+            "historical declaration receipt does not cover all 62 manifest inputs"
+        )
+    if set(actual) != set(expected):
+        raise CandidatePublicProjectionError(
+            "historical declaration receipt source keys do not match the release manifest"
+        )
+    if any(actual[key] != (digest, digest) for key, digest in expected.items()):
+        raise CandidatePublicProjectionError(
+            "historical declaration hashes do not match the release manifest"
+        )
+
+
+def _expected_historical_permissions(source_key: str) -> dict[str, str]:
+    if source_key.startswith("wikidata_phase3_"):
+        return _HISTORICAL_WIKIDATA_PERMISSIONS
+    if source_key.startswith("listenbrainz_"):
+        return _HISTORICAL_LISTENBRAINZ_PERMISSIONS
+    raise CandidatePublicProjectionError("manifest has an unsupported historical source policy")
+
+
+def _verify_candidate_policy_provenance(
+    connection: sqlite3.Connection, manifest: dict[str, Any]
+) -> None:
+    """Verify that each source's sealed historical policy owns its provenance.
+
+    The receipt proves declarations, but cannot itself make a candidate's
+    mutable database policy public.  Check the source, snapshot, artifact, and
+    provenance links against the historical constructor's policy contract.
+    """
+    expected_artifacts = {
+        str(item["source_key"]): str(item["artifact_sha256"])
+        for item in manifest["inputs"]
+        if isinstance(item, dict)
+    }
+    rows = tuple(
+        connection.execute(
+            """SELECT source.source_key, source.default_policy_id, source.acquisition_kind,
+                      policy.id, policy.policy_key, policy.policy_version, policy.classification,
+                      policy.local_only,
+                      snapshot.id, snapshot.policy_id, snapshot.snapshot_ref,
+                      artifact.policy_id, artifact.sha256
+               FROM data_sources AS source
+               JOIN rights_policies AS policy ON policy.id = source.default_policy_id
+               JOIN rights_policy_seals AS seal ON seal.policy_id = policy.id
+               JOIN source_snapshots AS snapshot ON snapshot.source_id = source.id
+               JOIN source_artifacts AS artifact ON artifact.snapshot_id = snapshot.id"""
+        )
+    )
+    by_source = {str(row[0]): row for row in rows}
+    if len(rows) != len(expected_artifacts) or set(by_source) != set(expected_artifacts):
+        raise CandidatePublicProjectionError("candidate source policy boundary is incomplete")
+    expected_provenance: set[tuple[str, int, str, str]] = set()
+    for row in rows:
+        source_key = str(row[0])
+        default_policy_id, acquisition_kind = int(row[1]), str(row[2])
+        policy_id, policy_key, policy_version, classification, local_only = (
+            int(row[3]),
+            str(row[4]),
+            int(row[5]),
+            str(row[6]),
+            int(row[7]),
+        )
+        snapshot_policy_id, snapshot_ref = int(row[9]), str(row[10])
+        artifact_policy_id, artifact_sha256 = int(row[11]), str(row[12])
+        if (
+            artifact_sha256 != expected_artifacts[source_key]
+            or policy_key != f"manifest:{source_key}:{artifact_sha256}"
+            or (default_policy_id, snapshot_policy_id, artifact_policy_id)
+            != (
+                policy_id,
+                policy_id,
+                policy_id,
+            )
+            or (policy_version, acquisition_kind, classification, local_only)
+            != (1, "public_download", "public_domain", 0)
+        ):
+            raise CandidatePublicProjectionError(
+                "candidate source policy is not the historical public policy"
+            )
+        permissions = {
+            str(permission[0]): str(permission[1])
+            for permission in connection.execute(
+                "SELECT use_kind, decision FROM active_rights_policy_permissions "
+                "WHERE policy_id = ?",
+                (policy_id,),
+            )
+        }
+        if permissions != _expected_historical_permissions(source_key):
+            raise CandidatePublicProjectionError(
+                "candidate source policy permissions do not match historical declarations"
+            )
+        expected_provenance.add((source_key, policy_id, snapshot_ref, artifact_sha256))
+    actual_provenance = {
+        (str(row[0]), int(row[1]), str(row[2]), str(row[3]))
+        for row in connection.execute(
+            """SELECT source.source_key, provenance.policy_id, provenance.snapshot_ref,
+                      provenance.artifact_sha256
+               FROM provenance_records AS provenance
+               JOIN data_sources AS source ON source.id = provenance.source_id"""
+        )
+    }
+    if actual_provenance != expected_provenance:
+        raise CandidatePublicProjectionError(
+            "candidate provenance does not match its historical source policies"
+        )
+
+
 def _verify_candidate_boundary(
     settings: CandidatePublicProjectionSettings,
-) -> tuple[dict[str, Any], CandidateCombinedReplayReport, str, str]:
+) -> tuple[dict[str, Any], HistoricalDeclarationCombinedReplayReport, str, str]:
     candidate = settings.candidate_database.resolve(strict=True)
     candidate_sha256 = _sha256(candidate)
     if candidate_sha256 != settings.expected_candidate_sha256:
@@ -145,6 +292,7 @@ def _verify_candidate_boundary(
         raise CandidatePublicProjectionError(
             "replay receipt does not bind the requested release manifest"
         )
+    _verify_historical_declarations(manifest, receipt)
     if receipt.database_path.resolve() != candidate:
         raise CandidatePublicProjectionError(
             "replay receipt does not bind the requested candidate database"
@@ -171,6 +319,7 @@ def _verify_candidate_boundary(
                    JOIN source_artifacts AS artifact ON artifact.snapshot_id = snapshot.id"""
             )
         }
+        _verify_candidate_policy_provenance(connection, manifest)
     if integrity is None or integrity[0] != "ok":
         raise CandidatePublicProjectionError("candidate database integrity check failed")
     if version is None or int(version[0]) != _CANDIDATE_SCHEMA_VERSION:

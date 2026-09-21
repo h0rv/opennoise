@@ -79,6 +79,11 @@ input, and creates each final file without replacement within `$out`.  No path
 defaults to `data/public.sqlite`, `data/model`, a sealed cache, or a static-site
 directory.
 
+Historical-declaration receipt v1 does not embed a candidate database SHA-256;
+the CLI's explicit expected candidate SHA-256 is checked separately. The result
+remains a non-certified local projection; a future receipt revision may embed
+the database hash.
+
 ## Required checks and expected result
 
 The model must match the sealed logical boundary exactly:
