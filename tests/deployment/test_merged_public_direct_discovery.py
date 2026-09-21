@@ -27,10 +27,9 @@ from opennoise.deployment.public_direct_static_discovery import (
     build_sealed_qid_additive_static_discovery,
     sealed_qid_additive_static_discovery_sha256,
 )
+from tests._pinned_v1_discovery import pinned_v1_discovery_path
 
-_BASE = Path(
-    "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-)
+_BASE = pinned_v1_discovery_path()
 _DATABASE = Path("data/public.sqlite")
 _LAYOUT = Path(".cache/semantic-map-layout-v3/artifact.json")
 _PINNED_INPUTS = (_BASE, _DATABASE, _LAYOUT)

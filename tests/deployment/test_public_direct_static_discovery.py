@@ -29,14 +29,12 @@ from opennoise.deployment.static_discovery import (
     StaticDiscoveryGenrePayload,
     StaticDiscoveryPayload,
 )
+from tests._pinned_v1_discovery import pinned_v1_discovery_path
 
 _PINNED_INPUTS = (
     Path("data/public.sqlite"),
     Path(".cache/semantic-map-layout-v3/artifact.json"),
-    Path(
-        "dist/assets/"
-        "static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-    ),
+    pinned_v1_discovery_path(),
 )
 _PINNED_INPUTS_AVAILABLE = all(path.is_file() for path in _PINNED_INPUTS)
 
@@ -71,7 +69,7 @@ class PublicDirectStaticDiscoveryTests(unittest.TestCase):
                 "--public-qid-seed-map",
                 str(qid_map),
                 "--base-static-discovery",
-                "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json",
+                str(pinned_v1_discovery_path()),
                 "--output",
                 str(bridge),
             ],
@@ -163,9 +161,7 @@ class PublicDirectStaticDiscoveryTests(unittest.TestCase):
     def test_real_pinned_replay_and_tampered_bridge_fail_closed(self) -> None:
         payload = build_sealed_qid_additive_static_discovery(
             database=Path("data/public.sqlite"),
-            base_static_discovery=Path(
-                "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-            ),
+            base_static_discovery=pinned_v1_discovery_path(),
             bridge=self._bridge,
         )
         self.assertEqual(
@@ -179,9 +175,7 @@ class PublicDirectStaticDiscoveryTests(unittest.TestCase):
         ):
             build_sealed_qid_additive_static_discovery(
                 database=Path("data/public.sqlite"),
-                base_static_discovery=Path(
-                    "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-                ),
+                base_static_discovery=pinned_v1_discovery_path(),
                 bridge=self._bridge.model_copy(update={"output_sha256": "0" * 64}),
             )
 
@@ -199,7 +193,7 @@ class PublicDirectStaticDiscoveryTests(unittest.TestCase):
                 "--public-database",
                 "data/public.sqlite",
                 "--base-static-discovery",
-                "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json",
+                str(pinned_v1_discovery_path()),
                 "--bridge-receipt",
                 str(self._bridge_path),
                 "--output",

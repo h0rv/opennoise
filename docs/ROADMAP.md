@@ -128,9 +128,13 @@ The merged local v2 candidate has 344 genres, 1,126 artists, and 3,859 bound
 observations, with hash
 `9ee2a464de74e0b681ea347163fda94afa6eb28e3189a4fa4e6d0ee3d708232b`. These
 outputs no longer consume the old v3 bridge or reconciliation, and the base v1
-asset is unchanged. No release or deployment is approved. A tracked promotion
-receipt, public v2 schema, certifier, and browser gates are still missing. The
-nested static v1 compatibility payload is not a release schema. See the [local batch checkpoint](checkpoints/SEALED_QID_DIRECT_BRIDGE_LOCAL_BATCH_20260921.md).
+asset is unchanged. The tracked promotion receipt now makes the public v2
+promotion gate explicit. The local static v2 build and browser certification
+now pass with 344 genres, 1,126 artists, and 3,859 observations. The v2
+discovery asset file SHA-256 is
+`4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c`.
+No deployment is approved or performed. The nested static v1 compatibility
+payload is not a release schema. See the [local batch checkpoint](checkpoints/SEALED_QID_DIRECT_BRIDGE_LOCAL_BATCH_20260921.md).
 
 The fixed v3 candidate also has one terminal observed-positive-only comparison
 to the retained historical signal. It accepts only one-to-one exact normalized

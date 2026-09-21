@@ -8,11 +8,21 @@ import math
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Final, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import BaseModel, ConfigDict
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex, write_atomic_bytes
+from opennoise.deployment.public_discovery_promotion import (
+    PublicDiscoveryPromotionError,
+    PublicDiscoveryPromotionReceipt,
+    verify_public_discovery_promotion,
+)
+from opennoise.deployment.public_static_discovery_v2 import (
+    PublicStaticDiscoveryV2Payload,
+    adapt_public_static_discovery_v2,
+    public_static_discovery_v2_json,
+)
 from opennoise.deployment.static_discovery import (
     StaticDiscoveryNode,
     StaticDiscoveryPayload,
@@ -25,6 +35,11 @@ from opennoise.ml.semantic_layout.contracts import (
     SemanticLayoutArtifact,
     verify_semantic_map_layout,
 )
+
+if TYPE_CHECKING:
+    from opennoise.deployment.merged_public_direct_discovery import (
+        MergedPublicDirectDiscoveryCandidate,
+    )
 
 _REVISION: Final = "opennoise-semantic-pages-v1"
 _PACKAGE_ROOT: Final = Path(__file__).resolve().parents[1]
@@ -113,6 +128,8 @@ class SemanticPagesExportInputs:
     semantic_layout_path: Path
     output_directory: Path
     discovery_database: Path | None = None
+    public_discovery_v2_candidate: MergedPublicDirectDiscoveryCandidate | None = None
+    public_discovery_v2_promotion_receipt: PublicDiscoveryPromotionReceipt | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,18 +155,13 @@ class _BrowseLandmark:
 
 def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object]:
     """Materialize the 2,945-node atlas and its static Canvas client."""
+    _require_paired_public_discovery_v2_inputs(inputs)
     if inputs.output_directory.exists() and any(inputs.output_directory.iterdir()):
         raise SemanticPagesExportError("static Pages output directory must be empty")
-    try:
-        artifact = SemanticLayoutArtifact.model_validate_json(
-            inputs.semantic_layout_path.read_bytes()
-        )
-        verify_semantic_map_layout(artifact)
-    except (OSError, ValueError) as error:
-        raise SemanticPagesExportError("invalid semantic map layout artifact") from error
+    artifact = _load_verified_semantic_layout(inputs.semantic_layout_path)
+    _require_public_discovery_v2_layout_pin(inputs, artifact)
     mapper = _PublicIdMapper.from_artifact(artifact)
     atlas_payload = _renderer_payload(artifact, mapper)
-    discovery_payload = _discovery_payload(artifact, mapper, inputs.discovery_database)
     atlas_payload["edges"] = [
         {
             "source": mapper.public(edge.left_seed_id),
@@ -162,7 +174,17 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
     assets = output / "assets"
     output.mkdir(parents=True, exist_ok=True)
     assets.mkdir()
-    asset_paths = _export_fingerprinted_assets(assets, atlas_payload, discovery_payload)
+    semantic_atlas = _write_fingerprinted_asset(
+        assets, "semantic-atlas", ".json", _json_bytes(atlas_payload)
+    )
+    public_v2 = _public_discovery_v2_payload(inputs, semantic_atlas)
+    if public_v2 is None:
+        discovery_payload = _discovery_payload(artifact, mapper, inputs.discovery_database)
+        discovery_bytes = static_discovery_json(discovery_payload)
+    else:
+        discovery_payload = public_v2
+        discovery_bytes = public_static_discovery_v2_json(public_v2)
+    asset_paths = _export_fingerprinted_assets(assets, semantic_atlas, discovery_bytes)
     _write(output / "index.html", _html(asset_paths))
     _write(
         output / "_headers",
@@ -192,11 +214,7 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
             ),
             "structural_edge_count": len(artifact.structural_edges),
         },
-        "discovery": {
-            "availability": discovery_payload.availability,
-            "revision": discovery_payload.revision,
-            "coverage": _discovery_manifest_coverage(discovery_payload),
-        },
+        "discovery": _discovery_manifest_payload(discovery_payload, discovery_bytes, inputs),
         "assets": {
             role: {
                 "path": str(path.relative_to(output)),
@@ -211,10 +229,27 @@ def export_semantic_pages(inputs: SemanticPagesExportInputs) -> dict[str, object
     return manifest
 
 
+def static_discovery_v1_bytes_from_layout(*, semantic_layout_path: Path, database: Path) -> bytes:
+    """Rebuild exact v1 discovery bytes from one verified layout and public database."""
+    artifact = _load_verified_semantic_layout(semantic_layout_path)
+    mapper = _PublicIdMapper.from_artifact(artifact)
+    return static_discovery_json(_discovery_payload(artifact, mapper, database))
+
+
+def _load_verified_semantic_layout(path: Path) -> SemanticLayoutArtifact:
+    """Parse and verify the sole layout input shared by export and v1 replay."""
+    try:
+        artifact = SemanticLayoutArtifact.model_validate_json(path.read_bytes())
+        verify_semantic_map_layout(artifact)
+    except (OSError, ValueError) as error:
+        raise SemanticPagesExportError("invalid semantic map layout artifact") from error
+    return artifact
+
+
 def _export_fingerprinted_assets(
     assets: Path,
-    atlas_payload: dict[str, object],
-    discovery_payload: StaticDiscoveryPayload,
+    semantic_atlas: Path,
+    discovery_bytes: bytes,
 ) -> dict[str, Path]:
     """Write one immutable URL per content-addressed browser asset."""
     app_css = _write_fingerprinted_asset(
@@ -230,11 +265,8 @@ def _export_fingerprinted_assets(
     renderer_module = _write_fingerprinted_asset(
         assets, "map-renderer", ".js", renderer_source.encode()
     )
-    semantic_atlas = _write_fingerprinted_asset(
-        assets, "semantic-atlas", ".json", _json_bytes(atlas_payload)
-    )
     static_discovery = _write_fingerprinted_asset(
-        assets, "static-discovery", ".json", static_discovery_json(discovery_payload)
+        assets, "static-discovery", ".json", discovery_bytes
     )
     return {
         "app_css": app_css,
@@ -242,6 +274,99 @@ def _export_fingerprinted_assets(
         "map_renderer_module": renderer_module,
         "semantic_atlas": semantic_atlas,
         "static_discovery": static_discovery,
+    }
+
+
+def _require_paired_public_discovery_v2_inputs(inputs: SemanticPagesExportInputs) -> None:
+    """Reject a candidate or promotion receipt that is not supplied as a pair."""
+    if (inputs.public_discovery_v2_candidate is None) != (
+        inputs.public_discovery_v2_promotion_receipt is None
+    ):
+        raise SemanticPagesExportError(
+            "public discovery v2 candidate and promotion receipt must be supplied together"
+        )
+
+
+def _require_public_discovery_v2_layout_pin(
+    inputs: SemanticPagesExportInputs, artifact: SemanticLayoutArtifact
+) -> None:
+    """Require the optional promotion receipt to bind this exact verified layout."""
+    receipt = inputs.public_discovery_v2_promotion_receipt
+    if receipt is None:
+        return
+    actual_file_sha256, _ = sha256_file(inputs.semantic_layout_path)
+    layout_pin = receipt.input_pins.sealed_layout
+    if (
+        actual_file_sha256 != layout_pin.file_sha256
+        or artifact.output_sha256 != layout_pin.logical_sha256
+    ):
+        raise SemanticPagesExportError("public discovery v2 receipt layout pin does not match")
+
+
+def _public_discovery_v2_payload(
+    inputs: SemanticPagesExportInputs, semantic_atlas: Path
+) -> PublicStaticDiscoveryV2Payload | None:
+    """Adapt and receipt-verify v2 only after the exact atlas bytes exist."""
+    candidate = inputs.public_discovery_v2_candidate
+    receipt = inputs.public_discovery_v2_promotion_receipt
+    if candidate is None or receipt is None:
+        return None
+    try:
+        payload = adapt_public_static_discovery_v2(
+            candidate=candidate, semantic_atlas=semantic_atlas
+        )
+        payload_bytes = public_static_discovery_v2_json(payload)
+        verified = verify_public_discovery_promotion(receipt, payload_bytes)
+    except (PublicDiscoveryPromotionError, ValueError) as error:
+        raise SemanticPagesExportError("public discovery v2 promotion does not replay") from error
+    if verified != payload:
+        raise SemanticPagesExportError("public discovery v2 receipt parsed different payload bytes")
+    return payload
+
+
+def _discovery_manifest_payload(
+    payload: StaticDiscoveryPayload | PublicStaticDiscoveryV2Payload,
+    payload_bytes: bytes,
+    inputs: SemanticPagesExportInputs,
+) -> dict[str, object]:
+    """Bind v2 byte and receipt identities while retaining v1 manifest bytes."""
+    if isinstance(payload, StaticDiscoveryPayload):
+        return {
+            "availability": payload.availability,
+            "revision": payload.revision,
+            "coverage": _discovery_manifest_coverage(payload),
+        }
+    receipt = inputs.public_discovery_v2_promotion_receipt
+    if receipt is None:
+        raise SemanticPagesExportError("public discovery v2 receipt is missing")
+    return {
+        "availability": payload.availability,
+        "revision": payload.revision,
+        "coverage": {
+            "placed_map_node_count": payload.coverage.placed_map_node_count,
+            "exact_label_bound_catalog_genre_count": (
+                payload.coverage.exact_label_bound_catalog_genre_count
+            ),
+            "one_to_one_qid_position_bound_catalog_genre_count": (
+                payload.coverage.one_to_one_qid_position_bound_catalog_genre_count
+            ),
+            "exact_label_genres_with_direct_artists": (
+                payload.coverage.exact_label_genres_with_direct_artists
+            ),
+            "one_to_one_qid_position_genres_with_direct_artists": (
+                payload.coverage.one_to_one_qid_position_genres_with_direct_artists
+            ),
+            "genres_with_direct_artists": payload.coverage.genres_with_direct_artists,
+            "artists_with_direct_map_genres": payload.coverage.artists_with_direct_map_genres,
+            "bound_direct_observation_count": payload.coverage.bound_direct_observation_count,
+            "artist_relation_method": payload.coverage.artist_relation_method,
+        },
+        "payload": {
+            "logical_sha256": payload.output_sha256,
+            "file_sha256": sha256(payload_bytes).hexdigest(),
+            "byte_count": len(payload_bytes),
+        },
+        "promotion_receipt_sha256": receipt.output_sha256,
     }
 
 

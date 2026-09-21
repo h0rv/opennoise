@@ -1,0 +1,35 @@
+{
+  "revision": "public-static-discovery-v2-promotion-v1",
+  "publication_scope": "public_static_discovery_v2_only",
+  "public_discovery_revision": "static-direct-discovery-v2",
+  "historical_inputs_used": false,
+  "reconciliation_inputs_used": false,
+  "audio_inputs_used": false,
+  "input_pins": {
+    "sealed_layout": {
+      "file_sha256": "e7723b42657451a341e92a9aefa1ced499067e673366b468fd38f84fc86f5972",
+      "logical_sha256": "469f207021157031e88853be1b9f2d1eb63af8f0fcfc9c504e19e7584fd0cc38"
+    },
+    "public_database_sha256": "240047cabddbbebccd48a775c9967488dd2dd2968d38d27f31354b90f3a3e8fc",
+    "base_static_discovery_sha256": "b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8",
+    "public_qid_seed_map_sha256": "dd5cf7cf33898a76c1e85e95351e25e7303933f4524e2776097c20fd0d73a449",
+    "sealed_qid_direct_bridge_selection_sha256": "a6e24b756236abf94416c129d442dd7b7fd5592eb27e2fe742c4c7ece30c1b4a",
+    "sealed_qid_direct_bridge_sha256": "c488223b34afcd59596072d4623e3190cfff1941cfdccb4da3e286e7ccebef5b",
+    "sealed_qid_additive_static_discovery_sha256": "dfc4c74915ddc72df831a350d3fd420c9b14ff24c1f99e3758b6cdbb8257da73",
+    "merged_public_direct_discovery_sha256": "9ee2a464de74e0b681ea347163fda94afa6eb28e3189a4fa4e6d0ee3d708232b",
+    "semantic_atlas_sha256": "730bca93300870d35b527f377eb883ae95a3f931aad7e820b013fa592c5bf4ac"
+  },
+  "public_payload": {
+    "logical_sha256": "c117658577413e8047503486077e3b50ebe31056340a9025897fa8645c716c22",
+    "file_sha256": "4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c",
+    "byte_count": 2865604
+  },
+  "coverage": {
+    "exact_label_genre_count": 260,
+    "qid_position_genre_count": 84,
+    "genre_count": 344,
+    "artist_count": 1126,
+    "bound_direct_observation_count": 3859
+  },
+  "output_sha256": "955ac09ab3534754810da8929709722cfcc739e20055201adc9be0a61e878f74"
+}

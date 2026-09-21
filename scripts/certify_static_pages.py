@@ -14,8 +14,32 @@ from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from opennoise.common import sha256_file
-from opennoise.deployment.semantic_pages import SemanticPagesExportInputs, export_semantic_pages
+from opennoise.checkpoints.public_qid_seed_map import (
+    PublicQidSeedMapInputs,
+    build_public_qid_seed_map,
+    write_public_qid_seed_map,
+)
+from opennoise.checkpoints.sealed_qid_direct_bridge import (
+    SealedQidDirectBridgeInputs,
+    build_sealed_qid_direct_bridge,
+)
+from opennoise.common import sha256_file, sha256_hex
+from opennoise.deployment.merged_public_direct_discovery import (
+    MergedPublicDirectDiscoveryCandidate,
+    build_merged_public_direct_discovery_candidate,
+)
+from opennoise.deployment.public_direct_static_discovery import (
+    build_sealed_qid_additive_static_discovery,
+)
+from opennoise.deployment.public_discovery_promotion import (
+    PublicDiscoveryPromotionReceipt,
+    public_discovery_promotion_sha256,
+)
+from opennoise.deployment.semantic_pages import (
+    SemanticPagesExportInputs,
+    export_semantic_pages,
+    static_discovery_v1_bytes_from_layout,
+)
 from opennoise.ml.semantic_layout.contracts import (
     SemanticLayoutArtifact,
     verify_semantic_map_layout,
@@ -29,6 +53,9 @@ _SEALED_DATABASE: Final = Path("data/public.sqlite")
 _SEALED_OUTPUT: Final = Path("dist")
 _SEALED_LAYOUT_SHA256: Final = "e7723b42657451a341e92a9aefa1ced499067e673366b468fd38f84fc86f5972"
 _SEALED_DATABASE_SHA256: Final = "240047cabddbbebccd48a775c9967488dd2dd2968d38d27f31354b90f3a3e8fc"
+_PUBLIC_DISCOVERY_V2_PROMOTION_RECEIPT: Final = Path(
+    "config/releases/public-discovery-v2-promotion.json"
+)
 _SEALED_ENVIRONMENT_OVERRIDES: Final = (
     "OPENNOISE_SEMANTIC_MAP_LAYOUT",
     "OPENNOISE_DISCOVERY_DATABASE",
@@ -134,6 +161,117 @@ def _atomic_install(staged: Path, output: Path) -> None:
         shutil.rmtree(backup)
 
 
+def _replay_public_discovery_v2_promotion(
+    *, semantic_layout: Path, database: Path, artifact: SemanticLayoutArtifact
+) -> tuple[MergedPublicDirectDiscoveryCandidate, PublicDiscoveryPromotionReceipt]:
+    """Rebuild a promoted v2 candidate solely from sealed layout and database bytes."""
+    receipt_path = _PUBLIC_DISCOVERY_V2_PROMOTION_RECEIPT
+    if not receipt_path.is_file():
+        if receipt_path.exists() or receipt_path.is_symlink():
+            raise RuntimeError("public discovery v2 promotion receipt is not a regular file")
+        raise RuntimeError("public discovery v2 promotion receipt is missing")
+    try:
+        receipt = _load_promotion_receipt(receipt_path)
+        v1_bytes = _verify_promotion_inputs(receipt, semantic_layout, database, artifact)
+        candidate = _rebuild_promoted_candidate(receipt, semantic_layout, database, v1_bytes)
+    except (OSError, ValueError) as error:
+        raise RuntimeError("public discovery v2 promotion replay failed") from error
+    return candidate, receipt
+
+
+def _load_promotion_receipt(path: Path) -> PublicDiscoveryPromotionReceipt:
+    """Load one strict, self-hashed tracked promotion authority."""
+    receipt = PublicDiscoveryPromotionReceipt.model_validate_json(path.read_bytes())
+    _require_replay(
+        condition=receipt.output_sha256 == public_discovery_promotion_sha256(receipt),
+        message="promotion receipt self-hash does not replay",
+    )
+    return receipt
+
+
+def _verify_promotion_inputs(
+    receipt: PublicDiscoveryPromotionReceipt,
+    semantic_layout: Path,
+    database: Path,
+    artifact: SemanticLayoutArtifact,
+) -> bytes:
+    """Require the two canonical inputs and regenerated v1 base to match the receipt."""
+    layout_sha256, _ = sha256_file(semantic_layout)
+    _require_replay(
+        condition=layout_sha256 == receipt.input_pins.sealed_layout.file_sha256
+        and artifact.output_sha256 == receipt.input_pins.sealed_layout.logical_sha256,
+        message="sealed layout does not match promotion receipt",
+    )
+    database_sha256, _ = sha256_file(database)
+    _require_replay(
+        condition=database_sha256 == receipt.input_pins.public_database_sha256,
+        message="public database does not match promotion receipt",
+    )
+    v1_bytes = static_discovery_v1_bytes_from_layout(
+        semantic_layout_path=semantic_layout, database=database
+    )
+    _require_replay(
+        condition=sha256_hex(v1_bytes) == receipt.input_pins.base_static_discovery_sha256,
+        message="rebuilt v1 static discovery does not match promotion receipt",
+    )
+    return v1_bytes
+
+
+def _rebuild_promoted_candidate(
+    receipt: PublicDiscoveryPromotionReceipt, semantic_layout: Path, database: Path, v1_bytes: bytes
+) -> MergedPublicDirectDiscoveryCandidate:
+    """Construct every v2 intermediate in a private directory and pin each result."""
+    with tempfile.TemporaryDirectory(prefix=".public-discovery-v2-replay-") as root:
+        replay_root = Path(root)
+        base_path = replay_root / "base-static-discovery.json"
+        qid_map_path = replay_root / "public-qid-seed-map.json"
+        base_path.write_bytes(v1_bytes)
+        qid_map = build_public_qid_seed_map(
+            PublicQidSeedMapInputs(public_database=database, canonical_layout=semantic_layout)
+        )
+        _require_replay(
+            condition=qid_map.output_sha256 == receipt.input_pins.public_qid_seed_map_sha256,
+            message="rebuilt QID map does not match promotion receipt",
+        )
+        write_public_qid_seed_map(qid_map, qid_map_path)
+        bridge = build_sealed_qid_direct_bridge(
+            SealedQidDirectBridgeInputs(
+                public_qid_seed_map=qid_map_path,
+                public_database=database,
+                base_static_discovery=base_path,
+            )
+        )
+        _require_replay(
+            condition=bridge.selection_sha256
+            == receipt.input_pins.sealed_qid_direct_bridge_selection_sha256
+            and bridge.output_sha256 == receipt.input_pins.sealed_qid_direct_bridge_sha256,
+            message="rebuilt sealed QID bridge does not match promotion receipt",
+        )
+        sidecar = build_sealed_qid_additive_static_discovery(
+            database=database, base_static_discovery=base_path, bridge=bridge
+        )
+        _require_replay(
+            condition=sidecar.output_sha256
+            == receipt.input_pins.sealed_qid_additive_static_discovery_sha256,
+            message="rebuilt QID sidecar does not match promotion receipt",
+        )
+        candidate = build_merged_public_direct_discovery_candidate(
+            base_static_discovery=base_path, additive=sidecar
+        )
+    _require_replay(
+        condition=candidate.output_sha256
+        == receipt.input_pins.merged_public_direct_discovery_sha256,
+        message="rebuilt merged candidate does not match promotion receipt",
+    )
+    return candidate
+
+
+def _require_replay(*, condition: bool, message: str) -> None:
+    """Reject one receipt invariant at its narrow replay boundary."""
+    if not condition:
+        raise ValueError(message)
+
+
 def main() -> int:
     """Run the sealed layout, static export, loopback, and browser gates."""
     arguments = _arguments()
@@ -144,6 +282,11 @@ def main() -> int:
         raise RuntimeError("Node.js is required for browser certification")
     artifact = SemanticLayoutArtifact.model_validate_json(arguments.semantic_layout.read_bytes())
     verify_semantic_map_layout(artifact)
+    promoted_v2 = _replay_public_discovery_v2_promotion(
+        semantic_layout=arguments.semantic_layout,
+        database=arguments.discovery_database,
+        artifact=artifact,
+    )
     output = arguments.output.resolve()
     report = arguments.report.resolve()
     captures = arguments.captures.resolve()
@@ -157,6 +300,8 @@ def main() -> int:
                 arguments.semantic_layout,
                 staged,
                 arguments.discovery_database,
+                public_discovery_v2_candidate=promoted_v2[0],
+                public_discovery_v2_promotion_receipt=promoted_v2[1],
             )
         )
         arguments.report.parent.mkdir(parents=True, exist_ok=True)

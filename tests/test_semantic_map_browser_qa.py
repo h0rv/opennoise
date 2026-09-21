@@ -107,6 +107,47 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
             renderer,
         )
 
+    def test_v2_discovery_is_manifest_gated_and_keeps_v1_supported(self) -> None:
+        renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
+        self.assertIn("static-direct-discovery-v1", renderer)
+        self.assertIn("static-direct-discovery-v2", renderer)
+        self.assertIn("unknown asset revision must not become public UI", renderer)
+        self.assertIn("manifest?.discovery?.revision === 'static-direct-discovery-v2'", self.source)
+        self.assertIn("published v2 discovery binding or coverage contract failed", self.source)
+        self.assertIn("one_to_one_qid_position_binding", self.source)
+        self.assertIn("v2_artist_search_deep_link", self.source)
+        self.assertIn("QID-position artist deep link did not restore public state", self.source)
+        self.assertIn("QID-position artist Back did not restore the genre detail", self.source)
+        self.assertIn(
+            "const atlasGenre = atlas.nodes?.find((item) => item.id === genreId);", self.source
+        )
+        self.assertIn("genre_name: atlasGenre.name", self.source)
+        self.assertIn("postPunkSearchContext.focus_url === postPunk.focus_url", self.source)
+        self.assertIn(
+            "post-punk artist search context did not restore its genre detail", self.source
+        )
+        self.assertIn("v2DeepLinkedArtist.canvas_ready", self.source)
+        self.assertIn("v2ArtistBack.frame_count > 0", self.source)
+        self.assertIn(
+            "QID-position artist search context is absent from the semantic atlas", self.source
+        )
+
+    def test_discovery_bytes_are_bound_to_manifest_and_promotion_receipt(self) -> None:
+        self.assertIn("jsonBytes", self.source)
+        self.assertIn("requireDiscoveryManifestBinding", self.source)
+        self.assertIn("static discovery bytes do not match manifest asset SHA-256", self.source)
+        self.assertIn("static discovery coverage does not match manifest", self.source)
+        self.assertIn("static discovery v1/v2 manifest revision mismatch", self.source)
+        self.assertIn(
+            "static discovery v2 payload or promotion receipt does not match manifest", self.source
+        )
+        self.assertIn(
+            "955ac09ab3534754810da8929709722cfcc739e20055201adc9be0a61e878f74",
+            self.source,
+        )
+        self.assertIn("discovery?.payload?.file_sha256 === fileSha256", self.source)
+        self.assertIn("discovery?.payload?.byte_count === discoveryAsset.bytes.length", self.source)
+
     def test_prefixed_focus_bookmarks_are_normalized_to_public_ids(self) -> None:
         renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
         self.assertIn("canonicalizeFocusUrl", renderer)

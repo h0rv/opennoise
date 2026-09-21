@@ -17,6 +17,11 @@ and 3,859 bound observations, with hash
 The sidecar and merged candidate no longer consume the old v3 bridge or
 reconciliation. The base v1 asset is unchanged.
 
-Nothing here approves a release or deployment. A tracked promotion receipt,
-public v2 schema, certifier, and browser gates are still missing. The nested
-static v1 compatibility payload is not a release schema.
+The tracked promotion receipt is now
+`config/releases/public-discovery-v2-promotion.json`. It pins the public v2
+payload's logical and file SHA-256 values, byte count, coverage, and sealed
+input chain. The local static v2 build and browser certification passed with
+344 genres, 1,126 artists, and 3,859 observations. The v2 discovery asset has
+file SHA-256 `4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c`.
+The result is not deployed. The nested static v1 compatibility payload is not
+a release schema.

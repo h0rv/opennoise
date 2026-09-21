@@ -18,7 +18,6 @@ overview regions, and bounded local structural edges.
 mise install
 poe sync
 poe check
-
 poe build
 poe dev
 ```
@@ -32,9 +31,11 @@ semantic-layout input hashes, coverage accounting, and every served asset.
 
 Deploy a certified `dist` directory with `poe deploy`.
 
-`poe bootstrap` is only needed when preparing the historical Every Noise source
-cache. These six commands are the complete supported Poe surface; archived
-documentation may name retired workflows whose scripts must be run directly.
+The supported Poe commands are `sync`, `bootstrap`, `check`, `dev`, `build`,
+and `deploy`. `poe bootstrap` is only needed when preparing the historical
+Every Noise source cache. Archived checkpoint and research documents can name
+retired Poe invocations. Run the named scripts directly instead of treating
+those invocations as supported tasks.
 
 ## Offline construction
 

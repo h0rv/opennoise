@@ -15,6 +15,7 @@ from opennoise.checkpoints.public_direct_bridge_candidate import (
     _safe_positioned_links,
     build_public_direct_bridge_candidate,
 )
+from tests._pinned_v1_discovery import pinned_v1_discovery_path
 
 if TYPE_CHECKING:
     from opennoise.ml.semantic_layout.contracts import SemanticLayoutArtifact
@@ -158,9 +159,7 @@ class PublicDirectBridgeCandidateTests(unittest.TestCase):
         candidate = build_public_direct_bridge_candidate(
             CandidateInputs(
                 public_database=Path("data/public.sqlite"),
-                static_discovery=Path(
-                    "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-                ),
+                static_discovery=pinned_v1_discovery_path(),
                 reconciliation=Path(".cache/seed-reconciliation/v3/seed-reconciliation.json"),
                 canonical_layout=Path(".cache/semantic-map-layout-v3/artifact.json"),
             )

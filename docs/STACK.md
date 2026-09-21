@@ -8,6 +8,19 @@
 - Ruff formats and lints. ty type-checks.
 - mise and uv reuse the project environment and hard-linked cache across runs.
 
+## Workflow
+
+Poe is the only task runner. The supported commands are `poe sync`, `poe bootstrap`,
+`poe check`, `poe dev`, `poe build`, and `poe deploy`. Run `poe sync` before the
+other commands. Run `poe bootstrap` only when preparing the historical Every Noise
+source cache. `poe build` creates and certifies `dist`, and `poe dev` serves that
+already-built directory. `poe deploy` rebuilds and certifies before it deploys to
+Cloudflare Pages.
+
+Archived checkpoint and research documents can refer to retired Poe
+invocations. Run their referenced scripts directly. Do not add an alias for a
+retired invocation.
+
 ## Delivery
 
 - Cloudflare Pages serves one exported directory. There is no application

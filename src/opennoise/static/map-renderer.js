@@ -251,11 +251,19 @@ if (canvas instanceof HTMLCanvasElement) {
     setUrl(null);
     schedule();
   };
-  const normaliseDiscovery = (payload) => ({
-    availability: payload?.availability === 'ready' ? 'ready' : 'unavailable',
-    genres: new Map((Array.isArray(payload?.genres) ? payload.genres : []).filter((item) => typeof item?.node_id === 'string').map((item) => [item.node_id, item])),
-    artists: new Map((Array.isArray(payload?.artists) ? payload.artists : []).filter((item) => typeof item?.artist_id === 'string').map((item) => [item.artist_id, item])),
-  });
+  const normaliseDiscovery = (payload) => {
+    // Discovery v2 deliberately preserves the v1 presentation shape while
+    // adding an explicit per-membership binding basis.  Keep this acceptance
+    // boundary narrow: an unknown asset revision must not become public UI.
+    const revision = payload?.revision;
+    const supported = revision === 'static-direct-discovery-v1' || revision === 'static-direct-discovery-v2';
+    return {
+    availability: supported && payload?.availability === 'ready' ? 'ready' : 'unavailable',
+    revision: supported ? revision : null,
+    genres: new Map((supported && Array.isArray(payload?.genres) ? payload.genres : []).filter((item) => typeof item?.node_id === 'string').map((item) => [item.node_id, item])),
+    artists: new Map((supported && Array.isArray(payload?.artists) ? payload.artists : []).filter((item) => typeof item?.artist_id === 'string').map((item) => [item.artist_id, item])),
+    };
+  };
   const closeSearchResults = ({ clear = false } = {}) => {
     state.searchMatches = [];
     if (searchResults) { searchResults.replaceChildren(); searchResults.hidden = true; }

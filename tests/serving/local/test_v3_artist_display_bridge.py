@@ -24,11 +24,10 @@ from opennoise.serving.local.v3_artist_display_bridge import (
     V3ArtistDisplayBridgeInputs,
     build_local_v3_artist_display_bridge_audit,
 )
+from tests._pinned_v1_discovery import pinned_v1_discovery_path
 
 _V3_ROOT = Path("/tmp/phase3-historical-v3-20260921")  # noqa: S108 - pinned local input.
-_STATIC_DISCOVERY = Path(
-    "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-)
+_STATIC_DISCOVERY = pinned_v1_discovery_path()
 _PINNED_INPUTS = (
     _V3_ROOT / "receipt.json",
     _V3_ROOT / "model.json",

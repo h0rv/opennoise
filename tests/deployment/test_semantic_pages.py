@@ -8,9 +8,33 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
+from opennoise.checkpoints.public_qid_seed_map import (
+    PublicQidSeedMapInputs,
+    build_public_qid_seed_map,
+    write_public_qid_seed_map,
+)
+from opennoise.checkpoints.sealed_qid_direct_bridge import (
+    SealedQidDirectBridgeInputs,
+    build_sealed_qid_direct_bridge,
+)
+from opennoise.common import sha256_file, sha256_hex
 from opennoise.deployment import semantic_pages
+from opennoise.deployment.merged_public_direct_discovery import (
+    build_merged_public_direct_discovery_candidate,
+)
+from opennoise.deployment.public_direct_static_discovery import (
+    build_sealed_qid_additive_static_discovery,
+)
+from opennoise.deployment.public_discovery_promotion import (
+    PublicDiscoveryPromotionReceipt,
+    public_discovery_promotion_sha256,
+)
+from opennoise.deployment.public_static_discovery_v2 import (
+    adapt_public_static_discovery_v2,
+    public_static_discovery_v2_json,
+)
 from opennoise.deployment.semantic_pages import (
     SemanticPagesExportError,
     SemanticPagesExportInputs,
@@ -21,12 +45,74 @@ from opennoise.deployment.semantic_pages import (
     _spread_static_label_reveals,
     export_semantic_pages,
 )
+from tests._pinned_v1_discovery import pinned_v1_discovery_path
 
 LAYOUT = Path(".cache/semantic-map-layout-v2/artifact.json")
+V3_LAYOUT = Path(".cache/semantic-map-layout-v3/artifact.json")
+PUBLIC_DATABASE = Path("data/public.sqlite")
+BASE_DISCOVERY = pinned_v1_discovery_path()
 STATIC_ROOT = Path(__file__).resolve().parents[2] / "src" / "opennoise" / "static"
 REFERENCE_FIT_SCALE = 900.0
 BASELINE_LABEL_COUNT = 4
 LABEL_BOX_HEIGHT = 22.0
+
+
+def _v2_candidate_and_receipt(atlas: Path):  # noqa: ANN202
+    with tempfile.TemporaryDirectory() as temporary:
+        qid_map_path = Path(temporary) / "qid-map.json"
+        qid_map = build_public_qid_seed_map(
+            PublicQidSeedMapInputs(public_database=PUBLIC_DATABASE, canonical_layout=V3_LAYOUT)
+        )
+        write_public_qid_seed_map(qid_map, qid_map_path)
+        bridge = build_sealed_qid_direct_bridge(
+            SealedQidDirectBridgeInputs(
+                public_qid_seed_map=qid_map_path,
+                public_database=PUBLIC_DATABASE,
+                base_static_discovery=BASE_DISCOVERY,
+            )
+        )
+        additive = build_sealed_qid_additive_static_discovery(
+            database=PUBLIC_DATABASE,
+            base_static_discovery=BASE_DISCOVERY,
+            bridge=bridge,
+        )
+        candidate = build_merged_public_direct_discovery_candidate(
+            base_static_discovery=BASE_DISCOVERY, additive=additive
+        )
+        payload = adapt_public_static_discovery_v2(candidate=candidate, semantic_atlas=atlas)
+        payload_bytes = public_static_discovery_v2_json(payload)
+        layout_sha256, _ = sha256_file(V3_LAYOUT)
+        layout = semantic_pages.SemanticLayoutArtifact.model_validate_json(V3_LAYOUT.read_bytes())
+        draft = PublicDiscoveryPromotionReceipt.model_validate(
+            {
+                "input_pins": {
+                    "sealed_layout": {
+                        "file_sha256": layout_sha256,
+                        "logical_sha256": layout.output_sha256,
+                    },
+                    "public_database_sha256": candidate.public_database_sha256,
+                    "base_static_discovery_sha256": candidate.base_static_discovery_sha256,
+                    "public_qid_seed_map_sha256": qid_map.output_sha256,
+                    "sealed_qid_direct_bridge_selection_sha256": bridge.selection_sha256,
+                    "sealed_qid_direct_bridge_sha256": bridge.output_sha256,
+                    "sealed_qid_additive_static_discovery_sha256": (
+                        candidate.sealed_qid_additive_static_discovery_sha256
+                    ),
+                    "merged_public_direct_discovery_sha256": candidate.output_sha256,
+                    "semantic_atlas_sha256": payload.input_chain.semantic_atlas_sha256,
+                },
+                "public_payload": {
+                    "logical_sha256": payload.output_sha256,
+                    "file_sha256": sha256_hex(payload_bytes),
+                    "byte_count": len(payload_bytes),
+                },
+                "output_sha256": "0" * 64,
+            }
+        )
+        receipt = draft.model_copy(
+            update={"output_sha256": public_discovery_promotion_sha256(draft)}
+        )
+        return candidate, receipt, payload_bytes
 
 
 def _assert_public_payload(test: unittest.TestCase, payload: dict[str, object]) -> None:  # noqa: C901, PLR0915
@@ -106,6 +192,76 @@ class PublicIdMapperTests(unittest.TestCase):
         self.assertEqual(mapper.public("item6291"), "item6291")
         with self.assertRaises(SemanticPagesExportError):
             _PublicIdMapper.from_ids((*ids, "archive:item1"))
+
+
+class PublicDiscoveryV2InputTests(unittest.TestCase):
+    """The optional v2 path never accepts an unpaired promotion authority."""
+
+    def test_v2_candidate_and_receipt_must_be_supplied_together(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "dist"
+            with self.assertRaisesRegex(SemanticPagesExportError, "supplied together"):
+                export_semantic_pages(
+                    SemanticPagesExportInputs(
+                        Path("missing-layout.json"),
+                        output,
+                        public_discovery_v2_candidate=MagicMock(),
+                    )
+                )
+            with self.assertRaisesRegex(SemanticPagesExportError, "supplied together"):
+                export_semantic_pages(
+                    SemanticPagesExportInputs(
+                        Path("missing-layout.json"),
+                        output,
+                        public_discovery_v2_promotion_receipt=MagicMock(),
+                    )
+                )
+
+
+@unittest.skipUnless(
+    all(path.is_file() for path in (V3_LAYOUT, PUBLIC_DATABASE, BASE_DISCOVERY)),
+    "requires pinned public v2 inputs",
+)
+class PublicDiscoveryV2ExportTests(unittest.TestCase):
+    """The optional export writes only a receipt-verified v2 discovery asset."""
+
+    def test_pinned_candidate_and_receipt_export_v2_after_atlas(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            seed_output = root / "seed"
+            seed_manifest = export_semantic_pages(SemanticPagesExportInputs(V3_LAYOUT, seed_output))
+            seed_assets = seed_manifest["assets"]
+            assert isinstance(seed_assets, dict)
+            seed_atlas = seed_assets["semantic_atlas"]
+            assert isinstance(seed_atlas, dict)
+            candidate, receipt, expected_bytes = _v2_candidate_and_receipt(
+                seed_output / str(seed_atlas["path"])
+            )
+
+            output = root / "v2"
+            manifest = export_semantic_pages(
+                SemanticPagesExportInputs(
+                    V3_LAYOUT,
+                    output,
+                    public_discovery_v2_candidate=candidate,
+                    public_discovery_v2_promotion_receipt=receipt,
+                )
+            )
+
+            discovery = manifest["discovery"]
+            assets = manifest["assets"]
+            assert isinstance(discovery, dict)
+            assert isinstance(assets, dict)
+            discovery_asset = assets["static_discovery"]
+            assert isinstance(discovery_asset, dict)
+            self.assertEqual(discovery["revision"], "static-direct-discovery-v2")
+            self.assertEqual(discovery["promotion_receipt_sha256"], receipt.output_sha256)
+            payload = discovery["payload"]
+            assert isinstance(payload, dict)
+            self.assertEqual(payload["logical_sha256"], receipt.public_payload.logical_sha256)
+            self.assertEqual(payload["file_sha256"], receipt.public_payload.file_sha256)
+            self.assertEqual(payload["byte_count"], receipt.public_payload.byte_count)
+            self.assertEqual((output / str(discovery_asset["path"])).read_bytes(), expected_bytes)
 
 
 class StaticLabelAtlasTests(unittest.TestCase):

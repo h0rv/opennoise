@@ -28,6 +28,7 @@ const option = (name) => {
 const captures = resolve(option("--captures") ?? "artifacts/semantic-map/captures");
 const port = Number(option("--port") ?? 9323);
 const requireLabelPointExit = args.includes("--require-label-point-exit");
+const PUBLIC_DISCOVERY_V2_PROMOTION_SHA256 = "955ac09ab3534754810da8929709722cfcc739e20055201adc9be0a61e878f74";
 const permittedLabelExitCauses = new Set([
   'label_box_viewport_clipping',
   'overlay_occlusion',
@@ -100,6 +101,64 @@ async function json(url, options = {}) {
   const response = await fetch(url, options);
   if (!response.ok) throw new Error(`${url} returned ${response.status}`);
   return response.json();
+}
+
+async function jsonBytes(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url} returned ${response.status}`);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  return { bytes, payload: JSON.parse(bytes.toString("utf8")) };
+}
+
+function requireDiscoveryManifestBinding(manifest, discoveryAsset) {
+  const asset = manifest?.assets?.static_discovery;
+  const discovery = manifest?.discovery;
+  requireCheck(
+    typeof asset?.path === "string" && typeof asset.sha256 === "string",
+    "manifest omitted static discovery asset identity",
+    { manifest },
+  );
+  const fileSha256 = createHash("sha256").update(discoveryAsset.bytes).digest("hex");
+  requireCheck(fileSha256 === asset.sha256, "static discovery bytes do not match manifest asset SHA-256", {
+    manifest_sha256: asset.sha256, file_sha256: fileSha256,
+  });
+  const payload = discoveryAsset.payload;
+  requireCheck(
+    payload?.revision === discovery?.revision && payload?.availability === discovery?.availability,
+    "static discovery revision or availability does not match manifest",
+    { manifest_discovery: discovery, payload_revision: payload?.revision, payload_availability: payload?.availability },
+  );
+  const manifestCoverage = discovery?.coverage;
+  requireCheck(
+    manifestCoverage && Object.entries(manifestCoverage).every(([key, value]) => payload?.coverage?.[key] === value),
+    "static discovery coverage does not match manifest",
+    { manifest_coverage: manifestCoverage, payload_coverage: payload?.coverage },
+  );
+  const isV2 = payload?.revision === "static-direct-discovery-v2";
+  requireCheck(
+    isV2 === (discovery?.revision === "static-direct-discovery-v2"),
+    "static discovery v1/v2 manifest revision mismatch",
+    { manifest_discovery: discovery, payload_revision: payload?.revision },
+  );
+  if (isV2) {
+    requireCheck(
+      discovery?.payload?.logical_sha256 === payload.output_sha256
+        && discovery?.payload?.file_sha256 === fileSha256
+        && discovery?.payload?.byte_count === discoveryAsset.bytes.length
+        && discovery?.promotion_receipt_sha256 === PUBLIC_DISCOVERY_V2_PROMOTION_SHA256,
+      "static discovery v2 payload or promotion receipt does not match manifest",
+      { manifest_discovery: discovery, payload_sha256: payload.output_sha256, file_sha256: fileSha256 },
+    );
+  } else {
+    requireCheck(
+      payload?.revision === "static-direct-discovery-v1"
+        && discovery?.payload === undefined
+        && discovery?.promotion_receipt_sha256 === undefined,
+      "static discovery v1 manifest carries v2 promotion fields",
+      { manifest_discovery: discovery, payload_revision: payload?.revision },
+    );
+  }
+  return payload;
 }
 
 async function launch() {
@@ -541,6 +600,10 @@ async function run() {
     await navigate(cdp, 1440, 900, "light");
     const initial = await diagnostics(cdp);
     const manifest = await json(new URL("opennoise-static-manifest.json", baseUrl));
+    const discoveryPath = manifest?.assets?.static_discovery?.path;
+    requireCheck(typeof discoveryPath === "string", "manifest omitted static discovery", manifest);
+    const publishedDiscovery = await jsonBytes(new URL(discoveryPath, baseUrl));
+    requireDiscoveryManifestBinding(manifest, publishedDiscovery);
     const atlasPath = manifest?.assets?.semantic_atlas?.path;
     requireCheck(typeof atlasPath === "string", "manifest omitted semantic atlas", manifest);
     const publishedAtlas = await json(new URL(atlasPath, baseUrl));
@@ -706,6 +769,7 @@ async function run() {
       const canvas = document.querySelector('#semantic-map');
       const currentArtistId = new URL(location.href).searchParams.get('open_artist');
       const payload = await fetch(canvas.dataset.discoveryUrl).then((response) => response.json());
+      const atlas = await fetch(canvas.dataset.mapUrl).then((response) => response.json());
       const artist = payload.artists?.find((item) => item.artist_id === currentArtistId);
       const relation = artist?.shared_genre_artists?.[0];
       const peer = payload.artists?.find((item) => item.artist_id === relation?.artist_id);
@@ -713,10 +777,11 @@ async function run() {
       const peerGenres = new Set(peer?.memberships?.map((item) => item.node_id) ?? []);
       const genreId = relation?.shared_genre_ids?.find((id) => sourceGenres.has(id) && peerGenres.has(id));
       const genre = payload.genres?.find((item) => item.node_id === genreId);
-      return relation && peer && genre ? {
+      const atlasGenre = atlas.nodes?.find((item) => item.id === genreId);
+      return relation && peer && genre && atlasGenre ? {
         artist_id: peer.artist_id,
         genre_id: genreId,
-        genre_name: genre.catalog_genre_name,
+        genre_name: atlasGenre.name,
       } : null;
     })()`);
     requireCheck(Boolean(similarExpected), 'artist detail has no exported shared-direct peer context', { postPunkArtist, similarExpected });
@@ -745,6 +810,19 @@ async function run() {
 
     // Artist search must expose the same public artist page as a genre-panel
     // click, including its explicit genre context and URL state.
+    await cdp.command('Page.navigate', { url: `${baseUrl}?open_focus=${encodeURIComponent(postPunk.focus_url)}` });
+    let postPunkSearchContext = await diagnostics(cdp);
+    for (let attempt = 0; attempt < 240; attempt += 1) {
+      if (postPunkSearchContext.focus_url === postPunk.focus_url
+        && postPunkSearchContext.detail_headings.includes('Artists in this genre')) break;
+      await sleep(25); postPunkSearchContext = await diagnostics(cdp);
+    }
+    requireCheck(
+      postPunkSearchContext.focus_url === postPunk.focus_url
+        && postPunkSearchContext.detail_headings.includes('Artists in this genre'),
+      'post-punk artist search context did not restore its genre detail',
+      { postPunk, postPunkSearchContext },
+    );
     const searchedArtistName = postPunkArtist.detail_artist_name;
     const searchedArtistId = postPunkArtist.artist_url;
     requireCheck(Boolean(searchedArtistName && searchedArtistId), 'artist detail did not publish a deep-link identity', postPunkArtist);
@@ -797,6 +875,159 @@ async function run() {
       'artist Back did not restore the genre-scoped panel',
       artistBack,
     );
+
+    // V2 keeps the v1 direct-discovery interaction contract, while publishing
+    // an explicitly distinct QID-to-position binding for the additive rows.
+    // Select the first sorted QID-only genre/artist pair from the published
+    // asset so this stays deterministic without encoding a research candidate
+    // name in the browser harness.
+    let v2Discovery = null;
+    let v2Focused = null;
+    let v2Artist = null;
+    let v2ArtistSearch = null;
+    let v2DeepLinkedArtist = null;
+    let v2ArtistBack = null;
+    if (manifest?.discovery?.revision === 'static-direct-discovery-v2') {
+      v2Discovery = await cdp.evaluate(`(async () => {
+        const canvas = document.querySelector('#semantic-map');
+        const payload = await fetch(canvas.dataset.discoveryUrl).then((response) => response.json());
+        const qidGenres = (payload.genres ?? [])
+          .filter((genre) => genre?.binding === 'one_to_one_qid_position_binding'
+            && typeof genre.node_id === 'string' && Array.isArray(genre.artist_ids)
+            && genre.artist_ids.length > 0)
+          .sort((left, right) => left.node_id.localeCompare(right.node_id)
+            || left.catalog_genre_id - right.catalog_genre_id);
+        const artistById = new Map((payload.artists ?? []).map((artist) => [artist.artist_id, artist]));
+        const nameCounts = new Map();
+        for (const artist of artistById.values()) nameCounts.set(artist.name, (nameCounts.get(artist.name) ?? 0) + 1);
+        const pair = qidGenres.flatMap((genre) => genre.artist_ids.slice().sort().map((artistId) => ({ genre, artist: artistById.get(artistId) })))
+          .find(({ genre, artist }) => artist && nameCounts.get(artist.name) === 1
+            && artist.memberships?.some((membership) => membership.node_id === genre.node_id
+              && membership.binding === 'one_to_one_qid_position_binding'));
+        const genre = pair?.genre;
+        const artist = pair?.artist;
+        const bindingCounts = (payload.genres ?? []).reduce((counts, item) => {
+          counts[item?.binding] = (counts[item?.binding] ?? 0) + 1; return counts;
+        }, {});
+        const evidence = (payload.artists ?? []).flatMap((item) => item.memberships ?? [])
+          .flatMap((item) => item.evidence ?? []);
+        return {
+          revision: payload.revision,
+          availability: payload.availability,
+          genre_count: payload.genres?.length ?? 0,
+          artist_count: payload.artists?.length ?? 0,
+          bound_observation_count: evidence.length,
+          unique_evidence_count: new Set(evidence.map((item) => item.evidence_id)).size,
+          binding_counts: bindingCounts,
+          genre: genre && artist ? { node_id: genre.node_id, artist_id: artist.artist_id, artist_name: artist.name } : null,
+        };
+      })()`);
+      requireCheck(
+        v2Discovery.revision === 'static-direct-discovery-v2'
+          && v2Discovery.availability === 'ready'
+          && v2Discovery.genre_count === 344
+          && v2Discovery.artist_count === 1126
+          && v2Discovery.bound_observation_count === 3859
+          && v2Discovery.unique_evidence_count === 3859
+          && v2Discovery.binding_counts.exact_casefolded_label === 260
+          && v2Discovery.binding_counts.one_to_one_qid_position_binding === 84
+          && Boolean(v2Discovery.genre),
+        'published v2 discovery binding or coverage contract failed',
+        { manifest_discovery: manifest.discovery, v2_discovery: v2Discovery },
+      );
+      await navigate(cdp, 1440, 900, 'light');
+      const v2Node = publishedAtlas.nodes.find((node) => node.id === v2Discovery.genre.node_id);
+      requireCheck(Boolean(v2Node), 'QID-position discovery genre is absent from the semantic atlas', { v2Discovery });
+      await cdp.command('Page.navigate', { url: `${baseUrl}?open_focus=${encodeURIComponent(v2Discovery.genre.node_id)}` });
+      for (let attempt = 0; attempt < 240; attempt += 1) {
+        v2Focused = await diagnostics(cdp);
+        if (v2Focused.focus_url === v2Discovery.genre.node_id
+          && v2Focused.detail_artist_names.includes(v2Discovery.genre.artist_name)) break;
+        await sleep(25);
+      }
+      requireCheck(
+        v2Focused.focus_url === v2Discovery.genre.node_id
+          && v2Focused.detail_artist_names.includes(v2Discovery.genre.artist_name),
+        'QID-position genre did not expose its directly observed artist',
+        { v2Discovery, v2Focused },
+      );
+      await cdp.evaluate(`([...document.querySelectorAll('#map-detail [data-open-artist-id]')]
+        .find((button) => button.dataset.openArtistId === ${JSON.stringify(v2Discovery.genre.artist_id)})?.click())`);
+      await sleep(100);
+      v2Artist = await diagnostics(cdp);
+      requireCheck(
+        v2Artist.artist_url === v2Discovery.genre.artist_id
+          && v2Artist.focus_url === v2Discovery.genre.node_id
+          && v2Artist.detail_artist_name === v2Discovery.genre.artist_name
+          && v2Artist.artist_contexts.includes(`Directly observed in ${v2Node.name}`),
+        'QID-position artist detail lost its explicit genre context',
+        { v2Discovery, v2Artist },
+      );
+      await navigate(cdp, 1440, 900, 'light');
+      await cdp.evaluate(`(() => { const input = document.querySelector('#query'); input.value = ${JSON.stringify(v2Discovery.genre.artist_name)}; input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+      for (let attempt = 0; attempt < 240; attempt += 1) {
+        v2ArtistSearch = await diagnostics(cdp);
+        const hasArtistResult = await cdp.evaluate(`([...document.querySelectorAll('#search-results [data-search-match]')]
+          .some((button) => button.textContent.startsWith(${JSON.stringify(v2Discovery.genre.artist_name)})
+            && button.querySelector('small')?.textContent.startsWith('Artist')))`);
+        if (hasArtistResult) break;
+        await sleep(25);
+      }
+      await cdp.evaluate(`([...document.querySelectorAll('#search-results [data-search-match]')]
+        .find((button) => button.textContent.startsWith(${JSON.stringify(v2Discovery.genre.artist_name)})
+          && button.querySelector('small')?.textContent.startsWith('Artist'))?.click())`);
+      await sleep(100);
+      v2ArtistSearch = await diagnostics(cdp);
+      requireCheck(
+        v2ArtistSearch.artist_url === v2Discovery.genre.artist_id
+          && Boolean(v2ArtistSearch.focus_url),
+        'QID-position artist search did not open a public genre-scoped detail',
+        { v2Discovery, v2ArtistSearch },
+      );
+      await cdp.command('Page.navigate', { url: `${baseUrl}?open_focus=${encodeURIComponent(v2ArtistSearch.focus_url)}&open_artist=${encodeURIComponent(v2Discovery.genre.artist_id)}` });
+      const v2SearchNode = publishedAtlas.nodes.find((node) => node.id === v2ArtistSearch.focus_url);
+      requireCheck(Boolean(v2SearchNode), 'QID-position artist search context is absent from the semantic atlas', { v2Discovery, v2ArtistSearch });
+      for (let attempt = 0; attempt < 240; attempt += 1) {
+        v2DeepLinkedArtist = await diagnostics(cdp);
+        if (v2DeepLinkedArtist.canvas_ready
+          && v2DeepLinkedArtist.frame_count > 0
+          && v2DeepLinkedArtist.artist_url === v2Discovery.genre.artist_id
+          && v2DeepLinkedArtist.detail_artist_name === v2Discovery.genre.artist_name
+          && v2DeepLinkedArtist.detail_headings.includes('Direct genres')
+          && v2DeepLinkedArtist.artist_contexts.includes(`Directly observed in ${v2SearchNode.name}`)) break;
+        await sleep(25);
+      }
+      requireCheck(
+        v2DeepLinkedArtist.canvas_ready
+          && v2DeepLinkedArtist.frame_count > 0
+          && v2DeepLinkedArtist.artist_url === v2Discovery.genre.artist_id
+          && v2DeepLinkedArtist.focus_url === v2ArtistSearch.focus_url
+          && v2DeepLinkedArtist.detail_artist_name === v2Discovery.genre.artist_name
+          && v2DeepLinkedArtist.detail_headings.includes('Direct genres')
+          && v2DeepLinkedArtist.artist_contexts.includes(`Directly observed in ${v2SearchNode.name}`),
+        'QID-position artist deep link did not restore public state',
+        { v2Discovery, v2ArtistSearch, v2DeepLinkedArtist },
+      );
+      await cdp.evaluate("document.querySelector('[data-map-action=\"back\"]')?.click()");
+      for (let attempt = 0; attempt < 240; attempt += 1) {
+        v2ArtistBack = await diagnostics(cdp);
+        if (v2ArtistBack.canvas_ready
+          && v2ArtistBack.frame_count > 0
+          && !v2ArtistBack.artist_url
+          && v2ArtistBack.focus_url === v2ArtistSearch.focus_url
+          && v2ArtistBack.detail_headings.includes('Artists in this genre')) break;
+        await sleep(25);
+      }
+      requireCheck(
+        v2ArtistBack.canvas_ready
+          && v2ArtistBack.frame_count > 0
+          && !v2ArtistBack.artist_url
+          && v2ArtistBack.focus_url === v2ArtistSearch.focus_url
+          && v2ArtistBack.detail_headings.includes('Artists in this genre'),
+        'QID-position artist Back did not restore the genre detail',
+        { v2ArtistSearch, v2ArtistBack },
+      );
+    }
 
     // This is a global-map camera test, not a focus layout: pan the actual
     // L0 rock browse label to center, then cross every + tier.
@@ -962,6 +1193,17 @@ async function run() {
         artist_search: artistSearch.search_results,
         artist_search_deep_link: deepLinkedArtist.artist_url === searchedArtistId,
         artist_search_back: !artistBack.artist_url && artistBack.focus_url === artistSearchSelection.focus_url,
+        v2_discovery: v2Discovery === null || (
+          v2Discovery.binding_counts.exact_casefolded_label === 260
+          && v2Discovery.binding_counts.one_to_one_qid_position_binding === 84
+        ),
+        v2_artist_search_deep_link: v2DeepLinkedArtist === null || (
+          v2DeepLinkedArtist.artist_url === v2Discovery.genre.artist_id
+          && v2DeepLinkedArtist.focus_url === v2ArtistSearch.focus_url
+        ),
+        v2_artist_back: v2ArtistBack === null || (
+          !v2ArtistBack.artist_url && v2ArtistBack.focus_url === v2ArtistSearch.focus_url
+        ),
         modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
           && modernRock.points === modernRock.detail_links + 1,
         rock_landmark_retained_after_plus: [rockL0, rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
@@ -973,7 +1215,7 @@ async function run() {
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, postPunkDiscovery, postPunkArtist, postPunkBackToGenre, artistSearch, artistSearchSelection, deepLinkedArtist, artistBack, rockOverview, rockL0, rockL1, rockL2, rockL3, rockDeep, capOverview, capSelected, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, postPunkDiscovery, postPunkArtist, postPunkBackToGenre, artistSearch, artistSearchSelection, deepLinkedArtist, artistBack, v2Discovery, v2Focused, v2Artist, v2ArtistSearch, v2DeepLinkedArtist, v2ArtistBack, rockOverview, rockL0, rockL1, rockL2, rockL3, rockDeep, capOverview, capSelected, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     const failedAcceptance = Object.entries(report.acceptance)

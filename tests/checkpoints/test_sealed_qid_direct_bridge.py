@@ -30,13 +30,11 @@ from opennoise.checkpoints.sealed_qid_direct_bridge import (
     write_sealed_qid_direct_bridge,
 )
 from opennoise.deployment.static_discovery import StaticDiscoveryPayload
+from tests._pinned_v1_discovery import pinned_v1_discovery_path
 
 _DATABASE = Path("data/public.sqlite")
 _LAYOUT = Path(".cache/semantic-map-layout-v3/artifact.json")
-_STATIC = Path(
-    ".cache/semantic-map-layout-v3-certification/site/assets/"
-    "static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-)
+_STATIC = pinned_v1_discovery_path()
 _SEALED_PRESENT = _DATABASE.is_file() and _LAYOUT.is_file() and _STATIC.is_file()
 
 

@@ -21,6 +21,7 @@ from opennoise.checkpoints.direct_bridge_audit import (
     parse_direct_bridge_audit_report,
     verify_direct_bridge_review_artifact,
 )
+from tests._pinned_v1_discovery import pinned_v1_discovery_path
 
 
 def _audit() -> DirectBridgeAuditReport:
@@ -63,10 +64,7 @@ class DirectBridgeAuditTests(unittest.TestCase):
     def test_human_packet_is_ranked_read_only_and_source_bound(self) -> None:
         packet = direct_bridge_review_packet(
             Path("data/model/open-construction-graph-v2.json"),
-            Path(
-                "dist/assets/"
-                "static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-            ),
+            pinned_v1_discovery_path(),
             Path("data/public.sqlite"),
         )
         self.assertEqual(packet["edge_count"], 441)
@@ -92,9 +90,7 @@ class DirectBridgeAuditTests(unittest.TestCase):
     def test_current_inputs_are_verified_and_source_bound(self) -> None:
         report = audit_direct_bridges(
             Path("data/model/open-construction-graph-v2.json"),
-            Path(
-                "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-            ),
+            pinned_v1_discovery_path(),
             Path("data/public.sqlite"),
         )
         self.assertEqual(report["edge_count"], 441)
@@ -182,9 +178,7 @@ class DirectBridgeAuditTests(unittest.TestCase):
             build_direct_bridge_review_artifact(audit, (unknown,))
 
     def test_review_cli_queues_verified_audit_then_appends_decision(self) -> None:
-        discovery = Path(
-            "dist/assets/static-discovery.b4ff2b1bcebb0bb6b1fd63b78caf9a416dbf5bb0c3050c0fa05e434fd0c700e8.json"
-        )
+        discovery = pinned_v1_discovery_path()
         report = audit_direct_bridges(
             Path("data/model/open-construction-graph-v2.json"),
             discovery,
