@@ -5,6 +5,8 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from asyncio import run
+from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,14 +14,20 @@ from pydantic import HttpUrl, TypeAdapter
 
 from opennoise.models.sources import DownloadSource
 from opennoise.pipeline.source_vault_replay import (
+    HistoricalDeclarationReplayObject,
+    HistoricalDeclarationReplayReport,
     ReleaseManifestReplayInput,
     SourceVaultReplayError,
     SourceVaultReplayReport,
     _candidate_listenbrainz_config,
+    _historical_wikidata_source,
     _ingest_listenbrainz_candidate,
+    _ingest_wikidata_objects,
     _listenbrainz_joint_input,
+    _offline_wikidata_source,
     load_report,
     replay_combined_source_vault_to_candidate_database,
+    replay_historical_declaration_combined_source_vault_to_candidate_database,
     replay_historical_source_declarations,
     replay_source_vault_to_candidate_database,
     restore_source_vault,
@@ -272,6 +280,69 @@ class SourceVaultReplayTests(unittest.TestCase):
             client_factory.assert_not_called()
             self.assertFalse((root / "missing-source.sqlite").exists())
 
+    def test_historical_wikidata_factory_seeds_immutable_public_policy_alignment(self) -> None:
+        """The opt-in factory changes first-write policy, not existing evidence later."""
+        wikidata_payload = (
+            Path(__file__).parent / "fixtures" / "wikidata_music_slice.json"
+        ).read_bytes()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            vault = root / "vault"
+            raw = vault / "raw" / "sha256"
+            raw.mkdir(parents=True)
+            digest = hashlib.sha256(wikidata_payload).hexdigest()
+            (raw / digest).write_bytes(wikidata_payload)
+            item = ReleaseManifestReplayInput(
+                source_key="wikidata_phase3_fixture_00",
+                snapshot_ref="wikidata_phase3_fixture_00:query:fixture",
+                source_manifest_sha256="0" * 64,
+                artifact_sha256=digest,
+                byte_size=len(wikidata_payload),
+            )
+            manifest = root / "release-manifest.json"
+            manifest.write_text("{}", encoding="utf-8")
+            payload = {"release_id": "test-release", "inputs": [item.model_dump()]}
+            with patch(
+                "opennoise.pipeline.source_vault_replay.load_release_manifest", return_value=payload
+            ):
+                run(
+                    _ingest_wikidata_objects(
+                        (item,),
+                        manifest_path=manifest,
+                        vault_path=vault,
+                        database_path=root / "local.sqlite",
+                    )
+                )
+                run(
+                    _ingest_wikidata_objects(
+                        (item,),
+                        manifest_path=manifest,
+                        vault_path=vault,
+                        database_path=root / "historical.sqlite",
+                        source_factory=_historical_wikidata_source,
+                    )
+                )
+            with closing(sqlite3.connect(root / "local.sqlite")) as connection:
+                local_policy = connection.execute(
+                    "SELECT local_only FROM rights_policies"
+                ).fetchone()
+            with closing(sqlite3.connect(root / "historical.sqlite")) as connection:
+                historical_policy = connection.execute(
+                    "SELECT local_only FROM rights_policies"
+                ).fetchone()
+                misaligned = connection.execute(
+                    """SELECT count(*)
+                       FROM artist_genre_evidence AS evidence
+                       JOIN provenance_records AS provenance
+                         ON provenance.id = evidence.provenance_id
+                       WHERE evidence.policy_id != provenance.policy_id"""
+                ).fetchone()
+            self.assertEqual(local_policy, (1,))
+            self.assertEqual(historical_policy, (0,))
+            self.assertEqual(misaligned, (0,))
+            self.assertTrue(_offline_wikidata_source(item).local_only)
+            self.assertFalse(_historical_wikidata_source(item).local_only)
+
     def test_listenbrainz_candidate_fails_before_daily_processing_on_config_drift(self) -> None:
         """The sealed joint receipt pins candidate settings before large inputs are read."""
         with tempfile.TemporaryDirectory() as directory:
@@ -311,6 +382,53 @@ class SourceVaultReplayTests(unittest.TestCase):
             with self.assertRaisesRegex(SourceVaultReplayError, "configuration differs"):
                 _listenbrainz_joint_input(bad, vault)
 
+    def test_historical_combined_rejects_declaration_preflight_before_staging(self) -> None:
+        """A declaration mismatch leaves both fresh output paths absent."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest, vault, payloads = self._fixture(root)
+            inputs = [
+                {
+                    "source_key": f"wikidata_phase3_fixture_{index:02}",
+                    "snapshot_ref": f"wikidata_phase3_fixture_{index:02}:query:fixture",
+                    "source_manifest_sha256": "0" * 64,
+                    "artifact_sha256": hashlib.sha256(value).hexdigest(),
+                    "byte_size": len(value),
+                }
+                for index, value in enumerate(payloads)
+            ]
+            payload = {"release_id": "test-release", "inputs": inputs}
+            target = root / "historical.sqlite"
+            receipt = root / "historical.receipt.json"
+            source_manifest = root / "sources.toml"
+            source_manifest.write_text("", encoding="utf-8")
+            with (
+                patch(
+                    "opennoise.pipeline.source_vault_replay.load_release_manifest",
+                    return_value=payload,
+                ),
+                patch(
+                    "opennoise.pipeline.source_vault_replay.replay_historical_source_declarations",
+                    side_effect=SourceVaultReplayError(
+                        "historical declaration does not match manifest"
+                    ),
+                ),
+                patch("opennoise.pipeline.source_vault_replay._ingest_wikidata_objects") as ingest,
+                self.assertRaisesRegex(SourceVaultReplayError, "does not match manifest"),
+            ):
+                report = verify_source_vault(manifest, vault)
+                replay_historical_declaration_combined_source_vault_to_candidate_database(
+                    report,
+                    vault,
+                    target,
+                    receipt,
+                    manifest_path=manifest,
+                    source_manifest_path=source_manifest,
+                )
+            ingest.assert_not_called()
+            self.assertFalse(target.exists())
+            self.assertFalse(receipt.exists())
+
     def test_listenbrainz_candidate_rejects_same_size_tampered_joint_before_parse(self) -> None:
         """The joint receipt is hashed before its configuration is trusted."""
         with tempfile.TemporaryDirectory() as directory:
@@ -335,7 +453,9 @@ class SourceVaultReplayTests(unittest.TestCase):
             with self.assertRaisesRegex(SourceVaultReplayError, "does not match report"):
                 _listenbrainz_joint_input(joint, root / "vault")
 
-    def test_combined_candidate_rehashes_and_ingests_54_wikidata_and_7_dailies(self) -> None:
+    def test_combined_candidate_rehashes_and_ingests_54_wikidata_and_7_dailies(  # noqa: PLR0915
+        self,
+    ) -> None:
         """The one-database path has a complete 62-object receipt before either ingest runs."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -380,6 +500,19 @@ class SourceVaultReplayTests(unittest.TestCase):
                 _fixture_listenbrainz_source(item, index)
                 for index, item in enumerate(inputs[54:61])
             )
+            historical_declarations = HistoricalDeclarationReplayReport(
+                release_id="test-release",
+                manifest_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest(),
+                object_count=len(inputs),
+                objects=tuple(
+                    HistoricalDeclarationReplayObject(
+                        source_key=str(item["source_key"]),
+                        expected_sha256=str(item["source_manifest_sha256"]),
+                        replayed_sha256=str(item["source_manifest_sha256"]),
+                    )
+                    for item in inputs
+                ),
+            )
 
             async def ingest_wikidata(
                 *_args: object, database_path: Path, **_kwargs: object
@@ -420,6 +553,10 @@ class SourceVaultReplayTests(unittest.TestCase):
                     "opennoise.pipeline.source_vault_replay._ingest_listenbrainz_candidate",
                     side_effect=ingest_listenbrainz,
                 ) as listenbrainz_ingest,
+                patch(
+                    "opennoise.pipeline.source_vault_replay.replay_historical_source_declarations",
+                    return_value=historical_declarations,
+                ),
             ):
                 report = verify_source_vault(manifest, vault)
                 candidate = replay_combined_source_vault_to_candidate_database(
@@ -430,6 +567,76 @@ class SourceVaultReplayTests(unittest.TestCase):
                     source_manifest_path=source_manifest,
                     progress=progress.append,
                 )
+                historical_target = root / "historical-combined.sqlite"
+                historical_receipt = root / "historical-combined.receipt.json"
+                historical_candidate = (
+                    replay_historical_declaration_combined_source_vault_to_candidate_database(
+                        report,
+                        vault,
+                        historical_target,
+                        historical_receipt,
+                        manifest_path=manifest,
+                        source_manifest_path=source_manifest,
+                    )
+                )
+                self.assertEqual(
+                    historical_candidate.revision,
+                    "source-vault-historical-declaration-combined-candidate-replay-v1",
+                )
+                self.assertEqual(
+                    historical_candidate.historical_declarations, historical_declarations
+                )
+                source_factory = wikidata_ingest.call_args.kwargs["source_factory"]
+                self.assertIs(source_factory, _historical_wikidata_source)
+                self.assertFalse(
+                    source_factory(ReleaseManifestReplayInput.model_validate(inputs[0])).local_only
+                )
+                self.assertTrue(historical_target.is_file())
+                self.assertTrue(historical_receipt.is_file())
+                racing_target = root / "racing.sqlite"
+                racing_receipt = root / "racing.receipt.json"
+
+                async def ingest_with_racing_target(
+                    *_args: object, database_path: Path, **_kwargs: object
+                ) -> None:
+                    racing_target.write_bytes(b"concurrent candidate")
+                    await ingest_wikidata(database_path=database_path)
+
+                wikidata_ingest.side_effect = ingest_with_racing_target
+                with self.assertRaisesRegex(SourceVaultReplayError, "candidate database must not"):
+                    replay_historical_declaration_combined_source_vault_to_candidate_database(
+                        report,
+                        vault,
+                        racing_target,
+                        racing_receipt,
+                        manifest_path=manifest,
+                        source_manifest_path=source_manifest,
+                    )
+                self.assertEqual(racing_target.read_bytes(), b"concurrent candidate")
+                self.assertFalse(racing_receipt.exists())
+                wikidata_ingest.side_effect = ingest_wikidata
+                receipt_race_target = root / "receipt-racing.sqlite"
+                receipt_race_receipt = root / "receipt-racing.receipt.json"
+
+                async def ingest_with_racing_receipt(
+                    *_args: object, database_path: Path, **_kwargs: object
+                ) -> None:
+                    receipt_race_receipt.write_bytes(b"concurrent receipt")
+                    await ingest_wikidata(database_path=database_path)
+
+                wikidata_ingest.side_effect = ingest_with_racing_receipt
+                with self.assertRaisesRegex(SourceVaultReplayError, "candidate receipt must not"):
+                    replay_historical_declaration_combined_source_vault_to_candidate_database(
+                        report,
+                        vault,
+                        receipt_race_target,
+                        receipt_race_receipt,
+                        manifest_path=manifest,
+                        source_manifest_path=source_manifest,
+                    )
+                self.assertFalse(receipt_race_target.exists())
+                self.assertEqual(receipt_race_receipt.read_bytes(), b"concurrent receipt")
+                wikidata_ingest.side_effect = ingest_wikidata
                 tampered = raw / str(inputs[54]["artifact_sha256"])
                 tampered.write_bytes(b"x" * tampered.stat().st_size)
                 with self.assertRaisesRegex(SourceVaultReplayError, "does not match report"):
@@ -464,8 +671,8 @@ class SourceVaultReplayTests(unittest.TestCase):
                     "candidate database published",
                 ],
             )
-            self.assertEqual(wikidata_ingest.call_count, 2)
-            listenbrainz_ingest.assert_called_once()
+            self.assertEqual(wikidata_ingest.call_count, 5)
+            self.assertEqual(listenbrainz_ingest.call_count, 4)
 
     def test_phase3_historical_declarations_replay_all_sealed_digests(self) -> None:
         report = replay_historical_source_declarations(

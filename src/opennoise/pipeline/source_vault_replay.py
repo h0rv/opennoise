@@ -237,6 +237,26 @@ class HistoricalDeclarationReplayReport(FrozenModel):
         return self
 
 
+class HistoricalDeclarationCombinedReplayReport(CandidateCombinedReplayReport):
+    """Receipt for a fresh combined candidate seeded with historic source policy."""
+
+    revision: Literal["source-vault-historical-declaration-combined-candidate-replay-v1"] = (
+        "source-vault-historical-declaration-combined-candidate-replay-v1"
+    )
+    historical_declarations: HistoricalDeclarationReplayReport
+
+    @model_validator(mode="after")
+    def check_historical_declarations(self) -> HistoricalDeclarationCombinedReplayReport:
+        """Bind every fresh source policy to the preflight declaration receipt."""
+        if (
+            self.historical_declarations.release_id,
+            self.historical_declarations.manifest_sha256,
+            self.historical_declarations.object_count,
+        ) != (self.release_id, self.manifest_sha256, self.verified_object_count):
+            raise ValueError("historical declaration receipt does not match combined replay")
+        return self
+
+
 class SourceVaultObject(FrozenModel):
     """One verified source object and its content-addressed object-store key."""
 
@@ -410,6 +430,7 @@ def write_candidate_database_report(
         CandidateDatabaseReplayReport
         | CandidateListenBrainzReplayReport
         | CandidateCombinedReplayReport
+        | HistoricalDeclarationCombinedReplayReport
         | HistoricalDeclarationReplayReport
     ),
     path: Path,
@@ -430,6 +451,30 @@ def _write_json_report(payload: str, path: Path) -> None:
             stream.flush()
             os.fsync(stream.fileno())
         temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _publish_fresh_file(staging_path: Path, destination: Path, label: str) -> None:
+    """Atomically claim an absent destination without replacing a concurrent writer."""
+    try:
+        os.link(staging_path, destination)
+    except FileExistsError as error:
+        raise SourceVaultReplayError(f"{label} must not already exist") from error
+
+
+def _write_fresh_json_report(payload: str, path: Path, label: str) -> None:
+    """Write and atomically claim a receipt path without replacing another receipt."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(payload)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        _publish_fresh_file(temporary, path, label)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -486,6 +531,15 @@ def _report_progress(progress: Callable[[str], None] | None, stage: str) -> None
     """Emit optional human-facing timing state without affecting replay receipts."""
     if progress is not None:
         progress(stage)
+
+
+def _candidate_database_schema_version(database_path: Path) -> int:
+    """Read the schema version from a completed staging database."""
+    with Database(database_path, read_only=True).connect() as connection:
+        schema_row = connection.execute("PRAGMA user_version").fetchone()
+    if schema_row is None:
+        raise SourceVaultReplayError("candidate database has no schema version")
+    return int(schema_row[0])
 
 
 def _offline_wikidata_source(item: ReleaseManifestReplayInput) -> DownloadSource:
@@ -626,12 +680,20 @@ async def _ingest_wikidata_objects(
     manifest_path: Path,
     vault_path: Path,
     database_path: Path,
+    source_factory: Callable[[ReleaseManifestReplayInput], DownloadSource] = (
+        _offline_wikidata_source
+    ),
 ) -> None:
-    """Replay supported SPARQL objects from already verified raw vault paths only."""
+    """Replay supported SPARQL objects from already verified raw vault paths only.
+
+    The default declaration is deliberately local-only.  The explicit historical
+    combined mode injects the independently preflighted historical declaration
+    before any source policy, provenance, or evidence row is first persisted.
+    """
     adapters = AdapterRegistry((WikidataSourceAdapter(),))
     projectors = ProjectorRegistry((EntityProjector(),))
     for item in inputs:
-        source = _offline_wikidata_source(item)
+        source = source_factory(item)
         await run_source_pipeline(
             source,
             adapters,
@@ -1118,3 +1180,146 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
             ),
         ),
     )
+
+
+def replay_historical_declaration_combined_source_vault_to_candidate_database(  # noqa: PLR0913, PLR0915
+    report: SourceVaultReplayReport,
+    vault_path: Path,
+    candidate_database: Path,
+    candidate_receipt: Path,
+    *,
+    manifest_path: Path,
+    source_manifest_path: Path,
+    progress: Callable[[str], None] | None = None,
+) -> HistoricalDeclarationCombinedReplayReport:
+    """Build one fresh candidate with reconstructed historical source policies.
+
+    This explicit mode is intentionally separate from the local-only replay.
+    It verifies every historical declaration before a staging directory exists,
+    then uses those declarations at the first policy/provenance/evidence write.
+    Neither an existing candidate nor an existing receipt can be replaced.
+    """
+    resolved_manifest = manifest_path.resolve(strict=True)
+    resolved_source_manifest = source_manifest_path.resolve(strict=True)
+    manifest_sha256, release_id, inputs = _replay_inputs(resolved_manifest)
+    _require_report_matches_manifest(report, manifest_sha256, release_id, inputs)
+    _report_progress(progress, "rehashing source-vault receipt")
+    _require_verified_vault_objects(report, vault_path)
+    _report_progress(progress, "source-vault receipt verified; verifying historical declarations")
+    historical_declarations = replay_historical_source_declarations(
+        resolved_manifest, resolved_source_manifest
+    )
+    if historical_declarations.object_count != len(inputs):
+        raise SourceVaultReplayError("historical declaration preflight is incomplete")
+    _report_progress(progress, "historical declarations verified")
+    if candidate_database.exists() or candidate_database.is_symlink():
+        raise SourceVaultReplayError("candidate database must not already exist")
+    if candidate_receipt.exists() or candidate_receipt.is_symlink():
+        raise SourceVaultReplayError("candidate receipt must not already exist")
+    wikidata = tuple(item for item in inputs if item.source_key.startswith(_WIKIDATA_SOURCE_PREFIX))
+    if len(wikidata) != _WIKIDATA_OBJECT_COUNT:
+        raise SourceVaultReplayError(
+            f"release manifest must retain exactly {_WIKIDATA_OBJECT_COUNT} Wikidata objects"
+        )
+    joint = _listenbrainz_joint_input(inputs, vault_path)
+    daily, sources = _candidate_listenbrainz_sources(inputs, resolved_source_manifest)
+    candidate_database.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(
+        tempfile.mkdtemp(
+            prefix=f".{candidate_database.name}.historical-combined-", dir=candidate_database.parent
+        )
+    )
+    staging_database = staging / candidate_database.name
+    derived_vault = staging / "derived-vault"
+    published_database = False
+    published_receipt = False
+    try:
+        _report_progress(progress, "replaying Wikidata objects with historical declarations")
+        asyncio.run(
+            _ingest_wikidata_objects(
+                wikidata,
+                manifest_path=resolved_manifest,
+                vault_path=vault_path,
+                database_path=staging_database,
+                source_factory=_historical_wikidata_source,
+            )
+        )
+        _report_progress(progress, "Wikidata replay complete; replaying ListenBrainz daily objects")
+        accepted, quarantined, aggregate_sha256 = _ingest_listenbrainz_candidate(
+            daily,
+            sources,
+            vault_path=vault_path,
+            candidate_database=staging_database,
+            source_manifest_path=resolved_source_manifest,
+            derived_vault_path=derived_vault,
+        )
+        _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
+        with closing(sqlite3.connect(staging_database)) as connection:
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            connection.execute("PRAGMA journal_mode = DELETE")
+        schema_version = _candidate_database_schema_version(staging_database)
+        candidate = HistoricalDeclarationCombinedReplayReport(
+            release_id=release_id,
+            manifest_sha256=manifest_sha256,
+            database_path=candidate_database,
+            database_schema_version=schema_version,
+            verified_object_count=len(report.objects),
+            wikidata_objects=tuple(
+                CandidateReplayObject(
+                    source_key=item.source_key,
+                    artifact_sha256=item.artifact_sha256,
+                    byte_size=item.byte_size,
+                    status="ingested",
+                    reason=(
+                        "replayed offline with historical "
+                        "wikidata_music_sparql_slice_v1 declaration"
+                    ),
+                )
+                for item in wikidata
+            ),
+            listenbrainz_daily_objects=tuple(
+                CandidateReplayObject(
+                    source_key=item.source_key,
+                    artifact_sha256=item.artifact_sha256,
+                    byte_size=item.byte_size,
+                    status="ingested",
+                    reason="replayed offline with the sealed joint configuration",
+                )
+                for item in daily
+            ),
+            sealed_joint_artifact_sha256=joint.artifact_sha256,
+            sealed_joint_artifact_byte_size=joint.byte_size,
+            accepted_record_count=accepted,
+            quarantined_record_count=quarantined,
+            blockers=(
+                (
+                    "historical declarations match their sealed digests, but candidate provenance "
+                    "and timestamps are newly generated"
+                ),
+                "candidate database bytes are not historical byte-identical or certified",
+            ),
+            historical_declarations=historical_declarations,
+        )
+        _publish_fresh_file(staging_database, candidate_database, "candidate database")
+        published_database = True
+        _write_fresh_json_report(
+            candidate.model_dump_json(indent=2), candidate_receipt, "candidate receipt"
+        )
+        published_receipt = True
+        _report_progress(
+            progress, "candidate database and historical-declaration receipt published"
+        )
+    except SourceVaultReplayError:
+        raise
+    except (OSError, ValueError, sqlite3.Error) as error:
+        raise SourceVaultReplayError("historical-declaration combined replay failed") from error
+    finally:
+        if (
+            published_database
+            and not published_receipt
+            and staging_database.exists()
+            and os.path.samestat(staging_database.stat(), candidate_database.stat())
+        ):
+            candidate_database.unlink(missing_ok=True)
+        shutil.rmtree(staging, ignore_errors=True)
+    return candidate
