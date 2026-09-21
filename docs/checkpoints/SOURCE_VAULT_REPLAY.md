@@ -48,13 +48,13 @@ database. The seven `listenbrainz_incremental_*` artifacts and the generated
 command. They have a separate candidate command below.
 
 The result is explicitly `certified_database: false` and
-`byte_identical_database_replay: false`. The release manifest does not retain
-the original per-source downloader declarations needed to reproduce its stored
-source-manifest hashes. The retained joint artifact does bind the fixed-window
-ListenBrainz aggregation configuration, but not the historical source
-declarations. Current schema and ingestion timestamps
-also differ from the sealed Phase 3 cache. The existing Phase 3 publication
-command therefore still starts from that separately certified SQLite cache.
+`byte_identical_database_replay: false`. The versioned historical-declaration
+replay verifies all 62 sealed pre-schema declaration hashes. The retained joint
+artifact also binds the fixed-window ListenBrainz aggregation configuration.
+This Wikidata-only candidate still omits ListenBrainz ingestion, and its
+schema, provenance, and ingestion timestamps differ from the sealed Phase 3
+cache. The existing Phase 3 publication command therefore still starts from
+that separately certified SQLite cache.
 
 A local run on 2026-09-21 ingested all 54 supported objects into a fresh
 schema-v12 candidate and reported all eight ListenBrainz objects as
@@ -77,8 +77,10 @@ recovered aggregation configuration hash before opening the large archives,
 and it requires the regenerated joint receipt to match the sealed artifact
 byte-for-byte. It creates a fresh derived candidate database and temporary
 derived vault. It never mutates the sealed database or source vault. The
-report remains uncertified because current source declarations do not reproduce
-the historical declaration hashes.
+report remains uncertified because its schema, provenance, timestamps, adapter
+build identity, and SQLite bytes differ from the sealed Phase 3 cache; the
+separate versioned declaration replay verifies all historical declaration
+hashes.
 
 ```sh
 poe replay-release-source-vault-listenbrainz-candidate \
@@ -105,8 +107,9 @@ The 62-object vault was reverified on 2026-09-21: 1,541,940,352 bytes,
 release-manifest SHA-256
 `795992807586432e2b285e2ddca9a24a00a16e9fc83b6c382a3e914539333232`.
 The recovered configuration matched the 1,534-byte sealed joint receipt in
-preflight. A full seven-day candidate database did **not** finish in this
-execution environment: repeated jobs were terminated before source rows were
-committed, and no persistent process session was available. The command above
-is reproducible on a machine without that tool limit. No success count or
-certification is claimed for the unfinished candidate.
+preflight. Controlled runs did complete and commit the seven-day aggregate to
+temporary staging databases, but did not return to publish the atomic candidate
+path or write a receipt. The combined postmortem records the exact retained
+staging evidence and the bounded runtime-cleanup diagnostic required before any
+further full scan. No success count or certification is claimed for an
+unfinished candidate.

@@ -27,7 +27,7 @@ from opennoise.models.sources import DownloadResult, DownloadSource
 from opennoise.pipeline.manifest import load_download_source
 from opennoise.pipeline.multi_source import (
     MultiArtifactOptions,
-    run_multi_artifact_pipeline_from_verified_downloads,
+    run_multi_artifact_pipeline_from_verified_downloads_sync,
 )
 from opennoise.pipeline.release_manifest import RELEASE_MANIFEST_NAME, load_release_manifest
 from opennoise.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
@@ -732,8 +732,8 @@ def replay_source_vault_to_candidate_database(
         objects=objects,
         blockers=(
             (
-                "the Phase 3 release manifest does not retain the original per-source downloader "
-                "declarations, so source_manifest_sha256 values cannot be reproduced"
+                "this Wikidata-only candidate does not ingest the seven ListenBrainz incrementals "
+                "or their generated joint artifact"
             ),
             (
                 "the seven ListenBrainz incrementals and their generated joint artifact require "
@@ -804,9 +804,9 @@ def _candidate_listenbrainz_sources(
 ) -> tuple[tuple[ReleaseManifestReplayInput, ...], tuple[DownloadSource, ...]]:
     """Bind current local declarations to the seven sealed daily raw objects.
 
-    The historical declaration digests are retained in the release manifest but
-    the current TOML declarations do not reproduce them.  This checks the
-    immutable fields the local adapter needs without misrepresenting that fact.
+    The versioned historical-declaration replay verifies the sealed digests
+    independently.  This boundary checks the immutable fields the local
+    adapter needs before it opens any retained daily object.
     """
     daily = tuple(
         item for item in inputs if item.source_key.startswith(_LISTENBRAINZ_SOURCE_PREFIX)
@@ -847,7 +847,7 @@ def _require_generated_joint_matches(
     )
 
 
-async def _ingest_listenbrainz_candidate(  # noqa: PLR0913
+def _ingest_listenbrainz_candidate(  # noqa: PLR0913
     daily: tuple[ReleaseManifestReplayInput, ...],
     sources: tuple[DownloadSource, ...],
     *,
@@ -890,7 +890,7 @@ async def _ingest_listenbrainz_candidate(  # noqa: PLR0913
     def records(_: tuple[DownloadResult, ...]) -> Iterator[SourceRecord]:
         return adapter.iter_joint_records(artifacts, limits)
 
-    summary = await run_multi_artifact_pipeline_from_verified_downloads(
+    summary = run_multi_artifact_pipeline_from_verified_downloads_sync(
         sources,
         downloads,
         adapter,
@@ -939,15 +939,13 @@ def replay_listenbrainz_source_vault_to_candidate_database(
     staging_database = staging / candidate_database.name
     derived_vault = staging / "derived-vault"
     try:
-        accepted, quarantined, aggregate_sha256 = asyncio.run(
-            _ingest_listenbrainz_candidate(
-                daily,
-                sources,
-                vault_path=vault_path,
-                candidate_database=staging_database,
-                source_manifest_path=resolved_source_manifest,
-                derived_vault_path=derived_vault,
-            )
+        accepted, quarantined, aggregate_sha256 = _ingest_listenbrainz_candidate(
+            daily,
+            sources,
+            vault_path=vault_path,
+            candidate_database=staging_database,
+            source_manifest_path=resolved_source_manifest,
+            derived_vault_path=derived_vault,
         )
         _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
         with closing(sqlite3.connect(staging_database)) as connection:
@@ -988,8 +986,8 @@ def replay_listenbrainz_source_vault_to_candidate_database(
         quarantined_record_count=quarantined,
         blockers=(
             (
-                "current source declarations bind retained bytes but do not reproduce "
-                "historical per-source declaration hashes"
+                "the historical declaration replay proves the sealed declaration hashes, but "
+                "this candidate still has newly generated provenance and timestamps"
             ),
             (
                 "candidate provenance, timestamps, adapter build identity, and SQLite "
@@ -1050,21 +1048,23 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
             )
         )
         _report_progress(progress, "Wikidata replay complete; replaying ListenBrainz daily objects")
-        accepted, quarantined, aggregate_sha256 = asyncio.run(
-            _ingest_listenbrainz_candidate(
-                daily,
-                sources,
-                vault_path=vault_path,
-                candidate_database=staging_database,
-                source_manifest_path=resolved_source_manifest,
-                derived_vault_path=derived_vault,
-            )
+        accepted, quarantined, aggregate_sha256 = _ingest_listenbrainz_candidate(
+            daily,
+            sources,
+            vault_path=vault_path,
+            candidate_database=staging_database,
+            source_manifest_path=resolved_source_manifest,
+            derived_vault_path=derived_vault,
+        )
+        _report_progress(
+            progress, "ListenBrainz persistence returned; validating sealed joint receipt"
         )
         _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
-        _report_progress(progress, "ListenBrainz replay complete; sealed joint receipt matched")
+        _report_progress(progress, "sealed joint receipt matched; checkpointing candidate database")
         with closing(sqlite3.connect(staging_database)) as connection:
             connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             connection.execute("PRAGMA journal_mode = DELETE")
+        _report_progress(progress, "candidate database checkpointed; publishing")
         staging_database.replace(candidate_database)
         _report_progress(progress, "candidate database published")
     except SourceVaultReplayError:
@@ -1109,8 +1109,8 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
         quarantined_record_count=quarantined,
         blockers=(
             (
-                "current source declarations bind retained bytes but do not reproduce "
-                "historical per-source declaration hashes"
+                "the historical declaration replay proves the sealed declaration hashes, but "
+                "this candidate still has newly generated provenance and timestamps"
             ),
             (
                 "candidate provenance, timestamps, adapter build identity, and SQLite "

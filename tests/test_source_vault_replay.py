@@ -8,13 +8,15 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pydantic import TypeAdapter
+from pydantic import HttpUrl, TypeAdapter
 
+from opennoise.models.sources import DownloadSource
 from opennoise.pipeline.source_vault_replay import (
     ReleaseManifestReplayInput,
     SourceVaultReplayError,
     SourceVaultReplayReport,
     _candidate_listenbrainz_config,
+    _ingest_listenbrainz_candidate,
     _listenbrainz_joint_input,
     load_report,
     replay_combined_source_vault_to_candidate_database,
@@ -27,7 +29,64 @@ from opennoise.pipeline.source_vault_replay import (
 from opennoise.storage import LocalObjectStore
 
 
+def _fixture_listenbrainz_source(item: dict[str, object], index: int) -> DownloadSource:
+    return DownloadSource(
+        id=str(item["source_key"]),
+        adapter="listenbrainz_incremental_v1",
+        snapshot=f"{2638 + index}-202608{24 + index:02}-000003-incremental",
+        url=HttpUrl(f"https://example.test/listenbrainz/{index}"),
+        discovery_url=HttpUrl("https://example.test/"),
+        expected_content_type="application/json",
+        compression="none",
+        expected_bytes=int(item["byte_size"]),
+        checksum_algorithm="sha256",
+        checksum=str(item["artifact_sha256"]),
+        data_license="CC0-1.0",
+        license_url="https://creativecommons.org/publicdomain/zero/1.0/",
+        rights_classification="public_domain",
+        local_only=True,
+        normalize=True,
+        local_search=True,
+        display=True,
+        embed=True,
+        train=True,
+        export_metadata=True,
+    )
+
+
 class SourceVaultReplayTests(unittest.TestCase):
+    def _assert_combined_sync_validation_does_not_publish(
+        self,
+        report: SourceVaultReplayReport,
+        vault: Path,
+        root: Path,
+        manifest: Path,
+        source_manifest: Path,
+    ) -> None:
+        target = root / "sync-validation.sqlite"
+        with (
+            patch("opennoise.pipeline.source_vault_replay._require_verified_vault_objects"),
+            patch(
+                "opennoise.pipeline.source_vault_replay._ingest_listenbrainz_candidate",
+                wraps=_ingest_listenbrainz_candidate,
+            ),
+            self.assertRaisesRegex(
+                SourceVaultReplayError, "combined candidate database replay failed"
+            ) as error,
+        ):
+            replay_combined_source_vault_to_candidate_database(
+                report,
+                vault,
+                target,
+                manifest_path=manifest,
+                source_manifest_path=source_manifest,
+            )
+        self.assertIsInstance(error.exception.__cause__, ValueError)
+        self.assertIn(
+            "verified local artifact bytes do not match source", str(error.exception.__cause__)
+        )
+        self.assertFalse(target.exists())
+
     def _fixture(self, root: Path) -> tuple[Path, Path, list[bytes]]:
         vault = root / "vault"
         raw = vault / "raw" / "sha256"
@@ -314,6 +373,10 @@ class SourceVaultReplayTests(unittest.TestCase):
             source_manifest.write_text("", encoding="utf-8")
             payload = {"release_id": "test-release", "inputs": inputs}
             progress: list[str] = []
+            daily_sources = tuple(
+                _fixture_listenbrainz_source(item, index)
+                for index, item in enumerate(inputs[54:61])
+            )
 
             async def ingest_wikidata(
                 *_args: object, database_path: Path, **_kwargs: object
@@ -321,7 +384,7 @@ class SourceVaultReplayTests(unittest.TestCase):
                 with sqlite3.connect(database_path) as connection:
                     connection.execute("PRAGMA user_version = 10")
 
-            async def ingest_listenbrainz(
+            def ingest_listenbrainz(
                 *_args: object, derived_vault_path: Path, **_kwargs: object
             ) -> tuple[int, int, str]:
                 joint = inputs[-1]
@@ -343,7 +406,7 @@ class SourceVaultReplayTests(unittest.TestCase):
                             ReleaseManifestReplayInput.model_validate(item)
                             for item in inputs[54:61]
                         ),
-                        (),
+                        daily_sources,
                     ),
                 ),
                 patch(
@@ -374,9 +437,13 @@ class SourceVaultReplayTests(unittest.TestCase):
                         manifest_path=manifest,
                         source_manifest_path=source_manifest,
                     )
+                self._assert_combined_sync_validation_does_not_publish(
+                    report, vault, root, manifest, source_manifest
+                )
             self.assertEqual(candidate.verified_object_count, 62)
             self.assertEqual(len(candidate.wikidata_objects), 54)
             self.assertEqual(len(candidate.listenbrainz_daily_objects), 7)
+            self.assertIn("historical declaration replay proves", candidate.blockers[0])
             self.assertEqual(
                 (candidate.accepted_record_count, candidate.quarantined_record_count), (17, 2)
             )
@@ -388,11 +455,13 @@ class SourceVaultReplayTests(unittest.TestCase):
                     "source-vault receipt verified",
                     "replaying Wikidata objects",
                     "Wikidata replay complete; replaying ListenBrainz daily objects",
-                    "ListenBrainz replay complete; sealed joint receipt matched",
+                    "ListenBrainz persistence returned; validating sealed joint receipt",
+                    "sealed joint receipt matched; checkpointing candidate database",
+                    "candidate database checkpointed; publishing",
                     "candidate database published",
                 ],
             )
-            wikidata_ingest.assert_called_once()
+            self.assertEqual(wikidata_ingest.call_count, 2)
             listenbrainz_ingest.assert_called_once()
 
     def test_phase3_historical_declarations_replay_all_sealed_digests(self) -> None:
