@@ -45,7 +45,7 @@ not yet ingest those objects into a new certified SQLite database.
 
 ## Static Pages delivery status
 
-The last documented deployed static release is main commit `c8a908d`. Its certified
+The deployed static release is main commit `ee9e1e1`. Its certified
 atlas has 2,945 placed nodes and 34,937 structural edges. The Pages manifest,
 HTML, JavaScript, JSON, asset names, and rendered focus links contain no
 retired identifier text. A clean `open_focus=item…` bookmark works, while an
@@ -70,8 +70,9 @@ than hidden by detached labels.
 
 The deployed fingerprinted export has been checked against the manifest,
 clean public IDs, the static discovery asset, and the same browser flows.
-The newer local artist-search export has passed the loopback browser gate, but
-its Cloudflare deployment has not been verified.
+The artist-search export was deployed on 2026-09-21. The Pages deployment URL
+and `opennoise.horv.co` both serve the same SHA-256 manifest as the certified
+local `dist`: `eec1c5a761ff5bda0235f4b1bc011092c2421b051a191a384c9740eb4652c3db`.
 
 Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
 pruned on 2026-09-16. Active offline-atlas, discovery, and data worktrees are

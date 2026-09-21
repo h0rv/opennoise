@@ -15,10 +15,14 @@ Artist search and the genre-specific artist view are in commit `63c7e03`.
 The view orders artists by shared direct genre observations. It does not claim
 to measure learned artist similarity.
 
-## Still open
+The local export was deployed to Cloudflare Pages as commit `ee9e1e1` after
+the local browser gate passed. The deployment URL and `opennoise.horv.co`
+served a manifest with SHA-256
+`eec1c5a761ff5bda0235f4b1bc011092c2421b051a191a384c9740eb4652c3db`,
+the same as the certified local `dist`. This verifies asset identity, not
+every interaction on the public domain.
 
-The current local export has not been tied to a verified Cloudflare deployment.
-The last deployment named in `docs/ROADMAP.md` predates the artist search change.
+## Still open
 
 The release manifest names 62 raw source inputs. The source vault replay gate
 verified every object's byte count and SHA-256 in the retained Phase 3 vault.
