@@ -72,7 +72,29 @@ instead of wrapping it in `asyncio.run` and `asyncio.to_thread`; a fixture
 asserts that direct path returns after persistence. This does not change
 aggregate parsing, SQLite contents, or candidate certification policy.
 
+## 2026-09-21 completed local candidate
+
+At commit `46cfc23`, one controlled replay completed with exit status 0 in
+339.6 seconds. It verified all 62 retained objects, replayed 54 Wikidata
+objects and seven ListenBrainz dailies, matched the regenerated joint artifact
+to the sealed receipt, checkpointed the SQLite database, and atomically
+published its local candidate and replay receipt.
+
+The local candidate is
+`/tmp/phase3-combined-replay-46cfc23.sqlite`: 148,897,792 bytes, SHA-256
+`6dea0c5d81e690b2ee7e9ff989f71d596f218b71dc992e2b86294381122c3972`.
+Its replay receipt is
+`/tmp/phase3-combined-replay-46cfc23.receipt.json`, SHA-256
+`e29e9962046c5fc63426b66fde86cb6172bb3f1a8367a4080c94d62193ceecf2`.
+The receipt records schema version 12, 30,904 accepted records, one quarantined
+record, and exact sealed-joint equality. Read-only checks returned SQLite
+`integrity_check: ok`, no foreign-key violations, one aggregate output, one
+co-listen run, and 30,903 co-listen evidence rows.
+
+This is a local research candidate only. Its receipt explicitly sets
+`certified_database: false` and `byte_identical_database_replay: false`; it
+does not certify, replace, or publish the sealed or public Phase 3 database.
+
 All 62 historical source-declaration hashes replay under the retained
 pre-schema serialization; current provenance, timestamps, adapter identity,
-and SQLite bytes still differ. A future receipt remains explicitly
-uncertified and non-byte-identical.
+and SQLite bytes still differ.

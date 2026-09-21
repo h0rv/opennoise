@@ -54,9 +54,12 @@ into its own fresh database. It checks the recovered fixed-window configuration
 against the sealed generated joint receipt before scanning the daily archives,
 then requires its generated joint receipt to match the sealed object. A
 versioned declaration replay now reproduces all 62 retained historical
-declaration hashes. A combined candidate replay path exists, but its full
-fresh run has no completed receipt. No candidate database is byte-identical
-or certified.
+declaration hashes. The controlled combined replay at `46cfc23` completed
+locally: it verified all 62 retained objects, replayed 54 Wikidata objects and
+seven ListenBrainz dailies, and wrote the receipt-bound candidate documented in
+`docs/checkpoints/SOURCE_VAULT_COMBINED_CANDIDATE_REPLAY.md`. That candidate
+remains local only, non-byte-identical, and explicitly uncertified; it does not
+replace or certify the Phase 3 public database.
 
 ## Static Pages delivery status
 
