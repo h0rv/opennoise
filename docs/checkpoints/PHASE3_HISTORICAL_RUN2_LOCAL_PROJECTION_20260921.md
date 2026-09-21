@@ -158,3 +158,37 @@ A read-only size audit measured the rejected v2 model at 38,823,505 bytes. One
 269-byte verbose source reference appeared 44,182 times. The v3 experiment
 keeps the same source identity but uses a compact hashed token for that
 reference. It does not alter the failed v2 result or authorize another v2 run.
+
+## Source-artifact v3 projection
+
+One full local v3 projection ran on 2026-09-21 and completed in 30.3 seconds.
+It used the attested run2 candidate, receipt, and detached binding, with
+`--source-artifacts-v3`. It wrote only these fresh local files:
+
+| Output | SHA-256 |
+| --- | --- |
+| `/tmp/phase3-historical-v3-20260921/serving.sqlite` | `1fca548fa214aae999f7b2462fd2ebf3e265a7f5195a3d6d76b5393f06bd8df9` |
+| `/tmp/phase3-historical-v3-20260921/model.json` | `c430b9948b863404827dd346fed6324a38b650ab2a827608078fc145b79fd1ba` |
+| `/tmp/phase3-historical-v3-20260921/receipt.json` | `3bd6adb0d213a4e95ed06e78426f47e85b7ac20e3e0b662de7ee1097140008af` |
+
+The serialized model is 30,031,286 bytes, which is below the 33,554,432-byte
+limit. Its input SHA-256 is
+`1ce33b37b1c3de2c415d559cb8605166e51b7b81a0c704065df2cc450eba8a37`.
+Its settings SHA-256 is
+`d27fa893459f5480e663253972191b5b90c3ab616cfaad49facc15c645ee22b0`.
+Its logical SHA-256 is
+`a206196014c8f4374b8c2dda4d18d9217f4ff94a328baa1a308caf05f0477b12`.
+The v3 receipt logical SHA-256 is
+`4ad4c3ba0d8347ed47a46009ec71ba461fdc898805848b3b95c9e3e5cfb83085`.
+
+The receipt records 62 exact source artifacts and 22,091 resolved v3 graph
+references. The gate passed with no failures. It reports 4,434 direct and
+22,091 one-hop memberships, 34,348 explainable neighbor rows, 603 genres, and
+four complete layouts. The persisted layout-point counts are 468 for `public`,
+468 for `public-direct`, 468 for `public-community`, and 598 for
+`public-taxonomy`. The serving database is schema 12, its integrity check is
+`ok`, and it has zero foreign-key violations.
+
+This is a local experimental output. The receipt continues to state that the
+database is not certified and is not a byte-identical replay. No sealed,
+public, static, or source-vault artifact changed.

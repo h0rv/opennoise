@@ -78,6 +78,12 @@ no model, gate, layout, graph, serving database, or report exists. The retained
 candidate and binding remain unchanged; see
 [the local projection checkpoint](checkpoints/PHASE3_HISTORICAL_RUN2_LOCAL_PROJECTION_20260921.md).
 
+An opt-in compact-reference v3 local projection completed from the same
+attested candidate. It verified 62 source artifacts, wrote a 30,031,286-byte
+model, passed the public-model gate, and persisted four layouts. The result is
+local, non-certified, and undeployed. It does not change any sealed, public,
+static, or deployed artifact. See [the v3 projection result](checkpoints/PHASE3_HISTORICAL_RUN2_LOCAL_PROJECTION_20260921.md).
+
 A single subsequent local-only public-model/layout projection attempt used a
 fresh copy of that candidate and stopped before artifact or database output.
 The replay candidate has 4,948 direct-source evidence rows, but its intentionally
