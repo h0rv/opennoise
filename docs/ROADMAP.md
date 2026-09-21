@@ -116,6 +116,22 @@ The production direct-bridge stage-one receipt now pins 84 positioned genres
 and 862 grouped direct memberships. It writes no static asset and is not
 exported, certified, or deployed; see the [receipt](checkpoints/PUBLIC_DIRECT_PRODUCTION_BRIDGE_RECEIPT_20260921.md).
 
+The clean local chain uses QID map hash
+`dd5cf7cf33898a76c1e85e95351e25e7303933f4524e2776097c20fd0d73a449` and
+sealed bridge output hash
+`c488223b34afcd59596072d4623e3190cfff1941cfdccb4da3e286e7ccebef5b`. It
+contains 84 positioned genres, 862 grouped memberships, 959 direct P136
+observations, 536 artists, and 118 net new artists. A terminal comparison
+found exact membership equality with the older bridge. The clean sidecar has
+hash `dfc4c74915ddc72df831a350d3fd420c9b14ff24c1f99e3758b6cdbb8257da73`.
+The merged local v2 candidate has 344 genres, 1,126 artists, and 3,859 bound
+observations, with hash
+`9ee2a464de74e0b681ea347163fda94afa6eb28e3189a4fa4e6d0ee3d708232b`. These
+outputs no longer consume the old v3 bridge or reconciliation, and the base v1
+asset is unchanged. No release or deployment is approved. A tracked promotion
+receipt, public v2 schema, certifier, and browser gates are still missing. The
+nested static v1 compatibility payload is not a release schema. See the [local batch checkpoint](checkpoints/SEALED_QID_DIRECT_BRIDGE_LOCAL_BATCH_20260921.md).
+
 The fixed v3 candidate also has one terminal observed-positive-only comparison
 to the retained historical signal. It accepts only one-to-one exact normalized
 name matches: 288 matched names, 315 candidate abstentions, and 6,003
@@ -197,6 +213,8 @@ gate is open.
   auto-promote exact matches or change the public bridge. A deterministic
   human-review packet now ranks all 441 edges by potential direct-observation
   lift and carries source-bound artist evidence. It does not publish anything.
+- Add the tracked promotion receipt, public v2 schema, certifier, and browser
+  gates before any release or deployment.
 - Add independently evaluated, versioned promotion paths for derived
   memberships and similarity; keep direct observations separate until then.
 - Complete the MusicBrainz release and track catalog chain. A larger local
@@ -241,8 +259,10 @@ gate is open.
   acquired or restored, ingested, and replayed into the certified database.
   Historical declaration replay does not provide that database certification.
 - Treat the recorded v3 versus sealed semantic comparison as documentation
-  only until a reusable, hash-pinned comparator reproduces the full artist-pair
-  and provenance projections.
+  only until the existing reusable, hash-pinned comparator passes the
+  normalized provenance-binding equality check; model and artist-pair
+  projections already match, but one provenance fingerprint differs. See the
+  [semantic comparison discrepancy](checkpoints/PHASE3_V3_SEMANTIC_COMPARATOR_DISCREPANCY_20260921.md).
 - Before any v3 promotion, require a reviewed local overlay adapter report,
   an independently reviewed artist identity/display bridge, a fresh sealed
   source-cache replay, and the existing public-model, static-export, and

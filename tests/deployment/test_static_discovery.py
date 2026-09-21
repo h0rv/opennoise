@@ -8,8 +8,11 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from opennoise.deployment.static_discovery import (
     StaticDiscoveryExportError,
+    StaticDiscoveryMembershipPayload,
     StaticDiscoveryNode,
     build_static_discovery_payload,
     unavailable_static_discovery_payload,
@@ -85,6 +88,18 @@ class StaticDiscoveryTests(unittest.TestCase):
         self.assertEqual(unavailable.availability, "unavailable")
         self.assertEqual(unavailable.genres, ())
         self.assertEqual(unavailable.artists, ())
+
+    def test_public_v1_rejects_qid_position_bindings(self) -> None:
+        with self.assertRaises(ValidationError):
+            StaticDiscoveryMembershipPayload.model_validate(
+                {
+                    "node_id": "item1",
+                    "catalog_genre_id": 1,
+                    "catalog_genre_name": "genre",
+                    "binding": "one_to_one_qid_position_binding",
+                    "evidence": (),
+                }
+            )
 
 
 def _fixture(path: Path) -> None:
