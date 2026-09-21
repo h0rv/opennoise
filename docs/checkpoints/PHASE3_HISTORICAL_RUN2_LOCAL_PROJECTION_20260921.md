@@ -97,3 +97,59 @@ retaining the old-manifest comparison as a diagnostic. The minimal equivalence
 test is equality of all six arrays after normalizing only the artist-pair
 attempt-ID suffix, plus equality of the stable pair tuple
 `(left_artist_id, right_artist_id, listener_day_support, supporting_windows)`.
+
+## Source-artifact v2 projection attempt
+
+One full local v2 projection ran on 2026-09-21. It used the run2 candidate,
+receipt, and detached binding above, with `--source-artifacts-v2`, and wrote
+only to the fresh `/tmp/phase3-historical-v2-20260921` directory. It failed
+after 11.0 seconds before it wrote a model, serving database, receipt, or gate
+report. No retry was run.
+
+```text
+candidate public projection failed: one-hop graph evidence is outside the release source attestation
+```
+
+The candidate stayed unchanged. Read-only checks after the failure found schema
+12, `integrity_check: ok`, and zero foreign-key violations. The v2 input had
+SHA-256 `a50d3b286ef66632a505a8e36b1d9eb04b8d58646e1056c559792191f401c3cf`
+with 62 artifacts, 603 genres, 4,890 direct memberships, 13,175 artist pairs,
+6,546 metadata candidates, and 712 hierarchy edges. The loader resolved the
+pair evidence to the attested joint ListenBrainz source artifact and its exact
+source key, snapshot, and SHA-256. The fixed v2 input-load settings hash was
+`f6aa4cbd7b120f1041c6c4a39ad6ce191f29426316d30d8283469026a1bcadfb`.
+The fixed model settings hash was
+`d27fa893459f5480e663253972191b5b90c3ab616cfaad49facc15c645ee22b0`.
+
+The failure came from the new projector check, not the source artifact lookup.
+One-hop propagation keeps both the direct seed reference
+`catalog:artist-genre:*` and the source-artifact v2 pair reference. The first
+v2 check rejected the direct reference. The check has since been narrowed to
+allow only source-backed direct seed references and attested v2 pair references.
+It still rejects unknown references. The changed check has focused tests, but
+this run remains failed. There are no v2 logical, file, serving, receipt, gate,
+layout, or graph-output hashes to report.
+
+## Source-artifact v2 retry
+
+One fresh local retry ran on 2026-09-21 after the mixed-reference check was
+fixed and independently reviewed. It used the same attested run2 inputs and
+the new `/tmp/phase3-historical-v2-retry-20260921` directory. It failed after
+16.2 seconds. No further retry was run.
+
+```text
+public model artifact exceeds the 33554432 byte limit
+```
+
+The projection passed the 62-source source, snapshot, and artifact attestation.
+It built the graph and passed the positive public-model gate before local
+publication. The publisher then rejected the staged JSON artifact because it
+was larger than its 32 MiB input limit. The staged files were removed by the
+projector, and the output directory contains no files. Therefore there is no
+saved model input, logical model, model file, serving database, receipt, layout
+or graph count, gate report, or output hash from this retry.
+
+The run2 candidate, replay receipt, and detached binding still hash to the
+values recorded above. No sealed, public, static, or source-vault file changed.
+The artifact-size limit is a separate local publication boundary. It needs a
+reviewed design change before another projection may run.
