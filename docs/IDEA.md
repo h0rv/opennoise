@@ -12,9 +12,9 @@ are source-claimed membership only; `shared_direct_genre` is an explained
 overlap method, not a learned similarity or an inferred membership. The local
 public catalog currently has direct artist claims for, for example, post-punk
 (23 artists), jazz (55), free jazz (4), electronic music (44), and folk music
-(36). Important gaps remain: direct coverage is sparse and uneven, unresolved
-seeds have no fabricated artist membership, and the real catalog needs bounded
-query performance before these links are a usable discovery surface.
+(36). The static export provides these links as a bounded discovery surface.
+Direct coverage remains sparse and uneven, and unresolved seeds have no
+fabricated artist membership.
 
 The historical Every Noise result is a local reference. It preserves 6,291
 immutable genre name seeds and dated observed map output. It does not claim to
@@ -146,12 +146,14 @@ adapter writes provenance and each model run records its inputs, parameters,
 code revision, seed, and content hash. Local object storage and future object
 stores use the same small abstraction.
 
-The retained 62-object source vault passes byte verification. The 54 Wikidata
-objects replay into a separate uncertified SQLite candidate. A second offline
-path verifies the seven ListenBrainz daily objects and their sealed joint
-receipt, but a complete candidate run has not finished in this execution
-environment. Neither candidate is a certified replacement for the sealed
-public cache. See [the source replay checkpoint](checkpoints/SOURCE_VAULT_REPLAY.md).
+The retained 62-object source vault passes byte verification. A completed
+combined local replay verifies all 62 objects and writes a fresh candidate
+database with the 54 Wikidata objects and seven ListenBrainz dailies. The
+candidate is not byte-identical to, and is not a certified replacement for,
+the sealed public cache. See [the source replay checkpoint](checkpoints/SOURCE_VAULT_REPLAY.md).
+
+The direct bridge, v3 projection, and source-vault replay outputs remain local
+candidates. They are not promoted into the sealed database or static release.
 
 Keep the stack small: Python 3.13.14, uv, mise, Poe, Pydantic, SQLite, and
 Cloudflare Pages. Offline tools construct source-bound artifacts, then one

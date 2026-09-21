@@ -637,6 +637,64 @@ class SourceVaultReplayTests(unittest.TestCase):
                 self.assertFalse(receipt_race_target.exists())
                 self.assertEqual(receipt_race_receipt.read_bytes(), b"concurrent receipt")
                 wikidata_ingest.side_effect = ingest_wikidata
+
+                normal_race_target = root / "normal-racing.sqlite"
+
+                async def ingest_with_normal_racing_target(
+                    *_args: object, database_path: Path, **_kwargs: object
+                ) -> None:
+                    normal_race_target.write_bytes(b"concurrent normal candidate")
+                    await ingest_wikidata(database_path=database_path)
+
+                wikidata_ingest.side_effect = ingest_with_normal_racing_target
+                with self.assertRaisesRegex(SourceVaultReplayError, "candidate database must not"):
+                    replay_combined_source_vault_to_candidate_database(
+                        report,
+                        vault,
+                        normal_race_target,
+                        manifest_path=manifest,
+                        source_manifest_path=source_manifest,
+                    )
+                self.assertEqual(normal_race_target.read_bytes(), b"concurrent normal candidate")
+                wikidata_ingest.side_effect = ingest_wikidata
+
+                async def ingest_with_late_source_mutation(
+                    *_args: object, database_path: Path, **_kwargs: object
+                ) -> None:
+                    await ingest_wikidata(database_path=database_path)
+                    source = raw / str(inputs[0]["artifact_sha256"])
+                    source.write_bytes(b"x" * source.stat().st_size)
+
+                wikidata_ingest.side_effect = ingest_with_late_source_mutation
+                late_mutation_target = root / "late-mutation.sqlite"
+                with self.assertRaisesRegex(SourceVaultReplayError, "does not match report"):
+                    replay_combined_source_vault_to_candidate_database(
+                        report,
+                        vault,
+                        late_mutation_target,
+                        manifest_path=manifest,
+                        source_manifest_path=source_manifest,
+                    )
+                self.assertFalse(late_mutation_target.exists())
+                (raw / str(inputs[0]["artifact_sha256"])).write_bytes(b"wd-0")
+                wikidata_ingest.side_effect = ingest_wikidata
+
+                historical_late_mutation_target = root / "historical-late-mutation.sqlite"
+                historical_late_mutation_receipt = root / "historical-late-mutation.json"
+                wikidata_ingest.side_effect = ingest_with_late_source_mutation
+                with self.assertRaisesRegex(SourceVaultReplayError, "does not match report"):
+                    replay_historical_declaration_combined_source_vault_to_candidate_database(
+                        report,
+                        vault,
+                        historical_late_mutation_target,
+                        historical_late_mutation_receipt,
+                        manifest_path=manifest,
+                        source_manifest_path=source_manifest,
+                    )
+                self.assertFalse(historical_late_mutation_target.exists())
+                self.assertFalse(historical_late_mutation_receipt.exists())
+                (raw / str(inputs[0]["artifact_sha256"])).write_bytes(b"wd-0")
+                wikidata_ingest.side_effect = ingest_wikidata
                 tampered = raw / str(inputs[54]["artifact_sha256"])
                 tampered.write_bytes(b"x" * tampered.stat().st_size)
                 with self.assertRaisesRegex(SourceVaultReplayError, "does not match report"):
@@ -666,13 +724,14 @@ class SourceVaultReplayTests(unittest.TestCase):
                     "replaying Wikidata objects",
                     "Wikidata replay complete; replaying ListenBrainz daily objects",
                     "ListenBrainz persistence returned; validating sealed joint receipt",
+                    "rechecking source-vault receipt after replay",
                     "sealed joint receipt matched; checkpointing candidate database",
                     "candidate database checkpointed; publishing",
                     "candidate database published",
                 ],
             )
-            self.assertEqual(wikidata_ingest.call_count, 5)
-            self.assertEqual(listenbrainz_ingest.call_count, 4)
+            self.assertEqual(wikidata_ingest.call_count, 8)
+            self.assertEqual(listenbrainz_ingest.call_count, 7)
 
     def test_phase3_historical_declarations_replay_all_sealed_digests(self) -> None:
         report = replay_historical_source_declarations(

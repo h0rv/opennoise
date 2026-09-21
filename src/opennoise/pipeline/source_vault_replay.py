@@ -1122,12 +1122,14 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
             progress, "ListenBrainz persistence returned; validating sealed joint receipt"
         )
         _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
+        _report_progress(progress, "rechecking source-vault receipt after replay")
+        _require_verified_vault_objects(report, vault_path)
         _report_progress(progress, "sealed joint receipt matched; checkpointing candidate database")
         with closing(sqlite3.connect(staging_database)) as connection:
             connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             connection.execute("PRAGMA journal_mode = DELETE")
         _report_progress(progress, "candidate database checkpointed; publishing")
-        staging_database.replace(candidate_database)
+        _publish_fresh_file(staging_database, candidate_database, "candidate database")
         _report_progress(progress, "candidate database published")
     except SourceVaultReplayError:
         raise
@@ -1254,6 +1256,8 @@ def replay_historical_declaration_combined_source_vault_to_candidate_database(  
             derived_vault_path=derived_vault,
         )
         _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
+        _report_progress(progress, "rechecking source-vault receipt after replay")
+        _require_verified_vault_objects(report, vault_path)
         with closing(sqlite3.connect(staging_database)) as connection:
             connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             connection.execute("PRAGMA journal_mode = DELETE")

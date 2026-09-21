@@ -147,6 +147,8 @@ class PublicDirectBridgeCandidateTests(unittest.TestCase):
         self.assertIn("HAVING count(DISTINCT identifier.normalized_value) = 1", source)
         self.assertIn("export_permission.use_kind = 'export'", source)
         self.assertIn("display_permission.use_kind = 'display'", source)
+        self.assertIn("evidence.method_key = 'wikidata_p136'", source)
+        self.assertIn("evidence.method_version = '1'", source)
 
     @unittest.skipUnless(
         Path(".cache/seed-reconciliation/v3/seed-reconciliation.json").exists(),

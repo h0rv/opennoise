@@ -43,8 +43,9 @@ derived cache, release configuration, model, map, and evidence. Raw source
 replay is separate. A fresh checkout can rebuild a selected bounded local vault
 from declared, network verifiable pins or restore a supplied source cache
 receipt. Raw bytes with local only or non redistributable policy never enter a
-portable store. The full release manifest source vault and derived database
-are not yet reproducible from this workflow. A separate local replay check now
+portable store. A full local candidate replay completed from the release
+manifest source vault, but it is not a byte-identical replay of the sealed
+derived database. A separate local replay check now
 verifies all 62 raw objects named by the Phase 3 manifest, a total of
 1,541,940,352 bytes, and can restore a supplied verified object store. A
 second local step replays the 54 Wikidata SPARQL objects into a fresh, explicitly
@@ -93,6 +94,10 @@ Only compacted v3 one-hop evidence-reference strings and run metadata differ.
 This is not byte-identical replay, certification, or publication authorization;
 see [the semantic comparison checkpoint](checkpoints/PHASE3_HISTORICAL_V3_SEMANTIC_COMPARISON_20260921.md).
 
+The bounded replay comparison found equal logical source and evidence
+projections, but candidate source metadata and the public derived stage differ.
+The candidate remains local and uncertified; see [the replay comparison checkpoint](checkpoints/PHASE3_HISTORICAL_REPLAY_BOUNDED_COMPARISON_20260921.md).
+
 The v3-to-static-map bridge remains local and audit-only. Of 603 v3 Wikidata
 genre references, 314 have unique non-ambiguous reconciliation links and 305
 already point to positioned canonical map seeds; none changes the 6,291 seed
@@ -102,8 +107,9 @@ review and is neither a map overlay nor a release input. See [the bridge audit](
 
 A separate sealed-public-DB direct-bridge candidate abstains from 25 catalog
 genres that resolve to multiple positioned seeds. Its remaining local-only
-frontier contains 84 newly positioned direct genres, 959 exact direct rows,
-and 118 net-new artists with exactly one authorized MusicBrainz ID. It is not
+frontier contains 84 newly positioned direct genres, 862 grouped artist-genre
+memberships across 959 retained P136 observations, and 118 net-new artists with
+exactly one authorized MusicBrainz ID. It is not
 published or promoted; see [the pinned checkpoint](checkpoints/PUBLIC_DIRECT_BRIDGE_FRONTIER_20260921.md).
 
 The fixed v3 candidate also has one terminal observed-positive-only comparison
@@ -126,7 +132,7 @@ is authorized by that result; see
 
 ## Static Pages delivery status
 
-The deployed static release is main commit `592fe7c`. Its certified v3
+The deployed static release is main commit `7f4e21f`. Its certified v3
 atlas has 2,945 placed nodes and 34,937 structural edges. The Pages manifest,
 HTML, JavaScript, JSON, asset names, and rendered focus links contain no
 retired identifier text. A clean `open_focus=item…` bookmark works, while an
@@ -157,11 +163,12 @@ clean public IDs, the static discovery asset, and the same browser flows.
 The artist-search export now carries exact, source-backed MusicBrainz and
 Wikidata links for all 1,008 exported artists. The Pages deployment URL
 and `opennoise.horv.co` both serve the same SHA-256 manifest as the certified
-local `dist`: `99f2079f85b8889501d40dfb0a98bcb48e98c036655bd4369c8c102a4f33e3aa`.
+local `dist`. Its output SHA-256 is
+`0c0672cfd7687beea8e60369d6c67e0382dac40f5996b0bb1a9c4b4a39f4660b`.
 
-The working-tree static artist detail now adds a `Similar artists` section,
+The deployed static artist detail includes a `Similar artists` section,
 explained solely by shared directly observed genres and navigable within the
-existing local discovery data. This UI change is not deployed or certified.
+existing local discovery data.
 
 Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
 pruned on 2026-09-16. A read-only worktree check on 2026-09-21 found only the
@@ -173,6 +180,13 @@ gate is open.
 
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
+- The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130
+  rows. The 544-seed loose-tag frontier remains nonfactual review evidence;
+  see [the proper-genre checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PROPER_GENRE_FRONTIER_20260921.md).
+- The conservative singleton peer candidate has no placed-to-placed edges, so
+  it has no placed holdout or proposed coordinates. The separate minimum-two
+  placed-peer diagnostic does not transfer to this candidate; see [the peer
+  layout holdout](checkpoints/CONSERVATIVE_MUSICBRAINZ_PEER_LAYOUT_HOLDOUT_20260921.md).
 - The local, non-publishing identity-bridge audit now separates 245 one-to-one
   exact label matches, 101 non-exact mappings needing review, and 95
   conflicting or ambiguous edges. Its append-only typed review ledger does not
@@ -220,6 +234,9 @@ gate is open.
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
   Historical declaration replay does not provide that database certification.
+- Treat the recorded v3 versus sealed semantic comparison as documentation
+  only until a reusable, hash-pinned comparator reproduces the full artist-pair
+  and provenance projections.
 - Before any v3 promotion, require a reviewed local overlay adapter report,
   an independently reviewed artist identity/display bridge, a fresh sealed
   source-cache replay, and the existing public-model, static-export, and

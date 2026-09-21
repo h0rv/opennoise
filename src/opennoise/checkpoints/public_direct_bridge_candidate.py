@@ -362,6 +362,8 @@ def _authorized_direct_rows(
                JOIN authorized_artist_mbid AS mbid
                  ON mbid.entity_id = evidence.artist_id
                WHERE evidence.evidence_kind = 'direct_source_claim'
+                 AND evidence.method_key = 'wikidata_p136'
+                 AND evidence.method_version = '1'
                ORDER BY evidence.genre_id, evidence.artist_id, evidence.id"""
         ).fetchall()
     selected = []

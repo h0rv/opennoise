@@ -12,8 +12,8 @@
 
 - Cloudflare Pages serves one exported directory. There is no application
   server, API, template engine, or runtime database in the delivery path.
-- `poe export-semantic-pages` validates one semantic-layout artifact and emits
-  HTML, CSS, JavaScript, JSON, and Pages headers into an empty `dist/`.
+- `poe build` validates one semantic-layout artifact, browser-certifies the
+  export, and emits HTML, CSS, JavaScript, JSON, and Pages headers into `dist/`.
 - `poe dev` is a loopback-only static file server for that exported directory.
 - The Canvas renderer owns pan, zoom, selection, search, and semantic LOD from
   the exported JSON. CSS owns light, system, and dark appearances.
