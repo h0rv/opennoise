@@ -40,6 +40,58 @@ export function compareCodepoints(left, right) {
   return (first.length - firstIndex) - (second.length - secondIndex);
 }
 
+/** Search only placed genres and artists actually present in the public static export. */
+export function searchAtlas(atlas, discovery, value, limit = 12) {
+  const query = String(value).trim().toLocaleLowerCase();
+  if (!query) return [];
+  const aliasesById = new Map();
+  for (const [alias, id] of atlas.aliases) {
+    const names = aliasesById.get(id) ?? [];
+    names.push(alias);
+    aliasesById.set(id, names);
+  }
+  const matches = [];
+  for (const node of atlas.nodes) {
+    const names = [node.name.toLocaleLowerCase(), ...(aliasesById.get(node.id) ?? [])];
+    const rank = names.some((name) => name === query) ? 0
+      : names.some((name) => name.startsWith(query)) ? 1
+        : names.some((name) => name.includes(query)) ? 2 : null;
+    if (rank !== null) matches.push({ kind: 'genre', id: node.id, name: node.name, rank });
+  }
+  for (const artist of discovery?.artists?.values() ?? []) {
+    const name = artist.name.toLocaleLowerCase();
+    const rank = name === query ? 0 : name.startsWith(query) ? 1 : name.includes(query) ? 2 : null;
+    if (rank !== null && artist.memberships?.length) {
+      matches.push({ kind: 'artist', id: artist.artist_id, name: artist.name, rank });
+    }
+  }
+  return matches.sort((left, right) => left.rank - right.rank
+    || compareCodepoints(left.name.toLocaleLowerCase(), right.name.toLocaleLowerCase())
+    || compareCodepoints(left.id, right.id)).slice(0, limit);
+}
+
+/** Rank only artists with a direct observation in the selected genre. */
+export function artistsInGenre(discovery, genreId, selectedArtistId = null) {
+  const genre = discovery?.genres?.get(genreId);
+  if (!genre) return [];
+  const selected = selectedArtistId ? discovery.artists.get(selectedArtistId) : null;
+  const selectedGenres = new Set(selected?.memberships?.map((item) => item.node_id) ?? []);
+  return genre.artist_ids.map((id) => {
+    const artist = discovery.artists.get(id);
+    if (!artist) return null;
+    const genreIds = artist.memberships.map((item) => item.node_id);
+    const shared = genreIds.filter((id) => selectedGenres.has(id));
+    return {
+      id, name: artist.name, sharedGenreIds: shared,
+      score: selected ? shared.length / new Set([...selectedGenres, ...genreIds]).size : 0,
+    };
+  }).filter((item) => item && item.id !== selectedArtistId)
+    .sort((left, right) => right.sharedGenreIds.length - left.sharedGenreIds.length
+      || right.score - left.score
+      || compareCodepoints(left.name.toLocaleLowerCase(), right.name.toLocaleLowerCase())
+      || compareCodepoints(left.id, right.id));
+}
+
 export function normaliseBounds(value, label = 'bounds') {
   if (!value || typeof value !== 'object') throw new TypeError(`${label} is required`);
   const x0 = finiteNumber(value.x0, `${label}.x0`);

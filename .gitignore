@@ -44,6 +44,7 @@ htmlcov/
 .coverage.*
 .cache
 .wrangler/
+artifacts/semantic-map/
 nosetests.xml
 coverage.xml
 *.cover

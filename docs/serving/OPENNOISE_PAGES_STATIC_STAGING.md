@@ -24,6 +24,13 @@ checked-in edge index in the browser.
 coverage accounting, and checksums for every emitted file. It is the release
 receipt.
 
+The content-addressed discovery asset adds 260 genres with directly observed
+artists and 1,008 artists from the public catalog snapshot. Search covers placed
+genre names, aliases, and those artists. A genre opens its artist list; choosing
+an artist shows direct genre memberships and other artists observed in that same
+genre. Shared direct genre counts order those peers. They are not learned
+similarity scores. Artist and genre selections are shareable URL state.
+
 ## Local verification
 
 ```sh

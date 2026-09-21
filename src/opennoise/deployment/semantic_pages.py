@@ -643,8 +643,10 @@ def _html(asset_paths: dict[str, Path]) -> str:
     <aside id="map-detail" aria-live="polite" hidden></aside>
   </main>
   <form id="search" role="search">
-    <label class="sr-only" for="query">Search map</label>
-    <input id="query" type="search" placeholder="Search a genre, e.g. IDM" autocomplete="off">
+    <label class="sr-only" for="query">Search genres and artists</label>
+    <input id="query" type="search" placeholder="Search genres or artists" autocomplete="off"
+           aria-controls="search-results" aria-expanded="false">
+    <div id="search-results" aria-label="Search results" hidden></div>
   </form>
   <script type="module" src="assets/{renderer_module}"></script>
 </body>

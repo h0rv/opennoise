@@ -81,10 +81,13 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("Zoom here", renderer)
         self.assertIn("state.worldCenter", renderer)
         self.assertIn("loadDiscovery", renderer)
-        self.assertIn("Shared genres", renderer)
+        self.assertIn("Artists in this genre", renderer)
+        self.assertIn("Also in ", renderer)
         self.assertIn("No direct catalog observations for this map label.", renderer)
         self.assertIn(
-            "state.artist = null; showDetail(state.focus, state.edges); schedule();", renderer
+            "state.artist = null; showDetail(state.focus, state.edges); "
+            "replaceUrl(state.focus); schedule();",
+            renderer,
         )
 
     def test_prefixed_focus_bookmarks_are_normalized_to_public_ids(self) -> None:

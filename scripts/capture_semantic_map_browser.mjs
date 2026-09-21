@@ -193,10 +193,15 @@ async function diagnostics(cdp) {
       detail_names: [...document.querySelectorAll('#map-detail [data-open-node-id]')]
         .map((link) => link.textContent),
       detail_artist_buttons: document.querySelectorAll('#map-detail [data-open-artist-id]').length,
+      detail_artist_names: [...document.querySelectorAll('#map-detail [data-open-artist-id]')]
+        .map((button) => button.textContent),
       detail_artist_name: document.querySelector('#map-detail h2')?.textContent ?? '',
       detail_headings: [...document.querySelectorAll('#map-detail h3')].map((heading) => heading.textContent),
+      search_results: [...document.querySelectorAll('#search-results [data-search-match]')]
+        .map((button) => button.textContent),
       detail_box: detailRect ? { x: detailRect.x, y: detailRect.y, width: detailRect.width, height: detailRect.height } : null,
       focus_url: new URL(location.href).searchParams.get('open_focus'),
+      artist_url: new URL(location.href).searchParams.get('open_artist'),
       renderer_p95_ms: qa?.render_ms?.length
         ? [...qa.render_ms].sort((left, right) => left - right)[Math.ceil(qa.render_ms.length * .95) - 1]
         : null,
@@ -600,7 +605,7 @@ async function run() {
       await sleep(25); postPunkDiscovery = await diagnostics(cdp);
     }
     requireCheck(
-      postPunkDiscovery.detail_headings.includes('Artists') && postPunkDiscovery.detail_artist_buttons > 0,
+      postPunkDiscovery.detail_headings.includes('Artists in this genre') && postPunkDiscovery.detail_artist_buttons > 0,
       'post-punk direct artist discovery did not load',
       postPunkDiscovery,
     );
@@ -609,21 +614,77 @@ async function run() {
     const postPunkArtist = await diagnostics(cdp);
     requireCheck(
       postPunkArtist.detail_headings.includes('Direct genres')
-        && postPunkArtist.detail_headings.includes('Shared genres')
+        && postPunkArtist.detail_headings.includes('Also in post-punk')
         && postPunkArtist.detail_artist_name !== 'post-punk',
       'artist discovery did not expose direct genres and explained artist overlap',
       postPunkArtist,
     );
+    screenshots.push(await screenshot(cdp, 'desktop-post-punk-artist.png', 'light', 1440, 900));
     await cdp.evaluate("document.querySelector('[data-map-action=\"genre-detail\"]')?.click()");
     await sleep(50);
     const postPunkBackToGenre = await diagnostics(cdp);
     requireCheck(
-      postPunkBackToGenre.detail_headings.includes('Artists')
+      postPunkBackToGenre.detail_headings.includes('Artists in this genre')
         && postPunkBackToGenre.detail_artist_buttons > 0,
       'artist detail back did not restore the genre discovery panel',
       postPunkBackToGenre,
     );
     screenshots.push(await screenshot(cdp, 'desktop-post-punk-focus.png', 'light', 1440, 900));
+
+    // Artist search must expose the same public artist page as a genre-panel
+    // click, including its explicit genre context and URL state.
+    const searchedArtistName = postPunkArtist.detail_artist_name;
+    const searchedArtistId = postPunkArtist.artist_url;
+    requireCheck(Boolean(searchedArtistName && searchedArtistId), 'artist detail did not publish a deep-link identity', postPunkArtist);
+    await cdp.evaluate(`(() => { const input = document.querySelector('#query'); input.value = ${JSON.stringify(searchedArtistName)}; input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+    await sleep(50);
+    await cdp.evaluate(`([...document.querySelectorAll('#search-results [data-search-match]')].find((button) => button.textContent.startsWith(${JSON.stringify(searchedArtistName)}))?.click())`);
+    await sleep(50);
+    const focusedArtistSearch = await diagnostics(cdp);
+    requireCheck(
+      focusedArtistSearch.artist_url === searchedArtistId && focusedArtistSearch.focus_url === postPunk.focus_url,
+      'artist search should preserve the current directly observed genre context',
+      focusedArtistSearch,
+    );
+    await navigate(cdp, 1440, 900, 'light');
+    await cdp.evaluate(`(() => { const input = document.querySelector('#query'); input.value = ${JSON.stringify(searchedArtistName)}; input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+    let artistSearch = await diagnostics(cdp);
+    for (let attempt = 0; attempt < 240 && !artistSearch.search_results.some((result) => result.startsWith(searchedArtistName)); attempt += 1) {
+      await sleep(25); artistSearch = await diagnostics(cdp);
+    }
+    requireCheck(artistSearch.search_results.some((result) => result.startsWith(searchedArtistName)), 'artist search did not expose a public artist result', artistSearch);
+    await cdp.evaluate(`([...document.querySelectorAll('#search-results [data-search-match]')].find((button) => button.textContent.startsWith(${JSON.stringify(searchedArtistName)}))?.click())`);
+    await sleep(100);
+    const artistSearchSelection = await diagnostics(cdp);
+    requireCheck(
+      artistSearchSelection.artist_url === searchedArtistId
+        && Boolean(artistSearchSelection.focus_url)
+        && artistSearchSelection.detail_headings.some((heading) => heading.startsWith('Also in ')),
+      'artist search did not open the genre-scoped artist page',
+      { artistSearch, artistSearchSelection, searchedArtistName, searchedArtistId },
+    );
+    screenshots.push(await screenshot(cdp, 'desktop-artist-search.png', 'light', 1440, 900));
+    await cdp.command('Page.navigate', { url: `${baseUrl}?open_focus=${encodeURIComponent(artistSearchSelection.focus_url)}&open_artist=${encodeURIComponent(searchedArtistId)}` });
+    let deepLinkedArtist = await diagnostics(cdp);
+    for (let attempt = 0; attempt < 240 && deepLinkedArtist.detail_artist_name !== searchedArtistName; attempt += 1) {
+      await sleep(25); deepLinkedArtist = await diagnostics(cdp);
+    }
+    requireCheck(
+      deepLinkedArtist.focus_url === artistSearchSelection.focus_url
+        && deepLinkedArtist.artist_url === searchedArtistId
+        && deepLinkedArtist.detail_artist_name === searchedArtistName,
+      'artist deep link did not restore the selected artist in its genre',
+      { deepLinkedArtist, searchedArtistName, searchedArtistId },
+    );
+    await cdp.evaluate("document.querySelector('[data-map-action=\"back\"]')?.click()");
+    await sleep(75);
+    const artistBack = await diagnostics(cdp);
+    requireCheck(
+      !artistBack.artist_url && artistBack.focus_url === artistSearchSelection.focus_url
+        && artistBack.detail_headings.includes('Artists in this genre'),
+      'artist Back did not restore the genre-scoped panel',
+      artistBack,
+    );
 
     // This is a global-map camera test, not a focus layout: pan the actual
     // L0 rock browse label to center, then cross every + tier.
@@ -767,7 +828,10 @@ async function run() {
         focused_edges: focused.edges,
         post_punk_edges: postPunk.edges,
         post_punk_direct_artists: postPunkDiscovery.detail_artist_buttons,
-        artist_discovery_back: postPunkBackToGenre.detail_headings.includes('Artists'),
+        artist_discovery_back: postPunkBackToGenre.detail_headings.includes('Artists in this genre'),
+        artist_search: artistSearch.search_results,
+        artist_search_deep_link: deepLinkedArtist.artist_url === searchedArtistId,
+        artist_search_back: !artistBack.artist_url && artistBack.focus_url === postPunk.focus_url,
         modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
           && modernRock.points === modernRock.detail_links + 1,
         rock_landmark_retained_after_plus: [rockL0, rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
@@ -779,7 +843,7 @@ async function run() {
         mobile_ready: mobile.canvas_ready && mobile.viewport?.width === 390 && mobile.viewport?.height === 844,
         mobile_pinch_zoomed: mobilePinch.scale > mobile.scale,
       },
-      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, postPunkDiscovery, postPunkArtist, postPunkBackToGenre, rockOverview, rockL0, rockL1, rockL2, rockL3, rockDeep, capOverview, capSelected, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
+      diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, postPunkDiscovery, postPunkArtist, postPunkBackToGenre, artistSearch, artistSearchSelection, deepLinkedArtist, artistBack, rockOverview, rockL0, rockL1, rockL2, rockL3, rockDeep, capOverview, capSelected, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);

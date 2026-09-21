@@ -6,12 +6,14 @@ import {
   fitCamera,
   focusCamera,
   appendCirclePath,
+  artistsInGenre,
   MAX_SCALE,
   isNodeRevealed,
   labelBudgetForScale,
   levelForScale,
   nextLodScale,
   normaliseAtlasPayload,
+  searchAtlas,
   structuralNeighborhood,
   visibleNodeLabels,
   zoomAtCenter,
@@ -40,6 +42,55 @@ test('atlas retains monotonic zoom labels and optional region metadata', () => {
   assert.equal(atlas.regions[0].title, 'Electronic');
   assert.deepEqual(atlas.labels.map((labels) => labels.length), [1, 2, 3, 4]);
   assert.deepEqual(atlas.childrenByParent.get('b'), ['c']);
+});
+
+test('atlas search ranks genres and directly observed artists together', () => {
+  const atlas = normaliseAtlasPayload({
+    ...payload,
+    aliases: [{ term: 'intelligent dance music', target: 'b' }],
+  });
+  const discovery = {
+    genres: new Map([
+      ['b', { node_id: 'b', artist_ids: ['artist-2', 'artist-1'] }],
+    ]),
+    artists: new Map([
+      ['artist-1', { artist_id: 'artist-1', name: 'IDM Artist', memberships: [{ node_id: 'b' }] }],
+      ['artist-2', { artist_id: 'artist-2', name: 'The Glitch Mob', memberships: [{ node_id: 'c' }] }],
+      ['artist-empty', { artist_id: 'artist-empty', name: 'Glitch Project', memberships: [] }],
+    ]),
+  };
+
+  assert.deepEqual(searchAtlas(atlas, discovery, 'intelligent dance music'), [
+    { kind: 'genre', id: 'b', name: 'idm', rank: 0 },
+  ]);
+  assert.deepEqual(searchAtlas(atlas, discovery, 'glitch').map(({ kind, id, name, rank }) => ({ kind, id, name, rank })), [
+    { kind: 'genre', id: 'c', name: 'glitch', rank: 0 },
+    { kind: 'artist', id: 'artist-2', name: 'The Glitch Mob', rank: 2 },
+  ]);
+  assert.deepEqual(searchAtlas(atlas, discovery, 'project'), []);
+  assert.deepEqual(searchAtlas(atlas, discovery, 'unpublished artist'), []);
+  assert.deepEqual(searchAtlas(atlas, discovery, 'artist'), [
+    { kind: 'artist', id: 'artist-1', name: 'IDM Artist', rank: 2 },
+  ]);
+});
+
+test('genre artist view ranks same-genre artists by shared memberships', () => {
+  const discovery = {
+    genres: new Map([
+      ['electronic', { node_id: 'electronic', artist_ids: ['artist-b', 'artist-a', 'artist-c'] }],
+    ]),
+    artists: new Map([
+      ['artist-a', { artist_id: 'artist-a', name: 'Artist A', memberships: [{ node_id: 'electronic' }, { node_id: 'idm' }], shared_genre_artists: [{ artist_id: 'artist-b' }] }],
+      ['artist-b', { artist_id: 'artist-b', name: 'Artist B', memberships: [{ node_id: 'electronic' }, { node_id: 'idm' }, { node_id: 'glitch' }] }],
+      ['artist-c', { artist_id: 'artist-c', name: 'Artist C', memberships: [{ node_id: 'electronic' }] }],
+    ]),
+  };
+
+  assert.deepEqual(artistsInGenre(discovery, 'electronic', 'artist-a'), [
+    { id: 'artist-b', name: 'Artist B', sharedGenreIds: ['electronic', 'idm'], score: 2 / 3 },
+    { id: 'artist-c', name: 'Artist C', sharedGenreIds: ['electronic'], score: 0.5 },
+  ]);
+  assert.deepEqual(artistsInGenre(discovery, 'missing'), []);
 });
 
 test('focus has one deduplicated twelve-edge structural contract', () => {
