@@ -14,7 +14,7 @@ from typing import override
 from unittest.mock import patch
 
 from opennoise.db import Database
-from opennoise.ml.public_graph import build_public_model
+from opennoise.ml.public_graph import build_public_model, public_model_output_sha256
 from opennoise.ml.publish import PublicModelPublishSummary, PublishedLensSummary
 from opennoise.models.modeling import (
     DirectMembershipEvidence,
@@ -26,8 +26,12 @@ from opennoise.models.modeling import (
 from opennoise.pipeline.candidate_public_projection import (
     CandidatePublicProjectionError,
     CandidatePublicProjectionSettings,
+    CandidatePublicProjectionV2Settings,
+    _v2_receipt_logical_sha256,
+    _v2_settings,
     _verify_candidate_boundary,
     project_candidate_public_model,
+    project_candidate_public_model_v2,
 )
 from opennoise.pipeline.historical_candidate_binding import (
     HistoricalCandidateBindingError,
@@ -67,7 +71,13 @@ class CandidatePublicProjectionTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
-    def _write_candidate(self, *, local_only: bool = False, first_policy_version: int = 1) -> None:
+    def _write_candidate(
+        self,
+        *,
+        local_only: bool = False,
+        first_policy_version: int = 1,
+        mismatched_snapshot: bool = False,
+    ) -> None:
         manifest = json.loads((RELEASE / "release-manifest.json").read_text())
         Database(self.candidate).initialize()
         with closing(sqlite3.connect(self.candidate)) as connection, connection:
@@ -126,7 +136,15 @@ class CandidatePublicProjectionTests(unittest.TestCase):
                        (id, source_id, snapshot_ref, snapshot_kind, manifest_sha256,
                         acquired_at, policy_id)
                        VALUES (?, ?, ?, 'single_artifact', ?, '2026-09-21T00:00:00Z', ?)""",
-                    (ordinal, ordinal, f"candidate:{source_key}", "b" * 64, ordinal),
+                    (
+                        ordinal,
+                        ordinal,
+                        "tampered"
+                        if mismatched_snapshot and ordinal == 1
+                        else item["snapshot_ref"],
+                        "b" * 64,
+                        ordinal,
+                    ),
                 )
                 connection.execute(
                     """INSERT INTO source_artifacts
@@ -151,7 +169,9 @@ class CandidatePublicProjectionTests(unittest.TestCase):
                     (
                         ordinal,
                         ordinal,
-                        f"candidate:{source_key}",
+                        "tampered"
+                        if mismatched_snapshot and ordinal == 1
+                        else item["snapshot_ref"],
                         item["artifact_sha256"],
                         f"{ordinal:064x}",
                     ),
@@ -232,6 +252,9 @@ class CandidatePublicProjectionTests(unittest.TestCase):
             report_output=self.root / "report.json",
         )
 
+    def _v2_settings(self) -> CandidatePublicProjectionV2Settings:
+        return CandidatePublicProjectionV2Settings(**self._settings().model_dump())
+
     def _write_binding(self) -> None:
         create_historical_candidate_binding(
             HistoricalCandidateBindingSettings(
@@ -274,6 +297,26 @@ class CandidatePublicProjectionTests(unittest.TestCase):
             ),
         )
         return build_public_model(inputs, PublicModelSettings())
+
+    def _v2_artifact(self):  # noqa: ANN202
+        manifest = json.loads((RELEASE / "release-manifest.json").read_text())
+        artifact = self._small_artifact().model_copy(
+            update={
+                "artifacts": tuple(
+                    PublicArtifact(
+                        source=(
+                            "listenbrainz" if "listenbrainz" in item["source_key"] else "wikidata"
+                        ),
+                        snapshot=item["snapshot_ref"],
+                        artifact_key=f"{item['source_key']}:{item['artifact_sha256']}",
+                        content_sha256=item["artifact_sha256"],
+                        export_allowed=True,
+                    )
+                    for item in manifest["inputs"]
+                )
+            }
+        )
+        return artifact.model_copy(update={"output_sha256": public_model_output_sha256(artifact)})
 
     def test_accepts_current_candidate_source_keys_and_artifact_hashes_without_old_snapshot_hashes(
         self,
@@ -428,6 +471,67 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         self.assertFalse(report.byte_identical_database_replay)
         with self.assertRaisesRegex(CandidatePublicProjectionError, "already exists"):
             project_candidate_public_model(settings)
+
+    def test_v2_projects_with_release_bounds_and_records_new_hashes(self) -> None:
+        settings = self._v2_settings()
+        artifact = self._v2_artifact()
+        summary = PublicModelPublishSummary(
+            output_sha256=artifact.output_sha256,
+            layouts=tuple(
+                PublishedLensSummary(
+                    layout_key=item.layout_key,
+                    layout_revision=1,
+                    coordinate_genres=len(item.coordinates),
+                )
+                for item in artifact.layouts
+            ),
+            representative_items=len(artifact.representatives),
+            profile_memberships=sum(len(item.memberships) for item in artifact.profiles),
+            neighbor_rows=len(artifact.neighbors),
+            duplicate=False,
+        )
+        load_settings, model_settings = _v2_settings()
+        with (
+            patch(
+                "opennoise.pipeline.candidate_public_projection._build_model_v2",
+                return_value=(
+                    artifact.model_dump_json().encode(),
+                    artifact,
+                    load_settings,
+                    model_settings,
+                ),
+            ),
+            patch(
+                "opennoise.pipeline.candidate_public_projection._release_policy_id", return_value=1
+            ),
+            patch(
+                "opennoise.pipeline.candidate_public_projection.publish_public_model",
+                return_value=summary,
+            ),
+        ):
+            report = project_candidate_public_model_v2(settings)
+        self.assertEqual(report.revision, "phase3-candidate-public-projection-v2")
+        self.assertEqual(report.source_artifact_count, 62)
+        self.assertEqual(report.model_logical_sha256, artifact.output_sha256)
+        self.assertEqual(
+            report.input_load_settings["artist_pair_evidence_ref_version"], "source_artifacts_v2"
+        )
+        self.assertEqual(report.model_settings["max_direct_memberships"], 100_000)
+        self.assertEqual(report.model_settings["max_artist_pairs"], 250_000)
+        self.assertEqual(report.model_settings["neighbors_per_genre"], 25)
+        self.assertEqual(report.receipt_logical_sha256, _v2_receipt_logical_sha256(report))
+
+    def test_v2_rejects_database_snapshot_not_in_release_before_outputs(self) -> None:
+        self.candidate.unlink()
+        self.binding.unlink()
+        self._write_candidate(mismatched_snapshot=True)
+        self._write_binding()
+        settings = self._v2_settings()
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "source/snapshot/artifact"):
+            project_candidate_public_model_v2(settings)
+        self.assertFalse(settings.output_database.exists())
+        self.assertFalse(settings.model_output.exists())
+        self.assertFalse(settings.report_output.exists())
 
     def test_binding_rejects_candidate_path_substitution(self) -> None:
         substituted = self.root / "substituted.sqlite"

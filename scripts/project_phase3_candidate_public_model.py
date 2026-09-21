@@ -9,7 +9,9 @@ from pathlib import Path
 from opennoise.pipeline.candidate_public_projection import (
     CandidatePublicProjectionError,
     CandidatePublicProjectionSettings,
+    CandidatePublicProjectionV2Settings,
     project_candidate_public_model,
+    project_candidate_public_model_v2,
 )
 
 
@@ -26,22 +28,34 @@ def main() -> int:
     parser.add_argument("--output-database", type=Path, required=True)
     parser.add_argument("--model-output", type=Path, required=True)
     parser.add_argument("--report-output", type=Path, required=True)
+    parser.add_argument(
+        "--source-artifacts-v2",
+        action="store_true",
+        help="run the isolated local-only source-artifact-v2 projector",
+    )
     arguments = parser.parse_args()
     try:
-        report = project_candidate_public_model(
-            CandidatePublicProjectionSettings(
-                release_directory=arguments.release_directory,
-                candidate_database=arguments.candidate,
-                replay_receipt=arguments.replay_receipt,
-                historical_candidate_binding=arguments.historical_candidate_binding,
-                expected_candidate_sha256=arguments.expected_candidate_sha256,
-                expected_replay_receipt_sha256=arguments.expected_replay_receipt_sha256,
-                expected_historical_candidate_binding_sha256=(
-                    arguments.expected_historical_candidate_binding_sha256
-                ),
-                output_database=arguments.output_database,
-                model_output=arguments.model_output,
-                report_output=arguments.report_output,
+        settings_kwargs = {
+            "release_directory": arguments.release_directory,
+            "candidate_database": arguments.candidate,
+            "replay_receipt": arguments.replay_receipt,
+            "historical_candidate_binding": arguments.historical_candidate_binding,
+            "expected_candidate_sha256": arguments.expected_candidate_sha256,
+            "expected_replay_receipt_sha256": arguments.expected_replay_receipt_sha256,
+            "expected_historical_candidate_binding_sha256": (
+                arguments.expected_historical_candidate_binding_sha256
+            ),
+            "output_database": arguments.output_database,
+            "model_output": arguments.model_output,
+            "report_output": arguments.report_output,
+        }
+        report = (
+            project_candidate_public_model_v2(
+                CandidatePublicProjectionV2Settings(**settings_kwargs)
+            )
+            if arguments.source_artifacts_v2
+            else project_candidate_public_model(
+                CandidatePublicProjectionSettings(**settings_kwargs)
             )
         )
     except CandidatePublicProjectionError as error:
