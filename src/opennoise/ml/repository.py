@@ -2,6 +2,8 @@
 
 import sqlite3
 from collections.abc import Iterable
+from typing import Literal
+from urllib.parse import quote
 
 from pydantic import Field
 
@@ -18,6 +20,8 @@ from opennoise.models.modeling import (
     PublicSource,
 )
 
+_MAX_ARTIST_PAIR_EVIDENCE_REFS = 366
+
 
 class PublicInputLoadSettings(FrozenModel):
     """Bound every database result before the model allocates its graph."""
@@ -28,6 +32,9 @@ class PublicInputLoadSettings(FrozenModel):
     max_hierarchy_edges: int = Field(default=100_000, gt=0, le=100_000)
     minimum_pair_support: int = Field(default=2, gt=0)
     minimum_pair_windows: int = Field(default=1, gt=0)
+    artist_pair_evidence_ref_version: Literal["attempt_ids_v1", "source_artifacts_v2"] = (
+        "attempt_ids_v1"
+    )
 
 
 class PublicInputLoadError(RuntimeError):
@@ -142,6 +149,16 @@ def _direct_memberships(
 def _artist_pairs(
     connection: sqlite3.Connection, settings: PublicInputLoadSettings
 ) -> tuple[ArtistPairEvidence, ...]:
+    """Load pairs with the requested provenance-reference contract."""
+    if settings.artist_pair_evidence_ref_version == "source_artifacts_v2":
+        return _artist_pairs_source_artifacts_v2(connection, settings)
+    return _artist_pairs_attempt_ids_v1(connection, settings)
+
+
+def _artist_pairs_attempt_ids_v1(
+    connection: sqlite3.Connection, settings: PublicInputLoadSettings
+) -> tuple[ArtistPairEvidence, ...]:
+    """Preserve the sealed attempt-ID reference contract exactly."""
     rows = _bounded_rows(
         connection,
         """
@@ -196,6 +213,141 @@ def _artist_pairs(
         )
         for row in rows
     )
+
+
+def _source_artifact_ref(source_key: str, snapshot_ref: str, artifact_sha256: str) -> str:
+    """Return an unambiguous, source-backed ListenBrainz evidence identity."""
+    return (
+        "listenbrainz:v2:source_key="
+        f"{quote(source_key, safe='')}&snapshot_ref={quote(snapshot_ref, safe='')}"
+        f"&artifact_sha256={artifact_sha256}"
+    )
+
+
+def _artist_pairs_source_artifacts_v2(
+    connection: sqlite3.Connection, settings: PublicInputLoadSettings
+) -> tuple[ArtistPairEvidence, ...]:
+    """Aggregate unchanged pair evidence with stable source-artifact references.
+
+    ``pair_stats`` first applies the legacy aggregation and bound.  The outer
+    query then streams each selected pair's distinct backing artifacts in a
+    deterministic order, avoiding one query per pair.
+    """
+    cursor = connection.execute(
+        """
+        WITH eligible AS (
+          SELECT evidence.left_artist_source_id AS left_artist_id,
+                 evidence.right_artist_source_id AS right_artist_id,
+                 evidence.distinct_user_count,
+                 source.source_key, snapshot.snapshot_ref, artifact.sha256
+          FROM normalizable_artist_co_listen_evidence AS evidence
+          JOIN artist_co_listen_runs AS run
+            ON run.ingest_attempt_id = evidence.ingest_attempt_id
+          JOIN source_artifacts AS artifact ON artifact.id = run.artifact_id
+          JOIN source_snapshots AS snapshot ON snapshot.id = artifact.snapshot_id
+          JOIN data_sources AS source ON source.id = snapshot.source_id
+          JOIN active_rights_policy_permissions AS embed_permission
+            ON embed_permission.policy_id = artifact.policy_id
+           AND embed_permission.use_kind = 'embed'
+           AND embed_permission.decision = 'allow'
+          JOIN normalization_exports AS export
+            ON export.staged_record_id = evidence.staged_record_id
+          JOIN provenance_records AS provenance ON provenance.id = export.provenance_id
+          WHERE NOT EXISTS (
+            SELECT 1 FROM active_suppressions AS suppression
+            WHERE suppression.use_kind IN ('all', 'embed') AND (
+              (suppression.target_kind = 'provenance'
+               AND suppression.target_ref = CAST(provenance.id AS TEXT))
+              OR (suppression.target_kind = 'source'
+                  AND suppression.target_ref = CAST(provenance.source_id AS TEXT))
+              OR (suppression.target_kind = 'entity' AND suppression.target_ref IN (
+                SELECT CAST(identifier.entity_id AS TEXT)
+                FROM entity_identifiers AS identifier
+                WHERE identifier.namespace = 'musicbrainz'
+                  AND ('musicbrainz:artist:' || identifier.normalized_value) IN (
+                    evidence.left_artist_source_id, evidence.right_artist_source_id
+                  )
+              ))
+            )
+          )
+        ), pair_stats AS (
+          SELECT left_artist_id, right_artist_id, sum(distinct_user_count) AS support,
+                 count(*) AS windows
+          FROM eligible
+          GROUP BY left_artist_id, right_artist_id
+          HAVING sum(distinct_user_count) >= ? AND count(*) >= ?
+          ORDER BY sum(distinct_user_count) DESC, left_artist_id, right_artist_id
+          LIMIT ?
+        ), pair_artifacts AS (
+          SELECT DISTINCT eligible.left_artist_id, eligible.right_artist_id,
+                 eligible.source_key, eligible.snapshot_ref, eligible.sha256
+          FROM eligible
+          JOIN pair_stats
+            ON pair_stats.left_artist_id = eligible.left_artist_id
+           AND pair_stats.right_artist_id = eligible.right_artist_id
+        )
+        SELECT pair_stats.left_artist_id, pair_stats.right_artist_id,
+               pair_stats.support, pair_stats.windows,
+               pair_artifacts.source_key, pair_artifacts.snapshot_ref, pair_artifacts.sha256
+        FROM pair_stats
+        JOIN pair_artifacts
+          ON pair_artifacts.left_artist_id = pair_stats.left_artist_id
+         AND pair_artifacts.right_artist_id = pair_stats.right_artist_id
+        ORDER BY pair_stats.support DESC, pair_stats.left_artist_id, pair_stats.right_artist_id,
+                 pair_artifacts.source_key, pair_artifacts.snapshot_ref, pair_artifacts.sha256
+        """,
+        (
+            settings.minimum_pair_support,
+            settings.minimum_pair_windows,
+            settings.max_artist_pairs + 1,
+        ),
+    )
+    result: list[ArtistPairEvidence] = []
+    current_key: tuple[str, str] | None = None
+    current_support = 0
+    current_windows = 0
+    refs: list[str] = []
+
+    def append_current() -> None:
+        if current_key is None:
+            return
+        if len(refs) > _MAX_ARTIST_PAIR_EVIDENCE_REFS:
+            raise PublicInputLoadError(
+                "artist pair evidence references exceed declared limit "
+                f"{_MAX_ARTIST_PAIR_EVIDENCE_REFS}"
+            )
+        result.append(
+            ArtistPairEvidence(
+                left_artist_id=current_key[0],
+                right_artist_id=current_key[1],
+                listener_day_support=current_support,
+                supporting_windows=current_windows,
+                evidence_refs=tuple(refs),
+            )
+        )
+
+    for raw_row in cursor:
+        if not isinstance(raw_row, sqlite3.Row):
+            raise PublicInputLoadError("SQLite row factory must return sqlite3.Row")
+        key = (str(raw_row[0]), str(raw_row[1]))
+        if current_key != key:
+            append_current()
+            current_key = key
+            current_support = int(raw_row[2])
+            current_windows = int(raw_row[3])
+            refs = []
+        if len(refs) >= _MAX_ARTIST_PAIR_EVIDENCE_REFS:
+            raise PublicInputLoadError(
+                "artist pair evidence references exceed declared limit "
+                f"{_MAX_ARTIST_PAIR_EVIDENCE_REFS}"
+            )
+        refs.append(_source_artifact_ref(str(raw_row[4]), str(raw_row[5]), str(raw_row[6])))
+    append_current()
+    if len(result) > settings.max_artist_pairs:
+        raise PublicInputLoadError(
+            f"artist pairs exceed declared limit {settings.max_artist_pairs}"
+        )
+    return tuple(result)
 
 
 def _hierarchy_edges(
