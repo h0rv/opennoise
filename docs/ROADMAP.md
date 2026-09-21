@@ -61,6 +61,14 @@ seven ListenBrainz dailies, and wrote the receipt-bound candidate documented in
 remains local only, non-byte-identical, and explicitly uncertified; it does not
 replace or certify the Phase 3 public database.
 
+The audited historical-declaration replay mode also completed one separate
+local candidate at `4a76c76`: it verified the same 62 vault objects and all 62
+historical declaration hashes before first write, then produced 603 modelable
+genres and 4,948 embed-authorized direct Wikidata rows. Its receipt remains
+explicitly non-certified and non-byte-identical, and currently lacks a
+cryptographic candidate-database hash binding; it is not eligible for
+projection or publication until that receipt contract is revised.
+
 A single subsequent local-only public-model/layout projection attempt used a
 fresh copy of that candidate and stopped before artifact or database output.
 The replay candidate has 4,948 direct-source evidence rows, but its intentionally

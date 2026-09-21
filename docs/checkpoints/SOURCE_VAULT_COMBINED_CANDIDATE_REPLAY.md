@@ -98,3 +98,39 @@ does not certify, replace, or publish the sealed or public Phase 3 database.
 All 62 historical source-declaration hashes replay under the retained
 pre-schema serialization; current provenance, timestamps, adapter identity,
 and SQLite bytes still differ.
+
+## 2026-09-21 historical-declaration local candidate
+
+At audited commit `4a76c76`, the explicit historical-declaration combined mode
+completed one local replay in 353.5 seconds with exit status 0. It rehashed the
+62-object vault receipt, verified all 62 reconstructed historical declaration
+hashes before staging, replayed 54 Wikidata objects under their historical
+public-domain policy declarations, and replayed seven ListenBrainz daily
+objects. The regenerated joint artifact matched its sealed receipt.
+
+The fresh local database is
+`/tmp/phase3-historical-combined-4a76c76-run2.sqlite`: 148,897,792 bytes,
+SHA-256 `327bbf377cb9ad8a1ed48821718979606622175f255ece5958d674146aba6763`.
+Its receipt is
+`/tmp/phase3-historical-combined-4a76c76-run2.receipt.json`, SHA-256
+`8d9974e5700c98e9de76385137b65f9d9154df3648a968866d8c1ad9b67ae0d0`.
+The receipt has revision
+`source-vault-historical-declaration-combined-candidate-replay-v1`, records
+the manifest SHA-256 `795992807586432e2b285e2ddca9a24a00a16e9fc83b6c382a3e914539333232`,
+all 62 declaration digests, 30,904 accepted records, one quarantined record,
+and exact sealed-joint equality.
+
+Read-only SQLite checks returned schema 12, journal mode `delete`,
+`integrity_check: ok`, and no foreign-key violations. The database has 62
+source/artifact pairs, 54 non-local public-domain Wikidata policies, 603
+modelable music genres, and 4,948 embed-authorized direct artist-genre rows.
+Direct and qualification evidence each have zero checked policy/provenance ID
+mismatches. It has 30,903 co-listen evidence rows, 4,948 direct rows, and 603
+qualification rows.
+
+This is a new local research candidate, not a replacement for the earlier
+local-only candidate, sealed database, or public database. Its receipt sets
+`certified_database: false` and `byte_identical_database_replay: false`.
+The receipt records the candidate path but does not yet bind the candidate
+database SHA-256; any projection must fail closed until a receipt revision adds
+that cryptographic database binding. No release certification is claimed.
