@@ -1,6 +1,11 @@
 import sqlite3
 import unittest
+from unittest.mock import patch
 
+from opennoise.ml.artist_pair_refs import (
+    artist_pair_source_artifact_ref_v3,
+    resolve_artist_pair_source_artifact_ref_v3,
+)
 from opennoise.ml.public_graph import _sha256 as public_input_sha256
 from opennoise.ml.repository import (
     PublicInputLoadError,
@@ -317,6 +322,45 @@ class PublicModelRepositoryTests(unittest.TestCase):
         self.assertIn(f"artifact_sha256={_LB_SHA}", ref)
         self.assertNotIn("attempt", ref)
 
+    def test_source_artifacts_v3_is_compact_and_resolves_exactly(self) -> None:
+        catalog = _catalog()
+        listenbrainz = _listenbrainz_v2(joint_attempt_id=62, insert_dummy_first=True)
+        self.addCleanup(catalog.close)
+        self.addCleanup(listenbrainz.close)
+        identity = (
+            "listenbrainz_joint_20260824_20260830",
+            f"listenbrainz_joint_20260824_20260830:joint:{_LB_SHA}",
+            _LB_SHA,
+        )
+
+        ref = (
+            PublicModelRepository(catalog, listenbrainz)
+            .load(PublicInputLoadSettings(artist_pair_evidence_ref_version="source_artifacts_v3"))
+            .artist_pairs[0]
+            .evidence_refs[0]
+        )
+
+        self.assertEqual(ref, artist_pair_source_artifact_ref_v3(*identity))
+        self.assertEqual(len(ref), 70)
+        self.assertEqual(resolve_artist_pair_source_artifact_ref_v3(ref, (identity,)), identity)
+
+    def test_source_artifacts_v3_rejects_an_ambiguous_attested_token(self) -> None:
+        first = ("listenbrainz_a", "snapshot-a", "a" * 64)
+        second = ("listenbrainz_b", "snapshot-b", "b" * 64)
+        with (
+            patch("opennoise.ml.artist_pair_refs.sha256_json", return_value="0" * 64),
+            self.assertRaisesRegex(ValueError, "ambiguous"),
+        ):
+            resolve_artist_pair_source_artifact_ref_v3("lb:v3:" + "0" * 64, (first, second))
+
+    def test_source_artifacts_v3_rejects_malformed_and_unknown_tokens(self) -> None:
+        identity = ("listenbrainz_a", "snapshot-a", "a" * 64)
+
+        with self.assertRaisesRegex(ValueError, "not an lb:v3 token"):
+            resolve_artist_pair_source_artifact_ref_v3("listenbrainz:v2:legacy", (identity,))
+        with self.assertRaisesRegex(ValueError, "outside the attested inventory"):
+            resolve_artist_pair_source_artifact_ref_v3("lb:v3:" + "0" * 64, (identity,))
+
     def test_source_artifacts_v2_input_hash_is_independent_of_insertion_order(self) -> None:
         catalog = _catalog()
         early_joint = _listenbrainz_v2(joint_attempt_id=8)
@@ -333,11 +377,17 @@ class PublicModelRepositoryTests(unittest.TestCase):
         late_v1 = PublicModelRepository(catalog, late_joint).load(settings_v1)
         early_v2 = PublicModelRepository(catalog, early_joint).load(settings_v2)
         late_v2 = PublicModelRepository(catalog, late_joint).load(settings_v2)
+        settings_v3 = PublicInputLoadSettings(
+            artist_pair_evidence_ref_version="source_artifacts_v3"
+        )
+        early_v3 = PublicModelRepository(catalog, early_joint).load(settings_v3)
+        late_v3 = PublicModelRepository(catalog, late_joint).load(settings_v3)
 
         self.assertNotEqual(early_v1.model_dump(mode="json"), late_v1.model_dump(mode="json"))
         self.assertEqual(early_v2.model_dump(mode="json"), late_v2.model_dump(mode="json"))
         self.assertNotEqual(public_input_sha256(early_v1), public_input_sha256(late_v1))
         self.assertEqual(public_input_sha256(early_v2), public_input_sha256(late_v2))
+        self.assertEqual(public_input_sha256(early_v3), public_input_sha256(late_v3))
         self.assertEqual(
             tuple(
                 (

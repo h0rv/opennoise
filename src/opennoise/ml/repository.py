@@ -1,12 +1,13 @@
 """Load bounded, policy-safe public graph evidence from SQLite catalogs."""
 
 import sqlite3
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Literal
 from urllib.parse import quote
 
 from pydantic import Field
 
+from opennoise.ml.artist_pair_refs import artist_pair_source_artifact_ref_v3
 from opennoise.models import FrozenModel
 from opennoise.models.modeling import (
     ArtistPairEvidence,
@@ -32,9 +33,9 @@ class PublicInputLoadSettings(FrozenModel):
     max_hierarchy_edges: int = Field(default=100_000, gt=0, le=100_000)
     minimum_pair_support: int = Field(default=2, gt=0)
     minimum_pair_windows: int = Field(default=1, gt=0)
-    artist_pair_evidence_ref_version: Literal["attempt_ids_v1", "source_artifacts_v2"] = (
-        "attempt_ids_v1"
-    )
+    artist_pair_evidence_ref_version: Literal[
+        "attempt_ids_v1", "source_artifacts_v2", "source_artifacts_v3"
+    ] = "attempt_ids_v1"
 
 
 class PublicInputLoadError(RuntimeError):
@@ -151,7 +152,11 @@ def _artist_pairs(
 ) -> tuple[ArtistPairEvidence, ...]:
     """Load pairs with the requested provenance-reference contract."""
     if settings.artist_pair_evidence_ref_version == "source_artifacts_v2":
-        return _artist_pairs_source_artifacts_v2(connection, settings)
+        return _artist_pairs_source_artifacts(connection, settings, _source_artifact_ref)
+    if settings.artist_pair_evidence_ref_version == "source_artifacts_v3":
+        return _artist_pairs_source_artifacts(
+            connection, settings, artist_pair_source_artifact_ref_v3
+        )
     return _artist_pairs_attempt_ids_v1(connection, settings)
 
 
@@ -224,8 +229,10 @@ def _source_artifact_ref(source_key: str, snapshot_ref: str, artifact_sha256: st
     )
 
 
-def _artist_pairs_source_artifacts_v2(
-    connection: sqlite3.Connection, settings: PublicInputLoadSettings
+def _artist_pairs_source_artifacts(
+    connection: sqlite3.Connection,
+    settings: PublicInputLoadSettings,
+    reference_builder: Callable[[str, str, str], str],
 ) -> tuple[ArtistPairEvidence, ...]:
     """Aggregate unchanged pair evidence with stable source-artifact references.
 
@@ -341,7 +348,7 @@ def _artist_pairs_source_artifacts_v2(
                 "artist pair evidence references exceed declared limit "
                 f"{_MAX_ARTIST_PAIR_EVIDENCE_REFS}"
             )
-        refs.append(_source_artifact_ref(str(raw_row[4]), str(raw_row[5]), str(raw_row[6])))
+        refs.append(reference_builder(str(raw_row[4]), str(raw_row[5]), str(raw_row[6])))
     append_current()
     if len(result) > settings.max_artist_pairs:
         raise PublicInputLoadError(
