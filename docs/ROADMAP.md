@@ -17,8 +17,9 @@ source coverage and exclusions.
 
 The local static export now searches artists as well as genres. An artist opens
 within a directly observed genre, with links back to that genre and to other
-artists observed there. The artist order uses shared direct genre counts, not
-a learned similarity model.
+artists observed there. It links to exact MusicBrainz and Wikidata artist
+records. The artist order uses shared direct genre counts, not a learned
+similarity model.
 
 The historical Every Noise result is a separate local reference. It preserves
 dated observed output for blind evaluation and does not provide inputs to the
@@ -57,7 +58,7 @@ hashes, and neither candidate database is byte-identical or certified.
 
 ## Static Pages delivery status
 
-The deployed static release is main commit `ee9e1e1`. Its certified
+The deployed static release is main commit `592fe7c`. Its certified v3
 atlas has 2,945 placed nodes and 34,937 structural edges. The Pages manifest,
 HTML, JavaScript, JSON, asset names, and rendered focus links contain no
 retired identifier text. A clean `open_focus=item…` bookmark works, while an
@@ -71,24 +72,24 @@ delayed to smooth density; it does not rerank labels while navigating. A
 selected genre offers `Zoom here`, which enters the same static browse view at
 its exact world position and preserves Back to the structural detail.
 
-The release candidate has passed a fresh sealed-layout rebuild, all-scale
-label-box clearance for 2,945 labels, and loopback browser certification. The
+The release passed a fresh sealed-layout rebuild, all-scale
+label-box clearance for 2,945 labels, and strict loopback browser certification. The
 browser evidence covers one-pixel pan anchoring, equivalent button and pinch
 paths, gradual fixed-center admission, deep selected-label readability,
 hierarchy landmarks, structural focus and Back, direct artist discovery, and
-mobile pinch. The known remaining layout debt is extremely near-coincident
-source coordinates; it is documented as a model/readability limitation rather
-than hidden by detached labels.
-The acceptance gate is mechanical, not a claim that every deep label is easy
-to reach: 117 of the 2,945 label entries require a reveal scale above `1e6`,
-40 require above `1e9`, and the worst requires above `1e12`. A new layout
-needs a human-scale navigation check before replacing this one.
+mobile pinch. The v3 deterministic separation removes all near-coordinate
+groups at `1e-4`. Every placed label now has a reveal scale below `1e6`;
+the maximum is about 835,120. The stricter label gate allows a still-visible
+dot to lose its caption only at a clipped viewport edge or under visible UI.
+This improves legibility without claiming that all genre relationships are
+correct or that every name has a placed coordinate.
 
 The deployed fingerprinted export has been checked against the manifest,
 clean public IDs, the static discovery asset, and the same browser flows.
-The artist-search export was deployed on 2026-09-21. The Pages deployment URL
+The artist-search export now carries exact, source-backed MusicBrainz and
+Wikidata links for all 1,008 exported artists. The Pages deployment URL
 and `opennoise.horv.co` both serve the same SHA-256 manifest as the certified
-local `dist`: `eec1c5a761ff5bda0235f4b1bc011092c2421b051a191a384c9740eb4652c3db`.
+local `dist`: `99f2079f85b8889501d40dfb0a98bcb48e98c036655bd4369c8c102a4f33e3aa`.
 
 Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
 pruned on 2026-09-16. A read-only worktree check on 2026-09-21 found only the
@@ -125,16 +126,11 @@ gate is open.
 
 ## Later experiments
 
-- Evaluate alternative graph and hierarchy aware layouts against fixed
-  evidence, including a practical maximum zoom and stable readable labels,
-  then expose accepted layouts through the versioned public map contract. The
-  measured baseline and candidate gate are in
-  [the layout navigation audit](checkpoints/LAYOUT_NAVIGATION_AUDIT.md). An
-  [unpublished candidate](checkpoints/LAYOUT_NAVIGATION_CANDIDATE.md) sharply
-  reduces near-overlap and extreme reveal scales. Its isolated browser QA
-  passes the identity-based gate with explicit viewport and overlay exemptions,
-  but eight labels still need more than `1e6` reveal scale. It has not replaced
-  the deployed map.
+- Improve semantic neighborhoods and overview landmark choices against open
+  graph evidence. The [layout navigation audit](checkpoints/LAYOUT_NAVIGATION_AUDIT.md)
+  records the v2 baseline; the [v3 selection](checkpoints/LAYOUT_NAVIGATION_SEPARATION_SWEEP.md)
+  records the measured geometry change. Better placement does not substitute
+  for more artist and genre evidence.
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files

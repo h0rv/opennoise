@@ -104,3 +104,13 @@ The [artist navigation audit](ARTIST_UX_AUDIT.md) found the current search,
 genre context, artist detail, deep-link and Back paths internally consistent.
 The JS atlas tests and six stdlib browser-contract tests pass; this is a
 correctness audit, not evidence that artist discovery coverage is complete.
+
+## Final static release checkpoint
+
+The v3 layout passed its isolated strict browser gate and then became the
+selected production build. The final Pages deployment for commit `592fe7c`
+served a manifest identical to the certified local `dist` at both the Pages
+deployment URL and `opennoise.horv.co`. The release also adds exact
+MusicBrainz and Wikidata artist links. The full receipt is in
+[STATIC_V3_RELEASE_20260921.md](STATIC_V3_RELEASE_20260921.md). The raw-source
+candidate replay and independent gold gate remain open.
