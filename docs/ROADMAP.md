@@ -171,6 +171,10 @@ gate is open.
   audit](checkpoints/MUSICBRAINZ_PEER_THRESHOLD_SENSITIVITY_20260921.md)
   finds a review-only hub-filtered route to 414 of the 495 overlap-abstained
   unplaced seeds; it has not changed the public layout.
+- The [final conservative peer candidate](checkpoints/CONSERVATIVE_MUSICBRAINZ_PEER_CANDIDATE_20260921.md)
+  is local-only: 1,497 fixed source-only edges reach 414 scoped seeds. Its
+  terminal Last.fm diagnostic is coverage evidence, not a quality gate or a
+  publication decision.
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files
