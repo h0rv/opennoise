@@ -10,8 +10,11 @@ from unittest.mock import patch
 from pydantic import TypeAdapter
 
 from opennoise.pipeline.source_vault_replay import (
+    ReleaseManifestReplayInput,
     SourceVaultReplayError,
     SourceVaultReplayReport,
+    _candidate_listenbrainz_config,
+    _listenbrainz_joint_input,
     load_report,
     replay_source_vault_to_candidate_database,
     restore_source_vault,
@@ -201,3 +204,63 @@ class SourceVaultReplayTests(unittest.TestCase):
                 )
             client_factory.assert_not_called()
             self.assertFalse((root / "missing-source.sqlite").exists())
+
+    def test_listenbrainz_candidate_fails_before_daily_processing_on_config_drift(self) -> None:
+        """The sealed joint receipt pins candidate settings before large inputs are read."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            vault = root / "vault"
+            raw = vault / "raw" / "sha256"
+            raw.mkdir(parents=True)
+            configuration_sha256 = hashlib.sha256(
+                _candidate_listenbrainz_config().model_dump_json().encode()
+            ).hexdigest()
+            good_payload = json.dumps({"configuration_sha256": configuration_sha256}).encode()
+            good_sha = hashlib.sha256(good_payload).hexdigest()
+            (raw / good_sha).write_bytes(good_payload)
+            inputs = (
+                {
+                    "source_key": "listenbrainz_joint_20260824_20260830",
+                    "snapshot_ref": "listenbrainz_joint_20260824_20260830:joint:test",
+                    "artifact_sha256": good_sha,
+                    "byte_size": len(good_payload),
+                },
+            )
+            parsed = tuple(ReleaseManifestReplayInput.model_validate(item) for item in inputs)
+            self.assertEqual(_listenbrainz_joint_input(parsed, vault).artifact_sha256, good_sha)
+            bad_payload = json.dumps({"configuration_sha256": "0" * 64}).encode()
+            bad_sha = hashlib.sha256(bad_payload).hexdigest()
+            (raw / bad_sha).write_bytes(bad_payload)
+            bad = (
+                ReleaseManifestReplayInput(
+                    source_key="listenbrainz_joint_20260824_20260830",
+                    snapshot_ref="listenbrainz_joint_20260824_20260830:joint:test",
+                    artifact_sha256=bad_sha,
+                    byte_size=len(bad_payload),
+                ),
+            )
+            with self.assertRaisesRegex(SourceVaultReplayError, "configuration differs"):
+                _listenbrainz_joint_input(bad, vault)
+
+    def test_listenbrainz_candidate_rejects_same_size_tampered_joint_before_parse(self) -> None:
+        """The joint receipt is hashed before its configuration is trusted."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = root / "vault" / "raw" / "sha256"
+            raw.mkdir(parents=True)
+            configuration_sha256 = hashlib.sha256(
+                _candidate_listenbrainz_config().model_dump_json().encode()
+            ).hexdigest()
+            expected_payload = json.dumps({"configuration_sha256": configuration_sha256}).encode()
+            expected_sha = hashlib.sha256(expected_payload).hexdigest()
+            (raw / expected_sha).write_bytes(b"x" * len(expected_payload))
+            joint = (
+                ReleaseManifestReplayInput(
+                    source_key="listenbrainz_joint_20260824_20260830",
+                    snapshot_ref="listenbrainz_joint_20260824_20260830:joint:test",
+                    artifact_sha256=expected_sha,
+                    byte_size=len(expected_payload),
+                ),
+            )
+            with self.assertRaisesRegex(SourceVaultReplayError, "does not match report"):
+                _listenbrainz_joint_input(joint, root / "vault")

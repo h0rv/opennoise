@@ -27,6 +27,12 @@ const option = (name) => {
 };
 const captures = resolve(option("--captures") ?? "artifacts/semantic-map/captures");
 const port = Number(option("--port") ?? 9323);
+const requireLabelPointExit = args.includes("--require-label-point-exit");
+const permittedLabelExitCauses = new Set([
+  'label_box_viewport_clipping',
+  'overlay_occlusion',
+  'point_edge_tolerance_visible',
+]);
 const sleep = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds));
 
 class Cdp {
@@ -157,6 +163,7 @@ async function waitForFrame(cdp, previousFrame = -1) {
 async function diagnostics(cdp) {
   return cdp.evaluate(`(() => {
     const qa = window.__opennoiseMapQA;
+    const trace = window.__opennoiseMapQATrace?.frames?.at(-1) ?? { displayedIds: [], labelIds: [] };
     const canvas = document.querySelector('#semantic-map');
     const rect = canvas?.getBoundingClientRect();
     const frame = qa?.frames?.at(-1) ?? {
@@ -179,8 +186,16 @@ async function diagnostics(cdp) {
       scale: Number(canvas?.dataset.mapScale ?? 0),
       cohorts: (canvas?.dataset.mapCohorts ?? '').split('|').filter(Boolean),
       label_names: [...new Set(frame.labels.map((item) => item.text))],
+      displayed_ids: trace.displayedIds,
+      label_ids: trace.labelIds,
       label_positions: frame.labels,
       label_boxes: frame.label_boxes,
+      overlay_boxes: [document.querySelector('#search'), detail, document.querySelector('#map-controls')]
+        .filter((element) => element && !element.hidden)
+        .map((element) => {
+          const box = element.getBoundingClientRect();
+          return { x0: box.left, y0: box.top, x1: box.right, y1: box.bottom };
+        }),
       edges: frame.edges,
       edge_endpoints: frame.edge_endpoints,
       connected_path_arcs: frame.connected_path_arcs,
@@ -297,24 +312,75 @@ function equivalentLabelMetrics(left, right) {
   };
 }
 
-function centeredZoomTrajectoryMetrics(frames) {
+function labelExitCause(id, frame, atlas) {
+  const label = atlas.labels.get(id);
+  const node = atlas.nodes.get(id);
+  if (!label || !node) return 'missing_static_metadata';
+  if (node.lod > frame.lod) return 'lod_filter';
+  if (label.reveal_scale > frame.scale) return 'reveal_scale_filter';
+  const samples = frame.label_ids.map((labelId, index) => {
+    const shownLabel = atlas.labels.get(labelId);
+    const shownNode = atlas.nodes.get(labelId);
+    const placement = frame.label_positions[index];
+    if (!shownLabel || !shownNode || !placement) return null;
+    return {
+      x: placement.x - shownLabel.offset_x - shownNode.x * frame.scale,
+      y: placement.y - shownLabel.offset_y - shownNode.y * frame.scale,
+    };
+  }).filter(Boolean);
+  if (!samples.length) return 'camera_unavailable';
+  const camera = samples.reduce(
+    (total, sample) => ({ x: total.x + sample.x, y: total.y + sample.y }), { x: 0, y: 0 },
+  );
+  camera.x /= samples.length;
+  camera.y /= samples.length;
+  const point = { x: camera.x + node.x * frame.scale, y: camera.y + node.y * frame.scale };
+  if (point.x < 0 || point.y < 0 || point.x > frame.viewport.width || point.y > frame.viewport.height) {
+    // The renderer intentionally retains dots inside an 8px hit-test fringe.
+    if (point.x >= -8 && point.y >= -8 && point.x <= frame.viewport.width + 8 && point.y <= frame.viewport.height + 8) {
+      return 'point_edge_tolerance_visible';
+    }
+    return 'point_viewport_clipping';
+  }
+  const box = {
+    x0: point.x + label.offset_x,
+    y0: point.y + label.offset_y - label.height_px,
+    x1: point.x + label.offset_x + label.width_px,
+    y1: point.y + label.offset_y,
+  };
+  if (box.x0 < 0 || box.y0 < 0 || box.x1 > frame.viewport.width || box.y1 > frame.viewport.height) {
+    return 'label_box_viewport_clipping';
+  }
+  if (frame.overlay_boxes.some((overlay) => !(box.x1 <= overlay.x0 || box.x0 >= overlay.x1 || box.y1 <= overlay.y0 || box.y0 >= overlay.y1))) {
+    return 'overlay_occlusion';
+  }
+  return 'other_renderer_filter';
+}
+
+function centeredZoomTrajectoryMetrics(frames, atlas) {
   const admitted = new Set();
   const steps = frames.map((frame, index) => {
     const prior = frames[index - 1];
-    const priorNames = new Set(prior?.label_names ?? []);
-    const names = new Set(frame.label_names);
-    for (const name of names) admitted.add(name);
-    const exited = [...priorNames].filter((name) => !names.has(name));
-    const pointExit = Boolean(prior) && frame.points < prior.points * .8;
+    const priorIds = new Set(prior?.label_ids ?? []);
+    const ids = new Set(frame.label_ids);
+    const displayedIds = new Set(frame.displayed_ids);
+    for (const id of ids) admitted.add(id);
+    const exited = [...priorIds].filter((id) => !ids.has(id));
+    const unsupportedExits = exited.filter((id) => displayedIds.has(id));
+    const labelsHaveVisiblePoints = [...ids].every((id) => displayedIds.has(id));
+    const aggregatePointExit = Boolean(prior) && frame.points < prior.points * .8;
     return {
       scale: frame.scale,
       lod: frame.lod,
       points: frame.points,
       labels: frame.labels,
-      newly_admitted: [...names].filter((name) => !priorNames.has(name)).length,
+      newly_admitted: [...ids].filter((id) => !priorIds.has(id)).length,
       exited: exited.length,
-      point_supported_exit: pointExit,
-      density_collapse: Boolean(prior) && !pointExit && frame.labels < prior.labels * .65,
+      point_supported_exit: unsupportedExits.length === 0,
+      unsupported_label_exit_ids: unsupportedExits,
+      unsupported_label_exit_causes: unsupportedExits.map((id) => ({ id, cause: labelExitCause(id, frame, atlas) })),
+      labels_have_visible_points: labelsHaveVisiblePoints,
+      density_collapse: Boolean(prior) && !aggregatePointExit && frame.labels < prior.labels * .65,
     };
   });
   return { cumulative_admitted: admitted.size, steps };
@@ -350,6 +416,7 @@ async function pinch(cdp, centerX, centerY, startRadius, endRadius) {
 }
 
 const PRELOAD = String.raw`(() => {
+  window.__opennoiseMapQATrace = { frames: [] };
   const original = {
     arc: CanvasRenderingContext2D.prototype.arc,
     fillText: CanvasRenderingContext2D.prototype.fillText,
@@ -758,15 +825,30 @@ async function run() {
       await waitForFrame(cdp, rockTrajectory.at(-1).frame_count - 1);
       rockTrajectory.push(await diagnostics(cdp));
     }
-    const centeredTrajectory = centeredZoomTrajectoryMetrics(rockTrajectory);
+    const atlas = {
+      labels: new Map(publishedAtlas.label_atlas.map((label) => [label.id, label])),
+      nodes: new Map(publishedAtlas.nodes.map((node) => [node.id, node])),
+    };
+    const centeredTrajectory = centeredZoomTrajectoryMetrics(rockTrajectory, atlas);
     requireCheck(
       centeredTrajectory.steps.every((step, index) => index === 0
         || (step.scale > centeredTrajectory.steps[index - 1].scale
           && step.lod >= centeredTrajectory.steps[index - 1].lod
+          && step.labels_have_visible_points
           && !step.density_collapse)),
       'fixed-center zoom path lost labels without a matching visible-point exit',
       centeredTrajectory,
     );
+    if (requireLabelPointExit) {
+      const interiorExits = centeredTrajectory.steps.flatMap((step) => (
+        step.unsupported_label_exit_causes.filter((entry) => !permittedLabelExitCauses.has(entry.cause))
+      ));
+      requireCheck(
+        interiorExits.length === 0,
+        'fixed-center zoom path hid an interior label while its point remained visible',
+        { interior_exits: interiorExits, trajectory: centeredTrajectory },
+      );
+    }
     requireCheck(centeredTrajectory.cumulative_admitted >= rockTrajectory[0].labels, 'fixed-center zoom did not retain cumulative label identity evidence', centeredTrajectory);
     screenshots.push(await screenshot(cdp, 'desktop-rock-fixed-center-trajectory.png', 'light', 1440, 900));
 

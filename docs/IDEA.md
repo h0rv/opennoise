@@ -37,6 +37,12 @@ Zooming reveals their child genres and nearby related genres. Further zooming
 reveals artists and representative metadata. The map does not treat a denser
 flat batch of points as a more detailed neighborhood.
 
+The published static atlas still has deep-zoom crowding. An offline candidate
+built only from sealed open graph inputs reduces near-overlapping points at
+`1e-4` from 262 to zero and labels needing more than `1e6` reveal scale from
+117 to 8. Its isolated browser checks pass, but the candidate is not yet the
+published map. See [the layout checkpoint](checkpoints/LAYOUT_NAVIGATION_CANDIDATE.md).
+
 The current full-corpus hierarchy checkpoint retains all 6,291 immutable names
 and 66,132 directed public-evidence candidates: 160 accepted, 59,911 review,
 and 6,061 abstained. The separately sealed all-seed frontier is built from the
@@ -139,6 +145,13 @@ projection, versioned derived graph, evaluation, and public publication. Each
 adapter writes provenance and each model run records its inputs, parameters,
 code revision, seed, and content hash. Local object storage and future object
 stores use the same small abstraction.
+
+The retained 62-object source vault passes byte verification. The 54 Wikidata
+objects replay into a separate uncertified SQLite candidate. A second offline
+path verifies the seven ListenBrainz daily objects and their sealed joint
+receipt, but a complete candidate run has not finished in this execution
+environment. Neither candidate is a certified replacement for the sealed
+public cache. See [the source replay checkpoint](checkpoints/SOURCE_VAULT_REPLAY.md).
 
 Keep the stack small: Python 3.13.14, uv, mise, Poe, Pydantic, SQLite, and
 Cloudflare Pages. Offline tools construct source-bound artifacts, then one

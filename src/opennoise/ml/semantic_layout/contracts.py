@@ -15,6 +15,8 @@ from opennoise.models import FrozenModel
 _REVISION = "semantic-map-layout-v2"
 _SEED_COUNT = 6_291
 _SHA256 = r"^[0-9a-f]{64}$"
+_DEFAULT_MINIMUM_COORDINATE_SEPARATION = 0.0
+_DEFAULT_MAXIMUM_SEPARATION_ITERATIONS = 32
 
 type EvidenceKind = Literal["peer", "colisten", "hierarchy"]
 
@@ -49,6 +51,12 @@ class SemanticLayoutSettings(FrozenModel):
     overview_label_budget: int = Field(default=24, ge=1, le=200)
     structural_refinement_iterations: int = Field(default=3, ge=0, le=32)
     structural_refinement_strength: float = Field(default=0.08, gt=0.0, le=0.25)
+    minimum_coordinate_separation: float = Field(
+        default=_DEFAULT_MINIMUM_COORDINATE_SEPARATION, ge=0.0, le=0.01
+    )
+    maximum_separation_iterations: int = Field(
+        default=_DEFAULT_MAXIMUM_SEPARATION_ITERATIONS, ge=1, le=128
+    )
 
 
 class InputBinding(FrozenModel):
@@ -470,12 +478,44 @@ class SemanticLayoutArtifact(FrozenModel):
 
 def semantic_layout_settings_sha256(settings: SemanticLayoutSettings) -> str:
     """Hash validated settings without accepting arbitrary mapping input."""
-    return _canonical_sha256(settings.model_dump(mode="json"))
+    return _canonical_sha256(_settings_payload(settings))
+
+
+def _settings_payload(settings: SemanticLayoutSettings) -> dict[str, object]:
+    """Preserve v2 hashes until an opt-in candidate setting changes geometry."""
+    payload: dict[str, object] = {
+        "revision": settings.revision,
+        "world_width": settings.world_width,
+        "world_height": settings.world_height,
+        "margin": settings.margin,
+        "peer_weight_scale": settings.peer_weight_scale,
+        "colisten_weight_scale": settings.colisten_weight_scale,
+        "hierarchy_weight_floor": settings.hierarchy_weight_floor,
+        "hierarchy_weight_scale": settings.hierarchy_weight_scale,
+        "peers_per_genre": settings.peers_per_genre,
+        "maximum_community_iterations": settings.maximum_community_iterations,
+        "community_tie_seed": settings.community_tie_seed,
+        "maximum_community_size": settings.maximum_community_size,
+        "overview_label_budget": settings.overview_label_budget,
+        "structural_refinement_iterations": settings.structural_refinement_iterations,
+        "structural_refinement_strength": settings.structural_refinement_strength,
+        "minimum_coordinate_separation": settings.minimum_coordinate_separation,
+        "maximum_separation_iterations": settings.maximum_separation_iterations,
+    }
+    if (
+        settings.minimum_coordinate_separation == _DEFAULT_MINIMUM_COORDINATE_SEPARATION
+        and settings.maximum_separation_iterations == _DEFAULT_MAXIMUM_SEPARATION_ITERATIONS
+    ):
+        payload.pop("minimum_coordinate_separation")
+        payload.pop("maximum_separation_iterations")
+    return payload
 
 
 def semantic_layout_sha256(artifact: SemanticLayoutArtifact) -> str:
     """Hash all logical output fields except the self-referential digest."""
-    return _canonical_sha256(artifact.model_dump(mode="json", exclude={"output_sha256"}))
+    payload = artifact.model_dump(mode="json", exclude={"output_sha256"})
+    payload["settings"] = _settings_payload(artifact.settings)
+    return _canonical_sha256(payload)
 
 
 def verify_semantic_map_layout(artifact: SemanticLayoutArtifact) -> None:

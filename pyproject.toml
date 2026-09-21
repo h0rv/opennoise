@@ -112,6 +112,7 @@ restore-source-cache = "opennoise restore-source-cache $OPENNOISE_SOURCE_CACHE_S
 verify-release-source-vault = "python scripts/replay_source_vault.py verify --manifest config/releases/phase3-public-20260831/release-manifest.json"
 restore-release-source-vault = "python scripts/replay_source_vault.py restore --manifest config/releases/phase3-public-20260831/release-manifest.json"
 replay-release-source-vault-candidate = "python scripts/replay_source_vault.py candidate-database --manifest config/releases/phase3-public-20260831/release-manifest.json"
+replay-release-source-vault-listenbrainz-candidate = "python scripts/replay_source_vault.py candidate-listenbrainz-database --manifest config/releases/phase3-public-20260831/release-manifest.json --source-manifest config/data_sources.toml"
 genre-candidate-review = "python scripts/manage_genre_candidate_review.py"
 direct-bridge-review = "python scripts/manage_direct_bridge_review.py"
 audit-direct-bridges = "python scripts/audit_direct_bridges.py"

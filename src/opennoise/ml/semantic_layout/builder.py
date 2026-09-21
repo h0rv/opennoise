@@ -416,6 +416,54 @@ def _separate_coincident_points(
     return output
 
 
+def _separate_nearby_points(
+    coordinates: Mapping[str, tuple[float, float]],
+    *,
+    minimum_distance: float,
+    maximum_iterations: int,
+    bounds: tuple[float, float, float, float],
+) -> dict[str, tuple[float, float]]:
+    """Deterministically open only sub-threshold pairs after graph placement.
+
+    This is a bounded display-legibility adjustment, not a force layout: it
+    reads no coordinates except the layout just built from sealed open inputs,
+    preserves the centroid of each adjusted pair, and has no runtime state.
+    """
+    if minimum_distance == 0.0 or len(coordinates) < _PAIR_NODE_COUNT:
+        return dict(coordinates)
+    ordered = tuple(sorted(coordinates))
+    output = dict(coordinates)
+    for _ in range(maximum_iterations):
+        tree = KDTree([output[node] for node in ordered])
+        pairs = sorted(tree.query_pairs(minimum_distance))
+        if not pairs:
+            break
+        shifts: dict[str, list[float]] = {node: [0.0, 0.0] for node in ordered}
+        for left_index, right_index in pairs:
+            left, right = ordered[left_index], ordered[right_index]
+            left_point, right_point = output[left], output[right]
+            dx, dy = right_point[0] - left_point[0], right_point[1] - left_point[1]
+            distance = math.hypot(dx, dy)
+            if distance == 0.0:
+                digest = hashlib.sha256(f"{left}\0{right}".encode()).digest()
+                angle = int.from_bytes(digest[:8], "big") / 2**64 * 2.0 * math.pi
+                dx, dy, distance = math.cos(angle), math.sin(angle), 1.0
+            deficit = (minimum_distance - distance) / 2.0
+            shift_x, shift_y = dx / distance * deficit, dy / distance * deficit
+            shifts[left][0] -= shift_x
+            shifts[left][1] -= shift_y
+            shifts[right][0] += shift_x
+            shifts[right][1] += shift_y
+        next_output: dict[str, tuple[float, float]] = {}
+        for node in ordered:
+            next_output[node] = (
+                min(max(output[node][0] + shifts[node][0], bounds[0]), bounds[2]),
+                min(max(output[node][1] + shifts[node][1], bounds[1]), bounds[3]),
+            )
+        output = next_output
+    return output
+
+
 def _split_large_communities(
     groups: Mapping[str, list[str]], weights: Mapping[Edge, float], maximum_size: int
 ) -> dict[str, list[str]]:
@@ -1183,6 +1231,17 @@ def build_semantic_map_layout(  # noqa: C901, PLR0912, PLR0915
         strength=resolved.structural_refinement_strength,
     )
     positions = _separate_coincident_points(positions)
+    positions = _separate_nearby_points(
+        positions,
+        minimum_distance=resolved.minimum_coordinate_separation,
+        maximum_iterations=resolved.maximum_separation_iterations,
+        bounds=(
+            atlas_margin,
+            atlas_margin,
+            resolved.world_width - atlas_margin,
+            resolved.world_height - atlas_margin,
+        ),
+    )
     regions = _semantic_regions(positions, parents, component, degree)
     community = {node: index for index, region in enumerate(regions) for node in region.members}
     records = []

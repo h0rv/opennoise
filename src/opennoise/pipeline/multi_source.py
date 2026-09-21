@@ -92,6 +92,26 @@ def _sha256(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _file_sha256(path: Path) -> str:
+    """Hash one local replay input without loading its contents into memory."""
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _require_verified_download(source: DownloadSource, download: DownloadResult) -> None:
+    """Reject a local file whose bytes differ from its caller-supplied identity."""
+    expected = (source.verified_sha256(), source.expected_bytes)
+    declared = (download.sha256, download.byte_size)
+    if download.path.is_symlink() or not download.path.is_file() or declared != expected:
+        raise ValueError(f"verified local artifact does not match source: {source.id}")
+    actual = (_file_sha256(download.path), download.path.stat().st_size)
+    if actual != expected:
+        raise ValueError(f"verified local artifact bytes do not match source: {source.id}")
+
+
 def _generated_source(
     sources: tuple[DownloadSource, ...],
     downloads: tuple[DownloadResult, ...],
@@ -328,6 +348,37 @@ async def run_multi_artifact_pipeline(
             for source in sources
         )
     downloads = tuple(task.result() for task in tasks)
+    return await asyncio.to_thread(
+        _persist_joint,
+        sources,
+        downloads,
+        adapter,
+        projectors,
+        record_factory,
+        options,
+    )
+
+
+async def run_multi_artifact_pipeline_from_verified_downloads(  # noqa: PLR0913, PLR0917
+    sources: tuple[DownloadSource, ...],
+    downloads: tuple[DownloadResult, ...],
+    adapter: SourceAdapter,
+    projectors: ProjectorRegistry,
+    record_factory: RecordFactory,
+    options: MultiArtifactOptions,
+) -> MultiArtifactSummary:
+    """Persist a multi-input aggregate from caller-verified local vault objects.
+
+    This deliberately has no downloader branch.  It is for source-vault replay
+    after the caller has bound every supplied ``DownloadResult`` to a verified
+    report; ordinary acquisition continues to use :func:`run_multi_artifact_pipeline`.
+    """
+    if len(sources) < MINIMUM_INPUT_ARTIFACTS or len(downloads) != len(sources):
+        raise ValueError("verified multi-artifact replay requires matching inputs")
+    if len({source.id for source in sources}) != len(sources):
+        raise ValueError("multi-artifact source IDs must be unique")
+    for source, download in zip(sources, downloads, strict=True):
+        _require_verified_download(source, download)
     return await asyncio.to_thread(
         _persist_joint,
         sources,

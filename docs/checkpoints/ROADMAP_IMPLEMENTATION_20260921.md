@@ -61,3 +61,46 @@ or changed the static map. A hash-sealed, append-only review ledger now accepts
 human decisions, but no edge is auto-published, including exact matches.
 The local Poe queue proof has all 441 edges pending, zero review decisions,
 and `static_bridge_published: false`.
+
+## Work in progress
+
+The separate offline ListenBrainz candidate replay now hashes the seven
+retained daily objects and the sealed joint input. The joint input's stored
+aggregation configuration hash matches the current seven-day configuration,
+and a regenerated joint receipt matched its sealed 1,534-byte object in
+preflight. The full database run was terminated by this tool environment
+before rows committed; its candidate remains unverified and uncertified.
+Historical source declaration hashes also do not replay. See the
+[source vault checkpoint](SOURCE_VAULT_REPLAY.md) for the laptop command.
+
+A separate, unpublished layout candidate is being measured against the current
+deep-zoom and near-coincident-node audit. It cannot replace the static map
+until it preserves the open-model boundary and improves navigation evidence.
+Its isolated build reduced the 262 near-overlapping nodes at `1e-4` to zero,
+and labels requiring more than `1e6` reveal scale from 117 to 8. The separate
+static export passed the existing browser QA, but its per-label fixed-center
+exit condition needed a precise viewport and overlay rule. The final isolated
+strict QA passes with those exemptions; eight labels still need extreme zoom,
+so the deployed atlas is unchanged. See the
+[layout candidate checkpoint](LAYOUT_NAVIGATION_CANDIDATE.md).
+
+The [independent gold source audit](INDEPENDENT_GOLD_SOURCE_AUDIT.md) found
+that FMA metadata has independent artist and genre identities, but neither
+identity is directly joined to our MusicBrainz artists or local genres. No
+archive was downloaded. A bounded, reviewed two-sided bridge and an explicit
+negative sampling policy are prerequisites; name-only joins and missing-tag
+negatives do not qualify. The same audit found that Last.fm's artist tag API
+accepts a MusicBrainz artist ID, making it a smaller exact-identity pilot
+candidate, but its live responses need source receipts, a tag mapping policy,
+an API key and a separate eligibility decision. No Last.fm result is a gold
+judgment today.
+
+The [source and signal inventory](SOURCE_SIGNAL_INVENTORY.md) records the
+current input boundary for each source family. In particular, an implemented
+adapter or a large local MusicBrainz corpus does not imply that its tags are
+published factual artist memberships.
+
+The [artist navigation audit](ARTIST_UX_AUDIT.md) found the current search,
+genre context, artist detail, deep-link and Back paths internally consistent.
+The JS atlas tests and six stdlib browser-contract tests pass; this is a
+correctness audit, not evidence that artist discovery coverage is complete.

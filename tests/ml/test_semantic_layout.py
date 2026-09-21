@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 import tempfile
 import unittest
@@ -22,6 +23,7 @@ from opennoise.ml.semantic_layout.builder import (
     _OverviewSelectionContext,
     _refine_structural_positions,
     _semantic_regions,
+    _separate_nearby_points,
     _structural_edge_distance_metrics,
 )
 from opennoise.ml.semantic_layout.contracts import (
@@ -32,6 +34,10 @@ from opennoise.ml.semantic_layout.contracts import (
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+
+_SEPARATION_BOUNDS = (0.1, 0.1, 1.6, 0.9)
+_MINIMUM_SEPARATION = 0.00099
 
 
 def _digest(value: Mapping[str, object]) -> str:
@@ -166,6 +172,17 @@ class SemanticLayoutTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             SemanticLayoutArtifact.model_validate(superseded)
 
+    def test_legacy_v2_default_settings_replay_without_new_candidate_fields(self) -> None:
+        """New opt-in candidate settings cannot invalidate an existing sealed v2 artifact."""
+        with tempfile.TemporaryDirectory() as temporary:
+            artifact = build_semantic_map_layout(self._inputs(Path(temporary)))
+        legacy = artifact.model_dump(mode="json")
+        legacy["settings"].pop("minimum_coordinate_separation")
+        legacy["settings"].pop("maximum_separation_iterations")
+        replayed = SemanticLayoutArtifact.model_validate_json(json.dumps(legacy))
+        verify_semantic_map_layout(replayed)
+        self.assertEqual(replayed.output_sha256, artifact.output_sha256)
+
     def test_initial_camera_is_padded_aspect_envelope(self) -> None:
         camera = _initial_camera(((0.2, 0.2), (1.4, 0.75)), 1.777777777778, 1.0)
         self.assertLessEqual(camera.x0, 0.2)
@@ -285,4 +302,34 @@ class SemanticLayoutTests(unittest.TestCase):
         self.assertEqual(
             _structural_edge_distance_metrics(positions, forward),
             _structural_edge_distance_metrics(positions, reverse),
+        )
+
+    def test_candidate_separation_is_deterministic_and_bounded(self) -> None:
+        """The offline legibility pass must not need historical or browser state."""
+        positions = {"a": (0.5, 0.5), "b": (0.5, 0.5), "c": (0.50001, 0.5)}
+        first = _separate_nearby_points(
+            positions,
+            minimum_distance=0.001,
+            maximum_iterations=96,
+            bounds=_SEPARATION_BOUNDS,
+        )
+        second = _separate_nearby_points(
+            positions,
+            minimum_distance=0.001,
+            maximum_iterations=96,
+            bounds=_SEPARATION_BOUNDS,
+        )
+        self.assertEqual(first, second)
+        self.assertTrue(
+            all(
+                _SEPARATION_BOUNDS[0] <= x <= _SEPARATION_BOUNDS[2]
+                and _SEPARATION_BOUNDS[1] <= y <= _SEPARATION_BOUNDS[3]
+                for x, y in first.values()
+            )
+        )
+        self.assertTrue(
+            all(
+                math.dist(first[left], first[right]) >= _MINIMUM_SEPARATION
+                for left, right in (("a", "b"), ("a", "c"), ("b", "c"))
+            )
         )

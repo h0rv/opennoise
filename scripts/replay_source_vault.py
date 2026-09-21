@@ -9,6 +9,7 @@ from pathlib import Path
 from opennoise.pipeline.source_vault_replay import (
     SourceVaultReplayError,
     load_report,
+    replay_listenbrainz_source_vault_to_candidate_database,
     replay_source_vault_to_candidate_database,
     restore_source_vault,
     verify_source_vault,
@@ -37,6 +38,13 @@ def _parser() -> argparse.ArgumentParser:
     candidate.add_argument("--vault", type=Path, required=True)
     candidate.add_argument("--candidate-database", type=Path, required=True)
     candidate.add_argument("--replay-report", type=Path, required=True)
+    candidate_listenbrainz = subparsers.add_parser("candidate-listenbrainz-database")
+    candidate_listenbrainz.add_argument("--manifest", type=Path, required=True)
+    candidate_listenbrainz.add_argument("--report", type=Path, required=True)
+    candidate_listenbrainz.add_argument("--vault", type=Path, required=True)
+    candidate_listenbrainz.add_argument("--candidate-database", type=Path, required=True)
+    candidate_listenbrainz.add_argument("--replay-report", type=Path, required=True)
+    candidate_listenbrainz.add_argument("--source-manifest", type=Path, required=True)
     return parser
 
 
@@ -57,12 +65,22 @@ def main() -> int:
                 manifest_path=arguments.manifest,
             )
             sys.stdout.write(f"restored {arguments.report} to {arguments.destination}\n")
-        else:
+        elif arguments.command == "candidate-database":
             candidate = replay_source_vault_to_candidate_database(
                 load_report(arguments.report),
                 arguments.vault,
                 arguments.candidate_database,
                 manifest_path=arguments.manifest,
+            )
+            write_candidate_database_report(candidate, arguments.replay_report)
+            sys.stdout.write(f"{candidate.model_dump_json(indent=2)}\n")
+        else:
+            candidate = replay_listenbrainz_source_vault_to_candidate_database(
+                load_report(arguments.report),
+                arguments.vault,
+                arguments.candidate_database,
+                manifest_path=arguments.manifest,
+                source_manifest_path=arguments.source_manifest,
             )
             write_candidate_database_report(candidate, arguments.replay_report)
             sys.stdout.write(f"{candidate.model_dump_json(indent=2)}\n")

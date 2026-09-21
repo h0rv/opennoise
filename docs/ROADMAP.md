@@ -24,6 +24,11 @@ The historical Every Noise result is a separate local reference. It preserves
 dated observed output for blind evaluation and does not provide inputs to the
 open model.
 
+The [source and signal inventory](checkpoints/SOURCE_SIGNAL_INVENTORY.md)
+separates adapters, retained receipts, model inputs, and evaluation-only data.
+It records which public claims are factual and which local signals are still
+research candidates.
+
 ## Release gates
 
 - Verify the sealed source cache and provenance manifest.
@@ -42,10 +47,13 @@ are not yet reproducible from this workflow. A separate local replay check now
 verifies all 62 raw objects named by the Phase 3 manifest, a total of
 1,541,940,352 bytes, and can restore a supplied verified object store. A
 second local step replays the 54 Wikidata SPARQL objects into a fresh, explicitly
-uncertified local candidate SQLite database. The seven ListenBrainz
-incrementals and their generated joint object remain unsupported until their
-historical joint configuration and source declarations can be bound. The
-candidate is not a certified database.
+uncertified local candidate SQLite database. A separate, strictly offline
+ListenBrainz candidate replay now consumes the seven retained daily objects
+into its own fresh database. It checks the recovered fixed-window configuration
+against the sealed generated joint receipt before scanning the daily archives,
+then requires its generated joint receipt to match the sealed object. Current
+source declarations still do not reproduce the retained historical declaration
+hashes, and neither candidate database is byte-identical or certified.
 
 ## Static Pages delivery status
 
@@ -105,8 +113,10 @@ retained until their own evidence gates conclude.
 - Replace calibration only artist membership evidence with an independent
   public gold set before using it as a production quality gate. The new
   evaluator abstains on its synthetic fixture; no retained source or accepted
-  threshold policy qualifies yet. See the
-  [gold-set workflow](evidence/INDEPENDENT_ARTIST_GENRE_GOLD.md).
+  threshold policy qualifies yet. FMA metadata is an independent candidate,
+  but exact artist and genre bridges are not present, so it cannot yet score
+  the model. See the [gold-set workflow](evidence/INDEPENDENT_ARTIST_GENRE_GOLD.md)
+  and [FMA source audit](checkpoints/INDEPENDENT_GOLD_SOURCE_AUDIT.md).
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
   The 54-object Wikidata candidate replay is not this certification.
@@ -117,7 +127,12 @@ retained until their own evidence gates conclude.
   evidence, including a practical maximum zoom and stable readable labels,
   then expose accepted layouts through the versioned public map contract. The
   measured baseline and candidate gate are in
-  [the layout navigation audit](checkpoints/LAYOUT_NAVIGATION_AUDIT.md).
+  [the layout navigation audit](checkpoints/LAYOUT_NAVIGATION_AUDIT.md). An
+  [unpublished candidate](checkpoints/LAYOUT_NAVIGATION_CANDIDATE.md) sharply
+  reduces near-overlap and extreme reveal scales. Its isolated browser QA
+  passes the identity-based gate with explicit viewport and overlay exemptions,
+  but eight labels still need more than `1e6` reveal scale. It has not replaced
+  the deployed map.
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files

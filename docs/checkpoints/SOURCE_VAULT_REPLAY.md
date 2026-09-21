@@ -44,14 +44,15 @@ poe replay-release-source-vault-candidate \
 The supported subset is exactly the 54 `wikidata_phase3_*` SPARQL JSON objects.
 They replay through `wikidata_music_sparql_slice_v1` into a new local candidate
 database. The seven `listenbrainz_incremental_*` artifacts and the generated
-`listenbrainz_joint_*` object are recorded as unsupported, rather than silently
-skipped or treated as equivalent evidence.
+`listenbrainz_joint_*` object are recorded as unsupported by this Wikidata-only
+command. They have a separate candidate command below.
 
 The result is explicitly `certified_database: false` and
 `byte_identical_database_replay: false`. The release manifest does not retain
 the original per-source downloader declarations needed to reproduce its stored
-source-manifest hashes, and it does not retain the historic ListenBrainz joint
-aggregation configuration/provenance. Current schema and ingestion timestamps
+source-manifest hashes. The retained joint artifact does bind the fixed-window
+ListenBrainz aggregation configuration, but not the historical source
+declarations. Current schema and ingestion timestamps
 also differ from the sealed Phase 3 cache. The existing Phase 3 publication
 command therefore still starts from that separately certified SQLite cache.
 
@@ -67,3 +68,45 @@ value, language, and validity dates also matches between candidate and sealed
 database (CSV SHA-256
 `6049f458c9130008c9c032f904f0d9c0c62a8d4aaba8bfe1e6947ec1f7c78e5a`).
 This compares open source claim content, not release provenance or rights.
+
+## ListenBrainz candidate replay
+
+The separate `candidate-listenbrainz-database` path hashes the seven daily
+objects and the 1,534-byte sealed joint receipt before parsing. It checks the
+recovered aggregation configuration hash before opening the large archives,
+and it requires the regenerated joint receipt to match the sealed artifact
+byte-for-byte. It creates a fresh derived candidate database and temporary
+derived vault. It never mutates the sealed database or source vault. The
+report remains uncertified because current source declarations do not reproduce
+the historical declaration hashes.
+
+```sh
+poe replay-release-source-vault-listenbrainz-candidate \
+  --report /tmp/phase3-source-vault-replay.json \
+  --vault .worktrees/phase3-public-evidence/data/phase3-final-vault \
+  --candidate-database /tmp/phase3-listenbrainz-candidate.sqlite \
+  --replay-report /tmp/phase3-listenbrainz-candidate-replay.json
+```
+
+On a laptop without the execution time limit, the exact command used for the
+uncompleted local attempt is:
+
+```sh
+UV_CACHE_DIR=/tmp/uv-cache uv run python scripts/replay_source_vault.py candidate-listenbrainz-database \
+  --manifest .worktrees/phase3-public-evidence/config/releases/phase3-public-20260831/release-manifest.json \
+  --report /tmp/phase3-source-vault-replay.json \
+  --vault .worktrees/phase3-public-evidence/data/phase3-final-vault \
+  --candidate-database /tmp/phase3-listenbrainz-candidate.sqlite \
+  --replay-report /tmp/phase3-listenbrainz-candidate-replay.json \
+  --source-manifest .worktrees/phase3-public-evidence/config/data_sources.toml
+```
+
+The 62-object vault was reverified on 2026-09-21: 1,541,940,352 bytes,
+release-manifest SHA-256
+`795992807586432e2b285e2ddca9a24a00a16e9fc83b6c382a3e914539333232`.
+The recovered configuration matched the 1,534-byte sealed joint receipt in
+preflight. A full seven-day candidate database did **not** finish in this
+execution environment: repeated jobs were terminated before source rows were
+committed, and no persistent process session was available. The command above
+is reproducible on a machine without that tool limit. No success count or
+certification is claimed for the unfinished candidate.

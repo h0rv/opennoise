@@ -14,7 +14,11 @@ from opennoise.catalog.registry import ProjectorRegistry
 from opennoise.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
 from opennoise.models.pipeline import ParsedSourceRecord, SourceLimits, SourceRecord
 from opennoise.models.sources import DownloadResult, DownloadSource
-from opennoise.pipeline.multi_source import MultiArtifactOptions, run_multi_artifact_pipeline
+from opennoise.pipeline.multi_source import (
+    MultiArtifactOptions,
+    run_multi_artifact_pipeline,
+    run_multi_artifact_pipeline_from_verified_downloads,
+)
 from tests._test_client import PollingIsolatedAsyncioTestCase
 
 
@@ -234,3 +238,23 @@ class MultiSourcePipelineTests(PollingIsolatedAsyncioTestCase):
         self.assertEqual(result.accepted, 2)
         self.assertEqual(downloader.await_count, 3)
         sleep.assert_awaited_once_with(1)
+
+    async def test_verified_download_replay_rejects_same_size_tampering_before_records(
+        self,
+    ) -> None:
+        """A caller cannot forge a verified descriptor around altered local bytes."""
+        self.downloads[0].path.write_bytes(b'{"input":9}')
+
+        def records(_: tuple[DownloadResult, ...]) -> Iterator[SourceRecord]:
+            raise AssertionError("record factory must not run after hash mismatch")
+
+        with self.assertRaisesRegex(ValueError, "bytes do not match source"):
+            await run_multi_artifact_pipeline_from_verified_downloads(
+                self.sources,
+                self.downloads,
+                _Adapter(),
+                ProjectorRegistry((ArtistCoListenProjector(), ArtistCoListenRunProjector())),
+                records,
+                self.options,
+            )
+        self.assertFalse(self.options.database_path.exists())

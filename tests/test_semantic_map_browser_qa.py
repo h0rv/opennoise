@@ -65,6 +65,14 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn(
             "fixed-center zoom path lost labels without a matching visible-point exit", self.source
         )
+        self.assertIn("!step.density_collapse", self.source)
+        self.assertIn("--require-label-point-exit", self.source)
+        self.assertIn("unsupported_label_exit_ids", self.source)
+        self.assertIn("permittedLabelExitCauses", self.source)
+        self.assertIn("label_box_viewport_clipping", self.source)
+        self.assertIn("overlay_occlusion", self.source)
+        self.assertIn("point_edge_tolerance_visible", self.source)
+        self.assertIn("interiorExits.length === 0", self.source)
         self.assertIn("desktop-rock-fixed-center-trajectory.png", self.source)
         self.assertIn(
             "deepest certified selected label is not readable at the camera cap", self.source
@@ -112,6 +120,15 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
         self.assertIn("CanvasRenderingContext2D.prototype.lineTo", self.source)
         self.assertIn("Input.dispatchTouchEvent", self.source)
         self.assertNotIn("src/opennoise/", self.source)
+
+    def test_identity_trace_is_opt_in_and_strict_per_label_exit_is_available(self) -> None:
+        renderer = (ROOT / "src/opennoise/static/map-renderer.js").read_text(encoding="utf-8")
+        self.assertIn("window.__opennoiseMapQATrace", renderer)
+        self.assertIn("displayedIds: [...state.displayedIds].sort()", renderer)
+        self.assertIn("labelIds: [...labelIds]", renderer)
+        self.assertIn("Preserve Canvas draw order", renderer)
+        self.assertIn("labels_have_visible_points", self.source)
+        self.assertIn("requireLabelPointExit", self.source)
 
 
 if __name__ == "__main__":

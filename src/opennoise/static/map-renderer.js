@@ -91,6 +91,19 @@ if (canvas instanceof HTMLCanvasElement) {
     context.fillStyle = colors.ink; context.strokeStyle = colors.canvas; context.lineWidth = 4;
     context.strokeText(name, x, placement.y); context.fillText(name, x, placement.y);
   };
+  const traceFrame = (labelIds) => {
+    // Browser QA may opt in before this module loads. Production has no trace
+    // object, so it neither retains node IDs nor exposes a debug surface.
+    const trace = window.__opennoiseMapQATrace;
+    if (!trace) return;
+    trace.frames.push({
+      displayedIds: [...state.displayedIds].sort(),
+      // Preserve Canvas draw order: QA associates each ID with the matching
+      // fillText position captured by its browser preload.
+      labelIds: [...labelIds],
+    });
+    if (trace.frames.length > 40) trace.frames.shift();
+  };
   const boxOverlapsRect = (box, rect) => box.x0 < rect.right && box.x1 > rect.left
     && box.y0 < rect.bottom && box.y1 > rect.top;
   const staticLabelLayers = (lod) => {
@@ -141,6 +154,7 @@ if (canvas instanceof HTMLCanvasElement) {
         context.fillStyle = colors.node; context.beginPath(); context.arc(item.screen.x, item.screen.y, 3.5, 0, Math.PI * 2); context.fill();
         drawLabel(context, item.text, item.placement, colors);
       }
+      traceFrame(labelLayers.map(({ item }) => item.id));
       return;
     }
     for (const edge of state.edges) { const left = state.atlas.byId.get(edge.source); const right = state.atlas.byId.get(edge.target); if (!left || !right) continue; const start = point(left); const end = point(right); context.strokeStyle = colors.similarity; context.globalAlpha = .7; context.lineWidth = 1.5; context.setLineDash([4, 3]); context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke(); context.setLineDash([]); }
@@ -199,6 +213,7 @@ if (canvas instanceof HTMLCanvasElement) {
       }
       drawLabel(context, item.text, { ...item.placement, width: item.width }, colors);
     }
+    traceFrame(labelItems.map((item) => item.id));
   };
   const setUrl = (id, artistId = null) => {
     const url = new URL(window.location.href);

@@ -4,32 +4,48 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import os
 import shutil
 import sqlite3
 import tempfile
 from contextlib import closing
+from datetime import date
 from pathlib import Path
-from typing import Final, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from pydantic import Field, HttpUrl, model_validator
 
+from opennoise.catalog.co_listens import ArtistCoListenProjector, ArtistCoListenRunProjector
 from opennoise.catalog.entities import EntityProjector
 from opennoise.catalog.registry import ProjectorRegistry
 from opennoise.db import Database
 from opennoise.models import FrozenModel
-from opennoise.models.pipeline import SourceLimits
-from opennoise.models.sources import DownloadSource
+from opennoise.models.listenbrainz import JointListenArtifact, ListenBrainzAggregationConfig
+from opennoise.models.pipeline import SourceLimits, SourceRecord
+from opennoise.models.sources import DownloadResult, DownloadSource
+from opennoise.pipeline.manifest import load_download_source
+from opennoise.pipeline.multi_source import (
+    MultiArtifactOptions,
+    run_multi_artifact_pipeline_from_verified_downloads,
+)
 from opennoise.pipeline.release_manifest import RELEASE_MANIFEST_NAME, load_release_manifest
 from opennoise.pipeline.runner import DeterministicPartition, PipelineOptions, run_source_pipeline
+from opennoise.sources.listenbrainz import ListenBrainzIncrementalAdapter
 from opennoise.sources.registry import AdapterRegistry
 from opennoise.sources.wikidata import WikidataSourceAdapter
 from opennoise.storage import ObjectKey, ObjectStore
 from opennoise.types import Sha256  # noqa: TC001
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
 _CHUNK_BYTES: Final = 1024 * 1024
 _RAW_PREFIX: Final = "raw/sha256"
 _WIKIDATA_SOURCE_PREFIX: Final = "wikidata_phase3_"
+_LISTENBRAINZ_SOURCE_PREFIX: Final = "listenbrainz_incremental_"
+_LISTENBRAINZ_JOINT_SOURCE_KEY: Final = "listenbrainz_joint_20260824_20260830"
+_LISTENBRAINZ_DAILY_OBJECT_COUNT: Final = 7
 _WIKIDATA_DISCOVERY_URL: Final = "https://www.wikidata.org/wiki/Wikidata:Data_access"
 _WIKIDATA_QUERY_URL: Final = "https://query.wikidata.org/sparql"
 
@@ -88,6 +104,44 @@ class CandidateDatabaseReplayReport(FrozenModel):
             raise ValueError("candidate replay object counts are inconsistent")
         if len({item.source_key for item in self.objects}) != len(self.objects):
             raise ValueError("candidate replay objects must have unique source keys")
+        return self
+
+
+class CandidateListenBrainzReplayReport(FrozenModel):
+    """Explicitly uncertified replay record for the retained seven-day corpus."""
+
+    revision: Literal["source-vault-listenbrainz-candidate-replay-v1"] = (
+        "source-vault-listenbrainz-candidate-replay-v1"
+    )
+    release_id: str = Field(min_length=1, max_length=300)
+    manifest_sha256: Sha256
+    database_path: Path
+    database_schema_version: int = Field(ge=1)
+    certified_database: Literal[False] = False
+    byte_identical_database_replay: Literal[False] = False
+    configuration_sha256: Sha256
+    sealed_joint_artifact_sha256: Sha256
+    sealed_joint_artifact_byte_size: int = Field(ge=0)
+    generated_joint_matches_sealed_artifact: Literal[True] = True
+    historical_source_declarations_match: Literal[False] = False
+    daily_objects: tuple[CandidateReplayObject, ...] = Field(
+        min_length=_LISTENBRAINZ_DAILY_OBJECT_COUNT,
+        max_length=_LISTENBRAINZ_DAILY_OBJECT_COUNT,
+    )
+    accepted_record_count: int = Field(ge=0)
+    quarantined_record_count: int = Field(ge=0)
+    blockers: tuple[str, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def check_daily_objects(self) -> CandidateListenBrainzReplayReport:
+        """Require exactly the seven independent daily source objects."""
+        if any(item.status != "ingested" for item in self.daily_objects):
+            raise ValueError("candidate ListenBrainz daily objects must be ingested")
+        keys = tuple(item.source_key for item in self.daily_objects)
+        if len(set(keys)) != _LISTENBRAINZ_DAILY_OBJECT_COUNT or any(
+            not key.startswith(_LISTENBRAINZ_SOURCE_PREFIX) for key in keys
+        ):
+            raise ValueError("candidate ListenBrainz replay requires seven unique daily objects")
         return self
 
 
@@ -259,7 +313,9 @@ def write_report(report: SourceVaultReplayReport, path: Path) -> None:
     _write_json_report(report.model_dump_json(indent=2), path)
 
 
-def write_candidate_database_report(report: CandidateDatabaseReplayReport, path: Path) -> None:
+def write_candidate_database_report(
+    report: CandidateDatabaseReplayReport | CandidateListenBrainzReplayReport, path: Path
+) -> None:
     """Atomically write the explicit non-certification record for a candidate DB."""
     _write_json_report(report.model_dump_json(indent=2), path)
 
@@ -476,6 +532,257 @@ def replay_source_vault_to_candidate_database(
                 "the current catalog schema and ingestion timestamps differ from the sealed "
                 "Phase 3 "
                 "cache, so this candidate is not byte-identical or certified"
+            ),
+        ),
+    )
+
+
+def _candidate_listenbrainz_config() -> ListenBrainzAggregationConfig:
+    """Return the hash-bound joint settings retained by the Phase 3 receipt."""
+    return ListenBrainzAggregationConfig(
+        ordering="unordered_bounded",
+        window_seconds=86_400,
+        minimum_distinct_users=5,
+        minimum_window_start=1_787_443_200,
+        maximum_window_start=1_787_961_600,
+        max_users_per_window=500_000,
+        max_distinct_artists=500_000,
+        max_pairs_per_window=2_000_000,
+        max_active_windows=7,
+        max_total_user_windows=3_500_000,
+    )
+
+
+def _listenbrainz_joint_input(
+    inputs: tuple[ReleaseManifestReplayInput, ...], vault_path: Path
+) -> ReleaseManifestReplayInput:
+    """Read the tiny sealed joint receipt and reject configuration drift before scans."""
+    matches = tuple(item for item in inputs if item.source_key == _LISTENBRAINZ_JOINT_SOURCE_KEY)
+    if len(matches) != 1:
+        raise SourceVaultReplayError("release manifest has no unique ListenBrainz joint artifact")
+    joint = matches[0]
+    path = _source_path(vault_path, joint.artifact_sha256)
+    if path.is_symlink() or not path.is_file() or path.stat().st_size != joint.byte_size:
+        raise SourceVaultReplayError(
+            "sealed ListenBrainz joint artifact is missing or has wrong size"
+        )
+    _require_bytes(
+        path,
+        joint.artifact_sha256,
+        joint.byte_size,
+        "sealed ListenBrainz joint artifact",
+    )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SourceVaultReplayError("sealed ListenBrainz joint artifact is not JSON") from error
+    expected_configuration = hashlib.sha256(
+        _candidate_listenbrainz_config().model_dump_json().encode()
+    ).hexdigest()
+    if (
+        not isinstance(payload, dict)
+        or payload.get("configuration_sha256") != expected_configuration
+    ):
+        raise SourceVaultReplayError("sealed ListenBrainz joint artifact configuration differs")
+    return joint
+
+
+def _candidate_listenbrainz_sources(
+    inputs: tuple[ReleaseManifestReplayInput, ...],
+    source_manifest_path: Path,
+) -> tuple[tuple[ReleaseManifestReplayInput, ...], tuple[DownloadSource, ...]]:
+    """Bind current local declarations to the seven sealed daily raw objects.
+
+    The historical declaration digests are retained in the release manifest but
+    the current TOML declarations do not reproduce them.  This checks the
+    immutable fields the local adapter needs without misrepresenting that fact.
+    """
+    daily = tuple(
+        item for item in inputs if item.source_key.startswith(_LISTENBRAINZ_SOURCE_PREFIX)
+    )
+    if len(daily) != _LISTENBRAINZ_DAILY_OBJECT_COUNT:
+        raise SourceVaultReplayError(
+            "release manifest must retain exactly seven ListenBrainz dailies"
+        )
+    sources = tuple(load_download_source(source_manifest_path, item.source_key) for item in daily)
+    for item, source in zip(daily, sources, strict=True):
+        if (
+            source.id,
+            f"{source.id}:{source.snapshot}",
+            source.verified_sha256(),
+            source.expected_bytes,
+        ) != (item.source_key, item.snapshot_ref, item.artifact_sha256, item.byte_size):
+            raise SourceVaultReplayError(
+                "current ListenBrainz declaration does not bind sealed raw object: "
+                f"{item.source_key}"
+            )
+    return daily, sources
+
+
+def _require_generated_joint_matches(
+    joint: ReleaseManifestReplayInput, derived_vault: Path, aggregate_sha256: str
+) -> None:
+    """Require the deterministic candidate joint receipt to match its sealed byte object."""
+    generated = _source_path(derived_vault, aggregate_sha256)
+    if aggregate_sha256 != joint.artifact_sha256:
+        raise SourceVaultReplayError(
+            "generated ListenBrainz joint artifact differs from sealed receipt"
+        )
+    _require_bytes(
+        generated,
+        joint.artifact_sha256,
+        joint.byte_size,
+        "generated ListenBrainz joint artifact",
+    )
+
+
+async def _ingest_listenbrainz_candidate(  # noqa: PLR0913
+    daily: tuple[ReleaseManifestReplayInput, ...],
+    sources: tuple[DownloadSource, ...],
+    *,
+    vault_path: Path,
+    candidate_database: Path,
+    source_manifest_path: Path,
+    derived_vault_path: Path,
+) -> tuple[int, int, str]:
+    """Run the seven retained dailies through the existing joint adapter offline."""
+    downloads = tuple(
+        DownloadResult(
+            path=_source_path(vault_path, item.artifact_sha256),
+            sha256=item.artifact_sha256,
+            byte_size=item.byte_size,
+            resumed_from=item.byte_size,
+            reused=True,
+        )
+        for item in daily
+    )
+    artifacts = tuple(
+        JointListenArtifact(
+            source=source,
+            path=download.path,
+            sequence=int(source.snapshot.split("-", maxsplit=1)[0]),
+            snapshot_date=date.fromisoformat(
+                f"{source.snapshot[5:9]}-{source.snapshot[9:11]}-{source.snapshot[11:13]}"
+            ),
+        )
+        for source, download in zip(sources, downloads, strict=True)
+    )
+    config = _candidate_listenbrainz_config()
+    adapter = ListenBrainzIncrementalAdapter(config)
+    limits = SourceLimits(
+        max_archive_bytes=300_000_000,
+        max_record_bytes=2_097_152,
+        max_records=50_000_000,
+        timeout_seconds=7_200,
+    )
+
+    def records(_: tuple[DownloadResult, ...]) -> Iterator[SourceRecord]:
+        return adapter.iter_joint_records(artifacts, limits)
+
+    summary = await run_multi_artifact_pipeline_from_verified_downloads(
+        sources,
+        downloads,
+        adapter,
+        ProjectorRegistry((ArtistCoListenProjector(), ArtistCoListenRunProjector())),
+        records,
+        MultiArtifactOptions(
+            manifest_path=source_manifest_path,
+            database_path=candidate_database,
+            vault_path=derived_vault_path,
+            aggregate_source_id=_LISTENBRAINZ_JOINT_SOURCE_KEY,
+            configuration_sha256=hashlib.sha256(config.model_dump_json().encode()).hexdigest(),
+            limits=limits,
+        ),
+    )
+    return summary.accepted, summary.quarantined, summary.aggregate_sha256
+
+
+def replay_listenbrainz_source_vault_to_candidate_database(
+    report: SourceVaultReplayReport,
+    vault_path: Path,
+    candidate_database: Path,
+    *,
+    manifest_path: Path,
+    source_manifest_path: Path,
+) -> CandidateListenBrainzReplayReport:
+    """Create an offline, non-certified candidate DB from seven retained dailies.
+
+    The source vault and sealed database are read-only inputs.  The generated
+    joint receipt must match the sealed joint artifact, but candidate database
+    bytes and provenance are intentionally not historical certification claims.
+    """
+    resolved_manifest = manifest_path.resolve(strict=True)
+    resolved_source_manifest = source_manifest_path.resolve(strict=True)
+    manifest_sha256, release_id, inputs = _replay_inputs(resolved_manifest)
+    _require_report_matches_manifest(report, manifest_sha256, release_id, inputs)
+    if candidate_database.exists() or candidate_database.is_symlink():
+        raise SourceVaultReplayError("candidate database must not already exist")
+    joint = _listenbrainz_joint_input(inputs, vault_path)
+    daily, sources = _candidate_listenbrainz_sources(inputs, resolved_source_manifest)
+    candidate_database.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(
+        tempfile.mkdtemp(
+            prefix=f".{candidate_database.name}.listenbrainz-", dir=candidate_database.parent
+        )
+    )
+    staging_database = staging / candidate_database.name
+    derived_vault = staging / "derived-vault"
+    try:
+        accepted, quarantined, aggregate_sha256 = asyncio.run(
+            _ingest_listenbrainz_candidate(
+                daily,
+                sources,
+                vault_path=vault_path,
+                candidate_database=staging_database,
+                source_manifest_path=resolved_source_manifest,
+                derived_vault_path=derived_vault,
+            )
+        )
+        _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
+        with closing(sqlite3.connect(staging_database)) as connection:
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            connection.execute("PRAGMA journal_mode = DELETE")
+        staging_database.replace(candidate_database)
+    except SourceVaultReplayError:
+        raise
+    except (OSError, ValueError, sqlite3.Error) as error:
+        raise SourceVaultReplayError("candidate ListenBrainz replay failed") from error
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    with Database(candidate_database, read_only=True).connect() as connection:
+        schema_row = connection.execute("PRAGMA user_version").fetchone()
+    if schema_row is None:
+        raise SourceVaultReplayError("candidate database has no schema version")
+    return CandidateListenBrainzReplayReport(
+        release_id=release_id,
+        manifest_sha256=manifest_sha256,
+        database_path=candidate_database,
+        database_schema_version=int(schema_row[0]),
+        configuration_sha256=hashlib.sha256(
+            _candidate_listenbrainz_config().model_dump_json().encode()
+        ).hexdigest(),
+        sealed_joint_artifact_sha256=joint.artifact_sha256,
+        sealed_joint_artifact_byte_size=joint.byte_size,
+        daily_objects=tuple(
+            CandidateReplayObject(
+                source_key=item.source_key,
+                artifact_sha256=item.artifact_sha256,
+                byte_size=item.byte_size,
+                status="ingested",
+                reason="replayed offline with the sealed joint configuration",
+            )
+            for item in daily
+        ),
+        accepted_record_count=accepted,
+        quarantined_record_count=quarantined,
+        blockers=(
+            (
+                "current source declarations bind retained bytes but do not reproduce "
+                "historical per-source declaration hashes"
+            ),
+            (
+                "candidate provenance, timestamps, adapter build identity, and SQLite "
+                "bytes are not historical byte-identical or certified"
             ),
         ),
     )
