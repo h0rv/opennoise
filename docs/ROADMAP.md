@@ -72,6 +72,12 @@ integrity, foreign keys, and historical policy/provenance state. That permits
 only a fresh local experimental projection; it neither authorizes publication
 nor certifies or replaces any sealed/public database.
 
+One such attested local projection was run once and stopped before publication:
+its constructed model input hash did not match the sealed manifest boundary, so
+no model, gate, layout, graph, serving database, or report exists. The retained
+candidate and binding remain unchanged; see
+[the local projection checkpoint](checkpoints/PHASE3_HISTORICAL_RUN2_LOCAL_PROJECTION_20260921.md).
+
 A single subsequent local-only public-model/layout projection attempt used a
 fresh copy of that candidate and stopped before artifact or database output.
 The replay candidate has 4,948 direct-source evidence rows, but its intentionally
