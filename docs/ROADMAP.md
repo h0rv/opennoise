@@ -122,7 +122,10 @@ gate is open.
   original retained source cache. A separate, bounded MusicBrainz refresh now
   retains 1,118 exact release and recording artist-credit relations from 87
   responses. Its v2 cache verifies all 87 source projections offline; no
-  public database changed. See the
+  public database changed. A separate fresh SQLite candidate now retains
+  those credits for 352 exact-MBID artists with two source-bound provenance
+  records; it is not serving input. See the
+  [materialized credit checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_MATERIALIZED_CANDIDATE.md),
   [artist-credit checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_REFRESH_CANDIDATE.md) and
   [materialization checkpoint](checkpoints/MUSICBRAINZ_CATALOG_MATERIALIZATION_CANDIDATE.md).
 - Keep metadata candidates separate from published metadata examples.
