@@ -131,6 +131,29 @@ qualification rows.
 This is a new local research candidate, not a replacement for the earlier
 local-only candidate, sealed database, or public database. Its receipt sets
 `certified_database: false` and `byte_identical_database_replay: false`.
-The receipt records the candidate path but does not yet bind the candidate
-database SHA-256; any projection must fail closed until a receipt revision adds
-that cryptographic database binding. No release certification is claimed.
+The original receipt records the candidate path but does not bind the candidate
+database SHA-256. A detached, versioned, no-replace local attestation now
+performs that binding without replaying the 1.5 GB vault. It is at
+`/tmp/phase3-historical-combined-4a76c76-run2.binding.json`, SHA-256
+`ddaf45593ad78a6c6535691bf499c003d86e36227dd1bceb3e97e60dfae9d6a6`.
+It rehashes the candidate, receipt, and manifest, checks the receipt path and
+all 62 declaration hashes, exact 62 source/artifact pairs, schema 12, SQLite
+integrity and foreign keys, plus historical public policy permissions and
+provenance state. Its explicit `local_experimental: true`,
+`certified_database: false`, and `publication_authorized: false` fields remain
+binding constraints.
+
+Only a fresh local experimental projection may now use this candidate, and it
+must provide the detached binding and its expected SHA-256. It must still write
+only fresh local outputs; no sealed, public, or static artifact may be written.
+Create an attestation with:
+
+```sh
+uv run python scripts/attest_phase3_historical_candidate.py \
+  --release-directory config/releases/phase3-public-20260831 \
+  --candidate /tmp/phase3-historical-combined-4a76c76-run2.sqlite \
+  --replay-receipt /tmp/phase3-historical-combined-4a76c76-run2.receipt.json \
+  --output /tmp/phase3-historical-combined-4a76c76-run2.binding.json
+```
+
+No release certification is claimed.

@@ -18,6 +18,10 @@ from opennoise.ml.publish import PublicModelPublishSummary, publish_public_model
 from opennoise.ml.repository import PublicInputLoadSettings, PublicModelRepository
 from opennoise.models import FrozenModel
 from opennoise.models.modeling import PublicModelArtifact, PublicModelSettings
+from opennoise.pipeline.historical_candidate_binding import (
+    HistoricalCandidateBindingError,
+    verify_historical_candidate_binding,
+)
 from opennoise.pipeline.public_release import _release_policy_id
 from opennoise.pipeline.release_manifest import load_release_manifest
 from opennoise.pipeline.source_vault_replay import HistoricalDeclarationCombinedReplayReport
@@ -61,8 +65,10 @@ class CandidatePublicProjectionSettings(FrozenModel):
     release_directory: Path
     candidate_database: Path
     replay_receipt: Path
+    historical_candidate_binding: Path
     expected_candidate_sha256: Sha256
     expected_replay_receipt_sha256: Sha256
+    expected_historical_candidate_binding_sha256: Sha256
     output_database: Path
     model_output: Path
     report_output: Path
@@ -74,6 +80,7 @@ class CandidatePublicProjectionReport(FrozenModel):
     revision: str = "phase3-candidate-public-projection-v1"
     release_id: str
     manifest_sha256: Sha256
+    historical_candidate_binding_sha256: Sha256
     replay_receipt_sha256: Sha256
     candidate_sha256: Sha256
     candidate_schema_version: int
@@ -276,6 +283,18 @@ def _verify_candidate_policy_provenance(
 def _verify_candidate_boundary(
     settings: CandidatePublicProjectionSettings,
 ) -> tuple[dict[str, Any], HistoricalDeclarationCombinedReplayReport, str, str]:
+    try:
+        verify_historical_candidate_binding(
+            settings.historical_candidate_binding,
+            settings.expected_historical_candidate_binding_sha256,
+            release_directory=settings.release_directory,
+            candidate_database=settings.candidate_database,
+            replay_receipt=settings.replay_receipt,
+        )
+    except HistoricalCandidateBindingError as error:
+        raise CandidatePublicProjectionError(
+            f"historical candidate binding verification failed: {error}"
+        ) from error
     candidate = settings.candidate_database.resolve(strict=True)
     candidate_sha256 = _sha256(candidate)
     if candidate_sha256 != settings.expected_candidate_sha256:
@@ -448,6 +467,9 @@ def project_candidate_public_model(
         report = CandidatePublicProjectionReport(
             release_id=receipt.release_id,
             manifest_sha256=manifest_sha256,
+            historical_candidate_binding_sha256=(
+                settings.expected_historical_candidate_binding_sha256
+            ),
             replay_receipt_sha256=settings.expected_replay_receipt_sha256,
             candidate_sha256=candidate_sha256,
             candidate_schema_version=_CANDIDATE_SCHEMA_VERSION,

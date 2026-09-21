@@ -19,8 +19,10 @@ def main() -> int:
     parser.add_argument("--release-directory", type=Path, required=True)
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--replay-receipt", type=Path, required=True)
+    parser.add_argument("--historical-candidate-binding", type=Path, required=True)
     parser.add_argument("--expected-candidate-sha256", required=True)
     parser.add_argument("--expected-replay-receipt-sha256", required=True)
+    parser.add_argument("--expected-historical-candidate-binding-sha256", required=True)
     parser.add_argument("--output-database", type=Path, required=True)
     parser.add_argument("--model-output", type=Path, required=True)
     parser.add_argument("--report-output", type=Path, required=True)
@@ -31,8 +33,12 @@ def main() -> int:
                 release_directory=arguments.release_directory,
                 candidate_database=arguments.candidate,
                 replay_receipt=arguments.replay_receipt,
+                historical_candidate_binding=arguments.historical_candidate_binding,
                 expected_candidate_sha256=arguments.expected_candidate_sha256,
                 expected_replay_receipt_sha256=arguments.expected_replay_receipt_sha256,
+                expected_historical_candidate_binding_sha256=(
+                    arguments.expected_historical_candidate_binding_sha256
+                ),
                 output_database=arguments.output_database,
                 model_output=arguments.model_output,
                 report_output=arguments.report_output,

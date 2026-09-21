@@ -29,6 +29,12 @@ from opennoise.pipeline.candidate_public_projection import (
     _verify_candidate_boundary,
     project_candidate_public_model,
 )
+from opennoise.pipeline.historical_candidate_binding import (
+    HistoricalCandidateBindingError,
+    HistoricalCandidateBindingSettings,
+    create_historical_candidate_binding,
+    verify_historical_candidate_binding,
+)
 from opennoise.pipeline.source_vault_replay import (
     CandidateCombinedReplayReport,
     CandidateReplayObject,
@@ -52,8 +58,10 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.candidate = self.root / "candidate.sqlite"
         self.receipt = self.root / "candidate.receipt.json"
+        self.binding = self.root / "candidate.binding.json"
         self._write_candidate()
         self._write_receipt()
+        self._write_binding()
 
     @override
     def tearDown(self) -> None:
@@ -215,11 +223,23 @@ class CandidatePublicProjectionTests(unittest.TestCase):
             release_directory=RELEASE,
             candidate_database=self.candidate,
             replay_receipt=self.receipt,
+            historical_candidate_binding=self.binding,
             expected_candidate_sha256=_sha256(self.candidate),
             expected_replay_receipt_sha256=_sha256(self.receipt),
+            expected_historical_candidate_binding_sha256=_sha256(self.binding),
             output_database=self.root / "output.sqlite",
             model_output=self.root / "model.json",
             report_output=self.root / "report.json",
+        )
+
+    def _write_binding(self) -> None:
+        create_historical_candidate_binding(
+            HistoricalCandidateBindingSettings(
+                release_directory=RELEASE,
+                candidate_database=self.candidate,
+                replay_receipt=self.receipt,
+                output=self.binding,
+            )
         )
 
     def _small_artifact(self):  # noqa: ANN202
@@ -274,6 +294,25 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         self.assertFalse(settings.model_output.exists())
         self.assertFalse(settings.report_output.exists())
 
+    def test_rejects_missing_binding_before_creating_outputs(self) -> None:
+        settings = self._settings().model_copy(
+            update={"historical_candidate_binding": self.root / "missing.binding.json"}
+        )
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "binding.*invalid"):
+            project_candidate_public_model(settings)
+        self.assertFalse(settings.output_database.exists())
+        self.assertFalse(settings.model_output.exists())
+        self.assertFalse(settings.report_output.exists())
+
+    def test_rejects_tampered_binding_before_creating_outputs(self) -> None:
+        settings = self._settings()
+        self.binding.write_text("{}", encoding="utf-8")
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "binding.*hash does not match"):
+            project_candidate_public_model(settings)
+        self.assertFalse(settings.output_database.exists())
+        self.assertFalse(settings.model_output.exists())
+        self.assertFalse(settings.report_output.exists())
+
     def test_rejects_old_local_only_combined_receipt_before_creating_outputs(self) -> None:
         historical = HistoricalDeclarationCombinedReplayReport.model_validate_json(
             self.receipt.read_bytes()
@@ -283,7 +322,7 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         )
         self.receipt.write_text(old_receipt.model_dump_json(), encoding="utf-8")
         settings = self._settings()
-        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical-declaration"):
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical candidate binding"):
             project_candidate_public_model(settings)
         self.assertFalse(settings.output_database.exists())
         self.assertFalse(settings.model_output.exists())
@@ -294,7 +333,7 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         payload["historical_declarations"]["objects"][0]["replayed_sha256"] = "0" * 64
         self.receipt.write_text(json.dumps(payload), encoding="utf-8")
         settings = self._settings()
-        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical-declaration"):
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical candidate binding"):
             project_candidate_public_model(settings)
         self.assertFalse(settings.output_database.exists())
         self.assertFalse(settings.model_output.exists())
@@ -316,7 +355,7 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         altered = receipt.model_copy(update={"historical_declarations": altered_declarations})
         self.receipt.write_text(altered.model_dump_json(), encoding="utf-8")
         settings = self._settings()
-        with self.assertRaisesRegex(CandidatePublicProjectionError, "source keys"):
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical candidate binding"):
             project_candidate_public_model(settings)
         self.assertFalse(settings.output_database.exists())
         self.assertFalse(settings.model_output.exists())
@@ -326,7 +365,7 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         self.candidate.unlink()
         self._write_candidate(local_only=True)
         settings = self._settings()
-        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical public policy"):
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical candidate binding"):
             project_candidate_public_model(settings)
         self.assertFalse(settings.output_database.exists())
         self.assertFalse(settings.model_output.exists())
@@ -336,7 +375,7 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         self.candidate.unlink()
         self._write_candidate(first_policy_version=2)
         settings = self._settings()
-        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical public policy"):
+        with self.assertRaisesRegex(CandidatePublicProjectionError, "historical candidate binding"):
             project_candidate_public_model(settings)
         self.assertFalse(settings.output_database.exists())
         self.assertFalse(settings.model_output.exists())
@@ -389,6 +428,39 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         self.assertFalse(report.byte_identical_database_replay)
         with self.assertRaisesRegex(CandidatePublicProjectionError, "already exists"):
             project_candidate_public_model(settings)
+
+    def test_binding_rejects_candidate_path_substitution(self) -> None:
+        substituted = self.root / "substituted.sqlite"
+        substituted.write_bytes(self.candidate.read_bytes())
+        with self.assertRaisesRegex(
+            HistoricalCandidateBindingError, "does not match current inputs"
+        ):
+            verify_historical_candidate_binding(
+                self.binding,
+                _sha256(self.binding),
+                release_directory=RELEASE,
+                candidate_database=substituted,
+                replay_receipt=self.receipt,
+            )
+
+    def test_binding_refuses_to_replace_existing_output(self) -> None:
+        with self.assertRaisesRegex(HistoricalCandidateBindingError, "output already exists"):
+            self._write_binding()
+
+    def test_binding_rejects_receipt_tampering(self) -> None:
+        payload = json.loads(self.receipt.read_text(encoding="utf-8"))
+        payload["accepted_record_count"] = 0
+        self.receipt.write_text(json.dumps(payload), encoding="utf-8")
+        with self.assertRaisesRegex(
+            HistoricalCandidateBindingError, "does not match current inputs"
+        ):
+            verify_historical_candidate_binding(
+                self.binding,
+                _sha256(self.binding),
+                release_directory=RELEASE,
+                candidate_database=self.candidate,
+                replay_receipt=self.receipt,
+            )
 
 
 if __name__ == "__main__":
