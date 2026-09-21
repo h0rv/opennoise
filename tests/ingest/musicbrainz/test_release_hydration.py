@@ -8,6 +8,9 @@ import httpx
 
 from opennoise.db import Database
 from opennoise.ingest.musicbrainz.artist_credit_enrichment import (
+    ArtistCreditRefreshSettings,
+    MusicBrainzArtistCreditRefreshAdapter,
+    _projection_sha256,
     build_cached_artist_credit_enrichment,
 )
 from opennoise.ingest.musicbrainz.catalog_candidate import (
@@ -305,6 +308,9 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
             cached_payload["payload"]["media"][0]["tracks"][0]["recording"]["artist-credit"] = [
                 artist_credit
             ]
+            cached_payload["projection_sha256"] = _projection_sha256(
+                endpoint=cached_payload["endpoint"], payload=cached_payload["payload"]
+            )
             release_cache.write_text(json.dumps(cached_payload), encoding="utf-8")
             artist_credit_enrichment = build_cached_artist_credit_enrichment(
                 source_hydration_artifact_path=root / "out.json",
@@ -390,6 +396,151 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
                 )
                 with self.assertRaisesRegex(MusicBrainzHydrationError, "offline replay cache miss"):
                     await adapter.hydrate(_representatives(), source_sha256="b" * 64)
+
+    async def test_artist_credit_refresh_uses_exact_ids_and_replays_its_own_cache(self) -> None:
+        artist_id = "60000000-0000-4000-8000-000000000001"
+        requests: list[httpx.Request] = []
+
+        async def handler(request: httpx.Request) -> httpx.Response:
+            requests.append(request)
+            payload = _release_payload()
+            credit = {
+                "artist": {"id": artist_id, "name": "Source Artist"},
+                "name": "Credited Source Artist",
+                "joinphrase": "",
+            }
+            payload["artist-credit"] = [credit]
+            media = payload["media"]
+            assert isinstance(media, list)
+            track = media[0]["tracks"][0]
+            assert isinstance(track, dict)
+            recording = track["recording"]
+            assert isinstance(recording, dict)
+            recording["artist-credit"] = [credit]
+            return httpx.Response(200, json=payload)
+
+        async def unexpected_request(_: httpx.Request) -> httpx.Response:
+            self.fail("offline artist-credit replay made an upstream request")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            hydration_path = root / "hydration.json"
+            hydration_path.write_text(
+                json.dumps(
+                    {
+                        "selection_sha256": "a" * 64,
+                        "source_representative_artifact_sha256": "b" * 64,
+                        "releases": [
+                            {
+                                "release_id": RELEASE_ID,
+                                "release_group_id": RELEASE_GROUP_ID,
+                                "title": "Synthetic Album",
+                                "release_group_title": "Synthetic Album",
+                                "media": [
+                                    {
+                                        "position": 1,
+                                        "tracks": [
+                                            {
+                                                "track_id": TRACK_ID,
+                                                "recording_id": RECORDING_ID,
+                                                "title": "Synthetic Track",
+                                                "position": 1,
+                                                "number": "1",
+                                            }
+                                        ],
+                                    }
+                                ],
+                                "evidence": [
+                                    {
+                                        "representative_kind": "release_group",
+                                        "representative_id": (
+                                            f"musicbrainz:release-group:{RELEASE_GROUP_ID}"
+                                        ),
+                                        "representative_rank": 1,
+                                        "endpoint": f"release/{RELEASE_ID}",
+                                        "response_sha256": "c" * 64,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            settings = ArtistCreditRefreshSettings(cache_directory=root / "credit-cache")
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                online = await MusicBrainzArtistCreditRefreshAdapter(
+                    client,
+                    settings,
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
+                    sleep=lambda _: _no_sleep(),
+                ).refresh(source_hydration_artifact_path=hydration_path)
+            self.assertEqual(len(requests), 1)
+            self.assertEqual(
+                requests[0].url.params["inc"], "release-groups+recordings+artist-credits"
+            )
+            self.assertEqual(
+                {str(member.artist_id) for credit in online.credits for member in credit.members},
+                {artist_id},
+            )
+            self.assertFalse(online.abstentions)
+            self.assertFalse(online.failures)
+            self.assertTrue(online.no_name_inference)
+            self.assertEqual(online.minimum_request_interval_seconds, 1.0)
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(unexpected_request)
+            ) as client:
+                offline_adapter = MusicBrainzArtistCreditRefreshAdapter(
+                    client,
+                    settings.model_copy(update={"offline": True}),
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
+                )
+                offline = await offline_adapter.refresh(
+                    source_hydration_artifact_path=hydration_path
+                )
+            self.assertEqual(offline.credits, online.credits)
+            self.assertEqual(offline_adapter.upstream_request_count, 0)
+            cached_path = next((root / "credit-cache").glob("*.json"))
+            cached_payload = json.loads(cached_path.read_text())
+            cached_payload["payload"]["artist-credit"][0]["name"] = "Tampered Artist"
+            cached_path.write_text(json.dumps(cached_payload), encoding="utf-8")
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(unexpected_request)
+            ) as client:
+                tampered_adapter = MusicBrainzArtistCreditRefreshAdapter(
+                    client,
+                    settings.model_copy(update={"offline": True}),
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
+                )
+                with self.assertRaisesRegex(MusicBrainzHydrationError, "projection SHA-256"):
+                    await tampered_adapter.refresh(source_hydration_artifact_path=hydration_path)
+
+    async def test_artist_credit_refresh_records_failed_release_and_recording_abstentions(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            hydration_path = root / "hydration.json"
+            hydration_path.write_text(
+                json.dumps(
+                    {
+                        "selection_sha256": "a" * 64,
+                        "source_representative_artifact_sha256": "b" * 64,
+                        "releases": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            # An empty fixture establishes that a bounded candidate can explicitly abstain.
+            adapter = MusicBrainzArtistCreditRefreshAdapter(
+                httpx.AsyncClient(transport=httpx.MockTransport(lambda _: httpx.Response(500))),
+                ArtistCreditRefreshSettings(cache_directory=root / "credit-cache", offline=True),
+                user_agent="opennoise/0.1 (maintainer@example.test)",
+            )
+            artifact = await adapter.refresh(source_hydration_artifact_path=hydration_path)
+            self.assertFalse(artifact.credits)
+            self.assertFalse(artifact.failures)
+            self.assertFalse(artifact.abstentions)
 
     async def test_failed_endpoint_is_negative_cached_for_identical_offline_abstention(
         self,

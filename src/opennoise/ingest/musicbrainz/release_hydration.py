@@ -154,6 +154,7 @@ class CachedResponse(_FrozenModel):
     record_kind: Literal["success"] = "success"
     endpoint: str = Field(min_length=1)
     response_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    projection_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     payload: dict[str, object]
 
 

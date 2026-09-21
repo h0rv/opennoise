@@ -119,7 +119,11 @@ gate is open.
   the [candidate checkpoint](checkpoints/MUSICBRAINZ_CATALOG_EXPANSION_CANDIDATE.md).
   A separate local materialization retains 87 distinct releases, 94 media,
   1,032 tracks, and 1,031 recordings. Artist credits remain absent from the
-  retained source cache and are explicit abstentions. See the
+  original retained source cache. A separate, bounded MusicBrainz refresh now
+  retains 1,118 exact release and recording artist-credit relations from 87
+  responses. Its v2 cache verifies all 87 source projections offline; no
+  public database changed. See the
+  [artist-credit checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_REFRESH_CANDIDATE.md) and
   [materialization checkpoint](checkpoints/MUSICBRAINZ_CATALOG_MATERIALIZATION_CANDIDATE.md).
 - Keep metadata candidates separate from published metadata examples.
 - Review the 484 source-bound genre candidates now queued by the versioned
@@ -154,7 +158,14 @@ gate is open.
   records the exact split and input hashes. The current MusicBrainz contextual
   tag extract has zero exact unplaced-name matches by construction; the
   [coverage checkpoint](checkpoints/MUSICBRAINZ_CONTEXTUAL_UNPLACED_CHECKPOINT_20260921.md)
-  records why a pre-filter source slice is needed.
+  records why a pre-filter source slice is needed. The retained direct-tag
+  lower bound nevertheless has positive rows for 577 unplaced seeds. The
+  [direct-tag audit](checkpoints/MUSICBRAINZ_PREFILTER_UNPLACED_AUDIT_20260921.md)
+  separates those positives from publishable membership and records their
+  current peer-edge abstentions. A [streamed peer-threshold
+  audit](checkpoints/MUSICBRAINZ_PEER_THRESHOLD_SENSITIVITY_20260921.md)
+  finds a review-only hub-filtered route to 414 of the 495 overlap-abstained
+  unplaced seeds; it has not changed the public layout.
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files
