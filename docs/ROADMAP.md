@@ -85,14 +85,14 @@ model, passed the public-model gate, and persisted four layouts. The result is
 local, non-certified, and undeployed. It does not change any sealed, public,
 static, or deployed artifact. See [the v3 projection result](checkpoints/PHASE3_HISTORICAL_RUN2_LOCAL_PROJECTION_20260921.md).
 
-A read-only canonical comparison then established that the v3 projection and
-the sealed Phase 3 model are semantically equal for the bounded public model:
+A read-only, hash-pinned comparator finds matching bounded model semantics:
 all 62 source identities, 603 genre identities, 4,434 direct memberships,
 13,175 artist pairs, 22,091 one-hop memberships, 34,348 neighbors, 3,344
 representatives, and 2,002 layout coordinates match after canonicalization.
-Only compacted v3 one-hop evidence-reference strings and run metadata differ.
-This is not byte-identical replay, certification, or publication authorization;
-see [the semantic comparison checkpoint](checkpoints/PHASE3_HISTORICAL_V3_SEMANTIC_COMPARISON_20260921.md).
+However, one of 37,017 normalized provenance binding fingerprints differs, so
+full semantic replay and certification remain unproven. This is not
+byte-identical replay, certification, or publication authorization; see the
+[semantic comparison correction](checkpoints/PHASE3_V3_SEMANTIC_COMPARATOR_DISCREPANCY_20260921.md).
 
 The bounded replay comparison found equal logical source and evidence
 projections, but candidate source metadata and the public derived stage differ.
@@ -111,6 +111,10 @@ frontier contains 84 newly positioned direct genres, 862 grouped artist-genre
 memberships across 959 retained P136 observations, and 118 net-new artists with
 exactly one authorized MusicBrainz ID. It is not
 published or promoted; see [the pinned checkpoint](checkpoints/PUBLIC_DIRECT_BRIDGE_FRONTIER_20260921.md).
+
+The production direct-bridge stage-one receipt now pins 84 positioned genres
+and 862 grouped direct memberships. It writes no static asset and is not
+exported, certified, or deployed; see the [receipt](checkpoints/PUBLIC_DIRECT_PRODUCTION_BRIDGE_RECEIPT_20260921.md).
 
 The fixed v3 candidate also has one terminal observed-positive-only comparison
 to the retained historical signal. It accepts only one-to-one exact normalized
@@ -231,6 +235,8 @@ gate is open.
   [AcousticBrainz audit](checkpoints/ACOUSTICBRAINZ_GENRE_DATASET_EVALUATION_AUDIT.md).
   A positive-only [Last.fm 2007 overlap check](checkpoints/LASTFM_ARTISTTAGS2007_STATIC_OVERLAP.md)
   is diagnostic, not independent gold or a release gate.
+- A separate Last.fm ArtistTags2007 blind review packet contains 100 positive-tag
+  questions. The rows remain unlabeled, and missing tags are not negative claims.
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
   Historical declaration replay does not provide that database certification.

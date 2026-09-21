@@ -1,6 +1,6 @@
 # Latent genre similarity benchmark
 
-`uv run poe build-latent-genre-similarity` benchmarks a fixed rank-16 sparse
+`scripts/build_latent_genre_similarity.py` benchmarks a fixed rank-16 sparse
 truncated SVD over the train-only artist-to-genre matrix already sealed by the
 full graph signal. It reads no audio, listeners, raw listens, or historical
 inputs. The output is review-only and cannot promote memberships or serving

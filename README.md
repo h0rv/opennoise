@@ -32,6 +32,10 @@ semantic-layout input hashes, coverage accounting, and every served asset.
 
 Deploy a certified `dist` directory with `poe deploy`.
 
+`poe bootstrap` is only needed when preparing the historical Every Noise source
+cache. These six commands are the complete supported Poe surface; archived
+documentation may name retired workflows whose scripts must be run directly.
+
 ## Offline construction
 
 Source adapters remain explicit and provenance-bound. They ingest approved

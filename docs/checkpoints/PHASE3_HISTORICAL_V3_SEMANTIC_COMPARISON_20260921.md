@@ -40,17 +40,25 @@ identity, then SHA-256 hashed. Public and v3 values are exactly equal.
 | Layout and unplaced semantic tuples | 4 / 410 | `a0ed216953bea74f2ee26c4d354f6602ab8e5a24af159e6e982bdc7c6730e887` |
 | Combined source-neutral semantic model | — | `afa0b428910f01594a2ceb53b6d6fab3c22538aa7571a7c74fb7d2fe92e46c3e` |
 
-Normalized database provenance bindings are also equal: 37,017 rows,
-`2e31d11efd255f57e1d0c69b9545cf869fd36fe7b93bf74c7b6fbdf4be1cf80c`.
+## Correction (2026-09-21)
+
+The original provenance-equality statement above is superseded by the reusable,
+hash-pinned comparator. Its explicit normalized binding contract finds 37,017
+rows on each side but one distinct record fingerprint per side. Model, pair,
+neighbor, representative, and layout semantics remain equal under that
+contract, but full semantic replay and certification are unproven. See the
+[comparator discrepancy checkpoint](PHASE3_V3_SEMANTIC_COMPARATOR_DISCREPANCY_20260921.md).
 
 ## Drift and limit
 
-The only content difference is representation of one-hop evidence references:
-all 22,091 one-hop memberships have compacted v3 membership/component reference
+One content difference is representation of one-hop evidence references: all
+22,091 one-hop memberships have compacted v3 membership/component reference
 strings. The public and v3 reference-inclusive hashes differ, while every
 membership identity, score, component, artist-pair window/support, neighbor,
-representative, and coordinate above is equal. The remaining model differences
-are derived input/output hashes and run-resource timings.
+representative, and coordinate above is equal. In addition, the corrected
+binding comparison finds one distinct normalized provenance-record fingerprint
+per side. The remaining model differences are derived input/output hashes and
+run-resource timings.
 
 This establishes a source-neutral semantic result for this bounded comparison.
 It does **not** certify v3, qualify it for publication, or assert a

@@ -36,6 +36,11 @@ is the narrowest identity-safe increment: 11 seed IDs and 130 retained direct
 rows. The remaining 58 proper-genre seed IDs are recorded as identity
 abstentions, not inferred mappings.
 
+A fresh local rerun reproduced those 130 observations and 11 seed IDs, with
+188 identity-abstained rows, zero malformed source rows, and zero publishable
+memberships. Its seed-target byte binding is
+`481eb68f7d75d8562fe16aa1f9faef327d24e8afd5145fa5c7d136ed9ac69dfe`.
+
 No release, peer, one-hop, or inferred membership row was read or used. The
 report fixes `historical_assignments_read=false`,
 `membership_construction_performed=false`, and

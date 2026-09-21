@@ -26,6 +26,22 @@ the independently retained track context and record the source-record hash.
 The resulting metrics are conditional on these judged pairs; they are not a
 full-population precision claim.
 
+The pinned Last.fm ArtistTags2007 archive is a quicker human-review candidate
+because its rows include exact MusicBrainz artist IDs. Build a deterministic
+100-question packet from the local archive with:
+
+```sh
+.venv/bin/python scripts/build_lastfm_artist_genre_review.py \
+  --archive .cache/lastfm-artisttags2007/source.tar.gz \
+  --output .cache/lastfm-artisttags2007/artist-genre-review-v1.json \
+  --sample-size 100
+```
+
+The packet contains positive tags for review, not gold labels. Reviewers must
+judge membership, and missing tags remain unknown, so the packet has no
+negative labels and cannot serve as a production gate. FMA remains the formal
+future route for an independently sourced gold set.
+
 For every source snapshot, create an `independent-artist-genre-gold-v1` JSON
 document with the source locator/version/payload hash, license or terms
 reference, exact-review bridge hash, and an exclusion list containing all five
@@ -44,10 +60,10 @@ false; it never creates labels from predictions.
 Run the diagnostic proof:
 
 ```sh
-OPENNOISE_INDEPENDENT_ARTIST_GENRE_GOLD=tests/fixtures/independent_artist_genre_gold_fixture_v1.json \
-OPENNOISE_INDEPENDENT_ARTIST_GENRE_PREDICTIONS=tests/fixtures/independent_artist_genre_predictions_fixture_v1.json \
-OPENNOISE_INDEPENDENT_ARTIST_GENRE_GOLD_REPORT=.cache/objective-gates/independent-artist-genre-gold-fixture-v1.json \
-uv run poe evaluate-independent-artist-genre-gold
+.venv/bin/python scripts/evaluate_independent_artist_genre_gold.py \
+  --gold tests/fixtures/independent_artist_genre_gold_fixture_v1.json \
+  --predictions tests/fixtures/independent_artist_genre_predictions_fixture_v1.json \
+  --report .cache/objective-gates/independent-artist-genre-gold-fixture-v1.json
 ```
 
 The command exits nonzero for this fixture by design. The workflow currently

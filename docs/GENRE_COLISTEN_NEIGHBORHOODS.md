@@ -1,6 +1,6 @@
 # Co-listen genre neighborhoods
 
-`poe build-genre-colisten-neighborhoods` is a no-environment-variable checkpoint. It locates the shared `.cache` beside Git's common directory, so main and linked worktrees use the same sealed inputs and durable output.
+`scripts/build_genre_colisten_neighborhoods.py` is a no-environment-variable checkpoint. It locates the shared `.cache` beside Git's common directory, so main and linked worktrees use the same sealed inputs and durable output.
 
 Construction reads exactly two receipt-bound SQLite artifacts: the evidence graph and the privacy-thresholded aggregate ListenBrainz co-listen sidecar. It verifies each receipt's logical hash, each database's bytes, the sidecar's graph-receipt binding, integrity, and all 6,291 stable seeds before querying. It never reads historical artifacts, audio, raw listens, or listener identifiers.
 

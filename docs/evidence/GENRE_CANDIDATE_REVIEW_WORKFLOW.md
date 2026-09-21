@@ -42,11 +42,11 @@ read catalog identity edges. In particular, it makes no factual identity claim
 from materially different labels and offers no catalog or serving path.
 
 ```bash
-poe genre-candidate-review queue \
+.venv/bin/python scripts/manage_genre_candidate_review.py queue \
   --source-artifact .cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v1.json \
   --output .cache/genre-candidate-review/queue.json
 
-poe genre-candidate-review apply \
+.venv/bin/python scripts/manage_genre_candidate_review.py apply \
   --source-artifact .cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v1.json \
   --queue .cache/genre-candidate-review/queue.json \
   --decisions review-decisions.json \
@@ -65,7 +65,7 @@ The separate triage audit groups review work without making a review or
 publication decision:
 
 ```bash
-poe audit-genre-candidate-triage \
+.venv/bin/python scripts/audit_genre_candidate_triage.py \
   --source-artifact .cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v1.json \
   --output .cache/genre-candidate-review/triage-audit-v2.json
 ```
@@ -80,7 +80,5 @@ audit artifacts are not interchangeable.
 Run the focused checks with:
 
 ```bash
-poe test
-poe lint
-poe typecheck
+poe check
 ```
