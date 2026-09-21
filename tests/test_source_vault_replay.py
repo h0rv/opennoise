@@ -30,6 +30,9 @@ from opennoise.storage import LocalObjectStore
 
 
 def _fixture_listenbrainz_source(item: dict[str, object], index: int) -> DownloadSource:
+    byte_size = item["byte_size"]
+    if not isinstance(byte_size, int):
+        raise TypeError("fixture byte size must be an int")
     return DownloadSource(
         id=str(item["source_key"]),
         adapter="listenbrainz_incremental_v1",
@@ -38,7 +41,7 @@ def _fixture_listenbrainz_source(item: dict[str, object], index: int) -> Downloa
         discovery_url=HttpUrl("https://example.test/"),
         expected_content_type="application/json",
         compression="none",
-        expected_bytes=int(item["byte_size"]),
+        expected_bytes=byte_size,
         checksum_algorithm="sha256",
         checksum=str(item["artifact_sha256"]),
         data_license="CC0-1.0",
