@@ -52,9 +52,11 @@ uncertified local candidate SQLite database. A separate, strictly offline
 ListenBrainz candidate replay now consumes the seven retained daily objects
 into its own fresh database. It checks the recovered fixed-window configuration
 against the sealed generated joint receipt before scanning the daily archives,
-then requires its generated joint receipt to match the sealed object. Current
-source declarations still do not reproduce the retained historical declaration
-hashes, and neither candidate database is byte-identical or certified.
+then requires its generated joint receipt to match the sealed object. A
+versioned declaration replay now reproduces all 62 retained historical
+declaration hashes. A combined candidate replay path exists, but its full
+fresh run has no completed receipt. No candidate database is byte-identical
+or certified.
 
 ## Static Pages delivery status
 
@@ -115,6 +117,10 @@ gate is open.
   requests; one stale recording stayed an explicit abstention. This is a
   metadata-only candidate, not yet the published catalog or a full crawl. See
   the [candidate checkpoint](checkpoints/MUSICBRAINZ_CATALOG_EXPANSION_CANDIDATE.md).
+  A separate local materialization retains 87 distinct releases, 94 media,
+  1,032 tracks, and 1,031 recordings. Artist credits remain absent from the
+  retained source cache and are explicit abstentions. See the
+  [materialization checkpoint](checkpoints/MUSICBRAINZ_CATALOG_MATERIALIZATION_CANDIDATE.md).
 - Keep metadata candidates separate from published metadata examples.
 - Review the 484 source-bound genre candidates now queued by the versioned
   workflow, then design a separate publication gate. None is published.
@@ -130,9 +136,11 @@ gate is open.
   [gold-set workflow](evidence/INDEPENDENT_ARTIST_GENRE_GOLD.md),
   [source audit](checkpoints/INDEPENDENT_GOLD_SOURCE_AUDIT.md), and
   [AcousticBrainz audit](checkpoints/ACOUSTICBRAINZ_GENRE_DATASET_EVALUATION_AUDIT.md).
+  A positive-only [Last.fm 2007 overlap check](checkpoints/LASTFM_ARTISTTAGS2007_STATIC_OVERLAP.md)
+  is diagnostic, not independent gold or a release gate.
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
-  The 54-object Wikidata candidate replay is not this certification.
+  Historical declaration replay does not provide that database certification.
 
 ## Later experiments
 
@@ -140,7 +148,13 @@ gate is open.
   graph evidence. The [layout navigation audit](checkpoints/LAYOUT_NAVIGATION_AUDIT.md)
   records the v2 baseline; the [v3 selection](checkpoints/LAYOUT_NAVIGATION_SEPARATION_SWEEP.md)
   records the measured geometry change. Better placement does not substitute
-  for more artist and genre evidence.
+  for more artist and genre evidence. Of the 3,346 unplaced names, 2,635 have
+  no proposal in either the current hierarchy review or open label graph.
+  The [unplaced source frontier](checkpoints/UNPLACED_SOURCE_FRONTIER_20260921.md)
+  records the exact split and input hashes. The current MusicBrainz contextual
+  tag extract has zero exact unplaced-name matches by construction; the
+  [coverage checkpoint](checkpoints/MUSICBRAINZ_CONTEXTUAL_UNPLACED_CHECKPOINT_20260921.md)
+  records why a pre-filter source slice is needed.
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files

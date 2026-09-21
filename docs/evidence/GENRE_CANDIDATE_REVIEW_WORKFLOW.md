@@ -59,6 +59,24 @@ artifact output hash. The decision file is a JSON array, or an object with a
 `review_decisions` array. `apply` seals review results only; it never
 publishes a genre.
 
+## Candidate-triage audit CLI
+
+The separate triage audit groups review work without making a review or
+publication decision:
+
+```bash
+poe audit-genre-candidate-triage \
+  --source-artifact .cache/musicbrainz-full-seed-targets/pipeline/open-label-graph-model-v1.json \
+  --output .cache/genre-candidate-review/triage-audit-v2.json
+```
+
+Its JSON output reports `genre-candidate-triage-audit-v2` and its coverage.
+`repeated_proposed_label_count` is the number of candidate rows whose proposed
+label occurs in more than one candidate. It is not a count of repeated source
+claims: distinct immutable claims can produce the same proposed label. The v2
+revision deliberately replaces the inaccurate v1 field name, so v1 and v2
+audit artifacts are not interchangeable.
+
 Run the focused checks with:
 
 ```bash

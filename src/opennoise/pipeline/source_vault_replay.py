@@ -38,7 +38,7 @@ from opennoise.storage import ObjectKey, ObjectStore
 from opennoise.types import Sha256  # noqa: TC001
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
 _CHUNK_BYTES: Final = 1024 * 1024
 _RAW_PREFIX: Final = "raw/sha256"
@@ -46,6 +46,7 @@ _WIKIDATA_SOURCE_PREFIX: Final = "wikidata_phase3_"
 _LISTENBRAINZ_SOURCE_PREFIX: Final = "listenbrainz_incremental_"
 _LISTENBRAINZ_JOINT_SOURCE_KEY: Final = "listenbrainz_joint_20260824_20260830"
 _LISTENBRAINZ_DAILY_OBJECT_COUNT: Final = 7
+_WIKIDATA_OBJECT_COUNT: Final = 54
 _WIKIDATA_DISCOVERY_URL: Final = "https://www.wikidata.org/wiki/Wikidata:Data_access"
 _WIKIDATA_QUERY_URL: Final = "https://query.wikidata.org/sparql"
 
@@ -66,6 +67,7 @@ class ReleaseManifestReplayInput(ReleaseManifestInput):
     """One manifest input with the fields needed by an available local adapter."""
 
     snapshot_ref: str = Field(min_length=1, max_length=600)
+    source_manifest_sha256: Sha256
 
 
 class CandidateReplayObject(FrozenModel):
@@ -142,6 +144,96 @@ class CandidateListenBrainzReplayReport(FrozenModel):
             not key.startswith(_LISTENBRAINZ_SOURCE_PREFIX) for key in keys
         ):
             raise ValueError("candidate ListenBrainz replay requires seven unique daily objects")
+        return self
+
+
+class CandidateCombinedReplayReport(FrozenModel):
+    """Receipt for one fresh, offline candidate containing both replayable inputs."""
+
+    revision: Literal["source-vault-combined-candidate-replay-v1"] = (
+        "source-vault-combined-candidate-replay-v1"
+    )
+    release_id: str = Field(min_length=1, max_length=300)
+    manifest_sha256: Sha256
+    database_path: Path
+    database_schema_version: int = Field(ge=1)
+    certified_database: Literal[False] = False
+    byte_identical_database_replay: Literal[False] = False
+    verified_object_count: int = Field(ge=1, le=128)
+    wikidata_objects: tuple[CandidateReplayObject, ...] = Field(min_length=1, max_length=128)
+    listenbrainz_daily_objects: tuple[CandidateReplayObject, ...] = Field(
+        min_length=_LISTENBRAINZ_DAILY_OBJECT_COUNT,
+        max_length=_LISTENBRAINZ_DAILY_OBJECT_COUNT,
+    )
+    sealed_joint_artifact_sha256: Sha256
+    sealed_joint_artifact_byte_size: int = Field(ge=0)
+    generated_joint_matches_sealed_artifact: Literal[True] = True
+    accepted_record_count: int = Field(ge=0)
+    quarantined_record_count: int = Field(ge=0)
+    blockers: tuple[str, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def check_inputs(self) -> CandidateCombinedReplayReport:
+        """Keep the combined receipt explicit about every replayed raw object."""
+        if (
+            self.verified_object_count
+            != len(self.wikidata_objects) + len(self.listenbrainz_daily_objects) + 1
+        ):
+            raise ValueError("combined replay verified object count is inconsistent")
+        if any(item.status != "ingested" for item in self.wikidata_objects):
+            raise ValueError("combined replay Wikidata objects must be ingested")
+        if any(item.status != "ingested" for item in self.listenbrainz_daily_objects):
+            raise ValueError("combined replay ListenBrainz objects must be ingested")
+        if any(
+            not item.source_key.startswith(_WIKIDATA_SOURCE_PREFIX)
+            for item in self.wikidata_objects
+        ):
+            raise ValueError("combined replay requires only Wikidata replay objects")
+        if any(
+            not item.source_key.startswith(_LISTENBRAINZ_SOURCE_PREFIX)
+            for item in self.listenbrainz_daily_objects
+        ):
+            raise ValueError("combined replay requires seven ListenBrainz daily objects")
+        return self
+
+
+class HistoricalDeclarationReplayObject(FrozenModel):
+    """One reconstructed pre-schema-expansion source declaration digest."""
+
+    source_key: str = Field(min_length=1, max_length=300)
+    expected_sha256: Sha256
+    replayed_sha256: Sha256
+
+    @model_validator(mode="after")
+    def check_digest(self) -> HistoricalDeclarationReplayObject:
+        """Require the reconstructed declaration to equal its sealed digest."""
+        if self.expected_sha256 != self.replayed_sha256:
+            raise ValueError("historical declaration digest does not replay")
+        return self
+
+
+class HistoricalDeclarationReplayReport(FrozenModel):
+    """Timestamp-free proof that all historical source declarations can be rebuilt."""
+
+    revision: Literal["phase3-historical-source-declarations-v1"] = (
+        "phase3-historical-source-declarations-v1"
+    )
+    release_id: str = Field(min_length=1, max_length=300)
+    manifest_sha256: Sha256
+    pre_schema_fields_omitted: tuple[Literal["export_raw", "redistribute"], ...] = (
+        "export_raw",
+        "redistribute",
+    )
+    object_count: int = Field(ge=1, le=128)
+    objects: tuple[HistoricalDeclarationReplayObject, ...] = Field(min_length=1, max_length=128)
+
+    @model_validator(mode="after")
+    def check_objects(self) -> HistoricalDeclarationReplayReport:
+        """Keep the declaration receipt complete and unambiguous."""
+        if self.object_count != len(self.objects):
+            raise ValueError("historical declaration replay object count is inconsistent")
+        if len({item.source_key for item in self.objects}) != len(self.objects):
+            raise ValueError("historical declaration replay source keys must be unique")
         return self
 
 
@@ -314,7 +406,13 @@ def write_report(report: SourceVaultReplayReport, path: Path) -> None:
 
 
 def write_candidate_database_report(
-    report: CandidateDatabaseReplayReport | CandidateListenBrainzReplayReport, path: Path
+    report: (
+        CandidateDatabaseReplayReport
+        | CandidateListenBrainzReplayReport
+        | CandidateCombinedReplayReport
+        | HistoricalDeclarationReplayReport
+    ),
+    path: Path,
 ) -> None:
     """Atomically write the explicit non-certification record for a candidate DB."""
     _write_json_report(report.model_dump_json(indent=2), path)
@@ -375,6 +473,21 @@ def _require_report_matches_manifest(
         raise SourceVaultReplayError("source-vault report does not match the release manifest")
 
 
+def _require_verified_vault_objects(report: SourceVaultReplayReport, vault_path: Path) -> None:
+    """Rehash each report-bound raw object immediately before offline replay."""
+    for item in report.objects:
+        path = _source_path(vault_path, item.artifact_sha256)
+        if path.is_symlink() or not path.is_file():
+            raise SourceVaultReplayError(f"source object is missing: {item.source_key}")
+        _require_bytes(path, item.artifact_sha256, item.byte_size, item.source_key)
+
+
+def _report_progress(progress: Callable[[str], None] | None, stage: str) -> None:
+    """Emit optional human-facing timing state without affecting replay receipts."""
+    if progress is not None:
+        progress(stage)
+
+
 def _offline_wikidata_source(item: ReleaseManifestReplayInput) -> DownloadSource:
     """Make the minimum typed adapter declaration from a sealed Wikidata raw object.
 
@@ -406,6 +519,104 @@ def _offline_wikidata_source(item: ReleaseManifestReplayInput) -> DownloadSource
         embed=False,
         train=False,
         export_metadata=False,
+    )
+
+
+def _historical_wikidata_source(item: ReleaseManifestReplayInput) -> DownloadSource:
+    """Recreate the Phase 3 constructor retained in the historical ingest script."""
+    source_prefix = f"{item.source_key}:"
+    if not item.snapshot_ref.startswith(source_prefix):
+        raise SourceVaultReplayError(f"Wikidata snapshot does not belong to {item.source_key}")
+    return DownloadSource(
+        id=item.source_key,
+        adapter="wikidata_music_sparql_slice_v1",
+        snapshot=item.snapshot_ref.removeprefix(source_prefix),
+        url=HttpUrl(_WIKIDATA_QUERY_URL),
+        discovery_url=HttpUrl(_WIKIDATA_DISCOVERY_URL),
+        expected_content_type="application/sparql-results+json",
+        compression="none",
+        expected_bytes=item.byte_size,
+        checksum_algorithm="sha256",
+        checksum=item.artifact_sha256,
+        data_license="CC0-1.0",
+        license_url="https://www.wikidata.org/wiki/Wikidata:Licensing",
+        rights_classification="public_domain",
+        local_only=False,
+        normalize=True,
+        local_search=True,
+        display=True,
+        embed=True,
+        train=True,
+        export_metadata=True,
+    )
+
+
+def _historical_declaration_sha256(source: DownloadSource) -> str:
+    """Hash the exact pre-Phase-3 source model, before two later default fields."""
+    return hashlib.sha256(
+        source.model_dump_json(exclude={"export_raw", "redistribute"}).encode()
+    ).hexdigest()
+
+
+def replay_historical_source_declarations(
+    manifest_path: Path, source_manifest_path: Path
+) -> HistoricalDeclarationReplayReport:
+    """Rebuild and verify all historical declaration hashes without raw ingestion."""
+    resolved_manifest = manifest_path.resolve(strict=True)
+    manifest_sha256, release_id, inputs = _replay_inputs(resolved_manifest)
+    daily, sources = _candidate_listenbrainz_sources(
+        inputs, source_manifest_path.resolve(strict=True)
+    )
+    daily_sources = {item.source_key: source for item, source in zip(daily, sources, strict=True)}
+    replayed: list[HistoricalDeclarationReplayObject] = []
+    for item in inputs:
+        if item.source_key.startswith(_WIKIDATA_SOURCE_PREFIX):
+            source = _historical_wikidata_source(item)
+        elif item.source_key.startswith(_LISTENBRAINZ_SOURCE_PREFIX):
+            source = daily_sources[item.source_key]
+        elif item.source_key == _LISTENBRAINZ_JOINT_SOURCE_KEY:
+            first = sources[0]
+            source = DownloadSource(
+                id=item.source_key,
+                adapter=ListenBrainzIncrementalAdapter(_candidate_listenbrainz_config()).key,
+                snapshot=item.snapshot_ref.removeprefix(f"{item.source_key}:"),
+                url=HttpUrl(f"https://example.invalid/{item.source_key}.json"),
+                discovery_url=first.discovery_url,
+                expected_content_type="application/json",
+                compression="none",
+                expected_bytes=item.byte_size,
+                checksum_algorithm="sha256",
+                checksum=item.artifact_sha256,
+                data_license=first.data_license,
+                license_url=first.license_url,
+                rights_classification=first.rights_classification,
+                local_only=all(item.local_only for item in sources),
+                normalize=all(item.normalize for item in sources),
+                local_search=all(item.local_search for item in sources),
+                display=all(item.display for item in sources),
+                embed=all(item.embed for item in sources),
+                train=all(item.train for item in sources),
+                export_metadata=all(item.export_metadata for item in sources),
+            )
+        else:
+            raise SourceVaultReplayError(f"unsupported historical declaration: {item.source_key}")
+        replayed_sha256 = _historical_declaration_sha256(source)
+        if replayed_sha256 != item.source_manifest_sha256:
+            raise SourceVaultReplayError(
+                f"historical declaration does not match manifest: {item.source_key}"
+            )
+        replayed.append(
+            HistoricalDeclarationReplayObject(
+                source_key=item.source_key,
+                expected_sha256=item.source_manifest_sha256,
+                replayed_sha256=replayed_sha256,
+            )
+        )
+    return HistoricalDeclarationReplayReport(
+        release_id=release_id,
+        manifest_sha256=manifest_sha256,
+        object_count=len(replayed),
+        objects=tuple(replayed),
     )
 
 
@@ -773,6 +984,127 @@ def replay_listenbrainz_source_vault_to_candidate_database(
             )
             for item in daily
         ),
+        accepted_record_count=accepted,
+        quarantined_record_count=quarantined,
+        blockers=(
+            (
+                "current source declarations bind retained bytes but do not reproduce "
+                "historical per-source declaration hashes"
+            ),
+            (
+                "candidate provenance, timestamps, adapter build identity, and SQLite "
+                "bytes are not historical byte-identical or certified"
+            ),
+        ),
+    )
+
+
+def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
+    report: SourceVaultReplayReport,
+    vault_path: Path,
+    candidate_database: Path,
+    *,
+    manifest_path: Path,
+    source_manifest_path: Path,
+    progress: Callable[[str], None] | None = None,
+) -> CandidateCombinedReplayReport:
+    """Replay all 54 Wikidata objects and seven ListenBrainz dailies into one DB.
+
+    The sealed joint artifact is rehashed as part of the full vault receipt and
+    then checked again against the newly derived joint artifact.  No existing
+    database is opened for writing: both projectors write only to a fresh
+    staging database which is atomically published to ``candidate_database``.
+    """
+    resolved_manifest = manifest_path.resolve(strict=True)
+    resolved_source_manifest = source_manifest_path.resolve(strict=True)
+    manifest_sha256, release_id, inputs = _replay_inputs(resolved_manifest)
+    _require_report_matches_manifest(report, manifest_sha256, release_id, inputs)
+    _report_progress(progress, "rehashing source-vault receipt")
+    _require_verified_vault_objects(report, vault_path)
+    _report_progress(progress, "source-vault receipt verified")
+    if candidate_database.exists() or candidate_database.is_symlink():
+        raise SourceVaultReplayError("candidate database must not already exist")
+    wikidata = tuple(item for item in inputs if item.source_key.startswith(_WIKIDATA_SOURCE_PREFIX))
+    if len(wikidata) != _WIKIDATA_OBJECT_COUNT:
+        raise SourceVaultReplayError(
+            f"release manifest must retain exactly {_WIKIDATA_OBJECT_COUNT} Wikidata objects"
+        )
+    joint = _listenbrainz_joint_input(inputs, vault_path)
+    daily, sources = _candidate_listenbrainz_sources(inputs, resolved_source_manifest)
+    candidate_database.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(
+        tempfile.mkdtemp(
+            prefix=f".{candidate_database.name}.combined-", dir=candidate_database.parent
+        )
+    )
+    staging_database = staging / candidate_database.name
+    derived_vault = staging / "derived-vault"
+    try:
+        _report_progress(progress, "replaying Wikidata objects")
+        asyncio.run(
+            _ingest_wikidata_objects(
+                wikidata,
+                manifest_path=resolved_manifest,
+                vault_path=vault_path,
+                database_path=staging_database,
+            )
+        )
+        _report_progress(progress, "Wikidata replay complete; replaying ListenBrainz daily objects")
+        accepted, quarantined, aggregate_sha256 = asyncio.run(
+            _ingest_listenbrainz_candidate(
+                daily,
+                sources,
+                vault_path=vault_path,
+                candidate_database=staging_database,
+                source_manifest_path=resolved_source_manifest,
+                derived_vault_path=derived_vault,
+            )
+        )
+        _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
+        _report_progress(progress, "ListenBrainz replay complete; sealed joint receipt matched")
+        with closing(sqlite3.connect(staging_database)) as connection:
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            connection.execute("PRAGMA journal_mode = DELETE")
+        staging_database.replace(candidate_database)
+        _report_progress(progress, "candidate database published")
+    except SourceVaultReplayError:
+        raise
+    except (OSError, ValueError, sqlite3.Error) as error:
+        raise SourceVaultReplayError("combined candidate database replay failed") from error
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    with Database(candidate_database, read_only=True).connect() as connection:
+        schema_row = connection.execute("PRAGMA user_version").fetchone()
+    if schema_row is None:
+        raise SourceVaultReplayError("candidate database has no schema version")
+    return CandidateCombinedReplayReport(
+        release_id=release_id,
+        manifest_sha256=manifest_sha256,
+        database_path=candidate_database,
+        database_schema_version=int(schema_row[0]),
+        verified_object_count=len(report.objects),
+        wikidata_objects=tuple(
+            CandidateReplayObject(
+                source_key=item.source_key,
+                artifact_sha256=item.artifact_sha256,
+                byte_size=item.byte_size,
+                status="ingested",
+                reason="replayed offline with wikidata_music_sparql_slice_v1",
+            )
+            for item in wikidata
+        ),
+        listenbrainz_daily_objects=tuple(
+            CandidateReplayObject(
+                source_key=item.source_key,
+                artifact_sha256=item.artifact_sha256,
+                byte_size=item.byte_size,
+                status="ingested",
+                reason="replayed offline with the sealed joint configuration",
+            )
+            for item in daily
+        ),
+        sealed_joint_artifact_sha256=joint.artifact_sha256,
+        sealed_joint_artifact_byte_size=joint.byte_size,
         accepted_record_count=accepted,
         quarantined_record_count=quarantined,
         blockers=(

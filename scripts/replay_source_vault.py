@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 from opennoise.pipeline.source_vault_replay import (
     SourceVaultReplayError,
     load_report,
+    replay_combined_source_vault_to_candidate_database,
+    replay_historical_source_declarations,
     replay_listenbrainz_source_vault_to_candidate_database,
     replay_source_vault_to_candidate_database,
     restore_source_vault,
@@ -45,6 +48,17 @@ def _parser() -> argparse.ArgumentParser:
     candidate_listenbrainz.add_argument("--candidate-database", type=Path, required=True)
     candidate_listenbrainz.add_argument("--replay-report", type=Path, required=True)
     candidate_listenbrainz.add_argument("--source-manifest", type=Path, required=True)
+    candidate_combined = subparsers.add_parser("candidate-combined-database")
+    candidate_combined.add_argument("--manifest", type=Path, required=True)
+    candidate_combined.add_argument("--report", type=Path, required=True)
+    candidate_combined.add_argument("--vault", type=Path, required=True)
+    candidate_combined.add_argument("--candidate-database", type=Path, required=True)
+    candidate_combined.add_argument("--replay-report", type=Path, required=True)
+    candidate_combined.add_argument("--source-manifest", type=Path, required=True)
+    declarations = subparsers.add_parser("verify-historical-declarations")
+    declarations.add_argument("--manifest", type=Path, required=True)
+    declarations.add_argument("--source-manifest", type=Path, required=True)
+    declarations.add_argument("--replay-report", type=Path, required=True)
     return parser
 
 
@@ -74,7 +88,7 @@ def main() -> int:
             )
             write_candidate_database_report(candidate, arguments.replay_report)
             sys.stdout.write(f"{candidate.model_dump_json(indent=2)}\n")
-        else:
+        elif arguments.command == "candidate-listenbrainz-database":
             candidate = replay_listenbrainz_source_vault_to_candidate_database(
                 load_report(arguments.report),
                 arguments.vault,
@@ -84,6 +98,29 @@ def main() -> int:
             )
             write_candidate_database_report(candidate, arguments.replay_report)
             sys.stdout.write(f"{candidate.model_dump_json(indent=2)}\n")
+        elif arguments.command == "candidate-combined-database":
+            started = time.monotonic()
+
+            def progress(stage: str) -> None:
+                elapsed = time.monotonic() - started
+                sys.stderr.write(f"[{elapsed:.1f}s] {stage}\n")
+
+            candidate = replay_combined_source_vault_to_candidate_database(
+                load_report(arguments.report),
+                arguments.vault,
+                arguments.candidate_database,
+                manifest_path=arguments.manifest,
+                source_manifest_path=arguments.source_manifest,
+                progress=progress,
+            )
+            write_candidate_database_report(candidate, arguments.replay_report)
+            sys.stdout.write(f"{candidate.model_dump_json(indent=2)}\n")
+        else:
+            declaration_report = replay_historical_source_declarations(
+                arguments.manifest, arguments.source_manifest
+            )
+            write_candidate_database_report(declaration_report, arguments.replay_report)
+            sys.stdout.write(f"{declaration_report.model_dump_json(indent=2)}\n")
     except SourceVaultReplayError as error:
         sys.stderr.write(f"source vault replay failed: {error}\n")
         return 2

@@ -7,6 +7,13 @@ from uuid import UUID
 import httpx
 
 from opennoise.db import Database
+from opennoise.ingest.musicbrainz.artist_credit_enrichment import (
+    build_cached_artist_credit_enrichment,
+)
+from opennoise.ingest.musicbrainz.catalog_candidate import (
+    load_source_artifact,
+    materialize_candidate,
+)
 from opennoise.ingest.musicbrainz.release_hydration import (
     HydrationSettings,
     MusicBrainzHydrationError,
@@ -87,6 +94,16 @@ def _release_payload() -> dict[str, object]:
     }
 
 
+def _hydration_artifact_json() -> str:
+    return json.dumps(
+        {
+            "selection_sha256": "a" * 64,
+            "source_representative_artifact_sha256": "b" * 64,
+            "releases": [],
+        }
+    )
+
+
 class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
     def test_default_settings_expand_two_selected_examples_per_genre(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -128,7 +145,7 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
         )
         self.assertEqual(tuple(item.classification for item in selected), ("metadata_example",) * 2)
 
-    async def test_hydrates_ordered_core_metadata_and_replays_cache_offline(self) -> None:
+    async def test_hydrates_ordered_core_metadata_and_replays_cache_offline(self) -> None:  # noqa: PLR0915
         requests: list[httpx.Request] = []
 
         async def handler(request: httpx.Request) -> httpx.Response:
@@ -221,6 +238,141 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
                     "recording", "00000000-0000-4000-8000-000000000000"
                 )
             )
+            with self.assertRaisesRegex(MusicBrainzHydrationError, "SHA-256"):
+                load_source_artifact(root / "out.json", expected_sha256="f" * 64)
+            candidate = materialize_candidate(
+                source_artifact_path=root / "out.json",
+                candidate_database_path=root / "candidate.sqlite",
+            )
+            self.assertEqual(candidate.source_artifact_sha256, receipt.artifact.sha256)
+            self.assertEqual(
+                candidate.source_counts,
+                {
+                    "release_entries": 1,
+                    "medium_entries": 1,
+                    "track_entries": 1,
+                    "normalized_releases": 1,
+                    "normalized_media": 1,
+                    "normalized_tracks": 1,
+                },
+            )
+            self.assertEqual(
+                candidate.first_materialization,
+                {
+                    "releases": 1,
+                    "media": 1,
+                    "tracks": 1,
+                    "recordings": 1,
+                },
+            )
+            self.assertEqual(
+                candidate.idempotent_replay,
+                {
+                    "releases": 0,
+                    "media": 0,
+                    "tracks": 0,
+                    "recordings": 0,
+                },
+            )
+            self.assertEqual(candidate.normalized_relation_counts.artist_credit_relations, 0)
+            self.assertEqual(
+                candidate.artist_relation_status,
+                "abstained_no_artist_credits_in_source_hydration_artifact",
+            )
+            self.assertEqual(candidate.foreign_key_violations, 0)
+            artist_credit_abstention = build_cached_artist_credit_enrichment(
+                source_hydration_artifact_path=root / "out.json",
+                cache_directory=root / "cache",
+            )
+            self.assertFalse(artist_credit_abstention.credits)
+            self.assertEqual(len(artist_credit_abstention.abstentions), 2)
+
+            release_cache = next(
+                path
+                for path in (root / "cache").glob("*.json")
+                if json.loads(path.read_text())["endpoint"] == f"release/{RELEASE_ID}"
+            )
+            cached_payload = json.loads(release_cache.read_text())
+            artist_credit = {
+                "artist": {
+                    "id": "60000000-0000-4000-8000-000000000001",
+                    "name": "Synthetic Artist",
+                },
+                "name": "Synthetic Artist",
+                "joinphrase": "",
+            }
+            cached_payload["payload"]["artist-credit"] = [artist_credit]
+            cached_payload["payload"]["media"][0]["tracks"][0]["recording"]["artist-credit"] = [
+                artist_credit
+            ]
+            release_cache.write_text(json.dumps(cached_payload), encoding="utf-8")
+            artist_credit_enrichment = build_cached_artist_credit_enrichment(
+                source_hydration_artifact_path=root / "out.json",
+                cache_directory=root / "cache",
+            )
+            self.assertEqual(len(artist_credit_enrichment.credits), 2)
+            self.assertFalse(artist_credit_enrichment.abstentions)
+            self.assertTrue(artist_credit_enrichment.no_name_inference)
+
+    def test_candidate_refuses_existing_or_symlink_target_without_mutating_it(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifact_path = root / "hydration.json"
+            artifact_path.write_text(_hydration_artifact_json(), encoding="utf-8")
+            target = root / "candidate.sqlite"
+            target.write_bytes(b"sealed-existing-database")
+
+            with self.assertRaisesRegex(MusicBrainzHydrationError, "target already exists"):
+                materialize_candidate(
+                    source_artifact_path=artifact_path, candidate_database_path=target
+                )
+            self.assertEqual(target.read_bytes(), b"sealed-existing-database")
+
+            linked_target = root / "linked-candidate.sqlite"
+            linked_target.symlink_to(target)
+            with self.assertRaisesRegex(MusicBrainzHydrationError, "target already exists"):
+                materialize_candidate(
+                    source_artifact_path=artifact_path, candidate_database_path=linked_target
+                )
+            self.assertEqual(target.read_bytes(), b"sealed-existing-database")
+
+    def test_invalid_candidate_input_leaves_target_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifact_path = root / "hydration.json"
+            artifact_path.write_text("not JSON", encoding="utf-8")
+            target = root / "candidate.sqlite"
+
+            with self.assertRaises(ValueError):
+                materialize_candidate(
+                    source_artifact_path=artifact_path, candidate_database_path=target
+                )
+            self.assertFalse(target.exists())
+            self.assertFalse(target.is_symlink())
+
+    def test_artist_credit_enrichment_rejects_cache_endpoint_not_matching_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifact_path = root / "hydration.json"
+            artifact_path.write_text(_hydration_artifact_json(), encoding="utf-8")
+            cache_directory = root / "cache"
+            cache_directory.mkdir()
+            (cache_directory / "response.json").write_text(
+                json.dumps(
+                    {
+                        "record_kind": "success",
+                        "endpoint": f"release/{SECOND_RELEASE_GROUP_ID}",
+                        "response_sha256": "a" * 64,
+                        "payload": _release_payload(),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(MusicBrainzHydrationError, "endpoint does not match"):
+                build_cached_artist_credit_enrichment(
+                    source_hydration_artifact_path=artifact_path, cache_directory=cache_directory
+                )
 
     async def test_offline_cache_miss_fails_without_network(self) -> None:
         async def unexpected_request(_: httpx.Request) -> httpx.Response:
