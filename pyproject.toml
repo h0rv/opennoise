@@ -157,6 +157,7 @@ build-evidence-graph-checkpoint = "python scripts/build_evidence_graph_projectio
 build-full-graph-signal = "python scripts/build_full_graph_signal.py --graph-database $OPENNOISE_EVIDENCE_GRAPH_DATABASE --graph-receipt $OPENNOISE_EVIDENCE_GRAPH_RECEIPT --construction-certificate $OPENNOISE_EVIDENCE_GRAPH_CONSTRUCTION_CERTIFICATE --cache-directory $OPENNOISE_FULL_GRAPH_SIGNAL_CACHE --output $OPENNOISE_FULL_GRAPH_SIGNAL_OUTPUT --receipt $OPENNOISE_FULL_GRAPH_SIGNAL_RECEIPT --run-report $OPENNOISE_FULL_GRAPH_SIGNAL_RUN_REPORT"
 certify-reconstruction-checkpoint = "python scripts/certify_reconstruction_checkpoint.py"
 evaluate-current-lineage-historical = "python scripts/evaluate_current_lineage_historical.py"
+audit-source-coverage = "python scripts/audit_source_coverage.py"
 build-cold-label-alignment = "python scripts/build_cold_label_alignment.py"
 build-release-group-label-vocabulary = "python scripts/build_release_group_label_vocabulary.py"
 audit-cold-label-alignment-historical = "python scripts/audit_cold_label_alignment_historical.py"

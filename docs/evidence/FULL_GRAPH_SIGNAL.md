@@ -22,6 +22,14 @@ co-occurrence multiplication laptop-safe, feature construction deterministically
 caps the number of train genres contributed by one artist (32 by default); the
 setting and resulting cache key are recorded in the artifact.
 
+Coverage labels have three intentionally different meanings. The complete
+multi-channel graph union is 2,570 seeds and 552,283 artists. The `2,435`
+field in the signal receipt is instead the active seed-column count in the
+**training matrix after the pair split**. Neither number is a count of direct
+artist observations: current direct graph claims cover 2,377 seeds and
+207,328 artists. Release-group support and reviewed alias context must remain
+separate evidence kinds when reporting the graph union or matrix coverage.
+
 Metrics are positive-only. They report Recall@1/10/25, score coverage, and
 abstention for complete held-out open membership pairs. A split-cold seed (no
 training membership support) is never assigned a fabricated score and is
@@ -55,7 +63,7 @@ from the replayable logical artifact.
 
 The receipt-bound cached run at
 `.cache/hierarchy-fusion-v1/full-graph-signal.json` has logical hash
-`be46df2abe0a861c19f93edf8ec0fd9815348e32ec7fab0f5f1648baf13d0916`.
+`3d14312e842b13ca4ea887088ad8c6c8a94922bcd4dde4e9092502c9a360c539`.
 It binds evidence-graph receipt
 `abb516066320039386517871eebb850d79f3c535c603411853f9c8eaf7dc7ce6` and
 construction certificate
@@ -66,7 +74,9 @@ The previously documented `6b992…` value has no recoverable matching artifact
 and is superseded, not a supported reproducibility claim.
 
 It streamed 5,591,670 claims into 1,773,093 complete pairs (1,416,893 train;
-356,200 held out), across 552,283 artists. The bounded evaluation sampled
+356,200 held out), across 552,283 artists in the multi-channel union. The
+2,435 active training-matrix seed columns are pair-split scope, not direct or
+factual seed coverage. The bounded evaluation sampled
 5,000 held-out artists: 7,403 anchored targets had 86.40% score coverage
 (1,007 abstentions), while the four split-cold targets were all abstained and
 never scored. The direct-only ablation covered only 34.24% of its anchored
