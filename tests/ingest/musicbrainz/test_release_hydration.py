@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ from opennoise.ingest.musicbrainz.release_hydration import (
     MusicBrainzHydrationError,
     MusicBrainzReleaseTrackHydrationAdapter,
     materialize_hydration_catalog,
+    select_representative_seeds,
     write_hydration_artifact,
 )
 from opennoise.serving.metadata.representatives import (
@@ -25,6 +27,7 @@ RELEASE_GROUP_ID = "10000000-0000-4000-8000-000000000001"
 RELEASE_ID = "30000000-0000-4000-8000-000000000001"
 TRACK_ID = "40000000-0000-4000-8000-000000000001"
 RECORDING_ID = "50000000-0000-4000-8000-000000000001"
+SECOND_RELEASE_GROUP_ID = "10000000-0000-4000-8000-000000000002"
 
 
 def _representatives() -> MetadataRepresentativeArtifact:
@@ -85,6 +88,46 @@ def _release_payload() -> dict[str, object]:
 
 
 class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
+    def test_default_settings_expand_two_selected_examples_per_genre(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(
+                HydrationSettings(cache_directory=Path(directory) / "cache").max_seeds_per_genre,
+                2,
+            )
+
+    def test_selects_multiple_existing_examples_per_genre_without_reordering(self) -> None:
+        artifact = MetadataRepresentativeArtifact(
+            run=RepresentativeRunProvenance(
+                model_run_id=1,
+                output_sha256="a" * 64,
+                input_provenance_ids=(1,),
+            ),
+            items=(
+                MetadataRepresentativeItem(
+                    genre_id="musicbrainz:genre:20000000-0000-4000-8000-000000000001",
+                    entity_kind="release_group",
+                    entity_id=f"musicbrainz:release-group:{SECOND_RELEASE_GROUP_ID}",
+                    display_name="Second Example",
+                    rank=2,
+                    direct_evidence_value=1.0,
+                    source_count=1,
+                    evidence_refs=("musicbrainz:fixture",),
+                ),
+                _representatives().items[0],
+            ),
+        )
+
+        selected = select_representative_seeds(artifact, max_genres=1, max_seeds_per_genre=2)
+
+        self.assertEqual(
+            tuple(item.entity_id for item in selected),
+            (
+                f"musicbrainz:release-group:{RELEASE_GROUP_ID}",
+                f"musicbrainz:release-group:{SECOND_RELEASE_GROUP_ID}",
+            ),
+        )
+        self.assertEqual(tuple(item.classification for item in selected), ("metadata_example",) * 2)
+
     async def test_hydrates_ordered_core_metadata_and_replays_cache_offline(self) -> None:
         requests: list[httpx.Request] = []
 
@@ -195,6 +238,54 @@ class MusicBrainzReleaseHydrationTests(PollingIsolatedAsyncioTestCase):
                 )
                 with self.assertRaisesRegex(MusicBrainzHydrationError, "offline replay cache miss"):
                     await adapter.hydrate(_representatives(), source_sha256="b" * 64)
+
+    async def test_failed_endpoint_is_negative_cached_for_identical_offline_abstention(
+        self,
+    ) -> None:
+        requests: list[httpx.Request] = []
+
+        async def failed_handler(request: httpx.Request) -> httpx.Response:
+            requests.append(request)
+            return httpx.Response(404)
+
+        async def unexpected_request(_: httpx.Request) -> httpx.Response:
+            self.fail("offline replay made an upstream request")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            settings = HydrationSettings(
+                cache_directory=root / "cache", max_genres=1, max_attempts=1
+            )
+            async with httpx.AsyncClient(transport=httpx.MockTransport(failed_handler)) as client:
+                adapter = MusicBrainzReleaseTrackHydrationAdapter(
+                    client,
+                    settings,
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
+                )
+                online = await adapter.hydrate_batch(_representatives(), source_sha256="b" * 64)
+            self.assertEqual(len(requests), 1)
+            self.assertEqual(len(online.failures), 1)
+            self.assertIn("invalid MusicBrainz metadata response", online.failures[0].message)
+            cache_entry = next((root / "cache").glob("*.json"))
+            cached = json.loads(cache_entry.read_bytes())
+            self.assertEqual(cached["record_kind"], "failure")
+            self.assertEqual(cached["failure_kind"], "invalid_metadata_response")
+            self.assertNotIn("payload", cached)
+
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(unexpected_request)
+            ) as client:
+                offline_adapter = MusicBrainzReleaseTrackHydrationAdapter(
+                    client,
+                    settings.model_copy(update={"offline": True}),
+                    user_agent="opennoise/0.1 (maintainer@example.test)",
+                )
+                offline = await offline_adapter.hydrate_batch(
+                    _representatives(), source_sha256="b" * 64
+                )
+            self.assertEqual(offline.artifact, online.artifact)
+            self.assertEqual(offline.failures, online.failures)
+            self.assertEqual(offline_adapter.upstream_request_count, 0)
 
 
 async def _no_sleep() -> None:

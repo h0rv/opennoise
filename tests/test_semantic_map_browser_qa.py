@@ -45,6 +45,8 @@ class SemanticMapBrowserQaTests(unittest.TestCase):
             self.source,
         )
         self.assertIn("artist detail back did not restore the genre discovery panel", self.source)
+        self.assertIn("artistBack.focus_url === artistSearchSelection.focus_url", self.source)
+        self.assertIn("browser acceptance summary contains false checks", self.source)
         self.assertIn("modern_rock_connection_contract", self.source)
         self.assertIn("rock_landmark_retained_after_plus", self.source)
         self.assertIn("modernRock.points === modernRock.edges + 1", self.source)

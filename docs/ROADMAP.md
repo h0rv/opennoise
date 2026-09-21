@@ -15,6 +15,11 @@ genres, never an unexplained similarity claim. See
 [static discovery status](evidence/STATIC_DISCOVERY_STATUS.md) for the current
 source coverage and exclusions.
 
+The local static export now searches artists as well as genres. An artist opens
+within a directly observed genre, with links back to that genre and to other
+artists observed there. The artist order uses shared direct genre counts, not
+a learned similarity model.
+
 The historical Every Noise result is a separate local reference. It preserves
 dated observed output for blind evaluation and does not provide inputs to the
 open model.
@@ -33,11 +38,14 @@ replay is separate. A fresh checkout can rebuild a selected bounded local vault
 from declared, network verifiable pins or restore a supplied source cache
 receipt. Raw bytes with local only or non redistributable policy never enter a
 portable store. The full release manifest source vault and derived database
-are not yet reproducible from this workflow.
+are not yet reproducible from this workflow. A separate local replay check now
+verifies all 62 raw objects named by the Phase 3 manifest, a total of
+1,541,940,352 bytes, and can restore a supplied verified object store. It does
+not yet ingest those objects into a new certified SQLite database.
 
 ## Static Pages delivery status
 
-The currently deployed static release is main commit `c8a908d`. Its certified
+The last documented deployed static release is main commit `c8a908d`. Its certified
 atlas has 2,945 placed nodes and 34,937 structural edges. The Pages manifest,
 HTML, JavaScript, JSON, asset names, and rendered focus links contain no
 retired identifier text. A clean `open_focus=item…` bookmark works, while an
@@ -62,6 +70,8 @@ than hidden by detached labels.
 
 The deployed fingerprinted export has been checked against the manifest,
 clean public IDs, the static discovery asset, and the same browser flows.
+The newer local artist-search export has passed the loopback browser gate, but
+its Cloudflare deployment has not been verified.
 
 Temporary rejected zoom/review worktrees and merged clean-ID worktrees were
 pruned on 2026-09-16. Active offline-atlas, discovery, and data worktrees are
@@ -71,13 +81,17 @@ retained until their own evidence gates conclude.
 
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
+- The local, non-publishing identity-bridge audit now separates 277 exact
+  label matches from 164 non-exact mappings needing review. It estimates
+  potential direct-observation coverage but does not change the public bridge.
 - Add independently evaluated, versioned promotion paths for derived
   memberships and similarity; keep direct observations separate until then.
-- Complete the MusicBrainz release and track catalog chain beyond the current
-  bounded 51 release and 491 track metadata slice.
+- Complete the MusicBrainz release and track catalog chain. A larger local
+  bounded run has 55 releases and 660 tracks, with offline-identical success
+  and failure replay; it is not yet the published catalog or a full crawl.
 - Keep metadata candidates separate from published metadata examples.
-- Add a reviewed, versioned genre candidate workflow before publishing any new
-  generated genre.
+- Review the 484 source-bound genre candidates now queued by the versioned
+  workflow, then design a separate publication gate. None is published.
 - Replace calibration only artist membership evidence with an independent
   public gold set before using it as a production quality gate.
 - Expand source cache replay until every selected release manifest input can be

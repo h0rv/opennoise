@@ -56,6 +56,7 @@ class HydrationSettings(_FrozenModel):
     """Bound one deterministic, sequential public API hydration run."""
 
     max_genres: int = Field(default=20, gt=0, le=100)
+    max_seeds_per_genre: int = Field(default=2, gt=0, le=3)
     max_releases_per_seed: int = Field(default=1, gt=0, le=3)
     max_attempts: int = Field(default=3, gt=0, le=5)
     cache_directory: Path
@@ -150,9 +151,19 @@ class MusicBrainzReleaseMetadata(_ApiModel):
 class CachedResponse(_FrozenModel):
     """Store a parsed safe projection instead of retaining an arbitrary API body."""
 
+    record_kind: Literal["success"] = "success"
     endpoint: str = Field(min_length=1)
     response_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     payload: dict[str, object]
+
+
+class CachedFailure(_FrozenModel):
+    """Retain one bounded safe endpoint failure for an offline-identical abstention."""
+
+    record_kind: Literal["failure"] = "failure"
+    endpoint: str = Field(min_length=1)
+    failure_kind: Literal["request_failed", "invalid_metadata_response"]
+    message: str = Field(min_length=1, max_length=500)
 
 
 class HydrationEvidence(_FrozenModel):
@@ -161,6 +172,7 @@ class HydrationEvidence(_FrozenModel):
     representative_kind: Literal["release_group", "recording"]
     representative_id: str = Field(min_length=1)
     representative_rank: int = Field(gt=0)
+    representative_classification: Literal["metadata_example"] = "metadata_example"
     endpoint: str = Field(min_length=1)
     response_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -280,9 +292,14 @@ def _representative_id(item: MetadataRepresentativeItem) -> UUID:
 
 
 def select_representative_seeds(
-    artifact: MetadataRepresentativeArtifact, *, max_genres: int
+    artifact: MetadataRepresentativeArtifact, *, max_genres: int, max_seeds_per_genre: int = 1
 ) -> tuple[MetadataRepresentativeItem, ...]:
-    """Choose one stable release-group-or-recording seed for each first N genres."""
+    """Choose bounded already-selected metadata examples without re-ranking them.
+
+    The representative artifact is the published-model selection boundary.  This
+    function only takes its first ordered examples per genre; it never reads the
+    broader candidate pool or turns a hydrated release into a published choice.
+    """
     ordered = sorted(
         artifact.items,
         key=lambda item: (
@@ -293,15 +310,16 @@ def select_representative_seeds(
         ),
     )
     selected: list[MetadataRepresentativeItem] = []
-    seen_genres: set[str] = set()
+    selected_per_genre: dict[str, int] = {}
     for item in ordered:
-        if item.genre_id in seen_genres:
+        already_selected = selected_per_genre.get(item.genre_id, 0)
+        if already_selected >= max_seeds_per_genre:
+            continue
+        if item.genre_id not in selected_per_genre and len(selected_per_genre) >= max_genres:
             continue
         _representative_id(item)
-        seen_genres.add(item.genre_id)
+        selected_per_genre[item.genre_id] = already_selected + 1
         selected.append(item)
-        if len(selected) == max_genres:
-            break
     return tuple(selected)
 
 
@@ -346,17 +364,29 @@ class MusicBrainzReleaseTrackHydrationAdapter:
     def _cache_path(self, endpoint: str) -> Path:
         return self._settings.cache_directory / f"{_endpoint_key(endpoint)}.json"
 
-    def _cached(self, endpoint: str, model: type[_ApiModel]) -> _ApiModel | None:
+    def _cached(self, endpoint: str, model: type[_ApiModel]) -> tuple[_ApiModel, str] | None:
         path = self._cache_path(endpoint)
         if not path.is_file():
             return None
         try:
             cached = CachedResponse.model_validate_json(path.read_bytes())
-        except (OSError, ValidationError, ValueError) as error:
+        except ValidationError:
+            try:
+                failed = CachedFailure.model_validate_json(path.read_bytes())
+            except (OSError, ValidationError, ValueError) as error:
+                raise MusicBrainzHydrationError(f"invalid hydration cache entry: {path}") from error
+            if failed.endpoint != endpoint:
+                raise MusicBrainzHydrationError("hydration cache endpoint mismatch") from None
+            raise MusicBrainzHydrationError(failed.message) from None
+        except (OSError, ValueError) as error:
             raise MusicBrainzHydrationError(f"invalid hydration cache entry: {path}") from error
         if cached.endpoint != endpoint:
             raise MusicBrainzHydrationError("hydration cache endpoint mismatch")
-        return model.model_validate_json(json.dumps(cached.payload, separators=(",", ":")))
+        try:
+            parsed = model.model_validate_json(json.dumps(cached.payload, separators=(",", ":")))
+        except (ValidationError, ValueError) as error:
+            raise MusicBrainzHydrationError(f"invalid hydration cache entry: {path}") from error
+        return parsed, cached.response_sha256
 
     def _cache(self, endpoint: str, response: bytes, model: _ApiModel) -> str:
         self._settings.cache_directory.mkdir(parents=True, exist_ok=True)
@@ -371,11 +401,29 @@ class MusicBrainzReleaseTrackHydrationAdapter:
         temporary.replace(path)
         return safe.response_sha256
 
+    def _cache_failure(
+        self,
+        endpoint: str,
+        *,
+        failure_kind: Literal["request_failed", "invalid_metadata_response"],
+        message: str,
+    ) -> None:
+        """Persist the safe adapter-level result, never a raw failed response body."""
+        self._settings.cache_directory.mkdir(parents=True, exist_ok=True)
+        failure = CachedFailure(
+            endpoint=endpoint,
+            failure_kind=failure_kind,
+            message=message,
+        )
+        path = self._cache_path(endpoint)
+        temporary = path.with_suffix(".tmp")
+        temporary.write_bytes(_canonical_bytes(failure))
+        temporary.replace(path)
+
     async def _fetch(self, endpoint: str, model: type[_ApiModel]) -> tuple[_ApiModel, str]:
         cached = self._cached(endpoint, model)
         if cached is not None:
-            cache = CachedResponse.model_validate_json(self._cache_path(endpoint).read_bytes())
-            return cached, cache.response_sha256
+            return cached
         if self._settings.offline:
             raise MusicBrainzHydrationError(f"offline replay cache miss: {endpoint}")
         for attempt in range(self._settings.max_attempts):
@@ -393,6 +441,7 @@ class MusicBrainzReleaseTrackHydrationAdapter:
             except httpx.HTTPError as error:
                 if attempt + 1 == self._settings.max_attempts:
                     message = f"MusicBrainz request failed: {endpoint}"
+                    self._cache_failure(endpoint, failure_kind="request_failed", message=message)
                     raise MusicBrainzHydrationError(message) from error
                 await self._sleep(float(2**attempt))
                 continue
@@ -414,6 +463,9 @@ class MusicBrainzReleaseTrackHydrationAdapter:
                 parsed = model.model_validate_json(response.content)
             except (httpx.HTTPStatusError, ValidationError, ValueError) as error:
                 message = f"invalid MusicBrainz metadata response: {endpoint}"
+                self._cache_failure(
+                    endpoint, failure_kind="invalid_metadata_response", message=message
+                )
                 raise MusicBrainzHydrationError(message) from error
             return parsed, self._cache(endpoint, response.content, parsed)
         raise AssertionError("bounded retry loop exhausted without returning")
@@ -423,7 +475,9 @@ class MusicBrainzReleaseTrackHydrationAdapter:
     ) -> MusicBrainzReleaseHydrationArtifact:
         """Fetch a deterministic, de-duplicated set of releases and their track listings."""
         seeds = select_representative_seeds(
-            representative_artifact, max_genres=self._settings.max_genres
+            representative_artifact,
+            max_genres=self._settings.max_genres,
+            max_seeds_per_genre=self._settings.max_seeds_per_genre,
         )
         selected_json = json.dumps(
             [item.model_dump(mode="json") for item in seeds],
@@ -458,6 +512,7 @@ class MusicBrainzReleaseTrackHydrationAdapter:
                         representative_kind=seed.entity_kind,
                         representative_id=seed.entity_id,
                         representative_rank=seed.rank,
+                        representative_classification=seed.classification,
                         endpoint=endpoint,
                         response_sha256=response_sha,
                     )
@@ -474,6 +529,9 @@ class MusicBrainzReleaseTrackHydrationAdapter:
                     representative_kind=evidence_by_release[release_id][0].representative_kind,
                     representative_id=evidence_by_release[release_id][0].representative_id,
                     representative_rank=evidence_by_release[release_id][0].representative_rank,
+                    representative_classification=(
+                        evidence_by_release[release_id][0].representative_classification
+                    ),
                     endpoint=endpoint,
                     response_sha256=response_sha,
                 ),
@@ -523,7 +581,9 @@ class MusicBrainzReleaseTrackHydrationAdapter:
     ) -> HydrationBatchResult:
         """Continue through the bounded deterministic seed list after individual failures."""
         seeds = select_representative_seeds(
-            representative_artifact, max_genres=self._settings.max_genres
+            representative_artifact,
+            max_genres=self._settings.max_genres,
+            max_seeds_per_genre=self._settings.max_seeds_per_genre,
         )
         releases: list[HydratedRelease] = []
         failures: list[HydrationFailure] = []

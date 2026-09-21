@@ -831,7 +831,7 @@ async function run() {
         artist_discovery_back: postPunkBackToGenre.detail_headings.includes('Artists in this genre'),
         artist_search: artistSearch.search_results,
         artist_search_deep_link: deepLinkedArtist.artist_url === searchedArtistId,
-        artist_search_back: !artistBack.artist_url && artistBack.focus_url === postPunk.focus_url,
+        artist_search_back: !artistBack.artist_url && artistBack.focus_url === artistSearchSelection.focus_url,
         modern_rock_connection_contract: modernRock.points === modernRock.edges + 1
           && modernRock.points === modernRock.detail_links + 1,
         rock_landmark_retained_after_plus: [rockL0, rockL1, rockL2, rockL3].every((frame) => frame.label_names.includes('rock')),
@@ -846,6 +846,10 @@ async function run() {
       diagnostics: { initial, buttonL1, buttonL2, buttonL3, buttonDeep, pinchL1, zoom1, zoom2, tinyPan, afterPan, focused, backed, postPunk, postPunkDiscovery, postPunkArtist, postPunkBackToGenre, artistSearch, artistSearchSelection, deepLinkedArtist, artistBack, rockOverview, rockL0, rockL1, rockL2, rockL3, rockDeep, capOverview, capSelected, deepestAtCap, rockTrajectory, modernRock, dark, mobile, mobilePinch },
       screenshots,
     };
+    const failedAcceptance = Object.entries(report.acceptance)
+      .filter(([, value]) => typeof value === 'boolean' && !value)
+      .map(([name]) => name);
+    requireCheck(failedAcceptance.length === 0, 'browser acceptance summary contains false checks', failedAcceptance);
     await writeFile(resolve(output), `${JSON.stringify(report, null, 2)}\n`);
   } finally {
     chrome.process_.kill("SIGTERM");
