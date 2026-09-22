@@ -232,6 +232,17 @@ gate is open.
   replay; public export remains policy-blocked. See [the publication-gate
   checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PUBLICATION_GATE_20260922.md) and
   [portable custody checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PROPER_GENRE_PORTABLE_CUSTODY_20260922.md).
+- A separate local-only canonical-name custody projection covers 164,404 of
+  198,409 exact direct artist MBIDs. It is not serving input or public export;
+  see [the canonical-name custody checkpoint](checkpoints/MUSICBRAINZ_DIRECT_CANONICAL_ARTIST_NAME_CUSTODY_20260922.md).
+- The exact direct artist and genre positive recovery check found 7,945
+  overlaps among 22,159 H3 positive pairs in the custody scope. It remains an
+  evaluation-only, positive-only diagnostic. See [the exact pair
+  checkpoint](checkpoints/MUSICBRAINZ_DIRECT_ARTIST_GENRE_H3_POSITIVE_RECOVERY_20260922.md).
+- The local custody-only delta report confirms 274 shared IDs and 423
+  candidate-only IDs. Of the candidate-only IDs, 412 are placed and 11 are
+  unplaced. It retains 139,398 candidate observations and abstains from artist
+  display names and static UI sizing. See [the delta checkpoint](checkpoints/MUSICBRAINZ_DIRECT_DISCOVERY_DELTA_20260922.md).
 - The conservative singleton peer candidate has no placed-to-placed edges, so
   it has no placed holdout or proposed coordinates. The separate minimum-two
   placed-peer diagnostic does not transfer to this candidate; see [the peer

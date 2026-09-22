@@ -39,14 +39,14 @@ static asset before treating the 423 as the evaluated cohort. Even then it
 only proves cohort identity and historical seed presence; an exact artist-MBID
 holdout or independently judged gold set is still required to evaluate quality.
 
-## Measured temporary receipt (2026-09-22)
+## Preliminary receipt (2026-09-22)
 
 The verified local custody receipt `cf91b9840cf53111c0efe1435467f36404b02dc871f65afd39c8dce7a159ad1b`
 was evaluated against static-discovery bytes
 `4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c`
 and historical semantic bytes
 `4f910231f6c098c1b75471071e7706a819b1617a0253ec574a09289751ddbb57`.
-The receipt logical hash is
+The temporary receipt logical hash was
 `6be45ecbf38bd555c387856a7bd899fa39f813d44eb45ae51a18efadc4195a8a`.
 
 It replayed 697 reconciliation-safe direct seed IDs, 344 current public seed
@@ -56,3 +56,20 @@ membership count; there were zero zero-count and zero missing-identity
 abstentions. This is expected given the retained H3 artifact has positive
 presence for 6,289 of 6,291 seed IDs. It confirms neither artist--genre claim
 correctness nor that the 423-seed lift is useful beyond labels.
+
+The final tracked custody receipt hash is
+`a6f874aea86f66519801b4b61f89d8150a4102a8c9266ed8f9ad31ceebf54bd9`.
+The final H3 identity-smoke report hash is
+`f6738cea3736774343f0bba72eca0a03d101f56b09b52ed198c7c535ed4c3ddd`.
+
+## Exact artist and genre positive recovery
+
+`scripts/evaluate_musicbrainz_direct_artist_genre_h3_positive_recovery.py`
+checks exact `(seed_id, MusicBrainz artist MBID)` pairs only. It verifies the
+direct custody object first. It then verifies the bridge and H3 hashes. The
+H3 genre key is a one-to-one source ID crosswalk, not a genre name or alias.
+
+The report is positive-only. H3 pairs absent from the direct set are not
+negative evidence. The result does not measure precision and cannot approve a
+release. Its soundness depends on the verified source-ID crosswalk and the
+accepted Spotify-to-MusicBrainz bridge being unique.
