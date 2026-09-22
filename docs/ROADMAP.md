@@ -243,6 +243,10 @@ gate is open.
   top-10 recovery check: 1,840 of 4,075 positive reference edges. It is
   positive-only and cannot provide precision; see [the peer holdout
   checkpoint](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_PEER_H3_HOLDOUT_20260922.md).
+- A bounded source-only audit found 13 candidate pairs where at least 1,000
+  shared artists are at least 90% one exact sorted seed-membership signature.
+  These require review and do not suppress candidates or delete facts; see
+  [the signature concentration checkpoint](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_SIGNATURE_CONCENTRATION_20260922.md).
 - The local custody-only delta report confirms 274 shared IDs and 423
   candidate-only IDs. Of the candidate-only IDs, 412 are placed and 11 are
   unplaced. It retains 139,398 candidate observations and abstains from artist

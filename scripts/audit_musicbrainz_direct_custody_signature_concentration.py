@@ -1,0 +1,29 @@
+"""Print the bounded local exact artist-signature concentration audit."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from opennoise.peers.signature_concentration import build_signature_concentration_report
+
+
+def main() -> int:
+    """Validate the graph receipt and print a deterministic JSON report."""
+    parser = argparse.ArgumentParser(
+        prog="audit-musicbrainz-direct-custody-signature-concentration"
+    )
+    parser.add_argument("--database", type=Path, required=True)
+    parser.add_argument("--receipt", type=Path, required=True)
+    arguments = parser.parse_args()
+    report = build_signature_concentration_report(
+        database=arguments.database, receipt_path=arguments.receipt
+    )
+    sys.stdout.write(json.dumps(report.model_dump(mode="json"), sort_keys=True) + "\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
