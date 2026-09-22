@@ -227,9 +227,11 @@ gate is open.
   see [the proper-genre checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PROPER_GENRE_FRONTIER_20260921.md).
 - The newer all-seed MusicBrainz direct-claim gate measures 697
   reconciliation-safe seeds, including 423 not in the current 344-genre static
-  discovery asset. It is local-only, depends on the ignored 682 MiB source
-  archive rather than portable custody, and remains policy-blocked from public
-  export; see [the publication-gate checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PUBLICATION_GATE_20260922.md).
+  discovery asset. Its compact filtered projection is now portable custody,
+  but the original ignored 682 MiB archive is still required for raw-source
+  replay; public export remains policy-blocked. See [the publication-gate
+  checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PUBLICATION_GATE_20260922.md) and
+  [portable custody checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PROPER_GENRE_PORTABLE_CUSTODY_20260922.md).
 - The conservative singleton peer candidate has no placed-to-placed edges, so
   it has no placed holdout or proposed coordinates. The separate minimum-two
   placed-peer diagnostic does not transfer to this candidate; see [the peer
