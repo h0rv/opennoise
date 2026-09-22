@@ -649,6 +649,16 @@ class _RawRecord:
     sha256: str
 
 
+@dataclass(frozen=True, slots=True)
+class RawMusicBrainzArtistRecord:
+    """One bounded record with LF-stripped content hash and source ordinal."""
+
+    ordinal: int
+    content_sha256: str
+    byte_length: int
+    payload: bytes | None
+
+
 def _iter_raw_records(stream: BinaryLineReader, limits: SourceLimits) -> Iterator[_RawRecord]:
     count = 0
     while first := stream.readline(limits.max_record_bytes + 2):
@@ -672,7 +682,11 @@ def _iter_raw_records(stream: BinaryLineReader, limits: SourceLimits) -> Iterato
         if count > limits.max_records:
             raise MusicBrainzAdapterError("MusicBrainz dump exceeds max_records")
         yield _RawRecord(
-            payload=bytes(captured) if byte_length <= limits.max_record_bytes else None,
+            payload=(
+                bytes(captured[:-1] if captured.endswith(b"\n") else captured)
+                if byte_length <= limits.max_record_bytes
+                else None
+            ),
             byte_length=byte_length,
             sha256=digest.hexdigest(),
         )
@@ -721,6 +735,26 @@ def _iter_raw_archive(
 
 def _iter_raw_artist_archive(path: Path, limits: SourceLimits) -> Iterator[_RawRecord]:
     yield from _iter_raw_archive(path, limits, member_name="artist")
+
+
+def iter_artist_archive_raw_records(
+    path: Path, limits: SourceLimits
+) -> Iterator[RawMusicBrainzArtistRecord]:
+    """Stream bounded ``mbdump/artist`` records through the shared archive boundary.
+
+    This is for source-specific projections that need a narrower JSON model than
+    the full artist catalog adapter. Each content hash and payload covers record
+    bytes with the terminating LF excluded. It shares the same tar, member, size,
+    line, record-hash, ordinal, and schema checks without interpreting
+    supplementary genre or tag fields.
+    """
+    for ordinal, raw in enumerate(_iter_raw_artist_archive(path, limits)):
+        yield RawMusicBrainzArtistRecord(
+            ordinal=ordinal,
+            content_sha256=raw.sha256,
+            byte_length=raw.byte_length,
+            payload=raw.payload,
+        )
 
 
 def iter_artist_jsonl(stream: BinaryLineReader, limits: AdapterLimits) -> Iterator[AdaptedArtist]:
