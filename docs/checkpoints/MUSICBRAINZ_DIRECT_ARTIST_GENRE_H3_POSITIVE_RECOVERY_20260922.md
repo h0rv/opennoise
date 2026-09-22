@@ -24,7 +24,7 @@ pairs, 22,159 distinct H3 positive pairs in the 697-seed custody scope, and
 Macro positive recovery was `0.3345636272517754`, with 654 of 695 H3-positive
 seeds having a hit. Two custody seeds had no H3 positive and were abstentions.
 
-The completed command was:
+An equivalent rerun can use this unused output path:
 
 ```sh
 .venv/bin/python scripts/evaluate_musicbrainz_direct_artist_genre_h3_positive_recovery.py \
@@ -39,7 +39,7 @@ The completed command was:
   --expected-h3-raw-sha256 863a513a6da89735a69373a46ba58f6975eddb5d065964c577dfcacf18fffe20 \
   --expected-h3-database-sha256 098dc8780b3f4a8daf1240d36bec7eb7be563dc2275d998dbc7509c3fb1859df \
   --historical-database .cache/historical-custody-vault/historical-h3/membership/sha256/098dc8780b3f4a8daf1240d36bec7eb7be563dc2275d998dbc7509c3fb1859df.sqlite \
-  --output /tmp/musix-exact-pair-final.json
+  --output /tmp/opennoise-exact-pair-final.json
 ```
 
 The script refuses to replace an existing output file.

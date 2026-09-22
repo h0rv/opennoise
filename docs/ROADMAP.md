@@ -239,6 +239,10 @@ gate is open.
   overlaps among 22,159 H3 positive pairs in the custody scope. It remains an
   evaluation-only, positive-only diagnostic. See [the exact pair
   checkpoint](checkpoints/MUSICBRAINZ_DIRECT_ARTIST_GENRE_H3_POSITIVE_RECOVERY_20260922.md).
+- The separately constructed direct-custody peer graph has one terminal H3
+  top-10 recovery check: 1,840 of 4,075 positive reference edges. It is
+  positive-only and cannot provide precision; see [the peer holdout
+  checkpoint](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_PEER_H3_HOLDOUT_20260922.md).
 - The local custody-only delta report confirms 274 shared IDs and 423
   candidate-only IDs. Of the candidate-only IDs, 412 are placed and 11 are
   unplaced. It retains 139,398 candidate observations and abstains from artist
@@ -248,6 +252,10 @@ gate is open.
   figure is only an uncompressed minimal candidate-shape estimate, not a
   production asset or publication authorization; see [the name-join
   checkpoint](checkpoints/MUSICBRAINZ_DIRECT_NAME_JOIN_FRONTIER_20260922.md).
+- A read-only static-packaging audit distinguishes that exact 12.2 MB minimal
+  JSONL boundary from the much larger current-v2 extrapolation and proposes
+  bounded lazy genre shards only for a future authorized release; see [the
+  packaging frontier](checkpoints/MUSICBRAINZ_DIRECT_STATIC_PACKAGING_FRONTIER_20260922.md).
 - The conservative singleton peer candidate has no placed-to-placed edges, so
   it has no placed holdout or proposed coordinates. The separate minimum-two
   placed-peer diagnostic does not transfer to this candidate; see [the peer
