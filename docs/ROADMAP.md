@@ -98,6 +98,11 @@ byte-identical replay, certification, or publication authorization; see the
 The comparator remains strict: the sealed completion provenance cannot be
 deterministically replayed because its adapter-byte hash and runtime telemetry
 are different; see the [replay diagnosis](checkpoints/PHASE3_V3_LISTENBRAINZ_PROVENANCE_REPLAY_DIAGNOSIS_20260921.md).
+Future offline candidate replays instead emit a v2 semantic-completion receipt
+that binds source artifacts, fixed-window configuration, and result counts,
+with adapter-build and runtime measurements separately auditable. This changes
+neither v1 receipts nor the strict historical comparator; see the
+[future receipt checkpoint](checkpoints/PHASE3_LISTENBRAINZ_FUTURE_SEMANTIC_COMPLETION_RECEIPT_20260922.md).
 
 The bounded replay comparison found equal logical source and evidence
 projections, but candidate source metadata and the public derived stage differ.
@@ -220,6 +225,11 @@ gate is open.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130
   rows. The 544-seed loose-tag frontier remains nonfactual review evidence;
   see [the proper-genre checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PROPER_GENRE_FRONTIER_20260921.md).
+- The newer all-seed MusicBrainz direct-claim gate measures 697
+  reconciliation-safe seeds, including 423 not in the current 344-genre static
+  discovery asset. It is local-only, depends on the ignored 682 MiB source
+  archive rather than portable custody, and remains policy-blocked from public
+  export; see [the publication-gate checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PUBLICATION_GATE_20260922.md).
 - The conservative singleton peer candidate has no placed-to-placed edges, so
   it has no placed holdout or proposed coordinates. The separate minimum-two
   placed-peer diagnostic does not transfer to this candidate; see [the peer
@@ -252,8 +262,11 @@ gate is open.
   The local-only [exact-ID static-overlap checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_STATIC_OVERLAP_20260921.md)
   measures 121 public-direct and 101 static-discovery artist overlaps without transferring memberships.
   A local v2 static-export gate now verifies source policy, report quality, and
-  exact MBIDs before producing 961 credit-metadata rows for 116 artists; it is
-  [not deployed or portable yet](checkpoints/MUSICBRAINZ_CREDIT_STATIC_EXPORT_GATE_20260921.md).
+  exact MBIDs before producing 961 credit-metadata rows for 116 artists. Its
+  exact candidate and source projections are now
+  [portable under custody](checkpoints/MUSICBRAINZ_CREDIT_PORTABLE_CUSTODY_20260922.md),
+  but the asset is not deployed: a real UI approval binding, artist-detail
+  integration, and browser-certified build remain required.
 - Keep metadata candidates separate from published metadata examples.
 - Review the 484 source-bound genre candidates now queued by the versioned
   workflow. The local promotion preflight binds review and triage receipts,

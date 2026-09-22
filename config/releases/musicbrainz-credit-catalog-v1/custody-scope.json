@@ -1,0 +1,10 @@
+{
+  "revision": "musicbrainz-credit-catalog-custody-scope-v1",
+  "decision": "custody_only",
+  "approved_policy_key": "musicbrainz-core-metadata-hydration",
+  "approved_use": "musicbrainz_credit_metadata_artist_detail",
+  "source_credit_sha256": "6454e5bfa4b4062e0bb7303629e0b5380af9997518ce386b896de69597496b7d",
+  "content_policy": "core_metadata_only_no_audio_preview_artwork_or_genres",
+  "no_name_inference": true,
+  "no_membership_or_discovery_claims": true
+}

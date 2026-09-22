@@ -8,10 +8,12 @@ import unittest
 from asyncio import run
 from contextlib import closing
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from pydantic import HttpUrl, TypeAdapter
 
+from opennoise.models.listenbrainz import ListenBrainzCompletionReceipt
 from opennoise.models.sources import DownloadSource
 from opennoise.pipeline.source_vault_replay import (
     HistoricalDeclarationReplayObject,
@@ -24,6 +26,7 @@ from opennoise.pipeline.source_vault_replay import (
     _ingest_listenbrainz_candidate,
     _ingest_wikidata_objects,
     _listenbrainz_joint_input,
+    _ListenBrainzCandidateIngest,
     _offline_wikidata_source,
     load_report,
     replay_combined_source_vault_to_candidate_database,
@@ -522,13 +525,21 @@ class SourceVaultReplayTests(unittest.TestCase):
 
             def ingest_listenbrainz(
                 *_args: object, derived_vault_path: Path, **_kwargs: object
-            ) -> tuple[int, int, str]:
+            ) -> _ListenBrainzCandidateIngest:
                 joint = inputs[-1]
                 digest = str(joint["artifact_sha256"])
                 target = derived_vault_path / "raw" / "sha256" / digest
                 target.parent.mkdir(parents=True)
                 target.write_bytes(joint_payload)
-                return 17, 2, digest
+                return _ListenBrainzCandidateIngest(
+                    accepted=17,
+                    quarantined=2,
+                    aggregate_sha256=digest,
+                    completion_receipt=ListenBrainzCompletionReceipt.model_construct(
+                        semantic=SimpleNamespace(semantic_identity_sha256="0" * 64),
+                        runtime=SimpleNamespace(semantic_identity_sha256="0" * 64),
+                    ),
+                )
 
             with (
                 patch(
@@ -581,7 +592,7 @@ class SourceVaultReplayTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     historical_candidate.revision,
-                    "source-vault-historical-declaration-combined-candidate-replay-v1",
+                    "source-vault-historical-declaration-combined-candidate-replay-v2",
                 )
                 self.assertEqual(
                     historical_candidate.historical_declarations, historical_declarations

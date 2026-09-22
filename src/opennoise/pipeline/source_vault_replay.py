@@ -10,6 +10,7 @@ import shutil
 import sqlite3
 import tempfile
 from contextlib import closing
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, Literal
@@ -21,8 +22,13 @@ from opennoise.catalog.entities import EntityProjector
 from opennoise.catalog.registry import ProjectorRegistry
 from opennoise.db import Database
 from opennoise.models import FrozenModel
-from opennoise.models.listenbrainz import JointListenArtifact, ListenBrainzAggregationConfig
-from opennoise.models.pipeline import SourceLimits, SourceRecord
+from opennoise.models.catalog import ArtistCoListenRunProjection
+from opennoise.models.listenbrainz import (
+    JointListenArtifact,
+    ListenBrainzAggregationConfig,
+    ListenBrainzCompletionReceipt,
+)
+from opennoise.models.pipeline import ParsedSourceRecord, SourceLimits, SourceRecord
 from opennoise.models.sources import DownloadResult, DownloadSource
 from opennoise.pipeline.manifest import load_download_source
 from opennoise.pipeline.multi_source import (
@@ -147,6 +153,15 @@ class CandidateListenBrainzReplayReport(FrozenModel):
         return self
 
 
+class CandidateListenBrainzReplayReportV2(CandidateListenBrainzReplayReport):
+    """Future candidate receipt with deterministic completion identity evidence."""
+
+    revision: Literal["source-vault-listenbrainz-candidate-replay-v2"] = (
+        "source-vault-listenbrainz-candidate-replay-v2"
+    )
+    completion_receipt: ListenBrainzCompletionReceipt
+
+
 class CandidateCombinedReplayReport(FrozenModel):
     """Receipt for one fresh, offline candidate containing both replayable inputs."""
 
@@ -195,6 +210,15 @@ class CandidateCombinedReplayReport(FrozenModel):
         ):
             raise ValueError("combined replay requires seven ListenBrainz daily objects")
         return self
+
+
+class CandidateCombinedReplayReportV2(CandidateCombinedReplayReport):
+    """Future combined receipt that preserves the v1 serialized contract."""
+
+    revision: Literal["source-vault-combined-candidate-replay-v2"] = (
+        "source-vault-combined-candidate-replay-v2"
+    )
+    completion_receipt: ListenBrainzCompletionReceipt
 
 
 class HistoricalDeclarationReplayObject(FrozenModel):
@@ -247,6 +271,26 @@ class HistoricalDeclarationCombinedReplayReport(CandidateCombinedReplayReport):
 
     @model_validator(mode="after")
     def check_historical_declarations(self) -> HistoricalDeclarationCombinedReplayReport:
+        """Bind every fresh source policy to the preflight declaration receipt."""
+        if (
+            self.historical_declarations.release_id,
+            self.historical_declarations.manifest_sha256,
+            self.historical_declarations.object_count,
+        ) != (self.release_id, self.manifest_sha256, self.verified_object_count):
+            raise ValueError("historical declaration receipt does not match combined replay")
+        return self
+
+
+class HistoricalDeclarationCombinedReplayReportV2(CandidateCombinedReplayReportV2):
+    """Future historical-declaration candidate receipt with completion evidence."""
+
+    revision: Literal["source-vault-historical-declaration-combined-candidate-replay-v2"] = (
+        "source-vault-historical-declaration-combined-candidate-replay-v2"
+    )
+    historical_declarations: HistoricalDeclarationReplayReport
+
+    @model_validator(mode="after")
+    def check_historical_declarations(self) -> HistoricalDeclarationCombinedReplayReportV2:
         """Bind every fresh source policy to the preflight declaration receipt."""
         if (
             self.historical_declarations.release_id,
@@ -909,6 +953,16 @@ def _require_generated_joint_matches(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class _ListenBrainzCandidateIngest:
+    """One completed candidate ingest plus its future replay receipt."""
+
+    accepted: int
+    quarantined: int
+    aggregate_sha256: str
+    completion_receipt: ListenBrainzCompletionReceipt
+
+
 def _ingest_listenbrainz_candidate(  # noqa: PLR0913
     daily: tuple[ReleaseManifestReplayInput, ...],
     sources: tuple[DownloadSource, ...],
@@ -917,7 +971,7 @@ def _ingest_listenbrainz_candidate(  # noqa: PLR0913
     candidate_database: Path,
     source_manifest_path: Path,
     derived_vault_path: Path,
-) -> tuple[int, int, str]:
+) -> _ListenBrainzCandidateIngest:
     """Run the seven retained dailies through the existing joint adapter offline."""
     downloads = tuple(
         DownloadResult(
@@ -949,8 +1003,16 @@ def _ingest_listenbrainz_candidate(  # noqa: PLR0913
         timeout_seconds=7_200,
     )
 
+    completion: ArtistCoListenRunProjection | None = None
+
     def records(_: tuple[DownloadResult, ...]) -> Iterator[SourceRecord]:
-        return adapter.iter_joint_records(artifacts, limits)
+        nonlocal completion
+        for record in adapter.iter_joint_records(artifacts, limits):
+            if isinstance(record, ParsedSourceRecord) and isinstance(
+                record.projection, ArtistCoListenRunProjection
+            ):
+                completion = record.projection
+            yield record
 
     summary = run_multi_artifact_pipeline_from_verified_downloads_sync(
         sources,
@@ -967,7 +1029,14 @@ def _ingest_listenbrainz_candidate(  # noqa: PLR0913
             limits=limits,
         ),
     )
-    return summary.accepted, summary.quarantined, summary.aggregate_sha256
+    if completion is None:
+        raise SourceVaultReplayError("ListenBrainz candidate produced no completion projection")
+    return _ListenBrainzCandidateIngest(
+        accepted=summary.accepted,
+        quarantined=summary.quarantined,
+        aggregate_sha256=summary.aggregate_sha256,
+        completion_receipt=adapter.completion_receipt(artifacts, completion),
+    )
 
 
 def replay_listenbrainz_source_vault_to_candidate_database(
@@ -977,7 +1046,7 @@ def replay_listenbrainz_source_vault_to_candidate_database(
     *,
     manifest_path: Path,
     source_manifest_path: Path,
-) -> CandidateListenBrainzReplayReport:
+) -> CandidateListenBrainzReplayReportV2:
     """Create an offline, non-certified candidate DB from seven retained dailies.
 
     The source vault and sealed database are read-only inputs.  The generated
@@ -1001,7 +1070,7 @@ def replay_listenbrainz_source_vault_to_candidate_database(
     staging_database = staging / candidate_database.name
     derived_vault = staging / "derived-vault"
     try:
-        accepted, quarantined, aggregate_sha256 = _ingest_listenbrainz_candidate(
+        ingest = _ingest_listenbrainz_candidate(
             daily,
             sources,
             vault_path=vault_path,
@@ -1009,7 +1078,7 @@ def replay_listenbrainz_source_vault_to_candidate_database(
             source_manifest_path=resolved_source_manifest,
             derived_vault_path=derived_vault,
         )
-        _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
+        _require_generated_joint_matches(joint, derived_vault, ingest.aggregate_sha256)
         with closing(sqlite3.connect(staging_database)) as connection:
             connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             connection.execute("PRAGMA journal_mode = DELETE")
@@ -1024,7 +1093,7 @@ def replay_listenbrainz_source_vault_to_candidate_database(
         schema_row = connection.execute("PRAGMA user_version").fetchone()
     if schema_row is None:
         raise SourceVaultReplayError("candidate database has no schema version")
-    return CandidateListenBrainzReplayReport(
+    return CandidateListenBrainzReplayReportV2(
         release_id=release_id,
         manifest_sha256=manifest_sha256,
         database_path=candidate_database,
@@ -1044,8 +1113,9 @@ def replay_listenbrainz_source_vault_to_candidate_database(
             )
             for item in daily
         ),
-        accepted_record_count=accepted,
-        quarantined_record_count=quarantined,
+        completion_receipt=ingest.completion_receipt,
+        accepted_record_count=ingest.accepted,
+        quarantined_record_count=ingest.quarantined,
         blockers=(
             (
                 "the historical declaration replay proves the sealed declaration hashes, but "
@@ -1067,7 +1137,7 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
     manifest_path: Path,
     source_manifest_path: Path,
     progress: Callable[[str], None] | None = None,
-) -> CandidateCombinedReplayReport:
+) -> CandidateCombinedReplayReportV2:
     """Replay all 54 Wikidata objects and seven ListenBrainz dailies into one DB.
 
     The sealed joint artifact is rehashed as part of the full vault receipt and
@@ -1110,7 +1180,7 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
             )
         )
         _report_progress(progress, "Wikidata replay complete; replaying ListenBrainz daily objects")
-        accepted, quarantined, aggregate_sha256 = _ingest_listenbrainz_candidate(
+        ingest = _ingest_listenbrainz_candidate(
             daily,
             sources,
             vault_path=vault_path,
@@ -1121,7 +1191,7 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
         _report_progress(
             progress, "ListenBrainz persistence returned; validating sealed joint receipt"
         )
-        _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
+        _require_generated_joint_matches(joint, derived_vault, ingest.aggregate_sha256)
         _report_progress(progress, "rechecking source-vault receipt after replay")
         _require_verified_vault_objects(report, vault_path)
         _report_progress(progress, "sealed joint receipt matched; checkpointing candidate database")
@@ -1141,7 +1211,7 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
         schema_row = connection.execute("PRAGMA user_version").fetchone()
     if schema_row is None:
         raise SourceVaultReplayError("candidate database has no schema version")
-    return CandidateCombinedReplayReport(
+    return CandidateCombinedReplayReportV2(
         release_id=release_id,
         manifest_sha256=manifest_sha256,
         database_path=candidate_database,
@@ -1169,8 +1239,9 @@ def replay_combined_source_vault_to_candidate_database(  # noqa: PLR0913
         ),
         sealed_joint_artifact_sha256=joint.artifact_sha256,
         sealed_joint_artifact_byte_size=joint.byte_size,
-        accepted_record_count=accepted,
-        quarantined_record_count=quarantined,
+        completion_receipt=ingest.completion_receipt,
+        accepted_record_count=ingest.accepted,
+        quarantined_record_count=ingest.quarantined,
         blockers=(
             (
                 "the historical declaration replay proves the sealed declaration hashes, but "
@@ -1193,7 +1264,7 @@ def replay_historical_declaration_combined_source_vault_to_candidate_database(  
     manifest_path: Path,
     source_manifest_path: Path,
     progress: Callable[[str], None] | None = None,
-) -> HistoricalDeclarationCombinedReplayReport:
+) -> HistoricalDeclarationCombinedReplayReportV2:
     """Build one fresh candidate with reconstructed historical source policies.
 
     This explicit mode is intentionally separate from the local-only replay.
@@ -1247,7 +1318,7 @@ def replay_historical_declaration_combined_source_vault_to_candidate_database(  
             )
         )
         _report_progress(progress, "Wikidata replay complete; replaying ListenBrainz daily objects")
-        accepted, quarantined, aggregate_sha256 = _ingest_listenbrainz_candidate(
+        ingest = _ingest_listenbrainz_candidate(
             daily,
             sources,
             vault_path=vault_path,
@@ -1255,14 +1326,14 @@ def replay_historical_declaration_combined_source_vault_to_candidate_database(  
             source_manifest_path=resolved_source_manifest,
             derived_vault_path=derived_vault,
         )
-        _require_generated_joint_matches(joint, derived_vault, aggregate_sha256)
+        _require_generated_joint_matches(joint, derived_vault, ingest.aggregate_sha256)
         _report_progress(progress, "rechecking source-vault receipt after replay")
         _require_verified_vault_objects(report, vault_path)
         with closing(sqlite3.connect(staging_database)) as connection:
             connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             connection.execute("PRAGMA journal_mode = DELETE")
         schema_version = _candidate_database_schema_version(staging_database)
-        candidate = HistoricalDeclarationCombinedReplayReport(
+        candidate = HistoricalDeclarationCombinedReplayReportV2(
             release_id=release_id,
             manifest_sha256=manifest_sha256,
             database_path=candidate_database,
@@ -1293,8 +1364,9 @@ def replay_historical_declaration_combined_source_vault_to_candidate_database(  
             ),
             sealed_joint_artifact_sha256=joint.artifact_sha256,
             sealed_joint_artifact_byte_size=joint.byte_size,
-            accepted_record_count=accepted,
-            quarantined_record_count=quarantined,
+            completion_receipt=ingest.completion_receipt,
+            accepted_record_count=ingest.accepted,
+            quarantined_record_count=ingest.quarantined,
             blockers=(
                 (
                     "historical declarations match their sealed digests, but candidate provenance "

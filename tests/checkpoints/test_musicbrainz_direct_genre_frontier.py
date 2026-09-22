@@ -12,7 +12,10 @@ from opennoise.checkpoints.musicbrainz_direct_genre_frontier import (
     DirectGenreMembershipCandidate,
     audit_direct_genre_frontier,
     build_direct_genre_membership_candidate,
+    build_direct_musicbrainz_publication_gate,
     verify_direct_genre_membership_candidate,
+    verify_direct_musicbrainz_publication_gate,
+    verify_direct_musicbrainz_publication_gate_from_inputs,
 )
 
 _SHA = "a" * 64
@@ -166,6 +169,101 @@ class DirectGenreFrontierTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "String should match pattern"):
             DirectGenreMembershipCandidate.model_validate_json(json.dumps(malformed))
 
+    def test_all_seed_publication_gate_keeps_policy_closed_and_measures_layout_overlap(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory_name:
+            directory = Path(directory_name)
+            seed_ids = [f"seed-{index}" for index in range(6291)]
+            layout = _write(
+                directory / "layout.json",
+                {"output_sha256": _SHA, "unplaced": [{"seed_id": "seed-1"}]},
+            )
+            reconciliation = _write(
+                directory / "reconciliation.json",
+                {
+                    "output_sha256": _SHA,
+                    "dispositions": [
+                        _reconciliation_row(seed_id, f"genre-{seed_id}") for seed_id in seed_ids
+                    ],
+                },
+            )
+            target = _write(
+                directory / "target.json",
+                {
+                    "output_sha256": _SHA,
+                    "evidence": [
+                        _evidence("seed-0", facet="genre", target_identity="genre-seed-0"),
+                        _evidence("seed-1", facet="genre", target_identity="genre-seed-1"),
+                        _evidence("seed-1", facet="tag", target_identity="tag:example"),
+                    ],
+                },
+            )
+            gate = build_direct_musicbrainz_publication_gate(
+                layout_path=layout, reconciliation_path=reconciliation, seed_target_path=target
+            )
+            verify_direct_musicbrainz_publication_gate_from_inputs(
+                gate,
+                layout_path=layout,
+                reconciliation_path=reconciliation,
+                seed_target_path=target,
+            )
+            target.write_text(
+                target.read_text(encoding="utf-8").replace("genre-seed-0", "other"),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "does not replay"):
+                verify_direct_musicbrainz_publication_gate_from_inputs(
+                    gate,
+                    layout_path=layout,
+                    reconciliation_path=reconciliation,
+                    seed_target_path=target,
+                )
+
+        verify_direct_musicbrainz_publication_gate(gate)
+        self.assertEqual(gate.proper_genre_membership_count, 2)
+        self.assertEqual(gate.proper_genre_frontier_seed_count, 2)
+        self.assertEqual(gate.placed_frontier_seed_count, 1)
+        self.assertEqual(gate.unplaced_frontier_seed_count, 1)
+        self.assertEqual(len(gate.claim_sample), 2)
+        self.assertFalse(gate.public_export_authorized)
+        self.assertFalse(gate.source_adapter_export_allowed)
+        self.assertEqual(gate.tag_rows_used, 0)
+
+    def test_publication_gate_deduplicates_after_the_sample_cap(self) -> None:
+        with tempfile.TemporaryDirectory() as directory_name:
+            directory = Path(directory_name)
+            seed_ids = [f"seed-{index}" for index in range(6291)]
+            layout = _write(directory / "layout.json", {"output_sha256": _SHA, "unplaced": []})
+            reconciliation = _write(
+                directory / "reconciliation.json",
+                {
+                    "output_sha256": _SHA,
+                    "dispositions": [
+                        _reconciliation_row(seed_id, f"genre-{seed_id}") for seed_id in seed_ids
+                    ],
+                },
+            )
+            evidence = [
+                _evidence(
+                    "seed-0",
+                    facet="genre",
+                    target_identity="genre-seed-0",
+                    artist=f"00000000-0000-0000-0000-{index:012d}",
+                )
+                for index in range(65)
+            ]
+            target = _write(
+                directory / "target.json",
+                {"output_sha256": _SHA, "evidence": [*evidence, evidence[-1]]},
+            )
+            gate = build_direct_musicbrainz_publication_gate(
+                layout_path=layout, reconciliation_path=reconciliation, seed_target_path=target
+            )
+        self.assertEqual(gate.proper_genre_membership_count, 65)
+        self.assertEqual(gate.source_proper_genre_membership_count, 65)
+        self.assertEqual(len(gate.claim_sample), 64)
+
 
 def _report_for_evidence(evidence: list[dict[str, str]]) -> DirectGenreFrontierReport:
     with tempfile.TemporaryDirectory() as directory_name:
@@ -217,17 +315,19 @@ def _evidence(  # noqa: PLR0913
     match_kind: str = "exact",
     source_sha: str = _SHA,
     target_namespace: str | None = None,
+    artist: str = _ARTIST,
 ) -> dict[str, str]:
     return {
         "seed_source_item_id": seed_id,
         "seed_name": "example",
-        "artist_id": _ARTIST,
+        "artist_id": artist,
         "facet": facet,
         "match_kind": match_kind,
         "target_identity": target_identity,
         "target_name": "example",
         "target_namespace": target_namespace
         or ("musicbrainz_genre_id" if facet == "genre" else "musicbrainz_tag_name"),
-        "source_record_id": f"musicbrainz:artist:{_ARTIST}",
+        "source_record_id": f"musicbrainz:artist:{artist}",
         "source_record_sha256": source_sha,
+        "evidence_ref": f"musicbrainz:seed-target:{source_sha}:{facet}:{target_identity}",
     }

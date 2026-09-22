@@ -13,5 +13,9 @@ It produced 961 rows: 82 releases and 879 recordings, for 116 artists with
 credit rows out of 1,126 visible artists. The temporary output hash was
 `13da60e6767bab1c3c1168e5a4a93d0add1695c012152512163d8d7269505d7c`.
 
-It remains local-only. Production requires release-custody of the candidate,
-a tracked purpose approval, then browser-certified artist-detail integration.
+The gate output remains local-only. Release custody of the exact candidate and
+safe source projections is now complete; see the
+[portable custody checkpoint](MUSICBRAINZ_CREDIT_PORTABLE_CUSTODY_20260922.md).
+Production still requires a real UI approval binding the public database, v2
+discovery asset, and final credit asset, followed by artist-detail integration
+and browser-certified build. No static asset has been deployed.

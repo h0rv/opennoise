@@ -22,22 +22,40 @@ class StaticDeliveryContractTests(unittest.TestCase):
         self.assertEqual(poe["executor"], {"type": "simple"})
         self.assertEqual(set(tasks), {"sync", "bootstrap", "check", "dev", "build", "deploy"})
         self.assertEqual(
-            tasks["sync"], {"cmd": "uv sync --locked", "env": {"UV_CACHE_DIR": ".cache/uv"}}
+            tasks["sync"],
+            {
+                "cmd": "uv sync --locked",
+                "use_exec": True,
+                "env": {"UV_CACHE_DIR": ".cache/uv"},
+            },
+        )
+        self.assertEqual(
+            tasks["bootstrap"],
+            {"cmd": ".venv/bin/opennoise bootstrap-everynoise", "use_exec": True},
         )
         self.assertEqual(tasks["dev"], ".venv/bin/python scripts/run_dev.py")
-        self.assertEqual(tasks["build"], ".venv/bin/python scripts/certify_static_pages.py")
+        self.assertEqual(
+            tasks["build"],
+            {"cmd": ".venv/bin/python scripts/certify_static_pages.py", "use_exec": True},
+        )
+        self.assertTrue(tasks["check"]["use_exec"])
         self.assertEqual(
             tasks["check"]["env"], {"TMPDIR": ".cache/test-tmp", "UV_CACHE_DIR": ".cache/uv"}
         )
-        self.assertIn("set -e", tasks["check"]["shell"])
-        self.assertIn("set -e", tasks["deploy"]["shell"])
+        self.assertIn("set -e", tasks["check"]["cmd"])
+        self.assertTrue(tasks["deploy"]["use_exec"])
+        self.assertIn("set -e", tasks["deploy"]["cmd"])
         self.assertIn(
             ".venv/bin/python scripts/certify_static_pages.py --sealed-deploy",
-            tasks["deploy"]["shell"],
+            tasks["deploy"]["cmd"],
         )
         self.assertIn(
             "wrangler pages deploy dist --project-name opennoise --branch main",
-            tasks["deploy"]["shell"],
+            tasks["deploy"]["cmd"],
+        )
+        self.assertLess(
+            tasks["deploy"]["cmd"].index("certify_static_pages.py --sealed-deploy"),
+            tasks["deploy"]["cmd"].index("wrangler pages deploy"),
         )
         self.assertEqual(
             tasks["deploy"]["env"], {"WRANGLER_LOG_PATH": ".cache/wrangler-deploy.log"}

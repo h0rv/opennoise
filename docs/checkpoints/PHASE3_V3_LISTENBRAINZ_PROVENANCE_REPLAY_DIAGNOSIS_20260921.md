@@ -58,13 +58,12 @@ listens seen, 993,589 with artist MBIDs, 79,673 artists, 40,782 user windows,
 8,420,452 candidate pairs, 30,903 emitted pairs, and one quarantined record.
 
 The sealed adapter source is recoverable as the parent of commit
-`d889e85017a7264d0d6dfeef9f4aa0d17d0f8fb9`, at
-`src/musix/sources/listenbrainz.py`. Its file digest is exactly the sealed
-adapter-build value. Its only content changes relative to the current
-`src/opennoise/sources/listenbrainz.py` are six `musix` to `opennoise` import
-renames. Since the adapter intentionally hashes its own full module bytes,
-this rename changes its adapter-build value and consequently the completion
-external ID. Separately, the projection intentionally samples wall-clock
+`d889e85017a7264d0d6dfeef9f4aa0d17d0f8fb9`. Its file digest is exactly the
+sealed adapter-build value. Its only content changes relative to the current
+adapter are six internal package-import renames. Since the adapter
+intentionally hashes its own full module bytes, those renames change its
+adapter-build value and consequently the completion external ID. Separately,
+the projection intentionally samples wall-clock
 elapsed time and process peak RSS, neither of which can be recovered from the
 source vault or replayed deterministically.
 

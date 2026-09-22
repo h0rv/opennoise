@@ -13,7 +13,7 @@ import json
 import re
 import uuid
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 import ijson
 from pydantic import Field, model_validator
@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _MB_ARTIST_RECORD_PREFIX = "musicbrainz:artist:"
+_RETAINED_SEED_COUNT: Final = 6_291
+_CLAIM_SAMPLE_LIMIT: Final = 64
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +45,7 @@ class SourceEvidence:
     target_namespace: str
     source_record_id: str
     source_record_sha256: str
+    evidence_ref: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,12 +144,96 @@ class DirectGenreMembershipCandidate(FrozenModel):
         return self
 
 
+class DirectMusicBrainzPublicationRow(FrozenModel):
+    """One source-reconstructable proper-genre observation for policy review.
+
+    This is intentionally not a ``PublicModelInput`` row.  The retained
+    extractor is still marked non-exportable by the model adapter, so these
+    rows are a review payload rather than a promotion path.
+    """
+
+    seed_id: str = Field(min_length=1)
+    artist_mbid: str = Field(
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    )
+    musicbrainz_genre_id: str = Field(min_length=1)
+    source_record_id: str = Field(min_length=1)
+    source_record_sha256: Sha256
+    source_evidence_ref: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _has_exact_artist_record(self) -> DirectMusicBrainzPublicationRow:
+        if self.source_record_id != f"{_MB_ARTIST_RECORD_PREFIX}{self.artist_mbid}":
+            raise ValueError("publication row source record is not the exact artist record")
+        return self
+
+
+class DirectMusicBrainzPublicationGate(FrozenModel):
+    """A portable, local-only gate for a possible direct-claim publication.
+
+    Its rows are deliberately restricted to literal artist-record genre facts.
+    Tags and release/context evidence have no representation in this model.
+    """
+
+    revision: Literal["musicbrainz-direct-publication-gate-v1"]
+    publication_scope: Literal["local_only_policy_gate"]
+    public_export_authorized: Literal[False] = False
+    source_adapter_export_allowed: Literal[False] = False
+    historical_assignments_read: Literal[False] = False
+    release_or_peer_rows_used: Literal[0] = 0
+    tag_rows_used: Literal[0] = 0
+    seed_target_byte_sha256: Sha256
+    seed_target_output_sha256: Sha256
+    reconciliation_byte_sha256: Sha256
+    reconciliation_output_sha256: Sha256
+    layout_byte_sha256: Sha256
+    layout_output_sha256: Sha256
+    retained_seed_count: Literal[6291] = 6291
+    source_proper_genre_frontier_seed_count: int = Field(ge=0, le=6291)
+    source_proper_genre_membership_count: int = Field(ge=0)
+    source_proper_genre_artist_mbid_count: int = Field(ge=0)
+    proper_genre_frontier_seed_count: int = Field(ge=0, le=6291)
+    proper_genre_membership_count: int = Field(ge=0)
+    proper_genre_artist_mbid_count: int = Field(ge=0)
+    placed_seed_count: int = Field(ge=0, le=6291)
+    unplaced_seed_count: int = Field(ge=0, le=6291)
+    placed_frontier_seed_count: int = Field(ge=0, le=6291)
+    unplaced_frontier_seed_count: int = Field(ge=0, le=6291)
+    claims_sha256: Sha256
+    claim_sample: tuple[DirectMusicBrainzPublicationRow, ...] = Field(max_length=64)
+    policy_blockers: tuple[str, ...] = Field(min_length=1)
+    output_sha256: Sha256
+
+    @model_validator(mode="after")
+    def _replays_counts_and_policy(self) -> DirectMusicBrainzPublicationGate:
+        if len(self.claim_sample) > self.proper_genre_membership_count:
+            raise ValueError("publication sample exceeds the counted claim set")
+        if len(set(self.claim_sample)) != len(self.claim_sample):
+            raise ValueError("publication sample rows must be unique")
+        if self.placed_seed_count + self.unplaced_seed_count != self.retained_seed_count:
+            raise ValueError("placed and unplaced seed counts do not cover retained seeds")
+        if self.proper_genre_frontier_seed_count > self.source_proper_genre_frontier_seed_count:
+            raise ValueError("identity-safe frontier cannot exceed source proper-genre frontier")
+        if self.proper_genre_membership_count > self.source_proper_genre_membership_count:
+            raise ValueError("identity-safe claims cannot exceed source proper-genre claims")
+        if (
+            self.placed_frontier_seed_count + self.unplaced_frontier_seed_count
+            != self.proper_genre_frontier_seed_count
+        ):
+            raise ValueError("placed-map overlap does not cover the direct frontier")
+        return self
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _canonical_json(value: object) -> bytes:
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
 
 
 def _json_object(path: Path, *, label: str) -> dict[str, object]:
@@ -237,6 +324,8 @@ def _canonical_genre_identities(reconciliation: dict[str, object]) -> dict[str, 
 def _parse_evidence(row: object) -> SourceEvidence | None:
     if not isinstance(row, dict):
         raise TypeError("seed-target evidence rows must be objects")
+    raw_evidence_ref = row.get("evidence_ref")
+    evidence_ref = raw_evidence_ref if isinstance(raw_evidence_ref, str) else ""
     match (
         row.get("seed_source_item_id"),
         row.get("seed_name"),
@@ -272,6 +361,7 @@ def _parse_evidence(row: object) -> SourceEvidence | None:
                 target_namespace,
                 source_record_id,
                 source_record_sha256,
+                evidence_ref,
             )
         case _:
             return None
@@ -471,6 +561,7 @@ def build_direct_genre_membership_candidate(
             _is_strict_direct_row(evidence, facet="genre")
             and evidence.target_namespace == "musicbrainz_genre_id"
             and evidence.target_identity in canonical_genres_by_id[evidence.seed_id]
+            and evidence.evidence_ref
         ):
             continue
         row = DirectGenreMembershipCandidateRow(
@@ -524,6 +615,154 @@ def verify_direct_genre_membership_candidate(candidate: DirectGenreMembershipCan
     DirectGenreMembershipCandidate.model_validate_json(candidate.model_dump_json())
     if candidate.output_sha256 != direct_genre_membership_candidate_sha256(candidate):
         raise ValueError("direct genre membership candidate output hash does not replay")
+
+
+def direct_musicbrainz_publication_gate_sha256(candidate: DirectMusicBrainzPublicationGate) -> str:
+    """Return the self-hash for a policy gate without trusting its stored value."""
+    payload = candidate.model_dump(mode="json", exclude={"output_sha256"})
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def build_direct_musicbrainz_publication_gate(
+    *, layout_path: Path, reconciliation_path: Path, seed_target_path: Path
+) -> DirectMusicBrainzPublicationGate:
+    """Build a fail-closed all-seed direct-genre publication review payload.
+
+    Every accepted row is independently reconstructable from the pinned
+    seed-target object: an exact UUID artist record, a literal genre facet,
+    matching spelling, and a genre identifier already attached to that stable
+    seed by reconciliation.  The method neither reads nor represents tags,
+    releases, peer evidence, inferred rows, or history.
+    """
+    layout = _json_object(layout_path, label="layout")
+    reconciliation = _json_object(reconciliation_path, label="reconciliation")
+    canonical_genres_by_id = _canonical_genre_identities(reconciliation)
+    if len(canonical_genres_by_id) != _RETAINED_SEED_COUNT:
+        raise ValueError("reconciliation must contain the retained 6,291-seed universe")
+    unplaced = _unplaced_ids(layout)
+    if not unplaced <= set(canonical_genres_by_id):
+        raise ValueError("layout unplaced IDs must be present in reconciliation")
+    placed = set(canonical_genres_by_id) - set(unplaced)
+    claim_digest = hashlib.sha256()
+    source_membership_count = 0
+    source_frontier: set[str] = set()
+    source_artists: set[str] = set()
+    source_claim_keys: set[bytes] = set()
+    membership_count = 0
+    frontier: set[str] = set()
+    artists: set[str] = set()
+    sample: list[DirectMusicBrainzPublicationRow] = []
+    for raw_row in _iter_evidence(seed_target_path):
+        evidence = _parse_evidence(raw_row)
+        if evidence is None or evidence.seed_id not in canonical_genres_by_id:
+            continue
+        if not (
+            _is_strict_direct_row(evidence, facet="genre")
+            and evidence.target_namespace == "musicbrainz_genre_id"
+            and evidence.evidence_ref
+        ):
+            continue
+        row = DirectMusicBrainzPublicationRow(
+            seed_id=evidence.seed_id,
+            artist_mbid=evidence.artist_mbid,
+            musicbrainz_genre_id=evidence.target_identity,
+            source_record_id=evidence.source_record_id,
+            source_record_sha256=evidence.source_record_sha256,
+            source_evidence_ref=evidence.evidence_ref,
+        )
+        row_bytes = _canonical_json(row.model_dump(mode="json"))
+        row_key = hashlib.sha256(row_bytes).digest()
+        if row_key in source_claim_keys:
+            continue
+        source_claim_keys.add(row_key)
+        source_membership_count += 1
+        source_frontier.add(evidence.seed_id)
+        source_artists.add(evidence.artist_mbid)
+        if evidence.target_identity not in canonical_genres_by_id[evidence.seed_id]:
+            continue
+        # The pinned source object's byte hash makes its streaming order part
+        # of the receipt.  This avoids retaining hundreds of thousands of rows
+        # merely to sort them before hashing.
+        claim_digest.update(row_bytes)
+        claim_digest.update(b"\n")
+        membership_count += 1
+        frontier.add(row.seed_id)
+        artists.add(row.artist_mbid)
+        if len(sample) < _CLAIM_SAMPLE_LIMIT:
+            sample.append(row)
+    base = DirectMusicBrainzPublicationGate(
+        revision="musicbrainz-direct-publication-gate-v1",
+        publication_scope="local_only_policy_gate",
+        public_export_authorized=False,
+        source_adapter_export_allowed=False,
+        historical_assignments_read=False,
+        release_or_peer_rows_used=0,
+        tag_rows_used=0,
+        seed_target_byte_sha256=_sha256(seed_target_path),
+        seed_target_output_sha256=_streamed_output_sha256(seed_target_path, label="seed target"),
+        reconciliation_byte_sha256=_sha256(reconciliation_path),
+        reconciliation_output_sha256=_required_sha256(reconciliation, label="reconciliation"),
+        layout_byte_sha256=_sha256(layout_path),
+        layout_output_sha256=_required_sha256(layout, label="layout"),
+        retained_seed_count=_RETAINED_SEED_COUNT,
+        source_proper_genre_frontier_seed_count=len(source_frontier),
+        source_proper_genre_membership_count=source_membership_count,
+        source_proper_genre_artist_mbid_count=len(source_artists),
+        proper_genre_frontier_seed_count=len(frontier),
+        proper_genre_membership_count=membership_count,
+        proper_genre_artist_mbid_count=len(artists),
+        placed_seed_count=len(placed),
+        unplaced_seed_count=len(unplaced),
+        placed_frontier_seed_count=len(frontier & placed),
+        unplaced_frontier_seed_count=len(frontier & set(unplaced)),
+        claims_sha256=claim_digest.hexdigest(),
+        claim_sample=tuple(sample),
+        policy_blockers=(
+            (
+                "The MusicBrainz model adapter declares its retained source artifact "
+                "export_allowed=false."
+            ),
+            "This gate does not itself authorize public export or alter release policy.",
+            "Source rows without a reconciled MusicBrainz genre ID remain excluded.",
+            "A separate source-license and release-policy decision must approve any promotion.",
+        ),
+        output_sha256="0" * 64,
+    )
+    return base.model_copy(
+        update={"output_sha256": direct_musicbrainz_publication_gate_sha256(base)}
+    )
+
+
+def verify_direct_musicbrainz_publication_gate(candidate: DirectMusicBrainzPublicationGate) -> None:
+    """Verify self-consistency and retain the no-public-export policy boundary."""
+    DirectMusicBrainzPublicationGate.model_validate_json(candidate.model_dump_json())
+    if candidate.output_sha256 != direct_musicbrainz_publication_gate_sha256(candidate):
+        raise ValueError("direct MusicBrainz publication gate output hash does not replay")
+
+
+def verify_direct_musicbrainz_publication_gate_from_inputs(
+    candidate: DirectMusicBrainzPublicationGate,
+    *,
+    layout_path: Path,
+    reconciliation_path: Path,
+    seed_target_path: Path,
+) -> None:
+    """Rebuild a detached receipt from its local source objects and compare it exactly.
+
+    The small receipt is portable, but verification is intentionally not: it
+    requires the pinned retained source archive and therefore cannot imply
+    fresh-checkout custody or publication readiness.
+    """
+    verify_direct_musicbrainz_publication_gate(candidate)
+    rebuilt = build_direct_musicbrainz_publication_gate(
+        layout_path=layout_path,
+        reconciliation_path=reconciliation_path,
+        seed_target_path=seed_target_path,
+    )
+    if rebuilt != candidate:
+        raise ValueError("direct MusicBrainz publication gate does not replay from inputs")
 
 
 def report_json(report: DirectGenreFrontierReport) -> str:

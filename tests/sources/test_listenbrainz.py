@@ -115,6 +115,7 @@ class ListenBrainzIncrementalAdapterTests(unittest.TestCase):
                     ),
                     member_name=f"dump/listens/{offset}.listens",
                 )
+
                 snapshot_date = first_date + timedelta(days=offset)
                 source = _pipeline_source(path, f"listenbrainz_joint_{offset}").model_copy(
                     update={
@@ -166,6 +167,78 @@ class ListenBrainzIncrementalAdapterTests(unittest.TestCase):
                         SourceLimits(max_records=100, max_decompression_ratio=1024.0),
                     )
                 )
+
+    def test_completion_receipt_keeps_semantic_identity_stable_across_runtime_changes(
+        self,
+    ) -> None:
+        """Build-path and process telemetry are auditable without changing semantic replay."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts: list[JointListenArtifact] = []
+            first_date = date(2026, 8, 1)
+            for offset in range(7):
+                path = root / f"{offset}.tar.zst"
+                _archive(
+                    path,
+                    (
+                        _listen(1 + offset * 3, 61, [ARTIST_A]),
+                        _listen(1 + offset * 3, 62, [ARTIST_B]),
+                        _listen(2 + offset * 3, 63, [ARTIST_A]),
+                        _listen(2 + offset * 3, 64, [ARTIST_B]),
+                    ),
+                )
+                snapshot_date = first_date + timedelta(days=offset)
+                source = _pipeline_source(path, f"listenbrainz_joint_{offset}").model_copy(
+                    update={"snapshot": f"{100 + offset}-{snapshot_date:%Y%m%d}-000003-incremental"}
+                )
+                artifacts.append(
+                    JointListenArtifact(
+                        source=source,
+                        path=path,
+                        sequence=100 + offset,
+                        snapshot_date=snapshot_date,
+                    )
+                )
+            adapter = ListenBrainzIncrementalAdapter(
+                ListenBrainzAggregationConfig(
+                    window_seconds=60,
+                    minimum_distinct_users=2,
+                    minimum_window_start=60,
+                    maximum_window_start=60,
+                    max_active_windows=1,
+                )
+            )
+            records = list(
+                adapter.iter_joint_records(
+                    tuple(artifacts),
+                    SourceLimits(max_records=100, max_decompression_ratio=1024.0),
+                )
+            )
+
+        completion_record = records[-1]
+        assert isinstance(completion_record, ParsedSourceRecord)
+        completion = completion_record.projection
+        assert isinstance(completion, ArtistCoListenRunProjection)
+        first = adapter.completion_receipt(tuple(artifacts), completion)
+        changed_import_path_and_runtime = completion.model_copy(
+            update={
+                # The adapter hashes its module bytes, so an import-path rename changes this.
+                "adapter_build_sha256": "f" * 64,
+                "elapsed_ms": completion.elapsed_ms + 1,
+                "peak_rss_bytes": completion.peak_rss_bytes + 4096,
+            }
+        )
+        second = adapter.completion_receipt(tuple(artifacts), changed_import_path_and_runtime)
+
+        self.assertEqual(
+            first.semantic.semantic_identity_sha256,
+            second.semantic.semantic_identity_sha256,
+        )
+        self.assertNotEqual(first.runtime.telemetry_sha256, second.runtime.telemetry_sha256)
+        self.assertNotEqual(
+            first.runtime.adapter_build_sha256,
+            second.runtime.adapter_build_sha256,
+        )
 
     def test_counts_each_pair_once_per_user_window_and_emits_no_user_data(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

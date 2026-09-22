@@ -16,11 +16,16 @@ from uuid import UUID
 import zstandard
 from pydantic import ValidationError
 
+from opennoise.common import canonical_json, sha256_hex
 from opennoise.models.catalog import ArtistCoListenProjection, ArtistCoListenRunProjection
 from opennoise.models.listenbrainz import (
     JointListenArtifact,
     ListenBrainzAggregationConfig,
+    ListenBrainzCompletionInput,
+    ListenBrainzCompletionReceipt,
     ListenBrainzListen,
+    ListenBrainzRuntimeTelemetryReceipt,
+    ListenBrainzSemanticCompletionReceipt,
 )
 from opennoise.models.pipeline import (
     ParsedSourceRecord,
@@ -426,6 +431,79 @@ class ListenBrainzIncrementalAdapter:
             elapsed_ms=int((time.monotonic() - started) * 1000),
             peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
         )
+
+    def completion_receipt(
+        self,
+        artifacts: tuple[JointListenArtifact, ...],
+        completion: ArtistCoListenRunProjection,
+    ) -> ListenBrainzCompletionReceipt:
+        """Issue a future replay receipt without folding runtime facts into its identity.
+
+        The old completion projection remains unchanged for sealed-history comparison.
+        New callers can use this versioned receipt to compare source bytes, fixed-window
+        policy, and semantic counters independently from build and process telemetry.
+        """
+        inputs = tuple(
+            ListenBrainzCompletionInput(
+                source_key=artifact.source.id,
+                snapshot_ref=f"{artifact.source.id}:{artifact.source.snapshot}",
+                artifact_sha256=artifact.source.verified_sha256(),
+                byte_size=artifact.source.expected_bytes,
+                sequence=artifact.sequence,
+            )
+            for artifact in artifacts
+        )
+        semantic_identity_fields = {
+            "revision": "listenbrainz-semantic-completion-v1",
+            "aggregation_version": completion.aggregation_version,
+            "configuration": self.config.model_dump(mode="json"),
+            "configuration_sha256": completion.configuration_sha256,
+            "inputs": [item.model_dump(mode="json") for item in inputs],
+            "listens_seen": completion.listens_seen,
+            "listens_with_artist_mbid": completion.listens_with_artist_mbid,
+            "distinct_artists": completion.distinct_artists,
+            "user_windows": completion.user_windows,
+            "candidate_pairs": completion.candidate_pairs,
+            "emitted_pairs": completion.emitted_pairs,
+            "quarantined_records": completion.quarantined_records,
+            "minimum_listened_at": completion.minimum_listened_at,
+            "maximum_listened_at": completion.maximum_listened_at,
+        }
+        semantic = ListenBrainzSemanticCompletionReceipt(
+            aggregation_version=completion.aggregation_version,
+            configuration=self.config,
+            configuration_sha256=completion.configuration_sha256,
+            inputs=inputs,
+            listens_seen=completion.listens_seen,
+            listens_with_artist_mbid=completion.listens_with_artist_mbid,
+            distinct_artists=completion.distinct_artists,
+            user_windows=completion.user_windows,
+            candidate_pairs=completion.candidate_pairs,
+            emitted_pairs=completion.emitted_pairs,
+            quarantined_records=completion.quarantined_records,
+            minimum_listened_at=completion.minimum_listened_at,
+            maximum_listened_at=completion.maximum_listened_at,
+            semantic_identity_sha256=sha256_hex(canonical_json(semantic_identity_fields)),
+        )
+        runtime_fields = {
+            "revision": "listenbrainz-runtime-telemetry-v1",
+            "semantic_identity_sha256": semantic.semantic_identity_sha256,
+            "adapter_key": completion.adapter_key,
+            "adapter_version": completion.adapter_version,
+            "adapter_build_sha256": completion.adapter_build_sha256,
+            "elapsed_ms": completion.elapsed_ms,
+            "peak_rss_bytes": completion.peak_rss_bytes,
+        }
+        runtime = ListenBrainzRuntimeTelemetryReceipt(
+            semantic_identity_sha256=semantic.semantic_identity_sha256,
+            adapter_key=completion.adapter_key,
+            adapter_version=completion.adapter_version,
+            adapter_build_sha256=completion.adapter_build_sha256,
+            elapsed_ms=completion.elapsed_ms,
+            peak_rss_bytes=completion.peak_rss_bytes,
+            telemetry_sha256=sha256_hex(canonical_json(runtime_fields)),
+        )
+        return ListenBrainzCompletionReceipt(semantic=semantic, runtime=runtime)
 
     def iter_records(
         self,

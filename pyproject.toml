@@ -95,20 +95,24 @@ all = "error"
 executor = { type = "simple" }
 
 [tool.poe.tasks]
-sync = { cmd = "uv sync --locked", env = { UV_CACHE_DIR = ".cache/uv" } }
-bootstrap = ".venv/bin/opennoise bootstrap-everynoise"
-check = { shell = """
+sync = { cmd = "uv sync --locked", use_exec = true, env = { UV_CACHE_DIR = ".cache/uv" } }
+bootstrap = { cmd = ".venv/bin/opennoise bootstrap-everynoise", use_exec = true }
+check = { cmd = """
+sh -ec '
 set -e
 .venv/bin/ruff format --check .
 .venv/bin/ruff check .
 .venv/bin/ty check
 mkdir -p .cache/test-tmp
 .venv/bin/python -m unittest discover -s tests -q
-""", env = { TMPDIR = ".cache/test-tmp", UV_CACHE_DIR = ".cache/uv" } }
+'
+""", use_exec = true, env = { TMPDIR = ".cache/test-tmp", UV_CACHE_DIR = ".cache/uv" } }
 dev = ".venv/bin/python scripts/run_dev.py"
-build = ".venv/bin/python scripts/certify_static_pages.py"
-deploy = { shell = """
+build = { cmd = ".venv/bin/python scripts/certify_static_pages.py", use_exec = true }
+deploy = { cmd = """
+sh -ec '
 set -e
 .venv/bin/python scripts/certify_static_pages.py --sealed-deploy
 wrangler pages deploy dist --project-name opennoise --branch main
-""", env = { WRANGLER_LOG_PATH = ".cache/wrangler-deploy.log" } }
+'
+""", use_exec = true, env = { WRANGLER_LOG_PATH = ".cache/wrangler-deploy.log" } }
