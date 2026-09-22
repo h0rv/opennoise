@@ -243,6 +243,11 @@ gate is open.
   candidate-only IDs. Of the candidate-only IDs, 412 are placed and 11 are
   unplaced. It retains 139,398 candidate observations and abstains from artist
   display names and static UI sizing. See [the delta checkpoint](checkpoints/MUSICBRAINZ_DIRECT_DISCOVERY_DELTA_20260922.md).
+- The exact-MBID local name-join checkpoint finds canonical names for 115,269
+  of 139,398 distinct candidate-only direct artist pairs (82.69%). Its 12.2 MB
+  figure is only an uncompressed minimal candidate-shape estimate, not a
+  production asset or publication authorization; see [the name-join
+  checkpoint](checkpoints/MUSICBRAINZ_DIRECT_NAME_JOIN_FRONTIER_20260922.md).
 - The conservative singleton peer candidate has no placed-to-placed edges, so
   it has no placed holdout or proposed coordinates. The separate minimum-two
   placed-peer diagnostic does not transfer to this candidate; see [the peer
@@ -301,6 +306,9 @@ gate is open.
   is diagnostic, not independent gold or a release gate.
 - A separate Last.fm ArtistTags2007 blind review packet contains 100 positive-tag
   questions. The rows remain unlabeled, and missing tags are not negative claims.
+- A second local-only [exact-MBID/literal-v2 review packet](checkpoints/LASTFM_ARTISTTAGS2007_STATIC_GENRE_REVIEW.md)
+  binds the deployed static-v2 asset and source-row hashes. It is unreviewed,
+  abstaining candidate selection only, not a genre bridge, label set, or gate.
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
   Historical declaration replay does not provide that database certification.

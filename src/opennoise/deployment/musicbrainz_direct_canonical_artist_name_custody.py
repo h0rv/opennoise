@@ -357,6 +357,14 @@ def verify_direct_canonical_artist_name_custody(
         )
 
 
+def iter_verified_direct_canonical_artist_names(
+    receipt: DirectCanonicalArtistNameCustodyReceipt, *, object_store: Path
+) -> Iterator[CanonicalArtistName]:
+    """Yield name facts only after the complete custody object verifies."""
+    verify_direct_canonical_artist_name_custody(receipt, object_store=object_store)
+    yield from _stream_names(object_store / receipt.names_object_key)
+
+
 def verify_direct_canonical_artist_name_custody_from_inputs(  # noqa: PLR0913 - replay inputs are explicit.
     receipt: DirectCanonicalArtistNameCustodyReceipt,
     *,
