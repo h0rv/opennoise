@@ -9,9 +9,11 @@ zoom, and dark mode.
 
 Static discovery is a separate, lazy JSON asset, not a backend API. The current
 sealed public catalog has 4,948 export- and display-authorized direct Wikidata
-P136 observations. An exact, one-to-one label bridge puts 2,900 of them on 260
-map genres for 1,008 artists. Artist overlap is explicitly shared direct mapped
-genres, never an unexplained similarity claim. See
+P136 observations. The deployed combined v2 bridge puts 3,859 of them on 344
+map genres for 1,126 artists: the 260 exact-label v1 genres plus 84
+QID-position additions. The earlier exact-label v1 baseline put 2,900
+observations on 260 map genres for 1,008 artists. Artist overlap is explicitly
+shared direct mapped genres, never an unexplained similarity claim. See
 [static discovery status](evidence/STATIC_DISCOVERY_STATUS.md) for the current
 source coverage and exclusions.
 
@@ -93,6 +95,9 @@ However, one of 37,017 normalized provenance binding fingerprints differs, so
 full semantic replay and certification remain unproven. This is not
 byte-identical replay, certification, or publication authorization; see the
 [semantic comparison correction](checkpoints/PHASE3_V3_SEMANTIC_COMPARATOR_DISCREPANCY_20260921.md).
+The comparator remains strict: the sealed completion provenance cannot be
+deterministically replayed because its adapter-byte hash and runtime telemetry
+are different; see the [replay diagnosis](checkpoints/PHASE3_V3_LISTENBRAINZ_PROVENANCE_REPLAY_DIAGNOSIS_20260921.md).
 
 The bounded replay comparison found equal logical source and evidence
 projections, but candidate source metadata and the public derived stage differ.
@@ -105,16 +110,17 @@ names, 2,945 positions, or 3,346 abstentions. The local-only adapter audit
 reads these facts without writing output; it remains pending final integration
 review and is neither a map overlay nor a release input. See [the bridge audit](checkpoints/PHASE3_V3_STATIC_MAP_BRIDGE_AUDIT_20260921.md).
 
-A separate sealed-public-DB direct-bridge candidate abstains from 25 catalog
+A historical sealed-public-DB direct-bridge precursor abstained from 25 catalog
 genres that resolve to multiple positioned seeds. Its remaining local-only
 frontier contains 84 newly positioned direct genres, 862 grouped artist-genre
 memberships across 959 retained P136 observations, and 118 net-new artists with
-exactly one authorized MusicBrainz ID. It is not
-published or promoted; see [the pinned checkpoint](checkpoints/PUBLIC_DIRECT_BRIDGE_FRONTIER_20260921.md).
+exactly one authorized MusicBrainz ID. This precursor was not itself published
+or promoted; see [the pinned checkpoint](checkpoints/PUBLIC_DIRECT_BRIDGE_FRONTIER_20260921.md).
 
-The production direct-bridge stage-one receipt now pins 84 positioned genres
-and 862 grouped direct memberships. It writes no static asset and is not
-exported, certified, or deployed; see the [receipt](checkpoints/PUBLIC_DIRECT_PRODUCTION_BRIDGE_RECEIPT_20260921.md).
+The historical production direct-bridge stage-one receipt pinned 84 positioned
+genres and 862 grouped direct memberships. That receipt wrote no static asset
+and was not itself exported, certified, or deployed; see the
+[receipt](checkpoints/PUBLIC_DIRECT_PRODUCTION_BRIDGE_RECEIPT_20260921.md).
 
 The clean local chain uses QID map hash
 `dd5cf7cf33898a76c1e85e95351e25e7303933f4524e2776097c20fd0d73a449` and
@@ -224,8 +230,6 @@ gate is open.
   auto-promote exact matches or change the public bridge. A deterministic
   human-review packet now ranks all 441 edges by potential direct-observation
   lift and carries source-bound artist evidence. It does not publish anything.
-- Add the tracked promotion receipt, public v2 schema, certifier, and browser
-  gates before any release or deployment.
 - Add independently evaluated, versioned promotion paths for derived
   memberships and similarity; keep direct observations separate until then.
 - Complete the MusicBrainz release and track catalog chain. A larger local
@@ -247,9 +251,14 @@ gate is open.
   [materialization checkpoint](checkpoints/MUSICBRAINZ_CATALOG_MATERIALIZATION_CANDIDATE.md).
   The local-only [exact-ID static-overlap checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_STATIC_OVERLAP_20260921.md)
   measures 121 public-direct and 101 static-discovery artist overlaps without transferring memberships.
+  A local v2 static-export gate now verifies source policy, report quality, and
+  exact MBIDs before producing 961 credit-metadata rows for 116 artists; it is
+  [not deployed or portable yet](checkpoints/MUSICBRAINZ_CREDIT_STATIC_EXPORT_GATE_20260921.md).
 - Keep metadata candidates separate from published metadata examples.
 - Review the 484 source-bound genre candidates now queued by the versioned
-  workflow, then design a separate publication gate. None is published.
+  workflow. The local promotion preflight binds review and triage receipts,
+  blocks lexical-only or ambiguous presentation rows, and always requires a
+  separate source-publication authorization; none is published.
 - Replace calibration only artist membership evidence with an independent
   public gold set before using it as a production quality gate. The new
   evaluator abstains on its synthetic fixture; no retained source or accepted

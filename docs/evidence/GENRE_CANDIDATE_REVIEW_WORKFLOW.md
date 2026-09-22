@@ -77,6 +77,25 @@ claims: distinct immutable claims can produce the same proposed label. The v2
 revision deliberately replaces the inaccurate v1 field name, so v1 and v2
 audit artifacts are not interchangeable.
 
+## Promotion preflight
+
+`opennoise.taxonomy.candidates.promotion_preflight` is a local-only screen for
+a reviewed queue and its matching triage audit. It binds their source-candidate
+and immutable-claim hashes, then blocks lexical-only, repeated-label, and
+competing-seed rows even if reviewers approve them. A non-blocked reviewed row
+remains `awaiting_source_publication_authorization`: review approval does not
+grant display, export, or redistribution rights. Its coverage always records
+zero public genres authorized, and it has no catalog, source, or static-site
+writer.
+
+The retained 484-row queue has zero human decisions, so its two-approval policy
+leaves all 484 rows awaiting independent review. Every row also carries the
+lexical-only triage blocker; if independently approved, it would remain blocked
+before source-publication authorization. There are zero public genres
+authorized. Its read-only preflight output hash is
+`fb39f59eb8a54221988c23d43a2b5330695898d2a40f71c9bb8e58343624e04e`.
+This is a deterministic coverage boundary, not a publication decision.
+
 Run the focused checks with:
 
 ```bash

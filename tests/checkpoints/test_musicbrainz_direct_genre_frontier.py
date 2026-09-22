@@ -9,7 +9,10 @@ from pathlib import Path
 
 from opennoise.checkpoints.musicbrainz_direct_genre_frontier import (
     DirectGenreFrontierReport,
+    DirectGenreMembershipCandidate,
     audit_direct_genre_frontier,
+    build_direct_genre_membership_candidate,
+    verify_direct_genre_membership_candidate,
 )
 
 _SHA = "a" * 64
@@ -110,6 +113,58 @@ class DirectGenreFrontierTests(unittest.TestCase):
         )
         self.assertEqual(report.exact_loose_tag_rows, 0)
         self.assertEqual(report.exact_loose_tag_seed_count, 0)
+
+    def test_projects_only_reconciled_exact_mbid_proper_genres(self) -> None:
+        with tempfile.TemporaryDirectory() as directory_name:
+            directory = Path(directory_name)
+            layout = _write(
+                directory / "layout.json", {"output_sha256": _SHA, "unplaced": [{"seed_id": "u1"}]}
+            )
+            frontier = _write(
+                directory / "frontier.json",
+                {"output_sha256": _SHA, "rows": [_frontier_row("u1", 0)]},
+            )
+            reconciliation = _write(
+                directory / "reconciliation.json",
+                {"output_sha256": _SHA, "dispositions": [_reconciliation_row("u1", "genre-id")]},
+            )
+            target = _write(
+                directory / "target.json",
+                {
+                    "output_sha256": _SHA,
+                    "evidence": [
+                        _evidence("u1", facet="genre", target_identity="genre-id"),
+                        _evidence("u1", facet="genre", target_identity="other-genre"),
+                        _evidence("u1", facet="tag", target_identity="tag:example"),
+                    ],
+                },
+            )
+            first = build_direct_genre_membership_candidate(
+                layout_path=layout,
+                frontier_path=frontier,
+                reconciliation_path=reconciliation,
+                seed_target_path=target,
+            )
+            second = build_direct_genre_membership_candidate(
+                layout_path=layout,
+                frontier_path=frontier,
+                reconciliation_path=reconciliation,
+                seed_target_path=target,
+            )
+
+        self.assertEqual(first.output_sha256, second.output_sha256)
+        self.assertEqual(first.membership_count, 1)
+        self.assertEqual(first.seed_count, 1)
+        self.assertEqual(first.artist_mbid_count, 1)
+        self.assertEqual(first.memberships[0].musicbrainz_genre_id, "genre-id")
+        self.assertFalse(first.historical_assignments_read)
+        self.assertFalse(first.alias_or_name_only_bridge_used)
+        self.assertFalse(first.public_export_authorized)
+        verify_direct_genre_membership_candidate(first)
+        malformed = first.model_dump(mode="json")
+        malformed["memberships"][0]["artist_mbid"] = "alias:artist"
+        with self.assertRaisesRegex(ValueError, "String should match pattern"):
+            DirectGenreMembershipCandidate.model_validate_json(json.dumps(malformed))
 
 
 def _report_for_evidence(evidence: list[dict[str, str]]) -> DirectGenreFrontierReport:

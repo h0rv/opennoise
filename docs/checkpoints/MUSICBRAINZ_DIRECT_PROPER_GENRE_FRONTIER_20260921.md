@@ -46,6 +46,23 @@ report fixes `historical_assignments_read=false`,
 `membership_construction_performed=false`, and
 `publishable_membership_count=0`.
 
+## Local exact-ID membership candidate
+
+A separate local-only candidate projection now retains the same 130
+reconciliation-bound proper-genre observations for 11 unplaced-and-unserved
+seeds and 130 exact artist MBIDs. Its output hash is
+`64ea221f3b1f294a23fbf455400675f5bf5781220c80705d31d20579e02a6928`.
+Each row carries the exact `musicbrainz:artist:<MBID>` source-record identifier
+and its immutable record SHA-256, alongside the reconciled MusicBrainz genre
+identifier. It binds the same seed-target source object hash
+`481eb68f7d75d8562fe16aa1f9faef327d24e8afd5145fa5c7d136ed9ac69dfe`.
+
+The candidate is a strict frozen payload: it reads no historical assignment,
+uses no alias or name-only identity bridge, does not alter a layout or catalog,
+and fixes `public_export_authorized=false`. It is not a public-v2 input or a
+publication claim. Its writer creates a fresh output with an atomic hard link
+and refuses existing files and symlinks.
+
 The scoped reconciliation states are 2,724 unresolved, 528 review-only, 61
 MusicBrainz-only, 29 public-only, one reconciled, and one ambiguous. They
 explain why source-positive coverage must not become automatic serving or

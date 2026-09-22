@@ -13,9 +13,13 @@ import json
 import re
 import uuid
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import ijson
+from pydantic import Field, model_validator
+
+from opennoise.models import FrozenModel
+from opennoise.types import Sha256  # noqa: TC001  # Pydantic resolves the alias at runtime.
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -81,6 +85,60 @@ class DirectGenreFrontierReport:
     reconciliation_abstentions: dict[str, int]
     publishable_membership_count: int
     policy_abstentions: tuple[str, ...]
+
+
+class DirectGenreMembershipCandidateRow(FrozenModel):
+    """One exact-MBID, reconciliation-bound local membership observation."""
+
+    seed_id: str = Field(min_length=1)
+    artist_mbid: str = Field(
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    )
+    musicbrainz_genre_id: str = Field(min_length=1)
+    source_record_id: str = Field(min_length=1)
+    source_record_sha256: Sha256
+
+    @model_validator(mode="after")
+    def _exact_artist_provenance(self) -> DirectGenreMembershipCandidateRow:
+        if self.source_record_id != f"{_MB_ARTIST_RECORD_PREFIX}{self.artist_mbid}":
+            raise ValueError("candidate row source record is not the exact artist record")
+        return self
+
+
+class DirectGenreMembershipCandidate(FrozenModel):
+    """A source-bound local candidate that has no public or layout effect."""
+
+    candidate_revision: Literal["musicbrainz-direct-proper-genre-membership-candidate-v1"]
+    publication_scope: Literal["local_only_candidate"]
+    historical_assignments_read: Literal[False] = False
+    alias_or_name_only_bridge_used: Literal[False] = False
+    public_export_authorized: Literal[False] = False
+    layout_byte_sha256: Sha256
+    layout_output_sha256: Sha256
+    frontier_byte_sha256: Sha256
+    frontier_output_sha256: Sha256
+    reconciliation_byte_sha256: Sha256
+    reconciliation_output_sha256: Sha256
+    seed_target_byte_sha256: Sha256
+    seed_target_output_sha256: Sha256
+    memberships: tuple[DirectGenreMembershipCandidateRow, ...]
+    membership_count: int = Field(ge=0)
+    seed_count: int = Field(ge=0)
+    artist_mbid_count: int = Field(ge=0)
+    source_record_count: int = Field(ge=0)
+    output_sha256: Sha256
+
+    @model_validator(mode="after")
+    def _counts_match_rows(self) -> DirectGenreMembershipCandidate:
+        if self.membership_count != len(self.memberships):
+            raise ValueError("membership count does not match candidate rows")
+        if self.seed_count != len({row.seed_id for row in self.memberships}):
+            raise ValueError("seed count does not match candidate rows")
+        if self.artist_mbid_count != len({row.artist_mbid for row in self.memberships}):
+            raise ValueError("artist MBID count does not match candidate rows")
+        if self.source_record_count != len({row.source_record_sha256 for row in self.memberships}):
+            raise ValueError("source record count does not match candidate rows")
+        return self
 
 
 def _sha256(path: Path) -> str:
@@ -382,6 +440,90 @@ def audit_direct_genre_frontier(  # noqa: C901, PLR0915
             ),
         ),
     )
+
+
+def build_direct_genre_membership_candidate(
+    *, layout_path: Path, frontier_path: Path, reconciliation_path: Path, seed_target_path: Path
+) -> DirectGenreMembershipCandidate:
+    """Project only identity-safe proper-genre rows into a local membership candidate.
+
+    The projection requires exact UUID artist IDs and the seed's own reconciled
+    MusicBrainz genre ID. It intentionally does not consult aliases, labels,
+    releases, peers, layouts beyond the frozen unplaced scope, or history.
+    """
+    layout = _json_object(layout_path, label="layout")
+    frontier = _json_object(frontier_path, label="frontier")
+    reconciliation = _json_object(reconciliation_path, label="reconciliation")
+    unplaced = _unplaced_ids(layout)
+    frontier_by_id = _frontier_rows(frontier)
+    canonical_genres_by_id = _canonical_genre_identities(reconciliation)
+    if set(frontier_by_id) != set(canonical_genres_by_id):
+        raise ValueError("frontier and reconciliation must account for the same seed IDs")
+    if not unplaced <= set(frontier_by_id):
+        raise ValueError("layout unplaced IDs must be present in the frontier")
+    scoped = {seed_id for seed_id in unplaced if not _is_currently_served(frontier_by_id[seed_id])}
+    rows: dict[tuple[str, str, str, str], DirectGenreMembershipCandidateRow] = {}
+    for raw_row in _iter_evidence(seed_target_path):
+        evidence = _parse_evidence(raw_row)
+        if evidence is None or evidence.seed_id not in scoped:
+            continue
+        if not (
+            _is_strict_direct_row(evidence, facet="genre")
+            and evidence.target_namespace == "musicbrainz_genre_id"
+            and evidence.target_identity in canonical_genres_by_id[evidence.seed_id]
+        ):
+            continue
+        row = DirectGenreMembershipCandidateRow(
+            seed_id=evidence.seed_id,
+            artist_mbid=evidence.artist_mbid,
+            musicbrainz_genre_id=evidence.target_identity,
+            source_record_id=evidence.source_record_id,
+            source_record_sha256=evidence.source_record_sha256,
+        )
+        key = (row.seed_id, row.artist_mbid, row.musicbrainz_genre_id, row.source_record_sha256)
+        existing = rows.setdefault(key, row)
+        if existing != row:
+            raise ValueError("membership key maps to conflicting immutable provenance")
+    memberships = tuple(rows[key] for key in sorted(rows))
+    base = DirectGenreMembershipCandidate(
+        candidate_revision="musicbrainz-direct-proper-genre-membership-candidate-v1",
+        publication_scope="local_only_candidate",
+        historical_assignments_read=False,
+        alias_or_name_only_bridge_used=False,
+        public_export_authorized=False,
+        layout_byte_sha256=_sha256(layout_path),
+        layout_output_sha256=_required_sha256(layout, label="layout"),
+        frontier_byte_sha256=_sha256(frontier_path),
+        frontier_output_sha256=_required_sha256(frontier, label="frontier"),
+        reconciliation_byte_sha256=_sha256(reconciliation_path),
+        reconciliation_output_sha256=_required_sha256(reconciliation, label="reconciliation"),
+        seed_target_byte_sha256=_sha256(seed_target_path),
+        seed_target_output_sha256=_streamed_output_sha256(seed_target_path, label="seed target"),
+        memberships=memberships,
+        membership_count=len(memberships),
+        seed_count=len({row.seed_id for row in memberships}),
+        artist_mbid_count=len({row.artist_mbid for row in memberships}),
+        source_record_count=len({row.source_record_sha256 for row in memberships}),
+        output_sha256="0" * 64,
+    )
+    return base.model_copy(update={"output_sha256": direct_genre_membership_candidate_sha256(base)})
+
+
+def direct_genre_membership_candidate_sha256(candidate: DirectGenreMembershipCandidate) -> str:
+    """Return a deterministic candidate checksum excluding its self hash."""
+    payload = candidate.model_dump(mode="json", exclude={"output_sha256"})
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def verify_direct_genre_membership_candidate(candidate: DirectGenreMembershipCandidate) -> None:
+    """Reject mutated provenance or any attempt to present this candidate as public."""
+    # Re-enter the strict serialized boundary so ``model_copy`` cannot bypass
+    # frozen Pydantic validation before the replay hash is checked.
+    DirectGenreMembershipCandidate.model_validate_json(candidate.model_dump_json())
+    if candidate.output_sha256 != direct_genre_membership_candidate_sha256(candidate):
+        raise ValueError("direct genre membership candidate output hash does not replay")
 
 
 def report_json(report: DirectGenreFrontierReport) -> str:

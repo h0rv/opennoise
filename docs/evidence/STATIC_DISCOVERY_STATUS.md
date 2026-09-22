@@ -7,16 +7,21 @@ It reads only the export- and display-authorized catalog snapshot
 | Current snapshot output | Count |
 | --- | ---: |
 | Map names / placed nodes | 6,291 / 2,945 |
-| Exact one-to-one catalog-label bridges | 294 |
-| Map genres with direct artists | 260 |
-| Artists with a mapped direct genre | 1,008 |
-| Direct P136 observations on mapped labels | 2,900 |
+| Exact one-to-one catalog-label bridges (v1 exact-label baseline) | 294 |
+| Map genres with direct artists (v1 exact-label baseline) | 260 |
+| Artists with a mapped direct genre (v1 exact-label baseline) | 1,008 |
+| Direct P136 observations on mapped labels (v1 exact-label baseline) | 2,900 |
+| Map genres with direct artists (deployed combined v2 bridge) | 344 |
+| Artists with a mapped direct genre (deployed combined v2 bridge) | 1,126 |
+| Direct P136 observations on mapped labels (deployed combined v2 bridge) | 3,859 |
 | Direct P136 observations in the authorized catalog | 4,948 |
 | Source partitions | 8 Wikidata artist partitions |
 
-The bridge is presentation only: a catalog genre may appear on the map only
-when its casefolded name names exactly one placed map label. It does not infer
-membership, expand aliases, or create a relation from a name resemblance.
+The v1 bridge is presentation only: a catalog genre may appear on the map only
+when its casefolded name names exactly one placed map label. The deployed v2
+bridge combines that v1 baseline with 84 sealed QID-position additions. Neither
+bridge infers membership, expands aliases, or creates a relation from a name
+resemblance.
 
 The exported flow is map genre → direct-source artists → each artist's direct
 mapped genres → artists with one or more shared direct mapped genres. Shared

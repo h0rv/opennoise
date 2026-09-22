@@ -152,8 +152,10 @@ database with the 54 Wikidata objects and seven ListenBrainz dailies. The
 candidate is not byte-identical to, and is not a certified replacement for,
 the sealed public cache. See [the source replay checkpoint](checkpoints/SOURCE_VAULT_REPLAY.md).
 
-The direct bridge, v3 projection, and source-vault replay outputs remain local
-candidates. They are not promoted into the sealed database or static release.
+The deployed v2 static-discovery bridge is a promoted, presentation-only
+QID-position projection; it does not change the sealed source database. The
+older v3 projection and source-vault replay outputs remain local candidates and
+are not promoted into the sealed database or static release.
 
 Keep the stack small: Python 3.13.14, uv, mise, Poe, Pydantic, SQLite, and
 Cloudflare Pages. Offline tools construct source-bound artifacts, then one
