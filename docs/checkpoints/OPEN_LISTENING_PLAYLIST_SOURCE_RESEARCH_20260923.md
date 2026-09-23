@@ -91,3 +91,26 @@ declared local-only signal role. A curated-playlist study would need receipts
 from multiple independently attributed curator organizations and an
 independent held-out evaluation. It must keep playlist text out of labels and
 must not promote playlist co-occurrence into factual membership.
+
+## Follow-up on listening and playlist signal
+
+Available listening datasets and public playlists answer different questions.
+Listening events can measure repeated user behavior after aggregation. Public
+playlist membership can measure track grouping, but it does not prove that a
+human selected the tracks or that the grouping expresses a genre claim.
+
+| Source | Signal and identity bridge | Scale and decision |
+| --- | --- | --- |
+| [Music4All-Onion v2](https://zenodo.org/records/15394646) | The creator's record describes 253 million Last.fm listening events and 109,000 tracks, but the published description does not establish an exact MusicBrainz recording bridge for the listening rows. | The 20 GB archive is too large for the next laptop probe. It would also add another raw Last.fm-derived listening source before a distinct population, rights, privacy, and exact-ID review. Do not acquire it. |
+| [Yambda](https://huggingface.co/datasets/yandex/yambda) | The dataset offers 50 million, 500 million, and 5 billion interactions with anonymized numeric item IDs. Its public card does not provide a MusicBrainz bridge. | It can test anonymous recommendation methods, but it cannot join the map without an exact bridge. Do not acquire it for this project. |
+| [Openwhyd API](https://openwhyd.github.io/openwhyd/API.html) | The API exposes public user playlists whose tracks reference services such as YouTube and SoundCloud. The documented identifiers are not MusicBrainz recording IDs. | Public user creation does not prove manual selection or curator expertise. The missing exact bridge and uncertain source role keep it below the existing ListenBrainz playlist probe. Do not acquire it. |
+| [MLHD+](https://musicbrainz.org/doc/MLHD%2B) | MLHD+ has timestamped listening histories with exact MusicBrainz artist, release, and recording IDs. | Exact IDs make it the strongest bridge candidate, but its 16 shards of about 15 GB exceed the laptop-first limit. Do not acquire it. |
+
+The next probe should remain small and use the already available ListenBrainz
+data. When the documented playlist search route returns JSON, retrieve the
+bounded second-account sample described above and measure only exact recording
+coverage, pair overlap, and verified credit bridges. Compare its normalized
+playlist pairs with the qualified ListenBrainz aggregate without merging them.
+The result can show whether public playlist grouping adds independent context.
+It cannot establish curator intent, genre membership, or a new production
+signal.

@@ -34,6 +34,23 @@ P136 positives has 781 artist and seed pairs, 248 artists, and 170 seeds.
 Exact normalized positive tags recover 133 of the 781 pairs, or 17.0294
 percent. The recovered pairs cover 53 seeds.
 
+The fixed ranking comparison freezes a 248-seed candidate universe from exact
+normalized sample tag names and the pinned reconciliation before it opens the
+P136 positives. It fixes `k = 5`, orders equal scores by seed ID, and never
+tunes either choice from the P136 result. Artist-local tag context recovers
+132 of the conditional 781 positive pairs at top five (16.9014 percent),
+covering 52 seeds. This is a positive-recovery count, not precision.
+
+The comparator is global tag popularity: positive tag vote counts summed once
+per release group across all 10,009 sample groups. Its candidate universe and
+ordering are fixed before the P136 target pairs are read, so it is P136-label-
+blind. It shares MusicBrainz tag groups, and potentially artists, with the
+artist-local arm. It is therefore neither artist-disjoint nor an independently
+held-out baseline. Its one fixed top-five list recovers 107 of 781 conditional
+pairs (13.7004 percent), covering five seeds. The 3,133 one-to-one P136 pairs
+remain the global positive denominator; 781 is explicitly the conditional
+denominator after requiring an artist in the fixed local tag sample.
+
 The sample has 11,062 positive tag observations on 3,727 groups. It has 10,317
 native proper genre observations on 3,641 groups. The evaluator records the
 native genre counts only. It never uses native proper genres as targets because
@@ -60,8 +77,8 @@ cache report and refuses to replace an existing output.
   --sample-report .cache/musicbrainz-rg-genre-recovery-hash-sample-v2/report.json \
   --wikidata-p136-database data/public.sqlite \
   --seed-reconciliation .cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json \
-  --output .cache/musicbrainz-rg-positive-tag-context-readiness-v1/report.json
+  --output .cache/musicbrainz-rg-positive-tag-context-readiness-v2/report.json
 ```
 
 The generated report has logical output hash
-`4443234d7588e496727dc87d0226ace74e3af11bf0e6a522980a0b58c101c175`.
+`13d3e8260d3fd359731763e6636389f1a43cbd044049731ba5e8224fe6898853`.

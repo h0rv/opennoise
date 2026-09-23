@@ -5,6 +5,13 @@ completed MusicBrainz evidence database by exact MusicBrainz release-group and
 artist IDs. It is `.cache/playlist-album-evidence-join-v1/report.json`, with
 logical SHA-256 `da966d9e1e8241b6fff9fdac7e4027fa46bf303a7c80c988d6c223a2ea13ccb0`.
 
+Note: v1 called rows from `release_group_support` "credited artist" evidence.
+That name was limited and did not measure release-group artist credits. The
+table only contains release-group genre or tag matches to a seed. The raw
+archive credit bridge supersedes v1 for credit coverage. See
+[Playlist album credit coverage](PLAYLIST_ALBUM_CREDIT_COVERAGE_20260923.md).
+The v1 report facts below remain unchanged.
+
 The report keeps four fields separate. A playlist occurrence remains a
 ListenBrainz playlist-track occurrence. A MusicBrainz release-group proper
 genre remains a release-group observation. A credited artist remains

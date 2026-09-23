@@ -19,6 +19,8 @@ from opennoise.analysis.listenbrainz_playlist_release_group_overlap import (
 from opennoise.ingest.musicbrainz.release_group_evidence import (
     ReleaseGroupEvidenceArtifact,  # noqa: TC001
 )
+from opennoise.models.pipeline import SourceLimits
+from opennoise.sources.musicbrainz import MusicBrainzReleaseGroup, _iter_raw_archive
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -46,13 +48,17 @@ class DirectArtistGenreEvidence(_FrozenModel):
 
 
 class ReleaseGroupCreditedArtistEvidence(_FrozenModel):
-    """An exact credited artist in existing release-group support rows."""
+    """One ordered artist credit from the exact MusicBrainz release-group record."""
 
-    role: Literal["release_group_credited_artist"] = "release_group_credited_artist"
+    role: Literal["musicbrainz_release_group_artist_credit"] = (
+        "musicbrainz_release_group_artist_credit"
+    )
     artist_mbid: str = Field(pattern=r"^[0-9a-f-]{36}$")
-    supported_seed_ids: tuple[str, ...] = Field(min_length=1)
-    facets: tuple[EvidenceFacet, ...] = Field(min_length=1)
-    evidence_references: tuple[str, ...] = Field(min_length=1)
+    artist_name: str = Field(min_length=1)
+    credited_name: str = Field(min_length=1)
+    joinphrase: str
+    credit_position: int = Field(ge=0)
+    record_content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class PlaylistAlbumEvidenceContext(_FrozenModel):
@@ -87,7 +93,7 @@ class PlaylistAlbumEvidenceContext(_FrozenModel):
 class PlaylistAlbumEvidenceJoinReport(_FrozenModel):
     """A bounded local-only report with no derived artist-to-genre membership."""
 
-    revision: Literal["playlist-album-evidence-join-v1"] = "playlist-album-evidence-join-v1"
+    revision: Literal["playlist-album-evidence-join-v2"] = "playlist-album-evidence-join-v2"
     local_only: Literal[True] = True
     export_allowed: Literal[False] = False
     serving_allowed: Literal[False] = False
@@ -98,6 +104,8 @@ class PlaylistAlbumEvidenceJoinReport(_FrozenModel):
     playlist_overlap_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     release_group_evidence_artifact_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     release_group_evidence_database_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    artist_credit_archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    artist_credit_archive_bytes: int = Field(gt=0)
     requested_release_group_count: int = Field(ge=0, le=_MAX_RELEASE_GROUPS)
     release_groups_with_native_proper_genres: int = Field(ge=0)
     release_groups_with_credited_artist_evidence: int = Field(ge=0)
@@ -116,29 +124,44 @@ def report_sha256(report: PlaylistAlbumEvidenceJoinReport) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def join_playlist_album_evidence(
+def join_playlist_album_evidence(  # noqa: PLR0913
     overlaps: tuple[PlaylistReleaseGroupOverlap, ...],
     *,
     playlist_overlap_report_sha256: str,
     evidence_database: Path,
     evidence_artifact: ReleaseGroupEvidenceArtifact,
+    artist_credits: dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]],
+    artist_credit_archive_sha256: str,
+    artist_credit_archive_bytes: int,
 ) -> PlaylistAlbumEvidenceJoinReport:
     """Connect exact IDs in local artifacts while keeping each source role separate."""
     release_group_ids = tuple(sorted({str(item.identity.release_group_mbid) for item in overlaps}))
     if len(release_group_ids) > _MAX_RELEASE_GROUPS:
         raise PlaylistAlbumEvidenceJoinError("release-group query exceeds the local bound")
     if not release_group_ids:
-        return _report((), playlist_overlap_report_sha256, evidence_artifact, 0, 0, 0, 0)
+        return _report(
+            (),
+            playlist_overlap_report_sha256,
+            evidence_artifact,
+            artist_credit_archive_sha256,
+            artist_credit_archive_bytes,
+            0,
+            0,
+            0,
+            0,
+        )
     _require_artifact_database_binding(evidence_database, evidence_artifact)
-    supports, direct = _read_exact_evidence(evidence_database, release_group_ids)
+    direct = _read_direct_evidence(evidence_database, artist_credits, release_group_ids)
     contexts = tuple(
-        _context_for_overlap(overlap, supports, direct)
+        _context_for_overlap(overlap, artist_credits, direct)
         for overlap in sorted(overlaps, key=lambda item: str(item.identity.release_group_mbid))
     )
     return _report(
         contexts,
         playlist_overlap_report_sha256,
         evidence_artifact,
+        artist_credit_archive_sha256,
+        artist_credit_archive_bytes,
         len(release_group_ids),
         len(
             {
@@ -147,11 +170,11 @@ def join_playlist_album_evidence(
                 if item.native_evidence.proper_genres
             }
         ),
-        len(supports),
+        sum(bool(artist_credits.get(item)) for item in release_group_ids),
         len(
             {
                 artist.artist_mbid
-                for artists in supports.values()
+                for artists in artist_credits.values()
                 for artist in artists
                 if direct.get(artist.artist_mbid)
             }
@@ -163,6 +186,8 @@ def _report(  # noqa: PLR0913, PLR0917  # The report binds its four explicit sou
     contexts: tuple[PlaylistAlbumEvidenceContext, ...],
     playlist_overlap_report_sha256: str,
     artifact: ReleaseGroupEvidenceArtifact,
+    artist_credit_archive_sha256: str,
+    artist_credit_archive_bytes: int,
     requested_release_group_count: int,
     release_groups_with_native_proper_genres: int,
     release_groups_with_credited_artist_evidence: int,
@@ -172,6 +197,8 @@ def _report(  # noqa: PLR0913, PLR0917  # The report binds its four explicit sou
         playlist_overlap_report_sha256=playlist_overlap_report_sha256,
         release_group_evidence_artifact_sha256=artifact.output_sha256,
         release_group_evidence_database_sha256=artifact.evidence_database_sha256,
+        artist_credit_archive_sha256=artist_credit_archive_sha256,
+        artist_credit_archive_bytes=artist_credit_archive_bytes,
         requested_release_group_count=requested_release_group_count,
         release_groups_with_native_proper_genres=release_groups_with_native_proper_genres,
         release_groups_with_credited_artist_evidence=release_groups_with_credited_artist_evidence,
@@ -200,57 +227,39 @@ def _require_artifact_database_binding(
         )
 
 
-def _read_exact_evidence(
-    database_path: Path, release_group_ids: tuple[str, ...]
-) -> tuple[
-    dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]],
-    dict[str, tuple[DirectArtistGenreEvidence, ...]],
-]:
-    placeholders = ",".join("?" for _ in release_group_ids)
+def _read_direct_evidence(
+    database_path: Path,
+    artist_credits: dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]],
+    release_group_ids: tuple[str, ...],
+) -> dict[str, tuple[DirectArtistGenreEvidence, ...]]:
+    """Read direct artist facts only for artists reached by exact credit records."""
+    artist_ids = tuple(
+        sorted(
+            {
+                credit.artist_mbid
+                for release_group_id in release_group_ids
+                for credit in artist_credits.get(release_group_id, ())
+            }
+        )
+    )
+    if not artist_ids:
+        return {}
     with closing(sqlite3.connect(f"file:{database_path}?mode=ro", uri=True)) as database:
         try:
-            support_query = f"""SELECT release_group_id, artist_id, genre_id, facet, evidence_ref
-                     FROM release_group_support
-                    WHERE release_group_id IN ({placeholders})
-                    ORDER BY release_group_id, artist_id, genre_id, facet, evidence_ref"""  # noqa: S608
-            support_rows = database.execute(support_query, release_group_ids).fetchall()
+            artist_placeholders = ",".join("?" for _ in artist_ids)
+            direct_query = f"""SELECT artist_id, genre_id, facet, evidence_ref
+                                FROM direct_anchor
+                               WHERE artist_id IN ({artist_placeholders})
+                               ORDER BY artist_id, genre_id, facet, evidence_ref"""  # noqa: S608
+            direct_rows = database.execute(direct_query, artist_ids).fetchall()
         except sqlite3.DatabaseError as error:
             raise PlaylistAlbumEvidenceJoinError(
-                "evidence database lacks release-group support"
+                "evidence database lacks direct artist evidence"
             ) from error
-        artist_ids = tuple(sorted({str(row[1]) for row in support_rows}))
-        if not artist_ids:
-            return {}, {}
-        artist_placeholders = ",".join("?" for _ in artist_ids)
-        direct_query = f"""SELECT artist_id, genre_id, facet, evidence_ref
-                            FROM direct_anchor
-                           WHERE artist_id IN ({artist_placeholders})
-                           ORDER BY artist_id, genre_id, facet, evidence_ref"""  # noqa: S608  # Placeholder count comes only from verified SQLite values.
-        direct_rows = database.execute(direct_query, artist_ids).fetchall()
-    support_groups: dict[tuple[str, str], list[tuple[str, EvidenceFacet, str]]] = defaultdict(list)
-    for release_group_id, artist_id, seed_id, facet, evidence_ref in support_rows:
-        support_groups[str(release_group_id), str(artist_id)].append(
-            (str(seed_id), _facet(str(facet)), str(evidence_ref))
-        )
-    supports: dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]] = defaultdict(tuple)
-    grouped_by_release_group: dict[str, list[ReleaseGroupCreditedArtistEvidence]] = defaultdict(
-        list
-    )
-    for (release_group_id, artist_mbid), rows in support_groups.items():
-        grouped_by_release_group[release_group_id].append(
-            ReleaseGroupCreditedArtistEvidence(
-                artist_mbid=artist_mbid,
-                supported_seed_ids=tuple(sorted({row[0] for row in rows})),
-                facets=tuple(sorted({row[1] for row in rows})),
-                evidence_references=tuple(sorted({row[2] for row in rows})),
-            )
-        )
-    for release_group_id, artists in grouped_by_release_group.items():
-        supports[release_group_id] = tuple(sorted(artists, key=lambda item: item.artist_mbid))
     direct_groups: dict[str, list[tuple[str, EvidenceFacet, str]]] = defaultdict(list)
     for artist_id, seed_id, facet, evidence_ref in direct_rows:
         direct_groups[str(artist_id)].append((str(seed_id), _facet(str(facet)), str(evidence_ref)))
-    direct = {
+    return {
         artist_id: tuple(
             DirectArtistGenreEvidence(
                 artist_mbid=artist_id,
@@ -262,7 +271,6 @@ def _read_exact_evidence(
         )
         for artist_id, rows in direct_groups.items()
     }
-    return dict(supports), direct
 
 
 def _facet(value: str) -> EvidenceFacet:
@@ -276,13 +284,15 @@ def _facet(value: str) -> EvidenceFacet:
 
 def _context_for_overlap(
     overlap: PlaylistReleaseGroupOverlap,
-    supports: dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]],
+    artist_credits: dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]],
     direct: dict[str, tuple[DirectArtistGenreEvidence, ...]],
 ) -> PlaylistAlbumEvidenceContext:
     release_group_id = str(overlap.identity.release_group_mbid)
-    credited_artists = supports.get(release_group_id, ())
+    credited_artists = artist_credits.get(release_group_id, ())
     direct_evidence = tuple(
-        item for artist in credited_artists for item in direct.get(artist.artist_mbid, ())
+        item
+        for artist_mbid in sorted({artist.artist_mbid for artist in credited_artists})
+        for item in direct.get(artist_mbid, ())
     )
     return PlaylistAlbumEvidenceContext(
         release_group_mbid=release_group_id,
@@ -294,3 +304,63 @@ def _context_for_overlap(
         credited_artists=credited_artists,
         direct_anchor_artist_seed_evidence=direct_evidence,
     )
+
+
+def read_exact_release_group_artist_credits(  # noqa: C901
+    archive_path: Path, overlaps: tuple[PlaylistReleaseGroupOverlap, ...]
+) -> dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]]:
+    """Extract credits only when a local raw record replays the overlap receipt exactly."""
+    expected = {
+        str(overlap.identity.release_group_mbid): overlap.native_evidence.record_content_sha256
+        for overlap in overlaps
+    }
+    if len(expected) > _MAX_RELEASE_GROUPS:
+        raise PlaylistAlbumEvidenceJoinError("release-group query exceeds the local bound")
+    target_bytes = tuple(release_group_id.encode() for release_group_id in expected)
+    found: dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]] = {}
+    limits = SourceLimits(
+        max_archive_bytes=archive_path.stat().st_size, max_record_bytes=2 * 1024**2
+    )
+    for raw in _iter_raw_archive(archive_path, limits, member_name="release-group"):
+        if raw.payload is None:
+            continue
+        if not any(release_group_id in raw.payload for release_group_id in target_bytes):
+            continue
+        try:
+            decoded = json.loads(raw.payload)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(decoded, dict):
+            continue
+        raw_id = decoded.get("id")
+        if not isinstance(raw_id, str) or raw_id not in expected:
+            continue
+        if raw_id in found:
+            raise PlaylistAlbumEvidenceJoinError("release-group archive repeats an exact target")
+        if raw.sha256 != expected[raw_id]:
+            raise PlaylistAlbumEvidenceJoinError(
+                "artist-credit record differs from overlap receipt"
+            )
+        try:
+            group = MusicBrainzReleaseGroup.model_validate_json(raw.payload)
+        except ValueError as error:
+            raise PlaylistAlbumEvidenceJoinError(
+                "artist-credit target record is malformed"
+            ) from error
+        found[raw_id] = tuple(
+            ReleaseGroupCreditedArtistEvidence(
+                artist_mbid=str(credit.artist.id),
+                artist_name=credit.artist.name,
+                credited_name=credit.name,
+                joinphrase=credit.joinphrase,
+                credit_position=position,
+                record_content_sha256=raw.sha256,
+            )
+            for position, credit in enumerate(group.artist_credit)
+        )
+    missing = set(expected) - set(found)
+    if missing:
+        raise PlaylistAlbumEvidenceJoinError(
+            "artist-credit archive lacks an exact target release group"
+        )
+    return found

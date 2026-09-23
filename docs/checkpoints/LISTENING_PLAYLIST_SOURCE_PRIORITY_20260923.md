@@ -37,6 +37,28 @@ would duplicate Last.fm custody while importing MusicBrainz-derived genre
 claims, so it is ineligible for independent evaluation and unnecessary for
 co-listening research.
 
+## Follow-up source comparison
+
+User listening records and public playlists should stay separate in source
+priority. Listening records can support a privacy-filtered co-listening
+aggregate. Playlist records can supply ordered track grouping, but public
+access does not show that a human made the choices or that a playlist states a
+genre.
+
+| Source | Exact MusicBrainz bridge | Scale and priority |
+| --- | --- | --- |
+| [Music4All-Onion v2](https://zenodo.org/records/15394646) | No exact recording bridge is established in the creator's public record for its 253 million Last.fm listening events. | The 20 GB archive and another Last.fm-derived source make it lower priority than the existing aggregates. Do not acquire it. |
+| [Yambda](https://huggingface.co/datasets/yandex/yambda) | No. It uses anonymized numeric item IDs across 50 million, 500 million, and 5 billion interaction versions. | It is not joinable to exact MusicBrainz entities, so it has no current map role. Do not acquire it. |
+| [Openwhyd](https://openwhyd.github.io/openwhyd/API.html) | No. Its documented public playlist tracks use service references such as YouTube and SoundCloud. | It provides public user playlist context with unknown manual-selection state. It ranks below the existing exact-recording ListenBrainz probe. Do not acquire it. |
+| [MLHD+](https://musicbrainz.org/doc/MLHD%2B) | Yes. It provides timestamped artist, release, and recording MBIDs. | Its 16 shards of about 15 GB make it an exact-ID candidate that exceeds the laptop-first limit. Do not acquire it. |
+
+The next laptop-sized probe is therefore a bounded second ListenBrainz account
+sample, if the documented search endpoint returns JSON. Keep the playlist
+signal separate from the qualified listening aggregate, and report exact
+recording coverage, pair overlap, and verified credit bridges only. A positive
+result would support further independence study. It would not change the
+production priority or establish human curation or genre membership.
+
 ## Official source facts
 
 - [ListenBrainz dump documentation](https://listenbrainz.readthedocs.io/en/latest/users/listenbrainz-dumps.html)

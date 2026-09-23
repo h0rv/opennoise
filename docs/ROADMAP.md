@@ -221,15 +221,24 @@ gate is open.
 ## Next data work
 
 - The local-only [release-group tag context checkpoint](checkpoints/MUSICBRAINZ_RG_POSITIVE_TAG_CONTEXT_P136_20260923.md)
-  measures 133 exact tag recoveries among 781 source-isolated Wikidata P136
-  positives. It has no negative labels or precision claim, and native
-  MusicBrainz proper genres remain excluded as targets. It cannot promote a
-  model or static output without a complete independent gold set.
+  has 133 exact positive-tag matches among 781 source-isolated Wikidata P136
+  positives. At fixed top-k, artist-local tags recover 132 of 781 and the
+  P136-label-blind global tag-popularity baseline recovers 107 of 781. Both use the
+  MusicBrainz tag source, so the comparison is positive-only and gives no
+  precision claim. Native MusicBrainz proper genres remain excluded as targets,
+  and the result cannot promote a model or static output.
+- The local-only [open-name coverage frontier](checkpoints/MUSICBRAINZ_OPEN_NAME_COVERAGE_FRONTIER_20260923.md)
+  measures 697 strict artist proper-genre names, 911 aggregate release-group
+  proper names, and 1,954 release-group tag names within the 6,291-name
+  vocabulary. No open source declares a microgenre stratum for that vocabulary,
+  so the report abstains from a microgenre-only denominator. It has no model or
+  static promotion path.
 - The local-only [playlist and album evidence join](checkpoints/PLAYLIST_ALBUM_EVIDENCE_JOIN_20260923.md)
-  retains exact IDs and separate source roles, but its two reached release
-  groups have no matching credited-artist support. More exact coverage is
-  needed before any broader context claim, and the result cannot promote a
-  model or static output.
+  found no matching rows in its seed-filtered `release_group_support` table.
+  The later [raw-credit coverage checkpoint](checkpoints/PLAYLIST_ALBUM_CREDIT_COVERAGE_20260923.md)
+  confirms exact credited artists for both receipt-bound release groups. The
+  source roles remain separate, neither result makes an artist membership
+  claim, and neither can promote a model or static output.
 - Playlist and listening work remains blocked on a retained cross-account
   ListenBrainz cohort from a compliant response or supplied public identifier.
   A hash-sampled daily-listen account route is a possible alternative, but it

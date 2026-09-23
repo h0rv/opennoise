@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from collections import defaultdict
 from contextlib import closing
 from typing import TYPE_CHECKING, Final, Literal
 
@@ -24,7 +25,8 @@ from opennoise.models import FrozenModel
 from opennoise.taxonomy.seeds.universe import normalize_label
 from opennoise.types import Sha256  # noqa: TC001 - Pydantic resolves this field at runtime.
 
-_REVISION: Final = "musicbrainz-rg-positive-tag-context-readiness-v1"
+_REVISION: Final = "musicbrainz-rg-positive-tag-context-readiness-v2"
+_FIXED_TOP_K: Final = 5
 _MAX_SAMPLE_REPORT_BYTES: Final = 64 * 1024 * 1024
 _MAX_GOLD_FILES: Final = 8
 _MAX_GOLD_BYTES: Final = 32 * 1024 * 1024
@@ -33,6 +35,8 @@ _MAX_RECONCILIATION_BYTES: Final = 16 * 1024 * 1024
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from opennoise.analysis.musicbrainz_rg_genre_recovery_v2 import SampledReleaseGroup
 
 
 class _SeedPublicIdentity(FrozenModel):
@@ -75,10 +79,40 @@ class GoldReadiness(FrozenModel):
     blocker: str = Field(min_length=1)
 
 
+class PositiveOnlyTopKRecovery(FrozenModel):
+    """Fixed-cutoff recovery over external positives, without negative labels."""
+
+    top_k: Literal[5] = _FIXED_TOP_K
+    candidate_universe_frozen_before_p136_targets: Literal[True] = True
+    ranking_order_frozen_before_p136_targets: Literal[True] = True
+    positive_pair_denominator: int = Field(ge=0)
+    positive_artist_denominator: int = Field(ge=0)
+    frozen_seed_candidate_count: int = Field(ge=0)
+    recovered_positive_pair_count: int = Field(ge=0)
+    recovered_positive_seed_count: int = Field(ge=0)
+    positive_recovery_at_top_k: float = Field(ge=0.0, le=1.0)
+
+
+class TrainBlindGlobalTagPopularityBaseline(PositiveOnlyTopKRecovery):
+    """P136-label-blind global popularity from the same local tag sample."""
+
+    p136_label_blind: Literal[True] = True
+    artist_disjoint_from_local_arm: Literal[False] = False
+    independently_held_out_baseline: Literal[False] = False
+    training_group_rule: Literal["all_sample_groups_before_p136_target_read"] = (
+        "all_sample_groups_before_p136_target_read"
+    )
+    popularity_score: Literal["sum_positive_tag_vote_count_per_release_group"] = (
+        "sum_positive_tag_vote_count_per_release_group"
+    )
+    tie_breaker: Literal["normalized_seed_id_ascending"] = "normalized_seed_id_ascending"
+    training_group_count: int = Field(ge=0)
+
+
 class MusicBrainzRgTagContextReadinessReport(FrozenModel):
     """A no-score checkpoint that prevents same-source target leakage."""
 
-    revision: Literal["musicbrainz-rg-positive-tag-context-readiness-v1"] = _REVISION
+    revision: Literal["musicbrainz-rg-positive-tag-context-readiness-v2"] = _REVISION
     local_only: Literal[True] = True
     export_allowed: Literal[False] = False
     serving_allowed: Literal[False] = False
@@ -117,6 +151,8 @@ class MusicBrainzRgTagContextReadinessReport(FrozenModel):
     positive_tag_exact_seed_hit_count: int = Field(ge=0)
     positive_tag_exact_seed_hit_seed_count: int = Field(ge=0)
     positive_tag_recovery: float = Field(ge=0.0, le=1.0)
+    artist_local_positive_tag_top_k: PositiveOnlyTopKRecovery
+    train_blind_global_tag_popularity_top_k: TrainBlindGlobalTagPopularityBaseline
     gold_candidates: tuple[GoldReadiness, ...] = Field(max_length=_MAX_GOLD_FILES)
     readiness: Literal["positive_only_recovery_not_full_quality_evaluation"] = (
         "positive_only_recovery_not_full_quality_evaluation"
@@ -239,6 +275,110 @@ def _one_to_one_reconciled_qid_seeds(path: Path) -> tuple[dict[str, str], dict[s
     )
 
 
+def _top_k_recovery(
+    *,
+    positives: set[tuple[str, str]],
+    rankings: dict[str, tuple[str, ...]],
+    candidate_seeds: frozenset[str],
+) -> PositiveOnlyTopKRecovery:
+    """Measure only the fraction of external positive pairs found in top five."""
+    recovered = {
+        (artist, seed)
+        for artist, seed in positives
+        if seed in rankings.get(artist, ())[:_FIXED_TOP_K]
+    }
+    return PositiveOnlyTopKRecovery(
+        positive_pair_denominator=len(positives),
+        positive_artist_denominator=len({artist for artist, _seed in positives}),
+        frozen_seed_candidate_count=len(candidate_seeds),
+        recovered_positive_pair_count=len(recovered),
+        recovered_positive_seed_count=len({seed for _artist, seed in recovered}),
+        positive_recovery_at_top_k=len(recovered) / len(positives) if positives else 0.0,
+    )
+
+
+def _fixed_rankings_before_p136_targets(
+    *,
+    groups: tuple[SampledReleaseGroup, ...],
+    seed_names: dict[str, str],
+    candidate_seeds: frozenset[str],
+) -> tuple[dict[str, tuple[str, ...]], tuple[str, ...]]:
+    """Freeze artist-local and global orders before P136 target pairs are read."""
+    seeds_by_name: dict[str, set[str]] = defaultdict(set)
+    for seed, name in seed_names.items():
+        seeds_by_name[name].add(seed)
+    local_scores: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    global_scores: dict[str, int] = defaultdict(int)
+    for group in groups:
+        tag_scores = _group_tag_seed_scores(group, seeds_by_name, candidate_seeds)
+        for artist in group.artist_mbids:
+            for seed, vote_count in tag_scores:
+                local_scores[artist][seed] += vote_count
+        for seed, vote_count in tag_scores:
+            global_scores[seed] += vote_count
+    return (
+        {
+            artist: tuple(sorted(scores, key=lambda seed: (-scores[seed], seed)))
+            for artist, scores in local_scores.items()
+        },
+        tuple(sorted(global_scores, key=lambda seed: (-global_scores[seed], seed))),
+    )
+
+
+def _group_tag_seed_scores(
+    group: SampledReleaseGroup,
+    seeds_by_name: dict[str, set[str]],
+    candidate_seeds: frozenset[str],
+) -> tuple[tuple[str, int], ...]:
+    """Return the predeclared candidate seeds exactly named by one group's tags."""
+    scores: list[tuple[str, int]] = []
+    for tag in group.positive_tags:
+        normalized = normalize_label(tag.name)
+        if normalized:
+            scores.extend(
+                (seed, tag.vote_count)
+                for seed in seeds_by_name.get(normalized, set()).intersection(candidate_seeds)
+            )
+    return tuple(scores)
+
+
+def _fixed_ranking_comparison(
+    *,
+    positives: set[tuple[str, str]],
+    candidate_seeds: frozenset[str],
+    local_rankings: dict[str, tuple[str, ...]],
+    global_ranking: tuple[str, ...],
+    training_group_count: int,
+) -> tuple[PositiveOnlyTopKRecovery, TrainBlindGlobalTagPopularityBaseline]:
+    """Evaluate orders that were frozen before P136 target pairs were read."""
+    cohort_artists = {artist for artist, _seed in positives}
+    local = _top_k_recovery(
+        positives=positives, rankings=local_rankings, candidate_seeds=candidate_seeds
+    )
+    baseline = TrainBlindGlobalTagPopularityBaseline(
+        **_top_k_recovery(
+            positives=positives,
+            rankings=dict.fromkeys(cohort_artists, global_ranking),
+            candidate_seeds=candidate_seeds,
+        ).model_dump(),
+        training_group_count=training_group_count,
+    )
+    return local, baseline
+
+
+def _frozen_sample_tag_candidate_seeds(
+    groups: tuple[SampledReleaseGroup, ...], seed_names: dict[str, str]
+) -> frozenset[str]:
+    """Fix exact-name candidate labels from the sample before P136 is opened."""
+    observed_names = {
+        normalized
+        for group in groups
+        for tag in group.positive_tags
+        if (normalized := normalize_label(tag.name))
+    }
+    return frozenset(seed for seed, name in seed_names.items() if name in observed_names)
+
+
 def audit_musicbrainz_rg_positive_tag_context(
     *,
     sample_report_path: Path,
@@ -263,6 +403,12 @@ def audit_musicbrainz_rg_positive_tag_context(
         seed_reconciliation_path, maximum_bytes=_MAX_RECONCILIATION_BYTES
     )
     qid_to_seed, seed_names = _one_to_one_reconciled_qid_seeds(seed_reconciliation_path)
+    candidate_seeds = _frozen_sample_tag_candidate_seeds(sample.sampled_groups, seed_names)
+    local_rankings, global_ranking = _fixed_rankings_before_p136_targets(
+        groups=sample.sampled_groups,
+        seed_names=seed_names,
+        candidate_seeds=candidate_seeds,
+    )
     raw_p136_pairs, p136_pairs = _wikidata_p136_pairs(wikidata_p136_database_path, qid_to_seed)
 
     tagged_groups = 0
@@ -287,13 +433,23 @@ def audit_musicbrainz_rg_positive_tag_context(
 
     tags_by_artist: dict[str, set[str]] = {}
     for group in sample.sampled_groups:
-        group_tags = {normalize_label(tag.name) for tag in group.positive_tags}
+        group_tags = {
+            normalized for tag in group.positive_tags if (normalized := normalize_label(tag.name))
+        }
         for artist_mbid in group.artist_mbids:
             tags_by_artist.setdefault(artist_mbid, set()).update(group_tags)
     overlap = {(artist, seed) for artist, seed in p136_pairs if artist in tags_by_artist}
     hits = {
         (artist, seed) for artist, seed in overlap if seed_names.get(seed) in tags_by_artist[artist]
     }
+
+    local_top_k, baseline_top_k = _fixed_ranking_comparison(
+        positives=overlap,
+        candidate_seeds=candidate_seeds,
+        local_rankings=local_rankings,
+        global_ranking=global_ranking,
+        training_group_count=sample.sampled_group_count,
+    )
 
     gold = tuple(_gold_readiness(path) for path in independent_gold_paths)
     blockers = (
@@ -305,6 +461,14 @@ def audit_musicbrainz_rg_positive_tag_context(
         (
             "Wikidata P136 contributes positives only; absent tags and absent P136 claims "
             "are not negatives"
+        ),
+        (
+            "the fixed top-five comparison is positive recovery only; it does not compute "
+            "precision, infer negatives, or authorize a quality claim"
+        ),
+        (
+            "the global popularity comparator is P136-label-blind but shares the MusicBrainz "
+            "tag sample with the artist-local arm; it is not independently held out"
         ),
     )
     draft = MusicBrainzRgTagContextReadinessReport.model_construct(
@@ -333,6 +497,8 @@ def audit_musicbrainz_rg_positive_tag_context(
         positive_tag_exact_seed_hit_count=len(hits),
         positive_tag_exact_seed_hit_seed_count=len({_seed for _artist, _seed in hits}),
         positive_tag_recovery=len(hits) / len(overlap) if overlap else 0.0,
+        artist_local_positive_tag_top_k=local_top_k,
+        train_blind_global_tag_popularity_top_k=baseline_top_k,
         gold_candidates=gold,
         blockers=blockers,
         next_required_input=(

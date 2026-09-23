@@ -18,6 +18,8 @@ from opennoise.analysis.musicbrainz_rg_genre_recovery_v2 import (
     report_sha256 as sample_report_sha256,
 )
 from opennoise.analysis.musicbrainz_rg_tag_context_readiness import (
+    _fixed_ranking_comparison,
+    _fixed_rankings_before_p136_targets,
     audit_musicbrainz_rg_positive_tag_context,
     verify_readiness_report,
 )
@@ -125,6 +127,23 @@ class MusicBrainzRgTagContextReadinessTests(unittest.TestCase):
         self.assertEqual(report.positive_tag_observation_count, 2)
         self.assertEqual(report.positive_tag_artist_attachment_count, 3)
         self.assertEqual(report.distinct_normalized_positive_tag_count, 2)
+        self.assertEqual(report.artist_local_positive_tag_top_k.top_k, 5)
+        self.assertEqual(
+            report.artist_local_positive_tag_top_k.positive_pair_denominator,
+            report.wikidata_p136_overlapping_sample_positive_pair_count,
+        )
+        self.assertTrue(report.train_blind_global_tag_popularity_top_k.p136_label_blind)
+        self.assertFalse(
+            report.train_blind_global_tag_popularity_top_k.independently_held_out_baseline
+        )
+        self.assertEqual(
+            report.train_blind_global_tag_popularity_top_k.positive_pair_denominator,
+            report.wikidata_p136_overlapping_sample_positive_pair_count,
+        )
+        self.assertEqual(
+            report.train_blind_global_tag_popularity_top_k.training_group_count,
+            report.sampled_group_count,
+        )
         self.assertEqual(report.gold_candidates[0].source_kind, "fixture_only")
         self.assertIn("fixture-only", report.gold_candidates[0].blocker)
         verify_readiness_report(report)
@@ -144,6 +163,32 @@ class MusicBrainzRgTagContextReadinessTests(unittest.TestCase):
         self.assertEqual(report.readiness, "positive_only_recovery_not_full_quality_evaluation")
         self.assertEqual(report.native_proper_genre_observation_count, 1)
         self.assertFalse(report.native_proper_genres_used_as_targets)
+        self.assertFalse(report.precision_computed)
+
+    def test_global_baseline_order_is_fixed_before_positive_pairs(self) -> None:
+        groups = _sample_report().sampled_groups
+        candidates = frozenset({"seed-jazz", "seed-fusion"})
+        local_rankings, global_ranking = _fixed_rankings_before_p136_targets(
+            groups=groups,
+            seed_names={"seed-jazz": "jazz", "seed-fusion": "fusion"},
+            candidate_seeds=candidates,
+        )
+        local, baseline = _fixed_ranking_comparison(
+            positives={("artist-a", "seed-jazz")},
+            candidate_seeds=candidates,
+            local_rankings=local_rankings,
+            global_ranking=global_ranking,
+            training_group_count=len(groups),
+        )
+
+        self.assertTrue(local.candidate_universe_frozen_before_p136_targets)
+        self.assertTrue(local.ranking_order_frozen_before_p136_targets)
+        self.assertEqual(local.frozen_seed_candidate_count, 2)
+        self.assertEqual(local.recovered_positive_pair_count, 1)
+        self.assertTrue(baseline.p136_label_blind)
+        self.assertFalse(baseline.artist_disjoint_from_local_arm)
+        self.assertEqual(baseline.training_group_count, 2)
+        self.assertEqual(baseline.recovered_positive_pair_count, 1)
 
 
 if __name__ == "__main__":

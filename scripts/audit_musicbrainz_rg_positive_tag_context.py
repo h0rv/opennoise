@@ -16,7 +16,7 @@ _P136_DATABASE = Path("data/public.sqlite")
 _SEED_RECONCILIATION = Path(
     ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json"
 )
-_OUTPUT = Path(".cache/musicbrainz-rg-positive-tag-context-readiness-v1/report.json")
+_OUTPUT = Path(".cache/musicbrainz-rg-positive-tag-context-readiness-v2/report.json")
 
 
 def main() -> int:

@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import hashlib
+import io
+import json
 import sqlite3
+import tarfile
 import tempfile
 import unittest
 from contextlib import closing
 from pathlib import Path
+from unittest.mock import patch
 from uuid import UUID
 
 from opennoise.analysis.listenbrainz_playlist_release_group_overlap import (
@@ -18,7 +22,9 @@ from opennoise.analysis.listenbrainz_playlist_release_group_overlap import (
 )
 from opennoise.analysis.playlist_album_evidence_join import (
     PlaylistAlbumEvidenceJoinError,
+    ReleaseGroupCreditedArtistEvidence,
     join_playlist_album_evidence,
+    read_exact_release_group_artist_credits,
     report_sha256,
 )
 from opennoise.ingest.musicbrainz.release_group_evidence import ReleaseGroupEvidenceArtifact
@@ -39,9 +45,13 @@ class PlaylistAlbumEvidenceJoinTests(unittest.TestCase):
                 playlist_overlap_report_sha256="a" * 64,
                 evidence_database=database,
                 evidence_artifact=_artifact(database),
+                artist_credits=_credits(),
+                artist_credit_archive_sha256="e" * 64,
+                artist_credit_archive_bytes=1,
             )
 
         self.assertEqual(report.requested_release_group_count, 2)
+        self.assertEqual(report.revision, "playlist-album-evidence-join-v2")
         self.assertEqual(report.release_groups_with_native_proper_genres, 1)
         self.assertEqual(report.release_groups_with_credited_artist_evidence, 1)
         self.assertEqual(report.credited_artists_with_direct_evidence, 2)
@@ -50,8 +60,11 @@ class PlaylistAlbumEvidenceJoinTests(unittest.TestCase):
         self.assertEqual(context.release_group_mbid, _GROUP_A)
         self.assertEqual(context.playlist_role, "listenbrainz_playlist_track")
         self.assertEqual(context.native_release_group_role, "native_release_group_proper_genre")
-        self.assertEqual(context.credited_artists[0].role, "release_group_credited_artist")
+        self.assertEqual(
+            context.credited_artists[0].role, "musicbrainz_release_group_artist_credit"
+        )
         self.assertEqual(context.credited_artists[0].artist_mbid, _ARTIST_A)
+        self.assertEqual(context.credited_artists[0].credit_position, 0)
         self.assertEqual(
             context.direct_anchor_artist_seed_evidence[0].role,
             "musicbrainz_direct_anchor_artist_seed",
@@ -79,7 +92,78 @@ class PlaylistAlbumEvidenceJoinTests(unittest.TestCase):
                     playlist_overlap_report_sha256="a" * 64,
                     evidence_database=database,
                     evidence_artifact=artifact,
+                    artist_credits=_credits(),
+                    artist_credit_archive_sha256="e" * 64,
+                    artist_credit_archive_bytes=1,
                 )
+
+    def test_reads_ordered_artist_credits_only_when_the_raw_record_replays(self) -> None:
+        body = json.dumps(
+            {
+                "id": _GROUP_A,
+                "title": "Fixture album",
+                "artist-credit": [
+                    {
+                        "artist": {"id": _ARTIST_A, "name": "Artist A"},
+                        "name": "A credited",
+                        "joinphrase": " & ",
+                    },
+                    {
+                        "artist": {"id": _ARTIST_B, "name": "Artist B"},
+                        "name": "B credited",
+                    },
+                ],
+            },
+            separators=(",", ":"),
+        ).encode()
+        with tempfile.TemporaryDirectory() as temporary:
+            archive = Path(temporary) / "release-group.tar.xz"
+            _archive(archive, body)
+            overlap = _overlaps()[0].model_copy(
+                update={
+                    "native_evidence": _overlaps()[0].native_evidence.model_copy(
+                        update={"record_content_sha256": hashlib.sha256(body).hexdigest()}
+                    )
+                }
+            )
+            artist_credits = read_exact_release_group_artist_credits(archive, (overlap,))
+
+        self.assertEqual(
+            [item.artist_mbid for item in artist_credits[_GROUP_A]], [_ARTIST_A, _ARTIST_B]
+        )
+        self.assertEqual(artist_credits[_GROUP_A][0].credited_name, "A credited")
+        self.assertEqual(artist_credits[_GROUP_A][1].credit_position, 1)
+
+    def test_skips_irrelevant_records_before_decode_and_rejects_duplicate_target(self) -> None:
+        target = _credit_record(_GROUP_A)
+        with tempfile.TemporaryDirectory() as temporary:
+            archive = Path(temporary) / "release-group.tar.xz"
+            _archive(
+                archive,
+                *(
+                    _credit_record(f"00000000-0000-4000-8000-000000000{index:03d}")
+                    for index in range(100, 110)
+                ),
+                target,
+                target,
+            )
+            overlap = _overlaps()[0].model_copy(
+                update={
+                    "native_evidence": _overlaps()[0].native_evidence.model_copy(
+                        update={"record_content_sha256": hashlib.sha256(target).hexdigest()}
+                    )
+                }
+            )
+            with (
+                patch(
+                    "opennoise.analysis.playlist_album_evidence_join.json.loads",
+                    wraps=json.loads,
+                ) as loads,
+                self.assertRaisesRegex(PlaylistAlbumEvidenceJoinError, "repeats"),
+            ):
+                read_exact_release_group_artist_credits(archive, (overlap,))
+
+        self.assertEqual(loads.call_count, 2)
 
 
 def _database(path: Path) -> Path:
@@ -88,17 +172,7 @@ def _database(path: Path) -> Path:
             """CREATE TABLE direct_anchor (
                    genre_id TEXT, artist_id TEXT, facet TEXT, evidence_ref TEXT
                );
-               CREATE TABLE release_group_support (
-                   genre_id TEXT, artist_id TEXT, facet TEXT,
-                   release_group_id TEXT, evidence_ref TEXT
-               );"""
-        )
-        database.executemany(
-            "INSERT INTO release_group_support VALUES (?, ?, ?, ?, ?)",
-            (
-                ("seed-context", _ARTIST_A, "musicbrainz_genre", _GROUP_A, "album:a"),
-                ("seed-context", _ARTIST_B, "musicbrainz_tag", _GROUP_A, "album:b"),
-            ),
+               """
         )
         database.execute(
             "INSERT INTO direct_anchor VALUES (?, ?, 'musicbrainz_genre', ?)",
@@ -109,6 +183,57 @@ def _database(path: Path) -> Path:
             ("seed-direct-b", _ARTIST_B, "direct:b"),
         )
     return path
+
+
+def _credits() -> dict[str, tuple[ReleaseGroupCreditedArtistEvidence, ...]]:
+    return {
+        _GROUP_A: (
+            ReleaseGroupCreditedArtistEvidence(
+                artist_mbid=_ARTIST_A,
+                artist_name="Artist A",
+                credited_name="Artist A",
+                credit_position=0,
+                joinphrase=" & ",
+                record_content_sha256="d" * 64,
+            ),
+            ReleaseGroupCreditedArtistEvidence(
+                artist_mbid=_ARTIST_B,
+                artist_name="Artist B",
+                credited_name="Artist B",
+                credit_position=1,
+                joinphrase="",
+                record_content_sha256="d" * 64,
+            ),
+        ),
+        _GROUP_B: (),
+    }
+
+
+def _credit_record(release_group: str) -> bytes:
+    return json.dumps(
+        {
+            "id": release_group,
+            "title": "Fixture album",
+            "artist-credit": [
+                {
+                    "artist": {"id": _ARTIST_A, "name": "Artist A"},
+                    "name": "Artist A",
+                }
+            ],
+        },
+        separators=(",", ":"),
+    ).encode()
+
+
+def _archive(path: Path, *bodies: bytes) -> None:
+    with tarfile.open(path, "w:xz") as archive:
+        schema = tarfile.TarInfo("JSON_DUMPS_SCHEMA_NUMBER")
+        schema.size = 2
+        archive.addfile(schema, io.BytesIO(b"1\n"))
+        member = tarfile.TarInfo("mbdump/release-group")
+        payload = b"\n".join(bodies) + b"\n"
+        member.size = len(payload)
+        archive.addfile(member, io.BytesIO(payload))
 
 
 def _artifact(database: Path) -> ReleaseGroupEvidenceArtifact:
