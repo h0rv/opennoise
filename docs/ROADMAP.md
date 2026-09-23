@@ -299,6 +299,10 @@ gate is open.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130
   rows. The 544-seed loose-tag frontier remains nonfactual review evidence;
   see [the proper-genre checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PROPER_GENRE_FRONTIER_20260921.md).
+  A further local-only exact-artist review route finds two exclusive positioned
+  anchors among those 11 seeds and retains the other nine as abstentions. It
+  reads seed-ID placement state only, not coordinates, and cannot alter the
+  public layout or serving; see [the anchor projection checkpoint](checkpoints/MUSICBRAINZ_DIRECT_PROPER_GENRE_ANCHOR_PROJECTION_20260923.md).
 - The newer all-seed MusicBrainz direct-claim gate measures 697
   reconciliation-safe seeds, including 423 not in the current 344-genre static
   discovery asset. Its compact filtered projection is now portable custody,
@@ -400,6 +404,10 @@ gate is open.
   support claims, and 3,132 exact credit matches. The genre or tag support
   remains release-group context and is not an artist-direct claim; see the
   [release-credit diagnostic](checkpoints/MUSICBRAINZ_RELEASE_CREDIT_GENRE_DIAGNOSTIC_20260922.md).
+  A separate bounded entity-native observation adapter pins recording, release,
+  and release-group response bytes while keeping proper genres and positive-count
+  tags separate. It is local-only and cannot propagate artist memberships; see
+  the [entity observation checkpoint](checkpoints/MUSICBRAINZ_ENTITY_GENRE_OBSERVATION_20260923.md).
   A local v2 static-export gate now verifies source policy, report quality, and
   exact MBIDs before producing 961 credit-metadata rows for 116 artists. Its
   exact candidate and source projections are now
@@ -499,6 +507,10 @@ gate is open.
   is local-only: 1,497 fixed source-only edges reach 414 scoped seeds. Its
   terminal Last.fm diagnostic is coverage evidence, not a quality gate or a
   publication decision.
+- A source-isolated sparse cosine reranking ablation improves Recall@20 from
+  188 to 315 on the same 960 aggregate-supported held-out targets. It does not
+  broaden aggregate graph reach, create memberships, alter serving, or
+  authorize export; see [the sparse cosine transfer checkpoint](checkpoints/SPARSE_GENRE_COSINE_TRANSFER_20260923.md).
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files
