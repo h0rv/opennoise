@@ -38,6 +38,24 @@ submitted metadata. These are server matches, not IDs submitted with the
 listen or guaranteed truth, and this documentation does not change the fields
 retained in the current aggregate. See the [JSON documentation](https://listenbrainz.readthedocs.io/en/latest/users/json.html).
 
+ListenBrainz's popularity API also returns artist-ranked recordings and
+release groups by listen count, with `total_user_count` and exact recording or
+release-group MBIDs. These counts can support separate song and album ranking
+probes keyed by exact artist MBIDs. They measure popularity among ListenBrainz
+users. They do not supply genre labels or establish factual genre membership. A
+bounded local probe could use at most 20 supplied artist MBIDs, retain the
+response receipts, and inspect up to 10 recording and 10 release-group
+results per artist. Join release-group results by exact MBID to retained
+MusicBrainz album evidence. Report recording-ID coverage separately because
+the local recording catalog is sparse. Keep the two rankings separate and the
+results local; do not use titles, tags, or ranking position as genre evidence
+or model input.
+See the [ListenBrainz popularity API](https://listenbrainz.readthedocs.io/en/latest/users/api/popularity.html).
+
+The Spotify Million Playlist Dataset is not a current open input because the
+official challenge page says its dataset is no longer available for download.
+See the [Spotify MPD challenge page](https://www.aicrowd.com/challenges/spotify-million-playlist-dataset-challenge).
+
 ## Existing evidence and limits
 
 The seven ListenBrainz daily objects support the receipt bound aggregate and
