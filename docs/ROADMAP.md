@@ -413,6 +413,10 @@ gate is open.
   and release-group response bytes while keeping proper genres and positive-count
   tags separate. It is local-only and cannot propagate artist memberships; see
   the [entity observation checkpoint](checkpoints/MUSICBRAINZ_ENTITY_GENRE_OBSERVATION_20260923.md).
+  A separate local archive-order pilot retains 10,000 native release-group
+  observations with exact record hashes and separate proper genres and positive
+  tags. It is not a full-corpus estimate or an artist source. See [the native
+  release-group checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_NATIVE_OBSERVATION_20260923.md).
   The local MusicBrainz derived entity-tag adapter has fixture coverage for
   recording, release, and release-group aggregate tags. It remains local-only and
   has not replayed the absent declared archive. See
@@ -510,6 +514,10 @@ gate is open.
   existing review frontier and one is new; these remain proposals, not
   membership or placement claims. See the
   [unplaced co-listen review](checkpoints/MUSICBRAINZ_UNPLACED_COLISTEN_REVIEW_EDGES_20260922.md).
+  A local reviewer packet now groups 3,104 hierarchy-review rows for 492
+  unplaced seeds with 109 co-listen context rows for 43 seeds. It pins all
+  inputs and keeps every row as an abstention. See the [structural relation
+  review](checkpoints/UNPLACED_STRUCTURAL_RELATION_REVIEW_20260923.md).
   A [streamed peer-threshold
   audit](checkpoints/MUSICBRAINZ_PEER_THRESHOLD_SENSITIVITY_20260921.md)
   finds a review-only hub-filtered route to 414 of the 495 overlap-abstained
@@ -525,6 +533,10 @@ gate is open.
 - The five-fold sparse cosine robustness result remains underpowered for niche
   genres, so it is a local experiment rather than a promotion input. See [the
   robustness checkpoint](checkpoints/SPARSE_GENRE_COSINE_ROBUSTNESS_20260923.md).
+- A fixed direct-peer and cosine rank fusion loses to the best control on both
+  full and endpoint-matched cohorts. Direct-peer full-holdout reach is a
+  candidate-coverage result, while cosine has the stronger matched ranking.
+  See [the hybrid transfer checkpoint](checkpoints/SPARSE_GENRE_HYBRID_TRANSFER_20260923.md).
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files

@@ -61,10 +61,43 @@ retrieves 188 of 1,453 endpoint-conditioned positives at Recall at 20, versus
 74 for direct-IDF peers. The result does not prove general coverage,
 precision, musical similarity, or membership, and the compared candidate
 capacities differ. Million Song Taste Profile has no verified exact
-MusicBrainz bridge. Spotify's historical Million Playlist Dataset is currently
-unavailable for download and unsuitable for the stated reconstruction purpose
-under its terms. MusicBrainz public collections are exact-ID lists but not
-playlists or curation evidence.
+MusicBrainz bridge. Spotify's historical Million Playlist Dataset has no
+confirmed project custody or source-and-terms review, so it is not an input.
+MusicBrainz public collections are exact-ID lists but not playlists or curation
+evidence.
+
+## Listening and playlist source decision
+
+The retained ListenBrainz aggregate is the first listening source to use for
+local diagnostics because it has usable privacy-filtered custody. Seven daily
+event archives are retained, and the qualified aggregate has 30,433
+graph-endpoint co-listen rows. The [official dump documentation](https://listenbrainz.readthedocs.io/en/latest/users/listenbrainz-dumps.html)
+describes full and incremental event dumps. The retained daily files are a
+bounded local input, not a replacement for a full-dump replay.
+
+Public playlist listing routes return account playlist metadata. Exact playlist
+routes return JSPF track data with recording MBIDs, as documented by the
+[official playlist API](https://listenbrainz.readthedocs.io/en/latest/users/api/playlist.html).
+Current custody has one 7,013-byte account-listing response with 20 playlist
+IDs and ten selected playlist snapshots. It supports only one service-declared
+account cohort. It does not establish human, manual, or editorial curation.
+
+The next pilot is fixed before any acquisition: one neutral search request,
+at most three distinct service-declared account listings, and at most two
+playlist snapshots per account. It has a maximum of ten requests and stops on
+an invalid or unretained response, rate-limit warning, or duplicate ID. The
+pilot may measure exact recording and repeated artist-pair counts, then run a
+local heldout comparison against the retained aggregate and a seeded baseline.
+It must keep account strings and JSPF bodies in local custody, and it must make
+no human-curation, genre, membership, serving, or export claim.
+
+MusicBrainz [MLHD+](https://musicbrainz.org/doc/MLHD%2B) is a separate bounded
+exact-ID candidate, not current custody. Its `-complete` archives contain
+canonical recording matches and event timestamp, artist, release, and recording
+MBIDs. A future experiment may declare one archive partition, verify its
+published bytes, retain only a privacy-filtered aggregate, and use a fixed
+time-ordered holdout against the existing ListenBrainz aggregate and seeded
+baseline. The partial archives and any unverified IDs remain out of scope.
 
 The current public genre graph uses Wikidata for catalog identity, factual
 hierarchy, direct artist membership, and representative metadata. It uses the
