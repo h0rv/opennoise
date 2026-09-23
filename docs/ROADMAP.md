@@ -234,16 +234,31 @@ gate is open.
   per-user cap five, and score threshold above ten. It is not a reproduction
   of ListenBrainz production similarity and has no model or serving use; see
   the [session checkpoint](checkpoints/LISTENBRAINZ_ARTIST_SESSION_APPROXIMATION_20260922.md).
-- The UPF Last.fm 360K user and artist play matrix has exact artist MBIDs and
-  could support a local aggregate comparison, but its official linked download
-  currently fails TLS hostname verification. It is non-commercial only and has
-  no adapter or model use. See the [source feasibility checkpoint](checkpoints/LASTFM_360K_SOURCE_FEASIBILITY_20260922.md).
+- The matched local-only direct-custody/aggregate-co-listen holdout is
+  receipt-bound and evaluation-only. Its capacity follow-up expands direct
+  peers beyond top ten and keeps a declared co-listen cap sensitivity; neither
+  is a factual membership claim or model input. See the [matched
+  holdout](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_COLISTEN_HOLDOUT_20260923.md)
+  and [capacity follow-up](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_COLISTEN_CAPACITY_HOLDOUT_20260923.md).
+- The UPF Last.fm 360K user and artist play matrix is now checksum-verified in
+  ignored local custody through its creator-attributed Zenodo record. Its
+  completed streaming aggregate read 17,559,530 rows and retained 485,840
+  exact artist pairs only at a >=5-user floor. The ignored aggregate SQLite is
+  receipt-hashed local custody, not a counts-only artifact; it carries no user
+  identifiers and has no public, model, factual-membership, or genre-gold role.
+  The observed strict-parser counts (359,349 contiguous blocks; 160,131 exact
+  artist UUIDs) remain distinct from the source page's published user and
+  artist figures. See the [source feasibility checkpoint](checkpoints/LASTFM_360K_SOURCE_FEASIBILITY_20260922.md).
 - A local-only ListenBrainz playlist probe can fetch explicit public playlist
   MBIDs into receipt-bound raw JSPF objects and exact recording UUID snapshots,
   with source order, curator uncertainty, and normalized pair support. A
   ten-playlist single-discovery-cohort observation has 527 unique recordings,
   11 exact overlaps with the current 623-recording local catalog, and no model
-  use. See the [playlist probe](checkpoints/LISTENBRAINZ_PLAYLIST_PROBE.md).
+  use. Its source-pinned, round-robin 24-recording exact MusicBrainz
+  artist-credit bridge reached 23 exact lookups and 27 distinct within-playlist
+  cross-recording artist-pair potentials; it has no genre, model, or serving
+  use. See the [playlist probe](checkpoints/LISTENBRAINZ_PLAYLIST_PROBE.md) and
+  [artist-credit bridge](checkpoints/LISTENBRAINZ_PLAYLIST_MUSICBRAINZ_ARTIST_BRIDGE_20260923.md).
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130

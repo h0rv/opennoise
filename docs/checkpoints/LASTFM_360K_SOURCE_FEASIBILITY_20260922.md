@@ -79,4 +79,35 @@ ignored at `.cache/lastfm-360k-upf-zenodo-6090214/sample-100k-aggregate.json`.
 The source record states that the dataset is available for non-commercial use;
 see its [license and source text](https://zenodo.org/records/6090214).
 
+## Verified full local aggregate
+
+On 2026-09-22, a streaming pass read the verified plays member directly from
+the archive without materializing its TSV or opening the profile member. It
+read all 17,559,530 rows, with 17,330,717 rows carrying a syntactically valid
+exact artist UUID. The pass found 160,131 unique valid exact artist UUIDs and
+782 exact overlaps with the current 1,331-artist catalog. It completed 359,349
+contiguous user blocks and detected no reappearing block under its ephemeral
+user-order check. These are source-stat and strict-parser observations, not
+claims that the published 359,347-user or 186,642-MBID figures are identical:
+the two-user and artist-count differences remain documented discrepancies.
+
+The bounded, source-order procedure used at most ten unique exact artist IDs
+per contiguous user block. It saw 6,230,582 candidate pairs and retained
+485,840 pairs only after the floor of five distinct users. The final ignored
+SQLite aggregate has 485,840 rows, a minimum support of 5, and no rows below
+the privacy floor. It is local aggregate custody, not a counts-only artifact:
+it retains exact artist and artist-pair MBIDs at that floor, but no user IDs,
+user hashes, artist names, or profile fields. Sub-floor pair candidates existed
+only as temporary local scan state and were pruned before the final artifact.
+
+The final SQLite is ignored at
+`.cache/lastfm-360k-full-aggregate-v1/aggregate.sqlite` (44 MiB, SHA-256
+`a63ae0028f45683cc956dd5e352f81ca2893b719a79ca6f94c2d5ac5c4e24169`). Its
+counts-only companion receipt is
+`.cache/lastfm-360k-full-aggregate-v1/receipt.json`; it binds the SQLite hash,
+privacy-floor query, and aggregate report hash without exposing exact IDs.
+This remains a local research candidate: the source-order first-ten cap and
+all-time Last.fm plays make it neither genre gold nor a similarity graph,
+evaluation input, model input, serving input, or public artifact.
+
 Primary source: <https://www.upf.edu/web/mtg/lastfm360k>.
