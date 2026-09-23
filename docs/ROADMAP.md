@@ -247,6 +247,16 @@ gate is open.
   is a factual membership claim or model input. See the [matched
   holdout](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_COLISTEN_HOLDOUT_20260923.md)
   and [capacity follow-up](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_COLISTEN_CAPACITY_HOLDOUT_20260923.md).
+- A local-only MusicBrainz Album query now returns up to five ranked examples
+  per seed for an exact genre name or credited artist MBID from the verified
+  release-group report. Genre rows remain native proper-genre observations;
+  albums are source-context examples, and credited artists are not direct
+  artist-genre membership. This query has no track or listening evidence yet.
+  Next, link release-group context to the existing direct and album-supported
+  artist evidence and playlist evidence while preserving each source role. See
+  the [Album query checkpoint](checkpoints/MUSICBRAINZ_ALBUM_DISCOVERY_QUERY_20260923.md),
+  [release-credit audit](checkpoints/MUSICBRAINZ_RELEASE_TRACK_DISCOVERY_SIGNAL_AUDIT_20260923.md),
+  and [playlist role audit](checkpoints/LISTENBRAINZ_PLAYLIST_SIGNAL_QUALITY_AUDIT_20260923.md).
 - A reverse-order sensitivity arm over the same seven privacy-filtered daily
   aggregate windows retains the train-only common-neighbor advantage on its
   fixed common scored cohort (Recall@10 `0.152532` versus popularity
