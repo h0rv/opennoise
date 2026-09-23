@@ -9,6 +9,7 @@ from opennoise.serving.local.conservative_peer_holdout import (
     adjacency,
     evaluate_holdout,
     project_unplaced,
+    singleton_degree_bounded_edges,
 )
 
 
@@ -29,3 +30,23 @@ class ConservativePeerHoldoutTests(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].seed_id, "u-with-anchor")
         self.assertEqual(result[0].point, Point(2.0, 4.0))
+
+    def test_singleton_degree_rule_filters_hubs_before_pair_enumeration(self) -> None:
+        edges = singleton_degree_bounded_edges(
+            (
+                ("artist-a", "one"),
+                ("artist-a", "two"),
+                ("artist-b", "one"),
+                ("artist-b", "two"),
+                ("hub", "one"),
+                ("hub", "three"),
+                ("hub", "four"),
+                ("low", "five"),
+                ("low", "six"),
+                ("hub-two", "five"),
+                ("hub-two", "six"),
+                ("hub-two", "seven"),
+            ),
+            maximum_artist_seed_degree=2,
+        )
+        self.assertEqual(edges, ())

@@ -247,6 +247,20 @@ gate is open.
   is a factual membership claim or model input. See the [matched
   holdout](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_COLISTEN_HOLDOUT_20260923.md)
   and [capacity follow-up](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_COLISTEN_CAPACITY_HOLDOUT_20260923.md).
+- A reverse-order sensitivity arm over the same seven privacy-filtered daily
+  aggregate windows retains the train-only common-neighbor advantage on its
+  fixed common scored cohort (Recall@10 `0.152532` versus popularity
+  `0.142857` and direct-IDF `0.062166`). It is a local retrieval diagnostic,
+  not a genre, membership, similarity, playlist, or promotion claim; see the
+  [directional holdout checkpoint](checkpoints/LISTENBRAINZ_DIRECTIONAL_HOLDOUT_20260923.md).
+- A fixed 10,000-record-per-day user-disjoint raw ListenBrainz slice abstained:
+  its separately privacy-filtered test arm had no five-distinct-user artist
+  pairs. The bound will not be expanded post hoc; see the [user-disjoint
+  abstention checkpoint](checkpoints/LISTENBRAINZ_USER_DISJOINT_HOLDOUT_ABSTENTION_20260923.md).
+- A separate Last.fm 360K >=5-user exact-artist aggregate retrieves 610 of
+  6,818 endpoint-matched direct-custody positives at 20 (8.9469%); it remains
+  a local source-bound retrieval diagnostic with no merged ListenBrainz model
+  or membership claim. See the [Last.fm holdout](checkpoints/LASTFM_DIRECT_CUSTODY_HOLDOUT_20260923.md).
 - The UPF Last.fm 360K user and artist play matrix is now checksum-verified in
   ignored local custody through its creator-attributed Zenodo record. Its
   completed streaming aggregate read 17,559,530 rows and retained 485,840
@@ -417,6 +431,15 @@ gate is open.
   observations with exact record hashes and separate proper genres and positive
   tags. It is not a full-corpus estimate or an artist source. See [the native
   release-group checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_NATIVE_OBSERVATION_20260923.md).
+  Its exact archive-order replay now preserves release-group title, type,
+  first-release date, ordered exact artist credits, and native genre UUID/votes
+  in a separate local support receipt. Only positive-vote genres form
+  credited-artist contextual support; all native facts remain retained and no
+  row is artist membership. See [the credited-artist support checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_NATIVE_ARTIST_SUPPORT_20260923.md).
+  A separately pinned aggregate-only full-corpus native census is prepared but
+  abstained when the local execution boundary stopped its stream before a
+  create-only report existed; it makes no extrapolation from the 10,000-record
+  sample. See [the census abstention checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_NATIVE_CENSUS_20260923.md).
   The local MusicBrainz derived entity-tag adapter has fixture coverage for
   recording, release, and release-group aggregate tags. It remains local-only and
   has not replayed the absent declared archive. See
@@ -495,6 +518,11 @@ gate is open.
 
 ## Later experiments
 
+- The [ListenBrainz account cohort pilot](checkpoints/LISTENBRAINZ_INDEPENDENT_ACCOUNT_PLAYLIST_PILOT_20260923.md)
+  is the next conditional playlist experiment. It can measure exact recording
+  membership across up to three service-declared accounts, but it cannot
+  establish independent people or human curation. It runs only after a
+  compliant discovery response or independently supplied public identifier.
 - Improve semantic neighborhoods and overview landmark choices against open
   graph evidence. The [layout navigation audit](checkpoints/LAYOUT_NAVIGATION_AUDIT.md)
   records the v2 baseline; the [v3 selection](checkpoints/LAYOUT_NAVIGATION_SEPARATION_SWEEP.md)
@@ -526,6 +554,13 @@ gate is open.
   is local-only: 1,497 fixed source-only edges reach 414 scoped seeds. Its
   terminal Last.fm diagnostic is coverage evidence, not a quality gate or a
   publication decision.
+- A source-family calibration now replays the same eligible singleton-witness
+  rule over the full pinned direct MusicBrainz membership input. Its
+  target-excluded placed holdout improves mean peer-centroid error by 0.0289
+  over the leave-one-out global centroid baseline, then permits 405 explicitly
+  local-only candidate positions from the frozen sparse frontier. It is neither
+  a factual placement claim nor a serving or publication path; see the
+  [calibrated candidate checkpoint](checkpoints/FULL_DIRECT_PEER_CALIBRATED_UNPLACED_CANDIDATE_20260923.md).
 - A source-isolated sparse cosine reranking ablation improves Recall@20 from
   188 to 315 on the same 960 aggregate-supported held-out targets. It does not
   broaden aggregate graph reach, create memberships, alter serving, or

@@ -45,6 +45,7 @@ class ListenBrainzOfflineExperimentSettings(FrozenModel):
     )
     train_window_count: Literal[4] = _TRAIN_WINDOW_COUNT
     ranks: tuple[int, ...] = _RANKS
+    evaluation_window_order: Literal["chronological", "reverse_chronological"] = "chronological"
 
 
 class RankingMetrics(FrozenModel):
@@ -100,10 +101,19 @@ def evaluate_listenbrainz_offline_experiment(
     public_database_sha256: str,
     settings: ListenBrainzOfflineExperimentSettings | None = None,
 ) -> ListenBrainzOfflineExperimentArtifact:
-    """Evaluate only novel future aggregate pairs against train-only rankings."""
+    """Evaluate novel held-out aggregate pairs against train-only rankings.
+
+    The ``reverse_chronological`` setting is a sensitivity arm, not a future-prediction
+    claim: it reverses the same seven fixed daily windows before splitting.
+    It permits a bounded check that the retrieval comparison is not dependent
+    on only one chronological partition.  It never changes the source rows,
+    their distinct-user privacy floor, or the aggregate-only boundary.
+    """
     resolved_settings = settings or ListenBrainzOfflineExperimentSettings()
     crosswalk, genre_sets = _load_public_artist_inputs(public_database_path)
     windows = _load_public_co_listen_windows(listenbrainz_path, crosswalk)
+    if resolved_settings.evaluation_window_order == "reverse_chronological":
+        windows = tuple(reversed(windows))
     if len(windows) <= resolved_settings.train_window_count:
         raise ValueError("co-listen source needs at least one held-out window")
     train_windows = windows[: resolved_settings.train_window_count]

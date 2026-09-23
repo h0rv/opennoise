@@ -75,6 +75,36 @@ def adjacency(edges: Iterable[tuple[str, str]]) -> dict[str, frozenset[str]]:
     return {seed_id: frozenset(neighbors) for seed_id, neighbors in result.items()}
 
 
+def singleton_degree_bounded_edges(
+    memberships: Iterable[tuple[str, str]], *, maximum_artist_seed_degree: int = 9
+) -> tuple[tuple[str, str], ...]:
+    """Replay overlap-one edges from only witnesses eligible under the fixed degree rule.
+
+    Artists above the bound are discarded before eligible-pair enumeration,
+    then checked again in the complete artist intersection. This preserves the
+    source rule: a low-degree witness plus any second (including hub) witness
+    is not an overlap-one edge.
+    """
+    by_artist: dict[str, set[str]] = defaultdict(set)
+    artists_by_genre: dict[str, set[str]] = defaultdict(set)
+    for artist_id, genre_id in memberships:
+        by_artist[artist_id].add(genre_id)
+        artists_by_genre[genre_id].add(artist_id)
+    counts: dict[tuple[str, str], int] = defaultdict(int)
+    for genres in by_artist.values():
+        if len(genres) > maximum_artist_seed_degree:
+            continue
+        ordered = sorted(genres)
+        for index, left in enumerate(ordered):
+            for right in ordered[index + 1 :]:
+                counts[(left, right)] += 1
+    return tuple(
+        edge
+        for edge, count in sorted(counts.items())
+        if count == 1 and len(artists_by_genre[edge[0]] & artists_by_genre[edge[1]]) == 1
+    )
+
+
 def evaluate_holdout(
     *, anchors: dict[str, Point], peer_adjacency: dict[str, frozenset[str]]
 ) -> HoldoutSummary:

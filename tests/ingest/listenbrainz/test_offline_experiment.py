@@ -5,8 +5,10 @@ from contextlib import closing
 from pathlib import Path
 
 from opennoise.ingest.listenbrainz.offline_experiment import (
+    ListenBrainzOfflineExperimentSettings,
     evaluate_listenbrainz_offline_experiment,
 )
+from scripts.evaluate_listenbrainz_offline_experiment import _local_cache_output_path
 
 _NOVEL_REFERENCE_COUNT = 2
 _A = "00000000-0000-4000-8000-000000000001"
@@ -75,6 +77,43 @@ class ListenBrainzOfflineExperimentTests(unittest.TestCase):
                     listenbrainz_database_sha256="a" * 64,
                     public_database_sha256="b" * 64,
                 )
+
+    def test_reverse_direction_uses_the_same_windows_in_reverse_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "qualified.sqlite"
+            public = root / "public.sqlite"
+            _source_fixture(source)
+            _public_fixture(public)
+
+            artifact = evaluate_listenbrainz_offline_experiment(
+                listenbrainz_path=source,
+                public_database_path=public,
+                listenbrainz_database_sha256="a" * 64,
+                public_database_sha256="b" * 64,
+                settings=ListenBrainzOfflineExperimentSettings(
+                    evaluation_window_order="reverse_chronological"
+                ),
+            )
+
+        self.assertEqual(artifact.settings.evaluation_window_order, "reverse_chronological")
+        self.assertEqual(artifact.source_window_count, 5)
+        self.assertEqual(artifact.train_window_count, 4)
+        self.assertEqual(artifact.heldout_window_count, 1)
+
+    def test_output_path_refuses_an_existing_file_or_symlink(self) -> None:
+        with tempfile.TemporaryDirectory(dir=".cache") as temporary:
+            output = Path(temporary) / "report.json"
+            output.write_text("already present", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                _local_cache_output_path(output)
+
+            output.unlink()
+            target = Path(temporary) / "target.json"
+            target.write_text("not an output", encoding="utf-8")
+            output.symlink_to(target)
+            with self.assertRaisesRegex(ValueError, "must not be a symlink"):
+                _local_cache_output_path(output)
 
 
 def _source_fixture(path: Path, *, reverse_pair: bool = False) -> None:
