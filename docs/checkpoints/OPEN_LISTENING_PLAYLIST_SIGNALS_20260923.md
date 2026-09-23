@@ -52,9 +52,92 @@ results local; do not use titles, tags, or ranking position as genre evidence
 or model input.
 See the [ListenBrainz popularity API](https://listenbrainz.readthedocs.io/en/latest/users/api/popularity.html).
 
-The Spotify Million Playlist Dataset is not a current open input because the
-official challenge page says its dataset is no longer available for download.
-See the [Spotify MPD challenge page](https://www.aicrowd.com/challenges/spotify-million-playlist-dataset-challenge).
+## Full-history listening sources
+
+ListenBrainz full-history data is a substantially broader user-level source
+than the seven daily objects already retained. The official dumps contain all
+submitted listens in monthly JSONL files, with daily incremental updates. A
+listen has a timestamp and user identifier; recording, release, release-group,
+and artist MBIDs may be present in submitted `additional_info` or in the
+read-time `mbid_mapping` resolved by ListenBrainz. The latter is a server match,
+not a guaranteed user-supplied identifier. Release-group MBIDs can support
+album grouping where available, and timestamp plus available duration can
+support inferred listening sessions. User-level co-listen counts can be
+calculated from a bounded event sample. The 2024 dataset paper reports about
+28,419 users and 876 million listens, with 764 million linked to MBIDs.
+Sources: [dump layout and refresh
+rules](https://listenbrainz.readthedocs.io/en/latest/users/listenbrainz-dumps.html),
+[listen JSON fields](https://listenbrainz.readthedocs.io/en/latest/users/json.html),
+and the [dataset paper](https://zenodo.org/record/14877361/files/000044.pdf).
+
+For a laptop-sized follow-up, use the public per-user listens API for a small,
+fixed sample of supplied account identifiers, with a prespecified time window
+or event cap (the API returns at most 1,000 listens per request). Keep each
+account wholly within one fold, retain only the fields needed for session,
+album, or co-listen calculations, and record source receipts. API clients must
+send a contactable User-Agent and stay at or below one request per second.
+The official 2026-09-15 full dump lists its listens archive at 229 GB (the
+Spark archive is 220 GB), so the bounded per-user API is the near-term local
+path; the dump was not downloaded. [Current full-dump
+directory](https://data.metabrainz.org/pub/musicbrainz/listenbrainz/fullexport/listenbrainz-dump-2663-20260915-000002-full/).
+Daily incremental listens archives are about 220–310 MB in sampled official
+directories, projecting to roughly 7–9 GB for 30 days. They cover listens
+submitted during each dump interval, not necessarily tracks played in that
+period (imports can contain older timestamps), and omit deletions. They could
+provide an account-agnostic submit-window sample, but not a clean played-at
+window or a complete current history without the full base dump. [Incremental
+archive index](https://data.metabrainz.org/pub/musicbrainz/listenbrainz/incremental/).
+This is a design option only; no new accounts or listening history have been
+downloaded or analyzed. ListenBrainz says listens are public and included in
+dumps, and its GDPR statement calls them personally identifying data; CC0
+publication does not remove the need to avoid exposing raw user-linked trails. Sources:
+[API limits](https://listenbrainz.readthedocs.io/en/latest/users/api/index.html),
+[GDPR statement](https://metabrainz.org/gdpr), and [dump
+documentation](https://listenbrainz.readthedocs.io/en/latest/users/listenbrainz-dumps.html).
+
+MLHD+ offers a different, much larger historical arm for later dedicated
+storage and compute. Each user has a random-UUID file with timestamp, artist
+MBIDs, release MBID, and recording MBID; complete files contain resolved
+canonical recordings, while partial files preserve some unresolved or missing
+data. Those fields support inferred sessions and artist, release, or recording
+co-listens. Its snapshot reflects MusicBrainz as of March 2023. The official
+archive index lists sixteen 15 GB complete tar shards and sixteen 2 GB partial
+shards, so even one complete shard is too large for the current laptop-sized
+workflow. This remains a future source, not an ingested or benchmarked signal.
+Sources: [MLHD+ format and caveats](https://musicbrainz.org/doc/MLHD%2B) and
+[archive sizes](https://data.musicbrainz.org/pub/musicbrainz/listenbrainz/mlhd/).
+
+The Million Song Dataset Taste Profile is another historical candidate: its
+48,373,586 rows are anonymous user-song play counts for 1,019,318 users and
+384,546 songs, not timestamped listens, so it cannot support sessions or
+played-at windows. The IDs are Echo Nest song IDs; a 461 MB archived Echo Nest
+profile bridge includes some MusicBrainz IDs, but its maintainers say the
+results are unvalidated and the Echo Nest API is shut down. The official MSD
+site lists Taste Profile as user data, but current download accessibility is
+unverified. Local feasibility depends on obtaining the source and measuring
+usable exact-ID coverage; this is not ingested or release eligible. Sources:
+[ISMIR comparison](https://archives.ismir.net/ismir2013/paper/000231.pdf),
+[MSD site](https://millionsongdataset.com/), and [Echo Nest mapping
+archive](https://labs.acousticbrainz.org/million-song-dataset-echonest-archive/).
+
+For playlist acquisition, the retained ListenBrainz source is the strongest
+current exact-ID option: public JSPF snapshots carry ordered recording MBIDs,
+but the current ten-playlist cohort comes from one service-declared account
+and its curator state is unknown. Public MusicBrainz collections are a
+secondary human-list signal: users create and title them, but their contents
+may describe libraries or other lists rather than themed playlists. The MPD
+is currently unavailable for download according to its [AIcrowd challenge
+page](https://www.aicrowd.com/challenges/spotify-million-playlist-dataset-challenge),
+despite Spotify's historical 2020 re-release announcement. Melon dataset
+access remains unclear because the download page and the reported Kakao Arena
+availability conflict. Deezer's public carousel research data exposes derived
+playlist feature vectors, not playlist track memberships, so it cannot serve
+as an import source. Keep all playlist evidence local-only; these sources do
+not establish independent creators, human curation, genre truth, model input,
+serving eligibility, or release eligibility. See [MusicBrainz
+Collections](https://musicbrainz.org/doc/Collections), [Melon dataset
+project](https://mtg.github.io/melon-playlist-dataset/), and [Deezer's
+carousel data](https://github.com/deezer/carousel_bandits).
 
 ## Existing evidence and limits
 

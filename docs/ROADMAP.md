@@ -352,6 +352,10 @@ gate is open.
   616 of 1,209. The result uses the first 10,000 valid archive-order groups
   and supports feasibility work only; see the [recovery feasibility
   checkpoint](checkpoints/MUSICBRAINZ_RG_GENRE_RECOVERY_FEASIBILITY_20260923.md).
+- A separate local-only hash sample retained 10,009 valid groups, of which
+  3,457 had seed-matched genres. Artist transfer had 59/700 coverage-adjusted
+  correct and 601 abstentions; training popularity scored 226/700. This result
+  does not promote the signal; see the [hash-sample checkpoint](checkpoints/MUSICBRAINZ_RG_GENRE_RECOVERY_HASH_SAMPLE_20260923.md).
 - The ListenBrainz popularity API probe is ready for a small local capture,
   but the environment could not resolve `api.listenbrainz.org`. No live
   response, ranking, or catalog overlap was measured; see the [probe
