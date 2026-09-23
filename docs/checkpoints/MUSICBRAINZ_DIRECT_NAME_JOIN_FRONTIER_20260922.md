@@ -11,6 +11,14 @@ export or serving, or infer similarity.
 Both receipt *bytes* were pinned before parsing so a self-consistent substitute
 receipt cannot select another cohort.
 
+The report also accepts an optional exact-MBID recovery receipt and object
+store. When supplied, it verifies the recovery receipt bytes and requires its
+direct and canonical-name custody bindings to match the two pinned inputs.
+Only recovery rows marked `unique_canonical_name` are unioned by MBID; a
+duplicate MBID is rejected. This remains a local-only accounting path: its
+report flags stay false for public export, serving, membership claims, and the
+release gate. Omitting all three recovery arguments preserves this baseline.
+
 | Input | Receipt-byte SHA-256 | Embedded logical output SHA-256 | Bound object SHA-256 |
 | --- | --- | --- | --- |
 | Direct proper-genre custody | `41842340be1b661d3a12a55979f10771e5ce333282e34b92b959208028a4f615` | `a6f874aea86f66519801b4b61f89d8150a4102a8c9266ed8f9ad31ceebf54bd9` | `b1fc1ac9428832cb4543710b716e2d47eb8cc62dc052ed4d768ffb27dd1dcc3e` |
@@ -44,6 +52,20 @@ Source claims and name facts are streamed into separate temporary SQLite tables
 and joined only in the aggregate query. No 387k-model in-memory collection is
 made.
 
+## Recovery-supplemented local result
+
+The completed recovery receipt has byte SHA-256
+`0282dc6c7f2f99828b2aedf64c370d32a5a69bfa4322c153a13fe755ad92693b` and
+logical output SHA-256
+`cccb11be61d74adea12f8f0eec32bbece4bc93aadf25e8d0abd5f96ba7193a7b`.
+Its verified object SHA-256 is
+`192c564e9b6a0eea26a2b00d80d13338a58616bec80d5d2da513468c64191939`.
+A fresh local report using the optional recovery input retained the same 423
+candidate-only seeds and 139,398 direct pairs, and raised named pairs from
+115,269 (82.6905694486291%) to **139,398 (100%)**. Unnamed pairs fell from
+24,129 to zero. This is local accounting only; it did not write `dist`, change
+the sealed discovery asset, or authorize serving or export.
+
 ## Size boundary
 
 An honest, derivable lower-bound shape is available, but it is not a production
@@ -75,6 +97,15 @@ changing the delta's compact, ID-only contract.
   --certified-manifest dist/opennoise-static-manifest.json \
   --certified-layout dist/assets/semantic-atlas.730bca93300870d35b527f377eb883ae95a3f931aad7e820b013fa592c5bf4ac.json \
   --output /tmp/musicbrainz-direct-name-join-frontier.json
+```
+
+To include a verified recovery object, append all three of these arguments to
+that command (before `--output` is convenient):
+
+```sh
+  --recovery-receipt .cache/musicbrainz-direct-artist-name-recovery-v1/receipt.json \
+  --recovery-receipt-sha256 0282dc6c7f2f99828b2aedf64c370d32a5a69bfa4322c153a13fe755ad92693b \
+  --recovery-object-store .cache/musicbrainz-direct-artist-name-recovery-v1/objects
 ```
 
 The writer refuses to replace an existing report. Both the report schema and

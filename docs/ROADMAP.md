@@ -247,6 +247,10 @@ gate is open.
   shared artists are at least 90% one exact sorted seed-membership signature.
   These require review and do not suppress candidates or delete facts; see
   [the signature concentration checkpoint](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_SIGNATURE_CONCENTRATION_20260922.md).
+- A follow-up local-only exact-signature ablation recomputes a shadow peer
+  graph after removing only complete dominant-signature cohorts. It is a
+  review tool and cannot alter the baseline graph or public output; see [the
+  ablation checkpoint](checkpoints/MUSICBRAINZ_DIRECT_CUSTODY_EXACT_SIGNATURE_ABLATION_20260922.md).
 - The local custody-only delta report confirms 274 shared IDs and 423
   candidate-only IDs. Of the candidate-only IDs, 412 are placed and 11 are
   unplaced. It retains 139,398 candidate observations and abstains from artist
@@ -256,6 +260,13 @@ gate is open.
   figure is only an uncompressed minimal candidate-shape estimate, not a
   production asset or publication authorization; see [the name-join
   checkpoint](checkpoints/MUSICBRAINZ_DIRECT_NAME_JOIN_FRONTIER_20260922.md).
+- The completed local-only exact-MBID recovery supplies 34,005 unique names
+  with no conflicts or missing targets. Its receipt is bound to the same direct
+  and canonical-name custody cohort; it is not serving input or publication
+  authorization. A fresh local name-join report uses it to cover all 139,398
+  candidate-only direct pairs (100%, up from 115,269 / 82.69%), without
+  changing `dist` or the public asset. See [the recovery checkpoint](checkpoints/MUSICBRAINZ_DIRECT_ARTIST_NAME_RECOVERY_20260922.md) and
+  [the name-join checkpoint](checkpoints/MUSICBRAINZ_DIRECT_NAME_JOIN_FRONTIER_20260922.md).
 - A read-only static-packaging audit distinguishes that exact 12.2 MB minimal
   JSONL boundary from the much larger current-v2 extrapolation and proposes
   bounded lazy genre shards only for a future authorized release; see [the

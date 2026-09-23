@@ -22,6 +22,9 @@ def main() -> int:
     parser.add_argument("--name-custody-receipt", type=Path, required=True)
     parser.add_argument("--name-custody-receipt-sha256", required=True)
     parser.add_argument("--name-object-store", type=Path, required=True)
+    parser.add_argument("--recovery-receipt", type=Path)
+    parser.add_argument("--recovery-receipt-sha256")
+    parser.add_argument("--recovery-object-store", type=Path)
     parser.add_argument("--static-discovery", type=Path, required=True)
     parser.add_argument("--certified-manifest", type=Path, required=True)
     parser.add_argument("--certified-layout", type=Path, required=True)
@@ -37,6 +40,9 @@ def main() -> int:
         static_discovery_path=arguments.static_discovery,
         certified_manifest_path=arguments.certified_manifest,
         certified_layout_path=arguments.certified_layout,
+        recovery_receipt_path=arguments.recovery_receipt,
+        recovery_receipt_sha256=arguments.recovery_receipt_sha256,
+        recovery_object_store=arguments.recovery_object_store,
     )
     _write_fresh_output(arguments.output, report_json(report).encode())
     return 0

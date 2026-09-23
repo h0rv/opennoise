@@ -19,6 +19,10 @@ from pydantic import Field, model_validator
 from opennoise.checkpoints.musicbrainz_direct_discovery_delta import (
     build_musicbrainz_direct_discovery_delta,
 )
+from opennoise.deployment.musicbrainz_direct_artist_name_recovery import (
+    DirectArtistNameRecoveryReceipt,
+    iter_verified_unique_recovered_names,
+)
 from opennoise.deployment.musicbrainz_direct_canonical_artist_name_custody import (
     DirectCanonicalArtistNameCustodyReceipt,
     iter_verified_direct_canonical_artist_names,
@@ -138,6 +142,38 @@ def _load_name_receipt(
         raise DirectNameJoinFrontierError("name custody receipt is invalid") from error
 
 
+def _load_recovery_receipt(path: Path, *, expected_sha256: str) -> DirectArtistNameRecoveryReceipt:
+    if _sha256(path) != expected_sha256:
+        raise DirectNameJoinFrontierError("recovery receipt bytes do not match expected SHA-256")
+    try:
+        return DirectArtistNameRecoveryReceipt.model_validate_json(path.read_bytes())
+    except (OSError, ValueError) as error:
+        raise DirectNameJoinFrontierError("recovery receipt is invalid") from error
+
+
+def _optional_recovery_inputs(
+    *,
+    recovery_receipt_path: Path | None,
+    recovery_receipt_sha256: str | None,
+    recovery_object_store: Path | None,
+) -> tuple[Path, str, Path] | None:
+    inputs = (recovery_receipt_path, recovery_receipt_sha256, recovery_object_store)
+    if all(value is None for value in inputs):
+        return None
+    if any(value is None for value in inputs):
+        raise DirectNameJoinFrontierError(
+            "recovery receipt, receipt SHA-256, and object store must be supplied together"
+        )
+    path, receipt_sha256, object_store = inputs
+    if (
+        not isinstance(path, Path)
+        or not isinstance(receipt_sha256, str)
+        or not isinstance(object_store, Path)
+    ):
+        raise DirectNameJoinFrontierError("recovery inputs have invalid types")
+    return path, receipt_sha256, object_store
+
+
 def build_musicbrainz_direct_name_join_frontier(  # noqa: PLR0913 - explicit custody inputs.
     *,
     direct_custody_receipt_path: Path,
@@ -149,6 +185,9 @@ def build_musicbrainz_direct_name_join_frontier(  # noqa: PLR0913 - explicit cus
     static_discovery_path: Path,
     certified_manifest_path: Path,
     certified_layout_path: Path,
+    recovery_receipt_path: Path | None = None,
+    recovery_receipt_sha256: str | None = None,
+    recovery_object_store: Path | None = None,
 ) -> DirectNameJoinFrontierReport:
     """Build a deterministic exact-MBID coverage report for candidate-only seeds."""
     direct_receipt = _load_direct_receipt(
@@ -169,6 +208,35 @@ def build_musicbrainz_direct_name_join_frontier(  # noqa: PLR0913 - explicit cus
         raise DirectNameJoinFrontierError(
             "name custody receipt is bound to a different direct cohort"
         )
+    recovery_inputs = _optional_recovery_inputs(
+        recovery_receipt_path=recovery_receipt_path,
+        recovery_receipt_sha256=recovery_receipt_sha256,
+        recovery_object_store=recovery_object_store,
+    )
+    recovery_receipt: DirectArtistNameRecoveryReceipt | None = None
+    if recovery_inputs is not None:
+        recovery_path, recovery_byte_sha256, _ = recovery_inputs
+        recovery_receipt = _load_recovery_receipt(
+            recovery_path, expected_sha256=recovery_byte_sha256
+        )
+        if (
+            recovery_receipt.direct_custody_receipt_byte_sha256,
+            recovery_receipt.direct_custody_receipt_output_sha256,
+            recovery_receipt.direct_claims_object_sha256,
+            recovery_receipt.name_custody_receipt_byte_sha256,
+            recovery_receipt.name_custody_receipt_output_sha256,
+            recovery_receipt.name_custody_object_sha256,
+        ) != (
+            direct_custody_receipt_sha256,
+            direct_receipt.output_sha256,
+            direct_receipt.claims_object_sha256,
+            name_custody_receipt_sha256,
+            name_receipt.output_sha256,
+            name_receipt.names_object_sha256,
+        ):
+            raise DirectNameJoinFrontierError(
+                "recovery receipt is bound to a different direct or canonical-name cohort"
+            )
 
     delta = build_musicbrainz_direct_discovery_delta(
         custody_receipt_path=direct_custody_receipt_path,
@@ -198,21 +266,32 @@ def build_musicbrainz_direct_name_join_frontier(  # noqa: PLR0913 - explicit cus
                 direct_object_store=direct_object_store,
                 name_receipt=name_receipt,
                 name_object_store=name_object_store,
+                recovery_receipt=recovery_receipt,
+                recovery_object_store=None if recovery_inputs is None else recovery_inputs[2],
                 candidate_ids=candidate_ids,
             )
             per_seed, totals, payload = _report_from_join(connection, candidate_ids=candidate_ids)
         finally:
             connection.close()
     total, named, unnamed = totals
+    inputs = {
+        "direct_custody_receipt_byte_sha256": direct_custody_receipt_sha256,
+        "direct_custody_receipt_output_sha256": direct_receipt.output_sha256,
+        "direct_claims_object_sha256": direct_receipt.claims_object_sha256,
+        "name_custody_receipt_byte_sha256": name_custody_receipt_sha256,
+        "name_custody_receipt_output_sha256": name_receipt.output_sha256,
+        "names_object_sha256": name_receipt.names_object_sha256,
+    }
+    if recovery_receipt is not None and recovery_inputs is not None:
+        inputs.update(
+            {
+                "recovery_receipt_byte_sha256": recovery_inputs[1],
+                "recovery_receipt_output_sha256": recovery_receipt.output_sha256,
+                "recovery_object_sha256": recovery_receipt.recovery_object_sha256,
+            }
+        )
     return DirectNameJoinFrontierReport(
-        inputs={
-            "direct_custody_receipt_byte_sha256": direct_custody_receipt_sha256,
-            "direct_custody_receipt_output_sha256": direct_receipt.output_sha256,
-            "direct_claims_object_sha256": direct_receipt.claims_object_sha256,
-            "name_custody_receipt_byte_sha256": name_custody_receipt_sha256,
-            "name_custody_receipt_output_sha256": name_receipt.output_sha256,
-            "names_object_sha256": name_receipt.names_object_sha256,
-        },
+        inputs=inputs,
         candidate_only_seed_count=len(candidate_ids),
         candidate_only_direct_artist_pair_count=total,
         candidate_only_named_direct_artist_pair_count=named,
@@ -230,6 +309,8 @@ def _stream_exact_join_inputs(  # noqa: PLR0913 - separate custody inputs are in
     direct_object_store: Path,
     name_receipt: DirectCanonicalArtistNameCustodyReceipt,
     name_object_store: Path,
+    recovery_receipt: DirectArtistNameRecoveryReceipt | None,
+    recovery_object_store: Path | None,
     candidate_ids: frozenset[str],
 ) -> None:
     connection.executescript(
@@ -264,8 +345,24 @@ def _stream_exact_join_inputs(  # noqa: PLR0913 - separate custody inputs are in
                 "INSERT INTO canonical_name_facts VALUES (?, ?)",
                 (name.artist_mbid, name.canonical_name),
             )
+        if recovery_receipt is not None:
+            if recovery_object_store is None:
+                raise DirectNameJoinFrontierError("recovery object store is missing")
+            for name in iter_verified_unique_recovered_names(
+                recovery_receipt, object_store=recovery_object_store
+            ):
+                connection.execute(
+                    "INSERT INTO canonical_name_facts VALUES (?, ?)",
+                    (name.artist_mbid, name.canonical_name),
+                )
+    except sqlite3.IntegrityError as error:
+        raise DirectNameJoinFrontierError(
+            "recovered name repeats a canonical-name custody MBID"
+        ) from error
     except (OSError, ValueError, RuntimeError) as error:
-        raise DirectNameJoinFrontierError("name custody object did not verify") from error
+        raise DirectNameJoinFrontierError(
+            "canonical or recovery name object did not verify"
+        ) from error
 
 
 def _report_from_join(

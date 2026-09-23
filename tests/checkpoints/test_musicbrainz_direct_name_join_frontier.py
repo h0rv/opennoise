@@ -15,6 +15,13 @@ from opennoise.checkpoints.musicbrainz_direct_name_join_frontier import (
     DirectNameJoinFrontierError,
     build_musicbrainz_direct_name_join_frontier,
 )
+from opennoise.deployment.musicbrainz_direct_artist_name_recovery import (
+    DirectArtistNameRecoveryReceipt,
+    DirectArtistNameRecoveryRow,
+)
+from opennoise.deployment.musicbrainz_direct_artist_name_recovery import (
+    receipt_sha256 as recovery_receipt_sha256,
+)
 from opennoise.deployment.musicbrainz_direct_canonical_artist_name_custody import (
     CanonicalArtistName,
     DirectCanonicalArtistNameCustodyReceipt,
@@ -104,6 +111,85 @@ class MusicBrainzDirectNameJoinFrontierTests(unittest.TestCase):
                     certified_layout_path=atlas,
                 )
 
+    def test_unions_verified_unique_recovery_names_by_exact_mbid(self) -> None:
+        with TemporaryDirectory() as temporary_name:
+            directory = Path(temporary_name)
+            direct_path, direct_store, name_path, name_store = _custodies(directory)
+            recovery_path, recovery_store = _recovery(directory, direct_path, name_path)
+            recovery_receipt_sha256 = _sha256(recovery_path)
+            static, manifest, atlas = _certified_site(directory)
+            report = build_musicbrainz_direct_name_join_frontier(
+                direct_custody_receipt_path=direct_path,
+                direct_custody_receipt_sha256=_sha256(direct_path),
+                direct_object_store=direct_store,
+                name_custody_receipt_path=name_path,
+                name_custody_receipt_sha256=_sha256(name_path),
+                name_object_store=name_store,
+                static_discovery_path=static,
+                certified_manifest_path=manifest,
+                certified_layout_path=atlas,
+                recovery_receipt_path=recovery_path,
+                recovery_receipt_sha256=recovery_receipt_sha256,
+                recovery_object_store=recovery_store,
+            )
+
+        self.assertFalse(report.public_export_authorized)
+        self.assertFalse(report.serving_authorized)
+        self.assertFalse(report.membership_claims_authorized)
+        self.assertFalse(report.release_gate)
+        self.assertEqual(report.candidate_only_named_direct_artist_pair_count, 2)
+        self.assertEqual(report.candidate_only_unnamed_direct_artist_pair_count, 0)
+        self.assertEqual(report.candidate_only_exact_display_coverage, 1.0)
+        self.assertEqual(report.proposed_static_payload["row_count"], 2)
+        self.assertEqual(report.inputs["recovery_receipt_byte_sha256"], recovery_receipt_sha256)
+        self.assertIn("recovery_receipt_output_sha256", report.inputs)
+        self.assertIn("recovery_object_sha256", report.inputs)
+
+    def test_rejects_recovery_bound_to_another_name_custody_cohort(self) -> None:
+        with TemporaryDirectory() as temporary_name:
+            directory = Path(temporary_name)
+            direct_path, direct_store, name_path, name_store = _custodies(directory)
+            recovery_path, recovery_store = _recovery(
+                directory, direct_path, name_path, bound_name_receipt_sha256="b" * 64
+            )
+            static, manifest, atlas = _certified_site(directory)
+            with self.assertRaisesRegex(
+                DirectNameJoinFrontierError, "different direct or canonical"
+            ):
+                build_musicbrainz_direct_name_join_frontier(
+                    direct_custody_receipt_path=direct_path,
+                    direct_custody_receipt_sha256=_sha256(direct_path),
+                    direct_object_store=direct_store,
+                    name_custody_receipt_path=name_path,
+                    name_custody_receipt_sha256=_sha256(name_path),
+                    name_object_store=name_store,
+                    static_discovery_path=static,
+                    certified_manifest_path=manifest,
+                    certified_layout_path=atlas,
+                    recovery_receipt_path=recovery_path,
+                    recovery_receipt_sha256=_sha256(recovery_path),
+                    recovery_object_store=recovery_store,
+                )
+
+    def test_rejects_partial_optional_recovery_input(self) -> None:
+        with TemporaryDirectory() as temporary_name:
+            directory = Path(temporary_name)
+            direct_path, direct_store, name_path, name_store = _custodies(directory)
+            static, manifest, atlas = _certified_site(directory)
+            with self.assertRaisesRegex(DirectNameJoinFrontierError, "supplied together"):
+                build_musicbrainz_direct_name_join_frontier(
+                    direct_custody_receipt_path=direct_path,
+                    direct_custody_receipt_sha256=_sha256(direct_path),
+                    direct_object_store=direct_store,
+                    name_custody_receipt_path=name_path,
+                    name_custody_receipt_sha256=_sha256(name_path),
+                    name_object_store=name_store,
+                    static_discovery_path=static,
+                    certified_manifest_path=manifest,
+                    certified_layout_path=atlas,
+                    recovery_receipt_path=directory / "recovery.json",
+                )
+
 
 def _custodies(directory: Path) -> tuple[Path, Path, Path, Path]:
     claims = tuple(
@@ -184,6 +270,64 @@ def _custodies(directory: Path) -> tuple[Path, Path, Path, Path]:
     name_path = directory / "name-receipt.json"
     name_path.write_text(name_receipt.model_dump_json(), encoding="utf-8")
     return direct_path, direct_store, name_path, name_store
+
+
+def _recovery(
+    directory: Path,
+    direct_path: Path,
+    name_path: Path,
+    *,
+    bound_name_receipt_sha256: str | None = None,
+) -> tuple[Path, Path]:
+    direct_receipt = DirectProperGenreCustodyReceipt.model_validate_json(direct_path.read_bytes())
+    name_receipt = DirectCanonicalArtistNameCustodyReceipt.model_validate_json(
+        name_path.read_bytes()
+    )
+    row = DirectArtistNameRecoveryRow(
+        artist_mbid=_ARTISTS[3],
+        canonical_name="Recovered Name",
+        source_record_sha256=_SHA,
+        source_record_ordinal=0,
+        source_observation_count=1,
+        name_status="unique_canonical_name",
+    )
+    stream = _jsonl((row.model_dump(mode="json"),))
+    store = directory / "recovery-objects"
+    recovery_object = _write_object(store, "musicbrainz-direct-artist-name-recovery/sha256", stream)
+    draft = DirectArtistNameRecoveryReceipt(
+        direct_custody_receipt_byte_sha256=_sha256(direct_path),
+        direct_custody_receipt_output_sha256=direct_receipt.output_sha256,
+        direct_claims_object_sha256=direct_receipt.claims_object_sha256,
+        name_custody_receipt_byte_sha256=(bound_name_receipt_sha256 or _sha256(name_path)),
+        name_custody_receipt_output_sha256=name_receipt.output_sha256,
+        name_custody_object_sha256=name_receipt.names_object_sha256,
+        source_archive_sha256=_SHA,
+        source_archive_byte_size=1,
+        source_record_count=1,
+        direct_artist_mbid_count=4,
+        prior_canonical_name_count=2,
+        recovery_target_count=2,
+        targeted_source_observation_count=1,
+        recovered_unique_mbid_count=1,
+        conflicting_mbid_count=0,
+        conflicting_name_variant_count=0,
+        invalid_name_observation_count=0,
+        duplicate_same_name_observation_count=0,
+        malformed_source_record_count=0,
+        oversized_source_record_count=0,
+        missing_mbid_count=1,
+        invalid_name_only_mbid_count=0,
+        recovery_object_row_count=1,
+        recovery_object_key=recovery_object[0],
+        recovery_object_sha256=recovery_object[1],
+        recovery_object_byte_size=recovery_object[2],
+        recovery_rows_uncompressed_sha256=hashlib.sha256(stream).hexdigest(),
+        output_sha256="0" * 64,
+    )
+    receipt = draft.model_copy(update={"output_sha256": recovery_receipt_sha256(draft)})
+    path = directory / "recovery-receipt.json"
+    path.write_text(receipt.model_dump_json(), encoding="utf-8")
+    return path, store
 
 
 def _jsonl(rows: Iterable[dict[str, object]]) -> bytes:
