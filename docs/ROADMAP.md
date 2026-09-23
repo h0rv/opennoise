@@ -258,9 +258,21 @@ gate is open.
   pairs. The bound will not be expanded post hoc; see the [user-disjoint
   abstention checkpoint](checkpoints/LISTENBRAINZ_USER_DISJOINT_HOLDOUT_ABSTENTION_20260923.md).
 - A separate Last.fm 360K >=5-user exact-artist aggregate retrieves 610 of
-  6,818 endpoint-matched direct-custody positives at 20 (8.9469%); it remains
-  a local source-bound retrieval diagnostic with no merged ListenBrainz model
-  or membership claim. See the [Last.fm holdout](checkpoints/LASTFM_DIRECT_CUSTODY_HOLDOUT_20260923.md).
+  6,818 endpoint-matched direct-custody positives at 20 (8.9469%). On the
+  identical endpoint cohort, fixed-fold direct popularity retrieves 7,
+  direct-IDF retrieves 226, and Last.fm graph weighted degree retrieves 40.
+  On the 873 common Last.fm and ListenBrainz endpoints, Last.fm retrieves 257,
+  direct popularity 0, direct-IDF 42, and graph weighted degree 39. The two
+  graphs remain separately ranked. Their top-20 hits are 94 both, 163 Last.fm
+  only, and 40 ListenBrainz only. This is a local source-bound retrieval
+  diagnostic with no merged ListenBrainz model or membership claim. See the
+  [Last.fm holdout](checkpoints/LASTFM_DIRECT_CUSTODY_HOLDOUT_20260923.md).
+- A fixed local-only reciprocal-rank fusion of separate Last.fm and
+  ListenBrainz top-20 lists is rejected. It recovers 238 of the same 873
+  common endpoint targets, below Last.fm alone at 257. The separate 40-item
+  candidate union contains 297 targets, but it is coverage only and does not
+  authorize tuning, a graph merge, model use, or publication. See the [rank
+  fusion holdout](checkpoints/LASTFM_LISTENBRAINZ_RANK_FUSION_HOLDOUT_20260923.md).
 - The UPF Last.fm 360K user and artist play matrix is now checksum-verified in
   ignored local custody through its creator-attributed Zenodo record. Its
   completed streaming aggregate read 17,559,530 rows and retained 485,840
@@ -436,10 +448,14 @@ gate is open.
   in a separate local support receipt. Only positive-vote genres form
   credited-artist contextual support; all native facts remain retained and no
   row is artist membership. See [the credited-artist support checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_NATIVE_ARTIST_SUPPORT_20260923.md).
-  A separately pinned aggregate-only full-corpus native census is prepared but
-  abstained when the local execution boundary stopped its stream before a
-  create-only report existed; it makes no extrapolation from the 10,000-record
-  sample. See [the census abstention checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_NATIVE_CENSUS_20260923.md).
+  A separately pinned aggregate-only full-corpus native census completed in a
+  persistent local process. It counted 4,499,286 parsed release groups,
+  4,596,870 proper-genre observations, and exact normalized overlap with 911
+  seeds, including 68 unplaced seeds. It remains local-only and makes no
+  extrapolation from the 10,000-record sample. A pinned aggregate decision
+  report finds positive native-genre observations for all 68 exact unplaced
+  name matches, but it cannot create artist membership, relations, or map
+  placements. See [the census checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_NATIVE_CENSUS_20260923.md).
   The local MusicBrainz derived entity-tag adapter has fixture coverage for
   recording, release, and release-group aggregate tags. It remains local-only and
   has not replayed the absent declared archive. See
@@ -574,5 +590,10 @@ gate is open.
   See [the hybrid transfer checkpoint](checkpoints/SPARSE_GENRE_HYBRID_TRANSFER_20260923.md).
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
+- The [2026-09-23 provenance audit](checkpoints/OPEN_MODEL_PROVENANCE_AUDIT_20260923.md)
+  confirms no direct Every Noise coordinate, artist, or similarity value flow
+  into the certified static release. It also records that local Phase 3 v3
+  remains unpromotable until a field-level, transitive construction receipt
+  proves the names-only boundary.
 - Add optional user reviewed ML experiments in isolated modules. No audio files
   or audio derived data enter the default pipeline.
