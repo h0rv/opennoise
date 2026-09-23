@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import sqlite3
 import unicodedata
 from collections import Counter, defaultdict
@@ -13,6 +14,11 @@ from typing import TYPE_CHECKING, Final, Literal
 from pydantic import Field, model_validator
 
 from opennoise.common import canonical_json, sha256_json
+from opennoise.deployment.public_static_discovery_v2 import (
+    PublicStaticDiscoveryV2Payload,
+    load_pinned_public_static_discovery_v2_atlas_nodes,
+    verify_public_static_discovery_v2_payload,
+)
 from opennoise.deployment.static_discovery import StaticDiscoveryPayload
 from opennoise.models import FrozenModel
 from opennoise.serving.open.construction_graph_v2 import (
@@ -258,7 +264,26 @@ def _load_edges(path: Path, database_sha256: str) -> tuple[str, tuple[BridgeEdge
 def _load_discovery(
     path: Path, database_sha256: str
 ) -> tuple[str, dict[str, tuple[int, str, int]]]:
-    payload = StaticDiscoveryPayload.model_validate_json(path.read_bytes())
+    payload_bytes = path.read_bytes()
+    try:
+        revision = json.loads(payload_bytes)["revision"]
+    except (json.JSONDecodeError, KeyError, TypeError) as error:
+        raise DirectBridgeAuditError("static discovery has no revision") from error
+    match revision:
+        case "static-direct-discovery-v1":
+            payload = StaticDiscoveryPayload.model_validate_json(payload_bytes)
+        case "static-direct-discovery-v2":
+            payload = PublicStaticDiscoveryV2Payload.model_validate_json(payload_bytes)
+            atlas_path = path.with_name(
+                f"semantic-atlas.{payload.input_chain.semantic_atlas_sha256}.json"
+            )
+            verify_public_static_discovery_v2_payload(
+                payload, load_pinned_public_static_discovery_v2_atlas_nodes(atlas_path)
+            )
+            if payload.input_chain.public_database_sha256 != database_sha256:
+                raise DirectBridgeAuditError("static discovery targets a different public catalog")
+        case _:
+            raise DirectBridgeAuditError("static discovery revision is unsupported")
     if payload.availability != "ready" or payload.source is None:
         raise DirectBridgeAuditError("static discovery is not ready")
     if payload.source.database_sha256 != database_sha256:

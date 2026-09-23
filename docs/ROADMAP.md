@@ -220,6 +220,16 @@ gate is open.
 
 ## Next data work
 
+- A bounded local-only ListenBrainz recording-ID probe inspected 250,000
+  retained raw listens: 2,176 submitted recording UUIDs, zero server-resolved
+  recording UUIDs, six exact catalog overlaps, and zero pairs at the
+  five-listener privacy floor. It is not representative or evaluative and
+  cannot enter the model; see the [recording signal checkpoint](checkpoints/LISTENBRAINZ_RECORDING_SIGNAL_20260922.md).
+- A local-only ListenBrainz playlist probe can fetch explicit public playlist
+  MBIDs into receipt-bound raw JSPF objects and exact recording UUID snapshots,
+  with source order, curator uncertainty, and normalized pair support. No live
+  snapshot was obtained in the bounded 2026-09-22 attempt; it has no model use.
+  See the [playlist probe](checkpoints/LISTENBRAINZ_PLAYLIST_PROBE.md).
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130
@@ -280,7 +290,10 @@ gate is open.
   conflicting or ambiguous edges. Its append-only typed review ledger does not
   auto-promote exact matches or change the public bridge. A deterministic
   human-review packet now ranks all 441 edges by potential direct-observation
-  lift and carries source-bound artist evidence. It does not publish anything.
+  lift and carries source-bound artist evidence. The fresh current-v2 audit
+  finds 29 unbridged exact matches, but their combined eligible direct
+  observation lift is only 2. See [the current v2 checkpoint](checkpoints/DIRECT_BRIDGE_CURRENT_V2_FRONTIER_20260922.md).
+  It does not publish anything.
 - Add independently evaluated, versioned promotion paths for derived
   memberships and similarity; keep direct observations separate until then.
 - Complete the MusicBrainz release and track catalog chain. A larger local

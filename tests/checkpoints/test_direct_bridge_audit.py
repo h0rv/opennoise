@@ -23,6 +23,15 @@ from opennoise.checkpoints.direct_bridge_audit import (
 )
 from tests._pinned_v1_discovery import pinned_v1_discovery_path
 
+_CURRENT_V2_DISCOVERY = Path(
+    "dist/assets/static-discovery."
+    "4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c.json"
+)
+_CURRENT_V2_ATLAS = Path(
+    "dist/assets/semantic-atlas."
+    "730bca93300870d35b527f377eb883ae95a3f931aad7e820b013fa592c5bf4ac.json"
+)
+
 
 def _audit() -> DirectBridgeAuditReport:
     return DirectBridgeAuditReport(
@@ -61,6 +70,52 @@ def _audit() -> DirectBridgeAuditReport:
 
 
 class DirectBridgeAuditTests(unittest.TestCase):
+    def test_current_v2_discovery_is_verified_and_source_bound(self) -> None:
+        public_database = Path("data/public.sqlite")
+        if (
+            not _CURRENT_V2_DISCOVERY.is_file()
+            or not _CURRENT_V2_ATLAS.is_file()
+            or not public_database.is_file()
+        ):
+            self.skipTest("the retained current v2 discovery inputs are unavailable")
+        report = audit_direct_bridges(
+            Path("data/model/open-construction-graph-v2.json"),
+            _CURRENT_V2_DISCOVERY,
+            public_database,
+        )
+        self.assertEqual(report["edge_count"], 441)
+        self.assertEqual(report["current_static_bridge_count"], 328)
+        self.assertEqual(report["potential_direct_observation_lift"], 561)
+        self.assertEqual(
+            report["classification_counts"],
+            {
+                "conflicting_or_ambiguous": 95,
+                "review_only": 101,
+                "safe_exact": 245,
+            },
+        )
+        inputs = report["inputs"]
+        if not isinstance(inputs, dict):
+            self.fail("audit report inputs must be a dictionary")
+        self.assertEqual(
+            inputs.get("discovery_sha256"),
+            "4d8adac6b3a929addf4413b41ffcf13de10633f57b2a784bfbe0449f3bcede1c",
+        )
+
+    def test_current_v2_discovery_requires_its_separately_retained_atlas(self) -> None:
+        public_database = Path("data/public.sqlite")
+        if not _CURRENT_V2_DISCOVERY.is_file() or not public_database.is_file():
+            self.skipTest("the retained current v2 discovery inputs are unavailable")
+        with TemporaryDirectory() as temporary:
+            copied_discovery = Path(temporary) / _CURRENT_V2_DISCOVERY.name
+            copied_discovery.write_bytes(_CURRENT_V2_DISCOVERY.read_bytes())
+            with self.assertRaisesRegex(ValueError, "semantic atlas"):
+                audit_direct_bridges(
+                    Path("data/model/open-construction-graph-v2.json"),
+                    copied_discovery,
+                    public_database,
+                )
+
     def test_human_packet_is_ranked_read_only_and_source_bound(self) -> None:
         packet = direct_bridge_review_packet(
             Path("data/model/open-construction-graph-v2.json"),

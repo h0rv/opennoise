@@ -161,7 +161,7 @@ def adapt_public_static_discovery_v2(
 ) -> PublicStaticDiscoveryV2Payload:
     """Project the exact clean local chain into a self-hashed public v2 payload."""
     _require_pinned_candidate(candidate)
-    atlas_node_ids = _load_pinned_atlas_nodes(semantic_atlas)
+    atlas_node_ids = load_pinned_public_static_discovery_v2_atlas_nodes(semantic_atlas)
     payload = _payload_from_candidate(candidate)
     verify_public_static_discovery_v2_payload(payload, atlas_node_ids)
     return payload
@@ -189,7 +189,8 @@ def _require_pinned_candidate(candidate: MergedPublicDirectDiscoveryCandidate) -
         raise PublicStaticDiscoveryV2Error("merged candidate clean input chain does not match pin")
 
 
-def _load_pinned_atlas_nodes(path: Path) -> frozenset[str]:
+def load_pinned_public_static_discovery_v2_atlas_nodes(path: Path) -> frozenset[str]:
+    """Load the separately retained atlas after replaying its certified hash."""
     try:
         actual, _ = sha256_file(path)
         atlas = _AtlasPayload.model_validate_json(path.read_bytes())
