@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Literal, Protocol, override
 from uuid import UUID
 
 import zstandard
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from opennoise.models import FrozenModel
 from opennoise.types import Sha256  # noqa: TC001  # Pydantic resolves the alias at definition.
@@ -54,6 +54,7 @@ class RecordingCoListenExperimentSettings(FrozenModel):
     maximum_active_windows: int = Field(default=32, gt=0, le=64)
     maximum_users_per_window: int = Field(default=100_000, gt=0)
     maximum_recordings_per_user_window: int = Field(default=100, gt=1)
+    maximum_unique_recordings: int = Field(default=50_000, gt=0)
     maximum_pairs_per_window: int = Field(default=500_000, gt=0)
 
 
@@ -95,6 +96,30 @@ class RecordingCoListenExperimentArtifact(FrozenModel):
     settings: RecordingCoListenExperimentSettings
     coverage: RecordingMbidCoverage
     aggregation: RecordingCoListenAggregation
+
+
+class RecordingIdCohortArtifact(FrozenModel):
+    """Local-only exact recording IDs selected from one bounded source prefix."""
+
+    revision: Literal["listenbrainz-recording-id-cohort-v1"] = "listenbrainz-recording-id-cohort-v1"
+    local_only: Literal[True] = True
+    export_allowed: Literal[False] = False
+    serving_allowed: Literal[False] = False
+    source_artifact_sha256: Sha256
+    source_artifact_byte_size: int = Field(ge=0)
+    settings: RecordingCoListenExperimentSettings
+    coverage: RecordingMbidCoverage
+    recording_ids: tuple[UUID, ...]
+    recording_id_set_sha256: Sha256
+
+    @model_validator(mode="after")
+    def require_sorted_unique_ids(self) -> RecordingIdCohortArtifact:
+        """Keep the local cohort deterministic and prevent duplicate source entries."""
+        if self.recording_ids != tuple(sorted(set(self.recording_ids), key=str)):
+            raise ValueError("recording cohort IDs must be sorted and unique")
+        if self.recording_id_set_sha256 != _uuid_id_set_sha256(self.recording_ids):
+            raise ValueError("recording cohort ID-set hash does not match")
+        return self
 
 
 class _RawMbidMapping(BaseModel):
@@ -204,13 +229,7 @@ def run_recording_co_listen_experiment(
 ) -> RecordingCoListenExperimentArtifact:
     """Measure exact recording-ID coverage and aggregate only privacy-safe pair counts."""
     resolved_settings = settings or RecordingCoListenExperimentSettings()
-    if not archive_path.is_file():
-        raise RecordingCoListenExperimentError("ListenBrainz archive does not exist")
-    source_bytes = archive_path.stat().st_size
-    if source_bytes > resolved_settings.maximum_archive_bytes:
-        raise RecordingCoListenExperimentError("recording experiment exceeds archive-byte limit")
-    if _sha256_file(archive_path) != source_artifact_sha256:
-        raise RecordingCoListenExperimentError("ListenBrainz archive hash does not match receipt")
+    source_bytes = _verify_archive(archive_path, source_artifact_sha256, resolved_settings)
     coverage = _MutableCoverage()
     state = _TransientState()
     for line in _iter_listen_lines(archive_path, resolved_settings):
@@ -229,6 +248,44 @@ def run_recording_co_listen_experiment(
         settings=resolved_settings,
         coverage=coverage.freeze(),
         aggregation=aggregation,
+    )
+
+
+def build_recording_id_cohort(
+    *,
+    archive_path: Path,
+    source_artifact_sha256: str,
+    settings: RecordingCoListenExperimentSettings | None = None,
+) -> RecordingIdCohortArtifact:
+    """Preserve exact recording IDs locally without preserving a listener or pair."""
+    resolved_settings = settings or RecordingCoListenExperimentSettings()
+    source_bytes = _verify_archive(archive_path, source_artifact_sha256, resolved_settings)
+    coverage = _MutableCoverage()
+    recording_ids: set[UUID] = set()
+    for line in _iter_listen_lines(archive_path, resolved_settings):
+        if coverage.raw_records_seen >= resolved_settings.maximum_records:
+            break
+        coverage.raw_records_seen += 1
+        try:
+            listen = _RawListen.model_validate_json(line)
+        except ValueError:
+            coverage.malformed_listen_records += 1
+            continue
+        coverage.valid_listen_records += 1
+        recording_id = _resolve_recording_id(listen, coverage)
+        if recording_id is None:
+            continue
+        recording_ids.add(UUID(recording_id.removeprefix(_RECORDING_PREFIX)))
+        if len(recording_ids) > resolved_settings.maximum_unique_recordings:
+            raise RecordingCoListenExperimentError("recording cohort exceeds unique-ID limit")
+    sorted_ids = tuple(sorted(recording_ids, key=str))
+    return RecordingIdCohortArtifact(
+        source_artifact_sha256=source_artifact_sha256,
+        source_artifact_byte_size=source_bytes,
+        settings=resolved_settings,
+        coverage=coverage.freeze(),
+        recording_ids=sorted_ids,
+        recording_id_set_sha256=_uuid_id_set_sha256(sorted_ids),
     )
 
 
@@ -399,6 +456,21 @@ def _read_only(path: Path) -> sqlite3.Connection:
     return connection
 
 
+def _verify_archive(
+    archive_path: Path,
+    source_artifact_sha256: str,
+    settings: RecordingCoListenExperimentSettings,
+) -> int:
+    if not archive_path.is_file():
+        raise RecordingCoListenExperimentError("ListenBrainz archive does not exist")
+    source_bytes = archive_path.stat().st_size
+    if source_bytes > settings.maximum_archive_bytes:
+        raise RecordingCoListenExperimentError("recording experiment exceeds archive-byte limit")
+    if _sha256_file(archive_path) != source_artifact_sha256:
+        raise RecordingCoListenExperimentError("ListenBrainz archive hash does not match receipt")
+    return source_bytes
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -415,3 +487,7 @@ def sha256_file(path: Path) -> str:
 def recording_id_set_sha256(recording_ids: frozenset[str]) -> str:
     """Hash the canonical exact-ID set used for catalog-overlap accounting."""
     return hashlib.sha256("\n".join(sorted(recording_ids)).encode()).hexdigest()
+
+
+def _uuid_id_set_sha256(recording_ids: tuple[UUID, ...]) -> str:
+    return hashlib.sha256("\n".join(map(str, recording_ids)).encode()).hexdigest()

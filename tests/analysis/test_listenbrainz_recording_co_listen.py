@@ -12,6 +12,7 @@ import zstandard
 from opennoise.analysis.listenbrainz_recording_co_listen import (
     RecordingCoListenExperimentError,
     RecordingCoListenExperimentSettings,
+    build_recording_id_cohort,
     load_catalog_recording_ids,
     recording_id_set_sha256,
     run_recording_co_listen_experiment,
@@ -54,6 +55,30 @@ def _sha256(path: Path) -> str:
 
 
 class RecordingCoListenExperimentTests(unittest.TestCase):
+    def test_builds_deterministic_local_id_cohort_without_listener_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / "listens.tar.zst"
+            _write_archive(
+                archive,
+                [
+                    _listen(1, 1_800_000_001, additional=SUBMITTED_RECORDING),
+                    _listen(2, 1_800_000_002, additional=SUBMITTED_RECORDING),
+                    _listen(3, 1_800_000_003, mapping=MAPPING_RECORDING),
+                ],
+            )
+            cohort = build_recording_id_cohort(
+                archive_path=archive,
+                source_artifact_sha256=_sha256(archive),
+            )
+        self.assertEqual(
+            tuple(map(str, cohort.recording_ids)), (MAPPING_RECORDING, SUBMITTED_RECORDING)
+        )
+        self.assertEqual(cohort.coverage.selected_resolved_mapping_recording_count, 1)
+        self.assertEqual(cohort.coverage.selected_submitted_additional_recording_count, 2)
+        serialized = cohort.model_dump_json()
+        self.assertNotIn("user_id", serialized)
+        self.assertNotIn("must not survive", serialized)
+
     def test_uses_mapping_before_submitted_fallback_and_emits_only_counts(self) -> None:
         records: list[dict[str, object]] = []
         for user_id in range(1, 6):

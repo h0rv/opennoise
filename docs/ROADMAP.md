@@ -225,11 +225,25 @@ gate is open.
   recording UUIDs, six exact catalog overlaps, and zero pairs at the
   five-listener privacy floor. It is not representative or evaluative and
   cannot enter the model; see the [recording signal checkpoint](checkpoints/LISTENBRAINZ_RECORDING_SIGNAL_20260922.md).
+- The resulting exact local recording-ID cohort has 2,098 UUIDs, but the union
+  of five retained local MusicBrainz catalog slices covers only eight. This is
+  a receipt-bound readiness result, not a missing-recording claim; see the
+  [catalog coverage checkpoint](checkpoints/LISTENBRAINZ_RECORDING_CATALOG_COVERAGE_20260922.md).
+- A separate bounded local-only artist-session approximation uses exact artist
+  MBIDs with a documented fixed-duration assumption, 300-second sessions,
+  per-user cap five, and score threshold above ten. It is not a reproduction
+  of ListenBrainz production similarity and has no model or serving use; see
+  the [session checkpoint](checkpoints/LISTENBRAINZ_ARTIST_SESSION_APPROXIMATION_20260922.md).
+- The UPF Last.fm 360K user and artist play matrix has exact artist MBIDs and
+  could support a local aggregate comparison, but its official linked download
+  currently fails TLS hostname verification. It is non-commercial only and has
+  no adapter or model use. See the [source feasibility checkpoint](checkpoints/LASTFM_360K_SOURCE_FEASIBILITY_20260922.md).
 - A local-only ListenBrainz playlist probe can fetch explicit public playlist
   MBIDs into receipt-bound raw JSPF objects and exact recording UUID snapshots,
-  with source order, curator uncertainty, and normalized pair support. No live
-  snapshot was obtained in the bounded 2026-09-22 attempt; it has no model use.
-  See the [playlist probe](checkpoints/LISTENBRAINZ_PLAYLIST_PROBE.md).
+  with source order, curator uncertainty, and normalized pair support. A
+  ten-playlist single-discovery-cohort observation has 527 unique recordings,
+  11 exact overlaps with the current 623-recording local catalog, and no model
+  use. See the [playlist probe](checkpoints/LISTENBRAINZ_PLAYLIST_PROBE.md).
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130

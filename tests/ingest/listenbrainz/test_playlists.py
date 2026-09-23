@@ -51,10 +51,30 @@ def _payload(
     return json.dumps(
         {
             "playlist": {
-                "identifier": f"https://musicbrainz.org/playlist/{playlist}",
+                "identifier": f"https://listenbrainz.org/playlist/{playlist}",
                 "title": "electronic examples",
                 "creator": "not used to infer curation",
                 "track": tracks,
+            }
+        },
+        separators=(",", ":"),
+    ).encode()
+
+
+def _array_identifier_payload(*recordings: str) -> bytes:
+    return json.dumps(
+        {
+            "playlist": {
+                "identifier": f"https://listenbrainz.org/playlist/{PLAYLIST}",
+                "track": [
+                    {
+                        "identifier": [
+                            f"https://musicbrainz.org/recording/{recording}",
+                            "https://example.test/not-used",
+                        ]
+                    }
+                    for recording in recordings
+                ],
             }
         },
         separators=(",", ":"),
@@ -101,6 +121,16 @@ class ListenBrainzPublicPlaylistProbeTests(unittest.TestCase):
         self.assertEqual(snapshot.curator_kind, "unknown")
         self.assertEqual(snapshot.duplicate_recording_count, 1)
         self.assertEqual(snapshot.unsupported_track_identifier_count, 1)
+
+    def test_parses_the_documented_array_identifier_jspf_shape(self) -> None:
+        payload = _array_identifier_payload(RECORDING_A, RECORDING_B)
+
+        snapshot = parse_public_playlist_snapshot(payload, _receipt(payload))
+
+        self.assertEqual(
+            tuple(item.recording_mbid for item in snapshot.recordings),
+            (UUID(RECORDING_A), UUID(RECORDING_B)),
+        )
 
     def test_rejects_mismatched_receipt_and_fewer_than_two_exact_ids(self) -> None:
         payload = _payload(RECORDING_A, RECORDING_B)

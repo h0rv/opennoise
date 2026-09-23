@@ -44,6 +44,7 @@ _MINIMUM_EXACT_RECORDINGS = 2
 _EXPECTED_MUSICBRAINZ_PATH_SEPARATORS = 2
 _LISTENBRAINZ_API_ORIGIN = "https://api.listenbrainz.org"
 _LISTENBRAINZ_PLAYLIST_PATH_PREFIX = "/1/playlist/"
+_LISTENBRAINZ_WEB_PLAYLIST_PATH_PREFIX = "/playlist/"
 _RESPONSE_CHUNK_BYTES = 64 * 1024
 _EXPECTED_LISTENBRAINZ_PATH_SEPARATORS = 3
 
@@ -64,7 +65,7 @@ class _JspfTrack(BaseModel):
 
     model_config = ConfigDict(frozen=True, strict=True, extra="ignore")
 
-    identifier: str = Field(min_length=1, max_length=1_000)
+    identifier: str | list[str] = Field(min_length=1, max_length=1_000)
 
 
 class _JspfPlaylist(BaseModel):
@@ -248,14 +249,14 @@ def parse_public_playlist_snapshot(
     except ValidationError as error:
         raise ListenBrainzPlaylistProbeError("playlist payload is not valid public JSPF") from error
 
-    playlist_mbid = _musicbrainz_id(envelope.playlist.identifier, expected_kind="playlist")
+    playlist_mbid = _listenbrainz_playlist_id(envelope.playlist.identifier)
     resolved_settings = settings or PlaylistProbeSettings()
     recordings: list[PlaylistRecording] = []
     seen: set[UUID] = set()
     unsupported = 0
     duplicates = 0
     for ordinal, track in enumerate(envelope.playlist.track):
-        recording_mbid = _try_musicbrainz_recording_id(track.identifier)
+        recording_mbid = _track_recording_mbid(track)
         if recording_mbid is None:
             unsupported += 1
             continue
@@ -589,6 +590,40 @@ def _try_musicbrainz_recording_id(identifier: str) -> UUID | None:
         return _musicbrainz_id(identifier, expected_kind="recording")
     except ListenBrainzPlaylistProbeError:
         return None
+
+
+def _track_recording_mbid(track: _JspfTrack) -> UUID | None:
+    """Resolve one unambiguous exact MusicBrainz recording URL from a JSPF track."""
+    identifiers = (track.identifier,) if isinstance(track.identifier, str) else track.identifier
+    candidates = frozenset(
+        recording_mbid
+        for identifier in identifiers
+        if (recording_mbid := _try_musicbrainz_recording_id(identifier)) is not None
+    )
+    if len(candidates) != 1:
+        return None
+    return next(iter(candidates))
+
+
+def _listenbrainz_playlist_id(identifier: str) -> UUID:
+    """Parse the exact public ListenBrainz playlist URL returned by its JSPF API."""
+    parsed = urlparse(identifier)
+    if (
+        parsed.scheme != "https"
+        or parsed.netloc != "listenbrainz.org"
+        or parsed.query
+        or parsed.fragment
+        or parsed.params
+        or not parsed.path.startswith(_LISTENBRAINZ_WEB_PLAYLIST_PATH_PREFIX)
+        or parsed.path.count("/") != _EXPECTED_MUSICBRAINZ_PATH_SEPARATORS
+    ):
+        raise ListenBrainzPlaylistProbeError("playlist identifier is not an exact ListenBrainz URL")
+    try:
+        return UUID(parsed.path.removeprefix(_LISTENBRAINZ_WEB_PLAYLIST_PATH_PREFIX))
+    except ValueError as error:
+        raise ListenBrainzPlaylistProbeError(
+            "playlist identifier has an invalid ListenBrainz UUID"
+        ) from error
 
 
 def _musicbrainz_id(identifier: str, *, expected_kind: Literal["playlist", "recording"]) -> UUID:
