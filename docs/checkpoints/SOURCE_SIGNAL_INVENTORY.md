@@ -54,6 +54,18 @@ claims; see the
 
 ## Signal boundaries
 
+The current [open listening and playlist source research](OPEN_LISTENING_PLAYLIST_SOURCE_RESEARCH_20260923.md)
+records the new-source decision. The existing privacy-filtered ListenBrainz
+aggregate remains the priority because its source-isolated local holdout
+retrieves 188 of 1,453 endpoint-conditioned positives at Recall at 20, versus
+74 for direct-IDF peers. The result does not prove general coverage,
+precision, musical similarity, or membership, and the compared candidate
+capacities differ. Million Song Taste Profile has no verified exact
+MusicBrainz bridge. Spotify's historical Million Playlist Dataset is currently
+unavailable for download and unsuitable for the stated reconstruction purpose
+under its terms. MusicBrainz public collections are exact-ID lists but not
+playlists or curation evidence.
+
 The current public genre graph uses Wikidata for catalog identity, factual
 hierarchy, direct artist membership, and representative metadata. It uses the
 privacy filtered ListenBrainz aggregate for a similarity input where the map

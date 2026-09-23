@@ -353,6 +353,11 @@ gate is open.
   seeds, source wording, and required quality-report fields. It remains
   unapproved and does not change the public v2 release; see the
   [policy-review input checkpoint](checkpoints/MUSICBRAINZ_DIRECT_STATIC_POLICY_REVIEW_INPUT_20260923.md).
+- A local quality report now rechecks the pinned custody object against the
+  exact 412-seed candidate. It records coverage, exclusions, exact-ID checks,
+  per-genre counts, and generated review links. It is not human approval and
+  does not allow public export or serving; see the [quality report
+  checkpoint](checkpoints/MUSICBRAINZ_DIRECT_STATIC_QUALITY_REPORT_20260923.md).
 - A read-only static-packaging audit distinguishes that exact 12.2 MB minimal
   JSONL boundary from the much larger current-v2 extrapolation and proposes
   bounded lazy genre shards only for a future authorized release; see [the

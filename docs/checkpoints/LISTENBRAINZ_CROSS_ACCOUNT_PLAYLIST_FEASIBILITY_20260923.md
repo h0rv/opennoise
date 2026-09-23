@@ -13,11 +13,16 @@ with a 15-second deadline. It timed out before receiving response bytes. The
 first sandboxed attempt could not resolve `api.listenbrainz.org`; the one
 approved external retry likewise produced no body before its deadline.
 
-Consequently there is no response body, response hash, raw JSPF, account
-listing, playlist selection, or cross-account support measurement to retain.
-No retry, pagination, account enumeration, or fallback source was attempted.
-This checkpoint deliberately contains no account names or other user
-identifiers.
+A further external retry of the same URL and deadline on 2026-09-23 reached
+the host, but it returned MetaBrainz's JavaScript browser-verification HTML
+rather than an API JSON body. The response is not retained as a source
+response, because it has no search payload and cannot support account or
+playlist selection. No further retry, pagination, account enumeration, or
+fallback source was attempted. This checkpoint deliberately contains no
+account names or other user identifiers.
+
+Consequently there is no auditable search response, raw JSPF, account listing,
+playlist selection, or cross-account support measurement to retain.
 
 The official API documentation says that playlist search matches public
 playlist titles and descriptions, the query must have at least three
@@ -25,6 +30,15 @@ characters, and `/1/user/(playlist_user_name)/playlists` returns playlist
 metadata without recordings. It also documents the exact playlist endpoint.
 These routes can establish only service-level route facts, never a human,
 manual/editorial selection, genre, quality, or independent-listener claim.
+
+The official API documentation was checked again on 2026-09-23 for a global,
+popular, recent, or otherwise username-free public-playlist listing. It
+documents no such route. A public listing requires a known
+`playlist_user_name`, and a full playlist requires a known playlist MBID.
+The only documented unauthenticated discovery route is title-and-description
+search. The service import routes require authorization. Therefore no alternate
+read-only request can discover a second public account without either the
+blocked search response or a pre-supplied account or playlist identifier.
 
 ## Bounded retry design
 
