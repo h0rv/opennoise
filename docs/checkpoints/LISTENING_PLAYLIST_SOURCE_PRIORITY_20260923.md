@@ -40,6 +40,14 @@ co-listening research.
   collaborator, and recommendation routes; it does not certify an ordinary
   public playlist as human-curated. In particular, the current ten-playlist
   sample remains `unknown`, not human-created.
+- [MusicBrainz MLHD+ documentation](https://musicbrainz.org/doc/MLHD%2B)
+  describes per-user listening histories with timestamps and artist, release,
+  and recording MBIDs, using improved matching and canonicalization. Its
+  archive scale does not fit the laptop-first workflow, so it is not a current
+  acquisition or ingestion path.
+- The [LFM-2b dataset page](https://www.cp.jku.at/datasets/LFM-2b/) says the
+  dataset is no longer available for download because of license issues. It is
+  not a current acquisition path.
 - [UPF's Last.fm 360K source](https://www.upf.edu/web/mtg/lastfm360k) and its
   [creator-attributed Zenodo mirror](https://zenodo.org/records/6090214)
   document the exact artist-MBID field, hashed user field, scale, checksums,

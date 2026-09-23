@@ -197,6 +197,95 @@ def verify_local_musicbrainz_direct_static_candidate(
     return manifest
 
 
+def verify_local_musicbrainz_direct_static_candidate_from_inputs(  # noqa: PLR0913
+    *,
+    output_directory: Path,
+    direct_custody_receipt_path: Path,
+    direct_custody_receipt_sha256: str,
+    direct_object_store: Path,
+    canonical_name_receipt_path: Path,
+    canonical_name_receipt_sha256: str,
+    canonical_name_object_store: Path,
+    recovered_name_receipt_path: Path,
+    recovered_name_receipt_sha256: str,
+    recovered_name_object_store: Path,
+    static_discovery_path: Path,
+    certified_manifest_path: Path,
+    certified_layout_path: Path,
+    expected_placed_candidate_seed_count: int = _EXPECTED_PLACED_CANDIDATE_SEED_COUNT,
+) -> LocalMusicBrainzStaticCandidateManifest:
+    """Replay pinned source inputs and require exact two-way output equivalence.
+
+    This goes beyond the local manifest and shard integrity check. It proves that
+    every emitted membership has the same direct-source fields and exact name as
+    the verified custody inputs, and that no eligible named source pair is absent.
+    """
+    output = verify_local_musicbrainz_direct_static_candidate(output_directory)
+    direct_bytes = _read_receipt(direct_custody_receipt_path, direct_custody_receipt_sha256)
+    name_bytes = _read_receipt(canonical_name_receipt_path, canonical_name_receipt_sha256)
+    recovery_bytes = _read_receipt(recovered_name_receipt_path, recovered_name_receipt_sha256)
+    try:
+        direct = DirectProperGenreCustodyReceipt.model_validate_json(direct_bytes)
+        names = DirectCanonicalArtistNameCustodyReceipt.model_validate_json(name_bytes)
+        recovered = DirectArtistNameRecoveryReceipt.model_validate_json(recovery_bytes)
+    except ValueError as error:
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate custody receipt is invalid"
+        ) from error
+    _require_input_bindings(
+        direct,
+        names,
+        recovered,
+        direct_custody_receipt_sha256=direct_custody_receipt_sha256,
+        canonical_name_receipt_sha256=canonical_name_receipt_sha256,
+    )
+    candidate_ids, static_sha, atlas_sha = _placed_candidate_seed_ids(
+        static_discovery_path=static_discovery_path,
+        certified_manifest_path=certified_manifest_path,
+        certified_layout_path=certified_layout_path,
+        direct=direct,
+        direct_object_store=direct_object_store,
+    )
+    if len(candidate_ids) != expected_placed_candidate_seed_count:
+        raise LocalMusicBrainzStaticCandidateError("placed candidate seed count does not match pin")
+    _require_manifest_input_bindings(
+        output,
+        direct=direct,
+        names=names,
+        recovered=recovered,
+        candidate_ids=candidate_ids,
+        direct_custody_receipt_sha256=direct_custody_receipt_sha256,
+        canonical_name_receipt_sha256=canonical_name_receipt_sha256,
+        recovered_name_receipt_sha256=recovered_name_receipt_sha256,
+        static_sha=static_sha,
+        atlas_sha=atlas_sha,
+    )
+    with tempfile.TemporaryDirectory(prefix="musicbrainz-direct-static-replay-") as temporary:
+        connection = sqlite3.connect(Path(temporary) / "replay.sqlite")
+        connection.row_factory = sqlite3.Row
+        try:
+            _create_replay_tables(connection)
+            _stream_names(
+                connection,
+                names=names,
+                canonical_name_object_store=canonical_name_object_store,
+                recovered=recovered,
+                recovered_name_object_store=recovered_name_object_store,
+            )
+            _stream_direct_claims(
+                connection,
+                direct=direct,
+                direct_object_store=direct_object_store,
+                candidate_ids=frozenset(candidate_ids),
+            )
+            _require_complete_named_scope(connection, candidate_ids)
+            _stream_verified_output_rows(connection, output_directory, output)
+            _require_replay_reciprocity(connection, output)
+        finally:
+            connection.close()
+    return output
+
+
 def build_local_musicbrainz_direct_static_candidate(  # noqa: PLR0913 - explicit custody inputs.
     *,
     output_directory: Path,
@@ -346,6 +435,25 @@ def _create_join_tables(connection: sqlite3.Connection) -> None:
     )
 
 
+def _create_replay_tables(connection: sqlite3.Connection) -> None:
+    """Create the verified source and output relations used for two-way replay."""
+    _create_join_tables(connection)
+    connection.execute(
+        """
+        CREATE TABLE output_rows (
+            seed_id TEXT NOT NULL,
+            artist_mbid TEXT NOT NULL,
+            canonical_name TEXT NOT NULL,
+            musicbrainz_genre_id TEXT NOT NULL,
+            source_record_id TEXT NOT NULL,
+            source_record_sha256 TEXT NOT NULL,
+            source_evidence_ref TEXT NOT NULL,
+            PRIMARY KEY (seed_id, artist_mbid)
+        ) WITHOUT ROWID
+        """
+    )
+
+
 def _stream_names(
     connection: sqlite3.Connection,
     *,
@@ -408,6 +516,168 @@ def _stream_direct_claims(
         raise LocalMusicBrainzStaticCandidateError(
             "direct proper-genre custody object did not verify"
         ) from error
+
+
+def _stream_verified_output_rows(
+    connection: sqlite3.Connection,
+    output_directory: Path,
+    manifest: LocalMusicBrainzStaticCandidateManifest,
+) -> None:
+    """Rehash each byte stream while loading it for the source-equivalence query.
+
+    The first integrity pass establishes the manifest shape. This second pass is
+    deliberate: source equality must describe the same shard bytes whose hash,
+    byte count, row bounds, and ordering are checked here, not a later reread.
+    """
+    observed_memberships: set[tuple[str, str]] = set()
+    last_artist_by_seed: dict[str, str] = {}
+    _require_real_directory(output_directory / "genres", "candidate genres directory")
+    for shard in manifest.shards:
+        _stream_and_verify_output_shard(
+            connection,
+            output_directory,
+            shard,
+            observed_memberships=observed_memberships,
+            last_artist_by_seed=last_artist_by_seed,
+        )
+
+
+def _stream_and_verify_output_shard(  # noqa: C901 - byte verification and insertion share one read.
+    connection: sqlite3.Connection,
+    output_directory: Path,
+    shard: LocalCandidateShard,
+    *,
+    observed_memberships: set[tuple[str, str]],
+    last_artist_by_seed: dict[str, str],
+) -> None:
+    """Verify one shard while inserting exactly those verified bytes for replay."""
+    expected_path = (
+        f"genres/{_sha256_bytes(shard.seed_id.encode())}/{shard.ordinal:04d}.{shard.sha256}.jsonl"
+    )
+    if shard.path != expected_path:
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate shard path does not bind its seed and hash"
+        )
+    path = output_directory / shard.path
+    _require_real_directory(path.parent, "candidate seed shard directory")
+    try:
+        metadata = path.lstat()
+    except OSError as error:
+        raise LocalMusicBrainzStaticCandidateError("candidate shard is missing") from error
+    if not stat.S_ISREG(metadata.st_mode) or metadata.st_size != shard.byte_count:
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate shard type or byte count does not match"
+        )
+    digest = hashlib.sha256()
+    row_count = 0
+    previous_artist_mbid = last_artist_by_seed.get(shard.seed_id)
+    try:
+        with path.open("rb") as stream:
+            while line := stream.readline(_MAXIMUM_MEMBERSHIP_ROW_BYTES + 1):
+                digest.update(line)
+                row_count += 1
+                if len(line) > _MAXIMUM_MEMBERSHIP_ROW_BYTES:
+                    raise LocalMusicBrainzStaticCandidateError(
+                        "candidate shard membership row exceeds byte limit"
+                    )
+                membership = _verified_membership_from_line(
+                    line,
+                    shard=shard,
+                    previous_artist_mbid=previous_artist_mbid,
+                    observed_memberships=observed_memberships,
+                )
+                previous_artist_mbid = membership.artist_mbid
+                connection.execute(
+                    "INSERT INTO output_rows VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        membership.seed_id,
+                        membership.artist_mbid,
+                        membership.canonical_name,
+                        membership.musicbrainz_genre_id,
+                        membership.source_record_id,
+                        membership.source_record_sha256,
+                        membership.source_evidence_ref,
+                    ),
+                )
+    except sqlite3.IntegrityError as error:
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate output repeats a direct source membership"
+        ) from error
+    except OSError as error:
+        raise LocalMusicBrainzStaticCandidateError("candidate output cannot be replayed") from error
+    if row_count != shard.row_count:
+        raise LocalMusicBrainzStaticCandidateError("candidate shard row count does not match")
+    if digest.hexdigest() != shard.sha256:
+        raise LocalMusicBrainzStaticCandidateError("candidate shard SHA-256 does not match")
+    if previous_artist_mbid is None:
+        raise LocalMusicBrainzStaticCandidateError("candidate shard contains no memberships")
+    last_artist_by_seed[shard.seed_id] = previous_artist_mbid
+
+
+def _require_replay_reciprocity(
+    connection: sqlite3.Connection, manifest: LocalMusicBrainzStaticCandidateManifest
+) -> None:
+    """Require each eligible source pair and each emitted row to have one exact counterpart."""
+    source_count = _query_count(connection, "SELECT COUNT(*) FROM claims")
+    output_count = _query_count(connection, "SELECT COUNT(*) FROM output_rows")
+    if (source_count, output_count) != (manifest.membership_count, manifest.membership_count):
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate output and eligible direct source counts are not reciprocal"
+        )
+    if _query_count(
+        connection,
+        """
+        SELECT COUNT(*) FROM claims
+        LEFT JOIN output_rows USING (seed_id, artist_mbid)
+        WHERE output_rows.artist_mbid IS NULL
+        """,
+    ):
+        raise LocalMusicBrainzStaticCandidateError(
+            "eligible direct source membership is absent from candidate output"
+        )
+    if _query_count(
+        connection,
+        """
+        SELECT COUNT(*) FROM output_rows
+        LEFT JOIN claims USING (seed_id, artist_mbid)
+        WHERE claims.artist_mbid IS NULL
+        """,
+    ):
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate output membership is absent from direct source custody"
+        )
+    if _query_count(
+        connection,
+        """
+        SELECT COUNT(*) FROM output_rows
+        JOIN claims USING (seed_id, artist_mbid)
+        WHERE output_rows.musicbrainz_genre_id != claims.musicbrainz_genre_id
+           OR output_rows.source_record_id != claims.source_record_id
+           OR output_rows.source_record_sha256 != claims.source_record_sha256
+           OR output_rows.source_evidence_ref != claims.source_evidence_ref
+        """,
+    ):
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate output direct-source evidence differs from custody"
+        )
+    if _query_count(
+        connection,
+        """
+        SELECT COUNT(*) FROM output_rows
+        LEFT JOIN names USING (artist_mbid)
+        WHERE names.artist_mbid IS NULL OR output_rows.canonical_name != names.canonical_name
+        """,
+    ):
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate output canonical name differs from exact name custody"
+        )
+
+
+def _query_count(connection: sqlite3.Connection, query: str) -> int:
+    row = connection.execute(query).fetchone()
+    if row is None:
+        raise LocalMusicBrainzStaticCandidateError("candidate replay count query failed")
+    return int(row[0])
 
 
 def _require_complete_named_scope(
@@ -554,6 +824,23 @@ def _verify_membership_line(
     previous_artist_mbid: str | None,
     observed_memberships: set[tuple[str, str]],
 ) -> str:
+    """Verify one output line and return its ordering key."""
+    return _verified_membership_from_line(
+        line,
+        shard=shard,
+        previous_artist_mbid=previous_artist_mbid,
+        observed_memberships=observed_memberships,
+    ).artist_mbid
+
+
+def _verified_membership_from_line(
+    line: bytes,
+    *,
+    shard: LocalCandidateShard,
+    previous_artist_mbid: str | None,
+    observed_memberships: set[tuple[str, str]],
+) -> LocalCandidateMembership:
+    """Parse one canonical membership and enforce shard-local invariants."""
     if not line.endswith(b"\n"):
         raise LocalMusicBrainzStaticCandidateError("candidate shard JSONL row lacks a newline")
     try:
@@ -580,7 +867,49 @@ def _verify_membership_line(
             "candidate shards repeat a direct source membership"
         )
     observed_memberships.add(membership_key)
-    return membership.artist_mbid
+    return membership
+
+
+def _require_manifest_input_bindings(  # noqa: PLR0913 - each source pin is material.
+    manifest: LocalMusicBrainzStaticCandidateManifest,
+    *,
+    direct: DirectProperGenreCustodyReceipt,
+    names: DirectCanonicalArtistNameCustodyReceipt,
+    recovered: DirectArtistNameRecoveryReceipt,
+    candidate_ids: tuple[str, ...],
+    direct_custody_receipt_sha256: str,
+    canonical_name_receipt_sha256: str,
+    recovered_name_receipt_sha256: str,
+    static_sha: str,
+    atlas_sha: str,
+) -> None:
+    """Bind the manifest to every replay input before reading an output row."""
+    if (
+        manifest.direct_custody_receipt_sha256,
+        manifest.direct_custody_output_sha256,
+        manifest.direct_claims_object_sha256,
+        manifest.canonical_name_receipt_sha256,
+        manifest.canonical_name_object_sha256,
+        manifest.recovered_name_receipt_sha256,
+        manifest.recovered_name_object_sha256,
+        manifest.certified_static_discovery_sha256,
+        manifest.certified_semantic_atlas_sha256,
+        manifest.placed_candidate_seed_ids,
+    ) != (
+        direct_custody_receipt_sha256,
+        direct.output_sha256,
+        direct.claims_object_sha256,
+        canonical_name_receipt_sha256,
+        names.names_object_sha256,
+        recovered_name_receipt_sha256,
+        recovered.recovery_object_sha256,
+        static_sha,
+        atlas_sha,
+        candidate_ids,
+    ):
+        raise LocalMusicBrainzStaticCandidateError(
+            "candidate manifest binds different replay inputs or candidate seed scope"
+        )
 
 
 def _require_input_bindings(

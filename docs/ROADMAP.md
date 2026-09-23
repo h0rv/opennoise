@@ -254,6 +254,12 @@ gate is open.
   The observed strict-parser counts (359,349 contiguous blocks; 160,131 exact
   artist UUIDs) remain distinct from the source page's published user and
   artist figures. See the [source feasibility checkpoint](checkpoints/LASTFM_360K_SOURCE_FEASIBILITY_20260922.md).
+  A separate matched local holdout compares 171 repeated playlist pair
+  potentials from 46 anchor artists against the privacy-filtered aggregate.
+  It recovers 41 of 171 pairs, with Recall at 10 of 36 of 342 directed ranking
+  events versus 6 of 342 for the seeded baseline. This one-account comparison
+  is descriptive only, not independent truth, a model input, or a quality
+  gate; see the [matched holdout](checkpoints/LISTENBRAINZ_PLAYLIST_LASTFM_360K_MATCHED_HOLDOUT_20260922.md).
 - A local-only ListenBrainz playlist probe can fetch explicit public playlist
   MBIDs into receipt-bound raw JSPF objects and exact recording UUID snapshots,
   with source order, curator uncertainty, and normalized pair support. A
@@ -323,6 +329,10 @@ gate is open.
   candidate-only direct pairs (100%, up from 115,269 / 82.69%), without
   changing `dist` or the public asset. See [the recovery checkpoint](checkpoints/MUSICBRAINZ_DIRECT_ARTIST_NAME_RECOVERY_20260922.md) and
   [the name-join checkpoint](checkpoints/MUSICBRAINZ_DIRECT_NAME_JOIN_FRONTIER_20260922.md).
+- A receipt-checked local source replay matched 139,268 direct MusicBrainz rows
+  across 412 placed candidate-only seeds in both directions. The ignored
+  candidate remains local-only and is not serving input; see the
+  [source replay checkpoint](checkpoints/MUSICBRAINZ_DIRECT_LOCAL_STATIC_SOURCE_REPLAY_20260923.md).
 - A read-only static-packaging audit distinguishes that exact 12.2 MB minimal
   JSONL boundary from the much larger current-v2 extrapolation and proposes
   bounded lazy genre shards only for a future authorized release; see [the
@@ -371,6 +381,11 @@ gate is open.
   `.cache`; it is a non-public preview seam, not UI approval, static-page
   integration, browser certification, or deployment. See the
   [local render checkpoint](checkpoints/MUSICBRAINZ_CREDIT_ARTIST_DETAIL_LOCAL_RENDER_20260922.md).
+  A separate local HTML preview wrapper checks a separately supplied typed
+  approval declaration and the already-gated asset before writing its `.cache`
+  output. It cannot recheck the candidate report or policy without the original
+  database and report, and it does not approve public UI integration. See the
+  [HTML preview checkpoint](checkpoints/MUSICBRAINZ_CREDIT_ARTIST_DETAIL_LOCAL_HTML_20260922.md).
 - Keep metadata candidates separate from published metadata examples.
 - Review the 484 source-bound genre candidates now queued by the versioned
   workflow. The local promotion preflight binds review and triage receipts,
@@ -395,6 +410,13 @@ gate is open.
   [source audit](checkpoints/INDEPENDENT_GOLD_SOURCE_AUDIT.md), and
   [AcousticBrainz audit](checkpoints/ACOUSTICBRAINZ_GENRE_DATASET_EVALUATION_AUDIT.md),
   and [source-isolation checkpoint](checkpoints/ACOUSTICBRAINZ_RECORDING_GOLD_ISOLATION_20260922.md).
+  The existing source-isolation gate remains a no-go for artist gold and
+  promotion. A separate local diagnostic freezes 63 Wikidata-only recording
+  predictions before parsing or using AcousticBrainz labels. Its label pass
+  finds three unique literal `jazz` positives and zero exact prediction
+  overlaps. This positive-only recording observation is not a quality result,
+  artist gold, or promotion gate; see the
+  [Wikidata recording diagnostic](checkpoints/ACOUSTICBRAINZ_WIKIDATA_RECORDING_DIAGNOSTIC_20260923.md).
   A positive-only [Last.fm 2007 overlap check](checkpoints/LASTFM_ARTISTTAGS2007_STATIC_OVERLAP.md)
   is diagnostic, not independent gold or a release gate.
 - A separate Last.fm ArtistTags2007 blind review packet contains 100 positive-tag
@@ -432,7 +454,12 @@ gate is open.
   lower bound nevertheless has positive rows for 577 unplaced seeds. The
   [direct-tag audit](checkpoints/MUSICBRAINZ_PREFILTER_UNPLACED_AUDIT_20260921.md)
   separates those positives from publishable membership and records their
-  current peer-edge abstentions. A [streamed peer-threshold
+  current peer-edge abstentions. A local Last.fm-supported review produced
+  109 proposed edges for 43 unplaced seeds. Forty-two seeds overlap the
+  existing review frontier and one is new; these remain proposals, not
+  membership or placement claims. See the
+  [unplaced co-listen review](checkpoints/MUSICBRAINZ_UNPLACED_COLISTEN_REVIEW_EDGES_20260922.md).
+  A [streamed peer-threshold
   audit](checkpoints/MUSICBRAINZ_PEER_THRESHOLD_SENSITIVITY_20260921.md)
   finds a review-only hub-filtered route to 414 of the 495 overlap-abstained
   unplaced seeds; it has not changed the public layout.

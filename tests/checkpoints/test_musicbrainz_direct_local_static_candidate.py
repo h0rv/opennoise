@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 import tempfile
 import unittest
 from dataclasses import dataclass
@@ -14,7 +15,12 @@ from unittest.mock import patch
 from opennoise.checkpoints.musicbrainz_direct_local_static_candidate import (
     LocalMusicBrainzStaticCandidateError,
     LocalMusicBrainzStaticCandidateManifest,
+    _create_replay_tables,
     _placed_candidate_seed_ids,
+    _require_replay_reciprocity,
+    _stream_direct_claims,
+    _stream_names,
+    _stream_verified_output_rows,
     _write_candidate,
     verify_local_musicbrainz_direct_static_candidate,
 )
@@ -245,6 +251,68 @@ class LocalMusicBrainzStaticCandidateTests(unittest.TestCase):
 
             with self.assertRaisesRegex(LocalMusicBrainzStaticCandidateError, "byte count"):
                 verify_local_musicbrainz_direct_static_candidate(staging)
+
+    def test_replay_requires_two_way_source_and_name_reciprocity(self) -> None:
+        claims = (_claim(1), _claim(2))
+        with tempfile.TemporaryDirectory() as temporary:
+            staging = Path(temporary)
+            manifest = self._write_small_candidate(staging, claims)
+            with sqlite3.connect(":memory:") as connection:
+                connection.row_factory = sqlite3.Row
+                with (
+                    patch(
+                        "opennoise.checkpoints.musicbrainz_direct_local_static_candidate.iter_verified_direct_canonical_artist_names",
+                        lambda *_args, **_kwargs: iter(
+                            _NameRow(claim.artist_mbid, "Name") for claim in claims
+                        ),
+                    ),
+                    patch(
+                        "opennoise.checkpoints.musicbrainz_direct_local_static_candidate.iter_verified_unique_recovered_names",
+                        lambda *_args, **_kwargs: iter(()),
+                    ),
+                    patch(
+                        "opennoise.checkpoints.musicbrainz_direct_local_static_candidate.iter_verified_portable_direct_proper_genre_claims",
+                        lambda *_args, **_kwargs: iter(claims),
+                    ),
+                ):
+                    _create_replay_tables(connection)
+                    _stream_names(
+                        connection,
+                        names=_name_receipt(),
+                        canonical_name_object_store=staging,
+                        recovered=_recovery_receipt(),
+                        recovered_name_object_store=staging,
+                    )
+                    _stream_direct_claims(
+                        connection,
+                        direct=_direct_receipt(),
+                        direct_object_store=staging,
+                        candidate_ids=frozenset({_SEED}),
+                    )
+                _stream_verified_output_rows(connection, staging, manifest)
+                _require_replay_reciprocity(connection, manifest)
+                connection.execute("UPDATE output_rows SET canonical_name = 'Altered'")
+                with self.assertRaisesRegex(
+                    LocalMusicBrainzStaticCandidateError, "canonical name differs"
+                ):
+                    _require_replay_reciprocity(connection, manifest)
+                connection.execute("DELETE FROM output_rows")
+                with self.assertRaisesRegex(LocalMusicBrainzStaticCandidateError, "not reciprocal"):
+                    _require_replay_reciprocity(connection, manifest)
+
+    def test_source_replay_rehashes_the_shard_bytes_it_compares(self) -> None:
+        claim = _claim(1)
+        with tempfile.TemporaryDirectory() as temporary:
+            staging = Path(temporary)
+            manifest = self._write_small_candidate(staging, (claim,))
+            shard_path = staging / manifest.shards[0].path
+            original = shard_path.read_bytes()
+            shard_path.write_bytes(original.replace(b"Name", b"Fake", 1))
+            with sqlite3.connect(":memory:") as connection:
+                connection.row_factory = sqlite3.Row
+                _create_replay_tables(connection)
+                with self.assertRaisesRegex(LocalMusicBrainzStaticCandidateError, "shard SHA-256"):
+                    _stream_verified_output_rows(connection, staging, manifest)
 
     def _write_small_candidate(
         self, staging: Path, claims: tuple[DirectProperGenreClaim, ...]
