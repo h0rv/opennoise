@@ -73,6 +73,14 @@ def main() -> int:
             "OPENNOISE_PUBLIC_RELEASE_OBJECTIVE_GATES", root / ".cache/objective-gates"
         ),
     )
+    parser.add_argument(
+        "--metadata-catalog-database",
+        type=Path,
+        help=(
+            "sealed catalog used to reconstruct and policy-verify the optional "
+            "metadata-representatives objective gate"
+        ),
+    )
     parser.add_argument("--skip-objective-gates", action="store_true")
     parser.add_argument("--source-mode", choices=("copy", "reference"), default="copy")
     parser.add_argument("--expected-cache-sha256", default=_CACHE_SHA256)
@@ -87,6 +95,7 @@ def main() -> int:
         objective_gates_directory=(
             None if arguments.skip_objective_gates else arguments.objective_gates_directory
         ),
+        metadata_catalog_database=arguments.metadata_catalog_database,
         source_mode=arguments.source_mode,
         expected_cache_sha256=arguments.expected_cache_sha256,
         expected_cache_byte_size=arguments.expected_cache_byte_size,

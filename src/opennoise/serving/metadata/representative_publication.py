@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import sqlite3
+from contextlib import closing
 from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field, ValidationError
@@ -12,6 +14,7 @@ from opennoise.policy import require_metadata_file
 from opennoise.serving.metadata.representatives import (
     MetadataRepresentativeArtifact,
     RepresentativeRunProvenance,
+    metadata_representatives,
 )
 from opennoise.storage import ObjectKey, ObjectStore, ObjectWrite
 
@@ -19,6 +22,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 MAX_ARTIFACT_BYTES = 8 * 1024 * 1024
+_METADATA_PROVENANCE_PREFIX = "catalog:metadata:"
 
 
 class MetadataRepresentativePublicationError(RuntimeError):
@@ -82,12 +86,86 @@ def load_metadata_representative_artifact(path: Path) -> LoadedMetadataRepresent
     )
 
 
+def verify_metadata_representative_publication_policy(
+    artifact: MetadataRepresentativeArtifact, catalog_database: Path
+) -> None:
+    """Bind examples to catalog selections and require display/export authorization.
+
+    The artifact's evidence references identify the source assertion that binds a
+    recording or release group to a genre.  A model run being exportable does not
+    supersede that source policy, so this check belongs immediately before the
+    object-store publication boundary.
+    """
+    try:
+        selected = metadata_representatives(catalog_database)
+    except (OSError, RuntimeError, ValueError) as error:
+        raise MetadataRepresentativePublicationError(
+            "catalog database cannot reconstruct metadata representative selection"
+        ) from error
+    if artifact != selected:
+        raise MetadataRepresentativePublicationError(
+            "metadata representative artifact does not exactly match catalog selection"
+        )
+    provenance_ids = tuple(
+        sorted(
+            {
+                _metadata_provenance_id(reference)
+                for item in artifact.items
+                for reference in item.evidence_refs
+            }
+        )
+    )
+    absolute = catalog_database.resolve(strict=True)
+    try:
+        with closing(
+            sqlite3.connect(f"file:{absolute.as_posix()}?mode=ro", uri=True)
+        ) as connection:
+            for provenance_id in provenance_ids:
+                permitted = connection.execute(
+                    """SELECT EXISTS(
+                           SELECT 1
+                           FROM provenance_records AS provenance
+                           JOIN active_rights_policy_permissions AS display_permission
+                             ON display_permission.policy_id = provenance.policy_id
+                            AND display_permission.use_kind = 'display'
+                            AND display_permission.decision = 'allow'
+                           JOIN active_rights_policy_permissions AS export_permission
+                             ON export_permission.policy_id = provenance.policy_id
+                            AND export_permission.use_kind = 'export'
+                            AND export_permission.decision = 'allow'
+                           WHERE provenance.id = ?
+                       )""",
+                    (provenance_id,),
+                ).fetchone()
+                if permitted is None or int(permitted[0]) != 1:
+                    raise MetadataRepresentativePublicationError(
+                        "metadata representative evidence is not actively authorized "
+                        f"for display and export: {provenance_id}"
+                    )
+    except sqlite3.Error as error:
+        raise MetadataRepresentativePublicationError(
+            "catalog database cannot verify metadata representative policy"
+        ) from error
+
+
+def _metadata_provenance_id(reference: str) -> int:
+    """Parse the sole provenance-reference form accepted at public publication."""
+    raw_id = reference.removeprefix(_METADATA_PROVENANCE_PREFIX)
+    if raw_id == reference or not raw_id.isdecimal() or int(raw_id) <= 0:
+        raise MetadataRepresentativePublicationError(
+            f"metadata representative has an invalid provenance reference: {reference}"
+        )
+    return int(raw_id)
+
+
 def publish_metadata_representatives(
     artifact_path: Path,
     store: ObjectStore,
+    catalog_database: Path,
 ) -> MetadataRepresentativePublication:
     """Persist a verified selection artifact without re-ranking, fetching, or reading media."""
     loaded = load_metadata_representative_artifact(artifact_path)
+    verify_metadata_representative_publication_policy(loaded.artifact, catalog_database)
     key = ObjectKey(value=f"metadata-representatives/sha256/{loaded.file_sha256}.json")
     stored = store.push(artifact_path, key)
     if (stored.sha256, stored.byte_size) != (loaded.file_sha256, loaded.byte_size):

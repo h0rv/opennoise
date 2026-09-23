@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import sqlite3
 from typing import TYPE_CHECKING, Literal
 from uuid import UUID
@@ -59,6 +60,55 @@ class PlaylistReleaseGroupOverlap(_FrozenModel):
     identity: RecordingReleaseGroupIdentity
     playlist_occurrences: tuple[PlaylistRecordingOccurrence, ...]
     native_evidence: NativeReleaseGroupEvidence
+
+
+class ExactPlaylistReleaseGroupOverlapReport(_FrozenModel):
+    """Local-only receipt for exact playlist recording-to-release-group evidence."""
+
+    revision: Literal["listenbrainz-playlist-release-group-overlap-v1"] = (
+        "listenbrainz-playlist-release-group-overlap-v1"
+    )
+    local_only: Literal[True] = True
+    export_allowed: Literal[False] = False
+    serving_allowed: Literal[False] = False
+    model_input_allowed: Literal[False] = False
+    artist_membership_asserted: Literal[False] = False
+    genre_membership_inferred_from_playlist: Literal[False] = False
+    playlist_bundle_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    playlist_count: int = Field(ge=1)
+    playlist_unique_recording_count: int = Field(ge=1)
+    curator_status: Literal["unknown"] = "unknown"
+    membership_source_role: Literal["listenbrainz_playlist_track"] = "listenbrainz_playlist_track"
+    musicbrainz_catalog_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    catalog_recording_count: int = Field(ge=0)
+    exact_recording_overlap_count: int = Field(ge=0)
+    exact_release_group_path_count: int = Field(ge=0)
+    public_catalog_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    public_catalog_recording_count: int = Field(ge=0)
+    public_catalog_exact_recording_overlap_count: int = Field(ge=0)
+    release_group_archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    release_group_archive_bytes: int = Field(gt=0)
+    source_cache_receipt_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    archive_records_seen: int = Field(ge=0)
+    archive_records_malformed: int = Field(ge=0)
+    archive_records_over_limit: int = Field(ge=0)
+    requested_release_group_count: int = Field(ge=0)
+    found_release_group_count: int = Field(ge=0)
+    target_groups_with_proper_genres: int = Field(ge=0)
+    target_proper_genre_observation_count: int = Field(ge=0)
+    target_positive_tag_observation_count: int = Field(ge=0)
+    overlaps: tuple[PlaylistReleaseGroupOverlap, ...]
+    output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+def overlap_report_sha256(report: ExactPlaylistReleaseGroupOverlapReport) -> str:
+    """Return the deterministic report hash excluding its self-reference."""
+    payload = json.dumps(
+        report.model_dump(mode="json", exclude={"output_sha256"}),
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode()
+    return hashlib.sha256(payload).hexdigest()
 
 
 def sha256_file(path: Path) -> str:

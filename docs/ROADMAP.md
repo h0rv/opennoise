@@ -220,6 +220,25 @@ gate is open.
 
 ## Next data work
 
+- The local-only [release-group tag context checkpoint](checkpoints/MUSICBRAINZ_RG_POSITIVE_TAG_CONTEXT_P136_20260923.md)
+  measures 133 exact tag recoveries among 781 source-isolated Wikidata P136
+  positives. It has no negative labels or precision claim, and native
+  MusicBrainz proper genres remain excluded as targets. It cannot promote a
+  model or static output without a complete independent gold set.
+- The local-only [playlist and album evidence join](checkpoints/PLAYLIST_ALBUM_EVIDENCE_JOIN_20260923.md)
+  retains exact IDs and separate source roles, but its two reached release
+  groups have no matching credited-artist support. More exact coverage is
+  needed before any broader context claim, and the result cannot promote a
+  model or static output.
+- Playlist and listening work remains blocked on a retained cross-account
+  ListenBrainz cohort from a compliant response or supplied public identifier.
+  A hash-sampled daily-listen account route is a possible alternative, but it
+  requires separate privacy and source authorization plus a non-disclosing
+  bounded receipt before any use.
+  The current one-account playlist cohort is research only and cannot promote
+  a model or static output. The qualified ListenBrainz aggregate remains
+  eligible where the production contract permits it, while Last.fm 360K remains
+  local research only.
 - The [direct P136 static v2 audit](checkpoints/DIRECT_P136_STATIC_V2_ZERO_LIFT_20260923.md)
   finds no safe, unambiguous, positioned addition to the deployed bridge.
   The 1,089 unrepresented observations are blocked by ambiguous labels,

@@ -164,6 +164,51 @@ belongs to one account. There is no cross account measurement. A new cohort
 requires a compliant search response or a supplied public account or playlist
 identifier. See the [feasibility checkpoint](LISTENBRAINZ_CROSS_ACCOUNT_PLAYLIST_FEASIBILITY_20260923.md).
 
+## 2026-09-23 research note
+
+The seven retained ListenBrainz daily objects are public submitted listening
+events. Their qualified aggregate retains 30,903 daily pairs and 13,175
+normalized artist pairs after the five-user floor. Playlist membership records
+only that recordings appear together in an ordered list. The retained ten
+playlist cohort has 527 exact recording MBIDs and is not a sample of listening
+events, a measure of playback, or a genre claim.
+
+Playlist titles and descriptions can provide weak semantic context, but they
+are not genre labels. Spotify Research used playlist titles and descriptions
+to derive mood-descriptor co-occurrence, while a 2025 peer-reviewed study
+found that fewer than 20% of coded playlist names were genre-based. The project
+does not ingest playlist text. Any future text test needs a separate,
+source-isolated evaluation and cannot promote its results to genre membership.
+See [Spotify Research's 2022 mood study](https://research.atspotify.com/2022/7/the-contribution-of-lyrics-and-acoustics-to-collaborative-understanding-of-mood)
+and the [2025 playlist-and-genre study](https://research.aber.ac.uk/en/publications/playlists-and-genre-the-role-of-music-genre-in-spotifys-playlists/).
+
+ListenBrainz also exposes explicit recording love or hate feedback by public
+user and recording MBID. It is separate from listens and playlist membership,
+is not ingested, and is not genre truth. See the [recording feedback API](https://listenbrainz.readthedocs.io/en/latest/users/api/recordings.html).
+
+The practical next local experiment remains the fixed three-account playlist
+pilot below, only after a compliant source response or supplied public
+identifier. It should retain exact IDs and receipts, then test repeated
+co-membership across account routes. It must not mix playlist co-membership
+with the listening aggregate.
+
+The seven raw daily objects contain transient account strings. A deterministic
+hash sample could select candidate account strings for public playlist listing,
+without a text search. That use would link listening identities to playlist
+endpoints beyond the current privacy and source boundary. It is not authorized
+or done. Any future use requires an explicit decision and a bounded local-only
+receipt that does not disclose account strings or the account-to-endpoint map.
+
+Spotify is not a workable public playlist-item source for this experiment.
+Spotify's February 2026 Development Mode guide says playlist items are
+available only for playlists the authenticated user owns or collaborates on.
+Spotify's Web API reference repeats that restriction, and its Developer Policy
+prohibit using Spotify Platform or Content to train or ingest a machine
+learning or AI model. See the [February 2026 migration guide](https://developer.spotify.com/documentation/web-api/tutorials/february-2026-migration-guide),
+[Get Playlist](https://developer.spotify.com/documentation/web-api/reference/get-playlist),
+and [Developer Policy](https://developer.spotify.com/policy). No Spotify
+ingestion or promotion is authorized.
+
 ## Next bounded experiment
 
 If a compliant discovery response or a public identifier becomes available,

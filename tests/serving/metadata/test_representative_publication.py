@@ -1,7 +1,9 @@
 import json
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from pydantic import ValidationError
 
@@ -50,6 +52,29 @@ def _artifact() -> MetadataRepresentativeArtifact:
     )
 
 
+def _catalog_database(path: Path, *, display_allowed: bool) -> None:
+    with sqlite3.connect(path) as connection:
+        connection.executescript(
+            """
+            CREATE TABLE provenance_records (id INTEGER PRIMARY KEY, policy_id INTEGER NOT NULL);
+            CREATE TABLE active_rights_policy_permissions (
+              policy_id INTEGER NOT NULL, use_kind TEXT NOT NULL, decision TEXT NOT NULL
+            );
+            """
+        )
+        connection.executemany(
+            "INSERT INTO provenance_records VALUES (?, 1)",
+            ((1,), (2,)),
+        )
+        connection.executemany(
+            "INSERT INTO active_rights_policy_permissions VALUES (1, ?, ?)",
+            (
+                ("display", "allow" if display_allowed else "deny"),
+                ("export", "allow"),
+            ),
+        )
+
+
 class MetadataRepresentativePublicationTests(unittest.TestCase):
     def test_persists_verified_examples_under_a_content_addressed_key(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -57,9 +82,15 @@ class MetadataRepresentativePublicationTests(unittest.TestCase):
             artifact_path = root / "metadata-representatives.json"
             artifact_path.write_text(_artifact().model_dump_json(), encoding="utf-8")
             store = LocalObjectStore(root / "objects")
+            catalog_database = root / "catalog.sqlite"
+            _catalog_database(catalog_database, display_allowed=True)
 
-            receipt = publish_metadata_representatives(artifact_path, store)
-            replay = publish_metadata_representatives(artifact_path, store)
+            with patch(
+                "opennoise.serving.metadata.representative_publication.metadata_representatives",
+                return_value=_artifact(),
+            ):
+                receipt = publish_metadata_representatives(artifact_path, store, catalog_database)
+                replay = publish_metadata_representatives(artifact_path, store, catalog_database)
 
         self.assertEqual(receipt.run.model_run_id, 7)
         self.assertEqual(receipt.total_examples, 2)
@@ -98,6 +129,60 @@ class MetadataRepresentativePublicationTests(unittest.TestCase):
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaises(MetadataRepresentativePublicationError):
                 load_metadata_representative_artifact(path)
+
+    def test_publication_rejects_display_denied_representative_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifact_path = root / "metadata-representatives.json"
+            artifact_path.write_text(_artifact().model_dump_json(), encoding="utf-8")
+            catalog_database = root / "catalog.sqlite"
+            _catalog_database(catalog_database, display_allowed=False)
+
+            with (
+                patch(
+                    "opennoise.serving.metadata.representative_publication.metadata_representatives",
+                    return_value=_artifact(),
+                ),
+                self.assertRaisesRegex(
+                    MetadataRepresentativePublicationError,
+                    "not actively authorized for display and export: 1",
+                ),
+            ):
+                publish_metadata_representatives(
+                    artifact_path, LocalObjectStore(root / "objects"), catalog_database
+                )
+
+    def test_publication_rejects_an_allowed_but_unselected_evidence_reference(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_database = root / "catalog.sqlite"
+            _catalog_database(catalog_database, display_allowed=True)
+            forged = _artifact().model_copy(
+                update={
+                    "items": (
+                        _artifact()
+                        .items[0]
+                        .model_copy(update={"evidence_refs": ("catalog:metadata:2",)}),
+                        _artifact().items[1],
+                    )
+                }
+            )
+            artifact_path = root / "metadata-representatives.json"
+            artifact_path.write_text(forged.model_dump_json(), encoding="utf-8")
+
+            with (
+                patch(
+                    "opennoise.serving.metadata.representative_publication.metadata_representatives",
+                    return_value=_artifact(),
+                ),
+                self.assertRaisesRegex(
+                    MetadataRepresentativePublicationError,
+                    "does not exactly match catalog selection",
+                ),
+            ):
+                publish_metadata_representatives(
+                    artifact_path, LocalObjectStore(root / "objects"), catalog_database
+                )
 
 
 if __name__ == "__main__":

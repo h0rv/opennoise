@@ -20,6 +20,10 @@ from opennoise.models import FrozenModel
 from opennoise.pipeline.public_release import PublicReleaseResult
 from opennoise.pipeline.release_manifest import verify_manifest_against_database
 from opennoise.serving.artist_membership_evaluation import ArtistMembershipEvaluationReport
+from opennoise.serving.metadata.representative_publication import (
+    MetadataRepresentativePublicationError,
+    verify_metadata_representative_publication_policy,
+)
 from opennoise.serving.metadata.representatives import MetadataRepresentativeArtifact
 from opennoise.storage import LocalObjectStore, ObjectKey, ObjectStore
 
@@ -167,6 +171,7 @@ class PublicReleaseCustodySettings(FrozenModel):
     evidence_directory: Path
     output_directory: Path
     objective_gates_directory: Path | None = None
+    metadata_catalog_database: Path | None = None
     additional_evidence_files: tuple[tuple[str, str], ...] = ()
     source_mode: Literal["copy", "reference"] = "copy"
     expected_cache_sha256: Sha256
@@ -390,7 +395,9 @@ def _objective_evidence_files(
 
 
 def _verify_objective_evidence(  # noqa: C901, PLR0912
-    paths: tuple[tuple[str, Path], ...], release_receipt: PublicReleaseResult
+    paths: tuple[tuple[str, Path], ...],
+    release_receipt: PublicReleaseResult,
+    catalog_database: Path | None = None,
 ) -> None:
     """Parse objective reports and bind them to the same public model release."""
     for name, path in paths:
@@ -414,6 +421,17 @@ def _verify_objective_evidence(  # noqa: C901, PLR0912
                     raise PublicReleaseCustodyError(
                         "metadata representatives objective gate targets another model"
                     )
+                if catalog_database is None:
+                    raise PublicReleaseCustodyError(
+                        "metadata representatives objective gate requires catalog policy "
+                        "verification"
+                    )
+                try:
+                    verify_metadata_representative_publication_policy(artifact, catalog_database)
+                except MetadataRepresentativePublicationError as error:
+                    raise PublicReleaseCustodyError(
+                        "metadata representatives objective gate is not catalog-authorized"
+                    ) from error
             elif name == "artist-membership-evaluation":
                 report = ArtistMembershipEvaluationReport.model_validate_json(
                     path.read_text(encoding="utf-8")
@@ -532,7 +550,11 @@ def custody_public_release(
         if objective_directory is not None
     )
     if objective_directory is not None and objective_paths:
-        _verify_objective_evidence(objective_paths, release_receipt)
+        _verify_objective_evidence(
+            objective_paths,
+            release_receipt,
+            settings.metadata_catalog_database,
+        )
         objective_evidence = _evidence_bindings(
             object_store,
             objective_directory,

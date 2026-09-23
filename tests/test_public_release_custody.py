@@ -20,6 +20,11 @@ from opennoise.serving.artist_membership_evaluation import (
     evaluate_artist_memberships,
     load_judgment_set,
 )
+from opennoise.serving.metadata.representatives import (
+    MetadataRepresentativeArtifact,
+    MetadataRepresentativeItem,
+    RepresentativeRunProvenance,
+)
 from tests.test_public_model_gate import _artifact
 
 
@@ -158,6 +163,50 @@ class PublicReleaseCustodyTests(unittest.TestCase):
                 _verify_objective_evidence(
                     (("artist-membership-judgments", copied_judgments),), release_receipt
                 )
+
+    def test_metadata_representative_evidence_requires_catalog_policy_verification(self) -> None:
+        release_receipt = PublicReleaseResult(
+            release_id="test",
+            cache_sha256="b" * 64,
+            cache_schema_version=10,
+            serving_schema_version=12,
+            model_logical_sha256="a" * 64,
+            model_file_sha256="c" * 64,
+            recorded_model_file_sha256="d" * 64,
+            model_input_sha256="e" * 64,
+            model_settings_sha256="f" * 64,
+            input_artifacts=1,
+            representative_items=1,
+            profile_memberships=0,
+            neighbor_rows=0,
+        )
+        artifact = MetadataRepresentativeArtifact(
+            run=RepresentativeRunProvenance(
+                model_run_id=1,
+                output_sha256=release_receipt.model_logical_sha256,
+                input_provenance_ids=(1,),
+            ),
+            items=(
+                MetadataRepresentativeItem(
+                    genre_id="wikidata:genre:Q1",
+                    entity_kind="recording",
+                    entity_id="musicbrainz:recording:11111111-1111-4111-8111-111111111111",
+                    display_name="Example",
+                    rank=1,
+                    direct_evidence_value=1.0,
+                    source_count=1,
+                    evidence_refs=("catalog:metadata:1",),
+                ),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "metadata-representatives-v1.json"
+            path.write_text(artifact.model_dump_json(), encoding="utf-8")
+            with self.assertRaisesRegex(
+                PublicReleaseCustodyError,
+                "requires catalog policy verification",
+            ):
+                _verify_objective_evidence((("metadata-representatives", path),), release_receipt)
 
 
 if __name__ == "__main__":
