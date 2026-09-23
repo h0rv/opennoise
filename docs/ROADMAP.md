@@ -246,6 +246,11 @@ gate is open.
   exact artist pairs only at a >=5-user floor. The ignored aggregate SQLite is
   receipt-hashed local custody, not a counts-only artifact; it carries no user
   identifiers and has no public, model, factual-membership, or genre-gold role.
+  A separate ignored order receipt found no play-count increases in 17,200,181
+  adjacent rows within the contiguous user blocks. The cap therefore selects
+  the first ten unique valid exact artist MBIDs in non-increasing play-count
+  order. It is not a top-ten-overall-rows rule when non-exact or malformed rows
+  appear before valid exact MBIDs.
   The observed strict-parser counts (359,349 contiguous blocks; 160,131 exact
   artist UUIDs) remain distinct from the source page's published user and
   artist figures. See the [source feasibility checkpoint](checkpoints/LASTFM_360K_SOURCE_FEASIBILITY_20260922.md).
@@ -254,11 +259,23 @@ gate is open.
   with source order, curator uncertainty, and normalized pair support. A
   ten-playlist single-discovery-cohort observation has 527 unique recordings,
   11 exact overlaps with the current 623-recording local catalog, and no model
-  use. Its source-pinned, round-robin 24-recording exact MusicBrainz
-  artist-credit bridge reached 23 exact lookups and 27 distinct within-playlist
-  cross-recording artist-pair potentials; it has no genre, model, or serving
-  use. See the [playlist probe](checkpoints/LISTENBRAINZ_PLAYLIST_PROBE.md) and
-  [artist-credit bridge](checkpoints/LISTENBRAINZ_PLAYLIST_MUSICBRAINZ_ARTIST_BRIDGE_20260923.md).
+  use. The route establishes only that the service lists the cohort as created
+  by one account; all curator states, human curation, and manual/editorial
+  selection remain unestablished. Its source-pinned, round-robin 24-recording
+  exact MusicBrainz artist-credit bridge reached 23 exact lookups and 27
+  distinct within-playlist cross-recording artist-pair potentials. A separate
+  local JSPF extension parse found 603 syntactically valid source-claimed artist
+  URIs across all 557 occurrences (344 distinct IDs); its claimed ID sets agree
+  with the 23 checked exact MusicBrainz credits only. Its 13,584 cross-track
+  artist-pair potentials, including 171 repeats across playlists, describe one
+  account cohort only, not independent account, curator, or privacy-floor
+  support. The first bounded cross-account acquisition attempt retained no
+  response body, so no cross-account measurement exists. None of these results
+  has genre, model, serving, or public use. See the [playlist probe](checkpoints/LISTENBRAINZ_PLAYLIST_PROBE.md),
+  [user-created route cohort](checkpoints/LISTENBRAINZ_USER_CREATED_PLAYLIST_COHORT_20260923.md),
+  [JSPF source-claim receipt](checkpoints/LISTENBRAINZ_PLAYLIST_JSPF_EMBEDDED_ARTIST_IDENTIFIERS_20260923.md),
+  [cross-account feasibility checkpoint](checkpoints/LISTENBRAINZ_CROSS_ACCOUNT_PLAYLIST_FEASIBILITY_20260923.md),
+  and [artist-credit bridge](checkpoints/LISTENBRAINZ_PLAYLIST_MUSICBRAINZ_ARTIST_BRIDGE_20260923.md).
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130
@@ -349,7 +366,11 @@ gate is open.
   exact candidate and source projections are now
   [portable under custody](checkpoints/MUSICBRAINZ_CREDIT_PORTABLE_CUSTODY_20260922.md),
   but the asset is not deployed: a real UI approval binding, artist-detail
-  integration, and browser-certified build remain required.
+  integration, and browser-certified build remain required. An isolated local
+  renderer can export one selected artist's source-bound credit metadata under
+  `.cache`; it is a non-public preview seam, not UI approval, static-page
+  integration, browser certification, or deployment. See the
+  [local render checkpoint](checkpoints/MUSICBRAINZ_CREDIT_ARTIST_DETAIL_LOCAL_RENDER_20260922.md).
 - Keep metadata candidates separate from published metadata examples.
 - Review the 484 source-bound genre candidates now queued by the versioned
   workflow. The local promotion preflight binds review and triage receipts,
@@ -363,10 +384,17 @@ gate is open.
   the model. The separate AcousticBrainz Genre Dataset offers recording-level
   metadata labels, but its labels were imported into MusicBrainz recording
   tags, so it is diagnostic only without a source-level leakage audit and an
-  exact recording-to-artist bridge. See the
+  exact recording-to-artist bridge. The completed isolation audit has 63
+  exact recording rows with a single primary artist, but abstains because no
+  retained prediction artifact and construction receipt proves exclusion of
+  MusicBrainz tag/recording/release inputs and historical Every Noise. Its
+  frozen Wikidata-only feasibility arm has only three literal `jazz` positives
+  and zero matching predictions, a coverage observation rather than a quality,
+  negative-label, artist-gold, or promotion result. See the
   [gold-set workflow](evidence/INDEPENDENT_ARTIST_GENRE_GOLD.md),
   [source audit](checkpoints/INDEPENDENT_GOLD_SOURCE_AUDIT.md), and
-  [AcousticBrainz audit](checkpoints/ACOUSTICBRAINZ_GENRE_DATASET_EVALUATION_AUDIT.md).
+  [AcousticBrainz audit](checkpoints/ACOUSTICBRAINZ_GENRE_DATASET_EVALUATION_AUDIT.md),
+  and [source-isolation checkpoint](checkpoints/ACOUSTICBRAINZ_RECORDING_GOLD_ISOLATION_20260922.md).
   A positive-only [Last.fm 2007 overlap check](checkpoints/LASTFM_ARTISTTAGS2007_STATIC_OVERLAP.md)
   is diagnostic, not independent gold or a release gate.
 - A separate Last.fm ArtistTags2007 blind review packet contains 100 positive-tag

@@ -14,6 +14,7 @@ from opennoise.analysis.lastfm_360k import (
     LastFm360kAggregateArtifact,
     LastFm360kProbeError,
     LastFm360kSettings,
+    audit_lastfm_360k_source_order,
     load_lastfm_360k_sealed_v1_envelope,
     run_lastfm_360k_full_aggregate,
 )
@@ -47,11 +48,55 @@ def _catalog(path: Path) -> None:
         database.execute("INSERT INTO entity_identifiers VALUES (1, ?)", (_ARTIST_A,))
 
 
-def _row(user: str, artist: str) -> bytes:
-    return f"{user}\t{artist}\tdiscarded artist name\t1\n".encode()
+def _row(user: str, artist: str, play_count: int = 1) -> bytes:
+    return f"{user}\t{artist}\tdiscarded artist name\t{play_count}\n".encode()
 
 
 class LastFm360kTests(unittest.TestCase):
+    def test_source_order_audit_counts_ties_and_user_blocks(self) -> None:
+        rows = [
+            _row("first", _ARTIST_A, 10),
+            _row("first", _ARTIST_B, 10),
+            _row("first", _ARTIST_A, 4),
+            _row("second", _ARTIST_A, 2),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / "source.tar.gz"
+            archive_md5, plays_md5 = _archive(archive, rows)
+            with (
+                patch("opennoise.analysis.lastfm_360k._ARCHIVE_MD5", archive_md5),
+                patch("opennoise.analysis.lastfm_360k._PLAYS_MD5", plays_md5),
+            ):
+                audit = audit_lastfm_360k_source_order(
+                    archive_path=archive,
+                    settings=LastFm360kSettings(maximum_rows=len(rows)),
+                )
+            expected_archive_sha256 = hashlib.sha256(archive.read_bytes()).hexdigest()
+        self.assertEqual(audit.contiguous_user_block_count, 2)
+        self.assertEqual(audit.source_archive_sha256, expected_archive_sha256)
+        self.assertEqual(audit.within_user_adjacent_comparison_count, 2)
+        self.assertEqual(audit.adjacent_play_count_decrease_count, 1)
+        self.assertEqual(audit.adjacent_play_count_tie_count, 1)
+        self.assertEqual(
+            audit.selection_strategy,
+            "first_ten_unique_valid_exact_artist_mbids_by_nonincreasing_source_play_count",
+        )
+
+    def test_source_order_audit_rejects_a_late_increase(self) -> None:
+        rows = [_row("first", _ARTIST_A, 4), _row("first", _ARTIST_B, 5)]
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / "source.tar.gz"
+            archive_md5, plays_md5 = _archive(archive, rows)
+            with (
+                patch("opennoise.analysis.lastfm_360k._ARCHIVE_MD5", archive_md5),
+                patch("opennoise.analysis.lastfm_360k._PLAYS_MD5", plays_md5),
+                self.assertRaisesRegex(LastFm360kProbeError, "not non-increasing"),
+            ):
+                audit_lastfm_360k_source_order(
+                    archive_path=archive,
+                    settings=LastFm360kSettings(maximum_rows=len(rows)),
+                )
+
     def test_emits_aggregate_only_after_five_distinct_user_blocks(self) -> None:
         rows = [
             _row(f"user-{index}", artist) for index in range(5) for artist in (_ARTIST_A, _ARTIST_B)

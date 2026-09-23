@@ -111,6 +111,51 @@ class LastFm360kAggregateArtifact(FrozenModel):
     listenbrainz_reference: ListenBrainzCoListenReference = ListenBrainzCoListenReference()
 
 
+class LastFm360kSourceOrderAudit(FrozenModel):
+    """Counts-only proof that source order is non-increasing within user blocks.
+
+    The aggregate deliberately selects the first ten *unique valid exact
+    artist MBIDs*, rather than the first ten rows regardless of identifier
+    validity.
+    """
+
+    revision: Literal["lastfm-360k-source-order-audit-v1"] = "lastfm-360k-source-order-audit-v1"
+    local_only: Literal[True] = True
+    export_allowed: Literal[False] = False
+    serving_allowed: Literal[False] = False
+    model_input_allowed: Literal[False] = False
+    independent_genre_gold: Literal[False] = False
+    source_archive_sha256: Sha256
+    source_archive_byte_size: int = Field(ge=0)
+    source_archive_md5: Literal["635e6ed3fc873aa4ba33aba0ebce02b1"] = _ARCHIVE_MD5
+    source_plays_tsv_md5: Literal["be672526eb7c69495c27ad27803148f1"] = _PLAYS_MD5
+    selection_strategy: Literal[
+        "first_ten_unique_valid_exact_artist_mbids_by_nonincreasing_source_play_count"
+    ] = "first_ten_unique_valid_exact_artist_mbids_by_nonincreasing_source_play_count"
+    selection_caveat: Literal[
+        "not_top_ten_overall_rows_when_non_exact_or_malformed_rows_precede_valid_exact_mbids"
+    ] = "not_top_ten_overall_rows_when_non_exact_or_malformed_rows_precede_valid_exact_mbids"
+    raw_rows_seen: int = Field(ge=0)
+    valid_play_rows_seen: int = Field(ge=0)
+    malformed_rows_seen: int = Field(ge=0)
+    contiguous_user_block_count: int = Field(ge=0)
+    within_user_adjacent_comparison_count: int = Field(ge=0)
+    adjacent_play_count_increase_count: Literal[0] = 0
+    adjacent_play_count_decrease_count: int = Field(ge=0)
+    adjacent_play_count_tie_count: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def _verify_comparison_partition(self) -> LastFm360kSourceOrderAudit:
+        if self.valid_play_rows_seen + self.malformed_rows_seen != self.raw_rows_seen:
+            raise ValueError("raw source-order row count is not partitioned by parse result")
+        if (
+            self.adjacent_play_count_decrease_count + self.adjacent_play_count_tie_count
+            != self.within_user_adjacent_comparison_count
+        ):
+            raise ValueError("source-order comparisons are not partitioned by decrease and tie")
+        return self
+
+
 class LastFm360kSealedV1Artifact(FrozenModel):
     """Original completed v1 report, preserved without a rewrite."""
 
@@ -208,6 +253,15 @@ class _Counts:
     completed_user_block_count: int = 0
 
 
+@dataclass(frozen=True, slots=True)
+class _ParsedPlayRow:
+    """Trusted, privacy-scoped fields from one plays TSV row."""
+
+    user_hash: bytes
+    artist_id: str | None
+    play_count: int
+
+
 def run_lastfm_360k_full_aggregate(
     *,
     archive_path: Path,
@@ -217,7 +271,7 @@ def run_lastfm_360k_full_aggregate(
 ) -> LastFm360kAggregateArtifact:
     """Stream one plays member and persist only aggregate artist state locally."""
     config = settings or LastFm360kSettings()
-    _verify_archive(archive_path, config)
+    archive_sha256 = _verify_archive(archive_path, config)
     if working_database_path.exists():
         raise LastFm360kProbeError("working aggregate database already exists")
     catalog_ids = _catalog_artist_ids(catalog_path)
@@ -257,7 +311,7 @@ def run_lastfm_360k_full_aggregate(
             working_database_path.unlink(missing_ok=True)
         raise
     return LastFm360kAggregateArtifact(
-        source_archive_sha256=_sha256_file(archive_path),
+        source_archive_sha256=archive_sha256,
         source_archive_byte_size=archive_path.stat().st_size,
         catalog_database_sha256=_sha256_file(catalog_path),
         catalog_exact_artist_mbid_count=len(catalog_ids),
@@ -276,6 +330,72 @@ def run_lastfm_360k_full_aggregate(
         working_database_sha256=_sha256_file(working_database_path),
         elapsed_seconds=time.monotonic() - started_at,
     )
+
+
+def audit_lastfm_360k_source_order(  # noqa: C901, PLR0912
+    *, archive_path: Path, settings: LastFm360kSettings | None = None
+) -> LastFm360kSourceOrderAudit:
+    """Stream the plays member once and retain only ordering counters."""
+    config = settings or LastFm360kSettings()
+    archive_sha256 = _verify_archive(archive_path, config)
+    raw_rows_seen = valid_play_rows_seen = malformed_rows_seen = 0
+    contiguous_user_block_count = adjacent_comparisons = decreases = ties = 0
+    current_user: bytes | None = None
+    prior_play_count: int | None = None
+    plays_digest = hashlib.md5(usedforsecurity=False)
+    with tarfile.open(archive_path, mode="r|gz") as archive:
+        for member in archive:
+            if member.name != _PLAYS_MEMBER:
+                continue
+            stream = archive.extractfile(member)
+            if stream is None:
+                raise LastFm360kProbeError("plays member cannot be opened")
+            try:
+                for line in stream:
+                    if raw_rows_seen >= config.maximum_rows:
+                        raise LastFm360kProbeError("plays member exceeds row limit")
+                    if len(line) > config.maximum_line_bytes:
+                        raise LastFm360kProbeError("plays row exceeds byte limit")
+                    plays_digest.update(line)
+                    raw_rows_seen += 1
+                    parsed = _parse_play_row(line)
+                    if parsed is None:
+                        malformed_rows_seen += 1
+                        continue
+                    valid_play_rows_seen += 1
+                    if parsed.user_hash != current_user:
+                        contiguous_user_block_count += 1
+                        current_user = parsed.user_hash
+                        prior_play_count = parsed.play_count
+                        continue
+                    if prior_play_count is None:
+                        raise AssertionError("same user must retain its prior play count")
+                    adjacent_comparisons += 1
+                    if parsed.play_count > prior_play_count:
+                        raise LastFm360kProbeError(
+                            "plays are not non-increasing within a user block"
+                        )
+                    if parsed.play_count == prior_play_count:
+                        ties += 1
+                    else:
+                        decreases += 1
+                    prior_play_count = parsed.play_count
+            finally:
+                stream.close()
+            if plays_digest.hexdigest() != _PLAYS_MD5:
+                raise LastFm360kProbeError("plays member MD5 does not match source receipt")
+            return LastFm360kSourceOrderAudit(
+                source_archive_sha256=archive_sha256,
+                source_archive_byte_size=archive_path.stat().st_size,
+                raw_rows_seen=raw_rows_seen,
+                valid_play_rows_seen=valid_play_rows_seen,
+                malformed_rows_seen=malformed_rows_seen,
+                contiguous_user_block_count=contiguous_user_block_count,
+                within_user_adjacent_comparison_count=adjacent_comparisons,
+                adjacent_play_count_decrease_count=decreases,
+                adjacent_play_count_tie_count=ties,
+            )
+    raise LastFm360kProbeError("plays member is unavailable")
 
 
 def load_lastfm_360k_sealed_v1_envelope(
@@ -373,7 +493,8 @@ def _consume_plays_member(  # noqa: C901, PLR0912, PLR0915
                     if parsed is None:
                         counts.malformed_rows += 1
                         continue
-                    user_hash, artist_id = parsed
+                    user_hash = parsed.user_hash
+                    artist_id = parsed.artist_id
                     counts.valid_rows += 1
                     if current_user != user_hash:
                         if current_user is not None:
@@ -417,18 +538,19 @@ def _consume_plays_member(  # noqa: C901, PLR0912, PLR0915
     raise LastFm360kProbeError("plays member is unavailable")
 
 
-def _parse_play_row(line: bytes) -> tuple[bytes, str | None] | None:
+def _parse_play_row(line: bytes) -> _ParsedPlayRow | None:
     fields = line.rstrip(b"\n").split(b"\t", maxsplit=3)
     if len(fields) != _PLAY_FIELD_COUNT:
         return None
     user_hash, raw_artist_id, _discarded_artist_name, raw_play_count = fields
-    if not user_hash or _parse_nonnegative_int(raw_play_count) is None:
+    play_count = _parse_nonnegative_int(raw_play_count)
+    if not user_hash or play_count is None:
         return None
     try:
         artist_id = str(UUID(raw_artist_id.decode("ascii")))
     except (UnicodeDecodeError, ValueError):
-        return user_hash, None
-    return user_hash, artist_id
+        return _ParsedPlayRow(user_hash=user_hash, artist_id=None, play_count=play_count)
+    return _ParsedPlayRow(user_hash=user_hash, artist_id=artist_id, play_count=play_count)
 
 
 def _parse_nonnegative_int(value: bytes) -> int | None:
@@ -513,19 +635,18 @@ def _count(database: sqlite3.Connection, statement: str, parameters: tuple[int, 
     return int(database.execute(statement, parameters).fetchone()[0])
 
 
-def _verify_archive(path: Path, config: LastFm360kSettings) -> None:
+def _verify_archive(path: Path, config: LastFm360kSettings) -> str:
     if not path.is_file() or path.stat().st_size > config.maximum_archive_bytes:
         raise LastFm360kProbeError("archive is unavailable or exceeds byte limit")
-    if _md5_file(path) != _ARCHIVE_MD5:
-        raise LastFm360kProbeError("archive MD5 does not match source receipt")
-
-
-def _md5_file(path: Path) -> str:
-    digest = hashlib.md5(usedforsecurity=False)
+    md5_digest = hashlib.md5(usedforsecurity=False)
+    sha256_digest = hashlib.sha256()
     with path.open("rb") as stream:
         while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
+            md5_digest.update(chunk)
+            sha256_digest.update(chunk)
+    if md5_digest.hexdigest() != _ARCHIVE_MD5:
+        raise LastFm360kProbeError("archive MD5 does not match source receipt")
+    return sha256_digest.hexdigest()
 
 
 def _sha256_file(path: Path) -> str:
