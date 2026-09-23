@@ -50,10 +50,11 @@ restored public catalog snapshot. Neither artifact inherits artist memberships
 through the hierarchy or uses historical data during construction.
 
 The sealed v5 frontier receipt-binds and preserves the full Wikidata-fused v4
-ledger: 2,377 MusicBrainz direct-observation seeds, 292 Wikidata seeds, 291
-cross-source corroborations, and 2,378 direct-observation seeds in union. It
-adds 23,497 ListenBrainz-derived review candidates across 425 seeds, all of
-which already have direct observations. This adds no factual memberships and
+ledger: 2,377 MusicBrainz release direct-anchor seeds, 292 Wikidata seeds, 291
+cross-source corroborations, and 2,378 source-anchor seeds in union. It adds
+23,497 ListenBrainz-derived review candidates across 425 seeds, all of which
+already have source anchors. The MusicBrainz anchor count is not an
+artist-direct membership count. This adds no factual memberships and
 no direct-coverage seeds. Its logical hash is
 `edf01e96b8ab12d7c90b49cf9119aa5fb0a01ccdea253924b7923ed3e0ecbef8`;
 the artifact byte hash is

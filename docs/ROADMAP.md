@@ -270,8 +270,13 @@ gate is open.
   selection remain unestablished. Its source-pinned, round-robin 24-recording
   exact MusicBrainz artist-credit bridge reached 23 exact lookups and 27
   distinct within-playlist cross-recording artist-pair potentials. A separate
-  local JSPF extension parse found 603 syntactically valid source-claimed artist
-  URIs across all 557 occurrences (344 distinct IDs); its claimed ID sets agree
+  50-recording disjoint follow-up selected exact IDs only, with selection
+  SHA-256 `2bac1641dad3201d77086344de5824f39f7f6ed6ae523dd91c043a9c32ee74f1`.
+  Its first response stalled, the attempt was interrupted, and it retained no
+  artist-credit result or custody object; see the [source research
+  checkpoint](checkpoints/OPEN_LISTENING_PLAYLIST_SOURCE_RESEARCH_20260922.md).
+  Another local JSPF extension parse found 603 syntactically valid source-claimed
+  artist URIs across all 557 occurrences (344 distinct IDs); its claimed ID sets agree
   with the 23 checked exact MusicBrainz credits only. Its 13,584 cross-track
   artist-pair potentials, including 171 repeats across playlists, describe one
   account cohort only, not independent account, curator, or privacy-floor
@@ -333,6 +338,10 @@ gate is open.
   across 412 placed candidate-only seeds in both directions. The ignored
   candidate remains local-only and is not serving input; see the
   [source replay checkpoint](checkpoints/MUSICBRAINZ_DIRECT_LOCAL_STATIC_SOURCE_REPLAY_20260923.md).
+- A future static release needs a separately reviewed MusicBrainz source role,
+  payload revision, promotion receipt, quality report, and browser gate. The
+  existing custody and v2 release contracts remain unchanged; see the
+  [publication readiness checkpoint](checkpoints/MUSICBRAINZ_DIRECT_STATIC_PUBLICATION_READINESS_20260923.md).
 - A read-only static-packaging audit distinguishes that exact 12.2 MB minimal
   JSONL boundary from the much larger current-v2 extrapolation and proposes
   bounded lazy genre shards only for a future authorized release; see [the
@@ -371,6 +380,10 @@ gate is open.
   [materialization checkpoint](checkpoints/MUSICBRAINZ_CATALOG_MATERIALIZATION_CANDIDATE.md).
   The local-only [exact-ID static-overlap checkpoint](checkpoints/MUSICBRAINZ_ARTIST_CREDIT_STATIC_OVERLAP_20260921.md)
   measures 121 public-direct and 101 static-discovery artist overlaps without transferring memberships.
+  A separate pinned diagnostic found 87 release groups, 284 release-group
+  support claims, and 3,132 exact credit matches. The genre or tag support
+  remains release-group context and is not an artist-direct claim; see the
+  [release-credit diagnostic](checkpoints/MUSICBRAINZ_RELEASE_CREDIT_GENRE_DIAGNOSTIC_20260922.md).
   A local v2 static-export gate now verifies source policy, report quality, and
   exact MBIDs before producing 961 credit-metadata rows for 116 artists. Its
   exact candidate and source projections are now
@@ -424,6 +437,9 @@ gate is open.
 - A second local-only [exact-MBID/literal-v2 review packet](checkpoints/LASTFM_ARTISTTAGS2007_STATIC_GENRE_REVIEW.md)
   binds the deployed static-v2 asset and source-row hashes. It is unreviewed,
   abstaining candidate selection only, not a genre bridge, label set, or gate.
+- The local-only Last.fm ArtistTags2007 literal candidate has 192,614 rows
+  across 1,317 seeds. It is neither factual membership nor gold, model input,
+  or release evidence; see the [literal candidate checkpoint](checkpoints/LASTFM_ARTISTTAGS2007_LITERAL_SEED_CANDIDATES.md).
 - Expand source cache replay until every selected release manifest input can be
   acquired or restored, ingested, and replayed into the certified database.
   Historical declaration replay does not provide that database certification.

@@ -30,8 +30,9 @@ co-listening research.
 ## Official source facts
 
 - [ListenBrainz dump documentation](https://listenbrainz.readthedocs.io/en/latest/users/listenbrainz-dumps.html)
-  says full dumps are twice monthly, incremental dumps are available daily,
-  and core listens are one JSON document per line. This makes them a
+  says full dumps are twice monthly and incremental dumps are twice weekly.
+  Daily objects in local cache are an ingest schedule, not a documented dump
+  publication cadence. Core listens are one JSON document per line. This makes them a
   high-volume raw-listen source, not a reason to bypass the existing privacy
   aggregate or download a full archive.
 - [ListenBrainz playlist API documentation](https://listenbrainz.readthedocs.io/en/latest/users/api/playlist.html)
