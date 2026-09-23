@@ -209,6 +209,38 @@ class MusicBrainzClientTests(PollingIsolatedAsyncioTestCase):
         )
         self.assertIn("inc=aliases%2Bgenres", str(requests[0].url))
 
+    async def test_fetch_recording_response_retains_native_genres_and_exact_bytes(self) -> None:
+        requests: list[httpx.Request] = []
+        response_bodies: list[bytes] = []
+        payload = {
+            "id": str(ARTIST_ID),
+            "title": "Recording",
+            "genres": [{"id": GENRE_ID, "name": "Electric blues", "count": 1}],
+            "tags": [{"name": "soul", "count": 2}],
+        }
+
+        async def handler(request: httpx.Request) -> httpx.Response:
+            requests.append(request)
+            response = httpx.Response(200, json=payload)
+            response_bodies.append(response.content)
+            return response
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = MusicBrainzClient(
+                http_client,
+                user_agent="opennoise/0.1 (maintainer@example.test)",
+            )
+            result = await client.fetch_recording_response(ARTIST_ID)
+
+        self.assertEqual(result.recording.id, ARTIST_ID)
+        self.assertEqual(result.recording.genres[0].count, 1)
+        self.assertEqual(result.recording.tags[0].name, "soul")
+        self.assertEqual(result.raw_bytes, response_bodies[0])
+        self.assertIn("inc=genres%2Btags", result.request_url)
+        self.assertEqual(
+            requests[0].headers["user-agent"], "opennoise/0.1 (maintainer@example.test)"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

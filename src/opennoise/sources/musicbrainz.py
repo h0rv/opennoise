@@ -270,6 +270,7 @@ class MusicBrainzRecording(BaseModel):
     )
     isrcs: tuple[str, ...] = Field(default=(), max_length=256)
     genres: tuple[MusicBrainzGenre, ...] = Field(default=(), max_length=128)
+    tags: tuple[MusicBrainzTag, ...] = Field(default=(), max_length=512)
 
 
 class MusicBrainzRelease(BaseModel):
@@ -977,6 +978,16 @@ class MusicBrainzArtistResponse:
     received_at: datetime
 
 
+@dataclass(frozen=True, slots=True)
+class MusicBrainzRecordingResponse:
+    """One recording response with the exact bytes needed for local custody."""
+
+    recording: MusicBrainzRecording
+    raw_bytes: bytes
+    request_url: str
+    received_at: datetime
+
+
 class MusicBrainzClient:
     """Fetch bounded typed records with the required identity and request rate."""
 
@@ -1035,6 +1046,22 @@ class MusicBrainzClient:
         )
         response.raise_for_status()
         return MusicBrainzReleaseGroup.model_validate_json(response.content)
+
+    async def fetch_recording_response(self, recording_id: UUID) -> MusicBrainzRecordingResponse:
+        """Fetch a recording with native genres and tags, retaining exact response bytes."""
+        await self._wait_for_rate_limit()
+        response = await self._client.get(
+            f"{MUSICBRAINZ_API_BASE}/recording/{recording_id}",
+            params={"fmt": "json", "inc": "genres+tags"},
+            headers={"User-Agent": self._user_agent, "Accept": "application/json"},
+        )
+        response.raise_for_status()
+        return MusicBrainzRecordingResponse(
+            recording=MusicBrainzRecording.model_validate_json(response.content),
+            raw_bytes=response.content,
+            request_url=str(response.url),
+            received_at=datetime.now(UTC),
+        )
 
     async def fetch_release(self, release_id: UUID) -> MusicBrainzRelease:
         """Fetch one concrete release with its release group and direct genres."""

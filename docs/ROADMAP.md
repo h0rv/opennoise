@@ -347,6 +347,20 @@ gate is open.
   curation, listener support, or genre evidence.
   See the [listening and playlist signal synthesis](checkpoints/OPEN_LISTENING_PLAYLIST_SIGNALS_20260923.md)
   for the source comparison and bounded next test.
+- A local release-group genre holdout predicted 511 of 1,209 held-out groups
+  by artist transfer and abstained on 512. Training-set popularity predicted
+  616 of 1,209. The result uses the first 10,000 valid archive-order groups
+  and supports feasibility work only; see the [recovery feasibility
+  checkpoint](checkpoints/MUSICBRAINZ_RG_GENRE_RECOVERY_FEASIBILITY_20260923.md).
+- The ListenBrainz popularity API probe is ready for a small local capture,
+  but the environment could not resolve `api.listenbrainz.org`. No live
+  response, ranking, or catalog overlap was measured; see the [probe
+  checkpoint](checkpoints/LISTENBRAINZ_POPULARITY_PROBE_20260923.md).
+- The recording-native genre probe verifies 11 exact recording IDs among the
+  cohort's 527, but its live MusicBrainz request stalled and was interrupted.
+  No native genre coverage was measured, and the `>2` recording threshold
+  remains unevaluated; see the [probe
+  checkpoint](checkpoints/LISTENBRAINZ_PLAYLIST_RECORDING_NATIVE_GENRE_PROBE_20260923.md).
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130
