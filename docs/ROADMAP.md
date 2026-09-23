@@ -294,6 +294,11 @@ gate is open.
   [JSPF source-claim receipt](checkpoints/LISTENBRAINZ_PLAYLIST_JSPF_EMBEDDED_ARTIST_IDENTIFIERS_20260923.md),
   [cross-account feasibility checkpoint](checkpoints/LISTENBRAINZ_CROSS_ACCOUNT_PLAYLIST_FEASIBILITY_20260923.md),
   and [artist-credit bridge](checkpoints/LISTENBRAINZ_PLAYLIST_MUSICBRAINZ_ARTIST_BRIDGE_20260923.md).
+  The retained listing custody has one 7,013-byte body with 20 playlist IDs
+  and SHA-256 `564cacb56623cd13b6760abcf18b9ac5c645e6e863bfc2ab9cea0891656bcfd2`.
+  Even a future pair of listing receipts could establish only distinct
+  service-declared account strings, not independently sourced people, human
+  curation, listener support, or genre evidence.
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130
@@ -408,6 +413,12 @@ gate is open.
   and release-group response bytes while keeping proper genres and positive-count
   tags separate. It is local-only and cannot propagate artist memberships; see
   the [entity observation checkpoint](checkpoints/MUSICBRAINZ_ENTITY_GENRE_OBSERVATION_20260923.md).
+  The local MusicBrainz derived entity-tag adapter has fixture coverage for
+  recording, release, and release-group aggregate tags. It remains local-only and
+  has not replayed the absent declared archive. See
+  [the derived tag checkpoint](checkpoints/MUSICBRAINZ_DERIVED_ENTITY_TAGS_20260923.md).
+  The already verified release-group JSON archive can support a separate native
+  release-group observation pass sooner. Neither path propagates tags to artists.
   A local v2 static-export gate now verifies source policy, report quality, and
   exact MBIDs before producing 961 credit-metadata rows for 116 artists. Its
   exact candidate and source projections are now
@@ -511,6 +522,9 @@ gate is open.
   188 to 315 on the same 960 aggregate-supported held-out targets. It does not
   broaden aggregate graph reach, create memberships, alter serving, or
   authorize export; see [the sparse cosine transfer checkpoint](checkpoints/SPARSE_GENRE_COSINE_TRANSFER_20260923.md).
+- The five-fold sparse cosine robustness result remains underpowered for niche
+  genres, so it is a local experiment rather than a promotion input. See [the
+  robustness checkpoint](checkpoints/SPARSE_GENRE_COSINE_ROBUSTNESS_20260923.md).
 - Keep historical output as a terminal, evaluation-only reference after each
   open-model checkpoint is sealed; it must never become a construction input.
 - Add optional user reviewed ML experiments in isolated modules. No audio files

@@ -24,6 +24,23 @@ account names or other user identifiers.
 Consequently there is no auditable search response, raw JSPF, account listing,
 playlist selection, or cross-account support measurement to retain.
 
+## Local custody check
+
+The current local playlist custody has one retained created-playlists listing
+body. It is 7,013 bytes, has SHA-256
+`564cacb56623cd13b6760abcf18b9ac5c645e6e863bfc2ab9cea0891656bcfd2`, and
+contains 20 playlist identifiers. There is no retained listing body for a
+second account, so it cannot form a two-account cohort. The existing snapshot
+bundle and raw JSPF objects therefore remain a one-account artifact.
+
+The adapter checks each selected playlist ID against its retained listing body
+and binds each JSPF response to its exact playlist endpoint. It cannot turn
+two distinct account strings into evidence that two people, curators, or
+listeners are independent. A completed two-route run could establish only
+support from two distinct service-declared account strings. It would still not
+support an independent-human, manual-curation, editorial, genre, or listener
+claim.
+
 The official API documentation says that playlist search matches public
 playlist titles and descriptions, the query must have at least three
 characters, and `/1/user/(playlist_user_name)/playlists` returns playlist
@@ -96,11 +113,14 @@ model input.
 
 ## Decision
 
-The official route design is feasible in principle, but the current network
-attempt yielded no auditable body. Keep the existing one-account cohort
+The official route design is feasible for a local two-service-account cohort,
+but it cannot establish an independently sourced human-created cohort. The
+current network attempt yielded no auditable body, and local custody contains
+only one account listing receipt. Keep the existing one-account cohort
 unchanged and do not claim cross-account support until a future, separately
 retained bounded run completes with every required listing receipt, raw JSPF
-object, and exact playlist receipt.
+object, and exact playlist receipt. Describe any resulting support as distinct
+service-declared account strings only.
 
 Sources: [ListenBrainz playlist API](https://listenbrainz.readthedocs.io/en/latest/users/api/playlist.html)
 and [ListenBrainz API requirements](https://listenbrainz.readthedocs.io/en/latest/users/api/index.html).
