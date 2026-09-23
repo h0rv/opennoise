@@ -220,6 +220,13 @@ gate is open.
 
 ## Next data work
 
+- The [direct P136 static v2 audit](checkpoints/DIRECT_P136_STATIC_V2_ZERO_LIFT_20260923.md)
+  finds no safe, unambiguous, positioned addition to the deployed bridge.
+  The 1,089 unrepresented observations are blocked by ambiguous labels,
+  multiple positioned seeds, unplaced exact links, or no unique exact link.
+  This corrects a possible reading of the two observation `safe_exact` graph
+  review result. Both map nodes are unplaced in the canonical layout and
+  remain pending human review.
 - A bounded local-only ListenBrainz recording-ID probe inspected 250,000
   retained raw listens: 2,176 submitted recording UUIDs, zero server-resolved
   recording UUIDs, six exact catalog overlaps, and zero pairs at the
@@ -342,6 +349,10 @@ gate is open.
   payload revision, promotion receipt, quality report, and browser gate. The
   existing custody and v2 release contracts remain unchanged; see the
   [publication readiness checkpoint](checkpoints/MUSICBRAINZ_DIRECT_STATIC_PUBLICATION_READINESS_20260923.md).
+- A pending local policy-review input now pins the exact 412 placed MusicBrainz
+  seeds, source wording, and required quality-report fields. It remains
+  unapproved and does not change the public v2 release; see the
+  [policy-review input checkpoint](checkpoints/MUSICBRAINZ_DIRECT_STATIC_POLICY_REVIEW_INPUT_20260923.md).
 - A read-only static-packaging audit distinguishes that exact 12.2 MB minimal
   JSONL boundary from the much larger current-v2 extrapolation and proposes
   bounded lazy genre shards only for a future authorized release; see [the

@@ -14,6 +14,16 @@ do not acquire the 2026 collaborative knowledge-graph repackaging.
 | 3 | Public ListenBrainz playlists | JSPF MusicBrainz extensions require a recording MBID per track. The retained ten-playlist probe has 527 unique exact recording MBIDs, but every curator state is `unknown`. | Ordered playlist co-occurrence is neither a user-listening sample nor evidence of human curation. The ordinary `playlists` route is the only route-level evidence labeled `user_created`; `createdfor` and recommendations retain their distinct routes but have unknown source role. No route receipt attaches a playlist identity without retained raw-listing membership proof. See the [route classifier checkpoint](LISTENBRAINZ_PLAYLIST_SOURCE_ROLE_20260923.md). Do not use titles/descriptions as genre labels. |
 | 4 | AcousticBrainz Discogs validation | 63 locally bridgeable exact recording/release-group/single-primary-artist rows. | Metadata-only positive recording-label diagnostic, never a listening signal or artist-membership label. It is conditionally usable only after an exact MusicBrainz-tag leakage exclusion audit. |
 
+The creator-attributed [Last.fm 1K Zenodo record](https://zenodo.org/records/6090214)
+is a future local only feasibility candidate, not a current priority. It lists
+a 672.7 MB archive with 19,150,868 timestamped rows for 992 users and exact
+MusicBrainz artist and track ID columns. A streaming audit with counts only should
+verify the published MD5 `a79a6808f54f73354789a9fb02cb1e41`, record a local
+SHA-256, and measure valid exact IDs before any aggregate work. The track ID
+does not establish a recording bridge. Any later aggregate must use fixed user
+and time splits, retain no user IDs, apply a privacy threshold, and remain out
+of the model, evaluation, and public data paths until separately approved.
+
 ## Excluded duplicate: 2026 collaborative music knowledge graph
 
 The [Zenodo v1 deposit](https://zenodo.org/records/20394102) is not a new
@@ -53,6 +63,10 @@ co-listening research.
   [creator-attributed Zenodo mirror](https://zenodo.org/records/6090214)
   document the exact artist-MBID field, hashed user field, scale, checksums,
   and non-commercial restriction.
+- The creator-attributed [Last.fm 1K Zenodo record](https://zenodo.org/records/6090214)
+  documents the timestamped row schema, 19,150,868 rows, 992 users, exact
+  MusicBrainz artist and track IDs, the 672.7 MB archive, its MD5, and the
+  noncommercial restriction.
 - [AcousticBrainz Genre Dataset format](https://mtg.github.io/acousticbrainz-genre-dataset/data/)
   documents recording and release-group MBIDs, not artist MBIDs; the local
   bridge abstains unless the independent MusicBrainz credit relation is exact.
