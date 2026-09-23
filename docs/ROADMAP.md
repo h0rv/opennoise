@@ -325,6 +325,8 @@ gate is open.
   Even a future pair of listing receipts could establish only distinct
   service-declared account strings, not independently sourced people, human
   curation, listener support, or genre evidence.
+  See the [listening and playlist signal synthesis](checkpoints/OPEN_LISTENING_PLAYLIST_SIGNALS_20260923.md)
+  for the source comparison and bounded next test.
 - Expand direct artist and catalog coverage, preserving source claims and
   rejecting ambiguous presentation identity bridges.
 - The identity-safe MusicBrainz proper-genre frontier has 11 seeds and 130
@@ -456,6 +458,12 @@ gate is open.
   report finds positive native-genre observations for all 68 exact unplaced
   name matches, but it cannot create artist membership, relations, or map
   placements. See [the census checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_NATIVE_CENSUS_20260923.md).
+  A separate full-corpus tag census over the same pinned archive found 1,954
+  exact normalized seed-name matches, including 385 unplaced names. It retains
+  only aggregate tag vote signs and exact seed names, and all observed counts
+  in this archive were positive. Tags remain distinct from proper genres and
+  cannot assert membership, relations, or placements. See [the tag census
+  checkpoint](checkpoints/MUSICBRAINZ_RELEASE_GROUP_TAG_CENSUS_20260923.md).
   The local MusicBrainz derived entity-tag adapter has fixture coverage for
   recording, release, and release-group aggregate tags. It remains local-only and
   has not replayed the absent declared archive. See
