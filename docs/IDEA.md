@@ -2,6 +2,12 @@
 
 Build OpenNoise, an open music map from public metadata and privacy safe aggregates.
 
+The design direction is minimal, plain, and “grug brain,” with usability and
+UI/UX preserved. Remove generic dashboard styling, repeated explanatory copy,
+badge clutter, and competing controls. Keep search, readable names, clear
+navigation, accessibility, and evidence distinctions. Follow the
+[design direction](serving/DESIGN.md) for the next UI pass.
+
 The product target is complete Every Noise discovery parity through open-data
 modeling and enrichment. The initial 697 source genres are evidence, not a
 vocabulary ceiling. The current research pipeline adds verified open tags and

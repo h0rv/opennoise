@@ -13,3 +13,6 @@ aliases. The only supported Poe commands are:
 Keep Python 3.13 and static-only delivery. Never deploy experimental v3 data,
 local research candidates, or previews. Archived docs may mention retired Poe
 aliases. Run their scripts directly when needed.
+
+For UI work, follow `docs/serving/DESIGN.md`: minimal, plain, “grug brain” design
+without sacrificing usability, accessibility, or source/inference distinctions.
