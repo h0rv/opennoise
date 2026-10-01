@@ -338,6 +338,49 @@ function showArtistExamples(artistId) {
   });
 }
 
+// Source-declared destinations only; rendering a link never requests provider media.
+let artistLinksRequest;
+function showArtistLinks(artistId) {
+  const path = document.body.dataset.artistLinks;
+  if (!path) return;
+  const section = node('section', undefined, 'artist-listen-links');
+  section.dataset.artistId = artistId;
+  section.dataset.evidenceRole = 'source_artist_url_relationships';
+  detail.append(section);
+  artistLinksRequest ||= fetch(path).then(response => {
+    if (!response.ok) throw new Error('Artist links unavailable');
+    return response.json();
+  });
+  artistLinksRequest.then(payload => {
+    if (!section.isConnected) return;
+    const artist = payload.artists?.find(row => row.artist_mbid === artistId);
+    if (!artist || !Array.isArray(artist.links)) { section.remove(); return; }
+    const links = node('div', undefined, 'native-links');
+    for (const row of artist.links) {
+      if (typeof row.url !== 'string' || typeof row.provider !== 'string' || !/^[0-9a-f]{64}$/.test(row.source_sha256)) continue;
+      let url; try { url = new URL(row.url); } catch { continue; }
+      if (url.protocol !== 'https:' || url.username || url.password || (url.port && url.port !== '443')) continue;
+      const domains = {'Spotify': 'spotify.com', 'Bandcamp': 'bandcamp.com', 'SoundCloud': 'soundcloud.com', 'YouTube': 'youtube.com'};
+      const domain = domains[row.provider];
+      if (domain ? !(url.hostname === domain || url.hostname.endsWith(`.${domain}`) || (row.provider === 'YouTube' && url.hostname === 'youtu.be')) : !(row.provider === 'Official website' && row.relation_type === 'official homepage')) continue;
+      const peers = artist.links.filter(candidate => candidate.provider === row.provider);
+      const suffix = url.pathname + url.search + url.hash;
+      const sharedPath = peers.filter(candidate => { try { const peer = new URL(candidate.url); return peer.pathname + peer.search + peer.hash === suffix; } catch { return false; } }).length > 1;
+      const label = peers.length > 1 ? `${row.provider} · ${sharedPath ? url.hostname : ''}${suffix}` : row.provider;
+      const link = node('a', label);
+      link.title = row.url; link.setAttribute('aria-label', `${row.provider}: ${row.url}`);
+      link.dataset.provider = row.provider;
+      link.href = row.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      link.dataset.artistId = artistId; link.dataset.sourceSha256 = row.source_sha256;
+      links.append(link);
+    }
+    if (links.childElementCount) section.append(node('h3', 'Listen links'), links);
+    else section.remove();
+  }).catch(() => {
+    if (section.isConnected) section.replaceChildren(node('p', 'Artist links unavailable. Try reloading.', 'muted'));
+  });
+}
+
 function renderArtist() {
   detail.replaceChildren(); detail.scrollTop = 0; detail.setAttribute('aria-busy', String(!artistProfile));
   detail.append(button(selected ? `← ${selected.name}${scene === 'artists' ? ' artists' : ''}` : '← all styles', 'back-button', () => {
@@ -346,7 +389,7 @@ function renderArtist() {
   }));
   if (!artistProfile) { detail.append(node('h2', 'Loading artist…'), node('p', 'Loading exact source identity and complete typed style evidence.', 'muted')); return; }
   detail.append(node('span', 'ARTIST · EXACT SOURCE IDENTITY', 'badge'), node('h2', artistProfile.name));
-  const provider = node('a', 'Artist on MusicBrainz ↗', 'provider-link'); provider.href = `https://musicbrainz.org/artist/${selectedArtist}`; provider.target = '_blank'; provider.rel = 'noopener noreferrer'; detail.append(provider); showArtistExamples(selectedArtist);
+  const provider = node('a', 'Artist on MusicBrainz ↗', 'provider-link'); provider.href = `https://musicbrainz.org/artist/${selectedArtist}`; provider.target = '_blank'; provider.rel = 'noopener noreferrer'; detail.append(provider); showArtistLinks(selectedArtist); showArtistExamples(selectedArtist);
   const validated = artistEvidence || validatedMemberships(artistProfile);
   if (scene === 'artists' && artistMap) {
     const row = artistMap.artists.find(candidate => candidate.artist_mbid === selectedArtist);

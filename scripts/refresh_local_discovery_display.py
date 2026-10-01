@@ -14,9 +14,13 @@ def main() -> None:
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--representative-music", type=Path)
+    parser.add_argument("--artist-links", type=Path)
     args = parser.parse_args()
     receipt = refresh_discovery_display(
-        source=args.source, output=args.output, representative_music=args.representative_music
+        source=args.source,
+        output=args.output,
+        representative_music=args.representative_music,
+        artist_links=args.artist_links,
     )
     sys.stdout.write(
         json.dumps(

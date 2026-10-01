@@ -150,6 +150,18 @@ try {
     assert.equal(await evaluate("document.querySelector('.membership-list').dataset.evidenceRole"), 'inferred_community_membership');
     assert.equal(await evaluate("document.querySelector('.source-list').dataset.evidenceRole"), 'direct_source_observation');
     assert.ok(await evaluate("document.querySelector('#detail').textContent.includes('not probabilities')"));
+    if (await evaluate("Boolean(document.body.dataset.artistLinks)")) {
+      const declaredLinks = await evaluate("fetch(document.body.dataset.artistLinks).then(response=>response.json()).then(payload=>payload.artists.find(row=>row.artist_mbid===" + JSON.stringify(artistId) + ").links)");
+      await wait("document.querySelectorAll('.artist-listen-links a').length === " + declaredLinks.length);
+      const renderedLinks = await evaluate("[...document.querySelectorAll('.artist-listen-links a')].map(row=>({url:row.getAttribute('href'), provider:row.dataset.provider, label:row.textContent, title:row.title, artistId:row.dataset.artistId, sourceSha256:row.dataset.sourceSha256, target:row.target, rel:row.rel}))");
+      assert.deepEqual(renderedLinks.map(row=>row.url), declaredLinks.map(row=>row.url), 'destinations must exactly match verified artist source relationships');
+      for (const provider of new Set(renderedLinks.map(row=>row.provider))) {
+        const labels = renderedLinks.filter(row=>row.provider===provider).map(row=>row.label);
+        assert.equal(new Set(labels).size, labels.length, 'same-provider destinations must have distinct visible labels');
+      }
+      assert.ok(renderedLinks.every(row=>row.title===row.url), 'full source URL must remain available when visible labels are ellipsized');
+      assert.ok(renderedLinks.every((row,index)=>row.artistId===artistId && row.sourceSha256===declaredLinks[index].source_sha256 && row.provider===declaredLinks[index].provider && row.target==='_blank' && row.rel.includes('noopener')));
+    }
     if (await evaluate("Boolean(document.body.dataset.artistExamples)")) {
       await wait("document.querySelectorAll('.artist-work-examples a').length === 12");
       assert.deepEqual(await evaluate("[...document.querySelectorAll('.artist-work-examples h3')].map(row=>row.textContent)"), ['Recordings', 'Release context']);

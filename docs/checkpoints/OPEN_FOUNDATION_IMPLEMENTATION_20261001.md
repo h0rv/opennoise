@@ -27,6 +27,14 @@ lineage, credit selection, identity, descriptors, inventory, and budgets. Sonic
 distances and inferred cultural overlap are separate outputs. This selected
 electronic-focused sample cannot establish general retrieval quality.
 
+The [independent cultural pack](OPEN_CULTURAL_SOURCE_REVIEW_20261001.md)
+captures Wikidata CC0 claims for 48 of 110 requested artists and all ten
+benchmarks. It retains 130 labeled property/QID observations and twelve
+property-specific overlap candidates. Genre, place, origin, and movement remain
+distinct. The portable manifest removes supplementary MusicBrainz genre claims
+used for cohort selection; raw Wikidata responses replay independently in a
+fresh checkout. Missing English display names do not count as missing identities.
+
 ## Reference evaluation
 
 The [North Star benchmark](../analysis/everynoise-reference-benchmark.md)
@@ -44,17 +52,22 @@ coordinates and memberships do not enter open model construction.
 ## Product and portable examples
 
 The final local export is
-`.cache/opennoise-discovery-minimal-20261001-v5/`, with receipt
-`f06f6d884d41847838de8e1241ff962a58c788c330878ed6338202e53d37c80e`.
+`.cache/opennoise-discovery-minimal-20261001-v7/`, with receipt
+`2cbf2b37403dda2ab3284d6f4fc9b6d1d6ad29ce804a372985702a8df84e456c`.
 It reduces decorative styling and repeated copy, puts advanced filters behind a
 disclosure, and preserves search, maps, complete lists, evidence roles, deep
 links, history, and mobile/keyboard access. Styles and communities lazily show
 [credited music examples](REPRESENTATIVE_MUSIC_20261001.md), including recordings
 and independently credited release context for Aphex Twin and Four Tet.
-External MusicBrainz links provide metadata navigation, not playback.
+External MusicBrainz links provide metadata navigation. A separately
+[verified destination pack](ARTIST_OUTBOUND_LINKS_20261001.md) adds 52 outbound
+listening/site links for the ten artists, with exact artist and source URL
+provenance. These links open providers; no embeds, audio, or destination requests
+enter the pipeline. Thirteen Discogs identity links remain metadata references.
+Repeated providers use their source paths to distinguish destinations.
 
 The refresh verifies the parent, hardlinks 97,466 unchanged artifacts, replaces
-six UI assets, and binds the CC0 examples and their receipt. Earlier generated
+six UI assets, and binds the CC0 examples, outbound links, and their receipts. Earlier generated
 display clones were removed to recover filesystem metadata space; original
 sealed parents and browser evidence remain intact. There is no deployment.
 
@@ -64,8 +77,8 @@ for each of Aphex Twin and Four Tet, mobile filter bounds, complete cohorts,
 history, reload, and all three explorer routes. No external fetches, media
 requests, HTTP errors, or runtime errors occurred. Evidence:
 
-- `.cache/minimal-style-browser-20261001-v5/browser-report.json`
-- `.cache/minimal-community-browser-20261001-v5/browser-report.json`
+- `.cache/minimal-style-browser-20261001-v7/browser-report.json`
+- `.cache/minimal-community-browser-20261001-v7/browser-report.json`
 
 The [foundation inventory](../foundation/README.md) exposes stage input hashes
 and missing dependencies. `validate --stage portable-examples` can succeed
@@ -84,6 +97,6 @@ remain unresolved. This checkpoint provides concrete building blocks and
 measured progress, not an overall completion percentage. Follow the
 [foundation acceptance contract](../foundation/GOAL.md).
 
-Validation at integration: `poe check` passed 1,473 Python tests (36 explicit
+Validation at integration: `poe check` passed 1,481 Python tests (36 explicit
 input-dependent skips) and 39 JavaScript/browser tests. The separate real-export
 captures and raw metadata replay supply evidence beyond the checkout fixtures.

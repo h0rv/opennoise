@@ -16,6 +16,7 @@ from opennoise.deployment.discovery_product import (
     _require_html_targets,
     _require_paths,
 )
+from opennoise.serving.metadata.artist_links import verify_artist_link_projection
 from opennoise.serving.metadata.artist_works import verify_projected_artist_work_examples
 
 _STATIC = Path(__file__).resolve().parents[1] / "static"
@@ -79,7 +80,52 @@ def _attach_examples(
     }
 
 
-def _verify_optional_examples(source: Path | None) -> None:
+def _attach_artist_links(
+    output: Path, source: Path | None, files: dict[str, Any]
+) -> dict[str, Any] | None:
+    if source is None:
+        return None
+    for original, relative in (
+        ("artist-links.json", "artist-links.json"),
+        ("receipt.json", "provenance/artist-links-receipt.json"),
+    ):
+        destination = output / relative
+        if destination.exists():
+            raise ValueError("artist link artifacts collide with source product")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source / original, destination)
+        files[relative] = _binding(destination)
+    verify_artist_link_projection(source / "artist-links.json", source / "receipt.json")
+    for original, relative in (
+        ("artist-links.json", "artist-links.json"),
+        ("receipt.json", "provenance/artist-links-receipt.json"),
+    ):
+        if files[relative] != _binding(source / original):
+            raise ValueError("artist link projection changed during display copy")
+    for relative, target in (
+        ("index.html", "artist-links.json"),
+        ("communities/index.html", "../artist-links.json"),
+    ):
+        path = output / relative
+        html = path.read_text(encoding="utf-8")
+        if html.count("<body") != 1:
+            raise ValueError("artist links require one document body")
+        path.write_text(
+            html.replace("<body", f'<body data-artist-links="{target}"', 1), encoding="utf-8"
+        )
+    return {
+        "path": "artist-links.json",
+        "receipt_path": "provenance/artist-links-receipt.json",
+        "projection_sha256": files["artist-links.json"]["sha256"],
+        "audio_used": False,
+    }
+
+
+def _verify_optional_examples(source: Path | None, artist_links: Path | None) -> None:
+    if artist_links is not None:
+        verify_artist_link_projection(
+            artist_links / "artist-links.json", artist_links / "receipt.json"
+        )
     if source is not None:
         verify_projected_artist_work_examples(
             source / "credited-examples.json", source / "receipt.json"
@@ -87,7 +133,11 @@ def _verify_optional_examples(source: Path | None) -> None:
 
 
 def refresh_discovery_display(
-    *, source: Path, output: Path, representative_music: Path | None = None
+    *,
+    source: Path,
+    output: Path,
+    representative_music: Path | None = None,
+    artist_links: Path | None = None,
 ) -> dict[str, Any]:
     """Hardlink verified data into a fresh local product; replace only six UI files."""
     require_local_candidate_destination(output)
@@ -109,7 +159,7 @@ def refresh_discovery_display(
     output.parent.mkdir(parents=True, exist_ok=True)
     if source.stat().st_dev != output.parent.stat().st_dev:
         raise ValueError("display refresh requires same-device hardlinks")
-    _verify_optional_examples(representative_music)
+    _verify_optional_examples(representative_music, artist_links)
     output.mkdir()
     try:
         files = dict(prior["files"])
@@ -117,6 +167,7 @@ def refresh_discovery_display(
         for relative in ("index.html", "communities/index.html"):
             _replace_navigation(output / relative, relative)
         example_binding = _attach_examples(output, representative_music, files)
+        link_binding = _attach_artist_links(output, artist_links, files)
         changes = {}
         for relative in _DISPLAY:
             files[relative] = _binding(output / relative)
@@ -134,6 +185,7 @@ def refresh_discovery_display(
             "unchanged_source_artifact_count": len(prior["files"]) - len(changes),
             "files": files,
             "representative_music": example_binding,
+            "artist_links": link_binding,
         }
         receipt.pop("output_sha256")
         receipt["output_sha256"] = sha256_json(receipt)

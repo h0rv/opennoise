@@ -105,6 +105,18 @@ FOUNDATION: Final[dict[str, object]] = {
             "required": True,
             "license": "MusicBrainz CC0 projection hash and source capture attribution",
         },
+        {
+            "id": "cultural-context-example",
+            "path": "data/examples/cultural-context/receipt.json",
+            "required": True,
+            "license": "Wikidata CC0 raw responses and sanitized portable projections",
+        },
+        {
+            "id": "outbound-link-example",
+            "path": "data/examples/artist-links/receipt.json",
+            "required": True,
+            "license": "MusicBrainz CC0 artist URL relationships; no destination content",
+        },
     ],
     "stages": [
         {
@@ -138,6 +150,24 @@ FOUNDATION: Final[dict[str, object]] = {
             "needs": ["canonical-database", "canonical-layout"],
             "command": "poe build",
             "purpose": "build and certify the canonical static export",
+        },
+        {
+            "id": "portable-cultural-context",
+            "needs": ["cultural-context-example"],
+            "command": (
+                ".venv/bin/python scripts/probe_open_cultural_sources.py "
+                "--verify-pack --pack-output data/examples/cultural-context"
+            ),
+            "purpose": "replay independent direct Wikidata claims and property-specific overlaps",
+        },
+        {
+            "id": "portable-listening-links",
+            "needs": ["outbound-link-example"],
+            "command": (
+                ".venv/bin/python scripts/verify_artist_outbound_links.py "
+                "data/examples/artist-links"
+            ),
+            "purpose": "verify source-declared outbound destinations without requesting media",
         },
         {
             "id": "historical-parity-evaluation",

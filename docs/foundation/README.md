@@ -60,6 +60,26 @@ transparent ranking into a local output file with:
 Both are examples of metadata provenance and local replay. They do not claim
 musical similarity or complete Every Noise parity.
 
+The independent CC0 cultural-context example replays retained Wikidata responses
+for 110 requested artists, including all ten exact benchmark identities. Its
+portable manifest excludes supplementary MusicBrainz genre claims used only to
+select the research cohort. The artist-link example separately verifies outbound
+listening destinations from exact MusicBrainz URL relationships:
+
+```sh
+.venv/bin/python scripts/probe_open_cultural_sources.py \
+  --verify-pack --pack-output data/examples/cultural-context
+.venv/bin/python scripts/probe_open_cultural_sources.py \
+  --demo --pack-output data/examples/cultural-context
+.venv/bin/python scripts/verify_artist_outbound_links.py data/examples/artist-links
+```
+
+These commands perform no network requests. Raw-response replay distinguishes
+receipt presence from verified data custody. Property-specific overlap scores
+are source metadata comparisons, and outbound links do not guarantee provider
+availability. The inventory exposes `portable-cultural-context` and
+`portable-listening-links` as individually checkable stages.
+
 License classes remain explicit. MusicBrainz identity, names, and core
 metadata are CC0. MusicBrainz tag and genre-association packs carry
 CC-BY-NC-SA-3.0 obligations and are optional, noncommercial research inputs;

@@ -48,9 +48,11 @@ class DiscoveryDisplayTests(unittest.TestCase):
             }
             receipt["output_sha256"] = sha256_json(receipt)
             (source / "receipt.json").write_bytes(canonical_json(receipt) + b"\n")
+            link_pack = Path(__file__).resolve().parents[2] / "data/examples/artist-links"
             result = refresh_discovery_display(
                 source=source,
                 output=output,
+                artist_links=link_pack,
                 representative_music=Path(__file__).resolve().parents[2]
                 / "data/examples/representative-music",
             )
@@ -67,6 +69,16 @@ class DiscoveryDisplayTests(unittest.TestCase):
                 (output / "index.html").read_text(),
             )
             self.assertIn("representative-music.json", result["files"])
+            self.assertIn("artist-links.json", result["files"])
+            self.assertEqual(
+                (output / "artist-links.json").read_bytes(),
+                (link_pack / "artist-links.json").read_bytes(),
+            )
+            self.assertIn(
+                'data-artist-links="../artist-links.json"',
+                (output / "communities/index.html").read_text(),
+            )
+            self.assertFalse((output / "provenance/raw").exists())
             with self.assertRaises(FileExistsError):
                 refresh_discovery_display(source=source, output=output)
             (source / "data.json").write_text("tampered", encoding="utf-8")

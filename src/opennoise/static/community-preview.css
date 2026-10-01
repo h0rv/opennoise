@@ -1114,3 +1114,18 @@ summary {
 
 }
 
+.back-button {
+  display: block;
+}
+
+.artist-listen-links a {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 44px;
+  min-height: 44px;
+  font-size: 13px;
+  margin-right: 12px;
+}
