@@ -23,6 +23,25 @@ def _group(index: int) -> dict[str, object]:
 
 
 class MultiSourceLineageTests(unittest.TestCase):
+    def test_bulk_projection_requires_raw_sources_and_selected_cohort(self) -> None:
+        bulk = {
+            "bulk_artist_tags_0" + suffix: {}
+            for suffix in ("", "_receipt", "_core_prefix", "_derived_archive", "_selection")
+        }
+        require_feature_bindings(_CORE | _group(0) | bulk)
+        for missing in bulk:
+            with self.subTest(missing=missing), self.assertRaisesRegex(ValueError, "bulk"):
+                require_feature_bindings(
+                    _CORE
+                    | _group(0)
+                    | {key: value for key, value in bulk.items() if key != missing}
+                )
+
+    def test_bulk_orphan_and_index_gap_are_rejected(self) -> None:
+        for orphan in ("bulk_artist_tags_0_license", "bulk_artist_tags_1_receipt"):
+            with self.subTest(orphan=orphan), self.assertRaisesRegex(ValueError, "bulk"):
+                require_feature_bindings(_CORE | _group(0) | {orphan: {}})
+
     def test_complete_multiple_sources_are_accepted(self) -> None:
         require_feature_bindings(_CORE | _group(0) | _group(1))
 

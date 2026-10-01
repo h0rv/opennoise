@@ -252,6 +252,23 @@ def require_feature_bindings(inputs: dict[str, Any]) -> None:
         key = f"open_artist_features_{index}"
         if not {key, key + "_receipt", key + "_manifest"}.issubset(inputs):
             raise ValueError("feature lineage omits mandatory source bindings")
+    bulk_indices = sorted(
+        {
+            int(match.group(1))
+            for key in inputs
+            if (match := re.fullmatch(r"bulk_artist_tags_(\d+)(?:_[a-z_]+)?", key))
+        }
+    )
+    if bulk_indices != list(range(len(bulk_indices))):
+        raise ValueError("bulk feature lineage has noncontiguous source groups")
+    for index in bulk_indices:
+        key = f"bulk_artist_tags_{index}"
+        required = {
+            key + suffix
+            for suffix in ("", "_receipt", "_core_prefix", "_derived_archive", "_selection")
+        }
+        if not required.issubset(inputs):
+            raise ValueError("bulk feature lineage omits source or selection bindings")
 
 
 def verify_feature_lineage(features: Path) -> dict[str, Any]:

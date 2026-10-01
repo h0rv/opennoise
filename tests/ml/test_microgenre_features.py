@@ -182,6 +182,8 @@ class MicrogenreFeatureTests(unittest.TestCase):
             "baritone",
             "writer",
             "arranger",
+            "conductor",
+            "english",
             "tiktok",
             "youtuber",
             "twitch streamer",
@@ -206,6 +208,8 @@ class MicrogenreFeatureTests(unittest.TestCase):
         self.assertEqual(reasons["2008 universal fire victim"], "nonmusical_or_technical_tag")
         self.assertEqual(reasons["ariana grande"], "artist_name_reference_tag")
         self.assertEqual(reasons["otherartistname ariana grande"], "artist_name_reference_tag")
+        self.assertEqual(reasons["conductor"], "nonmusical_or_technical_tag")
+        self.assertEqual(reasons["english"], "place_or_nationality_tag_use_context_facet")
         self.assertNotIn("jazz", reasons)
 
     def test_normalization_is_nfc_casefold_and_whitespace_stable(self) -> None:
@@ -225,6 +229,41 @@ class MicrogenreFeatureTests(unittest.TestCase):
         )
         self.assertEqual([item["value"] for item in rows[0]["features"]], ["microhouse"])
         self.assertIn("exact_artist_name_tag", {item["reason"] for item in rejected})
+
+    def test_bulk_tag_rows_keep_archive_and_association_evidence_and_positive_votes(self) -> None:
+        rows, rejected = build_microgenre_features(
+            [
+                {
+                    "artist_mbid": _ARTIST,
+                    "source_document": "mbdump/artist + mbdump/artist_tag + mbdump/tag",
+                    "source_response_sha256": "derived-archive-sha",
+                    "source_refs": ["mbdump/artist:row:17:sha256:artist-row-sha"],
+                    "source_role": "bulk_musicbrainz_aggregate_artist_tag",
+                    "tags": [
+                        {
+                            "name": "microhouse",
+                            "count": 3,
+                            "tag_id": 42,
+                            "source_row": 765,
+                            "source_row_sha256": "association-row-sha",
+                        },
+                        {
+                            "name": "zero-vote style",
+                            "count": 0,
+                            "tag_id": 43,
+                            "source_row": 766,
+                            "source_row_sha256": "zero-row-sha",
+                        },
+                    ],
+                }
+            ]
+        )
+        self.assertEqual([item["value"] for item in rows[0]["features"]], ["microhouse"])
+        refs = rows[0]["features"][0]["evidence_refs"]
+        self.assertTrue(any("derived-archive-sha" in item for item in refs))
+        self.assertTrue(any("artist-row-sha" in item for item in refs))
+        self.assertIn("source-row:sha256:association-row-sha:row:765:tag-id:42", refs)
+        self.assertEqual(rejected[0]["reason"], "nonpositive_source_count")
 
 
 if __name__ == "__main__":

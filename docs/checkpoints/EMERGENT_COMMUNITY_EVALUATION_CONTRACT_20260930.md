@@ -201,3 +201,120 @@ abstains while the baseline guesses 11,481 correctly. This explains much of the
 overall gap without permitting their removal from the primary score.
 Proposals remain inferred, uncalibrated metadata suggestions; they cannot count
 as new independent observations, native memberships, or validation evidence.
+
+### Bulk source audit and paired increment protocol
+
+The independent raw bulk audit fetched the official checksum manifest again,
+verified the complete derived archive, verified the bounded core prefix and
+complete artist member, and replayed every selected name, numeric/UUID join,
+aggregate tag/count, source ordinal, and row hash with a separate COPY decoder.
+Actual core and derived schema, replication sequence, and timestamp agree.
+The whole core archive remains unverified. Primary-v1 and primary-v2 selections
+contain exactly the same 198,409 UUIDs. Of these, 28 are absent from the current
+core dump, 25 matched artists have no positive tag, and 198,356 have positive
+aggregate tags. The raw projection contains 616,440 positive observations and
+40,825 raw label strings, which are not automatically musical or incremental
+features. It preserves nonpositive counts as raw evidence; model input must
+exclude them. Audit receipt:
+`.cache/bulk-artist-tag-independent-audit-20260930-v1/report.json`, identity
+`5278e0bba1f17ce548f1efec3e0edc87c25d1da6538d5b67c6b4a3afe4d0f6e3`.
+
+The finalized v2 projection preserves all 198,381 audited present records exactly
+and adds 28 explicit absent/empty records, completing the selected cohort. Source
+archive/member/selection/capture bindings are unchanged; local noncommercial
+research input is authorized and public export is not. Independent v2 audit:
+`.cache/bulk-artist-tag-independent-audit-20260930-v1/v2-semantic-report.json`,
+identity `61f8995ae1ab9964c56819d6d508370ce1fe49bf25f7e90009712a3d58642f4a`.
+
+The next paired diagnostic is prespecified in
+`opennoise.analysis.paired_feature_increment`. Its salt is
+`bulk-source-increment-paired-positive-fold-v1-fixed-20260930`. Select one target
+fold from the augmented corpus, group duplicated values across all facets and
+snapshots, preserve global release-group components, and remove those exact
+artist-value targets from both old and augmented training inputs. Addition-only
+comparison rejects any removed prior musical value or release-group provenance.
+Both variants must use identical target identities and denominators, with cold
+and unseen positives retained. Fit the previously selected enrichment settings
+(smoothing 4) and unchanged adaptive topic settings; compare each to frequency
+and proper-genre conditional baselines. No new parameter selection is permitted.
+Report existing/new artist-values, existing/new global vocabulary, proper-genre
+and tag-only targets, and rare/cold/unseen strata. These are within-source
+reconstruction diagnostics: API observations, curated proper genres, and bulk
+tags from MusicBrainz are overlapping evidence, not independent gold.
+
+The actual paired inputs apply the same updated quality policy to old and new
+sources: `primary-v2-policy-v2` (feature SHA `70f8dd0d…`) and `primary-v4`
+(`2b6179b4…`). Independent normalization finds 434,527 versus 549,416 canonical
+artist-value pairs, with no removals and no changed pre-existing facet weights.
+The 114,889 additional pairs enrich 57,666 artists. Vocabulary grows from 14,057
+to 31,864 values, but 15,644 of the 17,807 novel values occur for only one artist;
+1,987 occur for two to five, 165 for six to nineteen, and eleven for twenty to
+ninety-nine. These are source labels, not newly validated genres. Of 393,856
+new musical source facets, 278,967 repeat an already observed artist-value pair.
+Audit: `.cache/bulk-feature-increment-assessment-20260930-v2.json`, identity
+`c4959d35a2b5e0d83cdb22f4b3a736e7f0a24ad7812af5cfbdfe9c362194454f`.
+
+The authorized vocabulary admission bound grows from 30,000 to 50,000 without
+singleton pruning or statistical changes. Independent source comparison confirms
+that the community loader differs only in that constant and all eight predictor
+statistical/helper function ASTs remain identical. Proof:
+`.cache/paired-resource-cap-independent-audit-20260930-v1.json`, identity
+`6bced587f55e824e3913399f5e2a8e4f1c7c9556dec977ef0a7f315af8323c0c`.
+The paired diagnostic binds the new implementation hashes, reports actual
+training vocabulary sizes and previous-bound admissibility, and preserves all
+earlier frozen methods and evaluation receipts.
+
+The actual augmented fold holds 110,027 canonical positive pairs (20.026%);
+87,260 were already observed in the old source and 22,767 are new observations.
+All 578 musical release-group identities fall into ten connected components;
+the largest has 442 positives and the largest held component has 110. Both
+variants retain the same 198,409 artist identities. Independent row replay
+confirms that every target copy is removed and every other feature and row field
+is preserved, with receipt `93897c3d3d8d11624c1fb832268b2065b1cc52bc1f9853d6b089c204bfd59185`
+at `.cache/paired-bulk-source-increment-split-independent-audit-20260930-v1.json`.
+The old training set has 11,961 canonical values and 15,296 namespace-value
+identities; augmented training has 26,955 and 30,297 respectively. Thus both
+predictor training inputs fit its previous admission bound, while the augmented
+community loader requires the authorized extension even for this held-out fit.
+
+### Frozen paired source-increment result
+
+The completed paired report is
+`.cache/paired-bulk-source-increment-20260930-v1/report.json`, identity
+`e62b92d6c6324b7256d79a1a274c5a0ee20b3da35170a57f1e342a7ba0c8bd33`.
+Every row below uses the same 110,027 targets; the tag-only stratum has 31,836.
+Settings were fixed before fitting either variant and no score selected a model.
+
+| Scorer | All Recall@10, old → augmented | Tag-only Recall@10, old → augmented |
+| --- | --- | --- |
+| Adaptive communities | 30.25% → 36.20% | 14.58% → 26.95% |
+| Feature enrichment | 39.86% → 47.06% | 19.92% → 35.03% |
+| Global frequency | 22.56% → 22.93% | 0.00% → 8.50% |
+| Proper-genre conditional | 48.57% → 50.07% | 18.24% → 28.10% |
+
+Added source evidence improves both fixed learned methods on these matched
+targets. Enrichment outperforms the conditioned baseline on tag-only values,
+but both learned methods remain below it overall, and adaptive communities also
+remain below it on tag-only recovery. The conditioned baseline itself loses
+proper-genre recovery (60.92% → 59.02%) and previously observed-pair recovery
+(56.57% → 55.52%), illustrating a tradeoff from expanded candidate competition.
+Cold positives fall from 27,399 to 21,220 and unseen positives from 6,859 to 5,063;
+all remain in their variant's shared target denominator.
+
+Of 4,459 targets whose canonical labels were absent throughout the old source,
+enrichment recovers only 67 (1.50%), adaptive communities 33 (0.74%), and the
+conditioned baseline one. Every training-unseen target fails. Source vocabulary
+growth therefore does not establish reliable novel microgenre recovery. The
+predictor collapses duplicated canonical values; community vectors retain source
+namespaces and weights, so their contrast combines newly observed values with
+reweighting from repeated source facets. These results quantify complete source
+augmentation, not an isolated effect of novel vocabulary, sonic similarity, or
+independently validated taxonomy.
+
+A separate replay verifies the report/file hashes and recomputes every stratum's
+Recall@10 and reciprocal-rank sum from all eight saved ranking streams exactly.
+Enrichment gains 9,801 target hits and loses 1,883; adaptive communities gain
+13,739 and lose 7,186. Within tag-only targets those changes are +4,903/−92 and
++4,768/−830 respectively. Audit:
+`.cache/paired-bulk-source-increment-metrics-independent-audit-20260930-v1.json`,
+identity `daf9875b6d5546d33ae500bbbe1979deee43bb60f5c956d41579d1157afd4d2f`.

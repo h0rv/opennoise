@@ -28,6 +28,7 @@ _PURE_PLACE_TAGS = frozenset(
         "united kingdom",
         "great britain",
         "british",
+        "english",
         "america",
         "american",
         "usa",
@@ -141,7 +142,7 @@ _REJECT_PATTERNS = (
     re.compile(r"\b(male|female|woman|women|man|men|gay|lesbian|transgender|lgbtq?)\b"),
     re.compile(
         r"^(vocalist|singer|songwriter|producer|music producer|composer|dj|band|solo artist|"
-        r"violinist|guitarist|pianist|drummer|bassist|cellist|saxophonist|trumpeter|"
+        r"violinist|guitarist|pianist|drummer|bassist|cellist|saxophonist|trumpeter|conductor|"
         r"actor|actress|baritone|writer|arranger)$"
     ),
     re.compile(r"^(album|albums|track|tracks|song|songs|artist|artists|music)$"),
@@ -233,7 +234,29 @@ def _source_ref(row: Mapping[str, Any], fallback: str) -> str:
         value = row.get(key)
         if isinstance(value, str) and value.strip():
             parts.append(value.strip())
+    source_refs = row.get("source_refs")
+    if isinstance(source_refs, list):
+        parts.extend(
+            value.strip() for value in source_refs if isinstance(value, str) and value.strip()
+        )
     return "|".join(parts) if parts else _ref(row.get("source_evidence_ref"), fallback)
+
+
+def _observation_ref(source_ref: str, observation: object) -> str | list[str]:
+    """Add exact source-row identity where an aggregate observation provides it."""
+    if not isinstance(observation, Mapping):
+        return source_ref
+    row_digest = observation.get("source_row_sha256")
+    row_number = observation.get("source_row")
+    tag_id = observation.get("tag_id")
+    if not isinstance(row_digest, str) or not row_digest.strip():
+        return source_ref
+    detail = "source-row:sha256:" + row_digest.strip()
+    if isinstance(row_number, int) and not isinstance(row_number, bool):
+        detail += f":row:{row_number}"
+    if isinstance(tag_id, int) and not isinstance(tag_id, bool):
+        detail += f":tag-id:{tag_id}"
+    return [source_ref, detail]
 
 
 def _make_feature(
@@ -500,7 +523,13 @@ def build_microgenre_features(  # noqa: C901, PLR0912, PLR0915
                     }
                 )
                 continue
-            feature = _add_tag(artist, raw, "artist_tag", source_ref, rejected)
+            feature = _add_tag(
+                artist,
+                raw,
+                "artist_tag",
+                _observation_ref(source_ref, raw),
+                rejected,
+            )
             if feature:
                 _merge_feature(store, feature)
         area = row.get("area")
@@ -747,7 +776,7 @@ def write_feature_artifacts(  # noqa: PLR0913
         encoding="utf-8",
     )
     receipt = {
-        "revision": "microgenre-feature-cache-v1",
+        "revision": "microgenre-feature-cache-v2",
         "policy": "offline_candidate_only_no_historical_assignments_or_audio",
         "inputs": {
             name: {"path": str(path), "sha256": _sha256(path)}

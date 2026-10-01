@@ -6,7 +6,14 @@ layout artifacts, and exports one backend-free web directory. The browser only
 loads precomputed JSON, HTML, CSS, and JavaScript; it never calls an OpenNoise
 API or computes a graph layout.
 
-No music, preview, or audio bytes enter the project.
+No audio recordings or audio previews enter the project.
+
+The latest local research adds verified aggregate MusicBrainz tags and a
+named-style atlas with complete artist navigation. The [bulk source checkpoint](docs/checkpoints/MUSICBRAINZ_BULK_ARTIST_TAG_SOURCE_20260930.md),
+[paired evaluation](docs/checkpoints/EMERGENT_COMMUNITY_EVALUATION_CONTRACT_20260930.md),
+and [atlas checkpoint](docs/checkpoints/NAMED_STYLE_ATLAS_BUILD_20260930.md)
+record reproducible inputs, measured gains, and remaining parity gaps. These
+research artifacts are separate from the canonical publication below.
 
 ## Static delivery
 

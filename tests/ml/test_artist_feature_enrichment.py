@@ -12,6 +12,7 @@ import numpy as np
 from opennoise.common import canonical_json, sha256_json
 from opennoise.ml.artist_feature_enrichment import (
     MAX_BATCH,
+    MAX_FEATURES,
     EnrichmentSettings,
     fit_enrichment,
     load_enrichment,
@@ -130,6 +131,17 @@ class ArtistFeatureEnrichmentTests(unittest.TestCase):
         profile = tuple(f"value {i}" for i in range(512))
         with self.assertRaisesRegex(ValueError, "pair-count work bound"):
             fit_enrichment({str(i): profile for i in range(200)}, {})
+
+    def test_extended_vocabulary_retains_singletons_and_keeps_identity_guard(self) -> None:
+        previous_bound = 30_000
+        profiles = {f"artist-{i}": (f"style-{i}",) for i in range(previous_bound + 1)}
+        model = fit_enrichment(profiles, {})
+        self.assertEqual(len(model.vocabulary), len(profiles))
+        self.assertEqual(model.training_artist_count, len(profiles))
+        self.assertEqual(int(model.target_support.sum()), len(profiles))
+        self.assertEqual(model.associations.nnz, 0)
+        with self.assertRaisesRegex(ValueError, "identity bound"):
+            fit_enrichment({f"artist-{i}": (f"style-{i}",) for i in range(MAX_FEATURES + 1)}, {})
 
     def test_receipt_self_identity_and_mandatory_model_settings_are_verified(self) -> None:
         cache = Path(__file__).resolve().parents[2] / ".cache"

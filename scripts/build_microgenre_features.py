@@ -29,6 +29,7 @@ from opennoise.deployment.musicbrainz_direct_proper_genre_custody import (
     DirectProperGenreCustodyReceipt,
     iter_verified_portable_direct_proper_genre_claims,
 )
+from opennoise.ingest.musicbrainz.bulk_artist_tag_evidence import iter_bulk_artist_tag_rows
 from opennoise.ml.microgenre_features import (
     build_artist_name_overlay,
     build_microgenre_features,
@@ -78,6 +79,11 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
     )
     parser.add_argument("--release-records", type=Path, help="facet-scoped release metadata JSONL")
     parser.add_argument("--native-release-feature-directory", type=Path)
+    parser.add_argument(
+        "--bulk-artist-tag-directory",
+        type=Path,
+        help="verified complete UUID-projected aggregate MusicBrainz artist-tag artifact",
+    )
     parser.add_argument("--direct-genre-receipt", type=Path)
     parser.add_argument("--direct-object-store", type=Path)
     parser.add_argument(
@@ -96,7 +102,12 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
     args = parser.parse_args()
     open_feature_directories = args.open_features_directory or []
     native_artist_directories = args.native_artist_feature_directory or []
-    if args.artists is None and not open_feature_directories and not native_artist_directories:
+    if (
+        args.artists is None
+        and not open_feature_directories
+        and not native_artist_directories
+        and args.bulk_artist_tag_directory is None
+    ):
         parser.error("supply an artist metadata input directory or --artists")
     if args.primary_corpus_only and not args.candidate_catalog_directory:
         parser.error("--primary-corpus-only requires --candidate-catalog-directory")
@@ -104,7 +115,12 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         parser.error("--direct-genre-receipt and --direct-object-store are a pair")
     artist_rows = _jsonl(args.artists) if args.artists else []
     name_rows = list(artist_rows)
-    sources: dict[str, Path] = {"genre_labels": args.genre_labels}
+    repository_root = Path(__file__).resolve().parents[1]
+    sources: dict[str, Path] = {
+        "genre_labels": args.genre_labels,
+        "feature_extractor_code": repository_root / "src/opennoise/ml/microgenre_features.py",
+        "feature_builder_script": Path(__file__).resolve(),
+    }
     open_receipts: list[dict[str, Any]] = []
     native_artist_receipts: list[dict[str, Any]] = []
     direct_receipt: DirectProperGenreCustodyReceipt | None = None
@@ -134,6 +150,63 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         sources[source_prefix] = directory / "artist-features.jsonl"
         sources[f"{source_prefix}_receipt"] = directory / "receipt.json"
         sources[f"{source_prefix}_manifest"] = directory / "source.json"
+    bulk_artist_tag_receipt: dict[str, Any] | None = None
+    if args.bulk_artist_tag_directory:
+        # The producer iterator validates receipt/hash/UUID partition before
+        # releasing a single projected row to feature construction.
+        bulk_rows = list(iter_bulk_artist_tag_rows(directory=args.bulk_artist_tag_directory))
+        # Names are display metadata, not model input. Keep new core-dump names
+        # out of the tag-name rejection vocabulary so adding the source cannot
+        # remove previously retained musical values from other artists.
+        artist_rows.extend(
+            {key: value for key, value in row.items() if key != "name"} for row in bulk_rows
+        )
+        existing_name_ids = {
+            item.get("artist_mbid")
+            for item in name_rows
+            if isinstance(item.get("artist_mbid"), str)
+            and isinstance(
+                item.get("name", item.get("artist_name", item.get("canonical_name"))), str
+            )
+        }
+        # Core dump names are an exact-UUID fallback for unresolved display
+        # names; they never replace an already verified preferred name.
+        name_rows.extend(
+            row
+            for row in bulk_rows
+            if row.get("artist_mbid") not in existing_name_ids
+            and isinstance(name := row.get("name"), str)
+            and name.strip()
+        )
+        bulk_artist_tag_receipt = json.loads(
+            (args.bulk_artist_tag_directory / "receipt.json").read_text(encoding="utf-8")
+        )
+        source_root = args.bulk_artist_tag_directory / "source"
+        if not source_root.is_dir():
+            # V2 artifacts may keep retained immutable source captures beside
+            # their rows; otherwise resolve the paths from the source receipt.
+            source_root = (
+                args.bulk_artist_tag_directory.parent
+                / ("musicbrainz-bulk-artist-tags-20260930-v1")
+                / "source"
+            )
+        core_prefix_candidates = sorted(source_root.glob("mbdump-core-prefix-*.bz2"))
+        derived_archive = source_root / "mbdump-derived.tar.bz2"
+        selection_path = Path(str(bulk_artist_tag_receipt.get("selection_path", "")))
+        if len(core_prefix_candidates) != 1 or not derived_archive.is_file():
+            raise ValueError("bulk artist-tag replay source captures are incomplete")
+        if not selection_path.is_file():
+            raise ValueError("bulk artist-tag UUID selection input is unavailable")
+        bulk_prefix = "bulk_artist_tags_0"
+        sources[bulk_prefix] = args.bulk_artist_tag_directory / "artist-tags.jsonl"
+        sources[f"{bulk_prefix}_receipt"] = args.bulk_artist_tag_directory / "receipt.json"
+        sources[f"{bulk_prefix}_core_prefix"] = core_prefix_candidates[0]
+        sources[f"{bulk_prefix}_derived_archive"] = derived_archive
+        sources[f"{bulk_prefix}_selection"] = selection_path
+        if (source_root / "snapshot-index.html").is_file():
+            sources[f"{bulk_prefix}_source_index"] = source_root / "snapshot-index.html"
+        if (source_root / "license.html").is_file():
+            sources[f"{bulk_prefix}_license"] = source_root / "license.html"
     if args.release_records:
         sources["release_records"] = args.release_records
     release_rows = _jsonl(args.release_records) if args.release_records else []
@@ -249,6 +322,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         known_artist_names=[
             name
             for item in name_rows
+            if item.get("source_role") != "bulk_musicbrainz_aggregate_artist_tag"
             if isinstance(
                 name := item.get("name", item.get("artist_name", item.get("canonical_name"))),
                 str,
@@ -292,6 +366,18 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
                 ),
             }
         )
+    if bulk_artist_tag_receipt is not None:
+        receipt["bulk_artist_tag_output_sha256"] = bulk_artist_tag_receipt.get("rows_sha256")
+        receipt["musicbrainz_bulk_tag_associations_license"] = "CC-BY-NC-SA-3.0"
+        receipt["research_model_input_authorized"] = True
+        receipt["research_model_scope"] = "local_noncommercial_research"
+        receipt["musicbrainz_attribution"] = "MusicBrainz contributors; https://musicbrainz.org/"
+        receipt["derived_output_obligations"] = (
+            "MusicBrainz contributor attribution; noncommercial research; share alike; "
+            "no public export"
+        )
+        receipt["public_export_authorized"] = False
+        receipt["musicbrainz_bulk_artist_tag_counts"] = bulk_artist_tag_receipt.get("counts", {})
     if direct_receipt is not None:
         receipt["direct_claim_object_sha256"] = direct_receipt.claims_object_sha256
     if catalog_receipt is not None:

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 REVISION = "source-artist-feature-enrichment-v1"
 MAX_ARTISTS = 250_000
-MAX_FEATURES = 30_000
+MAX_FEATURES = 50_000
 MAX_OBSERVATIONS = 5_000_000
 MAX_ROW_FEATURES = 512
 MAX_BATCH = 256
@@ -372,6 +372,13 @@ def save_enrichment(model: EnrichmentModel, output: Path) -> dict[str, object]:
     receipt = {
         "revision": REVISION,
         "receipt_schema": 2,
+        "resource_bound_extension": {
+            "revision": "verified-source-vocabulary-bound-extension-v1",
+            "previous_max_features": 30_000,
+            "maximum_features": MAX_FEATURES,
+            "statistical_method_changed": False,
+            "singleton_pruning_used": False,
+        },
         "scope": "local_research_only",
         "public_export_authorized": False,
         "historical_inputs_used": False,

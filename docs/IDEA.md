@@ -18,6 +18,19 @@ for source coverage, exact reference artists, measured weaknesses, and the
 static hierarchy explorer. The measured product acceptance criteria remain in
 [Every Noise parity](EVERYNOISE_PARITY.md).
 
+The subsequent [bulk source acquisition](checkpoints/MUSICBRAINZ_BULK_ARTIST_TAG_SOURCE_20260930.md)
+adds aggregate MusicBrainz tags through exact artist UUIDs. After the same
+quality policy and model filters, it adds 114,889 canonical artist–value
+observations. The independently replayed [paired test](checkpoints/EMERGENT_COMMUNITY_EVALUATION_CONTRACT_20260930.md)
+holds the targets fixed: enrichment Recall@10 improves from 39.86% to 47.06%,
+and tag-only recovery from 19.92% to 35.03%. Overall recovery remains below the
+conditioned genre baseline; novel-label recovery is only 1.50%. The new
+[named-style atlas](checkpoints/NAMED_STYLE_ATLAS_BUILD_20260930.md) offers
+complete paginated artist cohorts and separates artist observations, release
+context, and suggestions. Its default view has 2,226 candidate names, while
+weaker annotations remain searchable. Neither these candidates nor name
+matches establish a validated Spotify-level taxonomy.
+
 OpenNoise is the product name; the internal Python package and compatibility
 identifiers remain `opennoise` during the staged migration.
 
