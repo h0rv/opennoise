@@ -15,6 +15,7 @@ def main() -> None:
         parser.add_argument(f"--{flag}", type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--refresh-from", type=Path)
+    parser.add_argument("--artist-maps", action="store_true")
     args = parser.parse_args()
     if args.refresh_from:
         if any((args.source, args.features, args.enrichment)):
@@ -28,6 +29,7 @@ def main() -> None:
             features=args.features,
             enrichment_directory=args.enrichment,
             output=args.output,
+            artist_maps=args.artist_maps,
         )
     sys.stdout.write(
         json.dumps(

@@ -14,9 +14,11 @@ const positioned = style => Number.isFinite(style.x) && Number.isFinite(style.y)
 const canonical = value => value.trim().toLocaleLowerCase().replaceAll(/\s+/g, ' ');
 let data, styles, selected, selectedArtist, artistProfile, artistEvidence, view = 'map', tier = 'supported', evidence = 'all', placement = 'all', sort = 'name';
 let cohort = ROLES[0], page = 0, directoryPage = 0, searchScope = 'styles';
+let scene = 'styles', artistMap = null, artistMapQuery = '';
 let generation = 0, searchGeneration = 0, searchIndex = -1, artistSearch;
 let width = 1, height = 1, camera = {scale: 1, x: 0, y: 0}, fitScale = 1, drag, hovered, targets = [], frame;
 const details = new Map(), pages = new Map(), artistShards = new Map();
+const artistMaps = new Map();
 const DIRECTORY_SIZE = 200;
 
 function node(tag, text, className) {
@@ -31,6 +33,8 @@ async function json(path) {
 function hash(style = selected?.id, artist = selectedArtist) {
   const state = new URLSearchParams();
   if (style) state.set('style', style); if (artist) state.set('artist', artist);
+  if (scene === 'artists' && style) state.set('atlas', 'artists');
+  if (artistMapQuery && scene === 'artists') state.set('sampleQuery', artistMapQuery);
   if (view !== 'map') state.set('view', view); if (tier !== 'supported') state.set('tier', tier);
   if (evidence !== 'all') state.set('evidence', evidence); if (placement !== 'all') state.set('placement', placement);
   if (sort !== 'name') state.set('sort', sort); if (cohort !== ROLES[0]) state.set('cohort', cohort);
@@ -50,15 +54,16 @@ function reveal(style) {
 }
 function navigateStyle(id) {
   const row = styles.get(id); if (!row) return;
-  selected = row; selectedArtist = null; artistProfile = null; cohort = ROLES[0]; page = 0; generation++;
+  scene = 'styles'; artistMap = null; artistMapQuery = ''; selected = row; selectedArtist = null; artistProfile = null; cohort = ROLES[0]; page = 0; generation++;
   reveal(row); results.hidden = true; render(); save(); if (positioned(row)) focusStyle(row);
 }
 function navigateArtist(id, style = null) {
   id = String(id).toLowerCase(); if (!validArtist(id)) return;
+  if (scene === 'artists' && selected?.id !== style) { scene = 'styles'; artistMap = null; artistMapQuery = ''; }
   selected = styles.get(style) || null; selectedArtist = id; artistProfile = null; generation++;
   results.hidden = true; render(); save(); loadArtist(generation);
 }
-function overview() { selected = null; selectedArtist = null; artistProfile = null; page = 0; generation++; render(); fit(); save(); }
+function overview() { scene = 'styles'; artistMap = null; artistMapQuery = ''; selected = null; selectedArtist = null; artistProfile = null; page = 0; generation++; render(); fit(); save(); }
 function restore() {
   if (!data) return; const state = new URLSearchParams(location.hash.slice(1));
   view = state.get('view') === 'list' ? 'list' : 'map'; tier = TIERS.includes(state.get('tier')) ? state.get('tier') : 'supported';
@@ -68,7 +73,8 @@ function restore() {
   directoryPage = Math.max(0, Number.parseInt(state.get('directoryPage') || '1', 10) - 1) || 0;
   searchScope = state.get('scope') === 'artists' ? 'artists' : 'styles'; search.value = state.get('q') || '';
   selected = styles.get(state.get('style')) || null; const artist = (state.get('artist') || '').toLowerCase(); selectedArtist = validArtist(artist) ? artist : null;
-  artistProfile = null; generation++; if (selected) reveal(selected); render(); selected && positioned(selected) ? focusStyle(selected) : fit();
+  scene = state.get('atlas') === 'artists' && selected ? 'artists' : 'styles'; artistMap = null; artistMapQuery = state.get('sampleQuery') || ''; canvas.dataset.artistMapReady = 'false';
+  artistProfile = null; generation++; if (selected && scene === 'styles') reveal(selected); render(); selected && positioned(selected) && scene === 'styles' ? focusStyle(selected) : fit();
   if (selectedArtist) loadArtist(generation);
 }
 function styleLink(row, className = 'style-evidence-link') {
@@ -83,6 +89,22 @@ function artistLink(row) {
 function controls() {
   $('#tier-filter').value = tier; $('#evidence-filter').value = evidence; $('#placement-filter').value = placement; $('#directory-sort').value = sort; $('#search-scope').value = searchScope;
   const rows = filtered(), placed = rows.filter(positioned).length;
+  const artistScene = scene === 'artists';
+  canvas.parentElement.dataset.scene = scene; $('#artist-map-toolbar').hidden = !artistScene; $('#artist-map-search').value = artistMapQuery;
+  $('#artist-map-labels').hidden = !artistScene || view !== 'map'; $('#artist-map-directory').hidden = !artistScene || view !== 'list';
+  if (artistScene) {
+    $('#map-view').disabled = Boolean(artistMap && !artistMap.positioned_count); $('#map-view').setAttribute('aria-pressed', String(view === 'map')); $('#list-view').setAttribute('aria-pressed', String(view === 'list'));
+    canvas.hidden = view !== 'map'; $('.map-controls').hidden = view !== 'map'; $('#style-directory').hidden = true; $('#directory-pager').hidden = true; $('#sort-label').hidden = true;
+    canvas.setAttribute('aria-label', 'Artists sampled from source observations. Positions infer profile overlap, not sound. Map labels open exact artist profiles. List includes unplaced sample artists.');
+    canvas.dataset.evidenceRole = 'inferred_source_artist_profile_map'; $('#fit-map').textContent = 'Fit artists';
+    $('.map-legend').textContent = 'Artist positions infer source musical-profile overlap, not sonic distance or validated artist style. Suggestions do not affect this map. List includes unplaced sample artists; complete artist cohorts stay in the evidence panel.';
+    canvas.parentElement.style.setProperty('--toolbar-space', `${topSpace()}px`);
+    $('#atlas-status').textContent = artistMap ? `${selected.name} · ${count(artistMap.selected_count)} sampled of ${count(artistMap.total_count)} source artists · ${count(artistMap.positioned_count)} positioned · ${count(artistMap.abstained_count)} unplaced${artistMapQuery ? ` · ${count(artistMapRows().length)} sample matches` : ''}` : `${selected?.name || 'Style'} · Loading source artist map…`;
+    return;
+  }
+  canvas.setAttribute('aria-label', 'Candidate musical style labels. Drag to pan and scroll to zoom. Arrow keys pan; plus and minus zoom. Search and List include every style, including unplaced styles.');
+  canvas.dataset.evidenceRole = 'candidate_named_styles'; $('#fit-map').textContent = 'Fit atlas';
+  $('.map-legend').textContent = 'Named descriptors are candidates, not a validated taxonomy. Positions reflect source co-occurrence, not sound; inferred suggestions do not affect geometry. Search or List reaches every label.';
   if (!placed && rows.length) view = 'list';
   $('#map-view').disabled = !placed; $('#map-view').setAttribute('aria-pressed', String(view === 'map')); $('#list-view').setAttribute('aria-pressed', String(view === 'list'));
   canvas.hidden = view !== 'map'; $('.map-controls').hidden = view !== 'map'; $('#style-directory').hidden = view !== 'list'; $('#directory-pager').hidden = view !== 'list'; $('#sort-label').hidden = view !== 'list';
@@ -123,6 +145,12 @@ function renderStyle() {
   detail.append(button('← all styles', 'back-button', overview), node('span', TIER_LABELS[selected.evidence_tier] || 'CANDIDATE NAMED STYLE', 'badge'), node('h2', selected.name));
   detail.append(node('p', `${count(selected.source_artist_support)} distinct source artists across source feature and release-context roles. Role counts can overlap.`, 'section-description'));
   detail.append(node('p', 'This source-derived name is a candidate label, not a validated taxonomy or a native genre membership.', 'section-description'));
+  if (selected.artist_map_path) {
+    const summary = node('section', undefined, 'artist-map-summary');
+    summary.append(node('span', 'INFERRED · SOURCE PROFILE GEOMETRY', 'badge'), node('p', 'Explore a bounded sample of source-observed artists. Positions describe musical metadata overlap, not sound.', 'section-description'));
+    if (scene === 'artists') summary.append(node('p', artistMap ? artistMapSummary() : 'Loading the source profile sample…', 'section-description map-sample-counts'));
+    summary.append(button(scene === 'artists' ? 'Return to style atlas' : 'Explore artist map', 'artist-map-toggle', () => scene === 'artists' ? leaveArtistMap() : openArtistMap())); detail.append(summary);
+  }
   if (selected.aliases?.some(alias => alias !== selected.name)) { const aliases = node('details', undefined, 'aliases'); aliases.append(node('summary', 'Source label variants'), node('p', selected.aliases.join(' · '))); detail.append(aliases); }
   if (!positioned(selected)) detail.append(node('p', selected.layout_status === 'abstained_identical_source_support' ? 'Unplaced: its source support cannot distinguish its geometry from another label. Every artist cohort remains browsable.' : 'Unplaced: no distinct supported source neighbors for geometry. Every artist cohort remains browsable.', 'empty-state'));
   if (selected.native_genre_ids?.length) {
@@ -148,6 +176,70 @@ async function ensureStyle(id) {
     Object.assign(row, payload); return row;
   }).catch(error => { details.delete(id); throw error; }));
   return details.get(id);
+}
+function artistMapRows() {
+  const query = artistMapQuery.trim().toLocaleLowerCase();
+  return (artistMap?.artists || []).filter(row => !query || row.name.toLocaleLowerCase().includes(query) || row.artist_mbid.includes(query));
+}
+function artistMapSummary() { return `${count(artistMap.selected_count)} sampled of ${count(artistMap.total_count)} source artists · ${count(artistMap.positioned_count)} positioned · ${count(artistMap.abstained_count)} unplaced${artistMap.omitted_count ? ` · ${count(artistMap.omitted_count)} outside this sample` : ''}. Selection uses source musical-profile information, then exact ID; not a relevance ranking. Complete source cohorts below include every source artist.`; }
+function sampleArtistLink(row) {
+  const link = node('a', undefined, 'artist-row'); link.href = hash(selected.id, row.artist_mbid); link.dataset.artistId = row.artist_mbid;
+  link.append(node('span', row.name), node('small', positioned(row) ? `${count(row.source_music_value_count)} source musical values · positioned` : `Unplaced · ${['identical_source_profile', 'identical_usable_source_music_profile'].includes(row.abstention_reason) ? 'indistinguishable source profile' : 'insufficient distinct source overlap'}`));
+  link.addEventListener('click', event => { if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); navigateArtist(row.artist_mbid, selected.id); }); return link;
+}
+function renderArtistMapList() {
+  const list = $('#artist-map-directory'); list.replaceChildren(); if (scene !== 'artists' || view !== 'list') return;
+  const rows = artistMapRows().toSorted((a, b) => a.name.localeCompare(b.name) || a.artist_mbid.localeCompare(b.artist_mbid));
+  for (const row of rows) list.append(sampleArtistLink(row));
+  if (!rows.length) list.append(node('p', artistMap ? 'No sampled artists match. Use the main artist search to search the complete catalog.' : 'Loading source artist map…', 'empty-state'));
+}
+function openArtistMap() {
+  if (!selected) return; scene = 'artists'; view = 'map'; selectedArtist = null; artistProfile = null; artistMap = null; artistMapQuery = ''; generation++; hovered = null;
+  canvas.dataset.artistMapReady = 'false'; render(); save();
+}
+function leaveArtistMap() {
+  scene = 'styles'; artistMap = null; artistMapQuery = ''; selectedArtist = null; artistProfile = null; hovered = null; generation++;
+  if (selected) reveal(selected); render(); fit(); save();
+}
+function validateArtistMap(payload, id) {
+  const sourceRoles = ROLES.slice(0, 2);
+  if (!payload || payload.style_id !== id || payload.role !== 'inferred_source_artist_profile_map' || payload.native_fact !== false || payload.quality_evaluated !== false || payload.method !== 'source_musical_value_idf_cosine_spectral_rectangular_atlas' || payload.candidate_selection !== 'informative_source_music_degree_descending_then_exact_mbid' || payload.world_width !== 16 / 9 || payload.world_height !== 1 || !Array.isArray(payload.cohort_roles) || payload.cohort_roles.length !== 2 || !sourceRoles.every(role => payload.cohort_roles.includes(role))) throw new Error('Artist map identity, source roles, or geometry method mismatch');
+  for (const key of ['total_count', 'selected_count', 'positioned_count', 'abstained_count', 'omitted_count']) if (!Number.isSafeInteger(payload[key]) || payload[key] < 0) throw new Error('Unsupported artist map counts');
+  if (payload.total_count !== styles.get(id)?.source_artist_support || payload.selected_count > 200 || payload.selected_count !== payload.positioned_count + payload.abstained_count || payload.total_count !== payload.selected_count + payload.omitted_count || payload.truncated !== (payload.omitted_count > 0) || !Array.isArray(payload.artists) || payload.artists.length !== payload.selected_count) throw new Error('Artist map sample count mismatch');
+  const ids = new Set(); let placed = 0;
+  for (const row of payload.artists) {
+    if (!validArtist(row.artist_mbid) || ids.has(row.artist_mbid) || typeof row.name !== 'string' || row.profile_path !== `artists/${row.artist_mbid.slice(0, 3)}.json` || !Array.isArray(row.membership_roles) || !row.membership_roles.length || row.membership_roles.some(role => !sourceRoles.includes(role)) || !Number.isSafeInteger(row.source_music_value_count) || row.source_music_value_count < 0) throw new Error('Unsupported source artist map record');
+    ids.add(row.artist_mbid);
+    if (!Array.isArray(row.neighbors) || row.neighbors.length > 10 || row.neighbors.some(neighbor => !validArtist(neighbor.artist_mbid) || !Number.isFinite(neighbor.score) || neighbor.score <= 0 || neighbor.score > 1 || !Number.isSafeInteger(neighbor.shared_music_value_count) || neighbor.shared_music_value_count < 2 || !Array.isArray(neighbor.shared_music_values) || !neighbor.shared_music_values.length || neighbor.shared_music_values.length > Math.min(5, neighbor.shared_music_value_count) || neighbor.shared_music_values.some(value => typeof value !== 'string' || !value))) throw new Error('Unsupported artist overlap evidence');
+    if (row.layout_status === 'positioned') {
+      if (!positioned(row) || row.x < 0 || row.x > payload.world_width || row.y < 0 || row.y > 1 || !Number.isSafeInteger(row.supported_neighbor_count) || row.supported_neighbor_count < 1) throw new Error('Unsupported positioned artist profile'); placed++;
+    } else if (row.layout_status !== 'abstained' || row.x !== null || row.y !== null || typeof row.abstention_reason !== 'string' || !row.abstention_reason) throw new Error('Unplaced artist has unsupported geometry');
+  }
+  if (placed !== payload.positioned_count) throw new Error('Artist map position count mismatch');
+  for (const row of payload.artists) {
+    const peers = new Set();
+    for (const neighbor of row.neighbors) {
+      if (!ids.has(neighbor.artist_mbid) || neighbor.artist_mbid === row.artist_mbid || peers.has(neighbor.artist_mbid)) throw new Error('Artist overlap points outside the distinct source sample');
+      peers.add(neighbor.artist_mbid);
+    }
+  }
+  return payload;
+}
+async function loadArtistMap(requested) {
+  const id = selected?.id; if (scene !== 'artists' || !id) return;
+  try {
+    const style = await ensureStyle(id); if (requested !== generation || scene !== 'artists' || selected?.id !== id) return;
+    const path = `style-artist-maps/${id}.json`; if (style.artist_map_path !== path) throw new Error('No supported source artist map for this style');
+    if (!artistMaps.has(id)) artistMaps.set(id, json(path).then(payload => validateArtistMap(payload, id)).catch(error => { artistMaps.delete(id); throw error; }));
+    const payload = await artistMaps.get(id); if (requested !== generation || scene !== 'artists' || selected?.id !== id) return;
+    const changed = artistMap !== payload; artistMap = payload; if (!payload.positioned_count) view = 'list'; controls(); renderArtistMapList();
+    if (selectedArtist) renderArtist(); else { const summary = $('.map-sample-counts'); if (summary) summary.textContent = artistMapSummary(); }
+    if (changed) fit(); else redraw(); save(true); canvas.dataset.artistMapStyleId = id; canvas.dataset.artistMapReady = 'true';
+  } catch (error) {
+    if (requested !== generation || scene !== 'artists' || selected?.id !== id) return;
+    $('#atlas-status').textContent = `Artist map unavailable: ${error.message}. Complete artist cohorts remain available.`;
+    $('#artist-map-directory').replaceChildren(node('p', 'No supported artist geometry is available. Return to the style atlas or browse complete artist cohorts in the evidence panel.', 'error-state')); redraw();
+  }
 }
 async function loadStyle(requested) {
   const id = selected?.id, role = cohort; if (!id || selectedArtist) return;
@@ -212,11 +304,24 @@ function validatedMemberships(profile) {
 }
 function renderArtist() {
   detail.replaceChildren(); detail.scrollTop = 0; detail.setAttribute('aria-busy', String(!artistProfile));
-  detail.append(button(selected ? `← ${selected.name}` : '← all styles', 'back-button', () => selected ? navigateStyle(selected.id) : overview()));
+  detail.append(button(selected ? `← ${selected.name}${scene === 'artists' ? ' artists' : ''}` : '← all styles', 'back-button', () => {
+    if (scene === 'artists' && selected) { selectedArtist = null; artistProfile = null; generation++; render(); save(); }
+    else selected ? navigateStyle(selected.id) : overview();
+  }));
   if (!artistProfile) { detail.append(node('h2', 'Loading artist…'), node('p', 'Loading exact source identity and complete typed style evidence.', 'muted')); return; }
   detail.append(node('span', 'ARTIST · EXACT SOURCE IDENTITY', 'badge'), node('h2', artistProfile.name));
   const provider = node('a', 'Artist on MusicBrainz ↗', 'provider-link'); provider.href = `https://musicbrainz.org/artist/${selectedArtist}`; provider.target = '_blank'; provider.rel = 'noopener noreferrer'; detail.append(provider);
   const validated = artistEvidence || validatedMemberships(artistProfile);
+  if (scene === 'artists' && artistMap) {
+    const row = artistMap.artists.find(candidate => candidate.artist_mbid === selectedArtist);
+    if (row) {
+      const context = node('section', undefined, 'artist-map-summary'); context.dataset.evidenceRole = 'inferred_source_artist_profile_map';
+      context.append(node('span', 'INFERRED · SOURCE PROFILE GEOMETRY', 'badge'), node('p', `${count(row.source_music_value_count)} source musical values · ${positioned(row) ? `${count(row.supported_neighbor_count)} supported sample neighbors` : 'unplaced; no distinct supported geometry'}`, 'section-description'));
+      context.append(node('p', `Included through ${row.membership_roles.map(role => ROLE_LABELS[role].toLowerCase()).join(' and ')}. This does not establish an artist style.`, 'section-description'));
+      if (row.neighbors.length) { const explanation = node('details'); explanation.append(node('summary', 'Source profile overlap in this sample')); const list = node('div', undefined, 'artist-list'); for (const neighbor of row.neighbors) { const peer = artistMap.artists.find(candidate => candidate.artist_mbid === neighbor.artist_mbid); if (!peer) continue; const link = sampleArtistLink(peer); link.append(node('small', `${neighbor.shared_music_value_count} shared musical values · cosine ${neighbor.score.toFixed(3)}; not a listening score`), node('small', `Shared source values: ${neighbor.shared_music_values.join(' · ')} (${neighbor.shared_music_values.length} of ${count(neighbor.shared_music_value_count)} shown)`)); list.append(link); } explanation.append(list); context.append(explanation); }
+      detail.append(context);
+    }
+  }
   if (validated.rejected) detail.append(node('p', 'Some evidence records could not be verified for display. Valid source observations and proposals are shown separately.', 'error-state'));
   for (const role of ROLES) {
     const section = node('section', undefined, 'artist-evidence'); section.dataset.evidenceRole = role;
@@ -240,7 +345,7 @@ async function loadArtist(requested) {
     detail.setAttribute('aria-busy', 'false'); detail.append(node('p', `Static artist profile could not load: ${error.message}`, 'error-state'), button('Retry artist', 'retry', () => loadArtist(generation)));
   }
 }
-function render() { controls(); renderDirectory(); if (selectedArtist) renderArtist(); else if (selected) { renderStyle(); loadStyle(generation); } else renderOverview(); redraw(); }
+function render() { controls(); renderDirectory(); renderArtistMapList(); if (selectedArtist) renderArtist(); else if (selected) { renderStyle(); loadStyle(generation); } else renderOverview(); if (scene === 'artists') loadArtistMap(generation); redraw(); }
 async function searchRows() {
   const query = search.value.trim().toLocaleLowerCase(), requested = ++searchGeneration, scope = searchScope; results.replaceChildren(); results.hidden = !query; searchIndex = -1; if (!query) return;
   try {
@@ -264,10 +369,10 @@ async function searchRows() {
 }
 const redraw = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(draw); };
 const screen = style => ({x: style.x * camera.scale + camera.x, y: style.y * camera.scale + camera.y});
-function topSpace() { return $('.toolbar').offsetTop + $('.toolbar').offsetHeight + 35; }
+function topSpace() { return (scene === 'artists' ? $('#artist-map-toolbar').offsetTop + $('#artist-map-toolbar').offsetHeight : $('.toolbar').offsetTop + $('.toolbar').offsetHeight) + 35; }
 function fit() {
   if (!data) { redraw(); return; }
-  const rows = filtered().filter(positioned); if (!rows.length) { redraw(); return; }
+  const rows = (scene === 'artists' ? artistMapRows() : filtered()).filter(positioned); if (!rows.length) { redraw(); return; }
   const minX = Math.min(...rows.map(row => row.x)), maxX = Math.max(...rows.map(row => row.x)), minY = Math.min(...rows.map(row => row.y)), maxY = Math.max(...rows.map(row => row.y));
   const top = topSpace(); fitScale = Math.min((width - 100) / Math.max(.12, maxX - minX), Math.max(100, height - top - 115) / Math.max(.12, maxY - minY));
   camera = {scale: fitScale, x: width / 2 - (minX + maxX) / 2 * fitScale, y: top + (height - top - 90) / 2 - (minY + maxY) / 2 * fitScale}; redraw();
@@ -275,7 +380,8 @@ function fit() {
 function focusStyle(row) { if (view !== 'map') { redraw(); return; } const scale = Math.max(fitScale * 3, camera.scale); camera = {scale, x: width / 2 - row.x * scale, y: (height + topSpace() - 80) / 2 - row.y * scale}; redraw(); }
 function zoom(factor, x = width / 2, y = (height + topSpace() - 80) / 2) { const scale = Math.min(fitScale * 30, Math.max(fitScale * .35, camera.scale * factor)), ratio = scale / camera.scale; camera = {scale, x: x - (x - camera.x) * ratio, y: y - (y - camera.y) * ratio}; redraw(); }
 function draw() {
-  context.clearRect(0, 0, width, height); targets = []; if (!data || view !== 'map') return;
+  context.clearRect(0, 0, width, height); targets = []; $('#artist-map-labels').replaceChildren(); if (!data || view !== 'map') return;
+  if (scene === 'artists') { drawArtistMap(); return; }
   const artistStyles = new Set(artistProfile ? (artistEvidence?.accepted || []).map(entry => entry.style_id) : []), occupied = new Set();
   const rows = filtered().filter(positioned).sort((a, b) => Number(b.id === hovered?.id) - Number(a.id === hovered?.id) || Number(b.id === selected?.id) - Number(a.id === selected?.id) || Number(artistStyles.has(b.id)) - Number(artistStyles.has(a.id)) || b.source_artist_support - a.source_artist_support);
   const size = Math.min(15, 10 + Math.max(0, Math.log2(camera.scale / fitScale))), top = topSpace() - 12;
@@ -294,11 +400,26 @@ function draw() {
     context.fillText(row.name, x, y, textWidth); targets.push({id: row.id, x: x - 2, y: y - size, w: textWidth + 4, h: size + 4});
   }
 }
+function drawArtistMap() {
+  const labels = $('#artist-map-labels'), occupied = new Set(), top = topSpace() - 12;
+  const rows = artistMapRows().filter(positioned).toSorted((a, b) => Number(b.artist_mbid === selectedArtist) - Number(a.artist_mbid === selectedArtist) || Number(b.artist_mbid === hovered?.artist_mbid) - Number(a.artist_mbid === hovered?.artist_mbid) || a.name.localeCompare(b.name));
+  for (const row of rows) {
+    const point = screen(row); if (point.x < -10 || point.x > width + 10 || point.y < top || point.y > height - 85) continue;
+    const active = row.artist_mbid === selectedArtist, highlight = active || row.artist_mbid === hovered?.artist_mbid;
+    context.fillStyle = active ? '#b94725' : '#355f72'; context.beginPath(); context.arc(point.x, point.y, highlight ? 3 : 2, 0, Math.PI * 2); context.fill();
+    context.font = '11px Arial'; const textWidth = Math.min(220, context.measureText(row.name).width + 6), x = Math.max(10, Math.min(width - textWidth - 12, point.x + 3)), y = point.y - 8;
+    const cells = []; for (let cx = Math.floor(x / 30); cx <= Math.floor((x + textWidth) / 30); cx++) for (let cy = Math.floor(y / 16); cy <= Math.floor((y + 16) / 16); cy++) cells.push(`${cx}:${cy}`);
+    if (!highlight && cells.some(cell => occupied.has(cell))) continue; for (const cell of cells) occupied.add(cell);
+    const label = button(row.name, 'artist-map-label', () => navigateArtist(row.artist_mbid, selected.id)); label.dataset.artistId = row.artist_mbid; label.setAttribute('aria-label', `${row.name}; open exact artist profile`); label.style.left = `${x}px`; label.style.top = `${y}px`; label.style.width = `${textWidth}px`; label.title = `${row.name} · ${row.artist_mbid} · source profile geometry`; if (active) label.setAttribute('aria-current', 'true'); labels.append(label);
+    targets.push({id: row.artist_mbid, x, y, w: textWidth, h: 17});
+  }
+}
 function nearest(x, y) {
   if (!data) return null;
-  for (const target of targets.toReversed()) if (x >= target.x && x <= target.x + target.w && y >= target.y && y <= target.y + target.h) return styles.get(target.id);
+  const rows = scene === 'artists' ? artistMapRows() : filtered();
+  for (const target of targets.toReversed()) if (x >= target.x && x <= target.x + target.w && y >= target.y && y <= target.y + target.h) return scene === 'artists' ? rows.find(row => row.artist_mbid === target.id) : styles.get(target.id);
   let closest = null, distance = 14;
-  for (const row of filtered().filter(positioned)) { const point = screen(row), delta = Math.hypot(x - point.x, y - point.y); if (delta < distance) { distance = delta; closest = row; } }
+  for (const row of rows.filter(positioned)) { const point = screen(row), delta = Math.hypot(x - point.x, y - point.y); if (delta < distance) { distance = delta; closest = row; } }
   return closest;
 }
 function resize() { const rect = canvas.parentElement.getBoundingClientRect(); width = rect.width; height = rect.height; const ratio = devicePixelRatio || 1; canvas.width = width * ratio; canvas.height = height * ratio; context.setTransform(ratio, 0, 0, ratio, 0, 0); canvas.parentElement.style.setProperty('--toolbar-space', `${topSpace()}px`); fit(); }
@@ -306,6 +427,8 @@ for (const [selector, set] of [['#tier-filter', value => tier = value], ['#evide
 $('#directory-sort').addEventListener('change', event => { sort = event.target.value; directoryPage = 0; renderDirectory(); save(); });
 $('#map-view').addEventListener('click', () => { view = 'map'; render(); fit(); save(); }); $('#list-view').addEventListener('click', () => { view = 'list'; render(); save(); });
 $('#fit-map').addEventListener('click', fit); $('#zoom-in').addEventListener('click', () => zoom(1.5)); $('#zoom-out').addEventListener('click', () => zoom(1 / 1.5));
+$('#artist-map-back').addEventListener('click', leaveArtistMap);
+$('#artist-map-search').addEventListener('input', event => { artistMapQuery = event.target.value; controls(); renderArtistMapList(); redraw(); save(true); });
 search.addEventListener('input', () => { searchRows(); save(true); }); $('#search-scope').addEventListener('change', event => { searchScope = event.target.value; searchRows(); save(); });
 search.addEventListener('keydown', event => { if (event.key === 'Escape') results.hidden = true; if (event.key === 'Enter') { const rows = results.querySelectorAll('.search-result'); if (!results.hidden && rows.length) { event.preventDefault(); rows[Math.max(0, searchIndex)].click(); } } if (event.key === 'ArrowDown') { event.preventDefault(); const rows = results.querySelectorAll('.search-result'); if (rows.length) { searchIndex = 0; rows[0].focus(); } } });
 results.addEventListener('keydown', event => { const rows = [...results.querySelectorAll('.search-result')]; if (event.key === 'Escape') { results.hidden = true; search.focus(); } if (['ArrowDown', 'ArrowUp'].includes(event.key)) { event.preventDefault(); searchIndex = Math.max(0, Math.min(rows.length - 1, rows.indexOf(document.activeElement) + (event.key === 'ArrowDown' ? 1 : -1))); rows[searchIndex]?.focus(); } });
@@ -314,8 +437,8 @@ document.addEventListener('keydown', event => { if (event.key === '/' && !['INPU
 $('#about-toggle').addEventListener('click', event => { const about = $('#about'); about.hidden = !about.hidden; event.currentTarget.setAttribute('aria-expanded', String(!about.hidden)); if (!about.hidden) about.scrollIntoView({block: 'nearest', behavior: 'smooth'}); });
 canvas.addEventListener('wheel', event => { event.preventDefault(); const rect = canvas.getBoundingClientRect(); zoom(Math.exp(-event.deltaY * .002), event.clientX - rect.left, event.clientY - rect.top); }, {passive: false});
 canvas.addEventListener('pointerdown', event => { drag = {x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY}; canvas.setPointerCapture(event.pointerId); });
-canvas.addEventListener('pointermove', event => { if (drag) { camera.x += event.clientX - drag.x; camera.y += event.clientY - drag.y; drag.x = event.clientX; drag.y = event.clientY; } else { const rect = canvas.getBoundingClientRect(); hovered = nearest(event.clientX - rect.left, event.clientY - rect.top); canvas.title = hovered ? `${hovered.name} · ${TIER_LABELS[hovered.evidence_tier] || 'Source candidate'}` : ''; } redraw(); });
-canvas.addEventListener('pointerup', event => { if (drag && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5) { const rect = canvas.getBoundingClientRect(), row = nearest(event.clientX - rect.left, event.clientY - rect.top); if (row) navigateStyle(row.id); } drag = null; });
+canvas.addEventListener('pointermove', event => { if (drag) { camera.x += event.clientX - drag.x; camera.y += event.clientY - drag.y; drag.x = event.clientX; drag.y = event.clientY; } else { const rect = canvas.getBoundingClientRect(); hovered = nearest(event.clientX - rect.left, event.clientY - rect.top); canvas.title = hovered ? `${hovered.name} · ${scene === 'artists' ? 'Source profile geometry' : TIER_LABELS[hovered.evidence_tier] || 'Source candidate'}` : ''; } redraw(); });
+canvas.addEventListener('pointerup', event => { if (drag && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5) { const rect = canvas.getBoundingClientRect(), row = nearest(event.clientX - rect.left, event.clientY - rect.top); if (row) scene === 'artists' ? navigateArtist(row.artist_mbid, selected.id) : navigateStyle(row.id); } drag = null; });
 canvas.addEventListener('pointercancel', () => drag = null);
 canvas.addEventListener('keydown', event => { const step = 45, shifts = {ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step]}; if (shifts[event.key]) { event.preventDefault(); camera.x += shifts[event.key][0]; camera.y += shifts[event.key][1]; redraw(); } else if (['+', '='].includes(event.key)) { event.preventDefault(); zoom(1.5); } else if (event.key === '-') { event.preventDefault(); zoom(1 / 1.5); } });
 window.addEventListener('popstate', restore); window.addEventListener('hashchange', restore); new ResizeObserver(resize).observe(canvas.parentElement);

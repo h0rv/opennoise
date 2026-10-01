@@ -18,7 +18,7 @@ catalog. Historical names and geometry are evaluation inputs only.
 | --- | --- | --- |
 | Genre coverage | 697 exact native source labels match 697 of 6,291 reference names: 11.08% | Learn finer overlapping communities from richer open tags, release context, and aggregates; reference names are an evaluation universe, not the construction ceiling |
 | Complete artist navigation | All 198,409 source artists and 387,435 direct pairs are reachable through static pages and search | Complete reference memberships and reviewed identity bridges for a reference-recall measurement |
-| Names | 198,390 artists named: 99.9904%; 19 exact-ID abstentions | Resolve redirected identities separately; do not silently change artist IDs |
+| Names | 198,391 artists named: 99.9909%; 18 exact-ID abstentions | Resolve redirected identities separately; do not silently change artist IDs |
 | Genre map and directory | Search, map/list modes, counts, sorting, placement filters, deep links, history, touch and keyboard controls | Reference behavior across the full genre universe and independently assessed semantic neighborhoods |
 | Artist maps | Bounded direct-member overlap maps for every source genre; 683 have geometry | Independent artist relevance and geometry assessment; acoustic-axis equivalence is unverified |
 | Artist discovery model | Held-out source reconstruction improves while preserving cold-artist denominators and source roles | External relevance evidence, calibrated ranking, and full missing-genre coverage |
@@ -37,7 +37,33 @@ They do not recover Every Noise's organic/mechanical or atmospheric/bouncy axes.
 Proper-genre observations, release credits, model neighbors, and artist proposals
 retain distinct roles. Album credits never create a genre membership.
 
+The [current unified research export](checkpoints/LOCAL_DISCOVERY_PRODUCT_20260930.md)
+adds a named-style atlas alongside learned communities and the source explorer.
+Its 31,864 retained values include 3,920 default candidate names; exact matches
+cover 2,112 reference names overall (33.57%) and 1,223 in the default view
+(19.44%). These are string-coverage diagnostics, not validated genre coverage
+or an overall parity percentage. The source-only artist maps cover 3,505
+style cohorts with bounded samples, while complete paginated cohorts retain
+every source artist. All ten benchmark identities and preferred names verify.
+[Independent review](checkpoints/INDEPENDENT_BULK_DISCOVERY_REVIEW_20260930.md)
+and real-browser certification preserve source/model separation and explicitly
+unmeasured musical and listening criteria.
+
 ## Model and data results
+
+The latest local research adds a bulk MusicBrainz tag source and a
+[paired evaluation](checkpoints/EMERGENT_COMMUNITY_EVALUATION_CONTRACT_20260930.md).
+On identical held targets, enrichment improves overall Recall@10 from 39.86%
+to 47.06% and tag-only recovery from 19.92% to 35.03%. The conditioned baseline
+still leads overall, and globally novel-value recovery is only 1.50%.
+The [bulk community refit](checkpoints/EMERGENT_BULK_SOURCE_REFIT_20260930.md)
+contains 128 broad, 157 subgenre, and 1,048 microgenre candidates, including
+micro memberships for all ten exact reference artists.
+
+A [fresh nested fine-style test](checkpoints/AUTHORITY_AWARE_FINE_STYLE_NESTED_20260930.md)
+is a recorded negative result: rare-tag Recall@10 is 14.19%, below enrichment
+at 22.69%. It contributes no suggestions to the product. These experiments
+measure reconstruction of open metadata, not Spotify-level genre validity.
 
 The macro-guarded reconstruction selects among 13 declared arms using validation
 only. On its newly salted test, micro Recall@10 improves from 42.7415% to

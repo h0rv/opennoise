@@ -108,11 +108,12 @@ binds review script SHA-256
 The exact v8 reproducer is preserved at
 `.cache/musicbrainz-source-label-quality-codefreeze-20260930-v8/review_musicbrainz_source_label_quality.py`
 with the report-bound SHA-256 above. The maintained script now has SHA-256
-`95977e2b5d6c3408a52a0cf0b6a2694e1975ad627371ca8d95e996a0cc8284ae`; its
-changes are formatting and lint cleanup, including equivalent adjacent-token
-iteration and named pinned thresholds. The v8 report remains bound to the
-frozen reproducer. These maintenance changes do not alter calculations or
-review categories, so no v9 artifact was created.
+`fac34d2d47fa0ada24d1ba67796660e5a4bf04c7b54bd833406a444c04bcad92`; its
+changes are formatting, lint cleanup, and type-only casts for values already
+produced as strings, integers, and floats. They include equivalent
+adjacent-token iteration and named pinned thresholds. The v8 report remains
+bound to the frozen reproducer. These maintenance changes do not alter
+calculations or review categories, so no v9 artifact was created.
 The `label-review.jsonl` stream is 7,748,233 bytes with SHA-256
 `937bdf43e85bdaf4f175f56b3f543b2ed035f19fb396fed0ec108ccd74cc7c04`. New-label
 categories are 155 musical-style candidates, 176 performance roles, 6

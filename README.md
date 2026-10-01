@@ -8,12 +8,17 @@ API or computes a graph layout.
 
 No audio recordings or audio previews enter the project.
 
-The latest local research adds verified aggregate MusicBrainz tags and a
-named-style atlas with complete artist navigation. The [bulk source checkpoint](docs/checkpoints/MUSICBRAINZ_BULK_ARTIST_TAG_SOURCE_20260930.md),
+The latest local research combines a named-style atlas, learned broad/sub/micro
+communities, and source genres in one static discovery export. It includes all
+198,409 source artists, 3,920 default candidate style names, and 3,505 bounded
+artist maps. Candidate names and source geometry do not establish Every Noise
+musical parity. The [product checkpoint](docs/checkpoints/LOCAL_DISCOVERY_PRODUCT_20260930.md)
+records reproduction, exact receipts, and real-browser certification. The
+[bulk source checkpoint](docs/checkpoints/MUSICBRAINZ_BULK_ARTIST_TAG_SOURCE_20260930.md),
 [paired evaluation](docs/checkpoints/EMERGENT_COMMUNITY_EVALUATION_CONTRACT_20260930.md),
-and [atlas checkpoint](docs/checkpoints/NAMED_STYLE_ATLAS_BUILD_20260930.md)
-record reproducible inputs, measured gains, and remaining parity gaps. These
-research artifacts are separate from the canonical publication below.
+and [bulk atlas checkpoint](docs/checkpoints/NAMED_STYLE_ATLAS_BULK_BUILD_20260930.md)
+record source coverage, measured gains, and remaining gaps. These research
+artifacts are separate from the canonical publication below.
 
 ## Static delivery
 

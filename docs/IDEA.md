@@ -6,7 +6,7 @@ The product target is complete Every Noise discovery parity through open-data
 modeling and enrichment. The initial 697 source genres are evidence, not a
 vocabulary ceiling. The current research pipeline adds verified open tags and
 learns overlapping broad, subgenre, and microgenre communities; names and
-historical maps do not determine their construction. The latest cleaned
+historical maps do not determine their construction. The preceding cleaned
 adaptive fit has 106 broad, 182 subgenre, and 954 microgenre candidates, with
 594,776 separately typed style suggestions across 198,409 artists. Independent
 within-source tests show tag-only enrichment gains, while overall results
@@ -30,6 +30,34 @@ complete paginated artist cohorts and separates artist observations, release
 context, and suggestions. Its default view has 2,226 candidate names, while
 weaker annotations remain searchable. Neither these candidates nor name
 matches establish a validated Spotify-level taxonomy.
+
+The [bulk community refit](checkpoints/EMERGENT_BULK_SOURCE_REFIT_20260930.md)
+learns 128 broad, 157 subgenre, and 1,048 microgenre candidates. All ten
+reference artists, including Aphex Twin and Four Tet, have micro memberships.
+Almost half the artist cores fall under coarse groups stopped by the safety
+budget, so their support status remains explicit. A separate
+[coarse-budget experiment](checkpoints/EMERGENT_EXPANDED_COARSE_BUDGET_20260930.md)
+stops naturally at 237 broad groups and greatly reduces unsupported coverage,
+but loses micro-level navigation for three reference artists. It remains a
+construction experiment rather than silently replacing the selected model.
+
+The [authority-aware fine-style experiment](checkpoints/AUTHORITY_AWARE_FINE_STYLE_NESTED_20260930.md)
+uses fresh nested folds, training-only support gates, and source-authority
+weights. Its prespecified rare-tag Recall@10 is 14.19%, below existing
+enrichment at 22.69%. Independent replay reproduces every metric and selection.
+It remains an unsuccessful research candidate and contributes no product
+suggestions. Further granularity work needs stronger musical evidence; these
+outer folds must not become another tuning set.
+
+The [unified local discovery product](checkpoints/LOCAL_DISCOVERY_PRODUCT_20260930.md)
+connects named styles, learned communities, and source genres through actual
+static routes. The [bulk atlas](checkpoints/NAMED_STYLE_ATLAS_BULK_BUILD_20260930.md)
+has 3,920 default candidate names and 3,505 source-only artist maps. All 198,409
+artists remain reachable through complete cohorts and exact-ID search; map
+samples are bounded and distinguish positioned profiles from abstentions.
+Aphex Twin and Four Tet retain their preferred names. Model suggestions stay
+separate from artist observations and credited-release context. Chromium
+certification covers the real export, history, mobile, and all three explorers.
 
 OpenNoise is the product name; the internal Python package and compatibility
 identifiers remain `opennoise` during the staged migration.

@@ -10,6 +10,7 @@ import sys
 from collections import Counter, defaultdict
 from itertools import pairwise
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 from scipy import sparse
@@ -195,7 +196,7 @@ def _support_by_value(path: Path) -> Counter[str]:
 def _family(value: str) -> str:
     """Return the Unicode final-word head used to group lexical subgenres."""
     normalized = _normalize(value)
-    words = re.findall(r"[^\W_]+", normalized, flags=re.UNICODE)
+    words = cast("list[str]", re.findall(r"[^\W_]+", normalized, flags=re.UNICODE))
     return words[-1] if words else normalized
 
 
@@ -439,7 +440,7 @@ def _sample_for_support(
 ) -> dict[str, list[str]]:
     buckets = {"1": [], "2-5": [], "6-19": [], "20-99": []}
     for row in rows:
-        support = int(row["support"])
+        support = cast("int", row["support"])
         key = (
             "1"
             if support == _SINGLETON_SUPPORT
@@ -476,7 +477,7 @@ def build_review(output: Path) -> dict[str, object]:  # noqa: PLR0915
 
     texts, labels, families, training_origins = _training_rows(native_labels)
     metrics = _family_aware_metrics(texts, labels, families)
-    model_usable = float(metrics["roc_auc"]) >= _MINIMUM_DESCRIPTIVE_AUC
+    model_usable = cast("float", metrics["roc_auc"]) >= _MINIMUM_DESCRIPTIVE_AUC
     reviewed_labels = sorted(set(novel) | {str(style["name"]) for style in defaults})
     reviewed_margins = _fit_lexical_centroids(
         texts, labels, [_normalize(label) for label in reviewed_labels]

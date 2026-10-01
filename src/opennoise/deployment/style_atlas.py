@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import math
+import os
 import re
 import resource
 import shutil
 import sqlite3
 import tempfile
 import time
+import zlib
 from collections import Counter, defaultdict
 from contextlib import closing
 from pathlib import Path
@@ -27,6 +30,12 @@ from opennoise.deployment.community_preview import (
     validate_feature_proposals,
     verified_receipt,
     verify_feature_lineage,
+)
+from opennoise.deployment.style_artist_maps import (
+    MIN_STYLE_SUPPORT,
+    ArtistMapContext,
+    map_context,
+    style_artist_map,
 )
 from opennoise.ml.artist_feature_enrichment import EnrichmentModel, load_enrichment
 from opennoise.ml.layout_lenses import build_weighted_spectral_coordinates
@@ -48,7 +57,7 @@ MAX_PROPOSAL_SHARD_BYTES = 64 * 1024 * 1024
 NEIGHBORS = 12
 MINIMUM_JOINT_SUPPORT = 2
 DEFAULT_BROWSE_SUPPORT = 5
-DISPLAY_RECIPE_REVISION = "named-style-display-v3"
+DISPLAY_RECIPE_REVISION = "named-style-display-v4"
 REVIEWED_NONSTYLE_LABELS = frozenset(
     {
         "27 club",
@@ -56,18 +65,33 @@ REVIEWED_NONSTYLE_LABELS = frozenset(
         "death by murder",
         "fixme",
         "model",
+        "records",
         "komponist",
         "violinist",
+        "violinists",
         "pianist",
+        "pianists",
         "drummer",
+        "drummers",
         "guitarist",
+        "guitarists",
         "bassist",
+        "bassists",
         "vocalist",
+        "vocalists",
         "composer",
+        "composers",
         "instrumentalist",
+        "instrumentalists",
+        "organist",
+        "organists",
+        "jazz musicians",
         "recording engineer",
+        "recording engineers",
         "audio engineer",
+        "audio engineers",
         "record producer",
+        "record producers",
         "actor",
         "actress",
         "photographer",
@@ -142,7 +166,11 @@ def display_suppression_reason(value: str) -> str | None:
         return "event_or_festival_label"
     if re.search(r"\b(?:actor|actress|screenwriter|cinematographer|photographer)\b", value):
         return "biographical_role_label"
-    return None
+    return (
+        "biographical_death_cause_label"
+        if re.match(r"^death (?:by|from|due to)\s+\S", value)
+        else None
+    )
 
 
 def source_memberships(row: dict[str, Any]) -> tuple[list[dict[str, Any]], set[str]]:
@@ -252,6 +280,23 @@ def _write(path: Path, value: object) -> None:
     path.write_bytes(canonical_json(value) + b"\n")
 
 
+def _clone_file(source: Path, destination: Path) -> None:
+    try:
+        os.link(source, destination)
+    except OSError as error:
+        if error.errno != errno.EXDEV:
+            raise
+        shutil.copyfile(source, destination)
+
+
+def _pack(value: object) -> bytes:
+    return zlib.compress(canonical_json(value))
+
+
+def _unpack(value: bytes | None) -> list[dict[str, Any]]:
+    return json.loads(zlib.decompress(value)) if value else []
+
+
 def _prediction_receipt(directory: Path, digest: str) -> tuple[dict[str, Any], EnrichmentModel]:
     receipt = verified_receipt(directory, "prediction-receipt.json")
     if (
@@ -295,7 +340,7 @@ def _ingest(
                 raise ValueError("feature observation bound exceeded")
             database.execute(
                 "INSERT INTO artists(mbid, source, proposals) VALUES (?, ?, NULL)",
-                (artist, json.dumps(memberships, separators=(",", ":"))),
+                (artist, _pack(memberships)),
             )
             for membership in memberships:
                 value = membership["value"]
@@ -383,7 +428,7 @@ def _proposals(
             if source is None or artist in seen:
                 raise ValueError("proposal artist differs from exact feature corpus")
             seen.add(artist)
-            memberships = json.loads(source[0])
+            memberships = _unpack(source[0])
             known = {membership["value"] for membership in memberships}
             if set(record["observed_music_values"]) != known:
                 raise ValueError("proposal observed values differ from exact source features")
@@ -398,7 +443,7 @@ def _proposals(
                 totals[ROLES[2]] += 1
             database.execute(
                 "UPDATE artists SET proposals=? WHERE mbid=?",
-                (json.dumps(record["feature_proposals"], separators=(",", ":")), artist),
+                (_pack(record["feature_proposals"]), artist),
             )
         database.commit()
     if len(seen) != totals["artists"]:
@@ -406,7 +451,11 @@ def _proposals(
 
 
 def _profiles(
-    source: Path, receipt: dict[str, Any], output: Path, database: sqlite3.Connection
+    source: Path,
+    receipt: dict[str, Any],
+    output: Path,
+    database: sqlite3.Connection,
+    fallbacks: dict[str, dict[str, Any]],
 ) -> None:
     for (prefix,) in database.execute("SELECT DISTINCT substr(mbid,1,3) FROM artists ORDER BY 1"):
         relative = f"artists/{prefix}.json"
@@ -420,16 +469,26 @@ def _profiles(
         ):
             if artist not in profiles:
                 raise ValueError("exact feature artist lacks verified source profile")
-            profile = profiles[artist]
+            profile = {**profiles[artist]}
+            if profile["name_status"] == "unresolved" and artist in fallbacks:
+                profile.update(
+                    name=fallbacks[artist]["name"],
+                    name_status="exact_verified_bulk_name_fallback",
+                    name_evidence_ref=fallbacks[artist]["evidence_ref"],
+                )
             database.execute("UPDATE artists SET name=? WHERE mbid=?", (profile["name"], artist))
+            database.execute(
+                "INSERT INTO artist_names VALUES (?, ?, ?)",
+                (artist, profile["name"], profile["name_status"]),
+            )
             inferred = [
                 {**proposal, "style_id": style_id(proposal["value"])}
-                for proposal in json.loads(proposals or "[]")
+                for proposal in _unpack(proposals)
             ]
             result[artist] = {
                 **profile,
                 "artist_mbid": artist,
-                "style_memberships": json.loads(memberships) + inferred,
+                "style_memberships": _unpack(memberships) + inferred,
             }
         _write(output / relative, {"artists": result})
         database.commit()
@@ -499,15 +558,117 @@ def _assets(
     expected = {row[0] for row in database.execute("SELECT mbid FROM artists")}
     if len(search) != len(expected) or {row[0] for row in search} != expected:
         raise ValueError("source artist search differs from exact feature corpus")
-    shutil.copyfile(source / relative, output / relative)
+    names = {
+        row[0]: row[1:] for row in database.execute("SELECT mbid,name,status FROM artist_names")
+    }
+    projected = [[row[0], *names[row[0]]] for row in search]
+    projected.sort(key=lambda row: (row[1].casefold(), row[0]))
+    _write(output / relative, {"artists": projected})
     static = Path(__file__).resolve().parents[1] / "static"
     for suffix in ("html", "css", "js"):
         name = f"style-atlas.{suffix}"
         shutil.copyfile(static / name, output / ("index.html" if suffix == "html" else name))
 
 
+def _missing_name_ids(
+    features: Path, receipt: dict[str, Any], known: set[str], named: set[str]
+) -> set[str]:
+    missing_overlay = features.parent / "missing-artist-names.jsonl"
+    if sha256_file(missing_overlay)[0] != receipt["missing_names_sha256"]:
+        raise ValueError("missing artist name overlay differs from feature receipt")
+    missing: set[str] = set()
+    with missing_overlay.open(encoding="utf-8") as stream:
+        for line in stream:
+            artist = json.loads(line)["artist_mbid"]
+            if artist not in known or artist in named or artist in missing:
+                raise ValueError("missing name overlay does not match exact source corpus")
+            missing.add(artist)
+    return missing
+
+
+def _fallback_names(
+    source: Path, features: Path, receipt: dict[str, Any]
+) -> dict[str, dict[str, Any]]:
+    if "name_overlay_sha256" not in receipt:
+        return {}
+    overlay = features.parent / "artist-names.jsonl"
+    if sha256_file(overlay)[0] != receipt["name_overlay_sha256"]:
+        raise ValueError("artist name fallback overlay differs from feature receipt")
+    search = json.loads((source / "artist-search.json").read_bytes())["artists"]
+    known = {row[0] for row in search}
+    unresolved = {row[0] for row in search if row[2] == "unresolved"}
+    seen = set()
+    result = {}
+    with overlay.open(encoding="utf-8") as stream:
+        for line in stream:
+            row = json.loads(line)
+            artist = row["artist_mbid"]
+            if artist not in known or artist in seen:
+                raise ValueError("name overlay does not match exact source corpus")
+            seen.add(artist)
+            if artist in unresolved and row.get("name"):
+                if not re.search(r"mbdump/artist:row:\d+:sha256:[0-9a-f]{64}", row["evidence_ref"]):
+                    raise ValueError("bulk fallback name lacks exact artist-row provenance")
+                result[artist] = row
+    if seen | _missing_name_ids(features, receipt, known, seen) != known:
+        raise ValueError("name overlays omit source corpus identities")
+    return result
+
+
+def _artist_maps(
+    output: Path,
+    database: sqlite3.Connection,
+    styles: list[dict[str, Any]],
+    context: ArtistMapContext,
+    bindings: dict[str, str],
+) -> dict[str, Any]:
+    totals: Counter[str] = Counter()
+    for style in styles:
+        style["artist_map_status"] = "not_default_source_supported_style"
+        if style["default_visible"] and style["source_artist_support"] >= MIN_STYLE_SUPPORT:
+            members = defaultdict(list)
+            for artist, role in database.execute(
+                "SELECT artist,role FROM members WHERE style=? AND role!=? ORDER BY artist,role",
+                (style["id"], ROLES[2]),
+            ):
+                members[artist].append(role)
+            payload = style_artist_map(context, style["id"], dict(members))
+            payload.update(bindings)
+            for row in payload["artists"]:
+                name, status = database.execute(
+                    "SELECT name,status FROM artist_names WHERE mbid=?", (row["artist_mbid"],)
+                ).fetchone()
+                row.update(name=name, name_status=status)
+            style["artist_map_path"] = f"style-artist-maps/{style['id']}.json"
+            style["artist_map_status"] = "ready" if payload["positioned_count"] else "abstained"
+            _write(output / style["artist_map_path"], payload)
+            totals["map_count"] += 1
+            for key in (
+                "selected_count",
+                "positioned_count",
+                "abstained_count",
+                "layout_edge_count",
+            ):
+                totals[key] += payload[key]
+        detail_path = output / style["detail_path"]
+        detail = json.loads(detail_path.read_bytes())
+        detail.update(style)
+        _write(detail_path, detail)
+    return {
+        "role": "inferred_source_artist_profile_maps",
+        "scope": "local_research_only",
+        "usable_canonical_music_values": len(context.vocabulary),
+        **totals,
+    }
+
+
 def build_style_atlas(
-    *, source: Path, features: Path, enrichment_directory: Path, output: Path
+    *,
+    source: Path,
+    features: Path,
+    enrichment_directory: Path,
+    output: Path,
+    artist_maps: bool = False,
 ) -> dict[str, Any]:
     """Fit and export a fresh complete local candidate style atlas from verified caches."""
     require_local_candidate_destination(output)
@@ -522,6 +683,8 @@ def build_style_atlas(
     ):
         raise ValueError("unsupported source profile boundary")
     prediction, model = _prediction_receipt(enrichment_directory, feature_receipt["feature_sha256"])
+    fallbacks = _fallback_names(source, features, feature_receipt)
+    map_summary = None
     output.parent.mkdir(parents=True, exist_ok=True)
     with (
         tempfile.TemporaryDirectory(dir=output.parent, prefix="style-atlas-work-") as temporary,
@@ -530,6 +693,7 @@ def build_style_atlas(
         database.executescript(
             "CREATE TABLE artists(mbid TEXT PRIMARY KEY, source TEXT, "
             "proposals TEXT, name TEXT);"
+            "CREATE TABLE artist_names(mbid TEXT PRIMARY KEY,name TEXT,status TEXT);"
             "CREATE TABLE members(style TEXT, role TEXT, artist TEXT, score REAL, "
             "PRIMARY KEY(style, role, artist));"
         )
@@ -576,9 +740,29 @@ def build_style_atlas(
                 }
             )
         output.mkdir()
-        _profiles(source, source_receipt, output, database)
+        _profiles(source, source_receipt, output, database, fallbacks)
         _cohorts(output, database, styles)
+        if artist_maps:
+            artist_ids = tuple(
+                row[0] for row in database.execute("SELECT mbid FROM artists ORDER BY rowid")
+            )
+            context = map_context(artist_ids, values, matrix)
+            map_summary = _artist_maps(
+                output,
+                database,
+                styles,
+                context,
+                {
+                    "features_sha256": feature_receipt["feature_sha256"],
+                    "source_model_sha256": model.model_sha256,
+                },
+            )
         _assets(source, source_receipt, output, database)
+        totals["named_artists"] = database.execute(
+            "SELECT count(*) FROM artist_names WHERE status!='unresolved'"
+        ).fetchone()[0]
+        totals["unresolved_artist_names"] = totals["artists"] - totals["named_artists"]
+        totals["bulk_name_fallbacks"] = len(fallbacks)
     _write(
         output / "source-geometry.json",
         {
@@ -617,6 +801,7 @@ def build_style_atlas(
             "page_size": PAGE_SIZE,
             "artist_shard_prefix_length": 3,
             "artist_search_path": "artist-search.json",
+            "artist_maps": map_summary,
             "default_browse_source_artist_support": DEFAULT_BROWSE_SUPPORT,
             "display_recipe_revision": DISPLAY_RECIPE_REVISION,
             "evidence_tier_semantics": {
@@ -638,10 +823,14 @@ def build_style_atlas(
         "model_sha256": model.model_sha256,
         "builder_sha256": sha256_file(Path(__file__))[0],
         "native_dictionary_sha256": feature_receipt["inputs"]["genre_labels"]["sha256"],
+        "name_overlay_sha256": feature_receipt.get("name_overlay_sha256"),
+        "artist_maps": map_summary,
+        "stage_storage": "zlib_compressed_source_and_proposal_json_in_sqlite",
         "code_bindings": {
             relative: sha256_file(Path(__file__).resolve().parents[3] / relative)[0]
             for relative in (
                 "src/opennoise/deployment/style_atlas.py",
+                "src/opennoise/deployment/style_artist_maps.py",
                 "src/opennoise/deployment/community_preview.py",
                 "src/opennoise/analysis/emergent_topic_holdout.py",
                 "src/opennoise/ml/emergent_topics.py",
@@ -696,7 +885,7 @@ def refresh_style_atlas_display(*, source: Path, output: Path) -> dict[str, Any]
     for relative in prior["files"]:
         destination = output / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source / relative, destination)
+        _clone_file(source / relative, destination)
     data = json.loads((output / "data.json").read_bytes())
     for style in data["styles"]:
         style["evidence_tier"] = evidence_tier(
@@ -741,8 +930,10 @@ def refresh_style_atlas_display(*, source: Path, output: Path) -> dict[str, Any]
         "display_recipe_revision": DISPLAY_RECIPE_REVISION,
         "source_atlas_output_sha256": prior["output_sha256"],
         "source_atlas_builder_sha256": prior["builder_sha256"],
+        "source_atlas_code_bindings": prior["code_bindings"],
         "builder_sha256": sha256_file(Path(__file__))[0],
         "derivation_method": "verified_clone_with_display_only_changes",
+        "clone_storage": "hardlinks_with_cross_device_copy_fallback_and_atomic_replacements",
     }
     receipt["code_bindings"] = {
         relative: sha256_file(Path(__file__).resolve().parents[3] / relative)[0]
