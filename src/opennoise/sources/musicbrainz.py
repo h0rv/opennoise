@@ -47,6 +47,7 @@ MAX_GENRE_CLAIMS_PER_ARTIST = 128
 MAX_TAG_CLAIMS_PER_ARTIST = 512
 MAX_ARTIST_CREDIT_MEMBERS = 128
 MAX_SECONDARY_TYPES = 32
+MAX_NATIVE_GENRE_DICTIONARY_SIZE = 10_000
 
 
 def _normalize_tag_name(value: str) -> str:
@@ -988,6 +989,26 @@ class MusicBrainzRecordingResponse:
     received_at: datetime
 
 
+class MusicBrainzGenrePage(BaseModel):
+    """Bound one page of the official native genre dictionary."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="ignore", populate_by_name=True)
+
+    genre_count: int = Field(alias="genre-count", ge=0, le=10_000)
+    genre_offset: int = Field(alias="genre-offset", ge=0)
+    genres: tuple[MusicBrainzGenre, ...] = Field(max_length=100)
+
+
+@dataclass(frozen=True, slots=True)
+class MusicBrainzGenrePageResponse:
+    """A native genre dictionary page and its retained source bytes."""
+
+    page: MusicBrainzGenrePage
+    raw_bytes: bytes
+    request_url: str
+    received_at: datetime
+
+
 class MusicBrainzClient:
     """Fetch bounded typed records with the required identity and request rate."""
 
@@ -1019,6 +1040,33 @@ class MusicBrainzClient:
     async def fetch_artist(self, artist_id: UUID) -> MusicBrainzArtist:
         """Fetch one official artist response with aliases, genres, and tags."""
         return (await self.fetch_artist_response(artist_id)).artist
+
+    async def fetch_genre_page_response(self, *, offset: int) -> MusicBrainzGenrePageResponse:
+        """Fetch a bounded genre dictionary page using the shared one-second rate limit."""
+        if not 0 <= offset < MAX_NATIVE_GENRE_DICTIONARY_SIZE:
+            raise ValueError("MusicBrainz genre dictionary offset is outside the bound")
+        await self._wait_for_rate_limit()
+        async with self._client.stream(
+            "GET",
+            f"{MUSICBRAINZ_API_BASE}/genre/all",
+            params={"fmt": "json", "limit": 100, "offset": offset},
+            headers={"User-Agent": self._user_agent, "Accept": "application/json"},
+        ) as response:
+            response.raise_for_status()
+            if response.headers.get("content-type", "").partition(";")[0] != "application/json":
+                raise MusicBrainzAdapterError("genre dictionary response must be JSON metadata")
+            chunks = bytearray()
+            async for chunk in response.aiter_bytes():
+                chunks.extend(chunk)
+                if len(chunks) > 128 * 1024:
+                    raise MusicBrainzAdapterError("genre dictionary response exceeds byte bound")
+            raw = bytes(chunks)
+            return MusicBrainzGenrePageResponse(
+                page=MusicBrainzGenrePage.model_validate_json(raw),
+                raw_bytes=raw,
+                request_url=str(response.url),
+                received_at=datetime.now(UTC),
+            )
 
     async def fetch_artist_response(self, artist_id: UUID) -> MusicBrainzArtistResponse:
         """Fetch one artist and retain exact response bytes for a caller-owned cache."""

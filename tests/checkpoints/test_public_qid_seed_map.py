@@ -4,8 +4,10 @@ import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from opennoise.checkpoints.public_qid_seed_map import (
+    _PUBLIC_DATABASE_SHA256,
     PublicQidIdentity,
     PublicQidSeedMapError,
     PublicQidSeedMapInputs,
@@ -17,6 +19,7 @@ from opennoise.checkpoints.public_qid_seed_map import (
     public_qid_seed_map_sha256,
     write_public_qid_seed_map,
 )
+from opennoise.common import sha256_file
 
 _INPUTS = PublicQidSeedMapInputs(
     public_database=Path("data/public.sqlite"),
@@ -87,7 +90,18 @@ class PublicQidSeedMapTests(unittest.TestCase):
 
             changed_layout = Path(directory) / "layout.json"
             changed_layout.write_bytes(b"not a sealed layout")
-            with self.assertRaisesRegex(PublicQidSeedMapError, "canonical layout hash"):
+            # Pass the earlier database byte gate while exercising the real layout hash gate.
+            with (
+                patch(
+                    "opennoise.checkpoints.public_qid_seed_map.sha256_file",
+                    side_effect=lambda path: (
+                        (_PUBLIC_DATABASE_SHA256, 1)
+                        if path == _INPUTS.public_database
+                        else sha256_file(path)
+                    ),
+                ),
+                self.assertRaisesRegex(PublicQidSeedMapError, "canonical layout hash"),
+            ):
                 build_public_qid_seed_map(
                     _INPUTS.model_copy(update={"canonical_layout": changed_layout})
                 )

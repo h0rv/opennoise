@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>OpenNoise · Source explorer</title>
+  <link rel="stylesheet" href="direct-custody-preview.css">
+  <script type="module" src="direct-custody-preview.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="./" aria-label="OpenNoise source explorer"><span class="brand-mark">◎</span> OpenNoise<span class="brand-sub">Source explorer</span></a>
+    <span class="research-badge">LOCAL RESEARCH</span>
+  </header>
+  <main class="workspace">
+    <section class="map-panel" aria-label="Genre neighborhood map">
+      <div class="map-intro"><p class="eyebrow">MUSICBRAINZ · DIRECT OBSERVATIONS</p><h1>Follow the connections.</h1><p>Explore genres through the artists they share.</p></div>
+      <nav class="view-switch" aria-label="Genre view"><button id="view-map" aria-pressed="true">Map</button><button id="view-list" aria-pressed="false">List</button></nav>
+      <div class="search-box"><label for="genre-search">Find a genre</label><input id="genre-search" type="search" placeholder="Try jazz, post-punk, ambient…" autocomplete="off" aria-controls="search-results"><div id="search-results" hidden></div><div class="search-scope" hidden><label><input id="scope-genres" type="radio" name="search-scope" value="genres" checked>Genres</label><label><input id="scope-artists" type="radio" name="search-scope" value="artists">Artists</label></div><p id="search-status" class="sr-only" aria-live="polite"></p></div>
+      <canvas id="genre-map" tabindex="0" aria-label="Genre map. Drag to pan, scroll to zoom. Arrow keys pan, plus and minus zoom, Home resets. Search provides access to every genre."></canvas>
+      <section id="genre-directory" hidden aria-label="All source genres"><div class="directory-toolbar"><label>Sort <select id="genre-sort"><option value="name">A–Z</option><option value="artists">Source artist count</option><option value="neighbors">Modeled neighbor count</option></select></label><label>Show <select id="genre-placement"><option value="all">All genres</option><option value="placed">On the map</option><option value="unplaced">Unplaced</option></select></label></div><p id="directory-status" aria-live="polite"></p><div id="directory-results"></div><nav id="directory-pages" aria-label="Genre directory pages"></nav></section>
+      <section id="artist-map-tools" hidden aria-label="Artist map sample"><div class="artist-map-tool-buttons"><button id="artist-map-close">← Genre map</button><button id="artist-map-list-toggle" aria-expanded="false" aria-controls="artist-map-results">Artists in this map</button></div><p id="artist-map-status" aria-live="polite"></p><input id="artist-map-query" type="search" placeholder="Filter this artist map…" aria-label="Filter artists in the map sample"><div id="artist-map-results" hidden></div></section>
+      <div class="map-controls"><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit-map">Fit map</button><button id="zoom-in" aria-label="Zoom in">+</button></div>
+      <div class="map-caption"><span><i></i> Source overlap neighborhoods</span><div><button id="show-unplaced">Unplaced genres</button><button id="browse-all">Browse all genres</button></div></div>
+    </section>
+    <aside id="detail" class="detail" aria-label="Selection details" aria-live="polite"><p class="loading">Loading the source graph…</p></aside>
+  </main>
+  <footer><span id="corpus-status">Verifying local data…</span><button id="about-toggle" aria-expanded="false" aria-controls="about">About this experiment</button></footer>
+  <section id="about" hidden><h2>A map of source observations</h2><p>Direct observations come from exact MusicBrainz artist records. Model neighbors and artist proposals are inferred and remain separate. Complete source artist pages use alphabetical display order. Older bounded examples use MusicBrainz ID order. Neither order measures importance.</p><p>Coordinates use only the modeled overlap graph. They describe a browsing arrangement, not musical truth. Genres without enough overlap stay searchable without coordinates. Map colors distinguish positions for readability; they do not encode acoustic measurements.</p><p id="evaluation-note"></p><p>This local research preview is not a published release. <a href="preview-receipt.json">View provenance receipt</a>.</p></section>
+</body>
+</html>

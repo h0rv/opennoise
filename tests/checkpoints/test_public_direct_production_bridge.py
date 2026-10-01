@@ -7,7 +7,10 @@ from unittest.mock import patch
 
 from opennoise.checkpoints.public_direct_bridge_candidate import (
     CandidateInputs,
-    build_public_direct_bridge_candidate,
+    DirectBridgeCoverage,
+    DirectBridgeRow,
+    PublicDirectBridgeCandidate,
+    candidate_sha256,
 )
 from opennoise.checkpoints.public_direct_production_bridge import (
     _CANDIDATE_SHA256,
@@ -28,7 +31,58 @@ _INPUTS = CandidateInputs(
 )
 
 
+def _candidate_fixture() -> PublicDirectBridgeCandidate:
+    """Small valid candidate for exercising gates without sealed catalog inputs."""
+    candidate = PublicDirectBridgeCandidate(
+        public_database_sha256="a" * 64,
+        static_discovery_sha256="b" * 64,
+        reconciliation_sha256="c" * 64,
+        canonical_layout_sha256="d" * 64,
+        primary_selection_sha256=_PRIMARY_SELECTION_SHA256,
+        rows=(
+            DirectBridgeRow(
+                catalog_genre_id=1,
+                source_genre_ref="wikidata:genre:Q1",
+                seed_id="item1",
+                reconciliation_disposition="reconciled",
+                artist_musicbrainz_id="00000000-0000-0000-0000-000000000001",
+                artist_catalog_id=2,
+                evidence_id=3,
+                source_key="fixture",
+                source_record_id="fixture:1",
+                authorization_status="display_and_export_authorized",
+                identifier_status="one_authorized_musicbrainz_artist_id",
+            ),
+        ),
+        coverage=DirectBridgeCoverage(
+            resolved_reconciliation_count=1,
+            positioned_seed_link_count=1,
+            distinct_catalog_genre_count=1,
+            direct_claim_catalog_genre_count=1,
+            already_static_catalog_genre_count=0,
+            new_direct_catalog_genre_count=1,
+            exact_direct_pair_count=1,
+            distinct_artist_count=1,
+            net_new_artist_count=1,
+        ),
+        output_sha256="0" * 64,
+    )
+    return candidate.model_copy(update={"output_sha256": candidate_sha256(candidate)})
+
+
 class PublicDirectProductionBridgeTests(unittest.TestCase):
+    @unittest.skipUnless(
+        all(
+            path.is_file()
+            for path in (
+                _INPUTS.public_database,
+                _INPUTS.static_discovery,
+                _INPUTS.reconciliation,
+                _INPUTS.canonical_layout,
+            )
+        ),
+        "sealed production bridge replay inputs are unavailable",
+    )
     def test_real_pinned_bridge_is_factual_and_hash_replayable(self) -> None:
         receipt = build_public_direct_production_bridge(_INPUTS)
 
@@ -62,46 +116,49 @@ class PublicDirectProductionBridgeTests(unittest.TestCase):
         )
 
     def test_same_count_candidate_row_drift_fails_closed_against_selection_pin(self) -> None:
-        candidate = build_public_direct_bridge_candidate(_INPUTS)
+        candidate = _candidate_fixture()
         changed = candidate.rows[0].model_copy(update={"source_key": "tampered"})
         tampered = candidate.model_copy(update={"rows": (changed, *candidate.rows[1:])})
+        tampered = tampered.model_copy(update={"output_sha256": candidate_sha256(tampered)})
 
         with (
             patch(
                 "opennoise.checkpoints.public_direct_production_bridge.build_public_direct_bridge_candidate",
                 return_value=tampered,
             ),
+            patch(
+                "opennoise.checkpoints.public_direct_production_bridge._CANDIDATE_SHA256",
+                candidate.output_sha256,
+            ),
             self.assertRaisesRegex(PublicDirectProductionBridgeError, "candidate selection"),
         ):
             build_public_direct_production_bridge(_INPUTS)
 
     def test_primary_selection_pin_is_checked_separately(self) -> None:
-        candidate = build_public_direct_bridge_candidate(_INPUTS).model_copy(
-            update={"primary_selection_sha256": "0" * 64}
-        )
+        candidate = _candidate_fixture().model_copy(update={"primary_selection_sha256": "0" * 64})
 
+        candidate = candidate.model_copy(update={"output_sha256": candidate_sha256(candidate)})
         with (
             patch(
-                "opennoise.checkpoints.public_direct_production_bridge.candidate_sha256",
-                return_value=_CANDIDATE_SHA256,
+                "opennoise.checkpoints.public_direct_production_bridge._CANDIDATE_SHA256",
+                candidate.output_sha256,
             ),
             self.assertRaisesRegex(PublicDirectProductionBridgeError, "primary selection"),
         ):
             _require_pinned_candidate(candidate)
 
     def test_tampered_base_static_hash_fails_closed(self) -> None:
-        candidate = build_public_direct_bridge_candidate(_INPUTS).model_copy(
-            update={"static_discovery_sha256": "0" * 64}
-        )
+        candidate = _candidate_fixture().model_copy(update={"static_discovery_sha256": "0" * 64})
 
+        candidate = candidate.model_copy(update={"output_sha256": candidate_sha256(candidate)})
         with (
             patch(
                 "opennoise.checkpoints.public_direct_production_bridge.build_public_direct_bridge_candidate",
                 return_value=candidate,
             ),
             patch(
-                "opennoise.checkpoints.public_direct_production_bridge.candidate_sha256",
-                return_value=_CANDIDATE_SHA256,
+                "opennoise.checkpoints.public_direct_production_bridge._CANDIDATE_SHA256",
+                candidate.output_sha256,
             ),
             self.assertRaisesRegex(PublicDirectProductionBridgeError, "additive base pin"),
         ):

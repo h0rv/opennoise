@@ -27,9 +27,12 @@ if (canvas instanceof HTMLCanvasElement) {
   const detail = document.querySelector('#map-detail');
   const query = document.querySelector('#query');
   const searchResults = document.querySelector('#search-results');
+  const searchStatus = document.querySelector('#search-status');
+  const browseStart = document.querySelector('#browse-start');
+  const overviewGuide = document.querySelector('#overview-guide');
   const endpoint = canvas.dataset.mapUrl;
   const discoveryEndpoint = canvas.dataset.discoveryUrl;
-  const state = { atlas: null, discovery: null, discoveryPromise: null, artist: null, camera: null, worldCenter: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map(), searchMatches: [] };
+  const state = { atlas: null, discovery: null, discoveryPromise: null, artist: null, camera: null, worldCenter: null, fitScale: 1, viewport: { width: 0, height: 0 }, focus: null, edges: [], neighborhoodIds: null, displayedIds: new Set(), frame: 0, drag: null, pointers: new Map(), pinch: null, moved: false, labelWidths: new Map(), searchMatches: [], searchActive: false };
   const overviewPadding = () => {
     const bounds = state.atlas.worldBounds;
     const density = state.atlas.nodes.length / ((bounds.x1 - bounds.x0) * (bounds.y1 - bounds.y0));
@@ -108,7 +111,7 @@ if (canvas instanceof HTMLCanvasElement) {
   const boxOverlapsRect = (box, rect) => box.x0 < rect.right && box.x1 > rect.left
     && box.y0 < rect.bottom && box.y1 > rect.top;
   const staticLabelLayers = (lod) => {
-    const overlays = [document.querySelector('#search'), detail, controls]
+    const overlays = [document.querySelector('#search'), detail, controls, overviewGuide]
       .filter((element) => element && !element.hidden)
       .map((element) => element.getBoundingClientRect());
     return state.atlas.staticLabels.map((label) => {
@@ -137,7 +140,8 @@ if (canvas instanceof HTMLCanvasElement) {
     const context = canvas.getContext('2d'); if (!context) return;
     if (canvas.width !== Math.round(state.viewport.width * ratio) || canvas.height !== Math.round(state.viewport.height * ratio)) { canvas.width = Math.round(state.viewport.width * ratio); canvas.height = Math.round(state.viewport.height * ratio); }
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, state.viewport.width, state.viewport.height);
-    const colors = palette(); const lod = level(); canvas.dataset.mapLod = String(lod); canvas.dataset.mapScale = String(state.camera.scale); canvas.dataset.mapCohorts = ''; context.font = '14px ui-sans-serif, system-ui, sans-serif';
+    const colors = palette(); const lod = level();
+    if (overviewGuide) overviewGuide.hidden = Boolean(state.focus) || lod > 0; canvas.dataset.mapLod = String(lod); canvas.dataset.mapScale = String(state.camera.scale); canvas.dataset.mapCohorts = ''; context.font = '14px ui-sans-serif, system-ui, sans-serif';
     state.displayedIds.clear();
     const measureLabel = (name) => {
       const key = `${context.font}\u0000${name}`;
@@ -257,17 +261,20 @@ if (canvas instanceof HTMLCanvasElement) {
     // boundary narrow: an unknown asset revision must not become public UI.
     const revision = payload?.revision;
     const supported = revision === 'static-direct-discovery-v1' || revision === 'static-direct-discovery-v2';
+    const ready = supported && payload?.availability === 'ready';
     return {
-    availability: supported && payload?.availability === 'ready' ? 'ready' : 'unavailable',
+    availability: ready ? 'ready' : 'unavailable',
     revision: supported ? revision : null,
-    genres: new Map((supported && Array.isArray(payload?.genres) ? payload.genres : []).filter((item) => typeof item?.node_id === 'string').map((item) => [item.node_id, item])),
-    artists: new Map((supported && Array.isArray(payload?.artists) ? payload.artists : []).filter((item) => typeof item?.artist_id === 'string').map((item) => [item.artist_id, item])),
+    genres: new Map((ready && Array.isArray(payload?.genres) ? payload.genres : []).filter((item) => typeof item?.node_id === 'string').map((item) => [item.node_id, item])),
+    artists: new Map((ready && Array.isArray(payload?.artists) ? payload.artists : []).filter((item) => typeof item?.artist_id === 'string').map((item) => [item.artist_id, item])),
     };
   };
   const closeSearchResults = ({ clear = false } = {}) => {
-    state.searchMatches = [];
+    state.searchMatches = []; state.searchActive = false;
     if (searchResults) { searchResults.replaceChildren(); searchResults.hidden = true; }
     if (query) { query.setAttribute('aria-expanded', 'false'); if (clear) query.value = ''; }
+    if (searchStatus) searchStatus.hidden = true;
+    if (browseStart) browseStart.hidden = Boolean(query?.value.trim());
   };
   const artistSearchContext = (artistId) => {
     const artist = state.discovery?.artists.get(artistId);
@@ -288,9 +295,10 @@ if (canvas instanceof HTMLCanvasElement) {
     showArtist(match.id);
   };
   const renderSearchResults = () => {
-    if (!query || !searchResults || !state.atlas) return;
+    if (!query || !searchResults || !state.atlas || !state.searchActive) return;
     const value = query.value.trim();
     if (!value) { closeSearchResults(); return; }
+    if (browseStart) browseStart.hidden = true;
     state.searchMatches = searchAtlas(state.atlas, state.discovery, value);
     searchResults.replaceChildren();
     for (const [index, match] of state.searchMatches.entries()) {
@@ -306,16 +314,45 @@ if (canvas instanceof HTMLCanvasElement) {
     }
     searchResults.hidden = state.searchMatches.length === 0;
     query.setAttribute('aria-expanded', String(state.searchMatches.length > 0));
+    if (searchStatus) {
+      searchStatus.hidden = state.searchMatches.length > 0;
+      searchStatus.textContent = state.discovery?.availability === 'unavailable'
+        ? 'No matching genres. Artist search is unavailable.'
+        : !state.discovery ? 'No matching genres. Loading artists…'
+        : 'No matches. Try another genre or artist name.';
+    }
+    schedule();
   };
   const loadDiscovery = () => {
-    if (state.discoveryPromise || !discoveryEndpoint) return state.discoveryPromise;
-    state.discoveryPromise = fetch(discoveryEndpoint).then((response) => response.json()).then((payload) => {
+    if (state.discoveryPromise) return state.discoveryPromise;
+    const settle = (payload) => {
+      const collapsed = detail?.classList.contains('is-collapsed') ?? false;
       state.discovery = normaliseDiscovery(payload);
       renderSearchResults();
       if (state.artist && !showArtist(state.artist, false)) { state.artist = null; replaceUrl(state.focus); }
       if (!state.artist && state.focus) showDetail(state.focus, state.edges);
-    }).catch(() => { state.discovery = normaliseDiscovery(null); if (state.focus) showDetail(state.focus, state.edges); });
+      if (collapsed && detail && !detail.hidden) {
+        detail.classList.add('is-collapsed');
+        const toggle = detail.querySelector('[data-map-action="toggle-detail"]');
+        if (toggle) { toggle.setAttribute('aria-expanded', 'false'); toggle.textContent = 'Expand'; }
+        schedule();
+      }
+    };
+    if (!discoveryEndpoint) { settle(null); return null; }
+    state.discoveryPromise = fetch(discoveryEndpoint).then((response) => {
+      if (!response.ok) throw new Error('Discovery data is unavailable.');
+      return response.json();
+    }).then(settle).catch(() => { settle(null); });
     return state.discoveryPromise;
+  };
+  const panelHeader = (title, kind) => {
+    const header = document.createElement('header'); header.className = 'detail-header';
+    const label = document.createElement('span'); label.className = 'detail-kind'; label.textContent = kind; header.append(label);
+    const heading = document.createElement('h2'); heading.textContent = title; header.append(heading);
+    const actions = document.createElement('div'); actions.className = 'detail-tools';
+    const collapse = document.createElement('button'); collapse.type = 'button'; collapse.dataset.mapAction = 'toggle-detail'; collapse.textContent = 'Collapse'; collapse.setAttribute('aria-expanded', 'true'); actions.append(collapse);
+    const close = document.createElement('button'); close.type = 'button'; close.dataset.mapAction = 'close-detail'; close.textContent = '×'; close.setAttribute('aria-label', 'Close detail and explore map'); actions.append(close);
+    header.append(actions); detail.append(header); detail.classList.remove('is-collapsed');
   };
   const detailHeading = (text) => { const heading = document.createElement('h3'); heading.textContent = text; detail.append(heading); };
   const detailList = () => { const list = document.createElement('ul'); detail.append(list); return list; };
@@ -340,11 +377,14 @@ if (canvas instanceof HTMLCanvasElement) {
   const showDetail = (id, edges) => {
     if (!detail) return;
     detail.replaceChildren();
-    const heading = document.createElement('h2'); heading.textContent = state.atlas.byId.get(id).name; detail.append(heading);
-    const zoom = document.createElement('button'); zoom.type = 'button'; zoom.className = 'zoom-here'; zoom.textContent = 'Zoom here'; zoom.addEventListener('click', zoomHere); detail.append(zoom);
-    if (edges.length) { const label = document.createElement('h3'); label.textContent = 'Structural connections'; detail.append(label); const list = document.createElement('ul'); for (const edge of edges) { const nodeId = edge.source === id ? edge.target : edge.source; const peer = state.atlas.byId.get(nodeId); if (!peer) continue; const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; link.textContent = peer.name; item.append(link); list.append(item); } detail.append(list); }
-    if (state.discovery?.availability === 'ready') {
-      detailHeading('Artists in this genre');
+    panelHeader(state.atlas.byId.get(id).name, 'Genre');
+    const zoom = document.createElement('button'); zoom.type = 'button'; zoom.className = 'zoom-here'; zoom.textContent = 'Explore this area'; zoom.addEventListener('click', zoomHere); detail.append(zoom);
+    if (edges.length) { const label = document.createElement('h3'); label.textContent = 'Structural connections'; detail.append(label); const list = document.createElement('ul'); list.className = 'genre-chips'; for (const edge of edges) { const nodeId = edge.source === id ? edge.target : edge.source; const peer = state.atlas.byId.get(nodeId); if (!peer) continue; const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(peer.id)}`; link.dataset.openNodeId = peer.id; link.textContent = peer.name; item.append(link); list.append(item); } detail.append(list); }
+    detailHeading('Artists in this genre');
+    const evidence = document.createElement('p'); evidence.className = 'artist-context'; evidence.textContent = 'Catalog observations · Connections on the map describe genre structure.'; detail.append(evidence);
+    if (!state.discovery) detailEmpty('Loading direct artist observations…');
+    else if (state.discovery.availability !== 'ready') detailEmpty('Direct artist observations are unavailable.');
+    else {
       const discoveryGenre = state.discovery.genres.get(id);
       if (!discoveryGenre) detailEmpty('No direct catalog observations for this map label.');
       else {
@@ -363,8 +403,8 @@ if (canvas instanceof HTMLCanvasElement) {
     if (!artist.memberships.some((membership) => membership.node_id === state.focus)) return false;
     state.artist = artistId; if (push) setUrl(state.focus, artistId); detail.replaceChildren();
     const backToGenre = document.createElement('button'); backToGenre.type = 'button'; backToGenre.className = 'detail-back'; backToGenre.dataset.mapAction = 'genre-detail'; backToGenre.textContent = `← ${state.atlas.byId.get(state.focus).name}`; detail.append(backToGenre);
+    panelHeader(artist.name, 'Artist');
     const selected = document.createElement('section'); selected.className = 'selected-artist'; detail.append(selected);
-    const heading = document.createElement('h2'); heading.textContent = artist.name; selected.append(heading);
     const sourceLinks = document.createElement('nav'); sourceLinks.className = 'artist-sources'; sourceLinks.setAttribute('aria-label', 'Artist sources');
     const musicbrainzUrl = authorizedMusicBrainzUrl(artist);
     if (musicbrainzUrl) {
@@ -377,7 +417,7 @@ if (canvas instanceof HTMLCanvasElement) {
     if (sourceLinks.childElementCount) selected.append(sourceLinks);
     const context = document.createElement('p'); context.className = 'artist-context'; context.textContent = `Directly observed in ${state.atlas.byId.get(state.focus).name}`; selected.append(context);
     detailHeading('Direct genres');
-    const genres = detailList();
+    const genres = detailList(); genres.className = 'genre-chips';
     for (const membership of artist.memberships) {
       const item = document.createElement('li'); const link = document.createElement('a'); link.href = `?open_focus=${encodeURIComponent(membership.node_id)}`; link.dataset.openNodeId = membership.node_id; link.textContent = membership.catalog_genre_name; item.append(link); genres.append(item);
     }
@@ -388,7 +428,7 @@ if (canvas instanceof HTMLCanvasElement) {
       return context ? { peer, relation } : null;
     }).filter(Boolean);
     if (similarEntries.length) {
-      detailHeading('Similar artists');
+      detailHeading('Artists with shared genres');
       const explanation = document.createElement('p'); explanation.className = 'artist-context'; explanation.textContent = 'Ranked by shared directly observed genres.'; detail.append(explanation);
       const similar = detailList(); similar.className = 'genre-artists';
       for (const { peer, relation } of similarEntries) {
@@ -431,9 +471,11 @@ if (canvas instanceof HTMLCanvasElement) {
     // at the overview scale.
     state.edges = neighborhood.edges;
     state.camera = cameraFor(state.edges);
+    // Keep the selected neighborhood above the mobile discovery sheet.
+    if (state.viewport.width <= 800) state.camera.y -= state.viewport.height * .16;
     syncWorldCenter();
     state.neighborhoodIds = new Set(neighborhood.nodeIds);
-    if (artistId && state.discovery?.availability === 'ready' && !showArtist(artistId, false)) {
+    if (artistId && state.discovery && !showArtist(artistId, false)) {
       state.artist = null; replaceUrl(id); showDetail(id, state.edges);
     } else if (!artistId || state.discovery?.availability !== 'ready') showDetail(id, state.edges);
     schedule();
@@ -510,13 +552,36 @@ if (canvas instanceof HTMLCanvasElement) {
     // the same membership guard as genre-list and search navigation.
     void focus(context.genreId, true, context.artistId);
   };
-  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') { if (state.artist) returnToGenreDetail(); else history.back(); } else if (action === 'in') { const target = nextLodScale(state.camera.scale, state.fitScale, state.atlas.maximumScale); if (target > state.camera.scale) state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, target / state.camera.scale, { min: state.fitScale, max: state.atlas.maximumScale }); schedule(); } else if (action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, 1 / 1.5, { min: state.fitScale, max: state.atlas.maximumScale }); schedule(); } else if (action === 'theme') { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; schedule(); } });
-  document.addEventListener('click', (event) => { const target = event.target.closest('[data-open-node-id]'); if (target) { event.preventDefault(); closeSearchResults(); void focus(target.dataset.openNodeId); return; } const similarArtist = event.target.closest('[data-open-similar-artist-id]'); if (similarArtist) { event.preventDefault(); closeSearchResults(); openSimilarArtist(similarArtist.dataset.openSimilarArtistId); return; } const artist = event.target.closest('[data-open-artist-id]'); if (artist) { event.preventDefault(); closeSearchResults(); showArtist(artist.dataset.openArtistId); return; } if (event.target.closest('[data-map-action="genre-detail"]') && state.focus) { event.preventDefault(); returnToGenreDetail(); } });
+  controls?.addEventListener('click', (event) => { const action = event.target.closest('button')?.dataset.mapAction; if (action === 'fit') { setUrl(null); fit(); } else if (action === 'back') { if (state.artist) returnToGenreDetail(); else history.back(); } else if (action === 'in') { const target = nextLodScale(state.camera.scale, state.fitScale, state.atlas.maximumScale); if (target > state.camera.scale) state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, target / state.camera.scale, { min: state.fitScale, max: state.atlas.maximumScale }); schedule(); } else if (action === 'out') { state.camera = zoomAtCenter(state.camera, { width: canvas.clientWidth, height: canvas.clientHeight }, 1 / 1.5, { min: state.fitScale, max: state.atlas.maximumScale }); schedule(); } else if (action === 'theme') { const root = document.documentElement; const current = root.dataset.theme ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); root.dataset.theme = current === 'dark' ? 'light' : 'dark'; schedule(); } });
+  canvas.addEventListener('keydown', (event) => {
+    if (!state.camera) return;
+    const directions = { ArrowLeft: [50, 0], ArrowRight: [-50, 0], ArrowUp: [0, 50], ArrowDown: [0, -50] };
+    const delta = directions[event.key];
+    if (delta) { event.preventDefault(); state.camera.x += delta[0]; state.camera.y += delta[1]; syncWorldCenter(); schedule(); }
+    else if (event.key === '+' || event.key === '=' || event.key === '-') { event.preventDefault(); controls?.querySelector(`[data-map-action="${event.key === '-' ? 'out' : 'in'}"]`)?.click(); }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.target.closest('input, textarea, [contenteditable="true"]')) { event.preventDefault(); query?.focus(); state.searchActive = true; renderSearchResults(); }
+  });
+  document.addEventListener('click', (event) => {
+    const panelAction = event.target.closest('[data-map-action]')?.dataset.mapAction;
+    if (panelAction === 'close-detail') {
+      state.focus = null; state.artist = null; state.edges = []; state.neighborhoodIds = null;
+      detail.hidden = true; if (back) back.hidden = true; setUrl(null); schedule(); return;
+    }
+    if (panelAction === 'toggle-detail') {
+      const collapsed = detail.classList.toggle('is-collapsed');
+      event.target.setAttribute('aria-expanded', String(!collapsed)); event.target.textContent = collapsed ? 'Expand' : 'Collapse'; schedule(); return;
+    }
+    const browse = event.target.closest('[data-browse-node-id]');
+    if (browse) { event.preventDefault(); closeSearchResults(); focus(browse.dataset.browseNodeId); zoomHere(); return; }
+    const target = event.target.closest('[data-open-node-id]'); if (target) { event.preventDefault(); closeSearchResults(); void focus(target.dataset.openNodeId); return; } const similarArtist = event.target.closest('[data-open-similar-artist-id]'); if (similarArtist) { event.preventDefault(); closeSearchResults(); openSimilarArtist(similarArtist.dataset.openSimilarArtistId); return; } const artist = event.target.closest('[data-open-artist-id]'); if (artist) { event.preventDefault(); closeSearchResults(); showArtist(artist.dataset.openArtistId); return; } if (event.target.closest('[data-map-action="genre-detail"]') && state.focus) { event.preventDefault(); returnToGenreDetail(); } });
   searchResults?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-search-match]'); if (!button) return;
     activateSearchMatch(state.searchMatches[Number(button.dataset.searchMatch)]);
   });
-  query?.addEventListener('input', () => { renderSearchResults(); if (!state.discoveryPromise) void loadDiscovery(); });
+  query?.addEventListener('input', () => { state.searchActive = true; renderSearchResults(); if (!state.discoveryPromise) void loadDiscovery(); });
+  query?.addEventListener('click', () => { if (query.value.trim()) { state.searchActive = true; renderSearchResults(); } });
   query?.addEventListener('keydown', (event) => {
     if (!state.atlas) return;
     const resultButtons = [...(searchResults?.querySelectorAll('button[data-search-match]') ?? [])];
@@ -540,6 +605,27 @@ if (canvas instanceof HTMLCanvasElement) {
   const initialArtist = initialFocus ? initialUrl.artistId : null;
   fetch(endpoint).then((response) => response.json()).then((payload) => {
     state.atlas = normaliseAtlasPayload(payload);
-    state.viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; fit(); renderSearchResults(); if (initialFocus) void focus(initialFocus, false, initialArtist);
+    state.viewport = { width: canvas.clientWidth, height: canvas.clientHeight }; fit(); renderSearchResults();
+    const coverage = document.querySelector('#atlas-coverage');
+    if (coverage) coverage.textContent = `${state.atlas.nodes.length.toLocaleString()} mapped genres · Zoom to reveal more`;
+    const families = document.querySelector('#overview-families');
+    if (families) { families.open = state.viewport.width > 800; families.addEventListener('toggle', schedule); }
+    const familyList = document.querySelector('#overview-family-list');
+    if (familyList) for (const landmark of state.atlas.browseLandmarks) {
+      if (!state.atlas.byId.has(landmark.root_id)) continue;
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.browseNodeId = landmark.root_id;
+      const name = document.createElement('span'); name.textContent = landmark.title; button.append(name);
+      if (Number.isSafeInteger(landmark.member_count) && landmark.member_count >= 0) {
+        const count = document.createElement('small'); count.textContent = `${landmark.member_count.toLocaleString()} labels`; button.append(count);
+      }
+      familyList.append(button);
+    }
+    const starts = document.querySelector('#browse-genres');
+    if (starts) for (const landmark of state.atlas.browseLandmarks.slice(0, 5)) {
+      const node = state.atlas.byId.get(landmark.nodeId ?? landmark.root_id ?? landmark.id)
+        ?? state.atlas.nodes.find((item) => item.name.toLocaleLowerCase() === landmark.title.toLocaleLowerCase());
+      if (!node) continue;
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.browseNodeId = node.id; button.textContent = node.name; starts.append(button);
+    } if (initialFocus) void focus(initialFocus, false, initialArtist);
   }).catch(() => { const error = document.createElement('p'); error.className = 'map-error'; error.textContent = 'Map data is unavailable.'; canvas.after(error); });
 }

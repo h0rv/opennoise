@@ -755,24 +755,45 @@ def _html(asset_paths: dict[str, Path]) -> str:
 </head>
 <body>
   <main id="map" aria-label="Music map">
-    <canvas id="semantic-map" role="img" aria-label="OpenNoise semantic music map"
+    <canvas id="semantic-map" role="img" tabindex="0" aria-label="OpenNoise semantic music map"
+            aria-describedby="map-keyboard-help"
             data-map-url="assets/{semantic_atlas}"
             data-discovery-url="assets/{static_discovery}"></canvas>
     <nav id="map-controls" aria-label="Map controls">
       <button type="button" data-map-action="back" hidden>Back</button>
-      <button type="button" data-map-action="fit">Fit</button>
+      <button type="button" data-map-action="fit">Overview</button>
       <button type="button" data-map-action="out" aria-label="Zoom out">-</button>
       <button type="button" data-map-action="in" aria-label="Zoom in">+</button>
       <button type="button" data-map-action="theme" aria-label="Toggle color theme">Theme</button>
     </nav>
+    <aside id="overview-guide" aria-label="Explore the atlas" hidden>
+      <h1>A world of music</h1>
+      <p id="atlas-coverage"></p>
+      <p class="overview-instructions">Choose a starting point, then zoom to reveal
+        its neighborhoods. Drag the map to explore.</p>
+      <details id="overview-families">
+        <summary>Browse starting points</summary>
+        <p class="overview-source">Counts describe mapped labels in each browse group.</p>
+        <div id="overview-family-list"></div>
+      </details>
+    </aside>
     <aside id="map-detail" aria-live="polite" hidden></aside>
   </main>
   <form id="search" role="search">
+    <div class="search-heading"><strong>OpenNoise</strong><span>A map of music</span></div>
     <label class="sr-only" for="query">Search genres and artists</label>
     <input id="query" type="search" placeholder="Search genres or artists" autocomplete="off"
            aria-controls="search-results" aria-expanded="false">
     <div id="search-results" aria-label="Search results" hidden></div>
+    <p id="search-status" class="search-status" aria-live="polite" hidden></p>
+    <div id="browse-start" class="browse-start">
+      <p>Find a genre. Follow its connections. Discover the artists.</p>
+      <div id="browse-genres" aria-label="Places to start"></div>
+    </div>
+    <p class="map-hint">Drag to explore · Scroll or pinch to zoom</p>
   </form>
+  <p id="map-keyboard-help" class="sr-only">Use arrow keys to pan the map, plus and minus to zoom.
+    Press slash to search genres and artists.</p>
   <script type="module" src="assets/{renderer_module}"></script>
 </body>
 </html>

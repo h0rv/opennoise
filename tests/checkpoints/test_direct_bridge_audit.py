@@ -32,6 +32,15 @@ _CURRENT_V2_ATLAS = Path(
     "730bca93300870d35b527f377eb883ae95a3f931aad7e820b013fa592c5bf4ac.json"
 )
 
+_SEALED_V1_INPUTS_PRESENT = all(
+    path.is_file()
+    for path in (
+        Path("data/public.sqlite"),
+        Path("data/model/open-construction-graph-v2.json"),
+        pinned_v1_discovery_path(),
+    )
+)
+
 
 def _audit() -> DirectBridgeAuditReport:
     return DirectBridgeAuditReport(
@@ -116,6 +125,10 @@ class DirectBridgeAuditTests(unittest.TestCase):
                     public_database,
                 )
 
+    @unittest.skipUnless(
+        _SEALED_V1_INPUTS_PRESENT,
+        "sealed v1 direct-bridge audit inputs are unavailable",
+    )
     def test_human_packet_is_ranked_read_only_and_source_bound(self) -> None:
         packet = direct_bridge_review_packet(
             Path("data/model/open-construction-graph-v2.json"),
@@ -142,6 +155,10 @@ class DirectBridgeAuditTests(unittest.TestCase):
             last["potential_direct_observation_lift"],
         )
 
+    @unittest.skipUnless(
+        _SEALED_V1_INPUTS_PRESENT,
+        "sealed v1 direct-bridge audit inputs are unavailable",
+    )
     def test_current_inputs_are_verified_and_source_bound(self) -> None:
         report = audit_direct_bridges(
             Path("data/model/open-construction-graph-v2.json"),
@@ -232,6 +249,10 @@ class DirectBridgeAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unknown audit edge"):
             build_direct_bridge_review_artifact(audit, (unknown,))
 
+    @unittest.skipUnless(
+        _SEALED_V1_INPUTS_PRESENT,
+        "sealed v1 direct-bridge audit inputs are unavailable",
+    )
     def test_review_cli_queues_verified_audit_then_appends_decision(self) -> None:
         discovery = pinned_v1_discovery_path()
         report = audit_direct_bridges(

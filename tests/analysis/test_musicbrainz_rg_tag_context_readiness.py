@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from opennoise.analysis.musicbrainz_rg_genre_recovery_v2 import (
@@ -100,20 +102,68 @@ def _sample_report() -> MusicBrainzRgGenreRecoveryV2Report:
     return draft.model_copy(update={"output_sha256": sample_report_sha256(draft)})
 
 
+def _public_inputs(root: Path) -> tuple[Path, Path]:
+    """Portable source-isolated P136 evidence and exact seed reconciliation."""
+    database = root / "public.sqlite"
+    with closing(sqlite3.connect(database)) as connection, connection:
+        connection.executescript("""
+            CREATE TABLE normalizable_artist_genre_evidence (
+                artist_id INTEGER, genre_id INTEGER, method_key TEXT
+            );
+            CREATE TABLE entity_identifiers (
+                entity_id INTEGER, identifier_type_id INTEGER,
+                namespace TEXT, normalized_value TEXT
+            );
+            CREATE TABLE identifier_types (id INTEGER, type_key TEXT);
+            INSERT INTO identifier_types VALUES
+                (1, 'musicbrainz_artist_id'), (2, 'wikidata_genre_qid');
+            INSERT INTO entity_identifiers VALUES
+                (1, 1, 'musicbrainz', 'artist-a'), (2, 1, 'musicbrainz', 'artist-b'),
+                (3, 2, 'wikidata', 'Q1'), (4, 2, 'wikidata', 'Q2');
+            INSERT INTO normalizable_artist_genre_evidence VALUES
+                (1, 3, 'wikidata_p136'), (2, 4, 'wikidata_p136');
+        """)
+    reconciliation = root / "reconciliation.json"
+    reconciliation.write_text(
+        json.dumps(
+            {
+                "dispositions": [
+                    {
+                        "source_item_id": seed,
+                        "normalized_name": name,
+                        "disposition": "reconciled",
+                        "public_identities": [
+                            {
+                                "namespace": "wikidata_genre_qid",
+                                "identifier": f"wikidata:genre:{qid}",
+                            }
+                        ],
+                    }
+                    for seed, name, qid in (
+                        ("seed-jazz", "jazz", "Q1"),
+                        ("seed-fusion", "fusion", "Q2"),
+                    )
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return database, reconciliation
+
+
 class MusicBrainzRgTagContextReadinessTests(unittest.TestCase):
     """The only permitted result without independent gold is abstention."""
 
     def test_fixture_gold_yields_a_no_score_readiness_checkpoint(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
+            database, reconciliation = _public_inputs(Path(temporary_directory))
             sample_path = Path(temporary_directory) / "sample.json"
             sample_path.write_text(json.dumps(_sample_report().model_dump(mode="json")))
 
             report = audit_musicbrainz_rg_positive_tag_context(
                 sample_report_path=sample_path,
-                wikidata_p136_database_path=Path("data/public.sqlite"),
-                seed_reconciliation_path=Path(
-                    ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json"
-                ),
+                wikidata_p136_database_path=database,
+                seed_reconciliation_path=reconciliation,
                 independent_gold_paths=(
                     Path("tests/fixtures/independent_artist_genre_gold_fixture_v1.json"),
                 ),
@@ -150,16 +200,17 @@ class MusicBrainzRgTagContextReadinessTests(unittest.TestCase):
 
     def test_source_isolated_positive_recovery_does_not_score_native_genres(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
+            database, reconciliation = _public_inputs(Path(temporary_directory))
             sample_path = Path(temporary_directory) / "sample.json"
             sample_path.write_text(json.dumps(_sample_report().model_dump(mode="json")))
             report = audit_musicbrainz_rg_positive_tag_context(
                 sample_report_path=sample_path,
-                wikidata_p136_database_path=Path("data/public.sqlite"),
-                seed_reconciliation_path=Path(
-                    ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json"
-                ),
+                wikidata_p136_database_path=database,
+                seed_reconciliation_path=reconciliation,
             )
 
+        self.assertEqual(report.wikidata_p136_overlapping_sample_positive_pair_count, 2)
+        self.assertEqual(report.positive_tag_exact_seed_hit_count, 2)
         self.assertEqual(report.readiness, "positive_only_recovery_not_full_quality_evaluation")
         self.assertEqual(report.native_proper_genre_observation_count, 1)
         self.assertFalse(report.native_proper_genres_used_as_targets)

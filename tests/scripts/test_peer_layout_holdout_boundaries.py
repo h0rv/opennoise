@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import patch
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -32,11 +33,21 @@ class PeerLayoutHoldoutBoundaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             candidate = Path(directory) / "candidate.json"
             candidate.write_bytes(b"{}")
-            with self.assertRaises(ValueError):
-                module.build_report(
-                    layout=Path(".cache/semantic-map-layout-v3/artifact.json"), candidate=candidate
-                )
+            layout = Path(directory) / "layout.json"
+            layout.write_bytes(b"fixture layout")
+            with (
+                patch.object(module, "_PINNED_LAYOUT_BYTE_SHA256", module._sha256(layout)),  # noqa: SLF001
+                self.assertRaisesRegex(ValueError, "candidate bytes"),
+            ):
+                module.build_report(layout=layout, candidate=candidate)
 
+    @unittest.skipUnless(
+        Path(".cache/semantic-map-layout-v3/artifact.json").is_file()
+        and Path(
+            ".cache/musicbrainz-peer-threshold-sensitivity-v1/conservative-peer-candidate-v2.json"
+        ).is_file(),
+        "sealed peer holdout replay inputs are unavailable",
+    )
     def test_zero_holdout_remains_an_abstention_without_proposals(self) -> None:
         module = _module(
             "conservative_peer_holdout_abstention",
@@ -82,8 +93,13 @@ class PeerLayoutHoldoutBoundaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             candidate = Path(directory) / "candidate.json"
             candidate.write_bytes(b"{}")
-            with self.assertRaises(ValueError):
+            layout = Path(directory) / "layout.json"
+            layout.write_bytes(b"fixture layout")
+            with (
+                patch.object(module, "_PINNED_LAYOUT_BYTE_SHA256", module._sha256(layout)),  # noqa: SLF001
+                self.assertRaisesRegex(ValueError, "candidate bytes"),
+            ):
                 module.build_report(
-                    layout=Path(".cache/semantic-map-layout-v3/artifact.json"),
+                    layout=layout,
                     baseline_candidate=candidate,
                 )

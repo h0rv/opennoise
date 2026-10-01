@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import patch
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -130,6 +131,15 @@ class ConservativePeerTerminalBoundaryTests(unittest.TestCase):
             with self.assertRaises(module.EvaluationError):
                 module._validate_candidate(candidate, reconciliation)  # noqa: SLF001
 
+    @unittest.skipUnless(
+        Path(
+            ".cache/musicbrainz-peer-threshold-sensitivity-v1/conservative-peer-candidate-v2.json"
+        ).is_file()
+        and Path(
+            ".cache/musicbrainz-full-seed-targets/pipeline/seed-reconciliation.json"
+        ).is_file(),
+        "sealed conservative peer replay inputs are unavailable",
+    )
     def test_terminal_gate_accepts_the_pinned_candidate_replay(self) -> None:
         module = _module(
             "conservative_peer_terminal_positive_gate",
@@ -156,9 +166,33 @@ class ConservativePeerTerminalBoundaryTests(unittest.TestCase):
             layout = Path(directory) / "layout.json"
             baseline.write_text("{}", encoding="utf-8")
             layout.write_text("{}", encoding="utf-8")
-            with self.assertRaises(module.MaterializationError):
+            receipt = Path(directory) / "report.json"
+            receipt.write_text(
+                json.dumps(
+                    {
+                        "inputs": {
+                            "baseline_candidate": {
+                                "logical_output_sha256": module._BASELINE_LOGICAL_SHA256,  # noqa: SLF001
+                                "settings_sha256": module._BASELINE_SETTINGS_SHA256,  # noqa: SLF001
+                                "byte_sha256": "0" * 64,
+                            },
+                            "layout": {
+                                "logical_output_sha256": module._LAYOUT_LOGICAL_SHA256,  # noqa: SLF001
+                                "byte_sha256": "0" * 64,
+                            },
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with (
+                patch.object(module, "_SENSITIVITY_REPORT_SHA256", module._sha256(receipt)),  # noqa: SLF001
+                self.assertRaisesRegex(
+                    module.MaterializationError, "local baseline or layout bytes"
+                ),
+            ):
                 module._validate_pinned_receipt(  # noqa: SLF001
-                    Path(".cache/musicbrainz-peer-threshold-sensitivity-v1/report.json"),
+                    receipt,
                     baseline,
                     layout,
                     "853353cfdc4d9ad1ea2a6faaaf58eff372b760133f70d3512e8d6de185838f76",

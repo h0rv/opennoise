@@ -752,7 +752,7 @@ async function run() {
     requireCheck(
       postPunkArtist.detail_headings.includes('Direct genres')
         && postPunkArtist.detail_headings.includes('Also in post-punk')
-        && postPunkArtist.detail_headings.includes('Similar artists')
+        && postPunkArtist.detail_headings.includes('Artists with shared genres')
         && postPunkArtist.similar_artist_buttons > 0
         && postPunkArtist.detail_artist_name !== 'post-punk',
       'artist discovery did not expose direct genres and direct-overlap similar artists',

@@ -1,5 +1,16 @@
 # Roadmap
 
+## Every Noise parity target
+
+Complete discovery parity is the product target. The latest source explorer
+supports complete source artist navigation, a genre directory, bounded artist
+maps, and retained release/track credit context with lazy static delivery.
+Artist-name coverage reaches 99.9904%, and macro-guarded model recovery improves.
+The source genre corpus still matches only 697 of 6,291 reference names.
+Missing genre evidence, external relevance evaluation, full release/playlist
+coverage, listening policy, and public promotion remain separate acceptance
+requirements. See [the measured parity checkpoint](EVERYNOISE_PARITY.md).
+
 ## Current product
 
 The default static map retains 6,291 immutable names; 2,945 have placed map
@@ -220,6 +231,21 @@ gate is open.
 
 ## Next data work
 
+- The [portable source model](checkpoints/DIRECT_CUSTODY_SPARSE_NEIGHBORHOODS_20260930.md)
+  now evaluates 387,435 exact MusicBrainz observations without the ignored raw
+  archive or historical assignments. Its validation-selected model improves
+  held-out Recall@10 by 0.4145 percentage points, with explicit cold-artist and
+  low-support limitations. A [static local explorer](checkpoints/DIRECT_CUSTODY_LOCAL_EXPLORER_20260930.md)
+  makes 697 native-labeled genres navigable while retaining 14 graph abstentions.
+  Artist proposals and geometry are not validated by the genre-recovery metric.
+- The [source model and UI batch](checkpoints/SOURCE_MODEL_UI_BATCH_20260930.md)
+  adds a verified exact-ID catalog and native genre dictionary replay. All 697
+  source genre UUIDs have display labels; 34,005 artist names remain unresolved,
+  and 4,845 colliding display labels remain separate identities. Public static
+  presentation recovery now permits UI iteration without pretending to restore
+  the sealed source database. The revised public-data UI and source-model
+  explorer remain separate local previews.
+
 - The local-only [release-group tag context checkpoint](checkpoints/MUSICBRAINZ_RG_POSITIVE_TAG_CONTEXT_P136_20260923.md)
   has 133 exact positive-tag matches among 781 source-isolated Wikidata P136
   positives. At fixed top-k, artist-local tags recover 132 of 781 and the
@@ -283,8 +309,12 @@ gate is open.
   A 20-seed human review packet contains 34 album candidates and three
   abstentions. It is local review material, not model input or an album
   recommendation claim; see the [Album context review](checkpoints/MUSICBRAINZ_ALBUM_CONTEXT_REVIEW_20260923.md).
-  Next, link release-group context to the existing direct and album-supported
-  artist evidence and playlist evidence while preserving each source role. See
+  The bounded [local album-context query](serving/LOCAL_ALBUM_DISCOVERY_CONTEXT.md)
+  now links those examples to exact credited artists' direct and album-supported
+  evidence and optional playlist occurrences while preserving each source role.
+  It verifies source bindings and makes no publication or inferred membership
+  claim. Its cross-source behavior is fixture-verified; the retained research
+  inputs remain necessary for a real-data query. See
   the [Album query checkpoint](checkpoints/MUSICBRAINZ_ALBUM_DISCOVERY_QUERY_20260923.md),
   [release-credit audit](checkpoints/MUSICBRAINZ_RELEASE_TRACK_DISCOVERY_SIGNAL_AUDIT_20260923.md),
   and [playlist role audit](checkpoints/LISTENBRAINZ_PLAYLIST_SIGNAL_QUALITY_AUDIT_20260923.md).

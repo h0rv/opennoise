@@ -6,6 +6,7 @@
 - uv owns the lockfile and virtual environment.
 - Poe is the task runner.
 - Ruff formats and lints. ty type-checks.
+- Node 24.19.0 runs the static renderer tests and browser certification harness.
 - mise and uv reuse the project environment and hard-linked cache across runs.
 
 ## Workflow
@@ -16,6 +17,11 @@ other commands. Run `poe bootstrap` only when preparing the historical Every Noi
 source cache. `poe build` creates and certifies `dist`, and `poe dev` serves that
 already-built directory. `poe deploy` rebuilds and certifies before it deploys to
 Cloudflare Pages.
+
+`poe check` includes the Node static tests and the Python suite. Tests that need
+ignored sealed release inputs explicitly skip when those inputs are absent;
+passing checkout checks does not certify a release. `poe build` still requires
+the sealed catalog and layout plus Chromium for browser certification.
 
 Archived checkpoint and research documents can refer to retired Poe
 invocations. Run their referenced scripts directly. Do not add an alias for a

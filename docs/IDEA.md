@@ -2,6 +2,14 @@
 
 Build OpenNoise, an open music map from public metadata and privacy safe aggregates.
 
+The product target is complete Every Noise discovery parity. The measured
+acceptance criteria and current gaps are recorded in [Every Noise parity](EVERYNOISE_PARITY.md).
+The latest local implementation makes all 198,409 source artists and 387,435
+direct observations browsable, enriches artist names to 99.9904%, adds bounded
+source-overlap artist maps and retained release/track context, and loads detailed
+metadata on demand. Its 697 source genres match only 11.08% of the dated
+6,291-genre reference. These improvements do not establish full parity.
+
 OpenNoise is the product name; the internal Python package and compatibility
 identifiers remain `opennoise` during the staged migration.
 
@@ -15,6 +23,16 @@ public catalog currently has direct artist claims for, for example, post-punk
 (36). The static export provides these links as a bounded discovery surface.
 Direct coverage remains sparse and uneven, and unresolved seeds have no
 fabricated artist membership.
+
+A separate portable, source-only experiment now reconstructs held-out
+MusicBrainz proper-genre observations from 387,435 exact artist–seed pairs.
+Validation-selected specificity transfer improves test Recall@10 from 42.2441%
+to 42.6586%; this is a small source-reconstruction gain, not independent
+recommendation quality. Its local explorer has exact native labels for all 697
+observed genres, 683 source-graph positions, and 14 searchable abstentions.
+Direct observations and inferred proposals remain separate. Neither the model
+nor the explorer changes the public release. See [the model checkpoint](checkpoints/DIRECT_CUSTODY_SPARSE_NEIGHBORHOODS_20260930.md)
+and [the local explorer](checkpoints/DIRECT_CUSTODY_LOCAL_EXPLORER_20260930.md).
 
 The historical Every Noise result is a local reference. It preserves 6,291
 immutable genre name seeds and dated observed map output. It does not claim to
@@ -123,6 +141,14 @@ They are not claims about the defining or most important works for a genre.
 A separate local run hydrated 55 releases and 660 tracks from already selected
 metadata examples. It replays both accepted and rejected API results offline,
 but it is not the published catalog or a complete MusicBrainz crawl.
+
+A bounded local album-context query now links native release-group examples
+to exact credited artists' direct observations, separate album-supported seed
+evidence, and optional exact playlist occurrences. It verifies the source
+bindings, retains proper-genre and tag facets separately, and reports missing
+playlist inputs and unmatched release groups explicitly. It does not infer
+artist membership from credits or playlists and has no publication or model
+promotion path. See [the local query contract](serving/LOCAL_ALBUM_DISCOVERY_CONTEXT.md).
 
 Generated genre labels and catalog identity bridges have separate review
 queues. The current local candidate queue has 484 unreviewed genre proposals
