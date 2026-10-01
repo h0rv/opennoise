@@ -2,6 +2,13 @@
 
 Audit date: 2026-08-30
 
+Current scope note, 2026-10-01: this audit records the source policy at its original
+date. Subsequent user-authorized research admits precomputed AcousticBrainz
+metadata under its own source and derived-run receipts. Audio recordings remain
+excluded. The older statements below about excluding audio-derived features do
+not prohibit that separately authorized metadata work. See the
+[exact-credit pilot](../checkpoints/ACOUSTICBRAINZ_BENCHMARK_METADATA_20260930.md).
+
 This report reviews open projects and public research related to Every Noise at Once. It focuses on work from 2023 through 2026, with older work where it explains the data or algorithms. The review used repository metadata, source files, project pages, papers, and official data and platform policies. No project was cloned or run. No restricted dataset was downloaded. No endpoint was scraped.
 
 ## Decision summary

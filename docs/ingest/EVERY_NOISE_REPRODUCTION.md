@@ -9,8 +9,10 @@ OpenNoise should support two separate results.
 The historical result reproduces what Every Noise at Once published. It preserves the final map, artist pages, examples, links, ranks, and playlists as dated observations. It does not claim to recreate Spotify's private calculations.
 
 The open result rebuilds the system from public metadata. It starts with open music identities,
-tags, relationships, and privacy-safe public listening aggregates. OpenNoise does not ingest audio or
-audio-derived feature data. Every stage records its inputs, method, version, and output. The open
+tags, relationships, and privacy-safe public listening aggregates. OpenNoise does not ingest audio
+recordings. Authorized, precomputed acoustic metadata can supply a separate sonic evidence facet;
+it retains its source license, exact recording identity, missingness, and model revision. Every
+stage records its inputs, method, version, and output. The open
 result can be measured against the historical result, but it remains a different map.
 
 An exact reproduction of the private model is not possible from the public record. Glenn McDonald disclosed several inputs and design choices, but he did not publish the source code, complete feature vectors, thresholds, weights, or the final layout transform. OpenNoise should show the difference between a disclosed fact and a fitted approximation.
@@ -252,8 +254,9 @@ Experiments can narrow the unknowns without claiming to recover private code.
 ### Coordinate experiment
 
 Crosswalk historical genres to open metadata evidence, then fit only on a training split and
-predict historical x and y on held out genres. The experiment may use metadata graph features but
-must not add audio or audio-derived inputs.
+predict historical x and y on held out genres. The experiment may use metadata graph features and
+separately authorized precomputed acoustic metadata, but must not ingest audio recordings. Keep
+metadata-only and acoustic-metadata results separate so their contributions can be measured.
 
 Compare monotonic linear regression, spline regression, partial least squares, random forest regression, and a small regularized neural model. Report R squared, mean absolute pixel error, rank correlation for each axis, and neighborhood preservation. A strong result shows that the open features explain the output. It does not prove the original formula.
 

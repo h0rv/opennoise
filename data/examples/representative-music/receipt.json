@@ -1,0 +1,8 @@
+{
+  "license": "MusicBrainz core metadata CC0 1.0",
+  "license_url": "https://musicbrainz.org/doc/About/Data_License",
+  "source_capture_receipt_sha256": "dc6fc8f755617909fb72ebec6cebcf4eb28912ca182bc706d7ea63f89d65135b",
+  "projection_sha256": "faf3852d01f723bd95737ebf323dd8ab81a67496802532a9fbe71957476fd660",
+  "omitted": "tags, aliases, ratings, search scores, media, audio, any genre assignment",
+  "scope": "Six ranked examples per artist per kind from bounded 25-recording MusicBrainz searches. Release-group links are independently exact artist-credited release edition context."
+}

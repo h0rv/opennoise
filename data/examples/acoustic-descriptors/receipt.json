@@ -1,0 +1,10 @@
+{
+  "attribution": "AcousticBrainz / MusicBrainz contributors",
+  "license": "CC0-1.0",
+  "omitted": "raw tags, cultural neighborhoods, audio, names, complete population",
+  "projection_sha256": "6f3410e5b1bca2c81734580c6d9cd7914293b6a3fe137a120783d5545659ec75",
+  "scope": "small reproducibility example; numeric projected artist descriptors only",
+  "source_receipt_sha256": "7c6d67baeadcbe0c81838b4c607f8bd3bf23bcf24867095682391289fc492306",
+  "source_summary_sha256": "2fe77404b1171fb2c6fbd1454c1670cc7b21d26dcc353d4c7073c39e520dfb44",
+  "version": 1
+}

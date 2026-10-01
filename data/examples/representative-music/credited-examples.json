@@ -1,0 +1,3766 @@
+{
+  "revision": "credited-music-examples-v1",
+  "publication_status": "local_candidate",
+  "method": "exact credits; album context; nonvariant; release and title diversity",
+  "limitations": "Bounded search sample, not defining quality, popularity or genre truth. Release-group links are context from independently exact artist-credited release editions, not recording-to-album credit inference or direct release-group credits.",
+  "rights": "MusicBrainz core metadata CC0; no audio or media assets acquired or embedded.",
+  "artists": [
+    {
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "name": "Jon Hopkins",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+          "title": "Glasstop",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3dea1d91-2313-34f5-b67d-9ff4405de96f"
+          ],
+          "first_release_date": "2004-08-09",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:594f843f-3ed1-423e-b1fc-f6aaf5bc7163",
+          "title": "Halcyon",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1e062b36-3736-3cef-a6f9-b1de22f83658"
+          ],
+          "first_release_date": "2001-07-30",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/594f843f-3ed1-423e-b1fc-f6aaf5bc7163",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:126aaa04-a746-424c-84de-01cb13a7a770",
+          "title": "Light Through the Veins (David Holmes remix)",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:ad354d74-3933-39d2-82a9-e96ea27ac0a8",
+            "musicbrainz:release-group:f095640b-77b2-34a8-b45a-2bbafe89a64f"
+          ],
+          "first_release_date": "2009-03-29",
+          "original_album": true,
+          "variant": true,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/126aaa04-a746-424c-84de-01cb13a7a770",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 0,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 165,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:d8a41475-0ed6-4879-a065-764a8ae743aa",
+          "title": "Open Eye Signal (Luke Abbott remix)",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:0fc29b1f-2d38-4e08-adcb-503f0a0ce535",
+            "musicbrainz:release-group:1c58a37a-24dc-493d-a40e-227ba1523d35"
+          ],
+          "first_release_date": "2013-04-29",
+          "original_album": true,
+          "variant": true,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/d8a41475-0ed6-4879-a065-764a8ae743aa",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 0,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 165,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:99fd475b-886d-48ae-9142-e3902b92eaba",
+          "title": "Reprise",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3dea1d91-2313-34f5-b67d-9ff4405de96f"
+          ],
+          "first_release_date": "2004-08-09",
+          "original_album": true,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/99fd475b-886d-48ae-9142-e3902b92eaba",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 0,
+            "distinct_title": 10
+          },
+          "score": 160,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:a29623f8-fbbf-4294-8c35-0565038e67bb",
+          "title": "Afterlife",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1e062b36-3736-3cef-a6f9-b1de22f83658"
+          ],
+          "first_release_date": "2001-07-30",
+          "original_album": true,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/a29623f8-fbbf-4294-8c35-0565038e67bb",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 0,
+            "distinct_title": 10
+          },
+          "score": 160,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:1c58a37a-24dc-493d-a40e-227ba1523d35",
+          "title": "Immunity",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1c58a37a-24dc-493d-a40e-227ba1523d35"
+          ],
+          "first_release_date": "2013-06-03",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/1c58a37a-24dc-493d-a40e-227ba1523d35",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:1e062b36-3736-3cef-a6f9-b1de22f83658",
+          "title": "Opalescent",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1e062b36-3736-3cef-a6f9-b1de22f83658"
+          ],
+          "first_release_date": "2001-07-30",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/1e062b36-3736-3cef-a6f9-b1de22f83658",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:3dea1d91-2313-34f5-b67d-9ff4405de96f",
+          "title": "Contact Note",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3dea1d91-2313-34f5-b67d-9ff4405de96f"
+          ],
+          "first_release_date": "2004-08-09",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/3dea1d91-2313-34f5-b67d-9ff4405de96f",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:f095640b-77b2-34a8-b45a-2bbafe89a64f",
+          "title": "Insides",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:f095640b-77b2-34a8-b45a-2bbafe89a64f"
+          ],
+          "first_release_date": "2009-05-05",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/f095640b-77b2-34a8-b45a-2bbafe89a64f",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:02eaba46-5742-4f95-96e1-86cfb51aa412",
+          "title": "Wilding: Original Soundtrack",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+            "60707f43-e919-4704-a3eb-1654aadb56e4"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:02eaba46-5742-4f95-96e1-86cfb51aa412"
+          ],
+          "first_release_date": "2026-01-16",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/02eaba46-5742-4f95-96e1-86cfb51aa412",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:0fc29b1f-2d38-4e08-adcb-503f0a0ce535",
+          "title": "Open Eye Signal",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "evidence_refs": [
+            "sha256:13d434c835821f5cde9e7d8b01eb3ea4ca565516c272cd5c4a3e2be441e6708e",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:0fc29b1f-2d38-4e08-adcb-503f0a0ce535"
+          ],
+          "first_release_date": "2013-04-29",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/0fc29b1f-2d38-4e08-adcb-503f0a0ce535",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "name": "Four Tet",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:3715b33e-9766-480f-ad0b-8437703af6b7",
+          "title": "Turtle Turtle Up",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3aff613c-6510-3868-9a80-36ec7f542981"
+          ],
+          "first_release_date": "2005-11-07",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/3715b33e-9766-480f-ad0b-8437703af6b7",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:885c71d0-b306-43df-a435-11433b06aa73",
+          "title": "Kool FM",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:43c64295-dfad-4faa-a78a-81c2b49e013a"
+          ],
+          "first_release_date": "2013-10-03",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/885c71d0-b306-43df-a435-11433b06aa73",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:23118e3d-2ac9-4e08-a1b8-18f77d68c6e1",
+          "title": "Sun Drums and Soil",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:03ba3086-da9a-397b-82b7-212d2d720dbd",
+            "musicbrainz:release-group:3aff613c-6510-3868-9a80-36ec7f542981",
+            "musicbrainz:release-group:b8ca3b73-8cdb-3f8f-ad27-46600f7078b2"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/23118e3d-2ac9-4e08-a1b8-18f77d68c6e1",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+          "title": "Lion",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:eed8ce49-0522-4829-a75c-54df667d9f6f"
+          ],
+          "first_release_date": "2012-10-15",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:187db0f2-f082-4159-8748-fa34146cacaf",
+          "title": "Ribbons",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:08e3ab20-16d2-383d-b113-2fb4820b2058"
+          ],
+          "first_release_date": "2008-04-21",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/187db0f2-f082-4159-8748-fa34146cacaf",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:2a23cd23-1a7d-4919-9a81-388e023edf2d",
+          "title": "0181, Part 1",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:a6f47f9c-8abf-44fa-ba49-8633fbf6e599"
+          ],
+          "first_release_date": "2013-02-11",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/2a23cd23-1a7d-4919-9a81-388e023edf2d",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:3aff613c-6510-3868-9a80-36ec7f542981",
+          "title": "Everything Ecstatic",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3aff613c-6510-3868-9a80-36ec7f542981"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/3aff613c-6510-3868-9a80-36ec7f542981",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:43c64295-dfad-4faa-a78a-81c2b49e013a",
+          "title": "Beautiful Rewind",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:43c64295-dfad-4faa-a78a-81c2b49e013a"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/43c64295-dfad-4faa-a78a-81c2b49e013a",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:27a3d416-eebb-3239-a135-1213f6fa38a3",
+          "title": "My Angel Rocks Back and Forth",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:27a3d416-eebb-3239-a135-1213f6fa38a3"
+          ],
+          "first_release_date": "2004-08-24",
+          "original_album": false,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/27a3d416-eebb-3239-a135-1213f6fa38a3",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:52600268-0879-454d-be55-c2b97319016e",
+          "title": "Live at the Echoplex in Los Angeles",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:52600268-0879-454d-be55-c2b97319016e"
+          ],
+          "first_release_date": "2010-04-27",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/52600268-0879-454d-be55-c2b97319016e",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:52b5db52-d142-46d1-a6cf-ee7d227f9f20",
+          "title": "Kool FM",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:52b5db52-d142-46d1-a6cf-ee7d227f9f20"
+          ],
+          "first_release_date": "2013-08",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/52b5db52-d142-46d1-a6cf-ee7d227f9f20",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:85a879ef-d8d8-3644-80b1-744b632eebfe",
+          "title": "A Joy",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "evidence_refs": [
+            "sha256:ec4b1c8ea6bef77b4c1468c776c13233f0d9a01b0500747efe93f992eee99549",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A3bcff06f-675a-451f-9075-99e8657047e8&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:85a879ef-d8d8-3644-80b1-744b632eebfe"
+          ],
+          "first_release_date": "2005",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/85a879ef-d8d8-3644-80b1-744b632eebfe",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "name": "Autechre",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+          "title": "Xylin Room",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1a6d6f6e-2988-3272-9e29-2d7edd258015"
+          ],
+          "first_release_date": "2003-04-07",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+          "title": "Tewe",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:fe4acfe9-6d1e-3565-8857-fb16ddc492ab"
+          ],
+          "first_release_date": "1997-02-17",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:4bc73c97-a204-42ad-877b-09a4445952ea",
+          "title": "Leterel",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:8b3d1836-e3cd-35eb-a8cd-d03d56bcc6f8"
+          ],
+          "first_release_date": "1995-11-06",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/4bc73c97-a204-42ad-877b-09a4445952ea",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:5b2373e2-21a4-449c-9b88-0c97c8c1e589",
+          "title": "Yulquen",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:44818c20-67ee-37d2-a8bf-d157fd99ae0b"
+          ],
+          "first_release_date": "1994-11-07",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/5b2373e2-21a4-449c-9b88-0c97c8c1e589",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:91fa0fd1-60d9-4536-8316-2e4489812fa4",
+          "title": "Silverside",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:02f20581-ff41-43d2-bd76-8c03dad3d6e9",
+            "musicbrainz:release-group:44818c20-67ee-37d2-a8bf-d157fd99ae0b",
+            "musicbrainz:release-group:4fd3eb80-ed84-3367-a71b-2e5a890ecd12"
+          ],
+          "first_release_date": "1994-11-07",
+          "original_album": true,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/91fa0fd1-60d9-4536-8316-2e4489812fa4",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:a6b3092f-9295-4f34-b9bc-2af0c0022189",
+          "title": "Recury",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:ea06a7fe-1092-40b3-9469-6e8a945ecee9",
+            "musicbrainz:release-group:fe4acfe9-6d1e-3565-8857-fb16ddc492ab"
+          ],
+          "first_release_date": "1997-02-17",
+          "original_album": true,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/a6b3092f-9295-4f34-b9bc-2af0c0022189",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:373e0d94-bd5c-3a9b-8b36-4899b33bfcb5",
+          "title": "Untilted",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:373e0d94-bd5c-3a9b-8b36-4899b33bfcb5"
+          ],
+          "first_release_date": "2005-04-09",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/373e0d94-bd5c-3a9b-8b36-4899b33bfcb5",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:1a6d6f6e-2988-3272-9e29-2d7edd258015",
+          "title": "Draft 7.30",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1a6d6f6e-2988-3272-9e29-2d7edd258015"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/1a6d6f6e-2988-3272-9e29-2d7edd258015",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:44818c20-67ee-37d2-a8bf-d157fd99ae0b",
+          "title": "Amber",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:44818c20-67ee-37d2-a8bf-d157fd99ae0b"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/44818c20-67ee-37d2-a8bf-d157fd99ae0b",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:8b3d1836-e3cd-35eb-a8cd-d03d56bcc6f8",
+          "title": "Tri Repetae",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:8b3d1836-e3cd-35eb-a8cd-d03d56bcc6f8"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/8b3d1836-e3cd-35eb-a8cd-d03d56bcc6f8",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:fe4acfe9-6d1e-3565-8857-fb16ddc492ab",
+          "title": "Chiastic Slide",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:fe4acfe9-6d1e-3565-8857-fb16ddc492ab"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/fe4acfe9-6d1e-3565-8857-fb16ddc492ab",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:3adc7d47-78f2-3769-91a6-08f9375ab6b4",
+          "title": "We R Are Why / Are Y Are We?",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "evidence_refs": [
+            "sha256:89becdca35364ea9780bf92c94810fa56d7e7eddeb12030880b618339e696c33",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A410c9baf-5469-44f6-9852-826524b80c61&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3adc7d47-78f2-3769-91a6-08f9375ab6b4"
+          ],
+          "first_release_date": "1996-04-14",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/3adc7d47-78f2-3769-91a6-08f9375ab6b4",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "name": "Squarepusher",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+          "title": "4026 Melt 3",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:07f2f865-2a7d-44e3-ade2-5fb520edc8b6",
+            "musicbrainz:release-group:1dc3c396-9eb8-33f2-b905-cbe36fd1bada"
+          ],
+          "first_release_date": "2006-10-11",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:623f308e-7cd3-413a-a641-534266e65732",
+          "title": "Shin Triad",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:6027638b-9ac6-3da0-b689-fb3804629936"
+          ],
+          "first_release_date": "1998-10-12",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/623f308e-7cd3-413a-a641-534266e65732",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:6278a2ab-4436-4077-a779-97268d3af3cf",
+          "title": "Tesko",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:fe073d16-6644-3ce6-a3cb-fbd07996d4a9"
+          ],
+          "first_release_date": "1999-11-08",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/6278a2ab-4436-4077-a779-97268d3af3cf",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:ae9e3578-da83-438d-8d07-80e22813e124",
+          "title": "My Fucking Sound",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:d23b8787-52a7-3b9c-bf94-862d17410ea7"
+          ],
+          "first_release_date": "2001-06-16",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/ae9e3578-da83-438d-8d07-80e22813e124",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:c6152bcf-20fb-49dc-a57c-8b58ab0cf3dd",
+          "title": "I Wish You Could Talk",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1981689e-d70a-4ae2-9dd0-1627c3621a1a",
+            "musicbrainz:release-group:3e6ece2f-8823-3300-be89-3a18193f075b",
+            "musicbrainz:release-group:d23b8787-52a7-3b9c-bf94-862d17410ea7"
+          ],
+          "first_release_date": "2001-06-16",
+          "original_album": true,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/c6152bcf-20fb-49dc-a57c-8b58ab0cf3dd",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:fb74906d-d2c5-452f-8316-c4f406f437be",
+          "title": "Hanningfield Window",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1dc3c396-9eb8-33f2-b905-cbe36fd1bada",
+            "musicbrainz:release-group:37e0db6d-c272-375e-ac91-d0f1aa398a26",
+            "musicbrainz:release-group:d9cbc6de-e55b-38c9-b54b-33a812a3512b"
+          ],
+          "first_release_date": "2006-09-04",
+          "original_album": true,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/fb74906d-d2c5-452f-8316-c4f406f437be",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:1dc3c396-9eb8-33f2-b905-cbe36fd1bada",
+          "title": "Hello Everything",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1dc3c396-9eb8-33f2-b905-cbe36fd1bada"
+          ],
+          "first_release_date": "2006-10-11",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/1dc3c396-9eb8-33f2-b905-cbe36fd1bada",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:6027638b-9ac6-3da0-b689-fb3804629936",
+          "title": "Music Is Rotted One Note",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:6027638b-9ac6-3da0-b689-fb3804629936"
+          ],
+          "first_release_date": "1998",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/6027638b-9ac6-3da0-b689-fb3804629936",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:d23b8787-52a7-3b9c-bf94-862d17410ea7",
+          "title": "Go Plastic",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:d23b8787-52a7-3b9c-bf94-862d17410ea7"
+          ],
+          "first_release_date": "2001",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/d23b8787-52a7-3b9c-bf94-862d17410ea7",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:fe073d16-6644-3ce6-a3cb-fbd07996d4a9",
+          "title": "Selection Sixteen",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:fe073d16-6644-3ce6-a3cb-fbd07996d4a9"
+          ],
+          "first_release_date": "1999-11-08",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/fe073d16-6644-3ce6-a3cb-fbd07996d4a9",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:07f2f865-2a7d-44e3-ade2-5fb520edc8b6",
+          "title": "Vacuum Tracks",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:07f2f865-2a7d-44e3-ade2-5fb520edc8b6"
+          ],
+          "first_release_date": "2006",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/07f2f865-2a7d-44e3-ade2-5fb520edc8b6",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:5e2b5f10-48d9-3094-839c-c1ec0e9733bf",
+          "title": "Conumber E:P",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "evidence_refs": [
+            "sha256:761b2033633b5475d98fcc590c33199dd432403878886abbd12b92ccc5a88712",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A4d86ad4e-28d8-4e9f-8cf4-735c57060fdc&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:5e2b5f10-48d9-3094-839c-c1ec0e9733bf"
+          ],
+          "first_release_date": "1995",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/5e2b5f10-48d9-3094-839c-c1ec0e9733bf",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "name": "Boards of Canada",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:a3c49027-eb58-4e16-8848-28a857f936cd",
+          "title": "Oscar See Through Red Eye",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:401bc572-414c-3cb2-b2b8-fbef17eb9ab0",
+            "musicbrainz:release-group:a1b82340-2b7d-3b98-89d2-a3398da63f2d",
+            "musicbrainz:release-group:f357a554-cdd6-39e0-a63c-28b26c854473"
+          ],
+          "first_release_date": "2005-10-12",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/a3c49027-eb58-4e16-8848-28a857f936cd",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:cd9072f6-15d7-4046-9849-6389a791dcf6",
+          "title": "Energy Warning",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:8183834a-6c8a-39ef-a7bc-a82f79b929e9"
+          ],
+          "first_release_date": "2002-02-13",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/cd9072f6-15d7-4046-9849-6389a791dcf6",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:eeca1d57-b7c9-452b-83d7-ba628484dbaf",
+          "title": "Transmisiones Ferox",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:77d7c506-8d47-4d68-9615-f25db638bbea"
+          ],
+          "first_release_date": "2013-06-05",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/eeca1d57-b7c9-452b-83d7-ba628484dbaf",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:0aed3058-e5a6-40cf-8725-afd091db447c",
+          "title": "[untitled]",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:89c5f694-cf43-4776-8a76-a13364342cad"
+          ],
+          "first_release_date": "1995",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/0aed3058-e5a6-40cf-8725-afd091db447c",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:7335ef2c-24c1-4ec2-b032-898eff19280b",
+          "title": "Davie Addison",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:89c5f694-cf43-4776-8a76-a13364342cad",
+            "musicbrainz:release-group:9588e039-1f95-3603-9c73-07a6269acbe5",
+            "musicbrainz:release-group:d5e5da66-8293-4518-ba06-53fbcfabc61e"
+          ],
+          "first_release_date": "1995",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/7335ef2c-24c1-4ec2-b032-898eff19280b",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:ef005987-8928-475f-836b-b82fd99a6875",
+          "title": "Music for Pylons",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:d07fb1c0-d5f3-302a-bde3-3236e7d991e8",
+            "musicbrainz:release-group:d5e5da66-8293-4518-ba06-53fbcfabc61e"
+          ],
+          "first_release_date": "1996",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/ef005987-8928-475f-836b-b82fd99a6875",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:401bc572-414c-3cb2-b2b8-fbef17eb9ab0",
+          "title": "The Campfire Headphase",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:401bc572-414c-3cb2-b2b8-fbef17eb9ab0"
+          ],
+          "first_release_date": "2005",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/401bc572-414c-3cb2-b2b8-fbef17eb9ab0",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:77d7c506-8d47-4d68-9615-f25db638bbea",
+          "title": "Tomorrow\u2019s Harvest",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:77d7c506-8d47-4d68-9615-f25db638bbea"
+          ],
+          "first_release_date": "2013-06-05",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/77d7c506-8d47-4d68-9615-f25db638bbea",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:8183834a-6c8a-39ef-a7bc-a82f79b929e9",
+          "title": "Geogaddi",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:8183834a-6c8a-39ef-a7bc-a82f79b929e9"
+          ],
+          "first_release_date": "2002",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/8183834a-6c8a-39ef-a7bc-a82f79b929e9",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:735a3279-5e42-3e58-9122-2628ec55d0fb",
+          "title": "2000-10-14: The Incredible Warp Light House Party, London, UK",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:735a3279-5e42-3e58-9122-2628ec55d0fb"
+          ],
+          "first_release_date": "2000-10-14",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/735a3279-5e42-3e58-9122-2628ec55d0fb",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:a3e8d2d8-9cdd-3f14-a029-27bdfb4b0f95",
+          "title": "1999-11-05: Warp Records 10th Anniversary Party, The Z Rooms, Old Truman Brewery, London, UK",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:a3e8d2d8-9cdd-3f14-a029-27bdfb4b0f95"
+          ],
+          "first_release_date": "1999-11-05",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/a3e8d2d8-9cdd-3f14-a029-27bdfb4b0f95",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:89c5f694-cf43-4776-8a76-a13364342cad",
+          "title": "Random 35 Tracks Tape",
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "evidence_refs": [
+            "sha256:0093c5f3800361904bc3436de36eeb82d08a1ab55db25a86f1e64734b9001891",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69158f97-4c07-4c4e-baf8-4e4ab1ed666e&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:89c5f694-cf43-4776-8a76-a13364342cad"
+          ],
+          "first_release_date": "",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/89c5f694-cf43-4776-8a76-a13364342cad",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 145,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "name": "Floating Points",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:33cc794d-1aca-44b6-af3d-6309a503ad93",
+          "title": "Del oro",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:2df55d1b-3272-49cd-b6cb-763bcd6be6ea",
+            "musicbrainz:release-group:70410894-5005-4fac-a254-c82912a069cc",
+            "musicbrainz:release-group:bafd14d4-c4fc-41e7-a5dd-3dae69d9f15f",
+            "musicbrainz:release-group:c0dc8b48-fc83-4883-8367-569034f07305",
+            "musicbrainz:release-group:cc88fb12-4dc0-409c-bfc1-5b6c641ec6c5"
+          ],
+          "first_release_date": "2024-06-04",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/33cc794d-1aca-44b6-af3d-6309a503ad93",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:efcda6da-a3e5-45d3-8238-4071320b4cba",
+          "title": "Movements 1\u20135",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+            "b3a0912a-a62a-4388-9368-7cb21ed5caf9",
+            "38712b4c-0fd4-4c65-8c7a-45676fecc973"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:970f689d-1778-4953-b3ed-48d057625724"
+          ],
+          "first_release_date": "2020-11-24",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/efcda6da-a3e5-45d3-8238-4071320b4cba",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:02e8f439-99fc-4427-8c12-2b08097d86e6",
+          "title": "Obfuse",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:f82b9f5c-8ee4-464e-8aef-af7eca56a3e4"
+          ],
+          "first_release_date": "2011-11-21",
+          "original_album": false,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/02e8f439-99fc-4427-8c12-2b08097d86e6",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:0efc83c3-92f6-42b0-9f04-1d558d017204",
+          "title": "Shangrila",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:54e4e0ff-61ba-30a4-98ec-0bcefbb8e5f9"
+          ],
+          "first_release_date": "2009-03-30",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/0efc83c3-92f6-42b0-9f04-1d558d017204",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:1d71137a-f2e5-423a-9fd7-01e77184de3b",
+          "title": "Peroration Five",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:2fa47ee5-5b48-4959-9402-d4c074219100"
+          ],
+          "first_release_date": "2009-08-24",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/1d71137a-f2e5-423a-9fd7-01e77184de3b",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:4025a3a5-cfa3-4100-bb3d-544daf59089d",
+          "title": "Lucerne Valley",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:76f7b7b0-9368-4269-9257-4d33bd5147de"
+          ],
+          "first_release_date": "2017-06-30",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/4025a3a5-cfa3-4100-bb3d-544daf59089d",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:70410894-5005-4fac-a254-c82912a069cc",
+          "title": "Cascade",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:70410894-5005-4fac-a254-c82912a069cc"
+          ],
+          "first_release_date": "2024-09-13",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/70410894-5005-4fac-a254-c82912a069cc",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:970f689d-1778-4953-b3ed-48d057625724",
+          "title": "Promises",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+            "b3a0912a-a62a-4388-9368-7cb21ed5caf9",
+            "38712b4c-0fd4-4c65-8c7a-45676fecc973"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:970f689d-1778-4953-b3ed-48d057625724"
+          ],
+          "first_release_date": "2020-11-24",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/970f689d-1778-4953-b3ed-48d057625724",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:15a7b141-8919-4877-8a09-217202601991",
+          "title": "Ambery",
+          "credited_artist_mbids": [
+            "bca46a0c-25c9-42ca-98c2-e64c8a5e337e",
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:15a7b141-8919-4877-8a09-217202601991"
+          ],
+          "first_release_date": "2025-10-23",
+          "original_album": false,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/15a7b141-8919-4877-8a09-217202601991",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:2df55d1b-3272-49cd-b6cb-763bcd6be6ea",
+          "title": "Key103",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:2df55d1b-3272-49cd-b6cb-763bcd6be6ea"
+          ],
+          "first_release_date": "2024-07-09",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/2df55d1b-3272-49cd-b6cb-763bcd6be6ea",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:313b5831-a909-4fd9-ad49-dfb60beb67c0",
+          "title": "Facilita",
+          "credited_artist_mbids": [
+            "bca46a0c-25c9-42ca-98c2-e64c8a5e337e",
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:313b5831-a909-4fd9-ad49-dfb60beb67c0"
+          ],
+          "first_release_date": "2025-10-24",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/313b5831-a909-4fd9-ad49-dfb60beb67c0",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:41e118b6-b6dc-4255-b06c-3e48479f0c83",
+          "title": "Far Away Tapes 016",
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "evidence_refs": [
+            "sha256:14efa2da1f8d7eaf80810ad2c1fc55445a38bc6090821bdc03b07fdf59666c2c",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:41e118b6-b6dc-4255-b06c-3e48479f0c83"
+          ],
+          "first_release_date": "2019-06-24",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/41e118b6-b6dc-4255-b06c-3e48479f0c83",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "name": "Caribou",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:1466d83d-cbe9-4c8f-9b63-df038350a773",
+          "title": "Found Out",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1e103be2-b071-40da-a88b-8e2f4732a8eb"
+          ],
+          "first_release_date": "2015",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/1466d83d-cbe9-4c8f-9b63-df038350a773",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+          "title": "Eli",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:6f6afa59-0d9e-4513-947b-d349d46d70cc",
+            "musicbrainz:release-group:8bf6c7db-9391-4e87-9c14-ee59591347ca",
+            "musicbrainz:release-group:93f286dc-1c9b-3b3e-bbd2-59334556158d",
+            "musicbrainz:release-group:ae93330c-fa37-3e17-909a-e5da060021b7"
+          ],
+          "first_release_date": "2007-08-17",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:429893fd-5242-4526-898e-134c3eb93a0f",
+          "title": "After Hours",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:24fece07-e0cc-3efd-8b07-25f7dae2094f",
+            "musicbrainz:release-group:ae93330c-fa37-3e17-909a-e5da060021b7"
+          ],
+          "first_release_date": "2007-08-17",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/429893fd-5242-4526-898e-134c3eb93a0f",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:f261c43a-efcb-47cb-8fe5-c1d3e1d3c97b",
+          "title": "Crayon",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:71e5ccb7-0000-302f-9e58-dc8e4ee3d217",
+            "musicbrainz:release-group:cb933c4c-a47e-3311-8c16-af438c868a2c",
+            "musicbrainz:release-group:d1b0f3fb-f601-3702-85cc-460bb3fb9a08",
+            "musicbrainz:release-group:f4f0fe8e-9072-3220-811c-9743f26c8161"
+          ],
+          "first_release_date": "2003-03-31",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/f261c43a-efcb-47cb-8fe5-c1d3e1d3c97b",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:4ab258ea-176b-4714-8107-8509ba266a61",
+          "title": "Bowls (Gavin Russom's rework)",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1e103be2-b071-40da-a88b-8e2f4732a8eb"
+          ],
+          "first_release_date": "2015",
+          "original_album": true,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/4ab258ea-176b-4714-8107-8509ba266a61",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 0,
+            "distinct_title": 10
+          },
+          "score": 160,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:685999dc-aac7-4265-9acc-7c3dbbaa3763",
+          "title": "Sun",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1e103be2-b071-40da-a88b-8e2f4732a8eb"
+          ],
+          "first_release_date": "2015",
+          "original_album": true,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/685999dc-aac7-4265-9acc-7c3dbbaa3763",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 0,
+            "distinct_title": 10
+          },
+          "score": 160,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:ae93330c-fa37-3e17-909a-e5da060021b7",
+          "title": "Andorra",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:ae93330c-fa37-3e17-909a-e5da060021b7"
+          ],
+          "first_release_date": "2007-08-17",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/ae93330c-fa37-3e17-909a-e5da060021b7",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:1e103be2-b071-40da-a88b-8e2f4732a8eb",
+          "title": "Swim",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1e103be2-b071-40da-a88b-8e2f4732a8eb"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/1e103be2-b071-40da-a88b-8e2f4732a8eb",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:71e5ccb7-0000-302f-9e58-dc8e4ee3d217",
+          "title": "Up in Flames",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:71e5ccb7-0000-302f-9e58-dc8e4ee3d217"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/71e5ccb7-0000-302f-9e58-dc8e4ee3d217",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:0bcd17a8-18fe-3028-9cd0-7214f4791654",
+          "title": "Marino",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:0bcd17a8-18fe-3028-9cd0-7214f4791654"
+          ],
+          "first_release_date": "2005-11-07",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/0bcd17a8-18fe-3028-9cd0-7214f4791654",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:6f6afa59-0d9e-4513-947b-d349d46d70cc",
+          "title": "Eli",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:6f6afa59-0d9e-4513-947b-d349d46d70cc"
+          ],
+          "first_release_date": "2008-05-08",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/6f6afa59-0d9e-4513-947b-d349d46d70cc",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:a746ec28-9863-30f6-a01e-a2bc04c6660c",
+          "title": "Melody Day",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "evidence_refs": [
+            "sha256:cda174ae84ddfa430e2d7032348baa17ce548c6273cb524900d6dae99106256d",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A735e3514-a8ae-401f-af3b-6300df1b8d2c&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:a746ec28-9863-30f6-a01e-a2bc04c6660c"
+          ],
+          "first_release_date": "2007-07-10",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/a746ec28-9863-30f6-a01e-a2bc04c6660c",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "name": "Burial (UK dubstep)",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:0feba647-01f6-489b-b8d4-a18de429a5af",
+          "title": "Gutted",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:2c28f0ee-bab8-30e1-94bb-399e1916d039"
+          ],
+          "first_release_date": "2007-05-21",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/0feba647-01f6-489b-b8d4-a18de429a5af",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:17abfe47-bd84-4e6d-b584-2ba2a5973a36",
+          "title": "In McDonalds",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:fddedc4f-7a2e-3d7d-9ec5-1705c416f3f4"
+          ],
+          "first_release_date": "2007-11-05",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/17abfe47-bd84-4e6d-b584-2ba2a5973a36",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd",
+          "title": "Ghost Hardware",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:2bb9f69b-8090-3bd9-bb09-5c44268e3f7d",
+            "musicbrainz:release-group:362227d7-b7c5-4ce1-a681-6668de9e4472",
+            "musicbrainz:release-group:427047b9-09b5-3740-b8f8-3c1cb5ad6787",
+            "musicbrainz:release-group:8051cd29-f1fb-3d98-8039-d1aa9e7c29e8",
+            "musicbrainz:release-group:8e12eedd-ef46-46c3-b437-b244e4e277fe",
+            "musicbrainz:release-group:976cc13f-6397-488d-aba1-974d30ec5da9",
+            "musicbrainz:release-group:cb41b95b-5250-4fec-b41e-f458ebba3cc5",
+            "musicbrainz:release-group:fddedc4f-7a2e-3d7d-9ec5-1705c416f3f4"
+          ],
+          "first_release_date": "2007-06-15",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:e66b1022-d2d4-4d92-8916-72970de6426e",
+          "title": "Archangel",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:4d66e589-cbbc-4ae6-8d6e-1a795ce97f03",
+            "musicbrainz:release-group:becb2323-a596-4c51-95e7-59871082041e",
+            "musicbrainz:release-group:c0ee4f48-f6a1-3aff-b9c3-0322b53aa9c8",
+            "musicbrainz:release-group:c41027f2-9784-4a0d-9d74-9d9910e5ac60",
+            "musicbrainz:release-group:fddedc4f-7a2e-3d7d-9ec5-1705c416f3f4"
+          ],
+          "first_release_date": "2007-11-05",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/e66b1022-d2d4-4d92-8916-72970de6426e",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:8a39d6ae-deac-4cc3-b398-1a12f34a34a9",
+          "title": "[Untrue intro]",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:fddedc4f-7a2e-3d7d-9ec5-1705c416f3f4"
+          ],
+          "first_release_date": "2007-11-05",
+          "original_album": true,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/8a39d6ae-deac-4cc3-b398-1a12f34a34a9",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 0,
+            "distinct_title": 10
+          },
+          "score": 160,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:007c5bdd-6666-4e48-9e25-1285bca13343",
+          "title": "Distant Lights",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:5a126a78-7a0b-4216-8f54-cfeeade2d7ba"
+          ],
+          "first_release_date": "2007",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/007c5bdd-6666-4e48-9e25-1285bca13343",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:2c28f0ee-bab8-30e1-94bb-399e1916d039",
+          "title": "Burial",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:2c28f0ee-bab8-30e1-94bb-399e1916d039"
+          ],
+          "first_release_date": "2007-05-21",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/2c28f0ee-bab8-30e1-94bb-399e1916d039",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:fddedc4f-7a2e-3d7d-9ec5-1705c416f3f4",
+          "title": "Untrue",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:fddedc4f-7a2e-3d7d-9ec5-1705c416f3f4"
+          ],
+          "first_release_date": "",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/fddedc4f-7a2e-3d7d-9ec5-1705c416f3f4",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 0,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 175,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:1b706bec-4cee-453c-a17b-857393953708",
+          "title": "Ego / Mirror",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+            "3bcff06f-675a-451f-9075-99e8657047e8",
+            "8ed2e0b3-aa4c-4e13-bec3-dc7393ed4d6b"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1b706bec-4cee-453c-a17b-857393953708"
+          ],
+          "first_release_date": "2011-03-16",
+          "original_album": false,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/1b706bec-4cee-453c-a17b-857393953708",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:2bb9f69b-8090-3bd9-bb09-5c44268e3f7d",
+          "title": "Ghost Hardware",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:2bb9f69b-8090-3bd9-bb09-5c44268e3f7d"
+          ],
+          "first_release_date": "2007-06-15",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/2bb9f69b-8090-3bd9-bb09-5c44268e3f7d",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:3b5b6c73-0089-4fb4-9965-c7cda3b9a2dc",
+          "title": "Temple Sleeper",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3b5b6c73-0089-4fb4-9965-c7cda3b9a2dc"
+          ],
+          "first_release_date": "2015-01-22",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/3b5b6c73-0089-4fb4-9965-c7cda3b9a2dc",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:4d66e589-cbbc-4ae6-8d6e-1a795ce97f03",
+          "title": "Archangel",
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "evidence_refs": [
+            "sha256:df978a004fa9630c43e256da7bbe77fd8d309d4dbdc6f5ef5e3b2cd2b106f8ca",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3A9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:4d66e589-cbbc-4ae6-8d6e-1a795ce97f03"
+          ],
+          "first_release_date": "2007",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/4d66e589-cbbc-4ae6-8d6e-1a795ce97f03",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "name": "Aphex Twin",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:030ed9b0-3620-4b6b-b75b-0c9cf0634ede",
+          "title": "[untitled]",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:02a246db-7899-3f0f-aa6c-96fe5d7ee6e5"
+          ],
+          "first_release_date": "1995",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/030ed9b0-3620-4b6b-b75b-0c9cf0634ede",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:2836d5dc-986c-4a3b-a062-398751b43260",
+          "title": "Bbydhyonchord",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:5e96f015-8cc7-371a-b6b6-8361279fd4b4"
+          ],
+          "first_release_date": "2002",
+          "original_album": false,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/2836d5dc-986c-4a3b-a062-398751b43260",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:3ec37d27-1f16-45c4-8a9e-5a705393c177",
+          "title": "En Trance to Exit",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1b7ec705-7248-3950-956b-4a683464b155",
+            "musicbrainz:release-group:2197e12d-c496-3f98-a475-39006dda7416"
+          ],
+          "first_release_date": "1992-09-14",
+          "original_album": false,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/3ec37d27-1f16-45c4-8a9e-5a705393c177",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:41bdd496-114e-48c6-82c9-ec9332891c8b",
+          "title": "Blue Calx",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:30d4670f-71a7-3a52-a3df-46547f5c8fdf"
+          ],
+          "first_release_date": "2003-01-27",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/41bdd496-114e-48c6-82c9-ec9332891c8b",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:6c10a042-f915-48ae-8831-796fc487e9ba",
+          "title": "Vaz Deferenz",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:a0f5d35c-b03b-3d7b-b2f8-35dc49052ae6"
+          ],
+          "first_release_date": "1995",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/6c10a042-f915-48ae-8831-796fc487e9ba",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:911954f3-a0b1-4df4-ae3c-d239401cca67",
+          "title": "Interview (after 4)",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3f075df8-7795-3330-ae23-a11f3942919e"
+          ],
+          "first_release_date": "1997-09-10",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/911954f3-a0b1-4df4-ae3c-d239401cca67",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:02a246db-7899-3f0f-aa6c-96fe5d7ee6e5",
+          "title": "Melodies From Mars",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:02a246db-7899-3f0f-aa6c-96fe5d7ee6e5"
+          ],
+          "first_release_date": "1995",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/02a246db-7899-3f0f-aa6c-96fe5d7ee6e5",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:1b053aa5-2b5c-326e-81ae-4251974c7107",
+          "title": "Words & Music",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1b053aa5-2b5c-326e-81ae-4251974c7107"
+          ],
+          "first_release_date": "1994-05-01",
+          "original_album": false,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/1b053aa5-2b5c-326e-81ae-4251974c7107",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:3f075df8-7795-3330-ae23-a11f3942919e",
+          "title": "1997-09-10: KCRW Morning Becomes Eclectic Interviews",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:3f075df8-7795-3330-ae23-a11f3942919e"
+          ],
+          "first_release_date": "1997-09-10",
+          "original_album": false,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/3f075df8-7795-3330-ae23-a11f3942919e",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:44758512-d6d1-398e-b8b1-11aa66d2bfdb",
+          "title": "Ventolin E.P",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:44758512-d6d1-398e-b8b1-11aa66d2bfdb"
+          ],
+          "first_release_date": "1995-03-27",
+          "original_album": false,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/44758512-d6d1-398e-b8b1-11aa66d2bfdb",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:72a82bd1-62e9-38a0-9b92-3d038e5142b8",
+          "title": "1994-04-09: Hallam University, Sheffield, UK",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:72a82bd1-62e9-38a0-9b92-3d038e5142b8"
+          ],
+          "first_release_date": "1994-04-09",
+          "original_album": false,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/72a82bd1-62e9-38a0-9b92-3d038e5142b8",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:74cc9f0f-a2e4-3737-a0e8-9e4a194930e3",
+          "title": "Live in Denver",
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "evidence_refs": [
+            "sha256:5a7da7adea4a82615528c8042311543ad7ee4a89708023f0b9c6c8a76b5d45b1",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Af22942a1-6f70-4f48-866e-238cb2308fbd&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:74cc9f0f-a2e4-3737-a0e8-9e4a194930e3"
+          ],
+          "first_release_date": "1997-09-17",
+          "original_album": false,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/74cc9f0f-a2e4-3737-a0e8-9e4a194930e3",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 0,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 150,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    },
+    {
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "name": "Brian Eno",
+      "recordings": [
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:0a3ca852-0607-4075-ab3f-8fb272bf048e",
+          "title": "Foreshadowed",
+          "credited_artist_mbids": [
+            "5c864a6f-146e-4225-986d-3295ce90f784",
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+            "ca0489a4-3a7b-4def-b66e-e00b2f579ae0"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:6c364112-e9fb-373c-9f1d-364b427f64c3"
+          ],
+          "first_release_date": "1984-08",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/recording/0a3ca852-0607-4075-ab3f-8fb272bf048e",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722",
+          "title": "Bottomliners",
+          "credited_artist_mbids": [
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:0fa0e2d9-6add-31d7-844a-79f5a2181893"
+          ],
+          "first_release_date": "2005-06-13",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/recording/0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f",
+          "title": "Abdominal Crisis (Seven Sea Sessions)",
+          "credited_artist_mbids": [
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+            "8dce9ad6-9415-4373-9747-dcac5ef43aef"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:0d0c7a79-39e0-4ccd-a776-cd4b7b75ca59"
+          ],
+          "first_release_date": "2026-04-18",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/recording/0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:55e01bcb-309a-41e6-bee4-cf41f87e8464",
+          "title": "Ali Click (trance mix \u2013 short)",
+          "credited_artist_mbids": [
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:8cc4ad2e-95b9-3bb9-9d34-1d1dc4dffe6e",
+            "musicbrainz:release-group:f73d48b6-b89e-3d37-9e26-d2d7c19780d8"
+          ],
+          "first_release_date": "1992-09-18",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/recording/55e01bcb-309a-41e6-bee4-cf41f87e8464",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:62e43def-be1c-47bd-8816-1382c3415576",
+          "title": "Ocean Motion",
+          "credited_artist_mbids": [
+            "24189c1e-b69f-4420-be4d-7b12f74194c2",
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+            "ca0489a4-3a7b-4def-b66e-e00b2f579ae0"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1696441a-25cd-32df-aad8-9ba367ea658c"
+          ],
+          "first_release_date": "1985",
+          "original_album": true,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/recording/62e43def-be1c-47bd-8816-1382c3415576",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "recording",
+          "entity_id": "musicbrainz:recording:9b15ae94-ceca-478b-bc9d-1f692b955957",
+          "title": "Late October",
+          "credited_artist_mbids": [
+            "5c864a6f-146e-4225-986d-3295ce90f784",
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+            "ca0489a4-3a7b-4def-b66e-e00b2f579ae0"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:62f3d4ad-e6e0-333e-867c-2729e0eceecf",
+            "musicbrainz:release-group:6c364112-e9fb-373c-9f1d-364b427f64c3"
+          ],
+          "first_release_date": "1984-08",
+          "original_album": true,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/recording/9b15ae94-ceca-478b-bc9d-1f692b955957",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "release_groups": [
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:0d0c7a79-39e0-4ccd-a776-cd4b7b75ca59",
+          "title": "Small Craft on a Milk Sea",
+          "credited_artist_mbids": [
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+            "8dce9ad6-9415-4373-9747-dcac5ef43aef"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:0d0c7a79-39e0-4ccd-a776-cd4b7b75ca59"
+          ],
+          "first_release_date": "2010",
+          "original_album": true,
+          "variant": false,
+          "rank": 1,
+          "url": "https://musicbrainz.org/release-group/0d0c7a79-39e0-4ccd-a776-cd4b7b75ca59",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:0fa0e2d9-6add-31d7-844a-79f5a2181893",
+          "title": "Another Day on Earth",
+          "credited_artist_mbids": [
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:0fa0e2d9-6add-31d7-844a-79f5a2181893"
+          ],
+          "first_release_date": "2005-06-13",
+          "original_album": true,
+          "variant": false,
+          "rank": 2,
+          "url": "https://musicbrainz.org/release-group/0fa0e2d9-6add-31d7-844a-79f5a2181893",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:1696441a-25cd-32df-aad8-9ba367ea658c",
+          "title": "Hybrid",
+          "credited_artist_mbids": [
+            "24189c1e-b69f-4420-be4d-7b12f74194c2",
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+            "ca0489a4-3a7b-4def-b66e-e00b2f579ae0"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:1696441a-25cd-32df-aad8-9ba367ea658c"
+          ],
+          "first_release_date": "1992-03-31",
+          "original_album": true,
+          "variant": false,
+          "rank": 3,
+          "url": "https://musicbrainz.org/release-group/1696441a-25cd-32df-aad8-9ba367ea658c",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:6c364112-e9fb-373c-9f1d-364b427f64c3",
+          "title": "The Pearl",
+          "credited_artist_mbids": [
+            "5c864a6f-146e-4225-986d-3295ce90f784",
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+            "ca0489a4-3a7b-4def-b66e-e00b2f579ae0"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:6c364112-e9fb-373c-9f1d-364b427f64c3"
+          ],
+          "first_release_date": "1984",
+          "original_album": true,
+          "variant": false,
+          "rank": 4,
+          "url": "https://musicbrainz.org/release-group/6c364112-e9fb-373c-9f1d-364b427f64c3",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:8cc4ad2e-95b9-3bb9-9d34-1d1dc4dffe6e",
+          "title": "Nerve Net",
+          "credited_artist_mbids": [
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:8cc4ad2e-95b9-3bb9-9d34-1d1dc4dffe6e"
+          ],
+          "first_release_date": "2005-06-27",
+          "original_album": true,
+          "variant": false,
+          "rank": 5,
+          "url": "https://musicbrainz.org/release-group/8cc4ad2e-95b9-3bb9-9d34-1d1dc4dffe6e",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        },
+        {
+          "entity_kind": "release_group",
+          "entity_id": "musicbrainz:release-group:a38d168f-7212-4c03-8f48-404032942e06",
+          "title": "2 Slow Stories",
+          "credited_artist_mbids": [
+            "00e44cae-55cd-4e70-9ab9-5d5776371022",
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+          ],
+          "evidence_refs": [
+            "sha256:3d8773efb50f083ae8d849162013a21a0823bd616d7c4e5c3c8be4c7e56006ab",
+            "https://musicbrainz.org/ws/2/recording?query=arid%3Aff95eb47-41c4-4f7f-a104-cdc30f02e872&limit=25&fmt=json"
+          ],
+          "release_group_ids": [
+            "musicbrainz:release-group:a38d168f-7212-4c03-8f48-404032942e06"
+          ],
+          "first_release_date": "2026-03-05",
+          "original_album": true,
+          "variant": false,
+          "rank": 6,
+          "url": "https://musicbrainz.org/release-group/a38d168f-7212-4c03-8f48-404032942e06",
+          "score_components": {
+            "exact_artist_credit": 100,
+            "original_album_context": 30,
+            "nonvariant_recording": 15,
+            "dated_metadata": 5,
+            "unseen_release_context": 20,
+            "distinct_title": 10
+          },
+          "score": 180,
+          "classification": "credited_metadata_example"
+        }
+      ],
+      "sample_recording_count": 25
+    }
+  ]
+}
