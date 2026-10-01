@@ -12,10 +12,39 @@ from typing import cast
 import numpy as np
 from scipy import sparse
 
+import opennoise.ml.emergent_adaptive_topics as adaptive_runtime
 from opennoise.catalog.musicbrainz_candidate import require_local_candidate_destination
 from opennoise.common import canonical_json, sha256_file, sha256_json
 from opennoise.ml.emergent_adaptive_topics import REVISION, fit_adaptive_topics
-from opennoise.ml.emergent_topics import TopicSettings, load_features
+from opennoise.ml.emergent_topics import FeatureMatrix, TopicSettings, load_features
+
+_EXPANDED_REVISION = "emergent-adaptive-lexical-coarse-topics-expanded-budget-v1"
+_EXPANDED_COARSE_BUDGET = 1024
+
+
+def _fit_variant(
+    data: FeatureMatrix, settings: TopicSettings, *, expanded: bool
+) -> tuple[dict[str, object], dict[str, list[dict[str, object]]]]:
+    """Change only the selected coarse stopping budget for this local fit."""
+    if not expanded:
+        return fit_adaptive_topics(data, settings, include_centroids=True)
+    default_budget = adaptive_runtime.MAXIMUM_BROAD_COMMUNITIES
+    try:
+        # The frozen module intentionally declares a literal default; this preset is process-local.
+        adaptive_runtime.MAXIMUM_BROAD_COMMUNITIES = _EXPANDED_COARSE_BUDGET  # ty: ignore[invalid-assignment]
+        model, assignments = fit_adaptive_topics(data, settings, include_centroids=True)
+    finally:
+        adaptive_runtime.MAXIMUM_BROAD_COMMUNITIES = default_budget
+    model["revision"] = _EXPANDED_REVISION
+    model["runtime_overrides"] = {
+        "opennoise.ml.emergent_adaptive_topics.MAXIMUM_BROAD_COMMUNITIES": {
+            "on_disk_default": default_budget,
+            "process_local_value": _EXPANDED_COARSE_BUDGET,
+            "role": "coarse_stopping_safety_budget_not_target_count",
+        }
+    }
+    model["predictive_evaluation_for_this_variant"] = "not_run_construction_only_experiment"
+    return model, assignments
 
 
 def main() -> int:
@@ -23,6 +52,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--features", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--expanded-coarse-budget",
+        action="store_true",
+        help="Use the local research 1024 coarse safety budget (default: 128); not a target count.",
+    )
     args = parser.parse_args()
     output = args.output
     require_local_candidate_destination(output)
@@ -30,7 +64,7 @@ def main() -> int:
         raise FileExistsError("refusing to overwrite a lexical experiment")
     settings = TopicSettings()
     data = load_features(args.features, settings)
-    model, assignments = fit_adaptive_topics(data, settings, include_centroids=True)
+    model, assignments = _fit_variant(data, settings, expanded=args.expanded_coarse_budget)
     primary = model.pop("primary_assignments")
     centers = cast("dict[str, list[float]]", model.pop("centroids"))
     core_groups = model.pop("core_group_ids")
@@ -63,7 +97,9 @@ def main() -> int:
                 canonical_json({"artist_mbid": artist, "musical_features": profile}) + b"\n"
             )
     report = {
-        "revision": REVISION,
+        "revision": model["revision"],
+        "algorithm_revision": REVISION,
+        "research_builder_sha256": sha256_file(Path(__file__))[0],
         "scope": "local_research_only",
         "settings": asdict(settings),
         "coverage": model["coverage"],
@@ -83,6 +119,14 @@ def main() -> int:
             for path in sorted(output.iterdir())
         },
     }
+    if args.expanded_coarse_budget:
+        report["runtime_overrides"] = model["runtime_overrides"]
+        report["predictive_evaluation_for_this_variant"] = model[
+            "predictive_evaluation_for_this_variant"
+        ]
+    feature_receipt = args.features.parent / "receipt.json"
+    if feature_receipt.is_file():
+        report["feature_receipt_sha256"] = sha256_file(feature_receipt)[0]
     report["output_sha256"] = sha256_json(report)
     (output / "report.json").write_bytes(canonical_json(report) + b"\n")
     sys.stdout.write(
