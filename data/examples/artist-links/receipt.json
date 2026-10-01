@@ -1,0 +1,78 @@
+{
+  "license": "MusicBrainz core metadata CC0 1.0",
+  "license_url": "https://musicbrainz.org/doc/About/Data_License",
+  "captures": [
+    {
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "url": "https://musicbrainz.org/ws/2/artist/0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd?inc=url-rels&fmt=json",
+      "sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08",
+      "bytes": 16802,
+      "path": "raw/00.json"
+    },
+    {
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "url": "https://musicbrainz.org/ws/2/artist/3bcff06f-675a-451f-9075-99e8657047e8?inc=url-rels&fmt=json",
+      "sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e",
+      "bytes": 14184,
+      "path": "raw/01.json"
+    },
+    {
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "url": "https://musicbrainz.org/ws/2/artist/410c9baf-5469-44f6-9852-826524b80c61?inc=url-rels&fmt=json",
+      "sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd",
+      "bytes": 13450,
+      "path": "raw/02.json"
+    },
+    {
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "url": "https://musicbrainz.org/ws/2/artist/4d86ad4e-28d8-4e9f-8cf4-735c57060fdc?inc=url-rels&fmt=json",
+      "sha256": "b11900ce91b286b5b56b3738cb44bb34f9a4e6c3e95ea46b5f2c40096073430b",
+      "bytes": 11388,
+      "path": "raw/03.json"
+    },
+    {
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "url": "https://musicbrainz.org/ws/2/artist/69158f97-4c07-4c4e-baf8-4e4ab1ed666e?inc=url-rels&fmt=json",
+      "sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082",
+      "bytes": 14268,
+      "path": "raw/04.json"
+    },
+    {
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "url": "https://musicbrainz.org/ws/2/artist/69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97?inc=url-rels&fmt=json",
+      "sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3",
+      "bytes": 12853,
+      "path": "raw/05.json"
+    },
+    {
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "url": "https://musicbrainz.org/ws/2/artist/735e3514-a8ae-401f-af3b-6300df1b8d2c?inc=url-rels&fmt=json",
+      "sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e",
+      "bytes": 14651,
+      "path": "raw/06.json"
+    },
+    {
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "url": "https://musicbrainz.org/ws/2/artist/9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6?inc=url-rels&fmt=json",
+      "sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8",
+      "bytes": 14963,
+      "path": "raw/07.json"
+    },
+    {
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "url": "https://musicbrainz.org/ws/2/artist/f22942a1-6f70-4f48-866e-238cb2308fbd?inc=url-rels&fmt=json",
+      "sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1",
+      "bytes": 21338,
+      "path": "raw/08.json"
+    },
+    {
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "url": "https://musicbrainz.org/ws/2/artist/ff95eb47-41c4-4f7f-a104-cdc30f02e872?inc=url-rels&fmt=json",
+      "sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2",
+      "bytes": 21094,
+      "path": "raw/09.json"
+    }
+  ],
+  "total_bytes": 154991,
+  "projection_sha256": "27612939e3a7d6ba2ac342bd976a716079a1b5b34158b168f23adfe2fd9d4de2"
+}

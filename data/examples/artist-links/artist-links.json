@@ -1,0 +1,542 @@
+{
+  "revision": "source-artist-outbound-links-v1",
+  "artists": [
+    {
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "name": "Jon Hopkins",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://jonhopkins.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/jonhopkins",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/7yxi31szvlbwvKq9dYOmFI",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UCiwgazsh4EbM04FIQuyDVYw",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/user/JonHopkinsVEVO",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/24056",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "name": "Four Tet",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://fourtet.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/four-tet",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/7Eu1txygG6nJttLHbZdQOh",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UC3sZYInu3YYkyIXBif83ZCg",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/3543",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "name": "Autechre",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://autechre.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd"
+        },
+        {
+          "provider": "Official website",
+          "url": "https://www.autechre.ws/",
+          "relation_type": "official homepage",
+          "relation_type_id": "fe33d22f-c3b0-4d68-bd53-a856badf2b15",
+          "source_sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/6WH1V41LwGDGmlPUhSZLHO",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://music.youtube.com/channel/UCBUAlfIrcw1f0c4qGrYn3xA",
+          "relation_type": "youtube music",
+          "relation_type_id": "631712a0-7525-42ba-b7a3-605aa7a238c4",
+          "source_sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/41",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "name": "Squarepusher",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://squarepusher.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "b11900ce91b286b5b56b3738cb44bb34f9a4e6c3e95ea46b5f2c40096073430b"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/4mtHSXwIHihO6MWNq5Qoko",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "b11900ce91b286b5b56b3738cb44bb34f9a4e6c3e95ea46b5f2c40096073430b"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UCMBGYerL97F0TaInwrlpvZQ",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "b11900ce91b286b5b56b3738cb44bb34f9a4e6c3e95ea46b5f2c40096073430b"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/269",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "b11900ce91b286b5b56b3738cb44bb34f9a4e6c3e95ea46b5f2c40096073430b"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "name": "Boards of Canada",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://boardsofcanada.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+        },
+        {
+          "provider": "Official website",
+          "url": "https://warp.net/artists/boards-of-canada",
+          "relation_type": "official homepage",
+          "relation_type_id": "fe33d22f-c3b0-4d68-bd53-a856badf2b15",
+          "source_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/boardsofcanada",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/2VAvhf61GgLYmC6C8anyX1",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://music.youtube.com/channel/UCidyEq0ZC6rcqZmwKt_g_2g",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UC9D7VN2HldiRFdxFvCcyA7A",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UCidyEq0ZC6rcqZmwKt_g_2g",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/307",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "name": "Floating Points",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://floatingpoints.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3"
+        },
+        {
+          "provider": "Official website",
+          "url": "https://floatingpoints.co.uk/",
+          "relation_type": "official homepage",
+          "relation_type_id": "fe33d22f-c3b0-4d68-bd53-a856badf2b15",
+          "source_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/floatingpoints",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/2AR42Ur9PcchQDtEdwkv4L",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UC5NbPNPbdLwAPPwWTJw0EbQ",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/1385084",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3"
+        },
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/1544337",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "name": "Caribou",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://caribouband.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/caribouband",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/4aEnNH9PuU1HF3TsZTru54",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/7nFj31QiQll8sRmWagex1M",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/user/CaribouVideos",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/275841",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e"
+        },
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/517",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "name": "Burial",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://burial.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/burial",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/0uCCBpmg6MrPb1KY2msceF",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/1975486",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8"
+        },
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/306157",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "name": "Aphex Twin",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://aphextwin.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/aphex-twin-official",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/richarddjames",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/user18081971",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/6kBDZFXuLrZgHnvmPu9NsG",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://music.youtube.com/channel/UCWmnkYUzoOiOztmPBhIlZjg",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UC4hfA78X-lqiRERBZLTnLBw",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UCWmnkYUzoOiOztmPBhIlZjg",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UCd_RgCaaP_QEXl_Zj4Gv5iQ",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/45",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "name": "Brian Eno",
+      "links": [
+        {
+          "provider": "Bandcamp",
+          "url": "https://brianeno.bandcamp.com/",
+          "relation_type": "bandcamp",
+          "relation_type_id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+          "source_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+        },
+        {
+          "provider": "Official website",
+          "url": "https://www.brian-eno.net/",
+          "relation_type": "official homepage",
+          "relation_type_id": "fe33d22f-c3b0-4d68-bd53-a856badf2b15",
+          "source_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+        },
+        {
+          "provider": "SoundCloud",
+          "url": "https://soundcloud.com/brian-eno-official",
+          "relation_type": "soundcloud",
+          "relation_type_id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+          "source_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/5nRTsSxPNnsySXsuJ6UHGq",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+        },
+        {
+          "provider": "Spotify",
+          "url": "https://open.spotify.com/artist/7MSUfLeTdDEoZiJPDSBXgi",
+          "relation_type": "free streaming",
+          "relation_type_id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+          "source_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://music.youtube.com/channel/UCDDJRnc_LsRm-_CAfRcKCZA",
+          "relation_type": "youtube music",
+          "relation_type_id": "631712a0-7525-42ba-b7a3-605aa7a238c4",
+          "source_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+        },
+        {
+          "provider": "YouTube",
+          "url": "https://www.youtube.com/channel/UCDDJRnc_LsRm-_CAfRcKCZA",
+          "relation_type": "youtube",
+          "relation_type_id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+          "source_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+        }
+      ],
+      "metadata_links": [
+        {
+          "provider": "Discogs",
+          "url": "https://www.discogs.com/artist/634",
+          "relation_type": "discogs",
+          "relation_type_id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+          "source_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+        }
+      ]
+    }
+  ],
+  "limitations": "Source-declared destinations; availability and listening access are not guaranteed. No audio or destination requests.",
+  "rights": "MusicBrainz core URL relationship metadata CC0."
+}
