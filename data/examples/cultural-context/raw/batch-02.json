@@ -1,0 +1,449 @@
+{
+  "head" : {
+    "vars" : [ "mbid", "artist", "label", "property", "value", "valueLabel" ]
+  },
+  "results" : {
+    "bindings" : [ {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P495"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P740"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P135"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      },
+      "value" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q45981"
+      },
+      "valueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "rhythm and blues"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      },
+      "value" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q9759"
+      },
+      "valueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "blues"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      },
+      "value" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q8341"
+      },
+      "valueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "jazz"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      },
+      "value" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q7749"
+      },
+      "valueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "rock and roll"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      },
+      "value" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q180268"
+      },
+      "valueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "gospel music"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e22d2f66-881e-41ca-9356-544697ee5f90"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q182725"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Etta James"
+      },
+      "value" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131272"
+      },
+      "valueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "soul"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e790b555-fea1-49ef-9468-21a040eb92b4"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P495"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5115386"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Chuck Cannon"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e790b555-fea1-49ef-9468-21a040eb92b4"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P740"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5115386"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Chuck Cannon"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e790b555-fea1-49ef-9468-21a040eb92b4"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P135"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5115386"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Chuck Cannon"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e790b555-fea1-49ef-9468-21a040eb92b4"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q5115386"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Chuck Cannon"
+      },
+      "value" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q83440"
+      },
+      "valueLabel" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "country music"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e69db629-f7ba-4379-9835-0853cc2f0c2c"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P495"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q25350026"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Scott Foster Harris"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e69db629-f7ba-4379-9835-0853cc2f0c2c"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P740"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q25350026"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Scott Foster Harris"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e69db629-f7ba-4379-9835-0853cc2f0c2c"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P135"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q25350026"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Scott Foster Harris"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e69db629-f7ba-4379-9835-0853cc2f0c2c"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q25350026"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Scott Foster Harris"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "f1fd1009-556b-4465-8ef5-73bf0e34b14a"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P495"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q113632049"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Bill Dicey"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "f1fd1009-556b-4465-8ef5-73bf0e34b14a"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P740"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q113632049"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Bill Dicey"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "f1fd1009-556b-4465-8ef5-73bf0e34b14a"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P135"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q113632049"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Bill Dicey"
+      }
+    }, {
+      "mbid" : {
+        "type" : "literal",
+        "value" : "f1fd1009-556b-4465-8ef5-73bf0e34b14a"
+      },
+      "property" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/prop/direct/P136"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q113632049"
+      },
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Bill Dicey"
+      }
+    } ]
+  }
+}

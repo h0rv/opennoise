@@ -1,0 +1,251 @@
+{
+  "checked_utc_date": "2026-10-01",
+  "docs": {
+    "country_of_origin_property": "https://www.wikidata.org/wiki/Property:P495",
+    "genre_property": "https://www.wikidata.org/wiki/Property:P136",
+    "license": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+    "location_formed_property": "https://www.wikidata.org/wiki/Property:P740",
+    "movement_property": "https://www.wikidata.org/wiki/Property:P135",
+    "musicbrainz_artist_id_property": "https://www.wikidata.org/wiki/Property:P434",
+    "query_service": "https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service"
+  },
+  "endpoint": "https://query.wikidata.org/sparql",
+  "identity_note": "The unmatched requested ID e0e1a8f4-11c4-4918-9219-3d06049b63a1 was an unverified exploratory UUID, not Four Tet. The benchmark manifest exact ID for Four Tet is 3bcff06f-675a-451f-9075-99e8657047e8; see the subsequent 110-artist acquisition in .cache/open-cultural-context-wikidata-20261001-v2.",
+  "license": "Wikidata structured data is dedicated to the public domain under CC0",
+  "query_sha256": "0fb4006a6e4f80a0f794218ca1d2a43fb0e1181a2a00c95d17c34a4c797a10c4",
+  "request_body_bytes": 0,
+  "request_count": 1,
+  "requested_mbids": [
+    "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+    "cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+    "e0e1a8f4-11c4-4918-9219-3d06049b63a1",
+    "f22942a1-6f70-4f48-866e-238cb2308fbd"
+  ],
+  "response_bytes": 16572,
+  "response_sha256": "1d1370d70688a3ccab81f0b3c9b97ce6b60f92f91555aa488eff4306d6d38612",
+  "returned_artist_count": 3,
+  "returned_artists": [
+    {
+      "claims": [
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q11399",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q1641839",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q186472",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q193355",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q206159",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q235858",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q37073",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q546264",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q56351111",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q7749",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q83270",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P495",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q145",
+          "wikidata_artist_id": "Q1299"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "property_id": "P740",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q24826",
+          "wikidata_artist_id": "Q1299"
+        }
+      ],
+      "label": "The Beatles",
+      "musicbrainz_artist_id": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+      "wikidata_artist_id": "Q1299"
+    },
+    {
+      "claims": [
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q11366",
+          "wikidata_artist_id": "Q45188"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q37073",
+          "wikidata_artist_id": "Q45188"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+          "property_id": "P495",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q145",
+          "wikidata_artist_id": "Q45188"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+          "property_id": "P740",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q84",
+          "wikidata_artist_id": "Q45188"
+        }
+      ],
+      "label": "Coldplay",
+      "musicbrainz_artist_id": "cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+      "wikidata_artist_id": "Q45188"
+    },
+    {
+      "claims": [
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q1259016",
+          "wikidata_artist_id": "Q223161"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q1640319",
+          "wikidata_artist_id": "Q223161"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q170611",
+          "wikidata_artist_id": "Q223161"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q193207",
+          "wikidata_artist_id": "Q223161"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q341395",
+          "wikidata_artist_id": "Q223161"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q660984",
+          "wikidata_artist_id": "Q223161"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q9149801",
+          "wikidata_artist_id": "Q223161"
+        },
+        {
+          "license": "CC0",
+          "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+          "property_id": "P136",
+          "source": "https://query.wikidata.org/sparql",
+          "value_qid": "Q9778",
+          "wikidata_artist_id": "Q223161"
+        }
+      ],
+      "label": "Aphex Twin",
+      "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "wikidata_artist_id": "Q223161"
+    }
+  ],
+  "status_code": 200
+}

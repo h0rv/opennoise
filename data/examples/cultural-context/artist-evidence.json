@@ -1,0 +1,1500 @@
+[
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "02d2e74f-985c-4706-8d83-24133c7de109",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock music",
+        "value_qid": "Q11399",
+        "wikidata_artist_id": "Q1406614"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "02d2e74f-985c-4706-8d83-24133c7de109",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Germany",
+        "value_qid": "Q183",
+        "wikidata_artist_id": "Q1406614"
+      }
+    ],
+    "label": "The Brandalls",
+    "musicbrainz_artist_id": "02d2e74f-985c-4706-8d83-24133c7de109",
+    "wikidata_artist_id": "Q1406614"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "050bd499-feba-4321-93d7-27b96a60d504",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electro-industrial",
+        "value_qid": "Q1403744",
+        "wikidata_artist_id": "Q4053604"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "050bd499-feba-4321-93d7-27b96a60d504",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Canada",
+        "value_qid": "Q16",
+        "wikidata_artist_id": "Q4053604"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "050bd499-feba-4321-93d7-27b96a60d504",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Hamilton",
+        "value_qid": "Q133116",
+        "wikidata_artist_id": "Q4053604"
+      }
+    ],
+    "label": "Zombie Girl",
+    "musicbrainz_artist_id": "050bd499-feba-4321-93d7-27b96a60d504",
+    "wikidata_artist_id": "Q4053604"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0609c172-8605-490c-9494-e1019803e817",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "soul",
+        "value_qid": "Q131272",
+        "wikidata_artist_id": "Q3194963"
+      }
+    ],
+    "label": "Kem",
+    "musicbrainz_artist_id": "0609c172-8605-490c-9494-e1019803e817",
+    "wikidata_artist_id": "Q3194963"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "reggae fusion",
+        "value_qid": "Q1606591",
+        "wikidata_artist_id": "Q2410892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "alternative hip-hop",
+        "value_qid": "Q438503",
+        "wikidata_artist_id": "Q2410892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ska",
+        "value_qid": "Q54365",
+        "wikidata_artist_id": "Q2410892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "acoustic rock",
+        "value_qid": "Q65936391",
+        "wikidata_artist_id": "Q2410892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "reggae rock",
+        "value_qid": "Q7308175",
+        "wikidata_artist_id": "Q2410892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q2410892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Orange County",
+        "value_qid": "Q5925",
+        "wikidata_artist_id": "Q2410892"
+      }
+    ],
+    "label": "The Dirty Heads",
+    "musicbrainz_artist_id": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+    "wikidata_artist_id": "Q2410892"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronica",
+        "value_qid": "Q817138",
+        "wikidata_artist_id": "Q903592"
+      }
+    ],
+    "label": "Jon Hopkins",
+    "musicbrainz_artist_id": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+    "wikidata_artist_id": "Q903592"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0f3c4d10-e541-46f0-a589-61ad701c6ce4",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hardcore punk",
+        "value_qid": "Q10922",
+        "wikidata_artist_id": "Q1785354"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0f3c4d10-e541-46f0-a589-61ad701c6ce4",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q1785354"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0f3c4d10-e541-46f0-a589-61ad701c6ce4",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Austin",
+        "value_qid": "Q16559",
+        "wikidata_artist_id": "Q1785354"
+      }
+    ],
+    "label": "MDC",
+    "musicbrainz_artist_id": "0f3c4d10-e541-46f0-a589-61ad701c6ce4",
+    "wikidata_artist_id": "Q1785354"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1f6949e2-f257-40f3-851e-e2e02271e398",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "soul",
+        "value_qid": "Q131272",
+        "wikidata_artist_id": "Q1271782"
+      }
+    ],
+    "label": "Mitty Collier",
+    "musicbrainz_artist_id": "1f6949e2-f257-40f3-851e-e2e02271e398",
+    "wikidata_artist_id": "Q1271782"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "27dedd67-b819-4040-b972-24ebf5dca374",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Eurodance",
+        "value_qid": "Q216961",
+        "wikidata_artist_id": "Q2381597"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "27dedd67-b819-4040-b972-24ebf5dca374",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Germany",
+        "value_qid": "Q183",
+        "wikidata_artist_id": "Q2381597"
+      }
+    ],
+    "label": "666",
+    "musicbrainz_artist_id": "27dedd67-b819-4040-b972-24ebf5dca374",
+    "wikidata_artist_id": "Q2381597"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "2b17b688-3e2e-4fb3-ac73-1fac6d75d73d",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "stoner rock",
+        "value_qid": "Q617240",
+        "wikidata_artist_id": "Q124670750"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "2b17b688-3e2e-4fb3-ac73-1fac6d75d73d",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Netherlands",
+        "value_qid": "Q55",
+        "wikidata_artist_id": "Q124670750"
+      }
+    ],
+    "label": "Stone in Egypt",
+    "musicbrainz_artist_id": "2b17b688-3e2e-4fb3-ac73-1fac6d75d73d",
+    "wikidata_artist_id": "Q124670750"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "2ef36a7b-c93c-4e05-9d23-2dd9f85c653a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "classical music",
+        "value_qid": "Q9730",
+        "wikidata_artist_id": "Q711810"
+      }
+    ],
+    "label": "Frans Br\u00fcggen",
+    "musicbrainz_artist_id": "2ef36a7b-c93c-4e05-9d23-2dd9f85c653a",
+    "wikidata_artist_id": "Q711810"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "32a1ded1-f6b7-4b07-b984-c297b6e0595a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues",
+        "value_qid": "Q9759",
+        "wikidata_artist_id": "Q99694793"
+      }
+    ],
+    "label": "Ray \"Killer\" Allison",
+    "musicbrainz_artist_id": "32a1ded1-f6b7-4b07-b984-c297b6e0595a",
+    "wikidata_artist_id": "Q99694793"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "37975cba-2416-4068-9b55-e684ba609359",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "microtonal music",
+        "value_qid": "Q1045756",
+        "wikidata_artist_id": "Q366711"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "37975cba-2416-4068-9b55-e684ba609359",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "opera",
+        "value_qid": "Q1344",
+        "wikidata_artist_id": "Q366711"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "37975cba-2416-4068-9b55-e684ba609359",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "classical music",
+        "value_qid": "Q9730",
+        "wikidata_artist_id": "Q366711"
+      }
+    ],
+    "label": "Alois H\u00e1ba",
+    "musicbrainz_artist_id": "37975cba-2416-4068-9b55-e684ba609359",
+    "wikidata_artist_id": "Q366711"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3bcff06f-675a-451f-9075-99e8657047e8",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronica",
+        "value_qid": "Q817138",
+        "wikidata_artist_id": "Q959655"
+      }
+    ],
+    "label": "Four Tet",
+    "musicbrainz_artist_id": "3bcff06f-675a-451f-9075-99e8657047e8",
+    "wikidata_artist_id": "Q959655"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3be2d963-3e2f-4c15-bd03-1b325083557d",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "country music",
+        "value_qid": "Q83440",
+        "wikidata_artist_id": "Q7613062"
+      }
+    ],
+    "label": null,
+    "musicbrainz_artist_id": "3be2d963-3e2f-4c15-bd03-1b325083557d",
+    "wikidata_artist_id": "Q7613062"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "alternative rock",
+        "value_qid": "Q11366",
+        "wikidata_artist_id": "Q12786712"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "stoner metal",
+        "value_qid": "Q1772422",
+        "wikidata_artist_id": "Q12786712"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues rock",
+        "value_qid": "Q193355",
+        "wikidata_artist_id": "Q12786712"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "stoner rock",
+        "value_qid": "Q617240",
+        "wikidata_artist_id": "Q12786712"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Slovenia",
+        "value_qid": "Q215",
+        "wikidata_artist_id": "Q12786712"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Zalog",
+        "value_qid": "Q12806459",
+        "wikidata_artist_id": "Q12786712"
+      }
+    ],
+    "label": null,
+    "musicbrainz_artist_id": "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+    "wikidata_artist_id": "Q12786712"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3cf294ed-9ec6-42bf-9c98-6d186310217d",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "disco",
+        "value_qid": "Q58339",
+        "wikidata_artist_id": "Q1228443"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3cf294ed-9ec6-42bf-9c98-6d186310217d",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q1228443"
+      }
+    ],
+    "label": "Disco-Tex and the Sex-O-Lettes",
+    "musicbrainz_artist_id": "3cf294ed-9ec6-42bf-9c98-6d186310217d",
+    "wikidata_artist_id": "Q1228443"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "glitch",
+        "value_qid": "Q1100989",
+        "wikidata_artist_id": "Q247237"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "experimental music",
+        "value_qid": "Q1640319",
+        "wikidata_artist_id": "Q247237"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "techno",
+        "value_qid": "Q170611",
+        "wikidata_artist_id": "Q247237"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient music",
+        "value_qid": "Q193207",
+        "wikidata_artist_id": "Q247237"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "intelligent dance music",
+        "value_qid": "Q660984",
+        "wikidata_artist_id": "Q247237"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q247237"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United Kingdom",
+        "value_qid": "Q145",
+        "wikidata_artist_id": "Q247237"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Rochdale",
+        "value_qid": "Q474605",
+        "wikidata_artist_id": "Q247237"
+      }
+    ],
+    "label": null,
+    "musicbrainz_artist_id": "410c9baf-5469-44f6-9852-826524b80c61",
+    "wikidata_artist_id": "Q247237"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "4567448e-8e6a-4ee2-9cce-73ce937dd64f",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Norway",
+        "value_qid": "Q20",
+        "wikidata_artist_id": "Q112118460"
+      }
+    ],
+    "label": "The Magni Wentzel Sextet",
+    "musicbrainz_artist_id": "4567448e-8e6a-4ee2-9cce-73ce937dd64f",
+    "wikidata_artist_id": "Q112118460"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q553861"
+      }
+    ],
+    "label": "Squarepusher",
+    "musicbrainz_artist_id": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+    "wikidata_artist_id": "Q553861"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "4ec41f8c-b399-4684-a361-a233e8e81a83",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q1431685"
+      }
+    ],
+    "label": "Si Zentner",
+    "musicbrainz_artist_id": "4ec41f8c-b399-4684-a361-a233e8e81a83",
+    "wikidata_artist_id": "Q1431685"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5b90f06e-eb6f-4e43-ae28-175d136cf8f6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock music",
+        "value_qid": "Q11399",
+        "wikidata_artist_id": "Q1691412"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5b90f06e-eb6f-4e43-ae28-175d136cf8f6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "soft rock",
+        "value_qid": "Q217191",
+        "wikidata_artist_id": "Q1691412"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5b90f06e-eb6f-4e43-ae28-175d136cf8f6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "pop music",
+        "value_qid": "Q37073",
+        "wikidata_artist_id": "Q1691412"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5b90f06e-eb6f-4e43-ae28-175d136cf8f6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "country rock",
+        "value_qid": "Q613408",
+        "wikidata_artist_id": "Q1691412"
+      }
+    ],
+    "label": "Joe Fagin",
+    "musicbrainz_artist_id": "5b90f06e-eb6f-4e43-ae28-175d136cf8f6",
+    "wikidata_artist_id": "Q1691412"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "folktronica",
+        "value_qid": "Q1435509",
+        "wikidata_artist_id": "Q722778"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient music",
+        "value_qid": "Q193207",
+        "wikidata_artist_id": "Q722778"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "downtempo",
+        "value_qid": "Q251192",
+        "wikidata_artist_id": "Q722778"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "intelligent dance music",
+        "value_qid": "Q660984",
+        "wikidata_artist_id": "Q722778"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronica",
+        "value_qid": "Q817138",
+        "wikidata_artist_id": "Q722778"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient techno",
+        "value_qid": "Q9149801",
+        "wikidata_artist_id": "Q722778"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United Kingdom",
+        "value_qid": "Q145",
+        "wikidata_artist_id": "Q722778"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Edinburgh",
+        "value_qid": "Q23436",
+        "wikidata_artist_id": "Q722778"
+      }
+    ],
+    "label": "Boards of Canada",
+    "musicbrainz_artist_id": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+    "wikidata_artist_id": "Q722778"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q22277802"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q22277802"
+      }
+    ],
+    "label": "Floating Points",
+    "musicbrainz_artist_id": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+    "wikidata_artist_id": "Q22277802"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "folktronica",
+        "value_qid": "Q1435509",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "psychedelic rock",
+        "value_qid": "Q206159",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "noise pop",
+        "value_qid": "Q2545135",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "shoegaze",
+        "value_qid": "Q272167",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "psychedelic pop",
+        "value_qid": "Q383982",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "dream pop",
+        "value_qid": "Q592330",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "intelligent dance music",
+        "value_qid": "Q660984",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "neo-psychedelia",
+        "value_qid": "Q703778",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronica",
+        "value_qid": "Q817138",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic dance music",
+        "value_qid": "Q851213",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "deep house",
+        "value_qid": "Q874038",
+        "wikidata_artist_id": "Q1036131"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q1036131"
+      }
+    ],
+    "label": "Dan Snaith",
+    "musicbrainz_artist_id": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+    "wikidata_artist_id": "Q1036131"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient music",
+        "value_qid": "Q193207",
+        "wikidata_artist_id": "Q552245"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "dubstep",
+        "value_qid": "Q20474",
+        "wikidata_artist_id": "Q552245"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "future garage",
+        "value_qid": "Q5510816",
+        "wikidata_artist_id": "Q552245"
+      }
+    ],
+    "label": "Burial",
+    "musicbrainz_artist_id": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+    "wikidata_artist_id": "Q552245"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "drill and bass",
+        "value_qid": "Q1259016",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "experimental music",
+        "value_qid": "Q1640319",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "techno",
+        "value_qid": "Q170611",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient music",
+        "value_qid": "Q193207",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "acid techno",
+        "value_qid": "Q341395",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "intelligent dance music",
+        "value_qid": "Q660984",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient techno",
+        "value_qid": "Q9149801",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q223161"
+      }
+    ],
+    "label": "Aphex Twin",
+    "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+    "wikidata_artist_id": "Q223161"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient music",
+        "value_qid": "Q193207",
+        "wikidata_artist_id": "Q569003"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "art rock",
+        "value_qid": "Q217467",
+        "wikidata_artist_id": "Q569003"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "art pop",
+        "value_qid": "Q25094849",
+        "wikidata_artist_id": "Q569003"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "drone music",
+        "value_qid": "Q650316",
+        "wikidata_artist_id": "Q569003"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q569003"
+      }
+    ],
+    "label": "Brian Eno",
+    "musicbrainz_artist_id": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+    "wikidata_artist_id": "Q569003"
+  },
+  {
+    "claims": [],
+    "label": "Gary Judd",
+    "musicbrainz_artist_id": "5c01ebfb-80f4-42e6-909d-3d687af29ddb",
+    "wikidata_artist_id": "Q16194622"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5d7df598-bb80-4d73-a6f8-9ed1a4374052",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q354883"
+      }
+    ],
+    "label": "Earl Hines",
+    "musicbrainz_artist_id": "5d7df598-bb80-4d73-a6f8-9ed1a4374052",
+    "wikidata_artist_id": "Q354883"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "62173ce5-37ef-41b1-86cd-45401a8955fc",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "house music",
+        "value_qid": "Q20502",
+        "wikidata_artist_id": "Q1344793"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "62173ce5-37ef-41b1-86cd-45401a8955fc",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Eurodance",
+        "value_qid": "Q216961",
+        "wikidata_artist_id": "Q1344793"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "62173ce5-37ef-41b1-86cd-45401a8955fc",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic dance music",
+        "value_qid": "Q851213",
+        "wikidata_artist_id": "Q1344793"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "62173ce5-37ef-41b1-86cd-45401a8955fc",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Belgium",
+        "value_qid": "Q31",
+        "wikidata_artist_id": "Q1344793"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "62173ce5-37ef-41b1-86cd-45401a8955fc",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Aalst",
+        "value_qid": "Q13121",
+        "wikidata_artist_id": "Q1344793"
+      }
+    ],
+    "label": "Technotronic",
+    "musicbrainz_artist_id": "62173ce5-37ef-41b1-86cd-45401a8955fc",
+    "wikidata_artist_id": "Q1344793"
+  },
+  {
+    "claims": [],
+    "label": "Atomic Steif",
+    "musicbrainz_artist_id": "622fca01-0c9f-44ae-b696-4d4648f57e33",
+    "wikidata_artist_id": "Q114588880"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6bf692e0-baac-4428-94c3-423d52508cf0",
+        "property_id": "P135",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "classical music",
+        "value_qid": "Q9730",
+        "wikidata_artist_id": "Q192114"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6bf692e0-baac-4428-94c3-423d52508cf0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock music",
+        "value_qid": "Q11399",
+        "wikidata_artist_id": "Q192114"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6bf692e0-baac-4428-94c3-423d52508cf0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "symphonic music",
+        "value_qid": "Q3328774",
+        "wikidata_artist_id": "Q192114"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6bf692e0-baac-4428-94c3-423d52508cf0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "progressive rock",
+        "value_qid": "Q49451",
+        "wikidata_artist_id": "Q192114"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6bf692e0-baac-4428-94c3-423d52508cf0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hard rock",
+        "value_qid": "Q83270",
+        "wikidata_artist_id": "Q192114"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6bf692e0-baac-4428-94c3-423d52508cf0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "concerto",
+        "value_qid": "Q9748",
+        "wikidata_artist_id": "Q192114"
+      }
+    ],
+    "label": "Jon Lord",
+    "musicbrainz_artist_id": "6bf692e0-baac-4428-94c3-423d52508cf0",
+    "wikidata_artist_id": "Q192114"
+  },
+  {
+    "claims": [],
+    "label": "Ismail Zabeeh",
+    "musicbrainz_artist_id": "81710904-cdce-42e4-ad5b-ad224efd1e7e",
+    "wikidata_artist_id": "Q138678513"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "82510e7b-a874-4238-b49e-96884600314e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "country music",
+        "value_qid": "Q83440",
+        "wikidata_artist_id": "Q7196164"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "82510e7b-a874-4238-b49e-96884600314e",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q7196164"
+      }
+    ],
+    "label": "Pinkard & Bowden",
+    "musicbrainz_artist_id": "82510e7b-a874-4238-b49e-96884600314e",
+    "wikidata_artist_id": "Q7196164"
+  },
+  {
+    "claims": [],
+    "label": "Fritz Weber",
+    "musicbrainz_artist_id": "8ec69f65-727b-4e95-b339-640673e3494e",
+    "wikidata_artist_id": "Q1468815"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "95c7c31f-3b5c-4573-b9bb-617bb01d8f26",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q7771514"
+      }
+    ],
+    "label": "The Unifics",
+    "musicbrainz_artist_id": "95c7c31f-3b5c-4573-b9bb-617bb01d8f26",
+    "wikidata_artist_id": "Q7771514"
+  },
+  {
+    "claims": [],
+    "label": "Laurence Lesser",
+    "musicbrainz_artist_id": "99de9b9c-773b-4938-abdc-19fd116405a8",
+    "wikidata_artist_id": "Q21519822"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient music",
+        "value_qid": "Q193207",
+        "wikidata_artist_id": "Q5097282"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "drone music",
+        "value_qid": "Q650316",
+        "wikidata_artist_id": "Q5097282"
+      }
+    ],
+    "label": "Chihei Hatakeyama",
+    "musicbrainz_artist_id": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+    "wikidata_artist_id": "Q5097282"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a1d32e75-2391-4d94-904e-13536304dcf6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ska",
+        "value_qid": "Q54365",
+        "wikidata_artist_id": "Q441161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a1d32e75-2391-4d94-904e-13536304dcf6",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "reggae",
+        "value_qid": "Q9794",
+        "wikidata_artist_id": "Q441161"
+      }
+    ],
+    "label": "Prince Buster",
+    "musicbrainz_artist_id": "a1d32e75-2391-4d94-904e-13536304dcf6",
+    "wikidata_artist_id": "Q441161"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aebbb417-0d18-4fec-a2e2-ce9663d1fa7e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "dansband music",
+        "value_qid": "Q105757139",
+        "wikidata_artist_id": "Q173144"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aebbb417-0d18-4fec-a2e2-ce9663d1fa7e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Europop",
+        "value_qid": "Q517415",
+        "wikidata_artist_id": "Q173144"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aebbb417-0d18-4fec-a2e2-ce9663d1fa7e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "disco",
+        "value_qid": "Q58339",
+        "wikidata_artist_id": "Q173144"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aebbb417-0d18-4fec-a2e2-ce9663d1fa7e",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "schlager music",
+        "value_qid": "Q959583",
+        "wikidata_artist_id": "Q173144"
+      }
+    ],
+    "label": "Agnetha F\u00e4ltskog",
+    "musicbrainz_artist_id": "aebbb417-0d18-4fec-a2e2-ce9663d1fa7e",
+    "wikidata_artist_id": "Q173144"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b18eed15-7628-4f55-9ca6-8b78373bcaf3",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "reggae",
+        "value_qid": "Q9794",
+        "wikidata_artist_id": "Q4978236"
+      }
+    ],
+    "label": "Bruce Ruffin",
+    "musicbrainz_artist_id": "b18eed15-7628-4f55-9ca6-8b78373bcaf3",
+    "wikidata_artist_id": "Q4978236"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "contemporary Christian music",
+        "value_qid": "Q1379958",
+        "wikidata_artist_id": "Q82238"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "pop music",
+        "value_qid": "Q37073",
+        "wikidata_artist_id": "Q82238"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "pop rock",
+        "value_qid": "Q484641",
+        "wikidata_artist_id": "Q82238"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "skiffle",
+        "value_qid": "Q606089",
+        "wikidata_artist_id": "Q82238"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock and roll",
+        "value_qid": "Q7749",
+        "wikidata_artist_id": "Q82238"
+      }
+    ],
+    "label": "Cliff Richard",
+    "musicbrainz_artist_id": "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+    "wikidata_artist_id": "Q82238"
+  },
+  {
+    "claims": [],
+    "label": "Jon-Erik \u00d6st",
+    "musicbrainz_artist_id": "c34734cf-d85e-4934-8500-9cd883fe4304",
+    "wikidata_artist_id": "Q6257472"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock music",
+        "value_qid": "Q11399",
+        "wikidata_artist_id": "Q184805"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "experimental music",
+        "value_qid": "Q1640319",
+        "wikidata_artist_id": "Q184805"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q184805"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues",
+        "value_qid": "Q9759",
+        "wikidata_artist_id": "Q184805"
+      }
+    ],
+    "label": "Tom Waits",
+    "musicbrainz_artist_id": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+    "wikidata_artist_id": "Q184805"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e22d2f66-881e-41ca-9356-544697ee5f90",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "soul",
+        "value_qid": "Q131272",
+        "wikidata_artist_id": "Q182725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e22d2f66-881e-41ca-9356-544697ee5f90",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "gospel music",
+        "value_qid": "Q180268",
+        "wikidata_artist_id": "Q182725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e22d2f66-881e-41ca-9356-544697ee5f90",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rhythm and blues",
+        "value_qid": "Q45981",
+        "wikidata_artist_id": "Q182725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e22d2f66-881e-41ca-9356-544697ee5f90",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock and roll",
+        "value_qid": "Q7749",
+        "wikidata_artist_id": "Q182725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e22d2f66-881e-41ca-9356-544697ee5f90",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q182725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e22d2f66-881e-41ca-9356-544697ee5f90",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues",
+        "value_qid": "Q9759",
+        "wikidata_artist_id": "Q182725"
+      }
+    ],
+    "label": "Etta James",
+    "musicbrainz_artist_id": "e22d2f66-881e-41ca-9356-544697ee5f90",
+    "wikidata_artist_id": "Q182725"
+  },
+  {
+    "claims": [],
+    "label": "Scott Foster Harris",
+    "musicbrainz_artist_id": "e69db629-f7ba-4379-9835-0853cc2f0c2c",
+    "wikidata_artist_id": "Q25350026"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e790b555-fea1-49ef-9468-21a040eb92b4",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "country music",
+        "value_qid": "Q83440",
+        "wikidata_artist_id": "Q5115386"
+      }
+    ],
+    "label": "Chuck Cannon",
+    "musicbrainz_artist_id": "e790b555-fea1-49ef-9468-21a040eb92b4",
+    "wikidata_artist_id": "Q5115386"
+  },
+  {
+    "claims": [],
+    "label": "Bill Dicey",
+    "musicbrainz_artist_id": "f1fd1009-556b-4465-8ef5-73bf0e34b14a",
+    "wikidata_artist_id": "Q113632049"
+  }
+]

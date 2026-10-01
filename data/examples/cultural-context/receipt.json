@@ -1,0 +1,14 @@
+{
+  "derived_from_manifest_sha256": "0ceb4458cad7eda0b6111ce9cad9825f294af1273b63ea9221025553d56b53eb",
+  "license": "CC0",
+  "revision": "open-cultural-context-wikidata-portable-v1",
+  "sha256": {
+    "artist-evidence.json": "2281c591ab4212d2dd4f65ee1d8f09433b4739743a5ea7fbc838353303560fcd",
+    "benchmark-neighbors.json": "2a00ce9a7ff9e01f05e1d8a61a4c26e6783bde83a720e298cb2592da458c4d1d",
+    "manifest.json": "0095c9f1cc8339c037e6ce20c7868966d5dc952b93d48f7543abd9bbe274f641",
+    "raw/batch-00.json": "269c9c7feda3b05dea6d007187848c0955d046748cc0f5267923859a907ce2ef",
+    "raw/batch-01.json": "16a23d4a9023a1a8666b3ce9335305609a6f7b9fcb3732cdb643ebb2f93c7fc8",
+    "raw/batch-02.json": "57155a276a0235c3da2f5a25cdd01305cbff64121d26ad6165ca9e78826fbf7c"
+  },
+  "source": "https://query.wikidata.org/sparql"
+}

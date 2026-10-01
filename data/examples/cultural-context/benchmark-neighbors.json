@@ -1,0 +1,195 @@
+[
+  {
+    "anchor_artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+    "anchor_label": null,
+    "anchor_value_count": 6,
+    "candidate_artist_mbid": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+    "candidate_label": "Chihei Hatakeyama",
+    "candidate_value_count": 2,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.14285714285714285,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q193207"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+    "anchor_label": null,
+    "anchor_value_count": 6,
+    "candidate_artist_mbid": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+    "candidate_label": "Tom Waits",
+    "candidate_value_count": 4,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.1111111111111111,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q1640319"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+    "anchor_label": "Boards of Canada",
+    "anchor_value_count": 6,
+    "candidate_artist_mbid": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+    "candidate_label": "Chihei Hatakeyama",
+    "candidate_value_count": 2,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.14285714285714285,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q193207"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+    "anchor_label": "Floating Points",
+    "anchor_value_count": 2,
+    "candidate_artist_mbid": "4ec41f8c-b399-4684-a361-a233e8e81a83",
+    "candidate_label": "Si Zentner",
+    "candidate_value_count": 1,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.5,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q8341"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+    "anchor_label": "Floating Points",
+    "anchor_value_count": 2,
+    "candidate_artist_mbid": "5d7df598-bb80-4d73-a6f8-9ed1a4374052",
+    "candidate_label": "Earl Hines",
+    "candidate_value_count": 1,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.5,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q8341"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+    "anchor_label": "Floating Points",
+    "anchor_value_count": 2,
+    "candidate_artist_mbid": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+    "candidate_label": "Tom Waits",
+    "candidate_value_count": 4,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.2,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q8341"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+    "anchor_label": "Floating Points",
+    "anchor_value_count": 2,
+    "candidate_artist_mbid": "e22d2f66-881e-41ca-9356-544697ee5f90",
+    "candidate_label": "Etta James",
+    "candidate_value_count": 6,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.14285714285714285,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q8341"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+    "anchor_label": "Dan Snaith",
+    "anchor_value_count": 12,
+    "candidate_artist_mbid": "62173ce5-37ef-41b1-86cd-45401a8955fc",
+    "candidate_label": "Technotronic",
+    "candidate_value_count": 3,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.07142857142857142,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q851213"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+    "anchor_label": "Burial",
+    "anchor_value_count": 3,
+    "candidate_artist_mbid": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+    "candidate_label": "Chihei Hatakeyama",
+    "candidate_value_count": 2,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.25,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q193207"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+    "anchor_label": "Aphex Twin",
+    "anchor_value_count": 8,
+    "candidate_artist_mbid": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+    "candidate_label": "Chihei Hatakeyama",
+    "candidate_value_count": 2,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.1111111111111111,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q193207"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+    "anchor_label": "Aphex Twin",
+    "anchor_value_count": 8,
+    "candidate_artist_mbid": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+    "candidate_label": "Tom Waits",
+    "candidate_value_count": 4,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.09090909090909091,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q1640319"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  },
+  {
+    "anchor_artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+    "anchor_label": "Brian Eno",
+    "anchor_value_count": 5,
+    "candidate_artist_mbid": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+    "candidate_label": "Chihei Hatakeyama",
+    "candidate_value_count": 2,
+    "license": "CC0",
+    "property_id": "P136",
+    "score": 0.4,
+    "score_method": "Jaccard overlap within one direct Wikidata property only",
+    "shared_value_qids": [
+      "Q193207",
+      "Q650316"
+    ],
+    "source": "https://query.wikidata.org/sparql"
+  }
+]

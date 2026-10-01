@@ -1,0 +1,885 @@
+{
+  "acquired_utc": "2026-10-01T10:29:12.308122+00:00",
+  "artist_match_rate": 0.43636363636363634,
+  "batch_count": 3,
+  "batches": [
+    {
+      "http_status": 200,
+      "index": 0,
+      "matched_artist_count": 27,
+      "query_sha256": "92bc94b2d16fcb0530bb1fedb60a535fd0e4d920a7fe7f633671813b00529ee7",
+      "raw_path": "raw/batch-00.json",
+      "requested_mbids": [
+        "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+        "3bcff06f-675a-451f-9075-99e8657047e8",
+        "410c9baf-5469-44f6-9852-826524b80c61",
+        "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+        "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+        "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+        "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+        "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+        "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+        "02d2e74f-985c-4706-8d83-24133c7de109",
+        "045ffe9e-f28f-4746-b96b-31bd4e8ec5fd",
+        "050bd499-feba-4321-93d7-27b96a60d504",
+        "0609c172-8605-490c-9494-e1019803e817",
+        "084023db-5475-42a4-84ee-87e33adaf804",
+        "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+        "0f3c4d10-e541-46f0-a589-61ad701c6ce4",
+        "121d286a-7474-494e-abdc-79741ea9ef5a",
+        "14d13aa5-b1c2-427a-9a48-d4a73e7d946a",
+        "17a08554-4da7-49d4-a24a-04cd0e632882",
+        "1a40d232-25f6-49ec-98ea-d2fd0393256c",
+        "1aac1f3e-469f-4a74-902c-a19dd19d9b2f",
+        "1f6949e2-f257-40f3-851e-e2e02271e398",
+        "1fb79b54-9a78-4c9c-9c5a-320c2295ea51",
+        "21b4ace5-d8bb-498e-85dc-49a20c5f392b",
+        "2783b3a3-80e7-4c9e-9d08-e71df576d814",
+        "27b771e1-c5a3-4fd4-b4dc-741adf5281e4",
+        "27dedd67-b819-4040-b972-24ebf5dca374",
+        "2b17b688-3e2e-4fb3-ac73-1fac6d75d73d",
+        "2ef36a7b-c93c-4e05-9d23-2dd9f85c653a",
+        "301e836f-e627-450b-af1b-9d26bdf7d09c",
+        "31ab9d08-eb2f-4ef7-9b78-0519c3225f47",
+        "32a1ded1-f6b7-4b07-b984-c297b6e0595a",
+        "359fcab7-0b8f-4fcb-ad94-9c76cc2558c6",
+        "373492fa-118b-4582-bce7-08361d31efaa",
+        "37975cba-2416-4068-9b55-e684ba609359",
+        "3b107768-78b1-4f31-9bf4-c37dfde821ae",
+        "3be2d963-3e2f-4c15-bd03-1b325083557d",
+        "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+        "3cf294ed-9ec6-42bf-9c98-6d186310217d",
+        "3d0109f0-3a18-4ae6-8f79-115e0c57fd39",
+        "3f410613-7077-440d-8fc6-9e2f9395ad00",
+        "4567448e-8e6a-4ee2-9cce-73ce937dd64f",
+        "49017290-d667-4a4b-bf9a-72cb3667ccd6",
+        "4993d38c-c7ad-44e1-b8a4-2d6367fda3f4",
+        "4ec41f8c-b399-4684-a361-a233e8e81a83",
+        "53459c43-00fa-4745-82fd-1987256c345c",
+        "5351d9b9-a42f-4ba3-859b-b8c0df624ffe",
+        "5ab9ff01-319e-43c6-8020-50770a916b12",
+        "5b90f06e-eb6f-4e43-ae28-175d136cf8f6"
+      ],
+      "response_bytes": 89851,
+      "response_sha256": "269c9c7feda3b05dea6d007187848c0955d046748cc0f5267923859a907ce2ef",
+      "returned_binding_count": 155,
+      "unmatched_artist_mbids": [
+        "045ffe9e-f28f-4746-b96b-31bd4e8ec5fd",
+        "084023db-5475-42a4-84ee-87e33adaf804",
+        "121d286a-7474-494e-abdc-79741ea9ef5a",
+        "14d13aa5-b1c2-427a-9a48-d4a73e7d946a",
+        "17a08554-4da7-49d4-a24a-04cd0e632882",
+        "1a40d232-25f6-49ec-98ea-d2fd0393256c",
+        "1aac1f3e-469f-4a74-902c-a19dd19d9b2f",
+        "1fb79b54-9a78-4c9c-9c5a-320c2295ea51",
+        "21b4ace5-d8bb-498e-85dc-49a20c5f392b",
+        "2783b3a3-80e7-4c9e-9d08-e71df576d814",
+        "27b771e1-c5a3-4fd4-b4dc-741adf5281e4",
+        "301e836f-e627-450b-af1b-9d26bdf7d09c",
+        "31ab9d08-eb2f-4ef7-9b78-0519c3225f47",
+        "359fcab7-0b8f-4fcb-ad94-9c76cc2558c6",
+        "373492fa-118b-4582-bce7-08361d31efaa",
+        "3b107768-78b1-4f31-9bf4-c37dfde821ae",
+        "3d0109f0-3a18-4ae6-8f79-115e0c57fd39",
+        "3f410613-7077-440d-8fc6-9e2f9395ad00",
+        "49017290-d667-4a4b-bf9a-72cb3667ccd6",
+        "4993d38c-c7ad-44e1-b8a4-2d6367fda3f4",
+        "53459c43-00fa-4745-82fd-1987256c345c",
+        "5351d9b9-a42f-4ba3-859b-b8c0df624ffe",
+        "5ab9ff01-319e-43c6-8020-50770a916b12"
+      ]
+    },
+    {
+      "http_status": 200,
+      "index": 1,
+      "matched_artist_count": 17,
+      "query_sha256": "7fa8ac8f45a3940beb89d314d0c6b574d977ccde06197d55a9d53eab989936a9",
+      "raw_path": "raw/batch-01.json",
+      "requested_mbids": [
+        "5bbb1869-e616-46f7-b0de-b3956767d538",
+        "5c01ebfb-80f4-42e6-909d-3d687af29ddb",
+        "5d7df598-bb80-4d73-a6f8-9ed1a4374052",
+        "5f7136b9-7ce8-4648-8ec6-7b3419d7b794",
+        "61006095-7cb7-4487-be18-4c43b8832d32",
+        "62173ce5-37ef-41b1-86cd-45401a8955fc",
+        "622fca01-0c9f-44ae-b696-4d4648f57e33",
+        "657952a5-e5bf-4762-97dd-8aaa62530651",
+        "6bf692e0-baac-4428-94c3-423d52508cf0",
+        "703e2126-8a01-4642-a686-d48b91e32980",
+        "7124c37e-b26b-4347-84f2-a3f39766327a",
+        "739cea3a-ae41-4e63-9802-57254e35333b",
+        "77300da4-d5c1-4390-8517-defbc9913d5a",
+        "776e2c73-b75a-4806-aaa9-86f797dbd042",
+        "7932f6cc-e618-4d0e-a0db-832ffa58ebe7",
+        "7a6f9b53-8dd4-4372-b900-22988c252da4",
+        "7df0c762-d66f-4127-ab8d-9808f0a05d7f",
+        "7e363eca-e368-4c2c-b708-f66feb471070",
+        "7ebec3f0-a830-4b11-815f-08a2f175a185",
+        "81710904-cdce-42e4-ad5b-ad224efd1e7e",
+        "8223452d-6098-4cb6-83b7-3a22e22f9d8a",
+        "82510e7b-a874-4238-b49e-96884600314e",
+        "898777b5-5d39-4c56-877c-b327c0623e70",
+        "89f32824-a75d-4e9b-984e-2d861bfb9bdb",
+        "8ec69f65-727b-4e95-b339-640673e3494e",
+        "95c7c31f-3b5c-4573-b9bb-617bb01d8f26",
+        "9696b712-00c3-4b30-98fa-dd86c76ae99b",
+        "99de9b9c-773b-4938-abdc-19fd116405a8",
+        "9aa0060e-23f4-429a-b5aa-8938a3be8453",
+        "a02fbbad-80d5-47cf-8658-a3d176c8c1a6",
+        "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+        "a1d32e75-2391-4d94-904e-13536304dcf6",
+        "a1fabf68-2011-45e1-8111-d00e82f87d81",
+        "a42d478d-7ec8-407a-a3f0-fc61db2da964",
+        "a5f105cc-0497-4433-a5ad-8326eddfaada",
+        "a6f682a6-025f-4ee0-89c8-fc51d2864e24",
+        "aebbb417-0d18-4fec-a2e2-ce9663d1fa7e",
+        "b0c0ac33-708e-4af6-b0ec-a7243456c3b7",
+        "b18eed15-7628-4f55-9ca6-8b78373bcaf3",
+        "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+        "b689eca2-2a5b-4299-9644-9e2ad8db507e",
+        "b88eebe7-42ae-40a3-bf6c-2369fbf3a5b7",
+        "c12eaa72-07a6-48dc-95bb-694b1fef0fda",
+        "c34734cf-d85e-4934-8500-9cd883fe4304",
+        "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+        "c461d82f-3e88-40d4-80d9-a523f1b34a57",
+        "c48369cd-a083-4999-af17-c9d9e4537f44",
+        "ce5c2e30-3c09-4f95-8b4f-625c65c65a3a",
+        "cefce45c-965a-4a64-80c7-4a1c51e3571c",
+        "d3e9d975-72be-4e23-9254-4cd3840d2e2b"
+      ],
+      "response_bytes": 47303,
+      "response_sha256": "16a23d4a9023a1a8666b3ce9335305609a6f7b9fcb3732cdb643ebb2f93c7fc8",
+      "returned_binding_count": 86,
+      "unmatched_artist_mbids": [
+        "5bbb1869-e616-46f7-b0de-b3956767d538",
+        "5f7136b9-7ce8-4648-8ec6-7b3419d7b794",
+        "61006095-7cb7-4487-be18-4c43b8832d32",
+        "657952a5-e5bf-4762-97dd-8aaa62530651",
+        "703e2126-8a01-4642-a686-d48b91e32980",
+        "7124c37e-b26b-4347-84f2-a3f39766327a",
+        "739cea3a-ae41-4e63-9802-57254e35333b",
+        "77300da4-d5c1-4390-8517-defbc9913d5a",
+        "776e2c73-b75a-4806-aaa9-86f797dbd042",
+        "7932f6cc-e618-4d0e-a0db-832ffa58ebe7",
+        "7a6f9b53-8dd4-4372-b900-22988c252da4",
+        "7df0c762-d66f-4127-ab8d-9808f0a05d7f",
+        "7e363eca-e368-4c2c-b708-f66feb471070",
+        "7ebec3f0-a830-4b11-815f-08a2f175a185",
+        "8223452d-6098-4cb6-83b7-3a22e22f9d8a",
+        "898777b5-5d39-4c56-877c-b327c0623e70",
+        "89f32824-a75d-4e9b-984e-2d861bfb9bdb",
+        "9696b712-00c3-4b30-98fa-dd86c76ae99b",
+        "9aa0060e-23f4-429a-b5aa-8938a3be8453",
+        "a02fbbad-80d5-47cf-8658-a3d176c8c1a6",
+        "a1fabf68-2011-45e1-8111-d00e82f87d81",
+        "a42d478d-7ec8-407a-a3f0-fc61db2da964",
+        "a5f105cc-0497-4433-a5ad-8326eddfaada",
+        "a6f682a6-025f-4ee0-89c8-fc51d2864e24",
+        "b0c0ac33-708e-4af6-b0ec-a7243456c3b7",
+        "b689eca2-2a5b-4299-9644-9e2ad8db507e",
+        "b88eebe7-42ae-40a3-bf6c-2369fbf3a5b7",
+        "c12eaa72-07a6-48dc-95bb-694b1fef0fda",
+        "c461d82f-3e88-40d4-80d9-a523f1b34a57",
+        "c48369cd-a083-4999-af17-c9d9e4537f44",
+        "ce5c2e30-3c09-4f95-8b4f-625c65c65a3a",
+        "cefce45c-965a-4a64-80c7-4a1c51e3571c",
+        "d3e9d975-72be-4e23-9254-4cd3840d2e2b"
+      ]
+    },
+    {
+      "http_status": 200,
+      "index": 2,
+      "matched_artist_count": 4,
+      "query_sha256": "da7488037c0934167f3d233dc642dded84d476e4c4eda7b6c7f5f5cc3492f384",
+      "raw_path": "raw/batch-02.json",
+      "requested_mbids": [
+        "daaf2e7e-2ba4-4cd2-a570-732407f56b6f",
+        "e22d2f66-881e-41ca-9356-544697ee5f90",
+        "e3317e74-c734-4629-b109-8b0386f94276",
+        "e69db629-f7ba-4379-9835-0853cc2f0c2c",
+        "e790b555-fea1-49ef-9468-21a040eb92b4",
+        "eb274bec-4432-494b-8a45-74f08d3e59c9",
+        "f0410270-49a2-48ef-bac8-da8a1d79532d",
+        "f1fd1009-556b-4465-8ef5-73bf0e34b14a",
+        "f7591ba8-de45-4403-8b9f-40b6ecb385f4",
+        "f9f67d49-8bba-4d2d-9910-cc335b941fcd"
+      ],
+      "response_bytes": 11410,
+      "response_sha256": "57155a276a0235c3da2f5a25cdd01305cbff64121d26ad6165ca9e78826fbf7c",
+      "returned_binding_count": 21,
+      "unmatched_artist_mbids": [
+        "daaf2e7e-2ba4-4cd2-a570-732407f56b6f",
+        "e3317e74-c734-4629-b109-8b0386f94276",
+        "eb274bec-4432-494b-8a45-74f08d3e59c9",
+        "f0410270-49a2-48ef-bac8-da8a1d79532d",
+        "f7591ba8-de45-4403-8b9f-40b6ecb385f4",
+        "f9f67d49-8bba-4d2d-9910-cc335b941fcd"
+      ]
+    }
+  ],
+  "cohort": [
+    {
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "name": "Jon Hopkins",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "name": "Four Tet",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "name": "Autechre",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "name": "Squarepusher",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "name": "Boards of Canada",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "name": "Floating Points",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "name": "Caribou",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "name": "Burial (UK dubstep)",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "name": "Aphex Twin",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "name": "Brian Eno",
+      "role": "benchmark"
+    },
+    {
+      "artist_mbid": "02d2e74f-985c-4706-8d83-24133c7de109",
+      "name": "The Brandalls",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "045ffe9e-f28f-4746-b96b-31bd4e8ec5fd",
+      "name": "Gooseflesh",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "050bd499-feba-4321-93d7-27b96a60d504",
+      "name": "Zombie Girl",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "0609c172-8605-490c-9494-e1019803e817",
+      "name": "Kem",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "084023db-5475-42a4-84ee-87e33adaf804",
+      "name": "Kanai Pineri",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+      "name": "Dirty Heads",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "0f3c4d10-e541-46f0-a589-61ad701c6ce4",
+      "name": "MDC",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "121d286a-7474-494e-abdc-79741ea9ef5a",
+      "name": "Kyomi",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "14d13aa5-b1c2-427a-9a48-d4a73e7d946a",
+      "name": "Edilene Gomes",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "17a08554-4da7-49d4-a24a-04cd0e632882",
+      "name": "Nesta",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "1a40d232-25f6-49ec-98ea-d2fd0393256c",
+      "name": "Kenny Hess",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "1aac1f3e-469f-4a74-902c-a19dd19d9b2f",
+      "name": "I Am a Witch",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "1f6949e2-f257-40f3-851e-e2e02271e398",
+      "name": "Mitty Collier",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "1fb79b54-9a78-4c9c-9c5a-320c2295ea51",
+      "name": "Quality Control",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "21b4ace5-d8bb-498e-85dc-49a20c5f392b",
+      "name": "Pygmy Children",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "2783b3a3-80e7-4c9e-9d08-e71df576d814",
+      "name": "Second Degr\u00e9",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "27b771e1-c5a3-4fd4-b4dc-741adf5281e4",
+      "name": "Vessel",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "27dedd67-b819-4040-b972-24ebf5dca374",
+      "name": "666",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "2b17b688-3e2e-4fb3-ac73-1fac6d75d73d",
+      "name": "Stone in Egypt",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "2ef36a7b-c93c-4e05-9d23-2dd9f85c653a",
+      "name": "Frans Br\u00fcggen",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "301e836f-e627-450b-af1b-9d26bdf7d09c",
+      "name": "Pascal Schumacher Quartet",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "31ab9d08-eb2f-4ef7-9b78-0519c3225f47",
+      "name": "Ansia",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "32a1ded1-f6b7-4b07-b984-c297b6e0595a",
+      "name": "Ray Allison",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "359fcab7-0b8f-4fcb-ad94-9c76cc2558c6",
+      "name": "P.V.J.S.",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "373492fa-118b-4582-bce7-08361d31efaa",
+      "name": "Moscow String Quartet",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "37975cba-2416-4068-9b55-e684ba609359",
+      "name": "Alois H\u00e1ba",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "3b107768-78b1-4f31-9bf4-c37dfde821ae",
+      "name": "Munsinger",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "3be2d963-3e2f-4c15-bd03-1b325083557d",
+      "name": "Steve Kolander",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+      "name": "Carnaval",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "3cf294ed-9ec6-42bf-9c98-6d186310217d",
+      "name": "Disco Tex and His Sex\u2010O\u2010Lettes",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "3d0109f0-3a18-4ae6-8f79-115e0c57fd39",
+      "name": "Ethan Martin",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "3f410613-7077-440d-8fc6-9e2f9395ad00",
+      "name": "Bearblood",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "4567448e-8e6a-4ee2-9cce-73ce937dd64f",
+      "name": "Magni Wentzel Sextet",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "49017290-d667-4a4b-bf9a-72cb3667ccd6",
+      "name": "Adil Sadullaeev",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "4993d38c-c7ad-44e1-b8a4-2d6367fda3f4",
+      "name": "Meat",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "4ec41f8c-b399-4684-a361-a233e8e81a83",
+      "name": "Si Zentner",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "53459c43-00fa-4745-82fd-1987256c345c",
+      "name": "Alexander\u2019s Discotime Band",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "5351d9b9-a42f-4ba3-859b-b8c0df624ffe",
+      "name": "Sybil Vane",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "5ab9ff01-319e-43c6-8020-50770a916b12",
+      "name": "Aloha Radio",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "5b90f06e-eb6f-4e43-ae28-175d136cf8f6",
+      "name": "Joe Fagin",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "5bbb1869-e616-46f7-b0de-b3956767d538",
+      "name": "10 foot clown",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "5c01ebfb-80f4-42e6-909d-3d687af29ddb",
+      "name": "Garry Judd",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "5d7df598-bb80-4d73-a6f8-9ed1a4374052",
+      "name": "Earl Hines",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "5f7136b9-7ce8-4648-8ec6-7b3419d7b794",
+      "name": "Becky & Cloud",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "61006095-7cb7-4487-be18-4c43b8832d32",
+      "name": "Pineblood",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "62173ce5-37ef-41b1-86cd-45401a8955fc",
+      "name": "Technotronic",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "622fca01-0c9f-44ae-b696-4d4648f57e33",
+      "name": "Atomic Steif",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "657952a5-e5bf-4762-97dd-8aaa62530651",
+      "name": "Aquanaut",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "6bf692e0-baac-4428-94c3-423d52508cf0",
+      "name": "Jon Lord",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "703e2126-8a01-4642-a686-d48b91e32980",
+      "name": "Test Transmission",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "7124c37e-b26b-4347-84f2-a3f39766327a",
+      "name": "QUEMIST",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "739cea3a-ae41-4e63-9802-57254e35333b",
+      "name": "Scr3am",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "77300da4-d5c1-4390-8517-defbc9913d5a",
+      "name": "widerberg",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "776e2c73-b75a-4806-aaa9-86f797dbd042",
+      "name": "Andra Borlo",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "7932f6cc-e618-4d0e-a0db-832ffa58ebe7",
+      "name": "Young Foolie",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "7a6f9b53-8dd4-4372-b900-22988c252da4",
+      "name": "Parks",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "7df0c762-d66f-4127-ab8d-9808f0a05d7f",
+      "name": "ackzz",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "7e363eca-e368-4c2c-b708-f66feb471070",
+      "name": "Heidemann",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "7ebec3f0-a830-4b11-815f-08a2f175a185",
+      "name": "DJ Lady Dior",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "81710904-cdce-42e4-ad5b-ad224efd1e7e",
+      "name": "Ismail Zabeeh",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "8223452d-6098-4cb6-83b7-3a22e22f9d8a",
+      "name": "Wynton Marsalis Hot Seven",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "82510e7b-a874-4238-b49e-96884600314e",
+      "name": "Pinkard & Bowden",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "898777b5-5d39-4c56-877c-b327c0623e70",
+      "name": "The Soul Sounds",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "89f32824-a75d-4e9b-984e-2d861bfb9bdb",
+      "name": "ZerO gRaViTy",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "8ec69f65-727b-4e95-b339-640673e3494e",
+      "name": "Fritz Weber",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "95c7c31f-3b5c-4573-b9bb-617bb01d8f26",
+      "name": "The Unifics",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "9696b712-00c3-4b30-98fa-dd86c76ae99b",
+      "name": "Arkady Futer",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "99de9b9c-773b-4938-abdc-19fd116405a8",
+      "name": "Laurence Lesser",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "9aa0060e-23f4-429a-b5aa-8938a3be8453",
+      "name": "Quails in the Nest",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "a02fbbad-80d5-47cf-8658-a3d176c8c1a6",
+      "name": "Fiona",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+      "name": "Chihei Hatakeyama",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "a1d32e75-2391-4d94-904e-13536304dcf6",
+      "name": "Prince Buster",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "a1fabf68-2011-45e1-8111-d00e82f87d81",
+      "name": "H\u00e4xa",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "a42d478d-7ec8-407a-a3f0-fc61db2da964",
+      "name": "Bugs Henderson and the Shuffle Kings",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "a5f105cc-0497-4433-a5ad-8326eddfaada",
+      "name": "Mason Bynes",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "a6f682a6-025f-4ee0-89c8-fc51d2864e24",
+      "name": "Blue Heat",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "aebbb417-0d18-4fec-a2e2-ce9663d1fa7e",
+      "name": "Agnetha F\u00e4ltskog",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "b0c0ac33-708e-4af6-b0ec-a7243456c3b7",
+      "name": "AKB",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "b18eed15-7628-4f55-9ca6-8b78373bcaf3",
+      "name": "Bruce Ruffin",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+      "name": "Cliff Richard",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "b689eca2-2a5b-4299-9644-9e2ad8db507e",
+      "name": "Coast",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "b88eebe7-42ae-40a3-bf6c-2369fbf3a5b7",
+      "name": "Solemnes",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "c12eaa72-07a6-48dc-95bb-694b1fef0fda",
+      "name": "Ron Sn0w",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "c34734cf-d85e-4934-8500-9cd883fe4304",
+      "name": "Jon Erik \u00d6st",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+      "name": "Tom Waits",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "c461d82f-3e88-40d4-80d9-a523f1b34a57",
+      "name": "Jem Cooke",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "c48369cd-a083-4999-af17-c9d9e4537f44",
+      "name": "\u3075\u3093\u308f\u308a\u3061\u3083\u3093",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "ce5c2e30-3c09-4f95-8b4f-625c65c65a3a",
+      "name": "Cindy & Roy",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "cefce45c-965a-4a64-80c7-4a1c51e3571c",
+      "name": "Katia Rudelman",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "d3e9d975-72be-4e23-9254-4cd3840d2e2b",
+      "name": "Kydo",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "daaf2e7e-2ba4-4cd2-a570-732407f56b6f",
+      "name": "Last Hit",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "e22d2f66-881e-41ca-9356-544697ee5f90",
+      "name": "Etta James",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "e3317e74-c734-4629-b109-8b0386f94276",
+      "name": "Cabizbajo",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "e69db629-f7ba-4379-9835-0853cc2f0c2c",
+      "name": "Scott Foster Harris",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "e790b555-fea1-49ef-9468-21a040eb92b4",
+      "name": "Chuck Cannon",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "eb274bec-4432-494b-8a45-74f08d3e59c9",
+      "name": "OnDubGround",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "f0410270-49a2-48ef-bac8-da8a1d79532d",
+      "name": "Vivisect",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "f1fd1009-556b-4465-8ef5-73bf0e34b14a",
+      "name": "Bill Dicey",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "f7591ba8-de45-4403-8b9f-40b6ecb385f4",
+      "name": "Free Folk Quartet",
+      "role": "stratified_source_artist"
+    },
+    {
+      "artist_mbid": "f9f67d49-8bba-4d2d-9910-cc335b941fcd",
+      "name": "Bad Pelicans",
+      "role": "stratified_source_artist"
+    }
+  ],
+  "direct_claim_count": 130,
+  "docs": {
+    "country_of_origin_property": "https://www.wikidata.org/wiki/Property:P495",
+    "genre_property": "https://www.wikidata.org/wiki/Property:P136",
+    "license": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+    "location_formed_property": "https://www.wikidata.org/wiki/Property:P740",
+    "movement_property": "https://www.wikidata.org/wiki/Property:P135",
+    "musicbrainz_artist_id_property": "https://www.wikidata.org/wiki/Property:P434",
+    "query_service": "https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service"
+  },
+  "endpoint": "https://query.wikidata.org/sparql",
+  "license": "CC0",
+  "matched_artist_count": 48,
+  "portable_derivation": {
+    "reason": "cohort genre selection values come from supplementary noncommercial artist associations",
+    "removed_fields": [
+      "cohort.source_genres",
+      "cohort.selection_stratum",
+      "selection.selection_strata"
+    ],
+    "source_manifest_sha256": "0ceb4458cad7eda0b6111ce9cad9825f294af1273b63ea9221025553d56b53eb"
+  },
+  "properties": [
+    "P135",
+    "P136",
+    "P495",
+    "P740"
+  ],
+  "raw_capture_mode": "exact response bytes",
+  "request_count": 3,
+  "requested_artist_count": 110,
+  "response_bytes_total": 148564,
+  "revision": "open-cultural-context-wikidata-v2",
+  "selection": {
+    "artist_features_path": ".cache/microgenre-features-rich-v2/artist-features.jsonl",
+    "artist_features_sha256": "32c9d3332854988d89432343e7cc567eaa406c8f53617d835a9a3907d89cb577",
+    "artist_search_name_count": 198409,
+    "artist_search_path": ".cache/named-style-atlas-20260930-v2/artist-search.json",
+    "artist_search_sha256": "7e143d48a3b448a17ef4792bce960b5adb95231c62cdabccdc7bd3dc4f91f089",
+    "benchmark_count": 10,
+    "benchmark_manifest_path": ".cache/acousticbrainz-benchmark-metadata-20260930-v1/query-manifest.json",
+    "benchmark_manifest_sha256": "c7cc60c88e80536c1395be81e2c397e2c00e93b3accdd835687b8f487d4d076c",
+    "identity_rule": "artist names are retained for display and provenance only; identity joins use exact MBID",
+    "selection": "SHA256-ranked exact MBID within each listed local artist_genre stratum, six max per stratum, then SHA256 fill",
+    "selection_strata_count": 18,
+    "stratified_source_artist_count": 100
+  },
+  "unmatched_artist_count": 62,
+  "unmatched_artist_mbids": [
+    "045ffe9e-f28f-4746-b96b-31bd4e8ec5fd",
+    "084023db-5475-42a4-84ee-87e33adaf804",
+    "121d286a-7474-494e-abdc-79741ea9ef5a",
+    "14d13aa5-b1c2-427a-9a48-d4a73e7d946a",
+    "17a08554-4da7-49d4-a24a-04cd0e632882",
+    "1a40d232-25f6-49ec-98ea-d2fd0393256c",
+    "1aac1f3e-469f-4a74-902c-a19dd19d9b2f",
+    "1fb79b54-9a78-4c9c-9c5a-320c2295ea51",
+    "21b4ace5-d8bb-498e-85dc-49a20c5f392b",
+    "2783b3a3-80e7-4c9e-9d08-e71df576d814",
+    "27b771e1-c5a3-4fd4-b4dc-741adf5281e4",
+    "301e836f-e627-450b-af1b-9d26bdf7d09c",
+    "31ab9d08-eb2f-4ef7-9b78-0519c3225f47",
+    "359fcab7-0b8f-4fcb-ad94-9c76cc2558c6",
+    "373492fa-118b-4582-bce7-08361d31efaa",
+    "3b107768-78b1-4f31-9bf4-c37dfde821ae",
+    "3d0109f0-3a18-4ae6-8f79-115e0c57fd39",
+    "3f410613-7077-440d-8fc6-9e2f9395ad00",
+    "49017290-d667-4a4b-bf9a-72cb3667ccd6",
+    "4993d38c-c7ad-44e1-b8a4-2d6367fda3f4",
+    "53459c43-00fa-4745-82fd-1987256c345c",
+    "5351d9b9-a42f-4ba3-859b-b8c0df624ffe",
+    "5ab9ff01-319e-43c6-8020-50770a916b12",
+    "5bbb1869-e616-46f7-b0de-b3956767d538",
+    "5f7136b9-7ce8-4648-8ec6-7b3419d7b794",
+    "61006095-7cb7-4487-be18-4c43b8832d32",
+    "657952a5-e5bf-4762-97dd-8aaa62530651",
+    "703e2126-8a01-4642-a686-d48b91e32980",
+    "7124c37e-b26b-4347-84f2-a3f39766327a",
+    "739cea3a-ae41-4e63-9802-57254e35333b",
+    "77300da4-d5c1-4390-8517-defbc9913d5a",
+    "776e2c73-b75a-4806-aaa9-86f797dbd042",
+    "7932f6cc-e618-4d0e-a0db-832ffa58ebe7",
+    "7a6f9b53-8dd4-4372-b900-22988c252da4",
+    "7df0c762-d66f-4127-ab8d-9808f0a05d7f",
+    "7e363eca-e368-4c2c-b708-f66feb471070",
+    "7ebec3f0-a830-4b11-815f-08a2f175a185",
+    "8223452d-6098-4cb6-83b7-3a22e22f9d8a",
+    "898777b5-5d39-4c56-877c-b327c0623e70",
+    "89f32824-a75d-4e9b-984e-2d861bfb9bdb",
+    "9696b712-00c3-4b30-98fa-dd86c76ae99b",
+    "9aa0060e-23f4-429a-b5aa-8938a3be8453",
+    "a02fbbad-80d5-47cf-8658-a3d176c8c1a6",
+    "a1fabf68-2011-45e1-8111-d00e82f87d81",
+    "a42d478d-7ec8-407a-a3f0-fc61db2da964",
+    "a5f105cc-0497-4433-a5ad-8326eddfaada",
+    "a6f682a6-025f-4ee0-89c8-fc51d2864e24",
+    "b0c0ac33-708e-4af6-b0ec-a7243456c3b7",
+    "b689eca2-2a5b-4299-9644-9e2ad8db507e",
+    "b88eebe7-42ae-40a3-bf6c-2369fbf3a5b7",
+    "c12eaa72-07a6-48dc-95bb-694b1fef0fda",
+    "c461d82f-3e88-40d4-80d9-a523f1b34a57",
+    "c48369cd-a083-4999-af17-c9d9e4537f44",
+    "ce5c2e30-3c09-4f95-8b4f-625c65c65a3a",
+    "cefce45c-965a-4a64-80c7-4a1c51e3571c",
+    "d3e9d975-72be-4e23-9254-4cd3840d2e2b",
+    "daaf2e7e-2ba4-4cd2-a570-732407f56b6f",
+    "e3317e74-c734-4629-b109-8b0386f94276",
+    "eb274bec-4432-494b-8a45-74f08d3e59c9",
+    "f0410270-49a2-48ef-bac8-da8a1d79532d",
+    "f7591ba8-de45-4403-8b9f-40b6ecb385f4",
+    "f9f67d49-8bba-4d2d-9910-cc335b941fcd"
+  ]
+}
