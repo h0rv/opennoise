@@ -72,11 +72,14 @@ limited, terminable licence; this is not an open-license substitute. Do not
 build a Last.fm similar-artist adapter without separately cleared access and
 terms.
 
-The repository already has a checksum-verified 360K Last.fm archive and a
-local aggregate, but the source checkpoint documents a non-commercial license,
-not open commercial reuse. Its strict exact-MBID aggregate is useful for
-bounded exploratory comparison; existing custody policy keeps it out of model,
-membership, and public use. It should not be recast as genre truth.
+An earlier repository checkpoint documents a checksum-verified 360K Last.fm
+archive and exact-MBID aggregate. The recorded aggregate cache is absent from
+this workspace, so that earlier receipt does not establish current custody.
+Its license permits noncommercial reuse rather than unrestricted commercial
+reuse. Historical receipts retain their original no-model-use scope. The
+current user authorizes local open-data modeling; any new research input would
+need fresh acquisition verification and a separate rights/authorization receipt,
+without changing those old receipts. Listener aggregates are not genre truth.
 
 The MSD documentation describes metadata-only SQLite files for track metadata,
 Last.fm tags, and directed track similarities. Official URLs are recorded in
@@ -90,18 +93,20 @@ artist genre membership. No files were fetched.
 
 ## Bounded next experiment
 
-Use ten already-retained recording MBIDs with exact MusicBrainz artist credits
-from the existing benchmark cohort. Query only AcousticBrainz high-level
-metadata first, one recording per artist, and record endpoint status, declared
-size, response SHA-256, model-family keys, and missing-data rate. Keep all
-classifier families distinct and separate from MusicBrainz tags and native
-genres. If this small audit shows useful, stable coverage, consider low-level
-features only for the same ten recordings and only as numeric descriptive
-review signals. Do not download the archives or audio; do not train or promote
-from this probe. Evaluate any later extension against independently reviewed
-artist/recording judgments, since the acoustic model labels themselves are
-not an independent gold set.
+The current release-context slice does not retain recordings for several
+benchmark artists, including Aphex Twin and Four Tet. The authorized pilot
+therefore uses ten exact artist MBIDs, one bounded MusicBrainz recording search
+per artist, and three UUID-sorted, exactly credited recordings from each search.
+Freeze that selection before acoustic requests; do not substitute known
+available recordings after observing missingness. Capture high- and low-level
+metadata for this small cohort with explicit endpoint status, byte hashes,
+source credits, model-family keys, and missing-data rates. Keep classifier
+families distinct from MusicBrainz tags and native genres. Numeric descriptions
+and classifier outputs remain recording-level observations with limited,
+nonrepresentative selection. Do not download archives or audio, or train or
+promote from this feasibility pilot. Any later extension needs independently
+reviewed artist/recording judgments; acoustic classifier labels are not gold.
 
-The next evidence step is therefore a small exact-MBID AcousticBrainz coverage
+The next evidence step is therefore a bounded exact-MBID AcousticBrainz coverage
 and schema audit. Neither this source nor the ListenBrainz radio route alone
 can establish 100% semantic genre parity.

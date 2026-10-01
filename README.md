@@ -19,6 +19,9 @@ records reproduction, exact receipts, and real-browser certification. The
 and [bulk atlas checkpoint](docs/checkpoints/NAMED_STYLE_ATLAS_BULK_BUILD_20260930.md)
 record source coverage, measured gains, and remaining gaps. These research
 artifacts are separate from the canonical publication below.
+The [AcousticBrainz pilot](docs/checkpoints/ACOUSTICBRAINZ_BENCHMARK_METADATA_20260930.md)
+verifies a bounded additional source of recording-level sonic metadata; it
+changes no model or published artist genres.
 
 ## Static delivery
 

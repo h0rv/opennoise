@@ -59,6 +59,17 @@ Aphex Twin and Four Tet retain their preferred names. Model suggestions stay
 separate from artist observations and credited-release context. Chromium
 certification covers the real export, history, mobile, and all three explorers.
 
+The [exact-credit AcousticBrainz pilot](checkpoints/ACOUSTICBRAINZ_BENCHMARK_METADATA_20260930.md)
+adds a separately verified source of sonic metadata. Thirty recordings were
+selected before feature requests; eighteen have both feature endpoints,
+including at least one recording for every benchmark artist. A corrected
+offline projection retains fourteen numeric descriptors without new requests.
+Missing recordings and absent fields remain explicit. This small sample adds
+no artist genre facts or model/product input; further experiments need broader
+coverage and independent musical judgments. The
+[independent metadata review](checkpoints/ACOUSTICBRAINZ_BENCHMARK_METADATA_REVIEW_20260930.md)
+records source age, recording identities, schema correction, and these limits.
+
 OpenNoise is the product name; the internal Python package and compatibility
 identifiers remain `opennoise` during the staged migration.
 
