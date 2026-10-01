@@ -62,3 +62,8 @@ metadata enrichment, source-model explorer, and revised public-data UI preview.
 The [Every Noise parity checkpoint](docs/EVERYNOISE_PARITY.md) measures remaining
 coverage gaps and reproduces the fuller local explorer with complete source
 artist navigation, artist maps, name enrichment, and release metadata.
+The [emergent community checkpoint](docs/checkpoints/EMERGENT_MUSIC_COMMUNITIES_20260930.md)
+records the richer open-tag pipeline, learned broad/sub/micro communities,
+independent predictive and stability checks, exact reference-artist coverage,
+and the static hierarchy explorer. Initial source genres are not its vocabulary
+ceiling; measured semantic and predictive gaps remain explicit.

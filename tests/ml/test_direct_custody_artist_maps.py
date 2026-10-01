@@ -118,6 +118,20 @@ class DirectCustodyArtistMapTests(unittest.TestCase):
         assert isinstance(artists, list)
         self.assertEqual(artists[0]["abstention_reason"], "no_two_genre_overlap_in_selected_cohort")
 
+    def test_identical_profiles_keep_members_but_abstain_from_arbitrary_geometry(self) -> None:
+        index = observation_index({"a": ("one", "two"), "b": ("one", "two")})
+        result = genre_artist_map(index, "a")
+        self.assertEqual(result["selected_count"], 2)
+        self.assertEqual(result["positioned_count"], 0)
+        self.assertEqual(result["distinct_profile_count"], 1)
+        self.assertEqual(result["layout_state"], "abstained_identical_source_profiles")
+        artists = result["artists"]
+        assert isinstance(artists, list)
+        self.assertTrue(all(artist["x"] is None and artist["y"] is None for artist in artists))
+        self.assertTrue(
+            all(artist["abstention_reason"] == "identical_source_profiles" for artist in artists)
+        )
+
     def test_source_order_does_not_change_selection_scores_or_geometry(self) -> None:
         memberships = {
             "target": ("one", "two", "three"),
@@ -133,7 +147,7 @@ class DirectCustodyArtistMapTests(unittest.TestCase):
         )
 
     def test_failed_spectral_fit_abstains_instead_of_inventing_positions(self) -> None:
-        index = observation_index({"a": ("one", "two"), "b": ("one", "two")})
+        index = observation_index({"a": ("one", "two", "three"), "b": ("one", "two")})
         error = ArpackNoConvergence("fixture", np.array([]), np.empty((0, 0)))
         with patch(
             "opennoise.ml.direct_custody_artist_maps.build_weighted_spectral_coordinates",
@@ -153,7 +167,7 @@ class DirectCustodyArtistMapTests(unittest.TestCase):
             output = Path(temporary) / "maps"
             result = build_genre_artist_maps(index, output_directory=output)
             self.assertEqual(result["genre_count"], 2)
-            self.assertEqual(result["positioned_artist_occurrence_count"], 4)
+            self.assertEqual(result["positioned_artist_occurrence_count"], 0)
             self.assertEqual(
                 json.loads((output / "a.json").read_bytes()), genre_artist_map(index, "a")
             )

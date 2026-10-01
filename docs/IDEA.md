@@ -2,13 +2,17 @@
 
 Build OpenNoise, an open music map from public metadata and privacy safe aggregates.
 
-The product target is complete Every Noise discovery parity. The measured
-acceptance criteria and current gaps are recorded in [Every Noise parity](EVERYNOISE_PARITY.md).
-The latest local implementation makes all 198,409 source artists and 387,435
-direct observations browsable, enriches artist names to 99.9904%, adds bounded
-source-overlap artist maps and retained release/track context, and loads detailed
-metadata on demand. Its 697 source genres match only 11.08% of the dated
-6,291-genre reference. These improvements do not establish full parity.
+The product target is complete Every Noise discovery parity through open-data
+modeling and enrichment. The initial 697 source genres are evidence, not a
+vocabulary ceiling. The current research pipeline adds verified open tags and
+learns overlapping broad, subgenre, and microgenre communities; names and
+historical maps do not determine their construction. The first rich model
+produces 844 communities, but its independent within-source feature holdout
+underperforms a conditioned genre baseline, so improved granularity is not yet
+established. See [the emergent community checkpoint](checkpoints/EMERGENT_MUSIC_COMMUNITIES_20260930.md)
+for source coverage, exact reference artists, measured weaknesses, and the new
+static hierarchy explorer. The measured product acceptance criteria remain in
+[Every Noise parity](EVERYNOISE_PARITY.md).
 
 OpenNoise is the product name; the internal Python package and compatibility
 identifiers remain `opennoise` during the staged migration.

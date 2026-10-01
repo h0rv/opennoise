@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 MAX_ARTISTS_PER_GENRE: Final = 200
 MAX_NEIGHBORS: Final = 10
-REVISION: Final = "direct-custody-artist-overlap-maps-v2"
+REVISION: Final = "direct-custody-artist-overlap-maps-v3"
 AFFINITY_SHRINKAGE: Final = 5
 CANDIDATE_SELECTION: Final = "multi_genre_then_mean_target_affinity_descending_then_mbid"
 METHOD: Final = "direct_genre_idf_cosine_spectral_rectangular_atlas"
@@ -99,10 +99,16 @@ def _artist_map(context: _Context, column: int) -> dict[str, object]:
                 }
             )
         neighbors[artist] = peers
+    distinct_profiles = len({tuple(profiles.getrow(row).indices) for row in range(len(selected))})
+    identical_profiles = bool(len(selected)) and distinct_profiles < MIN_SHARED
     connected = tuple(sorted({artist for edge in weights for artist in edge}))
     layout_state = "ready" if connected else "abstained_no_supported_pairs"
     try:
-        coordinates = build_weighted_spectral_coordinates(connected, weights)
+        coordinates = (
+            () if identical_profiles else build_weighted_spectral_coordinates(connected, weights)
+        )
+        if identical_profiles:
+            layout_state = "abstained_identical_source_profiles"
         atlas = build_rectangular_atlas(
             tuple(
                 AtlasPoint(point.genre_id, point.x, point.y, str(point.component))
@@ -122,6 +128,8 @@ def _artist_map(context: _Context, column: int) -> dict[str, object]:
             if position is not None
             else "single_direct_genre"
             if context.degree[selected[local]] < MIN_SHARED
+            else "identical_source_profiles"
+            if identical_profiles
             else "spectral_nonconvergence"
             if neighbors[artist]
             else "no_two_genre_overlap_in_selected_cohort"
@@ -147,6 +155,7 @@ def _artist_map(context: _Context, column: int) -> dict[str, object]:
         "quality_evaluated": False,
         "method": METHOD,
         "layout_state": layout_state,
+        "distinct_profile_count": distinct_profiles,
         "total_count": len(source_rows),
         "selected_count": len(selected),
         "positioned_count": len(positions),
@@ -201,6 +210,7 @@ def build_genre_artist_maps(
         "truncated_genre_count": 0,
         "positioned_genre_count": 0,
         "spectral_nonconvergence_genre_count": 0,
+        "identical_profile_abstained_genre_count": 0,
     }
     for column, seed in enumerate(index.seeds):
         payload = _artist_map(context, column)
@@ -214,6 +224,9 @@ def build_genre_artist_maps(
             totals[key] += value
         totals["truncated_genre_count"] += int(bool(payload["truncated"]))
         totals["positioned_genre_count"] += int(bool(payload["positioned_count"]))
+        totals["identical_profile_abstained_genre_count"] += int(
+            payload["layout_state"] == "abstained_identical_source_profiles"
+        )
         totals["spectral_nonconvergence_genre_count"] += int(
             payload["layout_state"] == "abstained_spectral_nonconvergence"
         )
