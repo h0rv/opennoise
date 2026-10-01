@@ -3,8 +3,8 @@ const $ = selector => document.querySelector(selector);
 const canvas = $('#style-map'), context = canvas.getContext('2d'), detail = $('#detail');
 const search = $('#atlas-search'), results = $('#search-results');
 const ROLES = ['observed_artist_feature', 'credited_release_context', 'inferred_feature_proposal'];
-const ROLE_LABELS = {observed_artist_feature: 'Artist observations', credited_release_context: 'Release context', inferred_feature_proposal: 'Style suggestions'};
-const ROLE_SHORT = {observed_artist_feature: 'Artists', credited_release_context: 'Releases', inferred_feature_proposal: 'Suggestions'};
+const ROLE_LABELS = {observed_artist_feature: 'Artist observations', credited_release_context: 'Release context', inferred_feature_proposal: 'Suggested'};
+const ROLE_SHORT = {observed_artist_feature: 'Artists', credited_release_context: 'Releases', inferred_feature_proposal: 'Suggested'};
 const TIERS = ['supported', 'all', 'dictionary_named_style', 'repeated_source_candidate', 'raw_source_candidate'];
 const TIER_LABELS = {dictionary_named_style: 'Dictionary name match', repeated_source_candidate: 'Repeated source candidate', raw_source_candidate: 'Raw source candidate'};
 const count = number => new Intl.NumberFormat('en').format(number ?? 0);
@@ -104,7 +104,7 @@ function controls() {
   }
   canvas.setAttribute('aria-label', 'Candidate musical style labels. Drag to pan and scroll to zoom. Arrow keys pan; plus and minus zoom. Search and List include every style, including unplaced styles.');
   canvas.dataset.evidenceRole = 'candidate_named_styles'; $('#fit-map').textContent = 'Fit atlas';
-  $('.map-legend').textContent = 'Named descriptors are candidates, not a validated taxonomy. Positions reflect source co-occurrence, not sound; inferred suggestions do not affect geometry. Search or List reaches every label.';
+  $('.map-legend').textContent = 'Source metadata map. Search or List includes unplaced styles.';
   if (!placed && rows.length) view = 'list';
   $('#map-view').disabled = !placed; $('#map-view').setAttribute('aria-pressed', String(view === 'map')); $('#list-view').setAttribute('aria-pressed', String(view === 'list'));
   canvas.hidden = view !== 'map'; $('.map-controls').hidden = view !== 'map'; $('#style-directory').hidden = view !== 'list'; $('#directory-pager').hidden = view !== 'list'; $('#sort-label').hidden = view !== 'list';
@@ -132,11 +132,11 @@ function renderDirectory() {
   $('#directory-pager').replaceChildren(pager(directoryPage, total, next => { directoryPage = next; renderDirectory(); list.scrollTop = 0; save(); }));
 }
 function renderOverview() {
-  detail.replaceChildren(node('span', 'SOURCE-BASED · CANDIDATE LABELS', 'badge'), node('h1', 'Explore named musical styles.'), node('p', 'Select a label on the map, search for a style or artist, or browse every candidate in List.', 'muted'));
-  detail.append(node('h3', 'Three distinct evidence roles'));
-  for (const role of ROLES) detail.append(node('span', ROLE_LABELS[role], `badge ${role}`), node('p', roleDescription(role), 'section-description'));
-  detail.append(node('p', 'The default view contains dictionary names and repeated source candidates. Raw source labels remain searchable and available with the Labels filter. Label support uses source artists; inferred suggestions do not improve a label’s evidence tier.', 'section-description'));
+  detail.replaceChildren(node('h1', 'Styles'), node('p', 'Choose a name on the map, or search for a style or artist. List includes every matching style.', 'muted'));
+  detail.append(node('p', 'Source observations, release context, and Suggested relationships are shown separately when you select a name.', 'section-description'));
+  detail.append(node('p', 'Filters includes raw source labels. About explains the sources and map.', 'section-description'));
 }
+
 function roleDescription(role) {
   return role === ROLES[0] ? 'Artists whose source records include this genre or tag. Observations do not validate a style taxonomy.' : role === ROLES[1] ? 'Artists credited on releases carrying this descriptor. Release context does not establish an artist’s style.' : 'Additional model suggestions, separate from all observed values. Scores are uncalibrated association strengths, not probabilities.';
 }
@@ -302,6 +302,42 @@ function validatedMemberships(profile) {
   }
   return {accepted, rejected: records.length - accepted.length};
 }
+// Optional metadata examples are fetched only after opening an artist.
+let artistExamplesRequest;
+function showArtistExamples(artistId) {
+  const path = document.body.dataset.artistExamples;
+  if (!path) return;
+  const section = node('section', undefined, 'artist-work-examples');
+  section.dataset.evidenceRole = 'exact_artist_credited_music_examples';
+  detail.append(section);
+  artistExamplesRequest ||= fetch(path).then(response => {
+    if (!response.ok) throw new Error('Examples unavailable');
+    return response.json();
+  });
+  artistExamplesRequest.then(payload => {
+    if (!section.isConnected) return;
+    const artist = payload.artists?.find(row => row.artist_mbid === artistId);
+    if (!artist) { section.remove(); return; }
+    section.append(node('p', 'A few credited metadata examples from a bounded source sample.', 'section-description'));
+    for (const [key, label, kind] of [['recordings', 'Recordings', 'recording'], ['release_groups', 'Release context', 'release-group']]) {
+      const rows = Array.isArray(artist[key]) ? artist[key] : [];
+      const list = node('div', undefined, 'artist-list');
+      for (const row of rows) {
+        if (!row.credited_artist_mbids?.includes(artistId) || !row.evidence_refs?.length || typeof row.entity_id !== 'string' || typeof row.title !== 'string') continue;
+        const id = row.entity_id.replace(`musicbrainz:${kind}:`, '');
+        if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(id) || row.url !== `https://musicbrainz.org/${kind}/${id}`) continue;
+        const link = node('a', row.title, 'artist-row');
+        link.href = row.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+        link.dataset.entityId = row.entity_id; list.append(link);
+      }
+      if (list.childElementCount) section.append(node('h3', label), list);
+    }
+    if (!section.querySelector('a')) section.remove();
+  }).catch(() => {
+    if (section.isConnected) section.replaceChildren(node('p', 'Music examples unavailable. Try reloading.', 'muted'));
+  });
+}
+
 function renderArtist() {
   detail.replaceChildren(); detail.scrollTop = 0; detail.setAttribute('aria-busy', String(!artistProfile));
   detail.append(button(selected ? `← ${selected.name}${scene === 'artists' ? ' artists' : ''}` : '← all styles', 'back-button', () => {
@@ -310,7 +346,7 @@ function renderArtist() {
   }));
   if (!artistProfile) { detail.append(node('h2', 'Loading artist…'), node('p', 'Loading exact source identity and complete typed style evidence.', 'muted')); return; }
   detail.append(node('span', 'ARTIST · EXACT SOURCE IDENTITY', 'badge'), node('h2', artistProfile.name));
-  const provider = node('a', 'Artist on MusicBrainz ↗', 'provider-link'); provider.href = `https://musicbrainz.org/artist/${selectedArtist}`; provider.target = '_blank'; provider.rel = 'noopener noreferrer'; detail.append(provider);
+  const provider = node('a', 'Artist on MusicBrainz ↗', 'provider-link'); provider.href = `https://musicbrainz.org/artist/${selectedArtist}`; provider.target = '_blank'; provider.rel = 'noopener noreferrer'; detail.append(provider); showArtistExamples(selectedArtist);
   const validated = artistEvidence || validatedMemberships(artistProfile);
   if (scene === 'artists' && artistMap) {
     const row = artistMap.artists.find(candidate => candidate.artist_mbid === selectedArtist);

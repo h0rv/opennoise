@@ -101,7 +101,7 @@ try {
   const initialRequests = [...requests];
   assert.ok(!initialRequests.some(row => /\/(?:artists|styles|cohorts|style-artist-maps)\/|artist-search\.json/.test(row.url)), 'overview must not prefetch artist profiles, cohorts, or artist search');
   assert.equal(await evaluate("document.querySelector('#tier-filter').value"), 'supported');
-  assert.ok(await evaluate("document.querySelector('.map-legend').textContent.includes('not a validated taxonomy')"));
+  assert.ok(await evaluate("document.querySelector('#about').textContent.includes('do not validate a style taxonomy') && document.querySelector('.map-legend').textContent.includes('unplaced styles')"));
   await screenshot('overview.png');
   const findStyle = async style => {
     await evaluate("document.querySelector('#search-scope').value='styles';document.querySelector('#search-scope').dispatchEvent(new Event('change'));document.querySelector('#atlas-search').value=" + JSON.stringify(style.name) + ";document.querySelector('#atlas-search').dispatchEvent(new Event('input'))");
@@ -207,7 +207,7 @@ try {
     await evaluate("document.querySelector('[data-cohort-role=" + JSON.stringify(role) + "]').click()");
     await wait("document.querySelector('.cohort-content')?.dataset.evidenceRole === " + JSON.stringify(role) + " && document.querySelectorAll('.artist-row').length > 0 && document.querySelector('#detail').getAttribute('aria-busy') === 'false'");
     assert.ok(await evaluate("document.querySelector('#detail').textContent.includes(" + JSON.stringify(role === roles[1] ? 'does not establish' : 'not probabilities') + ")"));
-    assert.ok(await evaluate("document.querySelector('#detail').textContent.includes(" + JSON.stringify(role === roles[1] ? 'Release context' : 'Style suggestions') + ")"));
+    assert.ok(await evaluate("document.querySelector('#detail').textContent.includes(" + JSON.stringify(role === roles[1] ? 'Release context' : 'Suggested') + ")"));
     await screenshot(role === roles[1] ? 'style-release-context.png' : 'style-inferred-artists.png');
   }
   await evaluate("document.querySelector('.artist-row').click()");
@@ -226,6 +226,12 @@ try {
     assert.ok(await evaluate("[...document.querySelectorAll('.evidence-card')].every(node=>node.dataset.nativeFact==='false')"));
     assert.equal(await evaluate("document.querySelectorAll('#detail .error-state').length"),0);
     knownArtists.push({name,id,roleCounts,inferredValues:profile.style_memberships.filter(row=>row.role===roles[2]).map(row=>row.value)});
+    if (await evaluate("Boolean(document.body.dataset.artistExamples)")) {
+      await wait("document.querySelectorAll('.artist-work-examples a').length === 12");
+      assert.deepEqual(await evaluate("[...document.querySelectorAll('.artist-work-examples h3')].map(row=>row.textContent)"), ['Recordings', 'Release context']);
+      assert.ok(await evaluate("[...document.querySelectorAll('.artist-work-examples a')].every(row=>row.href.startsWith('https://musicbrainz.org/') && row.rel.includes('noopener') && row.dataset.entityId.startsWith('musicbrainz:'))"));
+      assert.ok(await evaluate("document.querySelector('.artist-work-examples').textContent.includes('bounded source sample')"));
+    }
     await screenshot(name==='Aphex Twin'?'aphex-twin.png':'four-tet.png');
     if (name==='Aphex Twin') {
       await evaluate("document.querySelector('.artist-evidence[data-evidence-role=inferred_feature_proposal]').scrollIntoView({block:'start'});document.querySelector('.evidence-card.inferred_feature_proposal details').open=true");
@@ -239,7 +245,7 @@ try {
   await evaluate("document.querySelector('#atlas-search').value=" + JSON.stringify(exactArtist.id) + ";document.querySelector('#atlas-search').dispatchEvent(new Event('input'))");
   await wait("Boolean(document.querySelector('#search-results [data-artist-id=" + JSON.stringify(exactArtist.id) + "]'))");
   assert.equal(await evaluate("document.querySelector('#search-results [data-artist-id=" + JSON.stringify(exactArtist.id) + "] span').textContent"),exactArtist.name);
-  await evaluate("document.querySelector('.back-button').click();document.querySelector('#list-view').click();document.querySelector('#tier-filter').value='all';document.querySelector('#tier-filter').dispatchEvent(new Event('change'));document.querySelector('#directory-sort').value='observed_artist_feature';document.querySelector('#directory-sort').dispatchEvent(new Event('change'))");
+  await evaluate("document.querySelector('.back-button').click();document.querySelector('#list-view').click();document.querySelector('.filters').open=true;document.querySelector('#tier-filter').value='all';document.querySelector('#tier-filter').dispatchEvent(new Event('change'));document.querySelector('#directory-sort').value='observed_artist_feature';document.querySelector('#directory-sort').dispatchEvent(new Event('change'))");
   assert.equal(await evaluate("document.querySelectorAll('.style-card').length"),200);
   const visibleIds = await evaluate("[...document.querySelectorAll('.style-card')].map(row=>row.dataset.styleId)");
   const byId = new Map(catalog.styles.map(row=>[row.id,row]));
@@ -274,6 +280,8 @@ try {
   await evaluate("new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
   assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'),false);
   assert.ok(await evaluate("document.querySelector('#atlas-status').getBoundingClientRect().top >= document.querySelector('.toolbar').getBoundingClientRect().bottom"));
+  await evaluate("document.querySelector('.filters').open=true");
+  assert.ok(await evaluate("[...document.querySelectorAll('.filter-options select')].every(row=>{const r=row.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth})"), 'mobile filters must remain fully reachable');
   await screenshot('mobile.png');
   await evaluate("document.querySelector('#atlas-search').value='unmatched-style-query-927462';document.querySelector('#atlas-search').dispatchEvent(new Event('input'))");
   assert.ok(await evaluate("document.querySelector('#search-results').textContent.includes('No matching')"));

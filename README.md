@@ -8,6 +8,14 @@ API or computes a graph layout.
 
 No audio recordings or audio previews enter the project.
 
+The [open foundation](docs/foundation/README.md) now includes runnable CC0
+examples, a stage/input inventory, overlapping style-model research, separate
+sonic and cultural comparisons, and historical evaluation tooling. The
+[2026-10-01 checkpoint](docs/checkpoints/OPEN_FOUNDATION_IMPLEMENTATION_20261001.md)
+records the simpler discovery UI, credited music links, confirmed rare-style
+recovery gain, and remaining musical parity gaps. Full-corpus research and
+canonical publication still require additional retained inputs.
+
 The latest local research combines a named-style atlas, learned broad/sub/micro
 communities, and source genres in one static discovery export. It includes all
 198,409 source artists, 3,920 default candidate style names, and 3,505 bounded

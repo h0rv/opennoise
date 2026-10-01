@@ -108,7 +108,7 @@ try {
   assert.equal(await evaluate("document.querySelector('.feature-list').dataset.evidenceRole"), 'derived_feature_descriptors');
   assert.ok(await evaluate("document.querySelector('#detail .count').textContent.includes('assigned members') && document.querySelector('#detail').textContent.includes('member counts overlap')"));
   assert.ok(await evaluate("document.querySelector('#detail').textContent.includes('full retained feature catalog') && document.querySelector('.feature-list').textContent.includes('catalog artists with this feature')"));
-  assert.ok(await evaluate("document.querySelector('.map-caption').textContent.includes('sibling feature centroids') && document.querySelector('.map-caption').textContent.includes('not sonic distance')"));
+  assert.ok(await evaluate("document.querySelector('.map-caption').textContent.includes('Suggested communities') && document.querySelector('.map-caption').textContent.includes('metadata similarity') && document.querySelector('#about').textContent.includes('model outputs inferred')"));
   await screenshot('broad.png');
   await evaluate(`document.querySelector('.branch-list [data-community-id=${JSON.stringify(sub.id)}]').click()`);
   await wait("document.querySelector('#detail h2')?.textContent === " + JSON.stringify("Community descriptors: " + sub.label));
@@ -150,6 +150,12 @@ try {
     assert.equal(await evaluate("document.querySelector('.membership-list').dataset.evidenceRole"), 'inferred_community_membership');
     assert.equal(await evaluate("document.querySelector('.source-list').dataset.evidenceRole"), 'direct_source_observation');
     assert.ok(await evaluate("document.querySelector('#detail').textContent.includes('not probabilities')"));
+    if (await evaluate("Boolean(document.body.dataset.artistExamples)")) {
+      await wait("document.querySelectorAll('.artist-work-examples a').length === 12");
+      assert.deepEqual(await evaluate("[...document.querySelectorAll('.artist-work-examples h3')].map(row=>row.textContent)"), ['Recordings', 'Release context']);
+      assert.ok(await evaluate("[...document.querySelectorAll('.artist-work-examples a')].every(row=>row.href.startsWith('https://musicbrainz.org/') && row.rel.includes('noopener') && row.dataset.entityId.startsWith('musicbrainz:'))"));
+      assert.ok(await evaluate("document.querySelector('.artist-work-examples').textContent.includes('bounded source sample')"));
+    }
     await screenshot(name === 'Aphex Twin' ? 'aphex-twin.png' : 'four-tet.png');
     if (Array.isArray(modelAssignment.feature_proposals)) {
       const suggestions = await evaluate("[...document.querySelectorAll('.suggestion-card')].map(node => ({value: node.dataset.featureValue, role: node.dataset.evidenceRole, nativeFact: node.dataset.nativeFact}))");

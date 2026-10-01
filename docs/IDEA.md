@@ -2,6 +2,20 @@
 
 Build OpenNoise, an open music map from public metadata and privacy safe aggregates.
 
+The end goal includes a reusable open modeling foundation, not only a website.
+Use the historical Every Noise scrape as a North Star for discovery behavior
+and independent evaluation while constructing representations and overlapping
+communities from separately licensed open evidence. The
+[foundation goal and acceptance gaps](foundation/GOAL.md) define that scope;
+[reproducibility inventory](foundation/README.md) distinguishes runnable
+checkout examples from full-corpus stages that need additional inputs.
+
+The [2026-10-01 implementation checkpoint](checkpoints/OPEN_FOUNDATION_IMPLEMENTATION_20261001.md)
+is the latest integrated state. It adds a confirmed optional rare-style lens,
+expanded sonic metadata and offline replay, independent historical evaluation,
+portable CC0 examples, and the minimal UI with credited work links. Earlier
+checkpoints below retain the history of preceding source and model runs.
+
 The design direction is minimal, plain, and “grug brain,” with usability and
 UI/UX preserved. Remove generic dashboard styling, repeated explanatory copy,
 badge clutter, and competing controls. Keep search, readable names, clear

@@ -229,6 +229,42 @@ function renderCommunity() {
   const supported = model.quality_evaluated === true ? 'See the provenance receipt for the evaluation scope.' : 'Community quality has not been evaluated.';
   detail.append(node('p', `${supported} Source coverage limits what this model can discover; source-isolated artists remain available through search.`, 'coverage-note'));
 }
+// Optional metadata examples are fetched only after opening an artist.
+let artistExamplesRequest;
+function showArtistExamples(artistId) {
+  const path = document.body.dataset.artistExamples;
+  if (!path) return;
+  const section = node('section', undefined, 'artist-work-examples');
+  section.dataset.evidenceRole = 'exact_artist_credited_music_examples';
+  detail.append(section);
+  artistExamplesRequest ||= fetch(path).then(response => {
+    if (!response.ok) throw new Error('Examples unavailable');
+    return response.json();
+  });
+  artistExamplesRequest.then(payload => {
+    if (!section.isConnected) return;
+    const artist = payload.artists?.find(row => row.artist_mbid === artistId);
+    if (!artist) { section.remove(); return; }
+    section.append(node('p', 'A few credited metadata examples from a bounded source sample.', 'section-description'));
+    for (const [key, label, kind] of [['recordings', 'Recordings', 'recording'], ['release_groups', 'Release context', 'release-group']]) {
+      const rows = Array.isArray(artist[key]) ? artist[key] : [];
+      const list = node('div', undefined, 'artist-list');
+      for (const row of rows) {
+        if (!row.credited_artist_mbids?.includes(artistId) || !row.evidence_refs?.length || typeof row.entity_id !== 'string' || typeof row.title !== 'string') continue;
+        const id = row.entity_id.replace(`musicbrainz:${kind}:`, '');
+        if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(id) || row.url !== `https://musicbrainz.org/${kind}/${id}`) continue;
+        const link = node('a', row.title, 'artist-row');
+        link.href = row.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+        link.dataset.entityId = row.entity_id; list.append(link);
+      }
+      if (list.childElementCount) section.append(node('h3', label), list);
+    }
+    if (!section.querySelector('a')) section.remove();
+  }).catch(() => {
+    if (section.isConnected) section.replaceChildren(node('p', 'Music examples unavailable. Try reloading.', 'muted'));
+  });
+}
+
 function renderArtist() {
   detail.replaceChildren(); detail.scrollTop = 0; detail.setAttribute('aria-busy', String(!artistProfile || !artistAssignments));
   detail.append(button(`← ${selected.label}`, 'back-button', () => navigate(selected.id)));
@@ -237,7 +273,7 @@ function renderArtist() {
   }
   detail.append(node('span', 'ARTIST · EXACT SOURCE IDENTITY', 'role-badge source'), node('h2', artistProfile.name));
   const sourceLink = node('a', 'View artist on MusicBrainz', 'source-link'); sourceLink.href = `https://musicbrainz.org/artist/${selectedArtist}`;
-  sourceLink.target = '_blank'; sourceLink.rel = 'noopener noreferrer'; detail.append(sourceLink);
+  sourceLink.target = '_blank'; sourceLink.rel = 'noopener noreferrer'; detail.append(sourceLink); showArtistExamples(selectedArtist);
   detail.append(node('h3', 'Overlapping model memberships'), node('p', 'Uncalibrated cosine scores describe model similarity. They are not probabilities, source genre claims, or importance rankings.', 'section-description'));
   const memberships = node('div', undefined, 'membership-list'); memberships.dataset.evidenceRole = 'inferred_community_membership';
   for (const resolution of LEVELS) {

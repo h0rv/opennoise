@@ -9,10 +9,10 @@
   <script type="module" src="community-preview.js"></script>
 </head>
 <body>
-  <header class="masthead"><a class="brand" href="./"><span>◎</span> OpenNoise <small>Model explorer</small></a><nav aria-label="Explorer"><a href="source-explorer.html">Source observations ↗</a><span class="research-badge">LOCAL MODEL</span></nav></header>
+  <header class="masthead"><a class="brand" href="./">OpenNoise <small>Communities</small></a><nav aria-label="Explorer"><a href="source-explorer.html">Sources</a><span class="research-badge">Suggested</span></nav></header>
   <main class="workspace">
     <section class="model-panel" aria-label="Emerging music communities">
-      <div class="intro"><p class="eyebrow">OPEN METADATA · INFERRED COMMUNITIES</p><h1>Explore an emerging music model.</h1><p>Follow broad communities into subcommunities and microcommunities.</p></div>
+      <div class="intro"><h1>Communities</h1><p>Suggested from source metadata. Choose a name to see artists.</p></div>
       <div class="view-switch" aria-label="Community view"><button id="view-map" aria-pressed="true">Map</button><button id="view-list" aria-pressed="false">List</button></div>
       <div class="search-box"><label class="sr-only" for="model-search">Find a community or artist</label><input id="model-search" type="search" placeholder="Find a community or artist…" autocomplete="off" aria-controls="search-results"><div class="search-scope"><label><input name="search-scope" type="radio" value="communities" checked>Communities</label><label><input name="search-scope" type="radio" value="artists">Artists</label></div><div id="search-results" hidden></div><p id="search-status" class="sr-only" aria-live="polite"></p></div>
       <nav class="level-nav" aria-label="Model resolution"><button data-level="broad" aria-pressed="true">Broad</button><span>→</span><button data-level="sub" aria-pressed="false">Sub</button><span>→</span><button data-level="micro" aria-pressed="false">Micro</button></nav>
@@ -21,11 +21,11 @@
       <canvas id="community-map" tabindex="0" aria-label="Inferred music communities. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom. Search and the list include unplaced communities."></canvas>
       <section id="community-directory" hidden aria-label="All communities in this branch, including unplaced communities"><div class="directory-toolbar"><p id="directory-status" aria-live="polite"></p><label>Sort <select id="directory-sort"><option value="name">Descriptor label A–Z</option><option value="artists">Assigned member count</option></select></label></div><div id="directory-results"></div></section>
       <div class="map-controls"><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit-map">Fit branch</button><button id="zoom-in" aria-label="Zoom in">+</button></div>
-      <div class="map-caption">Each branch compares sibling feature centroids; proximity is metadata similarity, not sonic distance. Labels and overlapping memberships are inferred. All communities are accessible in List.</div>
+      <div class="map-caption">Suggested communities. Map positions use metadata similarity. List includes unplaced communities.</div>
     </section>
     <aside id="detail" class="detail" aria-label="Community and artist details" aria-live="polite"><p class="muted">Loading the open-data model…</p></aside>
   </main>
-  <footer><span id="model-corpus-status">Loading model coverage…</span><button id="about-toggle" aria-controls="about" aria-expanded="false">About this model</button></footer>
+  <footer><span id="model-corpus-status">Loading model coverage…</span><button id="about-toggle" aria-controls="about" aria-expanded="false">About</button></footer>
   <section id="about" hidden><h2>A model of music communities</h2><p>Broad, sub, and micro communities are model outputs inferred from retained open metadata. Their names are derived from feature descriptors. They are not source taxonomy claims or reviewed genre names.</p><p>An artist can have overlapping model memberships. Scores are uncalibrated model similarities, not probabilities or importance rankings. Artists with insufficient evidence remain searchable without modeled assignments or positions.</p><p>The source explorer preserves exact artist observations and source identities independently. This preview contains metadata and is local research. <a href="community-preview-receipt.json">View the model provenance receipt</a>.</p></section>
 </body>
 </html>

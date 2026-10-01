@@ -49,6 +49,14 @@ every source artist. All ten benchmark identities and preferred names verify.
 and real-browser certification preserve source/model separation and explicitly
 unmeasured musical and listening criteria.
 
+The [2026-10-01 implementation](checkpoints/OPEN_FOUNDATION_IMPLEMENTATION_20261001.md)
+adds a simpler interface, exact-credit work links, a reusable acoustic-metadata
+representation, portable CC0 examples, and explicit historical benchmark tools.
+Its optional rare-style model confirms a source-recovery gain without replacing
+default suggestions. Historical display-neighbor recovery remains very low;
+music relevance, sonic axes, representative quality, listening, and complete
+reference memberships are still separate unresolved criteria.
+
 ## Model and data results
 
 The latest local research adds a bulk MusicBrainz tag source and a
