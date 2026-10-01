@@ -137,3 +137,67 @@ Immutable local evidence:
 - Full membership replay:
   `.cache/emergent-evaluation/membership-audit-20260930-v4.json`;
   synthetic capacity: `.cache/emergent-evaluation/capacity-20260930-v2/report.json`.
+
+### Separate feature-graph experiment
+
+The frozen `emergent_feature_graph.py` experiment changes both broad initialization
+and membership assignment: it uses hard core memberships without the v4
+individual parent-enrichment gate. Its comparison therefore does not isolate an
+initialization effect. All identical-profile primary constraints pass, but the
+44-community broad partition has in-sample cosine coherence 0.1539 versus v4's
+0.2532. The graph model's fixed-fold Recall@10 is 22.30% overall and 12.25% on
+tag-only targets, below v4, global frequency overall, and the conditioned
+proper-genre baseline. These results do not support promoting it as a quality
+improvement.
+
+The source module and shared v4 dependencies were byte-pinned before training;
+the evaluator accepted an explicit `TopicFitterBinding` without changing the
+default fitter. The training file and targets match the earlier fold exactly.
+Evidence is `.cache/emergent-evaluation/graph-20260930-v1.json` and
+`.cache/emergent-evaluation/feature-holdout-graph-20260930-v1/report.json`
+(receipt `ca3d4fde3d9349bc06d258c8af68b5ee6bf0fda245ba6c4b09576e856037f0e3`).
+
+### Frozen native-tag lexical representation
+
+The separately prespecified lexical/cooccurrence representation improves the same
+reused-fold diagnostic to 35.33% overall Recall@10 and 16.56% tag-only Recall@10.
+The conditioned baseline remains stronger overall at 57.01%. Tag-only recovery
+is 1,303 versus 1,231 positives for that baseline, a narrow 72-positive gain;
+tag-only MRR@10 is 0.09247 versus 0.07146. These are source-feature reconstruction
+results, not independent musical validation. All three implementation dependencies
+were frozen, with no parameter selection on these scores. The training and target
+bytes exactly match the earlier experiments. Evidence:
+`.cache/emergent-evaluation/feature-holdout-lexical-20260930-v1/report.json`,
+receipt `db90059d366100bd672b3a83b641a0759486094dde2a4f4a63aaa263ff8a60d2`.
+
+The subsequent prespecified adaptive coarse frontier uses the same frozen
+representation and retains the source-support membership guards. On the same
+reused fold, overall Recall@10 increases to 36.56% (31,113/85,109), still below the
+conditioned baseline's 57.01%. Tag-only Recall@10 is 18.09% (1,423/7,868), versus
+15.65% for that baseline; tag-only MRR@10 is 0.10575 versus 0.07146. All four code
+dependencies and exact training/target bytes are bound in
+`.cache/emergent-evaluation/feature-holdout-adaptive-20260930-v1/report.json`,
+receipt `9162a51b437e0f37672786fb039657b620fa608029b414cdf6462f1531c7c341`.
+Unsupported coarse groups remain explicitly marked candidates. The original
+corpus has one such group with 80 core artists but 107 total and primary broad
+assignments; these must not be represented as evidence-supported taxonomy.
+
+### Independent replay of nested feature enrichment
+
+The separate predictor uses a newly declared outer split on the already explored
+corpus, and chooses smoothing from 4/16/64 using an inner split only. An independent
+audit reproduces both split files byte-for-byte, the selected sparse association
+and support matrices exactly, all saved enrichment rankings for 198,409 artists,
+every reported outer metric, and the inner selection rule. No outer-target
+training leakage was found in this implementation. Evidence:
+`.cache/artist-feature-enrichment-nested-v1-independent-audit.json`, receipt
+`a349f398c390daef372ed092b4e6ee9bd3fd18ea0aba4e8410b5fd9fee494fed`.
+
+On 85,755 outer positives, enrichment Recall@10 is 45.83% versus 56.99% for the
+conditioned baseline. Prespecified strata improve: tag-only 24.12% versus 16.48%,
+one retained musical value 68.18% versus 65.40%, and training support at most five
+2.71% versus 0.67%. All 25,769 cold positives remain in the denominator; enrichment
+abstains while the baseline guesses 11,481 correctly. This explains much of the
+overall gap without permitting their removal from the primary score.
+Proposals remain inferred, uncalibrated metadata suggestions; they cannot count
+as new independent observations, native memberships, or validation evidence.

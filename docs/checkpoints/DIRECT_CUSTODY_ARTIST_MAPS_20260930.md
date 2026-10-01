@@ -1,9 +1,9 @@
 # Offline artist maps from direct genre overlap
 
-The local explorer can now build a separate artist map for every observed source
-genre. The real portable-source batch produced **697 map artifacts**, with
+The local explorer can build a separate artist map for every observed source
+genre. The retained v2 portable-source batch produced **697 map artifacts**, with
 **69,219 positioned artist occurrences** across **683 genres**. Jazz and rock
-each have a 200-artist map, drawn from source cohorts of 18,239 and 17,873 artists.
+each selected a 200-artist cohort, drawn from source cohorts of 18,239 and 17,873 artists.
 The maps use exact MusicBrainz artist identities and direct proper-genre profiles;
 artist names are joined only after coordinates are fixed.
 
@@ -11,6 +11,11 @@ These are inferred overlap maps, not reproduced Every Noise artist geometry.
 Their payloads retain `role: inferred_artist_overlap_map` and
 `quality_evaluated: false`. Artist membership comes from direct source observations;
 relative placement is a separate, unevaluated inference.
+
+Current v3 corrects one geometry limitation: a cohort containing only one
+identical source profile abstains from placement entirely. In particular, the
+v2 jazz cohort does not support 200 distinct positions. Earlier v2 positions and
+counts below are retained historical experiment results, not current coverage.
 
 ## Cohort and evidence rules
 
@@ -147,10 +152,22 @@ artists remain in the payload with null coordinates. The map also carries
 `world_width`, `world_height`, source role, construction method, and explicit
 coverage counts.
 
-Eleven focused tests cover singleton abstention, exact shared-seed explanations,
+Twelve focused tests cover singleton and identical-profile abstention, exact shared-seed explanations,
 IDF weighting against the complete profile, coherent versus broad-profile
 selection, self-observation exclusion, the minimum affinity support floor,
 deterministic bounded selection,
 cohort-specific abstention, source-order invariance, spectral failure handling,
 batch writing and overwrite refusal, unsafe source IDs, unknown genres, and
 public destination refusal. The tests, Ruff, formatting, and type checks pass.
+
+## Current v3 geometry correction
+
+The new immutable batch `.cache/direct-custody-artist-maps/run-20260930-v3`
+contains all 697 genre files. Cohort selection remains fixed, with 78,755 selected
+artist occurrences. Identical-profile geometry abstention reduces positioned
+occurrences to 69,019 and increases explicit abstentions to 9,736. There are 682
+genres with positions and six cohorts marked
+`abstained_identical_source_profiles`; five already lacked qualifying pairs.
+Jazz accounts for the 200 removed positions. There are no spectral failures.
+The aggregate receipt is `report-20260930-v3.json` beside the batch directory.
+These counts describe honest available geometry, not a relevance improvement.

@@ -5,9 +5,9 @@ from __future__ import annotations
 import hashlib
 import re
 from collections import defaultdict
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 import numpy as np
 from pydantic import TypeAdapter
@@ -21,6 +21,7 @@ from opennoise.catalog.musicbrainz_candidate import require_local_candidate_dest
 from opennoise.common import canonical_json, sha256_file, sha256_json
 from opennoise.ml.emergent_topics import (
     MUSIC_NAMESPACES,
+    FeatureMatrix,
     TopicSettings,
     _normalize,
     _usable,
@@ -35,6 +36,31 @@ SPLIT_SALT = "emergent-musical-feature-holdout-v1-fixed-20260930"
 RANK_LIMIT = 10
 BLOCK_SIZE = 256
 _RG = re.compile(r"(?:release-group[/:]|release_group[/:])([0-9a-f-]{36})")
+
+
+class TopicFitter(Protocol):
+    """A training-only topic fitter exposing diagnostic centroids and memberships."""
+
+    def __call__(
+        self, data: FeatureMatrix, settings: TopicSettings, *, include_centroids: bool
+    ) -> tuple[dict[str, object], dict[str, list[dict[str, object]]]]:
+        """Fit only the supplied, already partitioned observations."""
+        ...
+
+
+@dataclass(frozen=True)
+class TopicFitterBinding:
+    """Name and pin an alternative fitter's implementation dependencies."""
+
+    name: str
+    fitter: TopicFitter
+    implementation_paths: tuple[Path, ...]
+
+    def code_bindings(self) -> dict[str, str]:
+        """Bind implementation bytes in addition to the shared source feature reader."""
+        if not self.name or not self.implementation_paths:
+            raise ValueError("alternative fitter requires a name and implementation bindings")
+        return {str(path.resolve()): sha256_file(path)[0] for path in self.implementation_paths}
 
 
 def musical_value(feature: Mapping[str, object]) -> str | None:
@@ -59,7 +85,7 @@ def _facts(artist: str, feature: Mapping[str, object], value: str) -> list[Featu
 
 
 def partition_feature_file(
-    source: Path, destination: Path
+    source: Path, destination: Path, *, salt: str = SPLIT_SALT
 ) -> tuple[
     dict[str, tuple[str, ...]], dict[str, tuple[str, ...]], tuple[FeatureFact, ...], set[str]
 ]:
@@ -84,7 +110,7 @@ def partition_feature_file(
                     if feature["namespace"] == "artist_genre":
                         proper_values.add(value)
             rows.append(row)
-    train, hidden = split_feature_evidence(evidence, salt=SPLIT_SALT)
+    train, hidden = split_feature_evidence(evidence, salt=salt)
     withheld = {(fact.artist_id, fact.feature_id) for fact in hidden}
     profiles: dict[str, tuple[str, ...]] = {}
     proper: dict[str, tuple[str, ...]] = {}
@@ -189,8 +215,12 @@ def _metric(hits: int, reciprocal: float, positives: int) -> dict[str, int | flo
     }
 
 
-def evaluate_topic_feature_holdout(
-    *, features_path: Path, output: Path, settings: TopicSettings
+def evaluate_topic_feature_holdout(  # noqa: C901, PLR0915 - seal one split, fit, scoring, and code-binding boundary.
+    *,
+    features_path: Path,
+    output: Path,
+    settings: TopicSettings,
+    fitter_binding: TopicFitterBinding | None = None,
 ) -> dict[str, object]:
     """Fit once after splitting, then compare fixed centroid and two baseline scorers."""
     require_local_candidate_destination(output)
@@ -202,7 +232,7 @@ def evaluate_topic_feature_holdout(
     target_pairs = sorted({(fact.artist_id, fact.feature_id) for fact in targets})
     (output / "held-out-pairs.json").write_bytes(canonical_json(target_pairs) + b"\n")
     # The partition and parameters are frozen before the training reader is called.
-    declaration = {
+    declaration: dict[str, object] = {
         "split_salt": SPLIT_SALT,
         "settings": asdict(settings),
         "source_sha256": sha256_file(features_path)[0],
@@ -217,9 +247,17 @@ def evaluate_topic_feature_holdout(
         "model_code_sha256": sha256_file(Path(__file__).parents[1] / "ml/emergent_topics.py")[0],
         "evaluator_sha256": sha256_file(Path(__file__))[0],
     }
+    alternative = (
+        {"name": fitter_binding.name, "implementation_bindings": fitter_binding.code_bindings()}
+        if fitter_binding is not None
+        else None
+    )
+    if alternative is not None:
+        declaration["alternative_fitter"] = alternative
     (output / "pre-fit-declaration.json").write_bytes(canonical_json(declaration) + b"\n")
     data = load_features(training, settings)
-    model, memberships = fit_topics(data, settings, include_centroids=True)
+    fit = fitter_binding.fitter if fitter_binding is not None else fit_topics
+    model, memberships = fit(data, settings, include_centroids=True)
     artists = tuple(sorted(profiles))
     artist_index = {artist: row for row, artist in enumerate(artists)}
     vocabulary = tuple(sorted({value for values in profiles.values() for value in values}))
@@ -238,11 +276,12 @@ def evaluate_topic_feature_holdout(
     for artist, value in target_pairs:
         by_artist[artist_index[artist]].append((value, value_index.get(value)))
     active = sorted(by_artist)
+    scorers = TypeAdapter(list[str]).validate_python(declaration["scorers"])
     totals = {
         name: {
             stratum: [0, 0.0, 0] for stratum in ("all", "proper_genre_values", "tag_only_values")
         }
-        for name in declaration["scorers"]
+        for name in scorers
     }
     for offset in range(0, len(active), BLOCK_SIZE):
         rows = active[offset : offset + BLOCK_SIZE]
@@ -253,7 +292,7 @@ def evaluate_topic_feature_holdout(
         for local, row in enumerate(rows):
             known = observed.indices[observed.indptr[row] : observed.indptr[row + 1]]
             candidates = (predicted[local], frequency, conditioned[local])
-            for name, values in zip(declaration["scorers"], candidates, strict=True):
+            for name, values in zip(scorers, candidates, strict=True):
                 ranking = {
                     column: rank
                     for rank, column in enumerate(rank_positive_features(values, known), 1)
@@ -306,6 +345,10 @@ def evaluate_topic_feature_holdout(
         or report["evaluator_sha256"] != declaration["evaluator_sha256"]
     ):
         raise ValueError("evaluation code changed during the frozen holdout run")
+    if fitter_binding is not None and alternative is not None:
+        if fitter_binding.code_bindings() != alternative["implementation_bindings"]:
+            raise ValueError("alternative fitter code changed during the frozen holdout run")
+        report["alternative_fitter"] = alternative
     report["output_sha256"] = sha256_json(report)
     (output / "report.json").write_bytes(canonical_json(report) + b"\n")
     return report

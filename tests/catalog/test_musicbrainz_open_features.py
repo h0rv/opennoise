@@ -176,3 +176,9 @@ class OpenArtistFeaturesTests(unittest.TestCase):
         page.symlink_to(retained)
         with self.assertRaisesRegex(CandidateCatalogError, "symlinks"):
             list(iter_open_artist_feature_rows(directory=self.directory))
+
+    def test_request_pages_partition_the_exact_selected_cohort(self) -> None:
+        self.source["new_artist_ids"] = [_uuid(2)]
+        self._source()
+        with self.assertRaisesRegex(CandidateCatalogError, "selected cohort"):
+            list(iter_open_artist_feature_rows(directory=self.directory))

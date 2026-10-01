@@ -172,6 +172,42 @@ class MicrogenreFeatureTests(unittest.TestCase):
             )
         self.assertEqual(rejected, [])
 
+    def test_nonstyle_metadata_and_global_artist_names_are_filtered(self) -> None:
+        noise = [
+            "_private tag 1",
+            "_edit",
+            "2008 universal fire victim",
+            "actor",
+            "actress",
+            "baritone",
+            "writer",
+            "arranger",
+            "tiktok",
+            "youtuber",
+            "twitch streamer",
+            "1970s hong kong debut",
+            "white",
+            "vegan",
+            "otherartistname ariana grande",
+            "ariana grande",
+        ]
+        styles = ["singer-songwriter", "vocal jazz", "UK garage", "Brazilian rock", "jazz"]
+        rows, rejected = build_microgenre_features(
+            [{"artist_mbid": _ARTIST, "tags": [*noise, *styles]}],
+            genre_labels={"jazz-id": "jazz"},
+            known_artist_names=["Ariana Grande", "Jazz"],
+        )
+        self.assertEqual(
+            [item["value"] for item in rows[0]["features"] if item["namespace"] == "artist_tag"],
+            ["brazilian rock", "jazz", "singer-songwriter", "uk garage", "vocal jazz"],
+        )
+        reasons = {item["raw_value"]: item["reason"] for item in rejected}
+        self.assertEqual(reasons["_private tag 1"], "technical_private_metadata_tag")
+        self.assertEqual(reasons["2008 universal fire victim"], "nonmusical_or_technical_tag")
+        self.assertEqual(reasons["ariana grande"], "artist_name_reference_tag")
+        self.assertEqual(reasons["otherartistname ariana grande"], "artist_name_reference_tag")
+        self.assertNotIn("jazz", reasons)
+
     def test_normalization_is_nfc_casefold_and_whitespace_stable(self) -> None:
         self.assertEqual(normalize_value("  E\u0301lectronica\t"), "électronica")
 

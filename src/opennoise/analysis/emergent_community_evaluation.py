@@ -350,6 +350,7 @@ def evaluate_topic_run(*, directory: Path, output: Path) -> dict[str, object]:
             "emergent-source-music-topics-v1",
             "emergent-source-music-topics-v3",
             "emergent-source-music-topics-v4",
+            "emergent-source-feature-graph-v1",
         }
         or report["scope"] != "local_research_only"
         or report["historical_inputs_used"] is not False

@@ -214,7 +214,7 @@ async def acquire_open_artist_features(  # noqa: C901, PLR0912, PLR0913, PLR0915
     return build_open_artist_feature_projection(directory=directory)
 
 
-def iter_open_artist_feature_rows(  # noqa: C901, PLR0912 - complete native source replay boundary.
+def iter_open_artist_feature_rows(  # noqa: C901, PLR0912, PLR0915 - complete native source replay boundary.
     *, directory: Path
 ) -> Iterator[dict[str, object]]:
     """Replay native artist facts directly from retained exact-ID official response bytes."""
@@ -231,6 +231,32 @@ def iter_open_artist_feature_rows(  # noqa: C901, PLR0912 - complete native sour
     documents = TypeAdapter(list[dict[str, object]]).validate_python(source["documents"])
     if not 1 <= len(documents) <= 450:  # noqa: PLR2004 - 400 retained +50 new pages maximum.
         raise CandidateCatalogError("feature documents exceed bounded source pages")
+    requested_new = [
+        identity
+        for binding in documents
+        if str(binding["path"]).startswith("new-pages/")
+        for identity in TypeAdapter(list[str]).validate_python(binding["artist_mbids"])
+    ]
+    if requested_new != source.get("new_artist_ids") or len(set(requested_new)) != len(
+        requested_new
+    ):
+        raise CandidateCatalogError(
+            "new feature request pages do not partition the exact selected cohort"
+        )
+    if source.get("selection_byte_sha256") is not None:
+        selection_path = directory / "selection.json"
+        if sha256_file(selection_path)[0] != source["selection_byte_sha256"]:
+            raise CandidateCatalogError("additional native feature selection bytes differ")
+        selection = TypeAdapter(dict[str, object]).validate_json(selection_path.read_bytes())
+        if (
+            selection.get("output_sha256") != source.get("selection_output_sha256")
+            or selection.get("output_sha256")
+            != sha256_json(
+                {key: value for key, value in selection.items() if key != "output_sha256"}
+            )
+            or selection.get("artist_ids") != source.get("new_artist_ids")
+        ):
+            raise CandidateCatalogError("additional native feature selection does not replay")
     seen: set[str] = set()
     for binding in documents:
         relative = Path(str(binding["path"]))

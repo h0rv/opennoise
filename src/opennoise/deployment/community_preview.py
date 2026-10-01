@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 import shutil
 from collections import defaultdict
 from pathlib import Path
@@ -13,10 +15,24 @@ from scipy import sparse
 
 from opennoise.catalog.musicbrainz_candidate import require_local_candidate_destination
 from opennoise.common import canonical_json, sha256_file, sha256_json
+from opennoise.ml.artist_feature_enrichment import load_enrichment
 from opennoise.ml.layout_lenses import build_weighted_spectral_coordinates
 from opennoise.ml.semantic_layout.atlas import AtlasPoint, build_rectangular_atlas
 
 _COSINE_EPSILON = 1e-10
+_REQUIRED_FEATURE_BINDINGS = frozenset(
+    {
+        "artist_name_enrichment_receipt",
+        "candidate_catalog_database",
+        "candidate_catalog_receipt",
+        "direct_genre_claim_object",
+        "direct_genre_receipt",
+        "genre_labels",
+        "open_artist_features",
+        "open_artist_features_receipt",
+        "open_artist_source_manifest",
+    }
+)
 _STATIC = Path(__file__).resolve().parents[1] / "static"
 
 
@@ -123,6 +139,30 @@ def validate_hierarchy(model: dict[str, Any]) -> dict[str, Any]:
     return rows
 
 
+def validate_membership(
+    membership: dict[str, Any], assigned: set[str], rows: dict[str, Any]
+) -> None:
+    """Reject unknown, mislabeled, nonfinite, or orphan inferred memberships."""
+    key = membership["community_id"]
+    if key not in rows:
+        raise ValueError("unknown community assignment")
+    if (
+        membership["role"] != "inferred_community_membership"
+        or membership["level"] != rows[key]["level"]
+    ):
+        raise ValueError("membership role or level differs")
+    score = membership["score"]
+    if (
+        not isinstance(score, (int, float))
+        or isinstance(score, bool)
+        or not math.isfinite(score)
+        or not 0 <= score <= 1 + _COSINE_EPSILON
+    ):
+        raise ValueError("invalid membership affinity")
+    if rows[key]["parent_id"] is not None and rows[key]["parent_id"] not in assigned:
+        raise ValueError("membership lacks its ancestor")
+
+
 def assignment_profiles(
     model_directory: Path, source: Path, rows: dict[str, Any]
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -134,9 +174,11 @@ def assignment_profiles(
         prefix = artist[:3]
         if artist in shards[prefix]:
             raise ValueError("duplicate artist assignment")
+        assigned = {membership["community_id"] for membership in assignment["memberships"]}
+        if len(assigned) != len(assignment["memberships"]):
+            raise ValueError("duplicate community assignment")
         for membership in assignment["memberships"]:
-            if membership["community_id"] not in rows:
-                raise ValueError("unknown community assignment")
+            validate_membership(membership, assigned, rows)
         shards[prefix][artist] = assignment
     profiles = {}
     examples = {artist for row in rows.values() for artist in row["artist_ids"]}
@@ -184,6 +226,34 @@ def require_assignment_source_bindings(
             raise ValueError("consumed artist source lacks receipt binding")
 
 
+def require_feature_bindings(inputs: dict[str, Any]) -> None:
+    """Accept complete original or explicitly indexed multi-source feature manifests."""
+    original = {
+        "open_artist_features",
+        "open_artist_features_receipt",
+        "open_artist_source_manifest",
+    }
+    core = _REQUIRED_FEATURE_BINDINGS - original
+    if not core.issubset(inputs):
+        raise ValueError("feature lineage omits mandatory source bindings")
+    original_present = bool(original.intersection(inputs))
+    if original_present and not original.issubset(inputs):
+        raise ValueError("feature lineage omits mandatory source bindings")
+    indices = sorted(
+        {
+            int(match.group(1))
+            for key in inputs
+            if (match := re.fullmatch(r"open_artist_features_(\d+)(?:_receipt|_manifest)?", key))
+        }
+    )
+    if (not original_present and not indices) or indices != list(range(len(indices))):
+        raise ValueError("feature lineage omits mandatory source bindings")
+    for index in indices:
+        key = f"open_artist_features_{index}"
+        if not {key, key + "_receipt", key + "_manifest"}.issubset(inputs):
+            raise ValueError("feature lineage omits mandatory source bindings")
+
+
 def verify_feature_lineage(features: Path) -> dict[str, Any]:
     """Check exact feature bytes, source bindings, exclusions, and license scope."""
     receipt = json.loads((features.parent / "receipt.json").read_bytes())
@@ -195,6 +265,7 @@ def verify_feature_lineage(features: Path) -> dict[str, Any]:
         or sha256_file(features)[0] != receipt["feature_sha256"]
     ):
         raise ValueError("unsupported or mismatched feature lineage")
+    require_feature_bindings(receipt["inputs"])
     root = Path(__file__).resolve().parents[3]
     for binding in receipt["inputs"].values():
         path = root / binding["path"]
@@ -205,8 +276,114 @@ def verify_feature_lineage(features: Path) -> dict[str, Any]:
     return receipt
 
 
+def validate_feature_proposals(
+    record: dict[str, Any], training_sha256: str, model_sha256: str
+) -> None:
+    """Keep derived style suggestions separate from known source musical values."""
+    known = set(record["observed_music_values"])
+    seen = set()
+    for proposal in record["feature_proposals"]:
+        value = proposal["value"]
+        if value in known or value in seen:
+            raise ValueError("style suggestion repeats an observed or proposed value")
+        seen.add(value)
+        if (
+            proposal["role"] != "inferred_feature_proposal"
+            or proposal["native_fact"] is not False
+            or proposal["score_calibrated"] is not False
+            or proposal["training_source_sha256"] != training_sha256
+            or proposal["training_input_sha256"] != training_sha256
+            or proposal["source_model_sha256"] != model_sha256
+        ):
+            raise ValueError("style suggestion violates inference boundary")
+        score = proposal["score"]
+        if (
+            isinstance(score, bool)
+            or not isinstance(score, (int, float))
+            or not math.isfinite(score)
+            or score <= 0
+        ):
+            raise ValueError("invalid style suggestion score")
+        if not proposal["evidence"]:
+            raise ValueError("style suggestion lacks source explanation")
+        for cue in proposal["evidence"]:
+            validate_proposal_cue(cue, known, proposal["training_target_artist_support"])
+
+
+def validate_proposal_cue(cue: dict[str, Any], known: set[str], target_support: int) -> None:
+    """Require an observed cue and consistent positive native training support."""
+    if cue["value"] not in known or cue["cue_role"] not in {"music", "proper_genre"}:
+        raise ValueError("style suggestion explanation lacks an observed musical cue")
+    joint, support = cue["training_joint_artist_support"], cue["training_cue_artist_support"]
+    if any(
+        not isinstance(value, int) or isinstance(value, bool) or value < 1
+        for value in (joint, support, target_support)
+    ) or joint > min(support, target_support):
+        raise ValueError("style suggestion training counts differ")
+    refs = cue["query_evidence_refs"]
+    if (
+        not isinstance(refs, list)
+        or not refs
+        or any(not isinstance(ref, str) or not ref for ref in refs)
+    ):
+        raise ValueError("style suggestion lacks observed query references")
+    if cue["query_evidence_ref_count"] < len(refs):
+        raise ValueError("style suggestion reference count differs")
+
+
+def merge_feature_proposals(
+    directory: Path, shards: dict[str, Any], training_sha256: str
+) -> dict[str, Any]:
+    """Verify and join complete style predictions to existing exact artist identities."""
+    receipt = verified_receipt(directory, "prediction-receipt.json")
+    if (
+        receipt["training_sha256"] != training_sha256
+        or receipt["public_export_authorized"]
+        or receipt["scope"] not in {"local_research_only", "local_noncommercial_research"}
+        or receipt["role"] != "inferred_feature_proposals"
+    ):
+        raise ValueError("unsupported style prediction artifact")
+    if (
+        receipt["audio_used"] is not False
+        or receipt["historical_inputs_used"] is not False
+        or receipt["native_fact"] is not False
+        or receipt["scores_calibrated"] is not False
+        or receipt["training_input_sha256"] != training_sha256
+    ):
+        raise ValueError("style prediction artifact violates inference boundary")
+    if "model/receipt.json" not in receipt["files"]:
+        raise ValueError("style prediction model lacks byte binding")
+    model = load_enrichment(directory / "model")
+    if model.training_sha256 != training_sha256 or model.model_sha256 != receipt["model_sha256"]:
+        raise ValueError("style prediction model differs")
+    seen = set()
+    for relative in sorted(receipt["files"]):
+        if not relative.startswith("feature-proposals/") or not relative.endswith(".json"):
+            continue
+        records = json.loads((directory / relative).read_bytes())["artists"]
+        for artist, record in records.items():
+            prefix = artist[:3]
+            if artist in seen or prefix not in shards or artist not in shards[prefix]:
+                raise ValueError("style prediction artist differs from community corpus")
+            validate_feature_proposals(record, training_sha256, receipt["model_sha256"])
+            seen.add(artist)
+            shards[prefix][artist].update(
+                feature_proposals=record["feature_proposals"],
+                observed_music_values=record["observed_music_values"],
+                enrichment_state=record["state"],
+            )
+    if len(seen) != sum(len(artists) for artists in shards.values()):
+        raise ValueError("style prediction projection is incomplete")
+    return receipt
+
+
 def build_community_preview(
-    *, source: Path, model_directory: Path, features: Path, output: Path
+    *,
+    source: Path,
+    model_directory: Path,
+    features: Path,
+    output: Path,
+    enrichment_directory: Path | None = None,
 ) -> dict[str, Any]:
     """Create a fresh cache-only export retaining exact source and model roles."""
     require_local_candidate_destination(output)
@@ -237,11 +414,18 @@ def build_community_preview(
         )
     require_assignment_source_bindings(model_directory, source_receipt)
     shards, profiles = assignment_profiles(model_directory, source, rows)
+    enrichment_receipt = (
+        merge_feature_proposals(enrichment_directory, shards, report["features_sha256"])
+        if enrichment_directory
+        else None
+    )
     output.mkdir(parents=True)
     for relative in source_receipt["files"]:
         destination = output / ("source-explorer.html" if relative == "index.html" else relative)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source / relative, destination)
+        if sha256_file(destination)[0] != source_receipt["files"][relative]["sha256"]:
+            raise ValueError("source bytes changed during preview copy")
     for suffix in ("html", "css", "js"):
         name = f"community-preview.{suffix}"
         shutil.copyfile(_STATIC / name, output / ("index.html" if suffix == "html" else name))
@@ -257,6 +441,10 @@ def build_community_preview(
         artist_profiles=profiles,
         quality_evaluated=False,
         layout_method="offline_sibling_musical_centroid_cosine_spectral_atlas",
+        enrichment_available=enrichment_receipt is not None,
+        enrichment_prediction_output_sha256=enrichment_receipt["output_sha256"]
+        if enrichment_receipt
+        else None,
     )
     (output / "community-data.json").write_bytes(canonical_json(model) + b"\n")
     receipt = {
@@ -278,6 +466,9 @@ def build_community_preview(
         "native_genre_memberships_added": 0,
         "coverage": model["coverage"],
         "positioned_community_count": len(positions),
+        "enrichment_prediction_output_sha256": enrichment_receipt["output_sha256"]
+        if enrichment_receipt
+        else None,
         "files": {
             path.relative_to(output).as_posix(): {
                 "sha256": sha256_file(path)[0],

@@ -19,9 +19,9 @@
       <nav id="breadcrumbs" aria-label="Community ancestry"></nav>
       <p id="map-status" class="map-status" aria-live="polite"></p>
       <canvas id="community-map" tabindex="0" aria-label="Inferred music communities. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom. Search and the list include unplaced communities."></canvas>
-      <section id="community-directory" hidden aria-label="Communities in this branch"><div class="directory-toolbar"><p id="directory-status" aria-live="polite"></p><label>Sort <select id="directory-sort"><option value="name">Label A–Z</option><option value="artists">Model artist count</option></select></label></div><div id="directory-results"></div></section>
+      <section id="community-directory" hidden aria-label="All communities in this branch, including unplaced communities"><div class="directory-toolbar"><p id="directory-status" aria-live="polite"></p><label>Sort <select id="directory-sort"><option value="name">Descriptor label A–Z</option><option value="artists">Assigned member count</option></select></label></div><div id="directory-results"></div></section>
       <div class="map-controls"><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit-map">Fit branch</button><button id="zoom-in" aria-label="Zoom in">+</button></div>
-      <div class="map-caption">Labels, memberships, and geometry are inferred. Source observations remain separate.</div>
+      <div class="map-caption">Each branch compares sibling feature centroids; proximity is metadata similarity, not sonic distance. Labels and overlapping memberships are inferred. All communities are accessible in List.</div>
     </section>
     <aside id="detail" class="detail" aria-label="Community and artist details" aria-live="polite"><p class="muted">Loading the open-data model…</p></aside>
   </main>

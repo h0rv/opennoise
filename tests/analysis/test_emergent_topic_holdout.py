@@ -11,12 +11,13 @@ from typing import cast
 import numpy as np
 
 from opennoise.analysis.emergent_topic_holdout import (
+    TopicFitterBinding,
     evaluate_topic_feature_holdout,
     partition_feature_file,
     rank_positive_features,
 )
 from opennoise.common import canonical_json
-from opennoise.ml.emergent_topics import TopicSettings
+from opennoise.ml.emergent_topics import FeatureMatrix, TopicSettings, fit_topics
 
 
 def _feature(namespace: str, value: str, reference: str = "artist-record") -> dict[str, object]:
@@ -48,6 +49,15 @@ class EmergentTopicHoldoutTests(unittest.TestCase):
             profiles, _proper, hidden, _values = partition_feature_file(source, destination)
             self.assertTrue(hidden)
             targets = {(fact.artist_id, fact.feature_id) for fact in hidden}
+            other_profiles, _proper, other_hidden, _values = partition_feature_file(
+                source, directory / "other-split.jsonl", salt="independent-prespecified-split"
+            )
+            other_targets = {(fact.artist_id, fact.feature_id) for fact in other_hidden}
+            self.assertNotEqual(targets, other_targets)
+            self.assertFalse(
+                other_targets
+                & {(artist, value) for artist, values in other_profiles.items() for value in values}
+            )
             for line in destination.read_text().splitlines():
                 row = json.loads(line)
                 artist = row["artist_mbid"]
@@ -129,3 +139,61 @@ class EmergentTopicHoldoutTests(unittest.TestCase):
             self.assertTrue((directory / "run/pre-fit-declaration.json").exists())
             self.assertFalse(report["test_based_reselection"])
             self.assertFalse(report["genre_names_validated"])
+
+    def test_alternative_fitter_sees_only_training_and_requires_unchanged_code(self) -> None:
+        cache = Path(__file__).resolve().parents[2] / ".cache"
+        with TemporaryDirectory(dir=cache) as temporary:
+            directory = Path(temporary)
+            source = directory / "features.jsonl"
+            source.write_bytes(
+                b"\n".join(
+                    canonical_json(
+                        {
+                            "artist_mbid": f"artist-{index}",
+                            "features": [
+                                _feature("artist_genre", "ambient"),
+                                _feature("artist_tag", "drone"),
+                            ],
+                        }
+                    )
+                    for index in range(30)
+                )
+            )
+            dependency = directory / "implementation.py"
+            dependency.write_text("frozen implementation")
+            mutate = False
+
+            def alternative(
+                data: FeatureMatrix, settings: TopicSettings, *, include_centroids: bool
+            ) -> tuple[dict[str, object], dict[str, list[dict[str, object]]]]:
+                output = directory / ("mutated" if mutate else "run")
+                hidden = json.loads((output / "held-out-pairs.json").read_bytes())
+                profiles = dict(zip(data.artists, data.musical_profiles, strict=True))
+                self.assertTrue(hidden)
+                self.assertTrue(all(value not in profiles[artist] for artist, value in hidden))
+                self.assertTrue((output / "pre-fit-declaration.json").exists())
+                if mutate:
+                    dependency.write_text("changed during fit")
+                return fit_topics(data, settings, include_centroids=include_centroids)
+
+            binding = TopicFitterBinding("fixture", alternative, (dependency,))
+            settings = TopicSettings(depths=(1, 2, 3), minimum_artists=2)
+            report = evaluate_topic_feature_holdout(
+                features_path=source,
+                output=directory / "run",
+                settings=settings,
+                fitter_binding=binding,
+            )
+            self.assertEqual(
+                report["alternative_fitter"],
+                {"name": "fixture", "implementation_bindings": binding.code_bindings()},
+            )
+            mutate = True
+            with self.assertRaisesRegex(ValueError, "alternative fitter code changed"):
+                evaluate_topic_feature_holdout(
+                    features_path=source,
+                    output=directory / "mutated",
+                    settings=settings,
+                    fitter_binding=binding,
+                )
+            self.assertFalse((directory / "mutated/report.json").exists())

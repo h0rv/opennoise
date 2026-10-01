@@ -113,3 +113,11 @@ Reproduction uses the existing Python environment and direct research scripts:
 Use fresh cache paths: builders refuse to overwrite existing runs. The richer
 release-group feature cache is a separate, unevaluated follow-up; it is not the
 training input for either reported model.
+
+The subsequent [adaptive coarse-cut checkpoint](EMERGENT_ADAPTIVE_COARSE_CUT_20260930.md)
+replaces the fixed 16-broad-group budget with explicit coherence stopping and
+unsupported candidates. The final cleaned fit has 106 broad, 182 subgenre,
+and 954 microgenre candidates. The [artist enrichment checkpoint](ARTIST_FEATURE_ENRICHMENT_20260930.md)
+records independently audited style prediction gains, cold-profile limits,
+and the final combined static explorer. Earlier v3/v4 snapshots and results
+above remain historical evidence, not the latest selected product.

@@ -6,11 +6,15 @@ The product target is complete Every Noise discovery parity through open-data
 modeling and enrichment. The initial 697 source genres are evidence, not a
 vocabulary ceiling. The current research pipeline adds verified open tags and
 learns overlapping broad, subgenre, and microgenre communities; names and
-historical maps do not determine their construction. The first rich model
-produces 844 communities, but its independent within-source feature holdout
-underperforms a conditioned genre baseline, so improved granularity is not yet
-established. See [the emergent community checkpoint](checkpoints/EMERGENT_MUSIC_COMMUNITIES_20260930.md)
-for source coverage, exact reference artists, measured weaknesses, and the new
+historical maps do not determine their construction. The latest cleaned
+adaptive fit has 106 broad, 182 subgenre, and 954 microgenre candidates, with
+594,776 separately typed style suggestions across 198,409 artists. Independent
+within-source tests show tag-only enrichment gains, while overall results
+remain below a conditioned genre baseline. Source reconstruction does not
+establish independent musical validity or complete parity. See [the emergent
+community checkpoint](checkpoints/EMERGENT_MUSIC_COMMUNITIES_20260930.md) and
+[the artist enrichment checkpoint](checkpoints/ARTIST_FEATURE_ENRICHMENT_20260930.md)
+for source coverage, exact reference artists, measured weaknesses, and the
 static hierarchy explorer. The measured product acceptance criteria remain in
 [Every Noise parity](EVERYNOISE_PARITY.md).
 

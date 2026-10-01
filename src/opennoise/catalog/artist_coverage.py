@@ -216,7 +216,16 @@ def audit_artist_coverage(  # noqa: C901, PLR0913
                     feature_counts.get(mbid, 0) if feature_database is not None else None
                 ),
                 features=tuple(features) if features is not None else None,
-                assignment_state=(str(assignment_row.get("state")) if assignment_row else None),
+                assignment_state=(
+                    str(
+                        assignment_row.get("state")
+                        or (
+                            "assigned" if memberships else "abstained_insufficient_musical_evidence"
+                        )
+                    )
+                    if assignment_row
+                    else None
+                ),
                 assignments=tuple(memberships) if memberships is not None else None,
             )
         )

@@ -101,6 +101,39 @@ _PURE_PLACE_TAGS = frozenset(
         "icelandic",
     }
 )
+_MUSICAL_COMPOUND_HEADS = frozenset(
+    {
+        "ambient",
+        "bass",
+        "blues",
+        "breakbeat",
+        "dance",
+        "disco",
+        "drum and bass",
+        "dub",
+        "electronica",
+        "folk",
+        "funk",
+        "garage",
+        "gospel",
+        "hardcore",
+        "hip hop",
+        "house",
+        "jazz",
+        "metal",
+        "noise",
+        "pop",
+        "punk",
+        "r&b",
+        "rap",
+        "reggae",
+        "rock",
+        "soul",
+        "techno",
+        "trance",
+        "wave",
+    }
+)
 _MBID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 _REJECT_PATTERNS = (
     re.compile(r"^(favorites?|favourites?|owned|wishlist|wantlist|loved tracks?)$"),
@@ -108,11 +141,15 @@ _REJECT_PATTERNS = (
     re.compile(r"\b(male|female|woman|women|man|men|gay|lesbian|transgender|lgbtq?)\b"),
     re.compile(
         r"^(vocalist|singer|songwriter|producer|music producer|composer|dj|band|solo artist|"
-        r"violinist|guitarist|pianist|drummer|bassist|cellist|saxophonist|trumpeter)$"
+        r"violinist|guitarist|pianist|drummer|bassist|cellist|saxophonist|trumpeter|"
+        r"actor|actress|baritone|writer|arranger)$"
     ),
     re.compile(r"^(album|albums|track|tracks|song|songs|artist|artists|music)$"),
     re.compile(r"^(awesome|best|good|great|cool|beautiful|favorite|favourite)$"),
     re.compile(r"\b(private|personal|my collection|my tags)\b"),
+    re.compile(r"^(white|vegan)$"),
+    re.compile(r"\b(tiktok|youtube|youtuber|twitch|streamer|influencer|social media)\b"),
+    re.compile(r"\b(debut|universal fire|fire victim)\b"),
 )
 
 
@@ -143,6 +180,8 @@ def _weight(count: object) -> float:
 def tag_rejection_reason(value: str) -> str | None:  # noqa: PLR0911
     """Return an explicit rejection code for nonmusical or junk tag values."""
     normalized = normalize_value(value)
+    if normalized.startswith("_"):
+        return "technical_private_metadata_tag"
     if len(normalized) < _MIN_LABEL_LENGTH:
         return "too_short"
     if not any(char.isalpha() for char in normalized):
@@ -318,6 +357,7 @@ def build_microgenre_features(  # noqa: C901, PLR0912, PLR0915
     release_records: Iterable[Mapping[str, Any]] = (),
     proper_genre_claims: Iterable[Any] = (),
     genre_labels: Mapping[str, str] | None = None,
+    known_artist_names: Iterable[str] = (),
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     """Normalize artist, release, place, and decade facts into JSONL-ready rows.
 
@@ -347,6 +387,20 @@ def build_microgenre_features(  # noqa: C901, PLR0912, PLR0915
         )
         and name.strip()
     }
+    global_artist_names = set(artist_names.values())
+    global_artist_names.update(
+        normalize_value(name)
+        for name in known_artist_names
+        if isinstance(name, str) and name.strip()
+    )
+    verified_genre_values = {normalize_value(label) for label in labels.values()}
+    for row in artist_records:
+        genres = row.get("genres")
+        if isinstance(genres, list):
+            for genre in genres:
+                label = genre.get("name") if isinstance(genre, Mapping) else genre
+                if isinstance(label, str) and label.strip():
+                    verified_genre_values.add(normalize_value(label))
     features_by_artist: dict[str, dict[tuple[str, str], dict[str, Any]]] = defaultdict(dict)
     rejected: list[dict[str, str]] = []
     for index, row in enumerate(artist_records):
@@ -423,6 +477,26 @@ def build_microgenre_features(  # noqa: C901, PLR0912, PLR0915
                         "namespace": "artist_tag",
                         "raw_value": _display(tag),
                         "reason": "exact_artist_name_tag",
+                    }
+                )
+                continue
+            normalized_tag = normalize_value(tag) if tag else ""
+            referenced_name = normalized_tag.removeprefix("otherartistname ")
+            has_musical_head = any(
+                referenced_name.endswith(f" {head}") or referenced_name.startswith(f"{head} ")
+                for head in _MUSICAL_COMPOUND_HEADS
+            )
+            if (
+                referenced_name in global_artist_names
+                and normalized_tag not in verified_genre_values
+                and not has_musical_head
+            ):
+                rejected.append(
+                    {
+                        "artist_mbid": artist,
+                        "namespace": "artist_tag",
+                        "raw_value": _display(tag or ""),
+                        "reason": "artist_name_reference_tag",
                     }
                 )
                 continue
@@ -554,6 +628,28 @@ def build_microgenre_features(  # noqa: C901, PLR0912, PLR0915
                                 "namespace": namespace,
                                 "raw_value": _display(tag),
                                 "reason": "exact_artist_name_tag",
+                            }
+                        )
+                        continue
+                    normalized_tag = normalize_value(tag) if tag else ""
+                    referenced_name = normalized_tag.removeprefix("otherartistname ")
+                    has_musical_head = any(
+                        referenced_name.endswith(f" {head}")
+                        or referenced_name.startswith(f"{head} ")
+                        for head in _MUSICAL_COMPOUND_HEADS
+                    )
+                    if (
+                        namespace == "release_tag"
+                        and referenced_name in global_artist_names
+                        and normalized_tag not in verified_genre_values
+                        and not has_musical_head
+                    ):
+                        rejected.append(
+                            {
+                                "artist_mbid": artist,
+                                "namespace": namespace,
+                                "raw_value": _display(tag or ""),
+                                "reason": "artist_name_reference_tag",
                             }
                         )
                         continue

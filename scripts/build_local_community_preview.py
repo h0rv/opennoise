@@ -13,9 +13,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     for flag in ("source", "model", "features", "output"):
         parser.add_argument(f"--{flag}", type=Path, required=True)
+    parser.add_argument("--enrichment", type=Path)
     args = parser.parse_args()
     receipt = build_community_preview(
-        source=args.source, model_directory=args.model, features=args.features, output=args.output
+        source=args.source,
+        model_directory=args.model,
+        features=args.features,
+        output=args.output,
+        enrichment_directory=args.enrichment,
     )
     sys.stdout.write(
         json.dumps(

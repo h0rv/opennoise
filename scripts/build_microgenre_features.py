@@ -13,6 +13,10 @@ from typing import Any
 from opennoise.catalog.musicbrainz_artist_names import verify_artist_name_enrichment
 from opennoise.catalog.musicbrainz_candidate import verify_local_musicbrainz_candidate_catalog
 from opennoise.catalog.musicbrainz_genre_labels import verify_native_musicbrainz_genre_labels
+from opennoise.catalog.musicbrainz_native_artist_features import (
+    iter_native_artist_feature_rows,
+    verify_native_artist_features,
+)
 from opennoise.catalog.musicbrainz_open_features import (
     iter_open_artist_feature_rows,
     verify_open_artist_features,
@@ -65,6 +69,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artists", type=Path, help="additional verified artist metadata JSONL")
     parser.add_argument("--open-features-directory", type=Path, action="append")
+    parser.add_argument("--native-artist-feature-directory", type=Path, action="append")
     parser.add_argument(
         "--genre-labels",
         type=Path,
@@ -81,6 +86,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         help="separate verified source-bound artist name overlay JSONL",
     )
     parser.add_argument("--candidate-catalog-directory", type=Path)
+    parser.add_argument("--primary-corpus-only", action="store_true")
     parser.add_argument("--artist-name-enrichment-directory", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--rejections", type=Path, required=True)
@@ -89,18 +95,23 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
     parser.add_argument("--missing-names", type=Path, required=True)
     args = parser.parse_args()
     open_feature_directories = args.open_features_directory or []
-    if args.artists is None and not open_feature_directories:
-        parser.error("supply --artists or --open-features-directory")
+    native_artist_directories = args.native_artist_feature_directory or []
+    if args.artists is None and not open_feature_directories and not native_artist_directories:
+        parser.error("supply an artist metadata input directory or --artists")
+    if args.primary_corpus_only and not args.candidate_catalog_directory:
+        parser.error("--primary-corpus-only requires --candidate-catalog-directory")
     if (args.direct_genre_receipt is None) != (args.direct_object_store is None):
         parser.error("--direct-genre-receipt and --direct-object-store are a pair")
     artist_rows = _jsonl(args.artists) if args.artists else []
     name_rows = list(artist_rows)
     sources: dict[str, Path] = {"genre_labels": args.genre_labels}
     open_receipts: list[dict[str, Any]] = []
+    native_artist_receipts: list[dict[str, Any]] = []
     direct_receipt: DirectProperGenreCustodyReceipt | None = None
     catalog_receipt = None
     name_enrichment_receipt = None
     release_feature_receipt = None
+    primary_artist_ids: set[str] | None = None
     if args.artists:
         sources["artist_metadata"] = args.artists
     for index, directory in enumerate(open_feature_directories):
@@ -110,6 +121,16 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         artist_rows.extend(open_rows)
         name_rows.extend(open_rows)
         source_prefix = f"open_artist_features_{index}"
+        sources[source_prefix] = directory / "artist-features.jsonl"
+        sources[f"{source_prefix}_receipt"] = directory / "receipt.json"
+        sources[f"{source_prefix}_manifest"] = directory / "source.json"
+    for index, directory in enumerate(native_artist_directories):
+        native_receipt = verify_native_artist_features(directory=directory)
+        native_artist_receipts.append(native_receipt)
+        native_rows = list(iter_native_artist_feature_rows(directory=directory))
+        artist_rows.extend(native_rows)
+        name_rows.extend(native_rows)
+        source_prefix = f"native_artist_features_{index}"
         sources[source_prefix] = directory / "artist-features.jsonl"
         sources[f"{source_prefix}_receipt"] = directory / "receipt.json"
         sources[f"{source_prefix}_manifest"] = directory / "source.json"
@@ -189,6 +210,10 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
                     "SELECT artist_mbid,canonical_name FROM artist WHERE canonical_name IS NOT NULL"
                 )
             )
+            if args.primary_corpus_only:
+                primary_artist_ids = {
+                    artist_mbid for (artist_mbid,) in db.execute("SELECT artist_mbid FROM artist")
+                }
         sources["candidate_catalog_receipt"] = args.candidate_catalog_directory / "receipt.json"
         sources["candidate_catalog_database"] = catalog_database
     if args.artist_name_enrichment_directory:
@@ -221,7 +246,18 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         release_records=release_rows,
         proper_genre_claims=proper_claims,
         genre_labels=_labels(args.genre_labels),
+        known_artist_names=[
+            name
+            for item in name_rows
+            if isinstance(
+                name := item.get("name", item.get("artist_name", item.get("canonical_name"))),
+                str,
+            )
+        ],
     )
+    if primary_artist_ids is not None:
+        rows = [row for row in rows if row["artist_mbid"] in primary_artist_ids]
+        rejected = [row for row in rejected if row.get("artist_mbid") in primary_artist_ids]
     receipt = write_feature_artifacts(
         rows,
         rejected,
@@ -236,6 +272,11 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
             "public_export_authorized": False,
             "historical_assignments_read": False,
             "audio_inputs_used": False,
+            "artist_identity_scope": (
+                "verified_primary_candidate_catalog"
+                if primary_artist_ids is not None
+                else "all_verified_source_artist_identities"
+            ),
         }
     )
     if open_receipts:
@@ -255,6 +296,10 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
         receipt["direct_claim_object_sha256"] = direct_receipt.claims_object_sha256
     if catalog_receipt is not None:
         receipt["candidate_catalog_output_sha256"] = catalog_receipt.output_sha256
+    if native_artist_receipts:
+        receipt["native_artist_feature_output_sha256"] = [
+            item["output_sha256"] for item in native_artist_receipts
+        ]
     if name_enrichment_receipt is not None:
         receipt["artist_name_enrichment_output_sha256"] = name_enrichment_receipt["output_sha256"]
     if release_feature_receipt is not None:
