@@ -1,5 +1,6 @@
 """Exercise exact credits, safe links and deterministic diversity."""
 
+import copy
 import hashlib
 import json
 import tempfile
@@ -62,6 +63,43 @@ class ArtistWorkExamplesTests(unittest.TestCase):
 
 
 class ArtistWorkReplayTests(unittest.TestCase):
+    def test_portable_projection_has_only_permitted_fields(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        projection = root / "data/examples/representative-music/credited-examples.json"
+        receipt = root / "data/examples/representative-music/receipt.json"
+        artifact = verify_projected_artist_work_examples(projection, receipt)
+        self.assertEqual(len(artifact["artists"]), 10)
+
+    def test_matching_hash_cannot_authorize_supplementary_or_raw_fields(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        original = json.loads(
+            (root / "data/examples/representative-music/credited-examples.json").read_bytes()
+        )
+        proof = json.loads((root / "data/examples/representative-music/receipt.json").read_bytes())
+        with tempfile.TemporaryDirectory() as directory:
+            projection, receipt = (
+                Path(directory) / "projection.json",
+                Path(directory) / "receipt.json",
+            )
+            for scope in ("projection", "artist", "work", "ranking"):
+                with self.subTest(scope=scope):
+                    artifact = copy.deepcopy(original)
+                    row = artifact["artists"][0]["recordings"][0]
+                    match scope:
+                        case "projection":
+                            artifact["raw_response"] = {"tags": [{"name": "electronic"}]}
+                        case "artist":
+                            artifact["artists"][0]["genres"] = [{"name": "electronic"}]
+                        case "work":
+                            row["tags"] = [{"name": "electronic"}]
+                        case "ranking":
+                            row["score_components"]["supplementary_tag_score"] = 10
+                    projection.write_text(json.dumps(artifact))
+                    proof["projection_sha256"] = hashlib.sha256(projection.read_bytes()).hexdigest()
+                    receipt.write_text(json.dumps(proof))
+                    with self.assertRaisesRegex(ValueError, "unapproved .*fields"):
+                        verify_projected_artist_work_examples(projection, receipt)
+
     def test_duplicates_merge_independent_of_input_order(self) -> None:
         first = candidate(1, "a")
         second = first.model_copy(

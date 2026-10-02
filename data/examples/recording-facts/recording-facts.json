@@ -1,0 +1,453 @@
+{
+  "revision": "cc0-exact-recording-facts-v1",
+  "license": "MusicBrainz core metadata CC0 1.0",
+  "limitations": "Bounded exact recording credits; no representative quality, genres, popularity, release credits or listening availability assessed.",
+  "artists": [
+    {
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "name": "Jon Hopkins",
+      "requested_recordings": 3,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+          "title": "Glasstop",
+          "length_ms": 163813,
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "source_sha256": "8eb08e2efa6af343893fd75230529a406107cf9b26febcbc7773ec8c7b41d873",
+          "url": "https://musicbrainz.org/recording/56b8e7ce-2fb2-4054-abda-d889ed41a7ac"
+        },
+        {
+          "recording_mbid": "594f843f-3ed1-423e-b1fc-f6aaf5bc7163",
+          "title": "Halcyon",
+          "length_ms": 301000,
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "source_sha256": "7d25c1745422858a60c9eca217c1d7867d27cee11d63649119bf0f4b2cc6143c",
+          "url": "https://musicbrainz.org/recording/594f843f-3ed1-423e-b1fc-f6aaf5bc7163"
+        },
+        {
+          "recording_mbid": "126aaa04-a746-424c-84de-01cb13a7a770",
+          "title": "Light Through the Veins (David Holmes remix)",
+          "length_ms": 400000,
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "source_sha256": "fd10e4096392b418f79cacbb716d8ff366a03cf56e476a4880e5ff26a35c6e78",
+          "url": "https://musicbrainz.org/recording/126aaa04-a746-424c-84de-01cb13a7a770"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "name": "Four Tet",
+      "requested_recordings": 6,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "3715b33e-9766-480f-ad0b-8437703af6b7",
+          "title": "Turtle Turtle Up",
+          "length_ms": 131000,
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "source_sha256": "850273492b053db381462f658b6833d6a57276448fb485512b5a073f733db903",
+          "url": "https://musicbrainz.org/recording/3715b33e-9766-480f-ad0b-8437703af6b7"
+        },
+        {
+          "recording_mbid": "885c71d0-b306-43df-a435-11433b06aa73",
+          "title": "Kool FM",
+          "length_ms": 309000,
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "source_sha256": "dd534f0d59ab0c9d37ab45a27a45c1eab5f25eaefca169316cb9a6da752f9339",
+          "url": "https://musicbrainz.org/recording/885c71d0-b306-43df-a435-11433b06aa73"
+        },
+        {
+          "recording_mbid": "23118e3d-2ac9-4e08-a1b8-18f77d68c6e1",
+          "title": "Sun Drums and Soil",
+          "length_ms": 380760,
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "source_sha256": "0fc52818ac27c9d92dd9f55a180efbc675f7190dd5e111929b320e86eec63490",
+          "url": "https://musicbrainz.org/recording/23118e3d-2ac9-4e08-a1b8-18f77d68c6e1"
+        },
+        {
+          "recording_mbid": "0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+          "title": "Lion",
+          "length_ms": 541000,
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "source_sha256": "d9aa974a13b99fdd2d074ad6fe335f0a03976992e3dd3420f604b7e82283fce5",
+          "url": "https://musicbrainz.org/recording/0c21fe8d-7e15-4e95-a1c5-2919a630fe80"
+        },
+        {
+          "recording_mbid": "187db0f2-f082-4159-8748-fa34146cacaf",
+          "title": "Ribbons",
+          "length_ms": 321920,
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "source_sha256": "a5a8d437d2303486df81551ab20424e5f8b05a2675f03b4d4e9e5d16f3c88be0",
+          "url": "https://musicbrainz.org/recording/187db0f2-f082-4159-8748-fa34146cacaf"
+        },
+        {
+          "recording_mbid": "2a23cd23-1a7d-4919-9a81-388e023edf2d",
+          "title": "0181, Part 1",
+          "length_ms": 1131000,
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "source_sha256": "48f38b85f2c0c68167af454b48140b57a7d53b2fa4fdfe8ef863b8f7458460b9",
+          "url": "https://musicbrainz.org/recording/2a23cd23-1a7d-4919-9a81-388e023edf2d"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "name": "Autechre",
+      "requested_recordings": 3,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+          "title": "Xylin Room",
+          "length_ms": 369200,
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "source_sha256": "f3b1272f571878fd0c4da3ff89d6bad1bd0cb174d39c8bef8e0f6903bfdd12da",
+          "url": "https://musicbrainz.org/recording/1bb69702-4786-4cb2-80b0-b1fd5db996a3"
+        },
+        {
+          "recording_mbid": "41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+          "title": "Tewe",
+          "length_ms": 416933,
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "source_sha256": "80b7eb68d2951ebb3a2b3c9cf2240fc809682636b7f725bbbd5f48c62212836c",
+          "url": "https://musicbrainz.org/recording/41b1675b-6b4a-4b81-b478-a4fc49fd2a08"
+        },
+        {
+          "recording_mbid": "4bc73c97-a204-42ad-877b-09a4445952ea",
+          "title": "Leterel",
+          "length_ms": 428106,
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "source_sha256": "4b9db4764a9c726e4214b72d8081e99102899b62dd18f95ed85f15aa0c305034",
+          "url": "https://musicbrainz.org/recording/4bc73c97-a204-42ad-877b-09a4445952ea"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "name": "Squarepusher",
+      "requested_recordings": 3,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+          "title": "4026 Melt 3",
+          "length_ms": 187253,
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "source_sha256": "6df994bb003cd506493bdaf755459071e78e7e80e67b896dafc8b56e180bff07",
+          "url": "https://musicbrainz.org/recording/35b52cb7-52a2-4803-94f8-784ed8cd65b8"
+        },
+        {
+          "recording_mbid": "623f308e-7cd3-413a-a641-534266e65732",
+          "title": "Shin Triad",
+          "length_ms": 146773,
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "source_sha256": "cd807eef71a7847ee792245fa43ca93ef55e1e0d57662e52113cfcf3aad69766",
+          "url": "https://musicbrainz.org/recording/623f308e-7cd3-413a-a641-534266e65732"
+        },
+        {
+          "recording_mbid": "6278a2ab-4436-4077-a779-97268d3af3cf",
+          "title": "Tesko",
+          "length_ms": 20000,
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "source_sha256": "99048ea5bb02cfaee0f1108680113afd57e08a8829c4665bcaa35591f00cb70f",
+          "url": "https://musicbrainz.org/recording/6278a2ab-4436-4077-a779-97268d3af3cf"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "name": "Boards of Canada",
+      "requested_recordings": 3,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "a3c49027-eb58-4e16-8848-28a857f936cd",
+          "title": "Oscar See Through Red Eye",
+          "length_ms": 308000,
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "source_sha256": "56549f7b466e3726a2376760fc53e243d90e35216748da258066679cd778381d",
+          "url": "https://musicbrainz.org/recording/a3c49027-eb58-4e16-8848-28a857f936cd"
+        },
+        {
+          "recording_mbid": "cd9072f6-15d7-4046-9849-6389a791dcf6",
+          "title": "Energy Warning",
+          "length_ms": 35266,
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "source_sha256": "23f988555d20e7848b785af91ca9007559c75f4867a3cf88608d387cbd6d74dc",
+          "url": "https://musicbrainz.org/recording/cd9072f6-15d7-4046-9849-6389a791dcf6"
+        },
+        {
+          "recording_mbid": "eeca1d57-b7c9-452b-83d7-ba628484dbaf",
+          "title": "Transmisiones Ferox",
+          "length_ms": 138186,
+          "credited_artist_mbids": [
+            "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+          ],
+          "source_sha256": "e71c7477915f5bac215a2761f536d519c0b806107941da870bd20d899f9cb8fe",
+          "url": "https://musicbrainz.org/recording/eeca1d57-b7c9-452b-83d7-ba628484dbaf"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "name": "Floating Points",
+      "requested_recordings": 3,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "33cc794d-1aca-44b6-af3d-6309a503ad93",
+          "title": "Del oro",
+          "length_ms": 374122,
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "source_sha256": "082b20385f24777cc7512360c0b94543f59c40946f4216747453dee57d727946",
+          "url": "https://musicbrainz.org/recording/33cc794d-1aca-44b6-af3d-6309a503ad93"
+        },
+        {
+          "recording_mbid": "efcda6da-a3e5-45d3-8238-4071320b4cba",
+          "title": "Movements 1–5",
+          "length_ms": 1107000,
+          "credited_artist_mbids": [
+            "38712b4c-0fd4-4c65-8c7a-45676fecc973",
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+            "b3a0912a-a62a-4388-9368-7cb21ed5caf9"
+          ],
+          "source_sha256": "a863cbdc260e79b077dba46fef459fcd08f94a98a68546108153f3d1fbb05aae",
+          "url": "https://musicbrainz.org/recording/efcda6da-a3e5-45d3-8238-4071320b4cba"
+        },
+        {
+          "recording_mbid": "02e8f439-99fc-4427-8c12-2b08097d86e6",
+          "title": "Obfuse",
+          "length_ms": 251000,
+          "credited_artist_mbids": [
+            "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+          ],
+          "source_sha256": "b8e0b7a7e401f2b4edda2a32be7fe038bd07421205239bc61ee705fe8825a9c4",
+          "url": "https://musicbrainz.org/recording/02e8f439-99fc-4427-8c12-2b08097d86e6"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "name": "Caribou",
+      "requested_recordings": 3,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "1466d83d-cbe9-4c8f-9b63-df038350a773",
+          "title": "Found Out",
+          "length_ms": 199000,
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "source_sha256": "7ab8bd621f7dc59f320df0b45b0d4901e6ff3840bd07baee8caf5c8336fecc36",
+          "url": "https://musicbrainz.org/recording/1466d83d-cbe9-4c8f-9b63-df038350a773"
+        },
+        {
+          "recording_mbid": "2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+          "title": "Eli",
+          "length_ms": 184733,
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "source_sha256": "6f6b14ec18e69c59ecd630e1f39f35b9a44198eb1580c1f183a24d02f3e7b774",
+          "url": "https://musicbrainz.org/recording/2967c1d7-5df7-4624-bd0f-b96bf5114b91"
+        },
+        {
+          "recording_mbid": "429893fd-5242-4526-898e-134c3eb93a0f",
+          "title": "After Hours",
+          "length_ms": 375226,
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "source_sha256": "df0e79af1f2a63a95b9c57c90f7269431f2d11d5d5a226db14e1874012fab746",
+          "url": "https://musicbrainz.org/recording/429893fd-5242-4526-898e-134c3eb93a0f"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "name": "Burial (UK dubstep)",
+      "requested_recordings": 3,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "0feba647-01f6-489b-b8d4-a18de429a5af",
+          "title": "Gutted",
+          "length_ms": 277000,
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "source_sha256": "57ceaabe9a629f314ab4750bd690993f2d3ad0fd3382f72d919ad8bcbd030734",
+          "url": "https://musicbrainz.org/recording/0feba647-01f6-489b-b8d4-a18de429a5af"
+        },
+        {
+          "recording_mbid": "17abfe47-bd84-4e6d-b584-2ba2a5973a36",
+          "title": "In McDonalds",
+          "length_ms": 127000,
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "source_sha256": "21979b0283387bad9db9afa65cedba38a751b0e52cfed7cecc95558f65927b76",
+          "url": "https://musicbrainz.org/recording/17abfe47-bd84-4e6d-b584-2ba2a5973a36"
+        },
+        {
+          "recording_mbid": "1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd",
+          "title": "Ghost Hardware",
+          "length_ms": 293093,
+          "credited_artist_mbids": [
+            "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+          ],
+          "source_sha256": "7f4d79aa4dd7966e42537d9015406476135cef8a59d089a6fb3fcf75670c5107",
+          "url": "https://musicbrainz.org/recording/1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "name": "Aphex Twin",
+      "requested_recordings": 6,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "030ed9b0-3620-4b6b-b75b-0c9cf0634ede",
+          "title": "[untitled]",
+          "length_ms": 312000,
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "source_sha256": "6f4a2d14c7832df39e8e8d1c88e9e1a53f662f8b50cf9be82eb1b8f07b098b76",
+          "url": "https://musicbrainz.org/recording/030ed9b0-3620-4b6b-b75b-0c9cf0634ede"
+        },
+        {
+          "recording_mbid": "2836d5dc-986c-4a3b-a062-398751b43260",
+          "title": "Bbydhyonchord",
+          "length_ms": 150040,
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "source_sha256": "7241e5568dd7d326cd3e949bf116ccbad8706ef2c1f37b9f14edf9fa6cf0ede2",
+          "url": "https://musicbrainz.org/recording/2836d5dc-986c-4a3b-a062-398751b43260"
+        },
+        {
+          "recording_mbid": "3ec37d27-1f16-45c4-8a9e-5a705393c177",
+          "title": "En Trance to Exit",
+          "length_ms": 261800,
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "source_sha256": "ed44d3d96907860e891113293014a89727cd221a5802d8fb5251e8ebc982817e",
+          "url": "https://musicbrainz.org/recording/3ec37d27-1f16-45c4-8a9e-5a705393c177"
+        },
+        {
+          "recording_mbid": "41bdd496-114e-48c6-82c9-ec9332891c8b",
+          "title": "Blue Calx",
+          "length_ms": 401893,
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "source_sha256": "55b3da1694be496c6c620dfd5d987db68ff1184a36a8b6763c6335d08f556f5d",
+          "url": "https://musicbrainz.org/recording/41bdd496-114e-48c6-82c9-ec9332891c8b"
+        },
+        {
+          "recording_mbid": "6c10a042-f915-48ae-8831-796fc487e9ba",
+          "title": "Vaz Deferenz",
+          "length_ms": 345000,
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "source_sha256": "d1ddde45e2e33aed3ff858ee69198000e71be648c51bb1fd9a75a0d9d2989713",
+          "url": "https://musicbrainz.org/recording/6c10a042-f915-48ae-8831-796fc487e9ba"
+        },
+        {
+          "recording_mbid": "911954f3-a0b1-4df4-ae3c-d239401cca67",
+          "title": "Interview (after 4)",
+          "length_ms": 371000,
+          "credited_artist_mbids": [
+            "f22942a1-6f70-4f48-866e-238cb2308fbd"
+          ],
+          "source_sha256": "a102471cf93d05ac04bd09c748188fa1893aac5b10456531f0613c53f3b4300b",
+          "url": "https://musicbrainz.org/recording/911954f3-a0b1-4df4-ae3c-d239401cca67"
+        }
+      ]
+    },
+    {
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "name": "Brian Eno",
+      "requested_recordings": 3,
+      "missing_recordings": 0,
+      "recordings": [
+        {
+          "recording_mbid": "0a3ca852-0607-4075-ab3f-8fb272bf048e",
+          "title": "Foreshadowed",
+          "length_ms": 234733,
+          "credited_artist_mbids": [
+            "5c864a6f-146e-4225-986d-3295ce90f784",
+            "ca0489a4-3a7b-4def-b66e-e00b2f579ae0",
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+          ],
+          "source_sha256": "960e7dec9c68f40d567a0686851a69bd3611fe43533f5ad16f35e91794acb179",
+          "url": "https://musicbrainz.org/recording/0a3ca852-0607-4075-ab3f-8fb272bf048e"
+        },
+        {
+          "recording_mbid": "0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722",
+          "title": "Bottomliners",
+          "length_ms": 239293,
+          "credited_artist_mbids": [
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+          ],
+          "source_sha256": "831448e0d2999016e05119f9868edf60b5a6ae8a257e05d42d2f3c4f89c9c116",
+          "url": "https://musicbrainz.org/recording/0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722"
+        },
+        {
+          "recording_mbid": "0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f",
+          "title": "Abdominal Crisis (Seven Sea Sessions)",
+          "length_ms": null,
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+            "8dce9ad6-9415-4373-9747-dcac5ef43aef",
+            "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+          ],
+          "source_sha256": "97ab7e1b880ca322f4873bcadd36c6aa4431f199dbb2581329abc073a68ad35c",
+          "url": "https://musicbrainz.org/recording/0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f"
+        }
+      ]
+    }
+  ]
+}

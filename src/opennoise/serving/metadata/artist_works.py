@@ -15,6 +15,24 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _MAX_SELECTION = 100
+_PROJECTION_FIELDS = {
+    "revision",
+    "publication_status",
+    "method",
+    "limitations",
+    "rights",
+    "artists",
+}
+_ARTIST_FIELDS = {"artist_mbid", "name", "recordings", "release_groups", "sample_recording_count"}
+_RANKING_FIELDS = {"rank", "url", "score_components", "score", "classification"}
+_SCORE_FIELDS = {
+    "exact_artist_credit",
+    "original_album_context",
+    "nonvariant_recording",
+    "dated_metadata",
+    "unseen_release_context",
+    "distinct_title",
+}
 
 
 class CreditedMusicCandidate(FrozenModel):
@@ -127,8 +145,18 @@ def rank_artist_works(
     return tuple(selected)
 
 
+def _require_projected_work_fields(row: dict[str, Any], candidate_fields: set[str]) -> None:
+    if set(row) - candidate_fields - _RANKING_FIELDS:
+        raise ValueError("unapproved work fields in CC0 music projection")
+    if "score_components" in row and (
+        not isinstance(row["score_components"], dict)
+        or set(row["score_components"]) - _SCORE_FIELDS
+    ):
+        raise ValueError("unapproved ranking fields in CC0 music projection")
+
+
 def verify_projected_artist_work_examples(projection: Path, receipt: Path) -> dict[str, Any]:
-    """Verify a local immutable CC0 projection before using its outbound links."""
+    """Verify projected bytes, identities and permitted fields, without native source replay."""
     body = projection.read_bytes()
     proof = json.loads(receipt.read_text())
     if (
@@ -140,15 +168,20 @@ def verify_projected_artist_work_examples(projection: Path, receipt: Path) -> di
     artifact = json.loads(body)
     if artifact.get("revision") != "credited-music-examples-v1":
         raise ValueError("unknown credited music projection revision")
+    if set(artifact) - _PROJECTION_FIELDS:
+        raise ValueError("unapproved fields in CC0 music projection")
     fields = set(CreditedMusicCandidate.model_fields)
     seen: set[str] = set()
     for artist in artifact["artists"]:
+        if set(artist) - _ARTIST_FIELDS:
+            raise ValueError("unapproved artist fields in CC0 music projection")
         artist_id = artist["artist_mbid"]
         if artist_id in seen or metadata_url("artist", f"musicbrainz:artist:{artist_id}") is None:
             raise ValueError("invalid or repeated exact artist identity")
         seen.add(artist_id)
         for kind in ("recordings", "release_groups"):
             for row in artist[kind]:
+                _require_projected_work_fields(row, fields)
                 candidate = CreditedMusicCandidate.model_validate_json(
                     json.dumps({key: value for key, value in row.items() if key in fields})
                 )

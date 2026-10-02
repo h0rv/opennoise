@@ -1,0 +1,103 @@
+{
+  "revision": "cc0-exact-recording-facts-v1",
+  "selection_method": "First three bounded metadata examples per artist; first six for Aphex Twin and Four Tet. No new representative or historical rank claim.",
+  "source_projection_sha256": "faf3852d01f723bd95737ebf323dd8ab81a67496802532a9fbe71957476fd660",
+  "artists": [
+    {
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "name": "Jon Hopkins",
+      "recording_mbids": [
+        "56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+        "594f843f-3ed1-423e-b1fc-f6aaf5bc7163",
+        "126aaa04-a746-424c-84de-01cb13a7a770"
+      ]
+    },
+    {
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "name": "Four Tet",
+      "recording_mbids": [
+        "3715b33e-9766-480f-ad0b-8437703af6b7",
+        "885c71d0-b306-43df-a435-11433b06aa73",
+        "23118e3d-2ac9-4e08-a1b8-18f77d68c6e1",
+        "0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+        "187db0f2-f082-4159-8748-fa34146cacaf",
+        "2a23cd23-1a7d-4919-9a81-388e023edf2d"
+      ]
+    },
+    {
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "name": "Autechre",
+      "recording_mbids": [
+        "1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+        "41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+        "4bc73c97-a204-42ad-877b-09a4445952ea"
+      ]
+    },
+    {
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "name": "Squarepusher",
+      "recording_mbids": [
+        "35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+        "623f308e-7cd3-413a-a641-534266e65732",
+        "6278a2ab-4436-4077-a779-97268d3af3cf"
+      ]
+    },
+    {
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "name": "Boards of Canada",
+      "recording_mbids": [
+        "a3c49027-eb58-4e16-8848-28a857f936cd",
+        "cd9072f6-15d7-4046-9849-6389a791dcf6",
+        "eeca1d57-b7c9-452b-83d7-ba628484dbaf"
+      ]
+    },
+    {
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "name": "Floating Points",
+      "recording_mbids": [
+        "33cc794d-1aca-44b6-af3d-6309a503ad93",
+        "efcda6da-a3e5-45d3-8238-4071320b4cba",
+        "02e8f439-99fc-4427-8c12-2b08097d86e6"
+      ]
+    },
+    {
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "name": "Caribou",
+      "recording_mbids": [
+        "1466d83d-cbe9-4c8f-9b63-df038350a773",
+        "2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+        "429893fd-5242-4526-898e-134c3eb93a0f"
+      ]
+    },
+    {
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "name": "Burial (UK dubstep)",
+      "recording_mbids": [
+        "0feba647-01f6-489b-b8d4-a18de429a5af",
+        "17abfe47-bd84-4e6d-b584-2ba2a5973a36",
+        "1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd"
+      ]
+    },
+    {
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "name": "Aphex Twin",
+      "recording_mbids": [
+        "030ed9b0-3620-4b6b-b75b-0c9cf0634ede",
+        "2836d5dc-986c-4a3b-a062-398751b43260",
+        "3ec37d27-1f16-45c4-8a9e-5a705393c177",
+        "41bdd496-114e-48c6-82c9-ec9332891c8b",
+        "6c10a042-f915-48ae-8831-796fc487e9ba",
+        "911954f3-a0b1-4df4-ae3c-d239401cca67"
+      ]
+    },
+    {
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "name": "Brian Eno",
+      "recording_mbids": [
+        "0a3ca852-0607-4075-ab3f-8fb272bf048e",
+        "0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722",
+        "0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f"
+      ]
+    }
+  ]
+}
