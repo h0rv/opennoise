@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 from opennoise.common import sha256_file
 from opennoise.ml.fma_memberships import (
@@ -16,6 +16,7 @@ from opennoise.ml.fma_memberships import (
     replay_membership_pack,
     suggest,
 )
+from scripts.materialize_fma_membership_example import RECIPE, materialize
 
 
 def row(component: int, labels: list[int], ranks: list[int], fold: int = 1) -> dict[str, Any]:
@@ -101,12 +102,32 @@ class PositiveMembershipTests(unittest.TestCase):
 
 class SavedMembershipTests(unittest.TestCase):
     baseline = Path(__file__).resolve().parents[1] / "data/examples/fma-acoustic-baseline"
-    pack = Path(__file__).resolve().parents[1] / "data/examples/fma-source-memberships"
+    recipe = RECIPE
+
+    @classmethod
+    @override
+    def setUpClass(cls) -> None:
+        cls._temporary = tempfile.TemporaryDirectory(prefix="fma-membership-replay-")
+        cls.pack = Path(cls._temporary.name) / "pack"
+        materialize(cls.recipe, cls.pack)
+
+    @classmethod
+    @override
+    def tearDownClass(cls) -> None:
+        cls._temporary.cleanup()
 
     def test_all_exact_memberships_metrics_and_calibration_replay(self) -> None:
         result = replay_membership_pack(self.baseline, self.pack)
         self.assertTrue(result["all_thresholds_metrics_memberships_match"])
+        self.assertEqual(result["calibration_queries"], 4096)
         self.assertEqual(result["confirmation_queries"], 3236)
+        self.assertEqual(result["test_diagnostic_queries"], 6468)
+        self.assertEqual(
+            result["calibration_queries"]
+            + result["confirmation_queries"]
+            + result["test_diagnostic_queries"],
+            13800,
+        )
         self.assertFalse(result["model_refit"])
 
     def test_self_rehashed_changed_threshold_still_rejected(self) -> None:

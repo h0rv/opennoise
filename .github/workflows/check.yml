@@ -1,0 +1,31 @@
+name: Source-only checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Clean-checkout poe check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - name: Install Python 3.13
+        run: uv python install 3.13
+      - name: Install locked project dependencies
+        run: UV_CACHE_DIR=.cache/uv uv tool run --from poethepoet poe sync
+      - name: Run required source checks with locked project Poe
+        run: .venv/bin/poe check

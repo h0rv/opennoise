@@ -34,6 +34,33 @@ The versioned inventory lives in
 `src/opennoise/pipeline/foundation.py` and is intentionally not a general task
 runner.
 
+The newer [full-input reconstruction](FULL_INPUT_RECONSTRUCTION.md) follows a
+separately named contract for the retained open source packs. Its independently
+replayed v8 export covers 2,999,670 exact identities, complete indexes and
+observed genre cohorts, with FMA contexts in a separate namespace. The
+[current evidence](CONTINUATION_PROGRESS_20261003_V8.md) records one engineering
+reconstruction pass and eleven unmet acceptance gates. The full source packs
+must be recovered separately; this is not a fresh-checkout full website or a
+musical parity claim.
+
+The [FMA source-membership text recipe](../../data/recipes/fma-source-memberships-v1/README.md)
+is self-contained with the existing acoustic baseline. It reconstructs the exact
+nine-file model example, including all 13,800 saved queries, into a new directory:
+
+```sh
+.venv/bin/python scripts/materialize_fma_membership_example.py \
+  --output /tmp/fma-source-memberships-v1
+PYTHONPATH=src .venv/bin/python scripts/replay_fma_memberships.py \
+  --saved-pack data/examples/fma-acoustic-baseline \
+  --memberships /tmp/fma-source-memberships-v1
+```
+
+This replays saved source ranks, thresholds and metrics; it does not refit from
+native FMA files or establish musical membership. The original binary example
+is retained in private recovery storage. The public text recipe preserves its
+exact decoded bytes and attribution. Historical evidence copies referring to a
+tracked binary pack describe the local example before this publication route.
+
 `poe sync && poe check` is the clean-checkout baseline. `poe build` also needs
 `data/public.sqlite` and `.cache/semantic-map-layout-v3/artifact.json`; the
 ignored files must be supplied locally. The parity comparison additionally
