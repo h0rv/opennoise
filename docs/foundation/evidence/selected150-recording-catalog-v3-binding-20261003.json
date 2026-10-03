@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "role": "selected-cohort native acquisition engineering evidence",
+  "report": {
+    "path": "docs/reports/SELECTED150_RECORDING_CATALOG_V3_20261003.json",
+    "bytes": 9113,
+    "sha256": "86f5825351487c316e33e9073150233e602d7c770b0fedf7c7adf1dc2974cb7a"
+  },
+  "readable": {
+    "path": "docs/foundation/SELECTED150_RECORDING_CATALOG_V3.md",
+    "bytes": 6041,
+    "sha256": "91f949b92466b03b82b73199283de0b5f00c2bbffcedb4a974f1d784e9f791f3"
+  },
+  "source_receipt_sha256": "682e0e963a63c574f9f8729b4c74f8b42aa5bfcd35e41b1a21eeb1bd11b68f9d",
+  "native_replay_sha256": "ee118b79840a650f650c9d152339dd493a48ef710404363daa5d4c4055f7aabc",
+  "native_replay_execution_sha256": "919918bb7529a6cea8aacd2a0c5b456934d79e2545eedaf4415c12c56a82b3c2",
+  "outside_recovery_zip_sha256": "e6138676843b8373ec7c765c5f4656c85c09e9836a8ccdf7c2a09986fcf19b83",
+  "limitations": [
+    "147 stable observed windows, three count declines; not an atomic snapshot",
+    "Artist-recording observations are not globally unique recording count",
+    "No musical judgments, audio permission, fresh normalized export or site certification",
+    "No additional acceptance gate is passed by publishing this summary"
+  ]
+}
