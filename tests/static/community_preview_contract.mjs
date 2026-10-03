@@ -49,17 +49,19 @@ const suggestedAssignments = { artists: { [artistId]: {
 async function capture(url) {
   const profile = await mkdtemp(join(tmpdir(), 'opennoise-community-contract-'));
   const child = spawn(chromium, ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank']);
-  let socket;
+  let socket, stderr = '';
+  child.stderr.on('data', data => { stderr = (stderr + data).slice(-5000); });
   try {
     const endpoint = await new Promise((resolve, reject) => {
-      let stderr = '';
-      const timeout = setTimeout(() => reject(new Error('Chromium did not expose DevTools')), 10_000);
-      child.on('error', error => { clearTimeout(timeout); reject(error); });
-      child.stderr.on('data', data => {
-        stderr += data;
+      const cleanup = () => { clearTimeout(timeout); child.off('error', onError); child.off('exit', onExit); child.stderr.off('data', onData); };
+      const onError = error => { cleanup(); reject(error); };
+      const onExit = (code, signal) => { cleanup(); reject(new Error(`Chromium exited before exposing DevTools (code=${code}, signal=${signal})`)); };
+      const onData = () => {
         const match = stderr.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//);
-        if (match) { clearTimeout(timeout); resolve(`http://127.0.0.1:${match[1]}`); }
-      });
+        if (match) { cleanup(); resolve(`http://127.0.0.1:${match[1]}`); }
+      };
+      const timeout = setTimeout(() => { cleanup(); reject(new Error('Chromium did not expose DevTools')); }, 10_000);
+      child.once('error', onError); child.once('exit', onExit); child.stderr.on('data', onData);
     });
     const target = await fetch(`${endpoint}/json/new?about:blank`, { method: 'PUT' }).then(response => response.json());
     socket = new WebSocket(target.webSocketDebuggerUrl);
@@ -135,6 +137,8 @@ async function capture(url) {
       captured.exploration = exploration.result.value;
     }
     return captured;
+  } catch (error) {
+    throw new Error(`${error.message}; browser=${chromium}; exit=${child.exitCode}; signal=${child.signalCode}; stderr(last 5000 chars):\n${stderr}`, { cause: error });
   } finally {
     socket?.close(); child.kill('SIGKILL');
     await new Promise(resolve => child.exitCode !== null || child.signalCode !== null ? resolve() : child.once('close', resolve));

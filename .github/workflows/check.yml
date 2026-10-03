@@ -13,6 +13,8 @@ jobs:
     name: Clean-checkout poe check
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,6 +27,10 @@ jobs:
           enable-cache: false
       - name: Install Python 3.13
         run: uv python install 3.13
+      - name: Verify the browser executable used by contracts
+        run: |
+          test -x "$CHROMIUM_PATH"
+          "$CHROMIUM_PATH" --version
       - name: Install locked project dependencies
         run: UV_CACHE_DIR=.cache/uv uv tool run --from poethepoet poe sync
       - name: Run required source checks with locked project Poe
