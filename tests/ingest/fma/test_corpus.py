@@ -92,6 +92,22 @@ class CorpusTests(unittest.TestCase):
             with self.subTest(crc=crc, length=length), self.assertRaises(ValueError):
                 io.BufferedReader(reader).read()
 
+    def test_native_album_identity_preserves_distinct_artists_and_missingness(self) -> None:
+        """Album overlap is observable without merging artists or filling invalid IDs."""
+        first = corpus.project_row("tracks", {"track_id": "1", "artist_id": "10", "album_id": "77"})
+        second = corpus.project_row(
+            "tracks", {"track_id": "2", "artist_id": "20", "album_id": "77"}
+        )
+        self.assertEqual(first["album_id"], second["album_id"])
+        self.assertNotEqual(first["artist_id"], second["artist_id"])
+        for value, reason in [("", "source_empty"), ("invalid", "source_invalid_native_id")]:
+            with self.subTest(value=value):
+                row = corpus.project_row(
+                    "tracks", {"track_id": "3", "artist_id": "30", "album_id": value}
+                )
+                self.assertIsNone(row["album_id"])
+                self.assertEqual(row["missing_fields"]["album_id"], reason)
+
     def test_untrusted_genre_literals_are_data_and_missingness_is_typed(self) -> None:
         """Do not evaluate code or invent absent source genres and identity bridges."""
         row = corpus.project_row(
