@@ -19,10 +19,13 @@ from opennoise.ingest.fma import corpus
 README = (Path(__file__).resolve().parents[3] / "data/examples/fma-source/README.md").read_bytes()
 GENRES = "genre_id,genre_parent_id,genre_title\n21,,Hip-Hop\n"
 ARTISTS = "artist_id,artist_name\n1,AWOL\n"
-TRACKS = """track_id,artist_id,artist_name,track_title,track_genres,license_title,license_url,track_url
-2,1,AWOL,Food,"[{'genre_id': '21'}]",CC BY-NC-SA,https://cc.example/by-nc-sa,http://fma.example/food
-3,999,Unknown,No tags,,Unknown,,
-"""
+TRACKS = (
+    "track_id,artist_id,artist_name,track_title,track_genres,"
+    "license_title,license_url,track_url,album_id,album_title\n"
+    "2,1,AWOL,Food,\"[{'genre_id': '21'}]\",CC BY-NC-SA,"
+    "https://cc.example/by-nc-sa,http://fma.example/food,17,Album\n"
+    "3,999,Unknown,No tags,,Unknown,,,,\n"
+)
 
 
 def fixture_zip() -> bytes:
@@ -55,6 +58,29 @@ class CorpusTests(unittest.TestCase):
         ]:
             with self.subTest(status=status, changed=changed), self.assertRaises(ValueError):
                 corpus.check_range(status, changed, 10, 19)
+
+    def test_native_range_rejects_truncation_and_overflow(self) -> None:
+        """Declared lengths cannot substitute for counting the bytes actually read."""
+        for payload in (b"short", b"too many bytes"):
+
+            def handler(_request: httpx.Request, body: bytes = payload) -> httpx.Response:
+                return httpx.Response(
+                    206,
+                    headers={
+                        "content-range": f"bytes 10-19/{corpus.ARCHIVE_BYTES}",
+                        "etag": corpus.ETAG,
+                        "content-length": "10",
+                    },
+                    stream=httpx.ByteStream(body),
+                )
+
+            with (
+                self.subTest(payload=payload),
+                tempfile.TemporaryDirectory() as temporary,
+                httpx.Client(transport=httpx.MockTransport(handler)) as client,
+                self.assertRaises(ValueError),
+            ):
+                corpus.capture_range(client, Path(temporary), "bad.range", 10, 19)
 
     def test_stream_crc_and_uncompressed_size_are_not_only_receipt_hashes(self) -> None:
         """Corrupt CRC and decompression overflow both fail at the native stream."""
@@ -132,6 +158,8 @@ class CorpusTests(unittest.TestCase):
             ):
                 rows = [json.loads(line) for line in io.TextIOWrapper(compressed)]
             self.assertEqual(rows[0]["genre_ids"], [21])
+            self.assertEqual(rows[0]["album_id"], 17)
+            self.assertIsNone(rows[1]["album_id"])
             self.assertEqual(rows[0]["audio_license_title"], "CC BY-NC-SA")
             self.assertIsNone(rows[1]["genre_ids"])
             replay = corpus.project_corpus(source, Path(temporary) / "replay")

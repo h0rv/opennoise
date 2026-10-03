@@ -100,13 +100,13 @@ def central_members(tail: bytes) -> dict[str, dict[str, Any]]:
     if cursor != end or not set(MEMBERS).issubset(members):
         raise ValueError("ZIP directory membership mismatch")
     selected = {name: members[name] for name in MEMBERS}
-    if (
-        any(
-            row["compression"] != ZIP_BZIP2 or row["uncompressed_bytes"] > MAX_UNCOMPRESSED_BYTES
-            for row in selected.values()
-        )
-        or sum(row["compressed_bytes"] for row in selected.values())
-        > MAX_NATIVE_BYTES - TAIL_BYTES - 10_000
+    if any(
+        row["compression"] != ZIP_BZIP2 or row["uncompressed_bytes"] > MAX_UNCOMPRESSED_BYTES
+        for row in selected.values()
+    ) or sum(
+        row["compressed_bytes"] for row in selected.values()
+    ) > MAX_NATIVE_BYTES - TAIL_BYTES - MAX_README_BYTES - len(MEMBERS) * (
+        LOCAL_HEADER_BYTES + MAX_EXTRA_BYTES + 100
     ):
         raise ValueError("unsupported or oversized source members")
     return selected
@@ -144,9 +144,10 @@ def check_range(status: int, headers: Mapping[str, str], start: int, end: int) -
         raise ValueError("HTTP range, length, encoding, or ETag mismatch")
 
 
-def _capture_range(
+def capture_range(
     client: httpx.Client, directory: Path, name: str, start: int, end: int
 ) -> dict[str, Any]:
+    """Capture one exact bounded native archive range into an exclusive file."""
     if not 0 <= start <= end < ARCHIVE_BYTES or end - start + 1 > MAX_NATIVE_BYTES:
         raise ValueError("range exceeds bounds")
     with client.stream(
@@ -211,7 +212,7 @@ def capture_sources(directory: Path) -> dict[str, Any]:
     ) as client:
         readme = _capture_readme(client, directory)
         ranges = [
-            _capture_range(
+            capture_range(
                 client,
                 directory,
                 "central-directory.range",
@@ -223,15 +224,13 @@ def capture_sources(directory: Path) -> dict[str, Any]:
         for index, member in enumerate(members.values()):
             offset = member["header_offset"]
             ranges.append(
-                _capture_range(
-                    client, directory, f"{index}-local-header.range", offset, offset + 29
-                )
+                capture_range(client, directory, f"{index}-local-header.range", offset, offset + 29)
             )
             name_size, extra_size = local_header(
                 (directory / ranges[-1]["path"]).read_bytes(), member
             )
             ranges.append(
-                _capture_range(
+                capture_range(
                     client,
                     directory,
                     f"{index}-compressed.range",
@@ -278,6 +277,12 @@ class CheckedCSV(io.RawIOBase):
         self.crc = 0
         self.sha256 = hashlib.sha256()
         self.complete = False
+
+    @override
+    def close(self) -> None:
+        """Close the decompressor when the text reader is closed."""
+        self.source.close()
+        super().close()
 
     @override
     def readable(self) -> bool:
@@ -426,6 +431,8 @@ def project_row(kind: str, row: dict[str, str]) -> dict[str, Any]:
             "title": "track_title",
             "artist_id": "artist_id",
             "artist_name": "artist_name",
+            "album_id": "album_id",
+            "album_title": "album_title",
             "audio_license_title": "license_title",
             "audio_license_url": "license_url",
             "source_metadata_url": "track_url",
