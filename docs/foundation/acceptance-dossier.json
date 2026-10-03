@@ -67,6 +67,28 @@
       "source": "OpenNoise checkpoint testimony",
       "license": "project documentation; underlying source licenses remain distinct",
       "pack": "review"
+    },
+    {
+      "id": "open-genre-taxonomy-oct2-receipt",
+      "path": "data/examples/open-genre-taxonomy/receipt.json",
+      "sha256": "aa4200c099c988122bb391b607bfc39e8f605417439efbd044af39d61a2c7b8b",
+      "size_bytes": 1512,
+      "scope": "portable-example",
+      "role": "construction",
+      "source": "Wikidata independently source-selected genre taxonomy",
+      "license": "CC0-1.0",
+      "pack": "unrestricted-core"
+    },
+    {
+      "id": "open-genre-taxonomy-oct2-projection",
+      "path": "data/examples/open-genre-taxonomy/projection.json",
+      "sha256": "6adac8eac040a9d68686c493bcd70530154457f61afa2bedf597c92f03f47c6f",
+      "size_bytes": 2528329,
+      "scope": "portable-example",
+      "role": "construction",
+      "source": "Wikidata independently source-selected genre taxonomy",
+      "license": "CC0-1.0",
+      "pack": "unrestricted-core"
     }
   ],
   "reviews": [
@@ -94,17 +116,21 @@
       "explanation": "Portable CC0 projections and optional NC source obligations are documented; no byte-bound full-input license and training-boundary review is supplied.",
       "evidence": [
         "integrated-oct1",
-        "cultural-review-oct1"
+        "cultural-review-oct1",
+        "open-genre-taxonomy-oct2-receipt",
+        "open-genre-taxonomy-oct2-projection"
       ],
       "criteria_covered": []
     },
     {
       "gate": "genre-and-artist-coverage",
       "decision": "missing",
-      "explanation": "Candidate names, selected artists and association neighborhoods do not establish reviewed full-corpus genre or artist coverage.",
+      "explanation": "October 2 independent Wikidata capture supplies 1,000 bounded source-selected genre entities and typed taxonomy, with selection possibly truncated. It supplies no artist memberships or reviewed broad/sub/micro communities; full genre/artist coverage remains unmet.",
       "evidence": [
         "integrated-oct1",
-        "source-confirmation-oct1"
+        "source-confirmation-oct1",
+        "open-genre-taxonomy-oct2-receipt",
+        "open-genre-taxonomy-oct2-projection"
       ],
       "criteria_covered": []
     },

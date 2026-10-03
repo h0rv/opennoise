@@ -1,0 +1,23 @@
+{
+  "artist_membership_claims": [],
+  "class_qid": "Q188451",
+  "class_url": "https://www.wikidata.org/wiki/Special:EntityData/Q188451.json",
+  "historical_inputs": [],
+  "label_language": "en",
+  "license": "CC0-1.0",
+  "license_url": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+  "request_limit": 10,
+  "response_byte_limit": 2000000,
+  "selection": "direct Wikidata P31 Q188451, bounded endpoint order; no name/artist inputs",
+  "selection_limit": 1000,
+  "selection_query": "PREFIX wd: <http://www.wikidata.org/entity/>\nPREFIX wdt: <http://www.wikidata.org/prop/direct/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?genre ?anchor WHERE {\n  VALUES ?anchor { wd:Q188451 }\n  ?genre wdt:P31 ?anchor.\n}\nLIMIT 1000",
+  "taxonomy_batch_size": 200,
+  "taxonomy_properties": [
+    "P31",
+    "P279"
+  ],
+  "taxonomy_row_limit": 2000,
+  "timeout_seconds": 30.0,
+  "total_byte_limit": 10000000,
+  "version": 1
+}

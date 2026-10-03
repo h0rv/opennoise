@@ -1,0 +1,46 @@
+{
+  "files": {
+    "manifest.json": {
+      "sha256": "48ff84cd20ef1762f11793bfa3eea34814a8372ea820281ffc8d5dc287cc6471",
+      "size_bytes": 54171
+    },
+    "projection.json": {
+      "sha256": "6adac8eac040a9d68686c493bcd70530154457f61afa2bedf597c92f03f47c6f",
+      "size_bytes": 2528329
+    },
+    "query-plan.json": {
+      "sha256": "0b157c3bb2d596d14ae02f30d9f7d6e4e6b2940d582662da0d86aef2540a40d2",
+      "size_bytes": 945
+    },
+    "raw/request-00.body": {
+      "sha256": "29403bb383a701a58bdcaa545dd5da43d525a501677cf92d362afdc89640027a",
+      "size_bytes": 59291
+    },
+    "raw/request-01.body": {
+      "sha256": "44c006da4e06c7bb0e145ae5d5bfa83ce31c70364c37fd58fb90a87170c619d8",
+      "size_bytes": 229267
+    },
+    "raw/request-02.body": {
+      "sha256": "868d2c7e0a74dbb1ae72474db5864c4fcb26125e8b0eceb2ed47b395db8432dd",
+      "size_bytes": 368202
+    },
+    "raw/request-03.body": {
+      "sha256": "d79b99282a23d5ede509851ca7464054307c841e07f50a7152300e38249271bb",
+      "size_bytes": 379923
+    },
+    "raw/request-04.body": {
+      "sha256": "84ca6d244e4319bfc6f20482202df3d5c0ee533931a30708fef897d33c22e537",
+      "size_bytes": 350763
+    },
+    "raw/request-05.body": {
+      "sha256": "5ee00106b4e3f9e06f86b3eb39ce8a5c51f24a4855e2e8630721d44cb90a554b",
+      "size_bytes": 351752
+    },
+    "raw/request-06.body": {
+      "sha256": "846581cda1fc05e3117d48424fcee57092e99649451369f41f6111d0db6c350c",
+      "size_bytes": 352898
+    }
+  },
+  "license": "CC0-1.0",
+  "version": 1
+}
