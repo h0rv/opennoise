@@ -1,4 +1,5 @@
 const main=document.querySelector('#main'),search=document.querySelector('#search'),form=document.querySelector('#search-form');
+document.querySelector('.skip').addEventListener('click',event=>{event.preventDefault();main.focus();});
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const link=(text,href)=>{const n=el('a',text);n.href=href;return n;};
 const route=(kind,id)=>`#${kind}/${encodeURIComponent(id)}`;

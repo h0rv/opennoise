@@ -1,6 +1,7 @@
 /** Source-only FMA catalog. Native track annotations never imply artist memberships. */
 const $ = selector => document.querySelector(selector);
 const content = $('#content'), heading = $('h1'), status = $('#status'), rows = $('#rows'), pages = $('#pages'), query = $('#query'), scope = $('#scope');
+$('.skip').addEventListener('click', event => { event.preventDefault(); content.focus(); });
 const node = (tag, text) => { const element = document.createElement(tag); if (text !== undefined) element.textContent = text; return element; };
 const number = value => new Intl.NumberFormat('en').format(value);
 const link = (text, hash) => { const element = node('a', text); element.href = hash; return element; };

@@ -1,5 +1,6 @@
 import {mountListeningList} from './listening-list.mjs';
 const main=document.querySelector('#main'), search=document.querySelector('#search'), form=document.querySelector('#search-form');
+document.querySelector('.skip').addEventListener('click',event=>{event.preventDefault();main.focus();});
 const listening=mountListeningList(document.querySelector('.header'));
 const el=(tag,text)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
 const link=(text,href)=>{const node=el('a',text);node.href=href;return node;};
