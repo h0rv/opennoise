@@ -95,6 +95,52 @@ class RecordingFactTests(unittest.TestCase):
                 for fact in artist["recordings"]:
                     self.assertIn(artist["artist_mbid"], fact["credited_artist_mbids"])
 
+    def test_unreferenced_raw_file_is_rejected_even_with_valid_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / "pack"
+            shutil.copytree(PACK, directory)
+            (directory / "raw/unreferenced-tags.json").write_text(
+                '{"tags":[{"name":"not part of this pack"}]}\n'
+            )
+            with self.assertRaisesRegex(ValueError, "file set differs"):
+                verify_recording_fact_pack(directory)
+
+    def test_symlinked_raw_directory_and_file_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / "pack"
+            shutil.copytree(PACK, directory)
+            raw = directory / "raw"
+            moved = directory / "raw-saved"
+            raw.rename(moved)
+            raw.symlink_to(moved, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "regular directory"):
+                verify_recording_fact_pack(directory)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / "pack"
+            shutil.copytree(PACK, directory)
+            proof = json.loads((directory / "receipt.json").read_bytes())
+            capture = next(c for c in proof["captures"] if c["outcome"] == "accepted_core")
+            source = directory / capture["path"]
+            target = Path(temporary) / "outside.json"
+            shutil.copy2(source, target)
+            source.unlink()
+            source.symlink_to(target)
+            with self.assertRaisesRegex(ValueError, "cannot contain symlinks"):
+                verify_recording_fact_pack(directory)
+
+    def test_noncanonical_capture_path_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / "pack"
+            shutil.copytree(PACK, directory)
+            receipt_path = directory / "receipt.json"
+            proof = json.loads(receipt_path.read_bytes())
+            capture = next(c for c in proof["captures"] if c["outcome"] == "accepted_core")
+            capture["path"] = "raw/../receipt.json"
+            receipt_path.write_text(json.dumps(proof))
+            with self.assertRaisesRegex(ValueError, "noncanonical raw path"):
+                verify_recording_fact_pack(directory)
+
     def test_matching_hash_cannot_reclassify_mixed_native_response(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary) / "pack"

@@ -143,6 +143,33 @@ def _capture_body(directory: Path, capture: dict[str, Any]) -> bytes:
     return body
 
 
+def _verify_closed_raw_directory(directory: Path, captures: list[dict[str, Any]]) -> None:
+    """Require the raw directory to contain only accepted, receipt-listed responses."""
+    raw_directory = directory / "raw"
+    if raw_directory.is_symlink() or not raw_directory.is_dir():
+        raise ValueError("recording raw path must be a regular directory")
+
+    expected_paths: set[str] = set()
+    for capture in captures:
+        if capture.get("outcome") != "accepted_core":
+            continue
+        recording_id = _require_uuid(capture.get("recording_mbid"))
+        expected_path = f"raw/{recording_id}.json"
+        if capture.get("path") != expected_path:
+            raise ValueError("accepted recording capture has a noncanonical raw path")
+        expected_paths.add(f"{recording_id}.json")
+
+    actual_paths: set[str] = set()
+    for path in raw_directory.rglob("*"):
+        if path.is_symlink():
+            raise ValueError("recording raw directory cannot contain symlinks")
+        if not path.is_file():
+            raise ValueError("recording raw directory cannot contain nested directories")
+        actual_paths.add(path.relative_to(raw_directory).as_posix())
+    if actual_paths != expected_paths:
+        raise ValueError("recording raw file set differs from accepted captures")
+
+
 def replay_recording_facts(
     directory: Path, selection: dict[str, Any], captures: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -214,6 +241,7 @@ def verify_recording_fact_pack(directory: Path) -> dict[str, Any]:
         raise ValueError("recording fact budget differs")
     if sum(c.get("bytes", 0) for c in captures) > receipt["response_bytes"]:
         raise ValueError("retained recording bytes exceed captured byte budget")
+    _verify_closed_raw_directory(directory, captures)
     projection = replay_recording_facts(directory, json.loads(selection_body), captures)
     if projection != json.loads(projection_body):
         raise ValueError("recording fact projection differs from native source replay")
