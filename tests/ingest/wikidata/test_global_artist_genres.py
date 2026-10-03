@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from typing import override
 from unittest.mock import patch
 
 import httpx
@@ -35,6 +36,7 @@ MBID_OTHER = "00000000-0000-4000-8000-000000000001"
 
 
 def binding(qid: str, artist_id: str, genre: str) -> dict[str, object]:
+    """Build one compact initial-scan SPARQL binding."""
     return {
         "artist": {"value": f"http://www.wikidata.org/entity/{qid}"},
         "mbid": {"value": artist_id},
@@ -79,12 +81,9 @@ class GlobalArtistGenresTests(unittest.TestCase):
 
     def test_exact_p434_qid_reuse_is_quarantined(self) -> None:
         other = "00000000-0000-4000-8000-000000000001"
-        _, _, mbids_by_qid = _scan_groups(
-            [("Q42", MBID, "Q5"), ("Q42", other, "Q6")]
-        )
+        _, _, mbids_by_qid = _scan_groups([("Q42", MBID, "Q5"), ("Q42", other, "Q6")])
         self.assertEqual(
             _identity_status(
-                MBID,
                 {"Q42"},
                 mbids_by_qid,
                 {"english_labels": {"Example"}, "types": {"Q5": "human"}},
@@ -96,15 +95,13 @@ class GlobalArtistGenresTests(unittest.TestCase):
     def test_name_normalization_only_confirms_candidate_coherence(self) -> None:
         _, _, mbids_by_qid = _scan_groups([("Q42", MBID, "Q5")])
         status, _ = _identity_status(
-            MBID,
             {"Q42"},
             mbids_by_qid,
-            {"english_labels": {"Ａrtist"}, "types": {"Q5": "human"}},
+            {"english_labels": {"\uff21rtist"}, "types": {"Q5": "human"}},
             "Artist",
         )
         self.assertEqual(status, "resolved_exact_p434_core_name")
         status, _ = _identity_status(
-            MBID,
             {"Q42"},
             mbids_by_qid,
             {"english_labels": {"Other"}, "types": {"Q5": "human"}},
@@ -114,6 +111,7 @@ class GlobalArtistGenresTests(unittest.TestCase):
 
 
 class GlobalArtistGenrePackTests(unittest.TestCase):
+    @override
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
@@ -122,6 +120,7 @@ class GlobalArtistGenrePackTests(unittest.TestCase):
         self._make_core()
         self._make_pack()
 
+    @override
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
@@ -193,8 +192,15 @@ class GlobalArtistGenrePackTests(unittest.TestCase):
                 raise AssertionError("unexpected Wikidata query")
             return httpx.Response(200, json=result)
 
-        def client_factory(*args: object, **kwargs: object) -> httpx.Client:
-            return original_client(*args, transport=httpx.MockTransport(respond), **kwargs)
+        def client_factory(
+            *, timeout: int, follow_redirects: bool, headers: dict[str, str]
+        ) -> httpx.Client:
+            return original_client(
+                transport=httpx.MockTransport(respond),
+                timeout=timeout,
+                follow_redirects=follow_redirects,
+                headers=headers,
+            )
 
         with (
             patch.object(global_genres.httpx, "Client", side_effect=client_factory),

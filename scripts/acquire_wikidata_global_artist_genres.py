@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from opennoise.ingest.wikidata.global_artist_genres import (
@@ -16,6 +17,7 @@ from opennoise.ingest.wikidata.global_artist_genres import (
 
 
 def main() -> None:
+    """Acquire, hydrate, or offline-replay the bounded Wikidata evidence pack."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DEFAULT_PACK)
     parser.add_argument("--core", type=Path, default=CORE_DEFAULT)
@@ -35,7 +37,7 @@ def main() -> None:
         manifest = acquire_global_artist_genres(
             arguments.output, arguments.core, max_artists=arguments.max_artists
         )
-    print(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2))
+    sys.stdout.write(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n")
 
 
 if __name__ == "__main__":
