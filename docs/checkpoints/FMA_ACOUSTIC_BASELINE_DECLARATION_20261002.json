@@ -1,0 +1,59 @@
+{
+  "revision": "fma-acoustic-positive-gaussian-v1",
+  "sealed_before_native_feature_capture_or_model_fit": true,
+  "source": {
+    "archive": "https://os.unil.cloud.switch.ch/fma/fma_metadata.zip",
+    "member": "fma_metadata/features.csv",
+    "feature_kind": "FMA-authored computed Librosa summary descriptors",
+    "license": "CC-BY-4.0",
+    "readme_sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9",
+    "metadata_tracks_sha256": "2a51ad101f8972182475a4e162efbc5604eee127b80089abd5ee10c64a56b687",
+    "metadata_source_receipt_sha256": "56b895019cfad35a6e4a27c52e5d35ccd22d494262768f18516a501ec55cae1b",
+    "no_audio_echonest_pickle_everynoise_or_musicbrainz_tags": true
+  },
+  "projection": {
+    "statistic": "mean",
+    "channels": {"mfcc": 20, "chroma_cens": 12, "spectral_contrast": 7, "rmse": 1, "spectral_centroid": 1, "spectral_bandwidth": 1, "spectral_rolloff": 1, "zero_crossing_rate": 1},
+    "storage": "44 little-endian float32 columns plus native uint32 track IDs; nonfinite cells retained as NaN, no fabricated observations",
+    "max_projection_bytes": 20000000,
+    "max_source_bytes": 310000000,
+    "native_full_member_crc_and_observed_sha256_required": true,
+    "full_archive_hash_verification_claimed": false
+  },
+  "partition": {
+    "revision": "opennoise-fma-acoustic-native-component-split-v2",
+    "grouping": "Whole connected native primary-artist and known native album components, augmented by exact full native feature-cell duplicate groups",
+    "canonical_group_id": "minimum positive native artist ID",
+    "hash": "SHA256(revision + NUL + decimal canonical_group_id), whole digest interpreted big endian modulo 1000",
+    "train": "bucket < 800",
+    "validation": "800 <= bucket < 900",
+    "test": "bucket >= 900",
+    "reshuffle_components_for_balance": false,
+    "missing_unresolved_artist": "excluded with source-positive and feature-row counts; never substitute track ID as artist",
+    "unknown_album_or_nonexact_name_alias": "unresolved, no invented identity merge",
+    "revision_reason": "Independent pre-result audit found 776 albums crossing initial artist-only folds; revised before any metric inspection. This establishes declared native-ID isolation, not complete recording or performer independence."
+  },
+  "model": {
+    "single_prespecified_arm": true,
+    "normalization": "mean/std fitted on complete finite training feature rows only; constant dimensions omitted",
+    "query_missingness": "abstain if any active feature is nonfinite",
+    "query_range_gate": "abstain if any active standardized absolute descriptor exceeds 12",
+    "target": "source-observed native track genre IDs only; never factual artist genres",
+    "scorer": "positive-only label-conditioned diagonal Gaussian log density plus log training label prevalence",
+    "variance_shrinkage_to_global": 0.5,
+    "minimum_standardized_variance": 0.1,
+    "minimum_label_training_positives": 5,
+    "source_absences_used_as_verified_negatives": false,
+    "validation_used_for_model_selection": false,
+    "comparators": ["training label popularity", "constant ascending native genre ID order"]
+  },
+  "evaluation": {
+    "splits": ["validation", "test"],
+    "metrics": ["positive-only micro Recall@5", "positive-only micro Recall@10", "per-label macro Recall@5", "per-label macro Recall@10", "mean reciprocal rank of first observed positive"],
+    "rare": "labels with <= 100 source-positive training tracks; preserve unseen and below-model-support labels in denominators",
+    "abstentions": "zero recovered positives while retaining every held-out labeled query and target",
+    "coverage": "raw metadata, feature intersection, label vocabulary, missing/unresolved identities, unlabeled queries, component sizes and realized folds reported separately",
+    "precision_or_independent_music_relevance": "unavailable; source absence is unknown"
+  },
+  "limits": {"model_run_seconds": 120, "memory_bytes": 1000000000, "new_outputs_bytes": 100000000}
+}
