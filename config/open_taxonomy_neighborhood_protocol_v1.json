@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "source_signal": "P279_only_selected_genre_to_selected_genre",
+  "excluded_signals": ["P31", "type_anchor", "historical_names", "historical_coordinates", "artist_memberships", "sonic_features"],
+  "seed": 20261002,
+  "edge_fold_assignment": "SHA256(seed|lexicographically_sorted_undirected_endpoints) modulo 5",
+  "fold_count": 5,
+  "held_out_folds": [0, 1, 2, 3, 4],
+  "retrieval": "degree_normalized_random_walk_sum_depth_1_to_3_weights_1_half_power_depth",
+  "maximum_depth": 3,
+  "neighbor_count": 10,
+  "baseline": "training_degree_descending_then_QID; exclude_query_and_observed_training_neighbors",
+  "denominators": "all_source_nodes_macro_including_no_positive_and_cold_nodes_as_zero; all_directed_held_out_edge_targets_micro",
+  "minimum_layout_component_nodes": 4,
+  "layout": "normalized_Laplacian_second_and_third_eigenvectors; canonical_sign; component_local_only",
+  "stability": "mean_top10_neighbor_Jaccard_full_vs_each_prespecified_edge_fold_deleted; all_source_nodes_including_empty_as_zero",
+  "interpretation": "source_graph_recovery_and_structural_stability_only; no_independent_musical_validity_or_sonic_similarity"
+}
