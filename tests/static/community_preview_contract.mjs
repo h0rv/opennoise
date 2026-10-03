@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
 const chromium = process.env.CHROMIUM_PATH ?? ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'].find(existsSync);
@@ -45,7 +47,7 @@ const suggestedAssignments = { artists: { [artistId]: {
 } } };
 
 async function capture(url) {
-  const profile = `/tmp/opennoise-community-contract-${process.pid}`;
+  const profile = await mkdtemp(join(tmpdir(), 'opennoise-community-contract-'));
   const child = spawn(chromium, ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank']);
   let socket;
   try {

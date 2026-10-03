@@ -19,9 +19,9 @@ async function browser(root, operation) {
     try { response.setHeader('Content-Type', (/\.m?js$/.test(file)) ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.html') ? 'text/html' : 'application/json'); response.end(await readFile(file)); }
     catch { response.statusCode = 404; response.end(); }
   });
+  const profile = await mkdtemp(join(tmpdir(), 'opennoise-skip-contract-'));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}/`;
-  const profile = await mkdtemp(join(tmpdir(), 'opennoise-skip-contract-'));
   const child = spawn(chromium, ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank']);
   let socket;
   const requests = [], errors = [];
