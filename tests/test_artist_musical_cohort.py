@@ -7,6 +7,7 @@ import unittest
 from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any, override
 from unittest.mock import patch
 from uuid import UUID
 
@@ -27,7 +28,7 @@ from opennoise.review.artist_musical_cohort import (
 )
 
 
-def confirmation_rows() -> list[dict]:
+def confirmation_rows() -> list[dict[str, Any]]:
     """Create explicit synthetic fixture identities; these are never human evidence."""
     result = []
     index = 1
@@ -58,6 +59,7 @@ class MusicalCohortTests(unittest.TestCase):
     """Exercise review custody and denominator safeguards without large packs."""
 
     @classmethod
+    @override
     def setUpClass(cls) -> None:
         """Prepare bounded deterministic synthetic identities once."""
         cls.fixture = confirmation_rows()
