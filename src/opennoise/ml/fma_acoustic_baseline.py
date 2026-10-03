@@ -217,9 +217,12 @@ def fit_positive_gaussian(
     x = np.asarray(features[eligible], dtype=np.float64)
     if len(x) < MIN_LABEL_SUPPORT:
         raise ValueError("insufficient finite training feature rows")
-    center = x.mean(axis=0)
-    scale = x.std(axis=0)
-    active = np.isfinite(scale) & (scale > 0)
+    with np.errstate(over="ignore", invalid="ignore"):
+        center = x.mean(axis=0)
+        scale = x.std(axis=0)
+    if not np.isfinite(center).all() or not np.isfinite(scale).all():
+        raise ValueError("training normalization overflows finite numeric support")
+    active = scale > 0
     if not active.any():
         raise ValueError("training has no varying acoustic features")
     normalized = (x[:, active] - center[active]) / scale[active]
