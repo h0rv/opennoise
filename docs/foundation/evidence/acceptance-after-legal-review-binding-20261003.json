@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "command": [
+    "scripts/check_foundation_acceptance.py",
+    "--json"
+  ],
+  "returncode": 1,
+  "dossier": {
+    "path": "docs/foundation/acceptance-dossier.json",
+    "sha256": "cb36d5ee7a1658c7bbe6431b008bdb2811cfc51b9d451f1ac1a955e4f7c129eb"
+  },
+  "report": {
+    "path": "docs/foundation/evidence/acceptance-after-legal-review-20261003.json",
+    "bytes": 49272,
+    "sha256": "8e00390f24bc4622787a816ae4ee2c56dd6e87651922e1e225a55c42a3acf97f"
+  },
+  "meaning": "42 valid byte bindings; two named reviewed engineering passes and ten unmet gates. Original criteria unchanged; automatic semantic pass false."
+}

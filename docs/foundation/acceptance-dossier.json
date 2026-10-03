@@ -408,6 +408,61 @@
       "source": "Dated bounded HEAD transport observations for nine exact source-bound Spotify track pages, all HTTP 200; playback, region and account availability unverified",
       "license": "MIT evaluation report; native metadata and licensed per-track audio retain separate source obligations",
       "pack": "review"
+    },
+    {
+      "id": "v8-legal-boundary-review",
+      "path": "docs/foundation/evidence/v8-legal-boundary-independent-review-20261003.json",
+      "sha256": "56906daddb15b693c58e4f640167db8a823dd42260b78ee8046102e295081c63",
+      "size_bytes": 127179,
+      "scope": "review-document",
+      "role": "review",
+      "source": "Codex AI agent /root/full_input_legal_boundary_review independent native source/license engineering review",
+      "license": "project review documentation; quoted source grants and underlying CC0/CC BY/per-track audio licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "v8-legal-boundary-readable",
+      "path": "docs/foundation/evidence/v8-legal-boundary-independent-review-20261003.md",
+      "sha256": "1b82a25d0e3d0d82f44e597a47c3d361de849fe1d220b9476ca57f503b2b94a1",
+      "size_bytes": 5719,
+      "scope": "review-document",
+      "role": "review",
+      "source": "Codex AI agent /root/full_input_legal_boundary_review independent native source/license engineering review",
+      "license": "project review documentation; quoted source grants and underlying CC0/CC BY/per-track audio licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "v8-native-genre-origin",
+      "path": "docs/foundation/evidence/v8-native-genre-origin-20261003.json",
+      "sha256": "20901affd31e52ec31b01fa21c951051202acfac41b7a09e5bf179bc6047d7ef",
+      "size_bytes": 1588,
+      "scope": "review-document",
+      "role": "review",
+      "source": "Codex AI agent /root/full_input_legal_boundary_review independent native source/license engineering review",
+      "license": "project review documentation; quoted source grants and underlying CC0/CC BY/per-track audio licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "v8-native-audio-boundary",
+      "path": "docs/foundation/evidence/v8-native-audio-boundary-20261003.json",
+      "sha256": "6dc96e8b4ea84c1b87fcead864d10fc3f2619f66990691d98237efee8419851b",
+      "size_bytes": 374,
+      "scope": "review-document",
+      "role": "review",
+      "source": "Codex AI agent /root/full_input_legal_boundary_review independent native source/license engineering review",
+      "license": "project review documentation; quoted source grants and underlying CC0/CC BY/per-track audio licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "v8-native-acoustic-boundary",
+      "path": "docs/foundation/evidence/v8-native-acoustic-boundary-20261003.json",
+      "sha256": "e3d3edc1275b02b7b8ba1820a6340eca46b265376dd713f51eb25659106f6f29",
+      "size_bytes": 4363,
+      "scope": "review-document",
+      "role": "review",
+      "source": "Codex AI agent /root/full_input_legal_boundary_review independent native source/license engineering review",
+      "license": "project review documentation; quoted source grants and underlying CC0/CC BY/per-track audio licenses remain distinct",
+      "pack": "review"
     }
   ],
   "reviews": [
@@ -449,8 +504,8 @@
     },
     {
       "gate": "legal-input-boundaries",
-      "decision": "missing",
-      "explanation": "The dated v4 receipt binds distinct CC0 identity/claim, FMA metadata/features and eight permitted per-track audio inputs. Native Wikidata report retains structured-data CC0 proof and native FMA report retains exact URL assertions, audio licenses and bounded ZIP ranges without claiming a full archive hash. This improves source custody but is not a reviewed complete license/training-boundary acceptance. Optional NC/SA derivatives and historical evaluation boundaries still require the original explicit review; blended ListenBrainz/MLHD permission remains unresolved and a complete boundary review remains unrecorded. V8 source rederivation now verifies all declared input-role bindings and preserves separate additive CC0/FMA/audio namespaces.",
+      "decision": "recorded_pass",
+      "explanation": "Independent named AI engineering review supports all three original criteria for the exact retained-input v8 receipt ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1. All 20533 output pins and eleven declared add-on receipt bindings match. Complete MusicBrainz identity/name-only stream, all 10309 artist direct genre sets and all 1018 labels are independently traced to permitted native Wikidata P136; no MusicBrainz supplementary tags supply these observations. Raw source grants, all 306 native AcousticBrainz descriptor cells and inherited medians, native FMA metadata/feature bindings and all eight unchanged per-track audio members are verified. NC inputs and optional SA coordinate packs are excluded; CC BY FMA models and two unchanged BY-SA clips remain separately attributed and licensed. The inherited cultural cohort selection from NC strata is disclosed, copied NC genre/selection values removed, and actual facts independently queried from CC0 Wikidata. Dated 2023-11-19 Every Noise data remains evaluation-only. Unresolved blended ListenBrainz/MLHD counts are excluded, so their grant is not a blocker to this exact route. This scope does not extend to every research pack elsewhere, future inputs, musical relevance or final browser behavior.",
       "evidence": [
         "integrated-oct1",
         "cultural-review-oct1",
@@ -463,9 +518,20 @@
         "native-entity-evidence-oct3",
         "exact-bridge-listening-oct3",
         "full-input-v8-reconstruction",
-        "full-input-v8-construction"
+        "full-input-v8-construction",
+        "v8-legal-boundary-review",
+        "v8-legal-boundary-readable",
+        "v8-native-genre-origin",
+        "v8-native-audio-boundary",
+        "v8-native-acoustic-boundary"
       ],
-      "criteria_covered": []
+      "criteria_covered": [
+        "source-level licenses and permitted projections verified against raw receipts",
+        "optional NC/SA packs excluded from unrestricted core and correctly labeled derivatives",
+        "dated Every Noise observations used only for separate evaluation"
+      ],
+      "reviewer": "Codex AI agent /root/full_input_legal_boundary_review, independent engineering source/license review (not legal counsel, human or musical judgment)",
+      "reviewed_at": "2026-10-03"
     },
     {
       "gate": "genre-and-artist-coverage",

@@ -1,0 +1,22 @@
+{
+  "all_original_training_queries": 5976,
+  "argv": [
+    ".venv/bin/python",
+    "scripts/experiment_wikidata_training_memberships.py",
+    "--source-pack",
+    "/dev/shm/opennoise-wikidata-artist-completion-v2",
+    "--source-receipt-sha256",
+    "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a",
+    "--output",
+    "/dev/shm/opennoise-wikidata-training-experiment-20261003-v1"
+  ],
+  "artifact_bytes": 1859872,
+  "confirmation_evaluation": false,
+  "ended_utc": "2026-10-03T05:35:00Z",
+  "returncode": 0,
+  "selected_arm_training_only": "conditional_a1_mean_w1",
+  "source_receipt_sha256_after": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a",
+  "started_utc": "2026-10-03T05:34:44Z",
+  "worker_peak_rss_bytes": 28168192,
+  "worker_rss_measurement": "Linux VmHWM peak since exec; checked every fold and after output"
+}

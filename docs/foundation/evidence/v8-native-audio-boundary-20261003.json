@@ -1,0 +1,9 @@
+{
+  "reviewer": "Codex AI engineering agent /root/full_input_legal_boundary_review",
+  "native_ZIP_audio_members_independently_decoded": 8,
+  "CRC_size_filename_and_export_bytes_match": true,
+  "failures": [],
+  "supported": true,
+  "maximum_rss_bytes": 21405696,
+  "scope": "Eight original FMA 30-second ZIP members unchanged; no audio adaptation or model-training use."
+}

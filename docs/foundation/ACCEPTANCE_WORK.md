@@ -8,11 +8,11 @@ not proof of global musical coverage. No gate or criterion is relaxed.
 
 The continuation began from public commit
 `2f667158bf68d01ad43ccc408115b2a46e4b1752`. The latest recorded checker result,
-`/dev/shm/opennoise-acceptance-source-ci-2038417-20261003.json`, returns exit 1:
-all 37 evidence bindings are valid, full-corpus rebuild has one recorded pass,
-and the other eleven gates remain unmet. That pass is a named AI engineering
-review of the retained-source reconstruction route, not an automatic semantic
-pass or a human musical judgment. The
+[saved after the independent license review](evidence/acceptance-after-legal-review-20261003.json),
+returns exit 1: all 42 evidence bindings are valid, full-corpus rebuild and legal
+input boundaries have recorded passes, and ten gates remain unmet. These are
+named AI engineering reviews of the exact retained-input v8 route, not automatic
+semantic passes or human musical judgments. The
 original twelve gates and their criteria remain unchanged. Preserve older
 artifacts and reviews as dated evidence.
 
@@ -36,7 +36,6 @@ the checked source commit; it does not certify or rebind the separate v8 export.
 | Listening and playlists | Resolve exact recording-specific provider assertions where licensed, retain provider/date/region/access states, implement permitted outbound listening and exportable lists; distinguish verified availability from unresolved links | Provider regional playback access and independent central/recent/emerging judgments are needed; artist links alone do not pass |
 | Plain accessible interface | Certify current full-input export search, selection, complete pagination, history, deep links, reload, keyboard skip links, mobile and source/inference labels with exact export hashes | No external dependency for engineering/browser evidence; a full product usability review still assesses the declared scope |
 
-
 The next recording-catalog step needs a fresh bounded full-150 plan: the observed
 per-artist counts imply 1,714 pages at limit 100 plus 150 closing count checks.
 Freeze request and byte budgets, retain every page and failure, verify exact
@@ -51,6 +50,13 @@ identity and unresolved bridges; metadata permission does not grant media or
 image rights. For ListenBrainz, obtain pure-source inputs or documented grant
 evidence with exact source and license bindings. Blended ListenBrainz/MLHD counts
 remain isolated while their unrestricted serving/training grant is unresolved.
+
+The [independent license review](evidence/v8-legal-boundary-independent-review-20261003.md)
+traces every v8 direct genre to native Wikidata P136 and verifies per-track
+audio and model source boundaries. Unused blended counts remain excluded.
+The [training-only experiment](WIKIDATA_TRAINING_INNERFOLD_20261003.md) improves
+innerfold source recovery with independently replayed rankings; its selected
+rule has no fresh confirmation or musical calibration.
 
 Actual v8 browser certification remains blocked by local memory. Reclaiming memory
 by deleting retained recovery artifacts is pending user approval; this is an internal

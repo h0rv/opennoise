@@ -1,0 +1,45 @@
+{
+  "revision": "v8-native-genre-license-origin-check-v1",
+  "reviewer": "Codex AI engineering agent /root/full_input_legal_boundary_review",
+  "no_network": true,
+  "no_SQL_or_model_fit": true,
+  "raw_native_Wikidata_artists_checked": 9992,
+  "genre_positive_artists": 10309,
+  "complete_vocabulary_genres": 1018,
+  "inherited_and_global_source_genre_pairs": {
+    "cultural-context": 108,
+    "independent-cultural-context": 179,
+    "global_native_P136": 563,
+    "native_entity_P136_statements": 18750
+  },
+  "exported_direct_P136_claim_origins": [
+    {
+      "capture_pack": "wikidata-entity-evidence-v1",
+      "source": "https://www.wikidata.org/w/api.php",
+      "license": "CC0-1.0",
+      "claim_count": 18750
+    },
+    {
+      "capture_pack": ".cache/wikidata-global-musical-artists-20261002-v1",
+      "source": "https://query.wikidata.org/sparql",
+      "license": "CC0",
+      "claim_count": 563
+    },
+    {
+      "capture_pack": "cultural-context",
+      "source": "https://query.wikidata.org/sparql",
+      "license": "CC0",
+      "claim_count": 108
+    },
+    {
+      "capture_pack": "independent-cultural-context",
+      "source": "https://query.wikidata.org/sparql",
+      "license": "CC0",
+      "claim_count": 179
+    }
+  ],
+  "failures": [],
+  "supported": true,
+  "maximum_rss_bytes": 27025408,
+  "scope_note": "All v8 direct genre sets and complete 1018-label vocabulary independently compared against permitted native Wikidata P136; MusicBrainz identities/names supply exact joins, not genre/tag fields. FMA annotations/models remain separate track scopes."
+}

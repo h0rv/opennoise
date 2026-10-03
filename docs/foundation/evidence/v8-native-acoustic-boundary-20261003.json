@@ -1,0 +1,101 @@
+{
+  "reviewer": "Codex AI engineering agent /root/full_input_legal_boundary_review",
+  "native_lowlevel_responses": 18,
+  "numeric_cells_compared": 306,
+  "raw_pins": [
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/015.bin",
+      "sha256": "8beef77f3c9aec0ddb5b2f811ccf56ff5e8a8f5a7b244cb31b768bcab255908b",
+      "bytes": 62865
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/017.bin",
+      "sha256": "4d07c7f2e91b1ccb93e61d42dcb96b4de4c40e67deedf1cd96ff55f1af881ba9",
+      "bytes": 51630
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/019.bin",
+      "sha256": "818acefe3a74031b5c3bc0010caa044c3d305ef744776c1ba7b6b54c19f68b5f",
+      "bytes": 62568
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/025.bin",
+      "sha256": "ebec1faf22b772624ade75947c4186e1234fb3f4af5f1409fbcc0cfc23916df5",
+      "bytes": 59515
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/027.bin",
+      "sha256": "3c2885bf03d996f0558bdc7c106cdf08352b05644a5261243550209900905d53",
+      "bytes": 57787
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/029.bin",
+      "sha256": "ac2217fdf9124309c5dd684a036d8279b11ae65602546b5bb3d3c3f8acb1ae9e",
+      "bytes": 60999
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/031.bin",
+      "sha256": "d7d62f947df33b9fd0ed732e5fb819432504c41488769d5651523465b3450c28",
+      "bytes": 54386
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/033.bin",
+      "sha256": "f9be88ffaa038270caf71daf2d8f0ed784575a96afcab4d46749d18ec03878d6",
+      "bytes": 56411
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/035.bin",
+      "sha256": "68dc76e48b60776ad8a63ad8d7b38bce754fc8fd0ab053f3d6893d95a43af7bf",
+      "bytes": 49053
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/037.bin",
+      "sha256": "160ccf313b8a1e7fb446a1da4f83c17473ff1f18b2103ac0b86d7b95b2b62d0d",
+      "bytes": 49647
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/041.bin",
+      "sha256": "2ea7aff9c442153f945ad22d53b3ddfd764fd3807b388372bb26730c6d9eff4f",
+      "bytes": 54073
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/043.bin",
+      "sha256": "0fb98a48a856cbdac44ec47a8ff23e621be736c7d2fc46ec088368c569d8c020",
+      "bytes": 54886
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/053.bin",
+      "sha256": "3b34987e96f5e7bf24f8012803f2eadd807fe6bef478cbc2e4cfc5482cf3c5d9",
+      "bytes": 49960
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/057.bin",
+      "sha256": "090d286e85234bfbeb499f04a212b9c3f96c51df0471eb450a3fbd96129aac52",
+      "bytes": 52291
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/061.bin",
+      "sha256": "5f925313eb9fc392c1bc8e6fa4cf20fe17bb32175efb561c42a317098e1e019b",
+      "bytes": 49299
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/063.bin",
+      "sha256": "4dbb1ab0513f427d20ee45a70bf4d04ef6d6ab07c783c6e715237b7e8accd958",
+      "bytes": 55667
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/069.bin",
+      "sha256": "bc459529f6401b7d6ba31423992cde718adba2a35b9bb469cb5e4acd904deebf",
+      "bytes": 56320
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/071.bin",
+      "sha256": "d336df2474f6b0727bb4095550ab8771cabb2b637b6b5e666141c72db3fb5931",
+      "bytes": 56412
+    }
+  ],
+  "failures": [],
+  "supported": true,
+  "maximum_rss_bytes": 16216064,
+  "scope": "No original MusicBrainz mixed search/tag, high-level classifier or benchmark membership fields enter the numeric projection."
+}

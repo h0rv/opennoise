@@ -1,0 +1,2741 @@
+{
+  "revision": "independent-v8-legal-input-boundary-review-v1",
+  "reviewer": "Codex AI engineering agent /root/full_input_legal_boundary_review",
+  "reviewed_at": "2026-10-03",
+  "review_kind": "Independent read-only engineering source/license boundary review; not legal counsel, human review, or musical judgment",
+  "scope": {
+    "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8",
+    "receipt_sha256": "ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1",
+    "route": "Full retained-input foundation v8; not historical sealed release restoration",
+    "excluded_sources": [
+      "MusicBrainz optional NC/SA tag/genre derivatives",
+      "Every Noise scrape/coordinates/memberships as construction or model input",
+      "blended ListenBrainz/MLHD listening counts with unresolved permission",
+      "EchoNest features",
+      "Spotify private features",
+      "audio as model input"
+    ]
+  },
+  "declared_roles": {
+    "artist_source_completion": {
+      "path": "/dev/shm/opennoise-wikidata-artist-completion-v2",
+      "receipt": "/dev/shm/opennoise-wikidata-artist-completion-v2/receipt.json",
+      "sha256": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a"
+    },
+    "entity_pack": {
+      "path": "/dev/shm/opennoise-wikidata-entities-10000-v3",
+      "receipt": "/dev/shm/opennoise-wikidata-entities-10000-v3/receipt.json",
+      "sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558"
+    },
+    "fma_bridge": {
+      "path": "/dev/shm/opennoise-fma-exact-bridge-20261003-v3",
+      "receipt": "/dev/shm/opennoise-fma-exact-bridge-20261003-v3/receipt.json",
+      "sha256": "f0adc78072e39753d86f8b8753b3825a9583fe11124f90d858bc4c43dd2a906a"
+    },
+    "fma_listening_pack": {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4",
+      "receipt": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/listening.json",
+      "sha256": "534c4c50f1b51362d469bc0f99c057c473a5c74a428412d1bee04182cc3acea8"
+    },
+    "fma_map": {
+      "path": "/dev/shm/opennoise-fma-sonic-map-20261003-v2/export",
+      "receipt": "/dev/shm/opennoise-fma-sonic-map-20261003-v2/export/receipt.json",
+      "sha256": "f749e21427dccaef68d0273e15e9c45ff6bbd34d418697a498639590b63f50c9"
+    },
+    "fma_memberships": {
+      "path": "/workspace/opennoise/data/examples/fma-source-memberships",
+      "receipt": "/workspace/opennoise/data/examples/fma-source-memberships/pack-receipt.json",
+      "sha256": "ad54dc99a09e0c0f492dd97ac21e216a4a70bfd39a7749932a6f1a1a45646c1d"
+    },
+    "fma_projection": {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-replay-20261002-v1",
+      "receipt": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-replay-20261002-v1/corpus-receipt.json",
+      "sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b"
+    },
+    "fma_source": {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1",
+      "receipt": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/source-receipt.json",
+      "sha256": "56b895019cfad35a6e4a27c52e5d35ccd22d494262768f18516a501ec55cae1b"
+    },
+    "fma_static": {
+      "path": "/dev/shm/opennoise-skip-recovery-fma-v2",
+      "receipt": "/dev/shm/opennoise-skip-recovery-fma-v2/static-receipt.json",
+      "sha256": "2565d6b5af09782522eda3b88a097192d490825493ab387a47cc54af0925e4ec"
+    },
+    "genre_context_pack": {
+      "path": "/dev/shm/opennoise-wikidata-native-genre-context-v1",
+      "receipt": "/dev/shm/opennoise-wikidata-native-genre-context-v1/receipt.json",
+      "sha256": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9"
+    },
+    "listening_pack": {
+      "path": "/dev/shm/opennoise-recording-listening-20261003-v1",
+      "receipt": "/dev/shm/opennoise-recording-listening-20261003-v1/receipt.json",
+      "sha256": "9ff28e5a97e838798d04c6f84835182b96c97a033106e24e5a9a046f0b2cdda8"
+    }
+  },
+  "official_license_bodies": [
+    {
+      "source": "MusicBrainz core",
+      "path": "/workspace/opennoise/.cache/musicbrainz-bulk-artist-tags-20260930-v1/source/license.html",
+      "sha256": "5b37894260af675ff117f6921f62bd21963081f22893cf10717991dd930ff2f8",
+      "excerpts": [
+        "wo components for licensing purposes. Core data The core data of the database is licensed under the CC0 , which is effectively placing the data into the Public Domain. This means that anyone can download and use the core data in any way they see fit. No restrictions, no worries! Supplementary data The remaining portions of the database are released under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 license. This allows for non-commercial use of the data as long as MusicBrainz is given credit and that derivative works (works based on the CC licensed data) are also made available under the same license. For a breakdown of what constitutes core/supplementary data, view the MusicBrainz Database page. Live Data Feed The Live Dat",
+        " MusicBrainz Database The MusicBrainz Database is split into two components for licensing purposes. Core data The core data of the database is licensed under the CC0 , which is effectively placing the data into the Public Domain. This means that anyone can download and use the core data in any way they see fit. No restrictions, no worries! Supplementary data The remaining portions of the database are released under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 license. This allows for non-commercial use of the data as long as MusicBrainz is given credit and that derivative works (works based on the CC licensed data) are also made available under the same license. For a breakdown of what constitutes core/supplementary data, v",
+        "hat anyone can download and use the core data in any way they see fit. No restrictions, no worries! Supplementary data The remaining portions of the database are released under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 license. This allows for non-commercial use of the data as long as MusicBrainz is given credit and that derivative works (works based on the CC licensed data) are also made available under the same license. For a breakdown of what constitutes core/supplementary data, view the MusicBrainz Database page. Live Data Feed The Live Data Feed replication packets are licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 license. MusicBrainz Server The MusicBrainz Server source code is licens"
+      ]
+    },
+    {
+      "source": "Wikidata structured data",
+      "path": "/dev/shm/opennoise-licensed-evidence-work/source-custody/wikidata-official-licensing.html",
+      "sha256": "b1a436154a36136476ad4bfd867027dc393db17bcb43414b4cb75b2f28079c75",
+      "excerpts": [
+        "ight of a dataset 4 Examples Toggle Examples subsection 4.1 Stories 4.2 Uses 5 Why should you use a CC0 license for data in Wikidata? 6 See also 7 External links Toggle the table of contents Wikidata : Licensing Project page Discussion English Read Edit View history Tools Tools move to sidebar hide Actions Read Edit View history General What links here Related changes Permanent link Page information Get shortened URL Print/export Create a book Download as PDF Printable version In other projects Appearance move to sidebar hide From Wikidata This page presents an overview of copyright licensing for Wikidata contributors and users. Official policy [ edit ] Wikidata's policy statement can be found at Wikidata:Copyright . All structured data (i."
+      ]
+    },
+    {
+      "source": "AcousticBrainz data",
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/001.bin",
+      "sha256": "dad99100be34964459ec9c936efdeacb779a403a73a1c744e27c113e7618a472",
+      "excerpts": [
+        " can easily fetch from AcousticBrainz. For details on how to do this, visit our API documentation . All of the data contained in AcousticBrainz is licensed under the CC0 license (public domain). Examples If you're wondering what this collected data actually looks like, have a look at the last 5 recordings that have been submitted: Trio Hugo Diaz / Organito de la Tarde Florindo Sassone - Instrumental / Cuandollora la milonga (reverb) Cat Power / Colors And The Kids Against Me! / You Look Like I Need a Drink blink‐182 / All the Small Things Data Statistics Lossy Lossless Total Unique 6,059,115 2,982,732 7,564,215 All 18,464,382 10,996,202 29,460,584 updated every hour last updated: 2022-07-06 00:00 UTC more on the detailed statistics page Twe",
+        "is, visit our API documentation . All of the data contained in AcousticBrainz is licensed under the CC0 license (public domain). Examples If you're wondering what this collected data actually looks like, have a look at the last 5 recordings that have been submitted: Trio Hugo Diaz / Organito de la Tarde Florindo Sassone - Instrumental / Cuandollora la milonga (reverb) Cat Power / Colors And The Kids Against Me! / You Look Like I Need a Drink blink‐182 / All the Small Things Data Statistics Lossy Lossless Total Unique 6,059,115 2,982,732 7,564,215 All 18,464,382 10,996,202 29,460,584 updated every hour last updated: 2022-07-06 00:00 UTC more on the detailed statistics page Tweets by @AcousticBrainz !function(d,s,id){var js,fjs=d.getElementsB"
+      ]
+    },
+    {
+      "source": "FMA metadata",
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/README.md",
+      "sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9",
+      "excerpts": [
+        "05337}, } ``` * The code in this repository is released under the [MIT license](LICENSE.txt). * The metadata is released under the [Creative Commons Attribution 4.0 International License (CC BY 4.0)][ccby40]. * We do not hold the copyright on the audio and distribute it under the license chosen by the artist. * The dataset is meant for research purposes. [ccby40]: https://creativecommons.org/licenses/by/4.0 [Swiss Data Science Center]: https://datascience.ch/collaboration-and-partnerships [EPFL]: https://www.epfl.ch [ETHZ]: https://www.ethz.ch ",
+        "txt). * The metadata is released under the [Creative Commons Attribution 4.0 International License (CC BY 4.0)][ccby40]. * We do not hold the copyright on the audio and distribute it under the license chosen by the artist. * The dataset is meant for research purposes. [ccby40]: https://creativecommons.org/licenses/by/4.0 [Swiss Data Science Center]: https://datascience.ch/collaboration-and-partnerships [EPFL]: https://www.epfl.ch [ETHZ]: https://www.ethz.ch ",
+        "cense (CC BY 4.0)][ccby40]. * We do not hold the copyright on the audio and distribute it under the license chosen by the artist. * The dataset is meant for research purposes. [ccby40]: https://creativecommons.org/licenses/by/4.0 [Swiss Data Science Center]: https://datascience.ch/collaboration-and-partnerships [EPFL]: https://www.epfl.ch [ETHZ]: https://www.ethz.ch "
+      ]
+    }
+  ],
+  "audio_tracks": [
+    {
+      "track_id": "61011",
+      "audio_path": "61011.mp3",
+      "audio_sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+      "license_url": "http://creativecommons.org/licenses/by/3.0/",
+      "license_title": "Creative Commons Attribution",
+      "attribution": "Week Seven — Ben von Wildenhaus; FMA dataset Defferrard et al. ISMIR 2017",
+      "track_url": "http://freemusicarchive.org/music/BenWildenhaus/Instrumental_Quaalude_vol_1/06_Week_Seven"
+    },
+    {
+      "track_id": "127299",
+      "audio_path": "127299.mp3",
+      "audio_sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "license_title": "Attribution",
+      "attribution": "With the Summer — Oh Yeah, the Future; FMA dataset Defferrard et al. ISMIR 2017",
+      "track_url": "http://freemusicarchive.org/music/Oh_Yeah_the_Future_1152/New_brave_face/Oh_Yeah_the_Future_-_New_Brave_Face_-_06_With_the_Summer"
+    },
+    {
+      "track_id": "138060",
+      "audio_path": "138060.mp3",
+      "audio_sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "license_title": "Attribution",
+      "attribution": "One Knife — Every Now and Every Then; FMA dataset Defferrard et al. ISMIR 2017",
+      "track_url": "http://freemusicarchive.org/music/Every_Now_and_Every_Then/Bergwald_Bergwald/Every_Now_and_Every_Then_-_Bergwald_Bergwald_-_07_One_Knife"
+    },
+    {
+      "track_id": "124391",
+      "audio_path": "124391.mp3",
+      "audio_sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+      "license_url": "http://creativecommons.org/licenses/by-sa/4.0/",
+      "license_title": "Attribution-ShareAlike",
+      "attribution": "Impulsion pt.1 — Radius System; FMA dataset Defferrard et al. ISMIR 2017",
+      "track_url": "http://freemusicarchive.org/music/Radius_System/Escape__Restart/05-RadiusSystem-Impulsionpt1"
+    },
+    {
+      "track_id": "112318",
+      "audio_path": "112318.mp3",
+      "audio_sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "license_title": "Attribution",
+      "attribution": "Sky Guide — Cloudkicker; FMA dataset Defferrard et al. ISMIR 2017",
+      "track_url": "http://freemusicarchive.org/music/Cloudkicker/Little_histories/Cloudkicker_-_Little_Histories_-_Sky_Guide_CC-BY"
+    },
+    {
+      "track_id": "138061",
+      "audio_path": "138061.mp3",
+      "audio_sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "license_title": "Attribution",
+      "attribution": "Bergwald Bergwald — Every Now and Every Then; FMA dataset Defferrard et al. ISMIR 2017",
+      "track_url": "http://freemusicarchive.org/music/Every_Now_and_Every_Then/Bergwald_Bergwald/Every_Now_and_Every_Then_-_Bergwald_Bergwald_-_08_Bergwald_Bergwald"
+    },
+    {
+      "track_id": "126602",
+      "audio_path": "126602.mp3",
+      "audio_sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+      "license_url": "http://creativecommons.org/licenses/by-sa/4.0/",
+      "license_title": "Attribution-ShareAlike",
+      "attribution": "Neon Hippies — Fields Ohio; FMA dataset Defferrard et al. ISMIR 2017",
+      "track_url": "http://freemusicarchive.org/music/Fields_of_Ohio/H_I_N_T_E_R_L_A_N_D/03_Fields_Ohio_-_Neon_Hippies_-_H_I_N_T_E_R_L_A_N_D"
+    },
+    {
+      "track_id": "140266",
+      "audio_path": "140266.mp3",
+      "audio_sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+      "license_url": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "license_title": "CC0 1.0 Universal",
+      "attribution": "Coco — Jorge Mario Zuleta; FMA dataset Defferrard et al. ISMIR 2017",
+      "track_url": "http://freemusicarchive.org/music/Jorge_Mario_Zuleta/Coco/coco"
+    }
+  ],
+  "historical_evaluation": {
+    "role": "evaluation_only_no_construction_or_training",
+    "source_data_date": "2023-11-19",
+    "source_snapshot": "git:e80265defc743b307586ac0a7a5c72d2dacdf409",
+    "source_sha256": "1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180",
+    "live_site_verified": false,
+    "membership_completeness": "unavailable_pinned_map_is_not_membership_census",
+    "neighbor_semantics": "nearest_display_coordinates_not_editorial_similarity"
+  },
+  "checks": [
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1",
+        "actual_sha256": "ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-wikidata-artist-completion-v2/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a",
+        "actual_sha256": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a"
+      }
+    },
+    {
+      "check": "inventory:/dev/shm/opennoise-wikidata-artist-completion-v2/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 10,
+        "bytes_hashed": 1835317,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-wikidata-entities-10000-v3/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+        "actual_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558"
+      }
+    },
+    {
+      "check": "inventory:/dev/shm/opennoise-wikidata-entities-10000-v3/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 586,
+        "bytes_hashed": 367138250,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-exact-bridge-20261003-v3/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "f0adc78072e39753d86f8b8753b3825a9583fe11124f90d858bc4c43dd2a906a",
+        "actual_sha256": "f0adc78072e39753d86f8b8753b3825a9583fe11124f90d858bc4c43dd2a906a"
+      }
+    },
+    {
+      "check": "inventory:/dev/shm/opennoise-fma-exact-bridge-20261003-v3/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 0,
+        "bytes_hashed": 0,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/listening.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "534c4c50f1b51362d469bc0f99c057c473a5c74a428412d1bee04182cc3acea8",
+        "actual_sha256": "534c4c50f1b51362d469bc0f99c057c473a5c74a428412d1bee04182cc3acea8"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-sonic-map-20261003-v2/export/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "f749e21427dccaef68d0273e15e9c45ff6bbd34d418697a498639590b63f50c9",
+        "actual_sha256": "f749e21427dccaef68d0273e15e9c45ff6bbd34d418697a498639590b63f50c9"
+      }
+    },
+    {
+      "check": "inventory:/dev/shm/opennoise-fma-sonic-map-20261003-v2/export/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 6,
+        "bytes_hashed": 3331428,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/fma-source-memberships/pack-receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "ad54dc99a09e0c0f492dd97ac21e216a4a70bfd39a7749932a6f1a1a45646c1d",
+        "actual_sha256": "ad54dc99a09e0c0f492dd97ac21e216a4a70bfd39a7749932a6f1a1a45646c1d"
+      }
+    },
+    {
+      "check": "inventory:/workspace/opennoise/data/examples/fma-source-memberships/pack-receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 7,
+        "bytes_hashed": 1112245,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-replay-20261002-v1/corpus-receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b",
+        "actual_sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b"
+      }
+    },
+    {
+      "check": "inventory:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-replay-20261002-v1/corpus-receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 3,
+        "bytes_hashed": 3876689,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/source-receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "56b895019cfad35a6e4a27c52e5d35ccd22d494262768f18516a501ec55cae1b",
+        "actual_sha256": "56b895019cfad35a6e4a27c52e5d35ccd22d494262768f18516a501ec55cae1b"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-skip-recovery-fma-v2/static-receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "2565d6b5af09782522eda3b88a097192d490825493ab387a47cc54af0925e4ec",
+        "actual_sha256": "2565d6b5af09782522eda3b88a097192d490825493ab387a47cc54af0925e4ec"
+      }
+    },
+    {
+      "check": "inventory:/dev/shm/opennoise-skip-recovery-fma-v2/static-receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 0,
+        "bytes_hashed": 0,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-wikidata-native-genre-context-v1/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9",
+        "actual_sha256": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9"
+      }
+    },
+    {
+      "check": "inventory:/dev/shm/opennoise-wikidata-native-genre-context-v1/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 59,
+        "bytes_hashed": 6434196,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-recording-listening-20261003-v1/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "9ff28e5a97e838798d04c6f84835182b96c97a033106e24e5a9a046f0b2cdda8",
+        "actual_sha256": "9ff28e5a97e838798d04c6f84835182b96c97a033106e24e5a9a046f0b2cdda8"
+      }
+    },
+    {
+      "check": "inventory:/dev/shm/opennoise-recording-listening-20261003-v1/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 0,
+        "bytes_hashed": 0,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/scripts/build_full_input_foundation.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "d4decc26c9ee75a17adac70fbaea76b603f85f5a375beabcfc66eeeb5c49500e",
+        "actual_sha256": "d4decc26c9ee75a17adac70fbaea76b603f85f5a375beabcfc66eeeb5c49500e"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/ml/fma_memberships.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "df6adf93e479336ab9ceb601550a50d40c67f5a31ef78c04ab9b16c281602d65",
+        "actual_sha256": "df6adf93e479336ab9ceb601550a50d40c67f5a31ef78c04ab9b16c281602d65"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/ml/fma_sonic_map.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "276f22e73e2ea69add09630bdd69b9193f565ebfa7b4baace55dc9de0d5172ab",
+        "actual_sha256": "276f22e73e2ea69add09630bdd69b9193f565ebfa7b4baace55dc9de0d5172ab"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/ml/wikidata_artist_completion.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "b535aa22a55007a89f3cc2bb7b6e18288cb59eff9c3ae36e08b92982cd093786",
+        "actual_sha256": "b535aa22a55007a89f3cc2bb7b6e18288cb59eff9c3ae36e08b92982cd093786"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/pipeline/full_input_assembly.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "75cd863f7687f99d07879400cd2c3ada6088c214a66d2bd6dfbc01591fe401d5",
+        "actual_sha256": "75cd863f7687f99d07879400cd2c3ada6088c214a66d2bd6dfbc01591fe401d5"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/pipeline/full_input_context.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "a9b271929200f1744e6acaf2c7cd97dbdcd043ac943c9b8fd047e3a1e05502db",
+        "actual_sha256": "a9b271929200f1744e6acaf2c7cd97dbdcd043ac943c9b8fd047e3a1e05502db"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/pipeline/full_input_foundation.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "d29f424d0eee0929fccbbb2a3f48fdab5606200a4e3aa863764ed72ca7c4d212",
+        "actual_sha256": "d29f424d0eee0929fccbbb2a3f48fdab5606200a4e3aa863764ed72ca7c4d212"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/pipeline/full_input_indexes.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7117a7b83dafebacac66087612595e7ecceb5b1227ae1d6b1bafaef8dafd066b",
+        "actual_sha256": "7117a7b83dafebacac66087612595e7ecceb5b1227ae1d6b1bafaef8dafd066b"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/pipeline/full_input_research.py",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "ceef6646396c22ca750764c6f7a6aff0e113434d34f5e0c7fb1dc1429d52fef6",
+        "actual_sha256": "ceef6646396c22ca750764c6f7a6aff0e113434d34f5e0c7fb1dc1429d52fef6"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/static/full-foundation-normalization.mjs",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "01d3320f50cef9bc171b81493543ee6712d5814e5566ebb47517917b7c0b4a9f",
+        "actual_sha256": "01d3320f50cef9bc171b81493543ee6712d5814e5566ebb47517917b7c0b4a9f"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/static/full-foundation.css",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "69c309f51f5baf2f71e3b75102805182f229b43c41d814d39067c1937918ae31",
+        "actual_sha256": "69c309f51f5baf2f71e3b75102805182f229b43c41d814d39067c1937918ae31"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/static/full-foundation.html",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "2f96903b12f644d112ff44c76c30bd786c7bcfdb147f72f58aea7143ccddf5d8",
+        "actual_sha256": "2f96903b12f644d112ff44c76c30bd786c7bcfdb147f72f58aea7143ccddf5d8"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/static/full-foundation.mjs",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "6f65fcfb2ec1b1ec822c96822306946b98f12120b6817cf893ae0bdbcd5d2562",
+        "actual_sha256": "6f65fcfb2ec1b1ec822c96822306946b98f12120b6817cf893ae0bdbcd5d2562"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/src/opennoise/static/listening-list.mjs",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "cad07e5237e687d3b48d3e3281b63f7cc4816d108c4fb6043022089456410304",
+        "actual_sha256": "cad07e5237e687d3b48d3e3281b63f7cc4816d108c4fb6043022089456410304"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/.cache/musicbrainz-bulk-artist-tags-20260930-v1/source/license.html",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "5b37894260af675ff117f6921f62bd21963081f22893cf10717991dd930ff2f8",
+        "actual_sha256": "5b37894260af675ff117f6921f62bd21963081f22893cf10717991dd930ff2f8"
+      }
+    },
+    {
+      "check": "official_license_body:MusicBrainz core",
+      "supported": true,
+      "facts": {
+        "required_literals": [
+          "CC0",
+          "Core data",
+          "Supplementary data"
+        ]
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-licensed-evidence-work/source-custody/wikidata-official-licensing.html",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "b1a436154a36136476ad4bfd867027dc393db17bcb43414b4cb75b2f28079c75",
+        "actual_sha256": "b1a436154a36136476ad4bfd867027dc393db17bcb43414b4cb75b2f28079c75"
+      }
+    },
+    {
+      "check": "official_license_body:Wikidata structured data",
+      "supported": true,
+      "facts": {
+        "required_literals": [
+          "CC0"
+        ]
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/001.bin",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "dad99100be34964459ec9c936efdeacb779a403a73a1c744e27c113e7618a472",
+        "actual_sha256": "dad99100be34964459ec9c936efdeacb779a403a73a1c744e27c113e7618a472"
+      }
+    },
+    {
+      "check": "official_license_body:AcousticBrainz data",
+      "supported": true,
+      "facts": {
+        "required_literals": [
+          "All of the data contained in AcousticBrainz",
+          "CC0"
+        ]
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/README.md",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9",
+        "actual_sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9"
+      }
+    },
+    {
+      "check": "official_license_body:FMA metadata",
+      "supported": true,
+      "facts": {
+        "required_literals": [
+          "metadata is released under",
+          "CC BY 4.0",
+          "license chosen by the artist"
+        ]
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/.cache/musicbrainz-core-artist-identities-20261002-v1/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "a28c0d099c5ae8b3a3ecdf824e29201625cee8cfb7b90c8dd51da7193aa2f2e5",
+        "actual_sha256": "a28c0d099c5ae8b3a3ecdf824e29201625cee8cfb7b90c8dd51da7193aa2f2e5"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/.cache/musicbrainz-core-artist-identities-20261002-v1/artist-identities.jsonl.zst",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "fd8d5d9cc36f1b90a200bf79c6316b5d2410045b31d2559a0d19c3f2ac2b8bbd",
+        "actual_sha256": "fd8d5d9cc36f1b90a200bf79c6316b5d2410045b31d2559a0d19c3f2ac2b8bbd"
+      }
+    },
+    {
+      "check": "core_license_and_selection",
+      "supported": true,
+      "facts": {
+        "revision": "musicbrainz-core-artist-identities-v1",
+        "license": "CC0-1.0",
+        "license_url": "https://musicbrainz.org/doc/About/Data_License",
+        "license_capture_sha256": "5b37894260af675ff117f6921f62bd21963081f22893cf10717991dd930ff2f8",
+        "attribution": "MusicBrainz contributors",
+        "source_url": "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/20260930-002222/mbdump.tar.bz2",
+        "snapshot": "20260930-002222",
+        "observed_at": "2026-09-30T20:34:00Z",
+        "schema_sequence": "31",
+        "source_prefix_bytes": 209715200,
+        "source_prefix_sha256": "bcbc97886d8226c12d7a6f2f28246498fdd961840be516b85f14dc6a6a0cc7a0",
+        "source_archive_published_sha256": "4342c77212a8807e351e619b49162bc796e19419628bad3c9e791dbdd8e5f587",
+        "source_archive_sha256_verified": false,
+        "source_member": "mbdump/artist",
+        "source_member_bytes": 441457090,
+        "source_member_sha256": "6234d354577f0460b56e62c6696b8d47d3b4da8a25c62f8fe27d61b5b25e6d4d",
+        "artist_count": 2999670,
+        "fields": [
+          "artist_mbid",
+          "name"
+        ],
+        "genre_memberships": "absent; identities are not genre evidence",
+        "derived_tables_consumed": [],
+        "selection": "all core artist rows; no reference-label selection",
+        "output_file": "artist-identities.jsonl.zst",
+        "output_bytes": 95458405,
+        "output_sha256": "fd8d5d9cc36f1b90a200bf79c6316b5d2410045b31d2559a0d19c3f2ac2b8bbd",
+        "verified_complete": true
+      }
+    },
+    {
+      "check": "complete_core_field_allowlist",
+      "supported": true,
+      "facts": {
+        "rows": 2999670,
+        "unapproved_rows": 0
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/.cache/musicbrainz-bulk-artist-tags-20260930-v1/source/mbdump-core-prefix-209715200.bz2",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "bcbc97886d8226c12d7a6f2f28246498fdd961840be516b85f14dc6a6a0cc7a0",
+        "actual_sha256": "bcbc97886d8226c12d7a6f2f28246498fdd961840be516b85f14dc6a6a0cc7a0"
+      }
+    },
+    {
+      "check": "inventory:/workspace/opennoise/data/examples/cultural-context/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 6,
+        "bytes_hashed": 234193,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "inventory:/workspace/opennoise/data/examples/independent-cultural-context/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 4,
+        "bytes_hashed": 292676,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "inventory:/workspace/opennoise/data/examples/native-sonic/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 158,
+        "bytes_hashed": 3428286,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/56b8e7ce-2fb2-4054-abda-d889ed41a7ac.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "8eb08e2efa6af343893fd75230529a406107cf9b26febcbc7773ec8c7b41d873",
+        "actual_sha256": "8eb08e2efa6af343893fd75230529a406107cf9b26febcbc7773ec8c7b41d873"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/594f843f-3ed1-423e-b1fc-f6aaf5bc7163.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7d25c1745422858a60c9eca217c1d7867d27cee11d63649119bf0f4b2cc6143c",
+        "actual_sha256": "7d25c1745422858a60c9eca217c1d7867d27cee11d63649119bf0f4b2cc6143c"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/126aaa04-a746-424c-84de-01cb13a7a770.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "fd10e4096392b418f79cacbb716d8ff366a03cf56e476a4880e5ff26a35c6e78",
+        "actual_sha256": "fd10e4096392b418f79cacbb716d8ff366a03cf56e476a4880e5ff26a35c6e78"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/3715b33e-9766-480f-ad0b-8437703af6b7.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "850273492b053db381462f658b6833d6a57276448fb485512b5a073f733db903",
+        "actual_sha256": "850273492b053db381462f658b6833d6a57276448fb485512b5a073f733db903"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/885c71d0-b306-43df-a435-11433b06aa73.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "dd534f0d59ab0c9d37ab45a27a45c1eab5f25eaefca169316cb9a6da752f9339",
+        "actual_sha256": "dd534f0d59ab0c9d37ab45a27a45c1eab5f25eaefca169316cb9a6da752f9339"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/23118e3d-2ac9-4e08-a1b8-18f77d68c6e1.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "0fc52818ac27c9d92dd9f55a180efbc675f7190dd5e111929b320e86eec63490",
+        "actual_sha256": "0fc52818ac27c9d92dd9f55a180efbc675f7190dd5e111929b320e86eec63490"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/0c21fe8d-7e15-4e95-a1c5-2919a630fe80.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "d9aa974a13b99fdd2d074ad6fe335f0a03976992e3dd3420f604b7e82283fce5",
+        "actual_sha256": "d9aa974a13b99fdd2d074ad6fe335f0a03976992e3dd3420f604b7e82283fce5"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/187db0f2-f082-4159-8748-fa34146cacaf.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "a5a8d437d2303486df81551ab20424e5f8b05a2675f03b4d4e9e5d16f3c88be0",
+        "actual_sha256": "a5a8d437d2303486df81551ab20424e5f8b05a2675f03b4d4e9e5d16f3c88be0"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/2a23cd23-1a7d-4919-9a81-388e023edf2d.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "48f38b85f2c0c68167af454b48140b57a7d53b2fa4fdfe8ef863b8f7458460b9",
+        "actual_sha256": "48f38b85f2c0c68167af454b48140b57a7d53b2fa4fdfe8ef863b8f7458460b9"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/1bb69702-4786-4cb2-80b0-b1fd5db996a3.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "f3b1272f571878fd0c4da3ff89d6bad1bd0cb174d39c8bef8e0f6903bfdd12da",
+        "actual_sha256": "f3b1272f571878fd0c4da3ff89d6bad1bd0cb174d39c8bef8e0f6903bfdd12da"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/41b1675b-6b4a-4b81-b478-a4fc49fd2a08.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "80b7eb68d2951ebb3a2b3c9cf2240fc809682636b7f725bbbd5f48c62212836c",
+        "actual_sha256": "80b7eb68d2951ebb3a2b3c9cf2240fc809682636b7f725bbbd5f48c62212836c"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/4bc73c97-a204-42ad-877b-09a4445952ea.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "4b9db4764a9c726e4214b72d8081e99102899b62dd18f95ed85f15aa0c305034",
+        "actual_sha256": "4b9db4764a9c726e4214b72d8081e99102899b62dd18f95ed85f15aa0c305034"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/35b52cb7-52a2-4803-94f8-784ed8cd65b8.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "6df994bb003cd506493bdaf755459071e78e7e80e67b896dafc8b56e180bff07",
+        "actual_sha256": "6df994bb003cd506493bdaf755459071e78e7e80e67b896dafc8b56e180bff07"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/623f308e-7cd3-413a-a641-534266e65732.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "cd807eef71a7847ee792245fa43ca93ef55e1e0d57662e52113cfcf3aad69766",
+        "actual_sha256": "cd807eef71a7847ee792245fa43ca93ef55e1e0d57662e52113cfcf3aad69766"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/6278a2ab-4436-4077-a779-97268d3af3cf.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "99048ea5bb02cfaee0f1108680113afd57e08a8829c4665bcaa35591f00cb70f",
+        "actual_sha256": "99048ea5bb02cfaee0f1108680113afd57e08a8829c4665bcaa35591f00cb70f"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/a3c49027-eb58-4e16-8848-28a857f936cd.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "56549f7b466e3726a2376760fc53e243d90e35216748da258066679cd778381d",
+        "actual_sha256": "56549f7b466e3726a2376760fc53e243d90e35216748da258066679cd778381d"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/cd9072f6-15d7-4046-9849-6389a791dcf6.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "23f988555d20e7848b785af91ca9007559c75f4867a3cf88608d387cbd6d74dc",
+        "actual_sha256": "23f988555d20e7848b785af91ca9007559c75f4867a3cf88608d387cbd6d74dc"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/eeca1d57-b7c9-452b-83d7-ba628484dbaf.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "e71c7477915f5bac215a2761f536d519c0b806107941da870bd20d899f9cb8fe",
+        "actual_sha256": "e71c7477915f5bac215a2761f536d519c0b806107941da870bd20d899f9cb8fe"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/33cc794d-1aca-44b6-af3d-6309a503ad93.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "082b20385f24777cc7512360c0b94543f59c40946f4216747453dee57d727946",
+        "actual_sha256": "082b20385f24777cc7512360c0b94543f59c40946f4216747453dee57d727946"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/efcda6da-a3e5-45d3-8238-4071320b4cba.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "a863cbdc260e79b077dba46fef459fcd08f94a98a68546108153f3d1fbb05aae",
+        "actual_sha256": "a863cbdc260e79b077dba46fef459fcd08f94a98a68546108153f3d1fbb05aae"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/02e8f439-99fc-4427-8c12-2b08097d86e6.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "b8e0b7a7e401f2b4edda2a32be7fe038bd07421205239bc61ee705fe8825a9c4",
+        "actual_sha256": "b8e0b7a7e401f2b4edda2a32be7fe038bd07421205239bc61ee705fe8825a9c4"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/1466d83d-cbe9-4c8f-9b63-df038350a773.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7ab8bd621f7dc59f320df0b45b0d4901e6ff3840bd07baee8caf5c8336fecc36",
+        "actual_sha256": "7ab8bd621f7dc59f320df0b45b0d4901e6ff3840bd07baee8caf5c8336fecc36"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/2967c1d7-5df7-4624-bd0f-b96bf5114b91.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "6f6b14ec18e69c59ecd630e1f39f35b9a44198eb1580c1f183a24d02f3e7b774",
+        "actual_sha256": "6f6b14ec18e69c59ecd630e1f39f35b9a44198eb1580c1f183a24d02f3e7b774"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/429893fd-5242-4526-898e-134c3eb93a0f.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "df0e79af1f2a63a95b9c57c90f7269431f2d11d5d5a226db14e1874012fab746",
+        "actual_sha256": "df0e79af1f2a63a95b9c57c90f7269431f2d11d5d5a226db14e1874012fab746"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/0feba647-01f6-489b-b8d4-a18de429a5af.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "57ceaabe9a629f314ab4750bd690993f2d3ad0fd3382f72d919ad8bcbd030734",
+        "actual_sha256": "57ceaabe9a629f314ab4750bd690993f2d3ad0fd3382f72d919ad8bcbd030734"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/17abfe47-bd84-4e6d-b584-2ba2a5973a36.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "21979b0283387bad9db9afa65cedba38a751b0e52cfed7cecc95558f65927b76",
+        "actual_sha256": "21979b0283387bad9db9afa65cedba38a751b0e52cfed7cecc95558f65927b76"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7f4d79aa4dd7966e42537d9015406476135cef8a59d089a6fb3fcf75670c5107",
+        "actual_sha256": "7f4d79aa4dd7966e42537d9015406476135cef8a59d089a6fb3fcf75670c5107"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/030ed9b0-3620-4b6b-b75b-0c9cf0634ede.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "6f4a2d14c7832df39e8e8d1c88e9e1a53f662f8b50cf9be82eb1b8f07b098b76",
+        "actual_sha256": "6f4a2d14c7832df39e8e8d1c88e9e1a53f662f8b50cf9be82eb1b8f07b098b76"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/2836d5dc-986c-4a3b-a062-398751b43260.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7241e5568dd7d326cd3e949bf116ccbad8706ef2c1f37b9f14edf9fa6cf0ede2",
+        "actual_sha256": "7241e5568dd7d326cd3e949bf116ccbad8706ef2c1f37b9f14edf9fa6cf0ede2"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/3ec37d27-1f16-45c4-8a9e-5a705393c177.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "ed44d3d96907860e891113293014a89727cd221a5802d8fb5251e8ebc982817e",
+        "actual_sha256": "ed44d3d96907860e891113293014a89727cd221a5802d8fb5251e8ebc982817e"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/41bdd496-114e-48c6-82c9-ec9332891c8b.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "55b3da1694be496c6c620dfd5d987db68ff1184a36a8b6763c6335d08f556f5d",
+        "actual_sha256": "55b3da1694be496c6c620dfd5d987db68ff1184a36a8b6763c6335d08f556f5d"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/6c10a042-f915-48ae-8831-796fc487e9ba.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "d1ddde45e2e33aed3ff858ee69198000e71be648c51bb1fd9a75a0d9d2989713",
+        "actual_sha256": "d1ddde45e2e33aed3ff858ee69198000e71be648c51bb1fd9a75a0d9d2989713"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/911954f3-a0b1-4df4-ae3c-d239401cca67.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "a102471cf93d05ac04bd09c748188fa1893aac5b10456531f0613c53f3b4300b",
+        "actual_sha256": "a102471cf93d05ac04bd09c748188fa1893aac5b10456531f0613c53f3b4300b"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/0a3ca852-0607-4075-ab3f-8fb272bf048e.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "960e7dec9c68f40d567a0686851a69bd3611fe43533f5ad16f35e91794acb179",
+        "actual_sha256": "960e7dec9c68f40d567a0686851a69bd3611fe43533f5ad16f35e91794acb179"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "831448e0d2999016e05119f9868edf60b5a6ae8a257e05d42d2f3c4f89c9c116",
+        "actual_sha256": "831448e0d2999016e05119f9868edf60b5a6ae8a257e05d42d2f3c4f89c9c116"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/recording-facts/raw/0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "97ab7e1b880ca322f4873bcadd36c6aa4431f199dbb2581329abc073a68ad35c",
+        "actual_sha256": "97ab7e1b880ca322f4873bcadd36c6aa4431f199dbb2581329abc073a68ad35c"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/00.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08",
+        "actual_sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/01.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e",
+        "actual_sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/02.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd",
+        "actual_sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/03.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "b11900ce91b286b5b56b3738cb44bb34f9a4e6c3e95ea46b5f2c40096073430b",
+        "actual_sha256": "b11900ce91b286b5b56b3738cb44bb34f9a4e6c3e95ea46b5f2c40096073430b"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/04.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082",
+        "actual_sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/05.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3",
+        "actual_sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/06.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e",
+        "actual_sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/07.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8",
+        "actual_sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/08.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1",
+        "actual_sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/artist-links/raw/09.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2",
+        "actual_sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1-offline-projection-v2/receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7c6d67baeadcbe0c81838b4c607f8bd3bf23bcf24867095682391289fc492306",
+        "actual_sha256": "7c6d67baeadcbe0c81838b4c607f8bd3bf23bcf24867095682391289fc492306"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1-offline-projection-v2/summary.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "2fe77404b1171fb2c6fbd1454c1670cc7b21d26dcc353d4c7073c39e520dfb44",
+        "actual_sha256": "2fe77404b1171fb2c6fbd1454c1670cc7b21d26dcc353d4c7073c39e520dfb44"
+      }
+    },
+    {
+      "check": "inventory:/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1-offline-projection-v2/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 9,
+        "bytes_hashed": 354605,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/acoustic-descriptors/acoustic-descriptors.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "6f3410e5b1bca2c81734580c6d9cd7914293b6a3fe137a120783d5545659ec75",
+        "actual_sha256": "6f3410e5b1bca2c81734580c6d9cd7914293b6a3fe137a120783d5545659ec75"
+      }
+    },
+    {
+      "check": "inherited_acoustic_numeric_only_projection",
+      "supported": true,
+      "facts": {
+        "artists": 10,
+        "numeric_features": 17,
+        "mismatches": [],
+        "original_wrapper_denies_model_and_product_promotion": {
+          "alias_merging_allowed": false,
+          "audio_requested": false,
+          "calibrated": false,
+          "high_level_role": "derived_unvalidated_acoustic_model_output",
+          "http_redirects_followed": false,
+          "metadata_only": true,
+          "model_input_allowed": false,
+          "names_used_for_identity": false,
+          "product_promotion_allowed": false,
+          "representative_sample": false,
+          "retries_per_request": 0,
+          "revision": "acousticbrainz-exact-recording-benchmark-metadata-v1",
+          "scope": "local_research_only",
+          "source_audio_analysis_preexisting": true,
+          "source_license": "CC0-1.0"
+        }
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/central-directory.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "4c0e7ff3fcfc40cf1836fb2a693daaefd7eedc594dc7d8c3d1aefd2f7f042014",
+        "actual_sha256": "4c0e7ff3fcfc40cf1836fb2a693daaefd7eedc594dc7d8c3d1aefd2f7f042014"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/0-local-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "d2a3b389f6a05b028ef4df33cf0035045afb42ea59c54ea87052240479e2a0ad",
+        "actual_sha256": "d2a3b389f6a05b028ef4df33cf0035045afb42ea59c54ea87052240479e2a0ad"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/0-compressed.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "4401d7eabbf7eccf852461955a09d64483a96c3f6261073cd5335e5dbf97431a",
+        "actual_sha256": "4401d7eabbf7eccf852461955a09d64483a96c3f6261073cd5335e5dbf97431a"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/1-local-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "70612fdcc4354afe5302fd1e5ed8c5e1dfe57264d3115f40096a8e8678a4698b",
+        "actual_sha256": "70612fdcc4354afe5302fd1e5ed8c5e1dfe57264d3115f40096a8e8678a4698b"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/1-compressed.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "811195f3c996177133c5a96f8b01c390c2341be5ae7d5b493e455ebff3caefa4",
+        "actual_sha256": "811195f3c996177133c5a96f8b01c390c2341be5ae7d5b493e455ebff3caefa4"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/2-local-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "e4475bd0c02c0e5a66e8cd0abff30ba366893b93c16db9332d07b48b1d44094e",
+        "actual_sha256": "e4475bd0c02c0e5a66e8cd0abff30ba366893b93c16db9332d07b48b1d44094e"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/2-compressed.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "46215f1cef02200dc7ffa00d224b46320032a558153e34a4c83ad675542f831d",
+        "actual_sha256": "46215f1cef02200dc7ffa00d224b46320032a558153e34a4c83ad675542f831d"
+      }
+    },
+    {
+      "check": "all_eight_audio_licenses_match_native_csv",
+      "supported": true,
+      "facts": {
+        "native_track_rows_streamed": 109727,
+        "selected_tracks_verified": [
+          "112318",
+          "124391",
+          "126602",
+          "127299",
+          "138060",
+          "138061",
+          "140266",
+          "61011"
+        ]
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/directory.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "f4b1631de29a42c8a00b8b8e45d90bd27bcbf3fe8fb69feb8d739155d98ba237",
+        "actual_sha256": "f4b1631de29a42c8a00b8b8e45d90bd27bcbf3fe8fb69feb8d739155d98ba237"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/61011-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "14d80737a55786343d15846176976f65be16d5c7d365f2111f66a0bdffbad345",
+        "actual_sha256": "14d80737a55786343d15846176976f65be16d5c7d365f2111f66a0bdffbad345"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/61011-payload.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "234545139e2ed1517cfdaa9e7700c1f1308a40665ff5839788f91d53b252dbdc",
+        "actual_sha256": "234545139e2ed1517cfdaa9e7700c1f1308a40665ff5839788f91d53b252dbdc"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/127299-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "4d310774a5b806df4ab255282991013f19bb108a6bb1c3746fe3c5312d0f8e85",
+        "actual_sha256": "4d310774a5b806df4ab255282991013f19bb108a6bb1c3746fe3c5312d0f8e85"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/127299-payload.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "8eaa160e9c0a8541ad16783790bccae0410522f69f405c4a54341895622d35e5",
+        "actual_sha256": "8eaa160e9c0a8541ad16783790bccae0410522f69f405c4a54341895622d35e5"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138060-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "986a07a9c899b74019a7742a882bbcba38a0c054ed5bdc5a2b9539c0eaef7ded",
+        "actual_sha256": "986a07a9c899b74019a7742a882bbcba38a0c054ed5bdc5a2b9539c0eaef7ded"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138060-payload.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "79a98833ad1439da276ad2fd2a52e964c7464afca04d77278d983dcba1f9ab28",
+        "actual_sha256": "79a98833ad1439da276ad2fd2a52e964c7464afca04d77278d983dcba1f9ab28"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/124391-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "951b6f50e1e9fe71aa18a1b2fbd1a613ddd5efa76cd49c25e1d6eb73d93e92ba",
+        "actual_sha256": "951b6f50e1e9fe71aa18a1b2fbd1a613ddd5efa76cd49c25e1d6eb73d93e92ba"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/124391-payload.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "677c049c5929e54a762538246b52302e0e3a72470ef2de8d6ce6cc118d90adce",
+        "actual_sha256": "677c049c5929e54a762538246b52302e0e3a72470ef2de8d6ce6cc118d90adce"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/112318-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7ec74a76c2c067e747a259d72f7c41c653c98869f7be30e1ae2262846ad5d139",
+        "actual_sha256": "7ec74a76c2c067e747a259d72f7c41c653c98869f7be30e1ae2262846ad5d139"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/112318-payload.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "10a9dd02005a07c9353bd016479c489927fa47dfe2e65c27601732a771f53fdf",
+        "actual_sha256": "10a9dd02005a07c9353bd016479c489927fa47dfe2e65c27601732a771f53fdf"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138061-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "34859095843f2505ff272af27de5b6f98056976ba8d0b1b6374142586ddbc160",
+        "actual_sha256": "34859095843f2505ff272af27de5b6f98056976ba8d0b1b6374142586ddbc160"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138061-payload.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "fd1b5f91ae78ed055d59211e397bf6f1f8578c6582f8bceb6fab04e3777cc46d",
+        "actual_sha256": "fd1b5f91ae78ed055d59211e397bf6f1f8578c6582f8bceb6fab04e3777cc46d"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/126602-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "65fecc2f64177254bbca146ef40f903393a8788fb6ef51b3345ad4aa34539ec5",
+        "actual_sha256": "65fecc2f64177254bbca146ef40f903393a8788fb6ef51b3345ad4aa34539ec5"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/126602-payload.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "deda227546c08abda5d644b2037215eee44884c9b7ad61d3935c187360a7477d",
+        "actual_sha256": "deda227546c08abda5d644b2037215eee44884c9b7ad61d3935c187360a7477d"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/140266-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "e369d5a2035a57c44a388f234b68fd7317bb2750754e057ee5b5749814d3b2b7",
+        "actual_sha256": "e369d5a2035a57c44a388f234b68fd7317bb2750754e057ee5b5749814d3b2b7"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/140266-payload.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "86e57265b25bf39fe713d5f59f67cd56d184773e48d08f8a2ae704573f8f4ceb",
+        "actual_sha256": "86e57265b25bf39fe713d5f59f67cd56d184773e48d08f8a2ae704573f8f4ceb"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/61011.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+        "actual_sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/61011.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+        "actual_sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f"
+      }
+    },
+    {
+      "check": "audio_per_track_boundary:61011",
+      "supported": true,
+      "facts": {
+        "unchanged_native_audio": true,
+        "visible_credit_license_source": true,
+        "no_NC_or_ND": true
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/127299.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+        "actual_sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/127299.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+        "actual_sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b"
+      }
+    },
+    {
+      "check": "audio_per_track_boundary:127299",
+      "supported": true,
+      "facts": {
+        "unchanged_native_audio": true,
+        "visible_credit_license_source": true,
+        "no_NC_or_ND": true
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138060.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+        "actual_sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/138060.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+        "actual_sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf"
+      }
+    },
+    {
+      "check": "audio_per_track_boundary:138060",
+      "supported": true,
+      "facts": {
+        "unchanged_native_audio": true,
+        "visible_credit_license_source": true,
+        "no_NC_or_ND": true
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/124391.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+        "actual_sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/124391.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+        "actual_sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e"
+      }
+    },
+    {
+      "check": "audio_per_track_boundary:124391",
+      "supported": true,
+      "facts": {
+        "unchanged_native_audio": true,
+        "visible_credit_license_source": true,
+        "no_NC_or_ND": true
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/112318.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+        "actual_sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/112318.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+        "actual_sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409"
+      }
+    },
+    {
+      "check": "audio_per_track_boundary:112318",
+      "supported": true,
+      "facts": {
+        "unchanged_native_audio": true,
+        "visible_credit_license_source": true,
+        "no_NC_or_ND": true
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138061.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+        "actual_sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/138061.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+        "actual_sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8"
+      }
+    },
+    {
+      "check": "audio_per_track_boundary:138061",
+      "supported": true,
+      "facts": {
+        "unchanged_native_audio": true,
+        "visible_credit_license_source": true,
+        "no_NC_or_ND": true
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/126602.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+        "actual_sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/126602.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+        "actual_sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1"
+      }
+    },
+    {
+      "check": "audio_per_track_boundary:126602",
+      "supported": true,
+      "facts": {
+        "unchanged_native_audio": true,
+        "visible_credit_license_source": true,
+        "no_NC_or_ND": true
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-fma-permitted-listening-20261003-v4/140266.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+        "actual_sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d"
+      }
+    },
+    {
+      "check": "pin:/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/140266.mp3",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+        "actual_sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d"
+      }
+    },
+    {
+      "check": "audio_per_track_boundary:140266",
+      "supported": true,
+      "facts": {
+        "unchanged_native_audio": true,
+        "visible_credit_license_source": true,
+        "no_NC_or_ND": true
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/source-receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "91ca7c46466212b38dae4a146ed5dca2e46f581b926d954a4add885a18eab3a0",
+        "actual_sha256": "91ca7c46466212b38dae4a146ed5dca2e46f581b926d954a4add885a18eab3a0"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/README.md",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9",
+        "actual_sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/feature-local-header.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "7d20230ce8fb73f6abdb2e25adbc812d07ece2af36edd9fd3c97b1d2cce40102",
+        "actual_sha256": "7d20230ce8fb73f6abdb2e25adbc812d07ece2af36edd9fd3c97b1d2cce40102"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/feature-compressed.range",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "49a185bd53db47c198ff1cd8aeddd3430e8b3622dda1e5c2683318c1eb486c0c",
+        "actual_sha256": "49a185bd53db47c198ff1cd8aeddd3430e8b3622dda1e5c2683318c1eb486c0c"
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/projection-v3/projection-receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "949a78ce3b3bc968086d63fb26d5a209860fdd1d3d07ee0ba25516ddc9de7d25",
+        "actual_sha256": "949a78ce3b3bc968086d63fb26d5a209860fdd1d3d07ee0ba25516ddc9de7d25"
+      }
+    },
+    {
+      "check": "inventory:/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/projection-v3/projection-receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 3,
+        "bytes_hashed": 19211470,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "pin:/workspace/opennoise/data/examples/fma-acoustic-baseline/pack-receipt.json",
+      "supported": true,
+      "facts": {
+        "expected_sha256": "3e1651c136f5ae0c588e6dd6930a7a8f68fc7b332d1e423d29d1657e20cd0106",
+        "actual_sha256": "3e1651c136f5ae0c588e6dd6930a7a8f68fc7b332d1e423d29d1657e20cd0106"
+      }
+    },
+    {
+      "check": "inventory:/workspace/opennoise/data/examples/fma-acoustic-baseline/pack-receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 12,
+        "bytes_hashed": 3658859,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "fma_feature_legal_role",
+      "supported": true,
+      "facts": {
+        "columns": 44,
+        "rows": 106574,
+        "source_member": "fma_metadata/features.csv",
+        "excluded": [
+          "EchoNest",
+          "pickle",
+          "audio"
+        ],
+        "license_basis": "Official README distributes all metadata/features together, lists features.csv as common Librosa features, and declares metadata CC BY 4.0; EchoNest is separately named and excluded."
+      }
+    },
+    {
+      "check": "fma_map_and_membership_source_bindings",
+      "supported": true,
+      "facts": {
+        "feature_receipt_sha256": "949a78ce3b3bc968086d63fb26d5a209860fdd1d3d07ee0ba25516ddc9de7d25",
+        "feature_values_sha256": "b427d29b55b9b27c9e38b0aae635478dbebae5dcb381f00e00a9fcadf70032d4",
+        "fold_sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7",
+        "metadata_receipt_sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b",
+        "model_sha256": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38",
+        "track_ids_sha256": "8fb77ce50f3da09b7fb7c04bfc21948ef72e3dd50dbb63cd082291d75b180c07"
+      }
+    },
+    {
+      "check": "all_exported_detail_boundary_scan",
+      "supported": true,
+      "facts": {
+        "counts": {
+          "details": 10553,
+          "claims": 19653,
+          "exact_bridged_fma_artists": 168
+        },
+        "restricted_hits": []
+      }
+    },
+    {
+      "check": "profile_license_namespace_boundary",
+      "supported": true,
+      "facts": {
+        "licenses": {
+          "audio": "per-track declarations only",
+          "core": "CC0-1.0",
+          "fma_metadata": "CC-BY-4.0"
+        },
+        "scope": {
+          "full_foundation_complete": false,
+          "historical_inputs_used": false,
+          "identity_coverage_is_not_musical_coverage": true,
+          "inferred_memberships": "unavailable",
+          "legacy_release_equivalence": false,
+          "recordings": "bounded exact-credit examples; not representative music certification",
+          "semantic_coordinates": "unavailable",
+          "spotify_private_inputs_used": false,
+          "status": "full_retained_identity_input_reconstruction"
+        }
+      }
+    },
+    {
+      "check": "inventory:/dev/shm/opennoise-full-input-foundation-20261003-v8/receipt.json",
+      "supported": true,
+      "facts": {
+        "files_hashed": 20533,
+        "bytes_hashed": 1058750597,
+        "mismatches": []
+      }
+    },
+    {
+      "check": "v8_closed_output_pin_denominator",
+      "supported": true,
+      "facts": {
+        "output_pins": 20533
+      }
+    },
+    {
+      "check": "prior_native_replay_bound_to_this_receipt",
+      "supported": true,
+      "facts": {
+        "path": "/dev/shm/opennoise-full-input-replay-20261003-v8.json",
+        "valid": true,
+        "receipt_sha256": "ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1",
+        "note": "Retained independent replay evidence inspected; not rerun by this reviewer."
+      }
+    },
+    {
+      "check": "historical_evaluation_declared_dated",
+      "supported": true,
+      "facts": {
+        "role": "evaluation_only_no_construction_or_training",
+        "source_data_date": "2023-11-19",
+        "source_snapshot": "git:e80265defc743b307586ac0a7a5c72d2dacdf409",
+        "source_sha256": "1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180",
+        "live_site_verified": false,
+        "membership_completeness": "unavailable_pinned_map_is_not_membership_census",
+        "neighbor_semantics": "nearest_display_coordinates_not_editorial_similarity"
+      }
+    }
+  ],
+  "pins": [
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/receipt.json",
+      "sha256": "ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1",
+      "bytes": 2761023
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/construction.json",
+      "sha256": "86737786f3e09f31eeef01b4f3a7ecd47cb649438e05bb4c02ef5ce8e928ae48",
+      "bytes": 29707
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/profile.json",
+      "sha256": "192693a8e545b5d579ae5fa31db1dfb7d158ca430114641ccdb3ed1732172848",
+      "bytes": 13634
+    },
+    {
+      "path": "/dev/shm/opennoise-wikidata-artist-completion-v2/receipt.json",
+      "sha256": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a",
+      "bytes": 1542
+    },
+    {
+      "path": "/dev/shm/opennoise-wikidata-entities-10000-v3/receipt.json",
+      "sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+      "bytes": 87312
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-exact-bridge-20261003-v3/receipt.json",
+      "sha256": "f0adc78072e39753d86f8b8753b3825a9583fe11124f90d858bc4c43dd2a906a",
+      "bytes": 1845
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/listening.json",
+      "sha256": "534c4c50f1b51362d469bc0f99c057c473a5c74a428412d1bee04182cc3acea8",
+      "bytes": 18678
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-sonic-map-20261003-v2/export/receipt.json",
+      "sha256": "f749e21427dccaef68d0273e15e9c45ff6bbd34d418697a498639590b63f50c9",
+      "bytes": 1822
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/fma-source-memberships/pack-receipt.json",
+      "sha256": "ad54dc99a09e0c0f492dd97ac21e216a4a70bfd39a7749932a6f1a1a45646c1d",
+      "bytes": 1255
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-replay-20261002-v1/corpus-receipt.json",
+      "sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b",
+      "bytes": 2126
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/source-receipt.json",
+      "sha256": "56b895019cfad35a6e4a27c52e5d35ccd22d494262768f18516a501ec55cae1b",
+      "bytes": 4005
+    },
+    {
+      "path": "/dev/shm/opennoise-skip-recovery-fma-v2/static-receipt.json",
+      "sha256": "2565d6b5af09782522eda3b88a097192d490825493ab387a47cc54af0925e4ec",
+      "bytes": 789
+    },
+    {
+      "path": "/dev/shm/opennoise-wikidata-native-genre-context-v1/receipt.json",
+      "sha256": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9",
+      "bytes": 8798
+    },
+    {
+      "path": "/dev/shm/opennoise-recording-listening-20261003-v1/receipt.json",
+      "sha256": "9ff28e5a97e838798d04c6f84835182b96c97a033106e24e5a9a046f0b2cdda8",
+      "bytes": 20870
+    },
+    {
+      "path": "/workspace/opennoise/scripts/build_full_input_foundation.py",
+      "sha256": "d4decc26c9ee75a17adac70fbaea76b603f85f5a375beabcfc66eeeb5c49500e",
+      "bytes": 2587
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ml/fma_memberships.py",
+      "sha256": "df6adf93e479336ab9ceb601550a50d40c67f5a31ef78c04ab9b16c281602d65",
+      "bytes": 19574
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ml/fma_sonic_map.py",
+      "sha256": "276f22e73e2ea69add09630bdd69b9193f565ebfa7b4baace55dc9de0d5172ab",
+      "bytes": 18012
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ml/wikidata_artist_completion.py",
+      "sha256": "b535aa22a55007a89f3cc2bb7b6e18288cb59eff9c3ae36e08b92982cd093786",
+      "bytes": 28707
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_assembly.py",
+      "sha256": "75cd863f7687f99d07879400cd2c3ada6088c214a66d2bd6dfbc01591fe401d5",
+      "bytes": 10605
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_context.py",
+      "sha256": "a9b271929200f1744e6acaf2c7cd97dbdcd043ac943c9b8fd047e3a1e05502db",
+      "bytes": 9264
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_foundation.py",
+      "sha256": "d29f424d0eee0929fccbbb2a3f48fdab5606200a4e3aa863764ed72ca7c4d212",
+      "bytes": 40774
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_indexes.py",
+      "sha256": "7117a7b83dafebacac66087612595e7ecceb5b1227ae1d6b1bafaef8dafd066b",
+      "bytes": 2233
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_research.py",
+      "sha256": "ceef6646396c22ca750764c6f7a6aff0e113434d34f5e0c7fb1dc1429d52fef6",
+      "bytes": 8979
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/static/full-foundation-normalization.mjs",
+      "sha256": "01d3320f50cef9bc171b81493543ee6712d5814e5566ebb47517917b7c0b4a9f",
+      "bytes": 31156
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/static/full-foundation.css",
+      "sha256": "69c309f51f5baf2f71e3b75102805182f229b43c41d814d39067c1937918ae31",
+      "bytes": 2277
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/static/full-foundation.html",
+      "sha256": "2f96903b12f644d112ff44c76c30bd786c7bcfdb147f72f58aea7143ccddf5d8",
+      "bytes": 785
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/static/full-foundation.mjs",
+      "sha256": "6f65fcfb2ec1b1ec822c96822306946b98f12120b6817cf893ae0bdbcd5d2562",
+      "bytes": 15717
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/static/listening-list.mjs",
+      "sha256": "cad07e5237e687d3b48d3e3281b63f7cc4816d108c4fb6043022089456410304",
+      "bytes": 7795
+    },
+    {
+      "path": "/workspace/opennoise/.cache/musicbrainz-bulk-artist-tags-20260930-v1/source/license.html",
+      "sha256": "5b37894260af675ff117f6921f62bd21963081f22893cf10717991dd930ff2f8",
+      "bytes": 17378
+    },
+    {
+      "path": "/dev/shm/opennoise-licensed-evidence-work/source-custody/wikidata-official-licensing.html",
+      "sha256": "b1a436154a36136476ad4bfd867027dc393db17bcb43414b4cb75b2f28079c75",
+      "bytes": 64920
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/001.bin",
+      "sha256": "dad99100be34964459ec9c936efdeacb779a403a73a1c744e27c113e7618a472",
+      "bytes": 8728
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/README.md",
+      "sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9",
+      "bytes": 16012
+    },
+    {
+      "path": "/workspace/opennoise/.cache/musicbrainz-core-artist-identities-20261002-v1/receipt.json",
+      "sha256": "a28c0d099c5ae8b3a3ecdf824e29201625cee8cfb7b90c8dd51da7193aa2f2e5",
+      "bytes": 1383
+    },
+    {
+      "path": "/workspace/opennoise/.cache/musicbrainz-core-artist-identities-20261002-v1/artist-identities.jsonl.zst",
+      "sha256": "fd8d5d9cc36f1b90a200bf79c6316b5d2410045b31d2559a0d19c3f2ac2b8bbd",
+      "bytes": 95458405
+    },
+    {
+      "path": "/workspace/opennoise/.cache/musicbrainz-bulk-artist-tags-20260930-v1/source/mbdump-core-prefix-209715200.bz2",
+      "sha256": "bcbc97886d8226c12d7a6f2f28246498fdd961840be516b85f14dc6a6a0cc7a0",
+      "bytes": 209715200
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/cultural-context/receipt.json",
+      "sha256": "3c931909700e2840dff10e2afd2463e9123faa2a7b36e5fc1b90c472677453a7",
+      "bytes": 816
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/independent-cultural-context/receipt.json",
+      "sha256": "df9763aef5b3f5801cc9ef999ecd34b24b97c588dc25679a2adaf8432461cfa5",
+      "bytes": 640
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/native-sonic/receipt.json",
+      "sha256": "13e21e5296989e148e0efc2f6956675d2d391326552fe4a1a3b67df56e1494cb",
+      "bytes": 27950
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/receipt.json",
+      "sha256": "d2fd8df434c9268cf8d7fe0e289f658597dd858570bc468f63ac21ca1ecff7c4",
+      "bytes": 20193
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/56b8e7ce-2fb2-4054-abda-d889ed41a7ac.json",
+      "sha256": "8eb08e2efa6af343893fd75230529a406107cf9b26febcbc7773ec8c7b41d873",
+      "bytes": 408
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/594f843f-3ed1-423e-b1fc-f6aaf5bc7163.json",
+      "sha256": "7d25c1745422858a60c9eca217c1d7867d27cee11d63649119bf0f4b2cc6143c",
+      "bytes": 407
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/126aaa04-a746-424c-84de-01cb13a7a770.json",
+      "sha256": "fd10e4096392b418f79cacbb716d8ff366a03cf56e476a4880e5ff26a35c6e78",
+      "bytes": 444
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/3715b33e-9766-480f-ad0b-8437703af6b7.json",
+      "sha256": "850273492b053db381462f658b6833d6a57276448fb485512b5a073f733db903",
+      "bytes": 405
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/885c71d0-b306-43df-a435-11433b06aa73.json",
+      "sha256": "dd534f0d59ab0c9d37ab45a27a45c1eab5f25eaefca169316cb9a6da752f9339",
+      "bytes": 397
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/23118e3d-2ac9-4e08-a1b8-18f77d68c6e1.json",
+      "sha256": "0fc52818ac27c9d92dd9f55a180efbc675f7190dd5e111929b320e86eec63490",
+      "bytes": 374
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/0c21fe8d-7e15-4e95-a1c5-2919a630fe80.json",
+      "sha256": "d9aa974a13b99fdd2d074ad6fe335f0a03976992e3dd3420f604b7e82283fce5",
+      "bytes": 394
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/187db0f2-f082-4159-8748-fa34146cacaf.json",
+      "sha256": "a5a8d437d2303486df81551ab20424e5f8b05a2675f03b4d4e9e5d16f3c88be0",
+      "bytes": 397
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/2a23cd23-1a7d-4919-9a81-388e023edf2d.json",
+      "sha256": "48f38b85f2c0c68167af454b48140b57a7d53b2fa4fdfe8ef863b8f7458460b9",
+      "bytes": 403
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/1bb69702-4786-4cb2-80b0-b1fd5db996a3.json",
+      "sha256": "f3b1272f571878fd0c4da3ff89d6bad1bd0cb174d39c8bef8e0f6903bfdd12da",
+      "bytes": 419
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/41b1675b-6b4a-4b81-b478-a4fc49fd2a08.json",
+      "sha256": "80b7eb68d2951ebb3a2b3c9cf2240fc809682636b7f725bbbd5f48c62212836c",
+      "bytes": 413
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/4bc73c97-a204-42ad-877b-09a4445952ea.json",
+      "sha256": "4b9db4764a9c726e4214b72d8081e99102899b62dd18f95ed85f15aa0c305034",
+      "bytes": 416
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/35b52cb7-52a2-4803-94f8-784ed8cd65b8.json",
+      "sha256": "6df994bb003cd506493bdaf755459071e78e7e80e67b896dafc8b56e180bff07",
+      "bytes": 413
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/623f308e-7cd3-413a-a641-534266e65732.json",
+      "sha256": "cd807eef71a7847ee792245fa43ca93ef55e1e0d57662e52113cfcf3aad69766",
+      "bytes": 412
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/6278a2ab-4436-4077-a779-97268d3af3cf.json",
+      "sha256": "99048ea5bb02cfaee0f1108680113afd57e08a8829c4665bcaa35591f00cb70f",
+      "bytes": 406
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/a3c49027-eb58-4e16-8848-28a857f936cd.json",
+      "sha256": "56549f7b466e3726a2376760fc53e243d90e35216748da258066679cd778381d",
+      "bytes": 461
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/cd9072f6-15d7-4046-9849-6389a791dcf6.json",
+      "sha256": "23f988555d20e7848b785af91ca9007559c75f4867a3cf88608d387cbd6d74dc",
+      "bytes": 449
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/eeca1d57-b7c9-452b-83d7-ba628484dbaf.json",
+      "sha256": "e71c7477915f5bac215a2761f536d519c0b806107941da870bd20d899f9cb8fe",
+      "bytes": 455
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/33cc794d-1aca-44b6-af3d-6309a503ad93.json",
+      "sha256": "082b20385f24777cc7512360c0b94543f59c40946f4216747453dee57d727946",
+      "bytes": 418
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/efcda6da-a3e5-45d3-8238-4071320b4cba.json",
+      "sha256": "a863cbdc260e79b077dba46fef459fcd08f94a98a68546108153f3d1fbb05aae",
+      "bytes": 991
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/02e8f439-99fc-4427-8c12-2b08097d86e6.json",
+      "sha256": "b8e0b7a7e401f2b4edda2a32be7fe038bd07421205239bc61ee705fe8825a9c4",
+      "bytes": 417
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/1466d83d-cbe9-4c8f-9b63-df038350a773.json",
+      "sha256": "7ab8bd621f7dc59f320df0b45b0d4901e6ff3840bd07baee8caf5c8336fecc36",
+      "bytes": 420
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/2967c1d7-5df7-4624-bd0f-b96bf5114b91.json",
+      "sha256": "6f6b14ec18e69c59ecd630e1f39f35b9a44198eb1580c1f183a24d02f3e7b774",
+      "bytes": 420
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/429893fd-5242-4526-898e-134c3eb93a0f.json",
+      "sha256": "df0e79af1f2a63a95b9c57c90f7269431f2d11d5d5a226db14e1874012fab746",
+      "bytes": 428
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/0feba647-01f6-489b-b8d4-a18de429a5af.json",
+      "sha256": "57ceaabe9a629f314ab4750bd690993f2d3ad0fd3382f72d919ad8bcbd030734",
+      "bytes": 400
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/17abfe47-bd84-4e6d-b584-2ba2a5973a36.json",
+      "sha256": "21979b0283387bad9db9afa65cedba38a751b0e52cfed7cecc95558f65927b76",
+      "bytes": 406
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd.json",
+      "sha256": "7f4d79aa4dd7966e42537d9015406476135cef8a59d089a6fb3fcf75670c5107",
+      "bytes": 408
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/030ed9b0-3620-4b6b-b75b-0c9cf0634ede.json",
+      "sha256": "6f4a2d14c7832df39e8e8d1c88e9e1a53f662f8b50cf9be82eb1b8f07b098b76",
+      "bytes": 400
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/2836d5dc-986c-4a3b-a062-398751b43260.json",
+      "sha256": "7241e5568dd7d326cd3e949bf116ccbad8706ef2c1f37b9f14edf9fa6cf0ede2",
+      "bytes": 403
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/3ec37d27-1f16-45c4-8a9e-5a705393c177.json",
+      "sha256": "ed44d3d96907860e891113293014a89727cd221a5802d8fb5251e8ebc982817e",
+      "bytes": 413
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/41bdd496-114e-48c6-82c9-ec9332891c8b.json",
+      "sha256": "55b3da1694be496c6c620dfd5d987db68ff1184a36a8b6763c6335d08f556f5d",
+      "bytes": 405
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/6c10a042-f915-48ae-8831-796fc487e9ba.json",
+      "sha256": "d1ddde45e2e33aed3ff858ee69198000e71be648c51bb1fd9a75a0d9d2989713",
+      "bytes": 402
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/911954f3-a0b1-4df4-ae3c-d239401cca67.json",
+      "sha256": "a102471cf93d05ac04bd09c748188fa1893aac5b10456531f0613c53f3b4300b",
+      "bytes": 415
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/0a3ca852-0607-4075-ab3f-8fb272bf048e.json",
+      "sha256": "960e7dec9c68f40d567a0686851a69bd3611fe43533f5ad16f35e91794acb179",
+      "bytes": 961
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722.json",
+      "sha256": "831448e0d2999016e05119f9868edf60b5a6ae8a257e05d42d2f3c4f89c9c116",
+      "bytes": 406
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/recording-facts/raw/0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f.json",
+      "sha256": "97ab7e1b880ca322f4873bcadd36c6aa4431f199dbb2581329abc073a68ad35c",
+      "bytes": 925
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/receipt.json",
+      "sha256": "8bc3dd1356012238f685a86aba117f13db364c96efa25ba18df9b7258543360e",
+      "bytes": 3446
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/00.json",
+      "sha256": "463eea68b790618ae162eb96b20b7897de791bdff70ec223a6d6562b374bdf08",
+      "bytes": 16802
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/01.json",
+      "sha256": "9d17c867eba9ea2045ca453d41155ce5af9d87ab55c262f3c23c97e4b51fd31e",
+      "bytes": 14184
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/02.json",
+      "sha256": "a1bdf6c723ee43ce5d73b860dc14a24c110678818ff741a228288521741ffadd",
+      "bytes": 13450
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/03.json",
+      "sha256": "b11900ce91b286b5b56b3738cb44bb34f9a4e6c3e95ea46b5f2c40096073430b",
+      "bytes": 11388
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/04.json",
+      "sha256": "630c83b81a1a88f79963c86de2239c7a7cb92d672f6529d7dbf61e23c45e7082",
+      "bytes": 14268
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/05.json",
+      "sha256": "4119081e71da313e9130686b006e486a88115c257ecdd89629f1fcb2769a4cb3",
+      "bytes": 12853
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/06.json",
+      "sha256": "18dd658dd49d0b6f2b379278b707ddcd72069893a2818b8335b0bc02d0cef35e",
+      "bytes": 14651
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/07.json",
+      "sha256": "cdafb9ae3c539a54977ea96d0e7170bfbd551cad39d364b42140756f33188be8",
+      "bytes": 14963
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/08.json",
+      "sha256": "891e009ddf1adf0eee4a5d64441c1b20ce649366f2b55c2342d2120776e5e0c1",
+      "bytes": 21338
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/artist-links/raw/09.json",
+      "sha256": "be2ed9585f1bcbf18b56cb33bca06d1c22ddbe2229e7c344c5f3bea0c68472a2",
+      "bytes": 21094
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1-offline-projection-v2/receipt.json",
+      "sha256": "7c6d67baeadcbe0c81838b4c607f8bd3bf23bcf24867095682391289fc492306",
+      "bytes": 2534
+    },
+    {
+      "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1-offline-projection-v2/summary.json",
+      "sha256": "2fe77404b1171fb2c6fbd1454c1670cc7b21d26dcc353d4c7073c39e520dfb44",
+      "bytes": 264908
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/acoustic-descriptors/acoustic-descriptors.json",
+      "sha256": "6f3410e5b1bca2c81734580c6d9cd7914293b6a3fe137a120783d5545659ec75",
+      "bytes": 18345
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/central-directory.range",
+      "sha256": "4c0e7ff3fcfc40cf1836fb2a693daaefd7eedc594dc7d8c3d1aefd2f7f042014",
+      "bytes": 65557
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/0-local-header.range",
+      "sha256": "d2a3b389f6a05b028ef4df33cf0035045afb42ea59c54ea87052240479e2a0ad",
+      "bytes": 30
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/0-compressed.range",
+      "sha256": "4401d7eabbf7eccf852461955a09d64483a96c3f6261073cd5335e5dbf97431a",
+      "bytes": 2379
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/1-local-header.range",
+      "sha256": "70612fdcc4354afe5302fd1e5ed8c5e1dfe57264d3115f40096a8e8678a4698b",
+      "bytes": 30
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/1-compressed.range",
+      "sha256": "811195f3c996177133c5a96f8b01c390c2341be5ae7d5b493e455ebff3caefa4",
+      "bytes": 3225722
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/2-local-header.range",
+      "sha256": "e4475bd0c02c0e5a66e8cd0abff30ba366893b93c16db9332d07b48b1d44094e",
+      "bytes": 30
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1/2-compressed.range",
+      "sha256": "46215f1cef02200dc7ffa00d224b46320032a558153e34a4c83ad675542f831d",
+      "bytes": 8288481
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/directory.range",
+      "sha256": "f4b1631de29a42c8a00b8b8e45d90bd27bcbf3fe8fb69feb8d739155d98ba237",
+      "bytes": 627703
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/61011-header.range",
+      "sha256": "14d80737a55786343d15846176976f65be16d5c7d365f2111f66a0bdffbad345",
+      "bytes": 30
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/61011-payload.range",
+      "sha256": "234545139e2ed1517cfdaa9e7700c1f1308a40665ff5839788f91d53b252dbdc",
+      "bytes": 938605
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/127299-header.range",
+      "sha256": "4d310774a5b806df4ab255282991013f19bb108a6bb1c3746fe3c5312d0f8e85",
+      "bytes": 30
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/127299-payload.range",
+      "sha256": "8eaa160e9c0a8541ad16783790bccae0410522f69f405c4a54341895622d35e5",
+      "bytes": 1034164
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138060-header.range",
+      "sha256": "986a07a9c899b74019a7742a882bbcba38a0c054ed5bdc5a2b9539c0eaef7ded",
+      "bytes": 30
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138060-payload.range",
+      "sha256": "79a98833ad1439da276ad2fd2a52e964c7464afca04d77278d983dcba1f9ab28",
+      "bytes": 944021
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/124391-header.range",
+      "sha256": "951b6f50e1e9fe71aa18a1b2fbd1a613ddd5efa76cd49c25e1d6eb73d93e92ba",
+      "bytes": 30
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/124391-payload.range",
+      "sha256": "677c049c5929e54a762538246b52302e0e3a72470ef2de8d6ce6cc118d90adce",
+      "bytes": 695088
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/112318-header.range",
+      "sha256": "7ec74a76c2c067e747a259d72f7c41c653c98869f7be30e1ae2262846ad5d139",
+      "bytes": 30
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/112318-payload.range",
+      "sha256": "10a9dd02005a07c9353bd016479c489927fa47dfe2e65c27601732a771f53fdf",
+      "bytes": 1070289
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138061-header.range",
+      "sha256": "34859095843f2505ff272af27de5b6f98056976ba8d0b1b6374142586ddbc160",
+      "bytes": 30
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138061-payload.range",
+      "sha256": "fd1b5f91ae78ed055d59211e397bf6f1f8578c6582f8bceb6fab04e3777cc46d",
+      "bytes": 1078148
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/126602-header.range",
+      "sha256": "65fecc2f64177254bbca146ef40f903393a8788fb6ef51b3345ad4aa34539ec5",
+      "bytes": 30
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/126602-payload.range",
+      "sha256": "deda227546c08abda5d644b2037215eee44884c9b7ad61d3935c187360a7477d",
+      "bytes": 1137894
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/140266-header.range",
+      "sha256": "e369d5a2035a57c44a388f234b68fd7317bb2750754e057ee5b5749814d3b2b7",
+      "bytes": 30
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/140266-payload.range",
+      "sha256": "86e57265b25bf39fe713d5f59f67cd56d184773e48d08f8a2ae704573f8f4ceb",
+      "bytes": 477221
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/61011.mp3",
+      "sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+      "bytes": 961748
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/61011.mp3",
+      "sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+      "bytes": 961748
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/127299.mp3",
+      "sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+      "bytes": 1034627
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/127299.mp3",
+      "sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+      "bytes": 1034627
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138060.mp3",
+      "sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+      "bytes": 945567
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/138060.mp3",
+      "sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+      "bytes": 945567
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/124391.mp3",
+      "sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+      "bytes": 721577
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/124391.mp3",
+      "sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+      "bytes": 721577
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/112318.mp3",
+      "sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+      "bytes": 1070451
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/112318.mp3",
+      "sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+      "bytes": 1070451
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/138061.mp3",
+      "sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+      "bytes": 1078053
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/138061.mp3",
+      "sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+      "bytes": 1078053
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/126602.mp3",
+      "sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+      "bytes": 1201045
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/126602.mp3",
+      "sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+      "bytes": 1201045
+    },
+    {
+      "path": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4/140266.mp3",
+      "sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+      "bytes": 480777
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-foundation-20261003-v8/fma-listening/140266.mp3",
+      "sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+      "bytes": 480777
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/source-receipt.json",
+      "sha256": "91ca7c46466212b38dae4a146ed5dca2e46f581b926d954a4add885a18eab3a0",
+      "bytes": 2177
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/README.md",
+      "sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9",
+      "bytes": 16012
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/feature-local-header.range",
+      "sha256": "7d20230ce8fb73f6abdb2e25adbc812d07ece2af36edd9fd3c97b1d2cce40102",
+      "bytes": 30
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/feature-compressed.range",
+      "sha256": "49a185bd53db47c198ff1cd8aeddd3430e8b3622dda1e5c2683318c1eb486c0c",
+      "bytes": 293323125
+    },
+    {
+      "path": "/workspace/opennoise-next-20261002/review/.cache/fma-native-features-20261002-v1/projection-v3/projection-receipt.json",
+      "sha256": "949a78ce3b3bc968086d63fb26d5a209860fdd1d3d07ee0ba25516ddc9de7d25",
+      "bytes": 3905
+    },
+    {
+      "path": "/workspace/opennoise/data/examples/fma-acoustic-baseline/pack-receipt.json",
+      "sha256": "3e1651c136f5ae0c588e6dd6930a7a8f68fc7b332d1e423d29d1657e20cd0106",
+      "bytes": 2393
+    },
+    {
+      "path": "/dev/shm/opennoise-full-input-replay-20261003-v8.json",
+      "sha256": "2def455bb590617e20dbe7d26ef3b8cfeb663e89e9e5ca557ae10395261fd534",
+      "bytes": 1299
+    },
+    {
+      "path": "/workspace/opennoise/.cache/everynoise-northstar-reference-20261001-v2.json",
+      "sha256": "84e99f9b9715aa9fa7b654133b8b28e9c15be345ede02c05c71fb70da843ec2b",
+      "bytes": 2192235
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ingest/musicbrainz/core_artist_identities.py",
+      "sha256": "422c6dc34bd1b2d2ff64c454efbc620325a2f34caaeb0dba58e4c59d0826cceb",
+      "bytes": 5957,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/portable_foundation.py",
+      "sha256": "bf45ac8c5d8ebcc1942adf1cf0f76d6e70c3cc3e6a9a573ac7735d0a2b8aadbf",
+      "bytes": 26980,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_foundation.py",
+      "sha256": "d29f424d0eee0929fccbbb2a3f48fdab5606200a4e3aa863764ed72ca7c4d212",
+      "bytes": 40774,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_context.py",
+      "sha256": "a9b271929200f1744e6acaf2c7cd97dbdcd043ac943c9b8fd047e3a1e05502db",
+      "bytes": 9264,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_assembly.py",
+      "sha256": "75cd863f7687f99d07879400cd2c3ada6088c214a66d2bd6dfbc01591fe401d5",
+      "bytes": 10605,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/full_input_research.py",
+      "sha256": "ceef6646396c22ca750764c6f7a6aff0e113434d34f5e0c7fb1dc1429d52fef6",
+      "bytes": 8979,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ingest/wikidata/entity_evidence.py",
+      "sha256": "ee3dce0f8888c91588f08ba235a84fae4cf6218d87f7c37e62dc0f6b526369d2",
+      "bytes": 23428,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ingest/wikidata/genre_context.py",
+      "sha256": "b4e90e5164192d57de417b1e7474d336ab6747772eee68791dc9a4b967bcbdc2",
+      "bytes": 15253,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ingest/open_cultural_source.py",
+      "sha256": "4d4efd10df1108fac462800d66329326463a181682886128581048af6a248a98",
+      "bytes": 8778,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/serving/metadata/recording_facts.py",
+      "sha256": "98588d2dbaecc31d40b115f83394f67ac3bd972506739b3cb5e11383793b2089",
+      "bytes": 11118,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/serving/metadata/artist_links.py",
+      "sha256": "370164d92132a0e4c73814db8073be27cc1682e5d006302c9ab091d2615e15cb",
+      "bytes": 5886,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/serving/metadata/fma_listening.py",
+      "sha256": "b94d3655fa3e5d6c56aab3dfeed5582b401a3b223054a46ff3ec51ffe0da8b5d",
+      "bytes": 22433,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ingest/fma/corpus.py",
+      "sha256": "55bbd346043d6055d7fb99e1d9ef498a8006b9104920deaead7fa86efbf103a7",
+      "bytes": 23061,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ml/fma_sonic_map.py",
+      "sha256": "276f22e73e2ea69add09630bdd69b9193f565ebfa7b4baace55dc9de0d5172ab",
+      "bytes": 18012,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ml/fma_memberships.py",
+      "sha256": "df6adf93e479336ab9ceb601550a50d40c67f5a31ef78c04ab9b16c281602d65",
+      "bytes": 19574,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/ml/wikidata_artist_completion.py",
+      "sha256": "b535aa22a55007a89f3cc2bb7b6e18288cb59eff9c3ae36e08b92982cd093786",
+      "bytes": 28707,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/analysis/acoustic_representation.py",
+      "sha256": "f51f3c56bcdc093522b375c178e1314976257aa04691d42e0eb4a75874c77508",
+      "bytes": 5349,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/analysis/everynoise_parity.py",
+      "sha256": "a3d3e06856f826748732cc20cefd41ac51c9a2d3eaec6a9130c3620889b15a17",
+      "bytes": 14263,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/src/opennoise/pipeline/foundation.py",
+      "sha256": "2116143279b9cf64da8ea01cf6f55cb9ee379766cd47bc3c205fe1ec5dfc59eb",
+      "bytes": 17218,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/tests/test_fma_permitted_listening.py",
+      "sha256": "00a52147157baadabce0f11c0cd454c211942e1508b9b010009233066a958241",
+      "bytes": 3941,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/tests/test_exact_fma_bridge_and_listening.py",
+      "sha256": "1949f1590a5a7cb09b62c5663eb6deeed77c9bbb75dbe1d124f30aee8cb5bbee",
+      "bytes": 6350,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/tests/test_full_input_foundation.py",
+      "sha256": "ddb0336044fb2f999e5c0ca5a7ea2cf074ecaadd1ddd8ac08dd2b150761554fb",
+      "bytes": 6420,
+      "role": "reviewed source or existing fixture/test implementation; not executed anew"
+    },
+    {
+      "path": "/workspace/opennoise/data/vault/raw/sha256/1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180",
+      "sha256": "1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180",
+      "bytes": 3789046,
+      "role": "historical evaluation reference only"
+    }
+  ],
+  "failures": [],
+  "resources": {
+    "maximum_rss_bytes": 27025408,
+    "no_network": true,
+    "no_native_heavy_SQL_or_model_fit": true,
+    "full_corpus_replay_rerun": false,
+    "hash_and_stream_checks_only": true,
+    "maximum_rss_limit_bytes": 35000000,
+    "maximum_output_limit_bytes": 2000000,
+    "measurement_note": "Fresh audit subprocesses; receipt inventories and JSONL streams bounded. Selected historical metadata fields streamed individually. No large arrays, SQL model fit or complete native reconstruction run."
+  },
+  "additional_independent_native_proofs": [
+    {
+      "path": "/dev/shm/opennoise-v8-genre-origin-boundary-check-20261003-v2.json",
+      "sha256": "20901affd31e52ec31b01fa21c951051202acfac41b7a09e5bf179bc6047d7ef",
+      "bytes": 1588,
+      "result": {
+        "revision": "v8-native-genre-license-origin-check-v1",
+        "reviewer": "Codex AI engineering agent /root/full_input_legal_boundary_review",
+        "no_network": true,
+        "no_SQL_or_model_fit": true,
+        "raw_native_Wikidata_artists_checked": 9992,
+        "genre_positive_artists": 10309,
+        "complete_vocabulary_genres": 1018,
+        "inherited_and_global_source_genre_pairs": {
+          "cultural-context": 108,
+          "independent-cultural-context": 179,
+          "global_native_P136": 563,
+          "native_entity_P136_statements": 18750
+        },
+        "exported_direct_P136_claim_origins": [
+          {
+            "capture_pack": "wikidata-entity-evidence-v1",
+            "source": "https://www.wikidata.org/w/api.php",
+            "license": "CC0-1.0",
+            "claim_count": 18750
+          },
+          {
+            "capture_pack": ".cache/wikidata-global-musical-artists-20261002-v1",
+            "source": "https://query.wikidata.org/sparql",
+            "license": "CC0",
+            "claim_count": 563
+          },
+          {
+            "capture_pack": "cultural-context",
+            "source": "https://query.wikidata.org/sparql",
+            "license": "CC0",
+            "claim_count": 108
+          },
+          {
+            "capture_pack": "independent-cultural-context",
+            "source": "https://query.wikidata.org/sparql",
+            "license": "CC0",
+            "claim_count": 179
+          }
+        ],
+        "failures": [],
+        "supported": true,
+        "maximum_rss_bytes": 27025408,
+        "scope_note": "All v8 direct genre sets and complete 1018-label vocabulary independently compared against permitted native Wikidata P136; MusicBrainz identities/names supply exact joins, not genre/tag fields. FMA annotations/models remain separate track scopes."
+      }
+    },
+    {
+      "path": "/dev/shm/opennoise-v8-inherited-acoustic-native-boundary-check-20261003-v1.json",
+      "sha256": "e3d3edc1275b02b7b8ba1820a6340eca46b265376dd713f51eb25659106f6f29",
+      "bytes": 4363,
+      "result": {
+        "reviewer": "Codex AI engineering agent /root/full_input_legal_boundary_review",
+        "native_lowlevel_responses": 18,
+        "numeric_cells_compared": 306,
+        "raw_pins": [
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/015.bin",
+            "sha256": "8beef77f3c9aec0ddb5b2f811ccf56ff5e8a8f5a7b244cb31b768bcab255908b",
+            "bytes": 62865
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/017.bin",
+            "sha256": "4d07c7f2e91b1ccb93e61d42dcb96b4de4c40e67deedf1cd96ff55f1af881ba9",
+            "bytes": 51630
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/019.bin",
+            "sha256": "818acefe3a74031b5c3bc0010caa044c3d305ef744776c1ba7b6b54c19f68b5f",
+            "bytes": 62568
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/025.bin",
+            "sha256": "ebec1faf22b772624ade75947c4186e1234fb3f4af5f1409fbcc0cfc23916df5",
+            "bytes": 59515
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/027.bin",
+            "sha256": "3c2885bf03d996f0558bdc7c106cdf08352b05644a5261243550209900905d53",
+            "bytes": 57787
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/029.bin",
+            "sha256": "ac2217fdf9124309c5dd684a036d8279b11ae65602546b5bb3d3c3f8acb1ae9e",
+            "bytes": 60999
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/031.bin",
+            "sha256": "d7d62f947df33b9fd0ed732e5fb819432504c41488769d5651523465b3450c28",
+            "bytes": 54386
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/033.bin",
+            "sha256": "f9be88ffaa038270caf71daf2d8f0ed784575a96afcab4d46749d18ec03878d6",
+            "bytes": 56411
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/035.bin",
+            "sha256": "68dc76e48b60776ad8a63ad8d7b38bce754fc8fd0ab053f3d6893d95a43af7bf",
+            "bytes": 49053
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/037.bin",
+            "sha256": "160ccf313b8a1e7fb446a1da4f83c17473ff1f18b2103ac0b86d7b95b2b62d0d",
+            "bytes": 49647
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/041.bin",
+            "sha256": "2ea7aff9c442153f945ad22d53b3ddfd764fd3807b388372bb26730c6d9eff4f",
+            "bytes": 54073
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/043.bin",
+            "sha256": "0fb98a48a856cbdac44ec47a8ff23e621be736c7d2fc46ec088368c569d8c020",
+            "bytes": 54886
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/053.bin",
+            "sha256": "3b34987e96f5e7bf24f8012803f2eadd807fe6bef478cbc2e4cfc5482cf3c5d9",
+            "bytes": 49960
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/057.bin",
+            "sha256": "090d286e85234bfbeb499f04a212b9c3f96c51df0471eb450a3fbd96129aac52",
+            "bytes": 52291
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/061.bin",
+            "sha256": "5f925313eb9fc392c1bc8e6fa4cf20fe17bb32175efb561c42a317098e1e019b",
+            "bytes": 49299
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/063.bin",
+            "sha256": "4dbb1ab0513f427d20ee45a70bf4d04ef6d6ab07c783c6e715237b7e8accd958",
+            "bytes": 55667
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/069.bin",
+            "sha256": "bc459529f6401b7d6ba31423992cde718adba2a35b9bb469cb5e4acd904deebf",
+            "bytes": 56320
+          },
+          {
+            "path": "/workspace/opennoise/.cache/acousticbrainz-benchmark-metadata-20260930-v1/raw/071.bin",
+            "sha256": "d336df2474f6b0727bb4095550ab8771cabb2b637b6b5e666141c72db3fb5931",
+            "bytes": 56412
+          }
+        ],
+        "failures": [],
+        "supported": true,
+        "maximum_rss_bytes": 16216064,
+        "scope": "No original MusicBrainz mixed search/tag, high-level classifier or benchmark membership fields enter the numeric projection."
+      }
+    },
+    {
+      "path": "/dev/shm/opennoise-v8-audio-native-boundary-check-20261003-v1.json",
+      "sha256": "6dc96e8b4ea84c1b87fcead864d10fc3f2619f66990691d98237efee8419851b",
+      "bytes": 374,
+      "result": {
+        "reviewer": "Codex AI engineering agent /root/full_input_legal_boundary_review",
+        "native_ZIP_audio_members_independently_decoded": 8,
+        "CRC_size_filename_and_export_bytes_match": true,
+        "failures": [],
+        "supported": true,
+        "maximum_rss_bytes": 21405696,
+        "scope": "Eight original FMA 30-second ZIP members unchanged; no audio adaptation or model-training use."
+      }
+    }
+  ],
+  "criteria": [
+    {
+      "criterion": "source-level licenses and permitted projections verified against raw receipts",
+      "decision": "supported",
+      "scope": "Every source role of the exact full retained-input v8 receipt, including inherited source facts and frozen additive model inputs.",
+      "evidence": [
+        "official_license_bodies",
+        "checks",
+        "pins",
+        "additional_independent_native_proofs"
+      ],
+      "reason": "Raw retained official MusicBrainz licensing distinguishes CC0 core from NC-SA supplementary data; the complete 2999670-row identity stream contains only artist_mbid/name. Native raw Wikidata P136 reconstruction accounts for all 10309 artist genre sets and all 1018 genre QIDs. Recording credits and URL relationships use exact MusicBrainz core allowlists. AcousticBrainz numeric medians additionally match 18 native CC0 endpoint responses and 306 scalar cells. Native FMA README assigns metadata CC BY 4.0 and per-track audio licenses separately; native CSV declarations independently match every selected audio license. Metadata/Librosa feature ranges and original saved-model/derivative bindings match; no audio or EchoNest feature input enters those models."
+    },
+    {
+      "criterion": "optional NC/SA packs excluded from unrestricted core and correctly labeled derivatives",
+      "decision": "supported",
+      "scope": "CC0 identity/claim core, FMA metadata/model namespaces, and separately labeled unchanged per-track audio collection in v8; no blanket unrestricted license claimed for the whole export.",
+      "evidence": [
+        "declared_roles",
+        "audio_tracks",
+        "additional_independent_native_proofs",
+        "checks"
+      ],
+      "reason": "The optional MusicBrainz genre/tag NC-SA packs and alternative SA coordinate pack are absent from construction/model roles. Native Wikidata facts, not those associations, independently account for every exported observed artist genre. FMA context/map/membership outputs retain CC BY 4.0 and visible FMA attribution; experimental source completion retains CC0 source provenance. The two CC BY-SA 4.0 audio files (124391 and 126602) remain original source bytes in fma-listening with per-track title/creator/source/license credit; eight raw ZIP members independently decode to exactly those exported files. The CC0 core never contains these audio bytes or relabels them as unrestricted audio."
+    },
+    {
+      "criterion": "dated Every Noise observations used only for separate evaluation",
+      "decision": "supported",
+      "scope": "Dated historical reference remains outside v8 source and model construction; source licenses do not authorize live reference reuse beyond this stated evaluation role.",
+      "evidence": [
+        "historical_evaluation",
+        "declared_roles",
+        "checks"
+      ],
+      "reason": "Historical reference records source_data_date 2023-11-19, the pinned source snapshot/hash, evaluation_only_no_construction_or_training, and live_site_verified false. The full-input constructors and three retained model implementations accept explicit native source roles; none reads the historical reference or its labels/coordinates/memberships. The complete output inventory and detail scan contain no Every Noise URL or P9881 field. Native typed genre context allows P31/P279, and observed genres derive P136, so a Wikidata P9881 identifier is not a route for scraped target data into construction."
+    }
+  ],
+  "engineering_conclusion": "All three original legal-input-boundaries criteria are supported for the exact full retained-input v8 route. This report supplies engineering evidence for the parent reviewer; it does not alter the acceptance dossier or grant deployment authority.",
+  "boundary_notes": [
+    "MusicBrainz user genres/tags are supplementary NC-SA associations, not CC0 core genre facts. No such field is silently covered by a hardcoded CC0 label: all exported observed genre sets were independently reconstructed from native Wikidata bytes.",
+    "The inherited cultural-context cohort was originally selected using local noncommercial artist_genre strata. Its retained manifest explicitly records removal of cohort.source_genres, cohort.selection_stratum and selection.selection_strata. This selection history is retained as provenance; the actual output claims are independently obtained CC0 Wikidata assertions. The unrestricted full identity denominator includes every native core artist rather than only that selected cohort. None of the three current model input loaders consumes those NC associations or cohort strata.",
+    "The inherited acoustic summary comes from a research wrapper with model/product promotion denied. The reusable native CC0 endpoint data dedication was independently inspected; only scalar descriptor values and exact identities are extracted. Mixed MusicBrainz search/tag responses, benchmark memberships and high-level classifiers are excluded from this projection. The v8 acoustic field remains labeled projection_receipt_only; this review additionally checked available native numeric bytes without changing that historical custody label.",
+    "The eight audio licenses are five CC BY, two CC BY-SA and one CC0. SA files form part of a per-track labeled listening collection; there is no new adapted-audio output or audio-trained model here. Separately licensed FMA metadata/features do not inherit the individual audio license merely because they describe the same tracks.",
+    "Blended ListenBrainz/MLHD counts have unresolved reuse permission and remain excluded. Their permission is not required to support this v8 core/source boundary, because the declared route does not consume them.",
+    "Construction changed_source_files includes documentation/evaluation evidence; these are code/custody records, not training fields. Raw license HTML is evidence of provider grants and is not a feature input."
+  ],
+  "limitations": [
+    "Engineering review based on retained provider declarations and byte custody, not legal counsel or a judicial determination; no new source requests were made.",
+    "Remote full MusicBrainz/FMA archive hashes remain explicitly unverified; retained complete member/prefix/range custody and exact permitted projections are the claim.",
+    "Native descriptor/model mathematical fits were not rerun in this review. Their input licenses, source bytes, fixed model bindings and independent retained source-replay reports were inspected; current v8 output hashes were all checked.",
+    "This review supplies no independent human musical judgments, no global coverage claim, no final browser certification, and no all-twelve-gates acceptance decision."
+  ],
+  "reviewed_implementation_paths": [
+    "src/opennoise/ingest/musicbrainz/core_artist_identities.py",
+    "src/opennoise/pipeline/portable_foundation.py",
+    "src/opennoise/pipeline/full_input_foundation.py",
+    "src/opennoise/pipeline/full_input_context.py",
+    "src/opennoise/pipeline/full_input_assembly.py",
+    "src/opennoise/pipeline/full_input_research.py",
+    "src/opennoise/ingest/wikidata/entity_evidence.py",
+    "src/opennoise/ingest/wikidata/genre_context.py",
+    "src/opennoise/ingest/open_cultural_source.py",
+    "src/opennoise/serving/metadata/recording_facts.py",
+    "src/opennoise/serving/metadata/artist_links.py",
+    "src/opennoise/serving/metadata/fma_listening.py",
+    "src/opennoise/ingest/fma/corpus.py",
+    "src/opennoise/ml/fma_sonic_map.py",
+    "src/opennoise/ml/fma_memberships.py",
+    "src/opennoise/ml/wikidata_artist_completion.py",
+    "src/opennoise/analysis/acoustic_representation.py",
+    "src/opennoise/analysis/everynoise_parity.py",
+    "src/opennoise/pipeline/foundation.py",
+    "tests/test_fma_permitted_listening.py",
+    "tests/test_exact_fma_bridge_and_listening.py",
+    "tests/test_full_input_foundation.py"
+  ]
+}
