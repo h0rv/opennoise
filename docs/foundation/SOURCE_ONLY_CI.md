@@ -1,5 +1,14 @@
 # Source-only clean-checkout checks
 
+Clean-checkout [run 37097419855](https://github.com/h0rv/opennoise/actions/runs/37097419855)
+passed on exact public commit `2038417301d1775956271c16351eb92fa6844b1c`:
+whole formatting, lint and typing; 43 passing Node tests with nine optional
+export/input skips; 1,696 Python tests with 36 skips and no failures.
+The [receipt](evidence/source-only-ci-2038417-20261003.json) binds this source
+commit, tree, job and actual tool versions. It includes saved-model reconstruction
+from the public text recipe. These results do not certify the current full-input
+v8 website: its separate browser evidence remains blocked by local memory limits.
+
 `.github/workflows/check.yml` runs the existing required `poe check` on a fresh
 Ubuntu checkout for pushes, pull requests and manual dispatch. It installs Node
 24 and Python 3.13, invokes `poe sync` to install the locked dependencies, then
@@ -12,6 +21,11 @@ the existing Poe check. Clean-checkout run `37096763792` passed whole formatting
 lint and typing, then concurrent Chromium starts timed out in three browser
 cases. Serial execution bounds competing browser processes; it removes no
 assertions and does not turn missing-export skips into current-export evidence.
+
+Every contract honors `CHROMIUM_PATH`. CI verifies and uses its installed Google
+Chrome binary explicitly, avoiding incidental Chromium launcher selection;
+startup failures retain bounded stderr and process exit details. Neither browser
+timeouts nor behavioral assertions were relaxed.
 
 The existing check runs formatting, lint, full typing, all static Node contracts
 and Python unittest discovery. Tests that already require unavailable retained

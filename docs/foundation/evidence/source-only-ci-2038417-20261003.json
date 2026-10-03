@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "kind": "source-only-clean-checkout-validation",
+  "date_utc": "2026-10-03",
+  "commit": "2038417301d1775956271c16351eb92fa6844b1c",
+  "tree": "3089a39ac9b9a89b25954909047a5e4535080bf2",
+  "run_id": 37097419855,
+  "job_id": 111130079971,
+  "url": "https://github.com/h0rv/opennoise/actions/runs/37097419855",
+  "conclusion": "success",
+  "commands": [
+    "poe sync",
+    ".venv/bin/poe check"
+  ],
+  "python": "3.13.14",
+  "node": "24.21.0",
+  "browser": "Google Chrome 154.0.8037.57",
+  "checks": {
+    "ruff_format": "1444 files already formatted",
+    "ruff_lint": "passed",
+    "typing": "passed",
+    "node_tests": {
+      "total": 52,
+      "passed": 43,
+      "failed": 0,
+      "skipped": 9
+    },
+    "python_tests": {
+      "total": 1696,
+      "failed": 0,
+      "skipped": 36,
+      "seconds": 55.756
+    }
+  },
+  "scope": "Fresh public checkout; all required source checks. Optional current-export/input browser tests remain skipped. Does not establish current v8 website behavior, native full-source refitting, musical relevance or Every Noise parity.",
+  "jobs": [
+    {
+      "id": 111130079971,
+      "name": "Clean-checkout poe check",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37097419855,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run astral-sh/setup-uv@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install Python 3.13",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify the browser executable used by contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Install locked project dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run required source checks with locked project Poe",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run astral-sh/setup-uv@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ]
+    }
+  ]
+}

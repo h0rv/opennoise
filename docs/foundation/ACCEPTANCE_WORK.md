@@ -6,12 +6,20 @@ declared retained source denominator; it does not impersonate either missing
 sealed legacy artifact. Rebuilding every retained input is an engineering result,
 not proof of global musical coverage. No gate or criterion is relaxed.
 
-The continuation starts from public commit
-`2f667158bf68d01ad43ccc408115b2a46e4b1752`. Running
-`scripts/check_foundation_acceptance.py --json` returns exit 1, valid bindings and
-twelve unmet gates. Its descriptions mix older testimony and newer receipts;
-update descriptions only after new replay or review evidence exists. Preserve
-the older artifacts and reviews as dated evidence.
+The continuation began from public commit
+`2f667158bf68d01ad43ccc408115b2a46e4b1752`. The latest recorded checker result,
+`/dev/shm/opennoise-acceptance-source-ci-2038417-20261003.json`, returns exit 1:
+all 37 evidence bindings are valid, full-corpus rebuild has one recorded pass,
+and the other eleven gates remain unmet. That pass is a named AI engineering
+review of the retained-source reconstruction route, not an automatic semantic
+pass or a human musical judgment. The
+original twelve gates and their criteria remain unchanged. Preserve older
+artifacts and reviews as dated evidence.
+
+[Source CI](SOURCE_ONLY_CI.md) passed on exact commit
+`2038417301d1775956271c16351eb92fa6844b1c`: 1,696 Python tests with 36 skips,
+43 passing Node tests and nine skips, and whole formatting, lint and typing. This binds
+the checked source commit; it does not certify or rebind the separate v8 export.
 
 | Gate | Engineering and evidence work being pursued | Genuine external dependency |
 | --- | --- | --- |
@@ -27,6 +35,30 @@ the older artifacts and reviews as dated evidence.
 | Defining recordings | Acquire literal recording credits, preserve release/recording distinction, report full selected-discography denominator, freeze representative candidates and selection method | Listeners must judge introduction fit and diversity; exact metadata and popularity cannot manufacture defining status |
 | Listening and playlists | Resolve exact recording-specific provider assertions where licensed, retain provider/date/region/access states, implement permitted outbound listening and exportable lists; distinguish verified availability from unresolved links | Provider regional playback access and independent central/recent/emerging judgments are needed; artist links alone do not pass |
 | Plain accessible interface | Certify current full-input export search, selection, complete pagination, history, deep links, reload, keyboard skip links, mobile and source/inference labels with exact export hashes | No external dependency for engineering/browser evidence; a full product usability review still assesses the declared scope |
+
+
+The next recording-catalog step needs a fresh bounded full-150 plan: the observed
+per-artist counts imply 1,714 pages at limit 100 plus 150 closing count checks.
+Freeze request and byte budgets, retain every page and failure, verify exact
+credits, and detect changed counts before declaring pagination complete. The
+161,349 advertised count sum is not a count of unique recordings. Existing
+first-page credits remain arbitrary source examples; neither complete metadata
+nor source popularity supplies defining-recording judgments.
+
+Prepare a small Discogs pilot with strict source-asserted identity bridges and
+an explicit field/license audit before reuse. Preserve release versus recording
+identity and unresolved bridges; metadata permission does not grant media or
+image rights. For ListenBrainz, obtain pure-source inputs or documented grant
+evidence with exact source and license bindings. Blended ListenBrainz/MLHD counts
+remain isolated while their unrestricted serving/training grant is unresolved.
+
+Actual v8 browser certification remains blocked by local memory. Reclaiming memory
+by deleting retained recovery artifacts is pending user approval; this is an internal
+engineering constraint, not an external evidence dependency. Once memory permits,
+certify the exact v8 bytes and the original discovery/accessibility flows. Real
+independent listeners remain an external requirement: collect their actual
+blinded judgments, familiarity, conflicts, uncertainty and permitted listening
+access without filling any answer in advance.
 
 Artifacts are added to the dossier only with exact file size and SHA256, source,
 license, role and honest scope. A full-input reconstruction report must spell out
