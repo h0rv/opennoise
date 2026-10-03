@@ -38,11 +38,25 @@ class OverlappingStyles:
         self, profiles: StyleProfiles, artists: Sequence[str]
     ) -> dict[str, tuple[str, ...]]:
         """Rank hypotheses using deduplicated authority, excluding all known values."""
+        return {
+            artist: tuple(value for value, _score in values)
+            for artist, values in self.score_batch(profiles, artists).items()
+        }
+
+    def score_batch(
+        self, profiles: StyleProfiles, artists: Sequence[str]
+    ) -> dict[str, tuple[tuple[str, float], ...]]:
+        """Expose raw association scores without changing the frozen top-ten ranking.
+
+        Missing queries and primary-cold queries abstain. Raw scores are not
+        probabilities of genre membership or source observation.
+        """
         if len(artists) > MAX_BATCH:
             raise ValueError("overlap ranking batch exceeds bound")
-        scores = (_weighted_cues(profiles, artists, self.vocabulary) @ self.associations).tocsr()
-        result: dict[str, tuple[str, ...]] = {}
-        for row, artist in enumerate(artists):
+        present = tuple(artist for artist in artists if artist in profiles.music)
+        scores = (_weighted_cues(profiles, present, self.vocabulary) @ self.associations).tocsr()
+        result: dict[str, tuple[tuple[str, float], ...]] = dict.fromkeys(artists, ())
+        for row, artist in enumerate(present):
             if not profiles.artist_music[artist]:
                 result[artist] = ()
                 continue
@@ -54,7 +68,7 @@ class OverlappingStyles:
                 dtype=np.int64,
             )
             chosen = eligible[np.lexsort((columns[eligible], -values[eligible]))[:10]]
-            result[artist] = tuple(self.vocabulary[columns[i]] for i in chosen)
+            result[artist] = tuple((self.vocabulary[columns[i]], float(values[i])) for i in chosen)
         return result
 
 
