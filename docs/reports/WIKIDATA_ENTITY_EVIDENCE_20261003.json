@@ -1,0 +1,240 @@
+{
+  "artist_native_label_language_coverage": {
+    "ar": 1770,
+    "de": 7175,
+    "en": 9703,
+    "es": 9272,
+    "fr": 9116,
+    "hi": 177,
+    "id": 1130,
+    "it": 6824,
+    "ja": 3194,
+    "ko": 1571,
+    "pl": 3235,
+    "pt": 4073,
+    "ru": 3823,
+    "sv": 4567,
+    "tr": 2413,
+    "zh": 2091
+  },
+  "artists_with_direct_P136": 9992,
+  "artists_with_multiple_retained_language_labels": 9619,
+  "artists_with_property": {
+    "P136": 9992,
+    "P1412": 3405,
+    "P19": 4464,
+    "P27": 4787,
+    "P495": 4424,
+    "P569": 4767,
+    "P571": 3042,
+    "P740": 2617
+  },
+  "batch_streamed_replay_resource": {
+    "elapsed_seconds": 26.83773945899884,
+    "exit_status": 0,
+    "max_rss_kib": 74852
+  },
+  "batch_streamed_replay_result": {
+    "context_entity_count": 4549,
+    "outcomes": {
+      "P434_not_unique_exact": 8,
+      "exact_identity": 9992
+    },
+    "pack_bytes": 367225562,
+    "pack_files": 587,
+    "projection_sha256": "89b86d4419741856285184539175c57a4aec59c60790a4ad16e3b1c99c84fcd1",
+    "receipt_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+    "selected_artist_count": 10000,
+    "verified": true
+  },
+  "batch_streamed_verifier_source_sha256": "ee3dce0f8888c91588f08ba235a84fae4cf6218d87f7c37e62dc0f6b526369d2",
+  "capture_count": 291,
+  "capture_finished_utc": "2026-10-03T02:25:22.684974+00:00",
+  "capture_started_utc": "2026-10-03T02:16:52.920772+00:00",
+  "direct_P136_qids_with_any_native_labels": 1003,
+  "direct_P136_qids_with_en_labels": 998,
+  "direct_P136_statement_count": 18750,
+  "distinct_direct_P136_qids": 1003,
+  "http_statuses": {
+    "200": 291
+  },
+  "independent_exact_identity_count": 9992,
+  "independent_replay_result": {
+    "context_entity_count": 4549,
+    "outcomes": {
+      "P434_not_unique_exact": 8,
+      "exact_identity": 9992
+    },
+    "pack_bytes": 367225562,
+    "pack_files": 587,
+    "projection_sha256": "89b86d4419741856285184539175c57a4aec59c60790a4ad16e3b1c99c84fcd1",
+    "receipt_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+    "selected_artist_count": 10000,
+    "verified": true
+  },
+  "official_licensing_capture": {
+    "HTML_is_license_proof_not_a_model_input": true,
+    "bytes": 64920,
+    "cc0_literal_present": true,
+    "finished_utc": "2026-10-03T02:28:59.131150+00:00",
+    "http_status": 200,
+    "sha256": "b1a436154a36136476ad4bfd867027dc393db17bcb43414b4cb75b2f28079c75",
+    "started_utc": "2026-10-03T02:28:58.304212+00:00",
+    "structured_data_only": true,
+    "url": "https://www.wikidata.org/wiki/Wikidata:Licensing"
+  },
+  "projection_sha256": "89b86d4419741856285184539175c57a4aec59c60790a4ad16e3b1c99c84fcd1",
+  "property_distinct_literal_targets": {
+    "P136": 1003,
+    "P1412": 157,
+    "P19": 2530,
+    "P27": 213,
+    "P495": 96,
+    "P569": 4661,
+    "P571": 193,
+    "P740": 1031
+  },
+  "property_statement_count": {
+    "P136": 18750,
+    "P1412": 4090,
+    "P19": 4628,
+    "P27": 5515,
+    "P495": 4471,
+    "P569": 5271,
+    "P571": 3062,
+    "P740": 2657
+  },
+  "scope_limits": [
+    "Capped native scan, 20001 raw bindings/19998 valid; 10000 UUID-hash selected before hydration; not worldwide representative census.",
+    "Frozen v3 retains original valid-row cap plan; original query overflow sentinel is not selected. Future script freezes 20000 raw bindings before quarantine.",
+    "Native P136 source statements, not calibrated probabilities or listener judgments.",
+    "P27 citizenship / P495 origin / P740 formation place / P19 birthplace are literal entity assertions, not regional musical membership.",
+    "P1412 language-use assertions are not inferred language of recorded music.",
+    "P571 formation dates and P569 births are literal entity dates, not musical era classification.",
+    "Contexts are labels only; no inferred P31/P279 hierarchy from this pack.",
+    "All retained source references remain in exact raw bodies; compact projection has statement IDs, counts, qualifiers and raw body pointers."
+  ],
+  "selected_artist_count": 10000,
+  "source_custody_receipt_sha256": "3725857bf99fb58bd260b0c847a61b4ac4b2a9814793823e808886326ef6fbef",
+  "source_receipt_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+  "source_response_bytes": 307604448,
+  "successful_captures": 291,
+  "top_native_genre_labels": [
+    {
+      "native_en_label": "opera",
+      "qid": "Q1344",
+      "statement_count": 1933
+    },
+    {
+      "native_en_label": "indie rock",
+      "qid": "Q183504",
+      "statement_count": 1771
+    },
+    {
+      "native_en_label": null,
+      "qid": "Q3071",
+      "statement_count": 1085
+    },
+    {
+      "native_en_label": "traditional folk music",
+      "qid": "Q235858",
+      "statement_count": 987
+    },
+    {
+      "native_en_label": "death metal",
+      "qid": "Q483251",
+      "statement_count": 589
+    },
+    {
+      "native_en_label": "thrash metal",
+      "qid": "Q483352",
+      "statement_count": 502
+    },
+    {
+      "native_en_label": "alternative rock",
+      "qid": "Q11366",
+      "statement_count": 371
+    },
+    {
+      "native_en_label": "pop music",
+      "qid": "Q37073",
+      "statement_count": 311
+    },
+    {
+      "native_en_label": "gospel music",
+      "qid": "Q180268",
+      "statement_count": 282
+    },
+    {
+      "native_en_label": "classical music",
+      "qid": "Q9730",
+      "statement_count": 275
+    },
+    {
+      "native_en_label": "rock music",
+      "qid": "Q11399",
+      "statement_count": 227
+    },
+    {
+      "native_en_label": "alternative hip-hop",
+      "qid": "Q438503",
+      "statement_count": 225
+    },
+    {
+      "native_en_label": "melodic death metal",
+      "qid": "Q253918",
+      "statement_count": 224
+    },
+    {
+      "native_en_label": "hip-hop",
+      "qid": "Q11401",
+      "statement_count": 205
+    },
+    {
+      "native_en_label": "jazz",
+      "qid": "Q8341",
+      "statement_count": 193
+    },
+    {
+      "native_en_label": "post-punk",
+      "qid": "Q598929",
+      "statement_count": 182
+    },
+    {
+      "native_en_label": "nu metal",
+      "qid": "Q263734",
+      "statement_count": 182
+    },
+    {
+      "native_en_label": "Latin pop",
+      "qid": "Q547137",
+      "statement_count": 180
+    },
+    {
+      "native_en_label": "dancehall",
+      "qid": "Q474027",
+      "statement_count": 165
+    },
+    {
+      "native_en_label": "symphony",
+      "qid": "Q9734",
+      "statement_count": 165
+    }
+  ],
+  "upstream_source_scan_custody": {
+    "capture": {
+      "body_complete": true,
+      "failure": null,
+      "http_status": 200,
+      "raw_path": "initial.json",
+      "response_bytes": 6808977,
+      "response_sha256": "465f0d1c80a63a94f93a081eed63723b861e4c731b66bc07100629596ec156bd"
+    },
+    "new_transport_claim": false,
+    "query": "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\nPREFIX wd: <http://www.wikidata.org/entity/>\nSELECT ?artist ?mbid ?genre WHERE {\n  ?genre wdt:P31 wd:Q188451 .\n  ?artist wdt:P434 ?mbid; wdt:P136 ?genre .\n}\nLIMIT 20001",
+    "reused_upstream_response": true,
+    "upstream_manifest_acquired_utc": "2026-10-03T00:58:34.468020+00:00",
+    "upstream_manifest_sha256": "d7a7e57aa5b2bf8ff8a989373c50ca3de342d8ba31e7ae3d46eb74f792b89e95",
+    "upstream_receipt_sha256": "6d7642320e49dbe2c7f1576538b3bdcfeaa07e59bea9ba92f0d7983a1248da3e"
+  }
+}

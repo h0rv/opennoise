@@ -1,0 +1,60 @@
+{
+  "P279_distinct_edges": 2048,
+  "P279_distinct_targets": 729,
+  "P279_observed_vocabulary_distinct_edges": 997,
+  "P279_statement_count": 2048,
+  "P279_targets_without_hydrated_labels": 163,
+  "P31_distinct_typed_edges": 1789,
+  "P31_similarity_edges": 0,
+  "P31_statement_count": 1789,
+  "capture_count": 28,
+  "capture_finished_utc": "2026-10-03T02:37:01.755163+00:00",
+  "capture_started_utc": "2026-10-03T02:36:47.702005+00:00",
+  "http_statuses": {
+    "200": 28
+  },
+  "independent_replay_result": {
+    "P279_statement_count": 2048,
+    "P31_statement_count": 1789,
+    "http_statuses": {
+      "200": 28
+    },
+    "native_entity_count": 1317,
+    "observed_P136_qid_count": 1003,
+    "pack_bytes": 6442994,
+    "pack_files": 60,
+    "parent_qids_omitted_due_to_cap": 0,
+    "parent_qids_requested": 314,
+    "projection_sha256": "fc74ba372292a9d5125f7d8ad9f63885b16087a690bcfe489974a2a79696781f",
+    "receipt_sha256": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9",
+    "source_receipt_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+    "verified": true
+  },
+  "license": "CC0-1.0",
+  "license_custody_receipt_sha256": "3725857bf99fb58bd260b0c847a61b4ac4b2a9814793823e808886326ef6fbef",
+  "native_entity_count": 1317,
+  "observed_P136_qid_count": 1003,
+  "observed_P136_qids_with_en_label": 998,
+  "observed_P136_qids_with_native_P279": 973,
+  "pack_bytes": 6442994,
+  "pack_files": 60,
+  "parent_qids_omitted_due_to_cap": 0,
+  "parent_qids_requested": 314,
+  "projection_sha256": "fc74ba372292a9d5125f7d8ad9f63885b16087a690bcfe489974a2a79696781f",
+  "raw_external_metadata_audit": {
+    "consumed_every_noise_identifier_properties": 0,
+    "entity_qids": [
+      "Q108951349",
+      "Q116296482"
+    ],
+    "literal_every_noise_reference_count": 2,
+    "property": "P9881",
+    "scope": "Full API provenance snapshots retain unconsumed P9881 references; projection admits only native P31/P279/labels. No Every Noise ID/link is used as a feature, roster selector, training label, or identity join."
+  },
+  "receipt_sha256": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9",
+  "scope": "Source-defined P136 vocabulary, P31 typeclaims and P279 subclass claims; no inferred Spotify granularity or human musical validation.",
+  "source_receipt_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+  "source_response_compressed_bytes": 2749611,
+  "source_response_original_bytes": 15481281,
+  "verified": true
+}
