@@ -6,6 +6,7 @@ import hashlib
 import tempfile
 import unittest
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from opennoise.common import canonical_json
 from opennoise.serving.metadata.recording_facts import recording_source_url
@@ -14,12 +15,15 @@ from opennoise.serving.metadata.selected_recording_catalog import (
     project_browse,
 )
 
+if TYPE_CHECKING:
+    from typing import Any
+
 ARTIST = "00000000-0000-0000-0000-000000000001"
 OTHER = "00000000-0000-0000-0000-000000000002"
 RECORDING = "00000000-0000-0000-0000-000000000003"
 
 
-def recording(artist: str = ARTIST) -> dict:
+def recording(artist: str = ARTIST) -> dict[str, Any]:
     """Use literal core-only credits, independent of display names."""
     return {
         "id": RECORDING,
@@ -28,7 +32,7 @@ def recording(artist: str = ARTIST) -> dict:
     }
 
 
-def page(rows: list, count: int = 999, offset: int = 0) -> bytes:
+def page(rows: list[dict[str, Any]], count: int = 999, offset: int = 0) -> bytes:
     """Retain native advertised count independently of the returned first page."""
     return canonical_json(
         {"recording-count": count, "recording-offset": offset, "recordings": rows}
