@@ -1,0 +1,21 @@
+{
+  "schema": "opennoise-integrated-validation-v1",
+  "validated_local_commit": "dfbb161b62c09a45384ed3cfbedef985f9ee5bd2",
+  "validated_tree": "474b8194e19098dd2eec5f40686167b64c2053ee",
+  "checkout": "Fresh detached worktree on tmpfs with exact tracked tree; existing locked root environment reused, no dependencies installed",
+  "runner": "poe check",
+  "exit_code": 0,
+  "python_tests": 1593,
+  "python_skips": 36,
+  "static_browser_tests": 47,
+  "static_browser_skips": 0,
+  "format_lint_types": "passed",
+  "optional_actual_exports": {
+    "foundation": "/dev/shm/opennoise-skip-recovery-taxonomy-v1/artists",
+    "taxonomy": "/dev/shm/opennoise-skip-recovery-taxonomy-v1",
+    "fma": "/dev/shm/opennoise-skip-recovery-fma-v2"
+  },
+  "log_sha256": "a740bc05a2c437633736d8c291e012317159740845cb3a9d868b6a1726af0a3c",
+  "log_bytes": 62758,
+  "limits": "Input-dependent Python skips remain explicit. Source/native model audits are separately bound; test success does not establish musical truth or complete parity."
+}

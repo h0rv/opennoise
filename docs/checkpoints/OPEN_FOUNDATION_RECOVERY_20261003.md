@@ -64,6 +64,15 @@ links, history, reload and mobile/keyboard access. Skip links focus visible main
 content without changing the selected route. Real Chromium contracts exercise
 these behaviors. The [design requirements](../serving/DESIGN.md) remain binding.
 
+Combined `poe check` on the exact integrated tracked tree passed formatting,
+Ruff, types, all 47 static/browser tests without skips, and 1,593 Python tests
+with 36 explicit input-dependent skips. The check used a fresh detached checkout
+on tmpfs and the existing locked environment, preserving the nearly full original
+disk. Actual foundation, taxonomy and FMA exports were supplied to the browser
+contracts. The [validation receipt](../foundation/evidence/integrated-validation-20261003.json)
+binds the checked revision and retained log. Test temp storage now initializes
+before browser startup; every browser profile uses a fresh designated temp path.
+
 ## Genuine remaining acceptance gaps
 
 The two sealed legacy inputs remain absent. The new source-only SQLite and
