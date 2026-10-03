@@ -1,4 +1,5 @@
 """Replay checks for the curated independent Wikidata CC0 example."""
+
 from __future__ import annotations
 
 import json
