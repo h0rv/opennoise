@@ -16,7 +16,8 @@ class ProbeTests(fresh_process.FreshProcessTestCase):
 
     def test_success(self) -> None:
         self.assertEqual(
-            fresh_process._ACTIVE_METHOD_ID, self.id()  # noqa: SLF001 - Exact worker identity.
+            fresh_process._ACTIVE_METHOD_ID,
+            self.id(),  # noqa: SLF001 - Exact worker identity.
         )
         self.assertNotIn("tests.test_wikidata_source_recovery_calibration", sys.modules)
         self.assertNotIn("numpy", sys.modules)
