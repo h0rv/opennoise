@@ -5,8 +5,9 @@ beyond the earlier electronic-focused benchmark. Its roster contains 40 extra
 curated artists selected across jazz, classical, metal, folk, blues, country,
 hip-hop, electronic, and regional scenes, plus the baseline Aphex Twin and Four
 Tet. The roster was fixed without Every Noise memberships, coordinates, or
-examples and without MusicBrainz genre associations. Context strings in the
-manifest document the roster's intended diversity; they are not evidence labels.
+examples and without MusicBrainz genre associations. Its editorial coverage
+intent is described in prose only; no genre-like selection labels enter the
+machine-readable cohort or evidence projection.
 
 The preserved discovery capture uses exact English labels and Wikidata P434 to
 record each candidate's MusicBrainz UUID and Wikidata QID. Three candidates
