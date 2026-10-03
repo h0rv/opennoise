@@ -1,0 +1,251 @@
+{
+  "browser": {
+    "artist_receipt_sha256": "b0b894dfe8205f2398d06ce7bbe0c1575bd899fb9c0f1bb27a0863a417b1ce50",
+    "build_files_sha256": {
+      "data.json": "12474175b0db215c512ec21a3014034f4c8c340f158f97aff5f6fa5b64580b96",
+      "graph.json": "4a495af23dc4f372e1d83311d86324007a2bdbebd4fa63f98d34f5f069d3b6ee",
+      "index.html": "aab40119475f0a9555cebf41fed558ae9386871132bb04034c667da8d5ce56f4",
+      "layout.json": "da8ea0090bbe0c2090d797f4569effbc1935f4340b77d4ecd5f7f25c45feffa2",
+      "portable-taxonomy.css": "3e10b60cd17fed059dc432f7ce19692102baa4699aa9331b0d6a95864d3a1c03",
+      "portable-taxonomy.mjs": "5981cad6d177f46b401ef5778824acb7e103116643e58a781c3bd40ca46a66cb"
+    },
+    "checks": {
+      "all1000_genres_reachable": true,
+      "back_forward": true,
+      "component_local_svg": true,
+      "exact_direct_artist_route": true,
+      "exact_id_keyboard_search": true,
+      "isolated_genre_abstention": true,
+      "mobile_no_overflow": true,
+      "no_embedded_media": true,
+      "no_external_requests": true,
+      "no_inherited_membership": true,
+      "reload": true,
+      "svg_keyboard_navigation": true
+    },
+    "counts": {
+      "components": 357,
+      "genres": 1000,
+      "isolated": 317,
+      "positioned": 611,
+      "selected_p279_edges": 717,
+      "unpositioned": 389
+    },
+    "errors": [],
+    "passed": true,
+    "request_count": 24,
+    "revision": "portable-taxonomy-browser-v1",
+    "scope": {
+      "across_component_semantics": false,
+      "artist_membership_inference": false,
+      "full_foundation_complete": false,
+      "historical_inputs_used": false,
+      "independent_musical_validation": false,
+      "selected_taxonomy_entities": 1000,
+      "selection_possibly_truncated": true,
+      "spotify_private_inputs_used": false
+    }
+  },
+  "counts": {
+    "components": 357,
+    "genres": 1000,
+    "isolated": 317,
+    "positioned": 611,
+    "selected_p279_edges": 717,
+    "unpositioned": 389
+  },
+  "date": "2026-10-03",
+  "evaluation": {
+    "all_node_fold_denominator": 5000,
+    "all_node_macro_recall_at_10": 0.008415238095238095,
+    "all_node_neighbor_jaccard": 0.40908619734668533,
+    "cold_query_directed_targets": 511,
+    "degree_baseline_all_node_macro_recall_at_10": 0.043505555555555554,
+    "degree_baseline_micro_recall_at_10": 0.17224546722454673,
+    "directed_target_count": 1434,
+    "disconnected_directed_targets": 1122,
+    "folds": [
+      {
+        "all_node_macro_recall_at_10": 0.0132,
+        "all_node_neighbor_jaccard": 0.40683140482668384,
+        "cold_query_directed_targets": 104,
+        "cold_training_nodes": 412,
+        "degree_baseline_all_node_macro_recall_at_10": 0.04481111111111111,
+        "degree_baseline_hits_at_10": 54,
+        "degree_baseline_micro_recall_at_10": 0.18493150684931506,
+        "directed_target_count": 292,
+        "disconnected_directed_targets": 224,
+        "fold": 0,
+        "heldout_undirected_edges": 146,
+        "hits_at_10": 17,
+        "micro_recall_at_10": 0.05821917808219178,
+        "nodes_without_heldout_targets": 794,
+        "train_edge_count": 571
+      },
+      {
+        "all_node_macro_recall_at_10": 0.0072499999999999995,
+        "all_node_neighbor_jaccard": 0.42272878932642893,
+        "cold_query_directed_targets": 105,
+        "cold_training_nodes": 414,
+        "degree_baseline_all_node_macro_recall_at_10": 0.0435,
+        "degree_baseline_hits_at_10": 46,
+        "degree_baseline_micro_recall_at_10": 0.17037037037037037,
+        "directed_target_count": 270,
+        "disconnected_directed_targets": 222,
+        "fold": 1,
+        "heldout_undirected_edges": 135,
+        "hits_at_10": 10,
+        "micro_recall_at_10": 0.037037037037037035,
+        "nodes_without_heldout_targets": 804,
+        "train_edge_count": 582
+      },
+      {
+        "all_node_macro_recall_at_10": 0.00870952380952381,
+        "all_node_neighbor_jaccard": 0.41225802830640373,
+        "cold_query_directed_targets": 100,
+        "cold_training_nodes": 408,
+        "degree_baseline_all_node_macro_recall_at_10": 0.048150000000000005,
+        "degree_baseline_hits_at_10": 52,
+        "degree_baseline_micro_recall_at_10": 0.18055555555555555,
+        "directed_target_count": 288,
+        "disconnected_directed_targets": 228,
+        "fold": 2,
+        "heldout_undirected_edges": 144,
+        "hits_at_10": 13,
+        "micro_recall_at_10": 0.04513888888888889,
+        "nodes_without_heldout_targets": 793,
+        "train_edge_count": 573
+      },
+      {
+        "all_node_macro_recall_at_10": 0.004416666666666667,
+        "all_node_neighbor_jaccard": 0.41942395057642784,
+        "cold_query_directed_targets": 100,
+        "cold_training_nodes": 409,
+        "degree_baseline_all_node_macro_recall_at_10": 0.03545,
+        "degree_baseline_hits_at_10": 40,
+        "degree_baseline_micro_recall_at_10": 0.14492753623188406,
+        "directed_target_count": 276,
+        "disconnected_directed_targets": 216,
+        "fold": 3,
+        "heldout_undirected_edges": 138,
+        "hits_at_10": 8,
+        "micro_recall_at_10": 0.028985507246376812,
+        "nodes_without_heldout_targets": 802,
+        "train_edge_count": 579
+      },
+      {
+        "all_node_macro_recall_at_10": 0.0085,
+        "all_node_neighbor_jaccard": 0.38418881369748237,
+        "cold_query_directed_targets": 102,
+        "cold_training_nodes": 410,
+        "degree_baseline_all_node_macro_recall_at_10": 0.04561666666666666,
+        "degree_baseline_hits_at_10": 55,
+        "degree_baseline_micro_recall_at_10": 0.17857142857142858,
+        "directed_target_count": 308,
+        "disconnected_directed_targets": 232,
+        "fold": 4,
+        "heldout_undirected_edges": 154,
+        "hits_at_10": 12,
+        "micro_recall_at_10": 0.03896103896103896,
+        "nodes_without_heldout_targets": 782,
+        "train_edge_count": 563
+      }
+    ],
+    "independent_musical_validity": false,
+    "micro_recall_at_10": 0.04184100418410042,
+    "node_count": 1000,
+    "scope": "source_P279_edge_reconstruction_only"
+  },
+  "excluded_p31_claim_count": 1549,
+  "export_receipt": {
+    "artist_receipt_sha256": "b0b894dfe8205f2398d06ce7bbe0c1575bd899fb9c0f1bb27a0863a417b1ce50",
+    "asset_files_sha256": {
+      "portable-taxonomy.css": "3e10b60cd17fed059dc432f7ce19692102baa4699aa9331b0d6a95864d3a1c03",
+      "portable-taxonomy.html": "aab40119475f0a9555cebf41fed558ae9386871132bb04034c667da8d5ce56f4",
+      "portable-taxonomy.mjs": "5981cad6d177f46b401ef5778824acb7e103116643e58a781c3bd40ca46a66cb"
+    },
+    "counts": {
+      "components": 357,
+      "genres": 1000,
+      "isolated": 317,
+      "positioned": 611,
+      "selected_p279_edges": 717,
+      "unpositioned": 389
+    },
+    "files_sha256": {
+      "data.json": "12474175b0db215c512ec21a3014034f4c8c340f158f97aff5f6fa5b64580b96",
+      "graph.json": "4a495af23dc4f372e1d83311d86324007a2bdbebd4fa63f98d34f5f069d3b6ee",
+      "index.html": "aab40119475f0a9555cebf41fed558ae9386871132bb04034c667da8d5ce56f4",
+      "layout.json": "da8ea0090bbe0c2090d797f4569effbc1935f4340b77d4ecd5f7f25c45feffa2",
+      "portable-taxonomy.css": "3e10b60cd17fed059dc432f7ce19692102baa4699aa9331b0d6a95864d3a1c03",
+      "portable-taxonomy.mjs": "5981cad6d177f46b401ef5778824acb7e103116643e58a781c3bd40ca46a66cb"
+    },
+    "full_foundation_acceptance": "incomplete",
+    "implementation_files_sha256": {
+      "src/opennoise/analysis/taxonomy_neighborhoods.py": "fa9bd7d8efbd0e6bed98fbdd6eade344b9720888f42ef20050a9a560d3de7e33",
+      "src/opennoise/common/hashing.py": "6ab394ee6ff00cdca25f4215a9dfcdb51dbab60b15a575c94c77a45627614400",
+      "src/opennoise/ingest/wikidata/open_genre_taxonomy.py": "352e435d64dfe0e99a62ecc1ca18311818e49fb8f5e1ecd522261fa18eb13952",
+      "src/opennoise/pipeline/portable_taxonomy.py": "98035d705e83a104b8d5e66d475880557a7c1dfd1967c1847ecc7e3cb10df773"
+    },
+    "legacy_sealed_release": false,
+    "license": "CC0-1.0",
+    "revision": "open-foundation-taxonomy-v1",
+    "scope": {
+      "across_component_semantics": false,
+      "artist_membership_inference": false,
+      "full_foundation_complete": false,
+      "historical_inputs_used": false,
+      "independent_musical_validation": false,
+      "selected_taxonomy_entities": 1000,
+      "selection_possibly_truncated": true,
+      "spotify_private_inputs_used": false
+    },
+    "source_files_sha256": {
+      "config/open_taxonomy_neighborhood_protocol_v1.json": "9ac488b93c448e94583388f9125c853a77ad2b334a87997fdc374a1c4d26b526",
+      "data/examples/open-genre-taxonomy/manifest.json": "48ff84cd20ef1762f11793bfa3eea34814a8372ea820281ffc8d5dc287cc6471",
+      "data/examples/open-genre-taxonomy/projection.json": "6adac8eac040a9d68686c493bcd70530154457f61afa2bedf597c92f03f47c6f",
+      "data/examples/open-genre-taxonomy/query-plan.json": "0b157c3bb2d596d14ae02f30d9f7d6e4e6b2940d582662da0d86aef2540a40d2",
+      "data/examples/open-genre-taxonomy/raw/request-00.body": "29403bb383a701a58bdcaa545dd5da43d525a501677cf92d362afdc89640027a",
+      "data/examples/open-genre-taxonomy/raw/request-01.body": "44c006da4e06c7bb0e145ae5d5bfa83ce31c70364c37fd58fb90a87170c619d8",
+      "data/examples/open-genre-taxonomy/raw/request-02.body": "868d2c7e0a74dbb1ae72474db5864c4fcb26125e8b0eceb2ed47b395db8432dd",
+      "data/examples/open-genre-taxonomy/raw/request-03.body": "d79b99282a23d5ede509851ca7464054307c841e07f50a7152300e38249271bb",
+      "data/examples/open-genre-taxonomy/raw/request-04.body": "84ca6d244e4319bfc6f20482202df3d5c0ee533931a30708fef897d33c22e537",
+      "data/examples/open-genre-taxonomy/raw/request-05.body": "5ee00106b4e3f9e06f86b3eb39ce8a5c51f24a4855e2e8630721d44cb90a554b",
+      "data/examples/open-genre-taxonomy/raw/request-06.body": "846581cda1fc05e3117d48424fcee57092e99649451369f41f6111d0db6c350c",
+      "data/examples/open-genre-taxonomy/receipt.json": "aa4200c099c988122bb391b607bfc39e8f605417439efbd044af39d61a2c7b8b"
+    }
+  },
+  "frozen_protocol_commit": "64d33eb",
+  "graph_file_sha256": "4a495af23dc4f372e1d83311d86324007a2bdbebd4fa63f98d34f5f069d3b6ee",
+  "graph_receipt": {
+    "artist_membership_inference": false,
+    "builder_sha256": "fa9bd7d8efbd0e6bed98fbdd6eade344b9720888f42ef20050a9a560d3de7e33",
+    "historical_inputs_used": false,
+    "independent_musical_validation": false,
+    "license": "CC0-1.0",
+    "output_sha256": "86db4b5c5a23e2347cdec41658e80570256cc6e89b8cfaa58c193c3adf35a01b",
+    "projection_sha256": "6adac8eac040a9d68686c493bcd70530154457f61afa2bedf597c92f03f47c6f",
+    "protocol_sha256": "9ac488b93c448e94583388f9125c853a77ad2b334a87997fdc374a1c4d26b526",
+    "revision": "open-taxonomy-neighborhoods-v1",
+    "settings": {
+      "coordinate_scope": "component_local_source_structure",
+      "edge_policy": "undirected_selected_P279_only",
+      "excluded_signals": [
+        "P31",
+        "type_anchor",
+        "names",
+        "artists",
+        "sonic"
+      ],
+      "folds": 5,
+      "maximum_depth": 3,
+      "minimum_layout_component_nodes": 4,
+      "neighbor_count": 10,
+      "seed": 20261002
+    },
+    "source_receipt_sha256": "aa4200c099c988122bb391b607bfc39e8f605417439efbd044af39d61a2c7b8b"
+  },
+  "interpretation": "Source graph recovery and structural stability only. Walk retrieval underperforms degree baseline; no independent musical validation or full-corpus coverage.",
+  "p279_outside_selected_cohort_count": 825,
+  "revision": "open-taxonomy-neighborhood-evidence-v1"
+}

@@ -91,3 +91,11 @@ every complete genre cohort, all ten native recording-credit benchmark routes,
 missing genre evidence, the listening list, mobile overflow and static-only
 network requests. `report.json` binds the checked export file hashes; screenshots
 are review evidence rather than assertions of musical quality.
+
+An optional `--profile portable-taxonomy` adds the independently captured 1,000
+Wikidata genre entities, P279-only source neighborhoods, component-local graph
+positions and explicit unpositioned genres. It links the unchanged portable
+artist explorer under `artists/` and retains exact direct claims without taxonomy
+inheritance. See the [source graph checkpoint](../checkpoints/OPEN_TAXONOMY_NEIGHBORHOODS_20261003.md)
+for commands, frozen holdouts, poor recovery versus the degree baseline, browser
+checks and larger-vocabulary acquisition options. The default profile is unchanged.

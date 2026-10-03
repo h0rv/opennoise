@@ -12,6 +12,10 @@ from opennoise.pipeline.portable_foundation import (
     inspect_legacy_inputs,
     validate_portable_foundation,
 )
+from opennoise.pipeline.portable_taxonomy import (
+    build_portable_taxonomy,
+    validate_portable_taxonomy,
+)
 
 
 def main() -> int:
@@ -20,7 +24,7 @@ def main() -> int:
     parser.add_argument("command", choices=("build", "validate", "legacy-inputs"))
     parser.add_argument(
         "--profile",
-        choices=("portable-cc0",),
+        choices=("portable-cc0", "portable-taxonomy"),
         default="portable-cc0",
         help="partial selected-cohort profile; full foundation acceptance stays incomplete",
     )
@@ -31,9 +35,19 @@ def main() -> int:
         if args.command == "legacy-inputs":
             result = inspect_legacy_inputs(args.root)
         elif args.command == "build":
-            result = build_portable_foundation(args.root, args.output)
+            builder = (
+                build_portable_taxonomy
+                if args.profile == "portable-taxonomy"
+                else build_portable_foundation
+            )
+            result = builder(args.root, args.output)
         else:
-            result = validate_portable_foundation(args.root, args.output)
+            validator = (
+                validate_portable_taxonomy
+                if args.profile == "portable-taxonomy"
+                else validate_portable_foundation
+            )
+            result = validator(args.root, args.output)
     except (OSError, ValueError, KeyError, TypeError) as error:
         sys.stderr.write(f"open foundation {args.command} failed: {error}\n")
         return 2
