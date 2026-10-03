@@ -22,10 +22,9 @@ playback providers. No retry was sent. Raw response values remain private.
 The official endpoint source documents the response as a recording MBID plus
 `total_listen_count` and `total_user_count`, with paired null counts when no
 statistics exist. It does not return listener identities or event rows. The
-API is public, but small aggregates can still reveal information about a small
-group. A public display gate of at least five distinct listeners is implemented
-for future eligible use; this is not differential privacy and does not make
-small-group values safe to publish.
+API supplies public aggregate counts. A fixed minimum support of five distinct
+listeners is implemented for future eligible ranking use. That support threshold
+does not establish musical fit or make the sample representative.
 
 ## Data provenance and rights
 
@@ -55,8 +54,8 @@ says access logs include IP address, user agent, endpoint, and parameters. The
 [GDPR statement](https://metabrainz.org/gdpr) says ListenBrainz listens are
 personally identifying data and made public. This probe sent only a bounded set
 of public recording IDs; it requested and retained no user identity, listen
-event, or timestamp. The response is still local because aggregated counts can
-support inference about small listener groups.
+event, or timestamp. The response remains local because rights for its combined
+source population are unresolved.
 
 Even if rights are later resolved, these counts measure submitted listening
 activity for this provider's bounded examples. They are not genre labels,

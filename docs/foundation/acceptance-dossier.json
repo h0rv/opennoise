@@ -100,6 +100,61 @@
       "source": "Actual Chromium tasks on separately constructed selected-cohort CC0 static export; source counts and output hashes retained",
       "license": "MIT repository evaluation report; source packs retain their own licenses",
       "pack": "review"
+    },
+    {
+      "id": "fma-independent-audit-oct3",
+      "path": "docs/reports/FMA_INDEPENDENT_AUDIT_20261003.md",
+      "sha256": "ae187ed0516b073ac8045b63717b61a0c55ecdce1f07cf8611865042b5bb9fc2",
+      "size_bytes": 10277,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Independent native FMA source/feature/fold/model/rank/metric replay; source annotations and complete raw FMA denominator, distinct from full intended foundation",
+      "license": "MIT report; FMA metadata/features CC-BY-4.0",
+      "pack": "review"
+    },
+    {
+      "id": "native-sonic-custody-oct3",
+      "path": "data/examples/native-sonic/receipt.json",
+      "sha256": "13e21e5296989e148e0efc2f6956675d2d391326552fe4a1a3b67df56e1494cb",
+      "size_bytes": 27950,
+      "scope": "selected-cohort",
+      "role": "construction",
+      "source": "Native AcousticBrainz per-record custody and separately exact MusicBrainz core credit joins; selected 100 recording outcomes",
+      "license": "CC0-1.0",
+      "pack": "unrestricted-core"
+    },
+    {
+      "id": "taxonomy-graph-oct3",
+      "path": "docs/foundation/evidence/open-taxonomy-neighborhoods-20261003.json",
+      "sha256": "0bc15819093fb8f81ac38f852d81fe4166c2c2d07df33191d1b4094e9765a025",
+      "size_bytes": 11440,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Prespecified P279-only source-edge recovery and browser evidence on 1000 capped native Wikidata genre entities",
+      "license": "CC0-1.0 source; MIT evaluation report",
+      "pack": "review"
+    },
+    {
+      "id": "global-artist-scan-oct3",
+      "path": "docs/reports/WIKIDATA_GLOBAL_ARTIST_GENRES_20261003.json",
+      "sha256": "048c55be2dbfdf1e36eed43f5fff895e79c96d1dfcd72a1e66bec9f53fc815b4",
+      "size_bytes": 3061,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Independent bounded Wikidata scan and frozen core-present artist roster; incomplete identity hydration and explicitly unknown transport metadata",
+      "license": "CC0-1.0 source; MIT evaluation report",
+      "pack": "review"
+    },
+    {
+      "id": "selective-recovery-oct3",
+      "path": "docs/reports/NUMERIC_RECOVERY_PORT_20261003.json",
+      "sha256": "460febb87b8499979708286525d497ff873a9f949b7656b41e5c6e8b988343e7",
+      "size_bytes": 14582,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Selective raw-byte and prescribed-seed split verification, exact-credit pilot and compatibility with frozen FMA groups/train fitting/unknown targets",
+      "license": "MIT evaluation report",
+      "pack": "review"
     }
   ],
   "reviews": [
@@ -125,24 +180,28 @@
     {
       "gate": "legal-input-boundaries",
       "decision": "missing",
-      "explanation": "Portable CC0 projections and optional NC source obligations are documented; no byte-bound full-input license and training-boundary review is supplied.",
+      "explanation": "Portable CC0 projections and optional NC source obligations are documented; no byte-bound full-input license and training-boundary review is supplied. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
       "evidence": [
         "integrated-oct1",
         "cultural-review-oct1",
         "open-genre-taxonomy-oct2-receipt",
-        "open-genre-taxonomy-oct2-projection"
+        "open-genre-taxonomy-oct2-projection",
+        "native-sonic-custody-oct3",
+        "global-artist-scan-oct3",
+        "fma-independent-audit-oct3"
       ],
       "criteria_covered": []
     },
     {
       "gate": "genre-and-artist-coverage",
       "decision": "missing",
-      "explanation": "October 2 independent Wikidata capture supplies 1,000 bounded source-selected genre entities and typed taxonomy, with selection possibly truncated. It supplies no artist memberships or reviewed broad/sub/micro communities; full genre/artist coverage remains unmet.",
+      "explanation": "October 2 independent Wikidata capture supplies 1,000 bounded source-selected genre entities and typed taxonomy, with selection possibly truncated. It supplies no artist memberships or reviewed broad/sub/micro communities; full genre/artist coverage remains unmet. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
       "evidence": [
         "integrated-oct1",
         "source-confirmation-oct1",
         "open-genre-taxonomy-oct2-receipt",
-        "open-genre-taxonomy-oct2-projection"
+        "open-genre-taxonomy-oct2-projection",
+        "global-artist-scan-oct3"
       ],
       "criteria_covered": []
     },
@@ -158,9 +217,12 @@
     {
       "gate": "held-out-source-reconstruction",
       "decision": "missing",
-      "explanation": "October 1 frozen source confirmation is documented, but this dossier binds checkpoint testimony only, without selected-model folds, outputs and independent replay receipts.",
+      "explanation": "October 1 frozen source confirmation is documented, but this dossier binds checkpoint testimony only, without selected-model folds, outputs and independent replay receipts. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
       "evidence": [
-        "source-confirmation-oct1"
+        "source-confirmation-oct1",
+        "fma-independent-audit-oct3",
+        "taxonomy-graph-oct3",
+        "selective-recovery-oct3"
       ],
       "criteria_covered": []
     },
@@ -176,27 +238,31 @@
     {
       "gate": "acoustic-coverage-and-retrieval",
       "decision": "missing",
-      "explanation": "55 recordings across ten selected artists remain a bounded electronic-focused metadata pilot; diverse coverage and independent retrieval/blend evaluation are absent.",
+      "explanation": "55 recordings across ten selected artists remain a bounded electronic-focused metadata pilot; diverse coverage and independent retrieval/blend evaluation are absent. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
       "evidence": [
-        "acoustic-oct1"
+        "acoustic-oct1",
+        "fma-independent-audit-oct3",
+        "native-sonic-custody-oct3"
       ],
       "criteria_covered": []
     },
     {
       "gate": "genre-and-artist-maps",
       "decision": "missing",
-      "explanation": "Readable local layouts and historical display-neighbor comparison do not establish independent semantic map quality and stability.",
+      "explanation": "Readable local layouts and historical display-neighbor comparison do not establish independent semantic map quality and stability. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
       "evidence": [
-        "integrated-oct1"
+        "integrated-oct1",
+        "taxonomy-graph-oct3"
       ],
       "criteria_covered": []
     },
     {
       "gate": "defining-recordings",
       "decision": "missing",
-      "explanation": "Exact-credit metadata examples have limited discography coverage and no independent defining-selection acceptance.",
+      "explanation": "Exact-credit metadata examples have limited discography coverage and no independent defining-selection acceptance. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
       "evidence": [
-        "credited-examples-oct1"
+        "credited-examples-oct1",
+        "native-sonic-custody-oct3"
       ],
       "criteria_covered": []
     },

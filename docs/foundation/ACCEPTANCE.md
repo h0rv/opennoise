@@ -20,9 +20,10 @@ or automatically certifies semantic equivalence.** Its JSON always reports
 counts, browser tests, or custody verification alone cannot pass all gates.
 
 The checked-in [dossier](acceptance-dossier.json) records limited October 1
-checkpoint evidence and leaves every full-foundation gate unmet. New October 2
-artifacts require their own explicit dossier bindings and scoped review; their
-creation does not silently upgrade these decisions. Recovery of a source vault
+checkpoint evidence plus selected October 2–3 native source, model and browser
+bindings, and leaves every full-foundation gate unmet. Further artifacts require
+their own explicit dossier bindings and scoped review; their creation does not
+silently upgrade these decisions. Recovery of a source vault
 or durable Library copy does not reconstruct absent derived inputs by itself.
 
 | Gate | Required review evidence | Current limit / next concrete evidence |

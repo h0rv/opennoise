@@ -10,10 +10,11 @@ communities from separately licensed open evidence. The
 [reproducibility inventory](foundation/README.md) distinguishes runnable
 checkout examples from full-corpus stages that need additional inputs.
 
-The [2026-10-01 implementation checkpoint](checkpoints/OPEN_FOUNDATION_IMPLEMENTATION_20261001.md)
-is the latest integrated state. It adds a confirmed optional rare-style lens,
-expanded sonic metadata and offline replay, independent historical evaluation,
-portable CC0 examples, and the minimal UI with credited work links. Earlier
+The [2026-10-03 foundation and recovery checkpoint](checkpoints/OPEN_FOUNDATION_RECOVERY_20261003.md)
+records the current integrated source, model and product paths: durable recovery,
+three million core artist identities, separate CC0 source explorers, native sonic
+credit verification, a complete FMA catalog and independently audited acoustic
+baseline. It also records negative results and remaining acceptance gaps. Earlier
 checkpoints below retain the history of preceding source and model runs.
 
 The design direction is minimal, plain, and “grug brain,” with usability and
