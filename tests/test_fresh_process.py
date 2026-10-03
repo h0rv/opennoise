@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import unittest
+from typing import override
 
 from tests import fresh_process
 from tests import fresh_process_fixtures as fixtures
@@ -13,14 +14,17 @@ class CountingResult(unittest.TestResult):
     """Observe success and subtests alongside ordinary unittest accounting."""
 
     def __init__(self) -> None:
+        """Record forwarded callbacks alongside ordinary outcome lists."""
         super().__init__()
         self.successful_ids: list[str] = []
         self.subtest_ids: list[str] = []
 
+    @override
     def addSuccess(self, test: unittest.TestCase) -> None:
         self.successful_ids.append(test.id())
         super().addSuccess(test)
 
+    @override
     def addSubTest(
         self,
         test: unittest.TestCase,

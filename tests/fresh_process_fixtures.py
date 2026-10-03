@@ -16,8 +16,8 @@ class ProbeTests(fresh_process.FreshProcessTestCase):
 
     def test_success(self) -> None:
         self.assertEqual(
-            fresh_process._ACTIVE_METHOD_ID,
-            self.id(),  # noqa: SLF001 - Exact worker identity.
+            fresh_process._ACTIVE_METHOD_ID,  # noqa: SLF001 - Exact worker identity.
+            self.id(),
         )
         self.assertNotIn("tests.test_wikidata_source_recovery_calibration", sys.modules)
         self.assertNotIn("numpy", sys.modules)
@@ -41,7 +41,7 @@ class ProbeTests(fresh_process.FreshProcessTestCase):
 
     @unittest.expectedFailure
     def test_unexpected_success(self) -> None:
-        self.assertTrue(True)
+        self.assertEqual(1, 1)
 
     def test_subtests(self) -> None:
         failure_index, error_index, skip_index = 1, 2, 3
@@ -55,7 +55,7 @@ class ProbeTests(fresh_process.FreshProcessTestCase):
                     self.skipTest("subtest-skip")
 
     def test_process_exit(self) -> None:
-        os._exit(7)  # noqa: SLF001 - Deliberate worker transport failure.
+        os._exit(7)
 
     def test_raw_output_overflow(self) -> None:
         os.write(1, b"x" * (fresh_process.MAX_TRANSCRIPT_BYTES + 1))
@@ -74,4 +74,4 @@ class NonIsolatedProbe(unittest.TestCase):
     """Prove that unopted-in method identities are rejected by the worker."""
 
     def test_noop(self) -> None:
-        self.assertTrue(True)
+        self.assertEqual(1, 1)

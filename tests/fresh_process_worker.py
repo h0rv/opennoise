@@ -11,7 +11,7 @@ import sys
 import traceback
 import unittest
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from tests import fresh_process
 
@@ -23,9 +23,11 @@ class BoundedTranscript(io.StringIO):
     """Bound Python stdout/stderr before importing the selected test module."""
 
     def __init__(self) -> None:
+        """Start a bounded text sink before test imports."""
         super().__init__()
         self.encoded_bytes = 0
 
+    @override
     def write(self, value: str) -> int:
         addition = len(value.encode())
         if self.encoded_bytes + addition > fresh_process.MAX_TRANSCRIPT_BYTES:
@@ -38,16 +40,19 @@ class RecordedResult(unittest.TestResult):
     """Record categories and identities without retaining traceback objects."""
 
     def __init__(self) -> None:
+        """Start bounded outcome storage and exact method accounting."""
         super().__init__()
         self.events: list[dict[str, Any]] = []
         self.started_ids: list[str] = []
         self.stopped_ids: list[str] = []
         self.event_bytes = 0
 
+    @override
     def startTest(self, test: unittest.TestCase) -> None:
         super().startTest(test)
         self.started_ids.append(test.id())
 
+    @override
     def stopTest(self, test: unittest.TestCase) -> None:
         self.stopped_ids.append(test.id())
         super().stopTest(test)
@@ -82,31 +87,38 @@ class RecordedResult(unittest.TestResult):
         ):
             self.stop()
 
+    @override
     def addSuccess(self, test: unittest.TestCase) -> None:
         self._record("success", test)
 
+    @override
     def addError(self, test: unittest.TestCase, err: fresh_process.ExceptionInfo) -> None:
         self._record("error", test, err)
 
+    @override
     def addFailure(self, test: unittest.TestCase, err: fresh_process.ExceptionInfo) -> None:
         self._record("failure", test, err)
 
+    @override
     def addSkip(self, test: unittest.TestCase, reason: str) -> None:
         self._record("skip", test, reason=reason)
 
+    @override
     def addExpectedFailure(self, test: unittest.TestCase, err: fresh_process.ExceptionInfo) -> None:
         self._record("expected_failure", test, err)
 
+    @override
     def addUnexpectedSuccess(self, test: unittest.TestCase) -> None:
         self._record("unexpected_success", test)
 
+    @override
     def addSubTest(
         self,
         test: unittest.TestCase,
         subtest: unittest.TestCase,
         err: fresh_process.ExceptionInfo | None,
     ) -> None:
-        self._record("subtest", subtest, err)
+        self._record("subtest", subtest, err, parent_test_id=test.id())
 
 
 def _single(suite: unittest.TestSuite) -> unittest.TestCase:
@@ -118,7 +130,7 @@ def _single(suite: unittest.TestSuite) -> unittest.TestCase:
     if isinstance(test, unittest.TestSuite):
         return _single(test)
     if not isinstance(test, unittest.TestCase):
-        raise ValueError("worker loaded a non-test entry")
+        raise TypeError("worker loaded a non-test entry")
     return test
 
 

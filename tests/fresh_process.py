@@ -15,7 +15,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -33,7 +33,7 @@ _ACTIVE_METHOD_ID: str | None = None
 type ExceptionInfo = tuple[type[BaseException], BaseException, TracebackType | None]
 
 
-class RemoteTestFailure(AssertionError):
+class RemoteAssertionError(AssertionError):
     """Child assertion traceback transported without traceback-object sharing."""
 
 
@@ -45,23 +45,28 @@ class RemoteSubTest(unittest.TestCase):
     """Preserve a remote subtest's exact ID and displayed parameters."""
 
     def __init__(self, identity: str, display: str) -> None:
+        """Bind the exact child subtest identity and display text."""
         super().__init__()
         self.identity = identity
         self.display = display
 
+    @override
     def id(self) -> str:
         return self.identity
 
+    @override
     def __str__(self) -> str:
+        """Display the original child method and subtest parameters."""
         return self.display
 
+    @override
     def shortDescription(self) -> None:
         return None
 
 
 def _remote_error(event: dict[str, Any], protocol: dict[str, Any]) -> ExceptionInfo:
     """Retain original child exception text and bounded captured output."""
-    exception = RemoteTestFailure if event["assertion_failure"] else RemoteTestError
+    exception = RemoteAssertionError if event["assertion_failure"] else RemoteTestError
     message = event["traceback"]
     captured = protocol["python_transcript"] + protocol["transcript"]
     if captured:
@@ -170,11 +175,7 @@ def _validate_protocol(
 def _execute(identity: str, *, failfast: bool, timeout: float) -> dict[str, Any]:
     """Exec one method with bounded output, protocol bytes and elapsed time."""
     root = Path(__file__).resolve().parents[1]
-    preferred = Path("/dev/shm")
-    temporary_parent = preferred if preferred.is_dir() and os.access(preferred, os.W_OK) else None
-    with tempfile.TemporaryDirectory(
-        prefix="opennoise-fresh-test-", dir=temporary_parent
-    ) as temporary:
+    with tempfile.TemporaryDirectory(prefix="opennoise-fresh-test-") as temporary:
         protocol_path = Path(temporary) / "result.json"
         argv = [
             sys.executable,
@@ -211,7 +212,7 @@ def _execute(identity: str, *, failfast: bool, timeout: float) -> dict[str, Any]
             raise RuntimeError("fresh worker protocol missing, nonregular or oversized")
         protocol = json.loads(protocol_path.read_bytes())
         if not isinstance(protocol, dict):
-            raise RuntimeError("fresh worker protocol must be an object")
+            raise TypeError("fresh worker protocol must be an object")
         _validate_protocol(protocol, identity, argv, worker_pid)
         protocol["parent_argv"] = argv
         protocol["worker_returncode"] = returncode
@@ -257,8 +258,9 @@ class FreshProcessTestCase(unittest.TestCase):
 
     fresh_process_timeout: ClassVar[float] = 120.0
 
+    @override
     def run(self, result: unittest.TestResult | None = None) -> unittest.TestResult:
-        if _ACTIVE_METHOD_ID == self.id():
+        if self.id() == _ACTIVE_METHOD_ID:
             return super().run(result)
         created_result = result is None
         if result is None:
@@ -275,7 +277,7 @@ class FreshProcessTestCase(unittest.TestCase):
                 result.__dict__["fresh_process_evidence"] = evidence
             evidence.append(protocol)
             _forward(result, self, protocol)
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - Forward every transport error into TestResult.
             result.addError(self, (type(error), error, error.__traceback__))
         finally:
             result.stopTest(self)
