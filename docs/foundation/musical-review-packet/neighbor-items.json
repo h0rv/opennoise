@@ -1,0 +1,482 @@
+[
+  {
+    "pair_item_id": "N001",
+    "query_item_id": "M001",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N002",
+    "query_item_id": "M002",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N003",
+    "query_item_id": "M003",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N004",
+    "query_item_id": "M004",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N005",
+    "query_item_id": "M005",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N006",
+    "query_item_id": "M006",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N007",
+    "query_item_id": "M007",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N008",
+    "query_item_id": "M008",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N009",
+    "query_item_id": "M009",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N010",
+    "query_item_id": "M010",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N011",
+    "query_item_id": "M011",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N012",
+    "query_item_id": "M012",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N013",
+    "query_item_id": "M013",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N014",
+    "query_item_id": "M014",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N015",
+    "query_item_id": "M015",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N016",
+    "query_item_id": "M016",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N017",
+    "query_item_id": "M017",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N018",
+    "query_item_id": "M018",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N019",
+    "query_item_id": "M019",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N020",
+    "query_item_id": "M020",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N021",
+    "query_item_id": "M021",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N022",
+    "query_item_id": "M022",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N023",
+    "query_item_id": "M023",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N024",
+    "query_item_id": "M024",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N025",
+    "query_item_id": "M025",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N026",
+    "query_item_id": "M026",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N027",
+    "query_item_id": "M027",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N028",
+    "query_item_id": "M028",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N029",
+    "query_item_id": "M029",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N030",
+    "query_item_id": "M030",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N031",
+    "query_item_id": "M031",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N032",
+    "query_item_id": "M032",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N033",
+    "query_item_id": "M033",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N034",
+    "query_item_id": "M034",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N035",
+    "query_item_id": "M035",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N036",
+    "query_item_id": "M036",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N037",
+    "query_item_id": "M037",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N038",
+    "query_item_id": "M038",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N039",
+    "query_item_id": "M039",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N040",
+    "query_item_id": "M040",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N041",
+    "query_item_id": "M041",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N042",
+    "query_item_id": "M042",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N043",
+    "query_item_id": "M043",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N044",
+    "query_item_id": "M044",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N045",
+    "query_item_id": "M045",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N046",
+    "query_item_id": "M046",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N047",
+    "query_item_id": "M047",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N048",
+    "query_item_id": "M048",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N049",
+    "query_item_id": "M049",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N050",
+    "query_item_id": "M050",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N051",
+    "query_item_id": "M051",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N052",
+    "query_item_id": "M052",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N053",
+    "query_item_id": "M053",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N054",
+    "query_item_id": "M054",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N055",
+    "query_item_id": "M055",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N056",
+    "query_item_id": "M056",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N057",
+    "query_item_id": "M057",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N058",
+    "query_item_id": "M058",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N059",
+    "query_item_id": "M059",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  },
+  {
+    "pair_item_id": "N060",
+    "query_item_id": "M060",
+    "candidate_a": "",
+    "candidate_b": "",
+    "popularity_baseline": "",
+    "assignment_key_ref": "sealed/method-key.json"
+  }
+]

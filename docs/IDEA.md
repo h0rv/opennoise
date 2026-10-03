@@ -39,6 +39,19 @@ for source coverage, exact reference artists, measured weaknesses, and the
 static hierarchy explorer. The measured product acceptance criteria remain in
 [Every Noise parity](EVERYNOISE_PARITY.md).
 
+The separately named [full-input reconstruction](foundation/FULL_INPUT_RECONSTRUCTION.md)
+now replays all 2,999,670 retained core artist identities rather than substituting
+a selected-artist demo for that denominator. Its dated v4 export includes 10,309
+artists with native genre claims, 1,018 observed genre names, complete static
+identity browsing, and exact identity lookup. Actual Chromium checks cover
+Aphex Twin, Four Tet, Unicode search, history, mobile and keyboard navigation.
+The complete FMA metadata catalog remains a separate namespace: 109,727 tracks,
+16,916 artists, 168 exact artist bridges, and eight licensed listening excerpts
+with verified browser playback. Identity coverage is much broader than musical
+evidence coverage; this does not establish Every Noise parity. The
+[acceptance work map](foundation/ACCEPTANCE_WORK.md) preserves all twelve gates,
+including independent musical review and calibrated overlapping memberships.
+
 The subsequent [bulk source acquisition](checkpoints/MUSICBRAINZ_BULK_ARTIST_TAG_SOURCE_20260930.md)
 adds aggregate MusicBrainz tags through exact artist UUIDs. After the same
 quality policy and model filters, it adds 114,889 canonical artist–value

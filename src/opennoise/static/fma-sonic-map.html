@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FMA descriptor map — OpenNoise</title><link rel="stylesheet" href="./fma-sonic-map.css">
+<a class="skip" href="#main">Skip to map and search</a>
+<header><h1>FMA descriptor map</h1><p>A research map of open track descriptors. Nearby points describe similar measured summaries; musical similarity has not been established.</p></header>
+<main id="main" tabindex="-1">
+<p>PC1 and PC2 are mathematical axes. Genre points average training tracks with that source annotation. Artist points average native track descriptors; they do not assign genres to artists.</p>
+<form id="controls"><label for="kind">Show</label> <select id="kind"><option value="genres">Source genre contexts</option><option value="artists">Native artist contexts</option></select> <label for="search">Search</label> <input id="search" type="search" autocomplete="off"> <button type="reset">Clear</button></form>
+<p id="status" role="status">Loading source map…</p>
+<svg id="map" viewBox="0 0 1000 680" role="img" aria-label="Mathematical descriptor projection; use the searchable list for all identities"></svg>
+<p id="selected" aria-live="polite">Select a point or list entry for its source context.</p>
+<ol id="results"></ol>
+<nav aria-label="Result pages"><button id="previous" type="button">Previous</button> <span id="page"></span> <button id="next" type="button">Next</button></nav>
+<details><summary>Axes, missingness and limits</summary><pre id="method"></pre></details>
+<p>Metadata and descriptors: CC BY 4.0. Michaël Defferrard, Kirell Benzi, Pierre Vandergheynst and Xavier Bresson, <a href="https://github.com/mdeff/fma">FMA: A Dataset for Music Analysis</a>, ISMIR 2017. No audio is downloaded by this map. This experiment is not a certified musical genre map.</p>
+</main><script type="module" src="./fma-sonic-map.mjs"></script></html>

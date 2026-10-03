@@ -1,0 +1,828 @@
+{
+  "arms": {
+    "co_observation": {
+      "calibration": {
+        "abstentions": {
+          "no_observed_seed": 1304,
+          "unsupported_or_disconnected_seed": 31
+        },
+        "all_exact_artist_queries": 2025,
+        "calibrated_bin_reliability": {
+          "0": {
+            "confirmation_interval_95": [
+              0.03181437515487155,
+              0.160853939581994
+            ],
+            "frozen_calibration_probability": 0.07352941176470588,
+            "observed_masked_recovery_fraction": 0.07352941176470588,
+            "queries": 68,
+            "recovered": 5
+          },
+          "1": {
+            "confirmation_interval_95": [
+              0.21694502760133394,
+              0.396309819604581
+            ],
+            "frozen_calibration_probability": 0.29896907216494845,
+            "observed_masked_recovery_fraction": 0.29896907216494845,
+            "queries": 97,
+            "recovered": 29
+          },
+          "2": {
+            "confirmation_interval_95": [
+              0.14408448865877405,
+              0.25977108906533247
+            ],
+            "frozen_calibration_probability": 0.19553072625698323,
+            "observed_masked_recovery_fraction": 0.19553072625698323,
+            "queries": 179,
+            "recovered": 35
+          },
+          "3": {
+            "confirmation_interval_95": [
+              0.2494462396101262,
+              0.3752679658232422
+            ],
+            "frozen_calibration_probability": 0.3088235294117647,
+            "observed_masked_recovery_fraction": 0.3088235294117647,
+            "queries": 204,
+            "recovered": 63
+          },
+          "4": {
+            "confirmation_interval_95": [
+              0.21044679186262583,
+              0.40249286315276545
+            ],
+            "frozen_calibration_probability": 0.2976190476190476,
+            "observed_masked_recovery_fraction": 0.2976190476190476,
+            "queries": 84,
+            "recovered": 25
+          },
+          "5": {
+            "confirmation_interval_95": [
+              0.6914738161458368,
+              0.8906585995743256
+            ],
+            "frozen_calibration_probability": 0.8103448275862069,
+            "observed_masked_recovery_fraction": 0.8103448275862069,
+            "queries": 58,
+            "recovered": 47
+          }
+        },
+        "calibrated_confirmation_events": 690,
+        "masked_observed_positive_queries": 2025,
+        "masked_recovery_brier": 0.17845812897018762,
+        "masked_recovery_constant_baseline_brier": 0.20824196597353495,
+        "one_positive_queries": 1304,
+        "recall": {
+          "1": 0.10074074074074074,
+          "10": 0.21728395061728395,
+          "5": 0.18271604938271604
+        },
+        "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+        "seen_below_minimum_support_queries": 69,
+        "target_outside_training_vocabulary_queries": 104,
+        "target_support_strata": {
+          "common_target_over_10_train_artists": {
+            "positive_queries": 1865,
+            "recall_at_10": 0.23109919571045576
+          },
+          "rare_target_1_to_10_train_artists": {
+            "positive_queries": 125,
+            "recall_at_10": 0.072
+          },
+          "unseen_target": {
+            "positive_queries": 35,
+            "recall_at_10": 0.0
+          }
+        },
+        "unlabelled_queries": 0,
+        "unseen_target_queries": 35
+      },
+      "calibration_bins": {
+        "0": {
+          "count": 68,
+          "interval_95": [
+            0.03181437515487155,
+            0.160853939581994
+          ],
+          "probability": 0.07352941176470588,
+          "recoveries": 5
+        },
+        "1": {
+          "count": 97,
+          "interval_95": [
+            0.21694502760133394,
+            0.396309819604581
+          ],
+          "probability": 0.29896907216494845,
+          "recoveries": 29
+        },
+        "2": {
+          "count": 179,
+          "interval_95": [
+            0.14408448865877405,
+            0.25977108906533247
+          ],
+          "probability": 0.19553072625698323,
+          "recoveries": 35
+        },
+        "3": {
+          "count": 204,
+          "interval_95": [
+            0.2494462396101262,
+            0.3752679658232422
+          ],
+          "probability": 0.3088235294117647,
+          "recoveries": 63
+        },
+        "4": {
+          "count": 84,
+          "interval_95": [
+            0.21044679186262583,
+            0.40249286315276545
+          ],
+          "probability": 0.2976190476190476,
+          "recoveries": 25
+        },
+        "5": {
+          "count": 58,
+          "interval_95": [
+            0.6914738161458368,
+            0.8906585995743256
+          ],
+          "probability": 0.8103448275862069,
+          "recoveries": 47
+        }
+      },
+      "confirmation": {
+        "abstentions": {
+          "no_observed_seed": 1248,
+          "unsupported_or_disconnected_seed": 36
+        },
+        "all_exact_artist_queries": 1991,
+        "calibrated_bin_reliability": {
+          "0": {
+            "confirmation_interval_95": [
+              0.08577002061798975,
+              0.26055545700019456
+            ],
+            "frozen_calibration_probability": 0.07352941176470588,
+            "observed_masked_recovery_fraction": 0.15384615384615385,
+            "queries": 65,
+            "recovered": 10
+          },
+          "1": {
+            "confirmation_interval_95": [
+              0.18136307591306167,
+              0.3452279424260739
+            ],
+            "frozen_calibration_probability": 0.29896907216494845,
+            "observed_masked_recovery_fraction": 0.25471698113207547,
+            "queries": 106,
+            "recovered": 27
+          },
+          "2": {
+            "confirmation_interval_95": [
+              0.16764967187317115,
+              0.28840380024630563
+            ],
+            "frozen_calibration_probability": 0.19553072625698323,
+            "observed_masked_recovery_fraction": 0.2222222222222222,
+            "queries": 180,
+            "recovered": 40
+          },
+          "3": {
+            "confirmation_interval_95": [
+              0.15478240125596715,
+              0.26961565393544384
+            ],
+            "frozen_calibration_probability": 0.3088235294117647,
+            "observed_masked_recovery_fraction": 0.20634920634920634,
+            "queries": 189,
+            "recovered": 39
+          },
+          "4": {
+            "confirmation_interval_95": [
+              0.3269364765548295,
+              0.5402799943969628
+            ],
+            "frozen_calibration_probability": 0.2976190476190476,
+            "observed_masked_recovery_fraction": 0.43037974683544306,
+            "queries": 79,
+            "recovered": 34
+          },
+          "5": {
+            "confirmation_interval_95": [
+              0.6382402375069727,
+              0.8190688686061613
+            ],
+            "frozen_calibration_probability": 0.8103448275862069,
+            "observed_masked_recovery_fraction": 0.7386363636363636,
+            "queries": 88,
+            "recovered": 65
+          }
+        },
+        "calibrated_confirmation_events": 707,
+        "masked_observed_positive_queries": 1991,
+        "masked_recovery_brier": 0.18612179472657234,
+        "masked_recovery_constant_baseline_brier": 0.21169530725689364,
+        "one_positive_queries": 1248,
+        "recall": {
+          "1": 0.10798593671521849,
+          "10": 0.22551481667503767,
+          "5": 0.1868407835258664
+        },
+        "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+        "seen_below_minimum_support_queries": 86,
+        "target_outside_training_vocabulary_queries": 111,
+        "target_support_strata": {
+          "common_target_over_10_train_artists": {
+            "positive_queries": 1809,
+            "recall_at_10": 0.2443338861249309
+          },
+          "rare_target_1_to_10_train_artists": {
+            "positive_queries": 157,
+            "recall_at_10": 0.044585987261146494
+          },
+          "unseen_target": {
+            "positive_queries": 25,
+            "recall_at_10": 0.0
+          }
+        },
+        "unlabelled_queries": 0,
+        "unseen_target_queries": 25
+      }
+    },
+    "combined": {
+      "calibration": {
+        "abstentions": {
+          "no_observed_seed": 1304,
+          "unsupported_or_disconnected_seed": 28
+        },
+        "all_exact_artist_queries": 2025,
+        "calibrated_bin_reliability": {
+          "0": {
+            "confirmation_interval_95": [
+              0.05459419773541284,
+              0.26112420670238146
+            ],
+            "frozen_calibration_probability": 0.125,
+            "observed_masked_recovery_fraction": 0.125,
+            "queries": 40,
+            "recovered": 5
+          },
+          "2": {
+            "confirmation_interval_95": [
+              0.16490924817607316,
+              0.2555056182149829
+            ],
+            "frozen_calibration_probability": 0.20655737704918034,
+            "observed_masked_recovery_fraction": 0.20655737704918034,
+            "queries": 305,
+            "recovered": 63
+          },
+          "3": {
+            "confirmation_interval_95": [
+              0.19800836124207905,
+              0.3159107091424395
+            ],
+            "frozen_calibration_probability": 0.2524271844660194,
+            "observed_masked_recovery_fraction": 0.2524271844660194,
+            "queries": 206,
+            "recovered": 52
+          },
+          "4": {
+            "confirmation_interval_95": [
+              0.3868721294381169,
+              0.5695896405128417
+            ],
+            "frozen_calibration_probability": 0.4774774774774775,
+            "observed_masked_recovery_fraction": 0.4774774774774775,
+            "queries": 111,
+            "recovered": 53
+          }
+        },
+        "calibrated_confirmation_events": 662,
+        "masked_observed_positive_queries": 2025,
+        "masked_recovery_brier": 0.18267275732229957,
+        "masked_recovery_constant_baseline_brier": 0.19310875295625693,
+        "one_positive_queries": 1304,
+        "recall": {
+          "1": 0.09234567901234568,
+          "10": 0.21728395061728395,
+          "5": 0.17580246913580247
+        },
+        "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+        "seen_below_minimum_support_queries": 69,
+        "target_outside_training_vocabulary_queries": 104,
+        "target_support_strata": {
+          "common_target_over_10_train_artists": {
+            "positive_queries": 1865,
+            "recall_at_10": 0.23109919571045576
+          },
+          "rare_target_1_to_10_train_artists": {
+            "positive_queries": 125,
+            "recall_at_10": 0.072
+          },
+          "unseen_target": {
+            "positive_queries": 35,
+            "recall_at_10": 0.0
+          }
+        },
+        "unlabelled_queries": 0,
+        "unseen_target_queries": 35
+      },
+      "calibration_bins": {
+        "0": {
+          "count": 40,
+          "interval_95": [
+            0.05459419773541284,
+            0.26112420670238146
+          ],
+          "probability": 0.125,
+          "recoveries": 5
+        },
+        "1": {
+          "count": 19,
+          "interval_95": [
+            0.11806238339540162,
+            0.48791968441070643
+          ],
+          "probability": null,
+          "recoveries": 5
+        },
+        "2": {
+          "count": 305,
+          "interval_95": [
+            0.16490924817607316,
+            0.2555056182149829
+          ],
+          "probability": 0.20655737704918034,
+          "recoveries": 63
+        },
+        "3": {
+          "count": 206,
+          "interval_95": [
+            0.19800836124207905,
+            0.3159107091424395
+          ],
+          "probability": 0.2524271844660194,
+          "recoveries": 52
+        },
+        "4": {
+          "count": 111,
+          "interval_95": [
+            0.3868721294381169,
+            0.5695896405128417
+          ],
+          "probability": 0.4774774774774775,
+          "recoveries": 53
+        },
+        "5": {
+          "count": 12,
+          "interval_95": [
+            0.46768966087934005,
+            0.9110599603710386
+          ],
+          "probability": null,
+          "recoveries": 9
+        }
+      },
+      "confirmation": {
+        "abstentions": {
+          "no_observed_seed": 1248,
+          "unsupported_or_disconnected_seed": 33
+        },
+        "all_exact_artist_queries": 1991,
+        "calibrated_bin_reliability": {
+          "0": {
+            "confirmation_interval_95": [
+              0.15253815848329969,
+              0.470596357370175
+            ],
+            "frozen_calibration_probability": 0.125,
+            "observed_masked_recovery_fraction": 0.2857142857142857,
+            "queries": 28,
+            "recovered": 8
+          },
+          "2": {
+            "confirmation_interval_95": [
+              0.13738635690933132,
+              0.22241619204164564
+            ],
+            "frozen_calibration_probability": 0.20655737704918034,
+            "observed_masked_recovery_fraction": 0.1758957654723127,
+            "queries": 307,
+            "recovered": 54
+          },
+          "3": {
+            "confirmation_interval_95": [
+              0.19130826385689534,
+              0.3060206619580775
+            ],
+            "frozen_calibration_probability": 0.2524271844660194,
+            "observed_masked_recovery_fraction": 0.24413145539906103,
+            "queries": 213,
+            "recovered": 52
+          },
+          "4": {
+            "confirmation_interval_95": [
+              0.483326884526903,
+              0.6511604497548151
+            ],
+            "frozen_calibration_probability": 0.4774774774774775,
+            "observed_masked_recovery_fraction": 0.5692307692307692,
+            "queries": 130,
+            "recovered": 74
+          }
+        },
+        "calibrated_confirmation_events": 678,
+        "masked_observed_positive_queries": 1991,
+        "masked_recovery_brier": 0.1821813015529341,
+        "masked_recovery_constant_baseline_brier": 0.20045396067309257,
+        "one_positive_queries": 1248,
+        "recall": {
+          "1": 0.09944751381215469,
+          "10": 0.22049221496735308,
+          "5": 0.1808136614766449
+        },
+        "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+        "seen_below_minimum_support_queries": 86,
+        "target_outside_training_vocabulary_queries": 111,
+        "target_support_strata": {
+          "common_target_over_10_train_artists": {
+            "positive_queries": 1809,
+            "recall_at_10": 0.23935876174682144
+          },
+          "rare_target_1_to_10_train_artists": {
+            "positive_queries": 157,
+            "recall_at_10": 0.03821656050955414
+          },
+          "unseen_target": {
+            "positive_queries": 25,
+            "recall_at_10": 0.0
+          }
+        },
+        "unlabelled_queries": 0,
+        "unseen_target_queries": 25
+      }
+    },
+    "popularity": {
+      "calibration": {
+        "abstentions": {
+          "no_observed_seed": 1304,
+          "unsupported_or_disconnected_seed": 25
+        },
+        "all_exact_artist_queries": 2025,
+        "calibrated_bin_reliability": {
+          "1": {
+            "confirmation_interval_95": [
+              0.036377535217817836,
+              0.06913434061237002
+            ],
+            "frozen_calibration_probability": 0.05028735632183908,
+            "observed_masked_recovery_fraction": 0.05028735632183908,
+            "queries": 696,
+            "recovered": 35
+          }
+        },
+        "calibrated_confirmation_events": 696,
+        "masked_observed_positive_queries": 2025,
+        "masked_recovery_brier": 0.04775853811599947,
+        "masked_recovery_constant_baseline_brier": 0.04775853811599947,
+        "one_positive_queries": 1304,
+        "recall": {
+          "1": 0.01728395061728395,
+          "10": 0.10567901234567902,
+          "5": 0.06962962962962962
+        },
+        "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+        "seen_below_minimum_support_queries": 69,
+        "target_outside_training_vocabulary_queries": 104,
+        "target_support_strata": {
+          "common_target_over_10_train_artists": {
+            "positive_queries": 1865,
+            "recall_at_10": 0.11474530831099196
+          },
+          "rare_target_1_to_10_train_artists": {
+            "positive_queries": 125,
+            "recall_at_10": 0.0
+          },
+          "unseen_target": {
+            "positive_queries": 35,
+            "recall_at_10": 0.0
+          }
+        },
+        "unlabelled_queries": 0,
+        "unseen_target_queries": 35
+      },
+      "calibration_bins": {
+        "0": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "1": {
+          "count": 696,
+          "interval_95": [
+            0.036377535217817836,
+            0.06913434061237002
+          ],
+          "probability": 0.05028735632183908,
+          "recoveries": 35
+        },
+        "2": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "3": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "4": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "5": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        }
+      },
+      "confirmation": {
+        "abstentions": {
+          "no_observed_seed": 1248,
+          "unsupported_or_disconnected_seed": 31
+        },
+        "all_exact_artist_queries": 1991,
+        "calibrated_bin_reliability": {
+          "1": {
+            "confirmation_interval_95": [
+              0.05122265714754927,
+              0.08825177406740108
+            ],
+            "frozen_calibration_probability": 0.05028735632183908,
+            "observed_masked_recovery_fraction": 0.06741573033707865,
+            "queries": 712,
+            "recovered": 48
+          }
+        },
+        "calibrated_confirmation_events": 712,
+        "masked_observed_positive_queries": 1991,
+        "masked_recovery_brier": 0.06316423083660289,
+        "masked_recovery_constant_baseline_brier": 0.06316423083660289,
+        "one_positive_queries": 1248,
+        "recall": {
+          "1": 0.024108488196885988,
+          "10": 0.10246107483676545,
+          "5": 0.06428930185836264
+        },
+        "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+        "seen_below_minimum_support_queries": 86,
+        "target_outside_training_vocabulary_queries": 111,
+        "target_support_strata": {
+          "common_target_over_10_train_artists": {
+            "positive_queries": 1809,
+            "recall_at_10": 0.11276948590381426
+          },
+          "rare_target_1_to_10_train_artists": {
+            "positive_queries": 157,
+            "recall_at_10": 0.0
+          },
+          "unseen_target": {
+            "positive_queries": 25,
+            "recall_at_10": 0.0
+          }
+        },
+        "unlabelled_queries": 0,
+        "unseen_target_queries": 25
+      }
+    },
+    "typed_parent": {
+      "calibration": {
+        "abstentions": {
+          "no_observed_seed": 1304,
+          "unsupported_or_disconnected_seed": 166
+        },
+        "all_exact_artist_queries": 2025,
+        "calibrated_bin_reliability": {
+          "5": {
+            "confirmation_interval_95": [
+              0.1010507769661313,
+              0.15634165767008762
+            ],
+            "frozen_calibration_probability": 0.12612612612612611,
+            "observed_masked_recovery_fraction": 0.12612612612612611,
+            "queries": 555,
+            "recovered": 70
+          }
+        },
+        "calibrated_confirmation_events": 555,
+        "masked_observed_positive_queries": 2025,
+        "masked_recovery_brier": 0.11021832643454264,
+        "masked_recovery_constant_baseline_brier": 0.11021832643454264,
+        "one_positive_queries": 1304,
+        "recall": {
+          "1": 0.0345679012345679,
+          "10": 0.04197530864197531,
+          "5": 0.04197530864197531
+        },
+        "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+        "seen_below_minimum_support_queries": 69,
+        "target_outside_training_vocabulary_queries": 104,
+        "target_support_strata": {
+          "common_target_over_10_train_artists": {
+            "positive_queries": 1865,
+            "recall_at_10": 0.04450402144772118
+          },
+          "rare_target_1_to_10_train_artists": {
+            "positive_queries": 125,
+            "recall_at_10": 0.016
+          },
+          "unseen_target": {
+            "positive_queries": 35,
+            "recall_at_10": 0.0
+          }
+        },
+        "unlabelled_queries": 0,
+        "unseen_target_queries": 35
+      },
+      "calibration_bins": {
+        "0": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "1": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "2": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "3": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "4": {
+          "count": 0,
+          "interval_95": [
+            0.0,
+            1.0
+          ],
+          "probability": null,
+          "recoveries": 0
+        },
+        "5": {
+          "count": 555,
+          "interval_95": [
+            0.1010507769661313,
+            0.15634165767008762
+          ],
+          "probability": 0.12612612612612611,
+          "recoveries": 70
+        }
+      },
+      "confirmation": {
+        "abstentions": {
+          "no_observed_seed": 1248,
+          "unsupported_or_disconnected_seed": 163
+        },
+        "all_exact_artist_queries": 1991,
+        "calibrated_bin_reliability": {
+          "5": {
+            "confirmation_interval_95": [
+              0.08275057118617696,
+              0.13279008230614014
+            ],
+            "frozen_calibration_probability": 0.12612612612612611,
+            "observed_masked_recovery_fraction": 0.10517241379310345,
+            "queries": 580,
+            "recovered": 61
+          }
+        },
+        "calibrated_confirmation_events": 580,
+        "masked_observed_positive_queries": 1991,
+        "masked_recovery_brier": 0.09455023523057073,
+        "masked_recovery_constant_baseline_brier": 0.09455023523057073,
+        "one_positive_queries": 1248,
+        "recall": {
+          "1": 0.03063787041687594,
+          "10": 0.04168759417378202,
+          "5": 0.04168759417378202
+        },
+        "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+        "seen_below_minimum_support_queries": 86,
+        "target_outside_training_vocabulary_queries": 111,
+        "target_support_strata": {
+          "common_target_over_10_train_artists": {
+            "positive_queries": 1809,
+            "recall_at_10": 0.04532891100055279
+          },
+          "rare_target_1_to_10_train_artists": {
+            "positive_queries": 157,
+            "recall_at_10": 0.006369426751592357
+          },
+          "unseen_target": {
+            "positive_queries": 25,
+            "recall_at_10": 0.0
+          }
+        },
+        "unlabelled_queries": 0,
+        "unseen_target_queries": 25
+      }
+    }
+  },
+  "artist_replay": {
+    "exact_artists": 9992,
+    "excluded_non_exact": {
+      "P434_not_unique_exact": 8
+    },
+    "files": 587,
+    "receipt_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558"
+  },
+  "default_promotion": false,
+  "folds": {
+    "calibration": 2025,
+    "confirmation": 1991,
+    "train": 5976
+  },
+  "frozen_policy_sha256": "2452fe9bab96278ebbcf2efc0e819d52e4845ca662db5fed51e9665c93daf1a8",
+  "genre_replay": {
+    "files": 60,
+    "parent_edges": 2048,
+    "receipt_sha256": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9"
+  },
+  "implementation_sha256": "b535aa22a55007a89f3cc2bb7b6e18288cb59eff9c3ae36e08b92982cd093786",
+  "musical_validity": "requires independent listeners; unassessed",
+  "native_region_language_features": "not used for genre inference in this frozen experiment; source properties are not musical facts",
+  "parameters": {
+    "combined_parent_weight": 0.25,
+    "minimum_calibration_events": 20,
+    "minimum_label_support": 5,
+    "minimum_pair_support": 3,
+    "proposal_limit": 5,
+    "proposal_policy": "combined arm frozen before inspection; no winner selection",
+    "rank_limit": 10,
+    "score_bins": [
+      0.0,
+      0.1,
+      0.2,
+      0.4,
+      0.6,
+      0.8,
+      1.000001
+    ],
+    "smoothing": 1.0,
+    "split": "SHA256(seed:artist UUID), modulo 10: train 0..5/calibration 6..7/confirmation 8..9"
+  },
+  "preserved_implementation_sha256": "b535aa22a55007a89f3cc2bb7b6e18288cb59eff9c3ae36e08b92982cd093786",
+  "revision": "wikidata-artist-completion-v1",
+  "sampling_limit": "bounded source-selected Wikidata/MBID roster; no claim of representative artist population",
+  "source_license": "CC0-1.0",
+  "training_vocabulary": 238
+}

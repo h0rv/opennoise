@@ -1,0 +1,152 @@
+{
+  "revision": "opennoise-offline-listener-pilot-browser-v1",
+  "root": "/dev/shm/opennoise-listener-pilot-20261003-v1",
+  "files": {
+    "listen.html": {
+      "sha256": "08511ff8185a3cf10880948d725fc83c80ede5555e9e254712cb9d581fdfecd0",
+      "bytes": 5686
+    },
+    "cohort.json": {
+      "sha256": "7f1bf8b5e9db21f278d050422448ef60b770c71e797ae1e64a41d4201a35c28e",
+      "bytes": 8906
+    },
+    "declaration.json": {
+      "sha256": "f6666d7f684f03023f08271c695c8a8ad725b107d48ee189802b9be98f69ca3f",
+      "bytes": 1754
+    },
+    "review-form.csv": {
+      "sha256": "b4bfb0339f0e950d9c5a917ec728980acf26faf84570ad2916f75e002f761c12",
+      "bytes": 486
+    },
+    "reviewer-assignments.json": {
+      "sha256": "bacee713d979c2caa6436507db0e560a4de5f36a3c3577945345a16576f36b36",
+      "bytes": 1683
+    },
+    "listener-request.txt": {
+      "sha256": "8dfc15cfa7264e82a954fc088bedafd030c25cc1fc3fa8c5aef7613afcb8cb5d",
+      "bytes": 497
+    },
+    "README.md": {
+      "sha256": "90205cec233db0f9247470b66abf4567db69ef694f90c2cbeffb08503c9f9267",
+      "bytes": 2641
+    },
+    "SHA256SUMS": {
+      "sha256": "ce62fabc4cf983fea7a096b348f74c89af518b1d4412a20486eee3635d3502f2",
+      "bytes": 1303
+    },
+    "fma-listening/61011.mp3": {
+      "sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+      "bytes": 961748
+    },
+    "fma-listening/112318.mp3": {
+      "sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+      "bytes": 1070451
+    },
+    "fma-listening/124391.mp3": {
+      "sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+      "bytes": 721577
+    },
+    "fma-listening/126602.mp3": {
+      "sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+      "bytes": 1201045
+    },
+    "fma-listening/127299.mp3": {
+      "sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+      "bytes": 1034627
+    },
+    "fma-listening/138060.mp3": {
+      "sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+      "bytes": 945567
+    },
+    "fma-listening/138061.mp3": {
+      "sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+      "bytes": 1078053
+    },
+    "fma-listening/140266.mp3": {
+      "sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+      "bytes": 480777
+    }
+  },
+  "tracks": [
+    {
+      "item_id": "L01",
+      "track_id": 61011,
+      "audio_sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+      "duration": 30.014694,
+      "observed_current_time": 0.084078,
+      "actual_decode_play_pause": true
+    },
+    {
+      "item_id": "L02",
+      "track_id": 112318,
+      "audio_sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+      "duration": 29.988571,
+      "observed_current_time": 0.094309,
+      "actual_decode_play_pause": true
+    },
+    {
+      "item_id": "L03",
+      "track_id": 124391,
+      "audio_sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+      "duration": 30.014694,
+      "observed_current_time": 0.095036,
+      "actual_decode_play_pause": true
+    },
+    {
+      "item_id": "L04",
+      "track_id": 126602,
+      "audio_sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+      "duration": 29.988571,
+      "observed_current_time": 0.096548,
+      "actual_decode_play_pause": true
+    },
+    {
+      "item_id": "L05",
+      "track_id": 127299,
+      "audio_sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+      "duration": 30.014694,
+      "observed_current_time": 0.097443,
+      "actual_decode_play_pause": true
+    },
+    {
+      "item_id": "L06",
+      "track_id": 138060,
+      "audio_sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+      "duration": 29.988571,
+      "observed_current_time": 0.089413,
+      "actual_decode_play_pause": true
+    },
+    {
+      "item_id": "L07",
+      "track_id": 138061,
+      "audio_sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+      "duration": 29.988571,
+      "observed_current_time": 0.093551,
+      "actual_decode_play_pause": true
+    },
+    {
+      "item_id": "L08",
+      "track_id": 140266,
+      "audio_sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+      "duration": 29.988571,
+      "observed_current_time": 0.082217,
+      "actual_decode_play_pause": true
+    }
+  ],
+  "checks": {
+    "file_protocol_open": false,
+    "local_http_fallback": true,
+    "relative_audio_paths": true,
+    "no_initial_media_fetch": true,
+    "no_autoplay": true,
+    "all_eight_clips_decode_play_pause": true,
+    "per_clip_attribution": true,
+    "fit_candidate_absent": true,
+    "fit_rating_explicitly_blank": true,
+    "mobile_no_overflow": true,
+    "keyboard_skip_link": true
+  },
+  "musical_judgments": 0,
+  "physical_listeners": 0,
+  "playback_activation": "Chromium DevTools userGesture; no perceptual judgment"
+}

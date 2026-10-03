@@ -1,0 +1,3560 @@
+{
+  "artist_genre_assertions": false,
+  "baseline_pack_receipt_sha256": "3e1651c136f5ae0c588e6dd6930a7a8f68fc7b332d1e423d29d1657e20cd0106",
+  "calibrated_labels": 11,
+  "evaluation": {
+    "calibration": {
+      "abstentions": {
+        "missing_feature_row": 94,
+        "outside_training_support": 1
+      },
+      "bounded_positive_recall": 0.43975449553138796,
+      "component_bootstrap_95_percent_interval": [
+        0.3738835894735244,
+        0.5144043517236226
+      ],
+      "components": 395,
+      "macro_positive_recall": 0.08582999440765995,
+      "musical_calibration_established": false,
+      "per_label": {
+        "1": {
+          "calibration_components": 21,
+          "fully_recovered_positive_components": 18,
+          "hits": 168,
+          "positive_components": 21,
+          "positive_recall": 0.9824561403508771,
+          "positives": 171,
+          "threshold_rank": 87
+        },
+        "10": {
+          "calibration_components": 27,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 27,
+          "positive_recall": 0.0,
+          "positives": 174,
+          "threshold_rank": null
+        },
+        "100": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 17,
+          "threshold_rank": null
+        },
+        "102": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 16,
+          "threshold_rank": null
+        },
+        "103": {
+          "calibration_components": 14,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 14,
+          "positive_recall": 0.0,
+          "positives": 200,
+          "threshold_rank": null
+        },
+        "1032": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "107": {
+          "calibration_components": 23,
+          "fully_recovered_positive_components": 20,
+          "hits": 256,
+          "positive_components": 23,
+          "positive_recall": 0.9808429118773946,
+          "positives": 261,
+          "threshold_rank": 108
+        },
+        "109": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 86,
+          "threshold_rank": null
+        },
+        "11": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "111": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 54,
+          "threshold_rank": null
+        },
+        "113": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 40,
+          "threshold_rank": null
+        },
+        "118": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 75,
+          "threshold_rank": null
+        },
+        "12": {
+          "calibration_components": 46,
+          "fully_recovered_positive_components": 38,
+          "hits": 339,
+          "positive_components": 46,
+          "positive_recall": 0.9713467048710601,
+          "positives": 349,
+          "threshold_rank": 100
+        },
+        "1235": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 140,
+          "threshold_rank": null
+        },
+        "125": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "13": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "130": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 42,
+          "threshold_rank": null
+        },
+        "137": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 67,
+          "threshold_rank": null
+        },
+        "138": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "14": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 10,
+          "threshold_rank": null
+        },
+        "15": {
+          "calibration_components": 68,
+          "fully_recovered_positive_components": 57,
+          "hits": 560,
+          "positive_components": 68,
+          "positive_recall": 0.9475465313028765,
+          "positives": 591,
+          "threshold_rank": 86
+        },
+        "166": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "167": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 10,
+          "threshold_rank": null
+        },
+        "169": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "17": {
+          "calibration_components": 33,
+          "fully_recovered_positive_components": 28,
+          "hits": 291,
+          "positive_components": 33,
+          "positive_recall": 0.9509803921568627,
+          "positives": 306,
+          "threshold_rank": 118
+        },
+        "170": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "171": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 41,
+          "threshold_rank": null
+        },
+        "172": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 4,
+          "threshold_rank": null
+        },
+        "179": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 49,
+          "threshold_rank": null
+        },
+        "18": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 179,
+          "threshold_rank": null
+        },
+        "180": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 3,
+          "threshold_rank": null
+        },
+        "181": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 49,
+          "threshold_rank": null
+        },
+        "182": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 35,
+          "threshold_rank": null
+        },
+        "183": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 28,
+          "threshold_rank": null
+        },
+        "184": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 160,
+          "threshold_rank": null
+        },
+        "186": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 42,
+          "threshold_rank": null
+        },
+        "187": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "188": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "19": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "2": {
+          "calibration_components": 17,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 17,
+          "positive_recall": 0.0,
+          "positives": 106,
+          "threshold_rank": null
+        },
+        "20": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 8,
+          "threshold_rank": null
+        },
+        "21": {
+          "calibration_components": 18,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 18,
+          "positive_recall": 0.0,
+          "positives": 241,
+          "threshold_rank": null
+        },
+        "214": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "22": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "224": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 48,
+          "threshold_rank": null
+        },
+        "232": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "236": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 8,
+          "positive_recall": 0.0,
+          "positives": 137,
+          "threshold_rank": null
+        },
+        "240": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 34,
+          "threshold_rank": null
+        },
+        "247": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 35,
+          "threshold_rank": null
+        },
+        "25": {
+          "calibration_components": 32,
+          "fully_recovered_positive_components": 27,
+          "hits": 332,
+          "positive_components": 32,
+          "positive_recall": 0.9764705882352941,
+          "positives": 340,
+          "threshold_rank": 131
+        },
+        "250": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 13,
+          "positive_recall": 0.0,
+          "positives": 47,
+          "threshold_rank": null
+        },
+        "26": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 52,
+          "threshold_rank": null
+        },
+        "267": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "27": {
+          "calibration_components": 28,
+          "fully_recovered_positive_components": 24,
+          "hits": 502,
+          "positive_components": 28,
+          "positive_recall": 0.9616858237547893,
+          "positives": 522,
+          "threshold_rank": 95
+        },
+        "286": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 53,
+          "threshold_rank": null
+        },
+        "296": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 22,
+          "threshold_rank": null
+        },
+        "297": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 15,
+          "threshold_rank": null
+        },
+        "3": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "30": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 135,
+          "threshold_rank": null
+        },
+        "31": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 44,
+          "threshold_rank": null
+        },
+        "314": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "32": {
+          "calibration_components": 25,
+          "fully_recovered_positive_components": 21,
+          "hits": 468,
+          "positive_components": 25,
+          "positive_recall": 0.970954356846473,
+          "positives": 482,
+          "threshold_rank": 88
+        },
+        "322": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 54,
+          "threshold_rank": null
+        },
+        "33": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 61,
+          "threshold_rank": null
+        },
+        "359": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 43,
+          "threshold_rank": null
+        },
+        "36": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 48,
+          "threshold_rank": null
+        },
+        "360": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 4,
+          "threshold_rank": null
+        },
+        "361": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 19,
+          "threshold_rank": null
+        },
+        "362": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 13,
+          "threshold_rank": null
+        },
+        "38": {
+          "calibration_components": 83,
+          "fully_recovered_positive_components": 68,
+          "hits": 737,
+          "positive_components": 83,
+          "positive_recall": 0.9497422680412371,
+          "positives": 776,
+          "threshold_rank": 53
+        },
+        "4": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 102,
+          "threshold_rank": null
+        },
+        "400": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 23,
+          "threshold_rank": null
+        },
+        "404": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "41": {
+          "calibration_components": 20,
+          "fully_recovered_positive_components": 17,
+          "hits": 211,
+          "positive_components": 20,
+          "positive_recall": 0.985981308411215,
+          "positives": 214,
+          "threshold_rank": 72
+        },
+        "42": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 13,
+          "positive_recall": 0.0,
+          "positives": 100,
+          "threshold_rank": null
+        },
+        "43": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "439": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 100,
+          "threshold_rank": null
+        },
+        "440": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 2,
+          "threshold_rank": null
+        },
+        "441": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "443": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 66,
+          "threshold_rank": null
+        },
+        "444": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "45": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 15,
+          "threshold_rank": null
+        },
+        "456": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 8,
+          "positive_recall": 0.0,
+          "positives": 58,
+          "threshold_rank": null
+        },
+        "46": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 68,
+          "threshold_rank": null
+        },
+        "468": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 32,
+          "threshold_rank": null
+        },
+        "47": {
+          "calibration_components": 15,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 15,
+          "positive_recall": 0.0,
+          "positives": 112,
+          "threshold_rank": null
+        },
+        "49": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "495": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 22,
+          "threshold_rank": null
+        },
+        "5": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 13,
+          "positive_recall": 0.0,
+          "positives": 226,
+          "threshold_rank": null
+        },
+        "504": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "514": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 18,
+          "threshold_rank": null
+        },
+        "524": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 16,
+          "threshold_rank": null
+        },
+        "53": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 8,
+          "threshold_rank": null
+        },
+        "538": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "542": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "58": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 13,
+          "positive_recall": 0.0,
+          "positives": 136,
+          "threshold_rank": null
+        },
+        "6": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "602": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 3,
+          "threshold_rank": null
+        },
+        "619": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 19,
+          "threshold_rank": null
+        },
+        "63": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 2,
+          "threshold_rank": null
+        },
+        "64": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "65": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 10,
+          "threshold_rank": null
+        },
+        "659": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 61,
+          "threshold_rank": null
+        },
+        "66": {
+          "calibration_components": 31,
+          "fully_recovered_positive_components": 26,
+          "hits": 220,
+          "positive_components": 31,
+          "positive_recall": 0.9649122807017544,
+          "positives": 228,
+          "threshold_rank": 74
+        },
+        "70": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 34,
+          "threshold_rank": null
+        },
+        "71": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "74": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 70,
+          "threshold_rank": null
+        },
+        "76": {
+          "calibration_components": 15,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 15,
+          "positive_recall": 0.0,
+          "positives": 126,
+          "threshold_rank": null
+        },
+        "763": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 8,
+          "threshold_rank": null
+        },
+        "77": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "79": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 38,
+          "threshold_rank": null
+        },
+        "8": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 27,
+          "threshold_rank": null
+        },
+        "81": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 19,
+          "threshold_rank": null
+        },
+        "85": {
+          "calibration_components": 19,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 19,
+          "positive_recall": 0.0,
+          "positives": 186,
+          "threshold_rank": null
+        },
+        "86": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 53,
+          "threshold_rank": null
+        },
+        "88": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 42,
+          "threshold_rank": null
+        },
+        "89": {
+          "calibration_components": 11,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 11,
+          "positive_recall": 0.0,
+          "positives": 61,
+          "threshold_rank": null
+        },
+        "9": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 105,
+          "threshold_rank": null
+        },
+        "90": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "906": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 32,
+          "threshold_rank": null
+        },
+        "92": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 36,
+          "threshold_rank": null
+        },
+        "94": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 20,
+          "threshold_rank": null
+        },
+        "97": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 17,
+          "threshold_rank": null
+        },
+        "98": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 8,
+          "positive_recall": 0.0,
+          "positives": 42,
+          "threshold_rank": null
+        }
+      },
+      "precision_available": false,
+      "queries": 4096,
+      "raw_acoustic_recall_at_20": 0.5297728006891353,
+      "recovered_source_positives": 4084,
+      "set_size_mean": 9.7587890625,
+      "set_size_quantiles": [
+        0.0,
+        10.0,
+        11.0,
+        11.0
+      ],
+      "source_positives": 9287,
+      "stable_positive_recall": 0.4350166899967697,
+      "strata": {
+        "rare": {
+          "hits": 0,
+          "positives": 175,
+          "recall": 0.0
+        },
+        "supported": {
+          "hits": 4084,
+          "positives": 9112,
+          "recall": 0.4482001755926251
+        }
+      },
+      "uncapped_positive_recall": 0.43975449553138796,
+      "uncapped_set_size_mean": 9.7587890625,
+      "unlabeled_queries": 45
+    },
+    "confirmation": {
+      "abstentions": {
+        "missing_feature_row": 76,
+        "outside_training_support": 2
+      },
+      "bounded_positive_recall": 0.4102425145644222,
+      "component_bootstrap_95_percent_interval": [
+        0.3436812916660391,
+        0.4807041941510221
+      ],
+      "components": 358,
+      "macro_positive_recall": 0.08825164423607955,
+      "musical_calibration_established": false,
+      "per_label": {
+        "1": {
+          "calibration_components": 21,
+          "fully_recovered_positive_components": 16,
+          "hits": 318,
+          "positive_components": 20,
+          "positive_recall": 0.9784615384615385,
+          "positives": 325,
+          "threshold_rank": 87
+        },
+        "10": {
+          "calibration_components": 27,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 19,
+          "positive_recall": 0.0,
+          "positives": 93,
+          "threshold_rank": null
+        },
+        "101": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 11,
+          "threshold_rank": null
+        },
+        "102": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 17,
+          "threshold_rank": null
+        },
+        "103": {
+          "calibration_components": 14,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 22,
+          "positive_recall": 0.0,
+          "positives": 158,
+          "threshold_rank": null
+        },
+        "1060": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "107": {
+          "calibration_components": 23,
+          "fully_recovered_positive_components": 15,
+          "hits": 120,
+          "positive_components": 19,
+          "positive_recall": 0.9523809523809523,
+          "positives": 126,
+          "threshold_rank": 108
+        },
+        "109": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 78,
+          "threshold_rank": null
+        },
+        "11": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "111": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 47,
+          "threshold_rank": null
+        },
+        "113": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 27,
+          "threshold_rank": null
+        },
+        "1156": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 8,
+          "threshold_rank": null
+        },
+        "118": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 29,
+          "threshold_rank": null
+        },
+        "12": {
+          "calibration_components": 46,
+          "fully_recovered_positive_components": 31,
+          "hits": 198,
+          "positive_components": 37,
+          "positive_recall": 0.8571428571428571,
+          "positives": 231,
+          "threshold_rank": 100
+        },
+        "1235": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 84,
+          "threshold_rank": null
+        },
+        "125": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 4,
+          "threshold_rank": null
+        },
+        "13": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "130": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 64,
+          "threshold_rank": null
+        },
+        "137": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 17,
+          "threshold_rank": null
+        },
+        "138": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "14": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 28,
+          "threshold_rank": null
+        },
+        "15": {
+          "calibration_components": 68,
+          "fully_recovered_positive_components": 49,
+          "hits": 576,
+          "positive_components": 56,
+          "positive_recall": 0.9812606473594548,
+          "positives": 587,
+          "threshold_rank": 86
+        },
+        "166": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "17": {
+          "calibration_components": 33,
+          "fully_recovered_positive_components": 30,
+          "hits": 184,
+          "positive_components": 34,
+          "positive_recall": 0.9435897435897436,
+          "positives": 195,
+          "threshold_rank": 118
+        },
+        "171": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 19,
+          "threshold_rank": null
+        },
+        "172": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "18": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 51,
+          "threshold_rank": null
+        },
+        "180": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 18,
+          "threshold_rank": null
+        },
+        "181": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "182": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "183": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 196,
+          "threshold_rank": null
+        },
+        "184": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 37,
+          "threshold_rank": null
+        },
+        "185": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "187": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "188": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "189": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "19": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 11,
+          "threshold_rank": null
+        },
+        "2": {
+          "calibration_components": 17,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 8,
+          "positive_recall": 0.0,
+          "positives": 40,
+          "threshold_rank": null
+        },
+        "20": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 2,
+          "threshold_rank": null
+        },
+        "21": {
+          "calibration_components": 18,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 11,
+          "positive_recall": 0.0,
+          "positives": 98,
+          "threshold_rank": null
+        },
+        "22": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 56,
+          "threshold_rank": null
+        },
+        "224": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 75,
+          "threshold_rank": null
+        },
+        "236": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 66,
+          "threshold_rank": null
+        },
+        "240": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 20,
+          "threshold_rank": null
+        },
+        "247": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 11,
+          "threshold_rank": null
+        },
+        "25": {
+          "calibration_components": 32,
+          "fully_recovered_positive_components": 31,
+          "hits": 271,
+          "positive_components": 32,
+          "positive_recall": 0.9713261648745519,
+          "positives": 279,
+          "threshold_rank": 131
+        },
+        "250": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 24,
+          "positive_recall": 0.0,
+          "positives": 194,
+          "threshold_rank": null
+        },
+        "26": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 51,
+          "threshold_rank": null
+        },
+        "267": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "27": {
+          "calibration_components": 28,
+          "fully_recovered_positive_components": 20,
+          "hits": 352,
+          "positive_components": 24,
+          "positive_recall": 0.9591280653950953,
+          "positives": 367,
+          "threshold_rank": 95
+        },
+        "286": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "296": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 18,
+          "threshold_rank": null
+        },
+        "297": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 28,
+          "threshold_rank": null
+        },
+        "3": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 62,
+          "threshold_rank": null
+        },
+        "30": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 143,
+          "threshold_rank": null
+        },
+        "31": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 44,
+          "threshold_rank": null
+        },
+        "314": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "32": {
+          "calibration_components": 25,
+          "fully_recovered_positive_components": 24,
+          "hits": 186,
+          "positive_components": 25,
+          "positive_recall": 0.9946524064171123,
+          "positives": 187,
+          "threshold_rank": 88
+        },
+        "322": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 31,
+          "threshold_rank": null
+        },
+        "33": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 124,
+          "threshold_rank": null
+        },
+        "337": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 32,
+          "threshold_rank": null
+        },
+        "359": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 30,
+          "threshold_rank": null
+        },
+        "36": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 40,
+          "threshold_rank": null
+        },
+        "362": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 32,
+          "threshold_rank": null
+        },
+        "37": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 13,
+          "threshold_rank": null
+        },
+        "38": {
+          "calibration_components": 83,
+          "fully_recovered_positive_components": 54,
+          "hits": 645,
+          "positive_components": 68,
+          "positive_recall": 0.9375,
+          "positives": 688,
+          "threshold_rank": 53
+        },
+        "4": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 65,
+          "threshold_rank": null
+        },
+        "400": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 17,
+          "threshold_rank": null
+        },
+        "401": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "404": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 13,
+          "threshold_rank": null
+        },
+        "41": {
+          "calibration_components": 20,
+          "fully_recovered_positive_components": 13,
+          "hits": 76,
+          "positive_components": 13,
+          "positive_recall": 1.0,
+          "positives": 76,
+          "threshold_rank": 72
+        },
+        "42": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 12,
+          "positive_recall": 0.0,
+          "positives": 116,
+          "threshold_rank": null
+        },
+        "428": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 3,
+          "threshold_rank": null
+        },
+        "43": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "441": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 8,
+          "threshold_rank": null
+        },
+        "442": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "45": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 10,
+          "threshold_rank": null
+        },
+        "456": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 30,
+          "threshold_rank": null
+        },
+        "46": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "468": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "47": {
+          "calibration_components": 15,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 13,
+          "positive_recall": 0.0,
+          "positives": 177,
+          "threshold_rank": null
+        },
+        "49": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 53,
+          "threshold_rank": null
+        },
+        "495": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 42,
+          "threshold_rank": null
+        },
+        "5": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 141,
+          "threshold_rank": null
+        },
+        "502": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "504": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "514": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 41,
+          "threshold_rank": null
+        },
+        "53": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 32,
+          "threshold_rank": null
+        },
+        "539": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 19,
+          "threshold_rank": null
+        },
+        "542": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 21,
+          "threshold_rank": null
+        },
+        "58": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 11,
+          "positive_recall": 0.0,
+          "positives": 56,
+          "threshold_rank": null
+        },
+        "6": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "602": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 3,
+          "threshold_rank": null
+        },
+        "63": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 9,
+          "threshold_rank": null
+        },
+        "64": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 16,
+          "threshold_rank": null
+        },
+        "65": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 138,
+          "threshold_rank": null
+        },
+        "659": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 23,
+          "threshold_rank": null
+        },
+        "66": {
+          "calibration_components": 31,
+          "fully_recovered_positive_components": 13,
+          "hits": 102,
+          "positive_components": 21,
+          "positive_recall": 0.75,
+          "positives": 136,
+          "threshold_rank": 74
+        },
+        "695": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 26,
+          "threshold_rank": null
+        },
+        "70": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 33,
+          "threshold_rank": null
+        },
+        "71": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 34,
+          "threshold_rank": null
+        },
+        "74": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 79,
+          "threshold_rank": null
+        },
+        "76": {
+          "calibration_components": 15,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 17,
+          "positive_recall": 0.0,
+          "positives": 97,
+          "threshold_rank": null
+        },
+        "77": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "79": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 56,
+          "threshold_rank": null
+        },
+        "8": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "81": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "810": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "811": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 16,
+          "threshold_rank": null
+        },
+        "85": {
+          "calibration_components": 19,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 11,
+          "positive_recall": 0.0,
+          "positives": 111,
+          "threshold_rank": null
+        },
+        "88": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 41,
+          "threshold_rank": null
+        },
+        "89": {
+          "calibration_components": 11,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 17,
+          "positive_recall": 0.0,
+          "positives": 117,
+          "threshold_rank": null
+        },
+        "9": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 38,
+          "threshold_rank": null
+        },
+        "92": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "94": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 41,
+          "threshold_rank": null
+        },
+        "97": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "98": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 23,
+          "threshold_rank": null
+        }
+      },
+      "precision_available": false,
+      "queries": 3236,
+      "raw_acoustic_recall_at_20": 0.5091451022896627,
+      "recovered_source_positives": 3028,
+      "set_size_mean": 9.797589616810878,
+      "set_size_quantiles": [
+        0.0,
+        10.0,
+        11.0,
+        11.0
+      ],
+      "source_positives": 7381,
+      "stable_positive_recall": 0.4078038206205121,
+      "strata": {
+        "rare": {
+          "hits": 0,
+          "positives": 191,
+          "recall": 0.0
+        },
+        "supported": {
+          "hits": 3028,
+          "positives": 7190,
+          "recall": 0.4211404728789986
+        }
+      },
+      "uncapped_positive_recall": 0.4102425145644222,
+      "uncapped_set_size_mean": 9.797589616810878,
+      "unlabeled_queries": 34
+    },
+    "test_diagnostic": {
+      "abstentions": {
+        "missing_feature_row": 182,
+        "outside_training_support": 1
+      },
+      "bounded_positive_recall": 0.3700874878489099,
+      "component_bootstrap_95_percent_interval": [
+        0.3420136227087858,
+        0.3961680983647059
+      ],
+      "components": 703,
+      "macro_positive_recall": 0.07752430413678774,
+      "musical_calibration_established": false,
+      "per_label": {
+        "1": {
+          "calibration_components": 21,
+          "fully_recovered_positive_components": 41,
+          "hits": 290,
+          "positive_components": 44,
+          "positive_recall": 0.9570957095709571,
+          "positives": 303,
+          "threshold_rank": 87
+        },
+        "10": {
+          "calibration_components": 27,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 42,
+          "positive_recall": 0.0,
+          "positives": 301,
+          "threshold_rank": null
+        },
+        "100": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 35,
+          "threshold_rank": null
+        },
+        "101": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "102": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "103": {
+          "calibration_components": 14,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 38,
+          "positive_recall": 0.0,
+          "positives": 196,
+          "threshold_rank": null
+        },
+        "107": {
+          "calibration_components": 23,
+          "fully_recovered_positive_components": 25,
+          "hits": 228,
+          "positive_components": 34,
+          "positive_recall": 0.9156626506024096,
+          "positives": 249,
+          "threshold_rank": 108
+        },
+        "109": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 11,
+          "positive_recall": 0.0,
+          "positives": 61,
+          "threshold_rank": null
+        },
+        "11": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 35,
+          "threshold_rank": null
+        },
+        "111": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 62,
+          "threshold_rank": null
+        },
+        "113": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 89,
+          "threshold_rank": null
+        },
+        "118": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 20,
+          "threshold_rank": null
+        },
+        "1193": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 2,
+          "threshold_rank": null
+        },
+        "12": {
+          "calibration_components": 46,
+          "fully_recovered_positive_components": 74,
+          "hits": 561,
+          "positive_components": 84,
+          "positive_recall": 0.9824868651488616,
+          "positives": 571,
+          "threshold_rank": 100
+        },
+        "1235": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 24,
+          "positive_recall": 0.0,
+          "positives": 732,
+          "threshold_rank": null
+        },
+        "125": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 56,
+          "threshold_rank": null
+        },
+        "13": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 38,
+          "threshold_rank": null
+        },
+        "130": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 13,
+          "threshold_rank": null
+        },
+        "137": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 15,
+          "positive_recall": 0.0,
+          "positives": 110,
+          "threshold_rank": null
+        },
+        "138": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 22,
+          "threshold_rank": null
+        },
+        "14": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 57,
+          "threshold_rank": null
+        },
+        "15": {
+          "calibration_components": 68,
+          "fully_recovered_positive_components": 99,
+          "hits": 1465,
+          "positive_components": 119,
+          "positive_recall": 0.9740691489361702,
+          "positives": 1504,
+          "threshold_rank": 86
+        },
+        "166": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 2,
+          "threshold_rank": null
+        },
+        "167": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 29,
+          "threshold_rank": null
+        },
+        "169": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 43,
+          "threshold_rank": null
+        },
+        "17": {
+          "calibration_components": 33,
+          "fully_recovered_positive_components": 44,
+          "hits": 466,
+          "positive_components": 54,
+          "positive_recall": 0.9748953974895398,
+          "positives": 478,
+          "threshold_rank": 118
+        },
+        "171": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 45,
+          "threshold_rank": null
+        },
+        "172": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "174": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "177": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "179": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 17,
+          "threshold_rank": null
+        },
+        "18": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 21,
+          "positive_recall": 0.0,
+          "positives": 730,
+          "threshold_rank": null
+        },
+        "180": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 24,
+          "threshold_rank": null
+        },
+        "181": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 69,
+          "threshold_rank": null
+        },
+        "182": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 90,
+          "threshold_rank": null
+        },
+        "183": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 34,
+          "threshold_rank": null
+        },
+        "184": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 49,
+          "threshold_rank": null
+        },
+        "185": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 22,
+          "threshold_rank": null
+        },
+        "186": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 40,
+          "threshold_rank": null
+        },
+        "188": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "19": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 32,
+          "threshold_rank": null
+        },
+        "2": {
+          "calibration_components": 17,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 24,
+          "positive_recall": 0.0,
+          "positives": 131,
+          "threshold_rank": null
+        },
+        "20": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 4,
+          "threshold_rank": null
+        },
+        "21": {
+          "calibration_components": 18,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 23,
+          "positive_recall": 0.0,
+          "positives": 311,
+          "threshold_rank": null
+        },
+        "214": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 13,
+          "threshold_rank": null
+        },
+        "22": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 21,
+          "threshold_rank": null
+        },
+        "224": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 14,
+          "positive_recall": 0.0,
+          "positives": 147,
+          "threshold_rank": null
+        },
+        "236": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 15,
+          "positive_recall": 0.0,
+          "positives": 102,
+          "threshold_rank": null
+        },
+        "240": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 6,
+          "positive_recall": 0.0,
+          "positives": 69,
+          "threshold_rank": null
+        },
+        "247": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 45,
+          "threshold_rank": null
+        },
+        "25": {
+          "calibration_components": 32,
+          "fully_recovered_positive_components": 44,
+          "hits": 407,
+          "positive_components": 47,
+          "positive_recall": 0.9576470588235294,
+          "positives": 425,
+          "threshold_rank": 131
+        },
+        "250": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 40,
+          "positive_recall": 0.0,
+          "positives": 221,
+          "threshold_rank": null
+        },
+        "26": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 15,
+          "positive_recall": 0.0,
+          "positives": 83,
+          "threshold_rank": null
+        },
+        "267": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 3,
+          "threshold_rank": null
+        },
+        "27": {
+          "calibration_components": 28,
+          "fully_recovered_positive_components": 32,
+          "hits": 307,
+          "positive_components": 36,
+          "positive_recall": 0.941717791411043,
+          "positives": 326,
+          "threshold_rank": 95
+        },
+        "286": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 55,
+          "threshold_rank": null
+        },
+        "296": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 11,
+          "positive_recall": 0.0,
+          "positives": 150,
+          "threshold_rank": null
+        },
+        "297": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 125,
+          "threshold_rank": null
+        },
+        "3": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 16,
+          "positive_recall": 0.0,
+          "positives": 117,
+          "threshold_rank": null
+        },
+        "30": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 82,
+          "threshold_rank": null
+        },
+        "31": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 8,
+          "positive_recall": 0.0,
+          "positives": 47,
+          "threshold_rank": null
+        },
+        "311": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 45,
+          "threshold_rank": null
+        },
+        "314": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 53,
+          "threshold_rank": null
+        },
+        "32": {
+          "calibration_components": 25,
+          "fully_recovered_positive_components": 48,
+          "hits": 339,
+          "positive_components": 49,
+          "positive_recall": 0.9970588235294118,
+          "positives": 340,
+          "threshold_rank": 88
+        },
+        "322": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 8,
+          "positive_recall": 0.0,
+          "positives": 42,
+          "threshold_rank": null
+        },
+        "33": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 18,
+          "positive_recall": 0.0,
+          "positives": 148,
+          "threshold_rank": null
+        },
+        "337": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "359": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 50,
+          "threshold_rank": null
+        },
+        "36": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 57,
+          "threshold_rank": null
+        },
+        "360": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 19,
+          "threshold_rank": null
+        },
+        "362": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 15,
+          "positive_recall": 0.0,
+          "positives": 87,
+          "threshold_rank": null
+        },
+        "37": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "378": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "38": {
+          "calibration_components": 83,
+          "fully_recovered_positive_components": 101,
+          "hits": 869,
+          "positive_components": 123,
+          "positive_recall": 0.9234856535600425,
+          "positives": 941,
+          "threshold_rank": 53
+        },
+        "4": {
+          "calibration_components": 10,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 23,
+          "positive_recall": 0.0,
+          "positives": 98,
+          "threshold_rank": null
+        },
+        "400": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 106,
+          "threshold_rank": null
+        },
+        "401": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "404": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 31,
+          "threshold_rank": null
+        },
+        "41": {
+          "calibration_components": 20,
+          "fully_recovered_positive_components": 13,
+          "hits": 186,
+          "positive_components": 15,
+          "positive_recall": 0.9893617021276596,
+          "positives": 188,
+          "threshold_rank": 72
+        },
+        "42": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 25,
+          "positive_recall": 0.0,
+          "positives": 301,
+          "threshold_rank": null
+        },
+        "428": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "43": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 27,
+          "threshold_rank": null
+        },
+        "439": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 25,
+          "threshold_rank": null
+        },
+        "441": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "442": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "443": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 3,
+          "threshold_rank": null
+        },
+        "45": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 22,
+          "threshold_rank": null
+        },
+        "456": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 72,
+          "threshold_rank": null
+        },
+        "46": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 59,
+          "threshold_rank": null
+        },
+        "468": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 11,
+          "positive_recall": 0.0,
+          "positives": 67,
+          "threshold_rank": null
+        },
+        "47": {
+          "calibration_components": 15,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 22,
+          "positive_recall": 0.0,
+          "positives": 109,
+          "threshold_rank": null
+        },
+        "49": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 31,
+          "threshold_rank": null
+        },
+        "491": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "495": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 93,
+          "threshold_rank": null
+        },
+        "5": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 19,
+          "positive_recall": 0.0,
+          "positives": 128,
+          "threshold_rank": null
+        },
+        "502": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 3,
+          "positive_recall": 0.0,
+          "positives": 25,
+          "threshold_rank": null
+        },
+        "504": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "514": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 44,
+          "threshold_rank": null
+        },
+        "524": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 23,
+          "threshold_rank": null
+        },
+        "53": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 14,
+          "positive_recall": 0.0,
+          "positives": 144,
+          "threshold_rank": null
+        },
+        "539": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 59,
+          "threshold_rank": null
+        },
+        "542": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 23,
+          "threshold_rank": null
+        },
+        "58": {
+          "calibration_components": 13,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 36,
+          "positive_recall": 0.0,
+          "positives": 342,
+          "threshold_rank": null
+        },
+        "6": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 22,
+          "threshold_rank": null
+        },
+        "602": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 18,
+          "threshold_rank": null
+        },
+        "619": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 28,
+          "threshold_rank": null
+        },
+        "63": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 26,
+          "threshold_rank": null
+        },
+        "64": {
+          "calibration_components": 4,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 4,
+          "positive_recall": 0.0,
+          "positives": 74,
+          "threshold_rank": null
+        },
+        "65": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "651": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "659": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 58,
+          "threshold_rank": null
+        },
+        "66": {
+          "calibration_components": 31,
+          "fully_recovered_positive_components": 26,
+          "hits": 212,
+          "positive_components": 35,
+          "positive_recall": 0.9298245614035088,
+          "positives": 228,
+          "threshold_rank": 74
+        },
+        "695": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "7": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 6,
+          "threshold_rank": null
+        },
+        "70": {
+          "calibration_components": 6,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 67,
+          "threshold_rank": null
+        },
+        "71": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "74": {
+          "calibration_components": 7,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 12,
+          "positive_recall": 0.0,
+          "positives": 58,
+          "threshold_rank": null
+        },
+        "741": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 11,
+          "threshold_rank": null
+        },
+        "76": {
+          "calibration_components": 15,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 39,
+          "positive_recall": 0.0,
+          "positives": 400,
+          "threshold_rank": null
+        },
+        "77": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 7,
+          "threshold_rank": null
+        },
+        "79": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 31,
+          "threshold_rank": null
+        },
+        "8": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 14,
+          "positive_recall": 0.0,
+          "positives": 24,
+          "threshold_rank": null
+        },
+        "808": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "81": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 5,
+          "threshold_rank": null
+        },
+        "810": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 1,
+          "positive_recall": 0.0,
+          "positives": 1,
+          "threshold_rank": null
+        },
+        "811": {
+          "calibration_components": 0,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 29,
+          "threshold_rank": null
+        },
+        "85": {
+          "calibration_components": 19,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 34,
+          "positive_recall": 0.0,
+          "positives": 337,
+          "threshold_rank": null
+        },
+        "88": {
+          "calibration_components": 5,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 52,
+          "threshold_rank": null
+        },
+        "89": {
+          "calibration_components": 11,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 19,
+          "positive_recall": 0.0,
+          "positives": 112,
+          "threshold_rank": null
+        },
+        "9": {
+          "calibration_components": 9,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 9,
+          "positive_recall": 0.0,
+          "positives": 40,
+          "threshold_rank": null
+        },
+        "90": {
+          "calibration_components": 1,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 13,
+          "threshold_rank": null
+        },
+        "906": {
+          "calibration_components": 2,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 2,
+          "positive_recall": 0.0,
+          "positives": 8,
+          "threshold_rank": null
+        },
+        "92": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 7,
+          "positive_recall": 0.0,
+          "positives": 14,
+          "threshold_rank": null
+        },
+        "94": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 10,
+          "positive_recall": 0.0,
+          "positives": 70,
+          "threshold_rank": null
+        },
+        "97": {
+          "calibration_components": 3,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 5,
+          "positive_recall": 0.0,
+          "positives": 12,
+          "threshold_rank": null
+        },
+        "98": {
+          "calibration_components": 8,
+          "fully_recovered_positive_components": 0,
+          "hits": 0,
+          "positive_components": 11,
+          "positive_recall": 0.0,
+          "positives": 81,
+          "threshold_rank": null
+        }
+      },
+      "precision_available": false,
+      "queries": 6468,
+      "raw_acoustic_recall_at_20": 0.540966532426052,
+      "recovered_source_positives": 5330,
+      "set_size_mean": 9.61487322201608,
+      "set_size_quantiles": [
+        0.0,
+        10.0,
+        11.0,
+        11.0
+      ],
+      "source_positives": 14402,
+      "stable_positive_recall": 0.36772670462435775,
+      "strata": {
+        "below_five": {
+          "hits": 0,
+          "positives": 14,
+          "recall": 0.0
+        },
+        "rare": {
+          "hits": 0,
+          "positives": 249,
+          "recall": 0.0
+        },
+        "supported": {
+          "hits": 5330,
+          "positives": 14139,
+          "recall": 0.37697149727703516
+        }
+      },
+      "uncapped_positive_recall": 0.3700874878489099,
+      "uncapped_set_size_mean": 9.61487322201608,
+      "unlabeled_queries": 99
+    }
+  },
+  "formal_coverage_guarantee_claimed": false,
+  "frozen_declaration_sha256": "39017287328e88c26ef23789cb35ed22eb4f250e5a61ae767a2fd84b9f01ccdb",
+  "label_abstentions": {
+    "insufficient_calibration_components": 152,
+    "unsupported_positive_rank_tail": 1
+  },
+  "limitations": [
+    "Native FMA track annotations are incomplete source observations, not musical truth.",
+    "Component-positive percentiles and coverage thresholds are not posterior probabilities.",
+    "No exchangeable-component or stable-domain assumption is established; no formal coverage guarantee.",
+    "Bounding the output at twenty can reduce source-positive coverage below the target.",
+    "Confirmation partition is new for this arm; old aggregate validation baseline was previously reported.",
+    "Test is a previously observed diagnostic, not fresh evidence for selecting a model.",
+    "Rank-radius sensitivity is algebraic robustness, not audio perturbation or musical stability.",
+    "No native FMA to MusicBrainz artist or recording bridge is inferred."
+  ],
+  "model_refit": false,
+  "model_selection": false,
+  "musical_probability": false,
+  "native_source_replay_from_saved_pack_alone": false,
+  "revision": "fma-component-positive-memberships-v1",
+  "role": "native_fma_track_source_recovery_only",
+  "test_previously_observed": true
+}

@@ -1,0 +1,27 @@
+{
+  "counts": {
+    "artists": 2999670,
+    "artists_with_details": 10553,
+    "artists_with_direct_genres": 10309,
+    "artists_without_observed_genres": 2989361,
+    "browse_pages": 6000,
+    "fma_exact_artist_bridges": 168,
+    "fma_native_artists": 16916,
+    "fma_native_genres": 164,
+    "fma_native_tracks": 109727,
+    "genres": 1018,
+    "native_sonic_recordings": 55,
+    "search_buckets": 0,
+    "search_pages": 6000
+  },
+  "full_foundation_complete": false,
+  "native_identity_rows_replayed": 2999670,
+  "receipt_sha256": "03046fcb703c729dc8cc2651ba22672339b950377887ea5da3548d22d98583d1",
+  "revision": "open-foundation-full-input-v3",
+  "valid": true,
+  "validator_files": {
+    "src/opennoise/pipeline/full_input_context.py": "4b1f1ba7b964bb974fdeb14a78af8f31ae0e00ca25d4d261376e3710e0d168ed",
+    "src/opennoise/pipeline/full_input_foundation.py": "203ac502120fcc044814e46601c3a17990472dd02f1f4072a3b0d139a6b9df00",
+    "src/opennoise/pipeline/full_input_indexes.py": "7117a7b83dafebacac66087612595e7ecceb5b1227ae1d6b1bafaef8dafd066b"
+  }
+}

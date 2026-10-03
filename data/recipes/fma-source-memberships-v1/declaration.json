@@ -1,0 +1,21 @@
+{
+  "revision": "fma-component-positive-memberships-v1",
+  "role": "native_fma_track_source_recovery_only",
+  "coverage_target": 0.8,
+  "minimum_calibration_positive_components": 20,
+  "maximum_memberships": 20,
+  "rank_stability_radius": 2,
+  "bootstrap_repetitions": 200,
+  "bootstrap_seed": 72341,
+  "validation_partition": "SHA256(revision+NUL+decimal component ID), big-endian modulo 2; 0 calibration, 1 confirmation",
+  "test_role": "previously_observed_diagnostic_not_confirmatory",
+  "missing_labels": "unknown_never_negative",
+  "missing_positive_scores": "retain worst rank=number of labels+1",
+  "method": "per-label component worst-positive rank order statistic ceil((n+1)*0.8); threshold beyond available ranks means label abstention; membership rank <= threshold ordered by rank/threshold; fixed cap20",
+  "source_probabilities": false,
+  "exchangeable_components_assumed_for_guarantee": false,
+  "formal_coverage_guarantee_claimed": false,
+  "model_refit": false,
+  "model_selection": false,
+  "frozen_before_arm_evaluation": true
+}

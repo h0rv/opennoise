@@ -1,0 +1,19 @@
+# Frozen FMA source-positive memberships
+
+These are overlapping **native FMA track source-recovery suggestions**, not artist genres or calibrated musical probabilities. The original train-fitted Gaussian model and original frozen split remain unchanged. Calibration uses only one independently hashed half of validation components; confirmation is the other half. No source-label absence is treated as a negative.
+
+`declaration.json` was frozen before evaluating this arm. `thresholds.json` records each label's independent positive-component count and threshold, including unavailable labels. Three compressed query ledgers retain every declared query, direct source annotations, bounded suggestions and abstentions. Direct annotations and model suggestions have separate fields. Percentiles describe the calibration distribution of component-worst **observed positive** ranks; they do not estimate genre membership probability, precision or relevance.
+
+Replay from a fresh checkout:
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/replay_fma_memberships.py \
+  --saved-pack data/examples/fma-acoustic-baseline \
+  --memberships data/examples/fma-source-memberships
+```
+
+Replay checks every saved byte binding, then reconstructs every threshold, suggestion, coverage count, stratum and clustered interval against the independently retained baseline query/target/component ledgers. This saved pack alone does not replay the absent raw source CSV custody. The original baseline audit separately establishes native feature/metadata reconstruction.
+
+Only 11 of 164 source labels have usable calibration thresholds. The other 153 abstain. This pack is a research result and is not promoted as factual genre enrichment or a production musical recommender.
+
+Metadata, original descriptors, source track annotations and derived source-recovery suggestions: **CC BY 4.0**, attribution: Michaël Defferrard, Kirell Benzi, Pierre Vandergheynst and Xavier Bresson, *FMA: A Dataset for Music Analysis*, ISMIR 2017, https://github.com/mdeff/fma. No audio, Echo Nest data, Spotify internal data or Every Noise target labels were used. Project implementation code retains the repository code license.

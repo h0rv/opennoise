@@ -1,0 +1,157 @@
+{
+  "arm_reselection": false,
+  "calibration": {
+    "abstentions": {},
+    "all_exact_artist_queries": 2025,
+    "calibrated_bin_reliability": {
+      "1": {
+        "confirmation_interval_95": [
+          0.13853358146442427,
+          0.16993880001671255
+        ],
+        "frozen_calibration_probability": 0.15358024691358024,
+        "observed_masked_recovery_fraction": 0.15358024691358024,
+        "queries": 2025,
+        "recovered": 311
+      }
+    },
+    "calibrated_confirmation_events": 2025,
+    "masked_observed_positive_queries": 2025,
+    "masked_recovery_brier": 0.12999335467154396,
+    "masked_recovery_constant_baseline_brier": 0.12999335467154396,
+    "one_positive_queries": 1304,
+    "recall": {
+      "1": 0.15358024691358024,
+      "10": 0.6083950617283951,
+      "5": 0.5219753086419753
+    },
+    "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+    "seen_below_minimum_support_queries": 69,
+    "target_outside_training_vocabulary_queries": 104,
+    "target_support_strata": {
+      "common_target_over_10_train_artists": {
+        "positive_queries": 1865,
+        "recall_at_10": 0.6605898123324396
+      },
+      "rare_target_1_to_10_train_artists": {
+        "positive_queries": 125,
+        "recall_at_10": 0.0
+      },
+      "unseen_target": {
+        "positive_queries": 35,
+        "recall_at_10": 0.0
+      }
+    },
+    "unlabelled_queries": 0,
+    "unseen_target_queries": 35
+  },
+  "calibration_bins": {
+    "0": {
+      "count": 0,
+      "interval_95": [
+        0.0,
+        1.0
+      ],
+      "probability": null,
+      "recoveries": 0
+    },
+    "1": {
+      "count": 2025,
+      "interval_95": [
+        0.13853358146442427,
+        0.16993880001671255
+      ],
+      "probability": 0.15358024691358024,
+      "recoveries": 311
+    },
+    "2": {
+      "count": 0,
+      "interval_95": [
+        0.0,
+        1.0
+      ],
+      "probability": null,
+      "recoveries": 0
+    },
+    "3": {
+      "count": 0,
+      "interval_95": [
+        0.0,
+        1.0
+      ],
+      "probability": null,
+      "recoveries": 0
+    },
+    "4": {
+      "count": 0,
+      "interval_95": [
+        0.0,
+        1.0
+      ],
+      "probability": null,
+      "recoveries": 0
+    },
+    "5": {
+      "count": 0,
+      "interval_95": [
+        0.0,
+        1.0
+      ],
+      "probability": null,
+      "recoveries": 0
+    }
+  },
+  "confirmation": {
+    "abstentions": {},
+    "all_exact_artist_queries": 1991,
+    "calibrated_bin_reliability": {
+      "1": {
+        "confirmation_interval_95": [
+          0.13947823717206415,
+          0.17124397756418352
+        ],
+        "frozen_calibration_probability": 0.15358024691358024,
+        "observed_masked_recovery_fraction": 0.15469613259668508,
+        "queries": 1991,
+        "recovered": 308
+      }
+    },
+    "calibrated_confirmation_events": 1991,
+    "masked_observed_positive_queries": 1991,
+    "masked_recovery_brier": 0.13076648435717164,
+    "masked_recovery_constant_baseline_brier": 0.13076648435717164,
+    "one_positive_queries": 1248,
+    "recall": {
+      "1": 0.15469613259668508,
+      "10": 0.5861376192867905,
+      "5": 0.49623304871923657
+    },
+    "scope": "masked observed-source recovery; no musical truth, prevalence or absence negatives",
+    "seen_below_minimum_support_queries": 86,
+    "target_outside_training_vocabulary_queries": 111,
+    "target_support_strata": {
+      "common_target_over_10_train_artists": {
+        "positive_queries": 1809,
+        "recall_at_10": 0.6451077943615257
+      },
+      "rare_target_1_to_10_train_artists": {
+        "positive_queries": 157,
+        "recall_at_10": 0.0
+      },
+      "unseen_target": {
+        "positive_queries": 25,
+        "recall_at_10": 0.0
+      }
+    },
+    "unlabelled_queries": 0,
+    "unseen_target_queries": 25
+  },
+  "implementation_sha256": "acc90e73beb02b797de816dd0e025210efe830449558d2e500e03425885ae2ea",
+  "model_receipt_sha256": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a",
+  "refit": false,
+  "retuning": false,
+  "revision": "wikidata-unconditional-source-prior-diagnostic-v1",
+  "rule": "all train-active labels ordered by train artist support; exclude observed seeds, never require them",
+  "scope": "masked observed P136 recovery only; missing source labels unknown; no musical truth",
+  "timing": "post-inspection diagnostic on existing source splits; not fresh confirmation"
+}

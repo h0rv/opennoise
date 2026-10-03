@@ -1,0 +1,8 @@
+{
+  "all_thresholds_metrics_memberships_match": true,
+  "native_source_replay": false,
+  "calibration_queries": 4096,
+  "confirmation_queries": 3236,
+  "test_diagnostic_queries": 6468,
+  "model_refit": false
+}

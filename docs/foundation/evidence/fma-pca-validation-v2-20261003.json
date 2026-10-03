@@ -1,0 +1,48 @@
+{
+  "actual_chromium_contract": {
+    "all_164_native_genre_contexts": true,
+    "all_16916_native_artist_contexts": true,
+    "desktop_mobile_skip_focus": true,
+    "external_or_media_requests": 0,
+    "failed": 0,
+    "passed": 1,
+    "skipped": 0
+  },
+  "browser_contract_sha256": "370245035ea28c84f0b12e0e167d701220248c210e8410e52bc5b9eae8ab9925",
+  "browser_log_sha256": "4245665003cb1ce30e22044976494d12fc4efd149b3ada2ff46d332cc3ae814d",
+  "candidate_receipt_sha256": "f749e21427dccaef68d0273e15e9c45ff6bbd34d418697a498639590b63f50c9",
+  "coordinates_sha256": "ab73b2747ac47a6a50ef964a2f0aad8e073c5371cc6882a2992df7952b91c192",
+  "mathematical_axis_meanings_only": true,
+  "musical_validation_established": false,
+  "original_candidates_preserved": true,
+  "replay_evidence_sha256": "3daad97a217b683e1efdfd01b2a2dda8a982755e55768f1b4cb496ca878f6902",
+  "source_checker_sha256": "276f22e73e2ea69add09630bdd69b9193f565ebfa7b4baace55dc9de0d5172ab",
+  "source_coordinate_replay": {
+    "all_source_coordinates_replayed": true,
+    "denominators": {
+      "missing_finite_descriptors": 3153,
+      "native_artists": 16916,
+      "native_genres": 164,
+      "positioned_artists": 16109,
+      "positioned_genres": 158,
+      "raw_tracks": 109727,
+      "unlabeled_tracks": 2609,
+      "unresolved_artist_tracks": 974
+    },
+    "fit_heldout_tracks": 0,
+    "musical_validation_established": false,
+    "source": {
+      "feature_receipt_sha256": "949a78ce3b3bc968086d63fb26d5a209860fdd1d3d07ee0ba25516ddc9de7d25",
+      "feature_values_sha256": "b427d29b55b9b27c9e38b0aae635478dbebae5dcb381f00e00a9fcadf70032d4",
+      "fold_sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7",
+      "metadata_receipt_sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b",
+      "model_sha256": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38",
+      "track_ids_sha256": "8fb77ce50f3da09b7fb7c04bfc21948ef72e3dd50dbb63cd082291d75b180c07"
+    }
+  },
+  "unit_log_sha256": "d62a7d096d09297af31106c2964a33ae47a03dd6719e4b432495d0bce0854a23",
+  "unit_tests": {
+    "failed": 0,
+    "passed": 4
+  }
+}

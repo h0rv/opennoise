@@ -1,0 +1,39 @@
+{
+  "all_native_fold_mask_train_statistics_and_confirmation_events_match": true,
+  "arms": {
+    "co_observation": {
+      "all_ranks_counts_recall_brier_match": true,
+      "calibration_events": 690,
+      "confirmation_queries": 1991
+    },
+    "combined": {
+      "all_ranks_counts_recall_brier_match": true,
+      "calibration_events": 693,
+      "confirmation_queries": 1991
+    },
+    "popularity": {
+      "all_ranks_counts_recall_brier_match": true,
+      "calibration_events": 696,
+      "confirmation_queries": 1991
+    },
+    "typed_parent": {
+      "all_ranks_counts_recall_brier_match": true,
+      "calibration_events": 555,
+      "confirmation_queries": 1991
+    }
+  },
+  "auditor_sha256": "713053570b9d7402865c6a62f9cb88b4097d794f9ddca25869f882ed389bf0ae",
+  "folds": {
+    "calibration": 2025,
+    "confirmation": 1991,
+    "train": 5976
+  },
+  "musical_truth_or_full_seed_probability_claimed": false,
+  "native_artist_receipt_sha256": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+  "native_capture_transport_replay": "separately checked by source pack verifier",
+  "native_genre_receipt_sha256": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9",
+  "native_typed_P279_graph_replayed": true,
+  "pack_receipt_sha256": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a",
+  "peak_rss_bytes": 41054208,
+  "training_vocabulary": 238
+}

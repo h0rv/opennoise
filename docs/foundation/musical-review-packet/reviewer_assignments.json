@@ -1,0 +1,722 @@
+[
+  {
+    "item_id": "M001",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M001",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M002",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M002",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M003",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M003",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M004",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M004",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M005",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M005",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M006",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M006",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M007",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M007",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M008",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M008",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M009",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M009",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M010",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M010",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M011",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M011",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M012",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M012",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M013",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M013",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M014",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M014",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M015",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M015",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M016",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M016",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M017",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M017",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M018",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M018",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M019",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M019",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M020",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M020",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M021",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M021",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M022",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M022",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M023",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M023",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M024",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M024",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M025",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M025",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M026",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M026",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M027",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M027",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M028",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M028",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M029",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M029",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M030",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M030",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M031",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M031",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M032",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M032",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M033",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M033",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M034",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M034",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M035",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M035",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M036",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M036",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M037",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M037",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M038",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M038",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M039",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M039",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M040",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M040",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M041",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M041",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M042",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M042",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M043",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M043",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M044",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M044",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M045",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M045",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M046",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M046",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M047",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M047",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M048",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M048",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M049",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M049",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M050",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M050",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M051",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M051",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M052",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M052",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M053",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M053",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M054",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M054",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M055",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M055",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M056",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M056",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M057",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M057",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M058",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M058",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M059",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M059",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M060",
+    "reviewer_slot": 1,
+    "reviewer_id": "",
+    "status": "unassigned"
+  },
+  {
+    "item_id": "M060",
+    "reviewer_slot": 2,
+    "reviewer_id": "",
+    "status": "unassigned"
+  }
+]

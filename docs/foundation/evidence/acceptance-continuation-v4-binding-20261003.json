@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-03",
+  "checker_command": ".venv/bin/python scripts/check_foundation_acceptance.py --json",
+  "exit_code": 1,
+  "dossier": {
+    "path": "docs/foundation/acceptance-dossier.json",
+    "sha256": "ac2924008a4d80803d0ce4126c55daef0a2ba88878b30b1e31cf6997395d6d4d",
+    "size_bytes": 21352
+  },
+  "report": {
+    "path": "docs/foundation/evidence/acceptance-continuation-v4-20261003.json",
+    "sha256": "783dbf2c90558dc03d2f302cd397a1ecf10b432b5251190f0a911918e19609f7",
+    "size_bytes": 29279
+  },
+  "evidence_valid": true,
+  "all_gates_recorded_pass": false,
+  "automatic_semantic_pass": false,
+  "scope": "Dated v4 retained-input engineering evidence; v5 integration and final model/PCA replays pending; no global musical parity or listener judgments"
+}

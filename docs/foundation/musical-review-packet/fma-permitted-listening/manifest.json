@@ -1,0 +1,10 @@
+{
+  "sha256": {
+    "cohort.json": "f31e48be3222a074eb1f7904d7af52777db9606421d40b67e44aec52653fdab8",
+    "declaration.json": "159ed68a06107fba1e54a6a7370df5d796b0e806c07d7782e098cde28e2ce06c",
+    "listen.html": "456281f597d2f806014a46ea172fb58572272a42737f1413390c5bb883c2b76a",
+    "listener-request.txt": "51998fee9c3529dd863c6a341c5f1eace59c015417e229218c9aca588484dd9a",
+    "review-form.csv": "b4bfb0339f0e950d9c5a917ec728980acf26faf84570ad2916f75e002f761c12",
+    "reviewer-assignments.json": "bacee713d979c2caa6436507db0e560a4de5f36a3c3577945345a16576f36b36"
+  }
+}

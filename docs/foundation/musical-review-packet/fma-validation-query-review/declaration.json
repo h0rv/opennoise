@@ -1,0 +1,28 @@
+{
+  "candidate_construction": "one top-ranked track per each of two compared methods and fixed-order control; candidate slots randomized deterministically; method and source-label key stored separately",
+  "candidate_order": "per-query deterministic SHA-independent PRNG seed string; A/B/C labels randomized with assignment key separated",
+  "denominator": 7332,
+  "denominator_scope": "all known validation queries in frozen leakage-aware component split; this review sample uses the 240 query IDs frozen by the acoustic retrieval report",
+  "frozen_judgment_coding": {
+    "fit_positive": "both reviewers >=4 and neither unsure/unsupported",
+    "method_preference": "explicit reviewer preference only; preserve ties/neither/abstention",
+    "otherwise": "retain mixed/indeterminate and original rows"
+  },
+  "limitations": [
+    "Candidate retrieval ranking alone is not musical truth.",
+    "FMA-native IDs are not bridged to MusicBrainz.",
+    "Genre annotations are hidden and source-positive values are stored only in coordinator key.",
+    "Audio access, exact playback match, per-track permission and regional/date availability are unverified.",
+    "FMA is an endogenous 2017 source; unknown region, language and era remain unknown."
+  ],
+  "query_order_seed": 20256026,
+  "rater_scale": {
+    "confidence_1_5": "1 very unsure to 5 very high confidence",
+    "fit_1_5": "1 does not fit; 2 mostly does not fit; 3 mixed/uncertain; 4 good fit; 5 very strong fit"
+  },
+  "reviewers_per_item": 2,
+  "revision": "fma-sonic-neighbor-independent-review-v1",
+  "sample_size": 240,
+  "source_queries": "/dev/shm/opennoise-sonic-retrieval-20261003-v1/pack/queries.json",
+  "source_queries_sha256": "5e065ec7ab96bb5d3901f9f68c6848586224b48ce2c854932188d5d4c7b1ef71"
+}

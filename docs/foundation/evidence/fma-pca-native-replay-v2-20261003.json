@@ -1,0 +1,23 @@
+{
+  "all_source_coordinates_replayed": true,
+  "source": {
+    "metadata_receipt_sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b",
+    "feature_receipt_sha256": "949a78ce3b3bc968086d63fb26d5a209860fdd1d3d07ee0ba25516ddc9de7d25",
+    "model_sha256": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38",
+    "fold_sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7",
+    "feature_values_sha256": "b427d29b55b9b27c9e38b0aae635478dbebae5dcb381f00e00a9fcadf70032d4",
+    "track_ids_sha256": "8fb77ce50f3da09b7fb7c04bfc21948ef72e3dd50dbb63cd082291d75b180c07"
+  },
+  "denominators": {
+    "raw_tracks": 109727,
+    "unlabeled_tracks": 2609,
+    "unresolved_artist_tracks": 974,
+    "missing_finite_descriptors": 3153,
+    "native_artists": 16916,
+    "native_genres": 164,
+    "positioned_artists": 16109,
+    "positioned_genres": 158
+  },
+  "fit_heldout_tracks": 0,
+  "musical_validation_established": false
+}

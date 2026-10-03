@@ -1,0 +1,128 @@
+{
+  "revision": "opennoise-permitted-listening-browser-v1",
+  "export_root": "/dev/shm/opennoise-full-input-foundation-20261003-v4/fma-listening",
+  "files": {
+    "index.html": {
+      "sha256": "730dd5b9b63724acd7a830c11b83543a2e602abe6e1652970c0479562a2cdf33",
+      "bytes": 4420
+    },
+    "listening.json": {
+      "sha256": "534c4c50f1b51362d469bc0f99c057c473a5c74a428412d1bee04182cc3acea8",
+      "bytes": 18678
+    },
+    "manifest.json": {
+      "sha256": "66cf16c75a7a1a42dbb3975e78c7a114f70584dfec95a7821c62cdf3558fe873",
+      "bytes": 1755
+    },
+    "61011.mp3": {
+      "sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+      "bytes": 961748
+    },
+    "127299.mp3": {
+      "sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+      "bytes": 1034627
+    },
+    "138060.mp3": {
+      "sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+      "bytes": 945567
+    },
+    "124391.mp3": {
+      "sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+      "bytes": 721577
+    },
+    "112318.mp3": {
+      "sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+      "bytes": 1070451
+    },
+    "138061.mp3": {
+      "sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+      "bytes": 1078053
+    },
+    "126602.mp3": {
+      "sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+      "bytes": 1201045
+    },
+    "140266.mp3": {
+      "sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+      "bytes": 480777
+    }
+  },
+  "tracks": [
+    {
+      "track_id": "61011",
+      "audio_sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f",
+      "duration": 30.014694,
+      "observed_current_time": 0.090411,
+      "decode_play_pause": true,
+      "activation": "Chromium DevTools userGesture playback; no listener judgment"
+    },
+    {
+      "track_id": "127299",
+      "audio_sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b",
+      "duration": 30.014694,
+      "observed_current_time": 0.091234,
+      "decode_play_pause": true,
+      "activation": "Chromium DevTools userGesture playback; no listener judgment"
+    },
+    {
+      "track_id": "138060",
+      "audio_sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf",
+      "duration": 29.988571,
+      "observed_current_time": 0.089471,
+      "decode_play_pause": true,
+      "activation": "Chromium DevTools userGesture playback; no listener judgment"
+    },
+    {
+      "track_id": "124391",
+      "audio_sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e",
+      "duration": 30.014694,
+      "observed_current_time": 0.089907,
+      "decode_play_pause": true,
+      "activation": "Chromium DevTools userGesture playback; no listener judgment"
+    },
+    {
+      "track_id": "112318",
+      "audio_sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409",
+      "duration": 29.988571,
+      "observed_current_time": 0.086932,
+      "decode_play_pause": true,
+      "activation": "Chromium DevTools userGesture playback; no listener judgment"
+    },
+    {
+      "track_id": "138061",
+      "audio_sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8",
+      "duration": 29.988571,
+      "observed_current_time": 0.084012,
+      "decode_play_pause": true,
+      "activation": "Chromium DevTools userGesture playback; no listener judgment"
+    },
+    {
+      "track_id": "126602",
+      "audio_sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1",
+      "duration": 29.988571,
+      "observed_current_time": 0.101414,
+      "decode_play_pause": true,
+      "activation": "Chromium DevTools userGesture playback; no listener judgment"
+    },
+    {
+      "track_id": "140266",
+      "audio_sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d",
+      "duration": 29.988571,
+      "observed_current_time": 0.097276,
+      "decode_play_pause": true,
+      "activation": "Chromium DevTools userGesture playback; no listener judgment"
+    }
+  ],
+  "checks": {
+    "no_initial_audio_fetch": true,
+    "no_autoplay": true,
+    "all_eight_native_clips_decode_play_pause": true,
+    "per_track_attribution": true,
+    "keyboard_skip_link": true,
+    "mobile_no_overflow": true,
+    "all_network_requests_same_origin": true,
+    "inline_native_svg_control_icons": 4
+  },
+  "musical_judgments": "none",
+  "provider_availability_claim": "none"
+}

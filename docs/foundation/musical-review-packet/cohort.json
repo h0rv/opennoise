@@ -1,0 +1,997 @@
+{
+  "artists": [
+    {
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "artist_name": "Jon Hopkins",
+      "artist_url": "https://musicbrainz.org/artist/0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "era": "unknown",
+      "exact_recordings": [
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "126aaa04-a746-424c-84de-01cb13a7a770",
+          "recording_url": "https://musicbrainz.org/recording/126aaa04-a746-424c-84de-01cb13a7a770",
+          "title": "Light Through the Veins (David Holmes remix)"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+          "recording_url": "https://musicbrainz.org/recording/56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+          "title": "Glasstop"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "594f843f-3ed1-423e-b1fc-f6aaf5bc7163",
+          "recording_url": "https://musicbrainz.org/recording/594f843f-3ed1-423e-b1fc-f6aaf5bc7163",
+          "title": "Halcyon"
+        }
+      ],
+      "item_id": "M001",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "c12eaa72-07a6-48dc-95bb-694b1fef0fda",
+      "artist_name": "Ron Sn0w",
+      "artist_url": "https://musicbrainz.org/artist/c12eaa72-07a6-48dc-95bb-694b1fef0fda",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M002",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "21b4ace5-d8bb-498e-85dc-49a20c5f392b",
+      "artist_name": "Pygmy Children",
+      "artist_url": "https://musicbrainz.org/artist/21b4ace5-d8bb-498e-85dc-49a20c5f392b",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M003",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "95c7c31f-3b5c-4573-b9bb-617bb01d8f26",
+      "artist_name": "The Unifics",
+      "artist_url": "https://musicbrainz.org/artist/95c7c31f-3b5c-4573-b9bb-617bb01d8f26",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M004",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "5bbb1869-e616-46f7-b0de-b3956767d538",
+      "artist_name": "10 foot clown",
+      "artist_url": "https://musicbrainz.org/artist/5bbb1869-e616-46f7-b0de-b3956767d538",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M005",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "4993d38c-c7ad-44e1-b8a4-2d6367fda3f4",
+      "artist_name": "Meat",
+      "artist_url": "https://musicbrainz.org/artist/4993d38c-c7ad-44e1-b8a4-2d6367fda3f4",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M006",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+      "artist_name": "Kraftwerk",
+      "artist_url": "https://musicbrainz.org/artist/5700dcd4-c139-4f31-aa3e-6382b9af9032",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M007",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "c48369cd-a083-4999-af17-c9d9e4537f44",
+      "artist_name": "\u3075\u3093\u308f\u308a\u3061\u3083\u3093",
+      "artist_url": "https://musicbrainz.org/artist/c48369cd-a083-4999-af17-c9d9e4537f44",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M008",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+      "artist_name": "Public Enemy",
+      "artist_url": "https://musicbrainz.org/artist/bf2e15d0-4b77-469e-bfb4-f8414415baca",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M009",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "0f3c4d10-e541-46f0-a589-61ad701c6ce4",
+      "artist_name": "MDC",
+      "artist_url": "https://musicbrainz.org/artist/0f3c4d10-e541-46f0-a589-61ad701c6ce4",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M010",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+      "artist_name": "Iron Maiden",
+      "artist_url": "https://musicbrainz.org/artist/ca891d65-d9b0-4258-89f7-e6ba29d83767",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M011",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "2b17b688-3e2e-4fb3-ac73-1fac6d75d73d",
+      "artist_name": "Stone in Egypt",
+      "artist_url": "https://musicbrainz.org/artist/2b17b688-3e2e-4fb3-ac73-1fac6d75d73d",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M012",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+      "artist_name": "Miles Davis",
+      "artist_url": "https://musicbrainz.org/artist/561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M013",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "6514cffa-fbe0-4965-ad88-e998ead8a82a",
+      "artist_name": "Fela Kuti",
+      "artist_url": "https://musicbrainz.org/artist/6514cffa-fbe0-4965-ad88-e998ead8a82a",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M014",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+      "artist_name": "Chihei Hatakeyama",
+      "artist_url": "https://musicbrainz.org/artist/a0778b30-0caa-46cb-a775-b1f2ccc669e8",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M015",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "a42d478d-7ec8-407a-a3f0-fc61db2da964",
+      "artist_name": "Bugs Henderson and the Shuffle Kings",
+      "artist_url": "https://musicbrainz.org/artist/a42d478d-7ec8-407a-a3f0-fc61db2da964",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M016",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+      "artist_name": "Lata Mangeshkar",
+      "artist_url": "https://musicbrainz.org/artist/aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M017",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "81710904-cdce-42e4-ad5b-ad224efd1e7e",
+      "artist_name": "Ismail Zabeeh",
+      "artist_url": "https://musicbrainz.org/artist/81710904-cdce-42e4-ad5b-ad224efd1e7e",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M018",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+      "artist_name": "Bj\u00f6rk",
+      "artist_url": "https://musicbrainz.org/artist/87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M019",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "b18eed15-7628-4f55-9ca6-8b78373bcaf3",
+      "artist_name": "Bruce Ruffin",
+      "artist_url": "https://musicbrainz.org/artist/b18eed15-7628-4f55-9ca6-8b78373bcaf3",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M020",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "3f410613-7077-440d-8fc6-9e2f9395ad00",
+      "artist_name": "Bearblood",
+      "artist_url": "https://musicbrainz.org/artist/3f410613-7077-440d-8fc6-9e2f9395ad00",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M021",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "c34734cf-d85e-4934-8500-9cd883fe4304",
+      "artist_name": "Jon Erik \u00d6st",
+      "artist_url": "https://musicbrainz.org/artist/c34734cf-d85e-4934-8500-9cd883fe4304",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M022",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "6bf692e0-baac-4428-94c3-423d52508cf0",
+      "artist_name": "Jon Lord",
+      "artist_url": "https://musicbrainz.org/artist/6bf692e0-baac-4428-94c3-423d52508cf0",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M023",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "e790b555-fea1-49ef-9468-21a040eb92b4",
+      "artist_name": "Chuck Cannon",
+      "artist_url": "https://musicbrainz.org/artist/e790b555-fea1-49ef-9468-21a040eb92b4",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M024",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "9aa0060e-23f4-429a-b5aa-8938a3be8453",
+      "artist_name": "Quails in the Nest",
+      "artist_url": "https://musicbrainz.org/artist/9aa0060e-23f4-429a-b5aa-8938a3be8453",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M025",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "045ffe9e-f28f-4746-b96b-31bd4e8ec5fd",
+      "artist_name": "Gooseflesh",
+      "artist_url": "https://musicbrainz.org/artist/045ffe9e-f28f-4746-b96b-31bd4e8ec5fd",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M026",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "0609c172-8605-490c-9494-e1019803e817",
+      "artist_name": "Kem",
+      "artist_url": "https://musicbrainz.org/artist/0609c172-8605-490c-9494-e1019803e817",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M027",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "artist_name": "Caribou",
+      "artist_url": "https://musicbrainz.org/artist/735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "era": "unknown",
+      "exact_recordings": [
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "1466d83d-cbe9-4c8f-9b63-df038350a773",
+          "recording_url": "https://musicbrainz.org/recording/1466d83d-cbe9-4c8f-9b63-df038350a773",
+          "title": "Found Out"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+          "recording_url": "https://musicbrainz.org/recording/2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+          "title": "Eli"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "429893fd-5242-4526-898e-134c3eb93a0f",
+          "recording_url": "https://musicbrainz.org/recording/429893fd-5242-4526-898e-134c3eb93a0f",
+          "title": "After Hours"
+        }
+      ],
+      "item_id": "M028",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+      "artist_name": "Black Sabbath",
+      "artist_url": "https://musicbrainz.org/artist/5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M029",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "f07dbc2f-317b-470f-bad4-5f1b0eb6faf1",
+      "artist_name": "Caetano Veloso",
+      "artist_url": "https://musicbrainz.org/artist/f07dbc2f-317b-470f-bad4-5f1b0eb6faf1",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M030",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "622fca01-0c9f-44ae-b696-4d4648f57e33",
+      "artist_name": "Atomic Steif",
+      "artist_url": "https://musicbrainz.org/artist/622fca01-0c9f-44ae-b696-4d4648f57e33",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M031",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "4ec41f8c-b399-4684-a361-a233e8e81a83",
+      "artist_name": "Si Zentner",
+      "artist_url": "https://musicbrainz.org/artist/4ec41f8c-b399-4684-a361-a233e8e81a83",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M032",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "daaf2e7e-2ba4-4cd2-a570-732407f56b6f",
+      "artist_name": "Last Hit",
+      "artist_url": "https://musicbrainz.org/artist/daaf2e7e-2ba4-4cd2-a570-732407f56b6f",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M033",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "54799c0e-eb45-4eea-996d-c4d71a63c499",
+      "artist_name": "Ella Fitzgerald",
+      "artist_url": "https://musicbrainz.org/artist/54799c0e-eb45-4eea-996d-c4d71a63c499",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M034",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "e22d2f66-881e-41ca-9356-544697ee5f90",
+      "artist_name": "Etta James",
+      "artist_url": "https://musicbrainz.org/artist/e22d2f66-881e-41ca-9356-544697ee5f90",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M035",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "7ebec3f0-a830-4b11-815f-08a2f175a185",
+      "artist_name": "DJ Lady Dior",
+      "artist_url": "https://musicbrainz.org/artist/7ebec3f0-a830-4b11-815f-08a2f175a185",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M036",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "82510e7b-a874-4238-b49e-96884600314e",
+      "artist_name": "Pinkard & Bowden",
+      "artist_url": "https://musicbrainz.org/artist/82510e7b-a874-4238-b49e-96884600314e",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M037",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "3be2d963-3e2f-4c15-bd03-1b325083557d",
+      "artist_name": "Steve Kolander",
+      "artist_url": "https://musicbrainz.org/artist/3be2d963-3e2f-4c15-bd03-1b325083557d",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M038",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "artist_name": "Autechre",
+      "artist_url": "https://musicbrainz.org/artist/410c9baf-5469-44f6-9852-826524b80c61",
+      "era": "unknown",
+      "exact_recordings": [
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+          "recording_url": "https://musicbrainz.org/recording/1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+          "title": "Xylin Room"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+          "recording_url": "https://musicbrainz.org/recording/41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+          "title": "Tewe"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "410c9baf-5469-44f6-9852-826524b80c61"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "4bc73c97-a204-42ad-877b-09a4445952ea",
+          "recording_url": "https://musicbrainz.org/recording/4bc73c97-a204-42ad-877b-09a4445952ea",
+          "title": "Leterel"
+        }
+      ],
+      "item_id": "M039",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "02d2e74f-985c-4706-8d83-24133c7de109",
+      "artist_name": "The Brandalls",
+      "artist_url": "https://musicbrainz.org/artist/02d2e74f-985c-4706-8d83-24133c7de109",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M040",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "2783b3a3-80e7-4c9e-9d08-e71df576d814",
+      "artist_name": "Second Degr\u00e9",
+      "artist_url": "https://musicbrainz.org/artist/2783b3a3-80e7-4c9e-9d08-e71df576d814",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M041",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "2ef36a7b-c93c-4e05-9d23-2dd9f85c653a",
+      "artist_name": "Frans Br\u00fcggen",
+      "artist_url": "https://musicbrainz.org/artist/2ef36a7b-c93c-4e05-9d23-2dd9f85c653a",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M042",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "92d37892-6186-4459-9cc1-f0dde57652d0",
+      "artist_name": "Joan Baez",
+      "artist_url": "https://musicbrainz.org/artist/92d37892-6186-4459-9cc1-f0dde57652d0",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M043",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "4567448e-8e6a-4ee2-9cce-73ce937dd64f",
+      "artist_name": "Magni Wentzel Sextet",
+      "artist_url": "https://musicbrainz.org/artist/4567448e-8e6a-4ee2-9cce-73ce937dd64f",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M044",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "artist_name": "Squarepusher",
+      "artist_url": "https://musicbrainz.org/artist/4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "era": "unknown",
+      "exact_recordings": [
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+          "recording_url": "https://musicbrainz.org/recording/35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+          "title": "4026 Melt 3"
+        },
+        {
+          "availability_status": "destination_found_availability_not_checked",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "provider": "",
+          "provider_destinations": [
+            {
+              "availability": "not_checked",
+              "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+              "region": null,
+              "relation": "free streaming",
+              "source_url_mbid": "b3f7b1df-3a6f-4f8b-a073-6df23fd39bea",
+              "url": "https://open.spotify.com/track/1eI4QxgarxIFRaERUsLo4w"
+            }
+          ],
+          "recording_mbid": "623f308e-7cd3-413a-a641-534266e65732",
+          "recording_url": "https://musicbrainz.org/recording/623f308e-7cd3-413a-a641-534266e65732",
+          "title": "Shin Triad"
+        },
+        {
+          "availability_status": "destination_found_availability_not_checked",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+          ],
+          "provider": "",
+          "provider_destinations": [
+            {
+              "availability": "not_checked",
+              "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+              "region": null,
+              "relation": "free streaming",
+              "source_url_mbid": "9320f3b0-6d96-408f-9589-beb9f7240ac0",
+              "url": "https://open.spotify.com/track/4h8F0homLgdaTub8qkbhb6"
+            }
+          ],
+          "recording_mbid": "6278a2ab-4436-4077-a779-97268d3af3cf",
+          "recording_url": "https://musicbrainz.org/recording/6278a2ab-4436-4077-a779-97268d3af3cf",
+          "title": "Tesko"
+        }
+      ],
+      "item_id": "M045",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "359fcab7-0b8f-4fcb-ad94-9c76cc2558c6",
+      "artist_name": "P.V.J.S.",
+      "artist_url": "https://musicbrainz.org/artist/359fcab7-0b8f-4fcb-ad94-9c76cc2558c6",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M046",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "f1fd1009-556b-4465-8ef5-73bf0e34b14a",
+      "artist_name": "Bill Dicey",
+      "artist_url": "https://musicbrainz.org/artist/f1fd1009-556b-4465-8ef5-73bf0e34b14a",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M047",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "8c87dda0-be58-4e48-a3b5-2626f26364c7",
+      "artist_name": "Son House",
+      "artist_url": "https://musicbrainz.org/artist/8c87dda0-be58-4e48-a3b5-2626f26364c7",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M048",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "24f1766e-9635-4d58-a4d4-9413f9f98a4c",
+      "artist_name": "Johann Sebastian Bach",
+      "artist_url": "https://musicbrainz.org/artist/24f1766e-9635-4d58-a4d4-9413f9f98a4c",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M049",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+      "artist_name": "Ludwig van Beethoven",
+      "artist_url": "https://musicbrainz.org/artist/1f9df192-a621-4f54-8850-2c5373b7eac9",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M050",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "49017290-d667-4a4b-bf9a-72cb3667ccd6",
+      "artist_name": "Adil Sadullaeev",
+      "artist_url": "https://musicbrainz.org/artist/49017290-d667-4a4b-bf9a-72cb3667ccd6",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M051",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "7b8e1188-9ca4-4aa5-8393-172de6fa04de",
+      "artist_name": "Celia Cruz",
+      "artist_url": "https://musicbrainz.org/artist/7b8e1188-9ca4-4aa5-8393-172de6fa04de",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M052",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+      "artist_name": "Thelonious Monk",
+      "artist_url": "https://musicbrainz.org/artist/8e8c7417-c905-46b1-b42a-5260b4274ed4",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M053",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "artist_name": "Four Tet",
+      "artist_url": "https://musicbrainz.org/artist/3bcff06f-675a-451f-9075-99e8657047e8",
+      "era": "unknown",
+      "exact_recordings": [
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+          "recording_url": "https://musicbrainz.org/recording/0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+          "title": "Lion"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "187db0f2-f082-4159-8748-fa34146cacaf",
+          "recording_url": "https://musicbrainz.org/recording/187db0f2-f082-4159-8748-fa34146cacaf",
+          "title": "Ribbons"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "23118e3d-2ac9-4e08-a1b8-18f77d68c6e1",
+          "recording_url": "https://musicbrainz.org/recording/23118e3d-2ac9-4e08-a1b8-18f77d68c6e1",
+          "title": "Sun Drums and Soil"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "2a23cd23-1a7d-4919-9a81-388e023edf2d",
+          "recording_url": "https://musicbrainz.org/recording/2a23cd23-1a7d-4919-9a81-388e023edf2d",
+          "title": "0181, Part 1"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "3715b33e-9766-480f-ad0b-8437703af6b7",
+          "recording_url": "https://musicbrainz.org/recording/3715b33e-9766-480f-ad0b-8437703af6b7",
+          "title": "Turtle Turtle Up"
+        },
+        {
+          "availability_status": "destination_unlisted",
+          "credit_verified": "native_recording_credit_replay",
+          "credited_artist_mbids": [
+            "3bcff06f-675a-451f-9075-99e8657047e8"
+          ],
+          "provider": "",
+          "provider_destinations": [],
+          "recording_mbid": "885c71d0-b306-43df-a435-11433b06aa73",
+          "recording_url": "https://musicbrainz.org/recording/885c71d0-b306-43df-a435-11433b06aa73",
+          "title": "Kool FM"
+        }
+      ],
+      "item_id": "M054",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "f86f1f07-d182-45ce-ae93-ef610880ca72",
+      "artist_name": "Muddy Waters",
+      "artist_url": "https://musicbrainz.org/artist/f86f1f07-d182-45ce-ae93-ef610880ca72",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M055",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+      "artist_name": "Johnny Cash",
+      "artist_url": "https://musicbrainz.org/artist/d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M056",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "3e110caa-e9e8-4c33-98dc-ebbf0c6d2494",
+      "artist_name": "King Sunny Ad\u00e9",
+      "artist_url": "https://musicbrainz.org/artist/3e110caa-e9e8-4c33-98dc-ebbf0c6d2494",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M057",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "5f7136b9-7ce8-4648-8ec6-7b3419d7b794",
+      "artist_name": "Becky & Cloud",
+      "artist_url": "https://musicbrainz.org/artist/5f7136b9-7ce8-4648-8ec6-7b3419d7b794",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M058",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+      "artist_name": "A Tribe Called Quest",
+      "artist_url": "https://musicbrainz.org/artist/9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M059",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    },
+    {
+      "artist_mbid": "050bd499-feba-4321-93d7-27b96a60d504",
+      "artist_name": "Zombie Girl",
+      "artist_url": "https://musicbrainz.org/artist/050bd499-feba-4321-93d7-27b96a60d504",
+      "era": "unknown",
+      "exact_recordings": [],
+      "item_id": "M060",
+      "language": "unknown",
+      "listening_access_status": "not_checked",
+      "region": "unknown"
+    }
+  ],
+  "denominator_count": 150,
+  "excluded_denominator_ids": [
+    "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+    "084023db-5475-42a4-84ee-87e33adaf804",
+    "0a9f8491-5f30-4678-8b11-066f32e9cf11",
+    "0febdcf7-4e1f-4661-9493-b40427de2c13",
+    "121d286a-7474-494e-abdc-79741ea9ef5a",
+    "14d13aa5-b1c2-427a-9a48-d4a73e7d946a",
+    "17a08554-4da7-49d4-a24a-04cd0e632882",
+    "1a40d232-25f6-49ec-98ea-d2fd0393256c",
+    "1aac1f3e-469f-4a74-902c-a19dd19d9b2f",
+    "1d93c839-22e7-4f76-ad84-d27039efc048",
+    "1f6949e2-f257-40f3-851e-e2e02271e398",
+    "1fb79b54-9a78-4c9c-9c5a-320c2295ea51",
+    "27b771e1-c5a3-4fd4-b4dc-741adf5281e4",
+    "27dedd67-b819-4040-b972-24ebf5dca374",
+    "2944824d-4c26-476f-a981-be849081942f",
+    "301e836f-e627-450b-af1b-9d26bdf7d09c",
+    "31ab9d08-eb2f-4ef7-9b78-0519c3225f47",
+    "32a1ded1-f6b7-4b07-b984-c297b6e0595a",
+    "373492fa-118b-4582-bce7-08361d31efaa",
+    "37975cba-2416-4068-9b55-e684ba609359",
+    "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+    "3b107768-78b1-4f31-9bf4-c37dfde821ae",
+    "3c32d4ac-ab56-49f6-8333-8a7f7e8bc537",
+    "3cf294ed-9ec6-42bf-9c98-6d186310217d",
+    "3d0109f0-3a18-4ae6-8f79-115e0c57fd39",
+    "40ee8fa3-c6d7-4556-b4e2-9f4114565043",
+    "53459c43-00fa-4745-82fd-1987256c345c",
+    "5351d9b9-a42f-4ba3-859b-b8c0df624ffe",
+    "5ab9ff01-319e-43c6-8020-50770a916b12",
+    "5b90f06e-eb6f-4e43-ae28-175d136cf8f6",
+    "5c01ebfb-80f4-42e6-909d-3d687af29ddb",
+    "5c98fc12-be83-4246-ae5b-2184192913b9",
+    "5d7df598-bb80-4d73-a6f8-9ed1a4374052",
+    "61006095-7cb7-4487-be18-4c43b8832d32",
+    "62173ce5-37ef-41b1-86cd-45401a8955fc",
+    "657952a5-e5bf-4762-97dd-8aaa62530651",
+    "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+    "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+    "697f8b9f-0454-40f2-bba2-58f35668cdbe",
+    "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+    "703e2126-8a01-4642-a686-d48b91e32980",
+    "7124c37e-b26b-4347-84f2-a3f39766327a",
+    "739cea3a-ae41-4e63-9802-57254e35333b",
+    "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+    "7570a0dd-5a67-401b-b19a-261eee01a284",
+    "77300da4-d5c1-4390-8517-defbc9913d5a",
+    "776e2c73-b75a-4806-aaa9-86f797dbd042",
+    "7932f6cc-e618-4d0e-a0db-832ffa58ebe7",
+    "7a6f9b53-8dd4-4372-b900-22988c252da4",
+    "7df0c762-d66f-4127-ab8d-9808f0a05d7f",
+    "7e363eca-e368-4c2c-b708-f66feb471070",
+    "8223452d-6098-4cb6-83b7-3a22e22f9d8a",
+    "898777b5-5d39-4c56-877c-b327c0623e70",
+    "89f32824-a75d-4e9b-984e-2d861bfb9bdb",
+    "8ec69f65-727b-4e95-b339-640673e3494e",
+    "9696b712-00c3-4b30-98fa-dd86c76ae99b",
+    "99de9b9c-773b-4938-abdc-19fd116405a8",
+    "9be2a5ac-8201-489b-b5f6-91f958bf9060",
+    "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+    "a02fbbad-80d5-47cf-8658-a3d176c8c1a6",
+    "a1d32e75-2391-4d94-904e-13536304dcf6",
+    "a1fabf68-2011-45e1-8111-d00e82f87d81",
+    "a5f105cc-0497-4433-a5ad-8326eddfaada",
+    "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+    "a6f682a6-025f-4ee0-89c8-fc51d2864e24",
+    "aebbb417-0d18-4fec-a2e2-ce9663d1fa7e",
+    "b0c0ac33-708e-4af6-b0ec-a7243456c3b7",
+    "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+    "b625448e-bf4a-41c3-a421-72ad46cdb831",
+    "b689eca2-2a5b-4299-9644-9e2ad8db507e",
+    "b88eebe7-42ae-40a3-bf6c-2369fbf3a5b7",
+    "bc5c2918-4aba-4ef6-a245-100563a4487f",
+    "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+    "c3aeb863-7b26-4388-94e8-5a240f2be21b",
+    "c461d82f-3e88-40d4-80d9-a523f1b34a57",
+    "ce5c2e30-3c09-4f95-8b4f-625c65c65a3a",
+    "cefce45c-965a-4a64-80c7-4a1c51e3571c",
+    "cfbc0924-0035-4d6c-8197-f024653af823",
+    "d3e9d975-72be-4e23-9254-4cd3840d2e2b",
+    "d91b3683-4622-4d72-8a03-80f1ff59e639",
+    "e280268a-a5ab-4bb0-be4d-ec470ca59131",
+    "e3317e74-c734-4629-b109-8b0386f94276",
+    "e4d32f51-bc57-42a4-8165-b80f7a86496d",
+    "e69db629-f7ba-4379-9835-0853cc2f0c2c",
+    "eb274bec-4432-494b-8a45-74f08d3e59c9",
+    "f0410270-49a2-48ef-bac8-da8a1d79532d",
+    "f22942a1-6f70-4f48-866e-238cb2308fbd",
+    "f7591ba8-de45-4403-8b9f-40b6ecb385f4",
+    "f9f67d49-8bba-4d2d-9910-cc335b941fcd",
+    "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+  ],
+  "sample_count": 60
+}

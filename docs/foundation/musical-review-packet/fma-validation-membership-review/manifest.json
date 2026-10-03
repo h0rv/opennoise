@@ -1,0 +1,10 @@
+{
+  "sha256": {
+    "README.md": "b03a05b1843f14587c5d227cf8d9e8b5ea2a88640830912f1af114f1e9d24942",
+    "declaration.json": "174217195bfb6dbd90617ec45f62c4dca8c11a5673f3d9f1354362ab893db27a",
+    "items.json": "9f8e9ff7d6c1303b547a5881874dbe7a50e6ac073884fc26e0f738807ff849f5",
+    "listener-request.txt": "0e212eeffaaa6f2f255bb568fbdfa536dceb9910263af99110449fc23de1bdc9",
+    "membership-review-form.csv": "910113c882d828dbe84a768cd8ca56588e57baf384e97291ea23e002734a7f78",
+    "reviewer-assignments.json": "283dce37a99b60f098dc1ca33c238202b3afbb663249049fc8a5649a4b14d494"
+  }
+}

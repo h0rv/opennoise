@@ -43,8 +43,26 @@ abstention against these independent judgments before interpreting suggestions
 as calibrated musical memberships. Freeze any promotion threshold before viewing
 confirmation results; changes require a fresh confirmation cohort.
 
-Until a declared cohort has permitted listening access and completed independent
-judgments, the musical-relevance, defining-recording and calibrated-membership
-gates remain unmet. Counts, a working browser, graph edge recovery and held-out
-FMA annotations can support narrower technical claims. They cannot complete this
-review or certify Every Noise parity.
+Frozen independent-review materials were prepared on 2026-10-03 in
+`docs/foundation/musical-review-packet/`. They include a seeded 60-artist cohort
+from the selected 150-artist denominator, all 36 exact credited recording
+examples (nine literal external provider destinations, with availability and
+permission unverified), a seeded 240-track cohort from all 109,727 native FMA
+tracks, and the separate 240-query validation comparison from a 7,332-query
+known-validation denominator. A confirmation-only candidate-membership form is
+also present; source labels, ranks and scores stay in coordinator-only files.
+These FMA identifiers remain in the native FMA namespace. Region, language and
+era are unknown in the FMA and selected-150 rosters. The current full-FMA
+sample files are an interrupted pre-refactor build: the streamed selection and
+missingness strata have since been corrected, so those files must be
+regenerated and manifest-checked before distribution or use as frozen evidence.
+
+A separate eight-item FMA listening cohort has exact local 30-second clips with
+source-declared per-track CC licenses, attribution, hashes and two independent
+review slots. The clips are selected for their explicit audio permission path,
+not for musical representativeness; external provider and regional availability
+remain unchecked. No reviewer identities or musical judgments have been
+recorded in any packet. Therefore the musical-relevance, defining-recording and
+calibrated-membership gates remain unmet. Counts, a working browser, graph edge
+recovery and held-out FMA annotations can support narrower technical claims.
+They cannot complete this review or certify Every Noise parity.

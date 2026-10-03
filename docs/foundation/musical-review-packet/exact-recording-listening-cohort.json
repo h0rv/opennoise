@@ -1,0 +1,705 @@
+{
+  "items": [
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "artist_name": "Jon Hopkins",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+      ],
+      "item_id": "R001",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "126aaa04-a746-424c-84de-01cb13a7a770",
+      "recording_url": "https://musicbrainz.org/recording/126aaa04-a746-424c-84de-01cb13a7a770",
+      "region": "unknown",
+      "title": "Light Through the Veins (David Holmes remix)"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "artist_name": "Jon Hopkins",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+      ],
+      "item_id": "R002",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+      "recording_url": "https://musicbrainz.org/recording/56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+      "region": "unknown",
+      "title": "Glasstop"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+      "artist_name": "Jon Hopkins",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd"
+      ],
+      "item_id": "R003",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "594f843f-3ed1-423e-b1fc-f6aaf5bc7163",
+      "recording_url": "https://musicbrainz.org/recording/594f843f-3ed1-423e-b1fc-f6aaf5bc7163",
+      "region": "unknown",
+      "title": "Halcyon"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "artist_name": "Four Tet",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "3bcff06f-675a-451f-9075-99e8657047e8"
+      ],
+      "item_id": "R004",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+      "recording_url": "https://musicbrainz.org/recording/0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+      "region": "unknown",
+      "title": "Lion"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "artist_name": "Four Tet",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "3bcff06f-675a-451f-9075-99e8657047e8"
+      ],
+      "item_id": "R005",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "187db0f2-f082-4159-8748-fa34146cacaf",
+      "recording_url": "https://musicbrainz.org/recording/187db0f2-f082-4159-8748-fa34146cacaf",
+      "region": "unknown",
+      "title": "Ribbons"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "artist_name": "Four Tet",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "3bcff06f-675a-451f-9075-99e8657047e8"
+      ],
+      "item_id": "R006",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "23118e3d-2ac9-4e08-a1b8-18f77d68c6e1",
+      "recording_url": "https://musicbrainz.org/recording/23118e3d-2ac9-4e08-a1b8-18f77d68c6e1",
+      "region": "unknown",
+      "title": "Sun Drums and Soil"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "artist_name": "Four Tet",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "3bcff06f-675a-451f-9075-99e8657047e8"
+      ],
+      "item_id": "R007",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "2a23cd23-1a7d-4919-9a81-388e023edf2d",
+      "recording_url": "https://musicbrainz.org/recording/2a23cd23-1a7d-4919-9a81-388e023edf2d",
+      "region": "unknown",
+      "title": "0181, Part 1"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "artist_name": "Four Tet",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "3bcff06f-675a-451f-9075-99e8657047e8"
+      ],
+      "item_id": "R008",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "3715b33e-9766-480f-ad0b-8437703af6b7",
+      "recording_url": "https://musicbrainz.org/recording/3715b33e-9766-480f-ad0b-8437703af6b7",
+      "region": "unknown",
+      "title": "Turtle Turtle Up"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "artist_name": "Four Tet",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "3bcff06f-675a-451f-9075-99e8657047e8"
+      ],
+      "item_id": "R009",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "885c71d0-b306-43df-a435-11433b06aa73",
+      "recording_url": "https://musicbrainz.org/recording/885c71d0-b306-43df-a435-11433b06aa73",
+      "region": "unknown",
+      "title": "Kool FM"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "artist_name": "Autechre",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "410c9baf-5469-44f6-9852-826524b80c61"
+      ],
+      "item_id": "R010",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+      "recording_url": "https://musicbrainz.org/recording/1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+      "region": "unknown",
+      "title": "Xylin Room"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "artist_name": "Autechre",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "410c9baf-5469-44f6-9852-826524b80c61"
+      ],
+      "item_id": "R011",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+      "recording_url": "https://musicbrainz.org/recording/41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+      "region": "unknown",
+      "title": "Tewe"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "410c9baf-5469-44f6-9852-826524b80c61",
+      "artist_name": "Autechre",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "410c9baf-5469-44f6-9852-826524b80c61"
+      ],
+      "item_id": "R012",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "4bc73c97-a204-42ad-877b-09a4445952ea",
+      "recording_url": "https://musicbrainz.org/recording/4bc73c97-a204-42ad-877b-09a4445952ea",
+      "region": "unknown",
+      "title": "Leterel"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "artist_name": "Squarepusher",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+      ],
+      "item_id": "R013",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+      "recording_url": "https://musicbrainz.org/recording/35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+      "region": "unknown",
+      "title": "4026 Melt 3"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "artist_name": "Squarepusher",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+      ],
+      "item_id": "R014",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "b3f7b1df-3a6f-4f8b-a073-6df23fd39bea",
+          "url": "https://open.spotify.com/track/1eI4QxgarxIFRaERUsLo4w"
+        }
+      ],
+      "recording_mbid": "623f308e-7cd3-413a-a641-534266e65732",
+      "recording_url": "https://musicbrainz.org/recording/623f308e-7cd3-413a-a641-534266e65732",
+      "region": "unknown",
+      "title": "Shin Triad"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc",
+      "artist_name": "Squarepusher",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "4d86ad4e-28d8-4e9f-8cf4-735c57060fdc"
+      ],
+      "item_id": "R015",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "9320f3b0-6d96-408f-9589-beb9f7240ac0",
+          "url": "https://open.spotify.com/track/4h8F0homLgdaTub8qkbhb6"
+        }
+      ],
+      "recording_mbid": "6278a2ab-4436-4077-a779-97268d3af3cf",
+      "recording_url": "https://musicbrainz.org/recording/6278a2ab-4436-4077-a779-97268d3af3cf",
+      "region": "unknown",
+      "title": "Tesko"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "artist_name": "Boards of Canada",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+      ],
+      "item_id": "R016",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "e59d14f1-aa9f-492e-9135-edc555c7d7e9",
+          "url": "https://open.spotify.com/track/62In8NQKlFB34uMQf7oz1v"
+        }
+      ],
+      "recording_mbid": "a3c49027-eb58-4e16-8848-28a857f936cd",
+      "recording_url": "https://musicbrainz.org/recording/a3c49027-eb58-4e16-8848-28a857f936cd",
+      "region": "unknown",
+      "title": "Oscar See Through Red Eye"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "artist_name": "Boards of Canada",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+      ],
+      "item_id": "R017",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "6f0ebea1-34e3-4540-bdd9-be249648a1b1",
+          "url": "https://open.spotify.com/track/1xR9H230902WMiJwH0d8X9"
+        }
+      ],
+      "recording_mbid": "cd9072f6-15d7-4046-9849-6389a791dcf6",
+      "recording_url": "https://musicbrainz.org/recording/cd9072f6-15d7-4046-9849-6389a791dcf6",
+      "region": "unknown",
+      "title": "Energy Warning"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "69158f97-4c07-4c4e-baf8-4e4ab1ed666e",
+      "artist_name": "Boards of Canada",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "69158f97-4c07-4c4e-baf8-4e4ab1ed666e"
+      ],
+      "item_id": "R018",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "8db47917-feb5-47c7-9446-e8fe50b50a9f",
+          "url": "https://open.spotify.com/track/4CjUEILQ2oxJKFGDbavYBU"
+        }
+      ],
+      "recording_mbid": "eeca1d57-b7c9-452b-83d7-ba628484dbaf",
+      "recording_url": "https://musicbrainz.org/recording/eeca1d57-b7c9-452b-83d7-ba628484dbaf",
+      "region": "unknown",
+      "title": "Transmisiones Ferox"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "artist_name": "Floating Points",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+      ],
+      "item_id": "R019",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "02e8f439-99fc-4427-8c12-2b08097d86e6",
+      "recording_url": "https://musicbrainz.org/recording/02e8f439-99fc-4427-8c12-2b08097d86e6",
+      "region": "unknown",
+      "title": "Obfuse"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "artist_name": "Floating Points",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97"
+      ],
+      "item_id": "R020",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "bd72d59a-c4e7-4157-b2d2-1789f6aa4bbe",
+          "url": "https://open.spotify.com/track/3YGFZ8rIsAA5zQvvoeCaW0"
+        }
+      ],
+      "recording_mbid": "33cc794d-1aca-44b6-af3d-6309a503ad93",
+      "recording_url": "https://musicbrainz.org/recording/33cc794d-1aca-44b6-af3d-6309a503ad93",
+      "region": "unknown",
+      "title": "Del oro"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+      "artist_name": "Floating Points",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "38712b4c-0fd4-4c65-8c7a-45676fecc973",
+        "69d9c5ba-7bba-4cb7-ab32-8ccc48ad4f97",
+        "b3a0912a-a62a-4388-9368-7cb21ed5caf9"
+      ],
+      "item_id": "R021",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "efcda6da-a3e5-45d3-8238-4071320b4cba",
+      "recording_url": "https://musicbrainz.org/recording/efcda6da-a3e5-45d3-8238-4071320b4cba",
+      "region": "unknown",
+      "title": "Movements 1\u20135"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "artist_name": "Caribou",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+      ],
+      "item_id": "R022",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "1466d83d-cbe9-4c8f-9b63-df038350a773",
+      "recording_url": "https://musicbrainz.org/recording/1466d83d-cbe9-4c8f-9b63-df038350a773",
+      "region": "unknown",
+      "title": "Found Out"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "artist_name": "Caribou",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+      ],
+      "item_id": "R023",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+      "recording_url": "https://musicbrainz.org/recording/2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+      "region": "unknown",
+      "title": "Eli"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "735e3514-a8ae-401f-af3b-6300df1b8d2c",
+      "artist_name": "Caribou",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "735e3514-a8ae-401f-af3b-6300df1b8d2c"
+      ],
+      "item_id": "R024",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "429893fd-5242-4526-898e-134c3eb93a0f",
+      "recording_url": "https://musicbrainz.org/recording/429893fd-5242-4526-898e-134c3eb93a0f",
+      "region": "unknown",
+      "title": "After Hours"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "artist_name": "Burial (UK dubstep)",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+      ],
+      "item_id": "R025",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "0feba647-01f6-489b-b8d4-a18de429a5af",
+      "recording_url": "https://musicbrainz.org/recording/0feba647-01f6-489b-b8d4-a18de429a5af",
+      "region": "unknown",
+      "title": "Gutted"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "artist_name": "Burial (UK dubstep)",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+      ],
+      "item_id": "R026",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "dafc8f66-4c33-45e1-a547-b01eeeea28af",
+          "url": "https://open.spotify.com/track/4TDKgsDEAAP33JA8ByukSm"
+        }
+      ],
+      "recording_mbid": "17abfe47-bd84-4e6d-b584-2ba2a5973a36",
+      "recording_url": "https://musicbrainz.org/recording/17abfe47-bd84-4e6d-b584-2ba2a5973a36",
+      "region": "unknown",
+      "title": "In McDonalds"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6",
+      "artist_name": "Burial (UK dubstep)",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "9ddce51c-2b75-4b3e-ac8c-1db09e7c89c6"
+      ],
+      "item_id": "R027",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "4730aa0f-ec3f-4b56-adce-8f172a1bb454",
+          "url": "https://open.spotify.com/track/77JTZFqpdShRe5ljKirsxq"
+        }
+      ],
+      "recording_mbid": "1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd",
+      "recording_url": "https://musicbrainz.org/recording/1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd",
+      "region": "unknown",
+      "title": "Ghost Hardware"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "artist_name": "Aphex Twin",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "f22942a1-6f70-4f48-866e-238cb2308fbd"
+      ],
+      "item_id": "R028",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "030ed9b0-3620-4b6b-b75b-0c9cf0634ede",
+      "recording_url": "https://musicbrainz.org/recording/030ed9b0-3620-4b6b-b75b-0c9cf0634ede",
+      "region": "unknown",
+      "title": "[untitled]"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "artist_name": "Aphex Twin",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "f22942a1-6f70-4f48-866e-238cb2308fbd"
+      ],
+      "item_id": "R029",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "2836d5dc-986c-4a3b-a062-398751b43260",
+      "recording_url": "https://musicbrainz.org/recording/2836d5dc-986c-4a3b-a062-398751b43260",
+      "region": "unknown",
+      "title": "Bbydhyonchord"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "artist_name": "Aphex Twin",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "f22942a1-6f70-4f48-866e-238cb2308fbd"
+      ],
+      "item_id": "R030",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "3ec37d27-1f16-45c4-8a9e-5a705393c177",
+      "recording_url": "https://musicbrainz.org/recording/3ec37d27-1f16-45c4-8a9e-5a705393c177",
+      "region": "unknown",
+      "title": "En Trance to Exit"
+    },
+    {
+      "access_status": "destination_found_availability_not_checked",
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "artist_name": "Aphex Twin",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "f22942a1-6f70-4f48-866e-238cb2308fbd"
+      ],
+      "item_id": "R031",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [
+        {
+          "availability": "not_checked",
+          "permission_scope": "external provider destination; no embed, preview, media download or redistribution grant",
+          "region": null,
+          "relation": "free streaming",
+          "source_url_mbid": "348c1c09-09c6-461f-b21a-3f1e8d00fe52",
+          "url": "https://open.spotify.com/track/7c4lnS1bSj4fRJWAQ8D54R"
+        }
+      ],
+      "recording_mbid": "41bdd496-114e-48c6-82c9-ec9332891c8b",
+      "recording_url": "https://musicbrainz.org/recording/41bdd496-114e-48c6-82c9-ec9332891c8b",
+      "region": "unknown",
+      "title": "Blue Calx"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "artist_name": "Aphex Twin",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "f22942a1-6f70-4f48-866e-238cb2308fbd"
+      ],
+      "item_id": "R032",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "6c10a042-f915-48ae-8831-796fc487e9ba",
+      "recording_url": "https://musicbrainz.org/recording/6c10a042-f915-48ae-8831-796fc487e9ba",
+      "region": "unknown",
+      "title": "Vaz Deferenz"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "artist_name": "Aphex Twin",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "f22942a1-6f70-4f48-866e-238cb2308fbd"
+      ],
+      "item_id": "R033",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "911954f3-a0b1-4df4-ae3c-d239401cca67",
+      "recording_url": "https://musicbrainz.org/recording/911954f3-a0b1-4df4-ae3c-d239401cca67",
+      "region": "unknown",
+      "title": "Interview (after 4)"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "artist_name": "Brian Eno",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "5c864a6f-146e-4225-986d-3295ce90f784",
+        "ca0489a4-3a7b-4def-b66e-e00b2f579ae0",
+        "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+      ],
+      "item_id": "R034",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "0a3ca852-0607-4075-ab3f-8fb272bf048e",
+      "recording_url": "https://musicbrainz.org/recording/0a3ca852-0607-4075-ab3f-8fb272bf048e",
+      "region": "unknown",
+      "title": "Foreshadowed"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "artist_name": "Brian Eno",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+      ],
+      "item_id": "R035",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722",
+      "recording_url": "https://musicbrainz.org/recording/0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722",
+      "region": "unknown",
+      "title": "Bottomliners"
+    },
+    {
+      "access_status": "no_destination_found",
+      "artist_mbid": "ff95eb47-41c4-4f7f-a104-cdc30f02e872",
+      "artist_name": "Brian Eno",
+      "checked_at": null,
+      "credit_verified": "native_recording_credit_replay",
+      "credited_artist_mbids": [
+        "0b0c25f4-f31c-46a5-a4fb-ccbf53d663bd",
+        "8dce9ad6-9415-4373-9747-dcac5ef43aef",
+        "ff95eb47-41c4-4f7f-a104-cdc30f02e872"
+      ],
+      "item_id": "R036",
+      "listening_permission": "not established by this destination record",
+      "provider_destinations": [],
+      "recording_mbid": "0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f",
+      "recording_url": "https://musicbrainz.org/recording/0f8bcfcd-d4c4-4364-a5dd-e345489fdf2f",
+      "region": "unknown",
+      "title": "Abdominal Crisis (Seven Sea Sessions)"
+    }
+  ],
+  "provider_destinations_found": 9,
+  "source_recordings": 36
+}

@@ -1,0 +1,36 @@
+{
+  "audio_included": false,
+  "baseline_pack_receipt_sha256": "3e1651c136f5ae0c588e6dd6930a7a8f68fc7b332d1e423d29d1657e20cd0106",
+  "files": {
+    "calibration-memberships.jsonl.zst": {
+      "bytes": 282424,
+      "sha256": "6b49f5e75d524e908f25e177f39abc09b78f4d7e05999851ebb4980f13ae23ea"
+    },
+    "confirmation-memberships.jsonl.zst": {
+      "bytes": 221980,
+      "sha256": "83b25279eb2334c43b7b379f66faf2d4e0b0833666f9cd1d52f7a5fc1d5916bb"
+    },
+    "declaration.json": {
+      "bytes": 1048,
+      "sha256": "39017287328e88c26ef23789cb35ed22eb4f250e5a61ae767a2fd84b9f01ccdb"
+    },
+    "evaluation.json": {
+      "bytes": 107552,
+      "sha256": "8006aa30c994b83520aedd0aae53a5a5ffffd4d39b2f9d2e3c6a4764b12a746c"
+    },
+    "fma_memberships.py": {
+      "bytes": 19574,
+      "sha256": "df6adf93e479336ab9ceb601550a50d40c67f5a31ef78c04ab9b16c281602d65"
+    },
+    "test_diagnostic-memberships.jsonl.zst": {
+      "bytes": 441758,
+      "sha256": "d53322c6c0186a189a97c1e8e937e4f7c3a9cadc29a1ed35076798c9abb043bc"
+    },
+    "thresholds.json": {
+      "bytes": 37909,
+      "sha256": "7dc61d53b4495cb14443fef4a506c4896305a251c9b11f8a925b7d2ec0db471f"
+    }
+  },
+  "license": "CC-BY-4.0",
+  "revision": "fma-component-positive-memberships-v1"
+}

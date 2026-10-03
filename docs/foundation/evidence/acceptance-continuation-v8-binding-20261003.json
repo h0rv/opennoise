@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-03",
+  "checker_command": ".venv/bin/python scripts/check_foundation_acceptance.py --json",
+  "exit_code": 1,
+  "dossier": {
+    "path": "docs/foundation/acceptance-dossier.json",
+    "sha256": "122fcb5b3f674171032a025b32bb64b4ab2aa6c64b79b85d0414f780c5273d49",
+    "size_bytes": 34358
+  },
+  "report": {
+    "path": "docs/foundation/evidence/acceptance-continuation-v8-20261003.json",
+    "sha256": "508afaa146839b9ccd8ce8afeb886a4adf7076d5413ef1a2eb012a2beb78a96f",
+    "size_bytes": 44430
+  },
+  "evidence_valid": true,
+  "gate_states": {
+    "missing": 11,
+    "recorded_pass": 1
+  },
+  "all_gates_recorded_pass": false,
+  "automatic_semantic_pass": false,
+  "review_scope": "Named Codex AI agent independent engineering review records both original retained-input rebuild criteria satisfied; final v8 UI browser certification failed under confirmed cgroup OOM, all other gates remain unmet; no human judgments or global musical parity asserted"
+}

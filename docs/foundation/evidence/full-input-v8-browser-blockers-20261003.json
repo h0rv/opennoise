@@ -1,0 +1,85 @@
+{
+  "revision": "opennoise-browser-blockers-v1",
+  "export_root": "/dev/shm/opennoise-full-input-foundation-20261003-v8",
+  "receipt_sha256": "ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1",
+  "final_ui_browser_pass": false,
+  "final_nested_listening_browser_pass": false,
+  "attempts": [
+    {
+      "scope": "v8 full explorer single session",
+      "result": "failed",
+      "diagnostic": "Runtime.evaluate timed out; Chromium exit=null signal=SIGKILL",
+      "duration_ms": 10872.306785,
+      "successful_report_written": false
+    },
+    {
+      "scope": "pilot extracted file protocol",
+      "result": "failed",
+      "diagnostic": "Page.navigate errorText net::ERR_BLOCKED_BY_ADMINISTRATOR",
+      "duration_ms": 297.907217,
+      "successful_report_written": false,
+      "classification": "browser administrator file navigation policy; not bypassed"
+    },
+    {
+      "scope": "v8 nested eight clips single session",
+      "result": "failed",
+      "diagnostic": "Runtime.evaluate timed out; Chromium exit=null signal=SIGKILL",
+      "duration_ms": 11242.985739,
+      "successful_report_written": false,
+      "cgroup_observed_before": {
+        "oom": 25,
+        "oom_kill": 12
+      },
+      "cgroup_observed_after": {
+        "oom": 27,
+        "oom_kill": 13
+      }
+    },
+    {
+      "scope": "pilot local HTTP release-media single session",
+      "result": "failed",
+      "diagnostic": "Runtime.evaluate timed out; expression readyState/duration for track138061; signal=SIGKILL",
+      "duration_ms": 11935.342836,
+      "successful_report_written": false
+    },
+    {
+      "scope": "pilot local HTTP reload-per-clip",
+      "result": "failed",
+      "diagnostic": "Runtime.evaluate timed out; expression=document.querySelectorAll('audio').length===8; signal=SIGKILL",
+      "duration_ms": 11554.511137,
+      "successful_report_written": false
+    },
+    {
+      "scope": "pilot local HTTP fresh browser per clip and fresh accessibility session",
+      "result": "passed",
+      "duration_ms": 6805.27815,
+      "successful_report": "/dev/shm/opennoise-listener-pilot-browser-localhttp-20261003-v1.json",
+      "report_sha256": "946f4081ee745e13d3fa80ae5e1347eae10dbe2185c468b6fb7d1f45b334899e",
+      "scope_note": "Eight actual relative-path clips decoded, played with DevTools userGesture, clock advanced and paused. Local HTTP only. No physical or musical judgments."
+    },
+    {
+      "scope": "v8 nested eight clips fresh browser per clip",
+      "result": "failed",
+      "diagnostic": "Runtime.evaluate timed out; expression=document.querySelector(\"audio[data-track-id=\\\"140266\\\"]\").duration; signal=SIGKILL",
+      "duration_ms": 16634.135361,
+      "successful_report_written": false,
+      "completed_clips_before_failure": 7
+    },
+    {
+      "scope": "v8 explorer partitioned into five fresh coherent flows",
+      "result": "failed in first flow",
+      "diagnostic": "Runtime.evaluate timed out; Chromium exit=null signal=SIGKILL",
+      "duration_ms": 10873.671762,
+      "successful_report_written": false,
+      "expression_capture_limitation": "Failing expression context was added after this attempt; exact expression unavailable."
+    }
+  ],
+  "cgroup_final_observation": {
+    "memory_current_bytes": 16972132352,
+    "memory_max_bytes": 17179869184,
+    "oom": 36,
+    "oom_kill": 17
+  },
+  "interpretation": "Cgroup OOM counters and SIGKILL confirm insufficient memory for these failed actual browser attempts. File protocol has a separate explicit administrator-policy block. Source/export replay passed independently; final v8 browser acceptance remains unmet.",
+  "preservation": "All source assets, original artifacts and failed outputs preserved. Only newly created disposable Chrome profiles were removed by contract cleanup; root separately stopped its idle preview process. No recovery archives or transfer parts deleted."
+}

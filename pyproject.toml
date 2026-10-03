@@ -49,6 +49,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"data/examples/fma-source-memberships/fma_memberships.py" = [
+    "INP001", # Immutable model implementation snapshot; not an importable package.
+]
 "src/opennoise/ml/genre_neighborhoods/**" = [
     "E501", # Auditable SQLite statements retain their literal schema and query text.
     "PLR0913", # Sparse accumulator arguments are the explicit evidence dimensions.

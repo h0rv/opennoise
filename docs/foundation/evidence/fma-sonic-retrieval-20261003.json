@@ -1,0 +1,91 @@
+{
+  "abstentions": {
+    "missing_feature_row": 4,
+    "outside_training_support": 1
+  },
+  "declaration": {
+    "bytes": 4001,
+    "sha256": "48facacaf6048422beb0d5d7f768471976c5b82dfeba8f6cda338ec12dbe7001"
+  },
+  "evaluation": {
+    "fixed_hash_order": {
+      "labelled_queries": 236,
+      "musical_precision_available": false,
+      "queries_with_any_observed_overlap": 155,
+      "recovered_positives_in_neighbor_annotation_union": 225,
+      "source_positive_count": 529,
+      "union_source_recall": 0.42533081285444235,
+      "unknown_annotation_queries": 4
+    },
+    "standardized_euclidean": {
+      "labelled_queries": 236,
+      "musical_precision_available": false,
+      "queries_with_any_observed_overlap": 180,
+      "recovered_positives_in_neighbor_annotation_union": 278,
+      "source_positive_count": 529,
+      "union_source_recall": 0.5255198487712666,
+      "unknown_annotation_queries": 4
+    },
+    "training_annotation_frequency": {
+      "labelled_queries": 236,
+      "musical_precision_available": false,
+      "queries_with_any_observed_overlap": 151,
+      "recovered_positives_in_neighbor_annotation_union": 293,
+      "source_positive_count": 529,
+      "union_source_recall": 0.553875236294896,
+      "unknown_annotation_queries": 4
+    }
+  },
+  "feature_receipt": {
+    "bytes": 3905,
+    "sha256": "949a78ce3b3bc968086d63fb26d5a209860fdd1d3d07ee0ba25516ddc9de7d25"
+  },
+  "files": {
+    "normalization.npz": {
+      "bytes": 1316,
+      "sha256": "602e6adbd94450d4042ffa5a60b6c8af40e344dd3891877a323a48b51a5087d9"
+    },
+    "queries.json": {
+      "bytes": 435216,
+      "sha256": "5e065ec7ab96bb5d3901f9f68c6848586224b48ce2c854932188d5d4c7b1ef71"
+    }
+  },
+  "fresh_replay": {
+    "entire_frozen_policy_revalidated_before_descriptor_access": true,
+    "memory_strategy": "1024-row exact-distance batches; stable global tie ordering",
+    "normalization_bytes_identical_to_original": true,
+    "original_pack_preserved": true,
+    "query_bytes_identical_to_original": true,
+    "success": true,
+    "targeted_unit_tests": 8
+  },
+  "frozen_queries": 240,
+  "implementation": {
+    "scripts/build_fma_sonic_retrieval.py": {
+      "bytes": 11646,
+      "sha256": "944653def21306b96e22c2a11864fa9dd08c501c2fd48308a333c21a6fc20780"
+    },
+    "src/opennoise/ingest/fma_features.py": {
+      "bytes": 17341,
+      "sha256": "bbf43978504960a4c8e8a991f70adb009573a03b8e15e4ac179f9fbc9496ad85"
+    },
+    "src/opennoise/ml/fma_acoustic_baseline.py": {
+      "bytes": 24570,
+      "sha256": "412607216f2a0114cf5ee35be28a92217fe340cee0e38f0f9fc7977214206831"
+    },
+    "src/opennoise/ml/sonic_retrieval.py": {
+      "bytes": 5025,
+      "sha256": "b0e2a2f1ad041b11d6e4abcbeb7db0b61eaecc69da8a5eff03e21ae43d355966"
+    }
+  },
+  "license": "CC-BY-4.0",
+  "musical_relevance_established": false,
+  "namespace": "native-fma-track",
+  "native_feature_member_sha256": "a035d04941e15fc3240aadd6880c519471d218329bbfe0e82c17553ba50e9e16",
+  "query_components": 161,
+  "recording_identity_or_musicbrainz_bridge_claimed": false,
+  "revision": "opennoise-native-fma-sonic-retrieval-v1",
+  "training_components": 5467,
+  "training_index_rows": 92270,
+  "validation_reuse": "previously reported validation; descriptive new frozen arm, not untouched confirmation"
+}

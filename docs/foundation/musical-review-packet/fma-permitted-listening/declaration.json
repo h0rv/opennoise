@@ -1,0 +1,27 @@
+{
+  "cohort_scope": "separate exact-native-ID listening-access cohort; not the full FMA sample and not selected for musical representativeness",
+  "denominator": 8,
+  "limits": [
+    "These excerpts were selected by source/license availability, not for genre or quality representativeness.",
+    "A clip cannot establish an artist's full discography, era, or defining-recording status.",
+    "No independent listening or musical judgments have yet been recorded.",
+    "Provider region and external availability are unknown.",
+    "Native FMA IDs are not MusicBrainz IDs."
+  ],
+  "listening_behavior": "Use the supplied clip only for this review, do not infer full-track properties from a 30-second excerpt, do not download/embed elsewhere or redistribute outside the declared license scope, and record whether the exact clip was heard successfully.",
+  "review_thresholds": {
+    "fit_scale": {
+      "1": "does not fit",
+      "2": "mostly does not fit",
+      "3": "mixed or uncertain fit",
+      "4": "good fit",
+      "5": "very strong fit"
+    },
+    "fit_summary": "retain both ratings; do not replace disagreement with consensus; unsure and access failure are separate outcomes"
+  },
+  "reviewers_per_item": 2,
+  "revision": "fma-permitted-excerpt-independent-review-v1",
+  "rights": "Each included 30-second excerpt has an explicit source-declared Creative Commons license in its item record. Metadata and audio rights are distinct. Attribution is required where the license requires it. No additional rights to full recording, derivative audio, or external provider playback are asserted.",
+  "source_pack_revision": "fma-permitted-listening-v1",
+  "source_pack_sha256": "534c4c50f1b51362d469bc0f99c057c473a5c74a428412d1bee04182cc3acea8"
+}

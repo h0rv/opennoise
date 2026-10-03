@@ -1,0 +1,37 @@
+{
+  "reviewer": "Codex agent /root/evidence_dossier, independent engineering review (AI agent; no human or musical judgment)",
+  "reviewed_at": "2026-10-03",
+  "review_type": "explicit criterion-by-criterion engineering review",
+  "gate": "full-corpus-rebuild",
+  "scope": "Separately named full declared retained-input reconstruction, including all 2999670 native core identities and full native FMA catalog; legacy sealed release restoration and worldwide musical coverage are not asserted",
+  "receipt_sha256": "ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1",
+  "automatic_semantic_pass": false,
+  "criteria": [
+    {
+      "criterion": "fresh offline reconstruction of declared full-corpus inputs and outputs",
+      "result": "satisfied",
+      "evidence": [
+        "full-input-v8-reconstruction",
+        "full-input-v8-construction",
+        "full-input-v8-native-replay"
+      ],
+      "assessment": "Fresh separate v8 output is assembled offline from an immutable independently replayed native base. The complete replay rederives all 2999670 exact native identity rows, native detail fact fields, all identity/search/browse indexes and complete observed-genre cohorts, the full FMA catalog and all 256 research-context shards. Reuse of immutable byte-identical base payloads is explicit, and all 20533 output files are closed-set hash/size checked. No absent sealed legacy release hash is imitated."
+    },
+    {
+      "criterion": "input hashes, code revision, parameters, seeds, output hashes and replay verification",
+      "result": "satisfied",
+      "evidence": [
+        "full-input-v8-construction",
+        "full-input-v8-native-replay",
+        "full-input-v8-reconstruction"
+      ],
+      "assessment": "Construction manifest records actual base Git commit 66222e8eeec6a7cc1751e239a185c30e08c3c18b, 133 changed-source bindings, 14 implementation hashes, actual argv and exact input-role receipt hashes, NFKC casefold, 500-row pages, 256 context shards and no construction randomness. Frozen model declarations/seeds remain bound in additive source namespaces with no refit/retuning. Independently checked manifest bytes are in the output inventory, input-role hashes match the receipt, and construction pipeline hashes equal the replay validator hashes. Exact v8 receipt binds 20533 output SHA256/size pairs; the completed independent replay is valid."
+    }
+  ],
+  "decision": "recorded_pass",
+  "limitations": [
+    "Engineering review only; hashes verify custody and native-source reconstruction, not musical truth.",
+    "Native identities with absent genre evidence remain unknown.",
+    "Automatic semantic pass remains false."
+  ]
+}

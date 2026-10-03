@@ -1,0 +1,78 @@
+{
+  "denominator": {
+    "count": 150,
+    "selection_scope": "Wikidata, MusicBrainz and AcousticBrainz contributors",
+    "sha256": "f4d85433a07e8bda710d33878252af86af1fccea099d612d213a7c4f9731b60e",
+    "source": "/dev/shm/opennoise-taxonomy-review-v3/artists/data.json"
+  },
+  "frozen_at": "2026-10-03",
+  "frozen_decision_thresholds": {
+    "independent_item_coding": "unanimous fit-positive only when both reviewers rate >=4 and neither abstains; unanimous fit-negative only when both rate <=2; all other responses stay mixed/indeterminate with both rows preserved",
+    "listening": "require exact recording identity plus per-track license, permitted provider URL and region/date access status",
+    "maps": "judge neighborhood utility separately from layout and retain unpositioned alternatives",
+    "membership": "report fit at broad/subgenre/micro scope and confidence; use this cohort only for calibration/development, then freeze any score threshold before a disjoint confirmation cohort",
+    "neighbors": "record cultural and sonic relevance separately; method preference is supported only by an explicit reviewer choice, while ties, neither, unsure and unsupported stay separate; no aggregate promotion threshold before confirmation",
+    "recordings": "separate fit and diversity from popularity; unavailable is not a negative quality rating"
+  },
+  "limitations": [
+    "The roster is a selected 150-artist engineering cohort, not a sample of world music.",
+    "Region, language and era are unknown for every roster item and remain explicit.",
+    "Only exact credited recording evidence present in the frozen projection is attached; absence means no cohort recording was supplied, not absence from an artist's discography.",
+    "Listening provider permission and current availability have not been verified.",
+    "No reviewer identities, judgments, or access outcomes are populated."
+  ],
+  "provider_destination_receipt": {
+    "path": "/dev/shm/opennoise-recording-listening-20261003-v1/listening-destinations.json",
+    "scope": "exact MusicBrainz recording IDs mapped to literal provider destinations; availability and listening permission not checked",
+    "sha256": "3bf3144ba3929a8b3bb75b1d14c8dd3b1815dc32d834d6db52f4bd2220cabbf6"
+  },
+  "rater_scale": {
+    "confidence_1_5": {
+      "1": "very unsure",
+      "2": "low confidence",
+      "3": "moderate confidence",
+      "4": "high confidence",
+      "5": "very high confidence"
+    },
+    "familiarity_0_4": {
+      "0": "not familiar",
+      "1": "heard a little",
+      "2": "some familiarity",
+      "3": "very familiar",
+      "4": "expert or close familiarity"
+    },
+    "fit_1_5": {
+      "1": "does not fit",
+      "2": "mostly does not fit",
+      "3": "mixed or uncertain fit",
+      "4": "good fit",
+      "5": "very strong fit"
+    }
+  },
+  "review_design": {
+    "adjudication": "retain both original judgments; adjudication is a separate record",
+    "confidence_hidden": true,
+    "historical_memberships_hidden": true,
+    "independent_reviewers_per_item": 2,
+    "method_blinding": "candidate methods use randomized A/B labels; assignment key withheld during judgments",
+    "reviewer_conflicts_required": true,
+    "source_votes_hidden": true,
+    "unsure_and_access_failure_retained": true
+  },
+  "revision": "independent-musical-review-packet-v1",
+  "sampling": {
+    "algorithm": "Python random.Random; round-robin across evidence-volume tercile x direct-genre observed/missing; shuffled presentation",
+    "evidence_volume": "count of direct claims, exact credited recordings, and outbound links in source projection",
+    "regions_languages_eras": "unknown retained because source roster has no such observations; no geographic or linguistic representativeness claim",
+    "sample_size": 60,
+    "seed": 20261003,
+    "thresholds": {
+      "direct_genre": "source projection has at least one direct genre identifier",
+      "volume_tercile_cutpoints_inclusive": [
+        0,
+        3
+      ]
+    }
+  },
+  "scope": "selected-150-artist open-build review cohort; does not certify global coverage or legacy parity"
+}

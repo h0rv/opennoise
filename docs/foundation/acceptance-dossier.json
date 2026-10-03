@@ -155,32 +155,302 @@
       "source": "Selective raw-byte and prescribed-seed split verification, exact-credit pilot and compatibility with frozen FMA groups/train fitting/unknown targets",
       "license": "MIT evaluation report",
       "pack": "review"
+    },
+    {
+      "id": "full-input-v4-receipt",
+      "path": "docs/foundation/evidence/full-input-v4-receipt-20261003.json",
+      "sha256": "03046fcb703c729dc8cc2651ba22672339b950377887ea5da3548d22d98583d1",
+      "size_bytes": 2724436,
+      "scope": "full-corpus",
+      "role": "construction",
+      "source": "Dated v4 retained-input reconstruction receipt: complete declared native identity denominator and output hash inventory; not global musical coverage",
+      "license": "MIT construction receipt; CC0 identities/claims and FMA metadata/features CC-BY-4.0 remain separate",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v4-native-replay",
+      "path": "docs/foundation/evidence/full-input-v4-native-replay-20261003.json",
+      "sha256": "26d2a8ac78b1014ee4d30fddfeedcc6f0fe986d2a34be6cd9abdc72d7c491e3e",
+      "size_bytes": 1057,
+      "scope": "full-corpus",
+      "role": "evaluation",
+      "source": "Actual complete ordered native-row/source/export replay for dated v4 receipt 03046fcb703c729dc8cc2651ba22672339b950377887ea5da3548d22d98583d1; full_foundation_complete false",
+      "license": "MIT evaluation report",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v4-replay-resource",
+      "path": "docs/foundation/evidence/full-input-v4-replay-resource-20261003.json",
+      "sha256": "9fad5b83ae8dfd51966ee70723e71fd29162dac627ff138628b9908c0c599b36",
+      "size_bytes": 73,
+      "scope": "review-document",
+      "role": "evaluation",
+      "source": "Measured elapsed time and maximum resident memory for actual dated v4 native replay",
+      "license": "MIT evaluation report",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v4-browser",
+      "path": "docs/foundation/evidence/full-input-v4-browser-20261003.json",
+      "sha256": "02a6271f2c7c50d864ff9d2bff6379d46cab6aa251d20a882ea57d9067b7c338",
+      "size_bytes": 3734,
+      "scope": "actual-export",
+      "role": "evaluation",
+      "source": "Actual Chromium navigation/search/pagination/history/reload/keyboard/mobile tasks on dated v4 full retained identity export; output hashes and selected Unicode checks retained",
+      "license": "MIT evaluation report; underlying source packs retain licenses",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v4-listening-browser",
+      "path": "docs/foundation/evidence/full-input-v4-listening-browser-20261003.json",
+      "sha256": "0938c788d01b95eb18380ab509826938d274cb7078958e4f3e7a3abd9fbafd7b",
+      "size_bytes": 4578,
+      "scope": "actual-export",
+      "role": "evaluation",
+      "source": "Actual Chromium decode/play/pause for eight native licensed FMA excerpts in dated v4; no listener judgments or provider availability claim",
+      "license": "MIT evaluation report; audio CC-BY-3.0, CC-BY-4.0, CC-BY-SA-4.0 and CC0-1.0 per track",
+      "pack": "review"
+    },
+    {
+      "id": "native-entity-evidence-oct3",
+      "path": "docs/foundation/evidence/wikidata-entity-evidence-20261003.json",
+      "sha256": "fd627a6204efe1a445efe577c2824f123d67005d258b910ef910542d802690b8",
+      "size_bytes": 7337,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Native Wikidata entity custody and exact-identity replay: capped 10000 candidates, 9992 verified exact identities, 18750 P136 statements across 1003 labels; literal contexts only",
+      "license": "CC0-1.0 source; MIT evaluation report",
+      "pack": "review"
+    },
+    {
+      "id": "exact-bridge-listening-oct3",
+      "path": "docs/foundation/evidence/fma-exact-bridge-listening-20261003.json",
+      "sha256": "38b8c4b540630f4dea8bd94642635316799d9d4d21931033448b2e92faafc5fb",
+      "size_bytes": 4663,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Native FMA exact artist URL bridge audit and eight permitted excerpt source receipts; report predates completed browser duration checks retained separately",
+      "license": "MIT report; FMA metadata/features CC-BY-4.0; audio per-track CC-BY/CC-BY-SA/CC0",
+      "pack": "review"
+    },
+    {
+      "id": "fma-source-memberships-oct3",
+      "path": "docs/foundation/evidence/fma-source-memberships-20261003.md",
+      "sha256": "a6e3075b8a6f91ab581cb5bb83557e59c1cf65e1e769861ce618652a7a6a1fb5",
+      "size_bytes": 5275,
+      "scope": "review-document",
+      "role": "review",
+      "source": "Dated component source-positive calibration report, 11 supported labels of 164; checkpoint metrics are source conditional and final independent native/model replay pending",
+      "license": "MIT report; FMA metadata/features CC-BY-4.0",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v8-reconstruction",
+      "path": "docs/foundation/evidence/full-input-reconstruction-v8-20261003.json",
+      "sha256": "e1e83e90b2e27cb5f4b93ae288f527b9b065dc858d0f4a60cfe90e3183a06d85",
+      "size_bytes": 3861,
+      "scope": "full-corpus",
+      "role": "evaluation",
+      "source": "Complete declared retained-source v8 native replay and 20533 closed-file output inventory; no musical validity asserted",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v8-construction",
+      "path": "docs/foundation/evidence/full-input-v8-construction-20261003.json",
+      "sha256": "86737786f3e09f31eeef01b4f3a7ecd47cb649438e05bb4c02ef5ce8e928ae48",
+      "size_bytes": 29707,
+      "scope": "full-corpus",
+      "role": "construction",
+      "source": "Actual immutable-base assembly command, base Git commit, changed-source hashes, exact input-role hashes, parameters and deterministic construction policy",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v8-native-replay",
+      "path": "docs/foundation/evidence/full-input-v8-native-replay-20261003.json",
+      "sha256": "2def455bb590617e20dbe7d26ef3b8cfeb663e89e9e5ca557ae10395261fd534",
+      "size_bytes": 1299,
+      "scope": "full-corpus",
+      "role": "evaluation",
+      "source": "Actual independent whole native-source/export/addon rederivation with all 2999670 rows and exact construction/validator pipeline hashes",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v8-replay-resource",
+      "path": "docs/foundation/evidence/full-input-v8-replay-resource-20261003.json",
+      "sha256": "29762ea7bbff896ddd183c3e5d1a297e1eecf14e1424f7de148a5599a448f2b6",
+      "size_bytes": 1230,
+      "scope": "review-document",
+      "role": "evaluation",
+      "source": "Actual v8 validation argv, 153.54497559500305 seconds and peak RSS 150344 KiB",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "wikidata-completion-v2-report",
+      "path": "docs/foundation/evidence/wikidata-source-completion-v2-report-20261003.json",
+      "sha256": "bdd56463d9a1365b523b1a99c408a2745fb76470d8b2b66a7917536a8aed3b76",
+      "size_bytes": 26145,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Frozen native P136 source-completion folds, parameters, arm ranks and source-event Brier metrics; no musical probabilities",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "wikidata-completion-v2-independent-audit",
+      "path": "docs/foundation/evidence/wikidata-source-completion-v2-independent-audit-20261003.json",
+      "sha256": "b78daf98a1d1913a8ff89e414b5600dfe793e416c7079a81ffebd18028594d62",
+      "size_bytes": 1403,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Independent final native observations, typed P279 graph, train statistics, disjoint folds, calibration and confirmation events/ranks replay for receipt 5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "wikidata-unconditional-prior",
+      "path": "docs/foundation/evidence/wikidata-unconditional-source-prior-20261003.json",
+      "sha256": "c133eb95e01cf641440c2fa10bbb7b8dce5f6adf5c67a0835237f27655a70086",
+      "size_bytes": 4437,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Post-inspection unconditional train-label-frequency diagnostic on existing source folds; not fresh confirmation, refitting or arm selection",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "fma-pca-native-replay-v2",
+      "path": "docs/foundation/evidence/fma-pca-native-replay-v2-20261003.json",
+      "sha256": "3daad97a217b683e1efdfd01b2a2dda8a982755e55768f1b4cb496ca878f6902",
+      "size_bytes": 970,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Fresh train-only native descriptor PCA covariance, coordinates and deterministic sensitivity replay; mathematical axes only",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "fma-pca-validation-v2",
+      "path": "docs/foundation/evidence/fma-pca-validation-v2-20261003.json",
+      "sha256": "886907af27ef5862b5969429304a3266eb42bbf613077389c104cbe9d21f5d83",
+      "size_bytes": 2143,
+      "scope": "actual-export",
+      "role": "evaluation",
+      "source": "Exact PCA candidate source replay plus four tests and actual Chromium complete native FMA context/keyboard/mobile contract; no musical validation",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "fma-sonic-retrieval-oct3",
+      "path": "docs/foundation/evidence/fma-sonic-retrieval-20261003.json",
+      "sha256": "f74edbbaa201f22995ec94d36e4aafd2f905a93d3aa1736e8895243f7fa79982",
+      "size_bytes": 3282,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Fresh source/component/normalization/distance replay for 240 frozen native FMA queries; source overlap outcomes and abstentions retained",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "fma-memberships-saved-rank-replay",
+      "path": "docs/foundation/evidence/fma-memberships-saved-rank-replay-20261003.json",
+      "sha256": "75b26b2e3801846642d906bb8fef8d80c1e4bc88f1c6bdc52150292a9013ea3e",
+      "size_bytes": 210,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Actual saved-rank threshold/set/metric replay for all 13800 validation/test queries; native_source_replay false explicitly retained",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v8-rebuild-engineering-review",
+      "path": "docs/foundation/evidence/full-input-v8-rebuild-engineering-review-20261003.json",
+      "sha256": "c3a203460a2ad91e2b10b89e942c1a7d3e0b1b0c9d94331995a06be14b2f2f13",
+      "size_bytes": 2681,
+      "scope": "full-corpus",
+      "role": "review",
+      "source": "Named Codex AI agent independent engineering review of both original retained-input rebuild criteria; no human musical judgments",
+      "license": "MIT construction/evaluation report; CC0 identity/claim sources and CC-BY-4.0 FMA metadata/features retain separate roles",
+      "pack": "review"
+    },
+    {
+      "id": "full-input-v8-browser-blockers",
+      "path": "docs/foundation/evidence/full-input-v8-browser-blockers-20261003.json",
+      "sha256": "1fa462148b0a8b54b2f0d7588f1f3054f9c34ae9516a5dc196895a254cb3eeda",
+      "size_bytes": 3907,
+      "scope": "actual-export",
+      "role": "evaluation",
+      "source": "Actual v8 Chromium failed explorer/nested-listening attempts and cgroup OOM evidence; no final browser pass",
+      "license": "MIT evaluation report; native metadata and licensed per-track audio retain separate source obligations",
+      "pack": "review"
+    },
+    {
+      "id": "listener-pilot-localhttp-browser",
+      "path": "docs/foundation/evidence/listener-pilot-localhttp-browser-20261003.json",
+      "sha256": "946f4081ee745e13d3fa80ae5e1347eae10dbe2185c468b6fb7d1f45b334899e",
+      "size_bytes": 5049,
+      "scope": "actual-export",
+      "role": "evaluation",
+      "source": "Actual fresh Chromium per-clip playback and accessibility sessions for eight relative-path licensed clips in separately extracted local-HTTP pilot; file protocol rejected by administrator; zero human musical judgments",
+      "license": "MIT evaluation report; native metadata and licensed per-track audio retain separate source obligations",
+      "pack": "review"
+    },
+    {
+      "id": "recording-provider-page-status",
+      "path": "docs/foundation/evidence/recording-provider-page-status-20261003.json",
+      "sha256": "97ec4051e54cb528abc1be8f3c0ac1f8d9a5982dd2ba801f899a4284bb180c10",
+      "size_bytes": 8540,
+      "scope": "selected-cohort",
+      "role": "evaluation",
+      "source": "Dated bounded HEAD transport observations for nine exact source-bound Spotify track pages, all HTTP 200; playback, region and account availability unverified",
+      "license": "MIT evaluation report; native metadata and licensed per-track audio retain separate source obligations",
+      "pack": "review"
     }
   ],
   "reviews": [
     {
       "gate": "discovery-behavior",
       "decision": "missing",
-      "explanation": "October 1 local optional-source export tasks are checkpoint testimony; the intended current open export lacks bound full discovery acceptance. October 3 actual-export browser receipt verifies the independently built 150-artist CC0 profile, all 151 direct-genre cohorts, exact benchmark recording routes, history/reload, keyboard/mobile, missingness and local listening list. This is partial selected-cohort evidence; full intended product behavior and accessibility remain unaccepted.",
+      "explanation": "V8 whole source/export replay now validates all 2999670 exact identity rows, complete searchable/browse indexes, all observed-genre cohorts and explicit 2989361 identities without observed genres. Earlier actual v4 Chromium search/navigation/history/pagination evidence is retained as dated evidence. Final v8 actual Chromium explorer attempts were SIGKILLed under confirmed cgroup OOM; no successful v8 browser receipt exists. Concrete remaining original-contract checks are actual v8 genre-to-artist-to-a-second-overlapping-observed-genre clicks, exact-ID and prefix search, complete pagination and unsupported-identity missing-data abstention. These technical tasks require no invented musical review, but failed attempts cannot establish their execution; decision remains missing.",
       "evidence": [
         "integrated-oct1",
-        "portable-browser-oct3"
+        "portable-browser-oct3",
+        "full-input-v4-browser",
+        "full-input-v4-native-replay",
+        "full-input-v8-reconstruction",
+        "full-input-v8-browser-blockers"
       ],
       "criteria_covered": []
     },
     {
       "gate": "full-corpus-rebuild",
-      "decision": "blocked",
-      "explanation": "Legacy canonical and full-model inputs are unavailable in the checkout. A new correctly named full-input reconstruction contract and independently replayed build are required; a portable CC0 build is insufficient.",
+      "decision": "recorded_pass",
+      "explanation": "Named Codex AI agent independent engineering review on 2026-10-03 explicitly covers both original criteria for the separately named complete retained-input route. Fresh v8 immutable-base offline assembly and independent native/source/export/addon rederivation validate all 2999670 identities, full native FMA catalog, complete indexes/cohorts and 256 research shards. Construction binds actual Git revision plus changed sources, exact argv/input receipts, parameters and deterministic/frozen seed policies; matching construction/validator hashes and 20533 closed output SHA256/size bindings are verified. Exact receipt is ccf4135e3fb18dca9369de22b5b512d9d08f81d88060b5730a435d4bff3f3de1. This is retained-source reconstruction, not legacy sealed-release restoration or global musical coverage.",
       "evidence": [
-        "integrated-oct1"
+        "integrated-oct1",
+        "full-input-v4-receipt",
+        "full-input-v4-native-replay",
+        "full-input-v4-replay-resource",
+        "full-input-v8-reconstruction",
+        "full-input-v8-construction",
+        "full-input-v8-native-replay",
+        "full-input-v8-replay-resource",
+        "full-input-v8-rebuild-engineering-review"
       ],
-      "criteria_covered": []
+      "criteria_covered": [
+        "fresh offline reconstruction of declared full-corpus inputs and outputs",
+        "input hashes, code revision, parameters, seeds, output hashes and replay verification"
+      ],
+      "reviewer": "Codex agent /root/evidence_dossier, independent engineering review (AI agent; no human or musical judgment)",
+      "reviewed_at": "2026-10-03"
     },
     {
       "gate": "legal-input-boundaries",
       "decision": "missing",
-      "explanation": "Portable CC0 projections and optional NC source obligations are documented; no byte-bound full-input license and training-boundary review is supplied. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
+      "explanation": "The dated v4 receipt binds distinct CC0 identity/claim, FMA metadata/features and eight permitted per-track audio inputs. Native Wikidata report retains structured-data CC0 proof and native FMA report retains exact URL assertions, audio licenses and bounded ZIP ranges without claiming a full archive hash. This improves source custody but is not a reviewed complete license/training-boundary acceptance. Optional NC/SA derivatives and historical evaluation boundaries still require the original explicit review; blended ListenBrainz/MLHD permission remains unresolved and a complete boundary review remains unrecorded. V8 source rederivation now verifies all declared input-role bindings and preserves separate additive CC0/FMA/audio namespaces.",
       "evidence": [
         "integrated-oct1",
         "cultural-review-oct1",
@@ -188,20 +458,29 @@
         "open-genre-taxonomy-oct2-projection",
         "native-sonic-custody-oct3",
         "global-artist-scan-oct3",
-        "fma-independent-audit-oct3"
+        "fma-independent-audit-oct3",
+        "full-input-v4-receipt",
+        "native-entity-evidence-oct3",
+        "exact-bridge-listening-oct3",
+        "full-input-v8-reconstruction",
+        "full-input-v8-construction"
       ],
       "criteria_covered": []
     },
     {
       "gate": "genre-and-artist-coverage",
       "decision": "missing",
-      "explanation": "October 2 independent Wikidata capture supplies 1,000 bounded source-selected genre entities and typed taxonomy, with selection possibly truncated. It supplies no artist memberships or reviewed broad/sub/micro communities; full genre/artist coverage remains unmet. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
+      "explanation": "Dated native entity evidence verifies 9992 of 10000 capped candidates, retaining eight non-unique exact-ID outcomes and 18750 native P136 statements across 1003 labels. Whole-source-replayed v8 reconstruction retains 2,999,670 identities, 1018 genres, 10309 genre-labeled artists and 10553 detail profiles; FMA retains a separate 16916-artist/109727-track/164-label namespace with 168 exact artist bridges and zero recording bridges. Literal country/language/date assertions are not musical-region/language/era classifications. Reviewed broad/sub/micro communities and global representativeness remain absent; this is declared-source coverage, not global musical coverage.",
       "evidence": [
         "integrated-oct1",
         "source-confirmation-oct1",
         "open-genre-taxonomy-oct2-receipt",
         "open-genre-taxonomy-oct2-projection",
-        "global-artist-scan-oct3"
+        "global-artist-scan-oct3",
+        "native-entity-evidence-oct3",
+        "full-input-v4-native-replay",
+        "exact-bridge-listening-oct3",
+        "full-input-v8-reconstruction"
       ],
       "criteria_covered": []
     },
@@ -217,71 +496,101 @@
     {
       "gate": "held-out-source-reconstruction",
       "decision": "missing",
-      "explanation": "October 1 frozen source confirmation is documented, but this dossier binds checkpoint testimony only, without selected-model folds, outputs and independent replay receipts. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
+      "explanation": "Independent final native Wikidata audit now reproduces typed graph, native observations, 5976 training/2025 calibration/1991 confirmation exact-artist folds, train statistics and all arm ranks/counts/source-event Brier outcomes for frozen v2. Combined masked-source Recall@10 is 22.05%; conditional 678-event Brier is 0.18218 versus 0.20045 constant baseline. A post-inspection unconditional source-prior diagnostic reaches 58.61% Recall@10 on all 1991 source-positive confirmation queries, retains cold/rare/unseen failures and is not fresh confirmation or a selected replacement. FMA membership replay verifies every saved-rank threshold/set/metric but explicitly does not reconstruct native sources; prior native FMA model audit remains distinct. These are bounded source-conditional experiments; a criterion-complete foundation-wide review is not asserted by this update.",
       "evidence": [
         "source-confirmation-oct1",
         "fma-independent-audit-oct3",
         "taxonomy-graph-oct3",
-        "selective-recovery-oct3"
+        "selective-recovery-oct3",
+        "fma-source-memberships-oct3",
+        "wikidata-completion-v2-report",
+        "wikidata-completion-v2-independent-audit",
+        "wikidata-unconditional-prior",
+        "fma-memberships-saved-rank-replay"
       ],
       "criteria_covered": []
     },
     {
       "gate": "calibrated-overlapping-memberships",
       "decision": "missing",
-      "explanation": "Optional overlapping source suggestions are documented; independent calibration, abstention and stability acceptance is absent.",
+      "explanation": "Actual FMA saved-rank replay reproduces every threshold, overlapping set and metric for all 13800 validation/test queries, with native_source_replay false. Only 11/164 native labels have thresholds; 152 lack required component support and one has an unsupported missing-score tail. Independent native Wikidata source-event calibration/rank replay is now complete, but its conditional event Brier and source-completion suggestions are not probabilities of musical membership. Reviewed broad/sub/micro overlapping memberships and independently calibrated musical confidence remain absent.",
       "evidence": [
-        "source-confirmation-oct1"
+        "source-confirmation-oct1",
+        "fma-source-memberships-oct3",
+        "fma-memberships-saved-rank-replay",
+        "wikidata-completion-v2-independent-audit"
       ],
       "criteria_covered": []
     },
     {
       "gate": "acoustic-coverage-and-retrieval",
       "decision": "missing",
-      "explanation": "55 recordings across ten selected artists remain a bounded electronic-focused metadata pilot; diverse coverage and independent retrieval/blend evaluation are absent. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
+      "explanation": "V8 preserves exact native sonic custody for 55 recordings and complete separate FMA accounting of 16916 artists, 109727 tracks and 164 labels, with 168 exact artist bridges and zero exact recording bridges. Fresh source/component/fit/distance replay confirms the frozen 240-query native FMA retrieval experiment, retaining four missing-descriptor and one outside-support abstentions: source-overlap recall is 52.55% versus train-frequency 55.39%. Fresh train-only PCA/source-coordinate replay also completes, with missingness retained. These engineering/source-overlap results do not supply independent sonic relevance or separately evaluated cultural/sonic blend judgments.",
       "evidence": [
         "acoustic-oct1",
         "fma-independent-audit-oct3",
-        "native-sonic-custody-oct3"
+        "native-sonic-custody-oct3",
+        "full-input-v4-native-replay",
+        "exact-bridge-listening-oct3",
+        "full-input-v8-reconstruction",
+        "fma-sonic-retrieval-oct3",
+        "fma-pca-native-replay-v2"
       ],
       "criteria_covered": []
     },
     {
       "gate": "genre-and-artist-maps",
       "decision": "missing",
-      "explanation": "Readable local layouts and historical display-neighbor comparison do not establish independent semantic map quality and stability. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
+      "explanation": "Fresh train-only native FMA covariance replay now reproduces every coordinate and eight deterministic sensitivity fits; zero held-out tracks fit the axes. Actual Chromium candidate contract checks all 164 native genre contexts and 16916 artist contexts, unpositioned alternatives, keyboard/mobile tasks and no external/media requests. 16109 artists and 158 genres are positioned, with missing descriptors retained. Mathematical PCA axis meanings and deterministic source sensitivity do not establish independently assessed musical neighborhoods or interpretable musical axes; this original semantic criterion remains unmet.",
       "evidence": [
         "integrated-oct1",
-        "taxonomy-graph-oct3"
+        "taxonomy-graph-oct3",
+        "full-input-v4-native-replay",
+        "fma-pca-native-replay-v2",
+        "fma-pca-validation-v2",
+        "full-input-v8-reconstruction"
       ],
       "criteria_covered": []
     },
     {
       "gate": "defining-recordings",
       "decision": "missing",
-      "explanation": "Exact-credit metadata examples have limited discography coverage and no independent defining-selection acceptance. October 3 evidence establishes explicitly bounded native/source reconstruction and model custody. Independent musical judgments, intended full-corpus coverage and product promotion remain unaccepted; no gate decision is upgraded.",
+      "explanation": "Selected exact native recording credits remain separate from release credits. Dated native FMA evidence resolves 168 exact artist bridges and zero exact recording bridges across 109727 eligible tracks; eight licensed excerpts are listening engineering evidence, not defining-example selection. Sufficient selected-discography coverage and independent introduction-fit/diversity review remain absent.",
       "evidence": [
         "credited-examples-oct1",
-        "native-sonic-custody-oct3"
+        "native-sonic-custody-oct3",
+        "exact-bridge-listening-oct3"
       ],
       "criteria_covered": []
     },
     {
       "gate": "listening-and-playlists",
       "decision": "missing",
-      "explanation": "Outbound artist destinations do not establish recording/provider availability or reviewed central, recent and emerging playlists.",
+      "explanation": "Native evidence preserves 36 exact recording-source outcomes and nine external Spotify destinations; dated bounded HEAD checks now observe HTTP 200 for all nine literal track pages but do not verify playback, region or account access. Earlier actual v4 eight-clip browser evidence remains valid dated evidence. Separately extracted pilot now passes actual local-HTTP per-clip decode/play/pause, about 30-second durations, attribution, keyboard/mobile and no autoplay/initial audio-fetch checks, with zero physical listeners or musical judgments. Final nested v8 eight-clip session remains incomplete after cgroup OOM, and file protocol is separately blocked by administrator policy. Provider availability and independently assessed central/recent/emerging selections remain unmet.",
       "evidence": [
-        "outbound-links-oct1"
+        "outbound-links-oct1",
+        "exact-bridge-listening-oct3",
+        "full-input-v4-listening-browser",
+        "full-input-v4-browser",
+        "recording-provider-page-status",
+        "listener-pilot-localhttp-browser",
+        "full-input-v8-browser-blockers"
       ],
       "criteria_covered": []
     },
     {
       "gate": "plain-accessible-interface",
       "decision": "missing",
-      "explanation": "Checkpoint testimony reports historical local-export browser tasks; no current open-export byte-bound browser receipts are supplied. October 3 actual-export browser receipt verifies the independently built 150-artist CC0 profile, all 151 direct-genre cohorts, exact benchmark recording routes, history/reload, keyboard/mobile, missingness and local listening list. This is partial selected-cohort evidence; full intended product behavior and accessibility remain unaccepted.",
+      "explanation": "V8 source/output replay establishes exact current UI asset hashes, complete underlying lists, separately labeled observed facts and supplemental suggestions with null musical probabilities. Earlier successful actual v4 browser receipt and separate FMA PCA actual-export keyboard/mobile contract remain dated evidence. Final v8 explorer and nested-listening Chromium attempts failed with confirmed cgroup OOM and no successful final receipt. Concrete remaining original-contract tasks are current v8 search/selection/full-list pagination/history/deep-link/reload, keyboard/mobile and source/inference label verification. Extracted eight-clip pilot passes actual local-HTTP playback/attribution/keyboard/mobile sessions, while file navigation is explicitly rejected by browser administrator policy; it does not replace v8 explorer certification.",
       "evidence": [
         "integrated-oct1",
-        "portable-browser-oct3"
+        "portable-browser-oct3",
+        "full-input-v4-browser",
+        "full-input-v4-listening-browser",
+        "full-input-v8-reconstruction",
+        "full-input-v8-browser-blockers",
+        "listener-pilot-localhttp-browser",
+        "fma-pca-validation-v2"
       ],
       "criteria_covered": []
     }

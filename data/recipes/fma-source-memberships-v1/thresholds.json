@@ -1,0 +1,2066 @@
+{
+  "1": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      24,
+      29,
+      38,
+      43,
+      43,
+      46,
+      47,
+      47,
+      48,
+      49,
+      51,
+      67,
+      77,
+      82,
+      86,
+      86,
+      86,
+      87,
+      98,
+      165,
+      165
+    ],
+    "positive_components": 21,
+    "threshold_rank": 87
+  },
+  "2": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      3,
+      12,
+      22,
+      30,
+      31,
+      35,
+      39,
+      41,
+      41,
+      48,
+      50,
+      61,
+      67,
+      73,
+      79,
+      89,
+      165
+    ],
+    "positive_components": 17,
+    "threshold_rank": null
+  },
+  "3": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      77,
+      88,
+      95
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "4": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      10,
+      11,
+      15,
+      31,
+      49,
+      72,
+      77,
+      78,
+      88,
+      106
+    ],
+    "positive_components": 10,
+    "threshold_rank": null
+  },
+  "5": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      1,
+      1,
+      2,
+      2,
+      3,
+      4,
+      6,
+      42,
+      137,
+      146,
+      147,
+      147,
+      148
+    ],
+    "positive_components": 13,
+    "threshold_rank": null
+  },
+  "6": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      45
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "7": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "8": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      1,
+      1,
+      1,
+      21,
+      25,
+      145,
+      152,
+      156,
+      158
+    ],
+    "positive_components": 9,
+    "threshold_rank": null
+  },
+  "9": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      18,
+      27,
+      103,
+      107,
+      128,
+      132,
+      133,
+      165,
+      165
+    ],
+    "positive_components": 9,
+    "threshold_rank": null
+  },
+  "10": {
+    "abstention": "unsupported_positive_rank_tail",
+    "component_worst_positive_ranks": [
+      2,
+      8,
+      8,
+      11,
+      14,
+      15,
+      18,
+      19,
+      20,
+      29,
+      34,
+      37,
+      38,
+      41,
+      43,
+      45,
+      47,
+      47,
+      59,
+      63,
+      68,
+      78,
+      165,
+      165,
+      165,
+      165,
+      165
+    ],
+    "positive_components": 27,
+    "threshold_rank": null
+  },
+  "11": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      75
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "12": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      1,
+      1,
+      1,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      5,
+      5,
+      7,
+      8,
+      11,
+      26,
+      28,
+      29,
+      31,
+      31,
+      33,
+      35,
+      35,
+      40,
+      44,
+      47,
+      53,
+      55,
+      59,
+      84,
+      87,
+      90,
+      93,
+      100,
+      165,
+      165,
+      165,
+      165,
+      165,
+      165,
+      165,
+      165
+    ],
+    "positive_components": 46,
+    "threshold_rank": 100
+  },
+  "13": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      131
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "14": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      22,
+      108
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "15": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      1,
+      1,
+      2,
+      2,
+      2,
+      3,
+      5,
+      6,
+      9,
+      10,
+      10,
+      11,
+      11,
+      11,
+      12,
+      12,
+      14,
+      14,
+      15,
+      15,
+      16,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      19,
+      21,
+      21,
+      21,
+      22,
+      23,
+      24,
+      26,
+      26,
+      26,
+      30,
+      32,
+      37,
+      39,
+      47,
+      50,
+      54,
+      64,
+      68,
+      69,
+      70,
+      75,
+      76,
+      76,
+      77,
+      78,
+      79,
+      79,
+      86,
+      86,
+      87,
+      90,
+      92,
+      92,
+      95,
+      95,
+      99,
+      165,
+      165,
+      165,
+      165
+    ],
+    "positive_components": 68,
+    "threshold_rank": 86
+  },
+  "16": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "17": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      1,
+      1,
+      1,
+      2,
+      2,
+      2,
+      2,
+      8,
+      9,
+      14,
+      19,
+      21,
+      25,
+      28,
+      29,
+      60,
+      72,
+      93,
+      102,
+      103,
+      105,
+      107,
+      107,
+      113,
+      114,
+      115,
+      117,
+      118,
+      122,
+      124,
+      125,
+      165,
+      165
+    ],
+    "positive_components": 33,
+    "threshold_rank": 118
+  },
+  "18": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      6,
+      76,
+      110,
+      116,
+      126,
+      126,
+      129,
+      130,
+      132,
+      132
+    ],
+    "positive_components": 10,
+    "threshold_rank": null
+  },
+  "19": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      11,
+      27,
+      73
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "20": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      58,
+      74,
+      95
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "21": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      1,
+      2,
+      7,
+      7,
+      9,
+      11,
+      14,
+      15,
+      18,
+      35,
+      49,
+      54,
+      59,
+      88,
+      92,
+      123,
+      134,
+      165
+    ],
+    "positive_components": 18,
+    "threshold_rank": null
+  },
+  "22": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      57
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "25": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      1,
+      2,
+      2,
+      2,
+      2,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      5,
+      5,
+      6,
+      10,
+      14,
+      36,
+      41,
+      44,
+      51,
+      58,
+      96,
+      102,
+      103,
+      113,
+      131,
+      131,
+      138,
+      165,
+      165,
+      165,
+      165
+    ],
+    "positive_components": 32,
+    "threshold_rank": 131
+  },
+  "26": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      23,
+      29,
+      39,
+      57,
+      59,
+      78,
+      84,
+      84,
+      94
+    ],
+    "positive_components": 9,
+    "threshold_rank": null
+  },
+  "27": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      3,
+      4,
+      5,
+      7,
+      11,
+      14,
+      19,
+      25,
+      32,
+      35,
+      37,
+      52,
+      56,
+      68,
+      84,
+      86,
+      87,
+      87,
+      88,
+      91,
+      94,
+      95,
+      95,
+      95,
+      98,
+      103,
+      108,
+      165
+    ],
+    "positive_components": 28,
+    "threshold_rank": 95
+  },
+  "30": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      8,
+      19,
+      69,
+      77,
+      80,
+      88,
+      165
+    ],
+    "positive_components": 7,
+    "threshold_rank": null
+  },
+  "31": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      8,
+      50,
+      124,
+      129,
+      165
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "32": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      2,
+      5,
+      12,
+      13,
+      18,
+      20,
+      25,
+      29,
+      30,
+      35,
+      37,
+      39,
+      39,
+      49,
+      51,
+      54,
+      61,
+      82,
+      84,
+      88,
+      88,
+      95,
+      95,
+      97,
+      104
+    ],
+    "positive_components": 25,
+    "threshold_rank": 88
+  },
+  "33": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      6,
+      21,
+      68,
+      75,
+      76,
+      98,
+      123
+    ],
+    "positive_components": 7,
+    "threshold_rank": null
+  },
+  "36": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      31,
+      56,
+      77,
+      89,
+      165
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "37": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "38": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      2,
+      4,
+      4,
+      4,
+      4,
+      7,
+      7,
+      9,
+      9,
+      9,
+      10,
+      10,
+      12,
+      13,
+      13,
+      14,
+      15,
+      15,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      19,
+      19,
+      19,
+      20,
+      21,
+      22,
+      22,
+      23,
+      23,
+      23,
+      24,
+      25,
+      26,
+      28,
+      29,
+      29,
+      30,
+      31,
+      31,
+      32,
+      32,
+      32,
+      33,
+      34,
+      34,
+      36,
+      37,
+      37,
+      39,
+      40,
+      41,
+      43,
+      43,
+      44,
+      44,
+      44,
+      45,
+      45,
+      47,
+      48,
+      51,
+      51,
+      53,
+      53,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      63,
+      64,
+      64,
+      64,
+      65,
+      65,
+      65,
+      165,
+      165
+    ],
+    "positive_components": 83,
+    "threshold_rank": 53
+  },
+  "41": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      6,
+      14,
+      15,
+      16,
+      24,
+      33,
+      33,
+      43,
+      50,
+      51,
+      58,
+      61,
+      62,
+      64,
+      71,
+      72,
+      72,
+      76,
+      165,
+      165
+    ],
+    "positive_components": 20,
+    "threshold_rank": 72
+  },
+  "42": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      5,
+      24,
+      27,
+      34,
+      40,
+      48,
+      51,
+      65,
+      74,
+      82,
+      85,
+      98,
+      99
+    ],
+    "positive_components": 13,
+    "threshold_rank": null
+  },
+  "43": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      127
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "45": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      19,
+      34,
+      54,
+      86
+    ],
+    "positive_components": 4,
+    "threshold_rank": null
+  },
+  "46": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      68,
+      79
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "47": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      2,
+      11,
+      21,
+      22,
+      23,
+      33,
+      34,
+      44,
+      57,
+      83,
+      95,
+      98,
+      100,
+      106,
+      125
+    ],
+    "positive_components": 15,
+    "threshold_rank": null
+  },
+  "49": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      130
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "53": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      12,
+      14,
+      165
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "58": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      3,
+      6,
+      8,
+      32,
+      35,
+      40,
+      59,
+      67,
+      70,
+      79,
+      84,
+      165,
+      165
+    ],
+    "positive_components": 13,
+    "threshold_rank": null
+  },
+  "63": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      66
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "64": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      22,
+      30,
+      165,
+      165
+    ],
+    "positive_components": 4,
+    "threshold_rank": null
+  },
+  "65": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      150
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "66": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      3,
+      7,
+      9,
+      10,
+      15,
+      17,
+      20,
+      32,
+      34,
+      35,
+      37,
+      39,
+      45,
+      46,
+      50,
+      50,
+      52,
+      53,
+      59,
+      59,
+      60,
+      61,
+      62,
+      64,
+      69,
+      74,
+      77,
+      86,
+      165,
+      165,
+      165
+    ],
+    "positive_components": 31,
+    "threshold_rank": 74
+  },
+  "70": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      3,
+      24,
+      27,
+      55,
+      134,
+      165
+    ],
+    "positive_components": 6,
+    "threshold_rank": null
+  },
+  "71": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      13,
+      105,
+      165
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "74": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      6,
+      13,
+      22,
+      45,
+      80,
+      87,
+      93
+    ],
+    "positive_components": 7,
+    "threshold_rank": null
+  },
+  "76": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      6,
+      8,
+      12,
+      24,
+      27,
+      34,
+      45,
+      45,
+      46,
+      53,
+      56,
+      57,
+      67,
+      69,
+      165
+    ],
+    "positive_components": 15,
+    "threshold_rank": null
+  },
+  "77": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      49,
+      57,
+      78
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "79": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      60,
+      67,
+      118
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "81": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      104,
+      111,
+      126
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "83": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "85": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      1,
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      3,
+      13,
+      14,
+      41,
+      44,
+      47,
+      50,
+      50,
+      89,
+      106,
+      109,
+      165
+    ],
+    "positive_components": 19,
+    "threshold_rank": null
+  },
+  "86": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      95,
+      108,
+      137
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "88": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      9,
+      26,
+      70,
+      92,
+      115
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "89": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      5,
+      9,
+      9,
+      16,
+      16,
+      26,
+      27,
+      38,
+      79,
+      88,
+      108
+    ],
+    "positive_components": 11,
+    "threshold_rank": null
+  },
+  "90": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      24
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "92": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      85,
+      106,
+      165
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "94": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      42,
+      77,
+      124
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "97": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      72,
+      119,
+      129
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "98": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      10,
+      28,
+      30,
+      60,
+      72,
+      87,
+      123,
+      165
+    ],
+    "positive_components": 8,
+    "threshold_rank": null
+  },
+  "100": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      64,
+      89
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "101": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "102": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      73,
+      120
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "103": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      1,
+      2,
+      2,
+      14,
+      84,
+      84,
+      86,
+      100,
+      109,
+      122,
+      140,
+      165,
+      165,
+      165
+    ],
+    "positive_components": 14,
+    "threshold_rank": null
+  },
+  "107": {
+    "abstention": null,
+    "component_worst_positive_ranks": [
+      3,
+      4,
+      7,
+      11,
+      13,
+      14,
+      16,
+      16,
+      23,
+      25,
+      53,
+      61,
+      63,
+      73,
+      74,
+      82,
+      91,
+      96,
+      100,
+      108,
+      114,
+      122,
+      165
+    ],
+    "positive_components": 23,
+    "threshold_rank": 108
+  },
+  "109": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      19,
+      19,
+      19,
+      30,
+      41,
+      105,
+      130,
+      144,
+      165
+    ],
+    "positive_components": 9,
+    "threshold_rank": null
+  },
+  "111": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      4,
+      4,
+      22,
+      46,
+      62,
+      165,
+      165
+    ],
+    "positive_components": 7,
+    "threshold_rank": null
+  },
+  "113": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      47,
+      55,
+      66,
+      74,
+      84
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "117": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "118": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      21,
+      22,
+      48,
+      127,
+      135
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "125": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      120,
+      122,
+      165
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "130": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      18,
+      39,
+      106,
+      114,
+      134
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "137": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      23,
+      48,
+      67,
+      75,
+      76,
+      91,
+      104,
+      165,
+      165
+    ],
+    "positive_components": 9,
+    "threshold_rank": null
+  },
+  "138": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      128
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "166": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      1,
+      1,
+      165
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "167": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      31,
+      72,
+      77
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "169": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      52
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "170": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      37
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "171": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      52,
+      62,
+      117
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "172": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      42
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "173": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "174": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "175": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "176": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "177": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "178": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "179": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      151
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "180": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      165
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "181": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      10,
+      11,
+      31,
+      31,
+      38,
+      141
+    ],
+    "positive_components": 6,
+    "threshold_rank": null
+  },
+  "182": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      70,
+      101,
+      110,
+      111,
+      125
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "183": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      10,
+      17,
+      27,
+      165
+    ],
+    "positive_components": 4,
+    "threshold_rank": null
+  },
+  "184": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      30,
+      58,
+      75,
+      83,
+      83,
+      88,
+      114,
+      123,
+      129
+    ],
+    "positive_components": 9,
+    "threshold_rank": null
+  },
+  "185": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "186": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      46,
+      61,
+      76,
+      115
+    ],
+    "positive_components": 4,
+    "threshold_rank": null
+  },
+  "187": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      8,
+      11
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "188": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      114
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "189": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "214": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      153
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "224": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      35,
+      35,
+      41,
+      61,
+      68,
+      72,
+      80
+    ],
+    "positive_components": 7,
+    "threshold_rank": null
+  },
+  "232": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      137
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "236": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      11,
+      17,
+      24,
+      29,
+      105,
+      106,
+      113,
+      118
+    ],
+    "positive_components": 8,
+    "threshold_rank": null
+  },
+  "240": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      148,
+      155
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "247": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      48,
+      76
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "250": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      5,
+      6,
+      9,
+      13,
+      14,
+      53,
+      68,
+      81,
+      100,
+      108,
+      110,
+      121,
+      165
+    ],
+    "positive_components": 13,
+    "threshold_rank": null
+  },
+  "267": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      107
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "286": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      23,
+      34,
+      52,
+      89,
+      94
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "296": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      6,
+      6,
+      9,
+      9,
+      9,
+      31,
+      90
+    ],
+    "positive_components": 7,
+    "threshold_rank": null
+  },
+  "297": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      2,
+      102
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "311": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "314": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      64
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "322": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      9,
+      11,
+      16,
+      29,
+      38
+    ],
+    "positive_components": 5,
+    "threshold_rank": null
+  },
+  "337": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "359": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      26,
+      42,
+      67,
+      68,
+      69,
+      165
+    ],
+    "positive_components": 6,
+    "threshold_rank": null
+  },
+  "360": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      113
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "361": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      15,
+      129
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "362": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      40,
+      46,
+      165
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "374": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "377": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "378": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "400": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      14,
+      99
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "401": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "404": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      25
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "428": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "439": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      155
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "440": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      96
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "441": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      82
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "442": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "443": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      83
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "444": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      13
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "456": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      2,
+      5,
+      6,
+      9,
+      19,
+      46,
+      71,
+      146
+    ],
+    "positive_components": 8,
+    "threshold_rank": null
+  },
+  "465": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "468": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      11,
+      15,
+      128
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "491": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "493": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "495": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      3,
+      66,
+      67
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "502": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "504": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      78
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "514": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      146,
+      148,
+      157
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "524": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      80,
+      84
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "538": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      100
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "539": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "542": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      95
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "567": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "580": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "602": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      51
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "619": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      52,
+      99,
+      165
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "651": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "659": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      5,
+      9,
+      12,
+      16,
+      84,
+      135,
+      154
+    ],
+    "positive_components": 7,
+    "threshold_rank": null
+  },
+  "693": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "695": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "741": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "763": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      115,
+      124,
+      134
+    ],
+    "positive_components": 3,
+    "threshold_rank": null
+  },
+  "806": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "808": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "810": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "811": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "906": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      102,
+      107
+    ],
+    "positive_components": 2,
+    "threshold_rank": null
+  },
+  "1032": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      114
+    ],
+    "positive_components": 1,
+    "threshold_rank": null
+  },
+  "1060": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "1156": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "1193": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [],
+    "positive_components": 0,
+    "threshold_rank": null
+  },
+  "1235": {
+    "abstention": "insufficient_calibration_components",
+    "component_worst_positive_ranks": [
+      9,
+      10,
+      12,
+      16,
+      19,
+      32,
+      51,
+      102,
+      121,
+      126
+    ],
+    "positive_components": 10,
+    "threshold_rank": null
+  }
+}

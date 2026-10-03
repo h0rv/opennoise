@@ -1,0 +1,31 @@
+{
+  "calibration_partition_sha256": "6b49f5e75d524e908f25e177f39abc09b78f4d7e05999851ebb4980f13ae23ea",
+  "calibration_partition_source": "/dev/shm/opennoise-fma-memberships-20261003-v1/final-pack/calibration-memberships.jsonl.zst",
+  "candidate_display": "only candidate genre text and parent text shown; model method, rank, score, threshold, source annotations and percentile hidden",
+  "frozen_coding": {
+    "fit_negative": "both reviewers <=2 and neither unsure/unsupported",
+    "fit_positive": "both reviewers >=4 and neither unsure/unsupported",
+    "otherwise": "mixed/indeterminate; preserve both original responses",
+    "score_threshold": "no promotion threshold from this same cohort; freeze before a disjoint musical confirmation cohort"
+  },
+  "genres_source_sha256": "e355ffdc5aede4cbfb98098c4be39959493392c43a7d82ee3e1fd447a88b02cd",
+  "limits": [
+    "FMA-native track labels are not artist memberships.",
+    "Model rank/percentile is not a musical probability.",
+    "Track-level genre-source positives and model keys remain coordinator-only.",
+    "No ratings or reviewer identities have been entered.",
+    "Playback permission and availability remain per-track and unchecked for this cohort."
+  ],
+  "model_output_sha256": "83b25279eb2334c43b7b379f66faf2d4e0b0833666f9cd1d52f7a5fc1d5916bb",
+  "model_output_source": "/dev/shm/opennoise-fma-memberships-20261003-v1/final-pack/confirmation-memberships.jsonl.zst",
+  "query_denominator": 7332,
+  "rater_scale": {
+    "confidence_1_5": "1 very unsure to 5 very high confidence",
+    "fit_1_5": "1 does not fit; 2 mostly does not fit; 3 mixed/uncertain; 4 good fit; 5 very strong fit"
+  },
+  "results_considered": "confirmation partition only; no calibration predictions or rows displayed",
+  "reviewers_per_candidate": 2,
+  "revision": "fma-confirmation-membership-independent-review-v1",
+  "sample_query_count": 240,
+  "source_tracks_sha256": "2a51ad101f8972182475a4e162efbc5604eee127b80089abd5ee10c64a56b687"
+}

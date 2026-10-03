@@ -1,0 +1,118 @@
+{
+  "revision": "fma-exact-identity-and-permitted-listening-evidence-v1",
+  "native_source_replay_passed": true,
+  "bridge": {
+    "pack": "/dev/shm/opennoise-fma-exact-bridge-20261003-v3",
+    "projection_sha256": "d7c371c28e6a679bc3177d27b4d5e0b1bd97e8046a6fc4274109d020d2bde258",
+    "source_url_entities": 320,
+    "artist_eligible": 16916,
+    "artist_resolved": 168,
+    "artist_conflicts": 1,
+    "artist_unresolved": 16748,
+    "recording_eligible": 109727,
+    "recording_resolved": 0,
+    "core_identity_audit": {
+      "revision": "fma-bridge-core-identity-audit-v1",
+      "resolved_fma_artists": 168,
+      "distinct_bridge_mbids": 168,
+      "core_total": 2999670,
+      "matched_native_core_identities": 168,
+      "missing_native_core_identities": []
+    }
+  },
+  "recording_destinations": {
+    "pack": "/dev/shm/opennoise-recording-listening-20261003-v1",
+    "projection_sha256": "3bf3144ba3929a8b3bb75b1d14c8dd3b1815dc32d834d6db52f4bd2220cabbf6",
+    "eligible": 36,
+    "source_resolved": 36,
+    "destinations": 9,
+    "provider_availability_checked": false
+  },
+  "permitted_listening": {
+    "pack": "/dev/shm/opennoise-fma-permitted-listening-20261003-v4",
+    "projection_sha256": "534c4c50f1b51362d469bc0f99c057c473a5c74a428412d1bee04182cc3acea8",
+    "tracks": 8,
+    "audio_bytes": 7493845,
+    "native_zip_ranges": 17,
+    "range_bytes": 8003373,
+    "provider_archive_bytes": 7679594875,
+    "full_archive_sha256_verified": false,
+    "license_and_size_eligible_tracks": 1179,
+    "frozen_seed": "opennoise-licensed-listening-v1",
+    "clip_seconds_claim": "native FMA small 30-second excerpts; browser duration validation pending",
+    "tracks_detail": [
+      {
+        "track_id": "61011",
+        "artist": "Ben von Wildenhaus",
+        "title": "Week Seven",
+        "license_url": "http://creativecommons.org/licenses/by/3.0/",
+        "audio_bytes": 961748,
+        "audio_sha256": "10747e960ca6a5976ee1af058466e2e8269bdca74899c1bd373b119b64ac946f"
+      },
+      {
+        "track_id": "127299",
+        "artist": "Oh Yeah, the Future",
+        "title": "With the Summer",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "audio_bytes": 1034627,
+        "audio_sha256": "62002128def0674d40793c1e83d7fc611bb15185c70fec4de87a8a90df38938b"
+      },
+      {
+        "track_id": "138060",
+        "artist": "Every Now and Every Then",
+        "title": "One Knife",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "audio_bytes": 945567,
+        "audio_sha256": "a5750e6d520132bc052f475a00c9bfb73462d3fa80d281676a53eb15183602cf"
+      },
+      {
+        "track_id": "124391",
+        "artist": "Radius System",
+        "title": "Impulsion pt.1",
+        "license_url": "http://creativecommons.org/licenses/by-sa/4.0/",
+        "audio_bytes": 721577,
+        "audio_sha256": "50f81b3b63dcaf976663ca0c2be9643c64919ecfa11a62a5a850f7b803d6fd7e"
+      },
+      {
+        "track_id": "112318",
+        "artist": "Cloudkicker",
+        "title": "Sky Guide",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "audio_bytes": 1070451,
+        "audio_sha256": "bc7e7b0053bc4eaa23603c62a9481e8ed30b62f136501b6c3ccd59a61bf25409"
+      },
+      {
+        "track_id": "138061",
+        "artist": "Every Now and Every Then",
+        "title": "Bergwald Bergwald",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "audio_bytes": 1078053,
+        "audio_sha256": "50118604f77dadd1ad44d8cb689f0b3e16a27747e9ef5c864011b71e61fcb4f8"
+      },
+      {
+        "track_id": "126602",
+        "artist": "Fields Ohio",
+        "title": "Neon Hippies",
+        "license_url": "http://creativecommons.org/licenses/by-sa/4.0/",
+        "audio_bytes": 1201045,
+        "audio_sha256": "82273290a1feefb462c3ad422502fd15f79739bdb38ffec3ebe63e0310f964a1"
+      },
+      {
+        "track_id": "140266",
+        "artist": "Jorge Mario Zuleta",
+        "title": "Coco",
+        "license_url": "http://creativecommons.org/publicdomain/zero/1.0/",
+        "audio_bytes": 480777,
+        "audio_sha256": "7097bca7dea2ab403b231ab750d8fe3eb388c79b91591dbffda3cf96dc88595d"
+      }
+    ]
+  },
+  "acceptance_limits": [
+    "native artist URL assertions are not independent identity/musical review",
+    "no exact FMA track to MusicBrainz recording bridge",
+    "only 8 permitted audio excerpts, not defining examples for all artists or genres",
+    "external provider destinations are not playback availability proof",
+    "full audio archive hash not established by bounded ZIP ranges",
+    "no human judgments or musical representativeness established"
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "revision": "opennoise-full-foundation-browser-v1",
+  "export_root": "/dev/shm/opennoise-full-input-foundation-20261003-v4",
+  "files": {
+    "profile.json": "00463ce8067d20b1c48322bc212528640e0b158e9c5fcda9d38054ec32b57ac4",
+    "genres.json": "08ea184e19db7130b93cfade45b66a7ff32f0a1f2977d8c21b5f8d093f486db5",
+    "receipt.json": "03046fcb703c729dc8cc2651ba22672339b950377887ea5da3548d22d98583d1",
+    "index.html": "2f96903b12f644d112ff44c76c30bd786c7bcfdb147f72f58aea7143ccddf5d8",
+    "full-foundation.mjs": "e370b8a3713c1cfe05ed6bdcfe7c06ec5fe25c7a0da43b27bf11ffc47d47693f",
+    "full-foundation.css": "69c309f51f5baf2f71e3b75102805182f229b43c41d814d39067c1937918ae31",
+    "full-foundation-normalization.mjs": "01d3320f50cef9bc171b81493543ee6712d5814e5566ebb47517917b7c0b4a9f",
+    "listening-list.mjs": "cad07e5237e687d3b48d3e3281b63f7cc4816d108c4fb6043022089456410304"
+  },
+  "checks": {
+    "required_artists": true,
+    "complete_genre_cohort": true,
+    "identity_browse_pagination": true,
+    "outside_featured_identity": true,
+    "prefix_search": true,
+    "history_reload": true,
+    "listening_list": true,
+    "keyboard_skiplink": true,
+    "mobile_no_overflow": true,
+    "no_external_audio_requests": true,
+    "provider_links_label_unverified": true
+  },
+  "unicode_cohort": [
+    {
+      "kind": "single-character",
+      "id": "09028b5b-f8d0-4ad6-8143-8be0282fbb35",
+      "name": "X",
+      "path": "browse/005523.json"
+    },
+    {
+      "kind": "Japanese",
+      "id": "20d3bc4a-d853-46c4-a620-51b8e092aaf3",
+      "name": "ぁぉぃゅ",
+      "path": "browse/005745.json"
+    },
+    {
+      "kind": "astral",
+      "id": "a8cda234-0e1b-47b1-b51e-7f69a7147cb7",
+      "name": "𐊣𐊠𐊣𐊠",
+      "path": "browse/005999.json"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/dev/shm/opennoise-full-foundation-browser-20261003-v4.json-1280.png",
+      "sha256": "1f2fcb6dfc6a6146072fe6eba01fd05d7a124d4e9063ca108ec7161b6bea6fc5",
+      "bytes": 44981,
+      "width": 1280
+    },
+    {
+      "path": "/dev/shm/opennoise-full-foundation-browser-20261003-v4.json-390.png",
+      "sha256": "e6e2596bdc67a187388a7022b5a4d24deda68e5481e2df3bcc56250190721e5d",
+      "bytes": 39339,
+      "width": 390
+    }
+  ],
+  "initial_requests": 8,
+  "requests": [
+    "/",
+    "/full-foundation.css",
+    "/full-foundation.mjs",
+    "/full-foundation-normalization.mjs",
+    "/listening-list.mjs",
+    "/profile.json",
+    "/genres.json",
+    "/favicon.ico",
+    "/search/index.json",
+    "/browse/000342.json",
+    "/artists/identity-f2.json",
+    "/details/f22942a1-6f70-4f48-866e-238cb2308fbd.json",
+    "/",
+    "/full-foundation.css",
+    "/full-foundation.mjs",
+    "/full-foundation-normalization.mjs",
+    "/listening-list.mjs",
+    "/profile.json",
+    "/genres.json",
+    "/artists/identity-f2.json",
+    "/details/f22942a1-6f70-4f48-866e-238cb2308fbd.json",
+    "/search/index.json",
+    "/browse/001734.json",
+    "/artists/identity-3b.json",
+    "/details/3bcff06f-675a-451f-9075-99e8657047e8.json",
+    "/",
+    "/full-foundation.css",
+    "/full-foundation.mjs",
+    "/full-foundation-normalization.mjs",
+    "/listening-list.mjs",
+    "/profile.json",
+    "/genres.json",
+    "/artists/identity-3b.json",
+    "/details/3bcff06f-675a-451f-9075-99e8657047e8.json",
+    "/search/index.json",
+    "/browse/005523.json",
+    "/browse/005537.json",
+    "/browse/005524.json",
+    "/browse/005745.json",
+    "/browse/005999.json",
+    "/artists/identity-f2.json",
+    "/details/f22942a1-6f70-4f48-866e-238cb2308fbd.json",
+    "/genres/Q101552821.json",
+    "/browse/000000.json",
+    "/browse/000001.json",
+    "/artists/identity-ed.json",
+    "/details/ede114c8-a769-4a33-af86-65d309fa5c1e.json"
+  ]
+}
