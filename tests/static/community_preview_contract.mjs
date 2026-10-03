@@ -145,6 +145,7 @@ async function preview(records, inspect) {
   const server = createServer(async (request, response) => {
     const path = new URL(request.url, 'http://localhost').pathname;
     if (path === '/' || path === '/index.html') { response.setHeader('Content-Type', 'text/html'); response.end(page); }
+    else if (path === '/listening-list.mjs') { response.setHeader('Content-Type', 'text/javascript'); response.end(await readFile(new URL('../../src/opennoise/static/listening-list.mjs', import.meta.url))); }
     else if (path === '/community-preview.js') { response.setHeader('Content-Type', 'text/javascript'); response.end(await readFile(new URL('../../src/opennoise/static/community-preview.js', import.meta.url))); }
     else if (path === '/community-preview.css') { response.setHeader('Content-Type', 'text/css'); response.end(await readFile(new URL('../../src/opennoise/static/community-preview.css', import.meta.url))); }
     else if (path === '/community-data.json') { response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify(model)); }

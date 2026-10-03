@@ -24,9 +24,11 @@ _DISPLAY = {
     "index.html": "style-atlas.html",
     "style-atlas.css": "style-atlas.css",
     "style-atlas.js": "style-atlas.js",
+    "listening-list.mjs": "listening-list.mjs",
     "communities/index.html": "community-preview.html",
     "communities/community-preview.css": "community-preview.css",
     "communities/community-preview.js": "community-preview.js",
+    "communities/listening-list.mjs": "listening-list.mjs",
 }
 
 
@@ -40,6 +42,9 @@ def _clone_display_files(source: Path, output: Path, files: dict[str, Any]) -> N
             os.link(source / relative, destination)
             if _binding(destination) != binding:
                 raise ValueError("source artifact changed during display clone")
+
+    for relative in ("listening-list.mjs", "communities/listening-list.mjs"):
+        shutil.copyfile(_STATIC / "listening-list.mjs", output / relative)
 
 
 def _attach_examples(
@@ -153,7 +158,9 @@ def refresh_discovery_display(
     ):
         raise ValueError("unsupported local discovery display boundary")
     _require_paths(source, prior)
-    if not set(_DISPLAY).issubset(prior["files"]):
+    if not (set(_DISPLAY) - {"listening-list.mjs", "communities/listening-list.mjs"}).issubset(
+        prior["files"]
+    ):
         raise ValueError("discovery product lacks required display assets")
     # No copy fallback: a cross-device refresh must fail before copying gigabytes.
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -171,8 +178,11 @@ def refresh_discovery_display(
         changes = {}
         for relative in _DISPLAY:
             files[relative] = _binding(output / relative)
-            if files[relative] != prior["files"][relative]:
-                changes[relative] = {"before": prior["files"][relative], "after": files[relative]}
+            if files[relative] != prior["files"].get(relative):
+                changes[relative] = {
+                    "before": prior["files"].get(relative),
+                    "after": files[relative],
+                }
         for relative in ("index.html", "communities/index.html"):
             _require_html_targets(output, relative, {*files, "receipt.json"})
         receipt = {

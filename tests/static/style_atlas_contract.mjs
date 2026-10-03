@@ -28,9 +28,14 @@ async function withBrowser(operation, mutate = payload => payload, withMaps = tr
   const server = createServer((request, response) => {
     const path = new URL(request.url, 'http://localhost').pathname;
     let payload;
-    if (path === '/') { response.setHeader('Content-Type', 'text/html'); response.end(assets[0]); return; }
+    if (path === '/') { response.setHeader('Content-Type', 'text/html'); response.end(assets[0].toString().replace('<body', '<body data-artist-examples="recording-examples.json"')); return; }
     if (path === '/style-atlas.css' || path === '/style-atlas.js') { response.setHeader('Content-Type', path.endsWith('.js') ? 'text/javascript' : 'text/css'); response.end(assets[path.endsWith('.js') ? 2 : 1]); return; }
+    if (path === '/listening-list.mjs') { response.setHeader('Content-Type', 'text/javascript'); readFile(new URL('../../src/opennoise/static/listening-list.mjs', import.meta.url)).then(bytes => response.end(bytes)); return; }
     if (path === '/data.json') payload = current;
+    if (path === '/recording-examples.json') payload = {artists: [{artist_mbid: ids[0], name: names[0], recordings: [
+      {entity_id: 'musicbrainz:recording:' + ids[1], title: 'Exact track', credited_artist_mbids: [ids[0]], evidence_refs: ['source:credit'], url: 'https://musicbrainz.org/recording/' + ids[1]},
+      {entity_id: 'musicbrainz:recording:' + ids[2], title: 'Wrong credit', credited_artist_mbids: [ids[2]], evidence_refs: ['source:credit'], url: 'https://musicbrainz.org/recording/' + ids[2]}
+    ]}]};
     if (path === '/artist-search.json') payload = {artists: ids.map((id, index) => [id, names[index], 'source_name'])};
     const row = current.styles.find(row => path === '/' + row.detail_path);
     if (row) payload = {...row, cohorts: Object.fromEntries(Object.keys(row.counts).map(role => [role, {artist_count: row.counts[role], pages: Array.from({length: Math.ceil(row.counts[role] / 100)}, (_, page) => `cohorts/${row.id}/${role}/${page}.json`)}]))};
@@ -169,4 +174,35 @@ with tempfile.TemporaryDirectory() as temporary:
     assert.equal(await browser.evaluate("document.querySelector('#detail h2').textContent"), names[0]);
     assert.ok(await browser.evaluate("document.querySelector('.artist-map-summary').textContent.includes('Shared source values:')"));
   }, payload => produced[payload.style_id]);
+});
+
+
+test('credited recordings form a local portable list with keyboard dialog and reload', {skip: !chromium, timeout: 60000}, async () => {
+  await withBrowser(async ({evaluate, wait, command}) => {
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    await evaluate(`location.hash='artist=${ids[0]}'`);
+    await wait("Boolean(document.querySelector('.recording-action button'))");
+    assert.equal(await evaluate("document.querySelectorAll('.recording-action').length"), 1);
+    assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
+    await evaluate("document.querySelector('.recording-action button').click(); document.querySelector('.recording-action button').click(); document.querySelector('.listening-list-toggle').focus()");
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: ' ', code: 'Space', windowsVirtualKeyCode: 32});
+    await command('Input.dispatchKeyEvent', {type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32});
+    await wait("document.querySelector('.listening-dialog').open");
+    assert.equal(await evaluate("document.querySelectorAll('.listening-tracks a').length"), 1);
+    await evaluate("URL.createObjectURL = blob => { blob.text().then(text => window.listDownload=text); return 'blob:test'; }; HTMLAnchorElement.prototype.click = function() {} ; [...document.querySelectorAll('.listening-dialog button')].find(row => row.textContent === 'Download JSON').click()");
+    await wait("Boolean(window.listDownload)");
+    const payload = JSON.parse(await evaluate('window.listDownload'));
+    assert.equal(payload.tracks[0].recording_mbid, ids[1]);
+    assert.equal(payload.tracks[0].audio_url, null);
+    assert.equal(payload.playback_availability, 'not_resolved');
+    assert.deepEqual(payload.tracks[0].evidence_refs, ['source:credit']);
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27});
+    await command('Input.dispatchKeyEvent', {type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27});
+    await wait("!document.querySelector('.listening-dialog').open");
+    assert.equal(await evaluate("document.activeElement.className"), 'listening-list-toggle');
+    await command('Page.reload');
+    await wait("document.querySelector('.listening-list-toggle')?.textContent === 'Listening list (1)'");
+    await evaluate("document.querySelector('.listening-list-toggle').click(); [...document.querySelectorAll('.listening-dialog button')].find(row => row.textContent === 'Remove').click()");
+    assert.equal(await evaluate("document.querySelector('.listening-list-toggle').textContent"), 'Listening list (0)');
+  });
 });

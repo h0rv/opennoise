@@ -1,5 +1,7 @@
+import {mountListeningList} from './listening-list.mjs';
 /** Static exploration of inferred broad, sub, and micro music communities. */
 const $ = selector => document.querySelector(selector);
+const listening = mountListeningList();
 const canvas = $('#community-map'), context = canvas.getContext('2d');
 const detail = $('#detail'), search = $('#model-search'), results = $('#search-results');
 const LEVELS = ['broad', 'sub', 'micro'];
@@ -255,7 +257,9 @@ function showArtistExamples(artistId) {
         if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(id) || row.url !== `https://musicbrainz.org/${kind}/${id}`) continue;
         const link = node('a', row.title, 'artist-row');
         link.href = row.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
-        link.dataset.entityId = row.entity_id; list.append(link);
+        link.dataset.entityId = row.entity_id;
+        const add = kind === 'recording' ? listening?.addButton(row, artistId, artist.name ?? artist.artist_name ?? '') : null;
+        if (add) { const actions = node('div', undefined, 'recording-action'); actions.append(link, add); list.append(actions); } else list.append(link);
       }
       if (list.childElementCount) section.append(node('h3', label), list);
     }
@@ -282,7 +286,7 @@ function showArtistLinks(artistId) {
     if (!section.isConnected) return;
     const artist = payload.artists?.find(row => row.artist_mbid === artistId);
     if (!artist || !Array.isArray(artist.links)) { section.remove(); return; }
-    const links = node('div', undefined, 'native-links');
+    const links = node('div', undefined, 'native-links'), acceptedDestinations = [];
     for (const row of artist.links) {
       if (typeof row.url !== 'string' || typeof row.provider !== 'string' || !/^[0-9a-f]{64}$/.test(row.source_sha256)) continue;
       let url; try { url = new URL(row.url); } catch { continue; }
@@ -299,8 +303,9 @@ function showArtistLinks(artistId) {
       link.dataset.provider = row.provider;
       link.href = row.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
       link.dataset.artistId = artistId; link.dataset.sourceSha256 = row.source_sha256;
-      links.append(link);
+      links.append(link); acceptedDestinations.push(row);
     }
+    listening?.setArtistDestinations(artistId, acceptedDestinations);
     if (links.childElementCount) section.append(node('h3', 'Listen links'), links);
     else section.remove();
   }).catch(() => {

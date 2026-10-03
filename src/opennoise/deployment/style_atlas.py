@@ -565,6 +565,7 @@ def _assets(
     projected.sort(key=lambda row: (row[1].casefold(), row[0]))
     _write(output / relative, {"artists": projected})
     static = Path(__file__).resolve().parents[1] / "static"
+    shutil.copyfile(static / "listening-list.mjs", output / "listening-list.mjs")
     for suffix in ("html", "css", "js"):
         name = f"style-atlas.{suffix}"
         shutil.copyfile(static / name, output / ("index.html" if suffix == "html" else name))
@@ -918,6 +919,8 @@ def refresh_style_atlas_display(*, source: Path, output: Path) -> dict[str, Any]
     _write(output / "data.tmp", data)
     (output / "data.tmp").replace(output / "data.json")
     static = Path(__file__).resolve().parents[1] / "static"
+    shutil.copyfile(static / "listening-list.mjs", output / "listening-list.tmp")
+    (output / "listening-list.tmp").replace(output / "listening-list.mjs")
     for suffix in ("html", "css", "js"):
         name = f"style-atlas.{suffix}"
         destination = output / ("index.html" if suffix == "html" else name)

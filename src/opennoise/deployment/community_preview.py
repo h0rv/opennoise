@@ -443,6 +443,7 @@ def build_community_preview(
         shutil.copyfile(source / relative, destination)
         if sha256_file(destination)[0] != source_receipt["files"][relative]["sha256"]:
             raise ValueError("source bytes changed during preview copy")
+    shutil.copyfile(_STATIC / "listening-list.mjs", output / "listening-list.mjs")
     for suffix in ("html", "css", "js"):
         name = f"community-preview.{suffix}"
         shutil.copyfile(_STATIC / name, output / ("index.html" if suffix == "html" else name))
