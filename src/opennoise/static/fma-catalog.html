@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FMA source catalog · OpenNoise</title><link rel="stylesheet" href="fma-catalog.css"><script type="module" src="fma-catalog.js"></script></head>
+<body>
+<a class="skip" href="#content">Skip to catalog</a>
+<header><a href="#genres">FMA source catalog</a><nav aria-label="Catalog"><a href="#genres">Genres</a><a href="#artists">Artists</a><a href="#tracks">Tracks</a><a href="#unannotated">No genre annotations</a><a href="#artists&missing=1">Missing artist records</a></nav></header>
+<form id="search-form" role="search"><label for="query">Search</label><input id="query" type="search" autocomplete="off"><label for="scope">In</label><select id="scope"><option value="genres">Genres</option><option value="artists">Artists</option></select><button type="submit">Find</button></form>
+<main id="content" aria-busy="true"><h1 tabindex="-1">Loading catalog…</h1><p id="status" role="status"></p><div id="rows"></div><div id="pages" aria-label="Pages"></div></main>
+<footer><p>FMA native metadata · CC BY 4.0. Track genre annotations belong to tracks. Raw 2017 snapshot; names and links may be dated. Playback availability is unverified.</p><details><summary>Sources and license</summary><p>Michaël Defferrard, Kirell Benzi, Pierre Vandergheynst, Xavier Bresson, <a href="https://github.com/mdeff/fma" rel="noopener noreferrer" target="_blank">FMA: A Dataset For Music Analysis</a>, ISMIR 2017. Metadata is CC BY 4.0. Recordings have separate artist-selected licenses; no audio is included.</p><p>Native FMA IDs remain separate from MusicBrainz IDs. Source track-artist associations and source track genres are metadata observations. They are not artist genre memberships, musical-fit judgments, or model suggestions. The raw tables differ from the cleaned audio dataset.</p><p><a href="corpus-receipt.json">Corpus receipt</a> · <a href="static-receipt.json">Export receipt</a></p></details></footer>
+</body></html>

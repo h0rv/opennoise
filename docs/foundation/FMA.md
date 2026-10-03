@@ -66,3 +66,43 @@ The [source receipt](evidence/fma-native-source-20261002.json) and
 compressed captures and projected tables remain external workspace artifacts;
 the receipts are custody evidence and do not make those missing files available
 in a fresh checkout.
+
+## Optional native source catalog
+
+The separate static explorer exposes every raw track, all source artist records,
+the 250 additional native artist IDs whose records are missing, and all 164 genre
+definitions. Artist pages show source track-artist associations. Genre pages show
+only direct track annotations, with no parent inheritance. Tracks without genre
+annotations have a complete separate cohort. Search, pagination, keyboard
+navigation, hash deep links, browser history, and reload remain available.
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/build_fma_static_catalog.py \
+  --source .cache/fma-source-new --projected .cache/fma-corpus-new \
+  --output .cache/fma-static-new
+
+OPENNOISE_FMA_STATIC_ROOT="$PWD/.cache/fma-static-new" \
+  node --test tests/static/fma_catalog_contract.mjs
+```
+
+Build replays every native CSV row and ZIP CRC against the projected tables
+before creating any export. Artist profiles use 128 shards; track and cohort
+shards stay below 200 KB. The complete artist search index is loaded lazily and
+must stay below 2 MB. There is no initial full-track download. Native FMA metadata
+links retain source URLs only after validation; they do not establish current
+playback availability. Audio, media embeds, inferred memberships, MusicBrainz
+bridges, and Spotify APIs are absent.
+
+The tested local export contains 23.25 MB of bound files; its artist index is
+863,143 bytes and its largest JSON data shard is 78,927 bytes. The compact
+[static receipt](evidence/fma-native-static-20261002.json) binds a compressed file
+manifest rather than expanding thousands of hashes into the product flow.
+Actual Chromium checks cover the raw source counts, artist and genre routes,
+track pagination, history, deep-link reload, keyboard search, 390px layouts,
+missing artist records, missing annotations, and absence of media/provider
+requests. The [verification report](evidence/fma-native-static-verification-20261003.json)
+records the tested local export root, replay results, and checked file bindings.
+The complete export including its 789-byte receipt is 23,255,362 bytes.
+This is a source catalog with no claim of audition or playlist parity.
+It remains an optional CC BY pack, separate from the CC0 MusicBrainz profile;
+copy its entire verified export into a dedicated directory before linking to it.

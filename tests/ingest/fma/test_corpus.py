@@ -14,6 +14,8 @@ from unittest.mock import patch
 import httpx
 import zstandard
 
+from opennoise.common import canonical_json, sha256_file
+from opennoise.deployment.fma_static import verified_tables
 from opennoise.ingest.fma import corpus
 
 README = (Path(__file__).resolve().parents[3] / "data/examples/fma-source/README.md").read_bytes()
@@ -180,10 +182,27 @@ class CorpusTests(unittest.TestCase):
             self.assertIsNone(rows[1]["genre_ids"])
             replay = corpus.project_corpus(source, Path(temporary) / "replay")
             self.assertEqual(receipt, replay)
+            verified_receipt, verified = verified_tables(source, output)
+            self.assertEqual(verified_receipt, receipt)
+            self.assertEqual(verified["tracks"], rows)
             with self.assertRaises(FileExistsError):
                 corpus.capture_sources(source)
             with self.assertRaises(FileExistsError):
                 corpus.project_corpus(source, output)
+            # A forged projected table and matching self-reported hash still fail native replay.
+            rows[0]["title"] = "Forged source title"
+            tracks_path = output / "tracks.jsonl.zst"
+            tracks_path.write_bytes(
+                zstandard.ZstdCompressor().compress(
+                    b"".join(canonical_json(row) + b"\n" for row in rows)
+                )
+            )
+            receipt["files"]["tracks"].update(
+                zip(("sha256", "bytes"), sha256_file(tracks_path), strict=True)
+            )
+            (output / "corpus-receipt.json").write_bytes(canonical_json(receipt))
+            with self.assertRaisesRegex(ValueError, "differs from native source replay"):
+                verified_tables(source, output)
             payload = source / "2-compressed.range"
             payload.write_bytes(payload.read_bytes()[:-1])
             with self.assertRaises(ValueError):

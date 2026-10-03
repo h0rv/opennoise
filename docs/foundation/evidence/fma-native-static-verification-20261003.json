@@ -1,0 +1,40 @@
+{
+  "revision": "fma-source-static-verification-v1",
+  "verified_at_utc": "2026-10-03",
+  "local_export_root": "/workspace/opennoise-next-20261002/listening/.cache/fma-static-20261002-v2",
+  "local_source_root": "/workspace/opennoise-next-20261002/listening/.cache/fma-native-metadata-20261002-v1",
+  "projected_tables_directory": "projection-v2",
+  "static_receipt": "fma-native-static-20261002.json",
+  "manifest_sha256": "6c912043c488799fdd20d05c00b5be5c3e7674574d2c81ef25d0dab96c5e7edb",
+  "verified_bound_files": 2398,
+  "bound_files_and_manifest_bytes": 23254573,
+  "static_receipt_bytes": 789,
+  "complete_export_bytes_including_receipt": 23255362,
+  "native_source_replay": {
+    "passed": true,
+    "tracks": 109727,
+    "artists": 16916,
+    "genres": 164,
+    "full_stream_crc_and_source_hash_checked": true
+  },
+  "export_bindings": {
+    "passed": true,
+    "all_manifest_file_hashes_and_sizes_checked": true,
+    "exported_html_css_js_match_repository": true,
+    "persisted_receipt_matches_export": true
+  },
+  "checks": {
+    "ruff_format": "passed",
+    "ruff_lint": "passed",
+    "ty_types": "passed",
+    "focused_python_tests": {"passed": 9, "failed": 0},
+    "actual_chromium_contracts": {"passed": 2, "failed": 0, "skipped": 0},
+    "browser_contract_file": "tests/static/fma_catalog_contract.mjs",
+    "desktop_viewport": [1280, 900],
+    "mobile_viewport": [390, 844]
+  },
+  "deployed": false,
+  "audio_requested": false,
+  "full_every_noise_parity_claimed": false,
+  "availability_note": "Export and source files are local workspace artifacts; this report does not supply them in a fresh checkout."
+}
