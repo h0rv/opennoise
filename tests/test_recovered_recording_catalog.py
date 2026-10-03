@@ -16,11 +16,12 @@ from opennoise.ingest.musicbrainz.compressed_catalog_custody import compress_str
 from opennoise.ingest.musicbrainz.recovered_catalog_capture import capture
 from opennoise.serving.metadata import full_recording_catalog as old
 from opennoise.serving.metadata import recovered_recording_catalog as new
+from tests.fresh_process import FreshProcessTestCase
 
 ARTIST = "11111111-1111-4111-8111-111111111111"
 
 
-class RecoveryTests(unittest.TestCase):
+class RecoveryTests(FreshProcessTestCase):
     def reseal_fixture_proof(self, proof: Path, source: Path) -> None:
         """Model a self-rehashed attacker declaration, not trusted native source capture."""
         payload = json.loads(proof.read_bytes())

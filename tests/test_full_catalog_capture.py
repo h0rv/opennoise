@@ -16,6 +16,7 @@ from opennoise.serving.metadata.full_recording_catalog import (
     request_plan,
     verify_ledger_order,
 )
+from tests.fresh_process import FreshProcessTestCase
 
 ARTIST = "11111111-1111-4111-8111-111111111111"
 
@@ -32,7 +33,7 @@ class Response(io.BytesIO):
         self.headers["Content-Length"] = str(len(body))
 
 
-class WorkerTests(unittest.TestCase):
+class WorkerTests(FreshProcessTestCase):
     def test_selected_header_scope_excludes_secret_values_and_caps_metadata(self) -> None:
         headers = Message()
         headers["Content-Type"] = "application/json"
