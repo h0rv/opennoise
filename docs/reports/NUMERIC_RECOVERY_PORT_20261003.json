@@ -1,0 +1,292 @@
+{
+  "current_fma_declaration_sha256": "af972502f0f231dc1b0615a291f868d83c575c379195a687b82c52494f173fdc",
+  "current_fma_model_sha256": "412607216f2a0114cf5ee35be28a92217fe340cee0e38f0f9fc7977214206831",
+  "current_fma_query_accounting": {
+    "test": {
+      "labeled_queries": 6369,
+      "precision_available": false,
+      "queries": 6468,
+      "source_positive_count": 14402,
+      "unlabeled_queries": 99
+    },
+    "validation": {
+      "labeled_queries": 7253,
+      "precision_available": false,
+      "queries": 7332,
+      "source_positive_count": 16668,
+      "unlabeled_queries": 79
+    }
+  },
+  "independent_full_native_audit_commit": "ee6e2a112f5a8fe03de08cb21f665ee1d01068a0",
+  "native55_structural_example": {
+    "assignments": {
+      "musicbrainz:recording:02e8f439-99fc-4427-8c12-2b08097d86e6": "train",
+      "musicbrainz:recording:030ed9b0-3620-4b6b-b75b-0c9cf0634ede": "train",
+      "musicbrainz:recording:0632ca37-e615-484b-ab02-707c2365570b": "train",
+      "musicbrainz:recording:0a3ca852-0607-4075-ab3f-8fb272bf048e": "test",
+      "musicbrainz:recording:0aed3058-e5a6-40cf-8725-afd091db447c": "train",
+      "musicbrainz:recording:0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722": "test",
+      "musicbrainz:recording:0c21fe8d-7e15-4e95-a1c5-2919a630fe80": "train",
+      "musicbrainz:recording:0feba647-01f6-489b-b8d4-a18de429a5af": "validation",
+      "musicbrainz:recording:126aaa04-a746-424c-84de-01cb13a7a770": "test",
+      "musicbrainz:recording:17abfe47-bd84-4e6d-b584-2ba2a5973a36": "validation",
+      "musicbrainz:recording:1862a0ad-f65c-4a10-9d13-8253fb96b6b0": "test",
+      "musicbrainz:recording:187db0f2-f082-4159-8748-fa34146cacaf": "train",
+      "musicbrainz:recording:1bb69702-4786-4cb2-80b0-b1fd5db996a3": "train",
+      "musicbrainz:recording:1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd": "validation",
+      "musicbrainz:recording:1d71137a-f2e5-423a-9fd7-01e77184de3b": "train",
+      "musicbrainz:recording:1dc6b264-ca0c-4b46-9a64-59ac8134e763": "test",
+      "musicbrainz:recording:206e1393-9fd8-4249-b570-45ef7ecb4e05": "train",
+      "musicbrainz:recording:20a4b45e-2bb5-453b-9f2f-c71acb404cca": "test",
+      "musicbrainz:recording:27ab613a-fd92-4bd1-8ac1-94055609063d": "train",
+      "musicbrainz:recording:2967c1d7-5df7-4624-bd0f-b96bf5114b91": "test",
+      "musicbrainz:recording:2ab078f5-40e1-48b9-97e7-f709d1e62166": "test",
+      "musicbrainz:recording:2ec664f0-332d-4dcf-8716-9943ace94a30": "train",
+      "musicbrainz:recording:2f2363a1-041f-488d-ae57-81f9a4e6c349": "train",
+      "musicbrainz:recording:30391a7e-5cae-469a-bb9a-c9c78c959b52": "validation",
+      "musicbrainz:recording:33ccd32f-5484-4eed-962e-1694428d7e06": "train",
+      "musicbrainz:recording:35b52cb7-52a2-4803-94f8-784ed8cd65b8": "train",
+      "musicbrainz:recording:364a305d-8c44-43cd-beae-8997e513e0b5": "train",
+      "musicbrainz:recording:3715b33e-9766-480f-ad0b-8437703af6b7": "train",
+      "musicbrainz:recording:378ad7fb-7bfa-4c1f-9ef8-06083df557c2": "test",
+      "musicbrainz:recording:3acd24bf-7d8b-4b8f-ba60-c84c0556dac1": "train",
+      "musicbrainz:recording:3ec37d27-1f16-45c4-8a9e-5a705393c177": "train",
+      "musicbrainz:recording:41b1675b-6b4a-4b81-b478-a4fc49fd2a08": "train",
+      "musicbrainz:recording:41bdd496-114e-48c6-82c9-ec9332891c8b": "train",
+      "musicbrainz:recording:422539fd-51ee-4c02-9478-ecd0e9093700": "train",
+      "musicbrainz:recording:429893fd-5242-4526-898e-134c3eb93a0f": "test",
+      "musicbrainz:recording:429bc443-fbdd-47df-84e7-e309d7a6bdad": "train",
+      "musicbrainz:recording:455ea430-c629-4c7d-abdd-5549946a5759": "train",
+      "musicbrainz:recording:47c90c2d-b7dd-4681-9f86-6ad3421aca5e": "train",
+      "musicbrainz:recording:4bc73c97-a204-42ad-877b-09a4445952ea": "train",
+      "musicbrainz:recording:4c811cb6-8cb4-4ad7-915d-be60e439ce7e": "train",
+      "musicbrainz:recording:56b8e7ce-2fb2-4054-abda-d889ed41a7ac": "test",
+      "musicbrainz:recording:594f843f-3ed1-423e-b1fc-f6aaf5bc7163": "test",
+      "musicbrainz:recording:5b2373e2-21a4-449c-9b88-0c97c8c1e589": "train",
+      "musicbrainz:recording:5e26b543-ec58-41d4-a68c-76838ed586d0": "train",
+      "musicbrainz:recording:623f308e-7cd3-413a-a641-534266e65732": "train",
+      "musicbrainz:recording:6278a2ab-4436-4077-a779-97268d3af3cf": "train",
+      "musicbrainz:recording:67eca43c-41fa-440a-a450-2a0f65b7ed16": "train",
+      "musicbrainz:recording:6a3da073-b8c7-482a-8077-30ad06465570": "test",
+      "musicbrainz:recording:7335ef2c-24c1-4ec2-b032-898eff19280b": "train",
+      "musicbrainz:recording:7c1abea4-47c5-41d3-a8b0-f330bc8e1849": "train",
+      "musicbrainz:recording:7ea48ff5-2d92-485a-95b5-ea2080e98b45": "train",
+      "musicbrainz:recording:87e0dfaf-a99d-4c52-a92b-57a7600aa06f": "train",
+      "musicbrainz:recording:8f495650-06a2-42b3-8924-25442e911566": "train",
+      "musicbrainz:recording:911954f3-a0b1-4df4-ae3c-d239401cca67": "train",
+      "musicbrainz:recording:953cf087-52b1-4a0c-b826-3170216fd9bd": "train"
+    },
+    "audit": {
+      "all_partitions_nonempty": true,
+      "cross_partition_identities": {
+        "album_ids": [],
+        "artist_ids": [],
+        "duplicate_ids": [],
+        "recording_ids": []
+      },
+      "known_identity_isolation_passed": true,
+      "musical_quality_evaluated": false,
+      "partition_track_counts": {
+        "test": 13,
+        "train": 38,
+        "validation": 4
+      },
+      "tracks_missing_identity_kind": {
+        "album_ids": 55,
+        "artist_ids": 0,
+        "duplicate_ids": 55,
+        "recording_ids": 0
+      },
+      "unknown_identity_leakage_excluded": false
+    },
+    "bucket_counts": {
+      "test": 1,
+      "train": 8,
+      "validation": 1
+    },
+    "component_count": 9,
+    "components": [
+      {
+        "component_id": "cc1607cd5fbb20e470532568bfc8cd444e1caeed7eec3bd9ac40a794a9703519",
+        "partition": "train",
+        "tracks": [
+          "musicbrainz:recording:02e8f439-99fc-4427-8c12-2b08097d86e6",
+          "musicbrainz:recording:1d71137a-f2e5-423a-9fd7-01e77184de3b",
+          "musicbrainz:recording:2ec664f0-332d-4dcf-8716-9943ace94a30",
+          "musicbrainz:recording:5e26b543-ec58-41d4-a68c-76838ed586d0"
+        ]
+      },
+      {
+        "component_id": "88087bf533cbb72b84ede71cdc97b306650974dd48cdc9917f3bf0e6748a02eb",
+        "partition": "train",
+        "tracks": [
+          "musicbrainz:recording:030ed9b0-3620-4b6b-b75b-0c9cf0634ede",
+          "musicbrainz:recording:27ab613a-fd92-4bd1-8ac1-94055609063d",
+          "musicbrainz:recording:364a305d-8c44-43cd-beae-8997e513e0b5",
+          "musicbrainz:recording:3ec37d27-1f16-45c4-8a9e-5a705393c177",
+          "musicbrainz:recording:41bdd496-114e-48c6-82c9-ec9332891c8b",
+          "musicbrainz:recording:911954f3-a0b1-4df4-ae3c-d239401cca67"
+        ]
+      },
+      {
+        "component_id": "1f752e91c6d75801109d91f0911493a9ab0adf5d6c0be63af39e47334f72020f",
+        "partition": "train",
+        "tracks": [
+          "musicbrainz:recording:0632ca37-e615-484b-ab02-707c2365570b",
+          "musicbrainz:recording:1bb69702-4786-4cb2-80b0-b1fd5db996a3",
+          "musicbrainz:recording:206e1393-9fd8-4249-b570-45ef7ecb4e05",
+          "musicbrainz:recording:2f2363a1-041f-488d-ae57-81f9a4e6c349",
+          "musicbrainz:recording:41b1675b-6b4a-4b81-b478-a4fc49fd2a08",
+          "musicbrainz:recording:4bc73c97-a204-42ad-877b-09a4445952ea",
+          "musicbrainz:recording:5b2373e2-21a4-449c-9b88-0c97c8c1e589",
+          "musicbrainz:recording:67eca43c-41fa-440a-a450-2a0f65b7ed16"
+        ]
+      },
+      {
+        "component_id": "842741b82248621268e1bc23631483d4dc08a4e2ad4529248f6bfac5d0c1425b",
+        "partition": "test",
+        "tracks": [
+          "musicbrainz:recording:0a3ca852-0607-4075-ab3f-8fb272bf048e",
+          "musicbrainz:recording:0b39fc0c-3f8b-4e6c-85a8-c2739ae3f722",
+          "musicbrainz:recording:126aaa04-a746-424c-84de-01cb13a7a770",
+          "musicbrainz:recording:1dc6b264-ca0c-4b46-9a64-59ac8134e763",
+          "musicbrainz:recording:20a4b45e-2bb5-453b-9f2f-c71acb404cca",
+          "musicbrainz:recording:2ab078f5-40e1-48b9-97e7-f709d1e62166",
+          "musicbrainz:recording:378ad7fb-7bfa-4c1f-9ef8-06083df557c2",
+          "musicbrainz:recording:56b8e7ce-2fb2-4054-abda-d889ed41a7ac",
+          "musicbrainz:recording:594f843f-3ed1-423e-b1fc-f6aaf5bc7163"
+        ]
+      },
+      {
+        "component_id": "04b81f3b68a3ff463fa25e0c2543ccd8cacad8cfda0bab9a9793e5a89226b205",
+        "partition": "train",
+        "tracks": [
+          "musicbrainz:recording:0aed3058-e5a6-40cf-8725-afd091db447c",
+          "musicbrainz:recording:33ccd32f-5484-4eed-962e-1694428d7e06",
+          "musicbrainz:recording:455ea430-c629-4c7d-abdd-5549946a5759",
+          "musicbrainz:recording:4c811cb6-8cb4-4ad7-915d-be60e439ce7e",
+          "musicbrainz:recording:7335ef2c-24c1-4ec2-b032-898eff19280b",
+          "musicbrainz:recording:8f495650-06a2-42b3-8924-25442e911566"
+        ]
+      },
+      {
+        "component_id": "4b1acd5466b85cb9b7470d135a05d4d2510fdc1e9b5cd13393b6dea024200be6",
+        "partition": "train",
+        "tracks": [
+          "musicbrainz:recording:0c21fe8d-7e15-4e95-a1c5-2919a630fe80",
+          "musicbrainz:recording:187db0f2-f082-4159-8748-fa34146cacaf",
+          "musicbrainz:recording:3715b33e-9766-480f-ad0b-8437703af6b7",
+          "musicbrainz:recording:3acd24bf-7d8b-4b8f-ba60-c84c0556dac1"
+        ]
+      },
+      {
+        "component_id": "dca064501ce46daf3295733bc45ae6ea4d14702a32eac0c7a99b9c347f3b2649",
+        "partition": "validation",
+        "tracks": [
+          "musicbrainz:recording:0feba647-01f6-489b-b8d4-a18de429a5af",
+          "musicbrainz:recording:17abfe47-bd84-4e6d-b584-2ba2a5973a36",
+          "musicbrainz:recording:1ceb8b3d-fc7b-4b05-902f-2fec4170b9cd",
+          "musicbrainz:recording:30391a7e-5cae-469a-bb9a-c9c78c959b52"
+        ]
+      },
+      {
+        "component_id": "5c1dc33819443a217637f916175e27a51af3237c5748e4366f1654d81504c024",
+        "partition": "test",
+        "tracks": [
+          "musicbrainz:recording:1862a0ad-f65c-4a10-9d13-8253fb96b6b0",
+          "musicbrainz:recording:2967c1d7-5df7-4624-bd0f-b96bf5114b91",
+          "musicbrainz:recording:429893fd-5242-4526-898e-134c3eb93a0f",
+          "musicbrainz:recording:6a3da073-b8c7-482a-8077-30ad06465570"
+        ]
+      },
+      {
+        "component_id": "89cca28d465276b3dee8cbfad42ebec7b15c23ed5d557f61030785eeed64a6be",
+        "partition": "train",
+        "tracks": [
+          "musicbrainz:recording:35b52cb7-52a2-4803-94f8-784ed8cd65b8",
+          "musicbrainz:recording:422539fd-51ee-4c02-9478-ecd0e9093700",
+          "musicbrainz:recording:429bc443-fbdd-47df-84e7-e309d7a6bdad",
+          "musicbrainz:recording:47c90c2d-b7dd-4681-9f86-6ad3421aca5e",
+          "musicbrainz:recording:623f308e-7cd3-413a-a641-534266e65732",
+          "musicbrainz:recording:6278a2ab-4436-4077-a779-97268d3af3cf",
+          "musicbrainz:recording:7c1abea4-47c5-41d3-a8b0-f330bc8e1849",
+          "musicbrainz:recording:7ea48ff5-2d92-485a-95b5-ea2080e98b45",
+          "musicbrainz:recording:87e0dfaf-a99d-4c52-a92b-57a7600aa06f",
+          "musicbrainz:recording:953cf087-52b1-4a0c-b826-3170216fd9bd"
+        ]
+      }
+    ],
+    "evaluation_blockers": [
+      "The recording-credit projection supplies neither album membership nor duplicate groups.",
+      "No independent musical relevance labels are supplied; no model is fitted.",
+      "Known identity isolation is a structural example, not a performance evaluation."
+    ],
+    "evaluation_ready": false,
+    "largest_component_tracks": 10,
+    "limitations": [
+      "Grouping covers supplied identities; source truth needs source-specific verification.",
+      "Missing identities remain unknown; empty groups do not connect unrelated tracks.",
+      "Component hashing does not guarantee balanced or nonempty partitions.",
+      "Fit preprocessing on training only and select parameters on validation only.",
+      "No labels, audio, musical-quality metrics or release eligibility are inferred."
+    ],
+    "normalized_records_sha256": "90197e0e010978f1ab93416e96e8e9227d82e7993809cd98aa2297a595dc8ef1",
+    "revision": "connected-track-split-v1",
+    "seed": "opennoise-recording-facts-v1",
+    "source": {
+      "license": "CC0-1.0 native AcousticBrainz data and MusicBrainz core credit facts",
+      "native_source_replay_passed": true,
+      "pack_kind": "native-sonic",
+      "projection_sha256": "39c6fd15e79c479c23367c96e45b8016cdb31ebc0f2e346fbb336fe9fd96986b",
+      "receipt_sha256": "13e21e5296989e148e0efc2f6956675d2d391326552fe4a1a3b67df56e1494cb",
+      "selected_source_records": 100,
+      "verified_exact_credit_records": 55
+    }
+  },
+  "native_component_comparison": {
+    "components": 7410,
+    "current_assignment_overlap_audit": {
+      "all_partitions_nonempty": true,
+      "cross_partition_identities": {
+        "album_ids": [],
+        "artist_ids": [],
+        "duplicate_ids": [],
+        "recording_ids": []
+      },
+      "known_identity_isolation_passed": true,
+      "musical_quality_evaluated": false,
+      "partition_track_counts": {
+        "test": 6522,
+        "train": 95841,
+        "validation": 7364
+      },
+      "tracks_missing_identity_kind": {
+        "album_ids": 1041,
+        "artist_ids": 0,
+        "duplicate_ids": 105927,
+        "recording_ids": 109727
+      },
+      "unknown_identity_leakage_excluded": false
+    },
+    "current_native_hash_assignments_preserved": true,
+    "duplicate_groups_sha256": "f7955876770fb2b6b19a9688128782e1d772cc66970cfe63fedbc128a298db79",
+    "generic_split_folds_used_for_fma": false,
+    "known_evaluation_artist_tracks": 108753,
+    "metadata_receipt_sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b",
+    "model_refit": false,
+    "native_component_membership_exactly_matches": true,
+    "null_artist_tracks_excluded": 0,
+    "raw_tracks": 109727,
+    "revision": "numeric-recovery-native-component-equivalence-v1",
+    "supplied_positive_artist_identity_tracks": 109727,
+    "tracks_sha256": "2a51ad101f8972182475a4e162efbc5604eee127b80089abd5ee10c64a56b687",
+    "unresolved_artist_source_positives": 2075,
+    "unresolved_artist_tracks": 974
+  },
+  "new_generic_fma_fit_or_folds": false,
+  "publication_authorized": false,
+  "recovery_patch_sha256": "b4a67e1ccb52e002002677d7e9c2ede0f812e1dc1f8560db72e2e7799a6138db",
+  "revision": "numeric-recovery-port-evidence-v1",
+  "saved_fma_pack_receipt_sha256": "3e1651c136f5ae0c588e6dd6930a7a8f68fc7b332d1e423d29d1657e20cd0106",
+  "targeted_tests": 24
+}
