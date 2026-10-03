@@ -1,0 +1,27 @@
+{
+  "revision": "fma-independent-source-and-model-audit-v1",
+  "declared_at": "2026-10-02",
+  "metric_results_read_before_declaration": false,
+  "scope": "FMA native metadata and independently precomputed acoustic feature source recovery; no historical reference or NC source inputs",
+  "checks": [
+    "Verify official metadata/license custody, CRC/hash binding, selected archive members, and exclusion of EchoNest, pickle and audio payloads.",
+    "Reconcile raw API snapshot track rows (109727) and cleaned metadata/feature rows (106574), report exact intersection, excluded rows and missing labels/features without denominator conflation.",
+    "Treat FMA genre IDs as native track observations; prohibit artist genre facts or MusicBrainz identities without exact bridges.",
+    "Audit artist ID resolution, missing primary artists, aliases/name-only links, multi-performer limits, and album grouping availability.",
+    "Audit duplicate track IDs, exact acoustic duplicate rows, shared album/performer IDs and source split conflicts; distinguish enforceable grouping from unresolved entity leakage.",
+    "Verify split/fold salts and model settings frozen before metric inspection; require training-only normalization, vocabulary, priors and prototype construction.",
+    "Compare fixed acoustic methods to training-only popularity and appropriate permuted-feature or no-acoustic controls; do not tune against test results.",
+    "Keep rare, unseen, missing-label, missing-feature, unresolved-artist and cold groups visible; report abstention and complete eligible/total denominators.",
+    "Independently recompute saved predictions/metrics and validate source role and artifact hashes; source-positive recovery is distinct from semantic precision and independent musical judgment.",
+    "Inspect portable/new acoustic stage boundary: CC0 core remains separate from attributed CC-BY FMA packs and optional NC style calibration; no default or public promotion is inferred from source recovery."
+  ],
+  "regression_policy": "Add focused tests for concrete bugs only; coordinate changes to agent-owned implementations.",
+  "prespecified_limitations": [
+    "Source artist IDs are not complete performer-credit identities.",
+    "Missing artist or album metadata cannot prove performer/album isolation.",
+    "Identical metadata/acoustic rows may not identify all recording duplicates.",
+    "Source taxonomy recovery does not validate artist genres or Every Noise semantic parity.",
+    "This audit does not acquire or listen to audio."
+  ],
+  "promotion_authorized": false
+}
