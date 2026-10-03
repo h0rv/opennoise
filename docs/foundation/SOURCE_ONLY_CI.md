@@ -7,6 +7,12 @@ uses the project's installed `.venv/bin/poe check`. The workflow has read-only
 repository permissions, needs no secrets and restores no ignored source inputs.
 It adds no task aliases, builds or deployment steps.
 
+Static test files run serially through `node --test --test-concurrency=1` in
+the existing Poe check. Clean-checkout run `37096763792` passed whole formatting,
+lint and typing, then concurrent Chromium starts timed out in three browser
+cases. Serial execution bounds competing browser processes; it removes no
+assertions and does not turn missing-export skips into current-export evidence.
+
 The existing check runs formatting, lint, full typing, all static Node contracts
 and Python unittest discovery. Tests that already require unavailable retained
 inputs or an explicitly supplied browser/export keep their existing behavior;

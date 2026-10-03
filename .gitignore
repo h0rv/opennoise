@@ -238,3 +238,8 @@ __marimo__/
 /data/release/phase3-public-receipt.json
 .worktrees/
 /artifacts/ui-qa/
+
+# Musical review assignment keys are owner-private recovery inputs.
+/docs/foundation/musical-review-packet-coordinator/
+/docs/foundation/musical-review-packet/*-coordinator/
+/docs/foundation/musical-review-packet/**/coordinator-private/

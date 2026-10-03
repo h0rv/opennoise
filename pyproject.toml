@@ -107,7 +107,7 @@ set -e
 .venv/bin/ruff check .
 .venv/bin/ty check
 mkdir -p .cache/test-tmp
-node --test tests/static/*.mjs
+node --test --test-concurrency=1 tests/static/*.mjs
 .venv/bin/python -m unittest discover -s tests -t . -q
 '
 """, use_exec = true, env = { TMPDIR = ".cache/test-tmp", UV_CACHE_DIR = ".cache/uv" } }
