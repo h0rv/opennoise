@@ -18,6 +18,7 @@ from scipy import sparse
 from opennoise.common import sha256_file
 from opennoise.ingest import fma_features
 from opennoise.ingest.fma_features import CHANNELS, SELECTED_COLUMNS, verify_feature_source
+from opennoise.ml import fma_split_audit
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -32,6 +33,7 @@ _TRAIN_BUCKET_END = 800
 _VALIDATION_BUCKET_END = 900
 _BUCKET_COUNT = 1000
 _BATCH_ROWS = 2048
+_MATRIX_DIMENSIONS = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,7 +88,9 @@ def native_components(
         )
         for artist in artists[1:]:
             union(artists[0], artist)
-    return {identity: root(identity) for identity in sorted(parents)}
+    components = {identity: root(identity) for identity in sorted(parents)}
+    fma_split_audit.audit_native_components(tracks, duplicate_groups, components)
+    return components
 
 
 def _json_rows(path: Path) -> Iterator[dict[str, Any]]:
@@ -200,6 +204,15 @@ def fit_positive_gaussian(
     features: np.ndarray, targets: sparse.csr_matrix, training: np.ndarray
 ) -> PositiveGaussian:
     """Fit normalization and label-conditioned densities entirely inside declared training rows."""
+    if (
+        training.dtype != np.bool_
+        or training.ndim != 1
+        or features.ndim != _MATRIX_DIMENSIONS
+        or targets.ndim != _MATRIX_DIMENSIONS
+        or training.shape != (features.shape[0],)
+        or targets.shape[0] != features.shape[0]
+    ):
+        raise ValueError("training requires a boolean row mask and aligned feature/target matrices")
     eligible = training & np.isfinite(features).all(axis=1)
     x = np.asarray(features[eligible], dtype=np.float64)
     if len(x) < MIN_LABEL_SUPPORT:
@@ -356,7 +369,7 @@ def training_baseline_rankings(support: np.ndarray) -> tuple[list[int], list[int
 
 
 def _freeze_implementation(output: Path, declaration_path: Path) -> None:
-    for module in (__file__, fma_features.__file__):
+    for module in (__file__, fma_features.__file__, fma_split_audit.__file__):
         if module is None:
             raise ValueError("model implementation source is unavailable")
         path = Path(module)
