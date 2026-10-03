@@ -24,6 +24,12 @@ refuse symlinked paths. Output hashes bind each declared input file's bytes and
 each stage's declaration plus those file hashes. Inputs must be files; a directory
 cannot stand in for a missing receipt. Hashing a receipt does not verify every
 underlying dataset member: use its source-specific offline replay for that check.
+A new independently named [portable CC0 build](OPEN_BUILD.md) replays retained
+native source responses into SQLite, an explicitly nonsemantic browsing layout
+and a small static explorer. It covers 150 selected exact artists and preserves
+missing evidence; it does not reconstruct or impersonate the missing canonical
+release or satisfy full Every Noise acceptance.
+
 The versioned inventory lives in
 `src/opennoise/pipeline/foundation.py` and is intentionally not a general task
 runner.

@@ -118,6 +118,12 @@ FOUNDATION: Final[dict[str, object]] = {
             "license": "Wikidata CC0 exact identity crosswalk and direct claims",
         },
         {
+            "id": "native-recording-facts",
+            "path": "data/examples/recording-facts/receipt.json",
+            "required": True,
+            "license": "MusicBrainz native recording credits CC0; exact-ID raw replay",
+        },
+        {
             "id": "outbound-link-example",
             "path": "data/examples/artist-links/receipt.json",
             "required": True,
@@ -149,6 +155,27 @@ FOUNDATION: Final[dict[str, object]] = {
             "purpose": (
                 "replay numeric descriptors and exact artist-credited work "
                 "examples from checked-in CC0 projections"
+            ),
+        },
+        {
+            "id": "portable-open-foundation",
+            "needs": [
+                "cultural-context-example",
+                "independent-cultural-context-example",
+                "native-recording-facts",
+                "outbound-link-example",
+                "acoustic-demo",
+                "acoustic-demo-receipt",
+            ],
+            "command": (
+                ".venv/bin/python scripts/build_open_foundation.py build "
+                "--output .cache/open-foundation-portable-v1 && "
+                ".venv/bin/python scripts/build_open_foundation.py validate "
+                "--output .cache/open-foundation-portable-v1"
+            ),
+            "purpose": (
+                "fresh, deterministic CC0 SQLite, nonsemantic browsing layout and static explorer; "
+                "150 selected artists, partial source coverage, never a sealed-release replacement"
             ),
         },
         {
