@@ -1,0 +1,13 @@
+{
+  "scope": "saved native-fold ledger identity-only audit; duplicate custody absent",
+  "rows": 109727,
+  "missing_artist_rows": 0,
+  "missing_artist_known_album_rows": 0,
+  "artist_album_isolation_passed": true,
+  "full_duplicate_audit_passed": null,
+  "seconds": 0.11067897799995308,
+  "process_peak_rss_bytes": 156200960,
+  "ledger_sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7",
+  "audit_implementation_sha256": "ae324a9ad54cf0875bcc56fdeef34cccc2c94f46c38fc423c8aee375f320722d",
+  "musical_quality_evaluated": false
+}

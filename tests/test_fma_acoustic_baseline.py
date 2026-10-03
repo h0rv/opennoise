@@ -95,6 +95,17 @@ class NativeFeatureTests(unittest.TestCase):
 
 
 class NativeSplitTests(unittest.TestCase):
+    def test_missing_artist_bridge_stops_historical_split(self) -> None:
+        rows = [
+            NativeTrack(1, 30, artist_known=True, album_id=10, genre_ids=(), targets_missing=False),
+            NativeTrack(
+                2, None, artist_known=False, album_id=10, genre_ids=(), targets_missing=False
+            ),
+            NativeTrack(3, 5, artist_known=True, album_id=11, genre_ids=(), targets_missing=False),
+        ]
+        with self.assertRaisesRegex(ValueError, "fresh split revision"):
+            native_components(rows, [[2, 3]])
+
     def test_unresolved_artist_bridges_native_albums(self) -> None:
         rows = [
             NativeTrack(1, 30, artist_known=True, album_id=10, genre_ids=(), targets_missing=False),
@@ -156,6 +167,30 @@ class PositiveOnlyModelTests(unittest.TestCase):
         self.assertEqual(reasons, ["missing_descriptors", "outside_training_support", None])
         self.assertTrue(np.isneginf(scores[:2]).all())
         self.assertTrue(np.isneginf(scores[:, -1]).all())
+
+    def test_integer_training_masks_cannot_select_held_out_rows(self) -> None:
+        x, y, training = self.fixture()
+        training = np.roll(training, 2)
+        self.assertFalse(training[0])
+        first = fit_positive_gaussian(x, y, training)
+        x[~training] = 1e12
+        second = fit_positive_gaussian(x, y, training)
+        np.testing.assert_array_equal(first.center, second.center)
+        for dtype in (np.int8, np.int64, np.uint8, np.float64, object):
+            with self.subTest(dtype=dtype), self.assertRaisesRegex(ValueError, "boolean row mask"):
+                fit_positive_gaussian(x, y, training.astype(dtype))
+
+    def test_misaligned_training_inputs_fail_before_fitting(self) -> None:
+        x, y, training = self.fixture()
+        for features, targets, mask in (
+            (x, y, training[:, None]),
+            (x, y, training[:-1]),
+            (x, y, np.ones((), dtype=bool)),
+            (x[:, 0], y, training),
+            (x, y[:-1], training),
+        ):
+            with self.subTest(shape=mask.shape), self.assertRaisesRegex(ValueError, "aligned"):
+                fit_positive_gaussian(features, targets, mask)
 
     def test_abstentions_and_rare_cold_targets_keep_denominators(self) -> None:
         metric = PositiveMetrics([1, 2, 3], np.array([200, 30, 0]))
