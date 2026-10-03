@@ -1,0 +1,64 @@
+{
+  "artist_facts": false,
+  "attribution": "Defferrard, Benzi, Vandergheynst and Bresson, FMA: A Dataset For Music Analysis, ISMIR 2017, https://github.com/mdeff/fma",
+  "audio_included": false,
+  "files": {
+    "evaluation.json": {
+      "bytes": 206246,
+      "sha256": "f3b074af5f4bd3ecf8fd6ca5da96a57666a41b14e683e174446c57b9a4b3a80f"
+    },
+    "feature-projection-receipt.json": {
+      "bytes": 3905,
+      "sha256": "949a78ce3b3bc968086d63fb26d5a209860fdd1d3d07ee0ba25516ddc9de7d25"
+    },
+    "feature-source-receipt.json": {
+      "bytes": 2177,
+      "sha256": "91ca7c46466212b38dae4a146ed5dca2e46f581b926d954a4add885a18eab3a0"
+    },
+    "held-out-native-targets.jsonl.zst": {
+      "bytes": 41454,
+      "sha256": "7f47544a3fd5f385bc9bb8f03ff10000f93410939132ac041e2d6e9a73d85273"
+    },
+    "metadata-projection-receipt.json": {
+      "bytes": 2126,
+      "sha256": "c3ed50d73f78e8ec45906683715d68b39fb60ced0b9fa498fe56ff12197e808b"
+    },
+    "metadata-source-receipt.json": {
+      "bytes": 4005,
+      "sha256": "56b895019cfad35a6e4a27c52e5d35ccd22d494262768f18516a501ec55cae1b"
+    },
+    "model.npz": {
+      "bytes": 112268,
+      "sha256": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38"
+    },
+    "native-folds.jsonl.zst": {
+      "bytes": 415584,
+      "sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7"
+    },
+    "official-README.md": {
+      "bytes": 16012,
+      "sha256": "54148723ff06c19374c368499f1e97afb3d10f58646d20a221e4d9c7ab63fac9"
+    },
+    "runtime.json": {
+      "bytes": 162,
+      "sha256": "d56a9330139dd82229c244ff80bf1a8dd37ee5c93a59fec0cfe38142b5ebea42"
+    },
+    "test-acoustic-ranks.jsonl.zst": {
+      "bytes": 1335356,
+      "sha256": "1d6da0daa666df6261e71fb14e32522803f5edd117b99ab99fb8dbd5f88af65e"
+    },
+    "validation-acoustic-ranks.jsonl.zst": {
+      "bytes": 1519564,
+      "sha256": "8592a9dc17ead81636038a3fda0745c0763f8cc7ebbb7c7c0c0ee3915aad5af5"
+    }
+  },
+  "implementation_commit": "02bf447",
+  "license": "CC-BY-4.0",
+  "metadata_tracks_sha256": "2a51ad101f8972182475a4e162efbc5604eee127b80089abd5ee10c64a56b687",
+  "native_feature_member_included": false,
+  "native_metadata_members_included": false,
+  "public_product_promotion_authorized": false,
+  "raw_source_replay_from_pack_alone": false,
+  "revision": "fma-acoustic-saved-replay-pack-v1",
+  "scores_calibrated": false
+}
