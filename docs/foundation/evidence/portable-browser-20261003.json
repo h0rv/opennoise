@@ -1,0 +1,48 @@
+{
+  "revision": "portable-foundation-browser-v1",
+  "passed": true,
+  "scope": {
+    "artist_count": 150,
+    "cohort_selection": "110 previously selected identity-only artists plus 42 independently curated exact identities; overlap retained once",
+    "full_foundation_complete": false,
+    "historical_inputs_used": false,
+    "legacy_release_equivalence": false,
+    "limits": "Direct source claims only. Sparse selected coverage; no semantic map, learned memberships, independent musical validation or complete Every Noise parity.",
+    "noncommercial_packs_used": false,
+    "spotify_private_inputs_used": false,
+    "status": "partial_selected_cohort"
+  },
+  "counts": {
+    "artists": 150,
+    "artists_without_genres": 72,
+    "artists_without_sonic": 140,
+    "genres": 151,
+    "recordings": 36
+  },
+  "build_files_sha256": {
+    "catalog.sqlite": "5a6e0b372c449b2c5d5bbc1d9c322ffea44f426d3fc8071469e3f89460c0e89e",
+    "data.json": "f4d85433a07e8bda710d33878252af86af1fccea099d612d213a7c4f9731b60e",
+    "index.html": "7dc367da3b714b2de60b8885cc6961ab3379fd3022cd5ce4439dea00adb5c8b1",
+    "layout.json": "23578d8c7a777e9f7ca55ee47e58c6c418b310418237bcfc7433e9c463915883",
+    "legacy-inputs.json": "44f3b213984275684afbe7e815bb16edf38eaf43c6d847ce5207c6e65f36d69d",
+    "listening-list.mjs": "cad07e5237e687d3b48d3e3281b63f7cc4816d108c4fb6043022089456410304",
+    "portable-foundation.css": "33c5977d9a24ef227a9a58a21815b36f7fe0c03c13ac6275bb51ff5bbff13cc0",
+    "portable-foundation.mjs": "f9aa08dd7ddcf4ceeec3f570aa313158f0371dba955acc9e192021849cabbbab"
+  },
+  "checks": {
+    "exact_id_keyboard_search": true,
+    "artist_selection": true,
+    "reload": true,
+    "history": true,
+    "complete_artist_list": true,
+    "complete_genre_cohorts": 151,
+    "missingness": true,
+    "native_benchmark_artist_routes": 10,
+    "listening_list": true,
+    "mobile_no_overflow": true,
+    "no_embedded_media": true,
+    "no_external_requests": true
+  },
+  "errors": [],
+  "request_count": 13
+}

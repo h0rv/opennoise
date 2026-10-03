@@ -71,3 +71,9 @@ criterion. The report returns per-gate `binding_or_review_gaps`, evidence validi
 and `all_gates_recorded_pass`; it never reports an overall completion percentage.
 The [inventory](README.md) answers which inputs are available for a stage. This
 contract answers which review evidence is still needed for the final goal.
+
+The [independent musical review protocol](MUSICAL_REVIEW.md) specifies the
+method-blind questions, sampling strata, independent listeners, disagreement,
+listening-access failures and confirmation boundaries needed before musical
+claims can pass. The October 3 portable browser receipt is bound in the dossier
+as partial actual-export evidence; it does not change any full-foundation verdict.

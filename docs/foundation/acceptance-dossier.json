@@ -89,15 +89,27 @@
       "source": "Wikidata independently source-selected genre taxonomy",
       "license": "CC0-1.0",
       "pack": "unrestricted-core"
+    },
+    {
+      "id": "portable-browser-oct3",
+      "path": "docs/foundation/evidence/portable-browser-20261003.json",
+      "sha256": "99debf02bd1715e77acbe1c13e2dece017f006207ef57e19378bdf5bf307ac6d",
+      "size_bytes": 2002,
+      "scope": "actual-export",
+      "role": "evaluation",
+      "source": "Actual Chromium tasks on separately constructed selected-cohort CC0 static export; source counts and output hashes retained",
+      "license": "MIT repository evaluation report; source packs retain their own licenses",
+      "pack": "review"
     }
   ],
   "reviews": [
     {
       "gate": "discovery-behavior",
       "decision": "missing",
-      "explanation": "October 1 local optional-source export tasks are checkpoint testimony; the intended current open export lacks bound full discovery acceptance.",
+      "explanation": "October 1 local optional-source export tasks are checkpoint testimony; the intended current open export lacks bound full discovery acceptance. October 3 actual-export browser receipt verifies the independently built 150-artist CC0 profile, all 151 direct-genre cohorts, exact benchmark recording routes, history/reload, keyboard/mobile, missingness and local listening list. This is partial selected-cohort evidence; full intended product behavior and accessibility remain unaccepted.",
       "evidence": [
-        "integrated-oct1"
+        "integrated-oct1",
+        "portable-browser-oct3"
       ],
       "criteria_covered": []
     },
@@ -200,9 +212,10 @@
     {
       "gate": "plain-accessible-interface",
       "decision": "missing",
-      "explanation": "Checkpoint testimony reports historical local-export browser tasks; no current open-export byte-bound browser receipts are supplied.",
+      "explanation": "Checkpoint testimony reports historical local-export browser tasks; no current open-export byte-bound browser receipts are supplied. October 3 actual-export browser receipt verifies the independently built 150-artist CC0 profile, all 151 direct-genre cohorts, exact benchmark recording routes, history/reload, keyboard/mobile, missingness and local listening list. This is partial selected-cohort evidence; full intended product behavior and accessibility remain unaccepted.",
       "evidence": [
-        "integrated-oct1"
+        "integrated-oct1",
+        "portable-browser-oct3"
       ],
       "criteria_covered": []
     }
