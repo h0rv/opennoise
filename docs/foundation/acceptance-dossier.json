@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "scope": "full-open-foundation-every-noise",
+  "artifacts": [
+    {
+      "id": "integrated-oct1",
+      "path": "docs/checkpoints/OPEN_FOUNDATION_IMPLEMENTATION_20261001.md",
+      "sha256": "ea1bda19b3050a7a88a7d4a3a92c955fbf97c8874f7a3d8200df5595d9230122",
+      "size_bytes": 6114,
+      "scope": "review-document",
+      "role": "review",
+      "source": "OpenNoise checkpoint testimony",
+      "license": "project documentation; underlying source licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "source-confirmation-oct1",
+      "path": "docs/checkpoints/OVERLAPPING_SOURCE_STYLE_CONFIRMATION_20261001.md",
+      "sha256": "1e275d4ceae395c83ab5b5138462ade91af37f8f029dc800505e1942d26e534d",
+      "size_bytes": 10961,
+      "scope": "review-document",
+      "role": "review",
+      "source": "OpenNoise checkpoint testimony",
+      "license": "project documentation; underlying source licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "acoustic-oct1",
+      "path": "docs/checkpoints/ACOUSTIC_REPRESENTATION_20261001.md",
+      "sha256": "a709274246588d409bd943d45059037bb4eda6af584caeeeb5b2ae28295e862d",
+      "size_bytes": 5959,
+      "scope": "review-document",
+      "role": "review",
+      "source": "OpenNoise checkpoint testimony",
+      "license": "project documentation; underlying source licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "credited-examples-oct1",
+      "path": "docs/checkpoints/REPRESENTATIVE_MUSIC_20261001.md",
+      "sha256": "014eaae50a8365502e079ce7014a732d736283e25a5a3b6806008ccb073bb221",
+      "size_bytes": 2294,
+      "scope": "review-document",
+      "role": "review",
+      "source": "OpenNoise checkpoint testimony",
+      "license": "project documentation; underlying source licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "outbound-links-oct1",
+      "path": "docs/checkpoints/ARTIST_OUTBOUND_LINKS_20261001.md",
+      "sha256": "39f7dfaa0fbb13d06a4d1a04d7f52f07841c6081127585d3d31cb6c0fd1548b5",
+      "size_bytes": 1797,
+      "scope": "review-document",
+      "role": "review",
+      "source": "OpenNoise checkpoint testimony",
+      "license": "project documentation; underlying source licenses remain distinct",
+      "pack": "review"
+    },
+    {
+      "id": "cultural-review-oct1",
+      "path": "docs/checkpoints/OPEN_CULTURAL_SOURCE_REVIEW_20261001.md",
+      "sha256": "fd0ef6ad6f4cf0aa576d8265f1d31ae2cd9674b9227aa87613c73a28e74b03bc",
+      "size_bytes": 7109,
+      "scope": "review-document",
+      "role": "review",
+      "source": "OpenNoise checkpoint testimony",
+      "license": "project documentation; underlying source licenses remain distinct",
+      "pack": "review"
+    }
+  ],
+  "reviews": [
+    {
+      "gate": "discovery-behavior",
+      "decision": "missing",
+      "explanation": "October 1 local optional-source export tasks are checkpoint testimony; the intended current open export lacks bound full discovery acceptance.",
+      "evidence": [
+        "integrated-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "full-corpus-rebuild",
+      "decision": "blocked",
+      "explanation": "Legacy canonical and full-model inputs are unavailable in the checkout. A new correctly named full-input reconstruction contract and independently replayed build are required; a portable CC0 build is insufficient.",
+      "evidence": [
+        "integrated-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "legal-input-boundaries",
+      "decision": "missing",
+      "explanation": "Portable CC0 projections and optional NC source obligations are documented; no byte-bound full-input license and training-boundary review is supplied.",
+      "evidence": [
+        "integrated-oct1",
+        "cultural-review-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "genre-and-artist-coverage",
+      "decision": "missing",
+      "explanation": "Candidate names, selected artists and association neighborhoods do not establish reviewed full-corpus genre or artist coverage.",
+      "evidence": [
+        "integrated-oct1",
+        "source-confirmation-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "independent-musical-relevance",
+      "decision": "missing",
+      "explanation": "No independent blinded membership and neighbor relevance judgments are supplied.",
+      "evidence": [
+        "integrated-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "held-out-source-reconstruction",
+      "decision": "missing",
+      "explanation": "October 1 frozen source confirmation is documented, but this dossier binds checkpoint testimony only, without selected-model folds, outputs and independent replay receipts.",
+      "evidence": [
+        "source-confirmation-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "calibrated-overlapping-memberships",
+      "decision": "missing",
+      "explanation": "Optional overlapping source suggestions are documented; independent calibration, abstention and stability acceptance is absent.",
+      "evidence": [
+        "source-confirmation-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "acoustic-coverage-and-retrieval",
+      "decision": "missing",
+      "explanation": "55 recordings across ten selected artists remain a bounded electronic-focused metadata pilot; diverse coverage and independent retrieval/blend evaluation are absent.",
+      "evidence": [
+        "acoustic-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "genre-and-artist-maps",
+      "decision": "missing",
+      "explanation": "Readable local layouts and historical display-neighbor comparison do not establish independent semantic map quality and stability.",
+      "evidence": [
+        "integrated-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "defining-recordings",
+      "decision": "missing",
+      "explanation": "Exact-credit metadata examples have limited discography coverage and no independent defining-selection acceptance.",
+      "evidence": [
+        "credited-examples-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "listening-and-playlists",
+      "decision": "missing",
+      "explanation": "Outbound artist destinations do not establish recording/provider availability or reviewed central, recent and emerging playlists.",
+      "evidence": [
+        "outbound-links-oct1"
+      ],
+      "criteria_covered": []
+    },
+    {
+      "gate": "plain-accessible-interface",
+      "decision": "missing",
+      "explanation": "Checkpoint testimony reports historical local-export browser tasks; no current open-export byte-bound browser receipts are supplied.",
+      "evidence": [
+        "integrated-oct1"
+      ],
+      "criteria_covered": []
+    }
+  ]
+}

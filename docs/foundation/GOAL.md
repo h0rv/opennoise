@@ -46,6 +46,11 @@ There is no defensible single percentage for these criteria. A passing checkout,
 a large candidate vocabulary, or a high source-reconstruction score cannot
 substitute for the remaining musical judgments.
 
+The [twelve-gate acceptance contract](ACCEPTANCE.md) provides concrete review
+criteria and a machine-readable, byte-bound evidence dossier. Verified evidence
+custody and recorded review decisions remain distinct from automated semantic
+validation.
+
 ## Source packs
 
 The permissively reusable core can include MusicBrainz core identities and

@@ -1,5 +1,10 @@
 # Reproducible foundation
 
+The [end-to-end acceptance contract](ACCEPTANCE.md) and its byte-bound dossier
+separately report the twelve full-foundation gates. Input availability in this
+inventory establishes stage readiness; it does not establish musical validity
+or Every Noise parity.
+
 The checkout contains source code and some small checked-in model artifacts.
 It does not contain every source snapshot, research cache, sealed release input,
 or a complete Every Noise replacement. Run the direct inventory command to see
