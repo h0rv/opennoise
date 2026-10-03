@@ -18,6 +18,7 @@ import zstandard
 from opennoise.ml import wikidata_selected_rule_diagnostic as diagnostic
 from opennoise.ml import wikidata_source_recovery_calibration as calibration
 from opennoise.ml import wikidata_training_experiment as training
+from tests.fresh_process import FreshProcessTestCase
 from tests.test_wikidata_selected_rule_diagnostic import seal
 from tests.test_wikidata_training_experiment import raw_row
 
@@ -119,7 +120,7 @@ def model() -> training.Counts:
     )
 
 
-class SourceRecoveryCalibrationTests(unittest.TestCase):
+class SourceRecoveryCalibrationTests(FreshProcessTestCase):
     def test_seals_precede_later_decoding_roles_disjoint_and_all_queries_retained(self) -> None:
         with TemporaryDirectory(dir="/dev/shm") as directory:
             root = Path(directory)
@@ -367,6 +368,16 @@ class SourceRecoveryCalibrationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "sealed member"):
                 run_prepared(source, pin, selection, selection_pin, root / "output")
             assert not (root / "output").exists()
+
+    def test_preparation_keeps_real_rss_budget_enforced(self) -> None:
+        with TemporaryDirectory(dir="/dev/shm") as directory:
+            root = Path(directory)
+            source, pin, selection, selection_pin = fixture(root)
+            with (
+                patch.object(training, "_peak_rss", return_value=training.MAX_RSS_BYTES + 1),
+                self.assertRaisesRegex(ValueError, "exceeded RSS bound"),
+            ):
+                calibration.prepare(source, pin, selection, selection_pin, root / "prepared")
 
 
 if __name__ == "__main__":
