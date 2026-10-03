@@ -1,0 +1,20 @@
+{
+  "revision": "fma-independent-audit-split-acceptance-v2",
+  "declared_at": "2026-10-02",
+  "model_metric_results_read": false,
+  "initial_declaration_sha256": "860819a34e1306b0dcb4318d0326bc8b9661c868a67325e632a74a7f0ae44ac0",
+  "source_receipt_sha256": "56b895019cfad35a6e4a27c52e5d35ccd22d494262768f18516a501ec55cae1b",
+  "track_projection_v2_sha256": "2a51ad101f8972182475a4e162efbc5604eee127b80089abd5ee10c64a56b687",
+  "reason": "Independent pre-result source replay found 776 native albums crossing planned artist-only folds, covering 14704 raw tracks.",
+  "accepted_prespecified_revision": "Group whole connected native primary-artist and known-album components, plus exact full native-feature-cell duplicate groups, before hashing canonical minimum native artist IDs into a fresh fixed 80/10/10 v2 split.",
+  "must_report": [
+    "Realized fold sizes and largest source components without reshuffling for balance.",
+    "Exact feature duplicate group counts and cross-role isolation checks.",
+    "Raw metadata versus feature intersection and excluded unresolved/missing-artist positives.",
+    "Unknown album metadata, performer aliases and nonexact recording duplicates remain unresolved.",
+    "The grouping proves isolation of declared native source IDs and exact feature rows, not all actual performers or recordings."
+  ],
+  "nonexact_name_merging_authorized": false,
+  "post_test_tuning_authorized": false,
+  "default_or_public_promotion_authorized": false
+}
