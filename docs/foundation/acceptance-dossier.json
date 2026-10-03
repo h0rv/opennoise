@@ -463,6 +463,28 @@
       "source": "Codex AI agent /root/full_input_legal_boundary_review independent native source/license engineering review",
       "license": "project review documentation; quoted source grants and underlying CC0/CC BY/per-track audio licenses remain distinct",
       "pack": "review"
+    },
+    {
+      "id": "held-out-source-engineering-review",
+      "path": "docs/foundation/evidence/held-out-source-reconstruction-review-20261003.json",
+      "sha256": "5d6a4a5140366506d340834ad38ff6e65db96ea7aced3ba96ca86637139c7c17",
+      "size_bytes": 13646,
+      "scope": "review-document",
+      "role": "review",
+      "source": "Codex independent source-reconstruction AI engineering review; exact-identity source-selected Wikidata cohort, not musical validity",
+      "license": "MIT project review documentation; underlying CC0 structured source facts remain separately bound",
+      "pack": "review"
+    },
+    {
+      "id": "held-out-source-readable-review",
+      "path": "docs/foundation/evidence/held-out-source-reconstruction-review-20261003.md",
+      "sha256": "79e54c19a418a7c771794a1285daec3607921d4751912b4ac2aa2b67937a4584",
+      "size_bytes": 4820,
+      "scope": "review-document",
+      "role": "review",
+      "source": "Codex independent source-reconstruction AI engineering review, inspected by root against both unchanged criteria",
+      "license": "MIT project review documentation",
+      "pack": "review"
     }
   ],
   "reviews": [
@@ -561,8 +583,8 @@
     },
     {
       "gate": "held-out-source-reconstruction",
-      "decision": "missing",
-      "explanation": "Independent final native Wikidata audit now reproduces typed graph, native observations, 5976 training/2025 calibration/1991 confirmation exact-artist folds, train statistics and all arm ranks/counts/source-event Brier outcomes for frozen v2. Combined masked-source Recall@10 is 22.05%; conditional 678-event Brier is 0.18218 versus 0.20045 constant baseline. A post-inspection unconditional source-prior diagnostic reaches 58.61% Recall@10 on all 1991 source-positive confirmation queries, retains cold/rare/unseen failures and is not fresh confirmation or a selected replacement. FMA membership replay verifies every saved-rank threshold/set/metric but explicitly does not reconstruct native sources; prior native FMA model audit remains distinct. These are bounded source-conditional experiments; a criterion-complete foundation-wide review is not asserted by this update.",
+      "decision": "recorded_pass",
+      "explanation": "Root inspected the named independent AI engineering review against both unchanged source-reconstruction criteria. The original predeclared four-arm protocol and native replay authenticate 5976 training/2025 calibration/1991 confirmation UUID folds, deterministic masks, training-only statistics/vocabulary, calibration events and confirmation rankings. A fresh metadata-only census finds 9992 distinct native QIDs for 9992 rows, zero repeated or crossfold QIDs; native singleton P434 identity policy remains enforced. Independent training-innerfold replay matches 185256 rankings; post-inspection selected-rule replay separately seals a 5976-only fit before old outer decoding and matches all 4016 queries/8032 rankings/1905598 candidate scores and every cold/rare/unseen/outside-vocabulary stratum. Conditional and unconditional priors remain explicit. Both criteria are supported for this declared source-selected exact-identity cohort. The selected rule's 71.62% versus prior58.61% old-confirmation Recall@10 is descriptive post-inspection evidence, not fresh confirmation, musical confidence, representative unlabelled coverage or full-foundation acceptance. Actual missing-target rows are zero; source absence is never a negative genre judgment. Other original gates and criteria remain unchanged.",
       "evidence": [
         "source-confirmation-oct1",
         "fma-independent-audit-oct3",
@@ -572,9 +594,16 @@
         "wikidata-completion-v2-report",
         "wikidata-completion-v2-independent-audit",
         "wikidata-unconditional-prior",
-        "fma-memberships-saved-rank-replay"
+        "fma-memberships-saved-rank-replay",
+        "held-out-source-engineering-review",
+        "held-out-source-readable-review"
       ],
-      "criteria_covered": []
+      "criteria_covered": [
+        "frozen disjoint folds with no target leakage and independent replay",
+        "baselines, cold artists, unseen labels and source-conditional denominators"
+      ],
+      "reviewer": "Codex AI agent /root/review_builder_cleanup, independent source-reconstruction engineering review; inspected by root (no human musical judgment)",
+      "reviewed_at": "2026-10-03"
     },
     {
       "gate": "calibrated-overlapping-memberships",

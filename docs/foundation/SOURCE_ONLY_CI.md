@@ -1,13 +1,14 @@
 # Source-only clean-checkout checks
 
-Clean-checkout [run 37097419855](https://github.com/h0rv/opennoise/actions/runs/37097419855)
-passed on exact public commit `2038417301d1775956271c16351eb92fa6844b1c`:
+Clean-checkout [run 37102709523](https://github.com/h0rv/opennoise/actions/runs/37102709523)
+passed on exact public commit `e863150cf2adb4509be1509874996c2fdcb37f7b`:
 whole formatting, lint and typing; 43 passing Node tests with nine optional
-export/input skips; 1,696 Python tests with 36 skips and no failures.
-The [receipt](evidence/source-only-ci-2038417-20261003.json) binds this source
+export/input skips; 1,708 Python tests with 36 skips and no failures.
+The [receipt](evidence/source-only-ci-e863150-20261003.json) binds this source
 commit, tree, job and actual tool versions. It includes saved-model reconstruction
 from the public text recipe. These results do not certify the current full-input
-v8 website: its separate browser evidence remains blocked by local memory limits.
+v8 website: its separate browser evidence remains unpassed and is now deferred by the
+user's pipeline/modeling priority.
 
 `.github/workflows/check.yml` runs the existing required `poe check` on a fresh
 Ubuntu checkout for pushes, pull requests and manual dispatch. It installs Node
@@ -38,6 +39,6 @@ bytes where its tests require them.
 This workflow is a place to obtain an actual clean-checkout check result outside
 the nearly full development sandbox. Adding it is not a passing CI result;
 publication permissions and the actual GitHub run must be checked separately.
-The current acceptance dossier remains one recorded engineering rebuild pass and
-eleven unmet gates, with automatic semantic pass false. This workflow does not
+The freshly checked acceptance dossier has three recorded engineering passes and
+nine unmet original gates, with automatic semantic pass false. This workflow does not
 change the dossier, sealed exports or dated acceptance evidence.

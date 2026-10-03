@@ -1,0 +1,7 @@
+argv=PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src .venv/bin/python -B scripts/check_foundation_acceptance.py --json
+started_at=2026-10-03T08:54:51Z
+finished_at=2026-10-03T08:54:52Z
+exit_code=1
+sampled_proc_VmHWM_bytes=34549760
+process_cap_bytes=40000000
+guard_terminated=false

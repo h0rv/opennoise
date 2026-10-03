@@ -1,0 +1,16 @@
+{
+  "scope": "full-open-foundation-every-noise",
+  "executed_at": "2026-10-03T08:54:51Z",
+  "source_head": "a586a27e63a07e1ef636df70e6d882005463034f",
+  "dossier_sha256": "c9f5e7297b8928e178842483026aba0ccc395cb8e70ef4f60d010ba97eba3ba8",
+  "checker_sha256": "0e1664a32e07391afa0b4ff28104285cc2d771c6cb155859ba0f35f87cf25682",
+  "implementation_sha256": "1d8778758cc163ece4a5bb32658e0494b7d3caca07fa067b720d4d7773e84ba9",
+  "result_sha256": "116bcda41ee6f796e9d2b0a82b0085368936f8242ec905a4e8e8085a167c3110",
+  "exit_code": 1,
+  "evidence_valid": true,
+  "bindings": 44,
+  "recorded_passes": 3,
+  "unmet_gates": 9,
+  "automatic_semantic_pass": false,
+  "working_tree_note": "Dossier and reviewed evidence added after source HEAD; this binds bytes, not an uncommitted revision claim."
+}

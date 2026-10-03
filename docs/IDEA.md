@@ -3,6 +3,11 @@
 Build OpenNoise, an open music map from public metadata and privacy safe aggregates.
 
 The end goal includes a reusable open modeling foundation, not only a website.
+The current [pipeline and modeling milestone](foundation/PIPELINE_MODEL_MILESTONE_20261003.md)
+prioritizes reproducible licensed datasets, exact identities, reusable representations,
+overlapping memberships, calibration and leak-safe evaluation. Additional site
+features and polish are deferred; keep the inspection interface extremely minimal.
+This priority change does not declare the larger reproduction complete.
 Use the historical Every Noise scrape as a North Star for discovery behavior
 and independent evaluation while constructing representations and overlapping
 communities from separately licensed open evidence. The

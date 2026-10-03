@@ -1,0 +1,282 @@
+{
+  "revision": "held-out-source-reconstruction-independent-criterion-review-v1",
+  "reviewed_at": "2026-10-03",
+  "reviewer": {
+    "name": "Codex independent source-reconstruction engineering reviewer",
+    "kind": "AI engineering review",
+    "human_listener_judgments": 0
+  },
+  "acceptance_scope": "full-open-foundation-every-noise",
+  "gate": "held-out-source-reconstruction",
+  "review_scope": "Source reconstruction on the declared source-selected exact-identity Wikidata cohort only; other foundation criteria unchanged.",
+  "recommendation": "Both unchanged criteria are supported for the declared source-selected exact-identity Wikidata cohort. Recommend a named source-reconstruction-only recorded engineering review, subject to root inspection before any dossier decision; no automatic semantic or musical pass.",
+  "finalized": true,
+  "source_entity_identity_check": {
+    "static_contract": "Native roster requires one QID per UUID and one UUID per QID; source exact_identity and original raw model replay require P434 identifiers equal the singleton expected UUID.",
+    "native_nonunique_P434_exclusions": 8,
+    "empirical_duplicate_QID_census": {
+      "verified": true,
+      "exact_uuid_rows": 9992,
+      "unique_wikidata_qids": 9992,
+      "duplicate_qid_count": 0,
+      "crossfold_qid_count": 0,
+      "route_counts": {
+        "train": 5976,
+        "calibration": 2025,
+        "confirmation": 1991
+      },
+      "genre_label_json_decodes": 0,
+      "exit_code": 0,
+      "final_actual_proc_vmhwm_bytes": 22437888
+    },
+    "source_entity_disjointness_assumed": false,
+    "distinct_people_or_aliases_claimed": false,
+    "literal_source_entity_disjointness_verified": true
+  },
+  "automatic_semantic_pass": false,
+  "dossier_modified": false,
+  "criteria_modified": false,
+  "criteria": [
+    {
+      "criterion": "frozen disjoint folds with no target leakage and independent replay",
+      "supported": true,
+      "basis": "Original predeclared four-arm protocol independently reproduces UUID-disjoint train/calibration/confirmation assignment, masks, train-only counts/vocabulary, calibration events and confirmation ranks. New independent innerfold and selected-rule replays strengthen fit isolation and exact reconstruction. The selected-rule fit is independently sealed before outer decoding; target labels are excluded from query seeds and held-out artists from fit.",
+      "selection_inspection_limit": "New 31-arm training selection and two-arm old-outer diagnostic were designed after earlier outer inspection. Their old outer results are descriptive, not fresh confirmation; fit isolation does not erase adaptive selection risk.",
+      "missing_evidence_for_this_literal_criterion": [],
+      "evidence": [
+        "original-policy",
+        "original-native-final-audit",
+        "original-native-final-auditor",
+        "training-selection-receipt",
+        "independent-innerfold-replay",
+        "independent-selected-replay",
+        "independent-selected-fit-seal",
+        "independent-selected-execution",
+        "independent-source-entity-census",
+        "independent-source-entity-auditor",
+        "independent-source-entity-execution"
+      ]
+    },
+    {
+      "criterion": "baselines, cold artists, unseen labels and source-conditional denominators",
+      "supported": true,
+      "basis": "Conditional original baseline plus separately disclosed unconditional train prior; all original outer UUIDs retained in independently reconstructed two-arm full candidate queries and cold/rare/unseen/outside-vocabulary metrics. No absent source label is assigned a negative target.",
+      "cold_definition": "No observed seed or no supported seed after masking an observed source target.",
+      "actual_denominators": {
+        "train": 5976,
+        "calibration": {
+          "all_rows": 2025,
+          "positive_targets": 2025,
+          "missing_targets_unknown": 0,
+          "cold": 1329,
+          "no_observed_seed": 1304,
+          "unsupported_seeds": 25,
+          "unseen_targets": 35,
+          "rare_targets_1_to_10": 125,
+          "outside_vocabulary": 104
+        },
+        "confirmation": {
+          "all_rows": 1991,
+          "positive_targets": 1991,
+          "missing_targets_unknown": 0,
+          "cold": 1279,
+          "no_observed_seed": 1248,
+          "unsupported_seeds": 31,
+          "unseen_targets": 25,
+          "rare_targets_1_to_10": 157,
+          "outside_vocabulary": 111
+        }
+      },
+      "population_limit": "Source-positive selected roster; no empirical unlabelled representative population coverage or global genre-completeness claim.",
+      "missing_evidence_for_this_literal_criterion": [],
+      "evidence": [
+        "original-report",
+        "unconditional-prior-report",
+        "independent-selected-replay"
+      ]
+    }
+  ],
+  "interpretation_limits": {
+    "fresh_confirmation_for_selected_rule": false,
+    "calibrated_musical_probability": false,
+    "global_representative_coverage": false,
+    "full_foundation_acceptance": false,
+    "listener_or_neighbor_relevance": false,
+    "requirement_interpretation": "The two unchanged criteria do not state a performance threshold, fresh confirmation, full-corpus denominator or musical judgment requirement. Source-only support cannot satisfy other gates which explicitly require those properties.",
+    "native_transport": "Separately checked by native source-pack verification; the original independent model audit reconstructs native source projections/typed P279 and model events.",
+    "failed_audit": "First independent selected-rule attempt failed before outer decoding due to omitted empty pair dictionaries in the auditor. Failed source/log/proof are preserved; only corrected v2 pass is relied upon. Its final actual VmHWM is 27222016 bytes; largest sampled value is 27308032 bytes, below 30000000."
+  },
+  "bindings": [
+    {
+      "id": "criteria-source",
+      "path": "src/opennoise/pipeline/acceptance.py",
+      "sha256": "1d8778758cc163ece4a5bb32658e0494b7d3caca07fa067b720d4d7773e84ba9",
+      "bytes": 11015
+    },
+    {
+      "id": "dossier-inspected",
+      "path": "docs/foundation/acceptance-dossier.json",
+      "sha256": "cb36d5ee7a1658c7bbe6431b008bdb2811cfc51b9d451f1ac1a955e4f7c129eb",
+      "bytes": 38515
+    },
+    {
+      "id": "original-report",
+      "path": "docs/foundation/evidence/wikidata-source-completion-v2-report-20261003.json",
+      "sha256": "bdd56463d9a1365b523b1a99c408a2745fb76470d8b2b66a7917536a8aed3b76",
+      "bytes": 26145
+    },
+    {
+      "id": "original-native-final-audit",
+      "path": "docs/foundation/evidence/wikidata-source-completion-v2-independent-audit-20261003.json",
+      "sha256": "b78daf98a1d1913a8ff89e414b5600dfe793e416c7079a81ffebd18028594d62",
+      "bytes": 1403
+    },
+    {
+      "id": "original-native-final-auditor",
+      "path": "scripts/audit_wikidata_artist_completion.py",
+      "sha256": "713053570b9d7402865c6a62f9cb88b4097d794f9ddca25869f882ed389bf0ae",
+      "bytes": 14037
+    },
+    {
+      "id": "original-model-receipt",
+      "path": "/dev/shm/opennoise-wikidata-artist-completion-v2/receipt.json",
+      "sha256": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a"
+    },
+    {
+      "id": "original-policy",
+      "path": "/dev/shm/opennoise-wikidata-artist-completion-v2/frozen-policy.json",
+      "sha256": "2452fe9bab96278ebbcf2efc0e819d52e4845ca662db5fed51e9665c93daf1a8",
+      "bytes": 713
+    },
+    {
+      "id": "original-model-code",
+      "path": "/dev/shm/opennoise-wikidata-artist-completion-v2/implementation.py",
+      "sha256": "b535aa22a55007a89f3cc2bb7b6e18288cb59eff9c3ae36e08b92982cd093786",
+      "bytes": 28707
+    },
+    {
+      "id": "original-fold-target-ledger",
+      "path": "/dev/shm/opennoise-wikidata-artist-completion-v2/artist-fold-targets.jsonl.zst",
+      "sha256": "5f1754dd1717b886c06360946745a00e385f8aa19673ca13ff171cb0d133befd",
+      "bytes": 393988
+    },
+    {
+      "id": "unconditional-prior-report",
+      "path": "docs/foundation/evidence/wikidata-unconditional-source-prior-20261003.json",
+      "sha256": "c133eb95e01cf641440c2fa10bbb7b8dce5f6adf5c67a0835237f27655a70086",
+      "bytes": 4437
+    },
+    {
+      "id": "training-selection-receipt",
+      "path": "/dev/shm/opennoise-wikidata-training-experiment-20261003-v1/receipt.json",
+      "sha256": "399812f1e129272472d65312c873a150249fd5da99d606d903ef4d65a094c273",
+      "bytes": 631
+    },
+    {
+      "id": "training-selection-code",
+      "path": "/dev/shm/opennoise-wikidata-training-experiment-20261003-v1/implementation.py",
+      "sha256": "d1653f75eb1ca055b589da467cd440b427487811cdf75bb4a010abac95e3d830",
+      "bytes": 18971
+    },
+    {
+      "id": "independent-innerfold-replay",
+      "path": "/dev/shm/opennoise-wikidata-training-innerfold-independent-audit-20261003-v1.json",
+      "sha256": "1c88be2f12e154f543f246e59b74c46da6f9d73021dcaf513428b36e463ff602",
+      "bytes": 695797
+    },
+    {
+      "id": "independent-innerfold-auditor",
+      "path": "/dev/shm/opennoise-wikidata-training-innerfold-independent-audit-20261003-v1.py",
+      "sha256": "3305ece79937dab45e3610edbdbc2ef833a7d62fb73ab7ef51b82df45a9a947d",
+      "bytes": 13287
+    },
+    {
+      "id": "independent-innerfold-execution",
+      "path": "/dev/shm/opennoise-wikidata-training-innerfold-independent-audit-20261003-v1-execution.json",
+      "sha256": "c9cf8e6e6bc8c5aadb44f5763a2d096a6632839cd28b2c6fa12a868e1a985aea",
+      "bytes": 1256
+    },
+    {
+      "id": "post-inspection-diagnostic-receipt",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-post-inspection-20261003-v1/receipt.json",
+      "sha256": "b7be10a7454d0d0be8e0fdc8e0f2877be61c2776bf4a8de18f2bac69797c11b8",
+      "bytes": 1215
+    },
+    {
+      "id": "post-inspection-diagnostic-report",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-post-inspection-20261003-v1/report.json",
+      "sha256": "2fb47d59c19b6c6634b5f37973af84e9eab6561308237ad15119bbe92733c09b",
+      "bytes": 61231
+    },
+    {
+      "id": "post-inspection-diagnostic-code",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-post-inspection-20261003-v1/implementation.py",
+      "sha256": "e6928749dc24e9e846bdb17a015ac31fa341dae78004b732418148bea32eb797",
+      "bytes": 21272
+    },
+    {
+      "id": "post-inspection-diagnostic-policy",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-post-inspection-20261003-v1/frozen-policy.json",
+      "sha256": "18b85e2400d1c42fca4cd6db0111621744d34bcbffc8591e0d203e91bbb15542",
+      "bytes": 3579
+    },
+    {
+      "id": "post-inspection-fitted-model",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-post-inspection-20261003-v1/fitted-training-model.json",
+      "sha256": "86a2b43acec2d2fdcabb07cd2f4dab7f88debab4446cf5e7f1e8a12d45652e28",
+      "bytes": 156560
+    },
+    {
+      "id": "independent-selected-replay",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-independent-audit-20261003-v2.json",
+      "sha256": "e40400ee299f53d940fd753b940b6ac0875fbd175c40ce79a00cbcc39e3281f2",
+      "bytes": 61932
+    },
+    {
+      "id": "independent-selected-auditor",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-independent-audit-20261003-v2.py",
+      "sha256": "9699087d723489246672f0dd04d1b24eaf8c27a8898ae2184897cf88db1a1b7b",
+      "bytes": 16569
+    },
+    {
+      "id": "independent-selected-fit-seal",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-independent-fit-seal-20261003-v2.json",
+      "sha256": "1c85ad5ac18076b04cc60ab3e3f6f7680d2d4720bb60509a95417151e0fb42a2",
+      "bytes": 471
+    },
+    {
+      "id": "independent-selected-execution",
+      "path": "/dev/shm/opennoise-wikidata-selected-rule-independent-audit-20261003-v2-execution.json",
+      "sha256": "12c8c6bb613b22a64e15864b49678e102ff211e11559ffac90ad3f3a7fa3927e",
+      "bytes": 943
+    },
+    {
+      "id": "independent-source-entity-census",
+      "path": "/dev/shm/opennoise-wikidata-source-entity-fold-audit-20261003-v1.json",
+      "sha256": "8d87bec290b4051ee307d61c508672f774580cb72f75c3ba1e40d4fd6aef360e",
+      "bytes": 1014
+    },
+    {
+      "id": "independent-source-entity-auditor",
+      "path": "/dev/shm/opennoise-wikidata-source-entity-fold-audit-20261003-v1.py",
+      "sha256": "3be76af7ff348a1f814a8b4141515cf80a0f36d6ef64164c578877fa2fe408bb",
+      "bytes": 5376
+    },
+    {
+      "id": "independent-source-entity-execution",
+      "path": "/dev/shm/opennoise-wikidata-source-entity-fold-audit-20261003-v1-execution.json",
+      "sha256": "9ac46e407bbd4a7e47c3e7fe3cf3e2f0b85634afdfa2a16dab993013516f415e",
+      "bytes": 781
+    }
+  ],
+  "native_source_receipts_bound_by_original_audit": {
+    "artist": "7b2d96e868562614531a7620d89f72a4cdbb9398eb8fc3d70c0f4f149099e558",
+    "genre": "afdcc330cd2ed670d7e36e39bb54ca0ca6c4873a389bb4a10c4680c96b6877e9"
+  },
+  "original_producing_cli": {
+    "path": "/dev/shm/opennoise-selected-rule-producing-source-20261003-v1/cli.py",
+    "sha256": "a316cf61597bb6dd638d4dc9578450aa3e4230b1dc00b7fd102cd84ad378658e",
+    "current_annotation_repaired_module_used_as_producing_evidence": false
+  },
+  "scope_of_this_review_execution": "Static code/JSON reads and streamed file hashing, followed by one explicitly serialized metadata-only source-entity census. Census independently rederived all UUID routes and read literal QID metadata, with zero genre-label JSON decodes, zero HTTP, exit0, and actual /proc peak22437888bytes. Earlier passing model replays were independently executed under separate serialized grants. No source/model/dossier/criteria edits."
+}
