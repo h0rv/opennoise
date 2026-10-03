@@ -1,0 +1,69 @@
+{
+  "revision": "selected150-native-recording-observations-v1",
+  "artifact_path": "/dev/shm/opennoise-selected150-recording-observations-20261003-v1",
+  "artifact_receipt_sha256": "0a21e9de4bea8b96d07fcbc12734242daf13acb5636c506bd6bd57129efb13d2",
+  "source_receipt_sha256": "682e0e963a63c574f9f8729b4c74f8b42aa5bfcd35e41b1a21eeb1bd11b68f9d",
+  "source_inventory_format": "SHA256 of LC_ALL=C sorted absolute file-path GNU sha256sum lines; rg --files --hidden --no-ignore; filenames bound by native closed contract",
+  "source_inventory_before_after_sha256": "2491d3cffa930c6718e8e938d1ec469bd0c0aaa46dfca44d32b1e2a111936243",
+  "logical_bytes": 6847914,
+  "allocated_bytes": 6889472,
+  "closed_regular_files": 21,
+  "construction_source_snapshots": 14,
+  "implementation": {
+    "src/opennoise/serving/metadata/normalized_recording_dataset.py": "b2241a6dd0c8ec2ec7dd7e5a771a3bb4b3e5f2248ff05ccad8d290580f96e2d9",
+    "scripts/export_normalized_recording_dataset.py": "54084ab00953c26ef2aefb47c8e463b2597db723150eec784582d5998b029048",
+    "tests/test_normalized_recording_dataset.py": "ae88072dcf6cf32658493a1f234b28f2bfda5820bab6411d2413371a2d200baa"
+  },
+  "coverage": {
+    "selected_artists": 150,
+    "observed_window_complete": 147,
+    "inconsistent_native_count_drift": 3,
+    "zero_count_artists_probed": 9,
+    "baseline_per_artist_count_sum": 161349,
+    "observed_recording_artist_rows": 161339,
+    "global_unique_recordings": null,
+    "atomic_snapshot": false,
+    "representative_judgments": 0,
+    "musical_relevance": "not_assessed",
+    "external_derivative_storage_confirmed_by_this_report": false
+  },
+  "tables": {
+    "observations.jsonl.gz": {
+      "rows": 161339,
+      "bytes": 6471931,
+      "sha256": "1273564d28de795db6fa9b956f6022fbee31d2f57bc85f15aeedc0c8856bfa98",
+      "decoded_bytes": 45724129,
+      "decoded_sha256": "c3e08a5ea764680adfeb20b3fa951e080d2c04e19a146cceb4a2debda6babfa4"
+    },
+    "captures.jsonl.gz": {
+      "rows": 1864,
+      "bytes": 125361,
+      "sha256": "1e21086e6c6408a2463a7a31067431599af817a532b0c5151c5a3dd44e030f8f",
+      "decoded_bytes": 951082,
+      "decoded_sha256": "74ae0feeb3eb644d7e9755193ee58af1a9faf0455016f3f358531808cb61b2cf"
+    }
+  },
+  "producer": {
+    "started_at": "2026-10-03T09:51:02Z",
+    "finished_at": "2026-10-03T09:51:21Z",
+    "returncode": 0,
+    "actual_proc_vmhwm_bytes": 38666240,
+    "resource_proof_sha256": "9781cc613eeb3635b6c2e28c10a09eda4811f5494b7703565466c5964ddf4822",
+    "stdout_sha256": "38f52281894dcaccce72495becc719cde37d23eb67b574f5b82f2c5dcf0c6834"
+  },
+  "native_streaming_replay": {
+    "started_at": "2026-10-03T09:52:20Z",
+    "finished_at": "2026-10-03T09:52:35Z",
+    "returncode": 0,
+    "verified": true,
+    "actual_proc_vmhwm_bytes": 38940672,
+    "resource_proof_sha256": "a2a6db626f536621c69be72f10adab9a857e526403cd265909e293ffefb8cb84",
+    "stdout_sha256": "e6c0b170e4982658385797e1fc3dfe4b45683a5349f9bbf52f5d3d666f844a7e"
+  },
+  "limits": {
+    "actual_process_bytes": 40000000,
+    "logical_and_allocated_dataset_bytes": 10000000,
+    "reserved_proof_bytes": 200000
+  },
+  "not_claimed": ["Every Noise parity", "listening or representative musical judgment", "global recording deduplication", "audio permissions", "full-input acceptance"]
+}

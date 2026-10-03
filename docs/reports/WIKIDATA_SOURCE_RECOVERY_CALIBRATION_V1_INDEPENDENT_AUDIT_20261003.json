@@ -1,0 +1,229 @@
+{
+  "actual_proc_vmhwm_bytes_before_final_serialization": 27148288,
+  "all_arm_rankings_compared": 4730,
+  "all_candidate_scores_compared": 839700,
+  "all_later_queries_compared": 2365,
+  "all_query_fields_support_masks_roles_bins_unknown_denominators_metrics_equal": true,
+  "auditor_sha256": "c38d81a14a7212a9708189c62fc82ffc28449da21625c5752c903247602f4e69",
+  "brier_comparison_scope": "Original conditional315 and prior365 denominators differ and are nonpaired. Supplemental results below use only exact UUID intersection with available frozen event rates in both arms; no policy/model alteration.",
+  "calibration_artists": 1189,
+  "closed_pack_receipt_sha256": {
+    "model": "0d12f70648d242d44b989b7eb0c6cd092d47814b3fd0b3929f9bf2d7c9f34a49",
+    "preparation": "7a75bda3fe4f80776250e9ac651ac65a418feaf49cf154f4aaebdf12a1bf0c2b",
+    "selection": "399812f1e129272472d65312c873a150249fd5da99d606d903ef4d65a094c273",
+    "source": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a"
+  },
+  "date_utc": "2026-10-03T10:06:24.018476+00:00",
+  "development_artists": 1176,
+  "development_metrics": {
+    "conditional_a1_mean_w1": {
+      "counts": {
+        "abstention:None": 101,
+        "abstention:insufficient_calibration_artists": 50,
+        "abstention:no_observed_seed": 708,
+        "abstention:source_recovery_lower_bound_below_frozen_threshold": 214,
+        "abstention:unsupported_observed_seed": 103,
+        "all_queries": 1176,
+        "emitted:hits1": 71,
+        "emitted:hits10": 118,
+        "emitted:hits5": 102,
+        "emitted_queries": 101,
+        "event_rate_queries": 315,
+        "missing_source_queries_unknown": 0,
+        "observed_positive_targets": 1574,
+        "positive_queries": 1176,
+        "raw:hits1": 334,
+        "raw:hits10": 1049,
+        "raw:hits5": 885,
+        "reliability_bin3:event_hits": 60,
+        "reliability_bin3:queries": 87,
+        "reliability_bin4:event_hits": 91,
+        "reliability_bin4:queries": 127,
+        "reliability_bin5:event_hits": 93,
+        "reliability_bin5:queries": 101,
+        "target_coverage:outside_fitted_vocabulary_unknown": 104,
+        "target_coverage:supported_source_identity": 1415,
+        "target_coverage:unseen_source_identity_unknown": 55
+      },
+      "event_reliability": {
+        "0": {
+          "mean_estimated_event_rate": null,
+          "observed_event_rate": null,
+          "queries": 0
+        },
+        "1": {
+          "mean_estimated_event_rate": null,
+          "observed_event_rate": null,
+          "queries": 0
+        },
+        "2": {
+          "mean_estimated_event_rate": null,
+          "observed_event_rate": null,
+          "queries": 0
+        },
+        "3": {
+          "mean_estimated_event_rate": 0.8089887640449421,
+          "observed_event_rate": 0.6896551724137931,
+          "queries": 87
+        },
+        "4": {
+          "mean_estimated_event_rate": 0.7894736842105247,
+          "observed_event_rate": 0.7165354330708661,
+          "queries": 127
+        },
+        "5": {
+          "mean_estimated_event_rate": 0.9191919191919179,
+          "observed_event_rate": 0.9207920792079208,
+          "queries": 101
+        }
+      },
+      "query_emission_coverage": 0.0858843537414966,
+      "ranking": {
+        "emitted": {
+          "macro_recall": {
+            "1": 0.05002834467120182,
+            "10": 0.07142857142857142,
+            "5": 0.06476757369614512
+          },
+          "mean_ndcg10": 0.06445684901386932,
+          "mean_observed_positive_recovery_yield10": 0.010034013605442163,
+          "micro_recall": {
+            "1": 0.04510800508259212,
+            "10": 0.07496823379923762,
+            "5": 0.06480304955527319
+          }
+        },
+        "raw": {
+          "macro_recall": {
+            "1": 0.2375850340136055,
+            "10": 0.7358843537414966,
+            "5": 0.6325821995464853
+          },
+          "mean_ndcg10": 0.49809807974034864,
+          "mean_observed_positive_recovery_yield10": 0.08920068027210773,
+          "micro_recall": {
+            "1": 0.2121982210927573,
+            "10": 0.6664548919949174,
+            "5": 0.5622617534942821
+          }
+        }
+      },
+      "source_recovery_event_brier": 0.170467057326818
+    },
+    "unconditional_prior": {
+      "counts": {
+        "abstention:no_observed_seed": 708,
+        "abstention:source_recovery_lower_bound_below_frozen_threshold": 365,
+        "abstention:unsupported_observed_seed": 103,
+        "all_queries": 1176,
+        "emitted:hits1": 0,
+        "emitted:hits10": 0,
+        "emitted:hits5": 0,
+        "emitted_queries": 0,
+        "event_rate_queries": 365,
+        "missing_source_queries_unknown": 0,
+        "observed_positive_targets": 1574,
+        "positive_queries": 1176,
+        "raw:hits1": 199,
+        "raw:hits10": 820,
+        "raw:hits5": 659,
+        "reliability_bin3:event_hits": 158,
+        "reliability_bin3:queries": 365,
+        "target_coverage:outside_fitted_vocabulary_unknown": 104,
+        "target_coverage:supported_source_identity": 1415,
+        "target_coverage:unseen_source_identity_unknown": 55
+      },
+      "event_reliability": {
+        "0": {
+          "mean_estimated_event_rate": null,
+          "observed_event_rate": null,
+          "queries": 0
+        },
+        "1": {
+          "mean_estimated_event_rate": null,
+          "observed_event_rate": null,
+          "queries": 0
+        },
+        "2": {
+          "mean_estimated_event_rate": null,
+          "observed_event_rate": null,
+          "queries": 0
+        },
+        "3": {
+          "mean_estimated_event_rate": 0.4647887323943676,
+          "observed_event_rate": 0.4328767123287671,
+          "queries": 365
+        },
+        "4": {
+          "mean_estimated_event_rate": null,
+          "observed_event_rate": null,
+          "queries": 0
+        },
+        "5": {
+          "mean_estimated_event_rate": null,
+          "observed_event_rate": null,
+          "queries": 0
+        }
+      },
+      "query_emission_coverage": 0.0,
+      "ranking": {
+        "emitted": {
+          "macro_recall": {
+            "1": 0.0,
+            "10": 0.0,
+            "5": 0.0
+          },
+          "mean_ndcg10": 0.0,
+          "mean_observed_positive_recovery_yield10": 0.0,
+          "micro_recall": {
+            "1": 0.0,
+            "10": 0.0,
+            "5": 0.0
+          }
+        },
+        "raw": {
+          "macro_recall": {
+            "1": 0.16213151927437644,
+            "10": 0.6293083900226758,
+            "5": 0.5233418367346938
+          },
+          "mean_ndcg10": 0.39115452412271456,
+          "mean_observed_positive_recovery_yield10": 0.06972789115646226,
+          "micro_recall": {
+            "1": 0.12642947903430748,
+            "10": 0.5209656925031766,
+            "5": 0.41867852604828465
+          }
+        }
+      },
+      "source_recovery_event_brier": 0.2465128412768727
+    }
+  },
+  "fit_artists": 3611,
+  "http_requests": 0,
+  "imports_reviewed_model_logic": false,
+  "independent_calibration_seal_sha256": "93050cf728811c9b114944c4f4dfd3b0b477305ffcb44e51b9aa694cb7822b69",
+  "independent_fit_seal_sha256": "4e198bc15b84bc362048d881bcbf91cca5048652d6833cc559e139b3abe64377",
+  "limitations": [
+    "Training-history-selected score rule; no fresh confirmation.",
+    "Source-positive-selected cohort, unavailable memberships unknown.",
+    "Top10 observed-positive source recovery event, not individual genre membership or musical confidence.",
+    "Approximate adjusted Wilson bounds, not distribution-free guarantees."
+  ],
+  "native_router_sha256": "3305ece79937dab45e3610edbdbc2ef833a7d62fb73ab7ef51b82df45a9a947d",
+  "original_outer_label_json_decodes": 0,
+  "producer_kernel_cmdline_sha256": "d0d457c366f15d14cb1b39bea6a471f3d7dba68ff56fd2d9130e4c3b68103336",
+  "producer_report_sha256": "3c05cb798f9d25441aade17ef995271ef678f8e27ea0ccce8646d2b7c2f0f6d8",
+  "producer_runproof_sha256": "e1e1abd6315af12d269c84eac68e1e5ddc99b782b9a406a36b6441543e312a86",
+  "review_kind": "independent AI engineering native source-recovery replay",
+  "supplemental_matched_uuid_event_brier": {
+    "arm_brier": {
+      "conditional_a1_mean_w1": 0.170467057326818,
+      "unconditional_prior": 0.24911597912986547
+    },
+    "conditional_minus_prior": -0.07864892180304749,
+    "queries": 315
+  },
+  "verified": true,
+  "vocabulary": 178
+}

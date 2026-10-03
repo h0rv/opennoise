@@ -1,0 +1,72 @@
+{
+  "revision": "wikidata-source-recovery-public-evidence-binding-v1",
+  "event": "top10_recovery_of_masked_observed_source_positive",
+  "individual_membership_probability": null,
+  "musical_probability": null,
+  "promotion": false,
+  "fresh_confirmation": false,
+  "scope": "Post-selection development assessment on a source-positive-selected original-training cohort; unknown memberships remain unknown.",
+  "public_evidence": {
+    "report": {
+      "path": "docs/reports/WIKIDATA_SOURCE_RECOVERY_CALIBRATION_20261003.json",
+      "sha256": "3c05cb798f9d25441aade17ef995271ef678f8e27ea0ccce8646d2b7c2f0f6d8",
+      "exact_original_bytes": true
+    },
+    "receipt": {
+      "path": "docs/reports/WIKIDATA_SOURCE_RECOVERY_CALIBRATION_V1_RECEIPT_20261003.json",
+      "sha256": "0d12f70648d242d44b989b7eb0c6cd092d47814b3fd0b3929f9bf2d7c9f34a49",
+      "exact_original_bytes": true
+    },
+    "independent_audit": {
+      "path": "docs/reports/WIKIDATA_SOURCE_RECOVERY_CALIBRATION_V1_INDEPENDENT_AUDIT_20261003.json",
+      "sha256": "65aedc3c9624c9e3257269d40ac5e54e7a754f96a63f20c09d8b01761943e071",
+      "exact_original_bytes": true
+    }
+  },
+  "closed_pack_receipts": {
+    "model": "0d12f70648d242d44b989b7eb0c6cd092d47814b3fd0b3929f9bf2d7c9f34a49",
+    "preparation": "7a75bda3fe4f80776250e9ac651ac65a418feaf49cf154f4aaebdf12a1bf0c2b",
+    "selection": "399812f1e129272472d65312c873a150249fd5da99d606d903ef4d65a094c273",
+    "source": "5571f22953cfdc0c4003d855139bb4bbf1aadd97cbf2d3428495062eacaa0b6a"
+  },
+  "producing_code": {
+    "module": "50acd7dc3e5326ebeac8618a2aef0ecc51b215f6f322a793a8895fdd49c155aa",
+    "cli": "15aa611cf778462bb5398e785129060d5dfc143fbedc21c71c86ef267be6f2ce",
+    "tests": "586ad7f078e21167c50a1734d0d7ed8fccd4af56a98e8ce5c51cbfa8f5200c0d",
+    "policy": "0e2404e4462adfd22bac3591a9aa3134c41b213a8d5dd43f4a11729b77f0204f"
+  },
+  "independent_replay": {
+    "verified": true,
+    "query_rows": 2365,
+    "arm_rankings": 4730,
+    "candidate_scores": 839700,
+    "fit_artists": 3611,
+    "calibration_artists": 1189,
+    "development_artists": 1176,
+    "vocabulary": 178,
+    "no_model_logic_imports": true,
+    "original_outer_label_json_decodes": 0,
+    "auditor_sha256": "c38d81a14a7212a9708189c62fc82ffc28449da21625c5752c903247602f4e69",
+    "native_router_sha256": "3305ece79937dab45e3610edbdbc2ef833a7d62fb73ab7ef51b82df45a9a947d"
+  },
+  "execution": {
+    "runproof_sha256": "e1e1abd6315af12d269c84eac68e1e5ddc99b782b9a406a36b6441543e312a86",
+    "kernel_cmdline_sha256": "d0d457c366f15d14cb1b39bea6a471f3d7dba68ff56fd2d9130e4c3b68103336"
+  },
+  "descriptive_matched_uuid_event_brier": {
+    "arm_brier": {
+      "conditional_a1_mean_w1": 0.170467057326818,
+      "unconditional_prior": 0.24911597912986547
+    },
+    "conditional_minus_prior": -0.07864892180304749,
+    "queries": 315
+  },
+  "brier_scope": "Original conditional315 and prior365 denominators differ and are nonpaired. Supplemental results below use only exact UUID intersection with available frozen event rates in both arms; no policy/model alteration.",
+  "limitations": [
+    "Training-history-selected score rule; no fresh confirmation.",
+    "Source-positive-selected cohort, unavailable memberships unknown.",
+    "Top10 observed-positive source recovery event, not individual genre membership or musical confidence.",
+    "Approximate adjusted Wilson bounds, not distribution-free guarantees."
+  ],
+  "artifact_access": "Public receipt authenticates retained full artifact bytes; the full raw query/model pack is preserved in outside Library storage, not copied into this small source publication."
+}

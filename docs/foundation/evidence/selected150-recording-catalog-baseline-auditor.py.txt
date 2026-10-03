@@ -1,0 +1,147 @@
+"""Read-only independent engineering replay of a sealed native recording catalog."""
+from pathlib import Path
+from collections import Counter
+from datetime import datetime,timezone
+from uuid import UUID
+import ast,hashlib,json,math,resource,time,sys
+from opennoise.serving.metadata import recording_facts as core
+
+ROOT=Path(sys.argv[2])
+PACK=Path(sys.argv[1])
+REPORT=Path(sys.argv[3])
+ROSTER_SHA='373593fec761fdc5e9ebc512fe1858e8655af0b48bb1129a8fa9377111e54d79'
+RECEIPT_SHA='8ffe72196a8c9c1c1ac67b2522702405e9ef5697a0d07233e98c24b09f921864'
+ALLOWED_OUTCOMES={'complete_http_200','network_error','http_status','native_byte_budget','response_or_native_byte_budget'}
+if REPORT.exists():raise FileExistsError(REPORT)
+start=time.monotonic()
+def canonical(value):return json.dumps(value,ensure_ascii=False,allow_nan=False,separators=(',',':'),sort_keys=True).encode()
+def digest(path):
+ h=hashlib.sha256();n=0
+ with path.open('rb') as f:
+  while b:=f.read(65536):h.update(b);n+=len(b)
+ return {'sha256':h.hexdigest(),'bytes':n}
+def read(path):return json.loads(path.read_bytes())
+def exact_uuid(value):
+ assert isinstance(value,str) and str(UUID(value))==value
+ return value
+receipt=read(PACK/'receipt.json');assert digest(PACK/'receipt.json')['sha256']==RECEIPT_SHA
+assert receipt['revision']=='selected-150-native-recording-catalog-v1'
+actual=set()
+for path in PACK.rglob('*'):
+ assert not path.is_symlink()
+ if path.is_file():actual.add(path.relative_to(PACK).as_posix())
+assert actual==set(receipt['files'])|{'receipt.json'}
+for relative,binding in receipt['files'].items():
+ assert not Path(relative).is_absolute() and '..' not in Path(relative).parts
+ assert digest(PACK/relative)==binding,(relative,'custody mismatch')
+selection=read(PACK/'selection.json');freeze=read(PACK/'freeze.json')
+assert digest(PACK/'selection.json')['sha256']==freeze['selection_sha256']
+assert freeze['revision']==selection['revision']==receipt['revision']
+assert selection['limits']=={'requests':450,'response_bytes':200000,'native_bytes':3000000,'pack_bytes':8000000,'spacing_seconds':1.1,'shard_pairs':4,'max_process_rss_bytes':40000000}
+assert digest(ROOT/'src/opennoise/pipeline/portable_foundation.py')['sha256']==freeze['roster_verifier_sha256']
+artists={};source_files=set();source_pins={}
+for name in ['cultural-context','independent-cultural-context']:
+ directory=ROOT/'data/examples'/name
+ manifest=read(directory/'manifest.json');source_receipt=read(directory/'receipt.json')
+ assert manifest['license']==source_receipt['license']=='CC0'
+ for relative,sha in source_receipt['sha256'].items():
+  assert '..' not in Path(relative).parts and not Path(relative).is_absolute()
+  assert digest(directory/relative)['sha256']==sha
+ for row in manifest['cohort']:
+  artists.setdefault(exact_uuid(row['artist_mbid']),row['name'])
+ for path in directory.rglob('*'):
+  assert not path.is_symlink()
+  if path.is_file():source_files.add(path.relative_to(ROOT).as_posix())
+ for filename in ['manifest.json','receipt.json']:
+  source_pins[(directory/filename).relative_to(ROOT).as_posix()]=digest(directory/filename)['sha256']
+roster=[{'artist_mbid':key,'name':value} for key,value in sorted(artists.items())]
+assert len(roster)==150 and hashlib.sha256(canonical(roster)).hexdigest()==ROSTER_SHA
+assert roster==selection['artists'] and selection['roster_sha256']==ROSTER_SHA
+assert source_pins==selection['source_pins'] and source_files==set(freeze['source_files'])
+for relative,binding in freeze['source_files'].items():assert digest(ROOT/relative)==binding
+ledger=read(PACK/'captures.json');assert len(ledger)==424<=450
+assert [row['stage'] for row in ledger]==['browse']*150+['lookup']*274
+native_bytes=0;gaps=[];status_counts=Counter();outcomes=Counter();raw_projection=[];pairs=[];browse_rejected=0
+for index,row in enumerate(ledger):
+ assert row['sequence']==index and read(PACK/f'ledger/{index:03d}.json')==row
+ assert row['stage'] in {'browse','lookup'}
+ assert row['outcome'] in ALLOWED_OUTCOMES
+ assert type(row['bytes']) is int and 0<=row['bytes']<=200000
+ assert math.isfinite(row['started_elapsed_seconds']) and row['started_elapsed_seconds']>=0
+ assert datetime.fromisoformat(row['fetched_at']).utcoffset().total_seconds()==0
+ if index:
+  gap=row['started_elapsed_seconds']-ledger[index-1]['started_elapsed_seconds'];assert gap>=1.1;gaps.append(gap)
+ native_bytes+=row['bytes'];status_counts[row['status_code']]+=1;outcomes[row['outcome']]+=1
+ assert row['path']==f'custody/{index:03d}.body'
+ assert digest(PACK/row['path'])=={'bytes':row['bytes'],'sha256':row['sha256']}
+ assert row['outcome']=='complete_http_200' and row['status_code']==200 and row['complete_body'] is True
+ artist=exact_uuid(row['artist_mbid'])
+ if index<150:
+  assert artist==roster[index]['artist_mbid']
+  assert row['url']==f'https://musicbrainz.org/ws/2/recording?artist={artist}&limit=2&offset=0&inc=artist-credits&fmt=json'
+  payload=read(PACK/row['path']);assert set(payload)=={'recording-count','recording-offset','recordings'}
+  count=payload['recording-count'];returned=payload['recordings']
+  assert type(count) is int and count>=0 and type(payload['recording-offset']) is int and payload['recording-offset']==0
+  assert isinstance(returned,list) and len(returned)<=2 and len(returned)<=count
+  admitted=[];rejected=[];seen=set()
+  for j,native in enumerate(returned):
+   identity=native.get('id') if isinstance(native,dict) else None
+   try:
+    exact_uuid(identity);assert identity not in seen
+    core.project_recording_fact(canonical(native),identity,artist)
+   except (ValueError,TypeError,KeyError,AssertionError):rejected.append({'row_index':j,'reason':'not_strict_core_exact_credit'})
+   else:admitted.append(identity);seen.add(identity)
+  pairs.extend([[artist,recording] for recording in admitted]);browse_rejected+=len(rejected)
+  raw_projection.append({'artist_mbid':artist,'advertised_recording_count':count,'returned_count':len(returned),'recording_mbids':admitted,'rejected_rows':rejected,'unfetched_recording_count':count-len(returned),'complete_catalog_fetched':count==len(returned) and not rejected,'representativeness':'not_assessed_native_first_page'})
+ else:
+  recording=exact_uuid(row['recording_mbid']);assert [artist,recording]==pairs[index-150]
+  assert row['url']==core.recording_source_url(recording)
+  core.project_recording_fact((PACK/row['path']).read_bytes(),recording,artist)
+assert native_bytes==294636<=3000000
+candidate=read(PACK/'candidates.json')
+assert candidate['artists']==raw_projection and candidate['pairs']==pairs and len(pairs)==274
+assert len({tuple(pair) for pair in pairs})==len(pairs)
+shards=[pairs[i:i+4] for i in range(0,len(pairs),4)];assert candidate['shards']==shards
+observed=0;lookup_index=150
+assert {p.name for p in (PACK/'shards').iterdir()}=={f'{i:03d}' for i in range(len(shards))}
+for index,expected in enumerate(shards):
+ directory=PACK/'shards'/f'{index:03d}'
+ artifact=core.verify_recording_fact_pack(directory)
+ strict_selection=read(directory/'selection.json');strict_receipt=read(directory/'receipt.json')
+ assert [[artist['artist_mbid'],recording] for artist in strict_selection['artists'] for recording in artist['recording_mbids']]==expected
+ assert strict_selection['source_projection_sha256']==digest(PACK/'candidates.json')['sha256']
+ for capture in strict_receipt['captures']:
+  native=ledger[lookup_index];lookup_index+=1
+  assert capture['outcome']=='accepted_core'
+  assert capture['artist_mbid']==native['artist_mbid'] and capture['recording_mbid']==native['recording_mbid']
+  assert capture['url']==native['url'] and capture['status_code']==native['status_code']==200 and capture['fetched_at']==native['fetched_at']
+  assert capture['sha256']==native['sha256'] and capture['bytes']==native['bytes']
+  assert (directory/capture['path']).read_bytes()==(PACK/native['path']).read_bytes()
+ observed+=sum(len(artist['recordings']) for artist in artifact['artists'])
+assert observed==274 and lookup_index==424
+snapshot=read(PACK/'implementation-snapshot.json');code_pins={}
+assert sum(binding['bytes'] for binding in snapshot['files'].values())==40331
+for relative,binding in snapshot['files'].items():
+ assert digest(PACK/binding['path'])=={'sha256':binding['sha256'],'bytes':binding['bytes']}
+ assert digest(ROOT/relative)=={'sha256':binding['sha256'],'bytes':binding['bytes']}
+ code_pins[relative]=binding
+assert snapshot['frozen_candidate_sha256']==digest(PACK/'candidates.json')['sha256']
+assert snapshot['roster_policy_sha256']==digest(PACK/'selection.json')['sha256']
+# Static counterexamples stay in memory; no artifact or code is modified.
+unknown={**ledger[-1],'stage':'unrecognized-engineering-stage','sequence':424,'started_elapsed_seconds':ledger[-1]['started_elapsed_seconds']+1.1}
+unknown_ledger=ledger+[unknown]
+unknown_filters_unchanged=([r for r in unknown_ledger if r['stage']=='browse']==ledger[:150] and [r for r in unknown_ledger if r['stage']=='lookup']==ledger[150:])
+assert unknown_filters_unchanged and len(unknown_ledger)<=450 and sum(r['bytes'] for r in unknown_ledger)<=3000000
+interleaved=ledger[:1]+ledger[150:151]+ledger[1:150]+ledger[151:]
+assert [r for r in interleaved if r['stage']=='browse']==ledger[:150] and [r for r in interleaved if r['stage']=='lookup']==ledger[150:]
+assert [r['stage'] for r in interleaved]!=['browse']*150+['lookup']*274
+source=ROOT/'src/opennoise/serving/metadata/selected_recording_catalog.py';tree=ast.parse(source.read_text())
+verifier=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='verify_catalog')
+filters=[n for n in ast.walk(verifier) if isinstance(n,ast.ListComp) and "['stage']" in ast.unparse(n).replace('"',"'")]
+assert len(filters)==2
+pack_bytes=sum((PACK/name).stat().st_size for name in actual);assert pack_bytes<=8000000
+status={line.split(':')[0]:line.split(':')[1].strip() for line in Path('/proc/self/status').read_text().splitlines() if ':' in line}
+assert int(status['VmHWM'].split()[0])<=30*1024
+report={'revision':'selected150-native-catalog-independent-engineering-review-v1','reviewer':{'name':'Codex independent catalog engineering auditor','kind':'AI engineering review','human_music_review':False},'reviewed_at_utc':datetime.now(timezone.utc).isoformat(),'actual_sealed_artifact_valid':True,'artifact':{'path':str(PACK),'receipt_sha256':RECEIPT_SHA,'closed_member_count_including_receipt':len(actual),'pack_bytes':pack_bytes,'all_receipt_members_sha256_and_bytes_verified':True,'receipt_bindings':receipt['files']},'independent_raw_derivation':{'selected_artists':150,'roster_sha256':ROSTER_SHA,'known_native_counts':150,'advertised_per_artist_count_sum':sum(r['advertised_recording_count'] for r in raw_projection),'advertised_count_sum_is_not_unique_recordings':True,'returned_browse_rows':sum(r['returned_count'] for r in raw_projection),'rejected_browse_rows':browse_rejected,'unfetched_per_artist_count_sum':sum(r['unfetched_recording_count'] for r in raw_projection),'candidate_recording_artist_pairs':len(pairs),'unique_recording_ids_among_pairs':len({p[1] for p in pairs}),'actual_individual_native_lookup_responses':274,'unchanged_core_projection_accepted_pairs':observed,'strict_license_receipt_shards':len(shards),'all_browse_offset_zero_and_at_most_two':True,'actual_ledger_exact_stage_sequence':'150 browse then274 lookup','unknown_or_extra_stages':0,'lookup_plan_matches_native_page_exact_uuid_credits':True,'actual_requests':424,'native_body_bytes':native_bytes,'statuses':dict(status_counts),'outcomes':dict(outcomes),'minimum_recorded_monotonic_start_spacing_seconds':min(gaps),'all_original_capture_outcomes_and_bodies_retained':True,'skipped_or_failed_capture_count':sum(v for k,v in outcomes.items() if k!='complete_http_200'),'no_new_network_requests':True},'source_and_code_pins':{'selection':digest(PACK/'selection.json'),'freeze':digest(PACK/'freeze.json'),'captures':digest(PACK/'captures.json'),'candidates':digest(PACK/'candidates.json'),'implementation_snapshot':digest(PACK/'implementation-snapshot.json'),'sealed_implementation_files':code_pins,'current_test_source':digest(ROOT/'tests/test_selected_recording_catalog.py'),'strict_roster_verifier_sha256':freeze['roster_verifier_sha256'],'original_cohort_source_bindings':freeze['source_files'],'auditor_source':digest(Path(__file__))},'guard_issues':[{'id':'unknown-ledger-stage-not-rejected','classification':'replay protocol guard gap; actual artifact unaffected','source':str(source),'lines':[277,310,317],'evidence':'The global ledger loop validates outcomes/spacing/body custody but never restricts stage. The browse/lookup lists silently omit every other stage. An in-memory extra425th correctly spaced outcome preserves both filtered plans and stays below request/native-byte caps. No mutated sealed pack was created or executed.','required_future_change':'Reject any ledger stage outside browse/lookup before filtering; require exact total requests=150+number of frozen candidate pairs; require stage-specific keys and endpoint checks for every row.'},{'id':'browse-lookup-interleaving-not-rejected','classification':'replay construction-order guard gap; actual artifact unaffected','source':str(source),'lines':[310,317],'evidence':'Filtered browse and lookup subsequences are checked independently. In-memory moving the first lookup between browse rows leaves both validated subsequences unchanged; no verifier predicate enforces all150 browses precede lookup stage. Other sequence/path/time/custody bindings would need consistent re-freezing in an adversarial fixture; this is a static guard demonstration, not a claim the existing pack is malformed.','required_future_change':'Require exact global stage sequence: all150 selected browse outcomes first, then the274 frozen exact-pair lookups in candidate order; test unknown stages, extra stages and interleavings in a future fresh named pack.'}],'snapshot_timing_limit':snapshot['snapshot_timing'],'publication_assessment':{'actual_data_validity':'All actual sealed source outcomes, counts, native page bounds, exact UUID credits, individual lookup receipts and closed SHA/byte bindings independently match.','guard_quality':'Two replay protocol guard gaps remain; do not describe the current verifier as rejecting arbitrary ledger stage additions or interleavings. Preserve this immutable artifact; any fixes require a future fresh named reviewed pack.','musical_scope':'Arbitrary native first-page recordings; no representative/defining recording judgments, no media/playback evidence, no musical parity assessment.','representative_recordings_reviewed':0},'resource':{'wall_seconds':time.monotonic()-start,'process_peak_rss_since_exec':status['VmHWM'],'resource_self_maximum_rss_kib':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,'no_tests_or_model_jobs':True,'stdlib_plus_unchanged_recording_facts_only':True},'preservation':{'sealed_pack_modified':False,'project_source_modified':False,'model_or_snapshot_modified':False}}
+with REPORT.open('x',encoding='utf-8') as f:json.dump(report,f,indent=2,sort_keys=True);f.write('\n')
+print(json.dumps({'report':str(REPORT),'report_binding':digest(REPORT),'actual_sealed_artifact_valid':True,'raw_derivation':report['independent_raw_derivation'],'guard_issue_count':len(report['guard_issues']),'resource':report['resource']},sort_keys=True))
