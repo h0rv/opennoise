@@ -1,0 +1,69 @@
+{
+  "revision": "wikidata-global-musical-artists-evidence-summary-v1",
+  "status": "partial_source_sample",
+  "completeness_claim": "none",
+  "pack_path": ".cache/wikidata-global-musical-artists-20261002-v1",
+  "pack_bytes": 9489556,
+  "pack_files": 25,
+  "license": "CC0",
+  "source": "https://query.wikidata.org/sparql",
+  "source_query": "SELECT ?artist ?mbid ?genre WHERE { ?genre wdt:P31 wd:Q188451 . ?artist wdt:P434 ?mbid; wdt:P136 ?genre . } LIMIT 20001",
+  "source_query_sha256": "c644486296455558e093779749457a44ab4519071776b7a5732beae40d5326f5",
+  "source_scan": {
+    "http_status": 200,
+    "response_bytes": 6808977,
+    "response_sha256": "465f0d1c80a63a94f93a081eed63723b861e4c731b66bc07100629596ec156bd",
+    "bindings_seen": 20001,
+    "rows_projected_from_first_20000": 19997,
+    "malformed_uuid_rows_quarantined": 3,
+    "source_artist_uuids": 19144,
+    "selection_possibly_truncated": true
+  },
+  "identity_source": {
+    "revision": "musicbrainz-core-artist-identities-v1",
+    "license": "CC0-1.0",
+    "snapshot": "20260930-002222",
+    "artist_count": 2999670,
+    "output_bytes": 95458405,
+    "output_sha256": "fd8d5d9cc36f1b90a200bf79c6316b5d2410045b31d2559a0d19c3f2ac2b8bbd",
+    "full_archive_sha256_verified": false
+  },
+  "selection": {
+    "method": "SHA256 rank of exact source UUIDs present once in the verified core identity projection, before label hydration",
+    "core_eligible_artist_uuids": 18952,
+    "source_uuids_missing_from_core": 192,
+    "selected_artist_uuids": 3000,
+    "selection_sha256": "6262df981d21ea5a52ac7a0d4ae935ad4d2f36dcb0ff96f898f8b45ab5c516b4"
+  },
+  "capture": {
+    "request_count": 21,
+    "response_bytes_total": 7199783,
+    "limits": {
+      "initial_response_bytes": 10000000,
+      "followup_requests": 20,
+      "followup_response_bytes_each": 2000000,
+      "total_response_bytes": 20000000
+    },
+    "large_detail_http_503_count": 6,
+    "genre_label_http_200_count": 1,
+    "retry_bodies_with_unknown_http_status": 13,
+    "retry_capture_timestamp": null
+  },
+  "identity_status_counts": {
+    "resolved_exact_p434_core_name": 539,
+    "artist_detail_unavailable": 2194,
+    "core_name_mismatch": 96,
+    "english_label_missing_or_ambiguous": 15,
+    "p434_qid_reused_for_multiple_mbids": 155,
+    "duplicate_p434_qids": 1
+  },
+  "selected_terminal_status_denominator": 3000,
+  "direct_p136_claim_count": 563,
+  "claim_scope": "direct Wikidata source assertion; not a human-reviewed genre judgment",
+  "core_archive_scope": "complete identity projection hash and row count verified; published source archive hash was not verified",
+  "source_query_sha256": "c644486296455558e093779749457a44ab4519071776b7a5732beae40d5326f5",
+  "manifest_sha256": "d7a7e57aa5b2bf8ff8a989373c50ca3de342d8ba31e7ae3d46eb74f792b89e95",
+  "projection_sha256": "37084c45b6207848c23f0003502c524199bfcc8aa66807d572135882cf2094fe",
+  "receipt_sha256": "6d7642320e49dbe2c7f1576538b3bdcfeaa07e59bea9ba92f0d7983a1248da3e",
+  "replay_command": "python scripts/acquire_wikidata_global_artist_genres.py --verify"
+}
