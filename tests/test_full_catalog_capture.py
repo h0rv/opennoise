@@ -10,6 +10,7 @@ from email.message import Message
 from pathlib import Path
 from unittest.mock import patch
 
+from opennoise.ingest.musicbrainz import full_catalog_capture as worker
 from opennoise.ingest.musicbrainz.full_catalog_capture import capture, selected_headers
 from opennoise.serving.metadata.full_recording_catalog import (
     read_ledger,
@@ -174,6 +175,42 @@ class WorkerTests(FreshProcessTestCase):
             summary = json.loads((directory / "artists.json").read_bytes())[0]
             self.assertEqual(summary["status"], "unknown")
             self.assertEqual(summary["unfetched_baseline_count"], 201)
+
+    def test_post_header_rss_stop_retains_no_body_or_projected_fact(self) -> None:
+        """A real guard rejection must stay incomplete even with native-looking bytes."""
+        with tempfile.TemporaryDirectory() as temporary:
+            plan = request_plan(
+                {"artists": [{"artist_mbid": ARTIST}], "roster_sha256": "test"},
+                {"artists": [{"artist_mbid": ARTIST, "advertised_recording_count": 0}]},
+            )
+            directory = Path(temporary)
+            (directory / "plan.json").write_text(json.dumps(plan))
+            response = Response(b'{"recording-count":0,"recording-offset":0,"recordings":[]}')
+            with (
+                patch.object(worker, "guard", return_value=None),
+                patch.object(
+                    worker,
+                    "process_peak_bytes",
+                    return_value=worker.LIMITS["max_process_rss_bytes"],
+                ),
+                patch("urllib.request.OpenerDirector.open", return_value=response) as http,
+                patch.object(worker, "compress_stream") as compress,
+            ):
+                worker.capture(directory)
+            http.assert_called_once()
+            compress.assert_not_called()
+            self.assertTrue(response.closed)
+            ledger = read_ledger(directory, plan)
+            verify_ledger_order(plan, ledger)
+            rejected = [row for row in ledger if row["outcome"] == "process_rss_custody_only"]
+            self.assertEqual(len(rejected), 1)
+            self.assertIsNone(rejected[0]["projection"])
+            self.assertIsNone(rejected[0]["custody"]["path"])
+            self.assertFalse(rejected[0]["custody"]["complete_body"])
+            self.assertNotEqual(
+                json.loads((directory / "artists.json").read_bytes())[0]["status"],
+                "observed_window_complete",
+            )
 
 
 if __name__ == "__main__":

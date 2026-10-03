@@ -30,7 +30,9 @@ POLL_SECONDS = 0.05
 KILL_WAIT_SECONDS = 3
 _ACTIVE_METHOD_ID: str | None = None
 
-type ExceptionInfo = tuple[type[BaseException], BaseException, TracebackType | None]
+type ExceptionInfo = (
+    tuple[type[BaseException], BaseException, TracebackType] | tuple[None, None, None]
+)
 
 
 class RemoteAssertionError(AssertionError):
@@ -71,7 +73,10 @@ def _remote_error(event: dict[str, Any], protocol: dict[str, Any]) -> ExceptionI
     captured = protocol["python_transcript"] + protocol["transcript"]
     if captured:
         message += "\nCaptured child output:\n" + captured
-    return exception, exception(message), None
+    try:
+        raise exception(message)
+    except (RemoteAssertionError, RemoteTestError):
+        return sys.exc_info()
 
 
 def _capture(
@@ -259,7 +264,7 @@ class FreshProcessTestCase(unittest.TestCase):
     fresh_process_timeout: ClassVar[float] = 120.0
 
     @override
-    def run(self, result: unittest.TestResult | None = None) -> unittest.TestResult:
+    def run(self, result: unittest.TestResult | None = None) -> unittest.TestResult | None:
         if self.id() == _ACTIVE_METHOD_ID:
             return super().run(result)
         created_result = result is None
@@ -277,8 +282,8 @@ class FreshProcessTestCase(unittest.TestCase):
                 result.__dict__["fresh_process_evidence"] = evidence
             evidence.append(protocol)
             _forward(result, self, protocol)
-        except Exception as error:  # noqa: BLE001 - Forward every transport error into TestResult.
-            result.addError(self, (type(error), error, error.__traceback__))
+        except Exception:  # noqa: BLE001 - Forward every transport error into TestResult.
+            result.addError(self, sys.exc_info())
         finally:
             result.stopTest(self)
             if created_result:

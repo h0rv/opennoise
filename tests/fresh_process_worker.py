@@ -72,7 +72,7 @@ class RecordedResult(unittest.TestResult):
             "display": str(test),
             "traceback": "".join(traceback.format_exception(*err)) if err is not None else None,
             "assertion_failure": bool(
-                err is not None and issubclass(err[0], test.failureException)
+                err is not None and err[0] is not None and issubclass(err[0], test.failureException)
             ),
             **fields,
         }

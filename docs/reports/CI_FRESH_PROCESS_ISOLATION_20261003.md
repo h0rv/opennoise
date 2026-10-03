@@ -33,3 +33,30 @@ GitHub from the exact published parent for an independently reviewable draft.
 No local test, formatting, type or CI pass is claimed. Reconcile workspace and
 remote source after runtime recovery. Report actual new remote CI outcomes
 separately before describing this correction as validated.
+
+## Coordinated integration after executor recovery
+
+The repair executor fetched draft PR #1 at
+`20fa336abfafbce57b66410a20bad96148555fff` and reproduced all 12 `ty`
+diagnostics. Its `ExceptionInfo` allowed a missing traceback with a non-null
+exception, but unittest's callback contract accepts either a complete exception
+tuple or the all-null tuple. The override also promised a narrower `run()`
+return than the inherited contract. The follow-up uses `sys.exc_info()` with
+real caught exceptions, accepts the all-null callback tuple, safely classifies
+it, and matches the inherited optional return. No type suppressions were added.
+
+The PR's bounded transport, outcome/subtest forwarding, seven transport tests,
+three original commits and class-level isolation are preserved. A separately
+validated minimal decorator implementation was not layered over this helper.
+Three guard-rejection regressions were integrated from that repair: both catalog
+workers must stop after headers without compression, custody or projected facts
+when the actual process peak reaches the cap, and calibration preparation must
+reject above-budget memory. Existing provenance and transport assertions remain.
+
+All 31 focused tests (transport plus the three affected classes) pass locally.
+The aggregate source-only check and the exact published SHA's GitHub Actions
+result must be reported separately in the PR; this focused result is not a claim
+that CI has passed. Existing optional source-only skips require sealed public
+inputs, historical custody, retained discovery/layout artifacts, or actual
+FMA/foundation/taxonomy/listening exports. No recovery archive or new skip is
+needed for this repair; native limits and acceptance criteria are unchanged.

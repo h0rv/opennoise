@@ -369,6 +369,16 @@ class SourceRecoveryCalibrationTests(FreshProcessTestCase):
                 run_prepared(source, pin, selection, selection_pin, root / "output")
             assert not (root / "output").exists()
 
+    def test_preparation_keeps_real_rss_budget_enforced(self) -> None:
+        with TemporaryDirectory(dir="/dev/shm") as directory:
+            root = Path(directory)
+            source, pin, selection, selection_pin = fixture(root)
+            with (
+                patch.object(training, "_peak_rss", return_value=training.MAX_RSS_BYTES + 1),
+                self.assertRaisesRegex(ValueError, "exceeded RSS bound"),
+            ):
+                calibration.prepare(source, pin, selection, selection_pin, root / "prepared")
+
 
 if __name__ == "__main__":
     unittest.main()
