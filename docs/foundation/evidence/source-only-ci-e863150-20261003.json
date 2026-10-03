@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "kind": "source-only-clean-checkout-validation",
+  "date_utc": "2026-10-03",
+  "commit": "e863150cf2adb4509be1509874996c2fdcb37f7b",
+  "tree": "d8fe65e839f904aff9740f2cd8c0ad4d284d08a8",
+  "run_id": 37102709523,
+  "job_id": 111145241378,
+  "url": "https://github.com/h0rv/opennoise/actions/runs/37102709523",
+  "conclusion": "success",
+  "commands": [
+    "poe sync",
+    ".venv/bin/poe check"
+  ],
+  "python": "3.13.14",
+  "node": "24.21.0",
+  "browser": "Google Chrome 154.0.8037.57",
+  "checks": {
+    "ruff_format": "1449 files already formatted",
+    "ruff_lint": "passed",
+    "typing": "passed",
+    "node_tests": {
+      "total": 52,
+      "passed": 43,
+      "failed": 0,
+      "skipped": 9
+    },
+    "python_tests": {
+      "total": 1708,
+      "failed": 0,
+      "skipped": 36,
+      "seconds": 51.796
+    }
+  },
+  "scope": "Fresh public checkout, including the new training-only membership experiment. Does not certify the current v8 export or unpublished capture drafts, fresh outer confirmation, musical validity or Every Noise parity."
+}
