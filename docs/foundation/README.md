@@ -90,3 +90,18 @@ sharing them. Every optional pack must retain its source license capture,
 attribution, and receipt alongside derived artifacts. Other providers retain
 their own source-specific terms. The repository's static publication gates
 remain independently applicable to any proposed release.
+
+A second independently curated Wikidata CC0 example extends the cultural cohort
+with 40 cross-scene artists plus exact Aphex Twin and Four Tet identities. Its
+curation does not use Every Noise reference observations or supplementary
+MusicBrainz genre associations. The discovery crosswalk and raw claim response
+are retained; replay pins each artist to a specific Wikidata QID and records
+three conflicting duplicate P434 rows as excluded identity conflicts:
+
+```sh
+PYTHONPATH=src:scripts python scripts/acquire_independent_cultural_context.py \
+  --verify data/examples/independent-cultural-context
+```
+
+See the [2026-10-02 checkpoint](../checkpoints/INDEPENDENT_CULTURAL_ENRICHMENT_20261002.md)
+for cohort coverage, capture counts, and limits.

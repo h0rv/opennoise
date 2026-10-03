@@ -1,0 +1,596 @@
+{
+  "head" : {
+    "vars" : [ "label", "mbid", "artist" ]
+  },
+  "results" : {
+    "bindings" : [ {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Duke Ellington"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q4030"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "John Coltrane"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q7346"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "b625448e-bf4a-41c3-a421-72ad46cdb831"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Iron Maiden"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q42482"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "ca891d65-d9b0-4258-89f7-e6ba29d83767"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Wu-Tang Clan"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q52463"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "0febdcf7-4e1f-4661-9493-b40427de2c13"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Joan Baez"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q131725"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "92d37892-6186-4459-9cc1-f0dde57652d0"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Miriam Makeba"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q146256"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "bc5c2918-4aba-4ef6-a245-100563a4487f"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Lata Mangeshkar"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q156347"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "aeb71bd8-447d-4415-8ea1-2b7d664f67e1"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Nina Hagen"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q159099"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e4d32f51-bc57-42a4-8165-b80f7a86496d"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Astor Piazzolla"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q172505"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "e280268a-a5ab-4bb0-be4d-ec470ca59131"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Nina Simone"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q174957"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "2944824d-4c26-476f-a981-be849081942f"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Nas"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q194220"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "cfbc0924-0035-4d6c-8197-f024653af823"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Joni Mitchell"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q205721"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "a6de8ef9-b1a1-4756-97aa-481bbb8a4069"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Manu Chao"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q207898"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "7570a0dd-5a67-401b-b19a-261eee01a284"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sepultura"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q239074"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "1d93c839-22e7-4f76-ad84-d27039efc048"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Anoushka Shankar"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q259379"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "40ee8fa3-c6d7-4556-b4e2-9f4114565043"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Tinariwen"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q262317"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "5c98fc12-be83-4246-ae5b-2184192913b9"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "A Tribe Called Quest"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q300602"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "9689aa5a-4471-4fb4-9721-07cecda0fa9f"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Caetano Veloso"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q309983"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "f07dbc2f-317b-470f-bad4-5f1b0eb6faf1"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Fela Kuti"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q313868"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "6514cffa-fbe0-4965-ad88-e998ead8a82a"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Sufjan Stevens"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q319502"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "01d3c51b-9b98-418a-8d8e-37f6fab59d8c"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Celtic Frost"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q324645"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "d91b3683-4622-4d72-8a03-80f1ff59e639"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ali Farka Touré"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q334947"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "9be2a5ac-8201-489b-b5f6-91f958bf9060"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Son House"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q352999"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "8c87dda0-be58-4e48-a3b5-2626f26364c7"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "OutKast"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q472595"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "73fdb566-a9b1-494c-9f32-51768ec9fd27"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Celia Cruz"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q474045"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "7b8e1188-9ca4-4aa5-8393-172de6fa04de"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "King Sunny Adé"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q982678"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "3e110caa-e9e8-4c33-98dc-ebbf0c6d2494"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Iron Maiden"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q3154520"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "7c3762a3-51f8-4cf3-8565-1ee26a90efe2"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ludwig van Beethoven"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q255"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "1f9df192-a621-4f54-8850-2c5373b7eac9"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Johann Sebastian Bach"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1339"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "24f1766e-9635-4d58-a4d4-9413f9f98a4c"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ella Fitzgerald"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q1768"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "54799c0e-eb45-4eea-996d-c4d71a63c499"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Metallica"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q15920"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Björk"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q42455"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "87c5dedd-371d-4a53-9f7f-80522fb7f3cb"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Johnny Cash"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q42775"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Kraftwerk"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q44892"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "5700dcd4-c139-4f31-aa3e-6382b9af9032"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Black Sabbath"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q47670"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "5182c1d9-c7d2-4dad-afa0-ccfeada921a8"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Miles Davis"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q93341"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "561d854a-6a28-4aa7-8c99-323e6ce46c2a"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ravi Shankar"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q103774"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "697f8b9f-0454-40f2-bba2-58f35668cdbe"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Thelonious Monk"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q109612"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "8e8c7417-c905-46b1-b42a-5260b4274ed4"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Public Enemy"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q209182"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "bf2e15d0-4b77-469e-bfb4-f8414415baca"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Muddy Waters"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q220707"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "f86f1f07-d182-45ce-ae93-ef610880ca72"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Mastodon"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q548844"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727"
+      }
+    }, {
+      "label" : {
+        "xml:lang" : "en",
+        "type" : "literal",
+        "value" : "Ludwig van Beethoven"
+      },
+      "artist" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q12368917"
+      },
+      "mbid" : {
+        "type" : "literal",
+        "value" : "9a0495c6-5d78-4c29-960b-4eedd85a7a83"
+      }
+    } ]
+  }
+}

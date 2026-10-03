@@ -1,0 +1,407 @@
+{
+  "acquired_utc": "2026-10-02T23:11:05.315305+00:00",
+  "batch_count": 1,
+  "batches": [
+    {
+      "http_status": 200,
+      "index": 0,
+      "matched_artist_count": 45,
+      "query_sha256": "1d3d6edf7972b5a8835533324f851d78a60e4d5716384e70837891e840a33fac",
+      "raw_path": "raw/batch-00.json",
+      "raw_qid_conflict_rows": 3,
+      "requested_mbids": [
+        "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+        "b625448e-bf4a-41c3-a421-72ad46cdb831",
+        "2944824d-4c26-476f-a981-be849081942f",
+        "54799c0e-eb45-4eea-996d-c4d71a63c499",
+        "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+        "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+        "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+        "6514cffa-fbe0-4965-ad88-e998ead8a82a",
+        "9be2a5ac-8201-489b-b5f6-91f958bf9060",
+        "7b8e1188-9ca4-4aa5-8393-172de6fa04de",
+        "f07dbc2f-317b-470f-bad4-5f1b0eb6faf1",
+        "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+        "92d37892-6186-4459-9cc1-f0dde57652d0",
+        "f86f1f07-d182-45ce-ae93-ef610880ca72",
+        "8c87dda0-be58-4e48-a3b5-2626f26364c7",
+        "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+        "0febdcf7-4e1f-4661-9493-b40427de2c13",
+        "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+        "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+        "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "cfbc0924-0035-4d6c-8197-f024653af823",
+        "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+        "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+        "d91b3683-4622-4d72-8a03-80f1ff59e639",
+        "1d93c839-22e7-4f76-ad84-d27039efc048",
+        "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+        "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+        "24f1766e-9635-4d58-a4d4-9413f9f98a4c",
+        "1f9df192-a621-4f54-8850-2c5373b7eac9",
+        "e4d32f51-bc57-42a4-8165-b80f7a86496d",
+        "e280268a-a5ab-4bb0-be4d-ec470ca59131",
+        "697f8b9f-0454-40f2-bba2-58f35668cdbe",
+        "40ee8fa3-c6d7-4556-b4e2-9f4114565043",
+        "5c98fc12-be83-4246-ae5b-2184192913b9",
+        "3e110caa-e9e8-4c33-98dc-ebbf0c6d2494",
+        "bc5c2918-4aba-4ef6-a245-100563a4487f",
+        "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+        "7570a0dd-5a67-401b-b19a-261eee01a284",
+        "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "3bcff06f-675a-451f-9075-99e8657047e8"
+      ],
+      "response_bytes": 193871,
+      "response_sha256": "df1cf4e12a947ff18df1a7bcfb1cfda68e8c30b17e197275f07d4b336f772f19",
+      "returned_binding_count": 318,
+      "unmatched_artist_mbids": []
+    }
+  ],
+  "cohort": [
+    {
+      "artist_mbid": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+      "curation_context": "jazz",
+      "name": "Miles Davis",
+      "qid": "Q93341",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "b625448e-bf4a-41c3-a421-72ad46cdb831",
+      "curation_context": "jazz",
+      "name": "John Coltrane",
+      "qid": "Q7346",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "2944824d-4c26-476f-a981-be849081942f",
+      "curation_context": "jazz",
+      "name": "Nina Simone",
+      "qid": "Q174957",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "54799c0e-eb45-4eea-996d-c4d71a63c499",
+      "curation_context": "jazz",
+      "name": "Ella Fitzgerald",
+      "qid": "Q1768",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+      "curation_context": "jazz",
+      "name": "Thelonious Monk",
+      "qid": "Q109612",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+      "curation_context": "jazz",
+      "name": "Duke Ellington",
+      "qid": "Q4030",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+      "curation_context": "electronic/pop",
+      "name": "Björk",
+      "qid": "Q42455",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "6514cffa-fbe0-4965-ad88-e998ead8a82a",
+      "curation_context": "African popular",
+      "name": "Fela Kuti",
+      "qid": "Q313868",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "9be2a5ac-8201-489b-b5f6-91f958bf9060",
+      "curation_context": "African popular",
+      "name": "Ali Farka Touré",
+      "qid": "Q334947",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "7b8e1188-9ca4-4aa5-8393-172de6fa04de",
+      "curation_context": "Latin",
+      "name": "Celia Cruz",
+      "qid": "Q474045",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "f07dbc2f-317b-470f-bad4-5f1b0eb6faf1",
+      "curation_context": "Latin",
+      "name": "Caetano Veloso",
+      "qid": "Q309983",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+      "curation_context": "folk/rock",
+      "name": "Sufjan Stevens",
+      "qid": "Q319502",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+      "curation_context": "folk/rock",
+      "name": "Joni Mitchell",
+      "qid": "Q205721",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "92d37892-6186-4459-9cc1-f0dde57652d0",
+      "curation_context": "folk",
+      "name": "Joan Baez",
+      "qid": "Q131725",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "f86f1f07-d182-45ce-ae93-ef610880ca72",
+      "curation_context": "blues",
+      "name": "Muddy Waters",
+      "qid": "Q220707",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "8c87dda0-be58-4e48-a3b5-2626f26364c7",
+      "curation_context": "blues",
+      "name": "Son House",
+      "qid": "Q352999",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+      "curation_context": "country",
+      "name": "Johnny Cash",
+      "qid": "Q42775",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+      "curation_context": "hip-hop",
+      "name": "Wu-Tang Clan",
+      "qid": "Q52463",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+      "curation_context": "hip-hop",
+      "name": "A Tribe Called Quest",
+      "qid": "Q300602",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+      "curation_context": "hip-hop",
+      "name": "Public Enemy",
+      "qid": "Q209182",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+      "curation_context": "hip-hop",
+      "name": "OutKast",
+      "qid": "Q472595",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "cfbc0924-0035-4d6c-8197-f024653af823",
+      "curation_context": "hip-hop",
+      "name": "Nas",
+      "qid": "Q194220",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+      "curation_context": "electronic",
+      "name": "Kraftwerk",
+      "qid": "Q44892",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+      "curation_context": "metal",
+      "name": "Black Sabbath",
+      "qid": "Q47670",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+      "curation_context": "metal",
+      "name": "Metallica",
+      "qid": "Q15920",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+      "curation_context": "metal",
+      "name": "Celtic Frost",
+      "qid": "Q324645",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "1d93c839-22e7-4f76-ad84-d27039efc048",
+      "curation_context": "metal",
+      "name": "Sepultura",
+      "qid": "Q239074",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+      "curation_context": "metal",
+      "name": "Mastodon",
+      "qid": "Q548844",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+      "curation_context": "metal",
+      "name": "Iron Maiden",
+      "qid": "Q42482",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "24f1766e-9635-4d58-a4d4-9413f9f98a4c",
+      "curation_context": "classical",
+      "name": "Johann Sebastian Bach",
+      "qid": "Q1339",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+      "curation_context": "classical",
+      "name": "Ludwig van Beethoven",
+      "qid": "Q255",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "e4d32f51-bc57-42a4-8165-b80f7a86496d",
+      "curation_context": "rock",
+      "name": "Nina Hagen",
+      "qid": "Q159099",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "e280268a-a5ab-4bb0-be4d-ec470ca59131",
+      "curation_context": "Latin/classical",
+      "name": "Astor Piazzolla",
+      "qid": "Q172505",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "697f8b9f-0454-40f2-bba2-58f35668cdbe",
+      "curation_context": "South Asian classical",
+      "name": "Ravi Shankar",
+      "qid": "Q103774",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "40ee8fa3-c6d7-4556-b4e2-9f4114565043",
+      "curation_context": "South Asian classical",
+      "name": "Anoushka Shankar",
+      "qid": "Q259379",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "5c98fc12-be83-4246-ae5b-2184192913b9",
+      "curation_context": "African popular",
+      "name": "Tinariwen",
+      "qid": "Q262317",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "3e110caa-e9e8-4c33-98dc-ebbf0c6d2494",
+      "curation_context": "African popular",
+      "name": "King Sunny Adé",
+      "qid": "Q982678",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "bc5c2918-4aba-4ef6-a245-100563a4487f",
+      "curation_context": "African popular",
+      "name": "Miriam Makeba",
+      "qid": "Q146256",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+      "curation_context": "South Asian popular",
+      "name": "Lata Mangeshkar",
+      "qid": "Q156347",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "7570a0dd-5a67-401b-b19a-261eee01a284",
+      "curation_context": "Latin/rock",
+      "name": "Manu Chao",
+      "qid": "Q207898",
+      "role": "curated_cross_scene"
+    },
+    {
+      "artist_mbid": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+      "name": "Aphex Twin",
+      "qid": "Q223161",
+      "role": "baseline"
+    },
+    {
+      "artist_mbid": "3bcff06f-675a-451f-9075-99e8657047e8",
+      "name": "Four Tet",
+      "qid": "Q959655",
+      "role": "baseline"
+    }
+  ],
+  "direct_claim_count": 210,
+  "discovery": {
+    "http_status": 200,
+    "identity_rule": "exact English label plus exact P434 UUID and manually curated QID; all direct claim acquisition is subsequently exact-MBID based",
+    "query_sha256": "4ebdf0b25e703b5824c62324643e9cef1b1d935251e937eb58e4a0745af9c1bb",
+    "raw_path": "raw/roster-discovery.json",
+    "response_bytes": 14587,
+    "response_sha256": "7ee82ffab93e396945ec97d65d4eda3f42f78864dc66f65982e4756558788d34",
+    "returned_binding_count": 42
+  },
+  "discovery_response_bytes": 14587,
+  "docs": {
+    "identity_property": "https://www.wikidata.org/wiki/Property:P434",
+    "license": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+    "properties": {
+      "P135": "https://www.wikidata.org/wiki/Property:P135",
+      "P136": "https://www.wikidata.org/wiki/Property:P136",
+      "P495": "https://www.wikidata.org/wiki/Property:P495",
+      "P740": "https://www.wikidata.org/wiki/Property:P740"
+    },
+    "query_service": "https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service"
+  },
+  "endpoint": "https://query.wikidata.org/sparql",
+  "identity_rule": "construction joins only by exact MusicBrainz UUID through Wikidata P434; display names and curation context are not labels",
+  "license": "CC0",
+  "matched_artist_count": 42,
+  "properties": [
+    "P135",
+    "P136",
+    "P495",
+    "P740"
+  ],
+  "raw_qid_conflict_row_count": 3,
+  "request_count": 2,
+  "requested_artist_count": 42,
+  "response_bytes_total": 193871,
+  "revision": "independent-cultural-context-wikidata-20261002-v1",
+  "selection": {
+    "extra_artist_count": 40,
+    "method": "curated cross-scene/country roster fixed before query; no EveryNoise observations or MusicBrainz genre associations used",
+    "omission_reason": "No exact English rdfs:label plus P434 crosswalk result in the retained discovery response.",
+    "omitted_discovery_candidates": [
+      "Youssou N'Dour",
+      "Kendrick Lamar",
+      "Missy Elliott"
+    ],
+    "request_count_including_crosswalk": 2
+  },
+  "total_acquired_response_bytes": 208458,
+  "unmatched_artist_count": 0,
+  "unmatched_artist_mbids": []
+}

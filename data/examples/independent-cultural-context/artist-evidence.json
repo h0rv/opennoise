@@ -1,0 +1,2186 @@
+[
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "alternative rock",
+        "value_qid": "Q11366",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "folk-pop",
+        "value_qid": "Q11700058",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "indie folk",
+        "value_qid": "Q1317816",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "lo-fi music",
+        "value_qid": "Q1507298",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "indie rock",
+        "value_qid": "Q183504",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "chamber pop",
+        "value_qid": "Q22991878",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "baroque pop",
+        "value_qid": "Q46046",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "indie pop",
+        "value_qid": "Q842324",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "classical music",
+        "value_qid": "Q9730",
+        "wikidata_artist_id": "Q319502"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q319502"
+      }
+    ],
+    "label": "Sufjan Stevens",
+    "musicbrainz_artist_id": "01d3c51b-9b98-418a-8d8e-37f6fab59d8c",
+    "wikidata_artist_id": "Q319502"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "gangsta rap",
+        "value_qid": "Q753679",
+        "wikidata_artist_id": "Q52463"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "East Coast hip-hop",
+        "value_qid": "Q876171",
+        "wikidata_artist_id": "Q52463"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "mafioso rap",
+        "value_qid": "Q9302696",
+        "wikidata_artist_id": "Q52463"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hardcore hip-hop",
+        "value_qid": "Q966564",
+        "wikidata_artist_id": "Q52463"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q52463"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "New York City",
+        "value_qid": "Q60",
+        "wikidata_artist_id": "Q52463"
+      }
+    ],
+    "label": "Wu-Tang Clan",
+    "musicbrainz_artist_id": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+    "wikidata_artist_id": "Q52463"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1d93c839-22e7-4f76-ad84-d27039efc048",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "alternative metal",
+        "value_qid": "Q20378",
+        "wikidata_artist_id": "Q239074"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1d93c839-22e7-4f76-ad84-d27039efc048",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "groove metal",
+        "value_qid": "Q241662",
+        "wikidata_artist_id": "Q239074"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1d93c839-22e7-4f76-ad84-d27039efc048",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "nu metal",
+        "value_qid": "Q263734",
+        "wikidata_artist_id": "Q239074"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1d93c839-22e7-4f76-ad84-d27039efc048",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "death metal",
+        "value_qid": "Q483251",
+        "wikidata_artist_id": "Q239074"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1d93c839-22e7-4f76-ad84-d27039efc048",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "thrash metal",
+        "value_qid": "Q483352",
+        "wikidata_artist_id": "Q239074"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1d93c839-22e7-4f76-ad84-d27039efc048",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Brazil",
+        "value_qid": "Q155",
+        "wikidata_artist_id": "Q239074"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1d93c839-22e7-4f76-ad84-d27039efc048",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Belo Horizonte",
+        "value_qid": "Q42800",
+        "wikidata_artist_id": "Q239074"
+      }
+    ],
+    "label": "Sepultura",
+    "musicbrainz_artist_id": "1d93c839-22e7-4f76-ad84-d27039efc048",
+    "wikidata_artist_id": "Q239074"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+        "property_id": "P135",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Classical period",
+        "value_qid": "Q17723",
+        "wikidata_artist_id": "Q255"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+        "property_id": "P135",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Romantic music",
+        "value_qid": "Q207591",
+        "wikidata_artist_id": "Q255"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "sonata",
+        "value_qid": "Q131269",
+        "wikidata_artist_id": "Q255"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "opera",
+        "value_qid": "Q1344",
+        "wikidata_artist_id": "Q255"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "art music",
+        "value_qid": "Q1583807",
+        "wikidata_artist_id": "Q255"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "classical music",
+        "value_qid": "Q9730",
+        "wikidata_artist_id": "Q255"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "symphony",
+        "value_qid": "Q9734",
+        "wikidata_artist_id": "Q255"
+      }
+    ],
+    "label": "Ludwig van Beethoven",
+    "musicbrainz_artist_id": "1f9df192-a621-4f54-8850-2c5373b7eac9",
+    "wikidata_artist_id": "Q255"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "24f1766e-9635-4d58-a4d4-9413f9f98a4c",
+        "property_id": "P135",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Baroque music",
+        "value_qid": "Q8361",
+        "wikidata_artist_id": "Q1339"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "24f1766e-9635-4d58-a4d4-9413f9f98a4c",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Baroque music",
+        "value_qid": "Q8361",
+        "wikidata_artist_id": "Q1339"
+      }
+    ],
+    "label": "Johann Sebastian Bach",
+    "musicbrainz_artist_id": "24f1766e-9635-4d58-a4d4-9413f9f98a4c",
+    "wikidata_artist_id": "Q1339"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "2944824d-4c26-476f-a981-be849081942f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "soul",
+        "value_qid": "Q131272",
+        "wikidata_artist_id": "Q174957"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "2944824d-4c26-476f-a981-be849081942f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "gospel music",
+        "value_qid": "Q180268",
+        "wikidata_artist_id": "Q174957"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "2944824d-4c26-476f-a981-be849081942f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q174957"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "2944824d-4c26-476f-a981-be849081942f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues",
+        "value_qid": "Q9759",
+        "wikidata_artist_id": "Q174957"
+      }
+    ],
+    "label": "Nina Simone",
+    "musicbrainz_artist_id": "2944824d-4c26-476f-a981-be849081942f",
+    "wikidata_artist_id": "Q174957"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+        "property_id": "P135",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Harlem Renaissance",
+        "value_qid": "Q829895",
+        "wikidata_artist_id": "Q4030"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "gospel music",
+        "value_qid": "Q180268",
+        "wikidata_artist_id": "Q4030"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "swing",
+        "value_qid": "Q203775",
+        "wikidata_artist_id": "Q4030"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "vocal music",
+        "value_qid": "Q685884",
+        "wikidata_artist_id": "Q4030"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q4030"
+      }
+    ],
+    "label": "Duke Ellington",
+    "musicbrainz_artist_id": "3af06bc4-68ad-4cae-bb7a-7eeeb45e411f",
+    "wikidata_artist_id": "Q4030"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3bcff06f-675a-451f-9075-99e8657047e8",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronica",
+        "value_qid": "Q817138",
+        "wikidata_artist_id": "Q959655"
+      }
+    ],
+    "label": "Four Tet",
+    "musicbrainz_artist_id": "3bcff06f-675a-451f-9075-99e8657047e8",
+    "wikidata_artist_id": "Q959655"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3e110caa-e9e8-4c33-98dc-ebbf0c6d2494",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Jùjú music",
+        "value_qid": "Q1715700",
+        "wikidata_artist_id": "Q982678"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "3e110caa-e9e8-4c33-98dc-ebbf0c6d2494",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "music of Africa",
+        "value_qid": "Q369820",
+        "wikidata_artist_id": "Q982678"
+      }
+    ],
+    "label": "King Sunny Adé",
+    "musicbrainz_artist_id": "3e110caa-e9e8-4c33-98dc-ebbf0c6d2494",
+    "wikidata_artist_id": "Q982678"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "40ee8fa3-c6d7-4556-b4e2-9f4114565043",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Indian classical music",
+        "value_qid": "Q1323698",
+        "wikidata_artist_id": "Q259379"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "40ee8fa3-c6d7-4556-b4e2-9f4114565043",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues",
+        "value_qid": "Q9759",
+        "wikidata_artist_id": "Q259379"
+      }
+    ],
+    "label": "Anoushka Shankar",
+    "musicbrainz_artist_id": "40ee8fa3-c6d7-4556-b4e2-9f4114565043",
+    "wikidata_artist_id": "Q259379"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "traditional heavy metal",
+        "value_qid": "Q1133657",
+        "wikidata_artist_id": "Q47670"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "doom metal",
+        "value_qid": "Q186170",
+        "wikidata_artist_id": "Q47670"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "heavy metal music",
+        "value_qid": "Q38848",
+        "wikidata_artist_id": "Q47670"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hard rock",
+        "value_qid": "Q83270",
+        "wikidata_artist_id": "Q47670"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United Kingdom",
+        "value_qid": "Q145",
+        "wikidata_artist_id": "Q47670"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Birmingham",
+        "value_qid": "Q2256",
+        "wikidata_artist_id": "Q47670"
+      }
+    ],
+    "label": "Black Sabbath",
+    "musicbrainz_artist_id": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+    "wikidata_artist_id": "Q47670"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "54799c0e-eb45-4eea-996d-c4d71a63c499",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "traditional pop",
+        "value_qid": "Q1196752",
+        "wikidata_artist_id": "Q1768"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "54799c0e-eb45-4eea-996d-c4d71a63c499",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "soul",
+        "value_qid": "Q131272",
+        "wikidata_artist_id": "Q1768"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "54799c0e-eb45-4eea-996d-c4d71a63c499",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "swing",
+        "value_qid": "Q203775",
+        "wikidata_artist_id": "Q1768"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "54799c0e-eb45-4eea-996d-c4d71a63c499",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q1768"
+      }
+    ],
+    "label": "Ella Fitzgerald",
+    "musicbrainz_artist_id": "54799c0e-eb45-4eea-996d-c4d71a63c499",
+    "wikidata_artist_id": "Q1768"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "bebop",
+        "value_qid": "Q105513",
+        "wikidata_artist_id": "Q93341"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz fusion",
+        "value_qid": "Q105527",
+        "wikidata_artist_id": "Q93341"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "modal jazz",
+        "value_qid": "Q1127530",
+        "wikidata_artist_id": "Q93341"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hard bop",
+        "value_qid": "Q181010",
+        "wikidata_artist_id": "Q93341"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "cool jazz",
+        "value_qid": "Q327547",
+        "wikidata_artist_id": "Q93341"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q93341"
+      }
+    ],
+    "label": "Miles Davis",
+    "musicbrainz_artist_id": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+    "wikidata_artist_id": "Q93341"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "synth-pop",
+        "value_qid": "Q1298934",
+        "wikidata_artist_id": "Q44892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "experimental music",
+        "value_qid": "Q1640319",
+        "wikidata_artist_id": "Q44892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "techno",
+        "value_qid": "Q170611",
+        "wikidata_artist_id": "Q44892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electro",
+        "value_qid": "Q217597",
+        "wikidata_artist_id": "Q44892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Krautrock",
+        "value_qid": "Q320592",
+        "wikidata_artist_id": "Q44892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronica",
+        "value_qid": "Q817138",
+        "wikidata_artist_id": "Q44892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q44892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Germany",
+        "value_qid": "Q183",
+        "wikidata_artist_id": "Q44892"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Düsseldorf",
+        "value_qid": "Q1718",
+        "wikidata_artist_id": "Q44892"
+      }
+    ],
+    "label": "Kraftwerk",
+    "musicbrainz_artist_id": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+    "wikidata_artist_id": "Q44892"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5c98fc12-be83-4246-ae5b-2184192913b9",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "world music",
+        "value_qid": "Q205049",
+        "wikidata_artist_id": "Q262317"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5c98fc12-be83-4246-ae5b-2184192913b9",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "desert blues",
+        "value_qid": "Q7800608",
+        "wikidata_artist_id": "Q262317"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5c98fc12-be83-4246-ae5b-2184192913b9",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Kidal Region",
+        "value_qid": "Q338988",
+        "wikidata_artist_id": "Q262317"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "5c98fc12-be83-4246-ae5b-2184192913b9",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Kidal",
+        "value_qid": "Q650100",
+        "wikidata_artist_id": "Q262317"
+      }
+    ],
+    "label": "Tinariwen",
+    "musicbrainz_artist_id": "5c98fc12-be83-4246-ae5b-2184192913b9",
+    "wikidata_artist_id": "Q262317"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6514cffa-fbe0-4965-ad88-e998ead8a82a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Afrobeat",
+        "value_qid": "Q388296",
+        "wikidata_artist_id": "Q313868"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6514cffa-fbe0-4965-ad88-e998ead8a82a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q313868"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "6514cffa-fbe0-4965-ad88-e998ead8a82a",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "highlife",
+        "value_qid": "Q963061",
+        "wikidata_artist_id": "Q313868"
+      }
+    ],
+    "label": "Fela Kuti",
+    "musicbrainz_artist_id": "6514cffa-fbe0-4965-ad88-e998ead8a82a",
+    "wikidata_artist_id": "Q313868"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+        "property_id": "P135",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Bay Area thrash metal",
+        "value_qid": "Q2537356",
+        "wikidata_artist_id": "Q15920"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "heavy metal music",
+        "value_qid": "Q38848",
+        "wikidata_artist_id": "Q15920"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "thrash metal",
+        "value_qid": "Q483352",
+        "wikidata_artist_id": "Q15920"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q15920"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Los Angeles",
+        "value_qid": "Q65",
+        "wikidata_artist_id": "Q15920"
+      }
+    ],
+    "label": "Metallica",
+    "musicbrainz_artist_id": "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+    "wikidata_artist_id": "Q15920"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "697f8b9f-0454-40f2-bba2-58f35668cdbe",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Indian classical music",
+        "value_qid": "Q1323698",
+        "wikidata_artist_id": "Q103774"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "697f8b9f-0454-40f2-bba2-58f35668cdbe",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Hindustani classical music",
+        "value_qid": "Q1770695",
+        "wikidata_artist_id": "Q103774"
+      }
+    ],
+    "label": "Ravi Shankar",
+    "musicbrainz_artist_id": "697f8b9f-0454-40f2-bba2-58f35668cdbe",
+    "wikidata_artist_id": "Q103774"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "progressive rap",
+        "value_qid": "Q107572242",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "psychedelic rap",
+        "value_qid": "Q121667432",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Southern hip-hop",
+        "value_qid": "Q1253172",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "funk",
+        "value_qid": "Q164444",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "psychedelic hip-hop",
+        "value_qid": "Q2106887",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz rap",
+        "value_qid": "Q255406",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "alternative hip-hop",
+        "value_qid": "Q438503",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Atlanta hip-hop",
+        "value_qid": "Q4816198",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "dirty south",
+        "value_qid": "Q8560269",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q472595"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Atlanta",
+        "value_qid": "Q23556",
+        "wikidata_artist_id": "Q472595"
+      }
+    ],
+    "label": "OutKast",
+    "musicbrainz_artist_id": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+    "wikidata_artist_id": "Q472595"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "7570a0dd-5a67-401b-b19a-261eee01a284",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "world music",
+        "value_qid": "Q205049",
+        "wikidata_artist_id": "Q207898"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "7570a0dd-5a67-401b-b19a-261eee01a284",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ska",
+        "value_qid": "Q54365",
+        "wikidata_artist_id": "Q207898"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "7570a0dd-5a67-401b-b19a-261eee01a284",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "music of Latin America",
+        "value_qid": "Q727781",
+        "wikidata_artist_id": "Q207898"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "7570a0dd-5a67-401b-b19a-261eee01a284",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "reggae",
+        "value_qid": "Q9794",
+        "wikidata_artist_id": "Q207898"
+      }
+    ],
+    "label": "Manu Chao",
+    "musicbrainz_artist_id": "7570a0dd-5a67-401b-b19a-261eee01a284",
+    "wikidata_artist_id": "Q207898"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "7b8e1188-9ca4-4aa5-8393-172de6fa04de",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "salsa",
+        "value_qid": "Q208239",
+        "wikidata_artist_id": "Q474045"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "7b8e1188-9ca4-4aa5-8393-172de6fa04de",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Cuban rumba",
+        "value_qid": "Q388475",
+        "wikidata_artist_id": "Q474045"
+      }
+    ],
+    "label": "Celia Cruz",
+    "musicbrainz_artist_id": "7b8e1188-9ca4-4aa5-8393-172de6fa04de",
+    "wikidata_artist_id": "Q474045"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "alternative rock",
+        "value_qid": "Q11366",
+        "wikidata_artist_id": "Q42455"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock music",
+        "value_qid": "Q11399",
+        "wikidata_artist_id": "Q42455"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "gabberpop",
+        "value_qid": "Q124357128",
+        "wikidata_artist_id": "Q42455"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "experimental music",
+        "value_qid": "Q1640319",
+        "wikidata_artist_id": "Q42455"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "avant-garde music",
+        "value_qid": "Q2332751",
+        "wikidata_artist_id": "Q42455"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "art pop",
+        "value_qid": "Q25094849",
+        "wikidata_artist_id": "Q42455"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q42455"
+      }
+    ],
+    "label": "Björk",
+    "musicbrainz_artist_id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+    "wikidata_artist_id": "Q42455"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "8c87dda0-be58-4e48-a3b5-2626f26364c7",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Delta blues",
+        "value_qid": "Q1127539",
+        "wikidata_artist_id": "Q352999"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "8c87dda0-be58-4e48-a3b5-2626f26364c7",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "country music",
+        "value_qid": "Q83440",
+        "wikidata_artist_id": "Q352999"
+      }
+    ],
+    "label": "Son House",
+    "musicbrainz_artist_id": "8c87dda0-be58-4e48-a3b5-2626f26364c7",
+    "wikidata_artist_id": "Q352999"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "bebop",
+        "value_qid": "Q105513",
+        "wikidata_artist_id": "Q109612"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hard bop",
+        "value_qid": "Q181010",
+        "wikidata_artist_id": "Q109612"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "stride piano",
+        "value_qid": "Q181897",
+        "wikidata_artist_id": "Q109612"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "cool jazz",
+        "value_qid": "Q327547",
+        "wikidata_artist_id": "Q109612"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q109612"
+      }
+    ],
+    "label": "Thelonious Monk",
+    "musicbrainz_artist_id": "8e8c7417-c905-46b1-b42a-5260b4274ed4",
+    "wikidata_artist_id": "Q109612"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "92d37892-6186-4459-9cc1-f0dde57652d0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ballad",
+        "value_qid": "Q182659",
+        "wikidata_artist_id": "Q131725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "92d37892-6186-4459-9cc1-f0dde57652d0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "traditional folk music",
+        "value_qid": "Q235858",
+        "wikidata_artist_id": "Q131725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "92d37892-6186-4459-9cc1-f0dde57652d0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Afro-Cuban jazz",
+        "value_qid": "Q3163340",
+        "wikidata_artist_id": "Q131725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "92d37892-6186-4459-9cc1-f0dde57652d0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "folk music",
+        "value_qid": "Q43343",
+        "wikidata_artist_id": "Q131725"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "92d37892-6186-4459-9cc1-f0dde57652d0",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "country music",
+        "value_qid": "Q83440",
+        "wikidata_artist_id": "Q131725"
+      }
+    ],
+    "label": "Joan Baez",
+    "musicbrainz_artist_id": "92d37892-6186-4459-9cc1-f0dde57652d0",
+    "wikidata_artist_id": "Q131725"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "progressive rap",
+        "value_qid": "Q107572242",
+        "wikidata_artist_id": "Q300602"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hip-hop",
+        "value_qid": "Q11401",
+        "wikidata_artist_id": "Q300602"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz rap",
+        "value_qid": "Q255406",
+        "wikidata_artist_id": "Q300602"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "alternative hip-hop",
+        "value_qid": "Q438503",
+        "wikidata_artist_id": "Q300602"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "East Coast hip-hop",
+        "value_qid": "Q876171",
+        "wikidata_artist_id": "Q300602"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q300602"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "New York City",
+        "value_qid": "Q60",
+        "wikidata_artist_id": "Q300602"
+      }
+    ],
+    "label": "A Tribe Called Quest",
+    "musicbrainz_artist_id": "9689aa5a-4471-4fb4-9721-07cecda0fa9f",
+    "wikidata_artist_id": "Q300602"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "9be2a5ac-8201-489b-b5f6-91f958bf9060",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues",
+        "value_qid": "Q9759",
+        "wikidata_artist_id": "Q334947"
+      }
+    ],
+    "label": "Ali Farka Touré",
+    "musicbrainz_artist_id": "9be2a5ac-8201-489b-b5f6-91f958bf9060",
+    "wikidata_artist_id": "Q334947"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "folk rock",
+        "value_qid": "Q186472",
+        "wikidata_artist_id": "Q205721"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "world music",
+        "value_qid": "Q205049",
+        "wikidata_artist_id": "Q205721"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "art rock",
+        "value_qid": "Q217467",
+        "wikidata_artist_id": "Q205721"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "pop music",
+        "value_qid": "Q37073",
+        "wikidata_artist_id": "Q205721"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "folk music",
+        "value_qid": "Q43343",
+        "wikidata_artist_id": "Q205721"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "folk jazz",
+        "value_qid": "Q5464464",
+        "wikidata_artist_id": "Q205721"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q205721"
+      }
+    ],
+    "label": "Joni Mitchell",
+    "musicbrainz_artist_id": "a6de8ef9-b1a1-4756-97aa-481bbb8a4069",
+    "wikidata_artist_id": "Q205721"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Indian classical music",
+        "value_qid": "Q1323698",
+        "wikidata_artist_id": "Q156347"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Hindustani classical music",
+        "value_qid": "Q1770695",
+        "wikidata_artist_id": "Q156347"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "world music",
+        "value_qid": "Q205049",
+        "wikidata_artist_id": "Q156347"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Indian film music",
+        "value_qid": "Q544440",
+        "wikidata_artist_id": "Q156347"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "bhajan",
+        "value_qid": "Q854775",
+        "wikidata_artist_id": "Q156347"
+      }
+    ],
+    "label": "Lata Mangeshkar",
+    "musicbrainz_artist_id": "aeb71bd8-447d-4415-8ea1-2b7d664f67e1",
+    "wikidata_artist_id": "Q156347"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b625448e-bf4a-41c3-a421-72ad46cdb831",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "post-bop",
+        "value_qid": "Q1092837",
+        "wikidata_artist_id": "Q7346"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b625448e-bf4a-41c3-a421-72ad46cdb831",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "modal jazz",
+        "value_qid": "Q1127530",
+        "wikidata_artist_id": "Q7346"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b625448e-bf4a-41c3-a421-72ad46cdb831",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hard bop",
+        "value_qid": "Q181010",
+        "wikidata_artist_id": "Q7346"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b625448e-bf4a-41c3-a421-72ad46cdb831",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "free jazz",
+        "value_qid": "Q211781",
+        "wikidata_artist_id": "Q7346"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "b625448e-bf4a-41c3-a421-72ad46cdb831",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q7346"
+      }
+    ],
+    "label": "John Coltrane",
+    "musicbrainz_artist_id": "b625448e-bf4a-41c3-a421-72ad46cdb831",
+    "wikidata_artist_id": "Q7346"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5c2918-4aba-4ef6-a245-100563a4487f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock music",
+        "value_qid": "Q11399",
+        "wikidata_artist_id": "Q146256"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5c2918-4aba-4ef6-a245-100563a4487f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "township music",
+        "value_qid": "Q17111414",
+        "wikidata_artist_id": "Q146256"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5c2918-4aba-4ef6-a245-100563a4487f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "world music",
+        "value_qid": "Q205049",
+        "wikidata_artist_id": "Q146256"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5c2918-4aba-4ef6-a245-100563a4487f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "marabi",
+        "value_qid": "Q2798694",
+        "wikidata_artist_id": "Q146256"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5c2918-4aba-4ef6-a245-100563a4487f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz",
+        "value_qid": "Q8341",
+        "wikidata_artist_id": "Q146256"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5c2918-4aba-4ef6-a245-100563a4487f",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "African popular music",
+        "value_qid": "Q972634",
+        "wikidata_artist_id": "Q146256"
+      }
+    ],
+    "label": "Miriam Makeba",
+    "musicbrainz_artist_id": "bc5c2918-4aba-4ef6-a245-100563a4487f",
+    "wikidata_artist_id": "Q146256"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "heavy metal music",
+        "value_qid": "Q38848",
+        "wikidata_artist_id": "Q548844"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "progressive metal",
+        "value_qid": "Q484344",
+        "wikidata_artist_id": "Q548844"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "sludge metal",
+        "value_qid": "Q720959",
+        "wikidata_artist_id": "Q548844"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q548844"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Atlanta",
+        "value_qid": "Q23556",
+        "wikidata_artist_id": "Q548844"
+      }
+    ],
+    "label": "Mastodon",
+    "musicbrainz_artist_id": "bc5e2ad6-0a4a-4d90-b911-e9a7e6861727",
+    "wikidata_artist_id": "Q548844"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+        "property_id": "P135",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "East Coast hip-hop",
+        "value_qid": "Q876171",
+        "wikidata_artist_id": "Q209182"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "progressive rap",
+        "value_qid": "Q107572242",
+        "wikidata_artist_id": "Q209182"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "East Coast hip-hop",
+        "value_qid": "Q876171",
+        "wikidata_artist_id": "Q209182"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hardcore hip-hop",
+        "value_qid": "Q966564",
+        "wikidata_artist_id": "Q209182"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "political hip-hop",
+        "value_qid": "Q969663",
+        "wikidata_artist_id": "Q209182"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United States",
+        "value_qid": "Q30",
+        "wikidata_artist_id": "Q209182"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Long Island",
+        "value_qid": "Q18438",
+        "wikidata_artist_id": "Q209182"
+      }
+    ],
+    "label": "Public Enemy",
+    "musicbrainz_artist_id": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+    "wikidata_artist_id": "Q209182"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+        "property_id": "P135",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "new wave of British heavy metal",
+        "value_qid": "Q370515",
+        "wikidata_artist_id": "Q42482"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "traditional heavy metal",
+        "value_qid": "Q1133657",
+        "wikidata_artist_id": "Q42482"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "new wave of British heavy metal",
+        "value_qid": "Q370515",
+        "wikidata_artist_id": "Q42482"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "heavy metal music",
+        "value_qid": "Q38848",
+        "wikidata_artist_id": "Q42482"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "United Kingdom",
+        "value_qid": "Q145",
+        "wikidata_artist_id": "Q42482"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Leyton",
+        "value_qid": "Q2750829",
+        "wikidata_artist_id": "Q42482"
+      }
+    ],
+    "label": "Iron Maiden",
+    "musicbrainz_artist_id": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+    "wikidata_artist_id": "Q42482"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "conscious hip-hop",
+        "value_qid": "Q141459",
+        "wikidata_artist_id": "Q194220"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "jazz rap",
+        "value_qid": "Q255406",
+        "wikidata_artist_id": "Q194220"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "alternative hip-hop",
+        "value_qid": "Q438503",
+        "wikidata_artist_id": "Q194220"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "boom bap",
+        "value_qid": "Q529742",
+        "wikidata_artist_id": "Q194220"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "gangsta rap",
+        "value_qid": "Q753679",
+        "wikidata_artist_id": "Q194220"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "East Coast hip-hop",
+        "value_qid": "Q876171",
+        "wikidata_artist_id": "Q194220"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "mafioso rap",
+        "value_qid": "Q9302696",
+        "wikidata_artist_id": "Q194220"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "hardcore hip-hop",
+        "value_qid": "Q966564",
+        "wikidata_artist_id": "Q194220"
+      }
+    ],
+    "label": "Nas",
+    "musicbrainz_artist_id": "cfbc0924-0035-4d6c-8197-f024653af823",
+    "wikidata_artist_id": "Q194220"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "gospel music",
+        "value_qid": "Q180268",
+        "wikidata_artist_id": "Q42775"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rockabilly",
+        "value_qid": "Q203720",
+        "wikidata_artist_id": "Q42775"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "traditional folk music",
+        "value_qid": "Q235858",
+        "wikidata_artist_id": "Q42775"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "rock and roll",
+        "value_qid": "Q7749",
+        "wikidata_artist_id": "Q42775"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "country music",
+        "value_qid": "Q83440",
+        "wikidata_artist_id": "Q42775"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "outlaw country",
+        "value_qid": "Q964658",
+        "wikidata_artist_id": "Q42775"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues",
+        "value_qid": "Q9759",
+        "wikidata_artist_id": "Q42775"
+      }
+    ],
+    "label": "Johnny Cash",
+    "musicbrainz_artist_id": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+    "wikidata_artist_id": "Q42775"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "black metal",
+        "value_qid": "Q132438",
+        "wikidata_artist_id": "Q324645"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "doom metal",
+        "value_qid": "Q186170",
+        "wikidata_artist_id": "Q324645"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "death metal",
+        "value_qid": "Q483251",
+        "wikidata_artist_id": "Q324645"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "thrash metal",
+        "value_qid": "Q483352",
+        "wikidata_artist_id": "Q324645"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "avant-garde metal",
+        "value_qid": "Q641357",
+        "wikidata_artist_id": "Q324645"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+        "property_id": "P495",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Switzerland",
+        "value_qid": "Q39",
+        "wikidata_artist_id": "Q324645"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+        "property_id": "P740",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Zurich",
+        "value_qid": "Q72",
+        "wikidata_artist_id": "Q324645"
+      }
+    ],
+    "label": "Celtic Frost",
+    "musicbrainz_artist_id": "d91b3683-4622-4d72-8a03-80f1ff59e639",
+    "wikidata_artist_id": "Q324645"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e280268a-a5ab-4bb0-be4d-ec470ca59131",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "opera",
+        "value_qid": "Q1344",
+        "wikidata_artist_id": "Q172505"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e280268a-a5ab-4bb0-be4d-ec470ca59131",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "tango",
+        "value_qid": "Q14390274",
+        "wikidata_artist_id": "Q172505"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e280268a-a5ab-4bb0-be4d-ec470ca59131",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "nuevo tango",
+        "value_qid": "Q1632601",
+        "wikidata_artist_id": "Q172505"
+      }
+    ],
+    "label": "Astor Piazzolla",
+    "musicbrainz_artist_id": "e280268a-a5ab-4bb0-be4d-ec470ca59131",
+    "wikidata_artist_id": "Q172505"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e4d32f51-bc57-42a4-8165-b80f7a86496d",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "swing",
+        "value_qid": "Q203775",
+        "wikidata_artist_id": "Q159099"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e4d32f51-bc57-42a4-8165-b80f7a86496d",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": null,
+        "value_qid": "Q3071",
+        "wikidata_artist_id": "Q159099"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "e4d32f51-bc57-42a4-8165-b80f7a86496d",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "Neue Deutsche Welle",
+        "value_qid": "Q646679",
+        "wikidata_artist_id": "Q159099"
+      }
+    ],
+    "label": "Nina Hagen",
+    "musicbrainz_artist_id": "e4d32f51-bc57-42a4-8165-b80f7a86496d",
+    "wikidata_artist_id": "Q159099"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f07dbc2f-317b-470f-bad4-5f1b0eb6faf1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "música popular brasileira",
+        "value_qid": "Q1046768",
+        "wikidata_artist_id": "Q309983"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f07dbc2f-317b-470f-bad4-5f1b0eb6faf1",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "music of Brazil",
+        "value_qid": "Q899215",
+        "wikidata_artist_id": "Q309983"
+      }
+    ],
+    "label": "Caetano Veloso",
+    "musicbrainz_artist_id": "f07dbc2f-317b-470f-bad4-5f1b0eb6faf1",
+    "wikidata_artist_id": "Q309983"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "drill and bass",
+        "value_qid": "Q1259016",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "experimental music",
+        "value_qid": "Q1640319",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "techno",
+        "value_qid": "Q170611",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient music",
+        "value_qid": "Q193207",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "acid techno",
+        "value_qid": "Q341395",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "intelligent dance music",
+        "value_qid": "Q660984",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "ambient techno",
+        "value_qid": "Q9149801",
+        "wikidata_artist_id": "Q223161"
+      },
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "electronic music",
+        "value_qid": "Q9778",
+        "wikidata_artist_id": "Q223161"
+      }
+    ],
+    "label": "Aphex Twin",
+    "musicbrainz_artist_id": "f22942a1-6f70-4f48-866e-238cb2308fbd",
+    "wikidata_artist_id": "Q223161"
+  },
+  {
+    "claims": [
+      {
+        "license": "CC0",
+        "musicbrainz_artist_id": "f86f1f07-d182-45ce-ae93-ef610880ca72",
+        "property_id": "P136",
+        "source": "https://query.wikidata.org/sparql",
+        "value_label": "blues",
+        "value_qid": "Q9759",
+        "wikidata_artist_id": "Q220707"
+      }
+    ],
+    "label": "Muddy Waters",
+    "musicbrainz_artist_id": "f86f1f07-d182-45ce-ae93-ef610880ca72",
+    "wikidata_artist_id": "Q220707"
+  }
+]

@@ -112,6 +112,12 @@ FOUNDATION: Final[dict[str, object]] = {
             "license": "Wikidata CC0 raw responses and sanitized portable projections",
         },
         {
+            "id": "independent-cultural-context-example",
+            "path": "data/examples/independent-cultural-context/receipt.json",
+            "required": True,
+            "license": "Wikidata CC0 exact identity crosswalk and direct claims",
+        },
+        {
             "id": "outbound-link-example",
             "path": "data/examples/artist-links/receipt.json",
             "required": True,
@@ -159,6 +165,18 @@ FOUNDATION: Final[dict[str, object]] = {
                 "--verify-pack --pack-output data/examples/cultural-context"
             ),
             "purpose": "replay independent direct Wikidata claims and property-specific overlaps",
+        },
+        {
+            "id": "portable-independent-cultural-context",
+            "needs": ["independent-cultural-context-example"],
+            "command": (
+                ".venv/bin/python scripts/acquire_independent_cultural_context.py "
+                "--verify data/examples/independent-cultural-context"
+            ),
+            "purpose": (
+                "replay curated exact-ID Wikidata claims with QID-pinned identity "
+                "conflict accounting"
+            ),
         },
         {
             "id": "portable-listening-links",
