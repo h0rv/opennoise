@@ -1,0 +1,13 @@
+{
+  "core_credit_license_url": "https://musicbrainz.org/doc/About/Data_License",
+  "data_license": "CC0-1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "old_research_wrappers_promoted": false,
+  "quote": "All of the data contained in AcousticBrainz is licensed under the CC0 license (public domain).",
+  "review": "independent_gap_review, 2026-10-03; native AB dataset reusable separately from old wrappers",
+  "scope": "AcousticBrainz data only; not audio, MusicBrainz supplementary data or homepage HTML",
+  "source": "https://acousticbrainz.org/",
+  "source_body_bytes": 8728,
+  "source_body_sha256": "dad99100be34964459ec9c936efdeacb779a403a73a1c744e27c113e7618a472",
+  "source_observed_at": "2026-09-30T23:19:42.421597+00:00"
+}
