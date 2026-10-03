@@ -168,6 +168,37 @@ class PositiveOnlyModelTests(unittest.TestCase):
         self.assertTrue(np.isneginf(scores[:2]).all())
         self.assertTrue(np.isneginf(scores[:, -1]).all())
 
+    def test_training_overflow_cannot_silently_remove_a_descriptor(self) -> None:
+        for extreme in (np.full(14, 1e308), np.tile([1e200, -1e200], 7)):
+            with self.subTest(extreme=extreme[0]):
+                x, y, training = self.fixture()
+                x[:, 1] = extreme
+                with (
+                    np.errstate(all="raise"),
+                    self.assertRaisesRegex(ValueError, "normalization overflows"),
+                ):
+                    fit_positive_gaussian(x, y, training)
+
+    def test_held_out_extremes_do_not_trigger_training_overflow(self) -> None:
+        x, y, training = self.fixture()
+        first = fit_positive_gaussian(x, y, training)
+        x[~training] = 1e308
+        with np.errstate(all="raise"):
+            second = fit_positive_gaussian(x, y, training)
+        for field in ("center", "scale", "quadratic", "linear", "intercept", "active_columns"):
+            np.testing.assert_array_equal(getattr(first, field), getattr(second, field))
+
+    def test_constant_training_descriptor_is_still_omitted(self) -> None:
+        x, y, training = self.fixture()
+        x[:, 1] = 2.0
+        model = fit_positive_gaussian(x, y, training)
+        np.testing.assert_array_equal(model.active_columns, [True, False])
+        np.testing.assert_array_equal(model.center, [4.5, 2.0])
+        self.assertEqual(model.scale[1], 0.0)
+        scores, reasons = score_positive_gaussian(model, np.array([[4.0, 2.0]]))
+        self.assertEqual(reasons, [None])
+        self.assertTrue(np.isfinite(scores[:, model.active_labels]).all())
+
     def test_integer_training_masks_cannot_select_held_out_rows(self) -> None:
         x, y, training = self.fixture()
         training = np.roll(training, 2)
