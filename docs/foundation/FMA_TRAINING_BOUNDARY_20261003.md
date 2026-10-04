@@ -35,3 +35,12 @@ and does not certify duplicate isolation. No saved model scores were recomputed.
 If the audit rejects the native corpus, a separately versioned split and model
 run must be frozen and replayed before reporting replacement scores. No musical
 membership probabilities or fresh confirmation are established here.
+
+## Full native replay, 2026-10-04
+
+The [fresh FMA capture and comparison](../reports/FMA_NATIVE_COMPARISON_20261004.md)
+now supplies the missing duplicate-group custody. The whole-track guard passes
+all 109,727 native tracks with 1,689 exact full-feature duplicate groups, and
+independent graph traversal verifies 7,410 components. The historical v2 ledger
+and all query IDs are unchanged. This closes the native replay question above,
+not unknown recording/performer aliases or independent musical validation.
