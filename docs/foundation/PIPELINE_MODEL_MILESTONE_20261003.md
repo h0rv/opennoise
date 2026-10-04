@@ -35,6 +35,14 @@ preserved in Library with hashes. Musical confidence calibration, independent
 listener judgments and alias-complete identity remain unmet; this does not pass
 the complete milestone or any deferred site gate.
 
+The separate [FMA training-component calibration](../reports/FMA_TRAINING_CALIBRATION_20261004.md)
+closes the stricter FMA training-only selection requirement using retained inputs:
+fit and threshold calibration use disjoint components inside original training.
+Both outer folds remain previously inspected diagnostics. Unsupported labels
+abstain; source-positive recovery does not close musical confidence calibration
+or the broader milestone. The historical validation-calibrated protocol remains
+separate and preserved.
+
 ## Dependencies and limits
 
 Real independent listeners are required to assess musical membership, sonic and

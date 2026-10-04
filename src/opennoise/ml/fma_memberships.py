@@ -11,7 +11,7 @@ import json
 import math
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import zstandard
@@ -23,6 +23,9 @@ from opennoise.ml.fma_acoustic_baseline import (
     _json_rows,
 )
 from opennoise.ml.fma_saved_replay import replay_saved_pack
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 REVISION = "fma-component-positive-memberships-v1"
 MIN_COMPONENTS = 20
@@ -148,6 +151,10 @@ def evaluate_rows(
     rows: list[dict[str, Any]],
     thresholds: dict[int, dict[str, Any]],
     training_support: dict[int, int],
+    *,
+    suggestion_function: Callable[
+        [dict[str, Any], dict[int, dict[str, Any]]], dict[str, Any]
+    ] = suggest,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Retain every query/positive and cluster uncertainty by exact frozen native components."""
     components: dict[int, list[int]] = defaultdict(lambda: [0, 0])
@@ -160,7 +167,7 @@ def evaluate_rows(
     )
     raw_hits = raw_positives = uncapped_hits = stable_hits = unlabeled = 0
     for row in rows:
-        output = suggest(row, thresholds)
+        output = suggestion_function(row, thresholds)
         outputs.append(output)
         targets = set(row["genre_ids"] or [])
         selected = {item["genre_id"] for item in output["memberships"]}
