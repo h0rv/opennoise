@@ -89,6 +89,7 @@ def component_ledger(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
                 "component_id": component,
                 "fold": fold,
                 "observation_count": len(observations),
+                "join_states": sorted({row["join_state"] for row in observations}),
                 "training_identity_state": state,
             }
         )
@@ -134,6 +135,7 @@ def fit_frame(
     )
     frame: dict[str, Any] = {
         "heldout_fold": heldout_fold,
+        "input_columns": list(columns),
         "training_recordings": ids,
         "column_observed_counts": counts.tolist(),
         "support_selected_columns": selected.tolist(),
@@ -187,6 +189,14 @@ def transform(row: dict[str, Any], frame: dict[str, Any]) -> tuple[list[float], 
     return normalized, None
 
 
+def _quarantine_reason(metadata: dict[str, Any]) -> str | None:
+    if metadata["training_identity_state"] == "eligible":
+        return None
+    if len(metadata["join_states"]) == 1 and metadata["join_states"][0] != "joined":
+        return str(metadata["join_states"][0])
+    return str(metadata["training_identity_state"])
+
+
 def compare_recordings(
     rows: Sequence[dict[str, Any]], ledger: dict[str, Any], frames: Sequence[dict[str, Any]]
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -212,8 +222,7 @@ def compare_recordings(
             if metadata["fold"] != frame["heldout_fold"]:
                 continue
             vector, reason = transform(by_recording[identity], frame)
-            if metadata["training_identity_state"] != "eligible":
-                reason = reason or metadata["training_identity_state"]
+            reason = _quarantine_reason(metadata) or reason
             allowed = {
                 key: value
                 for key, value in candidates.items()
@@ -247,6 +256,11 @@ def compare_recordings(
             "source": row["source"],
             "join_state": row["join_state"],
             **results[row["recording_mbid"]],
+            "outcome": (
+                row["join_state"]
+                if row["join_state"] != "joined"
+                else results[row["recording_mbid"]]["outcome"]
+            ),
         }
         for index, row in enumerate(rows)
     ]

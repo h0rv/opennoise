@@ -103,6 +103,30 @@ class RecordingIsolationTests(unittest.TestCase):
             self.assertEqual(query["outcome"], "conflicting_recording_observations")
             self.assertEqual(query["numeric"], [])
 
+    def test_mixed_duplicate_failures_keep_per_observation_and_stable_recording_outcomes(
+        self,
+    ) -> None:
+        rows = fixture()
+        failure = copy.deepcopy(rows[0])
+        failure["join_state"] = "missing_observation_credit"
+        failure["credited_artist_mbids"] = None
+        failure["values"] = [None] * len(COLUMNS)
+        failure["source"] = {"capture_index": 999}
+        summaries = []
+        for ordered in ([*rows, failure], [failure, *rows]):
+            ledger = model.component_ledger(ordered)
+            queries, summary = model.compare_recordings(
+                ordered, ledger, frames_for(ordered, ledger)
+            )
+            summaries.append(summary)
+            repeated = [q for q in queries if q["recording_mbid"] == rows[0]["recording_mbid"]]
+            self.assertEqual(
+                {q["source"]["capture_index"]: q["outcome"] for q in repeated},
+                {1: "non_joined_observation", 999: "missing_observation_credit"},
+            )
+            self.assertTrue(all(not q["numeric"] and not q["fixed_hash"] for q in repeated))
+        self.assertEqual(summaries[0], summaries[1])
+
 
 class RecordingFrameTests(unittest.TestCase):
     def test_heldout_values_and_missingness_cannot_change_feature_frame(self) -> None:
