@@ -1,0 +1,28 @@
+{
+  "revision": "fma-training-component-memberships-v1",
+  "frozen_utc": "2026-10-04T20:50:33.967839+00:00",
+  "source_commit": "8a5257b9be66ce8a4d47ab28697241677316601c",
+  "native_declaration_sha256": "21d03475d0e2bd05c79e68542f0ae82c5936764ae17977770d1add8556c9d257",
+  "baseline_evaluation_sha256": "af574faa2d926fe4b03272fbfa53f49b52e65d0e7105d0d6831e9a422e912863",
+  "original_partition": "opennoise-fma-acoustic-native-component-split-v2 unchanged",
+  "inner_role_seed": "opennoise-fma-training-only-membership-roles-v1",
+  "inner_role_rule": "Only original fold0 known-artist queries: SHA256(seed+NUL+decimal component_id), full digest modulo5==0 calibration; all other buckets fit. Whole original components; no reshuffling.",
+  "model": "Existing single positive-only Gaussian unchanged hyperparameters; normalization, positive means/variances and prevalence from inner-fit only. Never refit after calibration.",
+  "thresholds": {
+    "coverage_target": 0.8,
+    "minimum_positive_components": 20,
+    "maximum_memberships": 20,
+    "rank_stability_radius": 2,
+    "bootstrap_repetitions": 200,
+    "bootstrap_seed": 72341,
+    "method": "Worst positive rank within each inner-calibration component, missing score vocabulary_size+1; ceil((n+1)*0.8) order statistic. Unsupported labels abstain."
+  },
+  "external_evaluation": "Original validation and test only after saved model and thresholds freeze. Both previously inspected, diagnostic only. No model/threshold selection or repeated optimization.",
+  "unknowns": "No fabricated positives, verified negatives, musical probabilities, cross-provider identities or listener judgments. Report all raw/known/missing-feature/unlabeled/cold/rare/unseen counts.",
+  "limits": {
+    "model_run_seconds": 120,
+    "memory_bytes": 1000000000,
+    "new_outputs_bytes": 100000000
+  },
+  "one_arm_only": true
+}
