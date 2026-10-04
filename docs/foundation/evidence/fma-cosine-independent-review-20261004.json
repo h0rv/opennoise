@@ -1,0 +1,67 @@
+{
+  "evaluated_source_sha256": {
+    "compare_fma_cosine_baseline.py": "ad71f5fff7b40614ea4ee3d91a11cae847a186bd95d22a3d3a918a0e75c382ac",
+    "fma_cosine_baseline.py": "fa3a8be1c8465fd864efb2f7ab2b704a281263056514ffbe4460317b9a20b4b9"
+  },
+  "evaluation_sha256": "ea3f4c8e594a80cbe4f624589193d79962fa678753b969ea9a5316b6015ef448",
+  "focused_tests": {
+    "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python -m unittest tests.test_fma_cosine_baseline -v",
+    "passed": true,
+    "tests": 7
+  },
+  "guard_only_rerun_verification": {
+    "byte_identical_files": [
+      "declaration.json",
+      "model.npz",
+      "fma_cosine_baseline.py",
+      "validation-cosine-ranks.jsonl.zst",
+      "test-cosine-ranks.jsonl.zst"
+    ],
+    "metrics_equal": true,
+    "model_output_bytes": 3241868,
+    "previous_attempt_preserved": true,
+    "runner_only_change": "Count complete encoded report bytes in budget before write"
+  },
+  "independent_audit": {
+    "active_prototypes": 158,
+    "audit_script_sha256": "d069e1833aecd5570633a628bf3b6130f88c17c166afdcd9cdb26980c2f79695",
+    "cosine_scorer_imported": false,
+    "elapsed_seconds": 7.62374330800003,
+    "evaluation_sha256": "ea3f4c8e594a80cbe4f624589193d79962fa678753b969ea9a5316b6015ef448",
+    "folds": {
+      "test": {
+        "all_full_rankings_match": true,
+        "all_metrics_match": true,
+        "queries": 6468
+      },
+      "validation": {
+        "all_full_rankings_match": true,
+        "all_metrics_match": true,
+        "queries": 7332
+      }
+    },
+    "independently_recomputed_native_means": true,
+    "peak_rss_bytes": 364687360,
+    "status": "passed",
+    "training_finite_rows": 92270
+  },
+  "issues": [],
+  "limits": [
+    "Previously inspected test fold: diagnostic, not fresh confirmation.",
+    "Native primary artist/album/exact feature duplicate component isolation does not resolve unknown aliases or establish complete performer independence.",
+    "Observed metadata-positive recovery only; no calibrated probabilities, verified negatives, or musical/listener relevance.",
+    "Audit rechecks retained projection hashes, independent components, direct training means, all rankings and independent metrics; it does not reacquire network sources.",
+    "Full repository tests and exact CI are owned by parent, not asserted by this review."
+  ],
+  "resolved_issues": [
+    "Nonfinite recovered class means/norms now fail closed; regression test passes.",
+    "Complete encoded evaluation JSON byte length now included in output budget before writing; reviewed exact final source and rerun."
+  ],
+  "reviewed_source_sha256": {
+    "scripts/compare_fma_cosine_baseline.py": "ad71f5fff7b40614ea4ee3d91a11cae847a186bd95d22a3d3a918a0e75c382ac",
+    "src/opennoise/ml/fma_cosine_baseline.py": "fa3a8be1c8465fd864efb2f7ab2b704a281263056514ffbe4460317b9a20b4b9",
+    "tests/test_fma_cosine_baseline.py": "3bf4ea13100ffd4643ec5673e6186e3d0b4b9d17c720c423797e5ab76ab4e1ba"
+  },
+  "reviewer": "independent model_review agent",
+  "verdict": "passed_no_remaining_review_findings"
+}

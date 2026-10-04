@@ -1,0 +1,23 @@
+{
+  "active_prototypes": 158,
+  "audit_script_sha256": "d069e1833aecd5570633a628bf3b6130f88c17c166afdcd9cdb26980c2f79695",
+  "cosine_scorer_imported": false,
+  "elapsed_seconds": 7.62374330800003,
+  "evaluation_sha256": "ea3f4c8e594a80cbe4f624589193d79962fa678753b969ea9a5316b6015ef448",
+  "folds": {
+    "test": {
+      "all_full_rankings_match": true,
+      "all_metrics_match": true,
+      "queries": 6468
+    },
+    "validation": {
+      "all_full_rankings_match": true,
+      "all_metrics_match": true,
+      "queries": 7332
+    }
+  },
+  "independently_recomputed_native_means": true,
+  "peak_rss_bytes": 364687360,
+  "status": "passed",
+  "training_finite_rows": 92270
+}

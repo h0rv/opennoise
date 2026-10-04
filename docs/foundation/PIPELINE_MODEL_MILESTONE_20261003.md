@@ -23,6 +23,18 @@ representative recordings and listening judgments remain important data/model
 validation questions; a minimal demo does not establish them. Browser work is
 not on the critical path for the normalized dataset or model exports.
 
+## Native FMA update, 2026-10-04
+
+The [fresh native replay and fixed comparison](../reports/FMA_NATIVE_COMPARISON_20261004.md)
+adds independently verified licensed metadata/features, reusable model artifacts
+and full native duplicate-group isolation evidence. The fixed cosine comparator
+underperforms Gaussian on overall validation recovery; retain its rare-label
+tradeoff without promoting it. No split change or tuning occurred, and previously
+inspected test results remain diagnostics. Native inputs and baseline outputs are
+preserved in Library with hashes. Musical confidence calibration, independent
+listener judgments and alias-complete identity remain unmet; this does not pass
+the complete milestone or any deferred site gate.
+
 ## Dependencies and limits
 
 Real independent listeners are required to assess musical membership, sonic and
@@ -32,7 +44,9 @@ and listening. A metadata grant never grants artwork or audio rights. Musical
 confidence cannot be validated from source-positive metadata alone.
 
 Local capacity is an engineering constraint, not a licensing or human dependency.
-The executor is near its 16 GiB cgroup limit and its overlay is full. All jobs
+The historical executor was near its 16 GiB cgroup limit with a full overlay.
+The fresh 2026-10-04 executor has adequate headroom; the FMA comparison retains
+its stricter 1 GB process cap and does not delete prior artifacts. All jobs
 must be serialized, stream bounded chunks, preserve rejected attempts and check
 actual headroom before starting. Deletion approval for the 443 redundant recovery
 transfer files remains pending; this priority change grants no deletion. Original

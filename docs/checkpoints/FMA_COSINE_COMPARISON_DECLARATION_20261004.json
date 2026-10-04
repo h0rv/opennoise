@@ -1,0 +1,25 @@
+{
+  "revision": "fma-positive-cosine-comparison-v1",
+  "frozen_at": "2026-10-04T20:23:31.612765+00:00",
+  "baseline_evaluation_sha256": "af574faa2d926fe4b03272fbfa53f49b52e65d0e7105d0d6831e9a422e912863",
+  "native_declaration_sha256": "21d03475d0e2bd05c79e68542f0ae82c5936764ae17977770d1add8556c9d257",
+  "source_commit": "a87bfa068ee9e51225fb68f8d115120e3d028fe4",
+  "arm": "cosine_of_training_standardized_query_and_positive_class_mean",
+  "parameters": {
+    "minimum_finite_positive_support": 5,
+    "minimum_vector_norm": 1e-12,
+    "maximum_standardized_absolute_value": 12
+  },
+  "fit": "Reuse independently native-replayed training-only Gaussian sufficient statistics: class_mean = linear / (-2 * quadratic); L2-normalize each supported class mean. Keep training-only center, scale and active columns. No variance or prevalence in cosine scores.",
+  "selection": "One fixed arm, no hyperparameter search or selection. Evaluate validation first and frozen test as previously inspected diagnostic only.",
+  "partition": "Unchanged opennoise-fma-acoustic-native-component-split-v2; exact native artist/album/full-feature-duplicate connected components. Verify every baseline ledger row against fresh native components.",
+  "denominators": "All known-artist validation/test metadata queries including missing features and unlabeled rows. Missing/nonfinite/out-of-range/zero-norm queries abstain. All native target labels retained, including unsupported classes.",
+  "tie_break": "ascending native genre ID",
+  "historical_test_previously_inspected": true,
+  "limits": {
+    "model_run_seconds": 120,
+    "memory_bytes": 1000000000,
+    "new_outputs_bytes": 100000000
+  },
+  "no_musical_quality_or_calibration_claim": true
+}

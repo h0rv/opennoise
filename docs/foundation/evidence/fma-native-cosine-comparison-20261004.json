@@ -1,0 +1,339 @@
+{
+  "active_prototypes": 158,
+  "artifacts": {
+    "compare_fma_cosine_baseline.py": {
+      "bytes": 10061,
+      "sha256": "ad71f5fff7b40614ea4ee3d91a11cae847a186bd95d22a3d3a918a0e75c382ac"
+    },
+    "declaration.json": {
+      "bytes": 1728,
+      "sha256": "db4f79fc60301d50de735ba69463342d281bb94e13083d439527f00d196362c2"
+    },
+    "fma_cosine_baseline.py": {
+      "bytes": 3363,
+      "sha256": "fa3a8be1c8465fd864efb2f7ab2b704a281263056514ffbe4460317b9a20b4b9"
+    },
+    "model.npz": {
+      "bytes": 56261,
+      "sha256": "438196e429109635ace3a6e6c06d5e1d08c4f3fa184fca978abf0e19fd9e00a1"
+    },
+    "test-cosine-ranks.jsonl.zst": {
+      "bytes": 1354319,
+      "sha256": "d627a7da0f3f8b648805dca10c3a333e3e063aea30062ed41c5b16079563c13a"
+    },
+    "validation-cosine-ranks.jsonl.zst": {
+      "bytes": 1542123,
+      "sha256": "1d394a9e4992f4c62777d5f1d5eadbf071fe9a48885b22d6ac538da1f034d1aa"
+    }
+  },
+  "baseline_evaluation_sha256": "af574faa2d926fe4b03272fbfa53f49b52e65d0e7105d0d6831e9a422e912863",
+  "coverage": {
+    "empty_observed_label_rows": 0,
+    "features": {
+      "source_positives": 253869,
+      "tracks": 106574
+    },
+    "known_missing_features": {
+      "source_positives": 6434,
+      "tracks": 3035
+    },
+    "missing_features": {
+      "source_positives": 6717,
+      "tracks": 3153
+    },
+    "missing_target_rows": 2609,
+    "observed_genre_ids": 162,
+    "raw": {
+      "source_positives": 260586,
+      "tracks": 109727
+    },
+    "raw_genre_vocabulary": 164,
+    "unresolved_artist": {
+      "source_positives": 2075,
+      "tracks": 974
+    },
+    "unresolved_missing_features": {
+      "source_positives": 283,
+      "tracks": 118
+    }
+  },
+  "declaration_sha256": "db4f79fc60301d50de735ba69463342d281bb94e13083d439527f00d196362c2",
+  "historical_test_previously_inspected": true,
+  "limitations": [
+    "Native-ID isolation does not resolve nonexact recording or performer aliases.",
+    "Observed track labels are incomplete; source absences are unknown.",
+    "No artist genre assignments, MBID bridge, audio, independent musical relevance, or EveryNoise parity.",
+    "No validation tuning; train-only normalization and support gates are prespecified."
+  ],
+  "native_fold_ledger_sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7",
+  "partition": {
+    "components": 7410,
+    "duplicate_groups": 1689,
+    "folds": {
+      "test": {
+        "source_positives": 14402,
+        "tracks": 6468
+      },
+      "train": {
+        "source_positives": 227441,
+        "tracks": 94953
+      },
+      "validation": {
+        "source_positives": 16668,
+        "tracks": 7332
+      }
+    },
+    "largest_components_tracks": [
+      39750,
+      935,
+      632,
+      528,
+      425,
+      381,
+      356,
+      319,
+      260,
+      247,
+      215,
+      214,
+      208,
+      175,
+      174,
+      162,
+      161,
+      160,
+      158,
+      157
+    ],
+    "revision": "opennoise-fma-acoustic-native-component-split-v2",
+    "unresolved_positive_artist_ids_retained_as_graph_nodes": true
+  },
+  "resource": {
+    "elapsed_seconds": 2.434105387000045,
+    "limits": {
+      "memory_bytes": 1000000000,
+      "model_run_seconds": 120,
+      "new_outputs_bytes": 100000000
+    },
+    "peak_rss_bytes": 121831424
+  },
+  "revision": "fma-positive-cosine-comparison-v1",
+  "selection_performed": false,
+  "zero_norm_supported_prototypes": 0,
+  "evaluation": {
+    "test": {
+      "acoustic": {
+        "abstentions": {
+          "missing_feature_row": 182,
+          "outside_training_support": 1
+        },
+        "below_five_seen_positive_count": 14,
+        "cold_positive_count": 14,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 6369,
+        "macro_recall_at_10": 0.2739980689186841,
+        "macro_recall_at_5": 0.17632955136967468,
+        "mean_reciprocal_rank": 0.31295635714887055,
+        "precision_available": false,
+        "queries": 6468,
+        "rare_positive_count": 263,
+        "rare_recall_at_10": 0.049429657794676805,
+        "rare_recall_at_5": 0.015209125475285171,
+        "recall_at_10": 0.39591723371753923,
+        "recall_at_5": 0.2650326343563394,
+        "source_positive_count": 14402,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 99
+      },
+      "constant": {
+        "abstentions": {},
+        "below_five_seen_positive_count": 14,
+        "cold_positive_count": 14,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 6369,
+        "macro_recall_at_10": 0.07352941176470588,
+        "macro_recall_at_5": 0.03676470588235294,
+        "mean_reciprocal_rank": 0.11532834508914876,
+        "precision_available": false,
+        "queries": 6468,
+        "rare_positive_count": 263,
+        "rare_recall_at_10": 0.0,
+        "rare_recall_at_5": 0.0,
+        "recall_at_10": 0.08123871684488265,
+        "recall_at_5": 0.05395084016108874,
+        "source_positive_count": 14402,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 99
+      },
+      "cosine": {
+        "abstentions": {
+          "missing_feature_row": 182,
+          "outside_training_support": 1
+        },
+        "below_five_seen_positive_count": 14,
+        "cold_positive_count": 14,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 6369,
+        "macro_recall_at_10": 0.2502127988085636,
+        "macro_recall_at_5": 0.14835926872728222,
+        "mean_reciprocal_rank": 0.17250664290111034,
+        "precision_available": false,
+        "queries": 6468,
+        "rare_positive_count": 263,
+        "rare_recall_at_10": 0.16730038022813687,
+        "rare_recall_at_5": 0.11026615969581749,
+        "recall_at_10": 0.24468823774475768,
+        "recall_at_5": 0.1340091653936953,
+        "source_positive_count": 14402,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 99
+      },
+      "popularity": {
+        "abstentions": {},
+        "below_five_seen_positive_count": 14,
+        "cold_positive_count": 14,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 6369,
+        "macro_recall_at_10": 0.07352941176470588,
+        "macro_recall_at_5": 0.03676470588235294,
+        "mean_reciprocal_rank": 0.31910814913960545,
+        "precision_available": false,
+        "queries": 6468,
+        "rare_positive_count": 263,
+        "rare_recall_at_10": 0.0,
+        "rare_recall_at_5": 0.0,
+        "recall_at_10": 0.36626857380919314,
+        "recall_at_5": 0.2582280238855714,
+        "source_positive_count": 14402,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 99
+      }
+    },
+    "validation": {
+      "acoustic": {
+        "abstentions": {
+          "missing_feature_row": 170,
+          "outside_training_support": 3
+        },
+        "below_five_seen_positive_count": 0,
+        "cold_positive_count": 0,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 7253,
+        "macro_recall_at_10": 0.2532660484384469,
+        "macro_recall_at_5": 0.15134291230578928,
+        "mean_reciprocal_rank": 0.3026080173493435,
+        "precision_available": false,
+        "queries": 7332,
+        "rare_positive_count": 366,
+        "rare_recall_at_10": 0.04644808743169399,
+        "rare_recall_at_5": 0.02459016393442623,
+        "recall_at_10": 0.37047036237101033,
+        "recall_at_5": 0.24406047516198703,
+        "source_positive_count": 16668,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 79
+      },
+      "constant": {
+        "abstentions": {},
+        "below_five_seen_positive_count": 0,
+        "cold_positive_count": 0,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 7253,
+        "macro_recall_at_10": 0.06474820143884892,
+        "macro_recall_at_5": 0.03597122302158273,
+        "mean_reciprocal_rank": 0.13430572586887887,
+        "precision_available": false,
+        "queries": 7332,
+        "rare_positive_count": 366,
+        "rare_recall_at_10": 0.0,
+        "rare_recall_at_5": 0.0,
+        "recall_at_10": 0.10223182145428365,
+        "recall_at_5": 0.07469402447804176,
+        "source_positive_count": 16668,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 79
+      },
+      "cosine": {
+        "abstentions": {
+          "missing_feature_row": 170,
+          "outside_training_support": 3
+        },
+        "below_five_seen_positive_count": 0,
+        "cold_positive_count": 0,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 7253,
+        "macro_recall_at_10": 0.24201358892803632,
+        "macro_recall_at_5": 0.15592464550489815,
+        "mean_reciprocal_rank": 0.18143521659844403,
+        "precision_available": false,
+        "queries": 7332,
+        "rare_positive_count": 366,
+        "rare_recall_at_10": 0.14754098360655737,
+        "rare_recall_at_5": 0.07377049180327869,
+        "recall_at_10": 0.2359611231101512,
+        "recall_at_5": 0.13894888408927286,
+        "source_positive_count": 16668,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 79
+      },
+      "popularity": {
+        "abstentions": {},
+        "below_five_seen_positive_count": 0,
+        "cold_positive_count": 0,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 7253,
+        "macro_recall_at_10": 0.07194244604316546,
+        "macro_recall_at_5": 0.03597122302158273,
+        "mean_reciprocal_rank": 0.3278932016325747,
+        "precision_available": false,
+        "queries": 7332,
+        "rare_positive_count": 366,
+        "rare_recall_at_10": 0.0,
+        "rare_recall_at_5": 0.0,
+        "recall_at_10": 0.363270938324934,
+        "recall_at_5": 0.23644108471322295,
+        "source_positive_count": 16668,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 79
+      }
+    }
+  },
+  "decision": "Do not replace Gaussian baseline; fixed cosine comparator is worse on overall validation recall and MRR. Preserve rare-label tradeoff without choosing a winner from inspected test results.",
+  "fresh_native_input_archive": {
+    "library_file_id": "libfile_c567548f92ec8191864e35995e2ea5d7",
+    "sha256": "1daeb6dd035b15a78e8359728aa3cef207c2434dea157acb678ae66b84facc30",
+    "bytes": 332185600
+  },
+  "comparison_archive": {
+    "library_file_id": "libfile_70d07179f91c81919be9a54809bf3255",
+    "bytes": 5985190,
+    "sha256": "3cb4ac5c5c1d0da2ac6553d613283e46c806da019dbf7fdb40f4c41d3ed8c4b8",
+    "manifest_sha256": "b0e7d767ed2e893f90ccdc20ec8bfa876a4672137e7cb452d4d8193054b494fe",
+    "final_model_directory": "model-final"
+  },
+  "final_independent_review_sha256": "55e4fddd62a20fd500806d3350a3b156aae7eff8aa276882fc49f308122d8fd6"
+}
