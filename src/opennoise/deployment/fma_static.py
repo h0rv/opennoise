@@ -6,7 +6,8 @@ import io
 import json
 import os
 import shutil
-from collections import defaultdict
+from collections import Counter, defaultdict
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
@@ -14,6 +15,7 @@ from urllib.parse import urlsplit
 import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
+from opennoise.deployment.fma_track_search import export_track_search
 from opennoise.ingest.fma.corpus import project_row, source_rows, verify_sources
 
 PAGE_SIZE = 200
@@ -22,6 +24,7 @@ TRACK_ID_SPAN = 500
 MAX_SHARD_BYTES = 200_000
 MAX_EXPORT_BYTES = 40_000_000
 MAX_ARTIST_INDEX_BYTES = 2_000_000
+RELATED_GENRES = 6
 
 
 def _projected_rows(path: Path) -> list[dict[str, Any]]:
@@ -200,6 +203,7 @@ def _artist_profiles(
     output: Path,
     artists: dict[int, dict[str, Any]],
     artist_tracks: dict[int | None, list[int]],
+    artist_track_genres: dict[int | None, Counter[int]],
     files: dict[str, Any],
 ) -> None:
     search = []
@@ -215,6 +219,12 @@ def _artist_profiles(
             "name": name,
             "status": status,
             "track_ids": ids,
+            "track_genre_counts": [
+                {"genre_id": genre, "track_count": count}
+                for genre, count in sorted(
+                    artist_track_genres[artist_id].items(), key=lambda item: (-item[1], item[0])
+                )
+            ],
         }
     for shard in range(PROFILE_SHARDS):
         _write(output, f"artists/{shard}.json", {"shard": shard, "artists": profiles[shard]}, files)
@@ -232,6 +242,28 @@ def _artist_profiles(
     files["artist-index.json"] = {"sha256": digest, "bytes": length}
 
 
+def _genre_connections(
+    tracks: list[dict[str, Any]], genre_tracks: dict[int, list[int]]
+) -> dict[int, list[dict[str, Any]]]:
+    """Connect direct track annotations by overlap; never infer sonic similarity or parents."""
+    shared: Counter[tuple[int, int]] = Counter()
+    for track in tracks:
+        shared.update(combinations(sorted(set(track["genre_ids"] or [])), 2))
+    neighbors: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for (left, right), count in shared.items():
+        union = len(genre_tracks[left]) + len(genre_tracks[right]) - count
+        for source, target in ((left, right), (right, left)):
+            neighbors[source].append(
+                {"genre_id": target, "shared_tracks": count, "overlap": count / union}
+            )
+    return {
+        genre: sorted(
+            rows, key=lambda row: (-row["overlap"], -row["shared_tracks"], row["genre_id"])
+        )[:RELATED_GENRES]
+        for genre, rows in neighbors.items()
+    }
+
+
 def build_fma_static(*, source: Path, projected: Path, output: Path) -> dict[str, Any]:
     """Build a fresh independent catalog; source track labels never become artist genres."""
     if output.exists() or output.is_symlink():
@@ -240,24 +272,33 @@ def build_fma_static(*, source: Path, projected: Path, output: Path) -> dict[str
     output.mkdir(parents=True)
     files: dict[str, Any] = {}
     artist_tracks: dict[int | None, list[int]] = defaultdict(list)
+    artist_track_genres: dict[int | None, Counter[int]] = defaultdict(Counter)
     genre_tracks: dict[int, list[int]] = defaultdict(list)
     unannotated = []
     tracks = sorted(tables["tracks"], key=lambda row: row["track_id"])
     for track in tracks:
         artist_tracks[track["artist_id"]].append(track["track_id"])
-        for genre in track["genre_ids"] or []:
+        artist_track_genres[track["artist_id"]].update(set(track["genre_ids"] or []))
+        for genre in sorted(set(track["genre_ids"] or [])):
             genre_tracks[genre].append(track["track_id"])
         if not track["genre_ids"]:
             unannotated.append(track["track_id"])
     artists = {row["artist_id"]: row for row in tables["artists"]}
     unknown = sorted(set(artist_tracks) - set(artists), key=lambda value: value or 0)
-    _artist_profiles(output, artists, artist_tracks, files)
+    _artist_profiles(output, artists, artist_tracks, artist_track_genres, files)
+    connections = _genre_connections(tracks, genre_tracks)
     genre_rows = []
     for genre in sorted(
         tables["genres"], key=lambda row: (row["title"].casefold(), row["genre_id"])
     ):
         ids = genre_tracks.get(genre["genre_id"], [])
-        genre_rows.append({**genre, "track_count": len(ids)})
+        genre_rows.append(
+            {
+                **genre,
+                "track_count": len(ids),
+                "connections": connections.get(genre["genre_id"], []),
+            }
+        )
         _cohort(output, f"genre-{genre['genre_id']}", ids, files)
     _cohort(output, "unannotated", unannotated, files)
     _cohort(output, "all", [row["track_id"] for row in tracks], files)
@@ -269,6 +310,7 @@ def build_fma_static(*, source: Path, projected: Path, output: Path) -> dict[str
         "profile_shards": PROFILE_SHARDS,
         "track_id_span": TRACK_ID_SPAN,
         "genres": genre_rows,
+        "track_search": export_track_search(output, tracks, files),
         **track_context,
         "counts": {
             "raw_tracks": len(tracks),
@@ -286,7 +328,13 @@ def build_fma_static(*, source: Path, projected: Path, output: Path) -> dict[str
     _write(output, "catalog.json", catalog, files)
     _write(output, "corpus-receipt.json", corpus_receipt, files)
     static = Path(__file__).resolve().parents[1] / "static"
-    for name in ("fma-catalog.html", "fma-catalog.css", "fma-catalog.js"):
+    for name in (
+        "fma-catalog.html",
+        "fma-catalog.css",
+        "fma-catalog.js",
+        "fma-genre-map.js",
+        "fma-genre-map.css",
+    ):
         relative = "index.html" if name.endswith(".html") else name
         shutil.copyfile(static / name, output / relative)
         digest, length = sha256_file(output / relative)
@@ -360,7 +408,13 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
     output.mkdir(parents=True)
     _clone_files(source, output, files)
     static = Path(__file__).resolve().parents[1] / "static"
-    for name in ("fma-catalog.html", "fma-catalog.css", "fma-catalog.js"):
+    for name in (
+        "fma-catalog.html",
+        "fma-catalog.css",
+        "fma-catalog.js",
+        "fma-genre-map.js",
+        "fma-genre-map.css",
+    ):
         relative = "index.html" if name.endswith(".html") else name
         temporary = output / (relative + ".tmp")
         shutil.copyfile(static / name, temporary)
