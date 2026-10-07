@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
+from opennoise.deployment.fma_playback import validate_playback_export
 from opennoise.deployment.fma_related import export_related_music
 from opennoise.deployment.fma_track_search import export_track_search
 from opennoise.deployment.source_genres import export_source_genres
@@ -266,7 +267,28 @@ def _genre_connections(
     }
 
 
-def build_fma_static(  # noqa: PLR0913 - explicit independent optional source packs.
+def _playback_binding(source: Path, output: Path, tracks: list[dict[str, Any]]) -> dict[str, Any]:
+    if source.name != "audio" or source.parent.resolve() != output.parent.resolve():
+        raise ValueError("playback must be the adjacent audio directory")
+    attached = validate_playback_export(source)
+    native_artists = {row["track_id"]: row["artist_id"] for row in tracks}
+    if any(
+        native_artists.get(row["track_id"]) != row["artist_id"]
+        for row in attached["tracks"].values()
+    ):
+        raise ValueError("playback track/artist identity differs from native catalog")
+    digest, length = sha256_file(source / "manifest.json")
+    return {
+        "manifest": "../audio/manifest.json",
+        "manifest_sha256": digest,
+        "manifest_bytes": length,
+        "clip_count": len(attached["tracks"]),
+        "audio_bytes": attached["audio_bytes"],
+        "scope": "separate local audio resource; excluded from metadata export byte total",
+    }
+
+
+def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional source packs.
     *,
     source: Path,
     projected: Path,
@@ -274,11 +296,15 @@ def build_fma_static(  # noqa: PLR0913 - explicit independent optional source pa
     source_genres: Path | None = None,
     artist_context_root: Path | None = None,
     related_music: Path | None = None,
+    playback: Path | None = None,
 ) -> dict[str, Any]:
     """Build a fresh independent catalog; source track labels never become artist genres."""
     if output.exists() or output.is_symlink():
         raise FileExistsError("refusing to replace FMA static catalog")
     corpus_receipt, tables = verified_tables(source, projected)
+    attached = (
+        _playback_binding(playback, output, tables["tracks"]) if playback is not None else None
+    )
     output.mkdir(parents=True)
     files: dict[str, Any] = {}
     artist_tracks: dict[int | None, list[int]] = defaultdict(list)
@@ -345,6 +371,8 @@ def build_fma_static(  # noqa: PLR0913 - explicit independent optional source pa
         catalog["related_music"] = export_related_music(
             related_music, output, files, {row["track_id"] for row in tracks}
         )
+    if attached is not None:
+        catalog["playback"] = attached
     _write(output, "catalog.json", catalog, files)
     _write(output, "corpus-receipt.json", corpus_receipt, files)
     static = Path(__file__).resolve().parents[1] / "static"
@@ -355,6 +383,7 @@ def build_fma_static(  # noqa: PLR0913 - explicit independent optional source pa
         "fma-genre-map.js",
         "source-genres.js",
         "fma-related-music.js",
+        "fma-playback.js",
         "fma-genre-map.css",
     ):
         relative = "index.html" if name.endswith(".html") else name
@@ -427,6 +456,16 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         files = json.loads(
             zstandard.ZstdDecompressor().decompress((source / binding["path"]).read_bytes())
         )
+    catalog = json.loads((source / "catalog.json").read_bytes())
+    if catalog.get("playback"):
+        audio = output.parent / "audio"
+        validate_playback_export(audio)
+        expected = catalog["playback"]
+        if sha256_file(audio / "manifest.json") != (
+            expected["manifest_sha256"],
+            expected["manifest_bytes"],
+        ):
+            raise ValueError("refreshed catalog requires the same adjacent audio attachment")
     output.mkdir(parents=True)
     _clone_files(source, output, files)
     static = Path(__file__).resolve().parents[1] / "static"
@@ -437,6 +476,7 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         "fma-genre-map.js",
         "source-genres.js",
         "fma-related-music.js",
+        "fma-playback.js",
         "fma-genre-map.css",
     ):
         relative = "index.html" if name.endswith(".html") else name
