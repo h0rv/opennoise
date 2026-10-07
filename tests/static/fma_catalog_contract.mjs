@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {existsSync} from 'node:fs';
-import {mkdtemp, readFile, rm} from 'node:fs/promises';
+import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {createServer} from 'node:http';
 import {tmpdir} from 'node:os';
 import {join, resolve, sep} from 'node:path';
@@ -93,5 +93,79 @@ test('actual FMA search, missing records and unannotated tracks work on mobile a
     assert.match(await evaluate("document.querySelector('#status').textContent"), /2,609/);
     assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
     assert.equal(await evaluate("document.querySelectorAll('audio,video,iframe').length"), 0);
+  });
+});
+
+test('connected genres lead to tracks and an artist’s track-genre summary', {skip, timeout: 60000}, async () => {
+  const catalog = JSON.parse(await readFile(join(root, 'catalog.json')));
+  const genre = catalog.genres.find(row => row.title === 'Jazz' && row.connections?.length);
+  assert.ok(genre, 'Jazz has source annotation connections');
+  await browser(async state => {
+    const {evaluate, wait, command} = state;
+    await evaluate(`location.hash='genre=${genre.genre_id}'`);
+    await wait("document.querySelector('.connections h2')?.textContent === 'Connected genres' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.equal(await evaluate("document.querySelectorAll('.connections li').length"), genre.connections.length);
+    assert.equal(await evaluate("document.querySelector('.connections').dataset.evidenceRole"), 'source_track_annotation_overlap');
+    const connection = await evaluate("document.querySelector('.connections .directory a').getAttribute('href')");
+    await evaluate("document.querySelector('.connections .directory a').focus()");
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r'});
+    await wait(`location.hash === ${JSON.stringify(connection)} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    assert.ok(await evaluate("document.querySelectorAll('.track').length > 0"));
+    await evaluate("document.querySelector('.track p a').click()");
+    await wait("location.hash.startsWith('#artist=') && document.querySelector('.connections h2')?.textContent === 'Explore track genres' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.match(await evaluate("document.querySelector('.connections p').textContent"), /this artist’s tracks; not an artist classification/);
+    const artistHash = await evaluate('location.hash');
+    const summary = await evaluate("document.querySelector('.connections').textContent");
+    await command('Page.reload');
+    await wait(`document.querySelector('.connections')?.textContent === ${JSON.stringify(summary)} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
+    await evaluate("document.querySelector('.connections .directory a').click()");
+    await wait("document.querySelector('.connections h2')?.textContent === 'Connected genres' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    await evaluate('history.back()');
+    await wait(`location.hash === ${JSON.stringify(artistHash)} && document.querySelector('.connections h2')?.textContent === 'Explore track genres' && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+  });
+});
+
+test('complete track search supports names, exact IDs, track links and empty results', {skip, timeout: 60000}, async () => {
+  const catalog = JSON.parse(await readFile(join(root, 'catalog.json')));
+  assert.equal(catalog.track_search.row_count, 109727);
+  await browser(async state => {
+    const {evaluate, wait, command, requests} = state;
+    assert.ok(!requests.some(row => row.request.url.includes('/track-search/')), 'track search stays lazy');
+    await evaluate("location.hash='tracks&q=AWOL'");
+    await wait("document.querySelector('h1').textContent === 'Tracks' && document.querySelectorAll('.track').length > 0 && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.match(await evaluate("document.querySelector('.track p').textContent"), /AWOL/i);
+    const trackId = await evaluate("document.querySelector('.track').dataset.trackId");
+    await evaluate(`location.hash='tracks&q=${trackId}'`);
+    await wait("document.querySelectorAll('.track').length === 1 && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.match(await evaluate("document.querySelector('#status').textContent"), /^1 matching tracks/);
+    await evaluate("document.querySelector('.track h2 a').click()");
+    await wait(`location.hash === '#track=${trackId}' && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    const heading = await evaluate("document.querySelector('h1').textContent");
+    await command('Page.reload');
+    await wait(`document.querySelector('h1')?.textContent === ${JSON.stringify(heading)} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    assert.ok(await evaluate("document.querySelector('.metadata a').href.startsWith('http')"));
+    await evaluate("document.querySelector('.annotations a').click()");
+    await wait("document.querySelector('.connections details') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    await evaluate("document.querySelector('.connections details').open = true");
+    assert.ok(await evaluate("document.querySelectorAll('.fma-genre-map svg a').length > 0"));
+    if (process.env.OPENNOISE_FMA_SCREENSHOTS) {
+      const shot = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(process.env.OPENNOISE_FMA_SCREENSHOTS, 'explorer-desktop.png'), Buffer.from(shot.data, 'base64'));
+    }
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
+    if (process.env.OPENNOISE_FMA_SCREENSHOTS) {
+      const shot = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(process.env.OPENNOISE_FMA_SCREENSHOTS, 'explorer-mobile.png'), Buffer.from(shot.data, 'base64'));
+    }
+    await evaluate("document.querySelector('.fma-genre-map svg a').focus()");
+    assert.equal(await evaluate("document.activeElement.closest('svg') !== null"), true);
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r'});
+    await idle(state);
+    await evaluate("location.hash='tracks&q=no-such-track-zzzzxxxx'");
+    await wait("document.querySelector('#status').textContent.startsWith('0 matching') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.match(await evaluate("document.querySelector('#rows').textContent"), /No matching tracks/);
   });
 });

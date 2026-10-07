@@ -10,6 +10,7 @@ import zstandard
 
 from opennoise.deployment.fma_static import (
     MAX_SHARD_BYTES,
+    _genre_connections,
     build_fma_static,
     refresh_fma_static_display,
     validated_metadata_url,
@@ -64,6 +65,23 @@ def tables() -> dict[str, list[dict[str, object]]]:
 class FMAStaticTests(unittest.TestCase):
     """The optional FMA pack stays separate from CC0 artist catalogs and inference."""
 
+    def test_connections_use_shared_track_labels_not_parent_or_artist_inference(self) -> None:
+        tracks = [
+            {"genre_ids": [1, 2, 2]},
+            {"genre_ids": [1, 3]},
+            {"genre_ids": [1]},
+            {"genre_ids": None},
+        ]
+        connections = _genre_connections(tracks, {1: [10, 11, 12], 2: [10], 3: [11]})
+        self.assertEqual([row["genre_id"] for row in connections[1]], [2, 3])
+        self.assertEqual(connections[1][0]["shared_tracks"], 1)
+        self.assertEqual(connections[1][0]["overlap"], 1 / 3)
+        self.assertEqual(connections[2][0]["genre_id"], 1)
+        self.assertNotIn(38, connections)
+        self.assertEqual(
+            _genre_connections([{"genre_ids": [1]}, {"genre_ids": None}], {1: [10]}), {}
+        )
+
     def test_only_source_declared_native_metadata_urls_survive(self) -> None:
         """External or malformed destinations cannot masquerade as playback links."""
         native = "https://freemusicarchive.org/music/a/track"
@@ -102,6 +120,8 @@ class FMAStaticTests(unittest.TestCase):
             self.assertEqual(catalog["genres"][1]["track_count"], 0)
             artist = json.loads((output / "artists/1.json").read_bytes())["artists"]["1"]
             self.assertEqual(artist["track_ids"], [2])
+            self.assertEqual(artist["track_genre_counts"], [{"genre_id": 21, "track_count": 1}])
+            self.assertEqual(catalog["genres"][1]["connections"], [])
             self.assertNotIn("genre_ids", artist)
             self.assertNotIn("musicbrainz_id", artist)
             self.assertEqual(
