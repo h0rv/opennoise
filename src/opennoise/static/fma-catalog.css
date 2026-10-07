@@ -3,3 +3,5 @@
 main:focus-visible{outline:3px solid #946b00;outline-offset:3px}
 
 .connections{max-width:42rem;margin:1.5rem 0}.connections h2{font-size:1.1rem;margin-bottom:.3rem}.connections p{font-size:.95rem;color:#444;margin:.3rem 0 .5rem}
+
+[hidden]{display:none!important}
