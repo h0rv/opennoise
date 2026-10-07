@@ -110,7 +110,8 @@ test('connected genres lead to tracks and an artist’s track-genre summary', {s
     const connection = await evaluate("document.querySelector('.connections .directory a').getAttribute('href')");
     await evaluate("document.querySelector('.connections .directory a').focus()");
     await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r'});
-    await wait(`location.hash === ${JSON.stringify(connection)} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    const connectedGenre = catalog.genres.find(row => row.genre_id === Number(connection.split('=')[1]));
+    await wait(`location.hash === ${JSON.stringify(connection)} && document.querySelector('h1').textContent === ${JSON.stringify(`${connectedGenre.title} · #${connectedGenre.genre_id}`)} && document.querySelector('.track p a') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
     assert.ok(await evaluate("document.querySelectorAll('.track').length > 0"));
     await evaluate("document.querySelector('.track p a').click()");
     await wait("location.hash.startsWith('#artist=') && document.querySelector('.connections h2')?.textContent === 'Explore track genres' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
@@ -285,5 +286,81 @@ test('optional Wikidata artist examples retain native identities and direct genr
     await wait(`document.querySelector('h1')?.textContent === ${JSON.stringify(artist.name)} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
     await evaluate(`document.querySelector('#rows a[href="#wdgenre=${genreId}"]').click()`);
     await wait(`location.hash === '#wdgenre=${genreId}' && document.querySelector('.source-artists a') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+  });
+});
+
+async function relatedMusicFixture(context) {
+  const catalog = JSON.parse(await readFile(join(root, 'catalog.json')));
+  if (!catalog.related_music) { context.skip('optional frozen descriptor neighbors are absent'); return null; }
+  const manifest = JSON.parse(await readFile(join(root, catalog.related_music.manifest_path)));
+  let supported, unavailable;
+  for (const file of Object.keys(manifest.files).sort((a, b) => parseInt(a) - parseInt(b))) {
+    const shard = JSON.parse(await readFile(join(root, 'related-tracks', file)));
+    supported ??= shard.rows.find(row => row[1].length && row[2] === null);
+    unavailable ??= shard.rows.find(row => !row[1].length && row[2]);
+    if (supported && unavailable) break;
+  }
+  assert.ok(supported, 'retained descriptors yield a supported query');
+  assert.ok(unavailable, 'unavailable descriptors remain explicit');
+  return {manifest, supported, unavailable};
+}
+
+test('optional suggested tracks preserve frozen neighbor order and navigable source artists', {skip, timeout: 60000}, async context => {
+  const fixture = await relatedMusicFixture(context); if (!fixture) return;
+  const {manifest, supported} = fixture;
+  const [queryId, neighborIds] = supported;
+  assert.equal(neighborIds.length, manifest.neighbor_count);
+  assert.ok(!neighborIds.includes(queryId));
+  assert.equal(new Set(neighborIds).size, neighborIds.length);
+  await browser(async state => {
+    const {evaluate, wait, command, requests} = state;
+    assert.ok(!requests.some(row => row.request.url.includes('/related-tracks/')), 'suggestions stay lazy on the directory');
+    await evaluate(`location.hash='track=${queryId}'`);
+    await wait("document.querySelector('.related-music h2')?.textContent === 'Suggested tracks' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.equal(await evaluate("document.querySelector('.related-music').dataset.evidenceRole"), 'frozen_descriptor_neighbors');
+    assert.deepEqual(await evaluate("[...document.querySelectorAll('.related-music a.related-track')].map(row => Number(row.getAttribute('href').split('=')[1]))"), neighborIds);
+    assert.ok(await evaluate("document.querySelector('.related-music').textContent.toLowerCase().includes('descriptor')"), 'suggestions describe their numeric evidence');
+    const artistHash = await evaluate("document.querySelector('.related-music a[href^=\"#artist=\"]').getAttribute('href')");
+    await evaluate("document.querySelector('.related-music a[href^=\"#artist=\"]').click()");
+    await wait(`location.hash === ${JSON.stringify(artistHash)} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    assert.ok(await evaluate("document.querySelectorAll('.track').length > 0"));
+    await evaluate('history.back()');
+    await wait(`location.hash === '#track=${queryId}' && document.querySelector('.related-music a.related-track') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    await command('Page.reload');
+    await wait("document.querySelector('.related-music a.related-track') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.deepEqual(await evaluate("[...document.querySelectorAll('.related-music a.related-track')].map(row => Number(row.getAttribute('href').split('=')[1]))"), neighborIds);
+    if (process.env.OPENNOISE_FMA_SCREENSHOTS) {
+      const shot = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(process.env.OPENNOISE_FMA_SCREENSHOTS, 'related-music-desktop.png'), Buffer.from(shot.data, 'base64'));
+    }
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
+    if (process.env.OPENNOISE_FMA_SCREENSHOTS) {
+      const shot = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(process.env.OPENNOISE_FMA_SCREENSHOTS, 'related-music-mobile.png'), Buffer.from(shot.data, 'base64'));
+    }
+    await evaluate("document.querySelector('.related-music a.related-track').focus()");
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r'});
+    await wait(`location.hash === '#track=${neighborIds[0]}' && document.querySelector('.track')?.dataset.trackId === '${neighborIds[0]}' && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+  });
+});
+
+test('optional suggested tracks explicitly abstain when source descriptors are unavailable', {skip, timeout: 60000}, async context => {
+  const fixture = await relatedMusicFixture(context); if (!fixture) return;
+  const [queryId, neighborIds, reason] = fixture.unavailable;
+  assert.deepEqual(neighborIds, []);
+  assert.ok(reason);
+  await browser(async state => {
+    const {evaluate, wait, command} = state;
+    await evaluate(`location.hash='track=${queryId}'`);
+    await wait("document.querySelector('.related-music')?.textContent.includes('No suggestions') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.equal(await evaluate("document.querySelectorAll('.related-music a.related-track').length"), 0);
+    const explanation = await evaluate("document.querySelector('.related-music').textContent");
+    assert.ok(explanation.replace('Suggested tracks', '').replace('No suggestions', '').trim().length > 10, 'abstention has a human-readable explanation');
+    assert.doesNotMatch(explanation, /undefined|null/);
+    await command('Page.reload');
+    await wait("document.querySelector('.related-music')?.textContent.includes('No suggestions') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.equal(await evaluate("document.querySelector('.related-music').textContent"), explanation);
+    assert.equal(await evaluate("document.querySelectorAll('.related-music a.related-track').length"), 0);
   });
 });

@@ -17,6 +17,7 @@ def main() -> None:
     parser.add_argument(
         "--artist-context-root", type=Path, help="repository with retained artist packs"
     )
+    parser.add_argument("--related-music", type=Path, help="verified frozen descriptor suggestions")
     args = parser.parse_args()
     receipt = build_fma_static(
         source=args.source,
@@ -24,6 +25,7 @@ def main() -> None:
         output=args.output,
         source_genres=args.source_genres,
         artist_context_root=args.artist_context_root,
+        related_music=args.related_music,
     )
     sys.stdout.write(
         json.dumps({key: value for key, value in receipt.items() if key != "files"}, indent=2)

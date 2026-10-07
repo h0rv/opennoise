@@ -1,3 +1,4 @@
+import {relatedMusic} from './fma-related-music.js';
 import {renderSourceGenres} from './source-genres.js';
 import {renderGenreMap} from './fma-genre-map.js';
 /** Source-only FMA catalog. Native track annotations never imply artist memberships. */
@@ -108,7 +109,9 @@ async function trackDetail(state, token) {
   if (token !== generation) return;
   heading.textContent = tracks[0][1] || `Track #${state.id}`;
   status.textContent = 'Choose a track genre or artist to keep exploring.';
-  rows.append(trackNode(tracks[0])); heading.focus({preventScroll: true});
+  rows.append(trackNode(tracks[0]));
+  await relatedMusic({id: state.id, manifest: catalog.related_music, json, tracksFor, artistIndex, rows, current: () => token === generation});
+  if (token === generation) heading.focus({preventScroll: true});
 }
 function exploreGenres(title, description, entries, countKey, selectedGenre = null) {
   const section = node('section'); section.className = 'connections';
@@ -184,5 +187,5 @@ query.addEventListener('input', () => search(true)); scope.addEventListener('cha
 query.addEventListener('keydown', event => { if (event.key === 'ArrowDown') { event.preventDefault(); rows.querySelector('.search-results a')?.focus(); } });
 document.addEventListener('keydown', event => { if (event.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); query.focus(); } });
 window.addEventListener('hashchange', render);
-try { catalog = await json('catalog.json'); document.querySelectorAll('[data-source-genres]').forEach(element => { element.hidden = !catalog.source_genres; }); genres = new Map(catalog.genres.map(row => [row.genre_id, row])); await render(); }
+try { catalog = await json('catalog.json'); document.querySelectorAll('[data-related-music]').forEach(element => { element.hidden = !catalog.related_music; }); document.querySelectorAll('[data-source-genres]').forEach(element => { element.hidden = !catalog.source_genres; }); genres = new Map(catalog.genres.map(row => [row.genre_id, row])); await render(); }
 catch (error) { heading.textContent = 'Catalog unavailable'; status.textContent = error.message; rows.append(button('Reload', () => location.reload())); content.setAttribute('aria-busy', 'false'); }

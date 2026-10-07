@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
+from opennoise.deployment.fma_related import export_related_music
 from opennoise.deployment.fma_track_search import export_track_search
 from opennoise.deployment.source_genres import export_source_genres
 from opennoise.ingest.fma.corpus import project_row, source_rows, verify_sources
@@ -265,13 +266,14 @@ def _genre_connections(
     }
 
 
-def build_fma_static(
+def build_fma_static(  # noqa: PLR0913 - explicit independent optional source packs.
     *,
     source: Path,
     projected: Path,
     output: Path,
     source_genres: Path | None = None,
     artist_context_root: Path | None = None,
+    related_music: Path | None = None,
 ) -> dict[str, Any]:
     """Build a fresh independent catalog; source track labels never become artist genres."""
     if output.exists() or output.is_symlink():
@@ -339,6 +341,10 @@ def build_fma_static(
         )
     elif artist_context_root is not None:
         raise ValueError("artist context requires a source genre pack")
+    if related_music is not None:
+        catalog["related_music"] = export_related_music(
+            related_music, output, files, {row["track_id"] for row in tracks}
+        )
     _write(output, "catalog.json", catalog, files)
     _write(output, "corpus-receipt.json", corpus_receipt, files)
     static = Path(__file__).resolve().parents[1] / "static"
@@ -348,6 +354,7 @@ def build_fma_static(
         "fma-catalog.js",
         "fma-genre-map.js",
         "source-genres.js",
+        "fma-related-music.js",
         "fma-genre-map.css",
     ):
         relative = "index.html" if name.endswith(".html") else name
@@ -429,6 +436,7 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         "fma-catalog.js",
         "fma-genre-map.js",
         "source-genres.js",
+        "fma-related-music.js",
         "fma-genre-map.css",
     ):
         relative = "index.html" if name.endswith(".html") else name
