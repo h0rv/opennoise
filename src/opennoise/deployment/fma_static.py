@@ -16,6 +16,7 @@ import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
 from opennoise.deployment.fma_track_search import export_track_search
+from opennoise.deployment.source_genres import export_source_genres
 from opennoise.ingest.fma.corpus import project_row, source_rows, verify_sources
 
 PAGE_SIZE = 200
@@ -264,7 +265,14 @@ def _genre_connections(
     }
 
 
-def build_fma_static(*, source: Path, projected: Path, output: Path) -> dict[str, Any]:
+def build_fma_static(
+    *,
+    source: Path,
+    projected: Path,
+    output: Path,
+    source_genres: Path | None = None,
+    artist_context_root: Path | None = None,
+) -> dict[str, Any]:
     """Build a fresh independent catalog; source track labels never become artist genres."""
     if output.exists() or output.is_symlink():
         raise FileExistsError("refusing to replace FMA static catalog")
@@ -325,6 +333,12 @@ def build_fma_static(*, source: Path, projected: Path, output: Path) -> dict[str
         },
         "corpus_receipt": "corpus-receipt.json",
     }
+    if source_genres is not None:
+        catalog["source_genres"] = export_source_genres(
+            source_genres, output, files, foundation_root=artist_context_root
+        )
+    elif artist_context_root is not None:
+        raise ValueError("artist context requires a source genre pack")
     _write(output, "catalog.json", catalog, files)
     _write(output, "corpus-receipt.json", corpus_receipt, files)
     static = Path(__file__).resolve().parents[1] / "static"
@@ -333,6 +347,7 @@ def build_fma_static(*, source: Path, projected: Path, output: Path) -> dict[str
         "fma-catalog.css",
         "fma-catalog.js",
         "fma-genre-map.js",
+        "source-genres.js",
         "fma-genre-map.css",
     ):
         relative = "index.html" if name.endswith(".html") else name
@@ -413,6 +428,7 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         "fma-catalog.css",
         "fma-catalog.js",
         "fma-genre-map.js",
+        "source-genres.js",
         "fma-genre-map.css",
     ):
         relative = "index.html" if name.endswith(".html") else name

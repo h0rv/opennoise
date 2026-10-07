@@ -54,6 +54,7 @@ test('actual raw FMA catalog preserves complete counts, source annotations, hist
   const biggest = catalog.genres.reduce((a, b) => a.track_count > b.track_count ? a : b);
   await browser(async state => {
     const {evaluate, wait, command} = state;
+    if (!catalog.source_genres) assert.ok(await evaluate("[...document.querySelectorAll('[data-source-genres]')].every(element => element.hidden)"), 'optional source genre controls stay hidden without a pack');
     assert.deepEqual(catalog.counts, {raw_tracks: 109727, source_artists: 16916, missing_artist_records: 250, tracks_with_missing_artist_records: 974, genre_definitions: 164, observed_track_genres: 162, unannotated_tracks: 2609});
     assert.match(await evaluate("document.querySelector('#status').textContent"), /164 genre definitions.*162/);
     assert.equal(await evaluate("document.querySelectorAll('.directory li').length"), 100);
@@ -167,5 +168,122 @@ test('complete track search supports names, exact IDs, track links and empty res
     await evaluate("location.hash='tracks&q=no-such-track-zzzzxxxx'");
     await wait("document.querySelector('#status').textContent.startsWith('0 matching') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
     assert.match(await evaluate("document.querySelector('#rows').textContent"), /No matching tracks/);
+  });
+});
+
+async function sourceGenreFixture(context) {
+  const catalog = JSON.parse(await readFile(join(root, 'catalog.json')));
+  if (!catalog.source_genres) { context.skip('optional Wikidata genre export is absent'); return null; }
+  const index = JSON.parse(await readFile(join(root, catalog.source_genres.index)));
+  const details = Object.assign({}, ...(await Promise.all(Array.from({length: index.detail_shards}, async (_, shard) => JSON.parse(await readFile(join(root, `source-genres/${shard}.json`))).genres))));
+  return {index, details};
+}
+
+test('optional Wikidata directory is lazy, complete, searchable and keyboard accessible', {skip, timeout: 60000}, async context => {
+  const fixture = await sourceGenreFixture(context); if (!fixture) return;
+  const {index} = fixture;
+  assert.equal(index.genres.length, 1000);
+  const missing = index.genres.find(row => row[2]);
+  assert.ok(missing, 'selection includes a missing English label');
+  await browser(async state => {
+    const {evaluate, wait, command, requests} = state;
+    assert.ok(!requests.some(row => row.request.url.includes('/source-genres/')), 'source genres stay lazy on FMA landing');
+    assert.equal(await evaluate("document.querySelector('nav [data-source-genres]').hidden"), false);
+    assert.equal(await evaluate("document.querySelector('#scope [data-source-genres]').hidden"), false);
+    await evaluate("document.querySelector('nav [data-source-genres]').click()");
+    await wait("location.hash === '#wikidata' && document.querySelectorAll('.directory li').length === 100 && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.match(await evaluate("document.querySelector('#status').textContent"), /1,000/);
+    const ids = [];
+    for (let page = 0; page < 10; page++) {
+      if (page) {
+        await evaluate("[...document.querySelectorAll('#pages button')].find(row => row.textContent === 'Next').click()");
+        await wait(`new URLSearchParams(location.hash.slice(1)).get('page') === '${page}' && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+      }
+      ids.push(...await evaluate("[...document.querySelectorAll('.directory a')].map(row => row.getAttribute('href').split('=')[1])"));
+    }
+    assert.deepEqual([...ids].sort(), index.genres.map(row => row[0]).sort());
+    assert.equal(new Set(ids).size, 1000);
+    await evaluate(`location.hash='wikidata&q=${missing[0]}'`);
+    await wait("document.querySelectorAll('.directory li').length === 1 && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.ok((await evaluate("document.querySelector('.directory').textContent")).includes(missing[0]), 'missing label remains searchable by QID');
+    assert.doesNotMatch(await evaluate("document.querySelector('.directory').textContent"), /undefined|null/);
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    await evaluate("document.querySelector('#query').value='ska'; document.querySelector('#query').dispatchEvent(new Event('input')); document.querySelector('#query').focus()");
+    await wait("document.querySelectorAll('.directory li').length > 0 && document.querySelector('#query').value === 'ska' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.ok(await evaluate("[...document.querySelectorAll('.directory a')].every(row => /ska/i.test(row.textContent))"));
+    assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
+    if (process.env.OPENNOISE_FMA_SCREENSHOTS) {
+      const shot = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(process.env.OPENNOISE_FMA_SCREENSHOTS, 'source-genres-mobile.png'), Buffer.from(shot.data, 'base64'));
+    }
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40});
+    assert.equal(await evaluate("document.activeElement.closest('.directory') !== null"), true);
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r'});
+    await wait("location.hash.startsWith('#wdgenre=') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.equal(await evaluate("document.querySelectorAll('.track,audio,video,iframe').length"), 0);
+  });
+});
+
+test('optional Wikidata direct hierarchy preserves boundaries, history, reload and invalid IDs', {skip, timeout: 60000}, async context => {
+  const fixture = await sourceGenreFixture(context); if (!fixture) return;
+  const {details} = fixture;
+  const twoTone = details.Q209498;
+  assert.ok(twoTone);
+  const ska = twoTone.parents.find(row => row[1].toLowerCase() === 'ska' && row[2]);
+  assert.ok(ska, '2 tone has its direct retained ska parent');
+  const outsideEntry = Object.entries(details).find(([, row]) => row.parents.some(parent => !parent[2]));
+  assert.ok(outsideEntry, 'selection retains external direct parents');
+  const [outsideSource, outsideDetail] = outsideEntry;
+  const outside = outsideDetail.parents.find(row => !row[2]);
+  await browser(async state => {
+    const {evaluate, wait, command} = state;
+    await evaluate("location.hash='wdgenre=Q209498'");
+    await wait("document.querySelector('h1').textContent.includes('2 tone') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.equal(await evaluate("document.querySelectorAll('.track').length"), 0);
+    assert.ok(await evaluate("document.querySelector('[data-evidence-role=wikidata_direct_subclass_claim]') !== null"));
+    if (process.env.OPENNOISE_FMA_SCREENSHOTS) {
+      const shot = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(process.env.OPENNOISE_FMA_SCREENSHOTS, 'source-genres-desktop.png'), Buffer.from(shot.data, 'base64'));
+    }
+    await evaluate(`document.querySelector('#rows a[href="#wdgenre=${ska[0]}"]').click()`);
+    await wait(`location.hash === '#wdgenre=${ska[0]}' && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    assert.ok(await evaluate("document.querySelector('#rows a[href=\"#wdgenre=Q209498\"]') !== null"), 'parent exposes retained direct child');
+    await evaluate('history.back()');
+    await wait("location.hash === '#wdgenre=Q209498' && document.querySelector('h1').textContent.includes('2 tone') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    await command('Page.reload');
+    await wait("document.querySelector('h1')?.textContent.includes('2 tone') && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    await evaluate(`location.hash='wdgenre=${outsideSource}'`);
+    await wait(`document.querySelector('#rows a[href="https://www.wikidata.org/wiki/${outside[0]}"]') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    assert.ok(await evaluate(`document.querySelector('#rows a[href="https://www.wikidata.org/wiki/${outside[0]}"]').parentElement.textContent.includes('Outside this selection')`));
+    assert.equal(await evaluate(`document.querySelector('#rows a[href="#wdgenre=${outside[0]}"]')`), null);
+    assert.equal(await evaluate("document.querySelectorAll('.track').length"), 0);
+    await evaluate("location.hash='wdgenre=not-a-qid'");
+    await wait("document.querySelector('h1').textContent === 'Catalog unavailable' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.match(await evaluate("document.querySelector('#status').textContent"), /invalid/i);
+    assert.equal(await evaluate("document.querySelectorAll('.track').length"), 0);
+  });
+});
+
+test('optional Wikidata artist examples retain native identities and direct genre navigation', {skip, timeout: 60000}, async context => {
+  const fixture = await sourceGenreFixture(context); if (!fixture) return;
+  const [genreId, detail] = Object.entries(fixture.details).find(([, row]) => row.artists?.length);
+  const artistId = detail.artists[0];
+  const artist = JSON.parse(await readFile(join(root, 'source-genres/artists.json'))).artists[artistId];
+  await browser(async state => {
+    const {evaluate, wait, command} = state;
+    await evaluate(`location.hash='wdgenre=${genreId}'`);
+    await wait("document.querySelector('.source-artists a') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.equal(await evaluate("document.querySelector('.source-artists').dataset.evidenceRole"), 'wikidata_direct_artist_genre_claim');
+    await evaluate(`document.querySelector('.source-artists a[href="#wdartist=${artistId}"]').click()`);
+    await wait(`location.hash === '#wdartist=${artistId}' && document.querySelector('h1').textContent === ${JSON.stringify(artist.name)} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    assert.match(await evaluate("document.querySelector('#status').textContent"), /separate from FMA/i);
+    assert.equal(await evaluate("document.querySelectorAll('.track,audio,video,iframe').length"), 0);
+    assert.ok(await evaluate(`document.querySelector('#rows a[href="https://musicbrainz.org/artist/${artistId}"]') !== null`));
+    if (artist.wikidata_id) assert.ok(await evaluate(`document.querySelector('#rows a[href="https://www.wikidata.org/wiki/${artist.wikidata_id}"]') !== null`));
+    assert.deepEqual((await evaluate("[...document.querySelectorAll('#rows a[href^=\"#wdgenre=\"]')].map(row => row.getAttribute('href').split('=')[1])")).sort(), [...artist.direct_genres].sort());
+    await command('Page.reload');
+    await wait(`document.querySelector('h1')?.textContent === ${JSON.stringify(artist.name)} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    await evaluate(`document.querySelector('#rows a[href="#wdgenre=${genreId}"]').click()`);
+    await wait(`location.hash === '#wdgenre=${genreId}' && document.querySelector('.source-artists a') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
   });
 });

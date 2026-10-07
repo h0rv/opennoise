@@ -1,3 +1,4 @@
+import {renderSourceGenres} from './source-genres.js';
 import {renderGenreMap} from './fma-genre-map.js';
 /** Source-only FMA catalog. Native track annotations never imply artist memberships. */
 const $ = selector => document.querySelector(selector);
@@ -18,6 +19,10 @@ async function loadArtists() {
 }
 function route() {
   const params = new URLSearchParams(location.hash.slice(1));
+  if (params.has('wikidata') || params.has('wdgenre') || params.has('wdartist')) {
+    const kind = params.has('wdgenre') ? 'wdgenre' : params.has('wdartist') ? 'wdartist' : 'wikidata';
+    return {kind, id: params.get(kind), q: params.get('q') ?? '', page: /^[0-9]+$/.test(params.get('page') ?? '') ? Number(params.get('page')) : 0};
+  }
   let kind = params.has('track') ? 'track' : params.has('artist') ? 'artist' : params.has('genre') ? 'genre' : params.has('artists') ? 'artists' : params.has('unannotated') ? 'unannotated' : params.has('tracks') ? 'tracks' : 'genres';
   const id = kind === 'track' ? params.get('track') : kind === 'artist' ? params.get('artist') : kind === 'genre' ? params.get('genre') : null;
   if (id !== null && (!/^(?:[1-9][0-9]*|null)$/.test(id) || (id !== 'null' && !Number.isSafeInteger(Number(id))))) kind = 'invalid';
@@ -156,10 +161,11 @@ async function cohort(state, token) {
 async function render() {
   const token = ++generation, state = route();
   content.setAttribute('aria-busy', 'true'); rows.replaceChildren(); pages.replaceChildren(); status.textContent = 'Loading…';
-  if (['artists', 'genres', 'tracks'].includes(state.kind)) { scope.value = state.kind; query.value = state.q; }
+  if (['artists', 'genres', 'tracks', 'wikidata'].includes(state.kind)) { scope.value = state.kind; query.value = state.q; }
   try {
     if (state.kind === 'invalid') throw new Error('Invalid native catalog ID');
-    if (['artists', 'genres'].includes(state.kind)) await directory(state, token);
+    if (['wikidata', 'wdgenre', 'wdartist'].includes(state.kind)) await renderSourceGenres({state, manifest: catalog.source_genres, json, heading, status, rows, paginate, current: () => token === generation});
+    else if (['artists', 'genres'].includes(state.kind)) await directory(state, token);
     else if (state.kind === 'tracks' && state.q.trim()) await searchTracks(state, token);
     else if (state.kind === 'track') await trackDetail(state, token);
     else await cohort(state, token);
@@ -178,5 +184,5 @@ query.addEventListener('input', () => search(true)); scope.addEventListener('cha
 query.addEventListener('keydown', event => { if (event.key === 'ArrowDown') { event.preventDefault(); rows.querySelector('.search-results a')?.focus(); } });
 document.addEventListener('keydown', event => { if (event.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); query.focus(); } });
 window.addEventListener('hashchange', render);
-try { catalog = await json('catalog.json'); genres = new Map(catalog.genres.map(row => [row.genre_id, row])); await render(); }
+try { catalog = await json('catalog.json'); document.querySelectorAll('[data-source-genres]').forEach(element => { element.hidden = !catalog.source_genres; }); genres = new Map(catalog.genres.map(row => [row.genre_id, row])); await render(); }
 catch (error) { heading.textContent = 'Catalog unavailable'; status.textContent = error.message; rows.append(button('Reload', () => location.reload())); content.setAttribute('aria-busy', 'false'); }
