@@ -150,3 +150,61 @@ test('catalog without approved playback configuration keeps listen hidden and ma
     assert.ok(!requests.some(row => /\/audio\//.test(row.request.url)));
   }, {enabled: false});
 });
+
+test('synthetic listening queue searches, steps and advances only after explicit queue activation', {skip, timeout: 60000}, async () => {
+  await browser(async state => {
+    const {evaluate, wait} = state;
+    await listen(state);
+    assert.equal(await evaluate("document.querySelectorAll('.listening-entry:not([hidden])').length"), 2);
+    await evaluate("document.querySelector('#listen-query').value = 'tone 3'; document.querySelector('#listen-query').dispatchEvent(new Event('input'))");
+    assert.equal(await evaluate("document.querySelectorAll('.listening-entry:not([hidden])').length"), 1);
+    assert.match(await evaluate("document.querySelector('.listening-entry:not([hidden])').textContent"), /Test-only tone 3/);
+    await evaluate("document.querySelector('#listen-query').value = 'TEST FIXTURE'; document.querySelector('#listen-query').dispatchEvent(new Event('input'))");
+    assert.equal(await evaluate("document.querySelectorAll('.listening-entry:not([hidden])').length"), 2);
+    await evaluate("document.querySelector('#listen-query').value = 'no matching tone'; document.querySelector('#listen-query').dispatchEvent(new Event('input'))");
+    assert.match(await evaluate("document.querySelector('.listening-status').textContent"), /No matching excerpts/);
+    assert.equal(await evaluate("document.querySelector('.playback-queue').disabled"), true);
+    await evaluate("document.querySelector('#listen-query').value = ''; document.querySelector('#listen-query').dispatchEvent(new Event('input'))");
+    await evaluate("document.querySelector('audio').dispatchEvent(new Event('ended'))");
+    assert.ok(await evaluate("[...document.querySelectorAll('audio')].every(audio => audio.paused)"), 'an ended event without queue activation cannot start playback');
+    await evaluate("document.querySelector('.playback-queue').click()");
+    await wait("document.querySelectorAll('audio')[0].currentTime > 0.1 && !document.querySelectorAll('audio')[0].paused");
+    await evaluate("document.querySelector('.playback-next').click()");
+    await wait("document.querySelectorAll('audio')[0].paused && document.querySelectorAll('audio')[1].currentTime > 0.1 && !document.querySelectorAll('audio')[1].paused");
+    await evaluate("document.querySelector('.playback-previous').click()");
+    await wait("!document.querySelectorAll('audio')[0].paused && document.querySelectorAll('audio')[1].paused");
+    await evaluate("document.querySelectorAll('audio')[0].currentTime = document.querySelectorAll('audio')[0].duration - 0.1");
+    await wait("document.querySelectorAll('audio')[0].ended && !document.querySelectorAll('audio')[1].paused");
+    assert.equal(await evaluate("[...document.querySelectorAll('audio')].filter(audio => !audio.paused).length"), 1);
+    await evaluate("document.querySelector('.playback-queue').click()");
+    await wait("[...document.querySelectorAll('audio')].every(audio => audio.paused)");
+    assert.equal(await evaluate("document.querySelector('.playback-queue').textContent"), 'Play queue');
+    await evaluate("document.querySelector('.playback-queue').click()");
+    await wait("!document.querySelectorAll('audio')[1].paused");
+    await evaluate("document.querySelector('#listen-query').value = 'tone 2'; document.querySelector('#listen-query').dispatchEvent(new Event('input'))");
+    assert.ok(await evaluate("[...document.querySelectorAll('audio')].every(audio => audio.paused)"), 'changing the queue filter pauses playback');
+    await evaluate("window.oldQueueAudio = [...document.querySelectorAll('audio')]; location.hash='genres'");
+    await wait("document.querySelector('h1').textContent === 'Genres' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    await evaluate("window.oldQueueAudio[0].dispatchEvent(new Event('ended'))");
+    assert.ok(await evaluate("window.oldQueueAudio.every(audio => audio.paused)"));
+  });
+});
+
+test('shared-annotation listening links only include distinct attached excerpts without extra players', {skip, timeout: 60000}, async () => {
+  await browser(async ({evaluate}) => {
+    await evaluate(`(async () => {
+      const {renderPlayback} = await import('./fma-playback.js');
+      await renderPlayback({config:{manifest:'../audio/manifest.json'}, id:2, relatedIds:[2,3,3,999999],
+        json: path => fetch(path).then(response => response.json()), rows:document.querySelector('#rows'),
+        heading:document.querySelector('h1'), status:document.querySelector('#status'), current:()=>true});
+    })()`);
+    assert.equal(await evaluate("document.querySelector('.playback-related').dataset.evidenceRole"), 'shared_source_track_annotations');
+    assert.equal(await evaluate("document.querySelector('.playback-related h2').textContent"), 'More local excerpts with shared track genres');
+    assert.equal(await evaluate("document.querySelector('.playback-related p').textContent"), 'Shared source annotations; not a musical-similarity ranking.');
+    assert.equal(await evaluate("document.querySelectorAll('.playback-related li').length"), 1);
+    assert.equal(await evaluate("document.querySelector('.playback-related a[href^=\"#track=\"]').getAttribute('href')"), '#track=3');
+    assert.equal(await evaluate("document.querySelector('.playback-related a[href^=\"#artist=\"]').getAttribute('href')"), '#artist=1');
+    assert.equal(await evaluate("document.querySelectorAll('audio').length"), 1);
+    assert.equal(await evaluate("document.querySelector('audio').paused"), true);
+  });
+});

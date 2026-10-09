@@ -1,5 +1,71 @@
 /** Native annotation overlap only; positions and edges do not imply sonic distance. */
 const SVG = 'http://www.w3.org/2000/svg';
+const htmlNode = (tag, text) => { const element = document.createElement(tag); if (text !== undefined) element.textContent = text; return element; };
+
+/** Complete source hierarchy; no inherited track counts or musical coordinates. */
+export function renderGenreAtlas(container, sourceGenres) {
+  container.replaceChildren();
+  container.classList.add('fma-genre-atlas');
+  container.dataset.evidenceRole = 'native_genre_parent_relationships';
+  const genres = [...(sourceGenres instanceof Map ? sourceGenres.values() : sourceGenres)]
+    .sort((a, b) => a.title.localeCompare(b.title) || a.genre_id - b.genre_id);
+  const index = new Map(genres.map(genre => [genre.genre_id, genre]));
+  const children = new Map();
+  for (const genre of genres) {
+    if (!children.has(genre.parent_id)) children.set(genre.parent_id, []);
+    children.get(genre.parent_id).push(genre);
+  }
+  const caption = htmlNode('p', `${genres.length} FMA genres, grouped by source parent relationships. Counts are direct track annotations; child genres are not added to their parents.`);
+  caption.className = 'fma-atlas-caption'; container.append(caption);
+  if (!genres.length) { container.append(htmlNode('p', 'No genre definitions are available.')); return; }
+  const grid = htmlNode('div'); grid.className = 'fma-atlas-grid'; container.append(grid);
+  const seen = new Set();
+  function genreLink(genre) {
+    const anchor = htmlNode('a', genre.title);
+    anchor.href = `#genre=${genre.genre_id}`;
+    anchor.dataset.genreId = genre.genre_id;
+    return anchor;
+  }
+  function count(genre) {
+    const count = htmlNode('small', `${new Intl.NumberFormat('en').format(genre.track_count)} tracks`);
+    count.className = 'fma-atlas-count';
+    return count;
+  }
+  function descendants(genre) {
+    const list = htmlNode('ul');
+    for (const child of children.get(genre.genre_id) ?? []) {
+      if (seen.has(child.genre_id)) continue;
+      seen.add(child.genre_id);
+      const item = htmlNode('li'), row = htmlNode('div'); row.className = 'fma-atlas-row';
+      row.append(genreLink(child), count(child)); item.append(row);
+      const nested = descendants(child);
+      if (nested.children.length) item.append(nested);
+      list.append(item);
+    }
+    return list;
+  }
+  function family(genre, note) {
+    if (seen.has(genre.genre_id)) return;
+    seen.add(genre.genre_id);
+    const section = htmlNode('section'); section.className = 'fma-atlas-family';
+    const heading = htmlNode('h2'); heading.append(genreLink(genre));
+    section.append(heading, count(genre));
+    if (note) section.append(htmlNode('p', note));
+    const list = descendants(genre);
+    if (list.children.length) section.append(list);
+    grid.append(section);
+  }
+  for (const genre of genres) {
+    if (genre.parent_id == null || !index.has(genre.parent_id)) {
+      family(genre, genre.parent_id == null ? null : `Parent #${genre.parent_id} is absent from this catalog.`);
+    }
+  }
+  // Keep every definition reachable even if future source data contains a cycle.
+  for (const genre of genres) {
+    if (!seen.has(genre.genre_id)) family(genre, 'This source parent chain contains a cycle; shown separately.');
+  }
+}
+
 function svgNode(tag, attributes = {}, text) {
   const element = document.createElementNS(SVG, tag);
   for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
