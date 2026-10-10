@@ -166,9 +166,24 @@ def _load_inputs(  # noqa: C901 - immutable model/source identities and distinct
     return fold_rows, model, identities, values, binding
 
 
-def derive_map(metadata: Path, features: Path, saved: Path) -> dict[str, Any]:  # noqa: C901, PLR0912, PLR0915 - explicit independent source domains and counts.
+def derive_map(metadata: Path, features: Path, saved: Path) -> dict[str, Any]:
     """Stream every source row, fit training covariance, retain every output identity."""
-    folds, model, identities, values, bindings = _load_inputs(metadata, features, saved)
+    return derive_loaded_map(metadata, features, _load_inputs(metadata, features, saved))
+
+
+def derive_loaded_map(  # noqa: C901, PLR0912, PLR0915 -- shared pure numerical derivation.
+    metadata: Path,
+    features: Path,
+    inputs: tuple[
+        dict[int, tuple[int, bool, int | None, int | None]],
+        dict[str, np.ndarray],
+        np.ndarray,
+        np.ndarray,
+        dict[str, str],
+    ],
+) -> dict[str, Any]:
+    """Derive coordinates from already verified inputs; callers own distinct custody protocols."""
+    folds, model, identities, values, bindings = inputs
     total = Moments()
     buckets = [Moments() for _ in range(BUCKETS)]
     for start in range(0, len(identities), BATCH):

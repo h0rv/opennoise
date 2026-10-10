@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
+from opennoise.deployment.fma_descriptor_map import export_descriptor_map
 from opennoise.deployment.fma_playback import validate_playback_export
 from opennoise.deployment.fma_related import export_related_music
 from opennoise.deployment.fma_track_search import export_track_search
@@ -306,6 +307,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
     artist_context_root: Path | None = None,
     related_music: Path | None = None,
     playback: Path | None = None,
+    descriptor_map: Path | None = None,
 ) -> dict[str, Any]:
     """Build a fresh independent catalog; source track labels never become artist genres."""
     if output.exists() or output.is_symlink():
@@ -382,6 +384,10 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         )
     if attached is not None:
         catalog["playback"] = attached
+    if descriptor_map is not None:
+        catalog["descriptor_map"] = export_descriptor_map(
+            descriptor_map, output, files, tables, sha256_file(projected / "corpus-receipt.json")[0]
+        )
     _write(output, "catalog.json", catalog, files)
     _write(output, "corpus-receipt.json", corpus_receipt, files)
     static = Path(__file__).resolve().parents[1] / "static"
@@ -394,6 +400,8 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         "fma-related-music.js",
         "fma-playback.js",
         "fma-genre-map.css",
+        "fma-descriptor-map.js",
+        "fma-descriptor-map.css",
     ):
         relative = "index.html" if name.endswith(".html") else name
         shutil.copyfile(static / name, output / relative)
@@ -487,6 +495,8 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         "fma-related-music.js",
         "fma-playback.js",
         "fma-genre-map.css",
+        "fma-descriptor-map.js",
+        "fma-descriptor-map.css",
     ):
         relative = "index.html" if name.endswith(".html") else name
         temporary = output / (relative + ".tmp")
