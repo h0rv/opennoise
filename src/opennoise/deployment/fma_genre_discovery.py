@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import tempfile
+from collections import Counter
 from pathlib import Path
 from typing import Any
+
+import zstandard
 
 from opennoise.common import canonical_json
 from opennoise.deployment.fma_listening_home import build_listening_home
@@ -16,6 +20,8 @@ REVISION = "fma-genre-discovery-v1"
 MAX_INDEX_BYTES = 200_000
 MAX_CONTROL_BYTES = 2_000_000
 MAX_AUDIO_FILES = 65
+MAX_NEIGHBORS = 6
+MAX_INVENTORY_BYTES = 4_000_000
 POLICY = (
     "Up to three distinct artists per genre, choosing fewer direct source genre tags then "
     "native track ID; all available excerpts remain listed. This is a browsing heuristic, "
@@ -27,6 +33,7 @@ ASSETS = (
     "fma-discovery.css",
     "fma-playback.js",
     "fma-catalog.css",
+    "fma-playable-neighbors.js",
 )
 
 
@@ -77,19 +84,122 @@ def _verified_inputs(root: Path) -> tuple[dict[str, Any], dict[str, Any], dict[s
     return retained, catalogs, audio
 
 
-def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901 -- exact source joins and transparent bounded ranking.
+def _neighbor_binding(  # noqa: C901, PLR0912 -- portable exported manifest custody.
+    root: Path, key: str, catalog: dict[str, Any], audio_sha: str
+) -> dict[str, Any] | None:
+    config = catalog.get("playable_neighbors")
+    if config is None:
+        return None
+    relative = "playable-neighbors/manifest.json"
+    if config.get("manifest_path") != relative:
+        raise ValueError("invalid local playable-neighbor path")
+    explorer = root / key / "explorer"
+    body = _body(explorer / relative, MAX_INDEX_BYTES)
+    receipt = json.loads(_body(explorer / "static-receipt.json"))
+    binding = receipt["files_manifest"]
+    if binding["path"] != "files-manifest.json.zst":
+        raise ValueError("playable-neighbor file inventory path differs")
+    compressed = _body(explorer / binding["path"])
+    if len(compressed) != binding["bytes"] or _sha(compressed) != binding["sha256"]:
+        raise ValueError("playable-neighbor file inventory hash differs")
+    with zstandard.ZstdDecompressor().stream_reader(io.BytesIO(compressed)) as reader:
+        decoded = reader.read(MAX_INVENTORY_BYTES + 1)
+    if len(decoded) > MAX_INVENTORY_BYTES:
+        raise ValueError("playable-neighbor inventory exceeds bounded decode")
+    inventory = json.loads(decoded)
+    if (
+        inventory[relative] != {"sha256": _sha(body), "bytes": len(body)}
+        or _sha(body) != config["manifest_sha256"]
+    ):
+        raise ValueError("playable-neighbor exported bytes differ")
+    manifest = json.loads(body)
+    attached = {row["track_id"]: row for row in catalog["playback"]["tracks"]}
+    rows, components = manifest.get("rows"), manifest.get("components")
+    if (
+        manifest.get("revision") != "fma-playable-descriptor-neighbors-v1"
+        or manifest.get("audio_manifest_sha256") != audio_sha
+        or any(
+            manifest.get(field) is not False
+            for field in ("fitted", "labels_used", "musical_relevance_established")
+        )
+        or not isinstance(rows, list)
+        or not 0 < len(rows) == len(attached) < MAX_AUDIO_FILES
+        or not isinstance(components, dict)
+        or set(components) != set(map(str, attached))
+        or any(
+            value is not None and (type(value) is not int or value <= 0)
+            for value in components.values()
+        )
+    ):
+        raise ValueError("playable-neighbor source scope differs")
+    identities = [row["track_id"] for row in rows]
+    if any(type(value) is not int for value in identities) or identities != sorted(attached):
+        raise ValueError("playable-neighbor complete ordered roster differs")
+    indexed = {row["track_id"]: row for row in rows}
+    reasons = {
+        "unresolved_artist",
+        "missing_feature_row",
+        "outside_training_support",
+        "no_cross_component_candidates",
+    }
+    for identity, row in indexed.items():
+        neighbors, reason = row["neighbor_ids"], row["reason"]
+        if (
+            reason not in reasons | {None}
+            or not isinstance(neighbors, list)
+            or len(neighbors) > MAX_NEIGHBORS
+            or len(set(neighbors)) != len(neighbors)
+            or (reason is None and not neighbors)
+            or (reason is not None and neighbors)
+            or any(
+                type(value) is not int or value not in attached or value == identity
+                for value in neighbors
+            )
+        ):
+            raise ValueError("playable-neighbor support or shape differs")
+        for neighbor in neighbors:
+            if (
+                indexed[neighbor]["reason"] is not None
+                or components[str(identity)] is None
+                or components[str(neighbor)] is None
+                or components[str(identity)] == components[str(neighbor)]
+                or attached[identity]["artist_id"] == attached[neighbor]["artist_id"]
+            ):
+                raise ValueError("playable-neighbor component or artist isolation differs")
+    counts = {
+        "queries": len(rows),
+        "supported_queries": sum(row["reason"] is None for row in rows),
+        "directed_edges": sum(len(row["neighbor_ids"]) for row in rows),
+        "abstentions": dict(
+            sorted(Counter(row["reason"] for row in rows if row["reason"] is not None).items())
+        ),
+    }
+    if manifest.get("counts") != counts or config.get("counts") != counts:
+        raise ValueError("playable-neighbor count receipt differs")
+    return {
+        "manifest_path": f"{key}/explorer/{relative}",
+        "manifest_sha256": _sha(body),
+        "manifest_bytes": len(body),
+        "counts": counts,
+    }
+
+
+def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912 -- exact source joins and transparent bounded ranking.
     """Validate custody and return the complete native-genre listening union without writing."""
     receipt, catalogs, audio = _verified_inputs(root)
     if catalogs["original"]["genres"] != catalogs["expanded"]["genres"]:
         raise ValueError("collection native genre catalogs differ")
     tracks: dict[str, Any] = {}
-    collections = {}
+    collections: dict[str, Any] = {}
     for key in ("original", "expanded"):
         manifest = f"{key}/audio/manifest.json"
         collections[key] = {
             "manifest": manifest,
             "manifest_sha256": _sha(_body(root / manifest, MAX_INDEX_BYTES)),
         }
+        neighbors = _neighbor_binding(root, key, catalogs[key], collections[key]["manifest_sha256"])
+        if neighbors is not None:
+            collections[key]["playable_neighbors"] = neighbors
         for row in catalogs[key]["playback"]["tracks"]:
             identity = str(row["track_id"])
             native = audio[key]["tracks"][identity]
