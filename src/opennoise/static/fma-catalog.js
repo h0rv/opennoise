@@ -1,4 +1,5 @@
-import {renderPlayback, stopPlayback} from './fma-playback.js';
+import {renderDescriptorMap} from './fma-descriptor-map.js';
+import {renderPlayback, clearRoutePlayers, requestPlay} from './fma-playback.js';
 import {relatedMusic} from './fma-related-music.js';
 import {renderSourceGenres} from './source-genres.js';
 import {renderGenreAtlas, renderGenreMap} from './fma-genre-map.js';
@@ -10,7 +11,7 @@ const node = (tag, text) => { const element = document.createElement(tag); if (t
 const number = value => new Intl.NumberFormat('en').format(value);
 const link = (text, hash) => { const element = node('a', text); element.href = hash; return element; };
 const button = (text, action) => { const element = node('button', text); element.type = 'button'; element.addEventListener('click', action); return element; };
-let catalog, genres, artists, artistIndex, trackSearchPromise, generation = 0;
+let catalog, genres, artists, artistIndex, trackSearchPromise, routeCleanup = null, generation = 0;
 const cache = new Map();
 async function json(path) {
   if (!cache.has(path)) cache.set(path, fetch(path).then(response => { if (!response.ok) throw new Error('Catalog file unavailable'); return response.json(); }).catch(error => { cache.delete(path); throw error; }));
@@ -21,10 +22,17 @@ async function loadArtists() {
 }
 function route() {
   const params = new URLSearchParams(location.hash.slice(1));
-  if (params.has('genre-map')) return {kind: 'genre-map', q: '', page: 0};
+  if (params.has('descriptor-map')) return {kind: 'descriptor-map', entity: params.get('entity') === 'artists' ? 'artists' : 'genres', q: params.get('q') ?? '', selected: params.get('selected') ?? null};
+  if (params.has('genre-map')) return {kind: 'genre-map', q: params.get('q') ?? '', playable: params.get('playable') === '1', page: 0};
   if (params.has('listen')) {
+    let queue = null;
+    if (params.has('queue')) {
+      const parts = params.get('queue').split(',');
+      if (parts.length > 64 || parts.some(value => !/^[1-9][0-9]*$/.test(value) || !Number.isSafeInteger(Number(value))) || new Set(parts).size !== parts.length || params.has('genre') || params.has('artist')) return {kind: 'invalid'};
+      queue = parts.map(Number);
+    }
     for (const key of ['genre', 'artist']) if (params.has(key) && (!/^[1-9][0-9]*$/.test(params.get(key)) || !Number.isSafeInteger(Number(params.get(key))))) return {kind: 'invalid'};
-    return {kind: 'listen', genre: params.has('genre') ? Number(params.get('genre')) : null, artist: params.has('artist') ? Number(params.get('artist')) : null, q: '', page: 0};
+    return {kind: 'listen', queue, genre: params.has('genre') ? Number(params.get('genre')) : null, artist: params.has('artist') ? Number(params.get('artist')) : null, q: '', page: 0};
   }
   if (params.has('wikidata') || params.has('wdgenre') || params.has('wdartist')) {
     const kind = params.has('wdgenre') ? 'wdgenre' : params.has('wdartist') ? 'wdartist' : 'wikidata';
@@ -34,7 +42,7 @@ function route() {
   const id = kind === 'track' ? params.get('track') : kind === 'artist' ? params.get('artist') : kind === 'genre' ? params.get('genre') : null;
   if (id !== null && (!/^(?:[1-9][0-9]*|null)$/.test(id) || (id !== 'null' && !Number.isSafeInteger(Number(id))))) kind = 'invalid';
   const requested = params.get('page');
-  return {kind, id: id === 'null' ? null : id === null ? null : Number(id), q: params.get('q') ?? '', missing: params.get('missing') === '1', page: requested && /^[0-9]+$/.test(requested) ? Number(requested) : 0};
+  return {kind, id: id === 'null' ? null : id === null ? null : Number(id), q: params.get('q') ?? '', missing: params.get('missing') === '1', playable: params.get('playable') === '1', page: requested && /^[0-9]+$/.test(requested) ? Number(requested) : 0};
 }
 function setPage(page) { const params = new URLSearchParams(location.hash.slice(1)); params.set('page', String(page)); location.hash = params.toString(); }
 function paginate(total, page, size) {
@@ -74,7 +82,7 @@ function trackNode(track) {
   const [id, title, artistId, genreIds, licenseId, metadataUrl, albumId] = track;
   const row = node('article'); row.className = 'track'; row.dataset.trackId = id; row.dataset.evidenceRole = 'native_track_metadata';
   const titleRow = node('h2'); titleRow.append(link(`${title || 'Missing track title'} · #${id}`, `#track=${id}`)); row.append(titleRow);
-  if (playableTracks().some(entry => entry.track_id === id)) row.append(link('Local excerpt available', `#track=${id}`));
+  if (playableTracks().some(entry => entry.track_id === id)) row.append(button('Play excerpt', () => requestPlay({config: catalog.playback, id, ids: playableTracks().map(entry => entry.track_id), json})));
   const credit = node('p'); credit.dataset.evidenceRole = 'native_track_artist_association'; credit.append(document.createTextNode('Source artist: '), link(`${artistIndex.get(artistId)?.[1] ?? 'Missing artist record'} · #${artistId}`, `#artist=${artistId}`)); row.append(credit);
   const annotations = node('p'); annotations.className = 'annotations'; annotations.dataset.evidenceRole = 'native_track_genre_annotations'; annotations.append(node('span', 'Track genres:'));
   if (!genreIds?.length) annotations.append(node('span', 'No source genre annotations'));
@@ -109,11 +117,13 @@ async function searchTracks(state, token) {
   if (token !== generation) return;
   const terms = state.q.normalize('NFKC').toLocaleLowerCase().split(/\s+/).filter(Boolean);
   const exactId = /^#?([1-9][0-9]*)$/.exec(state.q.trim());
+  const playable = new Set(playableTracks().map(row => row.track_id));
   const matches = entries.filter(([id, title, artistId]) => {
+    if (state.playable && !playable.has(id)) return false;
     const text = `${id} ${title ?? ''} ${artistIndex.get(artistId)?.[1] ?? ''}`.normalize('NFKC').toLocaleLowerCase();
     return exactId ? String(id) === exactId[1] : terms.every(term => text.includes(term));
   });
-  heading.textContent = 'Tracks'; status.textContent = `${number(matches.length)} matching tracks · title, artist or native track ID.`;
+  heading.textContent = 'Tracks'; status.textContent = `${number(matches.length)} matching tracks${state.playable ? ' with local excerpts' : ''} · title, artist or native track ID.`;
   if (!paginate(matches.length, state.page, catalog.page_size)) return;
   const selected = matches.slice(state.page * catalog.page_size, (state.page + 1) * catalog.page_size);
   const tracks = await tracksFor(selected.map(row => row[0]));
@@ -187,17 +197,21 @@ async function cohort(state, token) {
 }
 async function render() {
   const token = ++generation, state = route();
-  stopPlayback();
-  $('#search-form').hidden = state.kind === 'listen';
+  routeCleanup?.(); routeCleanup = null;
+  clearRoutePlayers();
+  $('#search-form').hidden = ['listen', 'genre-map', 'descriptor-map'].includes(state.kind);
   content.setAttribute('aria-busy', 'true'); rows.replaceChildren(); pages.replaceChildren(); status.textContent = 'Loading…';
   if (['artists', 'genres', 'tracks', 'wikidata'].includes(state.kind)) { scope.value = state.kind; query.value = state.q; }
+  $('#playable-only').checked = Boolean(state.playable);
+  $('[data-playable-filter]').hidden = !catalog.playback || scope.value !== 'tracks';
   try {
     if (state.kind === 'invalid') throw new Error('Invalid native catalog ID');
     if (state.kind === 'listen') {
       if (!catalog.playback) { heading.textContent = 'Listen'; status.textContent = 'No local excerpts are attached to this export.'; }
       else {
         const scoped = state.genre !== null || state.artist !== null;
-        const ids = scoped ? playableTracks({genre: state.genre, artist: state.artist}).map(row => row.track_id) : null;
+        if (state.queue && state.queue.some(id => !playableTracks().some(row => row.track_id === id))) throw new Error('This journey includes an excerpt absent from this local export.');
+        const ids = state.queue ?? (scoped ? playableTracks({genre: state.genre, artist: state.artist}).map(row => row.track_id) : null);
         await renderPlayback({config: catalog.playback, directory: true, ids, json, rows, heading, status, current: () => token === generation});
         if (token === generation && scoped) {
           if (state.genre !== null) { heading.textContent = `Listen · ${genres.get(state.genre)?.title ?? 'Unknown genre'}`; rows.prepend(link('All tracks in this genre', `#genre=${state.genre}`)); }
@@ -205,10 +219,15 @@ async function render() {
         }
       }
     }
-    else if (state.kind === 'genre-map') { heading.textContent = 'Genre families'; status.textContent = 'Browse all native FMA genre definitions by source parent. Positions do not represent musical distance.'; renderGenreAtlas(rows, genres); }
+    else if (state.kind === 'descriptor-map') {
+      if (!catalog.descriptor_map) throw new Error('Descriptor map is not attached.');
+      await loadArtists(); if (token !== generation) return;
+      await renderDescriptorMap({state, registerCleanup: cleanup => { if (token === generation) routeCleanup = cleanup; else cleanup(); }, playbackTracks: catalog.playback?.tracks ?? [], onPlay: (id, ids) => requestPlay({config: catalog.playback, id, ids, queue: Array.isArray(ids), json}), config: catalog.descriptor_map, json, genres, artists, rows, heading, status, current: () => token === generation, onStateChange: ({entity, q, selected}) => { const params = new URLSearchParams('descriptor-map'); if (entity === 'artists') params.set('entity', entity); if (q) params.set('q', q); if (selected !== null && selected !== undefined) params.set('selected', selected); history.replaceState(null, '', '#' + params); }});
+    }
+    else if (state.kind === 'genre-map') { heading.textContent = 'Genre families'; status.textContent = 'Browse all native FMA genre definitions by source parent. Positions do not represent musical distance.'; renderGenreAtlas(rows, genres, {playbackTracks: catalog.playback?.tracks ?? [], query: state.q, onlyWithExcerpts: state.playable, onFilterChange: ({query, onlyWithExcerpts}) => { const params = new URLSearchParams('genre-map'); if (query) params.set('q', query); if (onlyWithExcerpts) params.set('playable', '1'); history.replaceState(null, '', '#' + params); }}); }
     else if (['wikidata', 'wdgenre', 'wdartist'].includes(state.kind)) await renderSourceGenres({state, manifest: catalog.source_genres, json, heading, status, rows, paginate, current: () => token === generation});
     else if (['artists', 'genres'].includes(state.kind)) await directory(state, token);
-    else if (state.kind === 'tracks' && state.q.trim()) await searchTracks(state, token);
+    else if (state.kind === 'tracks' && (state.q.trim() || state.playable)) await searchTracks(state, token);
     else if (state.kind === 'track') await trackDetail(state, token);
     else await cohort(state, token);
     if (token === generation) { content.setAttribute('aria-busy', 'false'); document.documentElement.dataset.fmaReady = 'true'; }
@@ -218,13 +237,14 @@ async function render() {
   }
 }
 function search(replace = false) {
-  const params = new URLSearchParams(); params.set(scope.value, ''); if (query.value.trim()) params.set('q', query.value.trim());
+  const params = new URLSearchParams(); params.set(scope.value, ''); if (query.value.trim()) params.set('q', query.value.trim()); if (scope.value === 'tracks' && $('#playable-only').checked) params.set('playable', '1');
   const hash = '#' + params.toString(); if (replace) { history.replaceState(null, '', hash); render(); } else if (location.hash !== hash) location.hash = hash; else render();
 }
 $('#search-form').addEventListener('submit', event => { event.preventDefault(); const first = rows.querySelector('.search-results a'); if (first && route().q === query.value.trim()) first.click(); else search(); });
+$('#playable-only').addEventListener('change', () => search());
 query.addEventListener('input', () => search(true)); scope.addEventListener('change', () => search());
 query.addEventListener('keydown', event => { if (event.key === 'ArrowDown') { event.preventDefault(); rows.querySelector('.search-results a')?.focus(); } });
-document.addEventListener('keydown', event => { if (event.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); (document.querySelector('#listen-query') ?? query).focus(); } });
+document.addEventListener('keydown', event => { if (event.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); (document.querySelector('#listen-query, #descriptor-query, .fma-atlas-search') ?? query).focus(); } });
 window.addEventListener('hashchange', render);
-try { catalog = await json('catalog.json'); document.querySelectorAll('[data-playback]').forEach(element => { element.hidden = !catalog.playback; }); if (catalog.playback) { document.querySelector('[data-audio-scope]').textContent = 'Only explicitly attached local excerpts have playback controls; other tracks have no included audio.'; document.querySelector('[data-audio-license]').textContent = 'Recordings have separate artist-selected licenses. Attached excerpts retain per-track attribution and license links.'; } document.querySelectorAll('[data-related-music]').forEach(element => { element.hidden = !catalog.related_music; }); document.querySelectorAll('[data-source-genres]').forEach(element => { element.hidden = !catalog.source_genres; }); genres = new Map(catalog.genres.map(row => [row.genre_id, row])); await render(); }
+try { catalog = await json('catalog.json'); document.querySelectorAll('[data-descriptor-map]').forEach(element => { element.hidden = !catalog.descriptor_map; }); document.querySelectorAll('[data-playback]').forEach(element => { element.hidden = !catalog.playback; }); if (catalog.playback) { document.querySelector('[data-audio-scope]').textContent = 'Only explicitly attached local excerpts have playback controls; other tracks have no included audio.'; document.querySelector('[data-audio-license]').textContent = 'Recordings have separate artist-selected licenses. Attached excerpts retain per-track attribution and license links.'; } document.querySelectorAll('[data-related-music]').forEach(element => { element.hidden = !catalog.related_music; }); document.querySelectorAll('[data-source-genres]').forEach(element => { element.hidden = !catalog.source_genres; }); genres = new Map(catalog.genres.map(row => [row.genre_id, row])); await render(); }
 catch (error) { heading.textContent = 'Catalog unavailable'; status.textContent = error.message; rows.append(button('Reload', () => location.reload())); content.setAttribute('aria-busy', 'false'); }

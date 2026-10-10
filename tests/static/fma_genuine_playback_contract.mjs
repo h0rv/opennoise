@@ -23,8 +23,10 @@ async function browser(operation) {
     } catch { response.statusCode = 404; response.end(); }
   });
   try {
-    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-    const origin = `http://127.0.0.1:${server.address().port}`;
+    const externalOrigin = process.env.OPENNOISE_FMA_GENUINE_ORIGIN;
+    if (externalOrigin && !/^http:\/\/127\.0\.0\.1:\d+$/.test(externalOrigin)) throw Error('External genuine test origin must be localhost.');
+    if (!externalOrigin) await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    const origin = externalOrigin ?? `http://127.0.0.1:${server.address().port}`;
     child = spawn(chromium, ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank']);
     const endpoint = await new Promise((resolve, reject) => {
       let output = ''; const timer = setTimeout(() => reject(new Error('Chromium startup timed out')), 10000);
@@ -52,7 +54,7 @@ async function browser(operation) {
   }
 }
 
-test('genuine retained FMA excerpts play locally with attribution and navigation isolation', {skip, timeout: 180000}, async () => {
+test('genuine retained FMA excerpts play locally with attribution and persistent navigation', {skip, timeout: 180000}, async () => {
   const manifest = JSON.parse(await readFile(join(process.env.OPENNOISE_FMA_GENUINE_SITE, 'audio/manifest.json')));
   assert.equal(manifest.test_only, false);
   assert.equal(manifest.public_deployment_authorized, false);
@@ -68,23 +70,54 @@ test('genuine retained FMA excerpts play locally with attribution and navigation
     assert.equal(await evaluate("document.querySelectorAll('#rows a[href^=\"#genre=\"]').length"), catalog.genres.length);
     await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
     assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
+    await evaluate("document.querySelector('.fma-atlas-playable').click()");
+    assert.ok(await evaluate("location.hash.includes('playable=1')"));
+    assert.equal(await evaluate("document.querySelectorAll('.fma-atlas-listen').length"), new Set(catalog.playback.tracks.flatMap(row => row.genre_ids)).size);
+    if (catalog.descriptor_map) {
+      await evaluate("location.hash='descriptor-map'");
+      await wait("document.querySelector('#status').textContent.includes('164 matching genres') && document.querySelector('.descriptor-canvas') !== null");
+      await evaluate("document.querySelector('.descriptor-canvas').focus()");
+      await command('Input.dispatchKeyEvent', {type:'keyDown',key:'+',code:'Equal'});
+      await command('Input.dispatchKeyEvent', {type:'keyDown',key:'Home',code:'Home'});
+      assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
+      await evaluate("const s=document.querySelector('.descriptor-controls select');s.value='artists';s.dispatchEvent(new Event('change',{bubbles:true}))");
+      await wait("document.querySelector('#status').textContent.includes('16916 matching artists')");
+      assert.ok(await evaluate("document.querySelector('#status').textContent.includes('16109 with coordinates')"));
+      await evaluate(`const q=document.querySelector('#descriptor-query');q.value=${JSON.stringify(String(entries[0].artist_id))};q.dispatchEvent(new Event('input',{bubbles:true}))`);
+      await wait("document.querySelectorAll('.descriptor-list li').length === 1");
+      await evaluate("document.querySelector('.descriptor-list button').click()");
+      assert.ok(await evaluate(`document.querySelector('.descriptor-selection a').getAttribute('href') === '#artist=${entries[0].artist_id}'`));
+      assert.ok(!requests.some(row => row.type === 'Media' || row.request.url.endsWith('.mp3')), 'map selection does not autoplay');
+      await evaluate("document.querySelector('.descriptor-excerpts li button').click()");
+      await wait("document.querySelector('#persistent-player audio').currentTime > 0.1 && !document.querySelector('#persistent-player audio').paused");
+      await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
+      const mapQueue = catalog.playback.tracks.filter(row => row.artist_id === entries[0].artist_id).map(row => row.track_id);
+      await evaluate("document.querySelector('.descriptor-play-selection').click()");
+      await wait(`document.querySelector('#persistent-player').dataset.trackId === '${mapQueue[0]}' && document.querySelector('#persistent-player audio').currentTime > 0.1`);
+      assert.equal(await evaluate("document.querySelector('.playback-order').textContent"), `1 of ${mapQueue.length} · ${mapQueue.map(id => manifest.tracks[String(id)].title || `Track #${id}`).join(' → ')}`);
+      await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
+      await command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 900, deviceScaleFactor: 1, mobile: false});
+      await wait("document.querySelector('.descriptor-canvas').width > 600");
+      assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
+
+    }
     const genre = catalog.playback.tracks.find(row => row.genre_ids.length).genre_ids[0];
     const cohort = catalog.playback.tracks.filter(row => row.genre_ids.includes(genre));
     await evaluate(`location.hash='genre=${genre}'`);
     await wait("document.querySelector('#rows a[href^=\"#listen\"]') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'");
     await evaluate("document.querySelector('#rows a[href^=\"#listen\"]').click()");
-    await wait(`document.querySelectorAll('.playback audio').length === ${cohort.length} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
-    assert.deepEqual((await evaluate("[...document.querySelectorAll('.playback')].map(row => Number(row.dataset.trackId))")).sort((a,b)=>a-b), cohort.map(row => row.track_id).sort((a,b)=>a-b));
+    await wait(`document.querySelectorAll('#rows .playback[data-track-id]').length === ${cohort.length} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    assert.deepEqual((await evaluate("[...document.querySelectorAll('#rows .playback[data-track-id]')].map(row => Number(row.dataset.trackId))")).sort((a,b)=>a-b), cohort.map(row => row.track_id).sort((a,b)=>a-b));
     await evaluate("location.hash='listen'");
-    await wait(`document.querySelectorAll('.playback audio').length === ${entries.length} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
-    assert.ok(!requests.some(row => row.type === 'Media' || row.request.url.endsWith('.mp3')), 'no MP3 request before playback gesture');
+    await wait(`document.querySelectorAll('#rows .playback[data-track-id]').length === ${entries.length} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    assert.ok(requests.filter(row => row.type === 'Media').every(row => row.request.url.endsWith('.mp3')), 'only local MP3 media requests');
     const played = [];
     for (const entry of entries) {
-      const selector = `.playback[data-track-id="${entry.track_id}"]`;
+      const selector = `#rows .playback[data-track-id="${entry.track_id}"]`;
       assert.ok(await evaluate(`document.querySelector(${JSON.stringify(selector)}).textContent.includes(${JSON.stringify(entry.attribution)})`));
       assert.ok(await evaluate(`document.querySelector(${JSON.stringify(selector)}).querySelector('a[href=${JSON.stringify(entry.license_url)}]') !== null`));
       await evaluate(`document.querySelector(${JSON.stringify(selector)}).querySelector('.playback-toggle').click()`);
-      await wait(`(() => {const a=document.querySelector(${JSON.stringify(selector)}).querySelector('audio'); return !a.paused && a.currentTime > 0.1 && a.readyState >= 2 && !a.error;})()`);
+      await wait(`(() => {const a=document.querySelector('#persistent-player audio'); return document.querySelector('#persistent-player').dataset.trackId === '${entry.track_id}' && !a.paused && a.currentTime > 0.1 && a.readyState >= 2 && !a.error;})()`);
       assert.equal(await evaluate("[...document.querySelectorAll('audio')].filter(a => !a.paused).length"), 1);
       played.push(entry.track_id);
     }
@@ -93,18 +126,45 @@ test('genuine retained FMA excerpts play locally with attribution and navigation
     if (process.env.OPENNOISE_FMA_GENUINE_EVIDENCE) {
       const shot = await command('Page.captureScreenshot', {format: 'png'});
       await writeFile(join(process.env.OPENNOISE_FMA_GENUINE_EVIDENCE, 'genuine-listening-mobile.png'), Buffer.from(shot.data, 'base64'));
-      await writeFile(join(process.env.OPENNOISE_FMA_GENUINE_EVIDENCE, 'browser-playback.json'), JSON.stringify({test_only: false, played_track_ids: played, clips_started: played.length, one_active_player: true, local_requests_only: true}, null, 2));
+      await writeFile(join(process.env.OPENNOISE_FMA_GENUINE_EVIDENCE, 'browser-playback.json'), JSON.stringify({test_only: false, played_track_ids: played, clips_started: played.length, one_active_player: true, local_requests_only: true, persistent_navigation: true}, null, 2));
     }
-    await evaluate("window.retainedAudio=[...document.querySelectorAll('audio')]; location.hash='genres'");
+    await evaluate("window.retainedAudio=document.querySelector('#persistent-player audio'); window.retainedTime=window.retainedAudio.currentTime; location.hash='genres'");
     await wait("document.querySelector('h1').textContent === 'Genres' && document.querySelector('main').getAttribute('aria-busy') === 'false'");
-    assert.ok(await evaluate('window.retainedAudio.every(a => a.paused && !a.hasAttribute("src"))'));
+    await wait('window.retainedAudio.currentTime > window.retainedTime && !window.retainedAudio.paused');
+    assert.equal(await evaluate('document.querySelectorAll("audio").length'), 1);
+    await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
+    assert.ok(await evaluate('window.retainedAudio.paused && !window.retainedAudio.hasAttribute("src")'));
+    await evaluate("location.hash='tracks&playable=1'");
+    await wait(`document.querySelectorAll('#rows .track').length === ${entries.length} && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+    await evaluate("document.querySelector('#rows .track button').click()");
+    await wait("document.querySelector('#persistent-player audio').currentTime > 0.1 && !document.querySelector('#persistent-player audio').paused");
+    await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
     await evaluate(`location.hash='track=${entries[0].track_id}'`);
-    await wait("document.querySelector('.playback audio') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    await wait("document.querySelector('#rows .playback-toggle') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'");
     const expectedRelated = catalog.playback.tracks.filter(row => row.track_id !== entries[0].track_id && row.artist_id !== entries[0].artist_id && row.genre_ids.some(id => catalog.playback.tracks.find(other => other.track_id === entries[0].track_id).genre_ids.includes(id)));
     if (expectedRelated.length) assert.ok(await evaluate("document.querySelector('.playback-related a') !== null"));
-    await evaluate("document.querySelector('.playback-toggle').focus()");
+    await evaluate("document.querySelector('#rows .playback-toggle').focus()");
     await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r'});
     await command('Input.dispatchKeyEvent', {type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13});
-    await wait("document.querySelector('audio').currentTime > 0.1 && !document.querySelector('audio').paused");
+    await wait("document.querySelector('#persistent-player audio').currentTime > 0.1 && !document.querySelector('#persistent-player audio').paused");
+    await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
+    const journey = [entries[1].track_id, entries[0].track_id];
+    await evaluate(`location.hash='listen&queue=${journey.join(',')}'`);
+    await wait("document.querySelectorAll('#rows .playback[data-track-id]').length === 2 && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.deepEqual(await evaluate("[...document.querySelectorAll('#rows .playback[data-track-id]')].map(row=>Number(row.dataset.trackId))"), journey);
+    await evaluate("document.querySelector('.queue-options').open=true;document.querySelector('.queue-share').click();document.querySelector('.queue-save').click()");
+    assert.equal(await evaluate("new URL(document.querySelector('.journey-url').value).hash"), '#listen&queue='+journey.join(','));
+    await evaluate('window.beforeJourneyReload=true');
+    await command('Page.reload');
+    await wait("window.beforeJourneyReload === undefined && document.querySelectorAll('#rows .playback[data-track-id]').length === 2 && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+    assert.equal(await evaluate('document.querySelectorAll(\"audio\").length'), 0, 'restored journey is silent until explicit Play');
+    await evaluate("document.querySelector('.playback-queue').click()");
+    await wait(`document.querySelector('#persistent-player').dataset.trackId === '${journey[0]}' && document.querySelector('#persistent-player audio').currentTime > 0.1`);
+    // Natural completion also works on the deliverable's ordinary non-range HTTP server.
+    await evaluate("document.querySelector('#persistent-player audio').playbackRate=16");
+    await wait(`document.querySelector('#persistent-player').dataset.trackId === '${journey[1]}' && document.querySelector('#persistent-player audio').currentTime > 0.1`);
+    await evaluate("document.querySelector('#persistent-player .playback-repeat').click();document.querySelector('#persistent-player audio').playbackRate=16");
+    await wait(`document.querySelector('#persistent-player').dataset.trackId === '${journey[0]}' && document.querySelector('#persistent-player audio').currentTime > 0.1`);
+    await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
   });
 });

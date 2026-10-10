@@ -21,6 +21,7 @@ def main() -> None:
     parser.add_argument(
         "--playback", type=Path, help="verified adjacent audio directory; offline attachment"
     )
+    parser.add_argument("--descriptor-map", type=Path, help="verified fresh descriptor map")
     args = parser.parse_args()
     receipt = build_fma_static(
         source=args.source,
@@ -30,6 +31,7 @@ def main() -> None:
         artist_context_root=args.artist_context_root,
         related_music=args.related_music,
         playback=args.playback,
+        descriptor_map=args.descriptor_map,
     )
     sys.stdout.write(
         json.dumps({key: value for key, value in receipt.items() if key != "files"}, indent=2)
