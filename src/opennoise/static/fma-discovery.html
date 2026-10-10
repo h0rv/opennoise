@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OpenNoise · explore genres</title><link rel="stylesheet" href="fma-catalog.css"><link rel="stylesheet" href="fma-discovery.css"><script type="module" src="fma-discovery.js"></script></head>
+<body>
+<a class="skip" href="#content">Skip to music</a>
+<header><a href="#genres">OpenNoise · listen</a><nav aria-label="Listening"><a href="#genres">Genres</a><a href="#artists">Artists with excerpts</a><a href="collections.html">Collections and coverage</a></nav></header>
+<form id="discovery-search" role="search"><label for="discovery-query">Find a genre</label><input id="discovery-query" type="search" autocomplete="off" placeholder="Name or native ID"><label id="availability-label"><input id="include-unavailable" type="checkbox">Include genres without excerpts</label><button type="submit">Find</button></form>
+<main id="content" tabindex="-1" aria-busy="true"><h1 tabindex="-1">Loading genres…</h1><p id="discovery-status" role="status"></p><div id="discovery-rows"></div></main>
+<footer><p>Available FMA excerpts from both collections. Track tags are source annotations; they do not classify the artist. Nothing plays until you press Play.</p><details><summary>How starting excerpts are chosen</summary><p>Choose up to three different source artists from the available recordings, preferring tracks with fewer direct genre tags, then lower native track IDs. This is a transparent browsing heuristic, not a human judgment of musical representativeness. Every available excerpt remains accessible. Genres with one excerpt have no alternative here.</p><p>Metadata and license claims come from the retained historical FMA snapshot. Full attribution appears in the player. No new audio or training was used for this view.</p><a href="genre-discovery.json">Selection and coverage receipt</a></details></footer>
+</body></html>

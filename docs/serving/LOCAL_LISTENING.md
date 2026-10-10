@@ -177,3 +177,47 @@ distinct recordings and 124 direct genre annotations; 32 recordings appear in
 both. All new clips decoded completely and run about 30 seconds. Independent
 float64 distance replay reproduced all 384 expanded suggested-excerpt edges
 across 52 components. No new fit or musical relevance evaluation was performed.
+
+## Genre-first listening across retained collections
+
+`scripts/build_fma_genre_discovery.py --root <site>` explicitly replaces a verified
+two-collection entry page with a searchable genre directory. The previous chooser
+is preserved as `collections.html`. The builder replays the original source-bound
+collection checks in a temporary snapshot; it rejects changed receipts, native
+associations or overlapping records. It emits a 43,560-byte union index under a
+200 KB limit, leaving both audio manifests and every clip unchanged.
+
+The retained union supplies direct playback on 124 of 164 native genre pages and
+91 of 16,916 known source artist pages. There are 92 distinct recordings. Of the
+124 playable genres, 79 have one excerpt and 45 have multiple artists; 40 genre
+definitions lack excerpts. Be-Bop and Bollywood also lack native catalog tracks.
+British Folk, Power-Pop and Rock Opera have excerpts only in the original
+collection, now reachable from the same directory as expanded-only examples.
+
+Each genre exposes up to three **Starting excerpts**, choosing distinct native
+artists, then fewer direct source tags and lower track IDs. This source heuristic
+provides reproducible starting points, not a musical representativeness ranking.
+Every other available excerpt is listed. The index does not fabricate audio for
+uncovered genres or inherit parent tags. Full native catalog links remain available.
+
+Direct Play lazily uses the recording's original bounded collection manifest.
+The union index is metadata, not a larger audio attachment: each playback manifest
+still has at most 64 entries, and this entry view starts one excerpt at a time.
+One player persists through genre and artist routes, search and browser history;
+reload remains silent. Opening a full catalog leaves the page and stops its player.
+Queue controls remain in the collection explorers. No new acquisition or model fit
+is performed by this feature.
+
+This improves the retained-data discovery path, not full reference coverage.
+Forty missing excerpt cohorts cannot be repaired by relabeling the existing clips;
+79 single-example genres offer no within-genre comparison. Musical relevance and
+representativeness need independent listening judgments. Native FMA tags do not
+supply the complete historical Every Noise genre universe or reference memberships,
+so these coverage counts cannot establish an overall parity percentage.
+
+Run the optional real-data browser contract with
+`OPENNOISE_FMA_DISCOVERY_SITE=<site> node --test tests/static/fma_genre_discovery_contract.mjs`.
+It traverses every genre and retained artist, checks the disclosed one/zero-example
+states, plays from both bounded manifests, checks persistent navigation, keyboard
+access, mobile layout and silent reload, and rejects malformed index responses
+without fetching audio.
