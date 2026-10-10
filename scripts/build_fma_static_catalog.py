@@ -25,6 +25,7 @@ def main() -> None:
     parser.add_argument(
         "--playable-neighbors", type=Path, help="verified attached-audio descriptor neighbors"
     )
+    parser.add_argument("--collection-label", help="local bundle collection name")
     args = parser.parse_args()
     receipt = build_fma_static(
         source=args.source,
@@ -36,6 +37,7 @@ def main() -> None:
         playback=args.playback,
         descriptor_map=args.descriptor_map,
         playable_neighbors=args.playable_neighbors,
+        collection_label=args.collection_label,
     )
     sys.stdout.write(
         json.dumps({key: value for key, value in receipt.items() if key != "files"}, indent=2)

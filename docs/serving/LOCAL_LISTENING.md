@@ -130,3 +130,50 @@ The CLI retains 120-second CPU/wall and 1 GB address-space bounds, and the close
 pack is limited to 1 MB. Static attachment requires the exact audio-manifest hash
 and complete attached-ID coverage. Numerical verification replays all rows;
 closed-file validation alone does not establish ranking correctness.
+
+## Separately bounded expanded collection
+
+The approved 2026-10-10 capture uses the separate `fma-large32-native-listening-v1`
+recipe in `scripts/capture_fma_large32.py`. Its only network source is the official
+`https://os.unil.cloud.switch.ch/fma/fma_large.zip`. Probe permits at most eight
+serial directory requests and 16 MB; audio permits at most 32 new clips, 64
+requests and 32 MB. Combined limits are 72 requests and 48 MB; every range and
+MP3 is at most 2 MB. Redirects and retries are disabled. Existing capture limits
+are unchanged. These instructions do not authorize another acquisition.
+
+Run `probe --output <probe>`, then offline `freeze --source <native-source>
+--baseline <original-capture> --probe <probe>`. Review the frozen roster before
+`capture` with those same inputs and a fresh `--output <new-capture>`.
+Offline `verify --source <native-source> --baseline <original-capture>
+--output <new-capture>` replays the exact source, selection, ZIP and byte custody.
+The selection greedily adds direct source genre annotations absent from the
+original capture, prefers new artists on ties, keeps one track per batch artist,
+and excludes existing track IDs. No replacements occur after freezing.
+
+The completed capture contains 32 new recordings and adds 45 direct genre tags:
+70 requests transferred 37,556,754 bytes including the directory, producing
+29,948,551 MP3 bytes. The whole archive checksum remains unverified. Seven new
+recordings have no retained track-page URL; no URL is invented. Metadata licenses
+and annotations remain historical source claims, not current rights or musical
+representativeness judgments.
+
+`scripts/build_fma_listening_collection.py` verifies both captures, fully decodes
+each new clip, and assembles every new clip plus up to 32 original clips selected
+for additional genre coverage. The explicit `fma-local-playback-collection-v1`
+manifest binds both source inventories and the original decode receipts. Each
+collection still has at most 64 clips, 64 MB audio and a 200 KB manifest.
+
+Keep the original export under `site/original/audio` and the separately assembled
+collection under `site/expanded/audio`. Build corresponding static explorers with
+`--collection-label`, recomputing the expanded pool's playable-neighbor pack from
+the unchanged frozen model. `scripts/build_fma_listening_home.py --root <site>`
+checks sibling source bindings and creates a small collection chooser with exact
+union and overlap counts. Serve the site root and open `/`. Switching collections
+stops playback; catalog navigation within a collection retains its player.
+
+The completed expanded collection has 64 clips, 63 artists and 121 direct genre
+annotations, using 63,348,676 audio bytes. Across both collections there are 92
+distinct recordings and 124 direct genre annotations; 32 recordings appear in
+both. All new clips decoded completely and run about 30 seconds. Independent
+float64 distance replay reproduced all 384 expanded suggested-excerpt edges
+across 52 components. No new fit or musical relevance evaluation was performed.

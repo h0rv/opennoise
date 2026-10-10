@@ -18,6 +18,7 @@ from opennoise.serving.metadata.fma_listening import LICENSES
 
 REVISION = "fma-local-playback-v1"
 DECODE_PROTOCOL = "ffprobe-ffmpeg-mp3-full-decode-v1"
+COLLECTION_REVISION = "fma-local-playback-collection-v1"
 MAX_MANIFEST_BYTES = 200_000
 MAX_DURATION_SECONDS = 31.0
 PROCESS_TIMEOUT_SECONDS = 20
@@ -250,16 +251,27 @@ def validate_playback_export(directory: Path) -> dict[str, Any]:
     manifest = json.loads(path.read_bytes())
     tracks = manifest.get("tracks")
     if (
-        manifest.get("revision") != REVISION
+        manifest.get("revision") not in {REVISION, COLLECTION_REVISION}
         or manifest.get("test_only") is not False
         or manifest.get("public_deployment_authorized") is not False
         or manifest.get("metadata_license") != "CC-BY-4.0"
-        or not isinstance(manifest.get("source_pack_sha256"), str)
-        or not re.fullmatch(r"[0-9a-f]{64}", manifest["source_pack_sha256"])
+        or (
+            manifest.get("revision") == REVISION
+            and (
+                not isinstance(manifest.get("source_pack_sha256"), str)
+                or not re.fullmatch(r"[0-9a-f]{64}", manifest["source_pack_sha256"])
+            )
+        )
         or not isinstance(tracks, dict)
         or not 0 < len(tracks) <= fma_listening64.MAX_CLIPS
     ):
         raise ValueError("playback manifest scope or identity differs")
+    if manifest["revision"] == COLLECTION_REVISION:
+        from opennoise.deployment.fma_listening_collection import (  # noqa: PLC0415 -- explicit optional collection protocol.
+            validate_collection_metadata,
+        )
+
+        validate_collection_metadata(manifest)
     expected = {"manifest.json"}
     total = 0
     string_fields = (

@@ -252,3 +252,30 @@ test('shuffle preserves current track and queue membership; repeat only advances
     assert.equal(await evaluate("document.querySelector('#persistent-player').hidden"), true);
   }, {trackCount:4});
 });
+
+test('explicit collection revision plays synthetic audio while unknown revisions and oversized pools fail closed', {skip, timeout: 60000}, async () => {
+  await browser(async ({evaluate, wait, requests}) => {
+    await evaluate(`(async()=>{
+      window.collectionApi=await import('./fma-playback.js');
+      window.collectionFixture=await fetch('../audio/manifest.json').then(response=>response.json());
+      window.collectionFixture.revision='fma-local-playback-collection-v1';
+      window.collectionResult=await window.collectionApi.requestPlay({config:{manifest:'../audio/manifest.json'},id:2,json:async()=>window.collectionFixture});
+    })()`);
+    assert.equal(await evaluate('window.collectionResult'), true);
+    await wait("document.querySelector('audio').currentTime > 0.1 && !document.querySelector('audio').paused");
+    assert.match(await evaluate("document.querySelector('#persistent-player').textContent"), /Test-only audio fixture/);
+    await evaluate('window.collectionApi.stopPlayback()');
+    const before = requests.filter(row => row.request.url.endsWith('.mp3')).length;
+    for (const mutation of [
+      "pack.revision='fma-local-playback-collection-v2'",
+      "pack.tracks=Object.fromEntries(Array.from({length:65},(_,i)=>[i+2,{...pack.tracks[2],track_id:i+2,audio_path:`${i+2}.mp3`}]))",
+      "pack.tracks[2].audio_path='../other.mp3'",
+    ]) {
+      const accepted = await evaluate(`(async()=>{ const pack=structuredClone(window.collectionFixture); ${mutation}; return window.collectionApi.requestPlay({config:{manifest:'../audio/manifest.json'},id:2,json:async()=>pack}); })()`);
+      assert.equal(accepted, false);
+      assert.equal(await evaluate("document.querySelector('audio').paused && !document.querySelector('audio').hasAttribute('src')"), true);
+      await evaluate('window.collectionApi.stopPlayback()');
+    }
+    assert.equal(requests.filter(row => row.request.url.endsWith('.mp3')).length, before);
+  });
+});

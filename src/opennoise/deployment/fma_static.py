@@ -30,6 +30,7 @@ MAX_SHARD_BYTES = 200_000
 MAX_EXPORT_BYTES = 40_000_000
 MAX_ARTIST_INDEX_BYTES = 2_000_000
 RELATED_GENRES = 6
+MAX_COLLECTION_LABEL = 80
 
 
 def _projected_rows(path: Path) -> list[dict[str, Any]]:
@@ -299,6 +300,14 @@ def _playback_binding(source: Path, output: Path, tracks: list[dict[str, Any]]) 
     }
 
 
+def _collection_metadata(label: str | None) -> dict[str, Any]:
+    if label is None:
+        return {}
+    if not label.strip() or len(label) > MAX_COLLECTION_LABEL:
+        raise ValueError("invalid listening collection label")
+    return {"collection": {"label": label, "home": "../../index.html"}}
+
+
 def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional source packs.
     *,
     source: Path,
@@ -310,6 +319,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
     playback: Path | None = None,
     descriptor_map: Path | None = None,
     playable_neighbors: Path | None = None,
+    collection_label: str | None = None,
 ) -> dict[str, Any]:
     """Build a fresh independent catalog; source track labels never become artist genres."""
     if output.exists() or output.is_symlink():
@@ -353,6 +363,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
     _cohort(output, "all", [row["track_id"] for row in tracks], files)
     track_context = _track_rows(output, tracks, files)
     catalog = {
+        **_collection_metadata(collection_label),
         "revision": "fma-source-static-v1",
         "metadata_license": "CC-BY-4.0",
         "page_size": PAGE_SIZE,
