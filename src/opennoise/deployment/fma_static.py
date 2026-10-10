@@ -278,12 +278,21 @@ def _playback_binding(source: Path, output: Path, tracks: list[dict[str, Any]]) 
     ):
         raise ValueError("playback track/artist identity differs from native catalog")
     digest, length = sha256_file(source / "manifest.json")
+    native_tracks = {row["track_id"]: row for row in tracks}
     return {
         "manifest": "../audio/manifest.json",
         "manifest_sha256": digest,
         "manifest_bytes": length,
         "clip_count": len(attached["tracks"]),
         "audio_bytes": attached["audio_bytes"],
+        "tracks": [
+            {
+                "track_id": row["track_id"],
+                "artist_id": row["artist_id"],
+                "genre_ids": native_tracks[row["track_id"]]["genre_ids"] or [],
+            }
+            for row in sorted(attached["tracks"].values(), key=lambda row: row["track_id"])
+        ],
         "scope": "separate local audio resource; excluded from metadata export byte total",
     }
 

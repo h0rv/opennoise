@@ -11,6 +11,7 @@ import zstandard
 from opennoise.deployment.fma_static import (
     MAX_SHARD_BYTES,
     _genre_connections,
+    _playback_binding,
     build_fma_static,
     refresh_fma_static_display,
     validated_metadata_url,
@@ -64,6 +65,27 @@ def tables() -> dict[str, list[dict[str, object]]]:
 
 class FMAStaticTests(unittest.TestCase):
     """The optional FMA pack stays separate from CC0 artist catalogs and inference."""
+
+    def test_playable_index_uses_only_attached_native_track_annotations(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            audio = root / "audio"
+            audio.mkdir()
+            (audio / "manifest.json").write_text("{}")
+            attached = {
+                "tracks": {"3": {"track_id": 3, "artist_id": 999}},
+                "audio_bytes": 10,
+            }
+            with patch(
+                "opennoise.deployment.fma_static.validate_playback_export", return_value=attached
+            ):
+                binding = _playback_binding(audio, root / "explorer", tables()["tracks"])
+                self.assertEqual(
+                    binding["tracks"], [{"track_id": 3, "artist_id": 999, "genre_ids": []}]
+                )
+                attached["tracks"]["3"]["artist_id"] = 1
+                with self.assertRaisesRegex(ValueError, "identity differs"):
+                    _playback_binding(audio, root / "explorer", tables()["tracks"])
 
     def test_connections_use_shared_track_labels_not_parent_or_artist_inference(self) -> None:
         tracks = [
