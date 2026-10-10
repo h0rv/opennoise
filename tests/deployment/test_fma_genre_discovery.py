@@ -1,13 +1,20 @@
 """Synthetic metadata-only discovery fixtures; no actual audio or quality evidence."""
 
+import copy
+import hashlib
 import json
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
+import zstandard
+
+from opennoise.common import canonical_json
 from opennoise.deployment.fma_genre_discovery import (
     _body,
+    _neighbor_binding,
     _verified_inputs,
     build_genre_discovery,
     genre_index,
@@ -117,3 +124,92 @@ class GenreDiscoveryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "outputs must be fresh"):
                     build_genre_discovery(root)
                 self.assertEqual((root / "collections.html").read_bytes(), b"original chooser")
+
+    def test_optional_neighbors_are_byte_bound_and_isolated(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            explorer = root / "original" / "explorer"
+            (explorer / "playable-neighbors").mkdir(parents=True)
+            relative = "playable-neighbors/manifest.json"
+            manifest: dict[str, Any] = {
+                "revision": "fma-playable-descriptor-neighbors-v1",
+                "audio_manifest_sha256": "a" * 64,
+                "fitted": False,
+                "labels_used": False,
+                "musical_relevance_established": False,
+                "components": {"1": 10, "2": 20},
+                "rows": [
+                    {"track_id": 1, "neighbor_ids": [2], "reason": None},
+                    {"track_id": 2, "neighbor_ids": [1], "reason": None},
+                ],
+                "counts": {
+                    "queries": 2,
+                    "supported_queries": 2,
+                    "directed_edges": 2,
+                    "abstentions": {},
+                },
+            }
+            catalog: dict[str, Any] = {
+                "playback": {
+                    "tracks": [{"track_id": 1, "artist_id": 1}, {"track_id": 2, "artist_id": 2}]
+                }
+            }
+            self.assertIsNone(_neighbor_binding(root, "original", catalog, "a" * 64))
+
+            def save(value: dict[str, Any]) -> None:
+                body = canonical_json(value)
+                digest = hashlib.sha256(body).hexdigest()
+                (explorer / relative).write_bytes(body)
+                inventory = zstandard.ZstdCompressor().compress(
+                    canonical_json({relative: {"sha256": digest, "bytes": len(body)}})
+                )
+                (explorer / "files-manifest.json.zst").write_bytes(inventory)
+                (explorer / "static-receipt.json").write_text(
+                    json.dumps(
+                        {
+                            "files_manifest": {
+                                "path": "files-manifest.json.zst",
+                                "sha256": hashlib.sha256(inventory).hexdigest(),
+                                "bytes": len(inventory),
+                            }
+                        }
+                    )
+                )
+                catalog["playable_neighbors"] = {
+                    "manifest_path": relative,
+                    "manifest_sha256": digest,
+                    "counts": value["counts"],
+                }
+
+            save(manifest)
+            binding = _neighbor_binding(root, "original", catalog, "a" * 64)
+            assert binding is not None
+            self.assertEqual(
+                binding["manifest_path"], "original/explorer/playable-neighbors/manifest.json"
+            )
+            for mutation in ("audio", "claims", "duplicate", "component", "unsupported", "outside"):
+                changed = copy.deepcopy(manifest)
+                if mutation == "audio":
+                    changed["audio_manifest_sha256"] = "b" * 64
+                elif mutation == "claims":
+                    changed["fitted"] = True
+                elif mutation == "duplicate":
+                    changed["rows"][1]["track_id"] = 1
+                elif mutation == "component":
+                    changed["components"]["2"] = 10
+                elif mutation == "unsupported":
+                    changed["rows"][1]["reason"] = "outside_training_support"
+                    changed["rows"][1]["neighbor_ids"] = []
+                else:
+                    changed["rows"][0]["neighbor_ids"] = [3]
+                save(changed)
+                with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                    _neighbor_binding(root, "original", catalog, "a" * 64)
+            save(manifest)
+            catalog["playback"]["tracks"][1]["artist_id"] = 1
+            with self.assertRaisesRegex(ValueError, "isolation"):
+                _neighbor_binding(root, "original", catalog, "a" * 64)
+            catalog["playback"]["tracks"][1]["artist_id"] = 2
+            (explorer / relative).write_bytes(b"{}")
+            with self.assertRaisesRegex(ValueError, "bytes differ"):
+                _neighbor_binding(root, "original", catalog, "a" * 64)

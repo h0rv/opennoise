@@ -184,7 +184,7 @@ across 52 components. No new fit or musical relevance evaluation was performed.
 two-collection entry page with a searchable genre directory. The previous chooser
 is preserved as `collections.html`. The builder replays the original source-bound
 collection checks in a temporary snapshot; it rejects changed receipts, native
-associations or overlapping records. It emits a 43,560-byte union index under a
+associations or overlapping records. It emits a 44,128-byte union index, including optional suggestion bindings, under a
 200 KB limit, leaving both audio manifests and every clip unchanged.
 
 The retained union supplies direct playback on 124 of 164 native genre pages and
@@ -202,10 +202,11 @@ uncovered genres or inherit parent tags. Full native catalog links remain availa
 
 Direct Play lazily uses the recording's original bounded collection manifest.
 The union index is metadata, not a larger audio attachment: each playback manifest
-still has at most 64 entries, and this entry view starts one excerpt at a time.
+still has at most 64 entries. This entry view starts an individual excerpt or an
+explicit queue of up to six suggestions from one bound collection.
 One player persists through genre and artist routes, search and browser history;
 reload remains silent. Opening a full catalog leaves the page and stops its player.
-Queue controls remain in the collection explorers. No new acquisition or model fit
+Queue controls appear after an explicit suggestion queue starts. No new acquisition or model fit
 is performed by this feature.
 
 This improves the retained-data discovery path, not full reference coverage.
@@ -221,3 +222,34 @@ It traverses every genre and retained artist, checks the disclosed one/zero-exam
 states, plays from both bounded manifests, checks persistent navigation, keyboard
 access, mobile layout and silent reload, and rejects malformed index responses
 without fetching audio.
+
+
+## Inline playable discovery
+
+Root track pages now show the existing **Suggested excerpts** without leaving the
+persistent player. Starting-excerpt titles open these local track pages. Individual
+Play and **Play these excerpts** reuse the exact originating collection manifest;
+queues preserve the displayed order and contain at most six retained neighbors.
+Navigation through genre, artist and track pages keeps playback running. Next,
+Previous, Pause, Stop, shuffle and repeat use the existing bounded player; reload
+remains silent. Source tags and suggested numeric neighbors remain distinct.
+
+The root resolves shared recordings to the original collection. Consequently,
+60 original-pool query rows and 32 expanded-only query rows supply 552 ordered
+edges for the 92 distinct recordings. These are the prior independently replayed
+rankings, with artist/album/exact-feature component exclusions. No union candidate
+search, reranking, new fit or musical relevance claim is introduced. Following a
+shared recording's root track link uses its original-pool suggestions, even when
+that recording was reached from an expanded-pool queue.
+
+The index builder binds each optional suggestion manifest to its catalog hash,
+exported file inventory, exact audio roster and source roles. It verifies complete
+query coverage, support, components, artist exclusions and counts. Missing optional
+packs stay absent; invalid present packs fail the build. At runtime a failed pack
+only disables the suggestion section; source tags and direct playback remain
+available. Late loads and stale controls cannot replace a newer route or start its
+queue. Existing collection files and all audio bytes remain unchanged.
+
+Run `OPENNOISE_FMA_INLINE_SITE=<site> node --test tests/static/fma_inline_discovery_contract.mjs`
+for exact-row rendering, both source pools, individual and queued real playback,
+natural queue progression, history/reload/mobile, and stale or damaged pack checks.

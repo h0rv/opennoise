@@ -1,9 +1,10 @@
+import {renderPlayableNeighbors} from './fma-playable-neighbors.js';
 import {requestPlay} from './fma-playback.js';
 const $ = selector => document.querySelector(selector);
 const node = (tag, text) => { const value = document.createElement(tag); if (text !== undefined) value.textContent = text; return value; };
 const link = (text, href) => { const value = node('a', text); value.href = href; return value; };
 const heading = $('h1'), status = $('#discovery-status'), rows = $('#discovery-rows'), query = $('#discovery-query');
-let index, genres, artists;
+let index, genres, artists, generation = 0;
 const cache = new Map();
 async function json(path) {
   if (!cache.has(path)) cache.set(path, fetch(path).then(response => { if (!response.ok) throw Error('Local file unavailable.'); return response.json(); }).catch(error => { cache.delete(path); throw error; }));
@@ -25,10 +26,11 @@ function validate(value) {
   if (value.counts?.genres !== value.genres.length || value.counts?.clips !== Object.keys(value.tracks).length || value.counts?.playable_genres !== value.genres.filter(g => g.track_ids.length).length || value.counts?.artists !== new Set(Object.values(value.tracks).map(t => t.artist_id)).size) throw Error('Invalid coverage counts.');
   return value;
 }
-function play(id) {
+function play(id, collection = null, ids = null) {
   const track = index.tracks[String(id)];
   if (!track) return;
-  requestPlay({config: index.collections[track.collection], id, ids: [id], json});
+  document.body.dataset.discoveryQueue = String(Boolean(ids && ids.length > 1));
+  requestPlay({config: index.collections[collection ?? track.collection], id, ids: ids ?? [id], queue: Boolean(ids), json});
 }
 function playButton(id, label = 'Play excerpt') {
   const button = node('button', label); button.type = 'button'; button.dataset.playId = id;
@@ -42,12 +44,12 @@ function route() {
 }
 function excerpt(id, preferred = false) {
   const track = index.tracks[String(id)], article = node('article'); article.className = 'discovery-excerpt'; article.dataset.trackId = id;
-  article.append(node('h3', track.title || `Track #${id}`));
+  const title=node('h3');title.append(link(track.title || `Track #${id}`, `#track=${id}`));article.append(title);
   const credit = node('p'); credit.append(link(track.artist_name, `#artist=${track.artist_id}`)); article.append(credit, playButton(id));
   if (preferred) article.append(node('small', `${track.genre_ids.length} direct source tag${track.genre_ids.length === 1 ? '' : 's'}`));
   const tags = node('div'); tags.className = 'discovery-tags';
   for (const genreId of track.genre_ids) tags.append(link(genres.get(genreId)?.title ?? `Genre #${genreId}`, `#genre=${genreId}`));
-  const links = node('p'); links.className = 'excerpt-links'; links.append(link('Track details and suggested excerpts', `${track.collection}/explorer/index.html#track=${id}`));
+  const links = node('p'); links.className = 'excerpt-links'; links.append(link('Full track record', `${track.collection}/explorer/index.html#track=${id}`));
   article.append(tags, links); return article;
 }
 function directory(state) {
@@ -84,10 +86,18 @@ function genrePage(id) {
   const full=node('p');full.append(link(`Full source genre catalog · ${genre.track_count} tracks`, `expanded/explorer/index.html#genre=${id}`));rows.append(full);
   rows.append(node('p','Opening the full catalog leaves this page and stops its player.'));
 }
-function trackPage(id) {
+async function trackPage(id, current) {
   const track=index.tracks[String(id)];if(!track)throw Error('This recording is absent from the retained excerpts.');
   heading.textContent=track.title || `Track #${id}`;status.textContent='Local excerpt · direct source tags and attribution.';
-  rows.append(link('Explore genres','#genres'),excerpt(id),node('p','Opening full track details leaves this page and stops its player.'));
+  rows.append(link('Explore genres','#genres'),excerpt(id));
+  const collection=track.collection, config=index.collections[collection];
+  const pool=Object.values(index.tracks).filter(entry=>entry.origins.includes(collection));
+  const before=rows.children.length;
+  await renderPlayableNeighbors({id,config:config.playable_neighbors,playback:{manifest_sha256:config.manifest_sha256,tracks:pool},json,tracksFor:async ids=>ids.map(identity=>{const entry=index.tracks[String(identity)];if(!entry)throw Error('Missing retained excerpt');return [identity,entry.title,entry.artist_id];}),artistIndex:new Map([...artists].map(([identity,artist])=>[identity,[identity,artist.name]])),rows,current,onPlay:(identity,ids)=>{if(current())play(identity,collection,ids ?? null);}});
+  if(!current())return;
+  if(rows.children.length>before){const note=node('p',`Suggestions use the ${collection} collection's bounded pool and exclude the query’s artist/album/duplicate component. They are not a search across all retained recordings.`);note.className='selection-note';rows.append(note);}
+  else rows.append(node('p','No descriptor suggestion pack is attached to this collection. You can still follow its source genre tags.'));
+  rows.append(node('p','Opening full track details leaves this page and stops its player.'));
 }
 function artistPage(id) {
   const artist=artists.get(id);if(!artist)throw Error('No retained excerpt has this source artist ID.');
@@ -97,17 +107,17 @@ function artistPage(id) {
   const origin=index.tracks[String(artist.track_ids[0])].collection;
   rows.append(link('Full source artist record',`${origin}/explorer/index.html#artist=${id}`),node('p','Opening the full catalog leaves this page and stops its player.'));
 }
-function render() {
-  const state=route();rows.replaceChildren();$('#content').setAttribute('aria-busy','true');
+async function render() {
+  const token=++generation, state=route();rows.replaceChildren();$('#content').setAttribute('aria-busy','true');
   const directoryView=['genres','artists'].includes(state.kind);$('#discovery-search').hidden=!directoryView;
   if(directoryView){query.value=state.q;$('#include-unavailable').checked=Boolean(state.all);$('#availability-label').hidden=state.kind==='artists';$('label[for="discovery-query"]').textContent=state.kind==='artists'?'Find an artist':'Find a genre';}
-  try{if(directoryView)directory(state);else if(state.kind==='genre')genrePage(state.id);else if(state.kind==='artist')artistPage(state.id);else if(state.kind==='track')trackPage(state.id);else throw Error('Invalid native ID.');}
-  catch(error){heading.textContent='Page unavailable';status.textContent=error.message;rows.append(link('Explore genres','#genres'));}
-  $('#content').setAttribute('aria-busy','false');document.documentElement.dataset.discoveryReady='true';
+  try{if(directoryView)directory(state);else if(state.kind==='genre')genrePage(state.id);else if(state.kind==='artist')artistPage(state.id);else if(state.kind==='track')await trackPage(state.id,()=>token===generation);else throw Error('Invalid native ID.');}
+  catch(error){if(token!==generation)return;heading.textContent='Page unavailable';status.textContent=error.message;rows.append(link('Explore genres','#genres'));}
+  if(token!==generation)return;$('#content').setAttribute('aria-busy','false');document.documentElement.dataset.discoveryReady='true';
 }
 function search(replace=false){const state=route(),p=new URLSearchParams(state.kind==='artists'?'artists':'genres');if(query.value.trim())p.set('q',query.value.trim());if(state.kind!=='artists'&&$('#include-unavailable').checked)p.set('all','1');if(replace){history.replaceState(null,'','#'+p);render();}else location.hash=p.toString();}
 $('#discovery-search').addEventListener('submit',event=>{event.preventDefault();const first=rows.querySelector('.search-results a');if(first)first.click();else search();});query.addEventListener('input',()=>search(true));$('#include-unavailable').addEventListener('change',()=>search());query.addEventListener('keydown',event=>{if(event.key==='ArrowDown'){event.preventDefault();rows.querySelector('.search-results a')?.focus();}});
-window.addEventListener('hashchange',()=>{render();heading.focus({preventScroll:true});});
+window.addEventListener('hashchange',async()=>{const pending=render(),token=generation;await pending;if(token===generation)heading.focus({preventScroll:true});});
 document.addEventListener('keydown',event=>{if(event.key==='/'&&!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)&&!$('#discovery-search').hidden){event.preventDefault();query.focus();}});
 try{index=validate(await json('genre-discovery.json'));genres=new Map(index.genres.map(g=>[g.genre_id,g]));artists=new Map();for(const track of Object.values(index.tracks)){if(!artists.has(track.artist_id))artists.set(track.artist_id,{id:track.artist_id,name:track.artist_name,track_ids:[]});artists.get(track.artist_id).track_ids.push(track.track_id);}for(const a of artists.values())a.track_ids.sort((x,y)=>x-y);render();}
 catch(error){heading.textContent='Listening index unavailable';status.textContent=error.message;rows.append(link('Open the verified collections','collections.html'));$('#content').setAttribute('aria-busy','false');}
