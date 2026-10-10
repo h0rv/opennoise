@@ -17,7 +17,8 @@ from opennoise.ml import fma_related_tracks
 from opennoise.ml.fma_inference import FEATURE_RECEIPT_SHA256, MANIFEST_BYTES, _read_pinned
 from opennoise.ml.fma_sonic_map import FEATURE_SHA, ID_SHA
 
-REVISION = "fma-playable-descriptor-neighbors-v1"
+LEGACY_REVISION = "fma-playable-descriptor-neighbors-v1"
+REVISION = "fma-playable-component-neighbors-v2"
 MAX_OUTPUT_BYTES = 1_000_000
 MAX_CLIPS = 64
 LIMITS = {"seconds": 120, "memory_bytes": 1_000_000_000, "output_bytes": MAX_OUTPUT_BYTES}
@@ -33,8 +34,8 @@ CLAIMS = {
     "musical_relevance_established": False,
     "evaluation_status": "product inference only; no new quality evaluation",
 }
-POLICY: dict[str, Any] = {
-    "revision": REVISION,
+LEGACY_POLICY: dict[str, Any] = {
+    "revision": LEGACY_REVISION,
     "limits": LIMITS,
     "neighbors": 6,
     "max_clips": MAX_CLIPS,
@@ -43,6 +44,14 @@ POLICY: dict[str, Any] = {
     "ranking": "float64 squared Euclidean norm/dot identity; exact computed ties by native ID",
     "isolation": "exclude whole native artist/album/exact-feature component",
     **CLAIMS,
+}
+POLICY: dict[str, Any] = {
+    **LEGACY_POLICY,
+    "revision": REVISION,
+    "ranking": (
+        "float64 squared Euclidean norm/dot identity; exact computed ties by native ID; "
+        "first candidate per native component, continuing to six distinct components"
+    ),
 }
 
 
@@ -116,6 +125,32 @@ def freeze_protocol(audio: Path, pack: Path, features: Path, declaration: Path) 
     return frozen
 
 
+def _component_neighbors(
+    ids: np.ndarray, components: np.ndarray, values: np.ndarray
+) -> list[list[int]]:
+    """Keep each component's nearest clip, in the unchanged distance/native-ID order."""
+    distances = np.maximum(
+        np.sum(values * values, axis=1)[:, None]
+        + np.sum(values * values, axis=1)[None, :]
+        - 2 * (values @ values.T),
+        0,
+    )
+    neighbors = []
+    for index, row in enumerate(distances):
+        seen = {components[index]}
+        selected = []
+        for candidate in np.lexsort((ids, row)):
+            component = components[candidate]
+            if component in seen:
+                continue
+            seen.add(component)
+            selected.append(int(ids[candidate]))
+            if len(selected) == POLICY["neighbors"]:
+                break
+        neighbors.append(selected)
+    return neighbors
+
+
 def rank_playable(
     roster: list[int],
     roles: dict[int, dict[str, Any]],
@@ -145,7 +180,7 @@ def rank_playable(
         ids = np.asarray(supported_ids, dtype=np.uint32)
         components = np.asarray([roles[i]["component_id"] for i in supported_ids], dtype=np.int64)
         values = np.asarray(standardized)
-        neighbors = fma_related_tracks.nearest_batch(values, components, values, ids, components)
+        neighbors = _component_neighbors(ids, components, values)
         ranked = dict(zip(supported_ids, neighbors, strict=True))
     return [
         {
@@ -245,14 +280,14 @@ def build(
     return validate_playable_neighbors(output)
 
 
-def validate_playable_neighbors(  # noqa: C901 -- closed pool/receipt validation.
+def validate_playable_neighbors(  # noqa: C901, PLR0912 -- closed pool/receipt validation.
     output: Path, audio_manifest_sha256: str | None = None
 ) -> dict[str, Any]:
     """Validate closed receipts, pool scope, component exclusion and ordered query coverage."""
     _safe(output)
     receipt = _json(output / "receipt.json")
     if (
-        receipt["revision"] != REVISION
+        receipt["revision"] not in (LEGACY_REVISION, REVISION)
         or set(receipt["files"]) != {"manifest.json", "declaration.json"}
         or {p.name for p in output.iterdir()}
         != {"manifest.json", "declaration.json", "receipt.json"}
@@ -263,10 +298,11 @@ def validate_playable_neighbors(  # noqa: C901 -- closed pool/receipt validation
         if _binding(output / name) != binding:
             raise ValueError("playable-neighbor artifact hash differs")
     manifest, frozen = _json(output / "manifest.json"), _json(output / "declaration.json")
+    policy = LEGACY_POLICY if receipt["revision"] == LEGACY_REVISION else POLICY
     if (
-        frozen["policy"] != POLICY
-        or manifest["revision"] != REVISION
-        or manifest["pool"] != POLICY["pool"]
+        frozen["policy"] != policy
+        or manifest["revision"] != receipt["revision"]
+        or manifest["pool"] != policy["pool"]
         or manifest["components"] != frozen["components"]
         or manifest["audio_manifest_sha256"] != frozen["audio_manifest"]["sha256"]
         or (
@@ -317,6 +353,17 @@ def validate_playable_neighbors(  # noqa: C901 -- closed pool/receipt validation
                 or manifest["components"][str(neighbor)] == component
             ):
                 raise ValueError("playable neighbor violates support or whole-component isolation")
+        if manifest["revision"] == REVISION and reason is None:
+            selected = {manifest["components"][str(i)] for i in neighbors}
+            eligible = {
+                manifest["components"][str(i)]
+                for i, candidate in rows.items()
+                if candidate["reason"] is None and manifest["components"][str(i)] != component
+            }
+            if len(selected) != len(neighbors) or len(neighbors) != min(
+                POLICY["neighbors"], len(eligible)
+            ):
+                raise ValueError("playable-neighbor distinct component coverage differs")
     if manifest["counts"] != _counts(manifest["rows"]):
         raise ValueError("playable-neighbor counts differ")
     return manifest
