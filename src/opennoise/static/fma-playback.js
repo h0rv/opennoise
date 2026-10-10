@@ -8,7 +8,7 @@ async function loadPlayback(config, json) {
   const manifestURL = new URL(config.manifest, location.href);
   if (manifestURL.origin !== location.origin) throw new Error('Local audio manifest must use this server.');
   const manifest = await json(config.manifest);
-  if (manifest.revision !== 'fma-local-playback-v1' || typeof manifest.test_only !== 'boolean' || !manifest.tracks || Object.keys(manifest.tracks).length > 64) throw new Error('Unsupported local audio manifest.');
+  if (!['fma-local-playback-v1', 'fma-local-playback-collection-v1'].includes(manifest.revision) || typeof manifest.test_only !== 'boolean' || !manifest.tracks || Object.keys(manifest.tracks).length > 64) throw new Error('Unsupported local audio manifest.');
   for (const [key, entry] of Object.entries(manifest.tracks)) {
     if (!Number.isSafeInteger(entry.track_id) || entry.track_id <= 0 || key !== String(entry.track_id) || entry.audio_path !== `${entry.track_id}.mp3`) throw new Error('Local audio track identity differs.');
   }
