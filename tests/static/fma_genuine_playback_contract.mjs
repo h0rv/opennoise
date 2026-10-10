@@ -148,6 +148,37 @@ test('genuine retained FMA excerpts play locally with attribution and persistent
     await command('Input.dispatchKeyEvent', {type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13});
     await wait("document.querySelector('#persistent-player audio').currentTime > 0.1 && !document.querySelector('#persistent-player audio').paused");
     await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
+    if (catalog.playable_neighbors) {
+      const neighbors = JSON.parse(await readFile(join(process.env.OPENNOISE_FMA_GENUINE_SITE, 'explorer', catalog.playable_neighbors.manifest_path)));
+      assert.equal(neighbors.audio_manifest_sha256, catalog.playback.manifest_sha256);
+      for (const entry of neighbors.rows) {
+        await evaluate(`location.hash='track=${entry.track_id}'`);
+        await wait(`location.hash === '#track=${entry.track_id}' && document.querySelector('#rows .track')?.dataset.trackId === '${entry.track_id}' && document.querySelector('main').getAttribute('aria-busy') === 'false' && document.querySelector('.playable-neighbors') !== null`);
+        assert.deepEqual(await evaluate("[...document.querySelectorAll('.playable-neighbor-track')].map(a=>Number(a.hash.slice(7)))"), entry.neighbor_ids);
+        assert.ok(entry.neighbor_ids.every(id => neighbors.components[id] !== neighbors.components[entry.track_id]));
+        if (catalog.related_music) assert.ok(await evaluate("document.querySelector('.related-music') !== null"), 'original training-pool suggestions remain separate');
+      }
+      const selected = neighbors.rows.find(row => row.neighbor_ids.length >= 2);
+      assert.ok(selected);
+      await evaluate(`location.hash='track=${selected.track_id}'`);
+      await wait(`document.querySelector('#rows .track')?.dataset.trackId === '${selected.track_id}' && document.querySelector('.playable-neighbors-queue') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+      await evaluate("document.querySelector('.playable-neighbor-play').click()");
+      await wait(`document.querySelector('#persistent-player').dataset.trackId === '${selected.neighbor_ids[0]}' && document.querySelector('#persistent-player audio').currentTime > 0.1`);
+      await evaluate("document.querySelector('.playable-neighbors-queue').click()");
+      await wait(`document.querySelector('#persistent-player .playback-order').textContent === ${JSON.stringify('1 of ' + selected.neighbor_ids.length + ' · ' + selected.neighbor_ids.map(id => manifest.tracks[id].title).join(' → '))}`);
+      await evaluate("window.playableAudio=document.querySelector('#persistent-player audio'); document.querySelector('.playable-neighbor-track').click()");
+      await wait(`location.hash === '#track=${selected.neighbor_ids[0]}' && document.querySelector('#rows .track')?.dataset.trackId === '${selected.neighbor_ids[0]}' && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+      assert.equal(await evaluate("window.playableAudio === document.querySelector('#persistent-player audio') && !window.playableAudio.paused"), true);
+      await evaluate('history.back()');
+      await wait(`location.hash === '#track=${selected.track_id}' && document.querySelector('#rows .track')?.dataset.trackId === '${selected.track_id}' && document.querySelector('main').getAttribute('aria-busy') === 'false'`);
+      assert.deepEqual(await evaluate("[...document.querySelectorAll('.playable-neighbor-track')].map(a=>Number(a.hash.slice(7)))"), selected.neighbor_ids);
+      await evaluate("document.querySelector('#persistent-player audio').playbackRate=16");
+      await wait(`document.querySelector('#persistent-player').dataset.trackId === '${selected.neighbor_ids[1]}' && document.querySelector('#persistent-player audio').currentTime > 0.1`);
+      await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
+      await command('Page.reload');
+      await wait("document.documentElement?.dataset.fmaReady === 'true' && document.querySelector('.playable-neighbors-queue') !== null && document.querySelector('main').getAttribute('aria-busy') === 'false'");
+      assert.equal(await evaluate("document.querySelectorAll('audio').length"), 0, 'descriptor journey reload never autoplays');
+    }
     const journey = [entries[1].track_id, entries[0].track_id];
     await evaluate(`location.hash='listen&queue=${journey.join(',')}'`);
     await wait("document.querySelectorAll('#rows .playback[data-track-id]').length === 2 && document.querySelector('main').getAttribute('aria-busy') === 'false'");

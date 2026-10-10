@@ -105,3 +105,28 @@ Open the printed `/explorer/` URL; Ctrl+C stops it. No repository, build tools,
 upstream data access, or credentials are needed. `python3 serve.py --check-only`
 checks the extraction without opening a server. Another port can be selected
 with `--port 8001`. Browser queue saves remain local to the chosen origin.
+
+## Suggestions among attached excerpts
+
+An optional `--playable-neighbors` pack adds **Suggested excerpts** to attached
+track pages. Individual Play buttons and **Play these excerpts** use the same
+persistent player; the queue follows the displayed order. Navigation and reload
+retain ordinary route behavior and never start playback automatically.
+
+These are nearest numeric descriptors within the exact, verified local audio
+attachment, using the existing frozen normalization and support gate. Tracks in
+the query's artist/album/exact-feature component are excluded. The candidate
+pool is license-selected and small; musical similarity has not been validated.
+The original training-pool **Suggested tracks** remain a separate section.
+No fitting, new quality evaluation, genre assignment, or expanded acquisition
+is implied by this local listening view.
+
+Build the optional pack with `scripts/build_fma_playable_neighbors.py` in three
+stages: `freeze`, `build`, then `verify`. Each takes `--audio` (the verified local
+audio export), `--pack` (the frozen training-membership model pack), and
+`--features` (the pinned numeric projection). Freeze writes a new `--declaration`;
+build takes that declaration and a new `--output`; verify takes that output.
+The CLI retains 120-second CPU/wall and 1 GB address-space bounds, and the closed
+pack is limited to 1 MB. Static attachment requires the exact audio-manifest hash
+and complete attached-ID coverage. Numerical verification replays all rows;
+closed-file validation alone does not establish ranking correctness.
