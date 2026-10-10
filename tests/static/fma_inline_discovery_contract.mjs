@@ -80,7 +80,8 @@ test('all retained root queries preserve exact bounded neighbor order and explic
     assert.ok(!requests.some(r=>r.request.url.endsWith('/playable-neighbors/manifest.json')));
     for(const track of Object.values(index.tracks)){
       await route(state,`#track=${track.track_id}`);
-      const expected=packs[track.collection].rows.find(r=>r.track_id===track.track_id).neighbor_ids;
+      const pack=packs[track.collection], expected=pack.rows.find(r=>r.track_id===track.track_id).neighbor_ids;
+      if(pack.revision==='fma-playable-component-neighbors-v2') assert.equal(new Set(expected.map(id=>pack.components[id])).size,expected.length,'v2 suggestions span distinct source components');
       assert.deepEqual(await neighborIds(state),expected);
       assert.match(await evaluate("document.querySelector('.playable-neighbors').textContent"),/Musical similarity has not been validated/);
       audited.push({track_id:track.track_id,collection:track.collection,neighbor_ids:expected});
@@ -131,6 +132,7 @@ test('late suggestion response cannot attach to another route',{skip,timeout:300
 
 for(const [name,options] of [
   ['missing pack',{missing:true}],
+  ['repeated v2 component',{mutate:p=>{p.revision='fma-playable-component-neighbors-v2';const [a,b]=p.rows[0].neighbor_ids;p.components[b]=p.components[a];}}],
   ['wrong binding',{mutate:p=>{p.audio_manifest_sha256='0'.repeat(64);}}],
   ['self candidate',{mutate:p=>{p.rows[0].neighbor_ids[0]=p.rows[0].track_id;}}],
   ['unsupported candidate',{mutate:p=>{const id=p.rows[0].neighbor_ids[0],candidate=p.rows.find(r=>r.track_id===id);candidate.reason='outside_training_support';candidate.neighbor_ids=[];}}],
