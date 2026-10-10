@@ -16,6 +16,7 @@ import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
 from opennoise.deployment.fma_descriptor_map import export_descriptor_map
+from opennoise.deployment.fma_playable_neighbors import export_playable_neighbors
 from opennoise.deployment.fma_playback import validate_playback_export
 from opennoise.deployment.fma_related import export_related_music
 from opennoise.deployment.fma_track_search import export_track_search
@@ -308,6 +309,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
     related_music: Path | None = None,
     playback: Path | None = None,
     descriptor_map: Path | None = None,
+    playable_neighbors: Path | None = None,
 ) -> dict[str, Any]:
     """Build a fresh independent catalog; source track labels never become artist genres."""
     if output.exists() or output.is_symlink():
@@ -384,6 +386,10 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         )
     if attached is not None:
         catalog["playback"] = attached
+    if playable_neighbors is not None:
+        catalog["playable_neighbors"] = export_playable_neighbors(
+            playable_neighbors, output, files, attached
+        )
     if descriptor_map is not None:
         catalog["descriptor_map"] = export_descriptor_map(
             descriptor_map, output, files, tables, sha256_file(projected / "corpus-receipt.json")[0]
@@ -398,6 +404,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         "fma-genre-map.js",
         "source-genres.js",
         "fma-related-music.js",
+        "fma-playable-neighbors.js",
         "fma-playback.js",
         "fma-genre-map.css",
         "fma-descriptor-map.js",
@@ -493,6 +500,7 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         "fma-genre-map.js",
         "source-genres.js",
         "fma-related-music.js",
+        "fma-playable-neighbors.js",
         "fma-playback.js",
         "fma-genre-map.css",
         "fma-descriptor-map.js",

@@ -1,3 +1,4 @@
+import {renderPlayableNeighbors} from './fma-playable-neighbors.js';
 import {renderDescriptorMap} from './fma-descriptor-map.js';
 import {renderPlayback, clearRoutePlayers, requestPlay} from './fma-playback.js';
 import {relatedMusic} from './fma-related-music.js';
@@ -141,6 +142,8 @@ async function trackDetail(state, token) {
   const sourceGenres = new Set(tracks[0][3] ?? []);
   const relatedIds = playableTracks().filter(entry => entry.track_id !== state.id && entry.artist_id !== tracks[0][2]).map(entry => ({id: entry.track_id, shared: entry.genre_ids.filter(id => sourceGenres.has(id)).length})).filter(entry => entry.shared > 0).sort((a, b) => b.shared - a.shared || a.id - b.id).slice(0, 6).map(entry => entry.id);
   await renderPlayback({config: catalog.playback, id: state.id, relatedIds, json, rows, heading, status, current: () => token === generation});
+  if (token !== generation) return;
+  await renderPlayableNeighbors({id: state.id, config: catalog.playable_neighbors, playback: catalog.playback, json, tracksFor, artistIndex, rows, current: () => token === generation, onPlay: (id, ids) => requestPlay({config: catalog.playback, id, ids: ids ?? null, queue: Boolean(ids), json})});
   if (token !== generation) return;
   await relatedMusic({id: state.id, manifest: catalog.related_music, json, tracksFor, artistIndex, rows, current: () => token === generation});
   if (token === generation) heading.focus({preventScroll: true});
