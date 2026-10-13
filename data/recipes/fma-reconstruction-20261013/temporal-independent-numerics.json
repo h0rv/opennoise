@@ -1,0 +1,40 @@
+{
+  "status": "pass",
+  "normalization_columns": 88,
+  "label_parameter_rows": 164,
+  "all_saved_rank_queries": 13800,
+  "independent_method": "Native projected metadata and baseline ledger; direct label-conditioned mean/variance, then point-density scores and plain positive-recovery counters. No producer imports.",
+  "results": {
+    "validation": {
+      "queries": 7332,
+      "labeled_queries": 7253,
+      "source_positive_count": 16668,
+      "mean_reciprocal_rank": 0.2650344095851914,
+      "abstentions": {
+        "missing_feature_row": 170,
+        "outside_training_support": 5
+      },
+      "recall_at_5": 0.1955243580513559,
+      "macro_recall_at_5": 0.17821536388340556,
+      "recall_at_10": 0.3050755939524838,
+      "macro_recall_at_10": 0.29405897057928976
+    },
+    "test": {
+      "queries": 6468,
+      "labeled_queries": 6369,
+      "source_positive_count": 14402,
+      "mean_reciprocal_rank": 0.2640613350512464,
+      "abstentions": {
+        "missing_feature_row": 182,
+        "outside_training_support": 1
+      },
+      "recall_at_5": 0.21628940424940982,
+      "macro_recall_at_5": 0.19859804488070099,
+      "recall_at_10": 0.33231495625607554,
+      "macro_recall_at_10": 0.30079221737367867
+    }
+  },
+  "elapsed_seconds": 15.562354873000004,
+  "maxrss_kib": 594488,
+  "script_sha256": "b3161d5dd42e2e1687a555b00b1c8f488772b1206e4677e0089a8b9592b99f43"
+}

@@ -1,0 +1,59 @@
+{
+  "verification": {
+    "status": "passed author verification; independent review not implied",
+    "protocol": "fma-independent-audition-reconstruction-v1",
+    "seed": "opennoise-independent-audition-20261013-v1",
+    "declaration_sha256": "85a321974d5bf362b5d734d514d07906608cee9213e23ad55625681efbc2e214",
+    "slots": {
+      "1": {
+        "items": 24,
+        "unique_clips": 30,
+        "audio_bytes": 30543686,
+        "blank_response_rows": 24,
+        "manifest_sha256": "6524371562bab034c52ad95260b2ea9ae18ca5c0c86c4ccc64a0fffb61fd46f0",
+        "browser_contract": "passed; no skipped tests; local actual playback/exclusive audio/mobile/blank download",
+        "browser_log_sha256": "cc822cb95151e5160c0d94f4249bb1895c3a43c645b4f93be0c6129017d88ebb"
+      },
+      "2": {
+        "items": 24,
+        "unique_clips": 30,
+        "audio_bytes": 30543686,
+        "blank_response_rows": 24,
+        "manifest_sha256": "89873ff56d8b242b8cff2fc3965caf27cf294580ffb539259ed047cc3bfa6d1c",
+        "browser_contract": "passed; no skipped tests; local actual playback/exclusive audio/mobile/blank download",
+        "browser_log_sha256": "3e2e68f6e7bdec3c88b5bae685f113c6078860ec8b8b2529657dd61a3b1ca654"
+      }
+    },
+    "distinct_keys": true,
+    "differing_ab_items": 7,
+    "unsupported_comparisons": 0,
+    "identical_candidate_pairs": 1,
+    "judgments_recorded": 0,
+    "no_acquisition_or_external_transfer": true,
+    "limitations": [
+      "New reconstructed v3 candidate evidence; not historical PR18 packet or musical acceptance",
+      "No reviewers assigned or answers collected; 2 empty slots only",
+      "Browser downloads checked as blank generated JSON, not reviewer submissions"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-listener-1-20261013.zip",
+      "bytes": 29245428,
+      "sha256": "fc742b3989fff57d7905660cbd7a1e05625ab173ab3b0e27deec92a5a597b92f",
+      "coordinator_only": false
+    },
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-listener-2-20261013.zip",
+      "bytes": 29245429,
+      "sha256": "d9716265c1a82d52c62aea129746b72191a223884d95ff35519ee38dd2dc165e",
+      "coordinator_only": false
+    },
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-coordinator-20261013.zip",
+      "bytes": 73918,
+      "sha256": "d9713dd4b798d57275193bb24ffafa2ef1170c87365d730bfe1df89a60d7f6ea",
+      "coordinator_only": true
+    }
+  ]
+}

@@ -111,3 +111,15 @@ test('v2 keeps playback order and rejects repeated candidate groups while v1 rem
   const legacy=new Element('div');await renderPlayableNeighbors({...options,rows:legacy});
   assert.equal(walk(legacy).filter(n=>n.className==='playable-neighbor-track').length,2);
 });
+
+test('v3 explicitly labels reconstructed original-training basis and retains component diversity',async t=>{
+  const {options,manifest,rows}=fixture(t);
+  manifest.revision='fma-reconstructed-component-neighbors-v3';
+  await renderPlayableNeighbors(options);
+  assert.deepEqual(walk(rows).filter(n=>n.className==='playable-neighbor-track').map(n=>n.href),['#track=4','#track=3']);
+  assert.ok(walk(rows).some(n=>n.textContent?.includes('reconstructed original-training normalization')));
+  manifest.components[4]=2;
+  manifest.rows[1].neighbor_ids=[2];manifest.rows[2].neighbor_ids=[2];
+  const failed=new Element('div');await renderPlayableNeighbors({...options,rows:failed});
+  assert.ok(walk(failed).some(n=>n.textContent?.includes('unavailable')));
+});

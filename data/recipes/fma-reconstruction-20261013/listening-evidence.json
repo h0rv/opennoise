@@ -1,0 +1,63 @@
+{
+  "revision": "fma-reconstructed-listening-evidence-20261013-v1",
+  "counts": {
+    "artists": 91,
+    "clips": 92,
+    "genres": 164,
+    "playable_genres": 124
+  },
+  "collections": [
+    {
+      "collection": "original",
+      "clips": 60,
+      "audio_bytes": 61309169,
+      "manifest_sha256": "ee3f3f0f083482166acd28cc5b24a4371d29f158097f051c0f2f3fe868e748ee",
+      "neighbor_counts": {
+        "abstentions": {},
+        "directed_edges": 360,
+        "queries": 60,
+        "supported_queries": 60
+      }
+    },
+    {
+      "collection": "expanded",
+      "clips": 64,
+      "audio_bytes": 63348676,
+      "manifest_sha256": "e08c2a6a90f92d9e6471cad55154b20d79d45cebbbd9374322433a5affd5701c",
+      "neighbor_counts": {
+        "abstentions": {},
+        "directed_edges": 384,
+        "queries": 64,
+        "supported_queries": 64
+      }
+    }
+  ],
+  "native_decode": "all124 exported occurrences fully decoded;92unique tracks",
+  "browser": {
+    "original_genuine_playback": {
+      "passed": 1,
+      "skipped": 0
+    },
+    "expanded_genuine_playback": {
+      "passed": 1,
+      "skipped": 0
+    },
+    "final_genre_routes_and_playback": {
+      "passed": 4,
+      "skipped": 0
+    }
+  },
+  "local_check": {
+    "python_tests": 1925,
+    "python_skips": 36,
+    "javascript_tests": 99,
+    "javascript_passes": 69,
+    "javascript_skips": 30,
+    "failures": 0,
+    "final_guard_focused_python_tests": 16
+  },
+  "musical_judgments": 0,
+  "public_deployment": false,
+  "library_save": "blocked before transfer; unchanged path not retried",
+  "archive_receipts": "workspace delivery manifests record downloadable archives"
+}
