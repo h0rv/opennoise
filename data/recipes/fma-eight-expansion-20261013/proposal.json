@@ -1,0 +1,302 @@
+{
+  "analysis_sha256": "4990c102e7b00bca42ceff227cd3d26618a0ce0d4f8e4a738475c02a2a572229",
+  "archive_etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+  "baseline_clips": 92,
+  "baseline_direct_genres": 124,
+  "capture_protocol_requirements": {
+    "decoded_audio_bytes_max": 5288795,
+    "new_separately_frozen_protocol_required": true,
+    "no_retries_or_substitutions": true,
+    "per_response_bytes_max": 2000000,
+    "public_deployment": false,
+    "response_bytes_max": 5627304,
+    "reuse_verified_directory": true,
+    "serial_requests_max": 16,
+    "stop_on_any_failure": true,
+    "strong_if_match_required": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+    "verify": [
+      "exact 206 and Content-Range/Length",
+      "member header/path/method/CRC",
+      "MP3 SHA256",
+      "ffprobe and complete decode <=31 seconds",
+      "unchanged source-declared license and credits"
+    ]
+  },
+  "conditional_direct_genres": 132,
+  "existing_singleton_genres_receiving_second_clip": [
+    296
+  ],
+  "increment": {
+    "additional_clips": 8,
+    "audio_bytes": 5288795,
+    "new_artists": 8,
+    "new_direct_genres": 8,
+    "requests_upper": 16,
+    "response_bytes_upper": 5627304,
+    "total_playable_genres": 132
+  },
+  "numeric_features": {
+    "all_8_present_and_finite": true,
+    "columns": 44,
+    "feature_sha256": "b427d29b55b9b27c9e38b0aae635478dbebae5dcb381f00e00a9fcadf70032d4",
+    "track_ids_sha256": "8fb77ce50f3da09b7fb7c04bfc21948ef72e3dd50dbb63cd082291d75b180c07"
+  },
+  "proposed_clips": 100,
+  "quality_claim": "None; native label coverage and finite numeric features do not establish musical usefulness.",
+  "remaining_dependency": "Parent decision on acquiring these 8 additional clips beyond the reconstructed 92; local analysis is complete.",
+  "revision": "fma-eight-genre-expansion-proposal-v1",
+  "source_url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip",
+  "state": "offline_proposal_not_acquired",
+  "tracks": [
+    {
+      "artist_id": 7394,
+      "genre_ids": [
+        71,
+        296
+      ],
+      "member": {
+        "compressed": 475523,
+        "crc32": 3007702058,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/029/029735.mp3",
+        "offset": 15271598154,
+        "uncompressed": 480799
+      },
+      "new_genres": [
+        71
+      ],
+      "response_bytes_upper": 541112,
+      "source": {
+        "artist_name": "Holy Balm",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Sweater",
+        "track_url": ""
+      },
+      "track_id": 29735
+    },
+    {
+      "artist_id": 22324,
+      "genre_ids": [
+        18,
+        177
+      ],
+      "member": {
+        "compressed": 478962,
+        "crc32": 2865567777,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/139/139231.mp3",
+        "offset": 88526579743,
+        "uncompressed": 480792
+      },
+      "new_genres": [
+        177
+      ],
+      "response_bytes_upper": 544551,
+      "source": {
+        "artist_name": "Artofescapism",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Midnight Caravan",
+        "track_url": "http://freemusicarchive.org/music/Artofescapism/Midnight_Caravan/Midnight_Caravan"
+      },
+      "track_id": 139231
+    },
+    {
+      "artist_id": 2520,
+      "genre_ids": [
+        2,
+        8,
+        1156
+      ],
+      "member": {
+        "compressed": 576237,
+        "crc32": 3661913788,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/010/010421.mp3",
+        "offset": 4433526118,
+        "uncompressed": 720852
+      },
+      "new_genres": [
+        1156
+      ],
+      "response_bytes_upper": 641826,
+      "source": {
+        "artist_name": "Maria Alice",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "O Louco",
+        "track_url": ""
+      },
+      "track_id": 10421
+    },
+    {
+      "artist_id": 12602,
+      "genre_ids": [
+        25,
+        90
+      ],
+      "member": {
+        "compressed": 711211,
+        "crc32": 3193478690,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/058/058180.mp3",
+        "offset": 33649258163,
+        "uncompressed": 721542
+      },
+      "new_genres": [
+        90
+      ],
+      "response_bytes_upper": 776800,
+      "source": {
+        "artist_name": "Harvard",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "53rd & 3rd",
+        "track_url": ""
+      },
+      "track_id": 58180
+    },
+    {
+      "artist_id": 3581,
+      "genre_ids": [
+        20
+      ],
+      "member": {
+        "compressed": 714262,
+        "crc32": 3368916464,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/013/013149.mp3",
+        "offset": 6060722444,
+        "uncompressed": 721676
+      },
+      "new_genres": [
+        20
+      ],
+      "response_bytes_upper": 779851,
+      "source": {
+        "artist_name": "Readings from the Lesbian Herstory T-Shirt Archive",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "ulrike",
+        "track_url": ""
+      },
+      "track_id": 13149
+    },
+    {
+      "artist_id": 2524,
+      "genre_ids": [
+        2,
+        8,
+        214
+      ],
+      "member": {
+        "compressed": 715009,
+        "crc32": 2061071029,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/010/010425.mp3",
+        "offset": 4436246498,
+        "uncompressed": 720510
+      },
+      "new_genres": [
+        214
+      ],
+      "response_bytes_upper": 780598,
+      "source": {
+        "artist_name": "Chikha Aicha El Hertitia",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "\u00c2aita Baidaouiya",
+        "track_url": ""
+      },
+      "track_id": 10425
+    },
+    {
+      "artist_id": 8887,
+      "genre_ids": [
+        66,
+        651
+      ],
+      "member": {
+        "compressed": 715631,
+        "crc32": 2268010374,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/037/037134.mp3",
+        "offset": 20057697108,
+        "uncompressed": 721671
+      },
+      "new_genres": [
+        651
+      ],
+      "response_bytes_upper": 781220,
+      "source": {
+        "artist_name": "Ca\u00fcha\u00fcs",
+        "license_title": "Attribution 3.0 International",
+        "license_url": "http://creativecommons.org/licenses/by/3.0/",
+        "track_composer": "null",
+        "track_copyright_c": "null",
+        "track_copyright_p": "null",
+        "track_title": "Rednecks with White Faces",
+        "track_url": "http://freemusicarchive.org/music/Cahas/Calling_All_Fiends/24_-_cauhaus_-_rednecks_with_white_faces_192kb"
+      },
+      "track_id": 37134
+    },
+    {
+      "artist_id": 3551,
+      "genre_ids": [
+        2,
+        8,
+        174
+      ],
+      "member": {
+        "compressed": 715757,
+        "crc32": 2056441688,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/013/013077.mp3",
+        "offset": 6018395057,
+        "uncompressed": 720953
+      },
+      "new_genres": [
+        174
+      ],
+      "response_bytes_upper": 781346,
+      "source": {
+        "artist_name": "Professor Dwaram Venkataswami Naidu",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Thanam-Kalyani",
+        "track_url": ""
+      },
+      "track_id": 13077
+    }
+  ]
+}

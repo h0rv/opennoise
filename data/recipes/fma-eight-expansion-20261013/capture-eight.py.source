@@ -1,0 +1,87 @@
+"""One explicitly approved eight-member capture; never retries or substitutes."""
+from hashlib import sha256
+import json
+from pathlib import Path
+
+from opennoise.ingest.fma.corpus import project_row, source_rows, verify_sources
+from opennoise.serving.metadata import fma_large32 as large, fma_listening64 as small
+from opennoise.deployment.fma_playback import decode_duration
+
+ROOT = Path('/workspace/opennoise-rebuild-20261013')
+proposal_path = ROOT / 'next-eight-clip-proposal.json'
+assert sha256(proposal_path.read_bytes()).hexdigest() == '6df2cfebad3a641ed277de42d513dcb085b0b79955f1d74115491e383def3750'
+proposal = json.loads(proposal_path.read_bytes())
+items = proposal['tracks']
+assert len(items) == 8 and len({r['track_id'] for r in items}) == 8
+probe, members = large.verify_probe(ROOT / 'large-probe')
+assert probe['etag'] == proposal['archive_etag']
+assert proposal['source_url'] == large.URL
+receipt = verify_sources(ROOT / 'metadata-source')
+rows, checked, handles = source_rows(ROOT / 'metadata-source', receipt['members']['fma_metadata/raw_tracks.csv'])
+expected = {r['track_id']: r for r in items}
+matched = set()
+try:
+    for raw in rows:
+        row = project_row('tracks', raw)
+        if row['track_id'] not in expected:
+            continue
+        item = expected[row['track_id']]
+        assert row['artist_id'] == item['artist_id'] and row['genre_ids'] == item['genre_ids']
+        assert {key: raw.get(key, '') for key in item['source']} == item['source']
+        assert raw['license_url'] in ('http://creativecommons.org/licenses/by/3.0/', 'http://creativecommons.org/licenses/by/4.0/')
+        assert members[row['track_id']] == item['member']
+        matched.add(row['track_id'])
+    assert checked.complete and matched == set(expected)
+    native_sha = checked.sha256.hexdigest()
+finally:
+    for handle in handles:
+        handle.close()
+output = ROOT / 'listening8'
+output.mkdir(exist_ok=False)
+(output / 'proposal.json').write_bytes(proposal_path.read_bytes())
+(output / 'capture-script.py').write_bytes(Path(__file__).read_bytes())
+captures = []
+tracks = []
+
+
+def request(client, name, start, end):
+    # Extra strict scope guards sit in front of the unchanged native request verifier.
+    size = end - start + 1
+    assert len(captures) < 16 and 0 < size <= 2_000_000
+    assert sum(r['bytes'] for r in captures) + size <= 5_627_304
+    return large._request(client, output, name, start, end, captures, phase='audio', total=probe['archive_bytes'], etag=probe['etag'])
+
+
+with large._client() as client:
+    for item in items:
+        identity, member = item['track_id'], item['member']
+        header = request(client, f'{identity}-header.range', member['offset'], member['offset'] + 29)
+        start, end, prefix = small._payload_bounds((output / header['path']).read_bytes(), item, probe['directory']['start'])
+        payload = request(client, f'{identity}-payload.range', start, end)
+        audio = small._audio((output / payload['path']).read_bytes(), prefix, member)
+        assert sum(r['audio_bytes'] for r in tracks) + len(audio) <= 5_288_795
+        path = output / f'{identity}.mp3'
+        path.write_bytes(audio)
+        duration = decode_duration(path)
+        tracks.append({**item, 'audio_path': path.name, 'audio_sha256': sha256(audio).hexdigest(), 'audio_bytes': len(audio), 'duration_seconds': duration})
+        print(json.dumps({'track_id': identity, 'verified_duration': duration, 'audio_bytes': len(audio)}), flush=True)
+result = {
+    'revision': 'fma-eight-coverage-capture-v1', 'tracks': tracks, 'captures': captures,
+    'proposal_sha256': sha256(proposal_path.read_bytes()).hexdigest(),
+    'native_track_csv_sha256': native_sha,
+    'source_receipt_sha256': sha256((ROOT / 'metadata-source/source-receipt.json').read_bytes()).hexdigest(),
+    'probe_sha256': sha256((ROOT / 'large-probe/probe.json').read_bytes()).hexdigest(),
+    'response_bytes': sum(r['bytes'] for r in captures), 'audio_bytes': sum(r['audio_bytes'] for r in tracks),
+    'full_archive_hash_verified': False, 'musical_quality_validated': False, 'public_deployment_authorized': False,
+}
+# Replay retained range identities and independently decode all ZIP members before final receipt.
+for i, item in enumerate(tracks):
+    header, payload = captures[2*i:2*i+2]
+    hb = large._read_record(output, header, probe['archive_bytes'], probe['etag'], 2*i+1)
+    pb = large._read_record(output, payload, probe['archive_bytes'], probe['etag'], 2*i+2)
+    start, end, prefix = small._payload_bounds(hb, item, probe['directory']['start'])
+    assert (start, end) == (payload['start'], payload['end'])
+    assert small._audio(pb, prefix, item['member']) == (output / item['audio_path']).read_bytes()
+assert len(captures) == 16 and result['audio_bytes'] == 5_288_795
+(output / 'listening.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
+print(json.dumps({'completed': True, 'requests': len(captures), 'response_bytes': result['response_bytes'], 'audio_bytes': result['audio_bytes']}), flush=True)

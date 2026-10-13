@@ -1,0 +1,523 @@
+{
+  "audio_bytes": 5288795,
+  "captures": [
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-001.json",
+      "bytes": 30,
+      "end": 15271598183,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:49.312199+00:00",
+      "path": "29735-header.range",
+      "phase": "audio",
+      "sha256": "723240895ba53126c10ba7adcd000c9311b9fb5d0d8a2da4d29d4c98fc40edd0",
+      "start": 15271598154,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-002.json",
+      "bytes": 475547,
+      "end": 15272073730,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:50.240701+00:00",
+      "path": "29735-payload.range",
+      "phase": "audio",
+      "sha256": "c21797dbfe4380893b5186b8c65c244029f670c94ba63a67e43c64260884bd7c",
+      "start": 15271598184,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-003.json",
+      "bytes": 30,
+      "end": 88526579772,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:51.760518+00:00",
+      "path": "139231-header.range",
+      "phase": "audio",
+      "sha256": "2df342d283ced4f21b5c347210800b8fdbb6832c59537c14536d2d2adc548072",
+      "start": 88526579743,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-004.json",
+      "bytes": 478986,
+      "end": 88527058758,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:52.032053+00:00",
+      "path": "139231-payload.range",
+      "phase": "audio",
+      "sha256": "1079b5b49ce943d1d93071cff8d79f08b0dcf89a9309f137c5633c9bf4a39644",
+      "start": 88526579773,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-005.json",
+      "bytes": 30,
+      "end": 4433526147,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:53.774840+00:00",
+      "path": "10421-header.range",
+      "phase": "audio",
+      "sha256": "169407910d4203525f12de0dae66b1b9245cdb5fb33c1bd9faa5a13bcf4e5230",
+      "start": 4433526118,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-006.json",
+      "bytes": 576261,
+      "end": 4434102408,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:54.101794+00:00",
+      "path": "10421-payload.range",
+      "phase": "audio",
+      "sha256": "b2f7fab83f8643b6833ec6eed0981725b5cd3349ffaf0e1cfba7872e6e1eb2a9",
+      "start": 4433526148,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-007.json",
+      "bytes": 30,
+      "end": 33649258192,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:56.310486+00:00",
+      "path": "58180-header.range",
+      "phase": "audio",
+      "sha256": "742efe3721e8894d9733da438c8cd22e5b279e542cc1f7c269cf51a9d060e780",
+      "start": 33649258163,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-008.json",
+      "bytes": 711235,
+      "end": 33649969427,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:56.623214+00:00",
+      "path": "58180-payload.range",
+      "phase": "audio",
+      "sha256": "70e3b469156a409e3bd7383f66d3ce8fad277d81ba2d31eb2510f7701bbe7d86",
+      "start": 33649258193,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-009.json",
+      "bytes": 30,
+      "end": 6060722473,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:59.092626+00:00",
+      "path": "13149-header.range",
+      "phase": "audio",
+      "sha256": "36c3171e1dc0e6b76e2802f91816b44f12f104e966fa8a8df877b53b2930ba36",
+      "start": 6060722444,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-010.json",
+      "bytes": 714286,
+      "end": 6061436759,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:28:59.374026+00:00",
+      "path": "13149-payload.range",
+      "phase": "audio",
+      "sha256": "197340576a78c3190bed94f6b134fa4e83e31357151bd77fa1f5749c84e10bf6",
+      "start": 6060722474,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-011.json",
+      "bytes": 30,
+      "end": 4436246527,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:29:02.521603+00:00",
+      "path": "10425-header.range",
+      "phase": "audio",
+      "sha256": "5cc2c4c23727782cbd6ef804bab37e84cb431331fea2af5c7f56d07e7a332af9",
+      "start": 4436246498,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-012.json",
+      "bytes": 715033,
+      "end": 4436961560,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:29:02.887792+00:00",
+      "path": "10425-payload.range",
+      "phase": "audio",
+      "sha256": "bfc716ebd30e30feabad00066d02f905c6e33a8de4fb941b8b37c22ddd0b42c0",
+      "start": 4436246528,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-013.json",
+      "bytes": 30,
+      "end": 20057697137,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:29:07.234162+00:00",
+      "path": "37134-header.range",
+      "phase": "audio",
+      "sha256": "6868e1c1f07b0a633897c94dc4e3fc89b9a431bf1340b88ce64b0dc366904f22",
+      "start": 20057697108,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-014.json",
+      "bytes": 715655,
+      "end": 20058412792,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:29:07.685979+00:00",
+      "path": "37134-payload.range",
+      "phase": "audio",
+      "sha256": "261875a664d7e3101b6cde31b192c6ce0e239602ad64be8258d56e33b3248c9f",
+      "start": 20057697138,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-015.json",
+      "bytes": 30,
+      "end": 6018395086,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:29:12.153299+00:00",
+      "path": "13077-header.range",
+      "phase": "audio",
+      "sha256": "d5c00ba1198c23cda3acb5bc4d51266e45bc7add7e7173f6572c25f33ca52a35",
+      "start": 6018395057,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-016.json",
+      "bytes": 715781,
+      "end": 6019110867,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:29:12.399303+00:00",
+      "path": "13077-payload.range",
+      "phase": "audio",
+      "sha256": "6c23afc992a4ce085eb5efc199af994b193875715dc6efd53fa52b218e306470",
+      "start": 6018395087,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    }
+  ],
+  "finalization": "Offline exact-range replay; legacy helper assumed request 1 was directory suffix. All original attempts preserved; no retries or transport changes.",
+  "full_archive_hash_verified": false,
+  "musical_quality_validated": false,
+  "native_track_csv_sha256": "b025dc407ed663c10a0e3fd03b7b98154674bab043dff3ed8883f255010f7147",
+  "probe_sha256": "5f91bb016362b77e0012a17b7da74b089e8a95ed0bb512627b046383c6ace3f7",
+  "proposal_sha256": "6df2cfebad3a641ed277de42d513dcb085b0b79955f1d74115491e383def3750",
+  "public_deployment_authorized": false,
+  "response_bytes": 5103024,
+  "revision": "fma-eight-coverage-capture-v1",
+  "source_receipt_sha256": "cd46d53488e6892eed78b742814ef95e6531b18b6d69c8eb95688da075e6df99",
+  "tracks": [
+    {
+      "artist_id": 7394,
+      "audio_bytes": 480799,
+      "audio_path": "29735.mp3",
+      "audio_sha256": "5d9a8a209849a040c86500ebaf7f2c665364050bb978253f2d977071856a0442",
+      "duration_seconds": 29.988571,
+      "genre_ids": [
+        71,
+        296
+      ],
+      "member": {
+        "compressed": 475523,
+        "crc32": 3007702058,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/029/029735.mp3",
+        "offset": 15271598154,
+        "uncompressed": 480799
+      },
+      "new_genres": [
+        71
+      ],
+      "response_bytes_upper": 541112,
+      "source": {
+        "artist_name": "Holy Balm",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Sweater",
+        "track_url": ""
+      },
+      "track_id": 29735
+    },
+    {
+      "artist_id": 22324,
+      "audio_bytes": 480792,
+      "audio_path": "139231.mp3",
+      "audio_sha256": "502daec3fbc417d5a6314e7d02c28f30192563b27789435f3652c3132befb58a",
+      "duration_seconds": 29.988571,
+      "genre_ids": [
+        18,
+        177
+      ],
+      "member": {
+        "compressed": 478962,
+        "crc32": 2865567777,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/139/139231.mp3",
+        "offset": 88526579743,
+        "uncompressed": 480792
+      },
+      "new_genres": [
+        177
+      ],
+      "response_bytes_upper": 544551,
+      "source": {
+        "artist_name": "Artofescapism",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Midnight Caravan",
+        "track_url": "http://freemusicarchive.org/music/Artofescapism/Midnight_Caravan/Midnight_Caravan"
+      },
+      "track_id": 139231
+    },
+    {
+      "artist_id": 2520,
+      "audio_bytes": 720852,
+      "audio_path": "10421.mp3",
+      "audio_sha256": "e3a3873088f873ddafe2680bd23f133dff2308f9ba04f6782c13d1a4c7e867b0",
+      "duration_seconds": 29.988571,
+      "genre_ids": [
+        2,
+        8,
+        1156
+      ],
+      "member": {
+        "compressed": 576237,
+        "crc32": 3661913788,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/010/010421.mp3",
+        "offset": 4433526118,
+        "uncompressed": 720852
+      },
+      "new_genres": [
+        1156
+      ],
+      "response_bytes_upper": 641826,
+      "source": {
+        "artist_name": "Maria Alice",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "O Louco",
+        "track_url": ""
+      },
+      "track_id": 10421
+    },
+    {
+      "artist_id": 12602,
+      "audio_bytes": 721542,
+      "audio_path": "58180.mp3",
+      "audio_sha256": "0adeb1a071310464ef9530a0fcbfe8031d0b88be9bce5b75cb658f20ba8f402e",
+      "duration_seconds": 30.014694,
+      "genre_ids": [
+        25,
+        90
+      ],
+      "member": {
+        "compressed": 711211,
+        "crc32": 3193478690,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/058/058180.mp3",
+        "offset": 33649258163,
+        "uncompressed": 721542
+      },
+      "new_genres": [
+        90
+      ],
+      "response_bytes_upper": 776800,
+      "source": {
+        "artist_name": "Harvard",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "53rd & 3rd",
+        "track_url": ""
+      },
+      "track_id": 58180
+    },
+    {
+      "artist_id": 3581,
+      "audio_bytes": 721676,
+      "audio_path": "13149.mp3",
+      "audio_sha256": "196632363c9452760e3752763401beac1d0546320663d934ae5483213600113b",
+      "duration_seconds": 30.014694,
+      "genre_ids": [
+        20
+      ],
+      "member": {
+        "compressed": 714262,
+        "crc32": 3368916464,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/013/013149.mp3",
+        "offset": 6060722444,
+        "uncompressed": 721676
+      },
+      "new_genres": [
+        20
+      ],
+      "response_bytes_upper": 779851,
+      "source": {
+        "artist_name": "Readings from the Lesbian Herstory T-Shirt Archive",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "ulrike",
+        "track_url": ""
+      },
+      "track_id": 13149
+    },
+    {
+      "artist_id": 2524,
+      "audio_bytes": 720510,
+      "audio_path": "10425.mp3",
+      "audio_sha256": "6555b922136af3e50ad3b15e11a95494f59b908767b2cac1fa6f8f262acc24ec",
+      "duration_seconds": 29.988571,
+      "genre_ids": [
+        2,
+        8,
+        214
+      ],
+      "member": {
+        "compressed": 715009,
+        "crc32": 2061071029,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/010/010425.mp3",
+        "offset": 4436246498,
+        "uncompressed": 720510
+      },
+      "new_genres": [
+        214
+      ],
+      "response_bytes_upper": 780598,
+      "source": {
+        "artist_name": "Chikha Aicha El Hertitia",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "\u00c2aita Baidaouiya",
+        "track_url": ""
+      },
+      "track_id": 10425
+    },
+    {
+      "artist_id": 8887,
+      "audio_bytes": 721671,
+      "audio_path": "37134.mp3",
+      "audio_sha256": "e37ea81cd4c6275f9a8137112fede74e4ba3c32e46c4b290f52f7c22d0efa7ea",
+      "duration_seconds": 30.014694,
+      "genre_ids": [
+        66,
+        651
+      ],
+      "member": {
+        "compressed": 715631,
+        "crc32": 2268010374,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/037/037134.mp3",
+        "offset": 20057697108,
+        "uncompressed": 721671
+      },
+      "new_genres": [
+        651
+      ],
+      "response_bytes_upper": 781220,
+      "source": {
+        "artist_name": "Ca\u00fcha\u00fcs",
+        "license_title": "Attribution 3.0 International",
+        "license_url": "http://creativecommons.org/licenses/by/3.0/",
+        "track_composer": "null",
+        "track_copyright_c": "null",
+        "track_copyright_p": "null",
+        "track_title": "Rednecks with White Faces",
+        "track_url": "http://freemusicarchive.org/music/Cahas/Calling_All_Fiends/24_-_cauhaus_-_rednecks_with_white_faces_192kb"
+      },
+      "track_id": 37134
+    },
+    {
+      "artist_id": 3551,
+      "audio_bytes": 720953,
+      "audio_path": "13077.mp3",
+      "audio_sha256": "c15061ea658edeab9a7a8b5681d6942d26e6b7e529dd817840af4fd788fe6193",
+      "duration_seconds": 29.988571,
+      "genre_ids": [
+        2,
+        8,
+        174
+      ],
+      "member": {
+        "compressed": 715757,
+        "crc32": 2056441688,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/013/013077.mp3",
+        "offset": 6018395057,
+        "uncompressed": 720953
+      },
+      "new_genres": [
+        174
+      ],
+      "response_bytes_upper": 781346,
+      "source": {
+        "artist_name": "Professor Dwaram Venkataswami Naidu",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Thanam-Kalyani",
+        "track_url": ""
+      },
+      "track_id": 13077
+    }
+  ]
+}

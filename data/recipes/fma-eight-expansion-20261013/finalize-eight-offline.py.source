@@ -1,0 +1,63 @@
+"""Replay an audio-only request sequence without the legacy initial-tail assumption."""
+from hashlib import sha256
+from datetime import datetime
+import json
+from pathlib import Path
+
+from opennoise.serving.metadata import fma_large32 as large, fma_listening64 as small
+from opennoise.deployment.fma_playback import decode_duration
+
+ROOT = Path('/workspace/opennoise-rebuild-20261013')
+output = ROOT / 'listening8'
+proposal = json.loads((output / 'proposal.json').read_bytes())
+assert sha256((output / 'proposal.json').read_bytes()).hexdigest() == '6df2cfebad3a641ed277de42d513dcb085b0b79955f1d74115491e383def3750'
+probe, members = large.verify_probe(ROOT / 'large-probe')
+analysis = json.loads((ROOT / 'next-coverage-analysis.json').read_bytes())
+assert sha256((ROOT / 'next-coverage-analysis.json').read_bytes()).hexdigest() == proposal['analysis_sha256']
+captures, tracks = [], []
+
+
+def read_range(number, filename, start, end):
+    attempt_name = f'attempt-{number:03}.json'
+    attempt = json.loads((output / attempt_name).read_bytes())
+    body = (output / filename).read_bytes()
+    assert len(body) == end - start + 1 and 0 < len(body) <= 2_000_000
+    expected = {
+        'url': large.URL, 'phase': 'audio', 'range': f'bytes={start}-{end}',
+        'status': 206, 'state': 'complete', 'received_bytes': len(body),
+        'content_range': f"bytes {start}-{end}/{probe['archive_bytes']}",
+        'etag': probe['etag'], 'sha256': sha256(body).hexdigest(),
+    }
+    assert {k: attempt[k] for k in expected} == expected
+    datetime.fromisoformat(attempt['observed_at'])
+    captures.append({**{k: attempt[k] for k in ('url', 'phase', 'status', 'etag', 'sha256', 'observed_at')}, 'path': filename, 'attempt': attempt_name, 'start': start, 'end': end, 'bytes': len(body), 'archive_bytes': probe['archive_bytes']})
+    return body
+
+
+for i, item in enumerate(proposal['tracks']):
+    identity, member = item['track_id'], item['member']
+    assert members[identity] == member
+    header = read_range(2*i+1, f'{identity}-header.range', member['offset'], member['offset']+29)
+    start, end, prefix = small._payload_bounds(header, item, probe['directory']['start'])
+    payload = read_range(2*i+2, f'{identity}-payload.range', start, end)
+    audio = small._audio(payload, prefix, member)
+    path = output / f'{identity}.mp3'
+    assert path.read_bytes() == audio
+    duration = decode_duration(path)
+    tracks.append({**item, 'audio_path': path.name, 'audio_sha256': sha256(audio).hexdigest(), 'audio_bytes': len(audio), 'duration_seconds': duration})
+assert len(captures) == 16 and sum(r['bytes'] for r in captures) <= 5_627_304
+assert sum(r['audio_bytes'] for r in tracks) == 5_288_795
+assert len(list(output.glob('attempt-*.json'))) == 16
+result = {
+    'revision': 'fma-eight-coverage-capture-v1', 'tracks': tracks, 'captures': captures,
+    'proposal_sha256': sha256((output / 'proposal.json').read_bytes()).hexdigest(),
+    'native_track_csv_sha256': analysis['native_stream_sha256']['tracks'],
+    'source_receipt_sha256': analysis['input_sha256']['metadata-source/source-receipt.json'],
+    'probe_sha256': analysis['input_sha256']['large-probe/probe.json'],
+    'response_bytes': sum(r['bytes'] for r in captures), 'audio_bytes': sum(r['audio_bytes'] for r in tracks),
+    'full_archive_hash_verified': False, 'musical_quality_validated': False, 'public_deployment_authorized': False,
+    'finalization': 'Offline exact-range replay; legacy helper assumed request 1 was directory suffix. All original attempts preserved; no retries or transport changes.',
+}
+assert not (output / 'listening.json').exists()
+(output / 'listening.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
+print(json.dumps({'requests': 16, 'response_bytes': result['response_bytes'], 'audio_bytes': result['audio_bytes'], 'capture_sha256': sha256((output / 'listening.json').read_bytes()).hexdigest()}))

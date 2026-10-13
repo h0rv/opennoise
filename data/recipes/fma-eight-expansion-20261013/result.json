@@ -1,0 +1,48 @@
+{
+  "all_new_clips_fully_decoded": true,
+  "artifacts": {
+    "OpenNoise-eight-clip-source-20261013.tar": {
+      "bytes": 19425280,
+      "path": "/workspace/OpenNoise-eight-clip-source-20261013.tar",
+      "sha256": "ccd98f4c0394fa630a59f5a2d66447c7da89c6f846c16681460d02d77fd3aa46"
+    },
+    "OpenNoise-listening-100-clips-20261013.zip": {
+      "bytes": 132373657,
+      "path": "/workspace/OpenNoise-listening-100-clips-20261013.zip",
+      "sha256": "bd0fb1ce56f5f685bc02d55e9ba746385487f361665139bf6c25e09375348378"
+    }
+  },
+  "artists": 99,
+  "audio_bytes": 5288795,
+  "browser": {
+    "expanded_all_64_actual_playback": "passed",
+    "genre_discovery_tests": 4,
+    "skipped": 0
+  },
+  "clips": 100,
+  "direct_genres": 132,
+  "expanded_neighbor_edges_independently_replayed": 384,
+  "expanded_neighbor_queries_supported": 64,
+  "library_retry": false,
+  "logs": {
+    "eight-discovery-browser.log": "c218c28b6a9c1802b424dc757af9a365c707771a826490b34fd9a9ca642e80be",
+    "eight-neighbor-replay.log": "840dbaeb7f001b0b3145f0a71e295b3e6d6ad02eacd2fbfcd74675d8b40676f5",
+    "eight-playback-browser.log": "44e8e53aecfdba306ff1b7b96cfcd744ddaba659ccc94b1a53982b14f72d8b00"
+  },
+  "mean44_model_unchanged": true,
+  "musical_judgments": 0,
+  "musical_quality_score": null,
+  "new_clip_duration_range_seconds": [
+    29.988571,
+    30.014694
+  ],
+  "new_clips": 8,
+  "new_genres": 8,
+  "original_audition_preserved": true,
+  "original_site_preserved": true,
+  "public_deployment": false,
+  "requests": 16,
+  "response_bytes": 5103024,
+  "revision": "fma-eight-expansion-result-v1",
+  "total_genres": 164
+}
