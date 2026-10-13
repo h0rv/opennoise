@@ -1,0 +1,174 @@
+"""Independent statistical/rank recovery replay without temporal or baseline producer imports."""
+
+import os
+
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
+
+import hashlib
+import io
+import json
+import resource
+import signal
+import time
+from pathlib import Path
+
+import numpy as np
+import zstandard
+
+resource.setrlimit(resource.RLIMIT_AS, (1_000_000_000, 1_000_000_000))
+resource.setrlimit(resource.RLIMIT_CPU, (120, 120))
+signal.alarm(120)
+r = Path("/workspace/opennoise-rebuild-20261013")
+out = r / "training88"
+start = time.monotonic()
+
+
+def rows(path):
+    with path.open("rb") as raw, zstandard.ZstdDecompressor().stream_reader(raw) as stream:
+        yield from map(json.loads, io.TextIOWrapper(stream))
+
+
+receipt = json.loads((r / "metadata/corpus-receipt.json").read_bytes())
+native = list(rows(r / "metadata" / receipt["files"]["tracks"]["path"]))
+native.sort(key=lambda t: t["track_id"])
+labels = sorted(t["genre_id"] for t in rows(r / "metadata" / receipt["files"]["genres"]["path"]))
+lp = {label: i for i, label in enumerate(labels)}
+ledger = list(rows(r / "baseline44/native-folds.jsonl.zst"))
+assert [t["track_id"] for t in native] == [t["track_id"] for t in ledger]
+sourceids = np.fromfile(r / "feature-source/projection/track_ids.uint32", dtype="<u4")
+source = np.fromfile(r / "mean-std-projection/features.float32", dtype="<f4").reshape(
+    len(sourceids), 88
+)
+lookup = {int(v): i for i, v in enumerate(sourceids)}
+x = np.full((len(native), 88), np.nan, dtype=np.float32)
+for i, t in enumerate(native):
+    if t["track_id"] in lookup:
+        x[i] = source[lookup[t["track_id"]]]
+del source
+train = np.array([t["artist_known"] and t["fold"] == 0 for t in ledger])
+finite = train & np.isfinite(x).all(axis=1)
+xf = x[finite].astype(np.float64)
+center = xf.mean(axis=0)
+scale = xf.std(axis=0)
+active = scale > 0
+z = (xf[:, active] - center[active]) / scale[active]
+del xf
+m = dict(np.load(out / "model.npz", allow_pickle=False))
+np.testing.assert_allclose(m["center"], center, rtol=1e-12, atol=1e-12)
+np.testing.assert_allclose(m["scale"], scale, rtol=1e-12, atol=1e-12)
+assert np.array_equal(m["active_columns"], active) and m["training_rows"] == finite.sum()
+y = [set(t["genre_ids"] or []) for t in native]
+finite_y = [y[i] for i in np.flatnonzero(finite)]
+support = np.array([sum(label in y[i] for i in np.flatnonzero(train)) for label in labels])
+means = []
+variances = []
+intercepts = []
+valid = []
+for j, label in enumerate(labels):
+    positive = z[np.array([label in target for target in finite_y])]
+    mean = positive.mean(axis=0) if len(positive) else np.zeros(z.shape[1])
+    variance = np.maximum(
+        0.5 * (positive.var(axis=0) if len(positive) else np.zeros(z.shape[1])) + 0.5, 0.1
+    )
+    intercept = (
+        -0.5 * np.sum(mean * mean / variance + np.log(variance))
+        + np.log((support[j] + 0.5) / (train.sum() + 1))
+        if len(positive) >= 5
+        else -np.inf
+    )
+    means.append(mean)
+    variances.append(variance)
+    intercepts.append(intercept)
+    valid.append(len(positive) >= 5)
+    np.testing.assert_allclose(m["quadratic"][j], -0.5 / variance, rtol=1e-10, atol=1e-10)
+    np.testing.assert_allclose(m["linear"][j], mean / variance, rtol=1e-10, atol=1e-10)
+    np.testing.assert_allclose(m["intercept"][j], intercept, rtol=1e-10, atol=1e-10)
+del z
+means = np.array(means)
+variances = np.array(variances)
+intercepts = np.array(intercepts)
+valid = np.array(valid)
+report = json.loads((out / "evaluation.json").read_bytes())
+results = {}
+for fold, name in [(1, "validation"), (2, "test")]:
+    selected = [i for i, t in enumerate(ledger) if t["artist_known"] and t["fold"] == fold]
+    saved = list(rows(out / f"{name}-acoustic-ranks.jsonl.zst"))
+    assert len(saved) == len(selected)
+    pos = np.zeros(len(labels), dtype=int)
+    hits = {k: np.zeros(len(labels), dtype=int) for k in [5, 10]}
+    rr = 0.0
+    labeled = 0
+    abstentions = {}
+    for s in range(0, len(selected), 64):
+        batch = selected[s : s + 64]
+        a = x[batch][:, active].astype(np.float64)
+        norm = (a - center[active]) / scale[active]
+        good = np.isfinite(norm).all(axis=1) & (np.abs(norm) <= 12).all(axis=1)
+        # Label-by-label native Gaussian density; distinct from producer quadratic scorer.
+        scores = np.full((len(batch), len(labels)), -np.inf)
+        for j in np.flatnonzero(valid):
+            scores[good, j] = -0.5 * np.sum(
+                (norm[good] - means[j]) ** 2 / variances[j] + np.log(variances[j]), axis=1
+            ) + np.log((support[j] + 0.5) / (train.sum() + 1))
+        order = np.argsort(-scores, axis=1, kind="stable")
+        for offset, i in enumerate(batch):
+            target = y[i]
+            reason = (
+                None
+                if good[offset]
+                else "missing_feature_row"
+                if native[i]["track_id"] not in lookup
+                else "missing_descriptors"
+                if not np.isfinite(a[offset]).all()
+                else "outside_training_support"
+            )
+            ranking = [labels[j] for j in order[offset] if valid[j]] if reason is None else []
+            expected = {
+                "track_id": native[i]["track_id"],
+                "reason": reason,
+                "ranked_genre_ids": ranking,
+            }
+            assert expected == saved[s + offset], (name, native[i]["track_id"])
+            if reason:
+                abstentions[reason] = abstentions.get(reason, 0) + 1
+            if target:
+                labeled += 1
+                rr += next((1 / n for n, g in enumerate(ranking, 1) if g in target), 0)
+            for label in target:
+                pos[lp[label]] += 1
+            for k in hits:
+                for label in target.intersection(ranking[:k]):
+                    hits[k][lp[label]] += 1
+    metrics = {
+        "queries": len(selected),
+        "labeled_queries": labeled,
+        "source_positive_count": int(pos.sum()),
+        "mean_reciprocal_rank": rr / max(1, labeled),
+        "abstentions": abstentions,
+    }
+    for k in hits:
+        metrics[f"recall_at_{k}"] = float(hits[k].sum() / max(1, pos.sum()))
+        metrics[f"macro_recall_at_{k}"] = float(np.mean(hits[k][pos > 0] / pos[pos > 0]))
+    for key, value in metrics.items():
+        actual = report["evaluation"][name]["acoustic"][key]
+        if isinstance(value, float):
+            assert abs(value - actual) < 1e-12, (key, value, actual)
+        else:
+            assert value == actual, (key, value, actual)
+    results[name] = metrics
+result = {
+    "status": "pass",
+    "normalization_columns": 88,
+    "label_parameter_rows": len(labels),
+    "all_saved_rank_queries": sum(t["queries"] for t in results.values()),
+    "independent_method": "Native projected metadata and baseline ledger; direct label-conditioned mean/variance, then point-density scores and plain positive-recovery counters. No producer imports.",
+    "results": results,
+    "elapsed_seconds": time.monotonic() - start,
+    "maxrss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+    "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+}
+with (r / "temporal-independent-numerics.json").open("x") as stream:
+    json.dump(result, stream, indent=2)
+    stream.write("\n")
+print(json.dumps(result, indent=2))

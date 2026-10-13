@@ -1,0 +1,7 @@
+{
+  "pins": {
+    "mean-std-declaration.json": "3a0b0ad7a3418e4e7492d16710fbbf17f4ebe328d20cd0ff6542b51a52a4d6d4",
+    "mean-std-declaration-v2.json": "0e6e07c971b44393c6118513950be074acac6a3223106124cdfefc5fc0ff25c5"
+  },
+  "reason": "Before any projection or fit, correct accidental draft per-stage120s to authorized existing model_run_seconds120; native fullstream projection retains existing bounded-byte semantics without new time guard. Add imported source-code pins, exact input inventory and receipt shape/native hash verification. No candidate output or fit existed. Parent explicitly coordinated correction."
+}

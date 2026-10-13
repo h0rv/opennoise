@@ -1,0 +1,117 @@
+{
+  "revision": "fma-mean-std-experiment-summary-20261013-v1",
+  "status": "completed; primary diagnostic regression, not recommended as baseline replacement",
+  "declaration_sha256": "0e6e07c971b44393c6118513950be074acac6a3223106124cdfefc5fc0ff25c5",
+  "supersession": "temporal-declaration-supersession.json",
+  "changed_repo_files": {
+    "src/opennoise/ml/fma_temporal_experiment.py": "4683afd50eefc96b79accf58e12f8d87abf1e80eacbe32b0cac00d95e5ddeef0",
+    "scripts/run_fma_temporal_experiment.py": "3e28edea5384c551797dd7ee29b55b73c1b970ac299d57bbc20bf994bb0fbc85",
+    "tests/test_fma_temporal_experiment.py": "3e7f319e0eba57e08d0c939fe0e3743438fde61bfc4536f37f082213b232aafc"
+  },
+  "training_rows": 94953,
+  "finite_training_rows": 92270,
+  "model_seconds": 8.823199600999942,
+  "output_bytes": 40728485,
+  "comparison": {
+    "test": {
+      "abstentions": {
+        "mean44": {
+          "missing_feature_row": 182,
+          "outside_training_support": 1
+        },
+        "mean_std88": {
+          "missing_feature_row": 182,
+          "outside_training_support": 1
+        }
+      },
+      "macro_recall_at_10": {
+        "mean44": 0.2739980689186841,
+        "mean_std88": 0.30079221737367867
+      },
+      "macro_recall_at_5": {
+        "mean44": 0.17632955136967468,
+        "mean_std88": 0.19859804488070099
+      },
+      "mean_reciprocal_rank": {
+        "mean44": 0.31295635714887055,
+        "mean_std88": 0.2640613350512464
+      },
+      "queries": {
+        "mean44": 6468,
+        "mean_std88": 6468
+      },
+      "recall_at_10": {
+        "mean44": 0.39591723371753923,
+        "mean_std88": 0.33231495625607554
+      },
+      "recall_at_5": {
+        "mean44": 0.2650326343563394,
+        "mean_std88": 0.21628940424940982
+      },
+      "source_positive_count": {
+        "mean44": 14402,
+        "mean_std88": 14402
+      }
+    },
+    "validation": {
+      "abstentions": {
+        "mean44": {
+          "missing_feature_row": 170,
+          "outside_training_support": 3
+        },
+        "mean_std88": {
+          "missing_feature_row": 170,
+          "outside_training_support": 5
+        }
+      },
+      "macro_recall_at_10": {
+        "mean44": 0.2532660484384469,
+        "mean_std88": 0.29405897057928976
+      },
+      "macro_recall_at_5": {
+        "mean44": 0.15134291230578928,
+        "mean_std88": 0.17821536388340556
+      },
+      "mean_reciprocal_rank": {
+        "mean44": 0.3026080173493435,
+        "mean_std88": 0.2650344095851914
+      },
+      "queries": {
+        "mean44": 7332,
+        "mean_std88": 7332
+      },
+      "recall_at_10": {
+        "mean44": 0.37047036237101033,
+        "mean_std88": 0.3050755939524838
+      },
+      "recall_at_5": {
+        "mean44": 0.24406047516198703,
+        "mean_std88": 0.1955243580513559
+      },
+      "source_positive_count": {
+        "mean44": 16668,
+        "mean_std88": 16668
+      }
+    }
+  },
+  "checks": {
+    "unit_tests": 3,
+    "ruff": "pass",
+    "ty": "pass",
+    "independent_numerics": {
+      "status": "pass",
+      "queries": 13800,
+      "columns": 88,
+      "labels": 164,
+      "seconds": 15.562354873000004,
+      "maxrss_kib": 594488
+    }
+  },
+  "limitations": [
+    "Original full-training mask chosen as authorized, matching baseline44; no innercal membership model was fitted.",
+    "Mean+std models within-track variability, not temporal ordering.",
+    "Historical outer splits were previously inspected; results are descriptive proxies, not fresh confirmation or musical relevance.",
+    "Macro recovery improved while micro and MRR worsened; no tuning or further candidates selected."
+  ],
+  "external_raw_projection_review": "pending track_search independent raw CSV sample audit"
+}

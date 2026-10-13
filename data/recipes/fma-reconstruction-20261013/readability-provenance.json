@@ -1,0 +1,12 @@
+{
+  "audit-temporal-independent-track-search.py.source": {
+    "original_observed_script_sha256": "53b50f2e51dd14c67f83664bc78549b4aecd8bfe85598d9bec81176983703af7",
+    "readable_copy_sha256": "d137a474829596d2b0e03fc20615c1057d10c4cec97630094fcd7ac39a253e3a",
+    "python_ast_equal_after_splitting_import_statements": true
+  },
+  "audit-temporal-numerics.py.source": {
+    "original_observed_script_sha256": "b3161d5dd42e2e1687a555b00b1c8f488772b1206e4677e0089a8b9592b99f43",
+    "readable_copy_sha256": "ee65eee80bc7f89769e7c31cd4454c73dbda947612bbf24134a0a5823077fb3f",
+    "python_ast_equal_after_splitting_import_statements": true
+  }
+}

@@ -117,7 +117,11 @@ def _neighbor_binding(  # noqa: C901, PLR0912 -- portable exported manifest cust
     rows, components = manifest.get("rows"), manifest.get("components")
     if (
         manifest.get("revision")
-        not in ("fma-playable-descriptor-neighbors-v1", "fma-playable-component-neighbors-v2")
+        not in (
+            "fma-playable-descriptor-neighbors-v1",
+            "fma-playable-component-neighbors-v2",
+            "fma-reconstructed-component-neighbors-v3",
+        )
         or manifest.get("audio_manifest_sha256") != audio_sha
         or any(
             manifest.get(field) is not False
@@ -167,9 +171,10 @@ def _neighbor_binding(  # noqa: C901, PLR0912 -- portable exported manifest cust
                 or attached[identity]["artist_id"] == attached[neighbor]["artist_id"]
             ):
                 raise ValueError("playable-neighbor component or artist isolation differs")
-        if manifest["revision"] == "fma-playable-component-neighbors-v2" and len(
-            {components[str(value)] for value in neighbors}
-        ) != len(neighbors):
+        if manifest["revision"] in (
+            "fma-playable-component-neighbors-v2",
+            "fma-reconstructed-component-neighbors-v3",
+        ) and len({components[str(value)] for value in neighbors}) != len(neighbors):
             raise ValueError("playable-neighbor repeated candidate component")
     counts = {
         "queries": len(rows),

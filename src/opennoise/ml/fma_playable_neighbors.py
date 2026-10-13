@@ -19,6 +19,7 @@ from opennoise.ml.fma_sonic_map import FEATURE_SHA, ID_SHA
 
 LEGACY_REVISION = "fma-playable-descriptor-neighbors-v1"
 REVISION = "fma-playable-component-neighbors-v2"
+RECONSTRUCTED_REVISION = "fma-reconstructed-component-neighbors-v3"
 MAX_OUTPUT_BYTES = 1_000_000
 MAX_CLIPS = 64
 LIMITS = {"seconds": 120, "memory_bytes": 1_000_000_000, "output_bytes": MAX_OUTPUT_BYTES}
@@ -287,7 +288,7 @@ def validate_playable_neighbors(  # noqa: C901, PLR0912 -- closed pool/receipt v
     _safe(output)
     receipt = _json(output / "receipt.json")
     if (
-        receipt["revision"] not in (LEGACY_REVISION, REVISION)
+        receipt["revision"] not in (LEGACY_REVISION, REVISION, RECONSTRUCTED_REVISION)
         or set(receipt["files"]) != {"manifest.json", "declaration.json"}
         or {p.name for p in output.iterdir()}
         != {"manifest.json", "declaration.json", "receipt.json"}
@@ -299,6 +300,12 @@ def validate_playable_neighbors(  # noqa: C901, PLR0912 -- closed pool/receipt v
             raise ValueError("playable-neighbor artifact hash differs")
     manifest, frozen = _json(output / "manifest.json"), _json(output / "declaration.json")
     policy = LEGACY_POLICY if receipt["revision"] == LEGACY_REVISION else POLICY
+    if receipt["revision"] == RECONSTRUCTED_REVISION:
+        from opennoise.ml.fma_reconstructed_neighbors import (  # noqa: PLC0415 -- version-specific custody.
+            POLICY as RECONSTRUCTED_POLICY,
+        )
+
+        policy = RECONSTRUCTED_POLICY
     if (
         frozen["policy"] != policy
         or manifest["revision"] != receipt["revision"]
@@ -323,6 +330,11 @@ def validate_playable_neighbors(  # noqa: C901, PLR0912 -- closed pool/receipt v
         "features_sha256": FEATURE_SHA,
         "track_ids_sha256": ID_SHA,
     }
+    if receipt["revision"] == RECONSTRUCTED_REVISION and (
+        frozen["features"]["features.float32"]["sha256"] != FEATURE_SHA
+        or frozen["features"]["track_ids.uint32"]["sha256"] != ID_SHA
+    ):
+        raise ValueError("reconstructed native feature array pin differs")
     if manifest["provenance"] != expected_provenance:
         raise ValueError("playable-neighbor provenance differs")
     roster = frozen["roster"]
@@ -353,7 +365,7 @@ def validate_playable_neighbors(  # noqa: C901, PLR0912 -- closed pool/receipt v
                 or manifest["components"][str(neighbor)] == component
             ):
                 raise ValueError("playable neighbor violates support or whole-component isolation")
-        if manifest["revision"] == REVISION and reason is None:
+        if manifest["revision"] in (REVISION, RECONSTRUCTED_REVISION) and reason is None:
             selected = {manifest["components"][str(i)] for i in neighbors}
             eligible = {
                 manifest["components"][str(i)]

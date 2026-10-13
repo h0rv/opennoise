@@ -1,0 +1,356 @@
+{
+  "revision": "opennoise-fma-fresh-modeling-result-20261013-v1",
+  "source_access": {
+    "status": "official source capture succeeded",
+    "capture_kind": "fresh official source, distinct receipts from historical replay",
+    "repository_commit": "e9a505b99bf6eeed4d2ee3e8d853b29f4ce4fdb3",
+    "metadata_captured_at": "2026-10-13T13:26:21.995205+00:00",
+    "features_captured_at": "2026-10-13T13:31:31.792152+00:00",
+    "official_archive_url": "https://os.unil.cloud.switch.ch/fma/fma_metadata.zip",
+    "request_count": 10,
+    "response_bytes": 304921396,
+    "audio_downloaded": false,
+    "full_archive_hash_verified": false,
+    "native_zip_member_checks_required": true,
+    "receipts": {
+      "metadata-source/source-receipt.json": {
+        "sha256": "cd46d53488e6892eed78b742814ef95e6531b18b6d69c8eb95688da075e6df99",
+        "bytes": 5192
+      },
+      "feature-source/source-receipt.json": {
+        "sha256": "9d75189b303bc338d7c305c557cb95b48a8986edf281bddb3d250b15d96224a5",
+        "bytes": 2177
+      },
+      "native-declaration.json": {
+        "sha256": "96647a4ae15a9c0c1c20592128f2c75361599d899ede77414a17f45925f37041",
+        "bytes": 4447
+      },
+      "metadata-independent-audit.json": {
+        "sha256": "e18c70b55463478ae9a32934c1275c93ba95ec43e6d8e5639b02fb9cc2391061",
+        "bytes": 1621
+      }
+    }
+  },
+  "baseline_elapsed_seconds": 8.533195608000028,
+  "coverage": {
+    "empty_observed_label_rows": 0,
+    "features": {
+      "source_positives": 253869,
+      "tracks": 106574
+    },
+    "known_missing_features": {
+      "source_positives": 6434,
+      "tracks": 3035
+    },
+    "missing_features": {
+      "source_positives": 6717,
+      "tracks": 3153
+    },
+    "missing_target_rows": 2609,
+    "observed_genre_ids": 162,
+    "raw": {
+      "source_positives": 260586,
+      "tracks": 109727
+    },
+    "raw_genre_vocabulary": 164,
+    "unresolved_artist": {
+      "source_positives": 2075,
+      "tracks": 974
+    },
+    "unresolved_missing_features": {
+      "source_positives": 283,
+      "tracks": 118
+    }
+  },
+  "partition": {
+    "components": 7410,
+    "duplicate_groups": 1689,
+    "folds": {
+      "test": {
+        "source_positives": 14402,
+        "tracks": 6468
+      },
+      "train": {
+        "source_positives": 227441,
+        "tracks": 94953
+      },
+      "validation": {
+        "source_positives": 16668,
+        "tracks": 7332
+      }
+    },
+    "largest_components_tracks": [
+      39750,
+      935,
+      632,
+      528,
+      425,
+      381,
+      356,
+      319,
+      260,
+      247,
+      215,
+      214,
+      208,
+      175,
+      174,
+      162,
+      161,
+      160,
+      158,
+      157
+    ],
+    "revision": "opennoise-fma-acoustic-native-component-split-v2",
+    "unresolved_positive_artist_ids_retained_as_graph_nodes": true
+  },
+  "model_summary": {
+    "active_features": 44,
+    "active_labels": 158,
+    "artist_facts": false,
+    "comparators_restricted_to_training_observed_labels": true,
+    "finite_training_rows": 92270,
+    "public_product_promotion_authorized": false,
+    "scores_calibrated": false,
+    "target_role": "native_track_source_recovery"
+  },
+  "diagnostic_metrics": {
+    "test": {
+      "acoustic": {
+        "abstentions": {
+          "missing_feature_row": 182,
+          "outside_training_support": 1
+        },
+        "below_five_seen_positive_count": 14,
+        "cold_positive_count": 14,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 6369,
+        "macro_recall_at_10": 0.2739980689186841,
+        "macro_recall_at_5": 0.17632955136967468,
+        "mean_reciprocal_rank": 0.31295635714887055,
+        "precision_available": false,
+        "queries": 6468,
+        "rare_positive_count": 263,
+        "rare_recall_at_10": 0.049429657794676805,
+        "rare_recall_at_5": 0.015209125475285171,
+        "recall_at_10": 0.39591723371753923,
+        "recall_at_5": 0.2650326343563394,
+        "source_positive_count": 14402,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 99
+      },
+      "constant": {
+        "abstentions": {},
+        "below_five_seen_positive_count": 14,
+        "cold_positive_count": 14,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 6369,
+        "macro_recall_at_10": 0.07352941176470588,
+        "macro_recall_at_5": 0.03676470588235294,
+        "mean_reciprocal_rank": 0.11532834508914876,
+        "precision_available": false,
+        "queries": 6468,
+        "rare_positive_count": 263,
+        "rare_recall_at_10": 0.0,
+        "rare_recall_at_5": 0.0,
+        "recall_at_10": 0.08123871684488265,
+        "recall_at_5": 0.05395084016108874,
+        "source_positive_count": 14402,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 99
+      },
+      "popularity": {
+        "abstentions": {},
+        "below_five_seen_positive_count": 14,
+        "cold_positive_count": 14,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 6369,
+        "macro_recall_at_10": 0.07352941176470588,
+        "macro_recall_at_5": 0.03676470588235294,
+        "mean_reciprocal_rank": 0.31910814913960545,
+        "precision_available": false,
+        "queries": 6468,
+        "rare_positive_count": 263,
+        "rare_recall_at_10": 0.0,
+        "rare_recall_at_5": 0.0,
+        "recall_at_10": 0.36626857380919314,
+        "recall_at_5": 0.2582280238855714,
+        "source_positive_count": 14402,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 99
+      }
+    },
+    "validation": {
+      "acoustic": {
+        "abstentions": {
+          "missing_feature_row": 170,
+          "outside_training_support": 3
+        },
+        "below_five_seen_positive_count": 0,
+        "cold_positive_count": 0,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 7253,
+        "macro_recall_at_10": 0.2532660484384469,
+        "macro_recall_at_5": 0.15134291230578928,
+        "mean_reciprocal_rank": 0.3026080173493435,
+        "precision_available": false,
+        "queries": 7332,
+        "rare_positive_count": 366,
+        "rare_recall_at_10": 0.04644808743169399,
+        "rare_recall_at_5": 0.02459016393442623,
+        "recall_at_10": 0.37047036237101033,
+        "recall_at_5": 0.24406047516198703,
+        "source_positive_count": 16668,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 79
+      },
+      "constant": {
+        "abstentions": {},
+        "below_five_seen_positive_count": 0,
+        "cold_positive_count": 0,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 7253,
+        "macro_recall_at_10": 0.06474820143884892,
+        "macro_recall_at_5": 0.03597122302158273,
+        "mean_reciprocal_rank": 0.13430572586887887,
+        "precision_available": false,
+        "queries": 7332,
+        "rare_positive_count": 366,
+        "rare_recall_at_10": 0.0,
+        "rare_recall_at_5": 0.0,
+        "recall_at_10": 0.10223182145428365,
+        "recall_at_5": 0.07469402447804176,
+        "source_positive_count": 16668,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 79
+      },
+      "popularity": {
+        "abstentions": {},
+        "below_five_seen_positive_count": 0,
+        "cold_positive_count": 0,
+        "cold_recall_at_10": 0.0,
+        "cold_recall_at_5": 0.0,
+        "labeled_queries": 7253,
+        "macro_recall_at_10": 0.07194244604316546,
+        "macro_recall_at_5": 0.03597122302158273,
+        "mean_reciprocal_rank": 0.3278932016325747,
+        "precision_available": false,
+        "queries": 7332,
+        "rare_positive_count": 366,
+        "rare_recall_at_10": 0.0,
+        "rare_recall_at_5": 0.0,
+        "recall_at_10": 0.363270938324934,
+        "recall_at_5": 0.23644108471322295,
+        "source_positive_count": 16668,
+        "training_unseen_positive_count": 0,
+        "training_unseen_recall_at_10": 0.0,
+        "training_unseen_recall_at_5": 0.0,
+        "unlabeled_queries": 79
+      }
+    }
+  },
+  "model_independent_audit": {
+    "code_sha256": "31bad7cc29e9ee8072704077c5b0a440410a14f719e6f49494ed1dc9ba9edf08",
+    "finite_training_rows_verified": 92270,
+    "gaussian_label_parameters_verified": 164,
+    "heldout_missing_features_retained": true,
+    "independent_musical_relevance": "not_measured",
+    "independently_traversed_native_components": 7410,
+    "metric_arms_verified": 6,
+    "model_artifact_files_verified": 8,
+    "model_report_sha256": "b5c056cf61471c20dd1e11627790c19eb5336ce6ced6321400cc8c690bd0612d",
+    "native_track_folds_verified": 109727,
+    "ranking_formula_recomputed": true,
+    "revision": "independent-fma-model-audit-v1",
+    "tracked_pack_target_rows_verified_against_native_metadata": 0,
+    "validation_test_acoustic_queries_verified": 13800
+  },
+  "bounded_replay": {
+    "revision": "fma-native-reconstruction-replay-20261013-v1",
+    "report_equal_except_elapsed_seconds": true,
+    "all_frozen_artifacts_byte_identical": true,
+    "artifact_count": 8,
+    "first_elapsed_seconds": 8.533195608000028,
+    "replay_elapsed_seconds": 16.17681516699986,
+    "artifact_sha256": {
+      "fma_features.py": "bbf43978504960a4c8e8a991f70adb009573a03b8e15e4ac179f9fbc9496ad85",
+      "declaration.json": "96647a4ae15a9c0c1c20592128f2c75361599d899ede77414a17f45925f37041",
+      "native-folds.jsonl.zst": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7",
+      "validation-acoustic-ranks.jsonl.zst": "8592a9dc17ead81636038a3fda0745c0763f8cc7ebbb7c7c0c0ee3915aad5af5",
+      "fma_acoustic_baseline.py": "3202db668aa6215da111d3175bdb0403909fdea312a77ff6f9d710baebda5dc5",
+      "fma_split_audit.py": "ae324a9ad54cf0875bcc56fdeef34cccc2c94f46c38fc423c8aee375f320722d",
+      "model.npz": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38",
+      "test-acoustic-ranks.jsonl.zst": "1d6da0daa666df6261e71fb14e32522803f5edd117b99ab99fb8dbd5f88af65e"
+    },
+    "numeric_historical_projection_equal": true,
+    "fresh_receipts_distinct_from_historical": true
+  },
+  "limitations": [
+    "Previously inspected outer folds: diagnostic, not fresh confirmation.",
+    "Observed FMA track labels are incomplete; absent labels are unknown, not verified negatives.",
+    "Native artist/album/full-feature-duplicate components do not establish complete performer or recording identity.",
+    "Largest component contains 39,750 tracks; realized folds are imbalanced.",
+    "No audio or listening judgments. No musical relevance, artist-genre truth, or 70% product-quality claim.",
+    "Fresh receipt identities cannot be substituted for historical hard-pinned membership or inference protocols."
+  ],
+  "code_changes": false,
+  "deployment": false,
+  "main_ci": {
+    "commit": "e9a505b99bf6eeed4d2ee3e8d853b29f4ce4fdb3",
+    "run": 38404762197,
+    "conclusion": "success"
+  },
+  "feature_independent_audit": {
+    "code_sha256": "c61f0d4b7b30e336e9733d2a0017d5a04d9a9fe31d3af59c548170ac96f9f844",
+    "exact_duplicate_group_ids_sha256": "f7955876770fb2b6b19a9688128782e1d772cc66970cfe63fedbc128a298db79",
+    "exact_full_native_feature_duplicate_groups": 1689,
+    "exact_projected_44_feature_duplicate_groups": 1689,
+    "feature_metadata_intersection": 106574,
+    "feature_rows": 106574,
+    "feature_rows_without_raw_metadata": 0,
+    "independent_musical_relevance": "not_measured",
+    "metadata_track_rows": 109727,
+    "metadata_tracks_sha256": "2a51ad101f8972182475a4e162efbc5604eee127b80089abd5ee10c64a56b687",
+    "metadata_tracks_without_features": 3153,
+    "missing_selected_feature_cells": 0,
+    "native_crc32": "e8eb7a19",
+    "native_feature_columns": 518,
+    "native_observed_sha256": "a035d04941e15fc3240aadd6880c519471d218329bbfe0e82c17553ba50e9e16",
+    "native_uncompressed_bytes": 951117185,
+    "observed_native_genres_in_feature_intersection": 162,
+    "projected_cells_verified": 4689256,
+    "projected_feature_columns": 44,
+    "projection_receipt_sha256": "ba4555fbcdf2ff36fcda0828520280a7cd0c63596e8fbc62e7df6f1335aaec00",
+    "quality": {
+      "feature_missing:positive_pairs": 6717,
+      "feature_missing:tracks": 3153,
+      "feature_missing:unlabeled_tracks": 378,
+      "feature_present:positive_pairs": 253869,
+      "feature_present:tracks": 106574,
+      "feature_present:unlabeled_tracks": 2231,
+      "intersection:source_known:positive_pairs": 252077,
+      "intersection:source_known:tracks": 105718,
+      "intersection:source_unresolved:positive_pairs": 1792,
+      "intersection:source_unresolved:tracks": 856
+    },
+    "recording_or_artist_identity_bridge_from_duplicate_features": false,
+    "revision": "independent-fma-acoustic-source-audit-v1",
+    "source_receipt_sha256": "9d75189b303bc338d7c305c557cb95b48a8986edf281bddb3d250b15d96224a5",
+    "tracks_in_exact_full_native_feature_duplicate_groups": 3800
+  }
+}

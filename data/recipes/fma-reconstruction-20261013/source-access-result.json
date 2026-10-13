@@ -1,0 +1,31 @@
+{
+  "status": "official source capture succeeded",
+  "capture_kind": "fresh official source, distinct receipts from historical replay",
+  "repository_commit": "e9a505b99bf6eeed4d2ee3e8d853b29f4ce4fdb3",
+  "metadata_captured_at": "2026-10-13T13:26:21.995205+00:00",
+  "features_captured_at": "2026-10-13T13:31:31.792152+00:00",
+  "official_archive_url": "https://os.unil.cloud.switch.ch/fma/fma_metadata.zip",
+  "request_count": 10,
+  "response_bytes": 304921396,
+  "audio_downloaded": false,
+  "full_archive_hash_verified": false,
+  "native_zip_member_checks_required": true,
+  "receipts": {
+    "metadata-source/source-receipt.json": {
+      "sha256": "cd46d53488e6892eed78b742814ef95e6531b18b6d69c8eb95688da075e6df99",
+      "bytes": 5192
+    },
+    "feature-source/source-receipt.json": {
+      "sha256": "9d75189b303bc338d7c305c557cb95b48a8986edf281bddb3d250b15d96224a5",
+      "bytes": 2177
+    },
+    "native-declaration.json": {
+      "sha256": "96647a4ae15a9c0c1c20592128f2c75361599d899ede77414a17f45925f37041",
+      "bytes": 4447
+    },
+    "metadata-independent-audit.json": {
+      "sha256": "e18c70b55463478ae9a32934c1275c93ba95ec43e6d8e5639b02fb9cc2391061",
+      "bytes": 1621
+    }
+  }
+}
