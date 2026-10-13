@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "analysis_sha256": "4990c102e7b00bca42ceff227cd3d26618a0ce0d4f8e4a738475c02a2a572229",
+  "projected_tracks_checked": 109727,
+  "gap_denominators_checked": 40,
+  "selected_rows_checked": 18,
+  "network_requests": 0,
+  "method": "Separately retained projected native metadata; complete SHA verification; all 40 gap counts; selected IDs/licenses/genres/artists; cumulative exact byte sums.",
+  "verifier_sha256": "46b181e338a1dad5ffcd4cf462a94c5af772b0c9e122bffdfcd42d9664f05429"
+}
