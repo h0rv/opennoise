@@ -1,0 +1,212 @@
+{
+  "after": {
+    "artists": 103,
+    "clips": 104,
+    "genres": 164,
+    "playable_genres": 132,
+    "single_artist_genres": 74
+  },
+  "all_pairs_in_expanded_view": true,
+  "before": {
+    "clips": 100,
+    "single_artist_genres": 86
+  },
+  "model_changed": false,
+  "model_sha256": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38",
+  "musical_quality_acceptance": false,
+  "pairs": [
+    {
+      "artist_ids": [
+        7394,
+        7425
+      ],
+      "component_ids": [
+        7394,
+        738
+      ],
+      "genre_id": 71,
+      "title": "No Wave",
+      "track_ids": [
+        29735,
+        32633
+      ]
+    },
+    {
+      "artist_ids": [
+        5798,
+        7425
+      ],
+      "component_ids": [
+        738,
+        2
+      ],
+      "genre_id": 79,
+      "title": "Reggae - Dub",
+      "track_ids": [
+        32633,
+        141591
+      ]
+    },
+    {
+      "artist_ids": [
+        7425,
+        13535
+      ],
+      "component_ids": [
+        738,
+        13535
+      ],
+      "genre_id": 89,
+      "title": "Post-Punk",
+      "track_ids": [
+        32633,
+        85791
+      ]
+    },
+    {
+      "artist_ids": [
+        21804,
+        22009
+      ],
+      "component_ids": [
+        21804,
+        22009
+      ],
+      "genre_id": 9,
+      "title": "Country",
+      "track_ids": [
+        133463,
+        136027
+      ]
+    },
+    {
+      "artist_ids": [
+        20819,
+        21804
+      ],
+      "component_ids": [
+        20819,
+        21804
+      ],
+      "genre_id": 137,
+      "title": "Americana",
+      "track_ids": [
+        124824,
+        133463
+      ]
+    },
+    {
+      "artist_ids": [
+        9883,
+        21804
+      ],
+      "component_ids": [
+        9883,
+        21804
+      ],
+      "genre_id": 567,
+      "title": "Gospel",
+      "track_ids": [
+        41949,
+        133463
+      ]
+    },
+    {
+      "artist_ids": [
+        22145,
+        23152
+      ],
+      "component_ids": [
+        22145,
+        23152
+      ],
+      "genre_id": 64,
+      "title": "Electro-Punk",
+      "track_ids": [
+        137299,
+        145260
+      ]
+    },
+    {
+      "artist_ids": [
+        19406,
+        22145
+      ],
+      "component_ids": [
+        19406,
+        22145
+      ],
+      "genre_id": 70,
+      "title": "Industrial",
+      "track_ids": [
+        113511,
+        137299
+      ]
+    },
+    {
+      "artist_ids": [
+        21394,
+        22145
+      ],
+      "component_ids": [
+        22145,
+        21394
+      ],
+      "genre_id": 337,
+      "title": "Drum & Bass",
+      "track_ids": [
+        137299,
+        142078
+      ]
+    },
+    {
+      "artist_ids": [
+        5352,
+        15861
+      ],
+      "component_ids": [
+        5352,
+        15861
+      ],
+      "genre_id": 27,
+      "title": "Lo-Fi",
+      "track_ids": [
+        38578,
+        86402
+      ]
+    },
+    {
+      "artist_ids": [
+        15861,
+        22774
+      ],
+      "component_ids": [
+        15861,
+        22774
+      ],
+      "genre_id": 236,
+      "title": "IDM",
+      "track_ids": [
+        86402,
+        143059
+      ]
+    },
+    {
+      "artist_ids": [
+        6550,
+        15861
+      ],
+      "component_ids": [
+        15861,
+        6550
+      ],
+      "genre_id": 495,
+      "title": "Downtempo",
+      "track_ids": [
+        86402,
+        114544
+      ]
+    }
+  ],
+  "revision": "fma-four-artist-paired-verification-v1"
+}

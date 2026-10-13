@@ -15,6 +15,7 @@ from opennoise.common import canonical_json, sha256_file
 from opennoise.deployment.fma_playback import (
     COLLECTION_REVISION,
     EXTENSION_REVISION,
+    FOUR_ARTIST_REVISION,
     REVISION,
     validate_playback_export,
 )
@@ -31,7 +32,8 @@ def build_listening_home(root: Path) -> dict[str, Any]:  # noqa: C901 -- cross-c
     origin = expanded_audio.get("sources", {}).get("original", {})
     if (
         original_audio["revision"] != REVISION
-        or expanded_audio["revision"] not in {COLLECTION_REVISION, EXTENSION_REVISION}
+        or expanded_audio["revision"]
+        not in {COLLECTION_REVISION, EXTENSION_REVISION, FOUR_ARTIST_REVISION}
         or origin.get("manifest_sha256")
         != sha256_file(root / "original" / "audio" / "manifest.json")[0]
         or origin.get("capture_sha256") != original_audio.get("source_pack_sha256")

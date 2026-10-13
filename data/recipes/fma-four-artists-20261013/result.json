@@ -1,0 +1,53 @@
+{
+  "actual_audio_bytes": 3004625,
+  "actual_browser": {
+    "expanded_clips_played": 64,
+    "genre_contract_tests_passed": 5,
+    "paired_playback_actions": 24,
+    "paired_routes": 12,
+    "skipped": 0
+  },
+  "actual_requests": 8,
+  "actual_response_bytes": 2845999,
+  "all_pairs_in_expanded_view": true,
+  "artifacts": {
+    "OpenNoise-four-artist-source-20261013.tar": {
+      "bytes": 14807040,
+      "path": "/workspace/OpenNoise-four-artist-source-20261013.tar",
+      "sha256": "af0c8abddbb205e46e4243b808cb2de6b4572c9448d70cd3fd71a50cb090bb33"
+    },
+    "OpenNoise-listening-104-clips-20261013.zip": {
+      "bytes": 131158401,
+      "path": "/workspace/OpenNoise-listening-104-clips-20261013.zip",
+      "sha256": "d1b4b619c10b58e23c912968d573972934aefc284da72292703831162e233d41"
+    }
+  },
+  "coverage": {
+    "artists": 103,
+    "clips": 104,
+    "genres": 164,
+    "playable_genres": 132,
+    "single_artist_genres": 74
+  },
+  "evidence_sha256": {
+    "four-discovery-browser.log": "fca5ec38b97e5db0aeef8f8adc6e9ef0aa080bd73d81e446e8874400df421d5c",
+    "four-neighbor-replay.log": "74ddf952276f11e1d236754ea45d408b592100d45986d6bf89cbc12886875c28",
+    "four-paired-verification.json": "0d0eebdf13db5713c7b730bebec233ba6dce2c0d8abb9881bae805534e9cb382",
+    "four-playback-browser.log": "01ef61f9e4c113261cbb3d7032e2758a13a4257c894525e0f8858a78479cffd7"
+  },
+  "frozen_model_sha256": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38",
+  "library_retry": false,
+  "musical_quality_acceptance": false,
+  "neighbor_replay": {
+    "directed_edges": 384,
+    "supported_queries": 64
+  },
+  "new_model_fits": 0,
+  "next_useful_step_without_acquisition": "Ask real listeners to compare the twelve existing paired genre routes and record preference/neither/uncertainty plus brief reasons. Use the existing UI, keep the model frozen, and defer more acquisition or tuning until this feedback. No agent judgments count as independent human listening.",
+  "original_artifacts_preserved": true,
+  "paired_genres": 12,
+  "public_deployment": false,
+  "revision": "fma-four-artist-result-v1",
+  "single_artist_genres_after": 74,
+  "single_artist_genres_before": 86
+}
