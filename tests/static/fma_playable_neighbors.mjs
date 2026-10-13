@@ -96,3 +96,18 @@ test('metadata identity failure or unavailable local file never exposes play con
     assert.equal(walk(rows).filter(node=>node.tagName==='button').length,0);
   }
 });
+
+test('v2 keeps playback order and rejects repeated candidate groups while v1 remains readable',async t=>{
+  const {options,manifest,rows}=fixture(t);
+  manifest.revision='fma-playable-component-neighbors-v2';
+  await renderPlayableNeighbors(options);
+  assert.deepEqual(walk(rows).filter(n=>n.className==='playable-neighbor-track').map(n=>n.href),['#track=4','#track=3']);
+  assert.ok(walk(rows).some(n=>n.textContent?.includes('One excerpt per group')));
+  manifest.components[4]=2;
+  manifest.rows[1].neighbor_ids=[2];manifest.rows[2].neighbor_ids=[2];
+  const failed=new Element('div');await renderPlayableNeighbors({...options,rows:failed});
+  assert.ok(walk(failed).some(n=>n.textContent?.includes('unavailable')));
+  manifest.revision='fma-playable-descriptor-neighbors-v1';
+  const legacy=new Element('div');await renderPlayableNeighbors({...options,rows:legacy});
+  assert.equal(walk(legacy).filter(n=>n.className==='playable-neighbor-track').length,2);
+});

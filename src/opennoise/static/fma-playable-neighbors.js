@@ -7,12 +7,13 @@ function validate(manifest, playback) {
   const attached = playback.tracks;
   if (!Array.isArray(attached) || attached.length > 64 || attached.some(row => !nativeId(row.track_id))) throw Error('Invalid excerpt pool');
   const ids = new Set(attached.map(row => row.track_id));
-  if (ids.size !== attached.length || !/^[a-f0-9]{64}$/.test(playback.manifest_sha256) || manifest.audio_manifest_sha256 !== playback.manifest_sha256 || manifest.revision !== 'fma-playable-descriptor-neighbors-v1' || manifest.labels_used !== false || manifest.fitted !== false || manifest.musical_relevance_established !== false || !Array.isArray(manifest.rows) || manifest.rows.length !== ids.size || !manifest.components || Object.keys(manifest.components).length !== ids.size) throw Error('Excerpt suggestion binding differs');
+  if (ids.size !== attached.length || !/^[a-f0-9]{64}$/.test(playback.manifest_sha256) || manifest.audio_manifest_sha256 !== playback.manifest_sha256 || !['fma-playable-descriptor-neighbors-v1', 'fma-playable-component-neighbors-v2'].includes(manifest.revision) || manifest.labels_used !== false || manifest.fitted !== false || manifest.musical_relevance_established !== false || !Array.isArray(manifest.rows) || manifest.rows.length !== ids.size || !manifest.components || Object.keys(manifest.components).length !== ids.size) throw Error('Excerpt suggestion binding differs');
   for (const id of ids) if (!Object.hasOwn(manifest.components, id) || (manifest.components[id] !== null && !nativeId(manifest.components[id]))) throw Error('Invalid native component');
   const seen = new Set();
   for (const row of manifest.rows) {
     if (!ids.has(row.track_id) || seen.has(row.track_id) || !Array.isArray(row.neighbor_ids) || row.neighbor_ids.length > 6 || new Set(row.neighbor_ids).size !== row.neighbor_ids.length || !reasons.has(row.reason) || (row.reason === null ? !row.neighbor_ids.length : row.neighbor_ids.length)) throw Error('Invalid excerpt suggestions');
     seen.add(row.track_id);
+    if (manifest.revision === 'fma-playable-component-neighbors-v2' && new Set(row.neighbor_ids.map(id => manifest.components[id])).size !== row.neighbor_ids.length) throw Error('Repeated recording group');
     for (const id of row.neighbor_ids) if (!ids.has(id) || id === row.track_id || !nativeId(manifest.components[id]) || !nativeId(manifest.components[row.track_id]) || manifest.components[id] === manifest.components[row.track_id]) throw Error('Excerpt candidate differs');
   }
   const indexed = new Map(manifest.rows.map(row => [row.track_id, row]));
@@ -26,6 +27,7 @@ export async function renderPlayableNeighbors({id, config, playback, json, track
     if (typeof config.manifest_path !== 'string' || !/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.json$/.test(config.manifest_path)) throw Error('Invalid local suggestion path');
     const manifest = await json(config.manifest_path); if (!current()) return;
     validate(manifest, playback);
+    if (manifest.revision === 'fma-playable-component-neighbors-v2') section.append(node('p', 'One excerpt per group linked by artist, album or identical features, to reduce repetition.'));
     const selected = manifest.rows.find(row => row.track_id === id);
     if (selected.reason !== null) {
       section.append(node('p', 'No suggested excerpts: this track has no supported comparison in the attached pool.'));

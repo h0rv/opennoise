@@ -133,6 +133,43 @@ class PlayableNeighborTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             m.rank_playable([1] * 65, roles, {}, self.model)
 
+    def test_component_diversity_fills_beyond_old_six_and_keeps_nearest(self) -> None:
+        roles = {
+            i: {"artist_known": True, "component_id": 2 if 2 <= i <= 7 else i} for i in range(1, 13)
+        }
+        features = {i: np.array([(i - 1) / 2, 0]) for i in roles}
+        rows = m.rank_playable(list(reversed(roles)), roles, features, self.model)
+        self.assertEqual(rows[0]["neighbor_ids"], [2, 8, 9, 10, 11, 12])
+        self.assertEqual(rows[0]["reason"], None)
+        # Two component minima tie in distance; exact native ID breaks the tie.
+        features[8] = np.array([-0.5, 0])
+        tied = m.rank_playable(list(roles), roles, features, self.model)
+        self.assertEqual(tied[0]["neighbor_ids"][:2], [2, 8])
+        fewer = m.rank_playable([1, 2, 3, 8], roles, features, self.model)
+        self.assertEqual(fewer[0]["neighbor_ids"], [2, 8])
+
+    def test_legacy_pack_validation_retains_its_original_policy(self) -> None:
+        output, result = self.build()
+        frozen = json.loads(self.declaration.read_bytes())
+        frozen["policy"] = m.LEGACY_POLICY
+        body = json.dumps(frozen).encode()
+        (output / "declaration.json").write_bytes(body)
+        result["revision"] = m.LEGACY_REVISION
+        result["provenance"]["declaration_sha256"] = hashlib.sha256(body).hexdigest()
+        (output / "manifest.json").write_text(json.dumps(result))
+        receipt = {
+            "revision": m.LEGACY_REVISION,
+            "files": {
+                name: {
+                    "sha256": hashlib.sha256((output / name).read_bytes()).hexdigest(),
+                    "bytes": (output / name).stat().st_size,
+                }
+                for name in ("manifest.json", "declaration.json")
+            },
+        }
+        (output / "receipt.json").write_text(json.dumps(receipt))
+        self.assertEqual(m.validate_playable_neighbors(output), result)
+
     def test_frozen_audio_feature_and_code_tampering_rejected(self) -> None:
         m.freeze_protocol(self.audio, self.pack, self.features, self.declaration)
         original = self.declaration.read_bytes()
