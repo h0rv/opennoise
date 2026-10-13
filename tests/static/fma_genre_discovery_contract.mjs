@@ -135,3 +135,34 @@ for (const [name, mutate] of [
     assert.ok(!requests.some(row=>/\/audio\//.test(row.request.url)));
   },mutate);
 });
+
+const pairProposal = process.env.OPENNOISE_FMA_PAIR_PROPOSAL;
+
+test('approved artist additions expose and play both independent examples on all twelve genre routes', {
+  skip: skip || !pairProposal,
+  timeout: 120000,
+}, async () => {
+  const proposal = JSON.parse(await readFile(pairProposal));
+  const index = JSON.parse(await readFile(join(process.env.OPENNOISE_FMA_DISCOVERY_SITE, 'genre-discovery.json')));
+  const pairs = proposal.tracks.flatMap(track => track.second_independent_artist_genres.map(genreId => ({genreId, addedId: track.track_id})));
+  assert.equal(pairs.length, 12);
+  assert.equal(new Set(pairs.map(pair => pair.genreId)).size, 12);
+  await browser(async ({evaluate, wait}) => {
+    for (const {genreId, addedId} of pairs) {
+      const genre = index.genres.find(row => row.genre_id === genreId);
+      assert.equal(genre.track_ids.length, 2);
+      assert.ok(genre.track_ids.includes(addedId));
+      assert.equal(new Set(genre.track_ids.map(id => index.tracks[id].artist_id)).size, 2);
+      await evaluate(`location.hash='#genre=${genreId}'`);
+      await wait(`location.hash==='#genre=${genreId}' && document.documentElement.dataset.discoveryReady==='true' && document.querySelector('#content').getAttribute('aria-busy')==='false'`);
+      const displayed = await evaluate("[...document.querySelectorAll('.discovery-excerpt')].map(row => Number(row.dataset.trackId))");
+      assert.deepEqual(displayed.sort((a, b) => a - b), [...genre.track_ids].sort((a, b) => a - b));
+      for (const trackId of genre.track_ids) {
+        await evaluate(`document.querySelector('[data-play-id="${trackId}"]').click()`);
+        await wait(`document.querySelector('#persistent-player').dataset.trackId==='${trackId}' && document.querySelector('#persistent-player audio').currentTime>.1 && !document.querySelector('#persistent-player audio').paused`);
+        assert.equal(await evaluate("[...document.querySelectorAll('audio')].filter(audio => !audio.paused).length"), 1);
+        await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
+      }
+    }
+  });
+});

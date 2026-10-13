@@ -1,0 +1,291 @@
+{
+  "audio_bytes": 3004625,
+  "captures": [
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-001.json",
+      "bytes": 30,
+      "end": 17071857803,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:53:16.354755+00:00",
+      "path": "32633-header.range",
+      "phase": "audio",
+      "sha256": "e9b94917478c2b97d9457499cf406cb1043c5d691c0ef8964f43791efb59e19a",
+      "start": 17071857774,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-002.json",
+      "bytes": 593949,
+      "end": 17072451752,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:53:17.331536+00:00",
+      "path": "32633-payload.range",
+      "phase": "audio",
+      "sha256": "38632ccec7c8edc05fdfc905471eddf3b42de74d9c1d6baac6153c7da8a8f0da",
+      "start": 17071857804,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-003.json",
+      "bytes": 30,
+      "end": 83849049407,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:53:19.537562+00:00",
+      "path": "133463-header.range",
+      "phase": "audio",
+      "sha256": "4d61b2a44e2e013deb34c722be8d243c308ee253b95695ceb6a46137c90d5c54",
+      "start": 83849049378,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-004.json",
+      "bytes": 565074,
+      "end": 83849614481,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:53:19.810704+00:00",
+      "path": "133463-payload.range",
+      "phase": "audio",
+      "sha256": "ee7c2a69ed9835dded4fe581681762aa805d1f3c2d8087534eca9926cfa3743c",
+      "start": 83849049408,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-005.json",
+      "bytes": 30,
+      "end": 86750321454,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:53:22.012612+00:00",
+      "path": "137299-header.range",
+      "phase": "audio",
+      "sha256": "60fb2db66249598733e70ec43314535fc4296282ffa726d960a77b9300608a6e",
+      "start": 86750321425,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-006.json",
+      "bytes": 1091221,
+      "end": 86751412675,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:53:22.372943+00:00",
+      "path": "137299-payload.range",
+      "phase": "audio",
+      "sha256": "e09d31aa468d89e388f43e0ea89479adcc6b41100f4164cd1463c9e41b0947d2",
+      "start": 86750321455,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-007.json",
+      "bytes": 30,
+      "end": 53230353684,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:53:25.114781+00:00",
+      "path": "86402-header.range",
+      "phase": "audio",
+      "sha256": "0952b35a296e7a24d731835be205cfedfcbe4f1b80edc8e0d28e2fe6b277c6f5",
+      "start": 53230353655,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    },
+    {
+      "archive_bytes": 100306112191,
+      "attempt": "attempt-008.json",
+      "bytes": 595635,
+      "end": 53230949319,
+      "etag": "\"150d434dec77ecfcfa78aea547235a0f-9566\"",
+      "observed_at": "2026-10-13T14:53:25.431556+00:00",
+      "path": "86402-payload.range",
+      "phase": "audio",
+      "sha256": "c3e13431e4807c06fa73ae4077b5f91b6eb9985bd7a3352a00bcd3d3473cb660",
+      "start": 53230353685,
+      "status": 206,
+      "url": "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+    }
+  ],
+  "component_and_feature_verification": {
+    "all_four_finite_mean44": true,
+    "all_four_new_artist_and_component": true,
+    "features_sha256": "b427d29b55b9b27c9e38b0aae635478dbebae5dcb381f00e00a9fcadf70032d4",
+    "roles_sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7",
+    "track_ids_sha256": "8fb77ce50f3da09b7fb7c04bfc21948ef72e3dd50dbb63cd082291d75b180c07"
+  },
+  "full_archive_hash_verified": false,
+  "musical_quality_validated": false,
+  "native_track_csv_sha256": "b025dc407ed663c10a0e3fd03b7b98154674bab043dff3ed8883f255010f7147",
+  "probe_sha256": "5f91bb016362b77e0012a17b7da74b089e8a95ed0bb512627b046383c6ace3f7",
+  "proposal_sha256": "46bfebb15e32a850ac04b18e884a51d543a80b79d04c76fb139dc7c53068fd4a",
+  "public_deployment_authorized": false,
+  "response_bytes": 2845999,
+  "revision": "fma-four-artist-capture-v1",
+  "source_receipt_sha256": "cd46d53488e6892eed78b742814ef95e6531b18b6d69c8eb95688da075e6df99",
+  "tracks": [
+    {
+      "artist_id": 7425,
+      "audio_bytes": 601441,
+      "audio_path": "32633.mp3",
+      "audio_sha256": "c113ef1292b33d4ebe9d38e34a49c8a883ca3cb90faaa14ac92e34a69cb0cbd5",
+      "component_id": 738,
+      "duration_seconds": 30.014694,
+      "genre_ids": [
+        71,
+        79,
+        89
+      ],
+      "member": {
+        "compressed": 593925,
+        "crc32": 67989665,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/032/032633.mp3",
+        "offset": 17071857774,
+        "uncompressed": 601441
+      },
+      "response_bytes_upper": 659514,
+      "second_independent_artist_genres": [
+        71,
+        79,
+        89
+      ],
+      "source": {
+        "artist_name": "The Dreams",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Leahcim Ym",
+        "track_url": ""
+      },
+      "track_id": 32633
+    },
+    {
+      "artist_id": 21804,
+      "audio_bytes": 601136,
+      "audio_path": "133463.mp3",
+      "audio_sha256": "574ed1e58d4b18cb8c13288170ad20f5e047a252300549a316f385ad86fbb903",
+      "component_id": 21804,
+      "duration_seconds": 30.0,
+      "genre_ids": [
+        9,
+        137,
+        567
+      ],
+      "member": {
+        "compressed": 565050,
+        "crc32": 2325104368,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/133/133463.mp3",
+        "offset": 83849049378,
+        "uncompressed": 601136
+      },
+      "response_bytes_upper": 630639,
+      "second_independent_artist_genres": [
+        9,
+        137,
+        567
+      ],
+      "source": {
+        "artist_name": "Ryan Sheeler",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Fields and Footsteps",
+        "track_url": "http://freemusicarchive.org/music/Ryan_Sheeler/Skies_and_Shadows/07_Fields_and_Footsteps"
+      },
+      "track_id": 133463
+    },
+    {
+      "artist_id": 22145,
+      "audio_bytes": 1201205,
+      "audio_path": "137299.mp3",
+      "audio_sha256": "5ded580aa1d024b8efd954cb7b9264107af90a98d8b7ed8690ae398cd16bcf81",
+      "component_id": 22145,
+      "duration_seconds": 29.988571,
+      "genre_ids": [
+        64,
+        70,
+        337
+      ],
+      "member": {
+        "compressed": 1091197,
+        "crc32": 4183297141,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/137/137299.mp3",
+        "offset": 86750321425,
+        "uncompressed": 1201205
+      },
+      "response_bytes_upper": 1156786,
+      "second_independent_artist_genres": [
+        64,
+        70,
+        337
+      ],
+      "source": {
+        "artist_name": "To Eris",
+        "license_title": "Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/4.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Feet on the ground",
+        "track_url": "http://freemusicarchive.org/music/To_Eris/Escape_1609/Feet_on_the_ground"
+      },
+      "track_id": 137299
+    },
+    {
+      "artist_id": 15861,
+      "audio_bytes": 600843,
+      "audio_path": "86402.mp3",
+      "audio_sha256": "929d2d239502c18e04c03e89f8a36ed93b9e9644584361ba62cb55b60e887175",
+      "component_id": 15861,
+      "duration_seconds": 29.988571,
+      "genre_ids": [
+        27,
+        236,
+        495
+      ],
+      "member": {
+        "compressed": 595611,
+        "crc32": 2751502563,
+        "flags": 0,
+        "method": 12,
+        "name": "fma_large/086/086402.mp3",
+        "offset": 53230353655,
+        "uncompressed": 600843
+      },
+      "response_bytes_upper": 661200,
+      "second_independent_artist_genres": [
+        27,
+        236,
+        495
+      ],
+      "source": {
+        "artist_name": "Tardiss",
+        "license_title": "Creative Commons Attribution",
+        "license_url": "http://creativecommons.org/licenses/by/3.0/",
+        "track_composer": "",
+        "track_copyright_c": "",
+        "track_copyright_p": "",
+        "track_title": "Drill Bits",
+        "track_url": "http://freemusicarchive.org/music/Tardiss/Behind_the_Blind/04_Drill_Bits"
+      },
+      "track_id": 86402
+    }
+  ]
+}
