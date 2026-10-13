@@ -1,0 +1,15 @@
+{
+  "scope": "formatting only; delivered site/archive preserved",
+  "verification": "Acorn AST equivalence after normalization only of added single-statement if/for braces around throw/return/expression/if; all literals, operators, conditions and statement order unchanged",
+  "focused_js_tests": 7,
+  "files": {
+    "src/opennoise/static/fma-playable-neighbors.js": {
+      "before_sha256": "9da593b8865fb4cd643880b6478b9c6c04514df2b1f2148e801d9cdb609a2490",
+      "after_sha256": "82e4a385ce63d9ee221e5d618cb3fe678f794005c2546d67794397ebffc2b18a"
+    },
+    "tests/static/fma_playable_neighbors.mjs": {
+      "before_sha256": "4b3885ccf203eec3f017ace8880ba39bc385c2a18cd44da66bb993c1f79ac9c4",
+      "after_sha256": "b566f8eec7b8ac3f0035c82f83b5c933d29e306128cbdb5cea9b93121ffa5a08"
+    }
+  }
+}

@@ -315,11 +315,30 @@ def build_audition(site: Path, source: Path, output: Path) -> Record:
             "Run python3 serve.py (Python 3.11+). Complete independently; never consult coordinator or other listener. Blank means unanswered. Ratings 1=poor, 3=mixed, 5=strong; familiarity 0=none to4=very familiar. Record conflicts, date/region and playback failures. Preserve unsure, unsupported and disagreements. One short excerpt cannot establish full work or genre diversity. Historical source license claims and metadata CC-BY-4.0; missing credits remain unknown. No musical-quality promotion. Download answers before closing.\n"
         )
         (dest / "serve.py").write_text(
-            "from pathlib import Path\nimport hashlib,json,http.server,os\np=Path(__file__).resolve().parent\nfor n,r in json.loads((p/'MANIFEST.json').read_text()).items():\n f=p/n\n assert f.stat().st_size==r['bytes'] and hashlib.sha256(f.read_bytes()).hexdigest()==r['sha256'],n\nos.chdir(p)\nprint('Open http://127.0.0.1:887"
-            + str(slot)
-            + "/')\nhttp.server.HTTPServer(('127.0.0.1',887"
-            + str(slot)
-            + "),http.server.SimpleHTTPRequestHandler).serve_forever()\n"
+            f"""from pathlib import Path
+
+import hashlib
+import json
+import http.server
+import os
+
+
+p = Path(__file__).resolve().parent
+
+for n, r in json.loads((p / 'MANIFEST.json').read_text()).items():
+    f = p / n
+    assert (
+        f.stat().st_size == r['bytes']
+        and hashlib.sha256(f.read_bytes()).hexdigest() == r['sha256']
+    ), n
+
+os.chdir(p)
+print('Open http://127.0.0.1:887{slot}/')
+http.server.HTTPServer(
+    ('127.0.0.1', 887{slot}),
+    http.server.SimpleHTTPRequestHandler,
+).serve_forever()
+"""
         )
         inventory = {
             str(p.relative_to(dest)): {"bytes": p.stat().st_size, "sha256": _sha(p.read_bytes())}

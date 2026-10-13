@@ -118,3 +118,14 @@ One identical candidate pair remains in the denominator. The coordinator key
 must not accompany listener distribution. Actual independent listener responses
 are still required to assess musical usefulness; no 70% product-quality claim is
 supported. The local Library save failed before transfer; it was not retried.
+
+The two `.py.source` audit scripts are readable, behavior-equivalent copies.
+`readability-provenance.json` records their original observed hashes and the
+formatted-copy hashes; original executed bytes remain in the experiment archive.
+The numerical producer source and frozen model bytes were not reformatted.
+
+The readability follow-up preserves the verified listening site/archive at
+commit `d3785013b88d7c8b3296b2c5418404c7714de621`. The separately named readable
+audition archives preserve every selection, answer field, audio byte and private
+assignment; only presentation code, launcher formatting and their hashes differ.
+Both new listener browser contracts passed. See the readability evidence files.

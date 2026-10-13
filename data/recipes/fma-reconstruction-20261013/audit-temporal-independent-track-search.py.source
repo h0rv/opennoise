@@ -1,79 +1,260 @@
 """Read-only independent raw native cells, rank and metric audit; never fits a model."""
+
 import os
-os.environ['OPENBLAS_NUM_THREADS']='1'
-import bz2,csv,hashlib,io,json,resource,time
+
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
+import bz2, csv, hashlib, io, json, resource, time
 from collections import Counter
 from pathlib import Path
+
 import numpy as np
 import zstandard
-resource.setrlimit(resource.RLIMIT_AS,(1_000_000_000,1_000_000_000))
-r=Path('/workspace/opennoise-rebuild-20261013'); started=time.monotonic()
+
+resource.setrlimit(resource.RLIMIT_AS, (1_000_000_000, 1_000_000_000))
+r = Path("/workspace/opennoise-rebuild-20261013")
+started = time.monotonic()
+
+
 def digest(p):
- h=hashlib.sha256()
- with p.open('rb') as f:
-  for block in iter(lambda:f.read(1048576),b''):h.update(block)
- return h.hexdigest()
+    h = hashlib.sha256()
+    with p.open("rb") as f:
+        for block in iter(lambda: f.read(1048576), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
 def rows(p):
- with p.open('rb') as raw,zstandard.ZstdDecompressor().stream_reader(raw) as z:
-  yield from map(json.loads,io.TextIOWrapper(z))
-def same(actual,expected):
- if isinstance(expected,float):assert abs(actual-expected)<1e-12,(actual,expected)
- else:assert actual==expected,(actual,expected)
-dec=json.loads((r/'mean-std-declaration-v2.json').read_text()); projection=r/'mean-std-projection'; out=r/'training88'
-receipt=json.loads((projection/'receipt.json').read_text()); assert receipt['declaration_sha256']==digest(r/'mean-std-declaration-v2.json');assert receipt['features']['sha256']==digest(projection/'features.float32')
-ids=np.fromfile(r/'feature-source/projection/track_ids.uint32',dtype='<u4'); x=np.fromfile(projection/'features.float32',dtype='<f4').reshape(len(ids),88)
-old=np.fromfile(r/'feature-source/projection/features.float32',dtype='<f4').reshape(len(ids),44)
-assert np.array_equal(x[:,:44],old,equal_nan=True);assert np.isfinite(x).all();assert (x[:,44:]>=0).all();del old
-wanted=set(map(int,sorted(ids[:2048],key=lambda v:hashlib.sha256(f'raw-std-audit:{v}'.encode()).digest())[:64]));lookup={int(v):i for i,v in enumerate(ids)}
-source=json.loads((r/'feature-source/source-receipt.json').read_text())['member']; checked=[]
-with (r/'feature-source'/source['payload_path']).open('rb') as raw:
- raw.seek(source['payload_prefix_bytes'])
- with io.TextIOWrapper(bz2.BZ2File(raw),newline='') as text:
-  reader=csv.reader(text);headers=[next(reader) for _ in range(3)];assert next(reader)[0]=='track_id'
-  native=[(headers[0][i],headers[1][i],int(headers[2][i])) for i in range(1,len(headers[0]))]
-  cols=[tuple(c) for c in dec['columns']];assert cols[44:]==[(a,'std',c) for a,b,c in cols[:44]]
-  positions=[native.index(c)+1 for c in cols]
-  for row in reader:
-   identity=int(row[0])
-   if identity in wanted:
-    values=np.array([float(row[j]) if row[j] else np.nan for j in positions],dtype='<f4')
-    assert np.array_equal(values,x[lookup[identity]],equal_nan=True),identity
-    checked.append(identity)
-    if len(checked)==len(wanted):break
-assert set(checked)==wanted
-metadata=json.loads((r/'metadata/corpus-receipt.json').read_text());native={t['track_id']:t for t in rows(r/'metadata'/metadata['files']['tracks']['path'])};ledger=list(rows(r/'baseline44/native-folds.jsonl.zst'))
-training=Counter(g for t in ledger if t['artist_known'] and t['fold']==0 for g in native[t['track_id']]['genre_ids'] or [])
-seal=json.loads((out/'pre-diagnostic-seal.json').read_text());assert seal['phase']=='before outer diagnostic scoring';assert seal['model']['sha256']==digest(out/'model.npz');assert seal['projection']['sha256']==digest(projection/'receipt.json')
-m=dict(np.load(out/'model.npz',allow_pickle=False));labels=m['labels'];active=m['active_columns'];report=json.loads((out/'evaluation.json').read_text());results={}
-for fold,name in [(1,'validation'),(2,'test')]:
- saved=list(rows(out/f'{name}-acoustic-ranks.jsonl.zst'));expected=[t['track_id'] for t in ledger if t['artist_known'] and t['fold']==fold];assert [t['track_id'] for t in saved]==expected
- sample=set(sorted(expected,key=lambda v:hashlib.sha256(f'rank-audit:{v}'.encode()).digest())[:128]);positives=Counter();hits={5:Counter(),10:Counter()};abstain=Counter();unlabeled=0;rr=0.;rescored=0
- for record in saved:
-  i=record['track_id'];truth=set(native[i]['genre_ids'] or []);ranking=record['ranked_genre_ids'];reason=record['reason']
-  if reason:abstain[reason]+=1;assert not ranking
-  if not truth:unlabeled+=1
-  positives.update(truth);rr+=next((1/j for j,g in enumerate(ranking,1) if g in truth),0.)
-  for k in hits:hits[k].update(truth&set(ranking[:k]))
-  if i in sample:
-   if i not in lookup:why='missing_feature_row';rank=[]
-   else:
-    z=(x[lookup[i],active].astype('float64')-m['center'][active])/m['scale'][active]
-    why='missing_descriptors' if not np.isfinite(z).all() else 'outside_training_support' if np.any(np.abs(z)>12) else None
-    scores=np.sum(m['quadratic']*z*z+m['linear']*z,axis=1)+m['intercept']
-    rank=[int(labels[j]) for j in np.argsort(-scores,kind='stable') if m['active_labels'][j]] if why is None else []
-   assert reason==why and ranking==rank,i
-   rescored+=1
- total=sum(positives.values());actual={'queries':len(saved),'labeled_queries':len(saved)-unlabeled,'unlabeled_queries':unlabeled,'source_positive_count':total,'abstentions':dict(abstain),'mean_reciprocal_rank':rr/max(1,len(saved)-unlabeled)}
- for prefix,cohort in [('rare',lambda g:training[g]<=100),('cold',lambda g:training[g]<5),('training_unseen',lambda g:training[g]==0)]:
-  denom=sum(v for g,v in positives.items() if cohort(g));actual[prefix+'_positive_count']=denom
-  for k in hits:actual[f'{prefix}_recall_at_{k}']=sum(v for g,v in hits[k].items() if cohort(g))/max(1,denom)
- actual['below_five_seen_positive_count']=sum(v for g,v in positives.items() if 0<training[g]<5)
- for k in hits:actual[f'recall_at_{k}']=sum(hits[k].values())/max(1,total);actual[f'macro_recall_at_{k}']=float(np.mean([hits[k][g]/v for g,v in positives.items()]))
- for field,value in actual.items():same(value,report['evaluation'][name]['acoustic'][field])
- for p in report['evaluation'][name]['acoustic']['per_label']:
-  g=p['genre_id'];assert p=={'genre_id':g,'training_positive_count':training[g],'held_out_positive_count':positives[g],'hits_at_5':hits[5][g],'hits_at_10':hits[10][g]}
- baseline_report=json.loads((r/'baseline44/evaluation.json').read_text())['evaluation'][name]['acoustic'];assert baseline_report['queries']==actual['queries'] and baseline_report['source_positive_count']==total
- results[name]={'all_rank_rows':len(saved),'independently_rescored':rescored,'metrics':actual}
-split_source=Path('/workspace/opennoise/src/opennoise/ml/fma_split_audit.py');split_copy=r/'baseline44/fma_split_audit.py';assert digest(split_source)==digest(split_copy)
-audit={'revision':'fma-temporal-independent-track-search-v1','status':'pass','raw_native_subset':{'sampling':'64 deterministic SHA-selected track IDs within first2048 native feature IDs; no full stream checksum claim by this subset pass','track_ids':checked,'native_cells_compared':len(checked)*88,'native_std_cells_compared':len(checked)*44},'all_mean_columns_equal_baseline':True,'all88_features_finite':True,'all_std_nonnegative':True,'diagnostics':results,'model_seal_verified':True,'runtime_split_audit_matches_pinned_snapshot':digest(split_source),'code_review':{'training':'known native artist and unchanged component fold0 only','evaluation':'complete known-artist outer folds; all positives and abstentions retained','leakage_limit':'outer validation/test previously inspected; descriptive diagnostic only, no new unbiased heldout claim','source_std_not_temporal_order':True,'minor_custody_note':'runtime split-audit source omitted from temporal direct source pins; independently matched to frozen baseline snapshot'},'hashes':{str(p.relative_to(r)):digest(p) for p in [r/'mean-std-declaration-v2.json',projection/'receipt.json',out/'model.npz',out/'pre-diagnostic-seal.json',out/'evaluation.json']},'elapsed_seconds':time.monotonic()-started,'no_fitting_or_acquisition':True}
-(r/'temporal-independent-track-search-audit.json').write_text(json.dumps(audit,indent=2)+'\n');print(json.dumps({'status':'pass','raw_samples':len(checked),'ranks_rescored':256,'metrics_folds':list(results),'elapsed_seconds':audit['elapsed_seconds']}))
+    with p.open("rb") as raw, zstandard.ZstdDecompressor().stream_reader(raw) as z:
+        yield from map(json.loads, io.TextIOWrapper(z))
+
+
+def same(actual, expected):
+    if isinstance(expected, float):
+        assert abs(actual - expected) < 1e-12, (actual, expected)
+    else:
+        assert actual == expected, (actual, expected)
+
+
+dec = json.loads((r / "mean-std-declaration-v2.json").read_text())
+projection = r / "mean-std-projection"
+out = r / "training88"
+receipt = json.loads((projection / "receipt.json").read_text())
+assert receipt["declaration_sha256"] == digest(r / "mean-std-declaration-v2.json")
+assert receipt["features"]["sha256"] == digest(projection / "features.float32")
+ids = np.fromfile(r / "feature-source/projection/track_ids.uint32", dtype="<u4")
+x = np.fromfile(projection / "features.float32", dtype="<f4").reshape(len(ids), 88)
+old = np.fromfile(r / "feature-source/projection/features.float32", dtype="<f4").reshape(
+    len(ids), 44
+)
+assert np.array_equal(x[:, :44], old, equal_nan=True)
+assert np.isfinite(x).all()
+assert (x[:, 44:] >= 0).all()
+del old
+wanted = set(
+    map(
+        int,
+        sorted(ids[:2048], key=lambda v: hashlib.sha256(f"raw-std-audit:{v}".encode()).digest())[
+            :64
+        ],
+    )
+)
+lookup = {int(v): i for i, v in enumerate(ids)}
+source = json.loads((r / "feature-source/source-receipt.json").read_text())["member"]
+checked = []
+with (r / "feature-source" / source["payload_path"]).open("rb") as raw:
+    raw.seek(source["payload_prefix_bytes"])
+    with io.TextIOWrapper(bz2.BZ2File(raw), newline="") as text:
+        reader = csv.reader(text)
+        headers = [next(reader) for _ in range(3)]
+        assert next(reader)[0] == "track_id"
+        native = [
+            (headers[0][i], headers[1][i], int(headers[2][i])) for i in range(1, len(headers[0]))
+        ]
+        cols = [tuple(c) for c in dec["columns"]]
+        assert cols[44:] == [(a, "std", c) for a, b, c in cols[:44]]
+        positions = [native.index(c) + 1 for c in cols]
+        for row in reader:
+            identity = int(row[0])
+            if identity in wanted:
+                values = np.array(
+                    [float(row[j]) if row[j] else np.nan for j in positions], dtype="<f4"
+                )
+                assert np.array_equal(values, x[lookup[identity]], equal_nan=True), identity
+                checked.append(identity)
+                if len(checked) == len(wanted):
+                    break
+assert set(checked) == wanted
+metadata = json.loads((r / "metadata/corpus-receipt.json").read_text())
+native = {t["track_id"]: t for t in rows(r / "metadata" / metadata["files"]["tracks"]["path"])}
+ledger = list(rows(r / "baseline44/native-folds.jsonl.zst"))
+training = Counter(
+    g
+    for t in ledger
+    if t["artist_known"] and t["fold"] == 0
+    for g in native[t["track_id"]]["genre_ids"] or []
+)
+seal = json.loads((out / "pre-diagnostic-seal.json").read_text())
+assert seal["phase"] == "before outer diagnostic scoring"
+assert seal["model"]["sha256"] == digest(out / "model.npz")
+assert seal["projection"]["sha256"] == digest(projection / "receipt.json")
+m = dict(np.load(out / "model.npz", allow_pickle=False))
+labels = m["labels"]
+active = m["active_columns"]
+report = json.loads((out / "evaluation.json").read_text())
+results = {}
+for fold, name in [(1, "validation"), (2, "test")]:
+    saved = list(rows(out / f"{name}-acoustic-ranks.jsonl.zst"))
+    expected = [t["track_id"] for t in ledger if t["artist_known"] and t["fold"] == fold]
+    assert [t["track_id"] for t in saved] == expected
+    sample = set(
+        sorted(expected, key=lambda v: hashlib.sha256(f"rank-audit:{v}".encode()).digest())[:128]
+    )
+    positives = Counter()
+    hits = {5: Counter(), 10: Counter()}
+    abstain = Counter()
+    unlabeled = 0
+    rr = 0.0
+    rescored = 0
+    for record in saved:
+        i = record["track_id"]
+        truth = set(native[i]["genre_ids"] or [])
+        ranking = record["ranked_genre_ids"]
+        reason = record["reason"]
+        if reason:
+            abstain[reason] += 1
+            assert not ranking
+        if not truth:
+            unlabeled += 1
+        positives.update(truth)
+        rr += next((1 / j for j, g in enumerate(ranking, 1) if g in truth), 0.0)
+        for k in hits:
+            hits[k].update(truth & set(ranking[:k]))
+        if i in sample:
+            if i not in lookup:
+                why = "missing_feature_row"
+                rank = []
+            else:
+                z = (x[lookup[i], active].astype("float64") - m["center"][active]) / m["scale"][
+                    active
+                ]
+                why = (
+                    "missing_descriptors"
+                    if not np.isfinite(z).all()
+                    else "outside_training_support"
+                    if np.any(np.abs(z) > 12)
+                    else None
+                )
+                scores = np.sum(m["quadratic"] * z * z + m["linear"] * z, axis=1) + m["intercept"]
+                rank = (
+                    [
+                        int(labels[j])
+                        for j in np.argsort(-scores, kind="stable")
+                        if m["active_labels"][j]
+                    ]
+                    if why is None
+                    else []
+                )
+            assert reason == why and ranking == rank, i
+            rescored += 1
+    total = sum(positives.values())
+    actual = {
+        "queries": len(saved),
+        "labeled_queries": len(saved) - unlabeled,
+        "unlabeled_queries": unlabeled,
+        "source_positive_count": total,
+        "abstentions": dict(abstain),
+        "mean_reciprocal_rank": rr / max(1, len(saved) - unlabeled),
+    }
+    for prefix, cohort in [
+        ("rare", lambda g: training[g] <= 100),
+        ("cold", lambda g: training[g] < 5),
+        ("training_unseen", lambda g: training[g] == 0),
+    ]:
+        denom = sum(v for g, v in positives.items() if cohort(g))
+        actual[prefix + "_positive_count"] = denom
+        for k in hits:
+            actual[f"{prefix}_recall_at_{k}"] = sum(
+                v for g, v in hits[k].items() if cohort(g)
+            ) / max(1, denom)
+    actual["below_five_seen_positive_count"] = sum(
+        v for g, v in positives.items() if 0 < training[g] < 5
+    )
+    for k in hits:
+        actual[f"recall_at_{k}"] = sum(hits[k].values()) / max(1, total)
+        actual[f"macro_recall_at_{k}"] = float(
+            np.mean([hits[k][g] / v for g, v in positives.items()])
+        )
+    for field, value in actual.items():
+        same(value, report["evaluation"][name]["acoustic"][field])
+    for p in report["evaluation"][name]["acoustic"]["per_label"]:
+        g = p["genre_id"]
+        assert p == {
+            "genre_id": g,
+            "training_positive_count": training[g],
+            "held_out_positive_count": positives[g],
+            "hits_at_5": hits[5][g],
+            "hits_at_10": hits[10][g],
+        }
+    baseline_report = json.loads((r / "baseline44/evaluation.json").read_text())["evaluation"][
+        name
+    ]["acoustic"]
+    assert (
+        baseline_report["queries"] == actual["queries"]
+        and baseline_report["source_positive_count"] == total
+    )
+    results[name] = {
+        "all_rank_rows": len(saved),
+        "independently_rescored": rescored,
+        "metrics": actual,
+    }
+split_source = Path("/workspace/opennoise/src/opennoise/ml/fma_split_audit.py")
+split_copy = r / "baseline44/fma_split_audit.py"
+assert digest(split_source) == digest(split_copy)
+audit = {
+    "revision": "fma-temporal-independent-track-search-v1",
+    "status": "pass",
+    "raw_native_subset": {
+        "sampling": "64 deterministic SHA-selected track IDs within first2048 native feature IDs; no full stream checksum claim by this subset pass",
+        "track_ids": checked,
+        "native_cells_compared": len(checked) * 88,
+        "native_std_cells_compared": len(checked) * 44,
+    },
+    "all_mean_columns_equal_baseline": True,
+    "all88_features_finite": True,
+    "all_std_nonnegative": True,
+    "diagnostics": results,
+    "model_seal_verified": True,
+    "runtime_split_audit_matches_pinned_snapshot": digest(split_source),
+    "code_review": {
+        "training": "known native artist and unchanged component fold0 only",
+        "evaluation": "complete known-artist outer folds; all positives and abstentions retained",
+        "leakage_limit": "outer validation/test previously inspected; descriptive diagnostic only, no new unbiased heldout claim",
+        "source_std_not_temporal_order": True,
+        "minor_custody_note": "runtime split-audit source omitted from temporal direct source pins; independently matched to frozen baseline snapshot",
+    },
+    "hashes": {
+        str(p.relative_to(r)): digest(p)
+        for p in [
+            r / "mean-std-declaration-v2.json",
+            projection / "receipt.json",
+            out / "model.npz",
+            out / "pre-diagnostic-seal.json",
+            out / "evaluation.json",
+        ]
+    },
+    "elapsed_seconds": time.monotonic() - started,
+    "no_fitting_or_acquisition": True,
+}
+(r / "temporal-independent-track-search-audit.json").write_text(json.dumps(audit, indent=2) + "\n")
+print(
+    json.dumps(
+        {
+            "status": "pass",
+            "raw_samples": len(checked),
+            "ranks_rescored": 256,
+            "metrics_folds": list(results),
+            "elapsed_seconds": audit["elapsed_seconds"],
+        }
+    )
+)

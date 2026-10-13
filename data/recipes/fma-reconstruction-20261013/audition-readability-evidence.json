@@ -1,0 +1,116 @@
+{
+  "status": "passed",
+  "old_packet": "/workspace/opennoise-rebuild-20261013/audition",
+  "readable_packet": "/workspace/opennoise-rebuild-20261013/audition-readable",
+  "semantic_files_byte_identical": {
+    "1": {
+      "items.json": "64404905854cb9120a80cd277a214b8c632ac8a5610daac6488d921f50e5ab6a",
+      "credits.json": "db8c32d82af52816e86105124b3759f35277d2c196697f72537eed9d9ad422e9",
+      "review-form.csv": "224937841fe347ef0764fc008233ab3e2246f3d289f80d51ea78dc6b727a2696",
+      "README.txt": "5f1c18674dd16592813abb2057cbfa58a7767f0b38b5ac82bfaf96126a4b2f3b",
+      "audio/10572.mp3": "f1113f3c094f621e9ec8ca866048372bcf5cb66519012998378ea2625f65c278",
+      "audio/114274.mp3": "26662a353de931e2e905894a6e3934eea8f96fc46c52d5e8714f655997904992",
+      "audio/114544.mp3": "95efbb0e05ba38b1e317aad33b450999ef3bd91e603add98e71d798a58bbe14b",
+      "audio/118277.mp3": "6d632c7e4425428490afe5c18fa98d446ca0079d91e3b034e5e1bc97ae819e28",
+      "audio/118327.mp3": "e2abb0839c4ec4a5b784ee8d01d0a482ed2ba7c6dec3229da92422fa3c2a409b",
+      "audio/120032.mp3": "d13fc2eb37ad973d61c5676e2a866ea47c375209c3922a00b3ccefbbdb573ca5",
+      "audio/121319.mp3": "34b55557f94c03a56ec986446071303485cad9ec97e4d0a91062394873810a7c",
+      "audio/124824.mp3": "17bdb05169f98187d651d9346cca1635c4c1b968547e4d38a75c35b4a219d79e",
+      "audio/128457.mp3": "6f9487d26257eeceb2297e58d30d46b83561ae79e2d6e1c7c61d65e8ac0fe481",
+      "audio/134445.mp3": "3d0b453f0eedd700c0f19c9fdb5f0d283285ace8fee3eeb791c62620e78d123c",
+      "audio/134941.mp3": "643ba6ec8136042dc2620894b26b32177fa9cac5f629eec08974e9710a69ca86",
+      "audio/136027.mp3": "20a636e676727b1be8d36dbae383690e717bca7d588cbf6414aedae6e9317f23",
+      "audio/139188.mp3": "1cb93415fc343223e17e487ab15cf1e41f10cf680a3a0d7a47e3481e7fbd5fa5",
+      "audio/141877.mp3": "1ddc8e86289dc085a206c7a623c8d13b4a0eb344a8aadd5a67fd98aaa94d905c",
+      "audio/145653.mp3": "bfe20c2c7a01edbf920697313d3761c60569e511b98fa2bdb47f66f1cea86299",
+      "audio/145687.mp3": "1b0e20aafbe5a5041311198822eb0b2e232c9f48c060c68a5049381fb63e2bb5",
+      "audio/147295.mp3": "559131900b0a8f5d45337ca93961af474a1d9b2c432be65fd04e7eb7c882bf37",
+      "audio/149708.mp3": "b310c90ecccbb9da528bff5967ecec6db2fda48bffa634ebeeab21790473a2f3",
+      "audio/151220.mp3": "e75a4c0ae1e7642e8eff17dbd9a85b456a345387b0c8022349ea3e041f3db238",
+      "audio/24420.mp3": "c531ab4a332cc05791d345f41189a06adbbabfb2274a211ede40111d0c094b6c",
+      "audio/34267.mp3": "43179d23c5568eaf16a231563d26aa325c5b036cc0184d6c4b814211bec0476a",
+      "audio/39538.mp3": "d48579557c9ce86a2621abfb5e554fabaa2409f75c61835b306169665cd9a479",
+      "audio/4074.mp3": "ab955d8afaf0c960c7ace6eb4e87e6115a3d228dcadcc0955aac45bdd1959ee5",
+      "audio/41949.mp3": "822b8f37c69de794ce4a449880c6e2bc085fa0e6aec34c162ab505e602eec861",
+      "audio/42789.mp3": "e7cdf482202836b2721a4d43ce34a28ebba83a0e4d9641f39614fd15e2982697",
+      "audio/51006.mp3": "207a1ce3b98053bfa25b673cd11c0b19207e6c1c370fb6563a29d655d4aae0b1",
+      "audio/72073.mp3": "6d6188a652282e638fa83c073116c32cddcf04e66f34289337e8f4d20f984f2b",
+      "audio/73897.mp3": "7d716d6dca5d7945a7c19b393c88001a2ae3611548b570fd53a80f423ccd47bf",
+      "audio/85791.mp3": "f7497416b46fe2fd7ca7ca7160a95e5f9f6c90fb0e419baab85fa769cf8d950a",
+      "audio/89817.mp3": "29fd784fa3e91bb323beb946920597464188e7c6ce2bb02703b05fbf7fbb6364"
+    },
+    "2": {
+      "items.json": "86d831c4f848c46187cd8eeee1a402c1c8cc8742c7aaa15b4790e2c150219743",
+      "credits.json": "db8c32d82af52816e86105124b3759f35277d2c196697f72537eed9d9ad422e9",
+      "review-form.csv": "6229246c7adcf36e5fbe0bb7432edcd634f23df6819c28c6c74ae53de675fcd6",
+      "README.txt": "5f1c18674dd16592813abb2057cbfa58a7767f0b38b5ac82bfaf96126a4b2f3b",
+      "audio/10572.mp3": "f1113f3c094f621e9ec8ca866048372bcf5cb66519012998378ea2625f65c278",
+      "audio/114274.mp3": "26662a353de931e2e905894a6e3934eea8f96fc46c52d5e8714f655997904992",
+      "audio/114544.mp3": "95efbb0e05ba38b1e317aad33b450999ef3bd91e603add98e71d798a58bbe14b",
+      "audio/118277.mp3": "6d632c7e4425428490afe5c18fa98d446ca0079d91e3b034e5e1bc97ae819e28",
+      "audio/118327.mp3": "e2abb0839c4ec4a5b784ee8d01d0a482ed2ba7c6dec3229da92422fa3c2a409b",
+      "audio/120032.mp3": "d13fc2eb37ad973d61c5676e2a866ea47c375209c3922a00b3ccefbbdb573ca5",
+      "audio/121319.mp3": "34b55557f94c03a56ec986446071303485cad9ec97e4d0a91062394873810a7c",
+      "audio/124824.mp3": "17bdb05169f98187d651d9346cca1635c4c1b968547e4d38a75c35b4a219d79e",
+      "audio/128457.mp3": "6f9487d26257eeceb2297e58d30d46b83561ae79e2d6e1c7c61d65e8ac0fe481",
+      "audio/134445.mp3": "3d0b453f0eedd700c0f19c9fdb5f0d283285ace8fee3eeb791c62620e78d123c",
+      "audio/134941.mp3": "643ba6ec8136042dc2620894b26b32177fa9cac5f629eec08974e9710a69ca86",
+      "audio/136027.mp3": "20a636e676727b1be8d36dbae383690e717bca7d588cbf6414aedae6e9317f23",
+      "audio/139188.mp3": "1cb93415fc343223e17e487ab15cf1e41f10cf680a3a0d7a47e3481e7fbd5fa5",
+      "audio/141877.mp3": "1ddc8e86289dc085a206c7a623c8d13b4a0eb344a8aadd5a67fd98aaa94d905c",
+      "audio/145653.mp3": "bfe20c2c7a01edbf920697313d3761c60569e511b98fa2bdb47f66f1cea86299",
+      "audio/145687.mp3": "1b0e20aafbe5a5041311198822eb0b2e232c9f48c060c68a5049381fb63e2bb5",
+      "audio/147295.mp3": "559131900b0a8f5d45337ca93961af474a1d9b2c432be65fd04e7eb7c882bf37",
+      "audio/149708.mp3": "b310c90ecccbb9da528bff5967ecec6db2fda48bffa634ebeeab21790473a2f3",
+      "audio/151220.mp3": "e75a4c0ae1e7642e8eff17dbd9a85b456a345387b0c8022349ea3e041f3db238",
+      "audio/24420.mp3": "c531ab4a332cc05791d345f41189a06adbbabfb2274a211ede40111d0c094b6c",
+      "audio/34267.mp3": "43179d23c5568eaf16a231563d26aa325c5b036cc0184d6c4b814211bec0476a",
+      "audio/39538.mp3": "d48579557c9ce86a2621abfb5e554fabaa2409f75c61835b306169665cd9a479",
+      "audio/4074.mp3": "ab955d8afaf0c960c7ace6eb4e87e6115a3d228dcadcc0955aac45bdd1959ee5",
+      "audio/41949.mp3": "822b8f37c69de794ce4a449880c6e2bc085fa0e6aec34c162ab505e602eec861",
+      "audio/42789.mp3": "e7cdf482202836b2721a4d43ce34a28ebba83a0e4d9641f39614fd15e2982697",
+      "audio/51006.mp3": "207a1ce3b98053bfa25b673cd11c0b19207e6c1c370fb6563a29d655d4aae0b1",
+      "audio/72073.mp3": "6d6188a652282e638fa83c073116c32cddcf04e66f34289337e8f4d20f984f2b",
+      "audio/73897.mp3": "7d716d6dca5d7945a7c19b393c88001a2ae3611548b570fd53a80f423ccd47bf",
+      "audio/85791.mp3": "f7497416b46fe2fd7ca7ca7160a95e5f9f6c90fb0e419baab85fa769cf8d950a",
+      "audio/89817.mp3": "29fd784fa3e91bb323beb946920597464188e7c6ce2bb02703b05fbf7fbb6364"
+    }
+  },
+  "coordinator_files_byte_identical": {
+    "assignment-key.json": "43c899bab270b4249c803dd418353fb47737a7830ceb541e061194cfb6a91ba5",
+    "roster.json": "be1ee109751dfdce3172f56338a49bbe472ddb6c37b9d99de01571d442868329",
+    "denominators.json": "a853b2b7ca999cb204023740b9050bb18cc2c54be9a18f86b4ae81f9def23e0e"
+  },
+  "declaration_only_changed_fields": [
+    "implementation_sha256",
+    "listener_manifest_sha256",
+    "listener_template_sha256"
+  ],
+  "javascript_token_streams_identical": true,
+  "generated_server_ast_identical_after_import_group_normalization": true,
+  "historical_archives_unchanged": [
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-listener-1-20261013.zip",
+      "bytes": 29245428,
+      "sha256": "fc742b3989fff57d7905660cbd7a1e05625ab173ab3b0e27deec92a5a597b92f",
+      "coordinator_only": false
+    },
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-listener-2-20261013.zip",
+      "bytes": 29245429,
+      "sha256": "d9716265c1a82d52c62aea129746b72191a223884d95ff35519ee38dd2dc165e",
+      "coordinator_only": false
+    },
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-coordinator-20261013.zip",
+      "bytes": 73918,
+      "sha256": "d9713dd4b798d57275193bb24ffafa2ef1170c87365d730bfe1df89a60d7f6ea",
+      "coordinator_only": true
+    }
+  ],
+  "source_hashes": {
+    "src/opennoise/static/fma-audition.html": "110ab4c79ef5163ca0b81842d1fd6ee0231d04fc1413c568138b229a7a89f0f1",
+    "tests/static/fma_audition_contract.mjs": "082928a99a337233739da84c65ca771dead5cd899742df64f914158d70969ad3",
+    "src/opennoise/deployment/fma_audition.py": "031b76834b4163f8dde29a57d6cdf169bf19638cb5a9fda917f8bbffd72929b4"
+  }
+}

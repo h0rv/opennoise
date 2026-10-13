@@ -1,0 +1,62 @@
+{
+  "verification": {
+    "status": "passed author verification; independent review not implied",
+    "protocol": "fma-independent-audition-reconstruction-v1",
+    "seed": "opennoise-independent-audition-20261013-v1",
+    "declaration_sha256": "f7f815b8965c3651127d7e8ccaafcf426e8f3fa35e9f74d2f450c7ec66396759",
+    "slots": {
+      "1": {
+        "items": 24,
+        "unique_clips": 30,
+        "audio_bytes": 30543686,
+        "blank_response_rows": 24,
+        "manifest_sha256": "eadfbc5eba8dc3bb85d63c95d1040fe6c7e7129f3508c27de2e32c710fc5c2f3",
+        "browser_contract": "passed; no skipped tests; local actual playback/exclusive audio/mobile/blank download",
+        "browser_log_sha256": "be41968fc8e4032244581031c9c8588a8dd89b55ec36a06b2ad7fe816aa47f91"
+      },
+      "2": {
+        "items": 24,
+        "unique_clips": 30,
+        "audio_bytes": 30543686,
+        "blank_response_rows": 24,
+        "manifest_sha256": "4e15ac2720b6bfa7a0d31ca1dfd0eb47cfb9bbdb12af0d8875df020287d78e6f",
+        "browser_contract": "passed; no skipped tests; local actual playback/exclusive audio/mobile/blank download",
+        "browser_log_sha256": "4f0990e57d66b103607b2fa35b8baed1077b924c25f0126f2f6db63eb72dbeb6"
+      }
+    },
+    "distinct_keys": true,
+    "differing_ab_items": 7,
+    "unsupported_comparisons": 0,
+    "identical_candidate_pairs": 1,
+    "judgments_recorded": 0,
+    "no_acquisition_or_external_transfer": true,
+    "limitations": [
+      "New reconstructed v3 candidate evidence; not historical PR18 packet or musical acceptance",
+      "No reviewers assigned or answers collected; 2 empty slots only",
+      "Browser downloads checked as blank generated JSON, not reviewer submissions"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-readable-listener-1-20261013.zip",
+      "bytes": 29245630,
+      "sha256": "878b7dc952627b0bc6f712a02ee9045cd85fbe6f853de16e2269a1f141afbe09",
+      "coordinator_only": false
+    },
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-readable-listener-2-20261013.zip",
+      "bytes": 29245634,
+      "sha256": "9bc94abb6f76923fa837524a2034cdfc1e1a8edc6259ef8530fc235b19552a81",
+      "coordinator_only": false
+    },
+    {
+      "path": "/workspace/opennoise-rebuild-20261013/OpenNoise-audition-readable-coordinator-20261013.zip",
+      "bytes": 76946,
+      "sha256": "4cf75f02df7f1304f3e695cc2e5837802dfb15dc771fb43ba50d0b8da398fb34",
+      "coordinator_only": true
+    }
+  ],
+  "supersedes_for_readable_source_only": "/workspace/opennoise-rebuild-20261013/audition-artifacts.json",
+  "historical_packet_and_archives_preserved": true,
+  "semantic_equality_evidence": "/workspace/opennoise-rebuild-20261013/audition-readability-evidence.json"
+}
