@@ -48,7 +48,7 @@ const suggestedAssignments = { artists: { [artistId]: {
 
 async function capture(url) {
   const profile = await mkdtemp(join(tmpdir(), 'opennoise-community-contract-'));
-  const child = spawn(chromium, ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank']);
+  const child = spawn(chromium, ['--headless=new', '--no-first-run', '--no-default-browser-check', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank']);
   let socket, stderr = '';
   child.stderr.on('data', data => { stderr = (stderr + data).slice(-5000); });
   try {
@@ -60,7 +60,8 @@ async function capture(url) {
         const match = stderr.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//);
         if (match) { cleanup(); resolve(`http://127.0.0.1:${match[1]}`); }
       };
-      const timeout = setTimeout(() => { cleanup(); reject(new Error('Chromium did not expose DevTools')); }, 10_000);
+      // Allow cold browser launch on CI; application readiness and the 60s test limit stay unchanged.
+      const timeout = setTimeout(() => { cleanup(); reject(new Error('Chromium did not expose DevTools within 30s')); }, 30_000);
       child.once('error', onError); child.once('exit', onExit); child.stderr.on('data', onData);
     });
     const target = await fetch(`${endpoint}/json/new?about:blank`, { method: 'PUT' }).then(response => response.json());
