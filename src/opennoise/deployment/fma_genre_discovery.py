@@ -30,6 +30,7 @@ POLICY = (
 ASSETS = (
     "fma-discovery.html",
     "fma-discovery.js",
+    "fma-discovery-search.js",
     "fma-discovery.css",
     "fma-playback.js",
     "fma-catalog.css",
