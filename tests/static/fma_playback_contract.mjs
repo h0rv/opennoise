@@ -279,3 +279,46 @@ test('explicit collection revision plays synthetic audio while unknown revisions
     assert.equal(requests.filter(row => row.request.url.endsWith('.mp3')).length, before);
   });
 });
+
+
+test('manifest retry refetches the requested queue and Stop clears recovery', {skip, timeout: 60000}, async () => {
+  await browser(async ({evaluate, wait}) => {
+    await evaluate(`(async () => {
+      const api = await import('./fma-playback.js');
+      window.manifestAttempts = 0;
+      window.retryRequest = {config: {manifest: '../audio/manifest.json'}, id: 3, ids: [3, 2], queue: true,
+        json: async path => {
+          if (++window.manifestAttempts === 1) throw new Error('Temporary failure');
+          return fetch(path).then(response => response.json());
+        }};
+      await api.requestPlay(window.retryRequest);
+    })()`);
+    await wait("document.querySelector('.playback-retry')?.hidden === false");
+    assert.equal(await evaluate("document.querySelector('audio').getAttribute('src')"), null);
+    await evaluate("document.querySelector('.playback-retry').click()");
+    await wait("document.querySelector('audio').currentTime > .1 && !document.querySelector('audio').paused");
+    assert.equal(await evaluate('window.manifestAttempts'), 2);
+    assert.equal(await evaluate("document.querySelector('#persistent-player').dataset.trackId"), '3');
+    assert.match(await evaluate("document.querySelector('.playback-order').textContent"), /1 of 2.*tone 3.*tone 2/);
+    await evaluate("document.querySelector('.playback-stop').click(); document.querySelector('.playback-retry').click()");
+    assert.equal(await evaluate('window.manifestAttempts'), 2);
+    assert.ok(await evaluate("document.querySelector('#persistent-player').hidden && !document.querySelector('audio').hasAttribute('src')"));
+  });
+});
+
+test('native pause and resume preserves automatic queue advancement', {skip, timeout: 60000}, async () => {
+  await browser(async state => {
+    const {evaluate, wait} = state;
+    await listen(state);
+    await evaluate("document.querySelector('.playback-queue').click()");
+    await wait("document.querySelector('audio')?.currentTime > .1 && !document.querySelector('audio').paused");
+    await evaluate("document.querySelector('audio').pause()");
+    await wait("document.querySelector('audio').paused");
+    assert.equal(await evaluate("document.querySelector('#persistent-player').dataset.trackId"), '2');
+    await evaluate("document.querySelector('audio').play()");
+    await wait("!document.querySelector('audio').paused");
+    await evaluate("document.querySelector('audio').currentTime = document.querySelector('audio').duration - .1");
+    await wait("document.querySelector('#persistent-player').dataset.trackId === '3' && document.querySelector('audio').currentTime > .1 && !document.querySelector('audio').paused");
+    assert.match(await evaluate("document.querySelector('.playback-order').textContent"), /2 of 2/);
+  });
+});

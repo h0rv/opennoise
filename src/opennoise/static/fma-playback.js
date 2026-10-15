@@ -15,11 +15,12 @@ async function loadPlayback(config, json) {
   return {manifest, manifestURL};
 }
 let persistent = null, requestVersion = 0, queueEntries = [], queueIndex = -1, queueArmed = false, repeatQueue = false, loaded = null;
+let pendingRequest = null;
 const routeUpdates = new Set();
 const notify = () => { persistent?.update(); for (const update of routeUpdates) update(); };
 export function clearRoutePlayers() { routeUpdates.clear(); }
 export function stopPlayback() {
-  requestVersion++; queueArmed = false; repeatQueue = false; queueEntries = []; queueIndex = -1; loaded = null;
+  requestVersion++; pendingRequest = null; queueArmed = false; repeatQueue = false; queueEntries = []; queueIndex = -1; loaded = null;
   if (persistent) { persistent.audio.pause(); persistent.audio.removeAttribute('src'); persistent.audio.load(); persistent.section.hidden = true; }
   notify();
 }
@@ -56,10 +57,14 @@ function ensurePlayer() {
   const repeat = control('Repeat: off', 'playback-repeat', () => { repeatQueue = !repeatQueue; if (repeatQueue && !audio.paused) queueArmed = true; notify(); });
   const order = node('p'); order.className = 'playback-order';
   const orderPanel = node('details'); orderPanel.append(node('summary', 'Queue order'), order);
-  const retry = control('Retry playback', 'playback-retry', () => { audio.load(); startCurrent(queueEntries.length > 1); }); retry.hidden = true;
+  const retry = control('Retry playback', 'playback-retry', () => {
+    if (pendingRequest) requestPlay(pendingRequest);
+    else { audio.load(); startCurrent(queueEntries.length > 1); }
+  });
+  retry.hidden = true;
   const update = () => { toggle.textContent = audio.paused ? 'Play excerpt' : 'Pause excerpt'; previous.disabled = queueIndex <= 0; next.disabled = queueIndex < 0 || queueIndex >= queueEntries.length - 1; toggle.disabled = queueIndex < 0; shuffle.disabled = queueEntries.length - queueIndex - 1 < 2; repeat.textContent = repeatQueue ? 'Repeat: on' : 'Repeat: off'; repeat.setAttribute('aria-pressed', String(repeatQueue)); order.textContent = queueIndex < 0 ? '' : `${queueIndex + 1} of ${queueEntries.length} · ${queueEntries.map(entry => entry.title || `Track #${entry.track_id}`).join(' → ')}`; };
   persistent = {section, title, attribution, audio, status, retry, update};
-  audio.addEventListener('play', () => { if (!loaded || section.hidden) { audio.pause(); return; } status.textContent = 'Playing local excerpt.'; notify(); });
+  audio.addEventListener('play', () => { if (!loaded || section.hidden) { audio.pause(); return; } queueArmed = queueEntries.length > 1 || repeatQueue; status.textContent = 'Playing local excerpt.'; notify(); });
   audio.addEventListener('pause', () => { if (!audio.ended) { queueArmed = false; if (!retry.hidden) return; status.textContent = 'Paused.'; } notify(); });
   audio.addEventListener('ended', () => { if (!audio.ended) return; status.textContent = 'Excerpt ended.'; if (queueArmed && queueIndex + 1 < queueEntries.length) advance(1); else if (queueArmed && repeatQueue && queueEntries.length) { queueIndex = 0; startCurrent(true); } else { queueArmed = false; notify(); } });
   audio.addEventListener('error', () => { if (loaded && !section.hidden) failPlayback(); });
@@ -94,7 +99,13 @@ function advance(direction) {
 export async function requestPlay({config, id, ids = null, json, queue = false}) {
   const version = ++requestVersion;
   queueArmed = false;
-  const pending = ensurePlayer(); pending.section.hidden = false; pending.status.textContent = 'Loading local excerpt…'; notify();
+  pendingRequest = {config, id, ids: Array.isArray(ids) ? [...ids] : ids, json, queue};
+  loaded = null; queueEntries = []; queueIndex = -1; repeatQueue = false;
+  const pending = ensurePlayer();
+  pending.audio.pause(); pending.audio.removeAttribute('src'); pending.audio.load();
+  pending.title.replaceChildren(); pending.attribution.replaceChildren();
+  delete pending.section.dataset.trackId; delete pending.section.dataset.evidenceRole;
+  pending.retry.hidden = true; pending.section.hidden = false; pending.status.textContent = 'Loading local excerpt…'; notify();
   try {
     const pack = await loadPlayback(config, json); if (version !== requestVersion) return false;
     const entry = pack.manifest.tracks[String(id)]; if (!entry) throw new Error('Excerpt absent');
@@ -102,6 +113,7 @@ export async function requestPlay({config, id, ids = null, json, queue = false})
     if (!wanted || !Number.isSafeInteger(id) || id <= 0) throw new Error('Invalid native queue IDs');
     const entries = queue ? [...new Set(wanted)].map(value => pack.manifest.tracks[String(value)]).filter(Boolean) : [entry];
     if (!entries.some(row => row.track_id === entry.track_id)) throw new Error('Excerpt outside queue');
+    pendingRequest = null;
     loaded = pack; repeatQueue = false; queueEntries = entries; queueIndex = entries.findIndex(row => row.track_id === entry.track_id);
     return await startCurrent(queue);
   } catch { if (version === requestVersion) { ensurePlayer().section.hidden = false; failPlayback(); } return false; }
