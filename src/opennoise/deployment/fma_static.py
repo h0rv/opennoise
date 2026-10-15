@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
+from opennoise.deployment.fma_albums import export_albums
 from opennoise.deployment.fma_descriptor_map import export_descriptor_map
 from opennoise.deployment.fma_playable_neighbors import export_playable_neighbors
 from opennoise.deployment.fma_playback import validate_playback_export
@@ -205,12 +206,14 @@ def _track_rows(
     return {"licenses": licenses, "unvalidated_source_urls": unvalidated_urls}
 
 
-def _artist_profiles(
+def _artist_profiles(  # noqa: PLR0913 - independent native profile inputs.
     output: Path,
     artists: dict[int, dict[str, Any]],
     artist_tracks: dict[int | None, list[int]],
     artist_track_genres: dict[int | None, Counter[int]],
     files: dict[str, Any],
+    *,
+    artist_albums: dict[int | None, list[list[Any]]],
 ) -> None:
     search = []
     profiles: dict[int, dict[str, Any]] = defaultdict(dict)
@@ -225,6 +228,7 @@ def _artist_profiles(
             "name": name,
             "status": status,
             "track_ids": ids,
+            "albums": artist_albums.get(artist_id, []),
             "track_genre_counts": [
                 {"genre_id": genre, "track_count": count}
                 for genre, count in sorted(
@@ -344,7 +348,10 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
             unannotated.append(track["track_id"])
     artists = {row["artist_id"]: row for row in tables["artists"]}
     unknown = sorted(set(artist_tracks) - set(artists), key=lambda value: value or 0)
-    _artist_profiles(output, artists, artist_tracks, artist_track_genres, files)
+    album_context, artist_albums = export_albums(output, tracks, files, _write)
+    _artist_profiles(
+        output, artists, artist_tracks, artist_track_genres, files, artist_albums=artist_albums
+    )
     connections = _genre_connections(tracks, genre_tracks)
     genre_rows = []
     for genre in sorted(
@@ -371,6 +378,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         "track_id_span": TRACK_ID_SPAN,
         "genres": genre_rows,
         "track_search": export_track_search(output, tracks, files),
+        "albums": album_context,
         **track_context,
         "counts": {
             "raw_tracks": len(tracks),

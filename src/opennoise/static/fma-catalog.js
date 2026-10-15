@@ -39,9 +39,10 @@ function route() {
     const kind = params.has('wdgenre') ? 'wdgenre' : params.has('wdartist') ? 'wdartist' : 'wikidata';
     return {kind, id: params.get(kind), q: params.get('q') ?? '', page: /^[0-9]+$/.test(params.get('page') ?? '') ? Number(params.get('page')) : 0};
   }
-  let kind = params.has('track') ? 'track' : params.has('artist') ? 'artist' : params.has('genre') ? 'genre' : params.has('artists') ? 'artists' : params.has('unannotated') ? 'unannotated' : params.has('tracks') ? 'tracks' : 'genres';
-  const id = kind === 'track' ? params.get('track') : kind === 'artist' ? params.get('artist') : kind === 'genre' ? params.get('genre') : null;
+  let kind = params.has('album') ? 'album' : params.has('track') ? 'track' : params.has('artist') ? 'artist' : params.has('genre') ? 'genre' : params.has('artists') ? 'artists' : params.has('unannotated') ? 'unannotated' : params.has('tracks') ? 'tracks' : 'genres';
+  const id = kind === 'album' ? params.get('album') : kind === 'track' ? params.get('track') : kind === 'artist' ? params.get('artist') : kind === 'genre' ? params.get('genre') : null;
   if (id !== null && (!/^(?:[1-9][0-9]*|null)$/.test(id) || (id !== 'null' && !Number.isSafeInteger(Number(id))))) kind = 'invalid';
+  if (kind === 'album' && id === 'null') kind = 'invalid';
   const requested = params.get('page');
   return {kind, id: id === 'null' ? null : id === null ? null : Number(id), q: params.get('q') ?? '', missing: params.get('missing') === '1', playable: params.get('playable') === '1', page: requested && /^[0-9]+$/.test(requested) ? Number(requested) : 0};
 }
@@ -90,7 +91,11 @@ function trackNode(track) {
   for (const genreId of genreIds ?? []) annotations.append(link(genres.get(genreId)?.title ?? `Missing genre definition #${genreId}`, `#genre=${genreId}`));
   row.append(annotations);
   const license = catalog.licenses[licenseId];
-  row.append(node('small', `Album ID: ${albumId ?? 'missing'} · Audio license declared by source: ${license?.[0] || 'missing'}`));
+  const album = node('small');
+  if (Number.isSafeInteger(albumId) && albumId > 0 && catalog.albums) album.append(link(`Source album #${albumId}`, `#album=${albumId}`));
+  else album.append(document.createTextNode(`Album ID: ${albumId ?? 'missing'}`));
+  album.append(document.createTextNode(` · Audio license declared by source: ${license?.[0] || 'missing'}`));
+  row.append(album);
   if (metadataUrl) { const metadata = node('p'); metadata.className = 'metadata'; const external = node('a', 'FMA metadata page'); external.href = metadataUrl; external.target = '_blank'; external.rel = 'noopener noreferrer'; metadata.append(external); row.append(metadata); }
   return row;
 }
@@ -165,6 +170,71 @@ function exploreGenres(title, description, entries, countKey, selectedGenre = nu
   }
   section.append(list); rows.append(section);
 }
+function artistAlbums(artist) {
+  if (!catalog.albums || !artist.albums?.length) return;
+  const section = node('section');
+  section.className = 'artist-albums';
+  section.dataset.evidenceRole = 'native_track_album_associations';
+  section.append(node('h2', 'Albums containing this artist’s tracks'));
+  section.append(node('p', 'Source track associations; albums may include other artists. No release chronology is supplied.'));
+  const list = node('ul');
+  list.className = 'directory';
+  for (const [id, title, count] of artist.albums) {
+    const item = node('li');
+    item.append(link(`${title || 'Missing album title'} · #${id}`, `#album=${id}`));
+    item.append(node('small', `${number(count)} tracks with this source artist ID`));
+    list.append(item);
+  }
+  section.append(list);
+  rows.append(section);
+}
+
+async function albumPage(state, token) {
+  if (catalog.albums?.revision !== 'fma-native-albums-v1' || catalog.albums.shards !== 128) {
+    throw new Error('Album context is unavailable in this export.');
+  }
+  const shardId = state.id % catalog.albums.shards;
+  const payload = await json(`albums/${shardId}.json`);
+  if (token !== generation) return;
+  const album = payload.albums?.[String(state.id)];
+  if (payload.shard !== shardId || album?.album_id !== state.id
+    || !Array.isArray(album.track_ids) || !album.track_ids.length
+    || album.track_ids.some(id => !Number.isSafeInteger(id) || id <= 0)
+    || new Set(album.track_ids).size !== album.track_ids.length
+    || album.track_ids.some((id, position) => position > 0 && id <= album.track_ids[position - 1])
+    || (album.title !== null && typeof album.title !== 'string')
+    || !Array.isArray(album.artist_ids) || !album.artist_ids.length
+    || album.artist_ids.some(id => id !== null && (!Number.isSafeInteger(id) || id <= 0))
+    || new Set(album.artist_ids).size !== album.artist_ids.length) {
+    throw new Error('Native album context is missing or invalid.');
+  }
+  if (!paginate(album.track_ids.length, state.page, catalog.page_size)) return;
+  const ids = album.track_ids.slice(state.page * catalog.page_size, (state.page + 1) * catalog.page_size);
+  await loadArtists();
+  const tracks = await tracksFor(ids);
+  if (token !== generation) return;
+  if (tracks.some(track => track[6] !== state.id || !album.artist_ids.includes(track[2]))) {
+    throw new Error('Album membership differs from native track metadata.');
+  }
+  heading.textContent = `${album.title || 'Missing album title'} · #${album.album_id}`;
+  status.textContent = `${number(album.track_ids.length)} source tracks · ordered by native track ID, not release sequence. Dates and album genre classifications are not supplied.`;
+  const contributors = node('section');
+  contributors.className = 'album-contributors';
+  contributors.dataset.evidenceRole = 'native_track_artist_association';
+  contributors.append(node('h2', 'Artists on these source tracks'));
+  const list = node('ul');
+  list.className = 'directory';
+  for (const id of album.artist_ids) {
+    const item = node('li');
+    item.append(link(`${artistIndex.get(id)?.[1] ?? 'Missing artist record'} · #${id}`, `#artist=${id}`));
+    list.append(item);
+  }
+  contributors.append(list);
+  rows.append(contributors);
+  for (const track of tracks) rows.append(trackNode(track));
+  heading.focus({preventScroll:true});
+}
+
 async function cohort(state, token) {
   await loadArtists();
   if (token !== generation) return;
@@ -175,6 +245,7 @@ async function cohort(state, token) {
     ids = artist.track_ids.slice(state.page * catalog.page_size, (state.page + 1) * catalog.page_size); total = artist.track_ids.length; name = `${artist.name} · #${state.id}`;
     if (token !== generation) return;
     const listen = listenLink({artist: state.id}); if (listen) rows.append(listen);
+    artistAlbums(artist);
     if (artist.track_genre_counts?.length) exploreGenres('Explore track genres', 'Genres annotated on this artist’s tracks; not an artist classification.', artist.track_genre_counts, 'track_count');
     status.textContent = `${number(total)} tracks with this native source artist ID.${artist.status === 'missing_source_artist_record' ? ' Artist record is missing from the source table.' : ''} Genre annotations below belong to each track.`;
   } else {
@@ -232,6 +303,7 @@ async function render() {
     else if (['artists', 'genres'].includes(state.kind)) await directory(state, token);
     else if (state.kind === 'tracks' && (state.q.trim() || state.playable)) await searchTracks(state, token);
     else if (state.kind === 'track') await trackDetail(state, token);
+    else if (state.kind === 'album') await albumPage(state, token);
     else await cohort(state, token);
     if (token === generation) { content.setAttribute('aria-busy', 'false'); document.documentElement.dataset.fmaReady = 'true'; }
   } catch (error) {

@@ -142,6 +142,8 @@ class FMAStaticTests(unittest.TestCase):
             self.assertEqual(catalog["genres"][1]["track_count"], 0)
             artist = json.loads((output / "artists/1.json").read_bytes())["artists"]["1"]
             self.assertEqual(artist["track_ids"], [2])
+            self.assertEqual(artist["albums"], [[77, None, 1]])
+            self.assertEqual(catalog["albums"]["album_count"], 1)
             self.assertEqual(artist["track_genre_counts"], [{"genre_id": 21, "track_count": 1}])
             self.assertEqual(catalog["genres"][1]["connections"], [])
             self.assertNotIn("genre_ids", artist)
