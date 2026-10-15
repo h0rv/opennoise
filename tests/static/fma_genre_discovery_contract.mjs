@@ -161,6 +161,7 @@ for (const [name, mutate] of [
   ['duplicate genre', value=>value.genres.push(value.genres[0])],
   ['incomplete genre membership', value=>{ const genre=value.genres.find(g=>g.track_ids.length>1);genre.track_ids=genre.track_ids.slice(1);genre.starting_ids=genre.starting_ids.filter(id=>genre.track_ids.includes(id)); }],
   ['external collection path', value=>{value.collections.original.manifest='https://invalid.example/audio/manifest.json';}],
+  ['external descriptor map path', value => { value.collections.original.descriptor_map = {href: 'https://invalid.example/map'}; }],
 ]) test(`malformed discovery index rejects ${name} without fetching audio`,{skip,timeout:30000},async()=>{
   await browser(async({evaluate,requests})=>{
     assert.equal(await evaluate("document.querySelectorAll('[data-play-id],audio').length"),0);
@@ -397,5 +398,71 @@ test('listening families retain all source IDs, direct counts, filter history an
     await screenshot('listening-families-mobile');
     assert.equal(await evaluate('document.querySelectorAll(".fma-genre-atlas [data-genre-id]").length'), 164);
     assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+  });
+});
+
+
+test('attached descriptor map preserves native scope, missing contexts, playback and silent reload', {
+  skip: skip || !process.env.OPENNOISE_FMA_DESCRIPTOR_ATTACHED,
+  timeout: 60000,
+}, async () => {
+  const root = process.env.OPENNOISE_FMA_DISCOVERY_SITE;
+  const catalog = JSON.parse(await readFile(join(root, 'expanded/explorer/catalog.json')));
+  const map = JSON.parse(await readFile(join(root, 'expanded/explorer/descriptor-map/manifest.json')));
+  const missingGenre = map.genres.find(row => row.position === null).id;
+  const track = catalog.playback.tracks[0];
+  await browser(async ({evaluate, wait, command, requests}) => {
+    await evaluate("location.hash = '#families'");
+    await wait('!!document.querySelector(".fma-genre-atlas")');
+    const link = 'a[href="expanded/explorer/index.html#descriptor-map"]';
+    assert.equal(await evaluate(`document.querySelectorAll('${link}').length`), 1);
+    await evaluate(`document.querySelector('${link}').click()`);
+    await wait('document.querySelector("#status")?.textContent.includes("164 matching genres")');
+    assert.match(await evaluate('document.querySelector("#status").textContent'), /158 with coordinates.*6 without coordinates/);
+    const output = process.env.OPENNOISE_FMA_DISCOVERY_EVIDENCE;
+    const screenshot = async name => {
+      if (!output) return;
+      await mkdir(output, {recursive: true});
+      const image = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(output, name + '.png'), Buffer.from(image.data, 'base64'));
+    };
+    await screenshot('restored-descriptor-map-desktop');
+    assert.match(await evaluate('document.querySelector(".fma-descriptor-map").textContent'), /PC1 and PC2 are mathematical/);
+    assert.ok(!requests.some(row => row.request.url.includes('/descriptor-map/artists-')));
+    assert.ok(!requests.some(row => /\/audio\//.test(row.request.url)));
+    const genreIds = [];
+    for (let page = 0; page < 4; page++) {
+      genreIds.push(...await evaluate('[...document.querySelectorAll(".descriptor-list a")].map(a => Number(a.hash.split("=")[1]))'));
+      if (page < 3) await evaluate('document.querySelector(".descriptor-pages button:last-child").click()');
+    }
+    assert.deepEqual(genreIds.sort((a, b) => a - b), map.genres.map(row => row.id).sort((a, b) => a - b));
+    await evaluate(`location.hash = '#descriptor-map&q=${missingGenre}&selected=${missingGenre}'`);
+    await wait('document.querySelector(".descriptor-selection")?.textContent.includes("no supported coordinates")');
+    assert.equal(await evaluate('document.querySelector(".descriptor-selection a").hash'), `#genre=${missingGenre}`);
+    await evaluate("location.hash = '#descriptor-map&entity=artists'");
+    await wait('document.querySelector("#status")?.textContent.includes("16916 matching artists")');
+    assert.match(await evaluate('document.querySelector("#status").textContent'), /16109 with coordinates.*807 without coordinates/);
+    assert.equal(new Set(requests.filter(row => row.request.url.includes('/descriptor-map/artists-')).map(row => row.request.url)).size, map.artist_shards.length);
+    await evaluate(`location.hash = '#descriptor-map&selected=${track.genre_ids[0]}'`);
+    await wait('!!document.querySelector(".descriptor-play-selection")');
+    assert.equal(await evaluate('document.querySelectorAll("audio").length'), 0);
+    await evaluate('document.querySelector(".descriptor-play-selection").click()');
+    await wait('document.querySelector("audio")?.currentTime > .1 && !document.querySelector("audio").paused');
+    const playedId = await evaluate('Number(document.querySelector("#persistent-player").dataset.trackId)');
+    assert.ok(catalog.playback.tracks.some(row => row.track_id === playedId && row.genre_ids.includes(track.genre_ids[0])));
+    await evaluate(`location.hash = '#descriptor-map&entity=artists&selected=${track.artist_id}'`);
+    await wait(`document.querySelector('.descriptor-selection a')?.hash === '#artist=${track.artist_id}'`);
+    assert.equal(await evaluate('document.querySelector("audio").paused'), false);
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    await wait('document.querySelector(".descriptor-canvas").width < 500');
+    await screenshot('restored-descriptor-map-mobile');
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: '/', code: 'Slash'});
+    assert.equal(await evaluate('document.activeElement.id'), 'descriptor-query');
+    const before = requests.filter(row => row.request.url.endsWith('.mp3')).length;
+    await command('Page.reload');
+    await wait(`document.querySelector('.descriptor-selection a')?.hash === '#artist=${track.artist_id}'`);
+    assert.equal(await evaluate('document.querySelectorAll("audio").length'), 0);
+    assert.equal(requests.filter(row => row.request.url.endsWith('.mp3')).length, before);
   });
 });

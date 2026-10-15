@@ -18,6 +18,10 @@ async function json(path) {
 }
 function validate(value) {
   if (value.revision !== 'fma-genre-discovery-v1' || !Array.isArray(value.genres) || value.genres.length > 200 || !value.tracks || Object.keys(value.tracks).length > 128) throw Error('Unsupported genre index.');
+  for (const key of ['original', 'expanded']) {
+    const map = value.collections?.[key]?.descriptor_map;
+    if (map && map.href !== `${key}/explorer/index.html#descriptor-map`) throw Error('Invalid descriptor map location.');
+  }
   const identities = value.genres.map(genre => genre.genre_id);
   if (new Set(identities).size !== identities.length || value.musical_quality_validated !== false) throw Error('Invalid source genre scope.');
   for (const key of ['original', 'expanded']) if (value.collections?.[key]?.manifest !== `${key}/audio/manifest.json`) throw Error('Invalid collection location.');
@@ -162,6 +166,12 @@ async function familyPage(state, current) {
   const {renderGenreAtlas} = await import('./fma-genre-map.js');
   if (!current()) return;
 
+  const map = index.collections.expanded.descriptor_map ?? index.collections.original.descriptor_map;
+  if (map) {
+    const navigation = node('p');
+    navigation.append(link('Audio descriptor map · full catalog', map.href));
+    rows.append(navigation, node('p', 'Opening the full catalog leaves this page and stops its player.'));
+  }
   const atlas = node('div');
   rows.append(atlas);
   renderGenreAtlas(atlas, genres, {

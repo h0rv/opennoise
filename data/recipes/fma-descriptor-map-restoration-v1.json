@@ -1,0 +1,129 @@
+{
+  "claims": {
+    "audio_consumed_by_map": false,
+    "heldout_pca_fit_rows": 0,
+    "model_retrained": false,
+    "musical_relevance_validated": false,
+    "public_deployment_authorized": false
+  },
+  "implementation": {
+    "fma_fresh_map.py": {
+      "bytes": 11325,
+      "sha256": "8cba8a59c89f79b13b3d7f38d38578b65ebdb1084b9621ba58db0971d1c6f822"
+    },
+    "fma_sonic_map.py": {
+      "bytes": 18423,
+      "sha256": "af2039d83a92d99df1c1d9d9151f861e638e957090fb237c66529a73b3d52615"
+    }
+  },
+  "inputs": {
+    "feature-source/projection/features.float32": {
+      "bytes": 18757024,
+      "reconstruction_path": "feature-source/projection/features.float32",
+      "sha256": "b427d29b55b9b27c9e38b0aae635478dbebae5dcb381f00e00a9fcadf70032d4"
+    },
+    "feature-source/projection/projection-receipt.json": {
+      "bytes": 3905,
+      "reconstruction_path": "feature-source/projection/projection-receipt.json",
+      "sha256": "ba4555fbcdf2ff36fcda0828520280a7cd0c63596e8fbc62e7df6f1335aaec00"
+    },
+    "feature-source/projection/track_ids.uint32": {
+      "bytes": 426296,
+      "reconstruction_path": "feature-source/projection/track_ids.uint32",
+      "sha256": "8fb77ce50f3da09b7fb7c04bfc21948ef72e3dd50dbb63cd082291d75b180c07"
+    },
+    "feature-source/source-receipt.json": {
+      "bytes": 2177,
+      "reconstruction_path": "feature-source/source-receipt.json",
+      "sha256": "9d75189b303bc338d7c305c557cb95b48a8986edf281bddb3d250b15d96224a5"
+    },
+    "independent-model-replay.json": {
+      "bytes": 1176,
+      "reconstruction_path": "baseline44-replay-comparison.json",
+      "sha256": "add8ac9fef7edc5f51f8f48bfdcd9f6aa04b4a408bd9b4c81835855ef33f0242"
+    },
+    "metadata-source/source-receipt.json": {
+      "bytes": 5192,
+      "reconstruction_path": "metadata-source/source-receipt.json",
+      "sha256": "cd46d53488e6892eed78b742814ef95e6531b18b6d69c8eb95688da075e6df99"
+    },
+    "metadata/artists.jsonl.zst": {
+      "bytes": 202697,
+      "reconstruction_path": "metadata/artists.jsonl.zst",
+      "sha256": "98bd5b614664f98bc70d40d913219b0eb34ff454f33fc2c9ccfbc21f3a67507a"
+    },
+    "metadata/corpus-receipt.json": {
+      "bytes": 2126,
+      "reconstruction_path": "metadata/corpus-receipt.json",
+      "sha256": "088588f58ca80662f47e809d054de88eb320b402f110d6637d318f00edbff1ed"
+    },
+    "metadata/genres.jsonl.zst": {
+      "bytes": 1963,
+      "reconstruction_path": "metadata/genres.jsonl.zst",
+      "sha256": "e355ffdc5aede4cbfb98098c4be39959493392c43a7d82ee3e1fd447a88b02cd"
+    },
+    "metadata/tracks.jsonl.zst": {
+      "bytes": 3672029,
+      "reconstruction_path": "metadata/tracks.jsonl.zst",
+      "sha256": "2a51ad101f8972182475a4e162efbc5604eee127b80089abd5ee10c64a56b687"
+    },
+    "model/evaluation.json": {
+      "bytes": 206409,
+      "reconstruction_path": "baseline44/evaluation.json",
+      "sha256": "b5c056cf61471c20dd1e11627790c19eb5336ce6ced6321400cc8c690bd0612d"
+    },
+    "model/model.npz": {
+      "bytes": 112268,
+      "reconstruction_path": "baseline44/model.npz",
+      "sha256": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38"
+    },
+    "model/native-folds.jsonl.zst": {
+      "bytes": 415584,
+      "reconstruction_path": "baseline44/native-folds.jsonl.zst",
+      "sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7"
+    },
+    "native-feature-audit.json": {
+      "bytes": 1720,
+      "reconstruction_path": "feature-independent-audit.json",
+      "sha256": "7018bac848c0a38ce84d391e44120d4c8de680529bad1277208d2e0b785f0a24"
+    },
+    "native-metadata-audit.json": {
+      "bytes": 1621,
+      "reconstruction_path": "metadata-independent-audit.json",
+      "sha256": "e18c70b55463478ae9a32934c1275c93ba95ec43e6d8e5639b02fb9cc2391061"
+    }
+  },
+  "limits": {
+    "memory_bytes": 1000000000,
+    "output_bytes": 10000000,
+    "wall_seconds": 120
+  },
+  "protocol": "fma-fresh-descriptor-pca-v1",
+  "restored_artifacts": {
+    "declaration.json": {
+      "bytes": 2817,
+      "sha256": "0ee55549ce4a3acd77b54655c0cc02f7e2d143b6b6b903b90884bcf3b634c21c"
+    },
+    "independent-map-audit.json": {
+      "bytes": 2052,
+      "sha256": "f3f58b2803ead836580c0239daaa990e0004c292386fb245f0956ed664919d61"
+    },
+    "map/coordinates.json": {
+      "bytes": 3305723,
+      "sha256": "b40b1936bfc1cfc4ac3aade17cffb3c8b0d61d30afa31eb6457e002f7646413a"
+    },
+    "map/receipt.json": {
+      "bytes": 2783,
+      "sha256": "27eae07b440cb228aed0b16d6889a036f3120ba14d2eaea6ec999f3f5fec3a68"
+    }
+  },
+  "revision": "fma-descriptor-map-restoration-recipe-v1",
+  "source_capture": "FMA metadata/numeric reconstruction20261013",
+  "stages": [
+    "Prepare a fresh nonsymlink input directory with these exact files and aliases; preserve original inputs",
+    "Run scripts/build_fma_fresh_map.py freeze before build",
+    "Run build then verify with the same source root and a fresh output",
+    "Attach output via scripts/build_fma_static_catalog.py --descriptor-map; preserve source/audio custody",
+    "Build listening home and genre discovery only after full catalog export finishes"
+  ]
+}
