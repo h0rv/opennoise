@@ -33,6 +33,16 @@ async function fixture(root, enabled, trackCount = 2) {
     license_url: 'https://creativecommons.org/publicdomain/zero/1.0/', source_url: null,
     attribution: 'Synthetic test fixture; not FMA audio',
   }]));
+  for (const [collection, id] of [['original', 2], ['expanded', 3]]) {
+    const directory = join(explorer, collection, 'audio');
+    await mkdir(directory, {recursive:true});
+    await copyFile(join(audio, '2.mp3'), join(directory, `${id}.mp3`));
+    const entry = {...tracks[2], track_id:id, artist_id:id, audio_path:`${id}.mp3`,
+      title:`${collection} fixture`, attribution:`Synthetic ${collection} attribution`};
+    await writeFile(join(directory, 'manifest.json'), JSON.stringify({
+      revision:'fma-local-playback-v1', test_only:true, tracks:{[id]:entry}
+    }));
+  }
   const catalog = {counts: {raw_tracks: 2, source_artists: 1, missing_artist_records: 0, tracks_with_missing_artist_records: 0, genre_definitions: 0, observed_track_genres: 0, unannotated_tracks: 2}, genres: [], page_size: 200, profile_shards: 128, track_id_span: 500, licenses: [['CC0 fixture', 'https://creativecommons.org/publicdomain/zero/1.0/']]};
   if (enabled) catalog.playback = {manifest: '../audio/manifest.json', tracks: fixtureIds.map(track_id => ({track_id, artist_id:1, genre_ids:[]}))};
   await writeFile(join(explorer, 'catalog.json'), JSON.stringify(catalog));
@@ -70,7 +80,7 @@ async function browser(operation, {enabled = true, trackCount = 2} = {}) {
     let sequence = 0; const pending = new Map();
     socket.addEventListener('message', ({data}) => { const result = JSON.parse(data); if (result.method === 'Network.requestWillBeSent') requests.push(result.params); if (result.method === 'Runtime.exceptionThrown') errors.push(result.params.exceptionDetails); pending.get(result.id)?.(result); });
     const command = (method, params = {}) => new Promise((resolve, reject) => { const id = ++sequence, timer = setTimeout(() => reject(new Error(`${method} timed out`)), 10000); pending.set(id, result => { clearTimeout(timer); pending.delete(id); result.error ? reject(new Error(JSON.stringify(result.error))) : resolve(result.result); }); socket.send(JSON.stringify({id, method, params})); });
-    const evaluate = async expression => { const result = await command('Runtime.evaluate', {expression, returnByValue: true, awaitPromise: true, userGesture: true}); if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails)); return result.result.value; };
+    const evaluate = async (expression, replMode = false) => { const result = await command('Runtime.evaluate', {expression, returnByValue: true, awaitPromise: true, userGesture: true, replMode}); if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails)); return result.result.value; };
     const wait = async expression => { for (let i = 0; i < 400; i++) { if (await evaluate(expression)) return; await new Promise(resolve => setTimeout(resolve, 20)); } throw new Error(`Timed out: ${expression}`); };
     await command('Network.enable'); await command('Runtime.enable'); await command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 900, deviceScaleFactor: 1, mobile: false});
     await command('Page.navigate', {url: `${origin}/explorer/index.html`});
@@ -320,5 +330,60 @@ test('native pause and resume preserves automatic queue advancement', {skip, tim
     await evaluate("document.querySelector('audio').currentTime = document.querySelector('audio').duration - .1");
     await wait("document.querySelector('#persistent-player').dataset.trackId === '3' && document.querySelector('audio').currentTime > .1 && !document.querySelector('audio').paused");
     assert.match(await evaluate("document.querySelector('.playback-order').textContent"), /2 of 2/);
+  });
+});
+
+
+test('genre starters bind each entry to its collection and recover without stale replacement', {skip, timeout:60000}, async () => {
+  await browser(async ({evaluate: run, wait, failAudio, requests}) => {
+    const evaluate = expression => run(expression, true);
+    await evaluate(`
+      window.startersApi = await import('./fma-playback.js');
+      window.starterEntries = [
+        {id:2, config:{manifest:'original/audio/manifest.json'}},
+        {id:3, config:{manifest:'expanded/audio/manifest.json'}}
+      ];
+      window.starterJson = path => fetch(path).then(response => response.json());
+      window.startStarters = () => startersApi.requestGenreStarters({entries:starterEntries, json:starterJson});
+    `);
+    assert.ok(!requests.some(row => row.request.url.endsWith('.mp3')));
+    assert.equal(await evaluate('await startStarters()'), true);
+    const playing = async id => wait(`document.querySelector('#persistent-player').dataset.trackId === '${id}' && document.querySelector('audio').currentTime > .1 && !document.querySelector('audio').paused`);
+    await playing(2);
+    assert.match(await evaluate("document.querySelector('audio').src"), /original\/audio\/2.mp3$/);
+    assert.match(await evaluate("document.querySelector('#persistent-player').textContent"), /Synthetic original attribution/);
+    assert.ok(!requests.some(row => row.request.url.endsWith('/expanded/audio/3.mp3')), 'next media is not prefetched');
+    await evaluate("document.querySelector('audio').pause(); await document.querySelector('audio').play(); document.querySelector('audio').playbackRate=16");
+    await playing(3);
+    assert.match(await evaluate("document.querySelector('audio').src"), /expanded\/audio\/3.mp3$/);
+    assert.match(await evaluate("document.querySelector('#persistent-player').textContent"), /Synthetic expanded attribution/);
+    await evaluate("document.querySelector('.playback-previous').click()");
+    await playing(2);
+    failAudio(true);
+    await evaluate("document.querySelector('.playback-next').click()");
+    await wait("!document.querySelector('#persistent-player .playback-retry').hidden");
+    failAudio(false);
+    await evaluate("document.querySelector('#persistent-player .playback-retry').click()");
+    await playing(3);
+    await evaluate('startersApi.stopPlayback()');
+    assert.equal(await evaluate(`await startersApi.requestGenreStarters({entries:starterEntries,json:async()=>{throw Error('Temporary')}})`), false);
+    await evaluate(`window.delayedStarter=startersApi.requestGenreStarters({entries:starterEntries,json:()=>new Promise(resolve=>window.resolveStarter=resolve)}); startersApi.stopPlayback(); window.resolveStarter(await starterJson(starterEntries[0].config.manifest)); window.staleResult=await delayedStarter;`);
+    assert.equal(await evaluate('staleResult'), false);
+    assert.equal(await evaluate("document.querySelector('#persistent-player').hidden"), true);
+    await evaluate(`window.delayedStarter=startersApi.requestGenreStarters({entries:starterEntries,json:()=>new Promise(resolve=>window.resolveStarter=resolve)}); await startersApi.requestPlay({config:{manifest:'../audio/manifest.json'},id:2,json:starterJson}); window.resolveStarter(await starterJson(starterEntries[0].config.manifest)); window.staleResult=await delayedStarter;`);
+    assert.equal(await evaluate('staleResult'), false);
+    assert.match(await evaluate("document.querySelector('audio').src"), /\/audio\/2.mp3$/);
+    assert.match(await evaluate("document.querySelector('#persistent-player').textContent"), /Synthetic test fixture; not FMA audio/);
+    for (const entries of [[], [2,2], [2,3,4,5], [999]]) {
+      assert.equal(await evaluate(`await startersApi.requestGenreStarters({entries:${JSON.stringify(entries.map(id=>({id,config:{manifest:'original/audio/manifest.json'}})))},json:starterJson})`), false);
+    }
+    assert.equal(await evaluate(`await startersApi.requestGenreStarters({entries:starterEntries,json:async path=>{const pack=await starterJson(path);for(const entry of Object.values(pack.tracks))entry.artist_id=1;return pack}})`), false);
+    assert.equal(await evaluate(`await startersApi.requestGenreStarters({entries:starterEntries,json:async path=>{const pack=await starterJson(path);pack.tracks=Object.fromEntries(Array.from({length:65},(_,i)=>[i+1,{...pack.tracks[Object.keys(pack.tracks)[0]],track_id:i+1,audio_path:(i+1)+'.mp3'}]));return pack}})`), false);
+    await evaluate(`window.attempts=0; window.retryJson=async path=>{if(++attempts===1)throw Error('Temporary');return starterJson(path)}; await startersApi.requestGenreStarters({entries:starterEntries,json:retryJson});`);
+    await evaluate("document.querySelector('#persistent-player .playback-retry').click()");
+    await playing(2);
+    assert.match(await evaluate("document.querySelector('.playback-order').textContent"), /original fixture → expanded fixture/);
+    await evaluate('startersApi.stopPlayback()');
+    assert.equal(await evaluate("document.querySelector('audio').getAttribute('src')"), null);
   });
 });

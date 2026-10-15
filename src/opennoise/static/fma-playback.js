@@ -16,11 +16,12 @@ async function loadPlayback(config, json) {
 }
 let persistent = null, requestVersion = 0, queueEntries = [], queueIndex = -1, queueArmed = false, repeatQueue = false, loaded = null;
 let pendingRequest = null;
+const entryPacks = new Map();
 const routeUpdates = new Set();
 const notify = () => { persistent?.update(); for (const update of routeUpdates) update(); };
 export function clearRoutePlayers() { routeUpdates.clear(); }
 export function stopPlayback() {
-  requestVersion++; pendingRequest = null; queueArmed = false; repeatQueue = false; queueEntries = []; queueIndex = -1; loaded = null;
+  requestVersion++; entryPacks.clear(); pendingRequest = null; queueArmed = false; repeatQueue = false; queueEntries = []; queueIndex = -1; loaded = null;
   if (persistent) { persistent.audio.pause(); persistent.audio.removeAttribute('src'); persistent.audio.load(); persistent.section.hidden = true; }
   notify();
 }
@@ -58,7 +59,7 @@ function ensurePlayer() {
   const order = node('p'); order.className = 'playback-order';
   const orderPanel = node('details'); orderPanel.append(node('summary', 'Queue order'), order);
   const retry = control('Retry playback', 'playback-retry', () => {
-    if (pendingRequest) requestPlay(pendingRequest);
+    if (pendingRequest) pendingRequest();
     else { audio.load(); startCurrent(queueEntries.length > 1); }
   });
   retry.hidden = true;
@@ -76,7 +77,9 @@ function failPlayback() {
   const player = ensurePlayer(); player.status.textContent = 'Audio unavailable. Retry playback or check the local audio folder.'; player.retry.hidden = false; notify();
 }
 async function startCurrent(armed) {
-  const entry = queueEntries[queueIndex]; if (!loaded || !entry) return false;
+  const entry = queueEntries[queueIndex]; if (!entry) return false;
+  loaded = entryPacks.get(entry) ?? loaded;
+  if (!loaded) return false;
   const version = ++requestVersion, player = ensurePlayer(), url = new URL(entry.audio_path, loaded.manifestURL).href;
   if (player.audio.src !== url) {
     player.audio.pause(); player.audio.src = url;
@@ -95,17 +98,62 @@ function advance(direction) {
   const index = queueIndex + direction; if (index < 0 || index >= queueEntries.length) return;
   queueIndex = index; startCurrent(true);
 }
-/** Call only from an explicit user Play action; route rendering never calls this API. */
-export async function requestPlay({config, id, ids = null, json, queue = false}) {
+function beginRequest(retry) {
   const version = ++requestVersion;
   queueArmed = false;
-  pendingRequest = {config, id, ids: Array.isArray(ids) ? [...ids] : ids, json, queue};
+  pendingRequest = retry;
+  entryPacks.clear();
   loaded = null; queueEntries = []; queueIndex = -1; repeatQueue = false;
   const pending = ensurePlayer();
   pending.audio.pause(); pending.audio.removeAttribute('src'); pending.audio.load();
   pending.title.replaceChildren(); pending.attribution.replaceChildren();
   delete pending.section.dataset.trackId; delete pending.section.dataset.evidenceRole;
   pending.retry.hidden = true; pending.section.hidden = false; pending.status.textContent = 'Loading local excerpt…'; notify();
+  return version;
+}
+
+/** Play only the bounded, explicitly chosen genre starters across the two local collections. */
+export async function requestGenreStarters({entries, json}) {
+  const selections = Array.isArray(entries) && entries.length <= 3
+    ? entries.map(entry => ({id: entry?.id, config: {...entry?.config}}))
+    : [];
+  const version = beginRequest(() => requestGenreStarters({entries: selections, json}));
+  try {
+    if (!selections.length || selections.length > 3
+      || new Set(selections.map(entry => entry.id)).size !== selections.length) {
+      throw new Error('Invalid genre starter sequence.');
+    }
+    const packs = new Map(), chosen = [];
+    for (const selection of selections) {
+      const path = selection.config.manifest;
+      if (!['original/audio/manifest.json', 'expanded/audio/manifest.json'].includes(path)
+        || !Number.isSafeInteger(selection.id) || selection.id <= 0) {
+        throw new Error('Invalid genre starter source.');
+      }
+      if (!packs.has(path)) packs.set(path, await loadPlayback(selection.config, json));
+      if (version !== requestVersion) return false;
+      const pack = packs.get(path), entry = pack.manifest.tracks[String(selection.id)];
+      if (!entry || !Number.isSafeInteger(entry.artist_id) || entry.artist_id <= 0
+        || chosen.some(item => item.entry.artist_id === entry.artist_id)) {
+        throw new Error('Invalid genre starter identity.');
+      }
+      chosen.push({entry, pack});
+    }
+    pendingRequest = null;
+    for (const {entry, pack} of chosen) entryPacks.set(entry, pack);
+    queueEntries = chosen.map(item => item.entry);
+    queueIndex = 0;
+    return await startCurrent(true);
+  } catch {
+    if (version === requestVersion) failPlayback();
+    return false;
+  }
+}
+
+/** Call only from an explicit user Play action; route rendering never calls this API. */
+export async function requestPlay({config, id, ids = null, json, queue = false}) {
+  const retry = {config, id, ids: Array.isArray(ids) ? [...ids] : ids, json, queue};
+  const version = beginRequest(() => requestPlay(retry));
   try {
     const pack = await loadPlayback(config, json); if (version !== requestVersion) return false;
     const entry = pack.manifest.tracks[String(id)]; if (!entry) throw new Error('Excerpt absent');
