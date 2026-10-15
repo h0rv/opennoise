@@ -285,6 +285,40 @@ for (const failure of ['http', 'invalid-index']) {
 }
 
 
+test('skip to music preserves deep routes, history and the current player', {skip, timeout: 30000}, async () => {
+  const index = JSON.parse(await readFile(join(process.env.OPENNOISE_FMA_DISCOVERY_SITE, 'genre-discovery.json')));
+  const genre = index.genres.find(row => row.track_ids.length);
+  const trackId = genre.track_ids[0];
+  await browser(async ({evaluate, wait, command, requests}) => {
+    for (const hash of [`#genre=${genre.genre_id}`, `#track=${trackId}`, '#search&q=music']) {
+      await evaluate(`location.hash = ${JSON.stringify(hash)}`);
+      await wait(`location.hash === ${JSON.stringify(hash)} && document.querySelector('#content').getAttribute('aria-busy') === 'false'`);
+      if (hash.startsWith('#genre=')) {
+        await evaluate("document.querySelector('[data-play-id]').click()");
+        await wait("document.querySelector('audio')?.currentTime > .1 && !document.querySelector('audio').paused");
+        await evaluate("window.skipAudio = document.querySelector('audio')");
+      }
+      const historyLength = await evaluate('history.length');
+      const mediaRequests = requests.filter(row => row.request.url.endsWith('.mp3')).length;
+      await evaluate("document.querySelector('.skip').focus()");
+      await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r'});
+      await command('Input.dispatchKeyEvent', {type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13});
+      await wait("document.activeElement === document.querySelector('#content')");
+      assert.equal(await evaluate('location.hash'), hash);
+      assert.equal(await evaluate('history.length'), historyLength);
+      assert.ok(await evaluate("document.querySelector('audio') === window.skipAudio && !window.skipAudio.paused"));
+      assert.equal(requests.filter(row => row.request.url.endsWith('.mp3')).length, mediaRequests);
+    }
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    await evaluate("document.querySelector('.skip').click()");
+    assert.equal(await evaluate('location.hash'), '#search&q=music');
+    assert.ok(await evaluate("document.activeElement === document.querySelector('#content')"));
+    await evaluate('history.back()');
+    await wait(`location.hash === '#track=${trackId}' && document.querySelector('#content').getAttribute('aria-busy') === 'false'`);
+  });
+});
+
+
 test('listening families retain all source IDs, direct counts, filter history and the active player', {
   skip,
   timeout: 30000,

@@ -5,6 +5,11 @@ const $ = selector => document.querySelector(selector);
 const node = (tag, text) => { const value = document.createElement(tag); if (text !== undefined) value.textContent = text; return value; };
 const link = (text, href) => { const value = node('a', text); value.href = href; return value; };
 const heading = $('h1'), status = $('#discovery-status'), rows = $('#discovery-rows'), query = $('#discovery-query');
+$('.skip').addEventListener('click', event => {
+  event.preventDefault();
+  $('#content').focus();
+});
+
 let index, genres, artists, generation = 0;
 const cache = new Map();
 async function json(path) {
