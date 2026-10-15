@@ -1,0 +1,7 @@
+{
+  "status": "pass",
+  "comparison": "All numerical results exactly equal; clarified reproduction text and source/resource metadata differ",
+  "initial_results_sha256": "fb1760108c8eb4fdea40e61d9a14fc7e593f4d5a3246571d496acc168d1cceb5",
+  "reusable_results_sha256": "a2e5592827b31a735640d27440a65e13ad9c20740f955a56c7db6488f27f4993",
+  "reusable_source_sha256": "ffc673a5099503305be48c43636f2baa1396aa6f7854015fdeea599af5c9c023"
+}

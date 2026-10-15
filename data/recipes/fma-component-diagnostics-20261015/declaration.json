@@ -1,0 +1,80 @@
+{
+  "revision": "fma-fixed-rank-component-diagnostics-v1",
+  "inputs": {
+    "/workspace/opennoise-rebuild-20261013/baseline44/evaluation.json": {
+      "sha256": "b5c056cf61471c20dd1e11627790c19eb5336ce6ced6321400cc8c690bd0612d",
+      "bytes": 206409
+    },
+    "/workspace/opennoise-rebuild-20261013/baseline44/declaration.json": {
+      "sha256": "96647a4ae15a9c0c1c20592128f2c75361599d899ede77414a17f45925f37041",
+      "bytes": 4447
+    },
+    "/workspace/opennoise-rebuild-20261013/baseline44/model.npz": {
+      "sha256": "eb5e8091837dff54c1d373c660f7c722ad5f8a7eb6393493f972e2e7878bbb38",
+      "bytes": 112268
+    },
+    "/workspace/opennoise-rebuild-20261013/baseline44/native-folds.jsonl.zst": {
+      "sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7",
+      "bytes": 415584
+    },
+    "/workspace/opennoise-rebuild-20261013/baseline44/validation-acoustic-ranks.jsonl.zst": {
+      "sha256": "8592a9dc17ead81636038a3fda0745c0763f8cc7ebbb7c7c0c0ee3915aad5af5",
+      "bytes": 1519564
+    },
+    "/workspace/opennoise-rebuild-20261013/baseline44/test-acoustic-ranks.jsonl.zst": {
+      "sha256": "1d6da0daa666df6261e71fb14e32522803f5edd117b99ab99fb8dbd5f88af65e",
+      "bytes": 1335356
+    },
+    "/workspace/opennoise-rebuild-20261013/metadata/tracks.jsonl.zst": {
+      "sha256": "2a51ad101f8972182475a4e162efbc5604eee127b80089abd5ee10c64a56b687",
+      "bytes": 3672029
+    },
+    "/workspace/opennoise-rebuild-20261013/metadata/corpus-receipt.json": {
+      "sha256": "088588f58ca80662f47e809d054de88eb320b402f110d6637d318f00edbff1ed",
+      "bytes": 2126
+    }
+  },
+  "prespecified_analysis": {
+    "folds": [
+      "validation",
+      "test"
+    ],
+    "arms": [
+      "saved_acoustic",
+      "training_source_popularity"
+    ],
+    "metrics": [
+      "micro_observed_positive_recall_at_10",
+      "labeled_query_MRR"
+    ],
+    "paired_bootstrap": {
+      "unit": "entire known connected component",
+      "replicates": 2000,
+      "seed": 20261015,
+      "generator": "numpy PCG64",
+      "interval": "percentile 2.5/97.5; ratio of resampled sums; paired arm difference",
+      "empty_denominator": "omit replicate and report count"
+    },
+    "concentration": [
+      "component count",
+      "largest/top5/top10 query and positive mass",
+      "inverse Herfindahl effective component count weighted by positives",
+      "component-equal recall and MRR among components with valid denominator"
+    ],
+    "sensitivity": "delete each single component; report full range and component IDs producing extrema for paired differences; no model refit",
+    "reproduction": "independently recover popularity from all original training source tags; reproduce saved per-label hits, total positives, query counts, abstentions and MRR before new diagnostics",
+    "integrity": "exact rank roster/fold membership, unique track IDs and labels, components cannot cross folds; hashes before and after"
+  },
+  "limits": {
+    "wall_seconds": 120,
+    "address_space_bytes": 1073741824,
+    "new_output_bytes": 10485760
+  },
+  "interpretation": [
+    "Previously inspected heldout diagnostics, not new blind confirmation.",
+    "Component resampling conditional on fixed fitted model and observed component population; not retraining uncertainty or all unknown alias leakage.",
+    "Observed incomplete annotation recovery only, no negative-label precision, musical quality, or recommendation validation.",
+    "No parameter, feature, threshold, ranking, model, or split changes."
+  ],
+  "execution_state": "Frozen before new component diagnostic computation; review requested before execution"
+}
