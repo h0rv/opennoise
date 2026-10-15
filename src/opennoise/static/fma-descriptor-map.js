@@ -148,6 +148,7 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
     for(const row of matches.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE)) {
       const item=element('li');const choose=button(row.name,()=>{select(row.id);selection.scrollIntoView({block:'nearest'});});choose.setAttribute('aria-label',`Select ${row.name}, native ID ${row.id}${positioned(row)?'':' — no coordinates'}`);
       const detailLink=element('a',entity==='genres'?'Tracks':'Artist');detailLink.href=detail(entity==='genres'?'genre':'artist',row.id);
+      if (!detail(entity==='genres'?'genre':'artist',row.id).startsWith('#')) detailLink.textContent='Full catalog · stops player';
       item.append(choose,element('small',`#${row.id}${positioned(row)?'':' · no coordinates'}`),detailLink);listing.append(item);
     }
     if(!matches.length) listing.append(element('li','No matching names or native IDs. Clear Find to see every entity.'));
