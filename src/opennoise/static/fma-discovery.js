@@ -137,6 +137,7 @@ function artistPage(id) {
   rows.append(link('Full source artist record',`${origin}/explorer/index.html#artist=${id}`),node('p','Opening the full catalog leaves this page and stops its player.'));
 }
 async function render() {
+  if (!index) return;
   const token = ++generation, state = route();
   rows.replaceChildren();
   $('#content').setAttribute('aria-busy', 'true');
@@ -177,6 +178,7 @@ async function render() {
 }
 
 function search(replace = false) {
+  if (!index) return;
   const state = route();
   const p = new URLSearchParams(
     state.kind === 'search' ? 'search' : state.kind === 'artists' ? 'artists' : 'genres'
@@ -194,5 +196,54 @@ function search(replace = false) {
 $('#discovery-search').addEventListener('submit',event=>{event.preventDefault();const first=rows.querySelector('.search-results a');if(first)first.click();else search();});query.addEventListener('input',()=>search(true));$('#include-unavailable').addEventListener('change',()=>search());query.addEventListener('keydown',event=>{if(event.key==='ArrowDown'){event.preventDefault();rows.querySelector('.search-results a')?.focus();}});
 window.addEventListener('hashchange',async()=>{const pending=render(),token=generation;await pending;if(token===generation)heading.focus({preventScroll:true});});
 document.addEventListener('keydown',event=>{if(event.key==='/'&&!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)&&!$('#discovery-search').hidden){event.preventDefault();query.focus();}});
-try{index=validate(await json('genre-discovery.json'));genres=new Map(index.genres.map(g=>[g.genre_id,g]));artists=new Map();for(const track of Object.values(index.tracks)){if(!artists.has(track.artist_id))artists.set(track.artist_id,{id:track.artist_id,name:track.artist_name,track_ids:[]});artists.get(track.artist_id).track_ids.push(track.track_id);}for(const a of artists.values())a.track_ids.sort((x,y)=>x-y);render();}
-catch(error){heading.textContent='Listening index unavailable';status.textContent=error.message;rows.append(link('Open the verified collections','collections.html'));$('#content').setAttribute('aria-busy','false');}
+let initializing = false;
+
+async function initialize() {
+  if (initializing || index) return;
+  initializing = true;
+  rows.replaceChildren();
+  heading.textContent = 'Loading genres…';
+  status.textContent = '';
+  $('#discovery-search').hidden = true;
+  $('#content').setAttribute('aria-busy', 'true');
+  delete document.documentElement.dataset.discoveryReady;
+
+  try {
+    const loaded = validate(await json('genre-discovery.json'));
+    const loadedArtists = new Map();
+    for (const track of Object.values(loaded.tracks)) {
+      if (!loadedArtists.has(track.artist_id)) {
+        loadedArtists.set(track.artist_id, {
+          id: track.artist_id,
+          name: track.artist_name,
+          track_ids: [],
+        });
+      }
+      loadedArtists.get(track.artist_id).track_ids.push(track.track_id);
+    }
+    for (const artist of loadedArtists.values()) {
+      artist.track_ids.sort((a, b) => a - b);
+    }
+    genres = new Map(loaded.genres.map(genre => [genre.genre_id, genre]));
+    artists = loadedArtists;
+    index = loaded;
+    await render();
+  } catch (error) {
+    // Validation failures must be fetched again, just like transport failures.
+    cache.delete('genre-discovery.json');
+    index = undefined;
+    heading.textContent = 'Listening index unavailable';
+    status.textContent = error.message;
+    rows.replaceChildren();
+    const retry = node('button', 'Retry loading genres');
+    retry.type = 'button';
+    retry.dataset.retryIndex = '';
+    retry.addEventListener('click', initialize);
+    rows.append(retry, link('Open the verified collections', 'collections.html'));
+    $('#content').setAttribute('aria-busy', 'false');
+  } finally {
+    initializing = false;
+  }
+}
+
+await initialize();

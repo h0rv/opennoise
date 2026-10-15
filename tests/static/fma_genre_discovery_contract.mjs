@@ -8,7 +8,8 @@ import {join, resolve, sep} from 'node:path';
 import test from 'node:test';
 const chromium = process.env.CHROMIUM_PATH ?? ['/usr/bin/chromium', '/usr/bin/chromium-browser'].find(existsSync);
 const skip = !chromium || !process.env.OPENNOISE_FMA_DISCOVERY_SITE;
-async function browser(operation, mutateIndex = null) {
+async function browser(operation, mutateIndex = null, startupFailure = null) {
+  let indexAttempts = 0;
   const root = resolve(process.env.OPENNOISE_FMA_DISCOVERY_SITE);
   const profile = resolve(await mkdtemp(join(tmpdir(), 'opennoise-genuine-playback-')));
   const requests = [], errors = []; let failAudio = false, socket, child;
@@ -18,6 +19,21 @@ async function browser(operation, mutateIndex = null) {
     if (!file.startsWith(root + sep) || (failAudio && path.endsWith('.mp3'))) { response.statusCode = 404; response.end(); return; }
     try {
       let body = await readFile(file);
+      if (startupFailure && path === '/genre-discovery.json') {
+        indexAttempts++;
+        if (indexAttempts === 1) {
+          if (startupFailure === 'http') {
+            response.statusCode = 503;
+            response.end();
+            return;
+          }
+          const invalid = JSON.parse(body);
+          invalid.revision = 'unsupported';
+          body = Buffer.from(JSON.stringify(invalid));
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 150));
+        }
+      }
       if (mutateIndex && path === '/genre-discovery.json') { const value=JSON.parse(body); mutateIndex(value); body=Buffer.from(JSON.stringify(value)); }
       response.setHeader('Content-Type', file.endsWith('.mp3') ? 'audio/mpeg' : file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.html') ? 'text/html' : 'application/json');
       response.setHeader('Cache-Control', 'no-store'); response.setHeader('Content-Length', body.length); response.end(body);
@@ -43,7 +59,7 @@ async function browser(operation, mutateIndex = null) {
     const wait = async expression => { for (let i = 0; i < 400; i++) { if (await evaluate(expression)) return; await new Promise(resolve => setTimeout(resolve, 20)); } throw new Error(`Timed out: ${expression}`); };
     await command('Network.enable'); await command('Runtime.enable'); await command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 900, deviceScaleFactor: 1, mobile: false});
     await command('Page.navigate', {url: `${origin}/index.html`});
-    await wait(mutateIndex ? "document.querySelector('h1')?.textContent === 'Listening index unavailable'" : "document.documentElement?.dataset.discoveryReady === 'true'");
+    await wait(mutateIndex || startupFailure ? "document.querySelector('h1')?.textContent === 'Listening index unavailable'" : "document.documentElement?.dataset.discoveryReady === 'true'");
     assert.ok(!requests.some(row => /\/audio\//.test(row.request.url)), 'landing does not fetch audio or its manifest');
     await operation({evaluate, wait, command, requests, failAudio: value => { failAudio = value; }});
     assert.deepEqual(errors, []);
@@ -235,3 +251,35 @@ test('source families support keyboard descent, Back and mobile deep-link reload
     assert.ok(!requests.some(row => /\/audio\//.test(row.request.url)));
   });
 });
+
+for (const failure of ['http', 'invalid-index']) {
+  test(`listening index recovers from ${failure} without losing the current route or fetching audio`, {
+    skip,
+    timeout: 30000,
+  }, async () => {
+    const index = JSON.parse(await readFile(join(process.env.OPENNOISE_FMA_DISCOVERY_SITE, 'genre-discovery.json')));
+    const target = index.genres.find(genre => genre.track_ids.length);
+    await browser(async ({evaluate, wait, requests}) => {
+      assert.equal(await evaluate('document.querySelectorAll("[data-retry-index]").length'), 1);
+      await evaluate(`location.hash = '#genre=${target.genre_id}'`);
+      await wait(`location.hash === '#genre=${target.genre_id}'`);
+      assert.equal(await evaluate('document.querySelector("h1").textContent'), 'Listening index unavailable');
+      assert.equal(await evaluate('document.querySelector("#discovery-search").hidden'), true);
+      await evaluate(`
+        const retry = document.querySelector('[data-retry-index]');
+        retry.click();
+        retry.click();
+      `);
+      await wait('document.querySelector("#content").getAttribute("aria-busy") === "true"');
+      await evaluate(`location.hash = '#genre=${target.genre_id}&from=retry'`);
+      await evaluate('document.querySelector("#discovery-query").dispatchEvent(new Event("input", {bubbles: true}))');
+      await wait(`document.querySelector('h1').textContent === ${JSON.stringify(target.title)} && document.querySelector('#content').getAttribute('aria-busy') === 'false'`);
+      assert.equal(await evaluate('location.hash'), `#genre=${target.genre_id}&from=retry`);
+      assert.equal(await evaluate('document.querySelectorAll("[data-retry-index]").length'), 0);
+      assert.deepEqual(await evaluate('[...document.querySelectorAll(".discovery-excerpt")].map(row => Number(row.dataset.trackId)).sort((a, b) => a - b)'), [...target.track_ids].sort((a, b) => a - b));
+      assert.equal(requests.filter(row => row.request.url.endsWith('/genre-discovery.json')).length, 2);
+      assert.ok(!requests.some(row => /\/audio\//.test(row.request.url)));
+      assert.equal(await evaluate('document.querySelectorAll("audio").length'), 0);
+    }, null, failure);
+  });
+}
