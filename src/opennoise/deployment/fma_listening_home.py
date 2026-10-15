@@ -15,6 +15,7 @@ from opennoise.common import canonical_json, sha256_file
 from opennoise.deployment.fma_playback import (
     BOUNDED_EXTENSION_REVISION,
     COLLECTION_REVISION,
+    COVERAGE_EXTENSION_REVISION,
     COVERAGE_REVISION,
     EXTENSION_REVISION,
     FOUR_ARTIST_REVISION,
@@ -25,6 +26,15 @@ from opennoise.deployment.fma_playback import (
 MAX_UNION_CLIPS = 128
 MAX_COVERAGE_CLIPS = 12
 COLLECTION_KEYS = ("original", "expanded", "coverage")
+
+
+def coverage_limits(revision: str) -> tuple[int, int]:
+    """Keep historical limits unless the verified collection uses the reviewed v2 protocol."""
+    if revision == COVERAGE_REVISION:
+        return MAX_COVERAGE_CLIPS, MAX_UNION_CLIPS
+    if revision == COVERAGE_EXTENSION_REVISION:
+        return 17, 133
+    raise ValueError("unsupported coverage protocol")
 
 
 def collection_keys(root: Path) -> tuple[str, ...]:
@@ -43,11 +53,11 @@ def _coverage_binding(
     root: Path, coverage: dict[str, Any], prior: dict[str, Any], metadata: str
 ) -> None:
     """Require exactly the unchanged prior exports and disjoint native additions."""
+    maximum, _ = coverage_limits(coverage.get("revision", ""))
     bindings = coverage.get("source_bindings", {})
     prior_ids = set().union(*(set(value["tracks"]) for value in prior.values()))
     if (
-        coverage.get("revision") != COVERAGE_REVISION
-        or not 0 < len(coverage["tracks"]) <= MAX_COVERAGE_CLIPS
+        not 0 < len(coverage["tracks"]) <= maximum
         or coverage.get("metadata_source_receipt_sha256") != metadata
         or set(coverage["tracks"]) & prior_ids
         or coverage.get("prior_track_ids") != sorted(map(int, prior_ids))
@@ -95,8 +105,13 @@ def build_listening_home(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912, 
         _coverage_binding(root, coverage, audio_by_key, origin["metadata_source_receipt_sha256"])
         audio_by_key["coverage"] = coverage
     union = set().union(*(set(value["tracks"]) for value in audio_by_key.values()))
-    if len(union) > MAX_UNION_CLIPS:
-        raise ValueError("listening union exceeds 128 clips")
+    root_limit = (
+        coverage_limits(audio_by_key["coverage"]["revision"])[1]
+        if "coverage" in audio_by_key
+        else MAX_UNION_CLIPS
+    )
+    if len(union) > root_limit:
+        raise ValueError("listening union exceeds its reviewed protocol bound")
     for key in keys:
         audio = audio_by_key[key]
         catalog_path = root / key / "explorer" / "catalog.json"
@@ -150,7 +165,9 @@ def build_listening_home(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912, 
     added = sorted(all_genres - original[1], key=lambda g: (original[2][g].casefold(), g))
     union_ids = set(map(int, union))
     result = {
-        "revision": "fma-local-listening-collections-v1",
+        "revision": "fma-local-listening-collections-v2"
+        if root_limit > MAX_UNION_CLIPS
+        else "fma-local-listening-collections-v1",
         "public_deployment_authorized": False,
         "collections": collections,
         "distinct_clips": len(union),

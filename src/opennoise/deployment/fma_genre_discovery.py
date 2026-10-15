@@ -19,6 +19,7 @@ from opennoise.deployment.fma_listening_home import (
     MAX_UNION_CLIPS,
     build_listening_home,
     collection_keys,
+    coverage_limits,
 )
 
 REVISION = "fma-genre-discovery-v1"
@@ -274,6 +275,8 @@ def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912 -- exact s
             "manifest": manifest,
             "manifest_sha256": _sha(_body(root / manifest, MAX_INDEX_BYTES)),
         }
+        if key == "coverage" and coverage_limits(audio[key]["revision"])[1] > MAX_UNION_CLIPS:
+            collections[key]["audio_revision"] = audio[key]["revision"]
         descriptor_map = _descriptor_binding(root, key, catalogs[key])
         if descriptor_map is not None:
             collections[key]["descriptor_map"] = descriptor_map
@@ -296,8 +299,13 @@ def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912 -- exact s
                 tracks[identity]["origins"].append(key)
             else:
                 tracks[identity] = {**projected, "collection": key, "origins": [key]}
-    if len(tracks) > MAX_UNION_CLIPS:
-        raise ValueError("genre discovery union exceeds 128 clips")
+    root_limit = (
+        coverage_limits(audio["coverage"]["revision"])[1]
+        if "coverage" in audio
+        else MAX_UNION_CLIPS
+    )
+    if len(tracks) > root_limit:
+        raise ValueError("genre discovery union exceeds its reviewed protocol bound")
     genres = []
     for native in catalogs["original"]["genres"]:
         identity = native["genre_id"]
@@ -328,7 +336,7 @@ def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912 -- exact s
     if len(known) != len(genres) or any(set(row["genre_ids"]) - known for row in tracks.values()):
         raise ValueError("unknown or duplicate native genre reference")
     result = {
-        "revision": REVISION,
+        "revision": "fma-genre-discovery-v2" if root_limit > MAX_UNION_CLIPS else REVISION,
         "selection_policy": POLICY,
         "musical_quality_validated": False,
         "public_deployment_authorized": False,

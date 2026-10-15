@@ -17,7 +17,9 @@ async function json(path) {
   return cache.get(path);
 }
 function validate(value) {
-  if (value.revision !== 'fma-genre-discovery-v1' || !Array.isArray(value.genres) || value.genres.length > 200 || !value.tracks || Object.keys(value.tracks).length > 128) throw Error('Unsupported genre index.');
+  const extended = value.revision === 'fma-genre-discovery-v2';
+  if ((!extended && value.revision !== 'fma-genre-discovery-v1') || !Array.isArray(value.genres) || value.genres.length > 200 || !value.tracks || Object.keys(value.tracks).length > (extended ? 133 : 128)) throw Error('Unsupported genre index.');
+  if ((extended && value.collections?.coverage?.audio_revision !== 'fma-local-coverage-extension-v2') || (!extended && value.collections?.coverage?.audio_revision !== undefined)) throw Error('Coverage protocol differs from root scope.');
   const collectionKeys = Object.keys(value.collections ?? {});
   if (!collectionKeys.includes('original') || !collectionKeys.includes('expanded')
     || collectionKeys.some(key => !['original', 'expanded', 'coverage'].includes(key))) throw Error('Invalid collection scope.');
@@ -36,7 +38,7 @@ function validate(value) {
     if (!Number.isSafeInteger(track.track_id) || track.track_id <= 0 || key !== String(track.track_id) || !collectionKeys.includes(track.collection) || !Number.isSafeInteger(track.artist_id) || track.artist_id <= 0 || !Array.isArray(track.genre_ids) || new Set(track.genre_ids).size !== track.genre_ids.length || track.genre_ids.some(id => !identities.includes(id))) throw Error('Invalid excerpt identity.');
   }
   const coverageCount = Object.values(value.tracks).filter(track => track.origins.includes('coverage')).length;
-  if (collectionKeys.includes('coverage') && (coverageCount < 1 || coverageCount > 12)) throw Error('Coverage collection exceeds its bound.');
+  if (collectionKeys.includes('coverage') && (coverageCount < 1 || coverageCount > (extended ? 17 : 12))) throw Error('Coverage collection exceeds its bound.');
   for (const genre of value.genres) {
     const expectedArtists = [...new Set(Object.values(value.tracks).filter(track => track.genre_ids.includes(genre.genre_id)).map(track => track.artist_id))].sort((a,b)=>a-b);
     const expected = Object.values(value.tracks).filter(track => track.genre_ids.includes(genre.genre_id)).map(track => track.track_id).sort((a,b)=>a-b);
