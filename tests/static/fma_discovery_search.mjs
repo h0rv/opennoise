@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const source = await readFile(new URL('../../src/opennoise/static/fma-discovery-search.js', import.meta.url), 'utf8');
-const {normalizeQuery, searchDiscovery} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+const {normalizeQuery, searchDiscovery, catalogSearchLinks} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 const index = {
   genres: [
     {genre_id: 2, title: 'Jazz', track_ids: [12], starting_ids: [12]},
@@ -38,4 +38,19 @@ test('blank and unmatched queries never manufacture matches or change source obj
   assert.deepEqual(searchDiscovery(index, artists, '  '), {genres: [], artists: [], tracks: []});
   assert.deepEqual(searchDiscovery(index, artists, '<script>'), {genres: [], artists: [], tracks: []});
   assert.equal(JSON.stringify(index), before);
+});
+
+
+test('catalog handoff preserves exact queries within fixed local source routes', () => {
+  for (const query of ['Été & #? /', '<script>', '42', 'https://example.org']) {
+    for (const {kind, href} of catalogSearchLinks(query)) {
+      const url = new URL(href, 'http://localhost/');
+      assert.equal(url.pathname, '/expanded/explorer/index.html');
+      assert.equal(url.origin, 'http://localhost');
+      const state = new URLSearchParams(url.hash.slice(1));
+      assert.ok(state.has(kind));
+      assert.equal(state.get('q'), query);
+      assert.equal([...state.keys()].length, 2);
+    }
+  }
 });
