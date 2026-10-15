@@ -427,6 +427,14 @@ test('attached descriptor map preserves native scope, missing contexts, playback
       await writeFile(join(output, name + '.png'), Buffer.from(image.data, 'base64'));
     };
     await screenshot('restored-descriptor-map-desktop');
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    await wait('document.querySelector(".descriptor-canvas").width < 500');
+    await evaluate('document.querySelector(".descriptor-frame").scrollIntoView({block: "center"})');
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+    await screenshot('restored-descriptor-map-mobile-geometry');
+    await command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 900, deviceScaleFactor: 1, mobile: false});
+    await wait('document.querySelector(".descriptor-canvas").width > 500');
+    await evaluate('scrollTo(0, 0)');
     assert.match(await evaluate('document.querySelector(".fma-descriptor-map").textContent'), /PC1 and PC2 are mathematical/);
     assert.ok(!requests.some(row => row.request.url.includes('/descriptor-map/artists-')));
     assert.ok(!requests.some(row => /\/audio\//.test(row.request.url)));

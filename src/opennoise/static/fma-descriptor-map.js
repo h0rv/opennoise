@@ -3,6 +3,55 @@ const element = (tag, text) => { const node = document.createElement(tag); if (t
 const positioned = row => Array.isArray(row.position) && row.position.length === 2 && row.position.every(Number.isFinite);
 const PAGE_SIZE = 50;
 
+// Preserve the original origin and aspect ratio while fitting sub-unit coordinates.
+export function descriptorExtent(rows, axis = null) {
+  let extent = 0;
+  for (const row of rows) {
+    if (positioned(row)) {
+      extent = Math.max(extent, ...(axis === null ? row.position : [row.position[axis]]).map(Math.abs));
+    }
+  }
+  return extent > 0 ? extent : Number.EPSILON;
+}
+
+export function descriptorScale(width, height, extentX, extentY) {
+  return .43 * Math.min(width / extentX, height / extentY);
+}
+
+export function descriptorLabels(points, width, height, measure, selected) {
+  const placements = [];
+  const ordered = [...points].sort((a, b) =>
+    Number(b.row.id === selected) - Number(a.row.id === selected) || a.row.id - b.row.id);
+  for (const point of ordered) {
+    let text = point.row.name;
+    const maximum = Math.max(1, width - 16);
+    while (text.length > 1 && measure(text) > maximum) {
+      text = text.slice(0, -2) + '…';
+    }
+    const labelWidth = measure(text);
+    const {x, y} = point;
+    const candidates = [
+      [x + 7, y - 15],
+      [x - labelWidth - 7, y - 15],
+      [x + 7, y + 5],
+      [x - labelWidth - 7, y + 5],
+      [Math.max(4, Math.min(width - labelWidth - 4, x - labelWidth / 2)), y - 20],
+      [Math.max(4, Math.min(width - labelWidth - 4, x - labelWidth / 2)), y + 9],
+    ];
+    for (const [left, top] of candidates) {
+      const box = {left, top, right: left + labelWidth, bottom: top + 13};
+      if (box.left < 4 || box.right > width - 4 || box.top < 4 || box.bottom > height - 4) continue;
+      const overlaps = placements.some(other =>
+        box.left < other.right + 3 && box.right + 3 > other.left &&
+        box.top < other.bottom + 3 && box.bottom + 3 > other.top);
+      if (overlaps) continue;
+      placements.push({...box, text, id: point.row.id});
+      break;
+    }
+  }
+  return placements;
+}
+
 export async function renderDescriptorMap({state,config,json,genres,artists,rows,heading,status,current,onStateChange,registerCleanup,playbackTracks=[],onPlay}) {
   heading.textContent = 'Audio descriptor map';
   status.textContent = 'Loading frozen coordinates…';
@@ -33,14 +82,14 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
   const pagination=element('div'); pagination.className='descriptor-pages';
   section.append(toolbar,frame,selection,excerptChoices,listing,pagination);
   let entity=entitySelect.value, selected=state.selected == null ? null : Number(state.selected), page=0, zoom=1, panX=0,panY=0;
-  let all=[],matches=[],points=[],extent=1,artistPositions=null,artistLoading=null,loadVersion=0,width=600,height=400;
+  let all=[],matches=[],points=[],extentX=1,extentY=1,artistPositions=null,artistLoading=null,loadVersion=0,width=600,height=400;
   const ctx=canvas.getContext('2d');
   function button(text,action) { const b=element('button',text); b.type='button'; b.addEventListener('click',action); return b; }
   const announce = () => onStateChange?.({kind:'descriptor-map',entity,q:search.value,selected:selected ?? undefined});
   function reset() { zoom=1;panX=0;panY=0;draw(); }
   function magnify(factor) { zoom=Math.max(.5,Math.min(16,zoom*factor));draw(); }
-  toolbar.append(button('Zoom in',()=>magnify(1.4)),button('Zoom out',()=>magnify(1/1.4)),button('Reset view',reset),element('span','Drag to pan · choose a point or a name below'));
-  function coordinates(position) { const scale=Math.min(width,height)*.43*zoom/extent;return [width/2+panX+position[0]*scale,height/2+panY-position[1]*scale]; }
+  toolbar.append(button('Zoom in',()=>magnify(1.4)),button('Zoom out',()=>magnify(1/1.4)),button('Reset view',reset),element('span','Drag to pan · zoom for more names · all names in the list'));
+  function coordinates(position) { const scale=descriptorScale(width, height, extentX, extentY) * zoom;return [width/2+panX+position[0]*scale,height/2+panY-position[1]*scale]; }
   function draw() {
     if (!current() || !ctx) return;
     width=Math.max(240,frame.clientWidth || 600);height=width<500?330:430;
@@ -51,8 +100,11 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
       if (!positioned(row)) continue;
       const [x,y]=coordinates(row.position);if(x < -5 || x > width+5 || y < -5 || y > height+5) continue;
       points.push({row,x,y});ctx.fillStyle=row.id===selected?'#a34800':'#154d94';ctx.beginPath();ctx.arc(x,y,row.id===selected?5:entity==='artists'?2:3,0,Math.PI*2);ctx.fill();
-      if(labels.checked || row.id===selected) {ctx.fillStyle='#222';ctx.fillText(row.name,x+6,Math.max(12,y-4));}
     }
+    const candidates = points.filter(point => labels.checked || point.row.id === selected);
+    const names = descriptorLabels(candidates, width, height, text => ctx.measureText(text).width, selected);
+    ctx.fillStyle = '#222';
+    for (const label of names) ctx.fillText(label.text, label.left, label.top + 11);
   }
   function select(id) {
     selected=id;selection.replaceChildren();excerptChoices.replaceChildren();
@@ -84,7 +136,7 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
         }
         excerptChoices.append(choices);
       }
-      if(positioned(row)) {const scale=Math.min(width,height)*.43*zoom/extent;panX=-row.position[0]*scale;panY=row.position[1]*scale;}
+      if(positioned(row)) {const scale=descriptorScale(width, height, extentX, extentY) * zoom;panX=-row.position[0]*scale;panY=row.position[1]*scale;}
     } else selection.textContent='Choose a point or use the list below.';
     draw();announce();
   }
@@ -131,7 +183,8 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
       const positions=entity==='genres'?new Map(manifest.genres.map(row=>[row.id,row.position])):artistPositions;
       all=(entity==='genres'?[...genres.values()].map(row=>({id:row.genre_id,name:row.title})):artists.filter(row=>Number.isSafeInteger(row[0]) && row[0]>0 && positions.has(row[0])).map(row=>({id:row[0],name:row[1] || `Artist #${row[0]}`})))
         .map(row=>({...row,position:positions.get(row.id) ?? null})).sort((a,b)=>a.name.localeCompare(b.name)||a.id-b.id);
-      extent=1;for(const row of all)if(positioned(row))extent=Math.max(extent,Math.abs(row.position[0]),Math.abs(row.position[1]));
+      extentX = descriptorExtent(all, 0);
+      extentY = descriptorExtent(all, 1);
       zoom=1;panX=0;panY=0;filter(false);select(selected);
     } catch {if(current() && version===loadVersion){status.textContent='Coordinate data unavailable. Switch view or reload to retry.';listing.replaceChildren(element('li','No partial coordinate results are shown.'));}}
   }
