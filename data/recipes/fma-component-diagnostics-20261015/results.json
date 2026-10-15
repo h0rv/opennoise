@@ -1,0 +1,327 @@
+{
+  "revision": "fma-fixed-rank-component-diagnostics-v1",
+  "status": "pass",
+  "declaration_sha256": "a6bc8c92a6f268c9e31d708be53b16f71abe895c006b296d022090d5792708fd",
+  "analysis_sha256": "6d3f65cc77ccd7f25144d8860204017c65fce860ea4abc7227cada6b2293c766",
+  "results": {
+    "validation": {
+      "components": 753,
+      "queries": 7332,
+      "labeled_queries": 7253,
+      "source_positives": 16668,
+      "abstentions": {
+        "missing_feature_row": 170,
+        "outside_training_support": 3
+      },
+      "reproduction": "all metrics, per-label hits/support and denominators match saved evaluation within1e-12",
+      "metrics": {
+        "acoustic_recall10": {
+          "point": 0.37047036237101033,
+          "component_bootstrap_percentile95": [
+            0.3418573919052429,
+            0.40328225213555524
+          ]
+        },
+        "popularity_recall10": {
+          "point": 0.363270938324934,
+          "component_bootstrap_percentile95": [
+            0.3199474688148502,
+            0.40550389407473975
+          ]
+        },
+        "acoustic_mrr": {
+          "point": 0.30260801734934706,
+          "component_bootstrap_percentile95": [
+            0.27654547371976845,
+            0.32988212389357446
+          ]
+        },
+        "popularity_mrr": {
+          "point": 0.32789320163257635,
+          "component_bootstrap_percentile95": [
+            0.2803317650983065,
+            0.375734043463567
+          ]
+        },
+        "paired_recall10_difference": {
+          "point": 0.007199424046076319,
+          "component_bootstrap_percentile95": [
+            -0.05021103406635865,
+            0.06945796615621465
+          ]
+        },
+        "paired_mrr_difference": {
+          "point": -0.02528518428322929,
+          "component_bootstrap_percentile95": [
+            -0.07989113046845947,
+            0.029264970728992125
+          ]
+        }
+      },
+      "bootstrap_replicates": 2000,
+      "omitted_empty_denominator_replicates": 0,
+      "query_concentration": {
+        "largest_share": 0.03368794326241135,
+        "top5_share": 0.117430441898527,
+        "top10_share": 0.18126022913256956,
+        "inverse_herfindahl_effective_components": 172.13427942005225
+      },
+      "positive_concentration": {
+        "largest_share": 0.040436765058795295,
+        "top5_share": 0.16378689704823615,
+        "top10_share": 0.22816174706023518,
+        "inverse_herfindahl_effective_components": 117.54138327271988
+      },
+      "component_equal": {
+        "acoustic_recall10": {
+          "mean": 0.3910516430930604,
+          "components_with_denominator": 727
+        },
+        "popularity_recall10": {
+          "mean": 0.37320833909921086,
+          "components_with_denominator": 727
+        },
+        "acoustic_mrr": {
+          "mean": 0.277366702300857,
+          "components_with_denominator": 727
+        },
+        "popularity_mrr": {
+          "mean": 0.3127705575158106,
+          "components_with_denominator": 727
+        }
+      },
+      "leave_one_component_out": {
+        "paired_recall10_difference": {
+          "min": -0.0022873392680514693,
+          "min_deleted_component": 16852,
+          "max": 0.024019364448857994,
+          "max_deleted_component": 2226
+        },
+        "paired_mrr_difference": {
+          "min": -0.032625631601812255,
+          "min_deleted_component": 16852,
+          "max": -0.010390694798806721,
+          "max_deleted_component": 433
+        }
+      },
+      "largest_components_by_queries": [
+        {
+          "component_id": 4352,
+          "queries": 247,
+          "source_positives": 553
+        },
+        {
+          "component_id": 10460,
+          "queries": 175,
+          "source_positives": 674
+        },
+        {
+          "component_id": 433,
+          "queries": 160,
+          "source_positives": 455
+        },
+        {
+          "component_id": 16852,
+          "queries": 141,
+          "source_positives": 492
+        },
+        {
+          "component_id": 1657,
+          "queries": 138,
+          "source_positives": 276
+        },
+        {
+          "component_id": 2226,
+          "queries": 107,
+          "source_positives": 556
+        },
+        {
+          "component_id": 15240,
+          "queries": 100,
+          "source_positives": 100
+        },
+        {
+          "component_id": 4656,
+          "queries": 93,
+          "source_positives": 224
+        },
+        {
+          "component_id": 11687,
+          "queries": 85,
+          "source_positives": 170
+        },
+        {
+          "component_id": 19064,
+          "queries": 83,
+          "source_positives": 164
+        }
+      ]
+    },
+    "test": {
+      "components": 703,
+      "queries": 6468,
+      "labeled_queries": 6369,
+      "source_positives": 14402,
+      "abstentions": {
+        "missing_feature_row": 182,
+        "outside_training_support": 1
+      },
+      "reproduction": "all metrics, per-label hits/support and denominators match saved evaluation within1e-12",
+      "metrics": {
+        "acoustic_recall10": {
+          "point": 0.39591723371753923,
+          "component_bootstrap_percentile95": [
+            0.3651347066691834,
+            0.4248540535160804
+          ]
+        },
+        "popularity_recall10": {
+          "point": 0.36626857380919314,
+          "component_bootstrap_percentile95": [
+            0.33705046522888593,
+            0.39701607579448955
+          ]
+        },
+        "acoustic_mrr": {
+          "point": 0.31295635714887393,
+          "component_bootstrap_percentile95": [
+            0.28502036186737406,
+            0.33882007493711863
+          ]
+        },
+        "popularity_mrr": {
+          "point": 0.31910814913960794,
+          "component_bootstrap_percentile95": [
+            0.2812633871306355,
+            0.35556384221563614
+          ]
+        },
+        "paired_recall10_difference": {
+          "point": 0.029648659908346087,
+          "component_bootstrap_percentile95": [
+            -0.012917850695530444,
+            0.06552531714540723
+          ]
+        },
+        "paired_mrr_difference": {
+          "point": -0.006151791990734012,
+          "component_bootstrap_percentile95": [
+            -0.046352433640796595,
+            0.03587571249331591
+          ]
+        }
+      },
+      "bootstrap_replicates": 2000,
+      "omitted_empty_denominator_replicates": 0,
+      "query_concentration": {
+        "largest_share": 0.09771181199752628,
+        "top5_share": 0.16233766233766234,
+        "top10_share": 0.20841063698206555,
+        "inverse_herfindahl_effective_components": 77.29391810747794
+      },
+      "positive_concentration": {
+        "largest_share": 0.12532981530343007,
+        "top5_share": 0.19684766004721566,
+        "top10_share": 0.24739619497292042,
+        "inverse_herfindahl_effective_components": 51.09746864818018
+      },
+      "component_equal": {
+        "acoustic_recall10": {
+          "mean": 0.3773180464783372,
+          "components_with_denominator": 674
+        },
+        "popularity_recall10": {
+          "mean": 0.37742219473881305,
+          "components_with_denominator": 674
+        },
+        "acoustic_mrr": {
+          "mean": 0.2705509598148417,
+          "components_with_denominator": 674
+        },
+        "popularity_mrr": {
+          "mean": 0.3018174385958105,
+          "components_with_denominator": 674
+        }
+      },
+      "leave_one_component_out": {
+        "paired_recall10_difference": {
+          "min": 0.021830594586012553,
+          "min_deleted_component": 7168,
+          "max": 0.03490975234364069,
+          "max_deleted_component": 16362
+        },
+        "paired_mrr_difference": {
+          "min": -0.011846290867701503,
+          "min_deleted_component": 3089,
+          "max": 8.956192473530411e-05,
+          "max_deleted_component": 7168
+        }
+      },
+      "largest_components_by_queries": [
+        {
+          "component_id": 7168,
+          "queries": 632,
+          "source_positives": 1805
+        },
+        {
+          "component_id": 7473,
+          "queries": 135,
+          "source_positives": 186
+        },
+        {
+          "component_id": 13826,
+          "queries": 117,
+          "source_positives": 295
+        },
+        {
+          "component_id": 10990,
+          "queries": 92,
+          "source_positives": 264
+        },
+        {
+          "component_id": 3913,
+          "queries": 74,
+          "source_positives": 285
+        },
+        {
+          "component_id": 3089,
+          "queries": 66,
+          "source_positives": 66
+        },
+        {
+          "component_id": 22007,
+          "queries": 65,
+          "source_positives": 166
+        },
+        {
+          "component_id": 11121,
+          "queries": 59,
+          "source_positives": 119
+        },
+        {
+          "component_id": 3171,
+          "queries": 54,
+          "source_positives": 88
+        },
+        {
+          "component_id": 21803,
+          "queries": 54,
+          "source_positives": 133
+        }
+      ]
+    }
+  },
+  "limits": {
+    "wall_seconds": 120,
+    "address_space_bytes": 1000000000,
+    "new_output_bytes": 10000000
+  },
+  "elapsed_seconds": 1.6078143650011043,
+  "peak_rss_bytes": 165158912,
+  "interpretation": [
+    "Previously inspected heldout diagnostics, not new blind confirmation.",
+    "Component resampling conditional on fixed fitted model and observed component population; not retraining uncertainty or all unknown alias leakage.",
+    "Observed incomplete annotation recovery only, no negative-label precision, musical quality, or recommendation validation.",
+    "No parameter, feature, threshold, ranking, model, or split changes."
+  ]
+}
