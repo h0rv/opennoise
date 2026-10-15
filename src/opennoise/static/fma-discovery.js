@@ -1,3 +1,4 @@
+import {descriptorSource, renderDiscoveryMap} from './fma-discovery-map.js';
 import {renderDiscoverySearch} from './fma-discovery-search.js';
 import {renderPlayableNeighbors} from './fma-playable-neighbors.js';
 import {requestPlay, requestGenreStarters} from './fma-playback.js';
@@ -10,7 +11,7 @@ $('.skip').addEventListener('click', event => {
   $('#content').focus();
 });
 
-let index, genres, artists, generation = 0;
+let index, genres, artists, generation = 0, routeCleanup = null;
 const cache = new Map();
 async function json(path) {
   if (!cache.has(path)) cache.set(path, fetch(path).then(response => { if (!response.ok) throw Error('Local file unavailable.'); return response.json(); }).catch(error => { cache.delete(path); throw error; }));
@@ -61,6 +62,11 @@ function playButton(id, label = 'Play excerpt') {
 function route() {
   const p = new URLSearchParams(location.hash.slice(1));
   for (const kind of ['genre', 'artist', 'track']) if (p.has(kind)) { const id = p.get(kind); return /^[1-9][0-9]*$/.test(id) && Number.isSafeInteger(Number(id)) ? {kind, id:Number(id)} : {kind:'invalid'}; }
+  if (p.has('descriptor-map')) {
+    const selected = Number(p.get('selected'));
+    return {kind: 'descriptor-map', entity: p.get('entity') === 'artists' ? 'artists' : 'genres',
+      q: p.get('q') ?? '', selected: Number.isSafeInteger(selected) && selected > 0 ? selected : null};
+  }
   if (p.has('families')) return {kind: 'families', q: p.get('q') ?? '', playable: p.get('playable') === '1'};
   return {kind:p.has('search') ? 'search' : p.has('artists') ? 'artists':'genres', q:p.get('q') ?? '', all:p.get('all') === '1'};
 }
@@ -180,8 +186,8 @@ async function familyPage(state, current) {
   const map = index.collections.expanded.descriptor_map ?? index.collections.original.descriptor_map;
   if (map) {
     const navigation = node('p');
-    navigation.append(link('Audio descriptor map · full catalog', map.href));
-    rows.append(navigation, node('p', 'Opening the full catalog leaves this page and stops its player.'));
+    navigation.append(link('Audio descriptor map', '#descriptor-map'));
+    rows.append(navigation);
   }
   const atlas = node('div');
   rows.append(atlas);
@@ -203,6 +209,8 @@ async function familyPage(state, current) {
 async function render() {
   if (!index) return;
   const token = ++generation, state = route();
+  routeCleanup?.();
+  routeCleanup = null;
   rows.replaceChildren();
   $('#content').setAttribute('aria-busy', 'true');
   const directoryView = ['genres', 'artists', 'search'].includes(state.kind);
@@ -217,7 +225,12 @@ async function render() {
       ? 'Genre, artist, track or native ID' : 'Name or native ID';
   }
   try {
-    if (state.kind === 'families') {
+    if (state.kind === 'descriptor-map') {
+      await renderDiscoveryMap({index, genres, artists, state, json, rows, heading, status,
+        current: () => token === generation,
+        registerCleanup: cleanup => { if (token === generation) routeCleanup = cleanup; else cleanup(); },
+      });
+    } else if (state.kind === 'families') {
       await familyPage(state, () => token === generation);
     } else if (state.kind === 'search') {
       renderDiscoverySearch({index, artists, text: state.q, rows, heading, status, playButton});
@@ -293,6 +306,7 @@ async function initialize() {
     genres = new Map(loaded.genres.map(genre => [genre.genre_id, genre]));
     artists = loadedArtists;
     index = loaded;
+    $('[data-root-map]').hidden = !descriptorSource(index);
     await render();
   } catch (error) {
     // Validation failures must be fetched again, just like transport failures.

@@ -52,7 +52,7 @@ export function descriptorLabels(points, width, height, measure, selected) {
   return placements;
 }
 
-export async function renderDescriptorMap({state,config,json,genres,artists,rows,heading,status,current,onStateChange,registerCleanup,playbackTracks=[],onPlay}) {
+export async function renderDescriptorMap({state,config,json,genres,artists,rows,heading,status,current,onStateChange,registerCleanup,playbackTracks=[],onPlay,detailHref}) {
   heading.textContent = 'Audio descriptor map';
   status.textContent = 'Loading frozen coordinates…';
   if (!config) { status.textContent = 'This export has no descriptor map.'; return; }
@@ -85,7 +85,8 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
   let all=[],matches=[],points=[],extentX=1,extentY=1,artistPositions=null,artistLoading=null,loadVersion=0,width=600,height=400;
   const ctx=canvas.getContext('2d');
   function button(text,action) { const b=element('button',text); b.type='button'; b.addEventListener('click',action); return b; }
-  const announce = () => onStateChange?.({kind:'descriptor-map',entity,q:search.value,selected:selected ?? undefined});
+  const detail = (kind, id) => detailHref?.(kind, id) ?? `#${kind}=${id}`;
+  const announce = () => current() && onStateChange?.({kind:'descriptor-map',entity,q:search.value,selected:selected ?? undefined});
   function reset() { zoom=1;panX=0;panY=0;draw(); }
   function magnify(factor) { zoom=Math.max(.5,Math.min(16,zoom*factor));draw(); }
   toolbar.append(button('Zoom in',()=>magnify(1.4)),button('Zoom out',()=>magnify(1/1.4)),button('Reset view',reset),element('span','Drag to pan · zoom for more names · all names in the list'));
@@ -110,8 +111,9 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
     selected=id;selection.replaceChildren();excerptChoices.replaceChildren();
     const row=all.find(item=>item.id===id);
     if(row) {
-      const link=element('a',row.name);link.href=`#${entity==='genres'?'genre':'artist'}=${id}`;
+      const link=element('a',row.name);link.href=detail(entity==='genres'?'genre':'artist',id);
       selection.append(link,element('span',` · #${id}${positioned(row)?' · has descriptor coordinates':' · no supported coordinates'}`));
+      if (!detail(entity==='genres'?'genre':'artist',id).startsWith('#')) selection.append(element('span', ' · Full catalog: opening this record leaves the page and stops its player.'));
       const seenTracks=new Set();
       const available=playbackTracks.filter(track=>{
         const matched=Number.isSafeInteger(track.track_id) && track.track_id>0 && (entity==='genres'?(track.genre_ids ?? []).includes(id):track.artist_id===id);
@@ -130,7 +132,7 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
         }
         const choices=element('ul');
         for(const track of available.slice(0,6)) {
-          const item=element('li'),link=element('a',track.title || `Track #${track.track_id}`);link.href=`#track=${track.track_id}`;item.append(link);
+          const item=element('li'),link=element('a',track.title || `Track #${track.track_id}`);link.href=detail('track',track.track_id);item.append(link);
           if(onPlay) item.append(button(`Play excerpt #${track.track_id}`,()=>{if(current())onPlay(track.track_id);}));
           choices.append(item);
         }
@@ -145,8 +147,8 @@ export async function renderDescriptorMap({state,config,json,genres,artists,rows
     const last=Math.max(0,Math.ceil(matches.length/PAGE_SIZE)-1);page=Math.min(page,last);
     for(const row of matches.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE)) {
       const item=element('li');const choose=button(row.name,()=>{select(row.id);selection.scrollIntoView({block:'nearest'});});choose.setAttribute('aria-label',`Select ${row.name}, native ID ${row.id}${positioned(row)?'':' — no coordinates'}`);
-      const detail=element('a',entity==='genres'?'Tracks':'Artist');detail.href=`#${entity==='genres'?'genre':'artist'}=${row.id}`;
-      item.append(choose,element('small',`#${row.id}${positioned(row)?'':' · no coordinates'}`),detail);listing.append(item);
+      const detailLink=element('a',entity==='genres'?'Tracks':'Artist');detailLink.href=detail(entity==='genres'?'genre':'artist',row.id);
+      item.append(choose,element('small',`#${row.id}${positioned(row)?'':' · no coordinates'}`),detailLink);listing.append(item);
     }
     if(!matches.length) listing.append(element('li','No matching names or native IDs. Clear Find to see every entity.'));
     const previous=button('Previous',()=>{page--;showList();}),next=button('Next',()=>{page++;showList();});previous.disabled=page===0;next.disabled=page===last;

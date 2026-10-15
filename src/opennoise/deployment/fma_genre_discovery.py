@@ -38,6 +38,9 @@ ASSETS = (
     "fma-discovery.html",
     "fma-discovery.js",
     "fma-discovery-search.js",
+    "fma-discovery-map.js",
+    "fma-descriptor-map.js",
+    "fma-descriptor-map.css",
     "fma-discovery.css",
     "fma-genre-map.js",
     "fma-genre-map.css",
@@ -227,6 +230,12 @@ def _descriptor_binding(  # noqa: C901 -- distinct source, path, inventory and s
     if len(decoded) > MAX_INVENTORY_BYTES:
         raise ValueError("descriptor map inventory exceeds bounded decode")
     inventory = json.loads(decoded)
+    artist_body = _body(explorer / "artist-index.json", MAX_INVENTORY_BYTES)
+    if inventory.get("artist-index.json") != {
+        "sha256": _sha(artist_body),
+        "bytes": len(artist_body),
+    }:
+        raise ValueError("descriptor artist index exported bytes differ")
     body = _body(explorer / relative, MAX_INDEX_BYTES)
     manifest = json.loads(body)
     shards = manifest.get("artist_shards")
