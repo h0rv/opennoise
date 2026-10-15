@@ -92,3 +92,17 @@ test('initial query accepts native ID, and keyboard submit reaches a genre witho
   assert.equal(walk(root).find(node => node.tagName === 'a').focused, true);
   assert.equal(walk(root).filter(node => node.tagName === 'audio').length, 0);
 });
+
+
+test('root listening atlas can route excerpt links without changing default catalog links', t => {
+  const original = globalThis.document;
+  globalThis.document = {createElement: tag => new Element(tag)};
+  t.after(() => { globalThis.document = original; });
+  const root = new Element('div');
+  const genres = [row(1, null, 'Source genre', 5)];
+  const playbackTracks = [{track_id: 2, genre_ids: [1]}];
+  renderGenreAtlas(root, genres, {playbackTracks, listenHref: id => `#genre=${id}`});
+  assert.equal(walk(root).find(node => node.className === 'fma-atlas-listen').href, '#genre=1');
+  renderGenreAtlas(root, genres, {playbackTracks});
+  assert.equal(walk(root).find(node => node.className === 'fma-atlas-listen').href, '#listen&genre=1');
+});

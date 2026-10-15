@@ -283,3 +283,85 @@ for (const failure of ['http', 'invalid-index']) {
     }, null, failure);
   });
 }
+
+
+test('listening families retain all source IDs, direct counts, filter history and the active player', {
+  skip,
+  timeout: 30000,
+}, async () => {
+  const index = JSON.parse(await readFile(join(process.env.OPENNOISE_FMA_DISCOVERY_SITE, 'genre-discovery.json')));
+  const track = Object.values(index.tracks)[0];
+  const genre = index.genres.find(row => row.genre_id === track.genre_ids[0]);
+  await browser(async ({evaluate, wait, command, requests}) => {
+    assert.ok(!requests.some(row => row.request.url.endsWith('/fma-genre-map.js')), 'atlas JavaScript is lazy');
+    await evaluate(`location.hash = '#families'`);
+    await wait('document.querySelectorAll(".fma-atlas-name a, .fma-atlas-family h2 a").length === 164');
+    const displayed = await evaluate(`
+      [...document.querySelectorAll('.fma-genre-atlas [data-genre-id]')].map(anchor => {
+        const counts = anchor.closest('.fma-atlas-row, .fma-atlas-family').querySelector('.fma-atlas-counts');
+        return {
+          id: Number(anchor.dataset.genreId),
+          tracks: counts.querySelector('.fma-atlas-count').textContent,
+          excerpts: counts.querySelector('.fma-atlas-listen')?.textContent ?? null,
+          href: counts.querySelector('.fma-atlas-listen')?.getAttribute('href') ?? null,
+        };
+      }).sort((a, b) => a.id - b.id)
+    `);
+    assert.deepEqual(displayed, index.genres.map(row => ({
+      id: row.genre_id,
+      tracks: `${new Intl.NumberFormat('en').format(row.track_count)} tracks`,
+      excerpts: row.track_ids.length ? `Listen · ${row.track_ids.length} excerpt${row.track_ids.length === 1 ? '' : 's'}` : null,
+      href: row.track_ids.length ? `#genre=${row.genre_id}` : null,
+    })).sort((a, b) => a.id - b.id));
+    const output = process.env.OPENNOISE_FMA_DISCOVERY_EVIDENCE;
+    const screenshot = async name => {
+      if (!output) return;
+      await mkdir(output, {recursive: true});
+      const image = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(output, name + '.png'), Buffer.from(image.data, 'base64'));
+    };
+    await screenshot('listening-families-desktop');
+    assert.match(await evaluate('document.querySelector("#discovery-status").textContent'), /not musical similarity/);
+    assert.ok(!requests.some(row => /\/audio\//.test(row.request.url)));
+
+    await evaluate(`location.hash = '#genre=${genre.genre_id}'`);
+    await wait(`!!document.querySelector('[data-play-id="${track.track_id}"]')`);
+    await evaluate(`document.querySelector('[data-play-id="${track.track_id}"]').click()`);
+    await wait('document.querySelector("audio")?.currentTime > .1 && !document.querySelector("audio").paused');
+    await evaluate('window.originalPlayer = document.querySelector("audio"); location.hash = "#families"');
+    await wait('!!document.querySelector(".fma-atlas-search")');
+    assert.ok(await evaluate('document.querySelector("audio") === window.originalPlayer && !window.originalPlayer.paused'));
+    await evaluate(`
+      const search = document.querySelector('.fma-atlas-search');
+      search.focus();
+      search.value = '${genre.genre_id}';
+      search.dispatchEvent(new Event('input', {bubbles: true}));
+      document.querySelector('.fma-atlas-playable').click();
+    `);
+    const filteredHash = await evaluate('location.hash');
+    assert.ok(filteredHash.includes('q=' + genre.genre_id) && filteredHash.includes('playable=1'));
+    assert.match(await evaluate('document.querySelector(".fma-atlas-status").textContent'), /^1 of 164 genres with local excerpts/);
+    await evaluate(`document.querySelector('.fma-genre-atlas [data-genre-id="${genre.genre_id}"]').focus()`);
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter'});
+    await wait(`location.hash === '#genre=${genre.genre_id}' && !document.querySelector('.fma-genre-atlas')`);
+    await evaluate('history.back()');
+    await wait(`location.hash === ${JSON.stringify(filteredHash)} && !!document.querySelector('.fma-atlas-search')`);
+    assert.equal(await evaluate('document.querySelector(".fma-atlas-search").value'), String(genre.genre_id));
+    assert.equal(await evaluate('document.querySelector(".fma-atlas-playable").checked'), true);
+    assert.ok(await evaluate('document.querySelector("audio") === window.originalPlayer && !window.originalPlayer.paused'));
+
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+    const before = requests.filter(row => /\/audio\//.test(row.request.url)).length;
+    await command('Page.reload');
+    await wait('!!document.querySelector(".fma-atlas-search")');
+    assert.equal(await evaluate('location.hash'), filteredHash);
+    assert.equal(await evaluate('document.querySelector(".fma-atlas-search").value'), String(genre.genre_id));
+    assert.equal(await evaluate('document.querySelectorAll("audio").length'), 0);
+    assert.equal(requests.filter(row => /\/audio\//.test(row.request.url)).length, before);
+    await evaluate('document.querySelector(".fma-atlas-filters button").click()');
+    await screenshot('listening-families-mobile');
+    assert.equal(await evaluate('document.querySelectorAll(".fma-genre-atlas [data-genre-id]").length'), 164);
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+  });
+});
