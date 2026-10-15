@@ -14,7 +14,7 @@ from opennoise.deployment.fma_genre_discovery import _descriptor_binding
 
 
 class DescriptorNavigationTests(unittest.TestCase):
-    def test_only_complete_source_bound_map_exposes_a_fixed_local_route(self) -> None:
+    def test_only_complete_source_bound_map_exposes_a_fixed_local_route(self) -> None:  # noqa: PLR0915 -- sequential custody mutations share one bounded fixture.
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             explorer = root / "expanded" / "explorer"
@@ -44,7 +44,13 @@ class DescriptorNavigationTests(unittest.TestCase):
                 body = canonical_json(manifest)
                 (explorer / shard).write_bytes(content)
                 (explorer / relative).write_bytes(body)
+                artist_body = canonical_json({"artists": [[7, "Native name", 1]]})
+                (explorer / "artist-index.json").write_bytes(artist_body)
                 inventory = {
+                    "artist-index.json": {
+                        "sha256": hashlib.sha256(artist_body).hexdigest(),
+                        "bytes": len(artist_body),
+                    },
                     relative: {"sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)},
                     shard: binding,
                 }
@@ -71,6 +77,10 @@ class DescriptorNavigationTests(unittest.TestCase):
             result = _descriptor_binding(root, "expanded", catalog)
             assert result is not None
             self.assertEqual(result["href"], "expanded/explorer/index.html#descriptor-map")
+            (explorer / "artist-index.json").write_bytes(b"{}")
+            with self.assertRaisesRegex(ValueError, "artist index"):
+                _descriptor_binding(root, "expanded", catalog)
+            save()
             (explorer / shard).write_bytes(b"[]")
             with self.assertRaisesRegex(ValueError, "exported bytes"):
                 _descriptor_binding(root, "expanded", catalog)

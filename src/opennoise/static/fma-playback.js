@@ -153,6 +153,40 @@ export async function requestGenreStarters({entries, json}) {
   }
 }
 
+/** Explicit descriptor selection across fixed collections; the starter limit remains three. */
+export async function requestDescriptorQueue({entries, json}) {
+  const selections = Array.isArray(entries) && entries.length <= 64
+    ? entries.map(entry => ({id: entry?.id, config: {...entry?.config}}))
+    : [];
+  const version = beginRequest(() => requestDescriptorQueue({entries: selections, json}));
+  try {
+    if (!selections.length || new Set(selections.map(entry => entry.id)).size !== selections.length) {
+      throw new Error('Invalid descriptor queue.');
+    }
+    const packs = new Map(), chosen = [];
+    for (const selection of selections) {
+      const path = selection.config.manifest;
+      if (!['original/audio/manifest.json', 'expanded/audio/manifest.json', 'coverage/audio/manifest.json'].includes(path)
+        || !Number.isSafeInteger(selection.id) || selection.id <= 0) {
+        throw new Error('Invalid descriptor queue source.');
+      }
+      if (!packs.has(path)) packs.set(path, await loadPlayback(selection.config, json));
+      if (version !== requestVersion) return false;
+      const pack = packs.get(path), entry = pack.manifest.tracks[String(selection.id)];
+      if (!entry) throw new Error('Descriptor queue identity missing from manifest.');
+      chosen.push({entry, pack});
+    }
+    pendingRequest = null;
+    for (const {entry, pack} of chosen) entryPacks.set(entry, pack);
+    queueEntries = chosen.map(item => item.entry);
+    queueIndex = 0;
+    return await startCurrent(true);
+  } catch {
+    if (version === requestVersion) failPlayback();
+    return false;
+  }
+}
+
 /** Call only from an explicit user Play action; route rendering never calls this API. */
 export async function requestPlay({config, id, ids = null, json, queue = false}) {
   const retry = {config, id, ids: Array.isArray(ids) ? [...ids] : ids, json, queue};
