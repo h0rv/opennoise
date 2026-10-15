@@ -50,7 +50,7 @@ export function renderGenreAtlas(container, sourceGenres, options = {}) {
     const available = excerpts.get(genre.genre_id)?.size ?? 0;
     if (available) {
       const listen = htmlNode('a', `Listen · ${available} excerpt${available === 1 ? '' : 's'}`);
-      listen.href = `#listen&genre=${genre.genre_id}`; listen.className = 'fma-atlas-listen';
+      listen.href = options.listenHref?.(genre.genre_id) ?? `#listen&genre=${genre.genre_id}`; listen.className = 'fma-atlas-listen';
       listen.setAttribute('aria-label', `Listen to ${available} local excerpt${available === 1 ? '' : 's'} directly tagged ${genre.title}`);
       group.append(listen);
     }
