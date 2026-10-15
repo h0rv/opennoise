@@ -5,7 +5,9 @@ local implementation and evaluation checkpoint, not a claim that this target has
 been reached. Coverage, model recovery, listening, and interaction are separate
 acceptance criteria; they cannot be averaged into a meaningful overall percentage.
 
-## Delivered local explorer — 2026-10-15
+## Pre-restoration local snapshot — 2026-10-15
+
+Later work restores [descriptor maps](reports/FMA_DESCRIPTOR_MAP_RESTORATION_20261015.md), adds [album navigation](https://github.com/h0rv/opennoise/pull/34), and adds [portable bundle verification](https://github.com/h0rv/opennoise/pull/33). The table below preserves the earlier snapshot.
 
 This checkpoint describes the delivered FMA listening bundle, inspected against
 main `57054bdd76d608922b3ccb926c737a4682aa96e9`. It is distinct from the

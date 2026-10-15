@@ -4,7 +4,7 @@ import test from 'node:test';
 
 const walk=node=>[node,...node.children.flatMap(walk)];
 class Node {
-  constructor(tag){this.tagName=tag;this.children=[];this.style={};this.dataset={};this.handlers={};this.attributes={};this.clientWidth=360;this.context=new Proxy({},{get:(target,key)=>target[key]??(()=>{}),set:(target,key,value)=>{target[key]=value;return true;}});}
+  constructor(tag){this.tagName=tag;this.children=[];this.style={};this.dataset={};this.handlers={};this.attributes={};this.clientWidth=360;this.context=new Proxy({measureText:text=>({width:text.length*6})},{get:(target,key)=>target[key]??(()=>{}),set:(target,key,value)=>{target[key]=value;return true;}});}
   append(...children){this.children.push(...children);}
   replaceChildren(...children){this.children=children;}
   setAttribute(key,value){this.attributes[key]=value;}
@@ -15,7 +15,7 @@ class Node {
   scrollIntoView(){}
 }
 const source=await readFile(new URL('../../src/opennoise/static/fma-descriptor-map.js',import.meta.url),'utf8');
-const {renderDescriptorMap}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const {renderDescriptorMap,descriptorExtent,descriptorScale,descriptorLabels}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 function setup(t){const document=globalThis.document,window=globalThis.window;globalThis.document={createElement:tag=>new Node(tag)};globalThis.window={devicePixelRatio:1};t.after(()=>{globalThis.document=document;globalThis.window=window;});return {rows:new Node('div'),heading:new Node('h1'),status:new Node('p')};}
 const manifest={revision:'fma-descriptor-map-view-v1',genres:[{id:1,position:[1,2]},{id:2,position:null}],artist_shards:[]};
 const genres=new Map([[1,{genre_id:1,title:'Known name'}],[2,{genre_id:2,title:'Unpositioned name'}]]);
@@ -89,4 +89,51 @@ test('play these excerpts explicitly queues the full unique selection beyond six
   const queue=walk(nodes.rows).find(node=>node.className==='descriptor-play-selection');
   assert.equal(queue.textContent,'Play these excerpts');queue.handlers.click();
   assert.deepEqual(played,[{id:10,ids:Array.from({length:64},(_,i)=>i+10)}]);
+});
+
+
+test('descriptor extent fits sub-unit values and keeps zero or missing coordinates finite', () => {
+  assert.equal(descriptorExtent([{position: [.02, -.08]}, {position: null}]), .08);
+  assert.equal(descriptorExtent([{position: [0, 0]}]), Number.EPSILON);
+  assert.equal(descriptorExtent([]), Number.EPSILON);
+  assert.equal(descriptorExtent([{position: [3, -2]}]), 3);
+});
+
+test('labels are deterministic, collision-free, bounded and prioritize the selected name', () => {
+  const points = Array.from({length: 20}, (_, index) => ({
+    row: {id: index + 1, name: 'Genre ' + (index + 1)}, x: 100, y: 100,
+  }));
+  const measure = text => text.length * 6;
+  const labels = descriptorLabels(points, 300, 200, measure, 20);
+  assert.equal(labels[0].id, 20);
+  assert.ok(labels.length < points.length);
+  assert.deepEqual(labels, descriptorLabels([...points].reverse(), 300, 200, measure, 20));
+  for (const [index, box] of labels.entries()) {
+    assert.ok(box.left >= 4 && box.right <= 296 && box.top >= 4 && box.bottom <= 196);
+    for (const other of labels.slice(index + 1)) {
+      assert.ok(box.right + 3 <= other.left || other.right + 3 <= box.left ||
+        box.bottom + 3 <= other.top || other.bottom + 3 <= box.top);
+    }
+  }
+  assert.equal(points.length, 20);
+});
+
+test('narrow canvas truncates long labels without mutating native names', () => {
+  const name = 'A native genre with a very long retained source name';
+  const point = {row: {id: 7, name}, x: 12, y: 60};
+  const labels = descriptorLabels([point], 120, 100, text => text.length * 6, 7);
+  assert.equal(labels.length, 1);
+  assert.ok(labels[0].text.endsWith('…'));
+  assert.ok(labels[0].right <= 116);
+  assert.equal(point.row.name, name);
+});
+
+
+test('wide viewport fits unequal axis extents using one aspect-preserving scale', () => {
+  const rows = [{position: [5, 2]}];
+  const scale = descriptorScale(1000, 400, descriptorExtent(rows, 0), descriptorExtent(rows, 1));
+  assert.equal(scale, 86);
+  assert.equal(5 * scale, 430);
+  assert.equal(2 * scale, 172);
+  assert.ok(Number.isFinite(descriptorScale(390, 330, Number.EPSILON, Number.EPSILON)));
 });
