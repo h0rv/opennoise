@@ -5,7 +5,75 @@ local implementation and evaluation checkpoint, not a claim that this target has
 been reached. Coverage, model recovery, listening, and interaction are separate
 acceptance criteria; they cannot be averaged into a meaningful overall percentage.
 
-## Reference and acceptance
+## Delivered local explorer — 2026-10-15
+
+This checkpoint describes the delivered FMA listening bundle, inspected against
+main `57054bdd76d608922b3ccb926c737a4682aa96e9`. It is distinct from the
+September MusicBrainz research exports described below. It does not establish
+complete Every Noise parity or a measured overall parity percentage.
+
+| Criterion | Delivered FMA state | Remaining limitation |
+| --- | --- | --- |
+| Catalog navigation | 109,727 track records, 16,916 source artist records and 164 genre definitions; title, artist and native-ID search, genre/artist/track pages and full-catalog handoff | This is the retained FMA corpus, not the historical 198,409-artist MusicBrainz export or complete reference membership coverage |
+| Listening coverage | 104 distinct licensed excerpts from 103 artists; 132 of 164 genres have directly tagged excerpts | 32 genres have no excerpt; 74 have exactly one. Multiple genre tags on one recording do not create independent examples |
+| Interaction | Root search, source genre families, direct subgenre navigation, deep links, history, keyboard/mobile controls, retry and skip-link recovery | Full-catalog document handoffs stop the root player; catalog metadata is much broader than attached audio |
+| Playback | Persistent single player, attribution, bounded suggestions and up to three starting excerpts across the two collections; 58 genres have multiple starters and 35 starter sequences span collections | Each audio manifest retains its 64-clip bound. Listening coverage and musical representativeness remain separate |
+| Maps | Source hierarchy browsing is attached | Neither delivered collection has a descriptor-map attachment. Existing map code or historical map results do not establish current delivery; source hierarchy is not sonic geometry |
+| Suggestions and quality | Descriptor suggestions use each collection's bounded pool, exclude the query's artist/album/duplicate component and preserve source/model distinctions | Musical relevance and representative quality remain unmeasured. Starter selection uses distinct artists, fewer direct tags and native ID, not listening judgments |
+| Delivery | Checksum-bound local ZIP and genuine-browser evidence; no public deployment | Local delivery does not satisfy public-promotion or canonical production build gates |
+
+The source genre supplement in the full catalogs contains 1,000 Wikidata genre
+records and 78 directly associated artists. Those identities and relationships
+remain separate from FMA; adding the two label counts would not measure genre
+coverage or establish an artist identity bridge.
+
+The delivered archive is `OpenNoise-listening-104-complete-ui-20261015.zip`
+(131,029,028 bytes), SHA-256
+`22f98215b5b2731bff2ac81257ca147ea1026e527eb66ae2f3550b4e15a8eeed`.
+Its `current-export-receipt.json`, SHA-256
+`d2110f3802628c7bb0756e5f19466f51f03c6ee6bbaddbd73d5952b05e257ce3`,
+records source tree `818f07206f57ec6d6d1946c90ccc6b60ac2e76a9`, 14 passing
+genuine-browser tests with zero skips, all 64 expanded-collection clips played,
+and unchanged prior native data, model and audio bytes. The later main commit
+only changes the browser test's cold-launch allowance. The bundle's
+`genre-discovery.json`, SHA-256
+`b3522641774d99156fc0c176e0102b03ffd274ca63ad80b6efb8850d669d3cec`,
+and both `explorer/catalog.json` files provide the counts above. The receipt
+states `public_deployment: false` and `musical_representativeness: not_judged`.
+These are retained local artifacts, not newly claimed public URLs.
+
+The executable contracts are the [genre discovery tests](../tests/static/fma_genre_discovery_contract.mjs),
+[search and catalog handoff tests](../tests/static/fma_discovery_search_contract.mjs),
+[starter sequence test](../tests/static/fma_genre_starters_contract.mjs) and
+[playback tests](../tests/static/fma_playback_contract.mjs).
+Their successes establish the tested interactions, not musical quality.
+
+## Retained MusicBrainz custody versus serving
+
+The September corpus is not lost: the current offline custody assessment streamed
+387,435 direct pairs for 198,409 artists from object
+`b1fc1ac9428832cb4543710b716e2d47eb8cc62dc052ed4d768ffb27dd1dcc3e`,
+and 164,404 canonical names from object
+`48a9854906c5e430acadae70371165e7c21a6d0e365e9a24177e2e5a37fc7291`.
+The retained credit SQLite object
+`100af6ec48bae689eb5567e66648edf96dde74a7e06e76c2c32abd195eaf7a63`
+contains 352 artists, 87 releases and 1,032 tracks. These are separate retained
+inputs, not features currently integrated into the FMA listening bundle.
+
+The assessment found no retained enriched-name overlay supporting the historical
+198,391-name result in this workspace. Custody receipts mark public export as
+unauthorized and name serving as unauthorized; retained bytes do not grant
+serving permission. No exact FMA-to-MusicBrainz identity bridge was demonstrated
+by this assessment. Its local evidence is
+`opennoise-artist-gap-20261015/assessment.json`, SHA-256
+`09e37a877c8010899f95b258044e401e55d5f08f35f9d35ab37a8c2cf1361d9a`.
+
+## Historical reference and acceptance — September/October 2026
+
+The following findings and reproduction commands describe their dated research
+exports. Preserve them as historical evidence; they are not the delivered FMA
+bundle's current inventory or serving authorization.
+
 
 Live access to `everynoise.net` and `everynoise.com` was blocked in this environment.
 `poe bootstrap` restored the existing pinned 6,291-genre reference with zero
@@ -14,7 +82,7 @@ quarantine. Its source SHA-256 is
 The reference describes Spotify observations through 2023-11-19, not a live
 catalog. Historical names and geometry are evaluation inputs only.
 
-| Criterion | Delivered state | Acceptance still needed |
+| Criterion | Historical research state | Acceptance still needed |
 | --- | --- | --- |
 | Genre coverage | 697 exact native source labels match 697 of 6,291 reference names: 11.08% | Learn finer overlapping communities from richer open tags, release context, and aggregates; reference names are an evaluation universe, not the construction ceiling |
 | Complete artist navigation | All 198,409 source artists and 387,435 direct pairs are reachable through static pages and search | Complete reference memberships and reviewed identity bridges for a reference-recall measurement |
@@ -23,7 +91,7 @@ catalog. Historical names and geometry are evaluation inputs only.
 | Artist maps | Bounded direct-member overlap maps for every source genre; 683 have geometry | Independent artist relevance and geometry assessment; acoustic-axis equivalence is unverified |
 | Artist discovery model | Held-out source reconstruction improves while preserving cold-artist denominators and source roles | External relevance evidence, calibrated ranking, and full missing-genre coverage |
 | Releases and tracks | Retained credit metadata for 87 releases and 1,032 tracks, linked to exact source artists | Complete reference release/track coverage; representative ranking and playlists |
-| Listening | Existing metadata-only policy remains in effect | Playback policy and a permitted provider integration |
+| Listening | That historical batch was metadata-only | The separately authorized FMA excerpts above supersede a blanket no-playback description, without establishing broad provider integration |
 | Release | Static local builds with receipt-bound inputs and browser evidence | Existing sealed catalog/layout and public-promotion gates |
 
 Open-data model enrichment is the central construction goal: discover overlapping
@@ -37,7 +105,7 @@ They do not recover Every Noise's organic/mechanical or atmospheric/bouncy axes.
 Proper-genre observations, release credits, model neighbors, and artist proposals
 retain distinct roles. Album credits never create a genre membership.
 
-The [current unified research export](checkpoints/LOCAL_DISCOVERY_PRODUCT_20260930.md)
+The [2026-09-30 unified research export](checkpoints/LOCAL_DISCOVERY_PRODUCT_20260930.md)
 adds a named-style atlas alongside learned communities and the source explorer.
 Its 31,864 retained values include 3,920 default candidate names; exact matches
 cover 2,112 reference names overall (33.57%) and 1,223 in the default view
@@ -57,9 +125,9 @@ default suggestions. Historical display-neighbor recovery remains very low;
 music relevance, sonic axes, representative quality, listening, and complete
 reference memberships are still separate unresolved criteria.
 
-## Model and data results
+## Historical model and data results
 
-The latest local research adds a bulk MusicBrainz tag source and a
+The September local research added a bulk MusicBrainz tag source and a
 [paired evaluation](checkpoints/EMERGENT_COMMUNITY_EVALUATION_CONTRACT_20260930.md).
 On identical held targets, enrichment improves overall Recall@10 from 39.86%
 to 47.06% and tag-only recovery from 19.92% to 35.03%. The conditioned baseline
@@ -102,7 +170,7 @@ albums define or belong to the selected genre. Missing context remains explicit.
 See [the release-context checkpoint](checkpoints/OFFLINE_RELEASE_CREDIT_CONTEXT_20260930.md)
 for source bindings, role separation, and offline replay.
 
-## Reproduction
+## Historical research reproduction
 
 Use new `.cache` destinations; builders do not replace completed artifacts.
 Synchronize dependencies with `poe sync`. Run the catalog and native-label
