@@ -128,3 +128,53 @@ test('retained search reaches every title with keyboard, history, direct playbac
     if (output) await writeFile(join(output,'search-browser.json'),JSON.stringify({revision:'fma-retained-search-browser-v1',all_track_titles_reachable:Object.keys(index.tracks).length,artist_query:track.artist_name,played_track:track.track_id,history_reload:true,keyboard:true,mobile_no_overflow:true},null,2));
   });
 });
+
+test('full source handoff finds an unattached title, carries queries and leaves playback stopped', {skip, timeout:120000}, async () => {
+  const root = process.env.OPENNOISE_FMA_SEARCH_SITE;
+  const index = JSON.parse(await readFile(join(root, 'genre-discovery.json')));
+  const catalog = JSON.parse(await readFile(join(root, 'expanded/explorer/catalog.json')));
+  const firstShard = JSON.parse(await readFile(join(root, 'expanded/explorer', catalog.track_search.shards[0])));
+  const source = await readFile(new URL('../../src/opennoise/static/fma-discovery-search.js', import.meta.url), 'utf8');
+  const {searchDiscovery} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+  const artists = new Map(Object.values(index.tracks).map(track => [track.artist_id, {
+    id:track.artist_id, name:track.artist_name, track_ids:[track.track_id]
+  }]));
+  const fixture = firstShard.find(([id, title]) => title?.includes('&') && !index.tracks[id]
+    && Object.values(searchDiscovery(index, artists, title)).every(rows => !rows.length));
+  assert.ok(fixture, 'authentic unattached title containing an encoded ampersand exists');
+  const [id, title] = fixture;
+  await browser(async ({evaluate, wait, command, requests}) => {
+    const retained = Object.values(index.tracks)[0];
+    await evaluate(`location.hash='#search&q=${retained.track_id}'`);
+    await wait(`document.querySelector('[data-search-kind="tracks"] button[data-play-id="${retained.track_id}"]')`);
+    await evaluate(`document.querySelector('[data-search-kind="tracks"] button[data-play-id="${retained.track_id}"]').click()`);
+    await wait("document.querySelector('audio')?.currentTime > .1 && !document.querySelector('audio').paused");
+    const hash = '#search&q=' + encodeURIComponent(title);
+    await evaluate(`location.hash=${JSON.stringify(hash)}`);
+    await wait("document.querySelector('.catalog-search-handoff') && document.querySelector('#discovery-status').textContent.includes('No matching')");
+    assert.match(await evaluate("document.querySelector('.catalog-search-handoff').textContent"), /Leaving this page stops the current player/);
+    assert.ok(!requests.some(row => row.request.url.includes('/track-search/')), 'front page does not load full search shards');
+    assert.equal(await evaluate("document.querySelector('audio').paused"), false);
+    await evaluate("document.querySelector('[data-catalog-search=tracks]').click()");
+    await wait(`location.pathname === '/expanded/explorer/index.html' && document.querySelector('#rows a[href="#track=${id}"]')`);
+    assert.equal(await evaluate("new URLSearchParams(location.hash.slice(1)).get('q')"), title);
+    assert.equal(await evaluate("document.querySelectorAll('audio').length"), 0);
+    await evaluate('history.back()');
+    await wait(`location.pathname === '/index.html' && location.hash === ${JSON.stringify(hash)} && document.querySelector('.catalog-search-handoff')`);
+    assert.ok(await evaluate("[...document.querySelectorAll('audio')].every(audio => audio.paused)"));
+    await evaluate("document.querySelector('[data-catalog-search=artists]').click()");
+    await wait("location.pathname === '/expanded/explorer/index.html' && document.querySelector('h1')?.textContent === 'Artists'");
+    assert.equal(await evaluate("new URLSearchParams(location.hash.slice(1)).get('q')"), title);
+    assert.equal(await evaluate("document.querySelectorAll('audio').length"), 0);
+    await command('Page.reload');
+    await wait("document.querySelector('h1')?.textContent === 'Artists'");
+    assert.equal(await evaluate("new URLSearchParams(location.hash.slice(1)).get('q')"), title);
+    assert.equal(await evaluate("document.querySelectorAll('audio').length"), 0);
+    const output = process.env.OPENNOISE_FMA_SEARCH_EVIDENCE;
+    if (output) await writeFile(join(output, 'catalog-handoff.json'), JSON.stringify({
+      revision:'fma-catalog-search-handoff-browser-v1', source_track_id:id, source_title:title,
+      absent_retained_selection:true, source_result_found:true, encoded_query:true,
+      history_preserved:true, playback_stopped:true, no_autoplay:true
+    }, null, 2));
+  });
+});

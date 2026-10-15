@@ -50,6 +50,35 @@ export function searchDiscovery(index, artists, text) {
   };
 }
 
+export function catalogSearchLinks(text) {
+  const query = new URLSearchParams({q: text}).toString();
+  return ['tracks', 'artists'].map(kind => ({
+    kind,
+    href: `expanded/explorer/index.html#${kind}&${query}`
+  }));
+}
+
+function catalogHandoff(text) {
+  const section = document.createElement('section');
+  section.className = 'catalog-search-handoff';
+  const heading = document.createElement('h2');
+  heading.textContent = 'Search the full source catalog';
+  const explanation = document.createElement('p');
+  explanation.textContent = 'Explore metadata beyond the attached recordings. Most catalog tracks have no local audio. Leaving this page stops the current player.';
+  const list = document.createElement('ul');
+  for (const {kind, href} of catalogSearchLinks(text)) {
+    const item = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = href;
+    link.dataset.catalogSearch = kind;
+    link.textContent = `Search source ${kind}`;
+    item.append(link);
+    list.append(item);
+  }
+  section.append(heading, explanation, list);
+  return section;
+}
+
 export function renderDiscoverySearch({ index, artists, text, rows, heading, status, playButton }) {
   heading.textContent = 'Search';
   if (!normalizeQuery(text)) {
@@ -96,4 +125,5 @@ export function renderDiscoverySearch({ index, artists, text, rows, heading, sta
     section.append(label, list);
     rows.append(section);
   }
+  rows.append(catalogHandoff(text));
 }
