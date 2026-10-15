@@ -1,12 +1,24 @@
 # OpenNoise
 
-OpenNoise is an open, metadata-only music graph and a static semantic atlas.
-Offline Python tooling ingests bounded source snapshots, builds evidence and
-layout artifacts, and exports one backend-free web directory. The browser only
-loads precomputed JSON, HTML, CSS, and JavaScript; it never calls an OpenNoise
-API or computes a graph layout.
+OpenNoise builds static music explorers from bounded, provenance-checked data.
+The current local FMA listening explorer has 133 recordings from 129 artists,
+with excerpts for 143 of 164 source genre labels. Its browser loads precomputed
+JSON, HTML, CSS and JavaScript, and plays separately licensed local MP3 excerpts.
+Python performs ingestion, numerical modeling and layout offline; browsing needs
+no model server, Worker, WASM or OpenNoise API.
 
-No audio recordings or audio previews enter the project.
+The older metadata-only semantic atlas remains a separate publication path.
+Its source adapters still reject audio. The explicitly approved FMA listening
+pipeline separately captures and verifies audio, credits and licenses; it does
+not relax the metadata adapters or establish musical relevance.
+
+Open the self-contained [architecture walkthrough](docs/serving/architecture.html)
+for current model/data facts, or read the
+[release input and deployment plan](docs/serving/LISTENING_RELEASE_INPUTS.md).
+Code, tests and small recipes are in Git. Captured datasets, model artifacts,
+audio and the verified listening export are separate workspace artifacts; a
+fresh clone does not contain the listening site. Main CI currently checks source
+code and does not deploy it.
 
 The [open foundation](docs/foundation/README.md) now includes runnable CC0
 examples, a stage/input inventory, overlapping style-model research, separate
@@ -16,7 +28,7 @@ records the simpler discovery UI, credited music links, confirmed rare-style
 recovery gain, and remaining musical parity gaps. Full-corpus research and
 canonical publication still require additional retained inputs.
 
-The latest local research combines a named-style atlas, learned broad/sub/micro
+Earlier metadata research combines a named-style atlas, learned broad/sub/micro
 communities, and source genres in one static discovery export. It includes all
 198,409 source artists, 3,920 default candidate style names, and 3,505 bounded
 artist maps. Candidate names and source geometry do not establish Every Noise
@@ -31,9 +43,10 @@ The [AcousticBrainz pilot](docs/checkpoints/ACOUSTICBRAINZ_BENCHMARK_METADATA_20
 verifies a bounded additional source of recording-level sonic metadata; it
 changes no model or published artist genres.
 
-## Static delivery
+## Older semantic-atlas delivery
 
-The canonical publication path is the verified semantic atlas. It accounts for
+The existing `poe build` / `poe deploy` path is the verified semantic atlas,
+not the current FMA listening export. It accounts for
 all 6,291 retained names: 2,945 placed nodes, 3,346 honest abstentions, 24
 overview regions, and bounded local structural edges.
 
