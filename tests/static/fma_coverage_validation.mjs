@@ -46,3 +46,35 @@ test('coverage rejects unknown collection, changed URL, mixed origins and thirte
   assert.throws(() => validate(fixture(13)));
   assert.throws(() => validate(fixture(127)));
 });
+
+test('extended root requires the exact coverage protocol and retains old limits', () => {
+  const value = fixture(17);
+  value.revision = 'fma-genre-discovery-v2';
+  value.collections.coverage.audio_revision = 'fma-local-coverage-extension-v2';
+  assert.equal(validate(value), value);
+  for (const revision of [undefined, 'unknown', 'fma-local-coverage-v1']) {
+    const changed = structuredClone(value);
+    changed.collections.coverage.audio_revision = revision;
+    assert.throws(() => validate(changed));
+  }
+  value.revision = 'fma-genre-discovery-v1';
+  assert.throws(() => validate(value));
+  const old = fixture();
+  old.collections.coverage.audio_revision = 'unknown';
+  assert.throws(() => validate(old));
+  const oversized = fixture(18);
+  oversized.revision = 'fma-genre-discovery-v2';
+  oversized.collections.coverage.audio_revision = 'fma-local-coverage-extension-v2';
+  assert.throws(() => validate(oversized));
+});
+
+test('playback rejects an index declaring a different coverage manifest protocol', async () => {
+  const playback = await readFile(new URL('../../src/opennoise/static/fma-playback.js', import.meta.url), 'utf8');
+  const body = playback.slice(playback.indexOf('async function loadPlayback('), playback.indexOf('\nlet persistent'));
+  const load = runInNewContext(`(${body})`, {URL, location: new URL('http://localhost/')});
+  const config = {manifest: 'coverage/audio/manifest.json', audio_revision: 'fma-local-coverage-extension-v2'};
+  const manifest = {revision: 'fma-local-coverage-v1', test_only: true, tracks: {}};
+  await assert.rejects(load(config, async () => manifest), /protocol differs/);
+  manifest.revision = config.audio_revision;
+  assert.equal((await load(config, async () => manifest)).manifest, manifest);
+});
