@@ -15,7 +15,11 @@ from typing import Any
 import zstandard
 
 from opennoise.common import canonical_json
-from opennoise.deployment.fma_listening_home import build_listening_home
+from opennoise.deployment.fma_listening_home import (
+    MAX_UNION_CLIPS,
+    build_listening_home,
+    collection_keys,
+)
 
 REVISION = "fma-genre-discovery-v1"
 MAX_INDEX_BYTES = 200_000
@@ -64,7 +68,7 @@ def _verified_inputs(root: Path) -> tuple[dict[str, Any], dict[str, Any], dict[s
     catalogs, audio = {}, {}
     with tempfile.TemporaryDirectory(prefix="fma-discovery-", dir=root.parent) as name:
         snapshot = Path(name)
-        for key in ("original", "expanded"):
+        for key in collection_keys(root):
             for folder in ("audio", "explorer"):
                 (snapshot / key / folder).mkdir(parents=True)
             for control in ("catalog.json", "static-receipt.json"):
@@ -260,11 +264,11 @@ def _descriptor_binding(  # noqa: C901 -- distinct source, path, inventory and s
 def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912 -- exact source joins and transparent bounded ranking.
     """Validate custody and return the complete native-genre listening union without writing."""
     receipt, catalogs, audio = _verified_inputs(root)
-    if catalogs["original"]["genres"] != catalogs["expanded"]["genres"]:
+    if any(catalog["genres"] != catalogs["original"]["genres"] for catalog in catalogs.values()):
         raise ValueError("collection native genre catalogs differ")
     tracks: dict[str, Any] = {}
     collections: dict[str, Any] = {}
-    for key in ("original", "expanded"):
+    for key in collection_keys(root):
         manifest = f"{key}/audio/manifest.json"
         collections[key] = {
             "manifest": manifest,
@@ -292,6 +296,8 @@ def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912 -- exact s
                 tracks[identity]["origins"].append(key)
             else:
                 tracks[identity] = {**projected, "collection": key, "origins": [key]}
+    if len(tracks) > MAX_UNION_CLIPS:
+        raise ValueError("genre discovery union exceeds 128 clips")
     genres = []
     for native in catalogs["original"]["genres"]:
         identity = native["genre_id"]

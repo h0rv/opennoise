@@ -21,6 +21,7 @@ DECODE_PROTOCOL = "ffprobe-ffmpeg-mp3-full-decode-v1"
 COLLECTION_REVISION = "fma-local-playback-collection-v1"
 EXTENSION_REVISION = "fma-local-eight-extension-v2"
 FOUR_ARTIST_REVISION = "fma-local-four-artist-extension-v3"
+COVERAGE_REVISION = "fma-local-coverage-v1"
 BOUNDED_EXTENSION_REVISION = "fma-local-bounded-extension-v1"
 MAX_MANIFEST_BYTES = 200_000
 MAX_DURATION_SECONDS = 31.0
@@ -261,6 +262,7 @@ def validate_playback_export(directory: Path) -> dict[str, Any]:
             EXTENSION_REVISION,
             FOUR_ARTIST_REVISION,
             BOUNDED_EXTENSION_REVISION,
+            COVERAGE_REVISION,
         }
         or manifest.get("test_only") is not False
         or manifest.get("public_deployment_authorized") is not False
@@ -281,9 +283,13 @@ def validate_playback_export(directory: Path) -> dict[str, Any]:
         EXTENSION_REVISION,
         FOUR_ARTIST_REVISION,
         BOUNDED_EXTENSION_REVISION,
+        COVERAGE_REVISION,
     }:
         from opennoise.deployment.fma_bounded_extension import (  # noqa: PLC0415 -- individually approved extension protocol.
             validate_bounded_metadata,
+        )
+        from opennoise.deployment.fma_coverage import (  # noqa: PLC0415 -- individually reviewed optional coverage.
+            validate_coverage_metadata,
         )
         from opennoise.deployment.fma_eight_extension import (  # noqa: PLC0415 -- optional collection protocol.
             validate_extension_metadata,
@@ -296,6 +302,7 @@ def validate_playback_export(directory: Path) -> dict[str, Any]:
         )
 
         validators = {
+            COVERAGE_REVISION: validate_coverage_metadata,
             BOUNDED_EXTENSION_REVISION: validate_bounded_metadata,
             COLLECTION_REVISION: validate_collection_metadata,
             EXTENSION_REVISION: validate_extension_metadata,
