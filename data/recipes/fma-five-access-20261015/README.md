@@ -3,8 +3,9 @@
 This separately reviewed v2 recipe preserves all twelve prior coverage excerpts and adds
 five exact native FMA recordings. The original and expanded collections remain unchanged.
 The coverage collection now contains 17 clips (18,392,179 audio bytes), and the three
-collections contain 133 unique recordings. These five recordings share previously retained
-artists and components; this is added listening access, not artist or component novelty.
+collections contain 133 unique recordings. Three additions use previously retained artists and two introduce new artists; all five
+share previously retained components. This is added listening access, with no component
+novelty claim.
 No musical quality validation or public deployment is claimed.
 
 The old coverage v1 recipe remains limited to 12 clips and the old root to 128. Only the
