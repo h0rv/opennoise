@@ -14,6 +14,7 @@ import zstandard
 
 from opennoise.common import canonical_json, sha256_file
 from opennoise.deployment.fma_genre_discovery import ASSETS, genre_index
+from opennoise.deployment.fma_listening_home import collection_keys
 from opennoise.deployment.local_listening_server import (
     MAX_FILE_BYTES,
     REVISION,
@@ -49,7 +50,7 @@ def _verify_site(root: Path) -> None:
     expected.update(ASSETS[1:])
     if json.loads((root / "genre-discovery.json").read_bytes()) != genre_index(root):
         raise ValueError("discovery index differs from retained source bindings")
-    for key in ("original", "expanded"):
+    for key in collection_keys(root):
         base = root / key / "explorer"
         receipt = json.loads((base / "static-receipt.json").read_bytes())
         if (

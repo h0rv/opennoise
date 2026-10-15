@@ -18,16 +18,25 @@ async function json(path) {
 }
 function validate(value) {
   if (value.revision !== 'fma-genre-discovery-v1' || !Array.isArray(value.genres) || value.genres.length > 200 || !value.tracks || Object.keys(value.tracks).length > 128) throw Error('Unsupported genre index.');
-  for (const key of ['original', 'expanded']) {
+  const collectionKeys = Object.keys(value.collections ?? {});
+  if (!collectionKeys.includes('original') || !collectionKeys.includes('expanded')
+    || collectionKeys.some(key => !['original', 'expanded', 'coverage'].includes(key))) throw Error('Invalid collection scope.');
+  for (const key of collectionKeys) {
     const map = value.collections?.[key]?.descriptor_map;
     if (map && map.href !== `${key}/explorer/index.html#descriptor-map`) throw Error('Invalid descriptor map location.');
   }
   const identities = value.genres.map(genre => genre.genre_id);
   if (new Set(identities).size !== identities.length || value.musical_quality_validated !== false) throw Error('Invalid source genre scope.');
-  for (const key of ['original', 'expanded']) if (value.collections?.[key]?.manifest !== `${key}/audio/manifest.json`) throw Error('Invalid collection location.');
+  for (const key of collectionKeys) if (value.collections?.[key]?.manifest !== `${key}/audio/manifest.json`) throw Error('Invalid collection location.');
   for (const [key, track] of Object.entries(value.tracks)) {
-    if (!Number.isSafeInteger(track.track_id) || track.track_id <= 0 || key !== String(track.track_id) || !['original', 'expanded'].includes(track.collection) || !Number.isSafeInteger(track.artist_id) || track.artist_id <= 0 || !Array.isArray(track.genre_ids) || new Set(track.genre_ids).size !== track.genre_ids.length || track.genre_ids.some(id => !identities.includes(id))) throw Error('Invalid excerpt identity.');
+    if (!Array.isArray(track.origins) || !track.origins.includes(track.collection)
+      || new Set(track.origins).size !== track.origins.length
+      || track.origins.some(origin => !collectionKeys.includes(origin))
+      || (track.origins.includes('coverage') && (track.origins.length !== 1 || track.collection !== 'coverage'))) throw Error('Invalid excerpt origins.');
+    if (!Number.isSafeInteger(track.track_id) || track.track_id <= 0 || key !== String(track.track_id) || !collectionKeys.includes(track.collection) || !Number.isSafeInteger(track.artist_id) || track.artist_id <= 0 || !Array.isArray(track.genre_ids) || new Set(track.genre_ids).size !== track.genre_ids.length || track.genre_ids.some(id => !identities.includes(id))) throw Error('Invalid excerpt identity.');
   }
+  const coverageCount = Object.values(value.tracks).filter(track => track.origins.includes('coverage')).length;
+  if (collectionKeys.includes('coverage') && (coverageCount < 1 || coverageCount > 12)) throw Error('Coverage collection exceeds its bound.');
   for (const genre of value.genres) {
     const expectedArtists = [...new Set(Object.values(value.tracks).filter(track => track.genre_ids.includes(genre.genre_id)).map(track => track.artist_id))].sort((a,b)=>a-b);
     const expected = Object.values(value.tracks).filter(track => track.genre_ids.includes(genre.genre_id)).map(track => track.track_id).sort((a,b)=>a-b);
