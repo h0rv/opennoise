@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import tempfile
 from collections import Counter
 from pathlib import Path
@@ -22,6 +23,7 @@ MAX_CONTROL_BYTES = 2_000_000
 MAX_AUDIO_FILES = 65
 MAX_NEIGHBORS = 6
 MAX_INVENTORY_BYTES = 4_000_000
+MAX_DESCRIPTOR_BYTES = 3_000_000
 POLICY = (
     "Up to three distinct artists per genre, choosing fewer direct source genre tags then "
     "native track ID; all available excerpts remain listed. This is a browsing heuristic, "
@@ -197,6 +199,64 @@ def _neighbor_binding(  # noqa: C901, PLR0912 -- portable exported manifest cust
     }
 
 
+def _descriptor_binding(  # noqa: C901 -- distinct source, path, inventory and size guards.
+    root: Path, key: str, catalog: dict[str, Any]
+) -> dict[str, str] | None:
+    """Expose a fixed local map route only after its static bytes and native scope verify."""
+    config = catalog.get("descriptor_map")
+    if config is None:
+        return None
+    relative = "descriptor-map/manifest.json"
+    if config.get("manifest") != relative:
+        raise ValueError("invalid descriptor map navigation path")
+    explorer = root / key / "explorer"
+    receipt = json.loads(_body(explorer / "static-receipt.json"))
+    binding = receipt["files_manifest"]
+    if binding["path"] != "files-manifest.json.zst":
+        raise ValueError("descriptor map inventory path differs")
+    compressed = _body(explorer / binding["path"])
+    if len(compressed) != binding["bytes"] or _sha(compressed) != binding["sha256"]:
+        raise ValueError("descriptor map inventory hash differs")
+    with zstandard.ZstdDecompressor().stream_reader(io.BytesIO(compressed)) as reader:
+        decoded = reader.read(MAX_INVENTORY_BYTES + 1)
+    if len(decoded) > MAX_INVENTORY_BYTES:
+        raise ValueError("descriptor map inventory exceeds bounded decode")
+    inventory = json.loads(decoded)
+    body = _body(explorer / relative, MAX_INDEX_BYTES)
+    manifest = json.loads(body)
+    shards = manifest.get("artist_shards")
+    if (
+        manifest.get("revision") != "fma-descriptor-map-view-v1"
+        or manifest.get("musical_validation_established") is not False
+        or manifest.get("metadata_receipt_sha256") != receipt.get("corpus_receipt_sha256")
+        or manifest.get("metadata_receipt_sha256") != _sha(_body(explorer / "corpus-receipt.json"))
+        or not isinstance(shards, list)
+        or len(shards) != len(set(shards))
+        or any(not re.fullmatch(r"descriptor-map/artists-[0-9]+\.json", name) for name in shards)
+        or set(manifest.get("files", {})) != set(shards)
+        or sorted(row["id"] for row in manifest["genres"])
+        != sorted(row["genre_id"] for row in catalog["genres"])
+        or manifest["counts"]["native_artists"] != catalog["counts"]["source_artists"]
+    ):
+        raise ValueError("descriptor map native scope differs")
+    total = len(body)
+    for name in [relative, *shards]:
+        content = body if name == relative else _body(explorer / name, MAX_INDEX_BYTES)
+        actual = {"sha256": _sha(content), "bytes": len(content)}
+        if inventory.get(name) != actual or (
+            name != relative and manifest["files"][name] != actual
+        ):
+            raise ValueError("descriptor map exported bytes differ")
+        if name != relative:
+            total += len(content)
+    if total != config.get("bytes") or total > MAX_DESCRIPTOR_BYTES:
+        raise ValueError("descriptor map export size differs")
+    return {
+        "href": f"{key}/explorer/index.html#descriptor-map",
+        "manifest_sha256": _sha(body),
+    }
+
+
 def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912 -- exact source joins and transparent bounded ranking.
     """Validate custody and return the complete native-genre listening union without writing."""
     receipt, catalogs, audio = _verified_inputs(root)
@@ -210,6 +270,9 @@ def genre_index(root: Path) -> dict[str, Any]:  # noqa: C901, PLR0912 -- exact s
             "manifest": manifest,
             "manifest_sha256": _sha(_body(root / manifest, MAX_INDEX_BYTES)),
         }
+        descriptor_map = _descriptor_binding(root, key, catalogs[key])
+        if descriptor_map is not None:
+            collections[key]["descriptor_map"] = descriptor_map
         neighbors = _neighbor_binding(root, key, catalogs[key], collections[key]["manifest_sha256"])
         if neighbors is not None:
             collections[key]["playable_neighbors"] = neighbors
