@@ -32,6 +32,8 @@ ASSETS = (
     "fma-discovery.js",
     "fma-discovery-search.js",
     "fma-discovery.css",
+    "fma-genre-map.js",
+    "fma-genre-map.css",
     "fma-playback.js",
     "fma-catalog.css",
     "fma-playable-neighbors.js",

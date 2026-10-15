@@ -41,6 +41,7 @@ function playButton(id, label = 'Play excerpt') {
 function route() {
   const p = new URLSearchParams(location.hash.slice(1));
   for (const kind of ['genre', 'artist', 'track']) if (p.has(kind)) { const id = p.get(kind); return /^[1-9][0-9]*$/.test(id) && Number.isSafeInteger(Number(id)) ? {kind, id:Number(id)} : {kind:'invalid'}; }
+  if (p.has('families')) return {kind: 'families', q: p.get('q') ?? '', playable: p.get('playable') === '1'};
   return {kind:p.has('search') ? 'search' : p.has('artists') ? 'artists':'genres', q:p.get('q') ?? '', all:p.get('all') === '1'};
 }
 function excerpt(id, preferred = false) {
@@ -136,6 +137,29 @@ function artistPage(id) {
   const origin=index.tracks[String(artist.track_ids[0])].collection;
   rows.append(link('Full source artist record',`${origin}/explorer/index.html#artist=${id}`),node('p','Opening the full catalog leaves this page and stops its player.'));
 }
+async function familyPage(state, current) {
+  heading.textContent = 'Genre families';
+  status.textContent = 'Source parent relationships, not musical similarity.';
+  const {renderGenreAtlas} = await import('./fma-genre-map.js');
+  if (!current()) return;
+
+  const atlas = node('div');
+  rows.append(atlas);
+  renderGenreAtlas(atlas, genres, {
+    playbackTracks: index.tracks,
+    query: state.q,
+    onlyWithExcerpts: state.playable,
+    listenHref: id => `#genre=${id}`,
+    onFilterChange: ({query, onlyWithExcerpts}) => {
+      if (!current()) return;
+      const parameters = new URLSearchParams('families');
+      if (query.trim()) parameters.set('q', query.trim());
+      if (onlyWithExcerpts) parameters.set('playable', '1');
+      history.replaceState(null, '', '#' + parameters);
+    },
+  });
+}
+
 async function render() {
   if (!index) return;
   const token = ++generation, state = route();
@@ -153,7 +177,9 @@ async function render() {
       ? 'Genre, artist, track or native ID' : 'Name or native ID';
   }
   try {
-    if (state.kind === 'search') {
+    if (state.kind === 'families') {
+      await familyPage(state, () => token === generation);
+    } else if (state.kind === 'search') {
       renderDiscoverySearch({index, artists, text: state.q, rows, heading, status, playButton});
     } else if (directoryView) {
       directory(state);

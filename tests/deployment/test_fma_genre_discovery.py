@@ -121,6 +121,8 @@ class GenreDiscoveryTests(unittest.TestCase):
                 self.assertEqual((root / "index.html").read_bytes(), b"fixture discovery asset")
                 self.assertTrue((root / "genre-discovery.json").is_file())
                 self.assertTrue((root / "fma-playback.js").is_file())
+                self.assertTrue((root / "fma-genre-map.js").is_file())
+                self.assertTrue((root / "fma-genre-map.css").is_file())
                 with self.assertRaisesRegex(ValueError, "outputs must be fresh"):
                     build_genre_discovery(root)
                 self.assertEqual((root / "collections.html").read_bytes(), b"original chooser")
