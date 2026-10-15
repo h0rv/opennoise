@@ -71,6 +71,23 @@ test('genre discovery covers every native route and plays both bounded sources w
     for(const genre of index.genres){
       await route(`#genre=${genre.genre_id}`);
       assert.deepEqual((await ids()).sort((a,b)=>a-b),[...genre.track_ids].sort((a,b)=>a-b));
+      const children = index.genres
+        .filter(child => child.parent_id === genre.genre_id)
+        .sort((a, b) => a.title.localeCompare(b.title) || a.genre_id - b.genre_id);
+      const displayedChildren = await evaluate(`
+        [...document.querySelectorAll('section[aria-label="Source subgenres"] li')].map(item => ({
+          id: Number(item.dataset.genreId),
+          href: item.querySelector('a').getAttribute('href'),
+          count: item.querySelector('small').textContent,
+        }))
+      `);
+      assert.deepEqual(displayedChildren, children.map(child => ({
+        id: child.genre_id,
+        href: `#genre=${child.genre_id}`,
+        count: child.track_ids.length
+          ? `${child.track_ids.length} local excerpt${child.track_ids.length === 1 ? '' : 's'}`
+          : 'No local excerpt',
+      })));
       const starting=await evaluate("[...document.querySelectorAll('section[aria-label=\"Starting excerpts\"] .discovery-excerpt')].map(n=>Number(n.dataset.trackId))");
       assert.deepEqual(starting,genre.starting_ids);
       assert.equal(new Set(starting.map(id=>index.tracks[id].artist_id)).size,starting.length);
@@ -164,5 +181,57 @@ test('approved artist additions expose and play both independent examples on all
         await evaluate("document.querySelector('#persistent-player .playback-stop').click()");
       }
     }
+  });
+});
+
+
+test('source families support keyboard descent, Back and mobile deep-link reload without audio', {
+  skip,
+  timeout: 30000,
+}, async () => {
+  const index = JSON.parse(await readFile(join(process.env.OPENNOISE_FMA_DISCOVERY_SITE, 'genre-discovery.json')));
+  const parent = index.genres.find(genre => index.genres.some(child => child.parent_id === genre.genre_id));
+  assert.ok(parent, 'retained source has a genre family');
+  const child = index.genres
+    .filter(genre => genre.parent_id === parent.genre_id)
+    .sort((a, b) => a.title.localeCompare(b.title) || a.genre_id - b.genre_id)[0];
+
+  await browser(async ({evaluate, wait, command, requests}) => {
+    const ready = id => wait(`
+      location.hash === '#genre=${id}' &&
+      document.querySelector('h1').textContent === ${JSON.stringify(index.genres.find(genre => genre.genre_id === id).title)} &&
+      document.querySelector('#content').getAttribute('aria-busy') === 'false'
+    `);
+    await evaluate(`location.hash = '#genre=${parent.genre_id}'`);
+    await ready(parent.genre_id);
+    const output = process.env.OPENNOISE_FMA_DISCOVERY_EVIDENCE;
+    const screenshot = async name => {
+      if (!output) return;
+      await mkdir(output, {recursive: true});
+      const image = await command('Page.captureScreenshot', {format: 'png'});
+      await writeFile(join(output, name + '.png'), Buffer.from(image.data, 'base64'));
+    };
+    await screenshot('genre-family-desktop');
+    await evaluate(`document.querySelector('section[aria-label="Source subgenres"] a').focus()`);
+    await command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter'});
+    await ready(child.genre_id);
+    assert.equal(await evaluate('document.activeElement.tagName'), 'H1');
+    assert.ok(await evaluate(`!!document.querySelector('#discovery-rows a[href="#genre=${parent.genre_id}"]')`));
+
+    await evaluate('history.back()');
+    await ready(parent.genre_id);
+    await evaluate('history.forward()');
+    await ready(child.genre_id);
+    await command('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
+    await command('Page.reload');
+    await ready(child.genre_id);
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+    await evaluate(`document.querySelector('#discovery-rows a[href="#genre=${parent.genre_id}"]').click()`);
+    await ready(parent.genre_id);
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+    await evaluate(`document.querySelector('section[aria-label="Source subgenres"]').scrollIntoView()`);
+    await screenshot('genre-family-mobile');
+    assert.equal(await evaluate('document.querySelectorAll("audio").length'), 0);
+    assert.ok(!requests.some(row => /\/audio\//.test(row.request.url)));
   });
 });

@@ -69,6 +69,33 @@ function directory(state) {
   if (!matches.length) rows.append(node('p','No matching names or native IDs.'));
   rows.append(list);
 }
+function genreChildren(id) {
+  const children = index.genres
+    .filter(genre => genre.parent_id === id)
+    .sort((a, b) => a.title.localeCompare(b.title) || a.genre_id - b.genre_id);
+  if (!children.length) return;
+
+  const section = node('section');
+  section.setAttribute('aria-label', 'Source subgenres');
+  section.append(node('h2', 'Source subgenres'));
+  section.append(node('p', 'Direct source children. Excerpt counts use each genre’s own tags; parent tags are not inherited.'));
+
+  const list = node('ul');
+  list.className = 'discovery-directory';
+  for (const genre of children) {
+    const item = node('li');
+    item.dataset.genreId = genre.genre_id;
+    item.append(link(genre.title, `#genre=${genre.genre_id}`));
+    const count = genre.track_ids.length;
+    item.append(node('small', count
+      ? `${count} local excerpt${count === 1 ? '' : 's'}`
+      : 'No local excerpt'));
+    list.append(item);
+  }
+  section.append(list);
+  rows.append(section);
+}
+
 function genrePage(id) {
   const genre = genres.get(id); if (!genre) throw Error('Genre is absent from this source.');
   heading.textContent = genre.title;
@@ -83,6 +110,7 @@ function genrePage(id) {
     const other=genre.track_ids.filter(track=>!genre.starting_ids.includes(track));
     if(other.length){const details=node('details');details.className='more-excerpts';details.append(node('summary',`All other available excerpts (${other.length})`));for(const track of other)details.append(excerpt(track));rows.append(details);}
   }
+  genreChildren(id);
   const full=node('p');full.append(link(`Full source genre catalog · ${genre.track_count} tracks`, `expanded/explorer/index.html#genre=${id}`));rows.append(full);
   rows.append(node('p','Opening the full catalog leaves this page and stops its player.'));
 }
