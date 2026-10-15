@@ -253,3 +253,21 @@ queue. Existing collection files and all audio bytes remain unchanged.
 Run `OPENNOISE_FMA_INLINE_SITE=<site> node --test tests/static/fma_inline_discovery_contract.mjs`
 for exact-row rendering, both source pools, individual and queued real playback,
 natural queue progression, history/reload/mobile, and stale or damaged pack checks.
+
+## Portable local bundle
+
+Package an existing two-collection listening export with:
+
+```sh
+.venv/bin/python scripts/build_fma_listening_bundle.py --site <site> --output <new.zip>
+```
+
+The packager replays the native collection and discovery bindings and verifies
+all catalog inventory hashes before copying. It rejects extra site files and
+symbolic links. It produces a reproducible ZIP with `OpenNoise/site`, a
+standard-library `serve.py`, instructions and a closed SHA-256 inventory. Extract
+it and run `python3 serve.py` from `OpenNoise`; the server verifies every packaged
+file before listening on `127.0.0.1`. `--check-only` verifies without opening a
+server. No repository, install, source acquisition or public deployment is needed.
+The inventory detects changes; authenticity still depends on the separately
+recorded archive hash. Earlier raw-site ZIPs do not contain this launcher.
