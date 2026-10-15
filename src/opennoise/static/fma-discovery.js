@@ -1,6 +1,6 @@
 import {renderDiscoverySearch} from './fma-discovery-search.js';
 import {renderPlayableNeighbors} from './fma-playable-neighbors.js';
-import {requestPlay} from './fma-playback.js';
+import {requestPlay, requestGenreStarters} from './fma-playback.js';
 const $ = selector => document.querySelector(selector);
 const node = (tag, text) => { const value = document.createElement(tag); if (text !== undefined) value.textContent = text; return value; };
 const link = (text, href) => { const value = node('a', text); value.href = href; return value; };
@@ -107,6 +107,20 @@ function genrePage(id) {
   else {
     rows.append(node('h2',genre.starting_ids.length===1?'Starting excerpt':'Starting excerpts'));
     const note=node('p',genre.track_ids.length===1?'Only one excerpt is available here; it has not been judged representative of this genre.':'One excerpt per source artist, preferring fewer direct tags, then native track ID. These are starting points, not reviewed representatives.');note.className='selection-note';rows.append(note);
+    if (genre.starting_ids.length > 1) {
+      const sequence = node('button', 'Play starting excerpts');
+      sequence.type = 'button';
+      sequence.className = 'genre-play-starters';
+      sequence.addEventListener('click', () => {
+        document.body.dataset.discoveryQueue = 'true';
+        const entries = genre.starting_ids.map(id => ({
+          id,
+          config: index.collections[index.tracks[String(id)].collection]
+        }));
+        requestGenreStarters({entries, json});
+      });
+      rows.append(sequence);
+    }
     const chosen=node('section'); chosen.setAttribute('aria-label','Starting excerpts');for(const track of genre.starting_ids)chosen.append(excerpt(track,true));rows.append(chosen);
     const other=genre.track_ids.filter(track=>!genre.starting_ids.includes(track));
     if(other.length){const details=node('details');details.className='more-excerpts';details.append(node('summary',`All other available excerpts (${other.length})`));for(const track of other)details.append(excerpt(track));rows.append(details);}
