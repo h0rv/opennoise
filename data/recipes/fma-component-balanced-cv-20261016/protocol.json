@@ -1,0 +1,109 @@
+{
+  "revision": "fma-component-balanced-gaussian-cv-v1",
+  "status": "frozen_design_source_seal_required_before_execution",
+  "input_root": "/workspace/opennoise-clean-inputs-20261015/candidate",
+  "inputs": {
+    "MANIFEST.json": {
+      "bytes": 2304,
+      "sha256": "4344e609efd7442bf2c598fefb9d1f5abb08884b59f922a53a05643c60d0a323"
+    },
+    "PROVENANCE.json": {
+      "bytes": 4728,
+      "sha256": "d2f25ecc801684b4dbd18d8394d019b36470a56e469b69b0e89c34a074deb734"
+    },
+    "tracks-numeric.jsonl.zst": {
+      "bytes": 526202,
+      "sha256": "30f680112177c9e7124e0c2ff85d4f40a4a44fbe683058a944701b217159151a"
+    },
+    "genres-numeric.jsonl.zst": {
+      "bytes": 698,
+      "sha256": "927ea4d7d7150d6098a0d694ec799e618b30b4269f971c933a43b0afae29ae13"
+    },
+    "features.float32": {
+      "bytes": 18757024,
+      "sha256": "b427d29b55b9b27c9e38b0aae635478dbebae5dcb381f00e00a9fcadf70032d4"
+    },
+    "track_ids.uint32": {
+      "bytes": 426296,
+      "sha256": "8fb77ce50f3da09b7fb7c04bfc21948ef72e3dd50dbb63cd082291d75b180c07"
+    },
+    "duplicate-native-feature-cells.json": {
+      "bytes": 28150,
+      "sha256": "f7955876770fb2b6b19a9688128782e1d772cc66970cfe63fedbc128a298db79"
+    },
+    "saved-replay/native-folds.jsonl.zst": {
+      "bytes": 415584,
+      "sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7"
+    }
+  },
+  "population": "Only original ledger fold0 rows with source_known artist; preserve missing features and empty/null source tags. Recompute native connected components from numeric artist/album/duplicate groups and compare full ledger before selecting fold0. No outerfold fitting/scoring or outcome reads.",
+  "fold_rule": {
+    "count": 5,
+    "scope": "fma-component-balanced-cv-v1",
+    "expression": "int.from_bytes(SHA256(UTF8(scope+NUL+str(component_id))).digest(),big)%5",
+    "assignment": "Held-out innerfold f; fit other4 innerfolds. Never stratify/reassign based on labels or realized sizes."
+  },
+  "arms": {
+    "recording_gaussian": "Existing fit_positive_gaussian and score_positive_gaussian math on innerfit only; 44 unchanged columns.",
+    "component_gaussian": {
+      "normalization": "Each finite innerfit row gets1/(number of finite innerfit rows in its component); weighted population mean and variance. Zero variance columns inactive.",
+      "positive_moments": "For each label separately, each finite positive innerfit row gets1/(number of finite positive innerfit rows for that label in its component); every positive component has totalmass1. Compute class mean/variance usingthese labelconditionalweights after arm-specific trainnormalization.",
+      "prior": "Each source-known innerfit row including missing features gets1/(all innerfit rows in its component); prior=(weighted source-positive sum+.5)/(sum of all row weights+1).",
+      "support": "Same raw >=5finite positive training rows as recording arm; report distinct positive components and weighted support, do not introduce another gate."
+    },
+    "recording_popularity": "Descending innerfit source-positive recording count including missing-feature rows; onlylabels withpositivecount>0; tiesascending nativegenreID; no descriptor abstention."
+  },
+  "fixed_constants": {
+    "minimum_finite_positive_rows": 5,
+    "variance_shrinkage": 0.5,
+    "minimum_variance": 0.1,
+    "maximum_absolute_standardized_offset": 12,
+    "ranking_ties": "ascending nativegenreID",
+    "score_batch_rows": 2048
+  },
+  "measurement": {
+    "source_recall10": "sum hits amongtop10 / all observed positives, including unmodeled labels and descriptor abstentions.",
+    "mrr": "First matching positive reciprocalrank over entire supported labelranking; zero for missing/out-of-support/no-match. Standard mean over labeled queries.",
+    "positive_weighted_mrr": "sum(num_source_positives_for_query * reciprocalrank)/sum sourcepositives, explicitly separate from conventional query-averageMRR.",
+    "coverage": "nonemptyranking queries/allqueries; also labeled-only coverage. No-targetqueries retained for coverage/counts, excluded fromRecall/MRR denominators.",
+    "component_equal": "For each component compute hits/positives, RRsum/labeledqueries and rankingqueries/allqueries; then mean correspondingdefined componentrates. No-targetcomponents excluded only fromRecall/MRR and counted.",
+    "primary": "Pooled out-of-fold component-equalRecall10 difference balanced-minus-recordingGaussian. Allthree arms reported; noselectionthreshold orbestarm promotion. Component Recall10 means withincomponent positiveweightedrecovery hits/positives, not equalweight perqueryrecall; this exact estimand is intentional.",
+    "additional": "Pooled positive-weightedRecall10, conventionalMRR, positive-weightedMRR, component-equalMRR, coverage, per-innerfold metrics and supports/abstentions.",
+    "uncertainty": "2000 paired component bootstrap draws with replacement from sorted pooled out-of-fold components, same sampled components acrossarms; PCG64 seed20261016; percentile2.5/97.5 via numpy linearquantile. Reportbalanced-minus-recording andbothGaussian-minus-popularity; ratio-of-resampledsums forweighted metrics, meanresampled componentrates forcomponent-equal. Conditional on fixed fivefits, NOT refit/bootstrap or confidence in novel corpus. Overlapping fourfold training sets induce dependence acrossOOF predictions; intervals are descriptive fixed-prediction resampling only, not independentfold populationinference or full trainingprocedure uncertainty.",
+    "support_ceiling": "Perarm number/fraction of all OOF observed positives belonging to active labels in thatquerys innerfit; separate joint recoverablepositive ceiling also requiresquery descriptor/ranking support. Report allpositive denominator unchanged. Querycoverage nonemptyranking/allqueries; positivecoverage=sum positives of querieswithnonemptyranking/allpositives.",
+    "undefined_bootstrap": "Any metric with zero denominator in a replicate is undefined; omit only from that metric quantile and report valid/undefined drawcounts; never reroll or zero-impute. Zero valid draws yields null interval."
+  },
+  "preflight_concentration": {
+    "no_model_outcomes": true,
+    "report": "Originaltrain allrow/finitefeature/labeledrow/positive masses percomponent: counts, largest/top5/top10 shares, inverseHerfindahl effectivecount; perlabel positive row/componentcounts and concentration; innerfold query/positive/finite counts. No change tofold/weighting based onthis.",
+    "giant_component": "Report largest component nativeID, rows, positive mass, distinct artist and nonnull album counts; graph components are not individual artists; never split largest component."
+  },
+  "stages": {
+    "preflight": "inputverification/nativecomponentledgerreplay and concentration only",
+    "folds": "5 separate processes, eachonefold fitsbothGaussianarms and trainingpopularity then scoresonlythatinnerholdout; save models/ranks/percomponent sufficientstats",
+    "summary": "1 process verifies5foldoutputs and computes pooledmetrics/bootstrap; no fit",
+    "replay": "independent separate bounded verification of nativeweighted moments/ranks/denominators andbootstrap"
+  },
+  "limits": {
+    "per_stage_wall_seconds": 120,
+    "per_stage_cpu_seconds": 120,
+    "per_stage_address_space_bytes": 1000000000,
+    "combined_output_bytes": 100000000,
+    "blas_threads": 1
+  },
+  "interpretation": [
+    "Exploratory training-only CV design chosen after prior outerfold inspection; those inspected outerfolds are not used here.",
+    "Source-positive annotation recovery, not musical similarity/relevance or calibrated genre probabilities.",
+    "Component balancing is a bundled change to normalization, positive moments and prior; no causal attribution to one subchange.",
+    "Components encode artist/album/exact-feature identity links, not proven independent musicians or musical units.",
+    "No serving replacement, new data/audio, model tuning or learned embedding."
+  ],
+  "execution_seal": "After independentprotocolreview, freeze exactfinalprotocol+producer/helpercode hashes before model outcomes. Preserve any supersededproposal.",
+  "supersedes": {
+    "file": "protocol-proposal.json",
+    "sha256": "8b45c6c2bcdf07935854b6b3e69858a53bacdd1072ec09ab57f6e84f6dac5dd6",
+    "reason": "Pre-outcome design clarification: equal positive component mass within each label; preserve shared raw5-row support gate to isolate weighting; clarify denominators and conditional uncertainty."
+  },
+  "label_universe": "All164 native genre IDs in verified numeric genre metadata, sortedascending; no outcome-driven label selection.",
+  "low_component_support": "Forbotharms report eachlabel finitepositive rowcount anddistinctpositivecomponentcount; identify active labels supportedby<5components without gating them out."
+}
