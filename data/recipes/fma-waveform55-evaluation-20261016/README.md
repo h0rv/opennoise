@@ -67,6 +67,14 @@ clustered ratings. Two distinct listeners per query help measure disagreement;
 they do not double the independent query count. A useful subsequent study needs
 separate development queries, a frozen untouched evaluation roster, permitted
 recordings, relevant candidate coverage and actual independent listening responses.
+For fresh confirmation, budget roughly 100 previously uninspected query components,
+not 100 total tracks or 94 additions to these six inspected queries. Keep a separate
+training candidate pool and development cohort; multiple excerpts from one connected
+artist/album component do not create additional independent queries. A fixed recording
+count alone cannot guarantee useful musical coverage. Candidate availability and
+permission, representativeness and the intended similarity question need review
+before sampling. At least two distinct listeners per query implies about 200
+responses for one paired comparison, with missingness and disagreement retained.
 Additional acquisition and public deployment are outside this recipe.
 
 ## Reproduction and evidence
@@ -76,3 +84,50 @@ the completed evaluation. The existing waveform inventory is pinned to
 `829f3f80308149fe03adfd582c45a50168b67eb61fe5ce82e2556e5ce208f729`.
 The original source/audio artifacts remain unchanged. Evaluation runs use the
 existing 120-second CPU/wall, 1 GB memory and 100 MB output limits.
+
+Use the locked environment (`poe sync` first) and fresh output paths. The metadata
+source below is the existing verified capture; the commands perform no acquisition.
+
+```sh
+FRESH=/path/to/new-diagnostic-run
+SOURCE=/path/to/retained-metadata-source
+CANDIDATE=/path/to/reviewed-55-candidate
+WAVEFORM=/path/to/reviewed-waveform-pack
+mkdir "$FRESH"
+PYTHONPATH=src .venv/bin/python scripts/project_fma_waveform_popularity.py \
+  --source "$SOURCE" --manifest "$CANDIDATE/manifest.json" \
+  --output "$FRESH/historical-listens.json"
+PYTHONPATH=src .venv/bin/python scripts/evaluate_fma_waveform.py freeze \
+  --source "$WAVEFORM" --candidate-manifest "$CANDIDATE/manifest.json" \
+  --listens "$FRESH/historical-listens.json" \
+  --protocol data/recipes/fma-waveform55-evaluation-20261016/protocol-v2.json \
+  --declaration "$FRESH/declaration.json"
+PYTHONPATH=src .venv/bin/python scripts/evaluate_fma_waveform.py run \
+  --declaration "$FRESH/declaration.json" --output "$FRESH/pack"
+PYTHONPATH=src .venv/bin/python scripts/evaluate_fma_waveform.py run \
+  --declaration "$FRESH/declaration.json" --output "$FRESH/replay"
+```
+
+The same declaration must reproduce every pack file byte-for-byte. An independent
+implementation checks the numerical results before the output inventory is approved
+for listening-packet use. Validation requires that externally reviewed inventory pin:
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/evaluate_fma_waveform.py verify \
+  --output "$FRESH/pack" --candidate-manifest "$CANDIDATE/manifest.json" \
+  --inventory-sha256 "$REVIEWED_EVALUATION_SHA256"
+PYTHONPATH=src .venv/bin/python scripts/build_fma_listening_pilot.py freeze \
+  --candidate "$CANDIDATE" --baseline "$FRESH/pack" \
+  --baseline-inventory-sha256 "$REVIEWED_EVALUATION_SHA256" \
+  --design data/recipes/fma-waveform55-evaluation-20261016/listening-protocol.json \
+  --output "$FRESH/listening-seal.json"
+```
+
+After checking the seal against the reviewed implementation and inputs, supply its
+exact hash to `build_fma_listening_pilot.py build` with `--candidate`, `--baseline`,
+`--seal`, `--seal-sha256` and a fresh `--output`. Distribute participant roots
+separately; never serve their parent directory or coordinator mapping. Each root
+contains launch instructions. The summarizer accepts zero, one or two actual slot
+response files; absent responses remain missing. Confirm distinct participants only
+when the coordinator has established that fact. Browser-generated test responses
+must never be included as actual listening evidence.
