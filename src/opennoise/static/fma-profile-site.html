@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenNoise — genres</title>
+<style>
+p,small{overflow-wrap:anywhere}
+body{font:17px/1.5 system-ui;margin:auto;max-width:1000px;padding:20px;color:#222;background:#fff}input,button{font:inherit;padding:8px}input{box-sizing:border-box;width:100%;max-width:650px}a{color:#15518a;overflow-wrap:anywhere}button,a,input{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #185c9c;outline-offset:3px}nav{display:flex;gap:20px;margin:12px 0}li{padding:10px 0;border-bottom:1px solid #ccc}ul{padding-left:20px}small{display:block;color:#555}audio{width:100%}#player{background:#fff;border-block:1px solid #aaa;padding:12px 0;margin:18px 0}#player p{margin:4px 0}h1{font-size:1.7rem;margin:8px 0}h2{font-size:1.35rem}.credit-link{margin-right:12px}details{margin:16px 0}#results li>a:first-child{font-size:1.1rem}.play{margin:8px 10px 0 0}.skip{position:absolute;left:-10000px}.skip:focus{position:static}#error{color:#8a2010}#main{scroll-margin-top:10px}@media(max-width:600px){body{padding:14px}nav{gap:15px}button{min-height:44px}}
+svg{display:block;width:100%;height:auto;max-height:500px;border:1px solid #ccc}svg a:focus circle,svg a:hover circle{fill:#9d380c;stroke:#222;stroke-width:2}svg circle{fill:#15518a}svg a[data-selected=true] circle{fill:#a33b12}.map-switch{display:flex;gap:20px;margin:10px 0}#artist-suggestions li{list-style:none}.profile-member{margin-right:12px}.map-list{margin-top:16px}</style>
+<body>
+<a class="skip" href="#main">Skip to music</a>
+<header><h1><a href="#genres">OpenNoise</a></h1><nav aria-label="Browse"><a href="#genres">Genres</a><a href="#artists">Artists</a><a href="#tracks">Tracks</a><a href="#map">Map</a></nav></header>
+<section id="player" aria-label="Player"><audio controls preload="none"></audio><p id="credit" aria-live="polite">Choose an excerpt. Nothing plays automatically.</p><div id="notices"></div><button id="stop">Stop</button><p id="error" role="alert"></p></section>
+<label id="search-label">Search genres <input id="search" type="search" maxlength="200" autocomplete="off"></label>
+<main id="main" tabindex="-1" aria-busy="true"><p>Loading genres…</p></main>
+<details id="about"><summary>About and sources</summary><p>This subset contains matching supplied license declarations and reviewed credits, not a rights warranty. Local candidate only; no deployment authorized. Original audio bytes remain unchanged. Counts refer to distinct recordings and artists in this subset, not the full FMA catalog. Genre links are supplied track tags, not model predictions.</p><p>Metadata: <a href="https://github.com/mdeff/fma">FMA: A Dataset For Music Analysis</a>, Michaël Defferrard, Kirell Benzi, Pierre Vandergheynst and Xavier Bresson; <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Selected subset and minimized fields; source credits preserved.</p><p>The map is a train-only two-dimensional projection of descriptors extracted from these excerpts. Suggested excerpts use raw standardized descriptor similarity, not the map distance. Neither is a validated musical judgment. All recordings remain available in Tracks, including those without coordinates or suggestions.</p><p><a href="model/receipt.json">Pipeline provenance</a> · <a href="candidate/index.html">List-only interface</a></p><p>Artist points summarize the reviewed recordings attached to each native artist, usually a single excerpt; they are not estimates of an artist’s whole style. Suggested artists are inferred from those recording profiles. “Also tagged” links count the same recordings carrying both supplied genre tags; they are observed annotations, not inferred musical similarity.</p><p><a href="discovery/receipt.json">Recording-profile provenance</a></p></details>
+<script>
+'use strict';
+const q=selector=>document.querySelector(selector), audio=q('audio');
+let data=null, layout=null, discovery=null, discoveryError=false, layoutError=false, loading=false, playbackVersion=0,mapObserver=null;
+const node=(tag,text)=>{const element=document.createElement(tag);element.textContent=text;return element;};
+const nativeId=value=>Number.isSafeInteger(value)&&value>0;
+function route(){
+  const [path,query='']=location.hash.slice(1).split('?'), params=new URLSearchParams(query);
+  if(path==='map'){
+    const view=params.get('view')||'artists',selected=params.get('selected'),genre=params.get('genre');
+    if(!['artists','excerpts'].includes(view)||(selected!==null&&!/^[1-9][0-9]*$/.test(selected))||(genre!==null&&!/^[1-9][0-9]*$/.test(genre)))return {kind:'invalid'};
+    if((selected!==null&&!nativeId(Number(selected)))||(genre!==null&&!nativeId(Number(genre)))||(selected!==null&&genre!==null))return {kind:'invalid'};
+    return {kind:'map',view,selected:selected===null?null:Number(selected),genre:genre===null?null:Number(genre)};
+  }
+  if(!path||['genres','artists','tracks'].includes(path))return {kind:path||'genres',search:(params.get('q')||'').slice(0,200)};
+  const pair=/^shared\/([1-9][0-9]*)\/([1-9][0-9]*)$/.exec(path);
+  if(pair)return nativeId(Number(pair[1]))&&nativeId(Number(pair[2]))&&pair[1]!==pair[2]?{kind:'shared',first:Number(pair[1]),second:Number(pair[2])}:{kind:'invalid'};
+  const match=/^(genre|artist|track)\/([1-9][0-9]*)$/.exec(path);
+  return match&&nativeId(Number(match[2]))?{kind:match[1],id:Number(match[2])}:{kind:'invalid'};
+}
+function anchor(title,href){const a=node('a',title);a.href=href;return a;}
+function external(container,title,url){if(url){const a=anchor(title,url);a.rel='noreferrer';a.className='credit-link';container.append(a);}}
+function play(row){
+  const version=++playbackVersion;audio.pause();q('#error').textContent='';
+  const credit=q('#credit');credit.replaceChildren(anchor(row.title+' — '+row.artist_name,'#track/'+row.track_id),node('small',row.attribution));
+  const notices=q('#notices');notices.replaceChildren();external(notices,'License',row.license_url);
+  if(row.source_url)external(notices,'Native source',row.source_url);else notices.append(node('small','Native source URL unknown.'));
+  for(const url of row.embedded_source_urls)if(url!==row.source_url)external(notices,'Supplied embedded source',url);
+  for(const key of ['composer','copyright_c','copyright_p'])if(row[key])notices.append(node('small',key+': '+row[key]));
+  for(const [key,value] of Object.entries(row.embedded_notices))notices.append(node('small',key+': '+value));
+  if(row.embedded_curators.length)notices.append(node('small','Supplied curators: '+row.embedded_curators.join('; ')));
+  if(row.embedded_extra_text_present)notices.append(node('small','Original audio contains additional embedded text; it is not displayed here.'));
+  audio.src='candidate/'+row.audio_path;
+  audio.play().catch(()=>{if(version===playbackVersion)q('#error').textContent='Playback failed. Choose the excerpt again to retry.';});
+}
+function playButton(row){const b=node('button','Play');b.className='play';b.dataset.playTrack=row.track_id;b.setAttribute('aria-label','Play '+row.title+' — '+row.artist_name);b.onclick=()=>play(row);return b;}
+function list(){const ul=node('ul','');ul.id='results';return ul;}
+function trackList(rows){
+  const ul=list();for(const row of rows){const li=node('li','');li.dataset.trackId=row.track_id;
+    li.append(anchor(row.title,'#track/'+row.track_id),document.createTextNode(' — '),anchor(row.artist_name,'#artist/'+row.artist_id),node('small','Native track '+row.track_id));
+    li.append(playButton(row));ul.append(li);
+  }return ul;
+}
+function genreLinks(rows){
+  const ids=new Set(rows.flatMap(row=>row.genre_ids));const p=node('p','Genres: ');
+  for(const genre of data.genres.filter(g=>ids.has(g.genre_id))){p.append(anchor(genre.title,'#genre/'+genre.genre_id),document.createTextNode(' · '));}
+  if(!ids.size)p.append(document.createTextNode('No supplied genre tags.'));return p;
+}
+function notFound(){q('#main').append(node('h2','Not found'),node('p','This link does not identify an item in this subset.'),anchor('Browse genres','#genres'));}
+function render(){
+  if(!data)return;mapObserver?.disconnect();mapObserver=null;
+  const state=route(),main=q('#main'),label=q('#search-label'),input=q('#search');main.replaceChildren();main.setAttribute('aria-busy','false');main.dataset.route=location.hash;document.documentElement.dataset.candidateReady='true';
+  const directory=['genres','artists','tracks'].includes(state.kind);label.hidden=!directory;
+  if(directory){label.firstChild.textContent='Search '+state.kind+' ';input.value=state.search;input.setAttribute('aria-label','Search '+state.kind);}
+  document.querySelectorAll('nav a').forEach(a=>{if(a.hash==='#'+state.kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  const term=(state.search||'').toLocaleLowerCase();
+  if(state.kind==='genres'){
+    main.append(node('h2','Genres'));const ul=list();let count=0;
+    for(const genre of data.genres){if(!(`${genre.title} ${genre.genre_id}`.toLocaleLowerCase().includes(term)))continue;
+      const rows=data.tracks.filter(r=>r.genre_ids.includes(genre.genre_id)),artists=new Set(rows.map(r=>r.artist_id));
+      const li=node('li','');li.dataset.genreId=genre.genre_id;li.dataset.trackCount=rows.length;li.dataset.artistCount=artists.size;
+      li.append(anchor(genre.title,'#genre/'+genre.genre_id),node('small',`${rows.length} excerpts · ${artists.size} artists`));ul.append(li);count++;
+    }main.append(node('p',`${count} of ${data.genres.length} genres`),ul);if(!count)main.append(node('p','No matching genres. Clear Search to see every genre.'));
+  }else if(state.kind==='map'){
+    renderMap(main,state);
+  }else if(state.kind==='artists'){
+    main.append(node('h2','Artists'));const ul=list();const artists=[...new Map(data.tracks.map(r=>[r.artist_id,r.artist_name]))].sort((a,b)=>a[1].localeCompare(b[1])||a[0]-b[0]);let count=0;
+    for(const [id,name] of artists){if(!(`${name} ${id}`.toLocaleLowerCase().includes(term)))continue;const rows=data.tracks.filter(r=>r.artist_id===id),li=node('li','');li.dataset.artistId=id;li.dataset.trackCount=rows.length;li.append(anchor(name,'#artist/'+id),node('small',`${rows.length} excerpts`));ul.append(li);count++;}
+    main.append(node('p',`${count} of ${artists.length} artists`),ul);if(!count)main.append(node('p','No matching artists. Clear Search to see every artist.'));
+  }else if(state.kind==='tracks'){
+    const rows=data.tracks.filter(r=>(`${r.title} ${r.artist_name} ${r.track_id}`).toLocaleLowerCase().includes(term));main.append(node('h2','Tracks'),node('p',`${rows.length} of ${data.tracks.length} excerpts`),trackList(rows));if(!rows.length)main.append(node('p','No matching tracks. Clear Search to see every track.'));
+  }else if(state.kind==='genre'){
+    const genre=data.genres.find(g=>g.genre_id===state.id);if(!genre){notFound();return;}
+    const rows=data.tracks.filter(r=>r.genre_ids.includes(state.id));main.append(node('h2',genre.title),node('p',`${rows.length} excerpts · ${new Set(rows.map(r=>r.artist_id)).size} artists`),trackList(rows));main.append(anchor('Show excerpts on map','#map?view=excerpts&genre='+genre.genre_id));renderConnections(main,genre.genre_id);
+  }else if(state.kind==='shared'){
+    renderShared(main,state);
+  }else if(state.kind==='artist'){
+    const rows=data.tracks.filter(r=>r.artist_id===state.id);if(!rows.length){notFound();return;}
+    main.append(node('h2',rows[0].artist_name),node('p',`Recording profile from ${rows.length} excerpts · Native artist ${state.id}`),genreLinks(rows),anchor('Show recording profile on map','#map?view=artists&selected='+state.id),trackList(rows));renderArtistSuggestions(main,state.id);
+  }else if(state.kind==='track'){
+    const row=data.tracks.find(r=>r.track_id===state.id);if(!row){notFound();return;}
+    main.append(node('h2',row.title),anchor(row.artist_name,'#artist/'+row.artist_id),node('p','Native track '+row.track_id),genreLinks([row]),playButton(row),node('p',row.attribution));
+    external(main,'License',row.license_url);if(row.source_url)external(main,'Native source',row.source_url);else main.append(node('p','Native source URL unknown.'));
+    main.append(anchor('Show excerpt on map','#map?view=excerpts&selected='+row.track_id));renderSuggested(main,row.track_id);
+  }else notFound();
+  document.documentElement.dataset.candidateReady='true';
+}
+
+function validateLayout(value){
+  if(value.revision!=='fma-permitted55-waveform-layout-v1'||value.musical_quality_validated!==false||JSON.stringify(value.axes)!==JSON.stringify(['PC1','PC2'])||!Array.isArray(value.tracks)||value.tracks.length!==data.tracks.length)throw Error('Invalid layout');
+  const ids=new Set(data.tracks.map(r=>r.track_id)),seen=new Set(),rows=new Map();
+  for(const row of value.tracks){
+    if(!ids.has(row.track_id)||seen.has(row.track_id)||![0,1,2].includes(row.fold)||!Number.isSafeInteger(row.component_id)||row.component_id<=0)throw Error('Invalid layout identity');
+    if(row.position!==null&&(!Array.isArray(row.position)||row.position.length!==2||row.position.some(x=>typeof x!=='number'||!Number.isFinite(x))))throw Error('Invalid position');
+    if(![null,'zero_norm','out_of_support','no_eligible_components'].includes(row.neighbor_reason)||![null,'out_of_support','projection_degenerate'].includes(row.projection_reason))throw Error('Invalid abstention');
+    if((row.position===null)!==(row.projection_reason!==null))throw Error('Position abstention mismatch');
+    if(!Array.isArray(row.neighbors)||row.neighbors.length>6||(row.neighbor_reason!==null&&row.neighbors.length!==0)||new Set(row.neighbors).size!==row.neighbors.length)throw Error('Invalid suggestions');
+    seen.add(row.track_id);rows.set(row.track_id,row);
+  }
+  for(const row of value.tracks){const components=new Set();for(const id of row.neighbors){const other=rows.get(id);if(!other||other.fold!==0||!([null,'no_eligible_components'].includes(other.neighbor_reason))||other.component_id===row.component_id||components.has(other.component_id))throw Error('Ineligible suggestion');components.add(other.component_id);}}
+  if(!Array.isArray(value.genres)||value.genres.length!==data.genres.length)throw Error('Invalid genre roster');
+  const genreIds=new Set();for(const row of value.genres){
+    if(!data.genres.some(g=>g.genre_id===row.genre_id)||genreIds.has(row.genre_id))throw Error('Invalid genre identity');genreIds.add(row.genre_id);
+    const training=value.tracks.filter(r=>r.fold===0&&data.tracks.find(t=>t.track_id===r.track_id).genre_ids.includes(row.genre_id));
+    const eligible=training.filter(r=>[null,'no_eligible_components'].includes(r.neighbor_reason));
+    const expected=[training.length,new Set(training.map(r=>r.component_id)).size,eligible.length,new Set(eligible.map(r=>r.component_id)).size];
+    const actual=[row.training_track_count,row.training_component_count,row.eligible_training_track_count,row.eligible_training_component_count];
+    if(JSON.stringify(expected)!==JSON.stringify(actual)||![null,'projection_degenerate','insufficient_training_components'].includes(row.reason))throw Error('Invalid genre support');
+    if(row.position===null){if(row.reason===null)throw Error('Missing genre position reason');}
+    else if(row.reason!==null||expected[3]<3||!Array.isArray(row.position)||row.position.length!==2||row.position.some(x=>typeof x!=='number'||!Number.isFinite(x)))throw Error('Invalid genre position');
+  }
+  return value;
+}
+async function loadLayout(){
+  try{const response=await fetch('model/layout.json');if(!response.ok)throw Error('Unavailable');const text=await response.text();if(new TextEncoder().encode(text).length>200000)throw Error('Oversized');layout=validateLayout(JSON.parse(text));}
+  catch{layoutError=true;}render();loadDiscovery();
+}
+function renderSuggested(main,id){
+  const section=node('section','');section.setAttribute('aria-label','Suggested');section.append(node('h3','Suggested'));
+  if(!layout){section.append(node('p',layoutError?'Suggestions are unavailable. All excerpts remain in Tracks.':'Loading suggestions…'));}
+  else{const row=layout.tracks.find(r=>r.track_id===id);if(!row.neighbors.length)section.append(node('p','No supported descriptor suggestions for this excerpt.'));
+    else{section.append(node('small','Inferred from audio descriptors, not supplied genre tags.'));const list=trackList(row.neighbors.map(id=>data.tracks.find(r=>r.track_id===id)));list.id='suggestions';section.append(list);}}
+  main.append(section);
+}
+function renderExcerptMap(main,state){
+  const selected=state.selected===null?null:data.tracks.find(r=>r.track_id===state.selected),genre=state.genre===null?null:data.genres.find(r=>r.genre_id===state.genre);if((state.selected!==null&&!selected)||(state.genre!==null&&!genre)){notFound();return;}
+  main.append(node('h2','Excerpt map'),anchor('Complete track list','#tracks'));if(selected)main.append(node('p','Selected: '+selected.title));if(genre)main.append(node('p','Highlighted excerpts tagged '+genre.title));
+  if(!layout){main.append(node('p',layoutError?'The map is unavailable. Use the complete track list.':'Loading map…'));return;}
+  const placed=layout.tracks.filter(r=>r.position!==null),genres=layout.genres.filter(r=>r.position!==null);main.append(node('p',`${genres.length} of ${data.genres.length} source genres placed from eligible training excerpts.`),anchor('Complete genre list','#genres'));main.append(node('p',`${placed.length} of ${data.tracks.length} excerpts placed. Select a point to open its track; nothing plays automatically.`));
+  if(placed.length){
+    const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');const width=Math.max(280,Math.min(900,main.clientWidth));svg.setAttribute('viewBox',`0 0 ${width} 500`);svg.setAttribute('role','group');svg.setAttribute('aria-label','Excerpt map');
+    const points=[...placed,...genres],xs=points.map(r=>r.position[0]),ys=points.map(r=>r.position[1]),lo=[Math.min(...xs),Math.min(...ys)],hi=[Math.max(...xs),Math.max(...ys)],span=[hi[0]-lo[0],hi[1]-lo[1]],scale=Math.min(span[0]?(width-60)/span[0]:Infinity,span[1]?440/span[1]:Infinity),s=Number.isFinite(scale)?scale:1;
+    for(const row of placed){const track=data.tracks.find(r=>r.track_id===row.track_id),a=document.createElementNS(ns,'a'),circle=document.createElementNS(ns,'circle'),title=document.createElementNS(ns,'title');a.setAttribute('href','#track/'+row.track_id);a.setAttribute('aria-label',track.title+' — '+track.artist_name);a.dataset.mapTrack=row.track_id;circle.setAttribute('cx',width/2+(row.position[0]-(lo[0]+hi[0])/2)*s);circle.setAttribute('cy',250-(row.position[1]-(lo[1]+hi[1])/2)*s);circle.setAttribute('r','7');const active=selected?selected.track_id===row.track_id:genre?track.genre_ids.includes(genre.genre_id):true;a.dataset.highlighted=String(active);if(!active)a.setAttribute('opacity','.25');else if(selected||genre){circle.setAttribute('stroke','#a33b12');circle.setAttribute('stroke-width','3');}title.textContent=track.title+' — '+track.artist_name;a.append(title,circle);svg.append(a);}
+    for(const row of genres){const genre=data.genres.find(g=>g.genre_id===row.genre_id),a=document.createElementNS(ns,'a'),text=document.createElementNS(ns,'text');a.setAttribute('href','#genre/'+row.genre_id);a.dataset.mapGenre=row.genre_id;text.setAttribute('x',width/2+(row.position[0]-(lo[0]+hi[0])/2)*s);text.setAttribute('y',250-(row.position[1]-(lo[1]+hi[1])/2)*s-9);text.setAttribute('text-anchor','middle');text.setAttribute('font-size','14');text.setAttribute('fill','#222');text.setAttribute('paint-order','stroke');text.setAttribute('stroke','white');text.setAttribute('stroke-width','3');text.textContent=genre.title;a.append(text);svg.append(a);}main.append(svg);
+  }
+  const details=node('details','');details.className='map-list';details.append(node('summary','All excerpts, including unplaced'),trackList(data.tracks));main.append(details);
+}
+
+function validateDiscovery(value){
+  if(value.revision!=='fma55-recording-profile-discovery-v1'||!Array.isArray(value.artists)||!Array.isArray(value.genres)||!value.claims||value.claims.musical_quality_validated!==false||value.claims.new_fit!==false||value.claims.new_evaluation!==false||value.claims.artist_style_inference!==false||value.claims.genre_relationships!=='All visible catalog source co-tags, not training/evaluation input')throw Error('Invalid discovery');
+  const artistIds=[...new Set(data.tracks.map(r=>r.artist_id))],seen=new Set(),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),sorted=xs=>[...xs].sort((a,b)=>a-b);
+  if(value.artists.length!==artistIds.length||value.genres.length!==data.genres.length)throw Error('Incomplete discovery roster');
+  const validPosition=p=>p===null||(Array.isArray(p)&&p.length===2&&p.every(x=>typeof x==='number'&&Number.isFinite(x)));
+  for(const row of value.artists){
+    const members=data.tracks.filter(t=>t.artist_id===row.artist_id).map(t=>t.track_id).sort((a,b)=>a-b);
+    if(!artistIds.includes(row.artist_id)||seen.has(row.artist_id)||!same(row.track_ids,members)||row.track_count!==members.length||row.singleton!==(members.length===1)||!nativeId(row.component_id)||![0,1,2].includes(row.fold)||!validPosition(row.position))throw Error('Invalid artist profile identity');seen.add(row.artist_id);
+    if(!Array.isArray(row.neighbors)||row.neighbors.length>6||new Set(row.neighbors).size!==row.neighbors.length||!['unsupported_member','zero_mean_norm','no_eligible_components',null].includes(row.neighbor_reason)||!['unsupported_member','projection_degenerate',null].includes(row.projection_reason)||(row.position===null)!==(row.projection_reason!==null)||(row.neighbor_reason!==null&&row.neighbors.length))throw Error('Invalid artist profile support');
+  }
+  const artistMap=new Map(value.artists.map(r=>[r.artist_id,r]));
+  for(const row of value.artists){const components=new Set();for(const id of row.neighbors){const other=artistMap.get(id);if(!other||other.fold!==0||!['no_eligible_components',null].includes(other.neighbor_reason)||other.component_id===row.component_id||components.has(other.component_id))throw Error('Ineligible artist suggestion');components.add(other.component_id);}}
+  const eligible=value.artists.filter(a=>a.fold===0&&[null,'no_eligible_components'].includes(a.neighbor_reason));if(!value.counts||value.counts.artists!==artistIds.length||value.counts.tracks!==data.tracks.length||value.counts.genres!==data.genres.length||value.counts.singleton_artists!==value.artists.filter(a=>a.track_count===1).length||value.counts.eligible_training_artists!==eligible.length||value.counts.eligible_training_components!==new Set(eligible.map(a=>a.component_id)).size)throw Error('Invalid profile counts');
+  const genreSeen=new Set();
+  for(const row of value.genres){
+    const members=data.tracks.filter(t=>t.genre_ids.includes(row.genre_id)),ids=sorted(members.map(t=>t.track_id)),artists=sorted(new Set(members.map(t=>t.artist_id))),components=sorted(new Set(members.map(t=>artistMap.get(t.artist_id).component_id)));
+    if(!data.genres.some(g=>g.genre_id===row.genre_id)||genreSeen.has(row.genre_id)||!same(row.track_ids,ids)||!same(row.artist_ids,artists)||!same(row.component_ids,components)||row.track_count!==ids.length||row.artist_count!==artists.length||row.component_count!==components.length||!Array.isArray(row.relationships))throw Error('Invalid genre membership');genreSeen.add(row.genre_id);
+    const expected=data.genres.filter(g=>g.genre_id!==row.genre_id).map(g=>({genre_id:g.genre_id,rows:members.filter(t=>t.genre_ids.includes(g.genre_id))})).filter(g=>g.rows.length).sort((a,b)=>b.rows.length-a.rows.length||a.genre_id-b.genre_id);
+    if(expected.length!==row.relationships.length)throw Error('Incomplete observed connections');
+    for(let i=0;i<expected.length;i++){const e=expected[i],edge=row.relationships[i],tracks=sorted(e.rows.map(t=>t.track_id)),artists=sorted(new Set(e.rows.map(t=>t.artist_id))),components=sorted(new Set(e.rows.map(t=>artistMap.get(t.artist_id).component_id)));
+      if(edge.genre_id!==e.genre_id||!same(edge.track_ids,tracks)||!same(edge.artist_ids,artists)||!same(edge.component_ids,components)||edge.track_count!==tracks.length||edge.artist_count!==artists.length||edge.component_count!==components.length)throw Error('Observed connection differs from source tags');}
+  }
+  return value;
+}
+async function loadDiscovery(){
+  try{const response=await fetch('discovery/discovery.json');if(!response.ok)throw Error('Unavailable');const text=await response.text();if(new TextEncoder().encode(text).length>200000)throw Error('Oversized');discovery=validateDiscovery(JSON.parse(text));}
+  catch{discoveryError=true;}render();
+}
+function renderConnections(main,id){
+  const section=node('section','');section.setAttribute('aria-label','Also tagged');section.append(node('h3','Also tagged on these excerpts'));
+  if(!discovery)section.append(node('p',discoveryError?'Connections are unavailable. The source track list remains above.':'Loading connections…'));
+  else{const relationships=discovery.genres.find(g=>g.genre_id===id).relationships;if(!relationships.length)section.append(node('p','These excerpts have no other supplied genre tags.'));
+    const ul=node('ul','');ul.id='genre-connections';for(const edge of relationships){const genre=data.genres.find(g=>g.genre_id===edge.genre_id),li=node('li','');li.dataset.genreId=edge.genre_id;li.dataset.trackCount=edge.track_count;li.dataset.artistCount=edge.artist_count;li.append(anchor(genre.title,'#genre/'+genre.genre_id),document.createTextNode(` · ${edge.track_count} shared excerpts · ${edge.artist_count} artists · `),anchor('Hear shared excerpts',`#shared/${id}/${genre.genre_id}`));ul.append(li);}section.append(ul);}
+  main.append(section);
+}
+function renderShared(main,state){
+  const first=data.genres.find(g=>g.genre_id===state.first),second=data.genres.find(g=>g.genre_id===state.second);if(!first||!second){notFound();return;}
+  const rows=data.tracks.filter(t=>t.genre_ids.includes(first.genre_id)&&t.genre_ids.includes(second.genre_id));main.append(node('h2',first.title+' + '+second.title),node('p',`${rows.length} excerpts carry both supplied tags. This is an observed annotation connection.`),anchor(first.title,'#genre/'+first.genre_id),document.createTextNode(' · '),anchor(second.title,'#genre/'+second.genre_id),trackList(rows));if(!rows.length)main.append(node('p','No recordings in this subset carry both tags.'));
+}
+function renderArtistSuggestions(main,id){
+  const section=node('section','');section.setAttribute('aria-label','Suggested artists');section.append(node('h3','Suggested artists'));
+  if(!discovery)section.append(node('p',discoveryError?'Recording-profile suggestions are unavailable. All artist excerpts remain playable.':'Loading recording profiles…'));
+  else{const row=discovery.artists.find(a=>a.artist_id===id);if(!row.neighbors.length)section.append(node('p','No supported recording-profile suggestions for this artist.'));
+    else{section.append(node('small','Inferred from recording descriptors, not an artist-style classification.'));const ul=node('ul','');ul.id='artist-suggestions';for(const identity of row.neighbors){const profile=discovery.artists.find(a=>a.artist_id===identity),members=profile.track_ids.map(t=>data.tracks.find(r=>r.track_id===t)),li=node('li','');li.dataset.artistId=identity;li.append(anchor(members[0].artist_name,'#artist/'+identity),node('small',`Recording profile from ${members.length} excerpts`));for(const track of members){const p=node('p','');p.append(anchor(track.title,'#track/'+track.track_id),playButton(track));li.append(p);}ul.append(li);}section.append(ul);}}
+  main.append(section);
+}
+function renderMap(main,state){
+  const width=main.clientWidth;mapObserver=new ResizeObserver(()=>{if(route().kind==='map'&&Math.abs(main.clientWidth-width)>1)render();});mapObserver.observe(main);
+  const switches=node('p','');switches.className='map-switch';switches.append(anchor('Artists','#map?view=artists'),anchor('Excerpts','#map?view=excerpts'));main.append(switches);
+  if(state.view==='excerpts'){renderExcerptMap(main,state);return;}
+  if(state.genre!==null){notFound();return;}
+  if(state.selected!==null&&!data.tracks.some(t=>t.artist_id===state.selected)){notFound();return;}
+  main.append(node('h2','Artist recording profiles'),anchor('Complete artist list','#artists'));
+  if(!discovery){main.append(node('p',discoveryError?'The artist map is unavailable. Use the complete artist list or excerpt map.':'Loading artist profiles…'));return;}
+  const placed=discovery.artists.filter(a=>a.position!==null),selected=discovery.artists.find(a=>a.artist_id===state.selected);
+  main.append(node('p',`${placed.length} of ${discovery.artists.length} artist recording profiles placed. Most summarize a single excerpt.`));
+  if(selected){const first=data.tracks.find(t=>t.artist_id===selected.artist_id);main.append(anchor(first.artist_name,'#artist/'+selected.artist_id),node('p',`Recording profile from ${selected.track_count} excerpts${selected.position===null?' · no supported map position':''}`),trackList(selected.track_ids.map(id=>data.tracks.find(t=>t.track_id===id))));}
+  if(placed.length){const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');const width=Math.max(280,Math.min(900,main.clientWidth));svg.setAttribute('viewBox',`0 0 ${width} 500`);svg.setAttribute('role','group');svg.setAttribute('aria-label','Artist recording-profile map');
+    const xs=placed.map(a=>a.position[0]),ys=placed.map(a=>a.position[1]),lo=[Math.min(...xs),Math.min(...ys)],hi=[Math.max(...xs),Math.max(...ys)],span=[hi[0]-lo[0],hi[1]-lo[1]],scale=Math.min(span[0]?(width-120)/span[0]:Infinity,span[1]?400/span[1]:Infinity),s=Number.isFinite(scale)?scale:1;
+    const drawn=[];for(const row of [...placed].sort((a,b)=>(b.artist_id===state.selected)-(a.artist_id===state.selected)||a.artist_id-b.artist_id)){const name=data.tracks.find(t=>t.artist_id===row.artist_id).artist_name,a=document.createElementNS(ns,'a'),circle=document.createElementNS(ns,'circle'),title=document.createElementNS(ns,'title'),x=width/2+(row.position[0]-(lo[0]+hi[0])/2)*s,y=250-(row.position[1]-(lo[1]+hi[1])/2)*s;a.setAttribute('href','#artist/'+row.artist_id);a.setAttribute('aria-label',name+': '+row.track_count+' excerpts');a.dataset.mapArtist=row.artist_id;a.dataset.selected=String(row.artist_id===state.selected);circle.setAttribute('cx',x);circle.setAttribute('cy',y);circle.setAttribute('r','7');title.textContent=name+' · '+row.track_count+' excerpts';a.append(title,circle);
+      const labelWidth=Math.min(width-4,name.length*7),left=Math.max(2,Math.min(width-2-labelWidth,x-labelWidth/2)),top=y-25,box=[left,top,left+labelWidth,top+17];if(row.artist_id===state.selected||drawn.every(b=>box[2]<b[0]||box[0]>b[2]||box[3]<b[1]||box[1]>b[3])){const text=document.createElementNS(ns,'text');text.setAttribute('x',left);text.setAttribute('y',y-10);text.setAttribute('font-size','14');text.setAttribute('paint-order','stroke');text.setAttribute('stroke','white');text.setAttribute('stroke-width','3');text.textContent=name;a.append(text);drawn.push(box);}svg.append(a);}main.append(svg);}
+  const details=node('details','');details.append(node('summary','All artist profiles, including unplaced'));const ul=node('ul','');ul.id='map-artists';for(const row of discovery.artists){const name=data.tracks.find(t=>t.artist_id===row.artist_id).artist_name,li=node('li','');li.dataset.artistId=row.artist_id;li.append(anchor(name,'#artist/'+row.artist_id),node('small',`${row.track_count} excerpts${row.position===null?' · unplaced':''}`),anchor('Locate on map','#map?view=artists&selected='+row.artist_id));ul.append(li);}details.append(ul);main.append(details);
+}
+
+function validate(value){
+  if(value.revision!=='fma-declared-license-candidate-v1'||value.public_deployment_authorized!==false||!Array.isArray(value.tracks)||!value.tracks.length||value.tracks.length>64||!Array.isArray(value.genres)||value.genres.length>164)throw Error('Invalid candidate');
+  const ids=new Set(),genres=new Set();
+  for(const genre of value.genres){if(!nativeId(genre.genre_id)||genres.has(genre.genre_id)||typeof genre.title!=='string')throw Error('Invalid genre');genres.add(genre.genre_id);}
+  for(const row of value.tracks){
+    if(!nativeId(row.track_id)||!nativeId(row.artist_id)||ids.has(row.track_id)||row.audio_path!==`audio/${row.track_id}.mp3`||!Array.isArray(row.genre_ids)||new Set(row.genre_ids).size!==row.genre_ids.length||row.genre_ids.some(id=>!genres.has(id)))throw Error('Invalid identity');ids.add(row.track_id);
+    for(const field of ['title','artist_name','attribution','license_url','source_url','composer','copyright_c','copyright_p'])if(typeof row[field]!=='string')throw Error('Invalid credit');
+    if(!Array.isArray(row.embedded_source_urls)||!Array.isArray(row.embedded_curators)||!row.embedded_notices||typeof row.embedded_notices!=='object'||Array.isArray(row.embedded_notices))throw Error('Invalid embedded credit');
+    for(const url of [row.license_url,row.source_url,...row.embedded_source_urls])if(url&&!/^https?:\/\//.test(url))throw Error('Unsafe link');
+  }
+  return value;
+}
+async function initialize(){
+  if(loading)return;loading=true;q('#main').setAttribute('aria-busy','true');q('#main').replaceChildren(node('p','Loading genres…'));
+  try{const response=await fetch('candidate/manifest.json');if(!response.ok)throw Error('Unavailable');const text=await response.text();if(new TextEncoder().encode(text).length>200000)throw Error('Oversized');data=validate(JSON.parse(text));render();loadLayout();}
+  catch{const retry=node('button','Retry');retry.onclick=initialize;q('#main').replaceChildren(node('p','Candidate metadata could not be loaded.'),retry);q('#main').setAttribute('aria-busy','false');}
+  finally{loading=false;}
+}
+q('#stop').onclick=()=>{playbackVersion++;audio.pause();audio.removeAttribute('src');audio.load();q('#error').textContent='';};
+q('.skip').onclick=event=>{event.preventDefault();q('#main').focus();};
+q('#search').addEventListener('input',()=>{const state=route();if(!['genres','artists','tracks'].includes(state.kind))return;const value=q('#search').value.slice(0,200);history.replaceState(null,'','#'+state.kind+(value?'?q='+encodeURIComponent(value):''));render();});
+window.addEventListener('hashchange',render);initialize();
+</script></body></html>
