@@ -4,13 +4,14 @@ import copy
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 from unittest import TestCase
 from unittest.mock import patch
 
 from opennoise.deployment import fma_listening_pilot as pilot
 
 
-def queries() -> list[dict]:
+def queries() -> list[dict[str, Any]]:
     """Six fictitious queries with disjoint illustrative candidates."""
     return [
         {"track_id": i, "component_id": i, "raw": 20 + i, "simple": 30 + i, "reason": None}
@@ -18,7 +19,7 @@ def queries() -> list[dict]:
     ]
 
 
-def structures() -> tuple[dict, dict]:
+def structures() -> tuple[dict[str, Any], dict[str, Any]]:
     """Build synthetic neutral slot metadata and its private key."""
     items, key = pilot.assignments(queries())
     packets = {
@@ -30,7 +31,7 @@ def structures() -> tuple[dict, dict]:
     }, packets
 
 
-def answers(packet: dict, pin: str) -> dict:
+def answers(packet: dict[str, Any], pin: str) -> dict[str, Any]:
     """Construct an entirely unanswered synthetic response."""
     return {
         "revision": pilot.REVISION,
@@ -195,7 +196,7 @@ class ListeningPilotTests(TestCase):
             for identity in range(1, 56):
                 body = f"FAKE AUDIO fixture {identity}".encode()
                 (candidate / "audio" / f"{identity}.mp3").write_bytes(body)
-                row = dict.fromkeys(pilot.CREDIT_FIELDS, "")
+                row: dict[str, Any] = dict.fromkeys(pilot.CREDIT_FIELDS, "")
                 row.update(
                     track_id=identity,
                     artist_id=identity,
