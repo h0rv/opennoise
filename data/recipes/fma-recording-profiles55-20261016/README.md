@@ -17,6 +17,8 @@ There are 53 native artists: 51 have one recording and two have two recordings.
 These are profiles of the available excerpts, not estimates of an artist's entire
 style. Ten distinct artist IDs share one original leakage component, so excluding
 only the query artist ID would be insufficient for training-candidate suggestions.
+These original components do not establish that all unknown aliases or near-duplicate
+recordings have been resolved.
 
 ## Fixed artist calculation
 
@@ -95,3 +97,64 @@ The stage retains the existing 120-second CPU/wall, 1 GB memory, 100 MB output a
 replay and an externally reviewed pack pin precede site generation. The versioned
 site preserves the original candidate/model subtrees and old export validators;
 no public deployment is authorized.
+
+Use the locked environment (`poe sync` first) and fresh output paths:
+
+```sh
+FRESH=/path/to/new-profile-run
+CANDIDATE=/path/to/reviewed-55-candidate
+WAVEFORM=/path/to/reviewed-waveform-pack
+mkdir "$FRESH"
+PYTHONPATH=src .venv/bin/python scripts/build_fma_recording_profiles.py freeze \
+  --source "$WAVEFORM" --candidate-manifest "$CANDIDATE/manifest.json" \
+  --protocol data/recipes/fma-recording-profiles55-20261016/protocol.json \
+  --declaration "$FRESH/declaration.json"
+PYTHONPATH=src .venv/bin/python scripts/build_fma_recording_profiles.py run \
+  --declaration "$FRESH/declaration.json" --output "$FRESH/pack"
+PYTHONPATH=src .venv/bin/python scripts/build_fma_recording_profiles.py run \
+  --declaration "$FRESH/declaration.json" --output "$FRESH/replay"
+```
+
+Compare every output byte and independently replay the calculations before accepting
+the derived inventory hash. Portable verification takes that external review pin:
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/build_fma_recording_profiles.py verify \
+  --output "$FRESH/pack" --source "$WAVEFORM" \
+  --candidate-manifest "$CANDIDATE/manifest.json" \
+  --inventory-sha256 "$REVIEWED_DISCOVERY_SHA256"
+```
+
+Build the separate static export after independent review, then verify it with the
+same two external inventory pins:
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/build_fma_profile_site.py build \
+  --candidate "$CANDIDATE" --model "$WAVEFORM" --discovery "$FRESH/pack" \
+  --model-inventory-sha256 829f3f80308149fe03adfd582c45a50168b67eb61fe5ce82e2556e5ce208f729 \
+  --discovery-inventory-sha256 "$REVIEWED_DISCOVERY_SHA256" \
+  --output "$FRESH/site"
+PYTHONPATH=src .venv/bin/python scripts/build_fma_profile_site.py verify \
+  --site "$FRESH/site" \
+  --model-inventory-sha256 829f3f80308149fe03adfd582c45a50168b67eb61fe5ce82e2556e5ce208f729 \
+  --discovery-inventory-sha256 "$REVIEWED_DISCOVERY_SHA256"
+```
+
+Serve only the resulting site directory over loopback to try the map and player.
+Its candidate/model subtrees retain their original closed validators. The new
+profile interface is separately versioned, so previously delivered exports remain
+valid. All audio bytes and required credit fields are preserved.
+
+## Recorded bounded run
+
+The frozen run took 0.202 seconds and 34,516,992 bytes peak RSS. Its 161,080-byte
+view and 167,740-byte complete pack remain within the unchanged limits. All five
+files reproduced byte-for-byte. The pack retains 53 positioned artist profiles,
+51 singletons, 45 eligible training artists in 36 components and 318 suggested
+artist links. All 93 genres have recording support; 87 have co-tag relationships,
+with 216 undirected pairs. Six isolates remain available with their recordings.
+These counts establish functioning data flow, not musical-quality improvements.
+An independent implementation matched all means exactly, all 318 ordered links,
+all tag evidence and every source relationship; projected-coordinate differences
+were at most `7.11e-15`. The reviewed discovery inventory is
+`3304948deab27e124d3e1f9c69ddd2dbdc25ac85f0894b30944ac9112feda9b8`.
