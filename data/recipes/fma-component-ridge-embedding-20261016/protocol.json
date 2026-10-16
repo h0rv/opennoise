@@ -1,0 +1,121 @@
+{
+  "revision": "fma-component-ridge-embedding-v1",
+  "status": "frozen_design_requires_review_and_source_seal_before_actual_fits",
+  "inputs": {
+    "MANIFEST.json": {
+      "bytes": 2304,
+      "sha256": "4344e609efd7442bf2c598fefb9d1f5abb08884b59f922a53a05643c60d0a323"
+    },
+    "PROVENANCE.json": {
+      "bytes": 4728,
+      "sha256": "d2f25ecc801684b4dbd18d8394d019b36470a56e469b69b0e89c34a074deb734"
+    },
+    "tracks-numeric.jsonl.zst": {
+      "bytes": 526202,
+      "sha256": "30f680112177c9e7124e0c2ff85d4f40a4a44fbe683058a944701b217159151a"
+    },
+    "genres-numeric.jsonl.zst": {
+      "bytes": 698,
+      "sha256": "927ea4d7d7150d6098a0d694ec799e618b30b4269f971c933a43b0afae29ae13"
+    },
+    "features.float32": {
+      "bytes": 18757024,
+      "sha256": "b427d29b55b9b27c9e38b0aae635478dbebae5dcb381f00e00a9fcadf70032d4"
+    },
+    "track_ids.uint32": {
+      "bytes": 426296,
+      "sha256": "8fb77ce50f3da09b7fb7c04bfc21948ef72e3dd50dbb63cd082291d75b180c07"
+    },
+    "duplicate-native-feature-cells.json": {
+      "bytes": 28150,
+      "sha256": "f7955876770fb2b6b19a9688128782e1d772cc66970cfe63fedbc128a298db79"
+    },
+    "saved-replay/native-folds.jsonl.zst": {
+      "bytes": 415584,
+      "sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7"
+    }
+  },
+  "population": "Only original ledger fold0 rows with source_known artist; preserve missing features and empty/null source tags. Recompute native connected components from numeric artist/album/duplicate groups and compare full ledger before selecting fold0. No outerfold fitting/scoring or outcome reads.",
+  "fold_rule": {
+    "count": 5,
+    "scope": "fma-component-balanced-cv-v1",
+    "expression": "int.from_bytes(SHA256(UTF8(scope+NUL+str(component_id))).digest(),big)%5",
+    "assignment": "Held-out innerfold f; fit other4 innerfolds. Never stratify/reassign based on labels or realized sizes."
+  },
+  "feature_columns": "Unchanged44 mean descriptors from the exact minimized numeric corpus; no new audio/metadata/features.",
+  "encoder": {
+    "normalization": "Finite innerfit rows only; weights1/n_finite_component normalized to sum1, population mean/variance; inactive zero-variance columns removed. Same normalization for rawcosine and embedding; identical to balancedGaussian normalization.",
+    "targets": "All164 nativegenres known frommetadata; encoder fits only labels with>=5finitepositive innerfitrows, same gate asGaussians. Binary suppliedsource indicators; zeros represent unobserved annotations, NOT verifiednegative musical membership. No inversefrequency or targetvariance scaling. Center each activeindicator by its finitecomponent-weighted trainingmean.",
+    "objective": "B=solve(Z.T W Z + lambda I, Z.T W (Y-mu)), W diagonal weights normalized sum1; fixed lambda=1.0. Equivalent convex weighted centered multivariate ridge leastsquares; targetindicators weakobservations.",
+    "lambda": 1.0,
+    "rank": 8,
+    "compression": "SVD B=U diag(s) V.T; retain first min(8,numericalrank) singularaxes. Encoder E=U_retained diag(s_retained); representation zE. This is SVD compression ofridgecoefficients, not claimed globallyoptimal rankconstrainedridge. Cosine equals corresponding centeredlowrank predictedlabelspace geometry.",
+    "numerical_rank": "s_i > max(B.shape)*float64eps*s_0; rank0 if noactive encoderlabels orall singularvalueszero.",
+    "boundary_tie": "If numericalrank>8 and abs(s_7-s_8)<=1e-10*s_0, stop thatstage as ambiguous_rank8_boundary; no arbitrarypartial tiedsubspace, fallback or parameterchange. Ties whollyinside retainedsubspace mayrotate; distancesinvariant.",
+    "sign": "For each retainedUcolumn, make the largestabsolute-loading element (lowest featureindex iftie) positive; apply sign to correspondingVrow. Persist full singularvalues, active columns/labels, means/scales/targetmeans/B/encoder.",
+    "rank_zero": "Produce zero-dimensional encoder andexplicit embedding_zero_rank abstentions for allqueries; never substitute raw/PCA. Candidate intrinsic support and jointpool loss reported."
+  },
+  "candidates": {
+    "maximum_components": 2048,
+    "representative_scope": "fma-ridge-representative-v1",
+    "component_scope": "fma-ridge-candidate-components-v1",
+    "selection": "For each innerfitcomponent with finite44D rows choose min(SHA256(scope+NUL+nativeTrackID),nativeTrackID) using representative_scope; sortcomponents by(SHA256(component_scope+NUL+componentID),componentID), takefirst2048; order chosenrepresentatives bynativeTrackID forscoreties. Labels never used to select candidateIDs.",
+    "eligibility": "After fixedselection apply common abs12 standardized-feature gate, rawL2norm>0 and embeddingL2norm>0 (allfinite). Jointeligible roster identical forraw/embedding; no replacements/backfill. Report selected/intrinsicraweligible/embeddingzero/jointeligible counts andIDs. In rank0 jointpoolisempty, bothretrievalarms abstain; retain intrinsicrawsupportcounts and explicitly identify coupling.",
+    "exclusion": "Candidates onlyfourinnerfitfolds; queries heldoutcomponentfold, so noquerycomponent overlaps. Exactlyonecandidate/component alreadydiversified.",
+    "query_roster": "ALL original knownartisttrain rows in heldoutinnerfold; noquerysubsampling. Missingfeature/abs12/zeronorm queries retained in metrics with abstentions. Rawandembedding useintrinsicnormchecks separately; neither consultsquerylabels.",
+    "distance": "Cosine via normalized vectors; descending float64 dotproduct, exactnumeric ties nativeTrackIDascending, no epsilontuning.",
+    "neighbor_count": 10,
+    "nomination_vs_eligibility": "Candidate nomination is label-blind. Final jointeligibility depends on the traininglabel-derivedencoder, never heldoutlabels. Intrinsic raw counts reveal this coupling."
+  },
+  "genre_transfer": {
+    "ranking": "Unweighted countofobserved trainingcandidate genreIDs among top10available neighbors. Candidatevotes mayinclude belowencoder5row labels. Rank onlypositivevote labels bydescending votes thennativegenreIDascending. Noquerylabels, unseenlabelcompletion orclassprior adjustment.",
+    "arms": [
+      "raw44_neighbors",
+      "ridge8_neighbors",
+      "recording_gaussian",
+      "balanced_gaussian",
+      "recording_popularity"
+    ],
+    "gaussian_baselines": "Refit exactlyunchanged existing recording andcomponentbalanced Gaussian helpers on sameinnerfitrows, same5rowgate/.5shrink/.1floor/abs12support. The balancednormalizer also suppliesraw/embedding commonfeaturetransform.",
+    "popularity": "Allinnerfit sourcepositive recordingcounts includingmissingfeatures, positivecountlabels only, countdescending/nativegenreIDties.",
+    "primary": "Pooled OOF component-equal sourceRecall10(ridge8neighbortransfer)-component-equal sourceRecall10(raw44neighbortransfer).",
+    "not_retrieval_quality": "Gaussian/popularity rankgenres directly, neighborarms transferlabels; allare comparedon same genreannotationrecovery task. NeighborIDs/distances saved for audit; no cross-arm track-relevance/precision claim.",
+    "secondary_track_task": "Deferred: no separate track-neighbor overlap/relevance metric. Save neighbor IDs/distances solely for implementation replay, not additional estimand selection."
+  },
+  "measurement": {
+    "source_recall10": "sum hits amongtop10 / all observed positives, including unmodeled labels and descriptor abstentions.",
+    "mrr": "First matching positive reciprocalrank over entire supported labelranking; zero for missing/out-of-support/no-match. Standard mean over labeled queries.",
+    "positive_weighted_mrr": "sum(num_source_positives_for_query * reciprocalrank)/sum sourcepositives, explicitly separate from conventional query-averageMRR.",
+    "coverage": "nonemptyranking queries/allqueries; also labeled-only coverage. No-targetqueries retained for coverage/counts, excluded fromRecall/MRR denominators.",
+    "component_equal": "For each component compute hits/positives, RRsum/labeledqueries and rankingqueries/allqueries; then mean correspondingdefined componentrates. No-targetcomponents excluded only fromRecall/MRR and counted.",
+    "primary": "Pooled OOF component-equal sourceRecall10(ridge8neighbortransfer)-component-equal sourceRecall10(raw44neighbortransfer).",
+    "additional": "Allfive arms on samefullqueryroster: positiveRecall10,ordinaryqueryMRR,positiveweightedMRR,componentRecall10/ MRR,query/labeledquery/positivecoverage andsupportceilings. Perfold,giantcomponent2 andothercomponents separately. Emptylabelqueries retainedcoverage, excludedlabelmetricdenoms.",
+    "uncertainty": "2000 paired component bootstrap draws with replacement from sorted pooled out-of-fold components, same sampled components acrossarms; PCG64 seed20261016; percentile2.5/97.5 via numpy linearquantile. Reportridge8-minus-raw44 primary; ridge8-minus-balancedGaussian andridge8-minus-popularity secondary; ratio-of-resampledsums forweighted metrics, meanresampled componentrates forcomponent-equal. Conditional on fixed fivefits, NOT refit/bootstrap or confidence in novel corpus. Overlapping fourfold training sets induce dependence acrossOOF predictions; intervals are descriptive fixed-prediction resampling only, not independentfold populationinference or full trainingprocedure uncertainty.",
+    "support_ceiling": "Raw/embedding: union ofsuppliedlabels in jointeligible candidatepool; Gaussian: armactivefitlabels; popularity:positivefitlabels. Allobservedpositive denominators unchanged. Jointrecoverable ceiling addsqueryranking/supportavailability. Distinguish candidateunion fromencoderactive labels.",
+    "undefined_bootstrap": "Any metric with zero denominator in a replicate is undefined; omit only from that metric quantile and report valid/undefined drawcounts; never reroll or zero-impute. Zero valid draws yields null interval.",
+    "availability": "Report separately descriptor-eligible querycount, nonempty neighborlist querycount, and nonempty genre-ranking querycount. Ten unlabeled neighbors can yield neighborcoverage withoutgenre-rankingcoverage. Report candidate/model labelunion ceiling, descriptor-eligible-positive jointceiling, and ranking-available-positive jointceiling separately; all usefullobservedpositive denominator. No ambiguous use ofcoverage."
+  },
+  "limits": {
+    "per_stage_wall_seconds": 120,
+    "per_stage_cpu_seconds": 120,
+    "per_stage_address_space_bytes": 1000000000,
+    "combined_output_bytes": 100000000,
+    "blas_threads": 1
+  },
+  "stages": {
+    "folds": "Five separate120s stages, onefixedinnerfold each, fitsmodels then scoresallheldoutqueries, batch256 for retrieval. SingleBLASthread,1GB perstage.",
+    "summary": "One separate120s stage verifyingfivefoldoutputs then2000pairedwholecomponentbootstrap;100MB combinednewoutputs. No refit.",
+    "source_gate": "Finalindependentprotocol+code review, exactinput/protocol/code/environmentseal beforeanyretained modeloutcome. Rootownsactualexecution.",
+    "synthetic_budget": "RandomGaussian matrices only:50105queriesx2048candidates, stablefullsorting batches256, both44/8D about13-15seconds and~63MB. This excludes loading/fits/votes/serialization; hard120s actualstagebound unchanged."
+  },
+  "giant_component": "Keepnativecomponent2 intact inoldhashfold; all39312queries preserved whenheldout. Report allOOF andgiantcomponent-only vs allothercomponents metrics with samefixedmodels; separate perinnerfold supports/masses. This is fixedprediction influence, not refit/deletion sensitivity. No reshuffle or labels-driven component split.",
+  "interpretation": [
+    "Exploratory training-only CV design chosen after prior outerfold inspection; those inspected outerfolds are not used here.",
+    "Source-positive annotation recovery, not musical similarity/relevance or calibrated genre probabilities.",
+    "Component balancing is a bundled change to normalization, positive moments and prior; no causal attribution to one subchange.",
+    "Components encode artist/album/exact-feature identity links, not proven independent musicians or musical units.",
+    "Supervised representation trained on suppliedweaksource tags; features-only application, NOT label-free learning.",
+    "Prior GaussianOOF outcomes alreadyinspected; newfixedcandidate prospectivelyspecified, not blind heldoutconfirmation or independent populationevidence.",
+    "No newembedding search, parameterselection, servingreplacement or musical-quality claim."
+  ]
+}
