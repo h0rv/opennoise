@@ -11,6 +11,7 @@ import unittest
 from collections import defaultdict
 from fractions import Fraction
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import patch
 
 import numpy as np
@@ -93,7 +94,7 @@ class EvaluationTests(unittest.TestCase):
                 }
                 for i in range(1, 7)
             ]
-            original = {
+            original: dict[str, Any] = {
                 "training_ids": [1, 2, 3, 4],
                 "eligible_training_ids": [1, 2, 3, 4],
                 "queries": [
@@ -104,7 +105,7 @@ class EvaluationTests(unittest.TestCase):
                         "rankings": {
                             arm: [1, 3, 4] if i == 5 else [] for arm in ("raw", "pca", "id")
                         },
-                        "metrics": dict.fromkeys(("raw", "pca", "id")),
+                        "metrics": {arm: {} for arm in ("raw", "pca", "id")},
                     }
                     for i in (5, 6)
                 ],
@@ -135,8 +136,9 @@ class EvaluationTests(unittest.TestCase):
                 self.assertFalse(arm["metrics"]["3"]["hit"])
                 self.assertIsNone(arm["metrics"]["3"]["recall_known"])
             self.assertEqual(result["aggregates"]["test"]["total_queries"], 1)
-            original["queries"][0]["metrics"]["pca"] = None
-            original["queries"][0]["rankings"]["pca"] = []
+            unavailable_query = cast("dict[str, Any]", original["queries"][0])
+            unavailable_query["metrics"]["pca"] = None
+            unavailable_query["rankings"]["pca"] = []
             (root / "evaluation.json").write_bytes(canonical_json(original))
             unavailable = evaluation.calculate(
                 root, {"tracks": tracks}, dict.fromkeys(range(1, 7), 0)
