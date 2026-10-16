@@ -36,8 +36,10 @@ which is flagged and not displayed or duplicated. This does not independently
 establish rights in that text. FMA dataset authorship, CC BY 4.0 metadata license,
 source link and projection changes appear in both the manifest and page.
 
-The candidate supplies explicit Play/Stop, genre/artist filters, title/artist/ID
-search and source/license/credit display. It does not relabel the 133-recording
+The candidate supplies a genre-first directory with distinct excerpt/artist counts,
+searchable genre/artist/track directories, native-ID detail links and browser
+Back/Forward. Explicit Play/Stop and source/license/credit display remain outside
+route rendering, so playback survives navigation. Reloading any deep link is silent. It does not relabel the 133-recording
 explorer as cleared or silently transplant its model recommendations.
 
 ## Local reproduction
@@ -60,3 +62,38 @@ Output must be fresh. Independently pin its manifest SHA-256, then call
 closed inventory, preserved audio hashes and the fixed page bytes. This explicit
 artifact pin is required; self-resealed arbitrary manifests are not trusted.
 No deployment, upload, acquisition or modification of original assets occurs.
+
+## Rebuild the interface without historical captures
+
+The reviewed 55-recording candidate is sufficient to rebuild the page. This path
+does not load the historical 133-recording export, private review decisions, audit
+tags, source metadata or model inputs. It requires the exact reviewed manifest
+SHA-256 `242505b6c393185bdca4925b3ee97eb579fac93746091e8b0675809c8c0286cf`
+and the original page SHA-256
+`fd4d39166545daa0688276bea9c1fa21857c5cf38a2fca77d6b5f6527c41fde9`
+(or the byte-exact current page). The general validator still accepts only the
+current page; legacy acceptance exists only in the explicitly pinned migration.
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/rebuild_fma_public_candidate.py \
+  --prior /workspace/opennoise-public-candidate-20261015/site55 \
+  --manifest-sha256 242505b6c393185bdca4925b3ee97eb579fac93746091e8b0675809c8c0286cf \
+  --output /workspace/new-genre-first-candidate
+```
+
+The migration verifies the complete prior closed inventory, copies manifest and
+MP3 bytes unchanged into a fresh directory, writes the new page, then verifies the
+new closed inventory. The result remains 57 files with the same 55 recordings,
+53 artists and 93 represented genres. Only `index.html` changes. No audio/license
+scope, original asset, metadata projection, model, upload or deployment changes.
+
+Routes use native IDs: `#genre/ID`, `#artist/ID`, `#track/ID`. Directory search is
+stored as `#genres?q=...`, `#artists?q=...` or `#tracks?q=...`, replacing the current
+history entry while typing. Unknown/malformed IDs show Not found and do not play.
+Counts describe this small subset, not the whole FMA taxonomy or Every Noise.
+
+Committed browser contracts use explicitly synthetic metadata and stubbed media
+operations. They test counts, keyboard links, special-character search, history,
+invalid IDs, silent reload, one persistent player and retry/Stop. They do not
+claim genuine audio decoding or musical validation. Separate retained-artifact
+checks exercise real playback and compare every original audio/manifest byte.

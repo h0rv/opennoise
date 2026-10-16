@@ -306,18 +306,130 @@ def build_candidate(  # noqa: C901, PLR0912, PLR0915 -- ordered custody gates.
     return manifest
 
 
-PAGE = """<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OpenNoise — reviewed source-evidence subset</title><style>body{font:17px/1.5 system-ui;margin:auto;max-width:1000px;padding:20px}input,select,button{font:inherit;padding:8px;max-width:100%}label{display:inline-block;margin:8px}li{padding:12px 0;border-bottom:1px solid #aaa}audio{width:100%}#player{position:sticky;top:0;background:white;padding:12px;border:1px solid #888}a{overflow-wrap:anywhere}button:focus-visible,a:focus-visible{outline:3px solid #185c9c}small{display:block}</style><body><h1>OpenNoise: reviewed source-evidence subset</h1><p>Matching supplied license declarations and reviewed credits. This is not a rights warranty. Local candidate only; no deployment authorized. Original audio bytes remain unchanged.</p><section id="player" aria-label="Player"><audio controls preload="none"></audio><p id="credit" aria-live="polite">Choose an excerpt. Nothing plays automatically.</p><div id="notices"></div><button id="stop">Stop</button></section><p>Metadata: <a href="https://github.com/mdeff/fma">FMA: A Dataset For Music Analysis</a>, Michaël Defferrard, Kirell Benzi, Pierre Vandergheynst and Xavier Bresson; <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Selected subset and minimized fields; source credits preserved.</p><main><label>Search title or artist <input id="search" type="search"></label><label>Genre <select id="genre"><option value="">All genres</option></select></label><label>Artist <select id="artist"><option value="">All artists</option></select></label><p id="count" aria-live="polite"></p><ul id="tracks"></ul><p id="error" role="alert"></p></main><script>
-'use strict';const q=s=>document.querySelector(s),audio=q('audio');let rows=[];
-function node(tag,text){const n=document.createElement(tag);n.textContent=text;return n;}
-function link(container,title,url){if(!url)return;const a=node('a',title);a.href=url;a.rel='noreferrer';container.append(a,document.createTextNode(' '));}
-function play(row){audio.pause();q('#credit').textContent=row.attribution;const notices=q('#notices');notices.replaceChildren();link(notices,'License',row.license_url);if(row.source_url)link(notices,'Native source',row.source_url);else notices.append(node('span','Native source URL unknown. '));for(const url of row.embedded_source_urls)if(url!==row.source_url)link(notices,'Supplied embedded source',url);for(const key of ['composer','copyright_c','copyright_p'])if(row[key])notices.append(node('small',key+': '+row[key]));for(const [key,value] of Object.entries(row.embedded_notices))notices.append(node('small',key+': '+value));if(row.embedded_curators.length)notices.append(node('small','Supplied curators: '+row.embedded_curators.join('; ')));if(row.embedded_extra_text_present)notices.append(node('small','Original audio contains additional embedded text; it is not displayed here.'));audio.src=row.audio_path;audio.play().catch(()=>{q('#error').textContent='Playback failed. Choose the excerpt again to retry.';});}
-function render(){const term=q('#search').value.toLowerCase(),genre=Number(q('#genre').value),artist=Number(q('#artist').value);const matches=rows.filter(r=>(!term||(r.title+' '+r.artist_name+' '+r.track_id).toLowerCase().includes(term))&&(!genre||r.genre_ids.includes(genre))&&(!artist||r.artist_id===artist));q('#count').textContent=matches.length+' of '+rows.length+' excerpts';q('#tracks').replaceChildren(...matches.map(r=>{const li=node('li','');li.dataset.trackId=r.track_id;const b=node('button','Play '+r.title+' — '+r.artist_name);b.addEventListener('click',()=>play(r));li.append(b,node('small','Native track '+r.track_id+' · '+r.license_title));return li;}));}
-q('#stop').onclick=()=>{audio.pause();audio.removeAttribute('src');audio.load();};for(const id of ['search','genre','artist'])q('#'+id).addEventListener('input',render);
-fetch('manifest.json').then(r=>{if(!r.ok)throw Error('manifest unavailable');return r.json();}).then(data=>{if(data.revision!=='fma-declared-license-candidate-v1'||data.public_deployment_authorized!==false||!Array.isArray(data.tracks)||data.tracks.length>64)throw Error('invalid candidate');rows=data.tracks;for(const g of data.genres){const o=node('option',g.title);o.value=g.genre_id;q('#genre').append(o);}for(const [id,name] of [...new Map(rows.map(r=>[r.artist_id,r.artist_name]))].sort((a,b)=>a[1].localeCompare(b[1]))){const o=node('option',name);o.value=id;q('#artist').append(o);}render();}).catch(()=>{q('#error').textContent='Candidate metadata could not be loaded.';});
-</script></body></html>"""
+PAGE = r"""<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenNoise — genres</title>
+<style>
+body{font:17px/1.5 system-ui;margin:auto;max-width:1000px;padding:20px;color:#222;background:#fff}input,button{font:inherit;padding:8px}input{box-sizing:border-box;width:100%;max-width:650px}a{color:#15518a;overflow-wrap:anywhere}button,a,input{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #185c9c;outline-offset:3px}nav{display:flex;gap:20px;margin:12px 0}li{padding:10px 0;border-bottom:1px solid #ccc}ul{padding-left:20px}small{display:block;color:#555}audio{width:100%}#player{background:#fff;border-block:1px solid #aaa;padding:12px 0;margin:18px 0}#player p{margin:4px 0}h1{font-size:1.7rem;margin:8px 0}h2{font-size:1.35rem}.credit-link{margin-right:12px}details{margin:16px 0}#results li>a:first-child{font-size:1.1rem}.play{margin:8px 10px 0 0}.skip{position:absolute;left:-10000px}.skip:focus{position:static}#error{color:#8a2010}#main{scroll-margin-top:10px}@media(max-width:600px){body{padding:14px}nav{gap:15px}button{min-height:44px}}
+</style>
+<body>
+<a class="skip" href="#main">Skip to music</a>
+<header><h1><a href="#genres">OpenNoise</a></h1><nav aria-label="Browse"><a href="#genres">Genres</a><a href="#artists">Artists</a><a href="#tracks">Tracks</a></nav></header>
+<section id="player" aria-label="Player"><audio controls preload="none"></audio><p id="credit" aria-live="polite">Choose an excerpt. Nothing plays automatically.</p><div id="notices"></div><button id="stop">Stop</button><p id="error" role="alert"></p></section>
+<label id="search-label">Search genres <input id="search" type="search" maxlength="200" autocomplete="off"></label>
+<main id="main" tabindex="-1" aria-busy="true"><p>Loading genres…</p></main>
+<details id="about"><summary>About and sources</summary><p>This subset contains matching supplied license declarations and reviewed credits, not a rights warranty. Local candidate only; no deployment authorized. Original audio bytes remain unchanged. Counts refer to distinct recordings and artists in this subset, not the full FMA catalog. Genre links are supplied track tags, not model predictions.</p><p>Metadata: <a href="https://github.com/mdeff/fma">FMA: A Dataset For Music Analysis</a>, Michaël Defferrard, Kirell Benzi, Pierre Vandergheynst and Xavier Bresson; <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Selected subset and minimized fields; source credits preserved.</p></details>
+<script>
+'use strict';
+const q=selector=>document.querySelector(selector), audio=q('audio');
+let data=null, loading=false, playbackVersion=0;
+const node=(tag,text)=>{const element=document.createElement(tag);element.textContent=text;return element;};
+const nativeId=value=>Number.isSafeInteger(value)&&value>0;
+function route(){
+  const [path,query='']=location.hash.slice(1).split('?'), params=new URLSearchParams(query);
+  if(!path||['genres','artists','tracks'].includes(path))return {kind:path||'genres',search:(params.get('q')||'').slice(0,200)};
+  const match=/^(genre|artist|track)\/([1-9][0-9]*)$/.exec(path);
+  return match&&nativeId(Number(match[2]))?{kind:match[1],id:Number(match[2])}:{kind:'invalid'};
+}
+function anchor(title,href){const a=node('a',title);a.href=href;return a;}
+function external(container,title,url){if(url){const a=anchor(title,url);a.rel='noreferrer';a.className='credit-link';container.append(a);}}
+function play(row){
+  const version=++playbackVersion;audio.pause();q('#error').textContent='';
+  const credit=q('#credit');credit.replaceChildren(anchor(row.title+' — '+row.artist_name,'#track/'+row.track_id),node('small',row.attribution));
+  const notices=q('#notices');notices.replaceChildren();external(notices,'License',row.license_url);
+  if(row.source_url)external(notices,'Native source',row.source_url);else notices.append(node('small','Native source URL unknown.'));
+  for(const url of row.embedded_source_urls)if(url!==row.source_url)external(notices,'Supplied embedded source',url);
+  for(const key of ['composer','copyright_c','copyright_p'])if(row[key])notices.append(node('small',key+': '+row[key]));
+  for(const [key,value] of Object.entries(row.embedded_notices))notices.append(node('small',key+': '+value));
+  if(row.embedded_curators.length)notices.append(node('small','Supplied curators: '+row.embedded_curators.join('; ')));
+  if(row.embedded_extra_text_present)notices.append(node('small','Original audio contains additional embedded text; it is not displayed here.'));
+  audio.src=row.audio_path;
+  audio.play().catch(()=>{if(version===playbackVersion)q('#error').textContent='Playback failed. Choose the excerpt again to retry.';});
+}
+function playButton(row){const b=node('button','Play');b.className='play';b.dataset.playTrack=row.track_id;b.setAttribute('aria-label','Play '+row.title+' — '+row.artist_name);b.onclick=()=>play(row);return b;}
+function list(){const ul=node('ul','');ul.id='results';return ul;}
+function trackList(rows){
+  const ul=list();for(const row of rows){const li=node('li','');li.dataset.trackId=row.track_id;
+    li.append(anchor(row.title,'#track/'+row.track_id),document.createTextNode(' — '),anchor(row.artist_name,'#artist/'+row.artist_id),node('small','Native track '+row.track_id));
+    li.append(playButton(row));ul.append(li);
+  }return ul;
+}
+function genreLinks(rows){
+  const ids=new Set(rows.flatMap(row=>row.genre_ids));const p=node('p','Genres: ');
+  for(const genre of data.genres.filter(g=>ids.has(g.genre_id))){p.append(anchor(genre.title,'#genre/'+genre.genre_id),document.createTextNode(' · '));}
+  if(!ids.size)p.append(document.createTextNode('No supplied genre tags.'));return p;
+}
+function notFound(){q('#main').append(node('h2','Not found'),node('p','This link does not identify an item in this subset.'),anchor('Browse genres','#genres'));}
+function render(){
+  if(!data)return;
+  const state=route(),main=q('#main'),label=q('#search-label'),input=q('#search');main.replaceChildren();main.setAttribute('aria-busy','false');main.dataset.route=location.hash;document.documentElement.dataset.candidateReady='true';
+  const directory=['genres','artists','tracks'].includes(state.kind);label.hidden=!directory;
+  if(directory){label.firstChild.textContent='Search '+state.kind+' ';input.value=state.search;input.setAttribute('aria-label','Search '+state.kind);}
+  document.querySelectorAll('nav a').forEach(a=>{if(a.hash==='#'+state.kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  const term=(state.search||'').toLocaleLowerCase();
+  if(state.kind==='genres'){
+    main.append(node('h2','Genres'));const ul=list();let count=0;
+    for(const genre of data.genres){if(!(`${genre.title} ${genre.genre_id}`.toLocaleLowerCase().includes(term)))continue;
+      const rows=data.tracks.filter(r=>r.genre_ids.includes(genre.genre_id)),artists=new Set(rows.map(r=>r.artist_id));
+      const li=node('li','');li.dataset.genreId=genre.genre_id;li.dataset.trackCount=rows.length;li.dataset.artistCount=artists.size;
+      li.append(anchor(genre.title,'#genre/'+genre.genre_id),node('small',`${rows.length} excerpts · ${artists.size} artists`));ul.append(li);count++;
+    }main.append(node('p',`${count} of ${data.genres.length} genres`),ul);if(!count)main.append(node('p','No matching genres. Clear Search to see every genre.'));
+  }else if(state.kind==='artists'){
+    main.append(node('h2','Artists'));const ul=list();const artists=[...new Map(data.tracks.map(r=>[r.artist_id,r.artist_name]))].sort((a,b)=>a[1].localeCompare(b[1])||a[0]-b[0]);let count=0;
+    for(const [id,name] of artists){if(!(`${name} ${id}`.toLocaleLowerCase().includes(term)))continue;const rows=data.tracks.filter(r=>r.artist_id===id),li=node('li','');li.dataset.artistId=id;li.dataset.trackCount=rows.length;li.append(anchor(name,'#artist/'+id),node('small',`${rows.length} excerpts`));ul.append(li);count++;}
+    main.append(node('p',`${count} of ${artists.length} artists`),ul);if(!count)main.append(node('p','No matching artists. Clear Search to see every artist.'));
+  }else if(state.kind==='tracks'){
+    const rows=data.tracks.filter(r=>(`${r.title} ${r.artist_name} ${r.track_id}`).toLocaleLowerCase().includes(term));main.append(node('h2','Tracks'),node('p',`${rows.length} of ${data.tracks.length} excerpts`),trackList(rows));if(!rows.length)main.append(node('p','No matching tracks. Clear Search to see every track.'));
+  }else if(state.kind==='genre'){
+    const genre=data.genres.find(g=>g.genre_id===state.id);if(!genre){notFound();return;}
+    const rows=data.tracks.filter(r=>r.genre_ids.includes(state.id));main.append(node('h2',genre.title),node('p',`${rows.length} excerpts · ${new Set(rows.map(r=>r.artist_id)).size} artists`),trackList(rows));
+  }else if(state.kind==='artist'){
+    const rows=data.tracks.filter(r=>r.artist_id===state.id);if(!rows.length){notFound();return;}
+    main.append(node('h2',rows[0].artist_name),node('p',`${rows.length} excerpts · Native artist ${state.id}`),genreLinks(rows),trackList(rows));
+  }else if(state.kind==='track'){
+    const row=data.tracks.find(r=>r.track_id===state.id);if(!row){notFound();return;}
+    main.append(node('h2',row.title),anchor(row.artist_name,'#artist/'+row.artist_id),node('p','Native track '+row.track_id),genreLinks([row]),playButton(row),node('p',row.attribution));
+    external(main,'License',row.license_url);if(row.source_url)external(main,'Native source',row.source_url);else main.append(node('p','Native source URL unknown.'));
+  }else notFound();
+  document.documentElement.dataset.candidateReady='true';
+}
+function validate(value){
+  if(value.revision!=='fma-declared-license-candidate-v1'||value.public_deployment_authorized!==false||!Array.isArray(value.tracks)||!value.tracks.length||value.tracks.length>64||!Array.isArray(value.genres)||value.genres.length>164)throw Error('Invalid candidate');
+  const ids=new Set(),genres=new Set();
+  for(const genre of value.genres){if(!nativeId(genre.genre_id)||genres.has(genre.genre_id)||typeof genre.title!=='string')throw Error('Invalid genre');genres.add(genre.genre_id);}
+  for(const row of value.tracks){
+    if(!nativeId(row.track_id)||!nativeId(row.artist_id)||ids.has(row.track_id)||row.audio_path!==`audio/${row.track_id}.mp3`||!Array.isArray(row.genre_ids)||new Set(row.genre_ids).size!==row.genre_ids.length||row.genre_ids.some(id=>!genres.has(id)))throw Error('Invalid identity');ids.add(row.track_id);
+    for(const field of ['title','artist_name','attribution','license_url','source_url','composer','copyright_c','copyright_p'])if(typeof row[field]!=='string')throw Error('Invalid credit');
+    if(!Array.isArray(row.embedded_source_urls)||!Array.isArray(row.embedded_curators)||!row.embedded_notices||typeof row.embedded_notices!=='object'||Array.isArray(row.embedded_notices))throw Error('Invalid embedded credit');
+    for(const url of [row.license_url,row.source_url,...row.embedded_source_urls])if(url&&!/^https?:\/\//.test(url))throw Error('Unsafe link');
+  }
+  return value;
+}
+async function initialize(){
+  if(loading)return;loading=true;q('#main').setAttribute('aria-busy','true');q('#main').replaceChildren(node('p','Loading genres…'));
+  try{const response=await fetch('manifest.json');if(!response.ok)throw Error('Unavailable');const text=await response.text();if(new TextEncoder().encode(text).length>200000)throw Error('Oversized');data=validate(JSON.parse(text));render();}
+  catch{const retry=node('button','Retry');retry.onclick=initialize;q('#main').replaceChildren(node('p','Candidate metadata could not be loaded.'),retry);q('#main').setAttribute('aria-busy','false');}
+  finally{loading=false;}
+}
+q('#stop').onclick=()=>{playbackVersion++;audio.pause();audio.removeAttribute('src');audio.load();q('#error').textContent='';};
+q('.skip').onclick=event=>{event.preventDefault();q('#main').focus();};
+q('#search').addEventListener('input',()=>{const state=route();if(!['genres','artists','tracks'].includes(state.kind))return;const value=q('#search').value.slice(0,200);history.replaceState(null,'','#'+state.kind+(value?'?q='+encodeURIComponent(value):''));render();});
+window.addEventListener('hashchange',render);initialize();
+</script></body></html>
+"""
+
+LEGACY_PAGE_SHA256 = "fd4d39166545daa0688276bea9c1fa21857c5cf38a2fca77d6b5f6527c41fde9"
+REVIEWED_MANIFEST_SHA256 = "242505b6c393185bdca4925b3ee97eb579fac93746091e8b0675809c8c0286cf"
 
 
-def validate_candidate(directory: Path, manifest_sha256: str) -> dict[str, Any]:  # noqa: C901 -- closed artifact checks.
+def validate_candidate(directory: Path, manifest_sha256: str) -> dict[str, Any]:
+    """Verify the current page only; historical migration has a separate pinned entry point."""
+    return _validate_candidate(
+        directory, manifest_sha256, hashlib.sha256(PAGE.encode()).hexdigest()
+    )
+
+
+def _validate_candidate(directory: Path, manifest_sha256: str, page_sha256: str) -> dict[str, Any]:  # noqa: C901 -- unchanged closed artifact checks.
     """Verify a reviewer's exact manifest pin and closed byte-preserving candidate."""
     manifest = _read(directory / "manifest.json", MAX_MANIFEST_BYTES)
     if (
@@ -386,7 +498,27 @@ def validate_candidate(directory: Path, manifest_sha256: str) -> dict[str, Any]:
         total > MAX_AUDIO_BYTES
         or total != manifest.get("audio_bytes")
         or actual != expected
-        or (directory / "index.html").read_bytes() != PAGE.encode()
+        or _hash(directory / "index.html") != page_sha256
     ):
         raise ValueError("Candidate inventory or budget differs")
+    return manifest
+
+
+def rebuild_candidate(prior: Path, output: Path, manifest_sha256: str) -> dict[str, Any]:
+    """Migrate only the exact reviewed candidate page; preserve every manifest/audio byte."""
+    if manifest_sha256 != REVIEWED_MANIFEST_SHA256:
+        raise ValueError("Migration requires the exact reviewed 55-recording manifest pin")
+    page_hash = _hash(prior / "index.html")
+    if page_hash not in {LEGACY_PAGE_SHA256, hashlib.sha256(PAGE.encode()).hexdigest()}:
+        raise ValueError("Prior page is not an explicitly pinned migration input")
+    manifest = _validate_candidate(prior, manifest_sha256, page_hash)
+    if output.exists() or output.is_symlink() or any(p.is_symlink() for p in output.parents):
+        raise ValueError("Migration output must be fresh and nonsymlinked")
+    output.mkdir(parents=True)
+    (output / "audio").mkdir()
+    for row in manifest["tracks"]:
+        shutil.copyfile(prior / row["audio_path"], output / row["audio_path"])
+    shutil.copyfile(prior / "manifest.json", output / "manifest.json")
+    (output / "index.html").write_text(PAGE)
+    validate_candidate(output, manifest_sha256)
     return manifest
