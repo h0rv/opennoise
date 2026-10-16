@@ -1,0 +1,87 @@
+{
+  "revision": "fma-permitted55-listening-protocol-v1",
+  "status": "frozen_design_pending_independent_review_and_build_seal",
+  "candidate_manifest_sha256": "242505b6c393185bdca4925b3ee97eb579fac93746091e8b0675809c8c0286cf",
+  "waveform_inventory_sha256": "829f3f80308149fe03adfd582c45a50168b67eb61fe5ce82e2556e5ce208f729",
+  "query_selection": "All six original fold=2 test queries, unchanged. Diagnostic previously inspected cohort; not fresh confirmation. No replacement for unsupported or identical candidates.",
+  "comparison": {
+    "reference": "raw52 top1",
+    "comparator": "simple_four top1: frozen saved train-standardized RMS/ZCR four-column squared Euclidean",
+    "selection": "Prespecified before new baseline results; no winner selection. Exact rankings supplied by separately validated baseline pack."
+  },
+  "slots": 2,
+  "items_per_slot": 6,
+  "seed": "opennoise-permitted55-listening-20261016-v1",
+  "assignment": "SHA256 seed+NUL+assignment+NUL+query ID orders all six; first three raw=A in slot1, rest raw=B; slot2 exact swap. Each slot independently SHA-orders item IDs. Neutral trial IDs derived from seeded order, no method names in participant data.",
+  "participant_fields": [
+    "revision",
+    "slot",
+    "items[{item_id,query,A,B,identical_candidates,unsupported}]",
+    "tracks{native_id:required credit record incl unchanged audio hash/path}"
+  ],
+  "participant_exclusions": [
+    "method names/key",
+    "features/scores/ranks",
+    "source genre annotations",
+    "model metrics",
+    "coordinator input paths",
+    "baseline artifacts"
+  ],
+  "response_fields": [
+    "revision",
+    "packet_sha256",
+    "slot",
+    "items[{item_id,choice,heard_query,heard_A,heard_B,familiarity,conflict,notes}]"
+  ],
+  "choices": [
+    null,
+    "A",
+    "B",
+    "tie",
+    "neither",
+    "unsure",
+    "playback_failure"
+  ],
+  "heard_fields": "Nullable self-reported booleans; not automatic proof of complete playback. Choice may be retained with incomplete listening, but reported separately.",
+  "familiarity_values": [
+    null,
+    "none",
+    "query",
+    "candidate",
+    "both",
+    "unsure"
+  ],
+  "conflict_values": [
+    null,
+    false,
+    true
+  ],
+  "notes": "Optional bounded string <=1000 chars; local only. No requested personal name/contact/demographics.",
+  "missingness": "Page exports all six rows, unanswered choice=null. Validator accepts zero, one or two slot files; absent slots explicitly missing. Duplicate slot files, item IDs or unexpected items rejected; never silently merged or dropped.",
+  "summary": "Descriptive per-query/per-component table with both original responses and mapped choices, identical/unsupported/incomplete/conflict status and disagreement. Outcome counts retain all12 planned responses. No significance test, confidence interval, quality score, acceptance threshold or serving change. No double counting correlated listener responses as independent queries.",
+  "blinding": "Method-blind only; identities, names and required source/license/attribution retained. Listeners must not consult coordinator mapping or model artifacts; identities may permit recognition. Separate participant roots contain no coordinator files.",
+  "limits": {
+    "cpu_seconds": 120,
+    "wall_seconds": 120,
+    "memory_bytes": 1000000000,
+    "clip_bytes": 2000000,
+    "slot_audio_bytes": 64000000,
+    "control_bytes": 2000000,
+    "response_bytes": 200000
+  },
+  "actual_judgments": 0,
+  "public_deployment_authorized": false,
+  "freeze_gate": "Before actual packets, a separate build seal must bind this design SHA256, independently reviewed baseline inventory SHA256, exact candidate manifest and waveform inventory, and builder/template hashes. No change to query selection, comparison or outcome rules is permitted by that seal.",
+  "primary_question": "Which candidate sounds more musically similar to the query?",
+  "choice_semantics": {
+    "A": "A sounds more similar",
+    "B": "B sounds more similar",
+    "tie": "Both sound equally similar",
+    "neither": "Neither sounds meaningfully similar",
+    "unsure": "Unable to judge",
+    "playback_failure": "Could not listen because playback failed"
+  },
+  "audition_instruction": "Listen to the complete query, A and B excerpts before choosing when available. Listening flags are participant self-reports, not proof of attention or complete decoding. Do not consult coordinator or the other slot.",
+  "participant_distinctness": "Two slots do not prove two independent people. Coordinator supplies separate distinct_participants_confirmed boolean at summary time; default false and report unconfirmed without collecting names.",
+  "unsupported_display": "Missing candidate shows unavailable and no Play control. Keep trial and any raw choices; exclude unsupported, identical, incomplete listening or conflict rows from discriminating preference counts with explicit reasons. Retain all planned response denominators."
+}
