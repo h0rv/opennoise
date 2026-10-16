@@ -49,7 +49,7 @@ test('synthetic artist profiles connect maps, suggested members and exact source
   await evaluate("document.querySelector('#genre-connections a[href=\"#shared/1/2\"]').click()");await wait("document.querySelector('#main').dataset.route==='#shared/1/2'");assert.deepEqual(await evaluate("[...document.querySelectorAll('#results [data-track-id]')].map(x=>x.dataset.trackId)"),['102']);
   await evaluate('history.back()');await wait("document.querySelector('#main').dataset.route==='#genre/1'");await evaluate('history.forward()');await wait("document.querySelector('#main').dataset.route==='#shared/1/2'");
   await evaluate("location.hash='#map?view=artists&selected=11'");await wait("document.querySelector('[data-map-artist][data-selected=true]')");assert.equal(await evaluate("document.querySelector('[data-map-artist][data-selected=true]').dataset.mapArtist"),'11');
-  await evaluate("document.querySelector('[data-map-artist]').focus()");await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await wait("document.querySelector('#main').dataset.route==='#artist/11'");
+  await evaluate("document.querySelector('[data-map-artist][data-selected=true]').focus()");await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await wait("document.querySelector('#main').dataset.route==='#artist/11'");
   await evaluate("location.hash='#map?view=excerpts&genre=1'");await wait("document.querySelectorAll('[data-map-track]').length===3");assert.equal(await evaluate("document.querySelectorAll('[data-map-track][data-highlighted=true]').length"),2);
   assert.equal(await evaluate("window.__player===document.querySelector('audio')&&window.__credit===document.querySelector('#credit').textContent"),true);assert.deepEqual(await evaluate('window.__media.plays'),['candidate/audio/102.mp3']);
   await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await wait("document.querySelector('svg').viewBox.baseVal.width<400");assert.equal(await evaluate('innerWidth'),390);assert.equal(await evaluate('document.documentElement.scrollWidth<=390'),true);
@@ -73,4 +73,45 @@ test('synthetic unplaced artist remains listed and playable with explicit absenc
 
 test('synthetic delayed profile response follows current route and disconnects old map observer',{skip:!chromium,timeout:60000},async()=>{
  await browser(async({evaluate,wait,command})=>{await wait("document.documentElement?.dataset.candidateReady==='true'");await evaluate("location.hash='#artist/11'");await wait("document.querySelector('#main').dataset.route==='#artist/11'");await evaluate("document.querySelector('#results [data-play-track]').click();location.hash='#track/103'");await wait("discovery!==null");assert.equal(await evaluate("document.querySelector('#main').dataset.route"),'#track/103');assert.deepEqual(await evaluate('window.__media.plays'),['candidate/audio/101.mp3']);await evaluate("location.hash='#map'");await wait("document.querySelector('[data-map-artist]')");await evaluate("location.hash='#track/101'");await wait("document.querySelector('#main').dataset.route==='#track/101'");assert.equal(await evaluate('mapObserver===null'),true);await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});assert.equal(await evaluate("document.querySelector('#main').dataset.route"),'#track/101');},discovery,700);
+});
+
+
+test('synthetic mobile artist map has no colliding labels and bounded accessible view controls',{skip:!chromium,timeout:60000},async()=>{
+ await browser(async({evaluate,wait,command})=>{
+  await command('Page.bringToFront');
+  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await wait("document.documentElement?.dataset.candidateReady==='true'");
+  await evaluate("location.hash='#track/101'");await wait("document.querySelector('#main [data-play-track]')");
+  await evaluate("document.querySelector('#main [data-play-track]').click();window.__player=document.querySelector('audio');window.__src=window.__player.getAttribute('src');window.__credit=document.querySelector('#credit').textContent;location.hash='#map?view=artists&selected=11'");
+  await wait("document.querySelectorAll('[data-map-artist]').length===2");
+  const original=await evaluate("[...document.querySelectorAll('svg circle')].map(c=>[c.getAttribute('cx'),c.getAttribute('cy')]).sort()");
+  assert.equal(await evaluate("document.querySelectorAll('svg text').length"),0,'no labels can overlap points or intercept another artist');
+  assert.equal(await evaluate("document.querySelector('#map-artist-name a').getAttribute('href')"),'#artist/11');
+  const initial=await evaluate("document.querySelector('svg').viewBox.baseVal.width");
+  const click=label=>evaluate(`(()=>{const b=[...document.querySelectorAll('.map-controls button')].find(b=>b.textContent===${JSON.stringify(label)});b.focus();b.click()})()`);
+  await click('Zoom in');assert.equal(await evaluate("document.querySelector('svg').viewBox.baseVal.width"),initial/2);
+  const before=await evaluate("document.querySelector('svg').viewBox.baseVal.x");await click('Pan right');assert.ok(await evaluate("document.querySelector('svg').viewBox.baseVal.x")>before);
+  for(let i=0;i<8;i++){await click('Zoom in');await click('Pan down');await click('Pan right');}
+  assert.equal(await evaluate("document.querySelector('svg').viewBox.baseVal.width"),initial/8);
+  assert.ok(await evaluate("document.querySelector('svg').viewBox.baseVal.y+document.querySelector('svg').viewBox.baseVal.height<=500.001"));
+  await evaluate("document.querySelector('[data-map-artist][data-selected=true]').focus()");
+  assert.equal(await evaluate("(()=>{const s=document.querySelector('svg'),v=s.viewBox.baseVal,c=document.activeElement.querySelector('circle'),x=Number(c.getAttribute('cx')),y=Number(c.getAttribute('cy'));return x>=v.x-.001&&x<=v.x+v.width+.001&&y>=v.y-.001&&y<=v.y+v.height+.001})()"),true,'focused point brought into viewport');
+  await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await wait("document.querySelector('#main').dataset.route==='#artist/11'");
+  await evaluate('history.back()');await wait("document.querySelector('[data-map-artist]')");assert.equal(await evaluate("document.querySelector('svg').viewBox.baseVal.width"),initial/8);
+  assert.equal(await evaluate("Number(document.querySelector('svg circle').getAttribute('r'))*8"),7);
+  await evaluate('history.forward()');await wait("document.querySelector('#main').dataset.route==='#artist/11'");
+  await evaluate("location.hash='#map?view=artists&selected=12'");await wait("document.querySelector('[data-map-artist][data-selected=true]')");
+  assert.equal(await evaluate("document.querySelector('svg').lastElementChild.dataset.mapArtist"),'12');
+  assert.equal(await evaluate("(()=>{const v=document.querySelector('svg').viewBox.baseVal,c=document.querySelector('[data-selected=true] circle'),x=Number(c.getAttribute('cx')),y=Number(c.getAttribute('cy'));return x>=v.x-.001&&x<=v.x+v.width+.001&&y>=v.y-.001&&y<=v.y+v.height+.001})()"),true);
+  await click('Pan down');await click('Pan right');await evaluate("location.hash='#artist/12'");await wait("document.querySelector('#main').dataset.route==='#artist/12'");
+  await evaluate("location.hash='#map?view=artists&selected=12'");await wait("document.querySelector('[data-selected=true]')");
+  assert.equal(await evaluate("(()=>{const v=document.querySelector('svg').viewBox.baseVal,c=document.querySelector('[data-selected=true] circle'),y=Number(c.getAttribute('cy'));return y>=v.y-.001&&y<=v.y+v.height+.001})()"),true,'fresh Locate on map recenters same artist');
+  for(let i=0;i<5;i++){await evaluate("location.hash='#map?view=artists'");await wait("document.querySelector('.map-controls')");await click('Reset view');await evaluate("location.hash='#genre/1'");await wait("document.querySelector('#main').dataset.route==='#genre/1'");}
+  await evaluate("location.hash='#map?view=artists'");await wait("document.querySelector('.map-controls')");
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('svg circle')].map(c=>[c.getAttribute('cx'),c.getAttribute('cy')]).sort()"),original);
+  assert.equal(await evaluate("document.querySelectorAll('.map-controls').length"),1);
+  assert.equal(await evaluate("window.__player===document.querySelector('audio')&&window.__src===document.querySelector('audio').getAttribute('src')&&window.__credit===document.querySelector('#credit').textContent"),true);
+  assert.deepEqual(await evaluate('window.__media.plays'),['candidate/audio/101.mp3']);
+  assert.equal(await evaluate('innerWidth'),390);assert.equal(await evaluate('document.documentElement.scrollWidth<=390'),true);
+ });
 });
