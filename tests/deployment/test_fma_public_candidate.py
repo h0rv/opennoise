@@ -232,3 +232,51 @@ class PublicCandidateTests(unittest.TestCase):
                     ),
                 ):
                     candidate.build_candidate(site, audit, path, root / "output", decision_pin)
+
+    def test_explicit_legacy_migration_preserves_bytes(self) -> None:
+        """Synthetic manifest pin is patched only after production rejects it."""
+        legacy = (Path(__file__).parents[1] / "fixtures/fma_candidate_legacy.html").read_bytes()
+        self.assertEqual(hashlib.sha256(legacy).hexdigest(), candidate.LEGACY_PAGE_SHA256)
+        row = candidate.project_track(self.native, self.decision, self.tags)
+        row["genre_ids"] = [1]
+        manifest = {
+            "revision": candidate.REVISION,
+            "public_deployment_authorized": False,
+            "rights_warranty": False,
+            "source_evidence_gate": "passed_matching_declarations_and_reviewed_attribution",
+            "tracks": [row],
+            "audio_bytes": 4,
+        }
+        payload = json.dumps(manifest).encode()
+        pin = hashlib.sha256(payload).hexdigest()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            prior = root / "prior"
+            (prior / "audio").mkdir(parents=True)
+            (prior / "audio/1.mp3").write_bytes(b"fake")
+            (prior / "manifest.json").write_bytes(payload)
+            (prior / "index.html").write_bytes(legacy)
+            with self.assertRaises(ValueError):
+                candidate.validate_candidate(prior, pin)
+            with self.assertRaisesRegex(ValueError, "exact reviewed"):
+                candidate.rebuild_candidate(prior, root / "rejected", pin)
+            with patch.object(candidate, "REVIEWED_MANIFEST_SHA256", pin):
+                candidate.rebuild_candidate(prior, root / "new", pin)
+            self.assertEqual((root / "new/manifest.json").read_bytes(), payload)
+            self.assertEqual((root / "new/audio/1.mp3").read_bytes(), b"fake")
+            self.assertEqual((prior / "index.html").read_bytes(), legacy)
+            candidate.validate_candidate(root / "new", pin)
+            with patch.object(candidate, "REVIEWED_MANIFEST_SHA256", pin):
+                for mutation in ("page", "audio", "extra"):
+                    with self.subTest(mutation=mutation):
+                        (prior / "index.html").write_bytes(
+                            legacy + (b"changed" if mutation == "page" else b"")
+                        )
+                        (prior / "audio/1.mp3").write_bytes(
+                            b"evil" if mutation == "audio" else b"fake"
+                        )
+                        if mutation == "extra":
+                            (prior / "unexpected").write_text("unexpected")
+                        with self.assertRaises(ValueError):
+                            candidate.rebuild_candidate(prior, root / mutation, pin)
+                        self.assertFalse((root / mutation).exists())
