@@ -131,3 +131,32 @@ contains launch instructions. The summarizer accepts zero, one or two actual slo
 response files; absent responses remain missing. Confirm distinct participants only
 when the coordinator has established that fact. Browser-generated test responses
 must never be included as actual listening evidence.
+
+## Recorded diagnostic results
+
+All six rankings have zero test hits at both one and three neighbors. Mean test
+source-tag recall is zero using either all observed labels (six defined queries)
+or training-known labels (five defined queries). The validation results are retained
+separately rather than pooled into the test result:
+
+| Ranking | Test hits @1 / @3 (six queries) | Validation hits @1 / @3 (two queries) |
+| --- | --- | --- |
+| Original 52-column cosine | 0 / 0 | 0 / 1 |
+| Original PCA2 | 0 / 0 | 1 / 1 |
+| Native ID | 0 / 0 | 0 / 0 |
+| Four simple audio features | 0 / 0 | 0 / 0 |
+| Training annotation prevalence | 0 / 0 | 0 / 0 |
+| Historical listen popularity | 0 / 0 | 0 / 0 |
+
+For the six test queries, the exact component-balanced random procedure has
+expected hit counts of 0.336 at one neighbor and 0.943 at three. Its central 95%
+conditional hit-count bands are respectively 0–2 and 0–3. Expected mean all-tag
+recall is 0.0333 and 0.0953; known-tag recall is 0.0549 and 0.1572, with the same
+six/five defined-query denominators. These describe the specified random mechanism
+on this fixed sample. They neither establish an underperforming population model
+nor excuse the observed ranking failures against recoverable labels.
+
+For validation, random expected hit counts are 0.0833 and 0.2359; both conditional
+bands are 0–1. The original raw/PCA validation hits concern the same one supported
+query. They are not evidence for choosing a model. The simple comparator provides
+no measured tag-overlap improvement, and no serving change follows these results.
