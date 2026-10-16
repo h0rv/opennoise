@@ -19,6 +19,10 @@ The producer freezes code, decoder executable/version, Python/NumPy versions, al
 The stage is offline and serial, with 120-second CPU/wall, 1 GB memory and 100 MB output
 limits. Decoder stdout/stderr are streamed with hard caps and 20-second timeout;
 full successful completion is required. No silent truncation or cap increase occurs.
+Actual extraction requires an already-installed local FFmpeg executable. Source
+tests always exercise bounded pipes and child-process failures using explicit
+synthetic processes; the separate codec integration test skips when FFmpeg is
+absent. The recorded real-audio run and independent replay both used FFmpeg.
 
 Use the locked repository environment (`poe sync` first). Only the reviewed
 55-recording candidate and minimized component ledger are input data; archived

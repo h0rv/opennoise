@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 # ruff: noqa: PLR2004 -- fixed protocol dimensions and synthetic physical signal values.
+import shutil
+import sys
 import tempfile
 import unittest
 import wave
@@ -91,6 +93,7 @@ class WaveformTests(unittest.TestCase):
         )
         self.assertEqual(order, [2, 3])
 
+    @unittest.skipUnless(shutil.which("ffmpeg"), "Offline FFmpeg integration requires FFmpeg")
     def test_decoder_full_completion_overflow_timeout_and_invalid_source(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             path = Path(name) / "synthetic.wav"
@@ -113,6 +116,46 @@ class WaveformTests(unittest.TestCase):
             path.write_bytes(b"invalid audio")
             with self.assertRaisesRegex(ValueError, "failed"):
                 pipeline.decode(path)
+
+    def test_stream_guards_with_real_synthetic_child_processes(self) -> None:
+        # Exercise actual pipes/process cleanup without claiming codec or FMA verification.
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            decoder = root / "synthetic-decoder"
+            source = root / "unused-synthetic-input"
+
+            def program(code: str) -> None:
+                decoder.write_text(f"#!{sys.executable}\nimport sys, struct, time\n{code}\n")
+                decoder.chmod(0o700)
+
+            with patch.object(pipeline.shutil, "which", return_value=str(decoder)):
+                program("sys.stdout.buffer.write(b'\\0' * 22050 * 4)")
+                self.assertEqual(len(pipeline.decode(source)), 22050)
+                with (
+                    patch.object(pipeline, "PCM_BYTES", 8192),
+                    self.assertRaisesRegex(ValueError, "bound"),
+                ):
+                    pipeline.decode(source)
+                program("time.sleep(5)")
+                with (
+                    patch.object(pipeline.time, "monotonic", side_effect=[0, 21]),
+                    self.assertRaisesRegex(ValueError, "timeout"),
+                ):
+                    pipeline.decode(source)
+                cases = (
+                    ("sys.stderr.buffer.write(b'x' * 200001)", "bound"),
+                    ("sys.exit(1)", "failed"),
+                    ("sys.stdout.buffer.write(b'\\0' * 8193)", "incomplete"),
+                    (
+                        "sys.stdout.buffer.write(struct.pack('<f', float('nan')) * 2048)",
+                        "nonfinite",
+                    ),
+                )
+                for code, message in cases:
+                    with self.subTest(message=message):
+                        program(code)
+                        with self.assertRaisesRegex(ValueError, message):
+                            pipeline.decode(source)
 
     def test_closed_pack_rejects_resealed_private_scope_and_missing_receipt_binding(self) -> None:
 
