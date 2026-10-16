@@ -1,0 +1,219 @@
+{
+  "status": "frozen_pending_independent_review_no_compute",
+  "scope": "Only reviewed site55 audio and minimized native metadata; no historical133 website import",
+  "inputs": {
+    "candidate": "/workspace/opennoise-public-candidate-20261015/site55",
+    "manifest_sha256": "242505b6c393185bdca4925b3ee97eb579fac93746091e8b0675809c8c0286cf",
+    "numeric_projection": "/workspace/opennoise-clean-inputs-20261015/candidate",
+    "component_roster": "/workspace/opennoise-clean-inputs-20261015/candidate/saved-replay/native-folds.jsonl.zst",
+    "observed": {
+      "clips": 55,
+      "artists": 53,
+      "source_genres": 93,
+      "components": 44,
+      "finite_archived_44_feature_rows": 55,
+      "duration_seconds_min": 29.988571,
+      "duration_seconds_max": 30.014694,
+      "train_clips": 47,
+      "train_components": 36,
+      "validation_clips": 2,
+      "test_clips": 6,
+      "test_components": 6,
+      "test_queries_with_any_train_observed_tag": 5,
+      "tag_support_histogram": {
+        "1": 56,
+        "2": 21,
+        "3": 10,
+        "4": 2,
+        "5": 3,
+        "9": 1
+      }
+    },
+    "component_roster_sha256": "a43584aeb88c874576b2e7a84a25a2ebd1908385935f1c2a20b84e1273642ea7"
+  },
+  "existing_executable_stages": [
+    {
+      "path": "scripts/build_fma_public_candidate.py",
+      "role": "source/license decisions plus byte-identical minimized playback candidate; retained actual55 exists"
+    },
+    {
+      "path": "scripts/capture_fma_acoustic_features.py",
+      "role": "archived numeric source capture/projection, not local waveform feature extraction; do not rerun acquisition"
+    },
+    {
+      "path": "scripts/evaluate_fma_acoustic_baseline.py",
+      "role": "full-native component-isolated positiveGaussian source-tag reconstruction; existing corpus model is not a55-only learned model"
+    },
+    {
+      "path": "scripts/build_fma_fresh_map.py",
+      "role": "inspect exact availability before reuse: existing fma_fresh_map module provides separately frozen numeric PCA; old output not permission to attach allcatalog identities"
+    },
+    {
+      "path": "scripts/build_fma_reconstructed_neighbors.py",
+      "role": "fixed-normalization descriptor retrieval with component exclusion; ranking is deterministic, not trained metric learning"
+    },
+    {
+      "path": "scripts/run_genre_reconstruction_pipeline.py",
+      "role": "separate MusicBrainz taxonomy/peer pipeline; does not close local FMA MP3-to-features gap"
+    }
+  ],
+  "gaps": [
+    "No local55 MP3-to-waveform-to-numeric descriptor producer found in current FMA modules.",
+    "No single small-sample recipe links permitted55 provenance, actual waveform features, frozen train-only representation, heldout comparison and playable static map.",
+    "Current full-corpus Gaussian evaluation and numeric PCA cannot serve as evidence for newly extracted55 features.",
+    "Sparse source-positive tags are weak diagnostics, not complete labels or human musical relevance judgments. No completed blinded listener judgments establish relevance.",
+    "Editorial genre names/source tags and representative-selection heuristics must remain visibly distinct from learned axes and inferred neighbors."
+  ],
+  "proposed_next_slice": {
+    "name": "Local55 waveform descriptor pipeline v1",
+    "implementation": "One small new CLI/module with freeze, extract, evaluate, export and verify operations; explicit paths, no network, no new dependencies. Parent must approve/freeze this scope before implementation/compute.",
+    "freeze_before_values": "Hash permitted manifest and all55 MP3s, source component roster, ordered native IDs, tool versions, code and exact protocol. Preserve original component train/validation/test membership; no relabeling or split search.",
+    "extract": "Decode only verified local MP3 snapshots using offline ffmpeg, mono22050Hz float32 PCM, at most31seconds perclip. NumPy float64 Hann2048 FFT with1024hop; retain complete frames only (shorter-than2048samples abstains). Exactly52 columns: population mean/std over frames of24 log-mel band energies and RMS/ZCR. No archived44 equivalence claim.",
+    "deterministic_baseline": "Fit center and population scale on47 original-training rows only (fail closed if any extraction fails until a separately reviewed missingness policy). Zero-variance columns inactive at scale<=1e-12; reject nonfinite values and standard offsets>12 with explicit abstention. Unit-normalize active standardized52D vectors; rank cosine distance with native-ID exact ties; evaluation candidates only47training rows, exclude query component, one nearest candidate per component.",
+    "learned_comparator": "Only train-fitted PCA2 for required map geometry; no PCA8 and no classifier. Symmetric covariance of standardized47training rows, np.linalg.eigh descending eigenvalues; largest-absolute loading positive (lowest feature index resolves ties). Report eigengaps/variance. Holdout positions transformed without refitting. Near-degenerate selected eigenspaces flagged; map remains numerical structure, not genre groundtruth.",
+    "evaluation": "Frozen topk1,3 diagnostics: heldout6 query rows against47training candidates under identical component exclusions/ties. Compare raw52D cosine ranking, PCA2 Euclidean projected ranking (projection diagnostic only), native-ID baseline. Report per-query positive-source-tag hits and recovered-known-tag counts divided by all observed query tags and by training-observed query tags separately. Zero denominator is null/unsupported, never removed silently. One test query has zero train-observed tags. Also report top3 neighbor overlap between raw and2D and raw-vs-projected rank disagreement. Validation2 separate, no tuning. No musical precision/global quality/parity claim.",
+    "genre_representation": "Use direct source names only. Train-positive centroids require at least3 distinct training components; unsupported genres remain in source list without a learned center. Display sample support. No invented genre boundaries or artist-genre facts.",
+    "export": "Fresh self-contained site containing only permitted55 IDs/audio/credits, actual feature/model receipts, 2D track geometry, bounded inferred neighbor links and sourcegenre browsing. All55 remain reachable including abstentions/unplaced records; playback explicit, one persistent player, silent reload. No imported133 website/fullcatalog references.",
+    "resources": "Preserve120seconds CPU/wall and1GBAS per stage,100MB total numeric/intermediate outputs (audio unchanged55clips<=64MB). Decode serially with20seconds perclip timeout,31seconds22050Hz mono float32 cap=2,734,200 PCM bytes/clip; cap retained output before allocation; stop without cap escalation. Static JSON shards<=200KB. No dependency/network/acquisition.",
+    "replay": "Physical deterministic fixtures (silence,sine tones,amplitude scaling,zero crossings) test feature meaning; no test fixtures become FMA audio. Save all learned arrays+column/split/tool/code hashes; exact loaded-vs-original transforms/rankings and independent extraction/linear-algebra replay with declared1e-10 absolute/1e-8 relative feature tolerance; exact nativeID ranking or explicit tie-stability failure. Rebuild artifact hashes identical for semantic outputs excluding elapsed/resource logs.",
+    "decision": "Completion means working source\u2192waveform features\u2192train-fitted layout\u2192deterministic retrieval\u2192heldout diagnostics\u2192playable static export, not superiority. Use raw52D for neighbor serving even when PCA2 tag scores differ. No learned classifier is justified by only47training clips/93sparse tags."
+  },
+  "completion_criteria": [
+    "Single documented local command sequence runs freeze/extract/evaluate/export/verify from retained55 without hidden historicalsite dependency or network.",
+    "Every exported identity/credit/audiohash joins permitted manifest exactly; component provenance retained separately without raw unrestricted metadata in website.",
+    "All55 extraction rows or explicit reasoned failures accounted for; extraction proves audio bytes were consumed and no source labels entered feature computation.",
+    "Normalization/PCA fit uses train only; test/validation rows never update parameters; tests detect leakage and samecomponent retrieval.",
+    "Raw52D, projected2D and native-ID ranking diagnostics use identical pools/exclusions/ties/denominators; preserve perquery and unsupported outcomes regardless of favorability.",
+    "Independent replay passes under frozen guards; map geometry derives from actual feature fit, not editorial coordinates.",
+    "Actual browser verifies all55 playable IDs, genre/artist/source links, no initial autoplay, keyboard/list alternative, mobile fit and no external requests.",
+    "Delivered README explains source-provided vs deterministic vs learned vs editorial stages with exact run commands and honest limits."
+  ],
+  "proposed_feature_definition": {
+    "revision": "fma-permitted55-waveform-pipeline-proposal-v1",
+    "sample_rate_hz": 22050,
+    "fft_samples": 2048,
+    "hop_samples": 1024,
+    "window": "np.hanning(2048), symmetric Hann",
+    "frames": "start0 through last complete2048 frame at hop1024, no padding",
+    "spectrum": "abs(rfft(frame*window))**2 / sum(window**2)",
+    "mel": "HTK2595*log10(1+hz/700);26equally spaced melpoints from0 toNyquist11025Hz, inverted toHz;24 triangles evaluated at exact FFT bin frequencies, unit-height, no area normalization",
+    "band_value": "log10(max(sum(power*triangle),1e-12))",
+    "rms": "sqrt(mean(unwindowed frame**2))",
+    "zcr": "mean((frame[:-1]<0)!=(frame[1:]<0))",
+    "statistics": "float64 population mean then population std per24band,RMS,ZCR, fixed52column ordered manifest",
+    "silence": "finitefloor bandvalues, RMS0,ZCR0; all-zero poststandardization cosine vector abstains",
+    "labels": "source tags never used in audio extraction, scaling,PCA or ranking; used only frozen diagnostics and named source browsing",
+    "layout": "same raw standardized vectors transformed by frozen PCA2; no hand-positioning"
+  },
+  "tests_required": [
+    "Silence finite with exactRMS/ZCR0; pure known-bin sine energy concentrated expectedmelbands; doubledsignal RMSdoubles and logenergy shifts log10(4) for nonfloorbands; sine ZCR tracks knownfrequency within finitewindowtolerance.",
+    "Incomplete/overlimitdecode,nonfinitePCM,wronghash/changedsource reject withoutpartialpromotion.",
+    "Heldout perturbation cannot change traincenter/scale/PCA; samecomponent candidate rejection; stable native-ID ties; save/load exact transform; source label permutation cannot change features/map/ranking.",
+    "Every55 row+44component accounted for; validation/test neverfit; all namedgenre assignments retain source role."
+  ],
+  "revision": "fma-permitted55-waveform-protocol-v3",
+  "supersedes_proposal_sha256": "cc978c4580e3aa2ceb9b71e205a5baea5d01e7e75389e38a37fbbeda732c96d6",
+  "v2_conventions": {
+    "precedence": "These explicit conventions supersede any less precise wording in inherited proposed_next_slice.",
+    "columns": [
+      "mel_00_mean",
+      "mel_01_mean",
+      "mel_02_mean",
+      "mel_03_mean",
+      "mel_04_mean",
+      "mel_05_mean",
+      "mel_06_mean",
+      "mel_07_mean",
+      "mel_08_mean",
+      "mel_09_mean",
+      "mel_10_mean",
+      "mel_11_mean",
+      "mel_12_mean",
+      "mel_13_mean",
+      "mel_14_mean",
+      "mel_15_mean",
+      "mel_16_mean",
+      "mel_17_mean",
+      "mel_18_mean",
+      "mel_19_mean",
+      "mel_20_mean",
+      "mel_21_mean",
+      "mel_22_mean",
+      "mel_23_mean",
+      "mel_00_std",
+      "mel_01_std",
+      "mel_02_std",
+      "mel_03_std",
+      "mel_04_std",
+      "mel_05_std",
+      "mel_06_std",
+      "mel_07_std",
+      "mel_08_std",
+      "mel_09_std",
+      "mel_10_std",
+      "mel_11_std",
+      "mel_12_std",
+      "mel_13_std",
+      "mel_14_std",
+      "mel_15_std",
+      "mel_16_std",
+      "mel_17_std",
+      "mel_18_std",
+      "mel_19_std",
+      "mel_20_std",
+      "mel_21_std",
+      "mel_22_std",
+      "mel_23_std",
+      "rms_mean",
+      "rms_std",
+      "zcr_mean",
+      "zcr_std"
+    ],
+    "zero_norm": "L2 norm<=1e-12 abstains. Standardized active coordinate absolute>12 abstains. Nonfinite extraction fails whole stage, no smaller training fit. All47training rows fit center/population scale/PCA, inactive columns scale<=1e-12.",
+    "pool": "Eligible original47training tracks finite, in support and norm>1e-12. Raw/PCA2/native-ID baselines start with identical eligible tracks, exclude querycomponent. Each method sorts by its distance then nativeID and greedily keeps one track per component; IDbaseline sorts nativeID only. All55 queries retained; all6 test outcomes retained even unsupported. Serving uses same eligibletraining pool and <=6 rawcosine neighbors; PCA2 never supplies servingneighbors.",
+    "PCA": "Float64 symmetric covariance, eigh descending eigenvalues. Let tolerance=1e-10*max(1,largest eigenvalue). Require >=2 eigenvalues>tolerance and both lambda1-lambda2 and lambda2-lambda3>tolerance (absentlambda3=0). Otherwise allpositions null/projection_degenerate, rawranking still usable. Sign largestabsolute loading positive; lowestfeatureindex tie. No alternatebasis/refit/thresholdsearch. Covariance exactly Z_train.T@Z_train/47 (population divisor).",
+    "decode": "No -t truncation. Verified local snapshot, ffmpeg -xerror, file input and pipe output only; mono22050Hz littleendianfloat32. Stream stdout cap2734200bytes (31seconds), readcap+1 then kill/reject overlong. Require successfulexit, complete4bytesamples, >=2048samples, finitePCM;20seconds perclip. Boundstderr concurrently; never unbounded communicate. Any failure aborts finalartifact promotion. Full source completion required; no silent truncation.",
+    "labels": "Globaltraining support from all47source-label rows regardless of candidateeligibility. Separately report eligibletraining labelset and query-specific postcomponent-exclusion labelset. Each query allobservedtag denominator and known-tag denominator(querytags intersect global47trainlabelset) remain fixed; never substitute smallerpool support. Zero denominator=null/unsupported; unsupportedvector queries retain zero-retrieved outcomes with explicitreason. One testquery with no globaltrainknownlabels remains counted.",
+    "rank_disagreement": "For shared eligiblecandidate pool, compare top3 rawcosine vs projectedEuclidean, both componentdiverse. overlap=intersection nativeIDs / min(3,eligiblecomponentcount), null if zero or projection unavailable. Normalized symmetric top3 rank footrule: union oftop3IDs, missingrank4; sumabsolute rankdifferences/12 (maximum12 for disjoint fulltop3lists). Store rawlists and unnormalized sum as well.",
+    "label_permutation": "Features/PCA/trackcoordinates/trackrankings invariant under source-tag permutation; namedgenrecentroids and annotationmetrics intentionally depend on tags.",
+    "resources": "120seconds CPU/wall and1GBAS perstage;100MB allnumeric/intermediateoutput; serial55decode; unchanged64MBaudio/2MBMP3 cap; <=200KBviewJSONshards. No capincrease.",
+    "replay": "Same source versions and orderedrows: saved-loadedtransform exactly matches original; independent numerical tolerance abs1e-10 rel1e-8; rankings exact or explicit tie-stabilityfailure. Physicalfixtures silence/sines/amplitude/ZCR; no syntheticfixture in realcandidate."
+  },
+  "export_schema": {
+    "revision": "fma-permitted55-waveform-layout-v1",
+    "candidate_manifest_sha256": "sha256",
+    "protocol_sha256": "sha256",
+    "receipt_sha256": "sha256",
+    "axes": [
+      "PC1",
+      "PC2"
+    ],
+    "musical_quality_validated": false,
+    "tracks": "exact55 sorted {track_id,position:[x,y]|null,neighbors:[id]<=6,neighbor_reason:null|zero_norm|out_of_support|no_eligible_components,projection_reason:null|projection_degenerate|out_of_support,component_id,fold}",
+    "genres": "all93 sourcegenres sorted {genre_id,position:[x,y]|null,training_track_count,training_component_count,reason:null|insufficient_training_components|projection_degenerate}; centroid of training tracks transformed PCA2, minimum3 distinct trainingcomponents, no source tagprediction"
+  },
+  "supersedes_v2_sha256": "706f7e071e705bb8af67a722cf94b2d75d701d1e6b8817dfffb1b4ce0a28e4d8",
+  "metric_conventions": {
+    "k": [
+      1,
+      3
+    ],
+    "hit_at_k": "Query-level boolean: at least one of firstk neighbor tracks has nonempty intersection with any observed query source tags. Empty neighbors=>false. Store number of matching neighbors separately, not precision.",
+    "recall_all_at_k": "Union source tags across firstk neighbors intersect queryobservedtags; divide by number queryobservedtags. Missing denominator=>null.",
+    "recall_known_at_k": "Recovered union intersect queryobservedtags intersect global47trainingtags; divide by queryobservedtags intersect global47trainingtags. Empty denominator=>null, preserve query row.",
+    "aggregates": "For test6 and validation2 separately, counts for total/supported/known-supported/unsupported, query-level hit sum/totalqueries, recall means only over defined denominators with explicit count; perquery outcomes primary. Unsupported vectors yield emptyneighbors and zero where denominator nonzero.",
+    "projection_support": "Raw zero_norm query abstains from all three evaluation arms for shared comparability; out_of_support likewise. Projectiondegenerate makes projected arm unavailable(nullmetrics) for everyquery; raw/ID continue. Eligibletraining zero-norm/OOD tracks removed from all three pools identically.",
+    "model_files": [
+      "protocol.json",
+      "declaration.json",
+      "receipt.json",
+      "features.npz",
+      "model.npz",
+      "evaluation.json",
+      "layout.json"
+    ],
+    "receipt_binding": "Unified protocol.json contains these exact metric semantics, hashed by declaration and finalinventory. Receipt hashes features/model/evaluation and declaration. Layout binds receipt and protocol hashes; finalinventory hashes allfiles without selfhash."
+  },
+  "integrated_metric_addendum_sha256": "caea60c7a9c045e3999148234f86ac089437bfeade5f64520c38de12b7981bfd",
+  "genre_centroid_rule": "All47training rows eligible for namedcentroids after rawsupport filter. Count sourcepositive trainingtracks/components beforefilter and eligibletracks/components separately. Require>=3 eligible distinctcomponents. Arithmetic mean of eligible sourcepositive track PCA2 positions; no weighting, no heldouttracks. Missingprojection=>null. Labels only aggregate namedcentroids and evaluate."
+}
