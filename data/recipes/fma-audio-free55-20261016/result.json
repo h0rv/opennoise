@@ -1,0 +1,33 @@
+{
+  "status": "pass",
+  "site_bytes": 471370,
+  "files": 16,
+  "site_receipt_sha256": "f42b11fbd5990104a5a573095907a9fed7fbb9820fc242822af62b6096d0eaac",
+  "html_bytes": 35599,
+  "fresh_replay_all_bytes_identical": true,
+  "model_discovery_packs_unchanged": true,
+  "tracks": 55,
+  "artists": 53,
+  "genres": 93,
+  "artist_profiles": 53,
+  "positioned_artists": 53,
+  "positioned_genres": 13,
+  "directed_artist_suggestions": 318,
+  "directed_source_genre_connections": 432,
+  "audio_files": 0,
+  "model_and_discovery_original_inventories_unchanged": true,
+  "independent_browser": {
+    "status": "passed",
+    "elapsed_seconds": 53.546,
+    "widths": [
+      1100,
+      390,
+      320
+    ],
+    "media_requests": 0,
+    "external_requests": 0,
+    "javascript_exceptions": 0,
+    "report_sha256": "1d7cb4a8808677385473726b1cccfed864bf2bc1dfda58b8281a10fe66ba9e5a",
+    "input_preservation_sha256": "5bf1ca43a77b74814721c7fb3c85140cb1c0d1fd0142422bb6a9573525f2aa59"
+  }
+}
