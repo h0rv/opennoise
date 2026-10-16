@@ -2,9 +2,11 @@
 
 import hashlib
 import json
+import platform
 import resource
 import time
 from dataclasses import asdict, dataclass
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, cast
 
@@ -155,6 +157,13 @@ def _code_paths() -> dict[str, Path]:
     }
 
 
+def _versions() -> dict[str, str]:
+    return {
+        "python": platform.python_version(),
+        **{name: version(name) for name in ("numpy", "scipy", "zstandard")},
+    }
+
+
 def freeze(protocol: Path, source: Path, output: Path) -> dict[str, Any]:
     """Seal exact approved design, numeric input root and code before model outcomes."""
     if output.exists() or digest(protocol) != PROTOCOL_SHA256:
@@ -166,6 +175,7 @@ def freeze(protocol: Path, source: Path, output: Path) -> dict[str, Any]:
         "protocol": json.loads(protocol.read_text()),
         "protocol_sha256": PROTOCOL_SHA256,
         "source": str(source.resolve()),
+        "versions": _versions(),
         "code": {name: digest(path) for name, path in _code_paths().items()},
     }
     _json(output, seal)
@@ -178,6 +188,7 @@ def verify_seal(path: Path) -> dict[str, Any]:
     protocol_bytes = (json.dumps(spec["protocol"], indent=2) + "\n").encode()
     if (
         spec["revision"] != "fma-component-balanced-execution-v1"
+        or spec.get("versions") != _versions()
         or spec["protocol_sha256"] != PROTOCOL_SHA256
         or hashlib.sha256(protocol_bytes).hexdigest() != PROTOCOL_SHA256
         or spec["code"] != {name: digest(p) for name, p in _code_paths().items()}

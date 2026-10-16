@@ -9,6 +9,7 @@ from pathlib import Path
 
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
 resource.setrlimit(resource.RLIMIT_AS, (1000000000, 1000000000))
 resource.setrlimit(resource.RLIMIT_CPU, (120, 120))
 signal.alarm(120)
