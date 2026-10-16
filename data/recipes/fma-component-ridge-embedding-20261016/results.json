@@ -1,0 +1,1776 @@
+{
+  "arms": {
+    "raw44_neighbors": {
+      "totals": {
+        "queries": 94953.0,
+        "labeled_queries": 92677.0,
+        "positives": 227441.0,
+        "hits10": 91706.0,
+        "rr_sum": 35601.33721762074,
+        "positive_rr_sum": 99236.44021003248,
+        "covered_queries": 92222.0,
+        "covered_positives": 221577.0,
+        "active_label_positives": 225976.0,
+        "recoverable_positives": 220157.0,
+        "covered_labeled_queries": 90286.0,
+        "descriptor_queries": 92222.0,
+        "neighbor_queries": 92222.0,
+        "descriptor_supported_positives": 220157.0
+      },
+      "metrics": {
+        "positive_recall10": 0.40320786489683036,
+        "query_mrr": 0.38414425604649205,
+        "positive_weighted_mrr": 0.43631728760440064,
+        "query_coverage": 0.9712384021568565,
+        "positive_coverage": 0.9742174893708698,
+        "label_support_ceiling": 0.9935587690873677,
+        "joint_support_ceiling": 0.9679741119674993,
+        "labeled_query_coverage": 0.9742007186249015,
+        "component_mean_recall10": 0.42230088755693085,
+        "component_mean_mrr": 0.34846022258949766,
+        "component_mean_coverage": 0.9237479879256583
+      },
+      "descriptor_coverage": 0.9712384021568565,
+      "neighbor_coverage": 0.9712384021568565,
+      "descriptor_support_ceiling": 0.9679741119674993,
+      "components": 5883
+    },
+    "ridge8_neighbors": {
+      "totals": {
+        "queries": 94953.0,
+        "labeled_queries": 92677.0,
+        "positives": 227441.0,
+        "hits10": 93139.0,
+        "rr_sum": 36728.92631647762,
+        "positive_rr_sum": 102227.21533075976,
+        "covered_queries": 92222.0,
+        "covered_positives": 221577.0,
+        "active_label_positives": 225976.0,
+        "recoverable_positives": 220157.0,
+        "covered_labeled_queries": 90286.0,
+        "descriptor_queries": 92222.0,
+        "neighbor_queries": 92222.0,
+        "descriptor_supported_positives": 220157.0
+      },
+      "metrics": {
+        "positive_recall10": 0.4095083999806543,
+        "query_mrr": 0.39631112699459004,
+        "positive_weighted_mrr": 0.4494669621165918,
+        "query_coverage": 0.9712384021568565,
+        "positive_coverage": 0.9742174893708698,
+        "label_support_ceiling": 0.9935587690873677,
+        "joint_support_ceiling": 0.9679741119674993,
+        "labeled_query_coverage": 0.9742007186249015,
+        "component_mean_recall10": 0.4265673411364752,
+        "component_mean_mrr": 0.3601842603662633,
+        "component_mean_coverage": 0.9237479879256583
+      },
+      "descriptor_coverage": 0.9712384021568565,
+      "neighbor_coverage": 0.9712384021568565,
+      "descriptor_support_ceiling": 0.9679741119674993,
+      "components": 5883
+    },
+    "recording_gaussian": {
+      "totals": {
+        "queries": 94953.0,
+        "labeled_queries": 92677.0,
+        "positives": 227441.0,
+        "hits10": 74551.0,
+        "rr_sum": 25605.8453746013,
+        "positive_rr_sum": 66181.28086452864,
+        "covered_queries": 92223.0,
+        "covered_positives": 221578.0,
+        "active_label_positives": 226997.0,
+        "recoverable_positives": 221135.0,
+        "covered_labeled_queries": 90287.0,
+        "descriptor_queries": 92223.0,
+        "neighbor_queries": 0.0,
+        "descriptor_supported_positives": 221135.0
+      },
+      "metrics": {
+        "positive_recall10": 0.32778171042160387,
+        "query_mrr": 0.2762912629304067,
+        "positive_weighted_mrr": 0.2909821925885335,
+        "query_coverage": 0.97124893368298,
+        "positive_coverage": 0.9742218861155201,
+        "label_support_ceiling": 0.9980478453752841,
+        "joint_support_ceiling": 0.9722741282354544,
+        "labeled_query_coverage": 0.9742115087885883,
+        "component_mean_recall10": 0.37647126254398,
+        "component_mean_mrr": 0.26660558982472693,
+        "component_mean_coverage": 0.9238981823676218
+      },
+      "descriptor_coverage": 0.97124893368298,
+      "neighbor_coverage": null,
+      "descriptor_support_ceiling": 0.9722741282354544,
+      "components": 5883
+    },
+    "balanced_gaussian": {
+      "totals": {
+        "queries": 94953.0,
+        "labeled_queries": 92677.0,
+        "positives": 227441.0,
+        "hits10": 76741.0,
+        "rr_sum": 25475.19954642429,
+        "positive_rr_sum": 65429.41171178526,
+        "covered_queries": 92222.0,
+        "covered_positives": 221577.0,
+        "active_label_positives": 226997.0,
+        "recoverable_positives": 221134.0,
+        "covered_labeled_queries": 90286.0,
+        "descriptor_queries": 92222.0,
+        "neighbor_queries": 0.0,
+        "descriptor_supported_positives": 221134.0
+      },
+      "metrics": {
+        "positive_recall10": 0.3374105812056753,
+        "query_mrr": 0.2748815730593814,
+        "positive_weighted_mrr": 0.2876764159135128,
+        "query_coverage": 0.9712384021568565,
+        "positive_coverage": 0.9742174893708698,
+        "label_support_ceiling": 0.9980478453752841,
+        "joint_support_ceiling": 0.9722697314908042,
+        "labeled_query_coverage": 0.9742007186249015,
+        "component_mean_recall10": 0.3955042667321404,
+        "component_mean_mrr": 0.27964524119895995,
+        "component_mean_coverage": 0.9237479879256583
+      },
+      "descriptor_coverage": 0.9712384021568565,
+      "neighbor_coverage": null,
+      "descriptor_support_ceiling": 0.9722697314908042,
+      "components": 5883
+    },
+    "recording_popularity": {
+      "totals": {
+        "queries": 94953.0,
+        "labeled_queries": 92677.0,
+        "positives": 227441.0,
+        "hits10": 86111.0,
+        "rr_sum": 36342.76528674966,
+        "positive_rr_sum": 111003.63515272904,
+        "covered_queries": 94953.0,
+        "covered_positives": 227441.0,
+        "active_label_positives": 227026.0,
+        "recoverable_positives": 227026.0,
+        "covered_labeled_queries": 92677.0,
+        "descriptor_queries": 94953.0,
+        "neighbor_queries": 0.0,
+        "descriptor_supported_positives": 227026.0
+      },
+      "metrics": {
+        "positive_recall10": 0.3786080785786204,
+        "query_mrr": 0.3921443862743686,
+        "positive_weighted_mrr": 0.48805463901727936,
+        "query_coverage": 1.0,
+        "positive_coverage": 1.0,
+        "label_support_ceiling": 0.9981753509701418,
+        "joint_support_ceiling": 0.9981753509701418,
+        "labeled_query_coverage": 1.0,
+        "component_mean_recall10": 0.3945771763032064,
+        "component_mean_mrr": 0.3132579025834161,
+        "component_mean_coverage": 1.0
+      },
+      "descriptor_coverage": 1.0,
+      "neighbor_coverage": null,
+      "descriptor_support_ceiling": 0.9981753509701418,
+      "components": 5883
+    }
+  },
+  "paired_bootstrap": {
+    "draws": 2000,
+    "seed": 20261016,
+    "rng": "PCG64",
+    "comparisons": {
+      "ridge8_neighbors_minus_raw44_neighbors": {
+        "positive_recall10": {
+          "difference": 0.006300535083823944,
+          "interval": [
+            -0.0012277240172951522,
+            0.009608737126774588
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "query_mrr": {
+          "difference": 0.012166870948097985,
+          "interval": [
+            0.0056743574933741615,
+            0.01519951990764928
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "positive_weighted_mrr": {
+          "difference": 0.013149674512191178,
+          "interval": [
+            0.008671705968291952,
+            0.01559296579051781
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "query_coverage": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "positive_coverage": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "label_support_ceiling": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "joint_support_ceiling": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "labeled_query_coverage": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_recall10": {
+          "difference": 0.00426645357954436,
+          "interval": [
+            -0.0010281852474362154,
+            0.009681390358370068
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_mrr": {
+          "difference": 0.011724037776765617,
+          "interval": [
+            0.006944161316549319,
+            0.016958981120459068
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_coverage": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        }
+      },
+      "ridge8_neighbors_minus_balanced_gaussian": {
+        "positive_recall10": {
+          "difference": 0.072097818774979,
+          "interval": [
+            0.02371605506188141,
+            0.09741068339158633
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "query_mrr": {
+          "difference": 0.12142955393520866,
+          "interval": [
+            0.06886165222564675,
+            0.15248438748888615
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "positive_weighted_mrr": {
+          "difference": 0.16179054620307903,
+          "interval": [
+            0.090526367692277,
+            0.19919374707374946
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "query_coverage": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "positive_coverage": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "label_support_ceiling": {
+          "difference": -0.004489076287916394,
+          "interval": [
+            -0.00543957810716211,
+            -0.003255352916157637
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "joint_support_ceiling": {
+          "difference": -0.004295619523304928,
+          "interval": [
+            -0.005254986679277038,
+            -0.0031881563137782336
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "labeled_query_coverage": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_recall10": {
+          "difference": 0.03106307440433481,
+          "interval": [
+            0.023256534312140566,
+            0.03915425371725306
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_mrr": {
+          "difference": 0.08053901916730333,
+          "interval": [
+            0.07281353398473787,
+            0.08835102848516416
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_coverage": {
+          "difference": 0.0,
+          "interval": [
+            0.0,
+            0.0
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        }
+      },
+      "ridge8_neighbors_minus_recording_popularity": {
+        "positive_recall10": {
+          "difference": 0.030900321402033915,
+          "interval": [
+            0.014226116534218711,
+            0.038399588984524446
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "query_mrr": {
+          "difference": 0.00416674072022144,
+          "interval": [
+            -0.022533246325724628,
+            0.053307225075272836
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "positive_weighted_mrr": {
+          "difference": -0.03858767690068754,
+          "interval": [
+            -0.07218651558468463,
+            0.03655355456746136
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "query_coverage": {
+          "difference": -0.02876159784314347,
+          "interval": [
+            -0.04225919208581427,
+            -0.022031102117971477
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "positive_coverage": {
+          "difference": -0.025782510629130173,
+          "interval": [
+            -0.029338816833986973,
+            -0.01942954133319921
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "label_support_ceiling": {
+          "difference": -0.004616581882774029,
+          "interval": [
+            -0.005656618311960809,
+            -0.0034443849501429678
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "joint_support_ceiling": {
+          "difference": -0.030201239002642488,
+          "interval": [
+            -0.03372604230141096,
+            -0.0238390957915242
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "labeled_query_coverage": {
+          "difference": -0.02579928137509846,
+          "interval": [
+            -0.03048856128112224,
+            -0.02167108168420995
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_recall10": {
+          "difference": 0.03199016483326883,
+          "interval": [
+            0.02216319270118204,
+            0.04265446204305298
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_mrr": {
+          "difference": 0.04692635778284715,
+          "interval": [
+            0.03773541032725257,
+            0.05657249575452054
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        },
+        "component_mean_coverage": {
+          "difference": -0.07625201207434174,
+          "interval": [
+            -0.08267963738210947,
+            -0.06989614446790111
+          ],
+          "valid_draws": 2000,
+          "undefined_draws": 0
+        }
+      }
+    },
+    "interpretation": "Conditional on fixed OOF predictions; overlapping training fits, no population or musical quality inference."
+  },
+  "per_fold": {
+    "0": {
+      "arms": {
+        "raw44_neighbors": {
+          "totals": {
+            "queries": 12025.0,
+            "labeled_queries": 11814.0,
+            "positives": 26403.0,
+            "hits10": 10780.0,
+            "rr_sum": 4343.308651410509,
+            "positive_rr_sum": 10403.610617431244,
+            "covered_queries": 11768.0,
+            "covered_positives": 25947.0,
+            "active_label_positives": 26242.0,
+            "recoverable_positives": 25791.0,
+            "covered_labeled_queries": 11568.0,
+            "descriptor_queries": 11768.0,
+            "neighbor_queries": 11768.0,
+            "descriptor_supported_positives": 25791.0
+          },
+          "metrics": {
+            "positive_recall10": 0.40828693709048214,
+            "query_mrr": 0.36764082033269924,
+            "positive_weighted_mrr": 0.3940313834576088,
+            "query_coverage": 0.9786278586278586,
+            "positive_coverage": 0.9827292353141689,
+            "label_support_ceiling": 0.9939022080824149,
+            "joint_support_ceiling": 0.9768208158163845,
+            "labeled_query_coverage": 0.979177247333672,
+            "component_mean_recall10": 0.4254550323152188,
+            "component_mean_mrr": 0.3506815574765466,
+            "component_mean_coverage": 0.9199889821168037
+          },
+          "descriptor_coverage": 0.9786278586278586,
+          "neighbor_coverage": 0.9786278586278586,
+          "descriptor_support_ceiling": 0.9768208158163845,
+          "components": 1219
+        },
+        "ridge8_neighbors": {
+          "totals": {
+            "queries": 12025.0,
+            "labeled_queries": 11814.0,
+            "positives": 26403.0,
+            "hits10": 10694.0,
+            "rr_sum": 4324.365603591454,
+            "positive_rr_sum": 10520.41836206449,
+            "covered_queries": 11768.0,
+            "covered_positives": 25947.0,
+            "active_label_positives": 26242.0,
+            "recoverable_positives": 25791.0,
+            "covered_labeled_queries": 11568.0,
+            "descriptor_queries": 11768.0,
+            "neighbor_queries": 11768.0,
+            "descriptor_supported_positives": 25791.0
+          },
+          "metrics": {
+            "positive_recall10": 0.4050297314699087,
+            "query_mrr": 0.3660373796843959,
+            "positive_weighted_mrr": 0.39845541650814265,
+            "query_coverage": 0.9786278586278586,
+            "positive_coverage": 0.9827292353141689,
+            "label_support_ceiling": 0.9939022080824149,
+            "joint_support_ceiling": 0.9768208158163845,
+            "labeled_query_coverage": 0.979177247333672,
+            "component_mean_recall10": 0.42742315062883246,
+            "component_mean_mrr": 0.36150390013692674,
+            "component_mean_coverage": 0.9199889821168037
+          },
+          "descriptor_coverage": 0.9786278586278586,
+          "neighbor_coverage": 0.9786278586278586,
+          "descriptor_support_ceiling": 0.9768208158163845,
+          "components": 1219
+        },
+        "recording_gaussian": {
+          "totals": {
+            "queries": 12025.0,
+            "labeled_queries": 11814.0,
+            "positives": 26403.0,
+            "hits10": 9976.0,
+            "rr_sum": 3650.5935953121398,
+            "positive_rr_sum": 8320.844206348294,
+            "covered_queries": 11769.0,
+            "covered_positives": 25949.0,
+            "active_label_positives": 26390.0,
+            "recoverable_positives": 25936.0,
+            "covered_labeled_queries": 11569.0,
+            "descriptor_queries": 11769.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 25936.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3778358519865167,
+            "query_mrr": 0.30900572162791096,
+            "positive_weighted_mrr": 0.31514768042829583,
+            "query_coverage": 0.9787110187110187,
+            "positive_coverage": 0.9828049842820892,
+            "label_support_ceiling": 0.999507631708518,
+            "joint_support_ceiling": 0.9823126159906072,
+            "labeled_query_coverage": 0.9792618926697139,
+            "component_mean_recall10": 0.38302883424385215,
+            "component_mean_mrr": 0.28053016172642814,
+            "component_mean_coverage": 0.9199961155476274
+          },
+          "descriptor_coverage": 0.9787110187110187,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9823126159906072,
+          "components": 1219
+        },
+        "balanced_gaussian": {
+          "totals": {
+            "queries": 12025.0,
+            "labeled_queries": 11814.0,
+            "positives": 26403.0,
+            "hits10": 9957.0,
+            "rr_sum": 3383.0072404812327,
+            "positive_rr_sum": 8005.387983343106,
+            "covered_queries": 11768.0,
+            "covered_positives": 25947.0,
+            "active_label_positives": 26390.0,
+            "recoverable_positives": 25934.0,
+            "covered_labeled_queries": 11568.0,
+            "descriptor_queries": 11768.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 25934.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3771162367912737,
+            "query_mrr": 0.2863557847029992,
+            "positive_weighted_mrr": 0.3031999387699544,
+            "query_coverage": 0.9786278586278586,
+            "positive_coverage": 0.9827292353141689,
+            "label_support_ceiling": 0.999507631708518,
+            "joint_support_ceiling": 0.9822368670226869,
+            "labeled_query_coverage": 0.979177247333672,
+            "component_mean_recall10": 0.40067417926166726,
+            "component_mean_mrr": 0.28596815695812816,
+            "component_mean_coverage": 0.9199889821168037
+          },
+          "descriptor_coverage": 0.9786278586278586,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9822368670226869,
+          "components": 1219
+        },
+        "recording_popularity": {
+          "totals": {
+            "queries": 12025.0,
+            "labeled_queries": 11814.0,
+            "positives": 26403.0,
+            "hits10": 9278.0,
+            "rr_sum": 3667.6433788627073,
+            "positive_rr_sum": 9647.015270395352,
+            "covered_queries": 12025.0,
+            "covered_positives": 26403.0,
+            "active_label_positives": 26392.0,
+            "recoverable_positives": 26392.0,
+            "covered_labeled_queries": 11814.0,
+            "descriptor_queries": 12025.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 26392.0
+          },
+          "metrics": {
+            "positive_recall10": 0.35139946218232776,
+            "query_mrr": 0.3104489062859918,
+            "positive_weighted_mrr": 0.36537572512196914,
+            "query_coverage": 1.0,
+            "positive_coverage": 1.0,
+            "label_support_ceiling": 0.9995833806764383,
+            "joint_support_ceiling": 0.9995833806764383,
+            "labeled_query_coverage": 1.0,
+            "component_mean_recall10": 0.3806269538118888,
+            "component_mean_mrr": 0.30043996230959524,
+            "component_mean_coverage": 1.0
+          },
+          "descriptor_coverage": 1.0,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9995833806764383,
+          "components": 1219
+        }
+      },
+      "paired_bootstrap": null
+    },
+    "1": {
+      "arms": {
+        "raw44_neighbors": {
+          "totals": {
+            "queries": 50105.0,
+            "labeled_queries": 48593.0,
+            "positives": 124633.0,
+            "hits10": 51173.0,
+            "rr_sum": 19902.405613015446,
+            "positive_rr_sum": 58180.76350741428,
+            "covered_queries": 48394.0,
+            "covered_positives": 120969.0,
+            "active_label_positives": 123549.0,
+            "recoverable_positives": 119923.0,
+            "covered_labeled_queries": 47185.0,
+            "descriptor_queries": 48394.0,
+            "neighbor_queries": 48394.0,
+            "descriptor_supported_positives": 119923.0
+          },
+          "metrics": {
+            "positive_recall10": 0.4105894907448268,
+            "query_mrr": 0.40957351085579086,
+            "positive_weighted_mrr": 0.4668166818371882,
+            "query_coverage": 0.9658517114060473,
+            "positive_coverage": 0.9706016865517159,
+            "label_support_ceiling": 0.991302464034405,
+            "joint_support_ceiling": 0.9622090457583465,
+            "labeled_query_coverage": 0.9710246331776182,
+            "component_mean_recall10": 0.42782069860239585,
+            "component_mean_mrr": 0.3376322907388259,
+            "component_mean_coverage": 0.9136906439117313
+          },
+          "descriptor_coverage": 0.9658517114060473,
+          "neighbor_coverage": 0.9658517114060473,
+          "descriptor_support_ceiling": 0.9622090457583465,
+          "components": 1148
+        },
+        "ridge8_neighbors": {
+          "totals": {
+            "queries": 50105.0,
+            "labeled_queries": 48593.0,
+            "positives": 124633.0,
+            "hits10": 52604.0,
+            "rr_sum": 20617.590669767273,
+            "positive_rr_sum": 59923.73442038658,
+            "covered_queries": 48394.0,
+            "covered_positives": 120969.0,
+            "active_label_positives": 123549.0,
+            "recoverable_positives": 119923.0,
+            "covered_labeled_queries": 47185.0,
+            "descriptor_queries": 48394.0,
+            "neighbor_queries": 48394.0,
+            "descriptor_supported_positives": 119923.0
+          },
+          "metrics": {
+            "positive_recall10": 0.4220712010462718,
+            "query_mrr": 0.4242913726208975,
+            "positive_weighted_mrr": 0.4808015085923197,
+            "query_coverage": 0.9658517114060473,
+            "positive_coverage": 0.9706016865517159,
+            "label_support_ceiling": 0.991302464034405,
+            "joint_support_ceiling": 0.9622090457583465,
+            "labeled_query_coverage": 0.9710246331776182,
+            "component_mean_recall10": 0.4295456630293938,
+            "component_mean_mrr": 0.35295550721297386,
+            "component_mean_coverage": 0.9136906439117313
+          },
+          "descriptor_coverage": 0.9658517114060473,
+          "neighbor_coverage": 0.9658517114060473,
+          "descriptor_support_ceiling": 0.9622090457583465,
+          "components": 1148
+        },
+        "recording_gaussian": {
+          "totals": {
+            "queries": 50105.0,
+            "labeled_queries": 48593.0,
+            "positives": 124633.0,
+            "hits10": 36589.0,
+            "rr_sum": 12223.995618106357,
+            "positive_rr_sum": 32263.818217614175,
+            "covered_queries": 48390.0,
+            "covered_positives": 120963.0,
+            "active_label_positives": 124231.0,
+            "recoverable_positives": 120562.0,
+            "covered_labeled_queries": 47181.0,
+            "descriptor_queries": 48390.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 120562.0
+          },
+          "metrics": {
+            "positive_recall10": 0.29357393306748614,
+            "query_mrr": 0.251558776327997,
+            "positive_weighted_mrr": 0.2588705897925443,
+            "query_coverage": 0.9657718790539866,
+            "positive_coverage": 0.9705535452087328,
+            "label_support_ceiling": 0.9967745300201392,
+            "joint_support_ceiling": 0.9673360987860358,
+            "labeled_query_coverage": 0.9709423167946001,
+            "component_mean_recall10": 0.3636902890445842,
+            "component_mean_mrr": 0.24753436447082225,
+            "component_mean_coverage": 0.9136905552792385
+          },
+          "descriptor_coverage": 0.9657718790539866,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9673360987860358,
+          "components": 1148
+        },
+        "balanced_gaussian": {
+          "totals": {
+            "queries": 50105.0,
+            "labeled_queries": 48593.0,
+            "positives": 124633.0,
+            "hits10": 39233.0,
+            "rr_sum": 12747.285624947928,
+            "positive_rr_sum": 33934.573237838995,
+            "covered_queries": 48394.0,
+            "covered_positives": 120969.0,
+            "active_label_positives": 124231.0,
+            "recoverable_positives": 120568.0,
+            "covered_labeled_queries": 47185.0,
+            "descriptor_queries": 48394.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 120568.0
+          },
+          "metrics": {
+            "positive_recall10": 0.31478821820866065,
+            "query_mrr": 0.26232761148617967,
+            "positive_weighted_mrr": 0.2722759882040791,
+            "query_coverage": 0.9658517114060473,
+            "positive_coverage": 0.9706016865517159,
+            "label_support_ceiling": 0.9967745300201392,
+            "joint_support_ceiling": 0.9673842401290188,
+            "labeled_query_coverage": 0.9710246331776182,
+            "component_mean_recall10": 0.3931739217214867,
+            "component_mean_mrr": 0.2728418386378353,
+            "component_mean_coverage": 0.9136906439117313
+          },
+          "descriptor_coverage": 0.9658517114060473,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9673842401290188,
+          "components": 1148
+        },
+        "recording_popularity": {
+          "totals": {
+            "queries": 50105.0,
+            "labeled_queries": 48593.0,
+            "positives": 124633.0,
+            "hits10": 48477.0,
+            "rr_sum": 22197.16953355013,
+            "positive_rr_sum": 69320.87387999616,
+            "covered_queries": 50105.0,
+            "covered_positives": 124633.0,
+            "active_label_positives": 124233.0,
+            "recoverable_positives": 124233.0,
+            "covered_labeled_queries": 48593.0,
+            "descriptor_queries": 50105.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 124233.0
+          },
+          "metrics": {
+            "positive_recall10": 0.388957980631133,
+            "query_mrr": 0.4567976773105207,
+            "positive_weighted_mrr": 0.556199994223008,
+            "query_coverage": 1.0,
+            "positive_coverage": 1.0,
+            "label_support_ceiling": 0.9967905771344668,
+            "joint_support_ceiling": 0.9967905771344668,
+            "labeled_query_coverage": 1.0,
+            "component_mean_recall10": 0.43178048374350303,
+            "component_mean_mrr": 0.3180073462213897,
+            "component_mean_coverage": 1.0
+          },
+          "descriptor_coverage": 1.0,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9967905771344668,
+          "components": 1148
+        }
+      },
+      "paired_bootstrap": null
+    },
+    "2": {
+      "arms": {
+        "raw44_neighbors": {
+          "totals": {
+            "queries": 9736.0,
+            "labeled_queries": 9557.0,
+            "positives": 20119.0,
+            "hits10": 8300.0,
+            "rr_sum": 3359.632650961873,
+            "positive_rr_sum": 7725.8814617056505,
+            "covered_queries": 9501.0,
+            "covered_positives": 19703.0,
+            "active_label_positives": 20033.0,
+            "recoverable_positives": 19617.0,
+            "covered_labeled_queries": 9333.0,
+            "descriptor_queries": 9501.0,
+            "neighbor_queries": 9501.0,
+            "descriptor_supported_positives": 19617.0
+          },
+          "metrics": {
+            "positive_recall10": 0.41254535513693524,
+            "query_mrr": 0.3515363242609473,
+            "positive_weighted_mrr": 0.3840092182367737,
+            "query_coverage": 0.9758627773212818,
+            "positive_coverage": 0.9793230279834982,
+            "label_support_ceiling": 0.9957254336696655,
+            "joint_support_ceiling": 0.9750484616531637,
+            "labeled_query_coverage": 0.9765616825363608,
+            "component_mean_recall10": 0.4274987956143862,
+            "component_mean_mrr": 0.3613520496590527,
+            "component_mean_coverage": 0.9368304014531971
+          },
+          "descriptor_coverage": 0.9758627773212818,
+          "neighbor_coverage": 0.9758627773212818,
+          "descriptor_support_ceiling": 0.9750484616531637,
+          "components": 1148
+        },
+        "ridge8_neighbors": {
+          "totals": {
+            "queries": 9736.0,
+            "labeled_queries": 9557.0,
+            "positives": 20119.0,
+            "hits10": 8158.0,
+            "rr_sum": 3387.9337283803256,
+            "positive_rr_sum": 7794.7228276152855,
+            "covered_queries": 9501.0,
+            "covered_positives": 19703.0,
+            "active_label_positives": 20033.0,
+            "recoverable_positives": 19617.0,
+            "covered_labeled_queries": 9333.0,
+            "descriptor_queries": 9501.0,
+            "neighbor_queries": 9501.0,
+            "descriptor_supported_positives": 19617.0
+          },
+          "metrics": {
+            "positive_recall10": 0.4054873502659178,
+            "query_mrr": 0.3544976172837005,
+            "positive_weighted_mrr": 0.3874309273629547,
+            "query_coverage": 0.9758627773212818,
+            "positive_coverage": 0.9793230279834982,
+            "label_support_ceiling": 0.9957254336696655,
+            "joint_support_ceiling": 0.9750484616531637,
+            "labeled_query_coverage": 0.9765616825363608,
+            "component_mean_recall10": 0.42650549973864055,
+            "component_mean_mrr": 0.363384934272362,
+            "component_mean_coverage": 0.9368304014531971
+          },
+          "descriptor_coverage": 0.9758627773212818,
+          "neighbor_coverage": 0.9758627773212818,
+          "descriptor_support_ceiling": 0.9750484616531637,
+          "components": 1148
+        },
+        "recording_gaussian": {
+          "totals": {
+            "queries": 9736.0,
+            "labeled_queries": 9557.0,
+            "positives": 20119.0,
+            "hits10": 7242.0,
+            "rr_sum": 2640.2970396126334,
+            "positive_rr_sum": 5672.502821208951,
+            "covered_queries": 9505.0,
+            "covered_positives": 19708.0,
+            "active_label_positives": 20113.0,
+            "recoverable_positives": 19702.0,
+            "covered_labeled_queries": 9337.0,
+            "descriptor_queries": 9505.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 19702.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3599582484218898,
+            "query_mrr": 0.27626839380690943,
+            "positive_weighted_mrr": 0.2819475531193872,
+            "query_coverage": 0.9762736236647493,
+            "positive_coverage": 0.9795715492817735,
+            "label_support_ceiling": 0.9997017744420696,
+            "joint_support_ceiling": 0.9792733237238431,
+            "labeled_query_coverage": 0.97698022391964,
+            "component_mean_recall10": 0.3603581244463063,
+            "component_mean_mrr": 0.2501566945919277,
+            "component_mean_coverage": 0.9375925965751483
+          },
+          "descriptor_coverage": 0.9762736236647493,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9792733237238431,
+          "components": 1148
+        },
+        "balanced_gaussian": {
+          "totals": {
+            "queries": 9736.0,
+            "labeled_queries": 9557.0,
+            "positives": 20119.0,
+            "hits10": 7151.0,
+            "rr_sum": 2604.887862665005,
+            "positive_rr_sum": 5669.652323428666,
+            "covered_queries": 9501.0,
+            "covered_positives": 19703.0,
+            "active_label_positives": 20113.0,
+            "recoverable_positives": 19697.0,
+            "covered_labeled_queries": 9333.0,
+            "descriptor_queries": 9501.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 19697.0
+          },
+          "metrics": {
+            "positive_recall10": 0.35543516079327997,
+            "query_mrr": 0.2725633423317992,
+            "positive_weighted_mrr": 0.2818058712375698,
+            "query_coverage": 0.9758627773212818,
+            "positive_coverage": 0.9793230279834982,
+            "label_support_ceiling": 0.9997017744420696,
+            "joint_support_ceiling": 0.9790248024255679,
+            "labeled_query_coverage": 0.9765616825363608,
+            "component_mean_recall10": 0.3777294884323578,
+            "component_mean_mrr": 0.26874101124111577,
+            "component_mean_coverage": 0.9368304014531971
+          },
+          "descriptor_coverage": 0.9758627773212818,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9790248024255679,
+          "components": 1148
+        },
+        "recording_popularity": {
+          "totals": {
+            "queries": 9736.0,
+            "labeled_queries": 9557.0,
+            "positives": 20119.0,
+            "hits10": 8211.0,
+            "rr_sum": 3076.9054832116353,
+            "positive_rr_sum": 7681.280638522573,
+            "covered_queries": 9736.0,
+            "covered_positives": 20119.0,
+            "active_label_positives": 20115.0,
+            "recoverable_positives": 20115.0,
+            "covered_labeled_queries": 9557.0,
+            "descriptor_queries": 9736.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 20115.0
+          },
+          "metrics": {
+            "positive_recall10": 0.40812167602763555,
+            "query_mrr": 0.32195306929074347,
+            "positive_weighted_mrr": 0.38179236734045296,
+            "query_coverage": 1.0,
+            "positive_coverage": 1.0,
+            "label_support_ceiling": 0.9998011829613798,
+            "joint_support_ceiling": 0.9998011829613798,
+            "labeled_query_coverage": 1.0,
+            "component_mean_recall10": 0.3971420772621719,
+            "component_mean_mrr": 0.3348910972157615,
+            "component_mean_coverage": 1.0
+          },
+          "descriptor_coverage": 1.0,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9998011829613798,
+          "components": 1148
+        }
+      },
+      "paired_bootstrap": null
+    },
+    "3": {
+      "arms": {
+        "raw44_neighbors": {
+          "totals": {
+            "queries": 12366.0,
+            "labeled_queries": 12192.0,
+            "positives": 31946.0,
+            "hits10": 12039.0,
+            "rr_sum": 4377.215559088313,
+            "positive_rr_sum": 13671.751011965316,
+            "covered_queries": 12105.0,
+            "covered_positives": 31242.0,
+            "active_label_positives": 31857.0,
+            "recoverable_positives": 31153.0,
+            "covered_labeled_queries": 11939.0,
+            "descriptor_queries": 12105.0,
+            "neighbor_queries": 12105.0,
+            "descriptor_supported_positives": 31153.0
+          },
+          "metrics": {
+            "positive_recall10": 0.37685469229324486,
+            "query_mrr": 0.3590235858832278,
+            "positive_weighted_mrr": 0.427964409064212,
+            "query_coverage": 0.9788937409024745,
+            "positive_coverage": 0.9779628122456646,
+            "label_support_ceiling": 0.9972140487071934,
+            "joint_support_ceiling": 0.9751768609528579,
+            "labeled_query_coverage": 0.979248687664042,
+            "component_mean_recall10": 0.4226890739426599,
+            "component_mean_mrr": 0.3545678771685382,
+            "component_mean_coverage": 0.9325263565885922
+          },
+          "descriptor_coverage": 0.9788937409024745,
+          "neighbor_coverage": 0.9788937409024745,
+          "descriptor_support_ceiling": 0.9751768609528579,
+          "components": 1204
+        },
+        "ridge8_neighbors": {
+          "totals": {
+            "queries": 12366.0,
+            "labeled_queries": 12192.0,
+            "positives": 31946.0,
+            "hits10": 12181.0,
+            "rr_sum": 4671.957656821158,
+            "positive_rr_sum": 14392.509993184494,
+            "covered_queries": 12105.0,
+            "covered_positives": 31242.0,
+            "active_label_positives": 31857.0,
+            "recoverable_positives": 31153.0,
+            "covered_labeled_queries": 11939.0,
+            "descriptor_queries": 12105.0,
+            "neighbor_queries": 12105.0,
+            "descriptor_supported_positives": 31153.0
+          },
+          "metrics": {
+            "positive_recall10": 0.38129969323232954,
+            "query_mrr": 0.3831986267077721,
+            "positive_weighted_mrr": 0.4505262002499372,
+            "query_coverage": 0.9788937409024745,
+            "positive_coverage": 0.9779628122456646,
+            "label_support_ceiling": 0.9972140487071934,
+            "joint_support_ceiling": 0.9751768609528579,
+            "labeled_query_coverage": 0.979248687664042,
+            "component_mean_recall10": 0.44166462205133533,
+            "component_mean_mrr": 0.37748892736618095,
+            "component_mean_coverage": 0.9325263565885922
+          },
+          "descriptor_coverage": 0.9788937409024745,
+          "neighbor_coverage": 0.9788937409024745,
+          "descriptor_support_ceiling": 0.9751768609528579,
+          "components": 1204
+        },
+        "recording_gaussian": {
+          "totals": {
+            "queries": 12366.0,
+            "labeled_queries": 12192.0,
+            "positives": 31946.0,
+            "hits10": 11618.0,
+            "rr_sum": 4038.651478926663,
+            "positive_rr_sum": 12405.011152521978,
+            "covered_queries": 12105.0,
+            "covered_positives": 31242.0,
+            "active_label_positives": 31923.0,
+            "recoverable_positives": 31219.0,
+            "covered_labeled_queries": 11939.0,
+            "descriptor_queries": 12105.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 31219.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3636762035935641,
+            "query_mrr": 0.3312542223529087,
+            "positive_weighted_mrr": 0.3883118748050453,
+            "query_coverage": 0.9788937409024745,
+            "positive_coverage": 0.9779628122456646,
+            "label_support_ceiling": 0.9992800350591623,
+            "joint_support_ceiling": 0.9772428473048269,
+            "labeled_query_coverage": 0.979248687664042,
+            "component_mean_recall10": 0.40395955619813095,
+            "component_mean_mrr": 0.2861058756305456,
+            "component_mean_coverage": 0.9325263565885922
+          },
+          "descriptor_coverage": 0.9788937409024745,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9772428473048269,
+          "components": 1204
+        },
+        "balanced_gaussian": {
+          "totals": {
+            "queries": 12366.0,
+            "labeled_queries": 12192.0,
+            "positives": 31946.0,
+            "hits10": 11359.0,
+            "rr_sum": 3691.949476251229,
+            "positive_rr_sum": 10347.58873351381,
+            "covered_queries": 12105.0,
+            "covered_positives": 31242.0,
+            "active_label_positives": 31923.0,
+            "recoverable_positives": 31219.0,
+            "covered_labeled_queries": 11939.0,
+            "descriptor_queries": 12105.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 31219.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3555687723032618,
+            "query_mrr": 0.30281737830144595,
+            "positive_weighted_mrr": 0.32390874392768454,
+            "query_coverage": 0.9788937409024745,
+            "positive_coverage": 0.9779628122456646,
+            "label_support_ceiling": 0.9992800350591623,
+            "joint_support_ceiling": 0.9772428473048269,
+            "labeled_query_coverage": 0.979248687664042,
+            "component_mean_recall10": 0.4213153326559046,
+            "component_mean_mrr": 0.2883807450478124,
+            "component_mean_coverage": 0.9325263565885922
+          },
+          "descriptor_coverage": 0.9788937409024745,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9772428473048269,
+          "components": 1204
+        },
+        "recording_popularity": {
+          "totals": {
+            "queries": 12366.0,
+            "labeled_queries": 12192.0,
+            "positives": 31946.0,
+            "hits10": 11282.0,
+            "rr_sum": 4297.884921221478,
+            "positive_rr_sum": 15919.111716525395,
+            "covered_queries": 12366.0,
+            "covered_positives": 31946.0,
+            "active_label_positives": 31946.0,
+            "recoverable_positives": 31946.0,
+            "covered_labeled_queries": 12192.0,
+            "descriptor_queries": 12366.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 31946.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3531584548926313,
+            "query_mrr": 0.352516807842969,
+            "positive_weighted_mrr": 0.49831314457288534,
+            "query_coverage": 1.0,
+            "positive_coverage": 1.0,
+            "label_support_ceiling": 1.0,
+            "joint_support_ceiling": 1.0,
+            "labeled_query_coverage": 1.0,
+            "component_mean_recall10": 0.38105485750520957,
+            "component_mean_mrr": 0.30393750366675154,
+            "component_mean_coverage": 1.0
+          },
+          "descriptor_coverage": 1.0,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 1.0,
+          "components": 1204
+        }
+      },
+      "paired_bootstrap": null
+    },
+    "4": {
+      "arms": {
+        "raw44_neighbors": {
+          "totals": {
+            "queries": 10721.0,
+            "labeled_queries": 10521.0,
+            "positives": 24340.0,
+            "hits10": 9414.0,
+            "rr_sum": 3618.774743144714,
+            "positive_rr_sum": 9254.433611516626,
+            "covered_queries": 10454.0,
+            "covered_positives": 23716.0,
+            "active_label_positives": 24295.0,
+            "recoverable_positives": 23673.0,
+            "covered_labeled_queries": 10261.0,
+            "descriptor_queries": 10454.0,
+            "neighbor_queries": 10454.0,
+            "descriptor_supported_positives": 23673.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3867707477403451,
+            "query_mrr": 0.3439572990347604,
+            "positive_weighted_mrr": 0.38021502101547355,
+            "query_coverage": 0.9750956067531014,
+            "positive_coverage": 0.9743631881676253,
+            "label_support_ceiling": 0.998151191454396,
+            "joint_support_ceiling": 0.9725965488907149,
+            "labeled_query_coverage": 0.9752875201976998,
+            "component_mean_recall10": 0.4078913378100083,
+            "component_mean_mrr": 0.33772017105986774,
+            "component_mean_coverage": 0.9156210913699834
+          },
+          "descriptor_coverage": 0.9750956067531014,
+          "neighbor_coverage": 0.9750956067531014,
+          "descriptor_support_ceiling": 0.9725965488907149,
+          "components": 1164
+        },
+        "ridge8_neighbors": {
+          "totals": {
+            "queries": 10721.0,
+            "labeled_queries": 10521.0,
+            "positives": 24340.0,
+            "hits10": 9502.0,
+            "rr_sum": 3727.078657917587,
+            "positive_rr_sum": 9595.829727509343,
+            "covered_queries": 10454.0,
+            "covered_positives": 23716.0,
+            "active_label_positives": 24295.0,
+            "recoverable_positives": 23673.0,
+            "covered_labeled_queries": 10261.0,
+            "descriptor_queries": 10454.0,
+            "neighbor_queries": 10454.0,
+            "descriptor_supported_positives": 23673.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3903861955628595,
+            "query_mrr": 0.35425136944373986,
+            "positive_weighted_mrr": 0.3942411556084364,
+            "query_coverage": 0.9750956067531014,
+            "positive_coverage": 0.9743631881676253,
+            "label_support_ceiling": 0.998151191454396,
+            "joint_support_ceiling": 0.9725965488907149,
+            "labeled_query_coverage": 0.9752875201976998,
+            "component_mean_recall10": 0.4069981641418232,
+            "component_mean_mrr": 0.34473784054481976,
+            "component_mean_coverage": 0.9156210913699834
+          },
+          "descriptor_coverage": 0.9750956067531014,
+          "neighbor_coverage": 0.9750956067531014,
+          "descriptor_support_ceiling": 0.9725965488907149,
+          "components": 1164
+        },
+        "recording_gaussian": {
+          "totals": {
+            "queries": 10721.0,
+            "labeled_queries": 10521.0,
+            "positives": 24340.0,
+            "hits10": 9126.0,
+            "rr_sum": 3052.3076426435236,
+            "positive_rr_sum": 7519.104466835341,
+            "covered_queries": 10454.0,
+            "covered_positives": 23716.0,
+            "active_label_positives": 24340.0,
+            "recoverable_positives": 23716.0,
+            "covered_labeled_queries": 10261.0,
+            "descriptor_queries": 10454.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 23716.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3749383730484799,
+            "query_mrr": 0.29011573449705574,
+            "positive_weighted_mrr": 0.30891965763497703,
+            "query_coverage": 0.9750956067531014,
+            "positive_coverage": 0.9743631881676253,
+            "label_support_ceiling": 1.0,
+            "joint_support_ceiling": 0.9743631881676253,
+            "labeled_query_coverage": 0.9752875201976998,
+            "component_mean_recall10": 0.36944717303638236,
+            "component_mean_mrr": 0.2666376416332037,
+            "component_mean_coverage": 0.9156210913699834
+          },
+          "descriptor_coverage": 0.9750956067531014,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9743631881676253,
+          "components": 1164
+        },
+        "balanced_gaussian": {
+          "totals": {
+            "queries": 10721.0,
+            "labeled_queries": 10521.0,
+            "positives": 24340.0,
+            "hits10": 9041.0,
+            "rr_sum": 3048.0693420789366,
+            "positive_rr_sum": 7472.209433660739,
+            "covered_queries": 10454.0,
+            "covered_positives": 23716.0,
+            "active_label_positives": 24340.0,
+            "recoverable_positives": 23716.0,
+            "covered_labeled_queries": 10261.0,
+            "descriptor_queries": 10454.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 23716.0
+          },
+          "metrics": {
+            "positive_recall10": 0.37144617912900574,
+            "query_mrr": 0.28971289250821564,
+            "positive_weighted_mrr": 0.3069929923443196,
+            "query_coverage": 0.9750956067531014,
+            "positive_coverage": 0.9743631881676253,
+            "label_support_ceiling": 1.0,
+            "joint_support_ceiling": 0.9743631881676253,
+            "labeled_query_coverage": 0.9752875201976998,
+            "component_mean_recall10": 0.38296369786724044,
+            "component_mean_mrr": 0.2813386156587877,
+            "component_mean_coverage": 0.9156210913699834
+          },
+          "descriptor_coverage": 0.9750956067531014,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 0.9743631881676253,
+          "components": 1164
+        },
+        "recording_popularity": {
+          "totals": {
+            "queries": 10721.0,
+            "labeled_queries": 10521.0,
+            "positives": 24340.0,
+            "hits10": 8863.0,
+            "rr_sum": 3103.1619699038697,
+            "positive_rr_sum": 8435.353647290023,
+            "covered_queries": 10721.0,
+            "covered_positives": 24340.0,
+            "active_label_positives": 24340.0,
+            "recoverable_positives": 24340.0,
+            "covered_labeled_queries": 10521.0,
+            "descriptor_queries": 10721.0,
+            "neighbor_queries": 0.0,
+            "descriptor_supported_positives": 24340.0
+          },
+          "metrics": {
+            "positive_recall10": 0.3641331142152835,
+            "query_mrr": 0.29494933655582833,
+            "positive_weighted_mrr": 0.34656342018447095,
+            "query_coverage": 1.0,
+            "positive_coverage": 1.0,
+            "label_support_ceiling": 1.0,
+            "joint_support_ceiling": 1.0,
+            "labeled_query_coverage": 1.0,
+            "component_mean_recall10": 0.3840464881092578,
+            "component_mean_mrr": 0.31053235823733744,
+            "component_mean_coverage": 1.0
+          },
+          "descriptor_coverage": 1.0,
+          "neighbor_coverage": null,
+          "descriptor_support_ceiling": 1.0,
+          "components": 1164
+        }
+      },
+      "paired_bootstrap": null
+    }
+  },
+  "fold_receipts": {
+    "0": "df8642ab987b98ba0825fb37e372c03a630bd36eb9813cd3fff83de497495551",
+    "1": "bc7a5a96289c9a1c6cf33aa189f1b5e3686d82addbff1962e4dbe2ecbdb05ae3",
+    "2": "cedef69a2a005ff8a87738a13adf406654af231ac84ae29c549a3bcb3fa2604c",
+    "3": "6e71c7f3055ae5a1caf75a94f8b63318e2cce8026849a8a6b973fed62ff84aed",
+    "4": "422d2ccfa81bff9061a063b9fe3ef872a31736a8163b8410b33b8e13722af7af"
+  },
+  "giant_component_id": 2,
+  "giant_component": {
+    "arms": {
+      "raw44_neighbors": {
+        "totals": {
+          "queries": 39312.0,
+          "labeled_queries": 38308.0,
+          "positives": 102190.0,
+          "hits10": 42226.0,
+          "rr_sum": 16378.34205006911,
+          "positive_rr_sum": 49863.8231207627,
+          "covered_queries": 38299.0,
+          "covered_positives": 99321.0,
+          "active_label_positives": 101316.0,
+          "recoverable_positives": 98479.0,
+          "covered_labeled_queries": 37324.0,
+          "descriptor_queries": 38299.0,
+          "neighbor_queries": 38299.0,
+          "descriptor_supported_positives": 98479.0
+        },
+        "metrics": {
+          "positive_recall10": 0.4132106859771015,
+          "query_mrr": 0.4275436475427877,
+          "positive_weighted_mrr": 0.4879520806415765,
+          "query_coverage": 0.9742317867317868,
+          "positive_coverage": 0.9719248458753302,
+          "label_support_ceiling": 0.9914473040414914,
+          "joint_support_ceiling": 0.9636852921029455,
+          "labeled_query_coverage": 0.974313459329644,
+          "component_mean_recall10": 0.4132106859771015,
+          "component_mean_mrr": 0.4275436475427877,
+          "component_mean_coverage": 0.9742317867317868
+        },
+        "descriptor_coverage": 0.9742317867317868,
+        "neighbor_coverage": 0.9742317867317868,
+        "descriptor_support_ceiling": 0.9636852921029455,
+        "components": 1
+      },
+      "ridge8_neighbors": {
+        "totals": {
+          "queries": 39312.0,
+          "labeled_queries": 38308.0,
+          "positives": 102190.0,
+          "hits10": 43425.0,
+          "rr_sum": 16962.525844134554,
+          "positive_rr_sum": 51349.13291828541,
+          "covered_queries": 38299.0,
+          "covered_positives": 99321.0,
+          "active_label_positives": 101316.0,
+          "recoverable_positives": 98479.0,
+          "covered_labeled_queries": 37324.0,
+          "descriptor_queries": 38299.0,
+          "neighbor_queries": 38299.0,
+          "descriptor_supported_positives": 98479.0
+        },
+        "metrics": {
+          "positive_recall10": 0.42494373226343085,
+          "query_mrr": 0.4427933028123252,
+          "positive_weighted_mrr": 0.5024868667999355,
+          "query_coverage": 0.9742317867317868,
+          "positive_coverage": 0.9719248458753302,
+          "label_support_ceiling": 0.9914473040414914,
+          "joint_support_ceiling": 0.9636852921029455,
+          "labeled_query_coverage": 0.974313459329644,
+          "component_mean_recall10": 0.42494373226343085,
+          "component_mean_mrr": 0.4427933028123252,
+          "component_mean_coverage": 0.9742317867317868
+        },
+        "descriptor_coverage": 0.9742317867317868,
+        "neighbor_coverage": 0.9742317867317868,
+        "descriptor_support_ceiling": 0.9636852921029455,
+        "components": 1
+      },
+      "recording_gaussian": {
+        "totals": {
+          "queries": 39312.0,
+          "labeled_queries": 38308.0,
+          "positives": 102190.0,
+          "hits10": 28896.0,
+          "rr_sum": 9546.977828379551,
+          "positive_rr_sum": 26178.09069363805,
+          "covered_queries": 38295.0,
+          "covered_positives": 99315.0,
+          "active_label_positives": 101811.0,
+          "recoverable_positives": 98937.0,
+          "covered_labeled_queries": 37320.0,
+          "descriptor_queries": 38295.0,
+          "neighbor_queries": 0.0,
+          "descriptor_supported_positives": 98937.0
+        },
+        "metrics": {
+          "positive_recall10": 0.28276739406986984,
+          "query_mrr": 0.24921629498745826,
+          "positive_weighted_mrr": 0.2561707671360999,
+          "query_coverage": 0.9741300366300366,
+          "positive_coverage": 0.971866131715432,
+          "label_support_ceiling": 0.9962912222330952,
+          "joint_support_ceiling": 0.9681671396418436,
+          "labeled_query_coverage": 0.9742090424976506,
+          "component_mean_recall10": 0.28276739406986984,
+          "component_mean_mrr": 0.24921629498745826,
+          "component_mean_coverage": 0.9741300366300366
+        },
+        "descriptor_coverage": 0.9741300366300366,
+        "neighbor_coverage": null,
+        "descriptor_support_ceiling": 0.9681671396418436,
+        "components": 1
+      },
+      "balanced_gaussian": {
+        "totals": {
+          "queries": 39312.0,
+          "labeled_queries": 38308.0,
+          "positives": 102190.0,
+          "hits10": 31142.0,
+          "rr_sum": 9920.649123815054,
+          "positive_rr_sum": 27459.972869819878,
+          "covered_queries": 38299.0,
+          "covered_positives": 99321.0,
+          "active_label_positives": 101811.0,
+          "recoverable_positives": 98943.0,
+          "covered_labeled_queries": 37324.0,
+          "descriptor_queries": 38299.0,
+          "neighbor_queries": 0.0,
+          "descriptor_supported_positives": 98943.0
+        },
+        "metrics": {
+          "positive_recall10": 0.30474606125844017,
+          "query_mrr": 0.2589706882065118,
+          "positive_weighted_mrr": 0.2687148729799381,
+          "query_coverage": 0.9742317867317868,
+          "positive_coverage": 0.9719248458753302,
+          "label_support_ceiling": 0.9962912222330952,
+          "joint_support_ceiling": 0.9682258538017419,
+          "labeled_query_coverage": 0.974313459329644,
+          "component_mean_recall10": 0.30474606125844017,
+          "component_mean_mrr": 0.2589706882065118,
+          "component_mean_coverage": 0.9742317867317868
+        },
+        "descriptor_coverage": 0.9742317867317868,
+        "neighbor_coverage": null,
+        "descriptor_support_ceiling": 0.9682258538017419,
+        "components": 1
+      },
+      "recording_popularity": {
+        "totals": {
+          "queries": 39312.0,
+          "labeled_queries": 38308.0,
+          "positives": 102190.0,
+          "hits10": 39372.0,
+          "rr_sum": 18792.258363581856,
+          "positive_rr_sum": 61021.7867409216,
+          "covered_queries": 39312.0,
+          "covered_positives": 102190.0,
+          "active_label_positives": 101811.0,
+          "recoverable_positives": 101811.0,
+          "covered_labeled_queries": 38308.0,
+          "descriptor_queries": 39312.0,
+          "neighbor_queries": 0.0,
+          "descriptor_supported_positives": 101811.0
+        },
+        "metrics": {
+          "positive_recall10": 0.3852823172521773,
+          "query_mrr": 0.49055702108128474,
+          "positive_weighted_mrr": 0.5971404906636814,
+          "query_coverage": 1.0,
+          "positive_coverage": 1.0,
+          "label_support_ceiling": 0.9962912222330952,
+          "joint_support_ceiling": 0.9962912222330952,
+          "labeled_query_coverage": 1.0,
+          "component_mean_recall10": 0.3852823172521773,
+          "component_mean_mrr": 0.49055702108128474,
+          "component_mean_coverage": 1.0
+        },
+        "descriptor_coverage": 1.0,
+        "neighbor_coverage": null,
+        "descriptor_support_ceiling": 0.9962912222330952,
+        "components": 1
+      }
+    },
+    "paired_bootstrap": null
+  },
+  "other_components": {
+    "arms": {
+      "raw44_neighbors": {
+        "totals": {
+          "queries": 55641.0,
+          "labeled_queries": 54369.0,
+          "positives": 125251.0,
+          "hits10": 49480.0,
+          "rr_sum": 19222.995167551744,
+          "positive_rr_sum": 49372.61708927052,
+          "covered_queries": 53923.0,
+          "covered_positives": 122256.0,
+          "active_label_positives": 124660.0,
+          "recoverable_positives": 121678.0,
+          "covered_labeled_queries": 52962.0,
+          "descriptor_queries": 53923.0,
+          "neighbor_queries": 53923.0,
+          "descriptor_supported_positives": 121678.0
+        },
+        "metrics": {
+          "positive_recall10": 0.3950467461337634,
+          "query_mrr": 0.3535653620179099,
+          "positive_weighted_mrr": 0.3941894043901487,
+          "query_coverage": 0.9691234880753401,
+          "positive_coverage": 0.9760880152653472,
+          "label_support_ceiling": 0.9952814747986044,
+          "joint_support_ceiling": 0.9714732816504459,
+          "labeled_query_coverage": 0.974121282348397,
+          "component_mean_recall10": 0.4223025050305216,
+          "component_mean_mrr": 0.3484461508056982,
+          "component_mean_coverage": 0.9237394051648955
+        },
+        "descriptor_coverage": 0.9691234880753401,
+        "neighbor_coverage": 0.9691234880753401,
+        "descriptor_support_ceiling": 0.9714732816504459,
+        "components": 5882
+      },
+      "ridge8_neighbors": {
+        "totals": {
+          "queries": 55641.0,
+          "labeled_queries": 54369.0,
+          "positives": 125251.0,
+          "hits10": 49714.0,
+          "rr_sum": 19766.400472343317,
+          "positive_rr_sum": 50878.0824124746,
+          "covered_queries": 53923.0,
+          "covered_positives": 122256.0,
+          "active_label_positives": 124660.0,
+          "recoverable_positives": 121678.0,
+          "covered_labeled_queries": 52962.0,
+          "descriptor_queries": 53923.0,
+          "neighbor_queries": 53923.0,
+          "descriptor_supported_positives": 121678.0
+        },
+        "metrics": {
+          "positive_recall10": 0.39691499469066116,
+          "query_mrr": 0.36356012566615753,
+          "positive_weighted_mrr": 0.40620899164457447,
+          "query_coverage": 0.9691234880753401,
+          "positive_coverage": 0.9760880152653472,
+          "label_support_ceiling": 0.9952814747986044,
+          "joint_support_ceiling": 0.9714732816504459,
+          "labeled_query_coverage": 0.974121282348397,
+          "component_mean_recall10": 0.42656763003485126,
+          "component_mean_mrr": 0.36016956124839034,
+          "component_mean_coverage": 0.9237394051648955
+        },
+        "descriptor_coverage": 0.9691234880753401,
+        "neighbor_coverage": 0.9691234880753401,
+        "descriptor_support_ceiling": 0.9714732816504459,
+        "components": 5882
+      },
+      "recording_gaussian": {
+        "totals": {
+          "queries": 55641.0,
+          "labeled_queries": 54369.0,
+          "positives": 125251.0,
+          "hits10": 45655.0,
+          "rr_sum": 16058.867546221802,
+          "positive_rr_sum": 40003.19017089067,
+          "covered_queries": 53928.0,
+          "covered_positives": 122263.0,
+          "active_label_positives": 125186.0,
+          "recoverable_positives": 122198.0,
+          "covered_labeled_queries": 52967.0,
+          "descriptor_queries": 53928.0,
+          "neighbor_queries": 0.0,
+          "descriptor_supported_positives": 122198.0
+        },
+        "metrics": {
+          "positive_recall10": 0.3645080677998579,
+          "query_mrr": 0.2953680874436131,
+          "positive_weighted_mrr": 0.3193841978977467,
+          "query_coverage": 0.9692133498679032,
+          "positive_coverage": 0.9761439030426903,
+          "label_support_ceiling": 0.9994810420675284,
+          "joint_support_ceiling": 0.9756249451102187,
+          "labeled_query_coverage": 0.9742132465191561,
+          "component_mean_recall10": 0.37648793583018536,
+          "component_mean_mrr": 0.26660868400530296,
+          "component_mean_coverage": 0.9238896424400015
+        },
+        "descriptor_coverage": 0.9692133498679032,
+        "neighbor_coverage": null,
+        "descriptor_support_ceiling": 0.9756249451102187,
+        "components": 5882
+      },
+      "balanced_gaussian": {
+        "totals": {
+          "queries": 55641.0,
+          "labeled_queries": 54369.0,
+          "positives": 125251.0,
+          "hits10": 45599.0,
+          "rr_sum": 15554.550422609327,
+          "positive_rr_sum": 37969.438841965384,
+          "covered_queries": 53923.0,
+          "covered_positives": 122256.0,
+          "active_label_positives": 125186.0,
+          "recoverable_positives": 122191.0,
+          "covered_labeled_queries": 52962.0,
+          "descriptor_queries": 53923.0,
+          "neighbor_queries": 0.0,
+          "descriptor_supported_positives": 122191.0
+        },
+        "metrics": {
+          "positive_recall10": 0.3640609655811131,
+          "query_mrr": 0.2860922662290888,
+          "positive_weighted_mrr": 0.3031467919774324,
+          "query_coverage": 0.9691234880753401,
+          "positive_coverage": 0.9760880152653472,
+          "label_support_ceiling": 0.9994810420675284,
+          "joint_support_ceiling": 0.9755690573328756,
+          "labeled_query_coverage": 0.974121282348397,
+          "component_mean_recall10": 0.39552041587902187,
+          "component_mean_mrr": 0.27964891994504404,
+          "component_mean_coverage": 0.9237394051648955
+        },
+        "descriptor_coverage": 0.9691234880753401,
+        "neighbor_coverage": null,
+        "descriptor_support_ceiling": 0.9755690573328756,
+        "components": 5882
+      },
+      "recording_popularity": {
+        "totals": {
+          "queries": 55641.0,
+          "labeled_queries": 54369.0,
+          "positives": 125251.0,
+          "hits10": 46739.0,
+          "rr_sum": 17550.506923168035,
+          "positive_rr_sum": 49981.84841180799,
+          "covered_queries": 55641.0,
+          "covered_positives": 125251.0,
+          "active_label_positives": 125215.0,
+          "recoverable_positives": 125215.0,
+          "covered_labeled_queries": 54369.0,
+          "descriptor_queries": 55641.0,
+          "neighbor_queries": 0.0,
+          "descriptor_supported_positives": 125215.0
+        },
+        "metrics": {
+          "positive_recall10": 0.37316268931984575,
+          "query_mrr": 0.32280356311810104,
+          "positive_weighted_mrr": 0.3990534878907792,
+          "query_coverage": 1.0,
+          "positive_coverage": 1.0,
+          "label_support_ceiling": 0.9997125771450927,
+          "joint_support_ceiling": 0.9997125771450927,
+          "labeled_query_coverage": 1.0,
+          "component_mean_recall10": 0.3945788301927172,
+          "component_mean_mrr": 0.3132263546975625,
+          "component_mean_coverage": 1.0
+        },
+        "descriptor_coverage": 1.0,
+        "neighbor_coverage": null,
+        "descriptor_support_ceiling": 0.9997125771450927,
+        "components": 5882
+      }
+    },
+    "paired_bootstrap": null
+  },
+  "interpretation": [
+    "Exploratory training-only CV design chosen after prior outerfold inspection; those inspected outerfolds are not used here.",
+    "Source-positive annotation recovery, not musical similarity/relevance or calibrated genre probabilities.",
+    "Component balancing is a bundled change to normalization, positive moments and prior; no causal attribution to one subchange.",
+    "Components encode artist/album/exact-feature identity links, not proven independent musicians or musical units.",
+    "Supervised representation trained on suppliedweaksource tags; features-only application, NOT label-free learning.",
+    "Prior GaussianOOF outcomes alreadyinspected; newfixedcandidate prospectivelyspecified, not blind heldoutconfirmation or independent populationevidence.",
+    "No newembedding search, parameterselection, servingreplacement or musical-quality claim."
+  ],
+  "provenance": {
+    "full_results_sha256": "ccf1b98b3e4ca7602f253484f5025964cadefab0e792a98968661f3d490f65e4",
+    "execution_seal_sha256": "e4351cfa8fb0f89d69c6984d63d7456510c78d39a2ba84aaa90c01134b5975e9",
+    "input_manifest_sha256": "4344e609efd7442bf2c598fefb9d1f5abb08884b59f922a53a05643c60d0a323",
+    "implementation_commit": "00bd476c05e8f64c590aaa1980bb3e49e62020af",
+    "omitted": "5883 component IDs; exact roster remains in full retained results and per-fold statistics"
+  }
+}
