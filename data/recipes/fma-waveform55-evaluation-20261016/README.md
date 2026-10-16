@@ -87,6 +87,9 @@ existing 120-second CPU/wall, 1 GB memory and 100 MB output limits.
 
 Use the locked environment (`poe sync` first) and fresh output paths. The metadata
 source below is the existing verified capture; the commands perform no acquisition.
+For numerical reproduction without the original metadata, reuse the evaluation
+pack's pinned `listens.json` directly. The original capture is needed only to replay
+the separate count projection, which was independently checked from the full stream.
 
 ```sh
 FRESH=/path/to/new-diagnostic-run
