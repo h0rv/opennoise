@@ -135,6 +135,19 @@ class EvaluationTests(unittest.TestCase):
                 self.assertFalse(arm["metrics"]["3"]["hit"])
                 self.assertIsNone(arm["metrics"]["3"]["recall_known"])
             self.assertEqual(result["aggregates"]["test"]["total_queries"], 1)
+            original["queries"][0]["metrics"]["pca"] = None
+            original["queries"][0]["rankings"]["pca"] = []
+            (root / "evaluation.json").write_bytes(canonical_json(original))
+            unavailable = evaluation.calculate(
+                root, {"tracks": tracks}, dict.fromkeys(range(1, 7), 0)
+            )
+            self.assertIsNone(unavailable["queries"][0]["arms"]["pca"]["metrics"])
+            self.assertEqual(
+                unavailable["aggregates"]["validation"]["arms"]["pca"]["3"]["total_queries"], 1
+            )
+            self.assertEqual(
+                unavailable["aggregates"]["validation"]["arms"]["pca"]["3"]["defined_queries"], 0
+            )
 
     def test_listens_projection_rejects_missing_boolean_negative_and_unknown_fields(self) -> None:
         for change in ("valid", "missing", "boolean", "negative", "extra"):

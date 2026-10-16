@@ -223,7 +223,9 @@ def calculate(source: Path, manifest: dict[str, Any], listens: dict[int, int]) -
         arms = {
             method: {
                 "ranking": row["rankings"][method],
-                "metrics": waveform.metrics(
+                "metrics": None
+                if method == "pca" and row["metrics"][method] is None
+                else waveform.metrics(
                     labels[identity],
                     known,
                     [indices[item] for item in row["rankings"][method]],
