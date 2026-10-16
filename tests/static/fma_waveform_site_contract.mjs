@@ -82,3 +82,19 @@ test('synthetic supported genre centroid links preserve native source identity',
   assert.equal(await evaluate("document.querySelectorAll('#results [data-track-id]').length"),3);assert.deepEqual(await evaluate('window.__media.plays'),[]);
  },false,mapped,candidate);
 });
+
+test('long supplied credits wrap without inflating the mobile viewport',{skip:!chromium,timeout:60000},async()=>{
+ const candidate=structuredClone(fixture);
+ candidate.tracks[0].attribution='Synthetic supplied credit https://example.com/'+ 'long-credit-'.repeat(30);
+ await browser(async({evaluate,wait,command})=>{
+  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await wait("document.documentElement?.dataset.candidateReady==='true'");
+  await evaluate("location.hash='#track/101'");await wait("document.querySelector('#main').dataset.route==='#track/101'");
+  await evaluate("document.querySelector('#main [data-play-track]').click()");
+  await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+  const dimensions=await evaluate('({inner:innerWidth,client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth,visual:visualViewport.width,scale:visualViewport.scale})');
+  assert.equal(dimensions.inner,390);assert.equal(dimensions.client,390);assert.equal(dimensions.scroll,390);
+  assert.ok(Math.abs(dimensions.visual-390)<1);assert.ok(Math.abs(dimensions.scale-1)<0.01);
+  assert.equal(await evaluate("document.querySelector('#credit small').textContent"),candidate.tracks[0].attribution);
+ },false,layout,candidate);
+});
