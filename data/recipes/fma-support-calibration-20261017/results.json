@@ -1,0 +1,924 @@
+{
+  "thresholds": {
+    "arms": {
+      "linear44": {
+        "thresholds": {
+          "original12": 12.0,
+          "q90": 3.5909777643231306,
+          "q95": 4.181757096783059,
+          "q99": 6.1338383164023345
+        },
+        "empirical_weighted_acceptance": {
+          "original12": 0.9998945814885113,
+          "q90": 0.9001257105665063,
+          "q95": 0.9500185459263725,
+          "q99": 0.9902134193344361
+        }
+      },
+      "linear518": {
+        "thresholds": {
+          "original12": 12.0,
+          "q90": 6.829084950328829,
+          "q95": 8.902221276487296,
+          "q99": 20.790931073967297
+        },
+        "empirical_weighted_acceptance": {
+          "original12": 0.9739459926877465,
+          "q90": 0.9007621494904451,
+          "q95": 0.9500345014726962,
+          "q99": 0.9904363829538076
+        }
+      }
+    },
+    "calibration_rows": 11968,
+    "calibration_components": 1143,
+    "properfit_components": 4740,
+    "properfit_roster_rows": 82985,
+    "properfit_finite_rows": 81013,
+    "giant_component_role": "proper_fit",
+    "common_finite_rows": 11257,
+    "common_finite_components": 1054,
+    "nominal_levels": [
+      0.9,
+      0.95,
+      0.99
+    ],
+    "interpretation": "Empirical descriptor acceptance on common-finite calibration rows; not future or ranking coverage guarantee.",
+    "calibration_components_without_common_finite_rows_count": 89
+  },
+  "results": {
+    "interpretation": "Calibration-label metrics are descriptive on already examined training data; no independent evaluation or point selection.",
+    "arms": {
+      "linear44": {
+        "original12": {
+          "availability": {
+            "queries": 11968,
+            "counts": {
+              "descriptor_accepted": 11253.0,
+              "embedding_accepted": 11253.0,
+              "neighbor_queries": 11253.0,
+              "ranking_queries": 11253.0,
+              "missing_descriptors": 711.0,
+              "outside_threshold": 4.0,
+              "norm_failure": 0.0
+            },
+            "component_mean_rates": {
+              "descriptor_accepted": 0.9167285584717083,
+              "embedding_accepted": 0.9167285584717083,
+              "neighbor_queries": 0.9167285584717083,
+              "ranking_queries": 0.9167285584717083,
+              "missing_descriptors": 0.08317423145732847,
+              "outside_threshold": 9.72100709633518e-05,
+              "norm_failure": 0.0
+            }
+          },
+          "all_calibration": {
+            "metrics": {
+              "positive_recall10": 0.3752159626003591,
+              "query_mrr": 0.371107867232829,
+              "positive_weighted_mrr": 0.449900844357059,
+              "query_coverage": 0.9402573529411765,
+              "positive_coverage": 0.9647345777295979,
+              "label_support_ceiling": 0.9983739286561197,
+              "joint_support_ceiling": 0.9631085063857177,
+              "labeled_query_coverage": 0.961952744961779,
+              "component_mean_recall10": 0.41627240710519925,
+              "component_mean_mrr": 0.3461268699768688,
+              "component_mean_coverage": 0.9167285584717081
+            },
+            "totals": {
+              "queries": 11968.0,
+              "labeled_queries": 11512.0,
+              "positives": 29519.0,
+              "hits10": 11076.0,
+              "rr_sum": 4272.193767584327,
+              "positive_rr_sum": 13280.623024576025,
+              "covered_queries": 11253.0,
+              "covered_positives": 28478.0,
+              "active_label_positives": 29471.0,
+              "recoverable_positives": 28430.0,
+              "covered_labeled_queries": 11074.0
+            }
+          },
+          "accepted_only": {
+            "metrics": {
+              "positive_recall10": 0.38893180700891916,
+              "query_mrr": 0.3857859642030276,
+              "positive_weighted_mrr": 0.4663467597645911,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9983144883769928,
+              "joint_support_ceiling": 0.9983144883769928,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.45434358678845627,
+              "component_mean_mrr": 0.37695694501297716,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 11253.0,
+              "labeled_queries": 11074.0,
+              "positives": 28478.0,
+              "hits10": 11076.0,
+              "rr_sum": 4272.193767584327,
+              "positive_rr_sum": 13280.623024576025,
+              "covered_queries": 11253.0,
+              "covered_positives": 28478.0,
+              "active_label_positives": 28430.0,
+              "recoverable_positives": 28430.0,
+              "covered_labeled_queries": 11074.0
+            }
+          },
+          "common_accepted": {
+            "metrics": {
+              "positive_recall10": 0.38889489814314043,
+              "query_mrr": 0.3867160076805097,
+              "positive_weighted_mrr": 0.4682353439170607,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9983414458265729,
+              "joint_support_ceiling": 0.9983414458265729,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.4547984807210787,
+              "component_mean_mrr": 0.37816357706294634,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 10941.0,
+              "labeled_queries": 10762.0,
+              "positives": 27735.0,
+              "hits10": 10786.0,
+              "rr_sum": 4161.837674657645,
+              "positive_rr_sum": 12986.507263539677,
+              "covered_queries": 10941.0,
+              "covered_positives": 27735.0,
+              "active_label_positives": 27689.0,
+              "recoverable_positives": 27689.0,
+              "covered_labeled_queries": 10762.0
+            }
+          }
+        },
+        "q90": {
+          "availability": {
+            "queries": 11968,
+            "counts": {
+              "descriptor_accepted": 9637.0,
+              "embedding_accepted": 9637.0,
+              "neighbor_queries": 9637.0,
+              "ranking_queries": 9637.0,
+              "missing_descriptors": 711.0,
+              "outside_threshold": 1620.0,
+              "norm_failure": 0.0
+            },
+            "component_mean_rates": {
+              "descriptor_accepted": 0.8249802790569306,
+              "embedding_accepted": 0.8249802790569306,
+              "neighbor_queries": 0.8249802790569306,
+              "ranking_queries": 0.8249802790569306,
+              "missing_descriptors": 0.08317423145732847,
+              "outside_threshold": 0.09184548948574112,
+              "norm_failure": 0.0
+            }
+          },
+          "all_calibration": {
+            "metrics": {
+              "positive_recall10": 0.29282834784376166,
+              "query_mrr": 0.3004201095760388,
+              "positive_weighted_mrr": 0.29401395987206863,
+              "query_coverage": 0.805230614973262,
+              "positive_coverage": 0.7143873437447068,
+              "label_support_ceiling": 0.9983739286561197,
+              "joint_support_ceiling": 0.7129306548324807,
+              "labeled_query_coverage": 0.8227067407922168,
+              "component_mean_recall10": 0.37129835637361075,
+              "component_mean_mrr": 0.30932155003663536,
+              "component_mean_coverage": 0.8249802790569306
+            },
+            "totals": {
+              "queries": 11968.0,
+              "labeled_queries": 11512.0,
+              "positives": 29519.0,
+              "hits10": 8644.0,
+              "rr_sum": 3458.436301439359,
+              "positive_rr_sum": 8678.998081463595,
+              "covered_queries": 9637.0,
+              "covered_positives": 21088.0,
+              "active_label_positives": 29471.0,
+              "recoverable_positives": 21045.0,
+              "covered_labeled_queries": 9471.0
+            }
+          },
+          "accepted_only": {
+            "metrics": {
+              "positive_recall10": 0.4099013657056146,
+              "query_mrr": 0.36516062732967575,
+              "positive_weighted_mrr": 0.411560986412348,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9979609256449166,
+              "joint_support_ceiling": 0.9979609256449166,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.45018782001432467,
+              "component_mean_mrr": 0.37431024999607393,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 9637.0,
+              "labeled_queries": 9471.0,
+              "positives": 21088.0,
+              "hits10": 8644.0,
+              "rr_sum": 3458.436301439359,
+              "positive_rr_sum": 8678.998081463595,
+              "covered_queries": 9637.0,
+              "covered_positives": 21088.0,
+              "active_label_positives": 21045.0,
+              "recoverable_positives": 21045.0,
+              "covered_labeled_queries": 9471.0
+            }
+          },
+          "common_accepted": {
+            "metrics": {
+              "positive_recall10": 0.40927254098360655,
+              "query_mrr": 0.3653170689482834,
+              "positive_weighted_mrr": 0.4124628416668296,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9979508196721312,
+              "joint_support_ceiling": 0.9979508196721312,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.45263634008478393,
+              "component_mean_mrr": 0.375870450969063,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 8933.0,
+              "labeled_queries": 8771.0,
+              "positives": 19520.0,
+              "hits10": 7989.0,
+              "rr_sum": 3204.1960117453937,
+              "positive_rr_sum": 8051.274669336514,
+              "covered_queries": 8933.0,
+              "covered_positives": 19520.0,
+              "active_label_positives": 19480.0,
+              "recoverable_positives": 19480.0,
+              "covered_labeled_queries": 8771.0
+            }
+          }
+        },
+        "q95": {
+          "availability": {
+            "queries": 11968,
+            "counts": {
+              "descriptor_accepted": 10323.0,
+              "embedding_accepted": 10323.0,
+              "neighbor_queries": 10323.0,
+              "ranking_queries": 10323.0,
+              "missing_descriptors": 711.0,
+              "outside_threshold": 934.0,
+              "norm_failure": 0.0
+            },
+            "component_mean_rates": {
+              "descriptor_accepted": 0.8709304670339371,
+              "embedding_accepted": 0.8709304670339371,
+              "neighbor_queries": 0.8709304670339371,
+              "ranking_queries": 0.8709304670339371,
+              "missing_descriptors": 0.08317423145732847,
+              "outside_threshold": 0.045895301508733916,
+              "norm_failure": 0.0
+            }
+          },
+          "all_calibration": {
+            "metrics": {
+              "positive_recall10": 0.32280903824655305,
+              "query_mrr": 0.32744302609469905,
+              "positive_weighted_mrr": 0.3428692126138014,
+              "query_coverage": 0.8625501336898396,
+              "positive_coverage": 0.8010772722653207,
+              "label_support_ceiling": 0.9983739286561197,
+              "joint_support_ceiling": 0.7994850774077713,
+              "labeled_query_coverage": 0.8816886726893676,
+              "component_mean_recall10": 0.39403277878182114,
+              "component_mean_mrr": 0.327412936634227,
+              "component_mean_coverage": 0.8709304670339376
+            },
+            "totals": {
+              "queries": 11968.0,
+              "labeled_queries": 11512.0,
+              "positives": 29519.0,
+              "hits10": 9529.0,
+              "rr_sum": 3769.5241164021754,
+              "positive_rr_sum": 10121.156287146803,
+              "covered_queries": 10323.0,
+              "covered_positives": 23647.0,
+              "active_label_positives": 29471.0,
+              "recoverable_positives": 23600.0,
+              "covered_labeled_queries": 10150.0
+            }
+          },
+          "accepted_only": {
+            "metrics": {
+              "positive_recall10": 0.4029686641011545,
+              "query_mrr": 0.37138168634504193,
+              "positive_weighted_mrr": 0.4280101614220325,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9980124328667485,
+              "joint_support_ceiling": 0.9980124328667485,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.4531779473056835,
+              "component_mean_mrr": 0.3759041032295658,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 10323.0,
+              "labeled_queries": 10150.0,
+              "positives": 23647.0,
+              "hits10": 9529.0,
+              "rr_sum": 3769.5241164021754,
+              "positive_rr_sum": 10121.156287146803,
+              "covered_queries": 10323.0,
+              "covered_positives": 23647.0,
+              "active_label_positives": 23600.0,
+              "recoverable_positives": 23600.0,
+              "covered_labeled_queries": 10150.0
+            }
+          },
+          "common_accepted": {
+            "metrics": {
+              "positive_recall10": 0.4028450629789483,
+              "query_mrr": 0.3717434698018707,
+              "positive_weighted_mrr": 0.4284023144004796,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9980181449837048,
+              "joint_support_ceiling": 0.9980181449837048,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.4558085422576428,
+              "component_mean_mrr": 0.37688789900400116,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 9913.0,
+              "labeled_queries": 9741.0,
+              "positives": 22706.0,
+              "hits10": 9147.0,
+              "rr_sum": 3621.1531393400223,
+              "positive_rr_sum": 9727.30295077729,
+              "covered_queries": 9913.0,
+              "covered_positives": 22706.0,
+              "active_label_positives": 22661.0,
+              "recoverable_positives": 22661.0,
+              "covered_labeled_queries": 9741.0
+            }
+          }
+        },
+        "q99": {
+          "availability": {
+            "queries": 11968,
+            "counts": {
+              "descriptor_accepted": 11154.0,
+              "embedding_accepted": 11154.0,
+              "neighbor_queries": 11154.0,
+              "ranking_queries": 11154.0,
+              "missing_descriptors": 711.0,
+              "outside_threshold": 103.0,
+              "norm_failure": 0.0
+            },
+            "component_mean_rates": {
+              "descriptor_accepted": 0.9078034668786636,
+              "embedding_accepted": 0.9078034668786636,
+              "neighbor_queries": 0.9078034668786636,
+              "ranking_queries": 0.9078034668786636,
+              "missing_descriptors": 0.08317423145732847,
+              "outside_threshold": 0.009022301664007885,
+              "norm_failure": 0.0
+            }
+          },
+          "all_calibration": {
+            "metrics": {
+              "positive_recall10": 0.37010061316440257,
+              "query_mrr": 0.3661345167569594,
+              "positive_weighted_mrr": 0.4408168596590631,
+              "query_coverage": 0.9319852941176471,
+              "positive_coverage": 0.9498628002303601,
+              "label_support_ceiling": 0.9983739286561197,
+              "joint_support_ceiling": 0.9482367288864799,
+              "labeled_query_coverage": 0.953353022932592,
+              "component_mean_recall10": 0.4117072906262403,
+              "component_mean_mrr": 0.3411208827334605,
+              "component_mean_coverage": 0.9078034668786636
+            },
+            "totals": {
+              "queries": 11968.0,
+              "labeled_queries": 11512.0,
+              "positives": 29519.0,
+              "hits10": 10925.0,
+              "rr_sum": 4214.940556906116,
+              "positive_rr_sum": 13012.472880275884,
+              "covered_queries": 11154.0,
+              "covered_positives": 28039.0,
+              "active_label_positives": 29471.0,
+              "recoverable_positives": 27991.0,
+              "covered_labeled_queries": 10975.0
+            }
+          },
+          "accepted_only": {
+            "metrics": {
+              "positive_recall10": 0.3896358643318235,
+              "query_mrr": 0.3840492534766393,
+              "positive_weighted_mrr": 0.4640847705080739,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9982880987196405,
+              "joint_support_ceiling": 0.9982880987196405,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.45456158335766034,
+              "component_mean_mrr": 0.37636827063198863,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 11154.0,
+              "labeled_queries": 10975.0,
+              "positives": 28039.0,
+              "hits10": 10925.0,
+              "rr_sum": 4214.940556906116,
+              "positive_rr_sum": 13012.472880275884,
+              "covered_queries": 11154.0,
+              "covered_positives": 28039.0,
+              "active_label_positives": 27991.0,
+              "recoverable_positives": 27991.0,
+              "covered_labeled_queries": 10975.0
+            }
+          },
+          "common_accepted": {
+            "metrics": {
+              "positive_recall10": 0.3894770959377701,
+              "query_mrr": 0.3843646015801209,
+              "positive_weighted_mrr": 0.46500724793480536,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9983074042062806,
+              "joint_support_ceiling": 0.9983074042062806,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.45350144164399725,
+              "component_mean_mrr": 0.3766120716987328,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 11041.0,
+              "labeled_queries": 10862.0,
+              "positives": 27768.0,
+              "hits10": 10815.0,
+              "rr_sum": 4174.968302363273,
+              "positive_rr_sum": 12912.321260653674,
+              "covered_queries": 11041.0,
+              "covered_positives": 27768.0,
+              "active_label_positives": 27721.0,
+              "recoverable_positives": 27721.0,
+              "covered_labeled_queries": 10862.0
+            }
+          }
+        }
+      },
+      "linear518": {
+        "original12": {
+          "availability": {
+            "queries": 11968,
+            "counts": {
+              "descriptor_accepted": 10941.0,
+              "embedding_accepted": 10941.0,
+              "neighbor_queries": 10941.0,
+              "ranking_queries": 10941.0,
+              "missing_descriptors": 711.0,
+              "outside_threshold": 316.0,
+              "norm_failure": 0.0
+            },
+            "component_mean_rates": {
+              "descriptor_accepted": 0.8928348311004185,
+              "embedding_accepted": 0.8928348311004185,
+              "neighbor_queries": 0.8928348311004185,
+              "ranking_queries": 0.8928348311004185,
+              "missing_descriptors": 0.08317423145732847,
+              "outside_threshold": 0.023990937442252693,
+              "norm_failure": 0.0
+            }
+          },
+          "all_calibration": {
+            "metrics": {
+              "positive_recall10": 0.4190182594261323,
+              "query_mrr": 0.4191949057448705,
+              "positive_weighted_mrr": 0.5148326952909171,
+              "query_coverage": 0.9141878342245989,
+              "positive_coverage": 0.9395643483857854,
+              "label_support_ceiling": 0.9983739286561197,
+              "joint_support_ceiling": 0.9380060300145668,
+              "labeled_query_coverage": 0.9348505906879777,
+              "component_mean_recall10": 0.4721109862270664,
+              "component_mean_mrr": 0.39347507011087907,
+              "component_mean_coverage": 0.8928348311004187
+            },
+            "totals": {
+              "queries": 11968.0,
+              "labeled_queries": 11512.0,
+              "positives": 29519.0,
+              "hits10": 12369.0,
+              "rr_sum": 4825.771754934949,
+              "positive_rr_sum": 15197.346332292582,
+              "covered_queries": 10941.0,
+              "covered_positives": 27735.0,
+              "active_label_positives": 29471.0,
+              "recoverable_positives": 27689.0,
+              "covered_labeled_queries": 10762.0
+            }
+          },
+          "accepted_only": {
+            "metrics": {
+              "positive_recall10": 0.4459707950243375,
+              "query_mrr": 0.44840845148995995,
+              "positive_weighted_mrr": 0.5479483083574034,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9983414458265729,
+              "joint_support_ceiling": 0.9983414458265729,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.5285767005493357,
+              "component_mean_mrr": 0.4405298931330192,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 10941.0,
+              "labeled_queries": 10762.0,
+              "positives": 27735.0,
+              "hits10": 12369.0,
+              "rr_sum": 4825.771754934949,
+              "positive_rr_sum": 15197.346332292582,
+              "covered_queries": 10941.0,
+              "covered_positives": 27735.0,
+              "active_label_positives": 27689.0,
+              "recoverable_positives": 27689.0,
+              "covered_labeled_queries": 10762.0
+            }
+          },
+          "common_accepted": {
+            "metrics": {
+              "positive_recall10": 0.4459707950243375,
+              "query_mrr": 0.44840845148995995,
+              "positive_weighted_mrr": 0.5479483083574034,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9983414458265729,
+              "joint_support_ceiling": 0.9983414458265729,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.5285767005493357,
+              "component_mean_mrr": 0.4405298931330192,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 10941.0,
+              "labeled_queries": 10762.0,
+              "positives": 27735.0,
+              "hits10": 12369.0,
+              "rr_sum": 4825.771754934949,
+              "positive_rr_sum": 15197.346332292582,
+              "covered_queries": 10941.0,
+              "covered_positives": 27735.0,
+              "active_label_positives": 27689.0,
+              "recoverable_positives": 27689.0,
+              "covered_labeled_queries": 10762.0
+            }
+          }
+        },
+        "q90": {
+          "availability": {
+            "queries": 11968,
+            "counts": {
+              "descriptor_accepted": 10068.0,
+              "embedding_accepted": 10068.0,
+              "neighbor_queries": 10068.0,
+              "ranking_queries": 10068.0,
+              "missing_descriptors": 711.0,
+              "outside_threshold": 1189.0,
+              "norm_failure": 0.0
+            },
+            "component_mean_rates": {
+              "descriptor_accepted": 0.8254432177494647,
+              "embedding_accepted": 0.8254432177494647,
+              "neighbor_queries": 0.8254432177494647,
+              "ranking_queries": 0.8254432177494647,
+              "missing_descriptors": 0.08317423145732847,
+              "outside_threshold": 0.09138255079320655,
+              "norm_failure": 0.0
+            }
+          },
+          "all_calibration": {
+            "metrics": {
+              "positive_recall10": 0.38172024797587994,
+              "query_mrr": 0.3835529382107475,
+              "positive_weighted_mrr": 0.46662298566129956,
+              "query_coverage": 0.8412433155080213,
+              "positive_coverage": 0.8548053795860293,
+              "label_support_ceiling": 0.9983739286561197,
+              "joint_support_ceiling": 0.8533148141874725,
+              "labeled_query_coverage": 0.8594510076441974,
+              "component_mean_recall10": 0.43563178618858356,
+              "component_mean_mrr": 0.3620290013378627,
+              "component_mean_coverage": 0.825443217749465
+            },
+            "totals": {
+              "queries": 11968.0,
+              "labeled_queries": 11512.0,
+              "positives": 29519.0,
+              "hits10": 11268.0,
+              "rr_sum": 4415.461424682125,
+              "positive_rr_sum": 13774.243913735902,
+              "covered_queries": 10068.0,
+              "covered_positives": 25233.0,
+              "active_label_positives": 29471.0,
+              "recoverable_positives": 25189.0,
+              "covered_labeled_queries": 9894.0
+            }
+          },
+          "accepted_only": {
+            "metrics": {
+              "positive_recall10": 0.4465580787064558,
+              "query_mrr": 0.4462766752256039,
+              "positive_weighted_mrr": 0.545882135050763,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9982562517338406,
+              "joint_support_ceiling": 0.9982562517338406,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.5278742535229781,
+              "component_mean_mrr": 0.44067018814612313,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 10068.0,
+              "labeled_queries": 9894.0,
+              "positives": 25233.0,
+              "hits10": 11268.0,
+              "rr_sum": 4415.461424682125,
+              "positive_rr_sum": 13774.243913735902,
+              "covered_queries": 10068.0,
+              "covered_positives": 25233.0,
+              "active_label_positives": 25189.0,
+              "recoverable_positives": 25189.0,
+              "covered_labeled_queries": 9894.0
+            }
+          },
+          "common_accepted": {
+            "metrics": {
+              "positive_recall10": 0.4713627049180328,
+              "query_mrr": 0.42633900043338996,
+              "positive_weighted_mrr": 0.48735095078220947,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9979508196721312,
+              "joint_support_ceiling": 0.9979508196721312,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.5276578059121986,
+              "component_mean_mrr": 0.43718735190534175,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 8933.0,
+              "labeled_queries": 8771.0,
+              "positives": 19520.0,
+              "hits10": 9201.0,
+              "rr_sum": 3739.4193728012633,
+              "positive_rr_sum": 9513.090559268729,
+              "covered_queries": 8933.0,
+              "covered_positives": 19520.0,
+              "active_label_positives": 19480.0,
+              "recoverable_positives": 19480.0,
+              "covered_labeled_queries": 8771.0
+            }
+          }
+        },
+        "q95": {
+          "availability": {
+            "queries": 11968,
+            "counts": {
+              "descriptor_accepted": 10665.0,
+              "embedding_accepted": 10665.0,
+              "neighbor_queries": 10665.0,
+              "ranking_queries": 10665.0,
+              "missing_descriptors": 711.0,
+              "outside_threshold": 592.0,
+              "norm_failure": 0.0
+            },
+            "component_mean_rates": {
+              "descriptor_accepted": 0.8708314973150907,
+              "embedding_accepted": 0.8708314973150907,
+              "neighbor_queries": 0.8708314973150907,
+              "ranking_queries": 0.8708314973150907,
+              "missing_descriptors": 0.08317423145732847,
+              "outside_threshold": 0.04599427122758072,
+              "norm_failure": 0.0
+            }
+          },
+          "all_calibration": {
+            "metrics": {
+              "positive_recall10": 0.40838104271824927,
+              "query_mrr": 0.4082883256647049,
+              "positive_weighted_mrr": 0.5025900775441727,
+              "query_coverage": 0.8911263368983957,
+              "positive_coverage": 0.9161556963311766,
+              "label_support_ceiling": 0.9983739286561197,
+              "joint_support_ceiling": 0.9146312544462888,
+              "labeled_query_coverage": 0.911049339819319,
+              "component_mean_recall10": 0.46045899956365516,
+              "component_mean_mrr": 0.38453670426964276,
+              "component_mean_coverage": 0.8708314973150908
+            },
+            "totals": {
+              "queries": 11968.0,
+              "labeled_queries": 11512.0,
+              "positives": 29519.0,
+              "hits10": 12055.0,
+              "rr_sum": 4700.215205052083,
+              "positive_rr_sum": 14835.956499026433,
+              "covered_queries": 10665.0,
+              "covered_positives": 27044.0,
+              "active_label_positives": 29471.0,
+              "recoverable_positives": 26999.0,
+              "covered_labeled_queries": 10488.0
+            }
+          },
+          "accepted_only": {
+            "metrics": {
+              "positive_recall10": 0.44575506581866586,
+              "query_mrr": 0.44815171672884085,
+              "positive_weighted_mrr": 0.5485858785322598,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9983360449637627,
+              "joint_support_ceiling": 0.9983360449637627,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.527895561598185,
+              "component_mean_mrr": 0.4415503402094708,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 10665.0,
+              "labeled_queries": 10488.0,
+              "positives": 27044.0,
+              "hits10": 12055.0,
+              "rr_sum": 4700.215205052083,
+              "positive_rr_sum": 14835.956499026433,
+              "covered_queries": 10665.0,
+              "covered_positives": 27044.0,
+              "active_label_positives": 26999.0,
+              "recoverable_positives": 26999.0,
+              "covered_labeled_queries": 10488.0
+            }
+          },
+          "common_accepted": {
+            "metrics": {
+              "positive_recall10": 0.4630494142517396,
+              "query_mrr": 0.43145854632335123,
+              "positive_weighted_mrr": 0.503612441095094,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9980181449837048,
+              "joint_support_ceiling": 0.9980181449837048,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.5267928702452361,
+              "component_mean_mrr": 0.43827434793917563,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 9913.0,
+              "labeled_queries": 9741.0,
+              "positives": 22706.0,
+              "hits10": 10514.0,
+              "rr_sum": 4202.8376997357645,
+              "positive_rr_sum": 11435.024087505204,
+              "covered_queries": 9913.0,
+              "covered_positives": 22706.0,
+              "active_label_positives": 22661.0,
+              "recoverable_positives": 22661.0,
+              "covered_labeled_queries": 9741.0
+            }
+          }
+        },
+        "q99": {
+          "availability": {
+            "queries": 11968,
+            "counts": {
+              "descriptor_accepted": 11133.0,
+              "embedding_accepted": 11133.0,
+              "neighbor_queries": 11133.0,
+              "ranking_queries": 11133.0,
+              "missing_descriptors": 711.0,
+              "outside_threshold": 124.0,
+              "norm_failure": 0.0
+            },
+            "component_mean_rates": {
+              "descriptor_accepted": 0.9080088136716047,
+              "embedding_accepted": 0.9080088136716047,
+              "neighbor_queries": 0.9080088136716047,
+              "ranking_queries": 0.9080088136716047,
+              "missing_descriptors": 0.08317423145732847,
+              "outside_threshold": 0.008816954871066757,
+              "norm_failure": 0.0
+            }
+          },
+          "all_calibration": {
+            "metrics": {
+              "positive_recall10": 0.4259968156102849,
+              "query_mrr": 0.42646126979545945,
+              "positive_weighted_mrr": 0.5222916782605881,
+              "query_coverage": 0.930230614973262,
+              "positive_coverage": 0.9548426437209933,
+              "label_support_ceiling": 0.9983739286561197,
+              "joint_support_ceiling": 0.9532504488634439,
+              "labeled_query_coverage": 0.9515288394718554,
+              "component_mean_recall10": 0.4803246094590608,
+              "component_mean_mrr": 0.4004178099352068,
+              "component_mean_coverage": 0.9080088136716047
+            },
+            "totals": {
+              "queries": 11968.0,
+              "labeled_queries": 11512.0,
+              "positives": 29519.0,
+              "hits10": 12575.0,
+              "rr_sum": 4909.422137885329,
+              "positive_rr_sum": 15417.528050574301,
+              "covered_queries": 11133.0,
+              "covered_positives": 28186.0,
+              "active_label_positives": 29471.0,
+              "recoverable_positives": 28139.0,
+              "covered_labeled_queries": 10954.0
+            }
+          },
+          "accepted_only": {
+            "metrics": {
+              "positive_recall10": 0.44614347548428296,
+              "query_mrr": 0.44818533301856206,
+              "positive_weighted_mrr": 0.546992409372536,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.998332505499184,
+              "joint_support_ceiling": 0.998332505499184,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.5287627410293884,
+              "component_mean_mrr": 0.44028991628874026,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 11133.0,
+              "labeled_queries": 10954.0,
+              "positives": 28186.0,
+              "hits10": 12575.0,
+              "rr_sum": 4909.422137885329,
+              "positive_rr_sum": 15417.528050574301,
+              "covered_queries": 11133.0,
+              "covered_positives": 28186.0,
+              "active_label_positives": 28139.0,
+              "recoverable_positives": 28139.0,
+              "covered_labeled_queries": 10954.0
+            }
+          },
+          "common_accepted": {
+            "metrics": {
+              "positive_recall10": 0.44752953039469895,
+              "query_mrr": 0.44710344449234074,
+              "positive_weighted_mrr": 0.5455696074653599,
+              "query_coverage": 1.0,
+              "positive_coverage": 1.0,
+              "label_support_ceiling": 0.9983074042062806,
+              "joint_support_ceiling": 0.9983074042062806,
+              "labeled_query_coverage": 1.0,
+              "component_mean_recall10": 0.5300564838735947,
+              "component_mean_mrr": 0.44151039914901813,
+              "component_mean_coverage": 1.0
+            },
+            "totals": {
+              "queries": 11041.0,
+              "labeled_queries": 10862.0,
+              "positives": 27768.0,
+              "hits10": 12427.0,
+              "rr_sum": 4856.437614075805,
+              "positive_rr_sum": 15149.376860098113,
+              "covered_queries": 11041.0,
+              "covered_positives": 27768.0,
+              "active_label_positives": 27721.0,
+              "recoverable_positives": 27721.0,
+              "covered_labeled_queries": 10862.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "evidence": {
+    "runtime_commit": "55ab6304f3541c69d45acaabd0d4ac905826b18f",
+    "thresholds_source_sha256": "aa733b630bb4fc7d1d00ffaf1c55e31ee154c598e07e42be9dee3281e46213c5",
+    "results_source_sha256": "279372cf5628870b233d6a6dc6ab28e35c3ec7e37ae1c51de7bc15b6dcd7540a",
+    "independent_audit_sha256": "e1f4ee67df1905695afbd8bb3806dc5a5be96aa7d531a4dd27ed07e4de58f576",
+    "independent_reference_sha256": "769e8536a7317e3f6ceb478661d5d58013ae848997eec6c1cea328565119d82c",
+    "output_bytes": 7049592,
+    "rank_records_verified": 23936,
+    "point_masks_verified": 95744
+  }
+}
