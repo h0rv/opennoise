@@ -1,5 +1,21 @@
 # Roadmap
 
+## Retained FMA discovery checkpoint — 2026-10-17
+
+The current local FMA catalog retains 109,727 source recordings, searchable
+artist and album identities, and complete direct genre co-tag evidence. The
+[genre–artist recording directory](../data/recipes/fma-genre-artists-20261017/README.md)
+adds complete reverse navigation through 47,341 native genre–artist pairs and
+their exact recordings. It preserves missing artist records and treats genre
+annotations as track observations, not artist classifications.
+
+The existing frozen descriptor map can accompany this catalog without a new
+fit. Its coordinates remain descriptive, with unsupported positions absent.
+This is a local retained-data workflow, separate from the historical public
+map and MusicBrainz coverage figures below. Source freshness, missing metadata,
+independent evaluation and human musical-relevance judgments remain open gaps;
+none of these navigation improvements establishes musical-quality parity.
+
 ## Every Noise parity target
 
 Complete discovery parity is the product target. The latest source explorer

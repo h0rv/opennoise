@@ -1,3 +1,4 @@
+import {genreArtistRoute, renderGenreArtists} from './fma-genre-artists.js';
 import {loadAlbumSearch, albumMatches} from './fma-album-search.js';
 import {cotagRoute, renderCotags} from './fma-cotags.js';
 import {renderPlayableNeighbors} from './fma-playable-neighbors.js';
@@ -25,6 +26,8 @@ async function loadArtists() {
 }
 function route() {
   const params = new URLSearchParams(location.hash.slice(1));
+  const genreArtist = genreArtistRoute(params);
+  if (genreArtist) return genreArtist;
   const cotag = cotagRoute(params);
   if (cotag) return cotag;
   if (params.has('descriptor-map')) return {kind: 'descriptor-map', entity: params.get('entity') === 'artists' ? 'artists' : 'genres', q: params.get('q') ?? '', selected: params.get('selected') ?? null};
@@ -269,7 +272,7 @@ async function cohort(state, token) {
   if (token !== generation) return;
   let ids, total, name;
   if (state.kind === 'artist') {
-    const shard = await json(`artists/${(state.id ?? 0) % catalog.profile_shards}.json`), artist = shard.artists[String(state.id)];
+    const shard = await json(`artists/${(state.id ?? 0) % catalog.profile_shards}.json`), artist = shard.artists[String(state.id)] ?? (state.id === null ? shard.artists.None : null);
     if (!artist) throw new Error('Native artist ID is absent');
     ids = artist.track_ids.slice(state.page * catalog.page_size, (state.page + 1) * catalog.page_size); total = artist.track_ids.length; name = `${artist.name} · #${state.id}`;
     if (token !== generation) return;
@@ -286,6 +289,11 @@ async function cohort(state, token) {
     if (total) { const key = state.kind === 'genre' ? `genre-${state.id}` : state.kind === 'unannotated' ? 'unannotated' : 'all'; const payload = await json(`cohorts/${key}/${state.page}.json`); if (payload.cohort !== key || payload.page !== state.page || payload.total !== total) throw new Error('Track cohort identity mismatch'); ids = payload.track_ids; } else ids = [];
     if (token !== generation) return;
     if (state.kind === 'genre') { const listen = listenLink({genre: state.id}); if (listen) rows.append(listen); }
+    if (state.kind === 'genre' && catalog.genre_artists) {
+      const artistsLink = node('p');
+      artistsLink.append(link('Artists on these source tracks', `#genre-artists=${state.id}`));
+      rows.append(artistsLink);
+    }
     if (state.kind === 'genre' && catalog.cotags) rows.append(link('All direct genre connections and shared recordings', `#connections=${state.id}`));
     if (state.kind === 'genre' && genre.connections?.length) exploreGenres('Connected genres', 'Explore genres that share track annotations.', genre.connections, 'shared_tracks', genre);
     status.textContent = `${number(total)} direct source tracks.${state.kind === 'genre' ? ` Native parent ID: ${genre.parent_id ?? 'not supplied'}. No parent annotations are inherited.` : ''}`;
@@ -301,17 +309,23 @@ async function cohort(state, token) {
 }
 async function render() {
   const token = ++generation, state = route();
+  heading.classList.toggle('genre-artist-heading', ['genre-artists', 'artist-genre'].includes(state.kind));
   heading.classList.toggle('cotag-heading', ['connections', 'pair'].includes(state.kind));
   routeCleanup?.(); routeCleanup = null;
   clearRoutePlayers();
-  $('#search-form').hidden = ['listen', 'genre-map', 'descriptor-map', 'connections', 'pair'].includes(state.kind);
+  $('#search-form').hidden = ['listen', 'genre-map', 'descriptor-map', 'connections', 'pair', 'genre-artists', 'artist-genre'].includes(state.kind);
   content.setAttribute('aria-busy', 'true'); rows.replaceChildren(); pages.replaceChildren(); status.textContent = 'Loading…';
   if (['artists', 'genres', 'tracks', 'albums', 'wikidata'].includes(state.kind)) { scope.value = state.kind; query.value = state.q; }
   $('#playable-only').checked = Boolean(state.playable);
   $('[data-playable-filter]').hidden = !catalog.playback || scope.value !== 'tracks';
   try {
     if (state.kind === 'invalid') throw new Error('Invalid native catalog ID');
-    if (['connections', 'pair'].includes(state.kind)) {
+    if (['genre-artists', 'artist-genre'].includes(state.kind)) {
+      await loadArtists();
+      if (token !== generation) return;
+      await renderGenreArtists({state, config: catalog.genre_artists, genres, artists: artistIndex, json, tracksFor, trackNode, rawTrackCount: catalog.counts.raw_tracks, profileShards: catalog.profile_shards, rows, heading, status, paginate, current: () => token === generation});
+    }
+    else if (['connections', 'pair'].includes(state.kind)) {
       if (state.kind === 'pair') await loadArtists();
       if (token !== generation) return;
       await renderCotags({state, config: catalog.cotags, genres, json, rows, heading, status, paginate, tracksFor, trackNode, current: () => token === generation});
