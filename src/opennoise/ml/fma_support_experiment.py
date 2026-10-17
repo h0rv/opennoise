@@ -35,7 +35,7 @@ AVAILABILITY = (
     "norm_failure",
 )
 POINTS = ("original12", "q90", "q95", "q99")
-PROTOCOL_SHA256 = "8e68db4d9b066af7e47a727d923ffd08603da80aee176c44642ffadf6d69a5d3"
+PROTOCOL_SHA256 = "cc346fadc19340d085fba32796c4ad60451637773cf2c12c3f29d21953682149"
 FILES = {
     "fit-linear44": {"model.npz", "fit-ids.json"},
     "fit-linear518": {"model.npz", "fit-ids.json"},
@@ -60,6 +60,8 @@ def _code() -> dict[str, str]:
 
 def freeze(protocol: Path, input_seal: Path, output: Path) -> None:
     """Freeze new protocol and source bindings without reading previous fitted models/outcomes."""
+    if any(p.is_symlink() for p in (output, *output.parents)):
+        raise ValueError("Symlink seal output")
     if output.exists() or balanced.digest(protocol) != PROTOCOL_SHA256:
         raise ValueError("Fresh output and reviewed protocol required")
     factorial.load_inputs(input_seal)

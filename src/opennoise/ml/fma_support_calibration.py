@@ -31,7 +31,9 @@ def descriptor_state(
         np.asarray(features[:, model.active_columns], dtype=np.float64)
         - model.center[model.active_columns]
     ) / model.scale[model.active_columns]
-    finite = np.isfinite(features).all(axis=1) & np.isfinite(z).all(axis=1)
+    finite = np.isfinite(features).all(axis=1)
+    if np.any(finite & ~np.isfinite(z).all(axis=1)):
+        raise ValueError("Finite descriptors overflowed training standardization")
     score = np.max(np.abs(z), axis=1)
     score[~finite] = np.inf
     vector = (np.where(finite[:, None], z, 0) - model.map_center) @ model.encoder

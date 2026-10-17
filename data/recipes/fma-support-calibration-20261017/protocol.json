@@ -10,7 +10,7 @@
     "fit_cohort": "Common completefinite44AND518 properfitrows only; equalfinitecomponentweights normalizedsum1. Calibrationfeatures/labels/groups never enter fittedstate."
   },
   "models": "Two new matchedlinear44/518 fixedlambda1 rank8 encoders, same original fit_encoder normalization/labelsupport/SVD rules; alteredproperfitcohort justifiesnewfits. NoRFF,parameterselection or servingreplacement.",
-  "support_score": "For eachbank use maximum absolute train-standardized ACTIVE descriptorcoordinate; label-independent score depends onlyproperfitnormalization. Missing/nonfinite descriptors yield infinity. Nonzero finite linearencoder norm is separate supportcondition, excluded fromquantilepopulationselection.",
+  "support_score": "For eachbank use maximum absolute train-standardized ACTIVE descriptorcoordinate; label-independent score depends onlyproperfitnormalization. Missing/nonfinite descriptors yield infinity. Nonzero finite linearencoder norm is separate supportcondition, excluded fromquantilepopulationselection. Finite raw descriptors yielding nonfinite standardized values fail explicitly as numerical overflow, rather than being excluded as missing.",
   "quantiles": {
     "levels": [
       0.9,

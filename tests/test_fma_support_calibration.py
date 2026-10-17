@@ -20,7 +20,7 @@ from opennoise.ml.fma_support_calibration import (
     component_quantiles,
     descriptor_state,
 )
-from opennoise.ml.fma_support_experiment import ARMS, calibrate, fit, score, verify_stage
+from opennoise.ml.fma_support_experiment import ARMS, calibrate, fit, freeze, score, verify_stage
 
 
 class SupportCalibrationTests(unittest.TestCase):
@@ -172,3 +172,24 @@ class SupportCalibrationTests(unittest.TestCase):
                     + counts["embedding_accepted"],
                     row["availability"]["queries"],
                 )
+
+    def test_finite_standardization_overflow_fails_instead_of_missing(self) -> None:
+        data, _ = self.fixture()
+        model = fit_encoder(
+            data.features,
+            data.targets,
+            ~calibration_mask(data.groups),
+            data.groups,
+            nonlinear=False,
+        )
+        model.scale[model.active_columns] = np.finfo(float).tiny
+        with np.errstate(over="ignore"), self.assertRaisesRegex(ValueError, "overflowed"):
+            descriptor_state(model, np.full((1, 5), 1e300))
+
+    def test_freeze_rejects_symlink_parent_before_source_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "real").mkdir()
+            (root / "alias").symlink_to(root / "real", target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "Symlink"):
+                freeze(root / "absent-protocol", root / "absent-input", root / "alias/seal.json")
