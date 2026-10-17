@@ -99,7 +99,7 @@ async function visit(state,hash,heading) {
     assert.equal(requests.some(row=>row.request.url.includes('/track-search/')),false,'blank context keeps index lazy');
     assert.equal(requests.filter(row=>row.request.url.includes('/cohorts/genre-1/')).length,1,'blank context browses just one page');
     await evaluate("document.querySelector('#query').value='Ｃａｆé 音楽';document.querySelector('#query').dispatchEvent(new Event('input',{bubbles:true}))");
-    await wait("document.querySelector('#status').textContent.startsWith('1 matching of 1,001')");
+    await wait("document.querySelector('#status').textContent.startsWith('1 matching of 1,001') && document.querySelector('main').getAttribute('aria-busy')==='false'");
     assert.deepEqual(await currentIds(evaluate),[201],'same title outside this genre is excluded');
     assert.equal(await evaluate("new URLSearchParams(location.hash.slice(1)).get('genre')"),'1');
     await evaluate("document.querySelector('#query').focus()");
@@ -110,9 +110,9 @@ async function visit(state,hash,heading) {
     assert.equal(await evaluate("document.querySelector('#scope').value"),'tracks');
     assert.equal(await evaluate("document.querySelector('#query').value"),'');
     await evaluate('history.back()');
-    await wait("document.querySelector('#scope').value==='context' && document.querySelector('#status').textContent.startsWith('1 matching of')");
+    await wait("document.querySelector('#scope').value==='context' && document.querySelector('#status').textContent.startsWith('1 matching of') && document.querySelector('main').getAttribute('aria-busy')==='false'");
     await command('Page.reload');
-    await wait("document.querySelector('#status')?.textContent.startsWith('1 matching of')");
+    await wait("document.querySelector('#status')?.textContent.startsWith('1 matching of') && document.querySelector('main')?.getAttribute('aria-busy')==='false'");
     assert.deepEqual(await currentIds(evaluate),[201]);
     await visit(state,'genre=1&q=Shared&page=4','Fixture genre');
     await wait("document.querySelectorAll('.track').length===199");
