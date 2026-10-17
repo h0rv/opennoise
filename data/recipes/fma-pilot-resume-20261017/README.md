@@ -41,3 +41,55 @@ by a genuinely unexamined evaluation before any broad quality or promotion claim
 
 No new source acquisition, audio processing, paid service, credentials, model
 variation, Library retry or public deployment is part of this change.
+
+## Verified result
+
+Implementation: `8fc3ff8add5e532b5bd85f4853bf2e81d3f587bc`.
+Independent source checks passed (7 Python and 5 Chromium contracts). Independent
+actual-package checks passed for both slots: all 15 recordings per slot play
+with preserved credits; blank answers survive download, reload, restoration and
+re-export exactly; wrong-slot/hash imports leave the form unchanged; no external
+requests, automatic playback or coordinator access occurred. Mobile 390px and
+keyboard checks passed; synthetic contracts additionally cover 320px, nonblank
+round trips, Unicode limits, cancellation and asynchronous races.
+
+The fresh execution seal is
+`054f7f3a7911698946f1239f3bb2aa9b27446c77adb3f4c75f9618065d67b9a7`.
+The new coordinator mapping hash is
+`ad1114852ea4a6e5b94cd34fdf1675bff324736a3568478359f722638cc6c36b`.
+Independent closed-inventory checks confirm byte-identical packets and audio,
+unchanged assignments and an untouched historical pack. Each listener ZIP has
+20 files, excludes coordinator files and responses, and passed byte-for-byte
+archive round-trip validation:
+
+- Slot 1: 14,464,977 bytes; SHA256
+  `9e447fc45a45b8dca5ba51da09e4b52148080f18662dcff26e5df1626cd049f9`.
+- Slot 2: 14,464,977 bytes; SHA256
+  `aba3c2ea73909800be7eece35a3e837572b69bc775dcd82b4dbea44006a4bd0d`.
+
+## Local reproduction
+
+Use the existing reviewed candidate at
+`/workspace/opennoise-candidate-navigation-20261016/site55` and baseline at
+`/workspace/opennoise-evaluation-run-20261016/pack-final`. The older candidate
+page correctly fails the current validator; no guard was weakened. Both
+candidate versions retain the same reviewed manifest and audio.
+
+Run `scripts/build_fma_listening_pilot.py freeze` with those inputs, baseline
+inventory pin `0f4f380428f5d5961dca818824ab6f38702dff2facc90309fa002ed556ffbd14`,
+and `data/recipes/fma-waveform55-evaluation-20261016/listening-protocol.json`.
+Review the resulting seal, then run `build` with its exact SHA256 into a fresh
+directory. Run `summarize` with the new mapping SHA256 and no response arguments
+to reproduce the zero-response summary. Do not confirm distinct participants
+without actual evidence. Existing wrapper resource guards remain unchanged.
+
+Actual run: `/workspace/opennoise-pilot-resume-run-20261017`.
+Independent artifact/browser evidence:
+`/workspace/opennoise-pilot-resume-independent-20261017`.
+Source and methodology reviews:
+`/workspace/opennoise-pilot-resume-review-20261017`.
+
+Extract each participant ZIP separately and run `python3 serve.py` inside that
+listener folder. Follow the printed loopback URL. Download answers before
+closing, then use **Restore saved answers** in the same listener slot to resume.
+Keep the coordinator archive away from participant folders and HTTP roots.
