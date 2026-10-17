@@ -1,0 +1,1 @@
+{"analysis":{"analysis_sample_rate":44100,"downmix":"mix","equal_loudness":0},"revision":"native-ab178-feature-contract-v1","schema_sha256":"c313c48a8f9bbfb62b729b8230232c96d1b28b534850aabc3cfd99a4d096ff23","version":{"essentia":"2.1-beta2","essentia_build_sha":"70f2e5ece6736b2c40cc944ad0e695b16b925413","essentia_git_sha":"v2.1_beta2","extractor":"music 1.0"}}

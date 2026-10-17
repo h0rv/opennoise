@@ -1,0 +1,93 @@
+{
+  "runtime_commit": "784396d860c358bc2aa39e036ea622803b437f1d",
+  "bundle_sha256": "6c20f1f2786ea6d4fa58bbcf23a3ef8888adee9e62d5f64a722ab3e5eeffc5e2",
+  "query_sha256": "4b48a59e3393ab98c8225a7ea3c57a19f85ba2922ed109618669b16c97be4292",
+  "result_sha256": "ca426bb9b24c15f13552c32674a82c4ce92179f954bb44b968272681805b6142",
+  "bundle_bytes": 431655,
+  "query_bytes": 82160,
+  "result_bytes": 17754,
+  "source_roster_rows": 100,
+  "contract_compatible_rows": 12,
+  "training_rows": 4,
+  "heldout_compatible_rows": 8,
+  "active_columns": 177,
+  "queries": 16,
+  "query_outcomes": {
+    "emitted": 4,
+    "outside_training_support": 8,
+    "missing_http_404": 1,
+    "dirty_extractor": 1,
+    "extractor_version_mismatch": 1,
+    "not_nominated": 1
+  },
+  "fit_members_flagged": 4,
+  "relocated_byte_identical": true,
+  "original_source_reads_in_relocated_inference": false,
+  "incompatible_schema_rejected_before_fit": true,
+  "repinned_credit_tamper_rejected_without_output": true,
+  "resources": {
+    "export-bundle": {
+      "wall_seconds": 0.41269013899727724,
+      "cpu_user_seconds": 0.376546,
+      "cpu_system_seconds": 0.035682,
+      "max_rss_kib": 37316
+    },
+    "export-queries": {
+      "wall_seconds": 0.5464695020018553,
+      "cpu_user_seconds": 0.439864,
+      "cpu_system_seconds": 0.052643999999999996,
+      "max_rss_kib": 36464
+    },
+    "infer": {
+      "wall_seconds": 0.22096474200225202,
+      "cpu_user_seconds": 0.19938499999999998,
+      "cpu_system_seconds": 0.020430999999999998,
+      "max_rss_kib": 34688
+    },
+    "replay": {
+      "wall_seconds": 0.21779921599954832,
+      "cpu_user_seconds": 0.207093,
+      "cpu_system_seconds": 0.007988,
+      "max_rss_kib": 34688
+    },
+    "relocated-infer": {
+      "wall_seconds": 0.455738789998577,
+      "cpu_user_seconds": 0.24515299999999998,
+      "cpu_system_seconds": 0.13363999999999998,
+      "max_rss_kib": 34700
+    }
+  },
+  "audio_extracted": false,
+  "new_acquisition": false,
+  "fma_weights_used": false,
+  "relevance_measured": false,
+  "revision": "native-ab178-portable-pilot-v1",
+  "contract_sha256": "955eda463b35d35530924e195837d95ad7ba00c010005bd0be6af42381c378d4",
+  "selection_sha256": "de8c5025b26f898284dca33d4e220dd84122fb672341c155dc080d649a953c06",
+  "independent_completion_sha256": "ac66aeebd240f7f72d27a55993edb212ef078e06a8ed277c554aa33e76396b74",
+  "native_source_states": {
+    "joined": 12,
+    "dirty_extractor": 21,
+    "extractor_version_mismatch": 22,
+    "missing_http_404": 45
+  },
+  "training_credit_components": 2,
+  "heldout_credit_components": 4,
+  "heldout_outcomes": {
+    "emitted": 0,
+    "outside_training_support": 8
+  },
+  "fit_member_outcomes": {
+    "emitted": 4
+  },
+  "compatible_cells_verified": 2136,
+  "max_vector_error": 0,
+  "max_distance_error": 0,
+  "limitations": [
+    "The four-record, two-component training frame emitted no heldout recommendations: all eight compatible heldout records exceeded the unchanged support gate.",
+    "This is retained-provider feature projection with source-reported extractor metadata, not local waveform extraction verification.",
+    "No FMA518 mapping, FMA weights, genre predictions or musical relevance validation.",
+    "Exact native recording/core-credit edges are checked; unknown album, duplicate-recording and artist-alias edges remain unresolved.",
+    "The input roster is selected and previously inspected; no representative or new independent cohort claim."
+  ]
+}

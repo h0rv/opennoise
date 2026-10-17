@@ -5,6 +5,29 @@ component engine. It projects retained source JSON into versioned 178-coordinate
 queries and fits one explicit held-out component fold. It does not extract audio,
 use FMA encoder weights, predict genres or establish musical relevance.
 
+## Checked pilot and current limitation
+
+The pre-frozen fold-0 pilot had 12 compatible recordings: four training records
+from two known credit components and eight heldout records from four components.
+**All eight heldout records exceeded the unchanged support gate.** Only the four
+fit-member rows emitted neighbors, with `fit_member: true`. This demonstrates the
+source/identity/frozen-inference path and provides no supported heldout retrieval
+result. The fold, gate and cohort were not changed after observing this outcome.
+
+The source roster retained 12 compatible analyses, 21 dirty builds, 22 other
+extractor versions and 45 explicit 404s. The 16-query check included all 12
+compatible rows plus one dirty, version-mismatched, missing and unnominated case.
+Independent reconstruction verified 2,136 compatible values, all 100 credit-graph
+rows, fitted moments, support states and neighbor distances with zero differences.
+Relocated results were byte-identical, and repinned credit tampering and an
+incompatible schema were rejected without publishing output.
+
+The actual 432 KB bundle and 82 KB query pack produced the 16 outcomes in 0.221
+seconds at 35.5 MB peak RSS on this executor. These are single-run observations,
+not latency guarantees. `pilot-contract.json` records the exact clean build and
+analysis configuration; `results.json` records aggregate hashes, limits and
+resource measurements. No audio was extracted or acquired.
+
 Before fitting, freeze a canonical JSON contract with exactly these fields:
 
 ```json
