@@ -51,7 +51,7 @@ The actual output has 199,519 bytes of observations (SHA256
 and a 1,673-byte report (SHA256
 `146774a2cac972f336a7bd051286e7b760d15ef16bcf00936a5150f57fa6f5ae`).
 Build, native replay and a fresh second build passed with identical artifact
-bytes, each below 0.5 seconds and 28MB peak RSS. Evidence is retained in
+bytes, each below 0.5 seconds and 28 MiB peak RSS. Evidence is retained in
 `/workspace/opennoise-native-vector-companion-run-20261017/`: `input-freeze.json`,
 `execution.json`, `byte-replay.json`, `pack/` and `replay/`. Runtime module SHA256
 is `54e828035de391e01fc8ae9985fcd94046ccc8b9f22608265e9dc1f128ba550c`.
