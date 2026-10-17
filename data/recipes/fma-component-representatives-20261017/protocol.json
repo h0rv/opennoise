@@ -1,0 +1,64 @@
+{
+  "revision": "fma-component-representatives-v1",
+  "purpose": "Test whether a second descriptor-diverse training representative per existing candidate component improves observed-positive recovery through raw44 retrieval",
+  "status": "one_fixed_exploratory_candidate_on_previously_inspected_original_training_component_folds",
+  "original_execution_seal_sha256": "e4351cfa8fb0f89d69c6984d63d7456510c78d39a2ba84aaa90c01134b5975e9",
+  "original_summary_sha256": "ccf1b98b3e4ca7602f253484f5025964cadefab0e792a98968661f3d490f65e4",
+  "input_manifest_sha256": "4344e609efd7442bf2c598fefb9d1f5abb08884b59f922a53a05643c60d0a323",
+  "population": "All 94953 source-known original-training queries across unchanged five native artist/album/exact-descriptor components folds. Query each once. Do not read outer validation/test predictions or change native components.",
+  "geometry": "Use saved per-fold component-weighted raw44 center/scale/active columns, descriptor support threshold and L2 normalization. No refit, learned projection, query-label use, or new feature. Exact existing joint candidate components and original representatives remain; their historical nomination/eligibility was shared with the supervised ridge experiment and is not claimed wholly label-free.",
+  "new_arm": {
+    "name": "two_representatives",
+    "candidate_components": "Exactly those in the original joint_ids roster, at most 2048; no additional component nomination",
+    "second_representative": "Among other original-training recordings in the same candidate component and outside the heldout fold, require complete finite descriptors, existing raw support and nonzero raw norm. Select lowest cosine similarity to the original representative, tie smallest native track ID. Do not consult genre labels or the learned embedding norm. If none exists, retain only original. Otherwise always add a different record even if its descriptor vector is identical; report duplicate-vector second representatives. At most 4096 recordings total.",
+    "component_score": "Maximum query cosine similarity over its one or two representatives. Winning-record tie uses smallest native track ID. Rank components by descending maximum cosine, then winning native track ID. Select ten distinct components and return their winning recordings.",
+    "label_transfer": "Unchanged unweighted supplied-positive genre votes from the ten winning recordings, descending vote count then native genre ID; evaluate top ten genre labels. Empty annotations contribute no votes, not negative labels.",
+    "abstention": "Same raw44 query eligibility/reasons as the saved raw arm; do not drop unsupported queries from positive denominators or replace candidates to improve labels"
+  },
+  "controls": [
+    "saved raw44 one-representative neighbors with all neighbor geometry and vote ranks replayed",
+    "recording-count training popularity rederived only from the other four folds, retaining full query denominators"
+  ],
+  "primary": "Pooled component-equal observed-positive Recall@10(two_representatives) minus raw44; report the same comparison with popularity and all absolute metrics",
+  "secondary": [
+    "Positive-weighted Recall@10",
+    "Query MRR over labeled queries",
+    "Component-equal MRR",
+    "Query/descriptor/neighbor/genre-ranking coverage",
+    "Per-fold and giant component 2 versus remaining component results with fixed models"
+  ],
+  "mechanism_accounting": [
+    "For raw and new arm, conserve every observed positive in ordered abstention, absent-from-arm-candidate-label-union, pool-available-not-retrieved, retrieved-below-vote-cutoff, recovered-top10 buckets; report positive and component weights",
+    "Retain paired 5x5 old-to-new bucket transitions, including new hits on labels already in the old pool versus labels newly added to the pool; these are descriptive joint counts, not causal mechanism estimates",
+    "Report original versus expanded pool size, source-label union, empty-annotation counts and annotation-count distribution; selected-neighbor annotation-count distribution, empty-annotation slots and candidate-use concentration",
+    "Report availability of second representatives and chosen distances, component training-record sizes, and whether giant component 2 supplies candidates. A maximum of two recordings cannot represent all giant-component heterogeneity",
+    "Keep unlabeled queries in coverage; no source-positive denominator or correctness claim for unknown tags. Empty label overlap is not evidence of musical mismatch"
+  ],
+  "verification": [
+    "Exact pinned original summary/fold receipts, source manifest and closed inventories; sealed protocol, implementation and numerical versions before any new ranking outcome",
+    "Reconstruct native query/component/fold/source-label roster and reject duplicate, omitted or unexpected queries",
+    "Replay original raw normalization and neighbors before comparing new ranks; preserve old full-denominator controls",
+    "Every extra representative must be eligible and train-only, in its original component; each returned neighborhood has unique candidate components and no heldout component",
+    "Independent implementation verifies candidate choice, new neighborhood ordering, complete vote ranks, paired statistics and all declared scopes",
+    "Fresh stage directories, closed output inventories, hashes, deterministic replay and resource receipts; source changes after sealing require explicit new freeze"
+  ],
+  "limits": {
+    "per_stage_cpu_seconds": 120,
+    "per_stage_wall_seconds": 120,
+    "per_stage_address_space_bytes": 1000000000,
+    "numerical_threads": 1,
+    "combined_new_output_bytes": 100000000,
+    "maximum_candidates": 4096,
+    "query_batch": 256
+  },
+  "stages": "Freeze after independent protocol/source review and synthetic worst-fold benchmark. Five serial fold stages, one summary stage and independent replay stages, each under unchanged limits. No acquisition or original artifact mutation.",
+  "decision": "Retain outcomes even if negative. No adaptive arm, parameter changes or repeated tuning during this experiment. A descriptive proxy improvement may motivate a prospectively locked independent study; it does not authorize serving replacement or musical-quality promotion. If negative or concentrated in giant/pool expansion, do not describe a broad retrieval improvement.",
+  "uncertainty": "No new p-values or confidence interval; these are fixed deterministic comparisons on previously examined and overlapping training folds, not independent confirmation.",
+  "provenance": "Offline reuse of retained numeric FMA inputs from separately receipted official source capture, not a fresh acquisition or reconstruction of historical receipt bytes. No audio download, paid service, credentials, Library retries, research data publication or public deployment.",
+  "reporting_definitions": {
+    "annotation_count_histogram": "Exact integer counts of source-positive labels including zero; candidate histograms separately per fold, selected-record histograms in pooled/fold/giant/other scopes. No pooled claim of independent candidate pools.",
+    "usage_concentration": "For record IDs and component IDs, store selection counts; report slots, used ID count, maximum share, top100 share, HHI=sum((count/slots)^2) and inverse HHI. Zero slots yields null shares/HHI. Sparse counters by query component support every declared aggregation scope.",
+    "component_mrr": "Within each component RRsum/labeled-query count; equally average only defined component rates. Query MRR divides total RRsum by all labeled queries including abstentions.",
+    "duplicate_vector_seconds": "Report selected second representatives whose normalized raw feature vector exactly equals the original vector; still retain them."
+  }
+}
