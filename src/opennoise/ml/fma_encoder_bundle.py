@@ -331,15 +331,32 @@ def infer(  # noqa: C901, PLR0912, PLR0915 - explicit identity modes share one i
         query["revision"] != QUERY_REVISION
         or query["bundle_sha256"] != bundle_sha256
         or query["columns"] != body["columns"]
-        or mode not in {"native-bank", "external-compatible"}
+        or mode not in {"native-bank", "native-source", "external-compatible"}
         or query.get("query_labels_consumed") is not False
     ):
         raise ValueError("Query feature schema or identity contract differs")
     if not external and (
         query["namespace"] != body["namespace"]
-        or query["bank_receipt_sha256"] != body["bank_receipt_sha256"]
+        or (
+            mode == "native-bank"
+            and query.get("bank_receipt_sha256") != body["bank_receipt_sha256"]
+        )
     ):
         raise ValueError("Native source bank differs")
+    if mode == "native-source" and (
+        query.get("native_observed_sha256") != body["native_observed_sha256"]
+        or re.fullmatch("[0-9a-f]{64}", str(query.get("source_receipt_sha256", ""))) is None
+        or query.get("native_uncompressed_bytes") != 951_117_185
+        or query.get("native_zip_crc32_verified") != "e8eb7a19"
+        or type(query.get("native_rows")) is not int
+        or not 0 < query["native_rows"] <= MAX_ROSTER
+        or query.get("audio_downloaded") is not False
+        or query.get("full_archive_sha1_verified") is not False
+        or query.get("license") != body["license"]
+        or query.get("attribution") != body["attribution"]
+        or "bank_receipt_sha256" in query
+    ):
+        raise ValueError("Native source verification provenance differs")
     if external and (
         not isinstance(query["namespace"], str)
         or not query["namespace"]

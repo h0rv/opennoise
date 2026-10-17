@@ -12,8 +12,10 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 resource.setrlimit(resource.RLIMIT_AS, (1_000_000_000, 1_000_000_000))
-resource.setrlimit(resource.RLIMIT_CPU, (120, 120))
-signal.alarm(120)
+# Only full native CSV validation uses the separately approved projection budget.
+source_scan = len(sys.argv) > 1 and sys.argv[1] == "export-source-queries"
+resource.setrlimit(resource.RLIMIT_CPU, (300, 300) if source_scan else (120, 120))
+signal.alarm(360 if source_scan else 120)
 
 from opennoise.ml.fma_encoder_bundle import encoded, infer, load_bundle, sha  # noqa: E402
 from opennoise.ml.fma_encoder_export import (  # noqa: E402
@@ -22,9 +24,10 @@ from opennoise.ml.fma_encoder_export import (  # noqa: E402
     fresh_destination,
     import_queries,
 )
+from opennoise.ml.fma_source_queries import export_source_queries  # noqa: E402
 
 
-def main() -> None:  # noqa: C901, PLR0912 - fixed CLI subcommands.
+def main() -> None:  # noqa: C901, PLR0912, PLR0915 - fixed CLI subcommands.
     """Require external pins and fresh outputs; never follow historical paths for inference."""
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -34,14 +37,25 @@ def main() -> None:  # noqa: C901, PLR0912 - fixed CLI subcommands.
     for name in ("plan-sha256", "checkpoint-sha256", "arm"):
         export.add_argument("--" + name, required=True)
     export.add_argument("--fold", type=int, choices=range(5), required=True)
-    for command in ("export-queries", "import-queries", "infer", "replay", "verify"):
+    for command in (
+        "export-queries",
+        "export-source-queries",
+        "import-queries",
+        "infer",
+        "replay",
+        "verify",
+    ):
         child = commands.add_parser(command)
         child.add_argument("--bundle", type=Path, required=True)
         child.add_argument("--bundle-sha256", required=True)
-        if command in {"export-queries", "import-queries", "infer"}:
+        if command in {"export-queries", "export-source-queries", "import-queries", "infer"}:
             child.add_argument("--output", type=Path, required=True)
         if command == "export-queries":
             child.add_argument("--bank", type=Path, required=True)
+            child.add_argument("--track-id", type=int, action="append", required=True)
+        if command == "export-source-queries":
+            child.add_argument("--source", type=Path, required=True)
+            child.add_argument("--source-receipt-sha256", required=True)
             child.add_argument("--track-id", type=int, action="append", required=True)
         if command == "import-queries":
             child.add_argument("--source", type=Path, required=True)
@@ -66,6 +80,15 @@ def main() -> None:  # noqa: C901, PLR0912 - fixed CLI subcommands.
         )
     elif args.command == "export-queries":
         pin = export_queries(args.bundle, args.bundle_sha256, args.bank, args.track_id, args.output)
+    elif args.command == "export-source-queries":
+        pin = export_source_queries(
+            args.bundle,
+            args.bundle_sha256,
+            args.source,
+            args.source_receipt_sha256,
+            args.track_id,
+            args.output,
+        )
     elif args.command == "import-queries":
         pin = import_queries(
             args.bundle, args.bundle_sha256, args.source, args.source_sha256, args.output
