@@ -10,12 +10,15 @@ import test from 'node:test';
 // All records and media operations here are synthetic. This does not decode or assess real audio.
 const chromium=process.env.CHROMIUM_PATH??['/usr/bin/chromium','/usr/bin/chromium-browser'].find(existsSync);
 const page=await readFile(new URL('../../src/opennoise/static/fma-listening-pilot.html',import.meta.url),'utf8');
+// The browser otherwise requests an implicit favicon after page readiness, racing HTTP counts.
+// This fixture-only inline icon removes that unrelated request; application requests remain audited.
+const servedPage=page.replace('<title>', '<link rel="icon" href="data:,"><title>');
 const track=(id)=>({track_id:id,artist_id:id,title:'Synthetic excerpt '+id,artist_name:'Fixture artist',audio_path:`audio/${id}.mp3`,license_url:'https://creativecommons.org/licenses/by/4.0/',source_url:'',attribution:'Synthetic fixture credit '+'https://example.org/'+('long'.repeat(50)),composer:'Fixture composer',copyright_c:'',copyright_p:'',embedded_source_urls:['https://example.org/source'],embedded_curators:['Fixture curator'],embedded_notices:{copyright:'Fixture notice'},embedded_extra_text_present:false});
 const fixture={revision:'fma-permitted55-listening-v1',slot:1,tracks:Object.fromEntries([101,102,103].map(i=>[i,track(i)])),metadata_attribution:'Synthetic fixture',items:Array.from({length:6},(_,i)=>({item_id:`T0${i+1}`,query:101,A:102,B:i===1?102:i===2?null:103,identical_candidates:i===1,unsupported:i===2}))};
 
 async function browser(operation,initialFailure=false){
  const root=await mkdtemp(join(tmpdir(),'candidate-discovery-test-'));let child,socket;let fail=initialFailure;const requests=[],errors=[],network=[];
- const server=createServer((request,response)=>{requests.push(request.url);if(request.url.startsWith('/packet.json')){response.writeHead(fail?503:200,{'content-type':'application/json'});response.end(JSON.stringify(fixture));}else if(request.url.startsWith('/audio/')){response.writeHead(500);response.end('Synthetic contract forbids media fetch');}else{response.writeHead(200,{'content-type':'text/html'});response.end(page);}});
+ const server=createServer((request,response)=>{requests.push(request.url);if(request.url.startsWith('/packet.json')){response.writeHead(fail?503:200,{'content-type':'application/json'});response.end(JSON.stringify(fixture));}else if(request.url.startsWith('/audio/')){response.writeHead(500);response.end('Synthetic contract forbids media fetch');}else{response.writeHead(200,{'content-type':'text/html'});response.end(servedPage);}});
  try{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin=`http://127.0.0.1:${server.address().port}`;
   child=spawn(chromium,['--headless=new','--no-first-run','--no-default-browser-check','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--remote-debugging-port=0',`--user-data-dir=${root}`,'about:blank']);
@@ -26,7 +29,24 @@ async function browser(operation,initialFailure=false){
   const evaluate=async expression=>{const result=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true,userGesture:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result?.value;};
   const wait=async expression=>{for(let i=0;i<250;i++){if(await evaluate(expression))return;await new Promise(resolve=>setTimeout(resolve,20));}throw Error('Readiness failed: '+expression);};
   await command('Runtime.enable');await command('Page.enable');await command('Network.enable');
-  await command('Page.addScriptToEvaluateOnNewDocument',{source:`window.__media={plays:[],pauses:0};HTMLMediaElement.prototype.play=function(){window.__media.plays.push(this.getAttribute('src'));this.dataset.stubPlaying='true';if(window.__rejectNext){window.__rejectNext=false;return Promise.reject(Error('synthetic failure'));}return Promise.resolve();};HTMLMediaElement.prototype.pause=function(){window.__media.pauses++;this.dataset.stubPlaying='false';};HTMLMediaElement.prototype.load=function(){};`});
+  await command('Page.addScriptToEvaluateOnNewDocument',{source:`
+    window.__requests=[];
+    const nativeFetch=window.fetch;
+    window.fetch=function(input,...args){
+      window.__requests.push({api:'fetch',url:typeof input==='string'?input:input.url});
+      return nativeFetch.call(this,input,...args);
+    };
+    const nativeOpen=XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open=function(method,url,...args){
+      window.__requests.push({api:'xhr',url:String(url)});
+      return nativeOpen.call(this,method,url,...args);
+    };
+    const nativeBeacon=navigator.sendBeacon;
+    navigator.sendBeacon=function(url,...args){
+      window.__requests.push({api:'beacon',url:String(url)});
+      return nativeBeacon.call(this,url,...args);
+    };
+    window.__media={plays:[],pauses:0};HTMLMediaElement.prototype.play=function(){window.__media.plays.push(this.getAttribute('src'));this.dataset.stubPlaying='true';if(window.__rejectNext){window.__rejectNext=false;return Promise.reject(Error('synthetic failure'));}return Promise.resolve();};HTMLMediaElement.prototype.pause=function(){window.__media.pauses++;this.dataset.stubPlaying='false';};HTMLMediaElement.prototype.load=function(){};`});
   await command('Page.navigate',{url:origin});
   await operation({evaluate,wait,command,origin,requests,setFailure:value=>{fail=value;}});
   assert.deepEqual(errors,[]);assert.equal(network.some(url=>!url.startsWith(origin+'/')&&!url.startsWith('blob:')&&!url.startsWith('data:')),false,'no external requests: '+JSON.stringify(network));assert.equal(requests.some(url=>url.startsWith('/audio/')),false,'stubbed test performs no audio requests');
@@ -97,7 +117,9 @@ test('synthetic saved answers round trip after reload with Unicode and false pre
   await evaluate('window.__oldPage=true');
   await command('Page.reload');
   await wait("!window.__oldPage&&document.documentElement?.dataset.pilotReady==='true'");
-  const beforeRequests = requests.length;
+  const beforeRequests = [...requests];
+  const beforeCalls = await evaluate('window.__requests');
+  assert.deepEqual(beforeCalls,[{api:'fetch',url:'packet.json'}]);
   await evaluate("window.__confirmCalls=0;window.confirm=()=>{window.__confirmCalls++;return true;}");
   const reversed = {...saved,items:[...saved.items].reverse()};
   await importText(evaluate,JSON.stringify(reversed));
@@ -110,7 +132,8 @@ test('synthetic saved answers round trip after reload with Unicode and false pre
   await importText(evaluate,JSON.stringify(saved));
   await wait('window.__confirmCalls===1');
   assert.deepEqual(await evaluate('answers()'),saved);
-  assert.equal(requests.length,beforeRequests,'local restore requests no packet, media or other resource');
+  assert.deepEqual(await evaluate('window.__requests'),beforeCalls,'restore must not call fetch, XHR or sendBeacon');
+  assert.deepEqual(requests,beforeRequests,'restore must not request any HTTP resource; complete request history: '+JSON.stringify(requests));
   assert.deepEqual(await evaluate('window.__media.plays'),[]);
   assert.equal(await evaluate('localStorage.length+sessionStorage.length'),0);
   await command('Emulation.setDeviceMetricsOverride',{width:320,height:740,deviceScaleFactor:1,mobile:true});
