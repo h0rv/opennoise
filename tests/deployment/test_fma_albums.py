@@ -45,7 +45,8 @@ class FMAAlbumTests(unittest.TestCase):
             missing = json.loads((output / "albums/78.json").read_bytes())["albums"]["78"]
             self.assertIsNone(missing["title"])
             self.assertEqual(missing["artist_ids"], [None])
-            self.assertEqual(len(files), 128)
+            self.assertEqual(sum(path.startswith("albums/") for path in files), 128)
+            self.assertEqual(len(files), 128 + len(manifest["search"]["shards"]))
             for relative, binding in files.items():
                 self.assertEqual(
                     sha256_file(output / relative), (binding["sha256"], binding["bytes"])

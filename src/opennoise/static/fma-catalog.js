@@ -1,3 +1,4 @@
+import {loadAlbumSearch, albumMatches} from './fma-album-search.js';
 import {cotagRoute, renderCotags} from './fma-cotags.js';
 import {renderPlayableNeighbors} from './fma-playable-neighbors.js';
 import {renderDescriptorMap} from './fma-descriptor-map.js';
@@ -13,7 +14,7 @@ const node = (tag, text) => { const element = document.createElement(tag); if (t
 const number = value => new Intl.NumberFormat('en').format(value);
 const link = (text, hash) => { const element = node('a', text); element.href = hash; return element; };
 const button = (text, action) => { const element = node('button', text); element.type = 'button'; element.addEventListener('click', action); return element; };
-let catalog, genres, artists, artistIndex, trackSearchPromise, routeCleanup = null, generation = 0;
+let catalog, genres, artists, artistIndex, trackSearchPromise, albumSearchPromise, routeCleanup = null, generation = 0;
 const cache = new Map();
 async function json(path) {
   if (!cache.has(path)) cache.set(path, fetch(path).then(response => { if (!response.ok) throw new Error('Catalog file unavailable'); return response.json(); }).catch(error => { cache.delete(path); throw error; }));
@@ -42,7 +43,7 @@ function route() {
     const kind = params.has('wdgenre') ? 'wdgenre' : params.has('wdartist') ? 'wdartist' : 'wikidata';
     return {kind, id: params.get(kind), q: params.get('q') ?? '', page: /^[0-9]+$/.test(params.get('page') ?? '') ? Number(params.get('page')) : 0};
   }
-  let kind = params.has('album') ? 'album' : params.has('track') ? 'track' : params.has('artist') ? 'artist' : params.has('genre') ? 'genre' : params.has('artists') ? 'artists' : params.has('unannotated') ? 'unannotated' : params.has('tracks') ? 'tracks' : 'genres';
+  let kind = params.has('albums') ? 'albums' : params.has('album') ? 'album' : params.has('track') ? 'track' : params.has('artist') ? 'artist' : params.has('genre') ? 'genre' : params.has('artists') ? 'artists' : params.has('unannotated') ? 'unannotated' : params.has('tracks') ? 'tracks' : 'genres';
   const id = kind === 'album' ? params.get('album') : kind === 'track' ? params.get('track') : kind === 'artist' ? params.get('artist') : kind === 'genre' ? params.get('genre') : null;
   if (id !== null && (!/^(?:[1-9][0-9]*|null)$/.test(id) || (id !== 'null' && !Number.isSafeInteger(Number(id))))) kind = 'invalid';
   if (kind === 'album' && id === 'null') kind = 'invalid';
@@ -59,6 +60,31 @@ function paginate(total, page, size) {
   }
   return true;
 }
+async function albumDirectory(state, token) {
+  if (!albumSearchPromise) {
+    albumSearchPromise = loadAlbumSearch(catalog.albums, json).catch(error => {
+      albumSearchPromise = null;
+      throw error;
+    });
+  }
+  const matches = albumMatches(await albumSearchPromise, state.q);
+  if (token !== generation) return;
+  heading.textContent = 'Albums';
+  status.textContent = `${number(matches.length)} matching native album IDs · source track associations, not release chronology or artist ownership.`;
+  if (!paginate(matches.length, state.page, 100)) return;
+  const list = node('ul');
+  list.className = 'directory search-results album-search-results';
+  for (const [id, title, tracks, artistIds] of matches.slice(state.page * 100, state.page * 100 + 100)) {
+    const item = node('li');
+    item.dataset.albumId = id;
+    item.append(link(`${title || 'Missing album title'} · #${id}`, `#album=${id}`));
+    item.append(node('small', `${number(tracks)} tracks · ${number(artistIds)} artist IDs on source tracks`));
+    list.append(item);
+  }
+  rows.append(list);
+  if (!matches.length) rows.append(node('p', 'No matching album titles or exact native IDs.'));
+}
+
 async function directory(state, token) {
   if (state.kind === 'artists') await loadArtists();
   if (token !== generation) return;
@@ -280,7 +306,7 @@ async function render() {
   clearRoutePlayers();
   $('#search-form').hidden = ['listen', 'genre-map', 'descriptor-map', 'connections', 'pair'].includes(state.kind);
   content.setAttribute('aria-busy', 'true'); rows.replaceChildren(); pages.replaceChildren(); status.textContent = 'Loading…';
-  if (['artists', 'genres', 'tracks', 'wikidata'].includes(state.kind)) { scope.value = state.kind; query.value = state.q; }
+  if (['artists', 'genres', 'tracks', 'albums', 'wikidata'].includes(state.kind)) { scope.value = state.kind; query.value = state.q; }
   $('#playable-only').checked = Boolean(state.playable);
   $('[data-playable-filter]').hidden = !catalog.playback || scope.value !== 'tracks';
   try {
@@ -310,6 +336,7 @@ async function render() {
     }
     else if (state.kind === 'genre-map') { heading.textContent = 'Genre families'; status.textContent = 'Browse all native FMA genre definitions by source parent. Positions do not represent musical distance.'; renderGenreAtlas(rows, genres, {playbackTracks: catalog.playback?.tracks ?? [], query: state.q, onlyWithExcerpts: state.playable, onFilterChange: ({query, onlyWithExcerpts}) => { const params = new URLSearchParams('genre-map'); if (query) params.set('q', query); if (onlyWithExcerpts) params.set('playable', '1'); history.replaceState(null, '', '#' + params); }}); }
     else if (['wikidata', 'wdgenre', 'wdartist'].includes(state.kind)) await renderSourceGenres({state, manifest: catalog.source_genres, json, heading, status, rows, paginate, current: () => token === generation});
+    else if (state.kind === 'albums') await albumDirectory(state, token);
     else if (['artists', 'genres'].includes(state.kind)) await directory(state, token);
     else if (state.kind === 'tracks' && (state.q.trim() || state.playable)) await searchTracks(state, token);
     else if (state.kind === 'track') await trackDetail(state, token);
@@ -331,5 +358,5 @@ query.addEventListener('input', () => search(true)); scope.addEventListener('cha
 query.addEventListener('keydown', event => { if (event.key === 'ArrowDown') { event.preventDefault(); rows.querySelector('.search-results a')?.focus(); } });
 document.addEventListener('keydown', event => { if (event.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); (document.querySelector('#listen-query, #descriptor-query, .fma-atlas-search') ?? query).focus(); } });
 window.addEventListener('hashchange', render);
-try { catalog = await json('catalog.json'); if (catalog.collection) { if (catalog.collection.home !== '../../index.html' || typeof catalog.collection.label !== 'string') throw Error('Invalid collection navigation'); const label = document.querySelector('[data-collection-label]'); label.textContent = ' · ' + catalog.collection.label; label.hidden = false; document.querySelector('[data-collection-home]').hidden = false; } document.querySelectorAll('[data-descriptor-map]').forEach(element => { element.hidden = !catalog.descriptor_map; }); document.querySelectorAll('[data-playback]').forEach(element => { element.hidden = !catalog.playback; }); if (catalog.playback) { document.querySelector('[data-audio-scope]').textContent = 'Only explicitly attached local excerpts have playback controls; other tracks have no included audio.'; document.querySelector('[data-audio-license]').textContent = 'Recordings have separate artist-selected licenses. Attached excerpts retain per-track attribution and license links.'; } document.querySelectorAll('[data-related-music]').forEach(element => { element.hidden = !catalog.related_music; }); document.querySelectorAll('[data-source-genres]').forEach(element => { element.hidden = !catalog.source_genres; }); genres = new Map(catalog.genres.map(row => [row.genre_id, row])); await render(); }
+try { catalog = await json('catalog.json'); document.querySelectorAll('[data-album-search]').forEach(element => { element.hidden = !catalog.albums?.search; }); if (catalog.collection) { if (catalog.collection.home !== '../../index.html' || typeof catalog.collection.label !== 'string') throw Error('Invalid collection navigation'); const label = document.querySelector('[data-collection-label]'); label.textContent = ' · ' + catalog.collection.label; label.hidden = false; document.querySelector('[data-collection-home]').hidden = false; } document.querySelectorAll('[data-descriptor-map]').forEach(element => { element.hidden = !catalog.descriptor_map; }); document.querySelectorAll('[data-playback]').forEach(element => { element.hidden = !catalog.playback; }); if (catalog.playback) { document.querySelector('[data-audio-scope]').textContent = 'Only explicitly attached local excerpts have playback controls; other tracks have no included audio.'; document.querySelector('[data-audio-license]').textContent = 'Recordings have separate artist-selected licenses. Attached excerpts retain per-track attribution and license links.'; } document.querySelectorAll('[data-related-music]').forEach(element => { element.hidden = !catalog.related_music; }); document.querySelectorAll('[data-source-genres]').forEach(element => { element.hidden = !catalog.source_genres; }); genres = new Map(catalog.genres.map(row => [row.genre_id, row])); await render(); }
 catch (error) { heading.textContent = 'Catalog unavailable'; status.textContent = error.message; rows.append(button('Reload', () => location.reload())); content.setAttribute('aria-busy', 'false'); }
