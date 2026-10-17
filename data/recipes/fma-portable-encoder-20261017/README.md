@@ -139,3 +139,22 @@ closed inventories and external manifest pins; failed bundle validation leaves a
 pending marker rather than a completed manifest. Fresh outputs cannot overlap
 input packs or traverse symlink ancestors. These are local research artifacts;
 exporting them does not itself grant public redistribution clearance.
+
+## Checked engineering demonstration
+
+The retained `linear518`, fold-0 model was exported without fitting into a
+7,408,053-byte bundle containing 1,987 frozen candidates and 109,727 native
+identity entries. Six retained rows each produced an eight-dimensional embedding
+and ten neighbors. Four explicitly synthetic rows exercised a numeric ID collision
+across namespaces, unknown component identity, out-of-support features and null
+features. The two supported synthetic rows kept the same embeddings in both
+retrieval modes; unknown-identity retrieval occurred only with the explicit opt-in.
+
+All three result variants were byte-identical after relocation. File-access traces
+showed no reads of the original experiment, corpus or feature-bank paths. A modified
+query payload was rejected without creating a result. A separate implementation
+verified candidate data, the whole identity roster, query materialization and all
+result variants with zero vector or distance differences; the original model bytes
+were unchanged. Aggregate hashes and timings are recorded in `results.json`. The
+real batch took 0.379 seconds on this executor; this is an observation, not a latency
+guarantee. No model was fitted, calibrated or promoted.
