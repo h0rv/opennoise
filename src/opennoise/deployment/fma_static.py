@@ -35,6 +35,48 @@ MAX_EXPORT_BYTES = 40_000_000
 MAX_ARTIST_INDEX_BYTES = 2_000_000
 RELATED_GENRES = 6
 MAX_COLLECTION_LABEL = 80
+TRACK_COLUMNS = [
+    "track_id",
+    "title",
+    "artist_id",
+    "genre_ids",
+    "license_id",
+    "metadata_url",
+    "album_id",
+    "missing_fields",
+]
+TRACK_URL_PREFIXES = tuple(
+    f"{scheme}://{host}/music/"
+    for scheme in ("http", "https")
+    for host in ("freemusicarchive.org", "www.freemusicarchive.org")
+)
+
+
+def _track_shard(shard: int, rows: list[list[Any]]) -> dict[str, Any]:
+    """Factor a repeated literal URL prefix only when it reduces serialized bytes."""
+    plain = {"shard": shard, "columns": TRACK_COLUMNS, "tracks": rows}
+    urls = [row[5] for row in rows if row[5] is not None]
+    if not urls:
+        return plain
+    prefix = next(
+        (prefix for prefix in TRACK_URL_PREFIXES if all(url.startswith(prefix) for url in urls)),
+        None,
+    )
+    if prefix is None:
+        return plain
+    columns = [*TRACK_COLUMNS]
+    columns[5] = "metadata_url_suffix"
+    encoded = {
+        "revision": "fma-track-url-prefix-v1",
+        "shard": shard,
+        "columns": columns,
+        "metadata_url_prefix": prefix,
+        "tracks": [
+            [*row[:5], row[5][len(prefix) :] if row[5] is not None else None, *row[6:]]
+            for row in rows
+        ],
+    }
+    return encoded if len(canonical_json(encoded)) < len(canonical_json(plain)) else plain
 
 
 def _projected_rows(path: Path) -> list[dict[str, Any]]:
@@ -190,20 +232,7 @@ def _track_rows(
         _write(
             output,
             f"tracks/{shard}.json",
-            {
-                "shard": shard,
-                "columns": [
-                    "track_id",
-                    "title",
-                    "artist_id",
-                    "genre_ids",
-                    "license_id",
-                    "metadata_url",
-                    "album_id",
-                    "missing_fields",
-                ],
-                "tracks": rows,
-            },
+            _track_shard(shard, rows),
             files,
         )
     return {"licenses": licenses, "unvalidated_source_urls": unvalidated_urls}
@@ -448,6 +477,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         "fma-catalog.html",
         "fma-catalog.css",
         "fma-catalog.js",
+        "fma-track-shards.js",
         "fma-genre-artists.js",
         "fma-album-search.js",
         "fma-cotags.js",
@@ -547,6 +577,7 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         "fma-catalog.html",
         "fma-catalog.css",
         "fma-catalog.js",
+        "fma-track-shards.js",
         "fma-genre-artists.js",
         "fma-album-search.js",
         "fma-cotags.js",
