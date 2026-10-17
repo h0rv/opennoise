@@ -1,4 +1,5 @@
 import {genreArtistRoute, renderGenreArtists} from './fma-genre-artists.js';
+import {decodeTrackShard} from './fma-track-shards.js';
 import {loadAlbumSearch, albumMatches} from './fma-album-search.js';
 import {cotagRoute, renderCotags} from './fma-cotags.js';
 import {renderPlayableNeighbors} from './fma-playable-neighbors.js';
@@ -133,8 +134,11 @@ function trackNode(track) {
 }
 async function tracksFor(ids) {
   const paths = [...new Set(ids.map(id => `tracks/${Math.floor(id / catalog.track_id_span)}.json`))];
-  const shards = await Promise.all(paths.map(json));
-  const index = new Map(shards.flatMap(shard => shard.tracks).map(track => [track[0], track]));
+  const shards = await Promise.all(paths.map(async path => {
+    try { return decodeTrackShard(await json(path)); }
+    catch (error) { cache.delete(path); throw error; }
+  }));
+  const index = new Map(shards.flat().map(track => [track[0], track]));
   if (ids.some(id => !index.has(id))) throw new Error('Track shard is incomplete');
   return ids.map(id => index.get(id));
 }

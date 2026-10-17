@@ -12,6 +12,7 @@ from opennoise.deployment.fma_static import (
     MAX_SHARD_BYTES,
     _genre_connections,
     _playback_binding,
+    _track_shard,
     build_fma_static,
     refresh_fma_static_display,
     validated_metadata_url,
@@ -65,6 +66,49 @@ def tables() -> dict[str, list[dict[str, object]]]:
 
 class FMAStaticTests(unittest.TestCase):
     """The optional FMA pack stays separate from CC0 artist catalogs and inference."""
+
+    def test_url_prefix_encoding_preserves_all_fields_without_normalizing(self) -> None:
+        for prefix in (
+            "http://freemusicarchive.org/music/",
+            "https://freemusicarchive.org/music/",
+            "http://www.freemusicarchive.org/music/",
+            "https://www.freemusicarchive.org/music/",
+        ):
+            with self.subTest(prefix=prefix):
+                urls: list[str | None] = [
+                    prefix + f"Artist/A%2fb_{i}?q=é#Fragment" for i in range(20)
+                ]
+                urls.extend([None, prefix])
+                rows = [
+                    [i + 1, "Title", None, None, 0, url, None, {"genre_ids": "source_empty"}]
+                    for i, url in enumerate(urls)
+                ]
+                before = json.dumps(rows)
+                encoded = _track_shard(0, rows)
+                self.assertEqual(encoded["revision"], "fma-track-url-prefix-v1")
+                self.assertEqual(encoded["metadata_url_prefix"], prefix)
+                self.assertEqual(encoded["columns"][5], "metadata_url_suffix")
+                restored = [
+                    [*row[:5], prefix + row[5] if row[5] is not None else None, *row[6:]]
+                    for row in encoded["tracks"]
+                ]
+                self.assertEqual(restored, rows)
+                self.assertEqual(json.dumps(rows), before)
+
+    def test_url_prefix_encoding_retains_plain_shards_when_not_smaller_or_not_uniform(self) -> None:
+        for urls in (
+            [None] * 20,
+            ["http://freemusicarchive.org/music/a"],
+            ["http://freemusicarchive.org/music/a", "https://freemusicarchive.org/music/b"] * 20,
+            ["https://freemusicarchive.org:443/music/a"] * 20,
+        ):
+            with self.subTest(urls=urls):
+                rows = [[i + 1, None, None, None, 0, url, None, {}] for i, url in enumerate(urls)]
+                plain = _track_shard(0, rows)
+                self.assertNotIn("revision", plain)
+                self.assertNotIn("metadata_url_prefix", plain)
+                self.assertEqual(plain["columns"][5], "metadata_url")
+                self.assertEqual(plain["tracks"], rows)
 
     def test_playable_index_uses_only_attached_native_track_annotations(self) -> None:
         with tempfile.TemporaryDirectory() as name:
