@@ -1,3 +1,4 @@
+import {scopeMembership, trackMatcher, validateScopedTracks} from './fma-scoped-search.js';
 import {genreArtistRoute, renderGenreArtists} from './fma-genre-artists.js';
 import {decodeTrackShard} from './fma-track-shards.js';
 import {loadAlbumSearch, albumMatches} from './fma-album-search.js';
@@ -18,6 +19,7 @@ const link = (text, hash) => { const element = node('a', text); element.href = h
 const button = (text, action) => { const element = node('button', text); element.type = 'button'; element.addEventListener('click', action); return element; };
 let catalog, genres, artists, artistIndex, trackSearchPromise, albumSearchPromise, routeCleanup = null, generation = 0;
 const cache = new Map();
+const scopedMemberships = new Map();
 async function json(path) {
   if (!cache.has(path)) cache.set(path, fetch(path).then(response => { if (!response.ok) throw new Error('Catalog file unavailable'); return response.json(); }).catch(error => { cache.delete(path); throw error; }));
   return cache.get(path);
@@ -142,29 +144,85 @@ async function tracksFor(ids) {
   if (ids.some(id => !index.has(id))) throw new Error('Track shard is incomplete');
   return ids.map(id => index.get(id));
 }
-async function searchTracks(state, token) {
-  await loadArtists();
+async function loadTrackSearch() {
   if (!catalog.track_search) throw new Error('Track search is unavailable in this older export.');
   if (!trackSearchPromise) {
     trackSearchPromise = (async () => {
       const chunks = [], paths = catalog.track_search.shards;
-      for (let start = 0; start < paths.length; start += 4) chunks.push(...await Promise.all(paths.slice(start, start + 4).map(json)));
-      const entries = chunks.flat();
-      if (entries.length !== catalog.track_search.row_count) throw new Error('Track search index is incomplete');
-      return entries;
+      try {
+        for (let start = 0; start < paths.length; start += 4) chunks.push(...await Promise.all(paths.slice(start, start + 4).map(json)));
+        const entries = chunks.flat();
+        if (entries.length !== catalog.track_search.row_count || entries.some((row, index) =>
+          !Array.isArray(row) || row.length !== 3 || !Number.isSafeInteger(row[0]) || row[0] <= 0
+          || (index > 0 && row[0] <= entries[index - 1][0])
+          || (row[1] !== null && typeof row[1] !== 'string')
+          || (row[2] !== null && (!Number.isSafeInteger(row[2]) || row[2] <= 0)))) {
+          throw Error('Track search index is incomplete or invalid.');
+        }
+        return entries;
+      } catch (error) {
+        for (const path of paths) cache.delete(path);
+        throw error;
+      }
     })().catch(error => { trackSearchPromise = null; throw error; });
   }
-  if (token === generation) status.textContent = 'Loading track search…';
-  const entries = await trackSearchPromise;
+  return trackSearchPromise;
+}
+
+async function scopedTrackSearch(state, token) {
+  await loadArtists();
   if (token !== generation) return;
-  const terms = state.q.normalize('NFKC').toLocaleLowerCase().split(/\s+/).filter(Boolean);
-  const exactId = /^#?([1-9][0-9]*)$/.exec(state.q.trim());
+  status.textContent = 'Loading complete source track membership…';
+  const key = `${state.kind}:${state.id}`;
+  let membership = scopedMemberships.get(key);
+  if (!membership) {
+    membership = await scopeMembership({state, catalog, genres, json, evict:path => cache.delete(path), current:() => token === generation});
+    if (!membership || token !== generation) return;
+    scopedMemberships.set(key, membership);
+  }
+  const entries = membership.ids.length ? await loadTrackSearch() : [];
+  if (token !== generation) return;
+  const allowed = new Set(membership.ids);
+  const scoped = entries.filter(row => allowed.has(row[0]));
+  if (scoped.length !== allowed.size) {
+    scopedMemberships.delete(key);
+    for (const path of membership.paths) cache.delete(path);
+    trackSearchPromise = null;
+    for (const path of catalog.track_search.shards) cache.delete(path);
+    throw Error('Track search index omits source membership IDs.');
+  }
+  const matches = scoped.filter(trackMatcher(state.q, artistIndex));
+  heading.textContent = membership.name;
+  status.textContent = `${number(matches.length)} matching of ${number(membership.ids.length)} source tracks · ${membership.note}`;
+  if (!paginate(matches.length, state.page, catalog.page_size)) return;
+  const selected = matches.slice(state.page * catalog.page_size, (state.page + 1) * catalog.page_size);
+  let tracks;
+  try {
+    tracks = await tracksFor(selected.map(row => row[0]));
+    if (token !== generation) return;
+    validateScopedTracks(tracks, state, membership);
+  } catch (error) {
+    scopedMemberships.delete(key);
+    for (const path of membership.paths) cache.delete(path);
+    for (const row of selected) cache.delete(`tracks/${Math.floor(row[0] / catalog.track_id_span)}.json`);
+    throw error;
+  }
+  if (!matches.length) rows.append(node('p', 'No matching tracks in this source context.'));
+  for (const track of tracks) {
+    const result = trackNode(track);
+    result.classList.add('search-results');
+    rows.append(result);
+  }
+}
+
+async function searchTracks(state, token) {
+  await loadArtists();
+  if (token === generation) status.textContent = 'Loading track search…';
+  const entries = await loadTrackSearch();
+  if (token !== generation) return;
   const playable = new Set(playableTracks().map(row => row.track_id));
-  const matches = entries.filter(([id, title, artistId]) => {
-    if (state.playable && !playable.has(id)) return false;
-    const text = `${id} ${title ?? ''} ${artistIndex.get(artistId)?.[1] ?? ''}`.normalize('NFKC').toLocaleLowerCase();
-    return exactId ? String(id) === exactId[1] : terms.every(term => text.includes(term));
-  });
+  const matchesQuery = trackMatcher(state.q, artistIndex);
+  const matches = entries.filter(row => (!state.playable || playable.has(row[0])) && matchesQuery(row));
   heading.textContent = 'Tracks'; status.textContent = `${number(matches.length)} matching tracks${state.playable ? ' with local excerpts' : ''} · title, artist or native track ID.`;
   if (!paginate(matches.length, state.page, catalog.page_size)) return;
   const selected = matches.slice(state.page * catalog.page_size, (state.page + 1) * catalog.page_size);
@@ -268,7 +326,7 @@ async function albumPage(state, token) {
   contributors.append(list);
   rows.append(contributors);
   for (const track of tracks) rows.append(trackNode(track));
-  heading.focus({preventScroll:true});
+  if (document.activeElement !== query) heading.focus({preventScroll:true});
 }
 
 async function cohort(state, token) {
@@ -309,7 +367,7 @@ async function cohort(state, token) {
   if (rows.querySelector('.connections') && total) rows.append(node('h2', 'Tracks'));
   for (const track of tracks) rows.append(trackNode(track));
   if (!total) rows.append(node('p', 'No track annotations are present for this source record.'));
-  heading.focus({preventScroll: true});
+  if (document.activeElement !== query) heading.focus({preventScroll: true});
 }
 async function render() {
   const token = ++generation, state = route();
@@ -319,7 +377,20 @@ async function render() {
   clearRoutePlayers();
   $('#search-form').hidden = ['listen', 'genre-map', 'descriptor-map', 'connections', 'pair', 'genre-artists', 'artist-genre'].includes(state.kind);
   content.setAttribute('aria-busy', 'true'); rows.replaceChildren(); pages.replaceChildren(); status.textContent = 'Loading…';
-  if (['artists', 'genres', 'tracks', 'albums', 'wikidata'].includes(state.kind)) { scope.value = state.kind; query.value = state.q; }
+  const contextual = ['genre', 'artist', 'album'].includes(state.kind);
+  const contextOption = scope.querySelector('[data-context-search]');
+  contextOption.hidden = !contextual;
+  if (contextual) {
+    contextOption.textContent = `This ${state.kind}’s tracks`;
+    scope.value = 'context';
+    query.value = state.q;
+  } else if (['artists', 'genres', 'tracks', 'albums', 'wikidata'].includes(state.kind)) {
+    scope.value = state.kind;
+    query.value = state.q;
+  } else {
+    scope.value = 'tracks';
+    query.value = '';
+  }
   $('#playable-only').checked = Boolean(state.playable);
   $('[data-playable-filter]').hidden = !catalog.playback || scope.value !== 'tracks';
   try {
@@ -354,6 +425,7 @@ async function render() {
     }
     else if (state.kind === 'genre-map') { heading.textContent = 'Genre families'; status.textContent = 'Browse all native FMA genre definitions by source parent. Positions do not represent musical distance.'; renderGenreAtlas(rows, genres, {playbackTracks: catalog.playback?.tracks ?? [], query: state.q, onlyWithExcerpts: state.playable, onFilterChange: ({query, onlyWithExcerpts}) => { const params = new URLSearchParams('genre-map'); if (query) params.set('q', query); if (onlyWithExcerpts) params.set('playable', '1'); history.replaceState(null, '', '#' + params); }}); }
     else if (['wikidata', 'wdgenre', 'wdartist'].includes(state.kind)) await renderSourceGenres({state, manifest: catalog.source_genres, json, heading, status, rows, paginate, current: () => token === generation});
+    else if (contextual && state.q.trim()) await scopedTrackSearch(state, token);
     else if (state.kind === 'albums') await albumDirectory(state, token);
     else if (['artists', 'genres'].includes(state.kind)) await directory(state, token);
     else if (state.kind === 'tracks' && (state.q.trim() || state.playable)) await searchTracks(state, token);
@@ -367,7 +439,10 @@ async function render() {
   }
 }
 function search(replace = false) {
-  const params = new URLSearchParams(); params.set(scope.value, ''); if (query.value.trim()) params.set('q', query.value.trim()); if (scope.value === 'tracks' && $('#playable-only').checked) params.set('playable', '1');
+  const params = new URLSearchParams();
+  const state = route();
+  if (scope.value === 'context' && ['genre', 'artist', 'album'].includes(state.kind)) params.set(state.kind, String(state.id));
+  else params.set(scope.value, ''); if (query.value.trim()) params.set('q', query.value.trim()); if (scope.value === 'tracks' && $('#playable-only').checked) params.set('playable', '1');
   const hash = '#' + params.toString(); if (replace) { history.replaceState(null, '', hash); render(); } else if (location.hash !== hash) location.hash = hash; else render();
 }
 $('#search-form').addEventListener('submit', event => { event.preventDefault(); const first = rows.querySelector('.search-results a'); if (first && route().q === query.value.trim()) first.click(); else search(); });

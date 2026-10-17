@@ -5,6 +5,29 @@ local implementation and evaluation checkpoint, not a claim that this target has
 been reached. Coverage, model recovery, listening, and interaction are separate
 acceptance criteria; they cannot be averaged into a meaningful overall percentage.
 
+## Native catalog discovery checkpoint — 2026-10-17
+
+The retained metadata catalog exposes all 109,727 native track records, 16,916
+source artist records and 164 genre definitions. Recent work adds complete
+genre-to-artist navigation, exact shared-recording lists, album-title search and
+lossless track URL-prefix encoding. Source labels, missing records and frozen
+descriptor-map coordinates keep their separate meanings.
+
+Track search now preserves the current genre, artist or album context instead
+of silently switching to a global directory. Query and pagination are shareable;
+clearing the query restores ordinary browsing. It searches complete source
+memberships, not just the visible page. See the
+[scoped-search recipe](../data/recipes/fma-scoped-search-20261017/README.md) for
+validation, loading bounds and reproducible evidence.
+
+This checkpoint is a local metadata discovery capability. It does not attach
+audio to this catalog, expand reference coverage or validate musical relevance.
+The separate listening-pilot packages remain at 0/12 real responses. Independent
+human relevance evidence, genuinely unexamined evaluation, broader licensed
+listening coverage, exact cross-source identity bridges and public-promotion
+gates remain unresolved. The dated snapshots below are historical evidence,
+not the current inventory of every separately retained artifact.
+
 ## Pre-restoration local snapshot — 2026-10-15
 
 Later work restores [descriptor maps](reports/FMA_DESCRIPTOR_MAP_RESTORATION_20261015.md), adds [album navigation](https://github.com/h0rv/opennoise/pull/34), and adds [portable bundle verification](https://github.com/h0rv/opennoise/pull/33). The table below preserves the earlier snapshot.
