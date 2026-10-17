@@ -46,8 +46,8 @@ After `poe sync`, run the existing builder into a fresh local directory:
 
 The builder replays every projected row against the retained native capture.
 The observed build used explicit 120-second CPU/wall and 1 GiB address-space
-limits: 13.59 seconds, 368,091,136 bytes peak RSS. Its receipt accounts for
-35,421,906 bytes and 6,970 manifest entries, within the existing 40 MB export
+limits: 14.51 seconds, 367,075,328 bytes peak RSS. Its final receipt accounts for
+35,422,368 bytes and 6,970 manifest entries, within the existing 40 MB export
 and 200 KB JSON-shard caps. No limits were increased.
 
 New routes are `#connections=GENRE_ID` and `#pair=LOW_ID,HIGH_ID&page=0`.
