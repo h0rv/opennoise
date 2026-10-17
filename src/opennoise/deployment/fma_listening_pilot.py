@@ -474,7 +474,7 @@ def build_pilot(
             "at another slot or coordinator files. Names and required credits remain visible: this is not identity blinding. "
             "Listen to the full query, A and B when available, then record your own judgment. Listening flags are self-reports. "
             "Blank means unanswered. Identical and unavailable candidates stay in the denominator. "
-            "Download answers before closing/reloading; nothing is saved automatically or transmitted. "
+            "Download answers before closing/reloading, then use Restore saved answers to continue with this same packet and slot. Nothing is saved automatically or transmitted. "
             "No musical-quality conclusion, deployment authorization or rights warranty follows from this pilot.\n"
         )
         (dest / "serve.py").write_text(_server(slot))
