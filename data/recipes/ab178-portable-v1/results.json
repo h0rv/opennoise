@@ -89,5 +89,15 @@
     "No FMA518 mapping, FMA weights, genre predictions or musical relevance validation.",
     "Exact native recording/core-credit edges are checked; unknown album, duplicate-recording and artist-alias edges remain unresolved.",
     "The input roster is selected and previously inspected; no representative or new independent cohort claim."
-  ]
+  ],
+  "limits": {
+    "source_rows": 100,
+    "requested_mbids": 100,
+    "output_bytes": 4000000,
+    "file_bytes": 2000000,
+    "distance_pairs": 10000,
+    "cpu_seconds": 120,
+    "wall_seconds": 120,
+    "address_space_bytes": 1000000000
+  }
 }
