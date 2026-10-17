@@ -1,0 +1,54 @@
+{
+  "revision": "fma-frozen-retrieval-loss-v1",
+  "purpose": "Locate source-positive losses in existing raw44 and ridge8 retrieval predictions without fitting or changing rankings",
+  "status": "post_hoc_descriptive_diagnostic_of_previously_inspected_predictions",
+  "original_execution_seal_sha256": "e4351cfa8fb0f89d69c6984d63d7456510c78d39a2ba84aaa90c01134b5975e9",
+  "original_summary_sha256": "ccf1b98b3e4ca7602f253484f5025964cadefab0e792a98968661f3d490f65e4",
+  "input_manifest_sha256": "4344e609efd7442bf2c598fefb9d1f5abb08884b59f922a53a05643c60d0a323",
+  "population": "Every source-known original-training query in the unchanged five native component folds, exactly once; outer validation/test rankings are not analyzed",
+  "neighbor_arms": ["raw44_neighbors", "ridge8_neighbors"],
+  "control_arms": ["recording_gaussian", "balanced_gaussian", "recording_popularity"],
+  "neighbor_count": 10,
+  "genre_rank_cutoff": 10,
+  "candidate_union": "Direct source labels on the existing shared joint_ids candidate roster, recomputed separately for each fold; no new nomination or replacement",
+  "ordered_exclusive_buckets": [
+    "descriptor_or_retrieval_abstention",
+    "absent_from_candidate_label_union",
+    "available_in_pool_not_retrieved",
+    "retrieved_label_below_top10_vote_rank",
+    "recovered_top10"
+  ],
+  "assignment": "For each observed positive label: validated saved abstention reason takes precedence; else test candidate-label union, selected-neighbor label union, then original vote ranking top10. Every positive belongs to exactly one bucket. A non-abstaining query whose neighbors have no labels is not reclassified as a descriptor abstention.",
+  "verification": [
+    "Verify the exact original seal, closed minimized input inventory, all fold receipts and files, and original summary bindings before analysis",
+    "Require each fold receipt hash to match the fold_receipts binding in the exact pinned original summary, which in turn binds the existing candidate and ranking files",
+    "Reconstruct native components and original/inner folds from retained identities and duplicate ledger; require exact query identities, source labels and component assignments",
+    "Require each candidate to be an eligible original-training row outside the query fold and at most one candidate per component",
+    "Require saved neighbors to be unique eligible candidates with no heldout component leakage",
+    "Independently replay all positive-label vote counts and complete rankings with native genre ID tie breaks",
+    "Reproduce saved per-component hit10 counts for every arm and independently reproduce the fold-local recording popularity ranking",
+    "Reject omitted, duplicate or unexpected queries, inconsistent abstentions, changed source bytes and unclosed inventories"
+  ],
+  "reporting": {
+    "scopes": ["pooled", "each_fixed_fold", "giant_component_2", "all_other_components"],
+    "counts": "Query, labeled-query, positive-incidence, component, abstention-reason, neighbor-coverage and genre-ranking-coverage counts remain explicit",
+    "positive_weighting": "Bucket incidence count divided by all observed positive incidences, including unsupported queries",
+    "component_weighting": "For each component with at least one source positive, divide bucket incidences by its positive count, then average those component fractions equally",
+    "empty_annotations": "Remain in query coverage denominators; excluded only from undefined positive-recovery ratios; no missing tag is treated as a negative",
+    "controls": "Report original Recall@10 on the same full denominators, not a filtered supported subset",
+    "conservation": "Both the integer bucket totals and the component-equal fractions must conserve all positives; recovered bucket must reproduce original Recall@10",
+    "uncertainty": "No new significance test or interval: deterministic census conditional on fixed, previously inspected predictions and overlapping training folds"
+  },
+  "limits": {
+    "cpu_wall_seconds": 120,
+    "address_space_bytes": 1000000000,
+    "numerical_threads": 1,
+    "new_output_bytes": 10000000
+  },
+  "interpretation": [
+    "Ordered accounting, not causal attribution or an achievable counterfactual oracle",
+    "Source annotation recovery is not musical similarity or recommendation usefulness",
+    "No claim of untouched evaluation, population generalization, statistical significance or parity improvement",
+    "No model fitting, calibration, parameter or candidate-pool search, prediction changes, audio acquisition, serving integration or public deployment"
+  ]
+}
