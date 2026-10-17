@@ -70,3 +70,17 @@ class FMAAlbumSearchTests(unittest.TestCase):
             ):
                 export_album_search(Path(directory), [[1, "Long title", 1, 1]], {}, _write)
             self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_fragmented_index_rejects_seventeenth_shard_before_writing(self) -> None:
+        # Each row fits 200 KB, but no two fit together. Total remains below 2 MB.
+        rows = [[index, "x" * 100_000, 1, 1] for index in range(1, 18)]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files: dict[str, Any] = {}
+            with self.assertRaisesRegex(ValueError, "16 shards"):
+                export_album_search(root, rows, files, _write)
+            self.assertEqual(files, {})
+            self.assertEqual(list(root.iterdir()), [])
+            manifest = export_album_search(root, rows[:16], files, _write)
+            self.assertEqual(len(manifest["shards"]), 16)
+            self.assertLess(manifest["bytes"], 2_000_000)

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 MAX_SHARD_BYTES = 200_000
 MAX_SEARCH_BYTES = 2_000_000
+MAX_SEARCH_SHARDS = 16
 
 
 def export_album_search(
@@ -45,6 +46,8 @@ def export_album_search(
         total += size
     if total > MAX_SEARCH_BYTES:
         raise ValueError("album search index exceeds 2 MB")
+    if len(chunks) > MAX_SEARCH_SHARDS:
+        raise ValueError("album search index exceeds 16 shards")
     paths = []
     for index, chunk in enumerate(chunks):
         relative = f"album-search/{index}.json"
