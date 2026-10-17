@@ -1,0 +1,47 @@
+{
+  "revision": "jamendo-human-happy-v1",
+  "source_commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+  "created_utc": "2026-10-17T12:16:00Z",
+  "purpose": "Local noncommercial research: test metadata predictiveness for existing human happy/not_happy votes. No product integration, deployment, audio, acoustic feature access, FMA model transfer or musical-usefulness claim.",
+  "input_files": [
+    {
+      "path": "data/splits/split-0/autotagging-test.tsv",
+      "bytes": 1611903,
+      "git_blob_sha1": "6a14702bb012bfef3870323ca156390803f5db2f"
+    },
+    {
+      "path": "derived/music-classification-annotations/music-classification-annotations-raw.tsv",
+      "bytes": 7468828,
+      "git_blob_sha1": "4df9c93c81ca5dd4185a3d4591c4060a2cd740c6"
+    }
+  ],
+  "license": "MTG metadata CC-BY-NC-SA-4.0, sole noncommercial research use, attribution retained; source data and data-derived artifacts kept separately from MIT source and serving.",
+  "limits": {
+    "source_get_requests": 2,
+    "bytes_per_response": 8000000,
+    "total_source_bytes": 10000000,
+    "retries": 0,
+    "redirects": false,
+    "request_spacing_seconds": 1.1,
+    "timeout_seconds": 20,
+    "max_rows": 15000,
+    "max_fields_per_row": 250,
+    "max_line_bytes": 65536,
+    "model_cpu_seconds": 120,
+    "model_wall_seconds": 120,
+    "address_space_bytes": 1073741824,
+    "output_bytes": 20000000
+  },
+  "cohort": "All exact native track IDs in frozen split0-test metadata, maximum15000. Join raw human rows on exact track ID; artist ID,album ID,path,duration must agree. Duplicate IDs/paths or conflicting identity fail closed. No replacements/subsampling/consensus selection. Persist identity-only cohort+folds before exposing human vote statistics or fitting.",
+  "eligibility": "Only mood_happy with exactly3 votes all in {happy,not_happy}; retain disagreement. Others excluded with denominators/reasons. No other human taxonomy may enter features or model selection.",
+  "components": "Union native artist IDs and album IDs across whole cohort before labels; duplicate same path/track rejected. Exact duplicate identity handled; audio-fingerprint/alias cross-source duplicates cannot be established with metadata and are an explicit residual limitation. No cross-source join/FMA inputs.",
+  "folds": "5 folds: int(SHA256('opennoise-jamendo-human-happy-v1|'+minimum_track_id_decimal).hexdigest(),16)%5 per connected component; no balancing or reseeding.",
+  "fit": "For each heldoutfold, only eligible training rows. Each row weight1/(eligible training rows in its component). Vocabulary sorted genre--- and instrument--- tags occurring but not universal across eligible training rows. No mood/theme/artist/album/track IDs,duration,humanotherlabels as features. pi=(1+sum w*y)/(2+sum w), y=happy_votes/3; theta_h,j=(1+sum w*y*xj)/(2+sum w*y), theta_n,j=(1+sum w*(1-y)*xj)/(2+sum w*(1-y)). Bernoulli posterior with presence AND absence loglikelihoods and fixed alpha1; no search/tuning. Empty vocabulary yields prior. No training eligible rows =>abstain all methods in that fold.",
+  "methods": [
+    "component_weighted_human_prior",
+    "genre_instrument_bernoulli_nb_alpha1",
+    "uploader_happy_tag_privileged_diagnostic: if mood/theme---happy present p=1 else trainingprior; explicitly additional input not matched feature comparison"
+  ],
+  "metrics": "Primary NB-minus-prior component-equal mean individual-vote Brier: p*p-2*p*y+y, lowerbetter. Identical eligible querysets, report coverage/allnominated denominator, fold/component/artist/albumcounts, missingvotes/disagreement, componentmaxsize, unseen featuretags. Auxiliary trackweighted Brier and mean (p-y)^2. Fixed bootstrap2000 resamples eligiblecomponents PCG64 seed20261017; percentile2.5/97.5 conditional fixedOOF predictions, not retraining/population significance.",
+  "freeze": "Protocol before source acquisition/model outcomes. A GitHub contents metadata attempt returned TSV text unexpectedly; only JSON parse error beginning with header was exposed; no rows retained or examined and no models run. Cohort/fold hash frozen after identity parsing before human labels exposed. Store predictions then evaluation; independent implementation/replay verifies."
+}

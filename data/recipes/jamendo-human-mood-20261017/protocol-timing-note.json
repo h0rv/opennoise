@@ -1,0 +1,5 @@
+{
+  "protocol_sha256": "8832fc5c34298073394ef5a6470f909a607575843211005febf3c202f63d12c0",
+  "filesystem_mtime_utc": "2026-10-17T12:15:02.485549+00:00",
+  "note": "Protocol created_utc field was manually rounded forward to12:16 and is not authoritative timing evidence. Filesystem mtime and acquisition receipt binding this exact protocol hash establish actual freeze before source capture. Preserve original bytes/hash."
+}
