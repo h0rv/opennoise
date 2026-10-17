@@ -24,6 +24,7 @@ EPS = 1e-12
 RIDGE = 0.01
 MAX_OUTPUT = 20_000_000
 MIN_CALIBRATION_COMPONENTS = 2
+ATTRIBUTION = "MTG-Jamendo Dataset; human music-classification annotations"
 
 
 def role(component: int, outer: int) -> str:
@@ -389,17 +390,30 @@ def freeze(prepared: Path, protocol: Path, output: Path) -> dict[str, Any]:
     return seal
 
 
+def frozen_protocol() -> dict[str, Any]:
+    """Resolve exact reviewed protocol bytes independently of embedded seal claims."""
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "data/recipes/jamendo-calibration-20261017/protocol.json"
+    )
+    if base.digest(path) != PROTOCOL_SHA256:
+        raise ValueError("Reviewed protocol bytes differ")
+    return json.loads(path.read_text())
+
+
 def load(sealed: Path, pin: str) -> list[base.Observation]:
     """Validate new seal and unchanged original source custody."""
     if (
         base.digest(sealed / "seal.json") != pin
         or {p.name for p in sealed.iterdir()} != {"seal.json", "roles.json"}
-        or any(p.is_symlink() for p in (sealed, *sealed.iterdir()))
+        or any(p.is_symlink() for p in (sealed, *sealed.parents, *sealed.iterdir()))
     ):
         raise ValueError("Seal or closed inventory differs")
     seal = json.loads((sealed / "seal.json").read_text())
     if (
-        seal["code"] != code()
+        seal["revision"] != "jamendo-calibration-seal-v1"
+        or seal["protocol"] != frozen_protocol()
+        or seal["code"] != code()
         or seal["versions"] != base._versions()  # noqa: SLF001 -- same pinned runtime contract.
         or seal["protocol_sha256"] != PROTOCOL_SHA256
         or seal["prepared_seal_sha256"] != PREPARED_SHA256
@@ -442,7 +456,7 @@ def evaluate(sealed: Path, pin: str, output: Path) -> dict[str, Any]:
         "seal_sha256": pin,
         "research_only": True,
         "source_license": "CC-BY-NC-SA-4.0",
-        "attribution": "MTG-Jamendo Dataset; human music-classification annotations",
+        "attribution": ATTRIBUTION,
         "elapsed_seconds": time.monotonic() - started,
         "peak_rss_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
         "files": {
@@ -456,10 +470,25 @@ def evaluate(sealed: Path, pin: str, output: Path) -> dict[str, Any]:
 
 def replay(sealed: Path, pin: str, output: Path) -> None:
     """Recompute every numeric artifact and reject custody drift."""
+    if any(p.is_symlink() for p in (output, *output.parents, *output.iterdir())):
+        raise ValueError("Symlink result path")
+    if sum(p.stat().st_size for p in output.iterdir() if p.is_file()) > MAX_OUTPUT:
+        raise ValueError("Combined result byte budget exceeded")
     receipt = json.loads((output / "receipt.json").read_text())
     expected = {"predictions.json", "models.json", "evaluation.json"}
     if (
-        receipt["seal_sha256"] != pin
+        set(receipt)
+        != {
+            "seal_sha256",
+            "research_only",
+            "source_license",
+            "attribution",
+            "elapsed_seconds",
+            "peak_rss_bytes",
+            "files",
+        }
+        or receipt["attribution"] != ATTRIBUTION
+        or receipt["seal_sha256"] != pin
         or receipt["research_only"] is not True
         or receipt["source_license"] != "CC-BY-NC-SA-4.0"
         or set(receipt["files"]) != expected

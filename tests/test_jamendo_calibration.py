@@ -185,6 +185,13 @@ class CalibrationTests(unittest.TestCase):
                 self.assertEqual(cal.load(sealed, pin), rows)
                 with self.assertRaises(ValueError):
                     cal.load(sealed, "0" * 64)
+                original = (sealed / "seal.json").read_bytes()
+                body = json.loads(original)
+                body["protocol"]["primary"] = "Changed objective"
+                (sealed / "seal.json").write_text(json.dumps(body))
+                with self.assertRaises(ValueError):
+                    cal.load(sealed, base.digest(sealed / "seal.json"))
+                (sealed / "seal.json").write_bytes(original)
                 ledger = json.loads((sealed / "roles.json").read_text())
                 ledger[0]["roles"][0] = "wrong"
                 (sealed / "roles.json").write_text(json.dumps(ledger))
@@ -199,6 +206,19 @@ class CalibrationTests(unittest.TestCase):
             (root / "link").symlink_to(root)
             with self.assertRaises(ValueError):
                 cal.fresh(root / "link" / "new")
+
+    def test_replay_checks_budget_before_json_and_rejects_attribution_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            (output / "receipt.json").write_text("not JSON")
+            with (
+                patch.object(cal, "MAX_OUTPUT", 1),
+                self.assertRaisesRegex(ValueError, "byte budget"),
+            ):
+                cal.replay(output, "0" * 64, output)
+            (output / "receipt.json").write_text(json.dumps({"attribution": "changed"}))
+            with self.assertRaisesRegex(ValueError, "custody"):
+                cal.replay(output, "0" * 64, output)
 
 
 if __name__ == "__main__":
