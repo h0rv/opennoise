@@ -16,3 +16,5 @@ main:focus-visible{outline:3px solid #946b00;outline-offset:3px}
 .cotag-heading,.cotag-navigation{overflow-wrap:anywhere}
 
 .track-supplied-artist{flex-wrap:wrap}.track-supplied-artist a{min-width:0}.directory .track-supplied-artist small{white-space:normal;overflow-wrap:anywhere}
+
+.album-search-results li{flex-wrap:wrap}.album-search-results a{min-width:0;flex:1 1 15rem}.album-search-results small{white-space:normal;overflow-wrap:anywhere}

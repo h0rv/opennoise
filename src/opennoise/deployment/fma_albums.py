@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from typing import TYPE_CHECKING, Any
 
+from opennoise.deployment.fma_album_search import export_album_search
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
@@ -37,12 +39,21 @@ def export_albums(
 
     shards: dict[int, dict[str, Any]] = defaultdict(dict)
     artist_albums: dict[int | None, list[list[Any]]] = defaultdict(list)
+    search_rows: list[list[Any]] = []
     for album_id, members in sorted(grouped.items()):
         titles = {row.get("album_title") for row in members if row.get("album_title")}
         if len(titles) > 1:
             raise ValueError("conflicting native titles for one album ID")
         title = next(iter(titles), None)
         contributors = Counter(row["artist_id"] for row in members)
+        search_rows.append(
+            [
+                album_id,
+                title,
+                len(members),
+                sum(artist_id is not None for artist_id in contributors),
+            ]
+        )
         shards[album_id % ALBUM_SHARDS][str(album_id)] = {
             "album_id": album_id,
             "title": title,
@@ -59,6 +70,7 @@ def export_albums(
         "revision": "fma-native-albums-v1",
         "shards": ALBUM_SHARDS,
         "album_count": len(grouped),
+        "search": export_album_search(output, search_rows, files, write),
         "track_count": sum(len(rows) for rows in grouped.values()),
         "missing_album_tracks": len(tracks) - sum(len(rows) for rows in grouped.values()),
         "track_order": "native_track_id_not_release_sequence",
