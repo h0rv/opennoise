@@ -121,6 +121,18 @@ def load(directory: Path, name: str, pin: str) -> dict[str, Any]:
     return body
 
 
+def native_metadata(path: Path, expected_sha256: str) -> dict[str, Any]:
+    """Bind the same bounded raw buffer used for extractor metadata to native replay."""
+    bank.safe_path(path)
+    if not path.is_file() or path.stat().st_size > MAX_FILE_BYTES:
+        raise ValueError("Native metadata is not a bounded regular file")
+    with path.open("rb") as stream:
+        raw = stream.read(MAX_FILE_BYTES + 1)
+    if len(raw) > MAX_FILE_BYTES or hashlib.sha256(raw).hexdigest() != expected_sha256:
+        raise ValueError("Native metadata differs from verified source hash")
+    return json.loads(raw)
+
+
 def source_rows(
     source: Path, feature_contract: dict[str, Any], projected: dict[str, Any] | None = None
 ) -> list[dict[str, Any]]:
@@ -136,8 +148,7 @@ def source_rows(
         fact = record["exact_credit"]["fact"]
         state = record["state"]
         if state == "available":
-            # Source replay already binds these exact raw bytes and embedded native ID.
-            raw = json.loads((source / f"raw/sonic/{identity}.json").read_bytes())
+            raw = native_metadata(source / f"raw/sonic/{identity}.json", record["source_sha256"])
             metadata = raw.get("metadata", {})
             version = metadata.get("version")
             properties = metadata.get("audio_properties", {})

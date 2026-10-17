@@ -144,6 +144,8 @@ class PortableABTests(unittest.TestCase):
             else:
                 raw["metadata"]["audio_properties"]["downmix"] = "left"
             path.write_bytes(portable.encoded(raw))
+            record = next(r for r in self.projected["rows"] if r["recording_mbid"] == identity)
+            record["source_sha256"] = vector_bank.digest(path)
         self.projected["rows"][3]["state"] = "missing_http_404"
         other = self.root / "other"
         pin = self.export(other)
@@ -208,6 +210,34 @@ class PortableABTests(unittest.TestCase):
                 self.bundle, self.pin, self.source, "f" * 64, self.ids[:1], self.root / "bad-query"
             )
         scan.assert_not_called()
+
+    def test_metadata_change_after_projection_rejects_before_fit_and_output(self) -> None:
+        path = self.source / f"raw/sonic/{self.ids[0]}.json"
+
+        def changed_projection(*_: object) -> dict[str, Any]:
+            raw = json.loads(path.read_bytes())
+            raw["metadata"]["version"]["essentia_git_sha"] = "replaced-after-verification"
+            path.write_bytes(portable.encoded(raw))
+            return self.projected
+
+        output = self.root / "raced"
+        with (
+            patch("opennoise.ml.ab178_portable.bank.verify", side_effect=changed_projection),
+            patch("opennoise.ml.ab178_portable.engine.fit_frame") as fit,
+            self.assertRaisesRegex(ValueError, "verified source hash"),
+        ):
+            portable.export_bundle(
+                self.source,
+                self.source_pin,
+                self.native_bank,
+                self.source_pin,
+                self.contract_path,
+                self.contract_pin,
+                self.fold,
+                output,
+            )
+        fit.assert_not_called()
+        self.assertFalse(output.exists())
 
     def test_request_bounds_output_inventory_and_missing_support(self) -> None:
         for ids in ([], self.ids[:1] * 2, ["not-an-id"], [str(UUID(int=i)) for i in range(101)]):
