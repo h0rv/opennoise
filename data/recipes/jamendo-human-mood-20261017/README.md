@@ -80,8 +80,11 @@ See `results.json` for all frozen outcomes and denominator details.
 
 ## Verification and replay
 
-The independent implementation was frozen before seeing producer outcomes.
-It reproduced all 11,565 identities and folds, 10,614 scored queries, 31,842
+The independent core implementation, including the primary metric and bootstrap,
+was frozen before seeing producer outcomes and remained unchanged. A separate
+comparison adapter, including auxiliary bootstrap checks, was added after
+outputs existed. Together they reproduced all 11,565 identities and folds,
+10,614 scored queries, 31,842
 probabilities, five fold models and all metric/bootstrap results. Maximum
 probability difference was 6.66e-16; Bernoulli parameter differences were zero.
 The production implementation's own sealed numerical replay also passed.
