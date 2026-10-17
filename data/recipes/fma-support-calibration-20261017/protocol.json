@@ -1,0 +1,50 @@
+{
+  "revision": "fma-support-calibration-v1",
+  "purpose": "Quantify descriptor coverage and annotation-recovery operating points with separate component-disjoint proper-fit/calibration roles; original benchmarks and inference defaults stay unchanged.",
+  "prior_evidence": "Post-outcome diagnostic: all3546additional518abstentions violatedabs12,0missing/normloss;705components,1849lossesingiantcomponent. This motivates measurement only, not outcome-selected gatechanges.",
+  "population": "Only original known-artist training corpus94953rows; source IDs/components/44and518values pinned through existing factorialinputseal and exact sourceverification. No existing fold-f or originalvalidation/test query evaluation. No audio/network.",
+  "split": {
+    "domain": "fma-support-calibration-v1",
+    "rule": "int.from_bytes(SHA256(UTF8(domain+NUL+str(component_id))),big)%5==0 assigns calibration; allothercomponents properfit. No redraw/stratification after observing sizes/labels.",
+    "giant": "Keep intact; report assignedrole and row/componentcounts.",
+    "fit_cohort": "Common completefinite44AND518 properfitrows only; equalfinitecomponentweights normalizedsum1. Calibrationfeatures/labels/groups never enter fittedstate."
+  },
+  "models": "Two new matchedlinear44/518 fixedlambda1 rank8 encoders, same original fit_encoder normalization/labelsupport/SVD rules; alteredproperfitcohort justifiesnewfits. NoRFF,parameterselection or servingreplacement.",
+  "support_score": "For eachbank use maximum absolute train-standardized ACTIVE descriptorcoordinate; label-independent score depends onlyproperfitnormalization. Missing/nonfinite descriptors yield infinity. Nonzero finite linearencoder norm is separate supportcondition, excluded fromquantilepopulationselection.",
+  "quantiles": {
+    "levels": [
+      0.9,
+      0.95,
+      0.99
+    ],
+    "population": "Same commonfinite44AND518 calibrationrows BEFOREnormchecks. Eachrepresentedcomponent equalweight1/C; eachofitsnrows weight1/(C*n). Componentswithoutcommonfinite rows absentonlyconditionalquantilepopulation, countedindisclosures.",
+    "rule": "Sortscoreascendingstable; q=smallestobservedscore whose cumulative normalizedweight>=level; acceptscore<=q includingties. Emptycommonfinitepopulation fails.",
+    "reference": "Threshold12 perbank, sameproperfitstate andsamecandidatepool; historicalmodelresults untouched.",
+    "interpretation": "Only empirical componentweighted descriptoracceptance oncommonfinitecalibrationpopulation, not conformal/future/independent/whole-roster/rankingcoverage guarantee. Nooperatingpointchosenfromoutcomes."
+  },
+  "candidates": "Unchanged hash representative/componentnomination restrictedproperfitcomponents, finite44;atmost2048; sortnativeID. Commoncandidatepool requiresbothbanksfinite+score<=original12+finitepositiveembeddingnorm. Freezeoncebeforequeries; neverapply90/95/99querythresholds tocandidates; nofill/replacement. Reportnominated/commonIDs.",
+  "ranking": "Compute ungatednormalizedlinearqueryvectors forfiniteinputs, cosine/stableIDties/top10 then unweightedpositivegenre-votes exactlyonceperarm/query. Persistbase rankings. Apply4frozengatingmasks afterwards, so withinarm acceptedqueryranking neverchanges acrosspoints. Zero/nonfiniteembeddingnorm/missinginputs alwaysabstain.",
+  "measurement": "Allcalibrationqueries/positives preserved in full-denominator11metrics. Separately accepted-only and samepointcommonaccepted44AND518 metrics to distinguishrankingpopulation fromcoverage. Report empiricaldescriptoracceptance, actualnonemptyrankingcoverage and missing/norm outcomes via rankrecords. Calibration-label metrics descriptive only; calibration labels are not used in threshold/candidate calculations; descriptive metrics are computed after the threshold receipt. No inference of musical relevance.",
+  "limits": {
+    "wall_seconds_per_stage": 120,
+    "cpu_seconds_per_stage": 120,
+    "address_space_bytes": 1000000000,
+    "all_new_output_bytes": 100000000,
+    "blas_threads": 1
+  },
+  "stages": [
+    "freeze(sourceidentity+code+environment+protocol)",
+    "fit-linear44",
+    "fit-linear518",
+    "calibrate(labelblindthresholdreceipt+fixedcandidates)",
+    "score(cachedbasequeryranks+all4masks+descriptivesummary)"
+  ],
+  "review": "Independent design/codeclearance before actualfit. Independentreplay reconstructs split,fitstate,weightedquantiles,candidates,allranks/masks/metrics withoutproducerimports. Receiptvalidation is custodyonly.",
+  "interpretation": [
+    "Alreadyexamined training-source annotations; not new independent evaluation.",
+    "Calibration labels describe fixed operatingpoints; no threshold selection/promotion.",
+    "Absent source labels are unobserved, not verifiednegatives.",
+    "Fittedfeaturebanks differ ineffectivecapacity; samecandidatepool preservesmaskcomparison but is a deliberatelyrestricted retrievalpopulation."
+  ],
+  "availability": "At eachpoint report descriptoracceptance, embeddingacceptance, nonemptyneighborlist and nonemptypositivevote-ranking counts and equalcomponentrates separately. Missing/nonfinite descriptors, outsidethreshold, and zero/nonfiniteembeddingnorm afterdescriptoracceptance are mutuallyexclusive failures; plusembeddingacceptance partition allcalibrationrows. Counts include componentswithnofinitecalibrationrows; quantile conditionalpopulation exclusions listed."
+}
