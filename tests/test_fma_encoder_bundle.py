@@ -78,6 +78,10 @@ class PortableEncoderTests(unittest.TestCase):
             "musical_relevance_established": False,
             "promoted": False,
             "bank_receipt_sha256": "a" * 64,
+            "native_observed_sha256": "d" * 64,
+            "native_source_receipt_sha256": "e" * 64,
+            "license": "CC0 synthetic fixture",
+            "attribution": "Synthetic test",
         }
         self.pin = portable.write_manifest(self.bundle, self.metadata, portable.BUNDLE_BYTES)
 
@@ -206,6 +210,51 @@ class PortableEncoderTests(unittest.TestCase):
         bad["features"] = [0.0] * 178
         with self.assertRaisesRegex(ValueError, "features"):
             self.external([bad], "ab178")
+
+    def test_native_source_inference_and_provenance_rejection(self) -> None:
+        queries = self.root / "source-queries"
+        queries.mkdir()
+        values = np.zeros((1, 518), dtype=np.float32)
+        values[0, 0] = 1
+        np.savez(
+            queries / "queries.npz",
+            ids=np.array([2]),
+            features=values,
+            feature_present=np.ones(1, dtype=bool),
+        )
+        metadata = {
+            "revision": portable.QUERY_REVISION,
+            "mode": "native-source",
+            "namespace": self.metadata["namespace"],
+            "columns": self.metadata["columns"],
+            "bundle_sha256": self.pin,
+            "rows": 1,
+            "query_labels_consumed": False,
+            "native_observed_sha256": "d" * 64,
+            "source_receipt_sha256": "e" * 64,
+            "native_uncompressed_bytes": 951117185,
+            "native_zip_crc32_verified": "e8eb7a19",
+            "native_rows": 106574,
+            "audio_downloaded": False,
+            "full_archive_sha1_verified": False,
+            "license": self.metadata["license"],
+            "attribution": self.metadata["attribution"],
+        }
+        pin = portable.write_manifest(queries, metadata, portable.QUERY_BYTES)
+        result = portable.infer(self.bundle, self.pin, queries, pin)[0]
+        self.assertEqual(result["neighbor_ids"], [3, 4])
+        self.assertTrue(result["model_fit_member"])
+        for key, value in (
+            ("native_observed_sha256", "f" * 64),
+            ("source_receipt_sha256", ""),
+            ("source_receipt_sha256", "f" * 64),
+            ("native_zip_crc32_verified", "wrong"),
+            ("bank_receipt_sha256", "a" * 64),
+        ):
+            (queries / "manifest.json").unlink()
+            pin = portable.write_manifest(queries, {**metadata, key: value}, portable.QUERY_BYTES)
+            with self.assertRaisesRegex(ValueError, "provenance"):
+                portable.infer(self.bundle, self.pin, queries, pin)
 
     def test_relocation_has_no_original_path_reads_and_tamper_fails(self) -> None:
         queries, pin = self.external([self.row(2, 30)])
