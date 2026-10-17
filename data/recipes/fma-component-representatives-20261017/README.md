@@ -105,6 +105,104 @@ capture, not fresh acquisition or fabricated historical replay receipts. No
 audio, new credentials, paid compute, Library retry, public research-data release
 or deployment is part of this experiment.
 
+## Results and decision
+
+The fixed challenger did not improve the primary metric. Component-equal
+Recall@10 declined by **0.113 percentage points**; three of five fold differences
+were negative. The point estimate is descriptive, not proof of population harm.
+The small improvement in positive-weighted recall does not justify promotion.
+
+| Arm | Component-equal Recall@10 | Positive-weighted Recall@10 | Query MRR | Component-equal MRR |
+| --- | ---: | ---: | ---: | ---: |
+| Original raw44 representatives | 42.230% | 40.321% | 0.38414 | 0.34846 |
+| Two representatives | 42.118% | 40.731% | 0.38631 | 0.34736 |
+| Training-recording popularity | 39.458% | 37.861% | 0.39214 | 0.31326 |
+
+All 94,953 queries, 92,677 labeled queries and 227,441 observed positives remain
+in their declared denominators across 5,883 components. Both neighbor arms
+retain exactly 92,222 descriptor-supported queries, nonempty neighborhoods and
+genre rankings. The 2,276 unlabeled queries remain in coverage counts. Training
+popularity has full query ranking coverage. Raw44 and popularity controls
+reproduce their original results; the challenger's advantage over popularity
+on recall is not new evidence for adding representatives because raw44 already
+has that advantage. Popularity remains higher on pooled query MRR.
+
+The challenger gains 16,409 previously missed positives whose labels were already
+available in the old pool and 19 whose labels are newly available. It also loses
+15,495 previous hits, leaving 933 net additional positive incidences. Giant
+component queries contribute 670 of that net gain (71.8%); all other components
+contribute 263. Giant positive recall rises from 41.321% to 41.977%, while other
+components rise from 39.505% to 39.715%. Component-equal recall outside the giant
+falls from 42.230% to 42.118%. These are fixed-prediction influence descriptions,
+not a deletion-and-refit study.
+
+| Ordered positive category | Raw44 | Two representatives |
+| --- | ---: | ---: |
+| Descriptor/retrieval abstention | 5,864 | 5,864 |
+| Absent from candidate-label union | 1,420 | 1,159 |
+| Available in pool, not retrieved | 116,045 | 114,047 |
+| Retrieved label below vote cutoff | 12,406 | 13,732 |
+| Recovered in top ten | 91,706 | 92,639 |
+
+Expanded candidate availability moves 261 previously pool-absent positives into
+availability, but only 19 into recovery; 235 remain unretrieved and seven fall
+below the vote cutoff. Overall, the unretrieved category shrinks while the
+vote-excluded category grows. The complete paired transition matrix is retained.
+This does not identify a causal benefit of geometry or a reason to tune the vote
+cutoff on these same inspected queries.
+
+Unlabeled selected recordings fall from 56,131 to 40,609 of 922,220 neighbor
+slots (6.087% to 4.403%). Pooled record-use concentration falls, with inverse
+Herfindahl count increasing from 1,544 to 2,629. Component-use effective count
+increases more modestly, from 1,544 to 1,652. These changes accompany a worse
+primary metric; more record diversity or fewer empty tags is not by itself
+proof of better retrieval. The per-fold candidate pools remain distinct, and
+pooled use summaries are not independent-pool estimates.
+
+The evidence supports retaining the original baseline and closing this fixed
+challenger without a serving change. It does not support automatically adding
+more representatives, changing votes or searching another encoder against these
+same examined folds. The unresolved question is musical relevance, for which
+missing tags cannot supply negative judgments. A next promotion decision needs
+prospectively fixed independent evaluation and human relevance evidence, not
+another retrospective metric choice.
+
+The aggregate result SHA256 is
+`8062c64b1ebfb9d4dcb15b817ffcd79de8090495d6bf74da3db3201556e0c459`.
+The execution seal is
+`f7ca8f298f84af961bd780fe9db1c88696fc2eeb6f0d9d50c72451ce4197242a`,
+binding reviewed source commit `8861f8f84447a503d7276e3ad801b250da5f8031`
+and protocol `7ce59e1c4ef85e2f38f0e0224e8aa39a28a0186f73027a301ec1246a4ac3f949`.
+
+## Verification
+
+All five producer folds and the summary passed exact byte-for-byte replay.
+Producer fold stages took 9.74–39.47 seconds, with peak RSS at most 311,808,000
+bytes; summary took 3.54 seconds. The complete producer run is 42,366,400 bytes,
+within the unchanged 100 MB bound.
+
+The independently written, separately frozen verifier reproduced all 94,953
+queries, 5,883 components and 8,361 second-representative choices across folds.
+Candidate identities, neighbor order, complete vote rankings, integer statistics,
+paired transitions, sparsity and usage counts matched exactly. All eight summary
+scopes matched within 1e-12; maximum selected cosine-score error was
+8.881784197001252e-16. Independent folds took 8.16–29.21 seconds at approximately
+304 MB peak RSS; the complete schema comparison took 30.96 seconds and
+372,551,680 bytes. It imports no producer implementation and fits no model.
+
+Source and interpretation reviews passed. Full `poe check` passed with 2,091
+Python tests (36 skipped), 112 JavaScript passes and 44 optional skips, plus
+formatting, lint and type checks. Final exact-head and main CI records are kept
+with the completion receipt. Detailed inputs remain in their existing separate
+custody pack; this recipe publishes only code, protocol and aggregate counts.
+
+The producer and logs are retained under
+`/workspace/opennoise-component-representatives-run-20261017`; independent
+implementation, comparison and resource receipts are under
+`/workspace/opennoise-representatives-independent-20261017`. No original capture,
+model or prediction artifacts were overwritten, and no Library upload was
+retried.
+
 ## Reproduce
 
 Run `poe sync`, then the guarded script directly as permitted by AGENTS.md:
