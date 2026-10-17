@@ -18,3 +18,5 @@ main:focus-visible{outline:3px solid #946b00;outline-offset:3px}
 .track-supplied-artist{flex-wrap:wrap}.track-supplied-artist a{min-width:0}.directory .track-supplied-artist small{white-space:normal;overflow-wrap:anywhere}
 
 .album-search-results li{flex-wrap:wrap}.album-search-results a{min-width:0;flex:1 1 15rem}.album-search-results small{white-space:normal;overflow-wrap:anywhere}
+
+.genre-artist-results li{flex-wrap:wrap}.genre-artist-results a{min-width:0;flex:1 1 15rem}.genre-artist-results small{white-space:normal;overflow-wrap:anywhere}.genre-artist-heading,.genre-artist-navigation{overflow-wrap:anywhere}

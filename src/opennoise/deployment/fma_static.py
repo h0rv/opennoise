@@ -19,6 +19,7 @@ from opennoise.deployment.fma_albums import export_albums
 from opennoise.deployment.fma_artist_names import TRACK_NAME_SOURCE, track_artist_names
 from opennoise.deployment.fma_cotags import export_cotags
 from opennoise.deployment.fma_descriptor_map import export_descriptor_map
+from opennoise.deployment.fma_genre_artists import export_genre_artists
 from opennoise.deployment.fma_playable_neighbors import export_playable_neighbors
 from opennoise.deployment.fma_playback import validate_playback_export
 from opennoise.deployment.fma_related import export_related_music
@@ -394,6 +395,9 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         "genres": genre_rows,
         "track_search": export_track_search(output, tracks, files),
         "albums": album_context,
+        "genre_artists": export_genre_artists(
+            output, artist_track_genres, {row["genre_id"] for row in genre_rows}, files, _write
+        ),
         "cotags": export_cotags(
             output,
             tracks,
@@ -444,6 +448,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         "fma-catalog.html",
         "fma-catalog.css",
         "fma-catalog.js",
+        "fma-genre-artists.js",
         "fma-album-search.js",
         "fma-cotags.js",
         "fma-genre-map.js",
@@ -542,6 +547,7 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         "fma-catalog.html",
         "fma-catalog.css",
         "fma-catalog.js",
+        "fma-genre-artists.js",
         "fma-album-search.js",
         "fma-cotags.js",
         "fma-genre-map.js",
