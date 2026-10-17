@@ -1,0 +1,12 @@
+{
+  "protocol_sha256": "8832fc5c34298073394ef5a6470f909a607575843211005febf3c202f63d12c0",
+  "cohort_sha256": "c5f3ce5d9d588c632782b3b93ee71f3d83f8fe197ea3deb76dd58cd8acc62a72",
+  "stage": "before human vote statistics, fitting, predictions, or outcomes",
+  "metric_interpretation": "First average individual-vote Brier over eligible tracks within each component; then average equally across eligible components. Bootstrap the paired component NB-minus-prior differences, using the same queries and eligibility. Undefined metrics are null with an explicit reason; do not drop abstentions silently.",
+  "acquisition_timeout_interpretation": "20-second socket timeout and30-second request wall alarm; not20-second hard wall cap.",
+  "source_preprocessing": "Official uploader test metadata has upstream global taxonomy/tag-frequency preprocessing. Only the study's vocabulary and model are fit on training components; do not claim all source preprocessing is train-only.",
+  "human_annotation_limitations": "Exactly three recognized votes, preserving2:1 disagreements. Annotator IDs and cross-record independence/blinding are not established. Human happy judgments are not pairwise music similarity or recommendation utility.",
+  "duplicate_limitations": "Native track/path duplicates rejected, all native artist/album links grouped. No audio fingerprint or title/alias cross-catalog duplicate identity is available in these two files. Unresolved duplicates across different native artists/albums remain a limitation, not a claimed verified exclusion.",
+  "source_separation": "No FMA, MusicBrainz, AcousticBrainz labels/models/descriptors or prior inspected splits enter these new fits. Jamendo native IDs cannot prove absence of historical cross-catalog artists; no cross-source untouched-confirmation claim.",
+  "rights_boundary": "All source metadata and derived research artifacts remain CC-BY-NC-SA-4.0 attributed noncommercial research, separate from MIT source and serving. No product integration or deployment. Code alone may be merged after independent review and green CI."
+}

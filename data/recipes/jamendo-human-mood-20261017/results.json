@@ -1,0 +1,126 @@
+{
+  "nominated": 11565,
+  "eligible": 10614,
+  "predicted": 10614,
+  "coverage_all_nominated": 0.9177691309987029,
+  "coverage_eligible": 1.0,
+  "eligible_components": 699,
+  "predicted_components": 699,
+  "undefined_reason": null,
+  "methods": {
+    "human_prior": {
+      "component_equal_vote_brier": 0.23067497030241865,
+      "track_vote_brier": 0.23039406583018804,
+      "track_mean_target_squared_error": 0.12711328363476468
+    },
+    "genre_instrument_nb": {
+      "component_equal_vote_brier": 0.22297112636485414,
+      "track_vote_brier": 0.22180324747954344,
+      "track_mean_target_squared_error": 0.11852246528412033
+    },
+    "privileged_happy_tag": {
+      "component_equal_vote_brier": 0.2301904680189579,
+      "track_vote_brier": 0.2289856534665295,
+      "track_mean_target_squared_error": 0.12570487127110613
+    }
+  },
+  "nb_minus_prior": {
+    "component_equal_vote_brier": {
+      "difference": -0.007703843937564514,
+      "interval": [
+        -0.013790012412713814,
+        -0.0018798908476709492
+      ],
+      "valid_draws": 2000,
+      "undefined_draws": 0
+    },
+    "track_vote_brier": {
+      "difference": -0.008590818350644597,
+      "interval": [
+        -0.01917344792060753,
+        0.0008835468184903347
+      ],
+      "valid_draws": 2000,
+      "undefined_draws": 0
+    },
+    "track_mean_target_squared_error": {
+      "difference": -0.008590818350644347,
+      "interval": [
+        -0.019173447920606827,
+        0.0008835468184901793
+      ],
+      "valid_draws": 2000,
+      "undefined_draws": 0
+    }
+  },
+  "bootstrap": {
+    "draws": 2000,
+    "seed": 20261017,
+    "conditional_fixed_predictions": true
+  },
+  "eligibility_reasons": {
+    "eligible": 10614,
+    "wrong_vote_count": 951
+  },
+  "prediction_reasons": {
+    "predicted": 10614,
+    "wrong_vote_count": 951
+  },
+  "vote_sequences": {
+    "not_happy,not_happy,not_happy": 4209,
+    "happy,happy,happy": 1472,
+    "not_happy,not_happy": 315,
+    "happy,not_happy,not_happy": 2831,
+    "happy,happy,not_happy": 2102,
+    "not_happy": 112,
+    "happy,happy": 231,
+    "happy,not_happy": 243,
+    "happy": 50
+  },
+  "disagreement": 4933,
+  "artists": 713,
+  "albums": 2365,
+  "components": 713,
+  "largest_component": 548,
+  "unseen_feature_rows": 0,
+  "folds": [
+    {
+      "fold": 0,
+      "nominated": 2082,
+      "eligible": 1908,
+      "components": 139
+    },
+    {
+      "fold": 1,
+      "nominated": 2660,
+      "eligible": 2452,
+      "components": 170
+    },
+    {
+      "fold": 2,
+      "nominated": 1969,
+      "eligible": 1803,
+      "components": 134
+    },
+    {
+      "fold": 3,
+      "nominated": 2958,
+      "eligible": 2722,
+      "components": 140
+    },
+    {
+      "fold": 4,
+      "nominated": 1896,
+      "eligible": 1729,
+      "components": 130
+    }
+  ],
+  "interpretation": [
+    "Metadata predictiveness for existing human votes, not audio-based musical usefulness.",
+    "Happy-tag rule has privileged mood input, not a matched-feature comparison.",
+    "Source-global preprocessing and annotator selection may affect this cohort.",
+    "Artist/album components do not establish audio-fingerprint or alias independence.",
+    "Fixed-OOF bootstrap, not retraining or population inference.",
+    "Noncommercial research: CC-BY-NC-SA artifacts are not MIT serving assets."
+  ]
+}
