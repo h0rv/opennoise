@@ -37,3 +37,54 @@ relevance or merge the separate listening artifacts. No fitting against examined
 holdouts, new source/audio acquisition, credentials, paid services or public
 research deployment is part of this work. The finished listening packages remain
 unchanged with zero actual responses out of twelve planned responses.
+
+## Verified delivery
+
+Implementation: `47ab8ad6310abebf224f628f5e5dfd7363c14449`.
+The final actual browser audit passed 36 frozen search/page cases, covering all
+four independently enumerated scopes. For example, `#genre=38&q=live` returns
+458 of 25,493 source recordings. Text matching does not establish that a track
+is a live performance. Exact IDs, outsider duplicate titles, first/last result
+pages, history, reload, explicit global handoff, map compatibility and 320/390px
+layouts passed. A separate browser check cleared each of the three context
+queries and immediately typed with real keyboard input; focus stayed in the
+search box and the new query worked. Initial failure evidence is retained.
+
+Interrupted genre loading launched at most its current four-request batch;
+late results did not overwrite the new route. A failed membership page could
+be repaired and retried without reload or partial results. No external or media
+requests occurred. Four synthetic contracts additionally exercise null and
+missing-title fixtures, malformed membership/index/track cache recovery and
+matching semantics. Independent source review cleared the final source.
+
+All 7,545 JSON data files and all 13 descriptor-map files remain byte-identical
+to the compact baseline. The closed final export has 7,563 files and occupies
+33,998,075 bytes including its receipt, within the unchanged 40 MB bound. Only
+display code and output inventory receipts changed; there is no new data index.
+Both finished participant ZIPs still match their recorded hashes.
+
+The standalone archive `/workspace/OpenNoise-scoped-track-search-20261017.zip`
+has 7,564 members and 11,153,241 bytes; SHA256
+`aac92fadf4377776da731b53227084a8dccacd8e2cfaeea2216c60bdef322b0a`.
+Every file passed byte-for-byte archive round-trip verification. Extract it,
+serve its `site` folder with `python3 -m http.server 8000 --bind 127.0.0.1`,
+then open the local address. A repository, build environment or external service
+is unnecessary for browsing.
+
+The final display refresh uses the existing `refresh_fma_static_display`
+function with the receipt-pinned compact baseline. The exact wrapper is
+`/workspace/opennoise-scoped-search-run-20261017/refresh-final-bounded.py`;
+120-second CPU/wall and 1-GiB address-space guards remain unchanged. Its final
+output is `site-final` under that directory; the earlier `site` remains as
+pre-focus-fix evidence. The source/catalog/model is never refitted or recaptured.
+
+Evidence locations:
+
+- Run, resource bounds and checks: `/workspace/opennoise-scoped-search-run-20261017`.
+- Groundtruth and exact data audit: `/workspace/opennoise-scoped-search-independent-20261017`.
+- Final browser evidence: `/workspace/opennoise-scoped-search-browser-20261017/final`.
+- Independent source review: `/workspace/opennoise-scoped-search-review-20261017`.
+
+An environment disconnect notification at 15:51 UTC did not interrupt execution;
+the worktree remained available and a preservation snapshot was saved. No work
+was discarded or restarted because of the notification.
