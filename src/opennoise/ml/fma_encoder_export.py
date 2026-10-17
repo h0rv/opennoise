@@ -144,6 +144,7 @@ def export_bundle(  # noqa: PLR0913 - explicit externally pinned source roles.
         "model_sha256": fit_receipt["files"]["model.npz"]["sha256"],
         "source_candidate_sha256": score_receipt["files"]["candidates.json"]["sha256"],
         "native_observed_sha256": bank_receipt["native_observed_sha256"],
+        "native_source_receipt_sha256": bank_receipt["source_receipt_sha256"],
         "license": bank_receipt["license"],
         "attribution": bank_receipt["attribution"],
         "role": "explicit development-fold encoder; not a final full-training serving model",

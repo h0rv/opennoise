@@ -131,6 +131,8 @@ def export_source_queries(  # noqa: PLR0913, PLR0917 - two explicitly pinned inp
     ):
         raise ValueError("Request requires 1..256 unique positive native uint32 IDs")
     body, *_ = load_bundle(bundle, bundle_sha256)
+    if source_receipt_sha256 != body["native_source_receipt_sha256"]:
+        raise ValueError("Native source receipt differs from bundle capture pin")
     source_receipt = source_preflight(source, source_receipt_sha256)
     features, present, observed = scan_rows(
         source,

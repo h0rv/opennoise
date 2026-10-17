@@ -79,6 +79,7 @@ class PortableEncoderTests(unittest.TestCase):
             "promoted": False,
             "bank_receipt_sha256": "a" * 64,
             "native_observed_sha256": "d" * 64,
+            "native_source_receipt_sha256": "e" * 64,
             "license": "CC0 synthetic fixture",
             "attribution": "Synthetic test",
         }
@@ -246,6 +247,7 @@ class PortableEncoderTests(unittest.TestCase):
         for key, value in (
             ("native_observed_sha256", "f" * 64),
             ("source_receipt_sha256", ""),
+            ("source_receipt_sha256", "f" * 64),
             ("native_zip_crc32_verified", "wrong"),
             ("bank_receipt_sha256", "a" * 64),
         ):

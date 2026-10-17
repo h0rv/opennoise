@@ -95,7 +95,11 @@ class SourceQueryTests(unittest.TestCase):
             source = root / "source"
             source.mkdir()
             member, digest = self.stream(source, [[2, *["0"] * 518], [3, "bad"]])
-            body = {"columns": [list(COLUMNS[0])], "native_observed_sha256": digest}
+            body = {
+                "columns": [list(COLUMNS[0])],
+                "native_observed_sha256": digest,
+                "native_source_receipt_sha256": "pin",
+            }
             with (
                 patch("opennoise.ml.fma_source_queries.load_bundle", return_value=(body,)),
                 patch(
@@ -119,6 +123,7 @@ class SourceQueryTests(unittest.TestCase):
             body = {
                 "columns": [list(COLUMNS[0])],
                 "native_observed_sha256": digest,
+                "native_source_receipt_sha256": "a" * 64,
                 "namespace": "FMA/native-track-id",
                 "license": "CC-BY-4.0",
                 "attribution": "Synthetic source fixture",
@@ -140,6 +145,26 @@ class SourceQueryTests(unittest.TestCase):
                 np.testing.assert_array_equal(arrays["ids"], [9, 2])
                 np.testing.assert_array_equal(arrays["feature_present"], [False, True])
                 self.assertEqual(arrays["features"][1, 0], 0.25)
+
+    def test_capture_receipt_mismatch_rejects_before_source_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "queries"
+            with (
+                patch(
+                    "opennoise.ml.fma_source_queries.load_bundle",
+                    return_value=({"native_source_receipt_sha256": "a" * 64},),
+                ),
+                patch("opennoise.ml.fma_source_queries.source_preflight") as preflight,
+                patch("opennoise.ml.fma_source_queries.scan_rows") as scan,
+                self.assertRaisesRegex(ValueError, "bundle capture pin"),
+            ):
+                export_source_queries(
+                    root / "bundle", "pin", root / "source", "b" * 64, [2], output
+                )
+            preflight.assert_not_called()
+            scan.assert_not_called()
+            self.assertFalse(output.exists())
 
     def test_receipt_pin_and_payload_path_are_checked(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

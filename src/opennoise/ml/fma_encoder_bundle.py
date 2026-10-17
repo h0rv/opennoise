@@ -346,6 +346,7 @@ def infer(  # noqa: C901, PLR0912, PLR0915 - explicit identity modes share one i
     if mode == "native-source" and (
         query.get("native_observed_sha256") != body["native_observed_sha256"]
         or re.fullmatch("[0-9a-f]{64}", str(query.get("source_receipt_sha256", ""))) is None
+        or query.get("source_receipt_sha256") != body.get("native_source_receipt_sha256")
         or query.get("native_uncompressed_bytes") != 951_117_185
         or query.get("native_zip_crc32_verified") != "e8eb7a19"
         or type(query.get("native_rows")) is not int

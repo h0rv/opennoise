@@ -37,7 +37,9 @@ request order is preserved. Native roster and component exclusions are unchanged
 
 `native-source` provenance records the actual source receipt, complete CSV hash,
 CRC, byte length and observed row count. It does not pretend to be a feature-bank
-export. Source metadata remains CC BY 4.0 with the existing FMA attribution; no
+export. The source receipt must match the original capture receipt pinned in the
+bundle, as well as the complete native CSV hash. Source metadata remains CC BY 4.0
+with the existing FMA attribution; no
 audio license is inferred. Query labels are never consumed.
 
 ## Runtime compatibility and relocation
