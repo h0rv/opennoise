@@ -71,12 +71,12 @@ async function fixture() {
   };
   await put('catalog.json', {
     revision:'fma-source-static-v1', page_size:200, profile_shards:128, track_id_span:500,
-    genres:[1,2,3].map(id => ({genre_id:id,title:'Genre '+id,track_count:201,parent_id:null,connections:[]})),
+    genres:[1,2,3].map(id => ({genre_id:id,title:id===2?'ExperimentalVeryLongUnbrokenSourceGenreNameForMobileCoverage':'Genre '+id,track_count:201,parent_id:null,connections:[]})),
     counts:{raw_tracks:201,source_artists:1,missing_artist_records:0,observed_track_genres:3,unannotated_tracks:0},
     cotags:{revision:'fma-direct-cotags-v1'}, licenses:[]
   });
   await put('artist-index.json',{artists:[[10,'Fixture artist',201,'source']]});
-  await put('connections/1.json',{genre_id:1,connections:[{genre_id:2,shared_tracks:201,known_artist_count:1,unresolved_artist_tracks:0}]});
+  await put('connections/1.json',{genre_id:1,connections:[{genre_id:2,shared_tracks:201,known_artist_count:100,unresolved_artist_tracks:100}]});
   await put('connections/3.json',{genre_id:3,connections:[]});
   await put('cohorts/pair-1-2/0.json',{cohort:'pair-1-2',page:0,total:201,track_ids:Array.from({length:200},(_,i)=>i+1)});
   await put('cohorts/pair-1-2/1.json',{cohort:'pair-1-2',page:1,total:201,track_ids:[201]});
@@ -92,6 +92,13 @@ test('synthetic complete co-tag routes paginate, canonicalize, fail closed and r
       await evaluate("location.hash='connections=1'");
       await wait("document.querySelector('.cotag-connections a')");
       assert.equal(await evaluate("document.querySelector('.cotag-connections a').getAttribute('href')"),'#pair=1,2');
+      for (const width of [390, 320]) {
+        await command('Emulation.setDeviceMetricsOverride',{width,height:700,deviceScaleFactor:1,mobile:true});
+        assert.equal(await evaluate('innerWidth'),width,'connection counts must not inflate the mobile viewport');
+        assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+        assert.ok(await evaluate("document.querySelector('.cotag-connections small').textContent.includes('100 recordings with unresolved artists')"));
+      }
+
       await evaluate("document.querySelector('.cotag-connections a').click()");
       await wait("document.querySelectorAll('.track').length===200");
       assert.equal(await evaluate("document.querySelector('.track').dataset.trackId"),'1');
@@ -100,6 +107,7 @@ test('synthetic complete co-tag routes paginate, canonicalize, fail closed and r
       await evaluate("location.hash='pair=2,1'");
       await wait("location.hash==='#pair=1,2' && document.querySelectorAll('.track').length===200");
       await command('Emulation.setDeviceMetricsOverride',{width:320,height:700,deviceScaleFactor:1,mobile:true});
+      assert.equal(await evaluate('innerWidth'),320);
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
       await evaluate("location.hash='connections=3'");
       await wait("document.querySelector('#status').textContent.includes('0 directly')");

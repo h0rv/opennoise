@@ -275,6 +275,7 @@ async function cohort(state, token) {
 }
 async function render() {
   const token = ++generation, state = route();
+  heading.classList.toggle('cotag-heading', ['connections', 'pair'].includes(state.kind));
   routeCleanup?.(); routeCleanup = null;
   clearRoutePlayers();
   $('#search-form').hidden = ['listen', 'genre-map', 'descriptor-map', 'connections', 'pair'].includes(state.kind);

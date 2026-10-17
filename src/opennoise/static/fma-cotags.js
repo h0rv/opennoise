@@ -51,6 +51,7 @@ export async function renderCotags({state, config, genres, json, rows, heading, 
   const explanation = 'Recordings with both source genre tags.';
   rows.append(element('p', explanation));
   const navigation = element('p', '');
+  navigation.className = 'cotag-navigation';
   for (const [index, id] of ids.entries()) {
     if (index) navigation.append(document.createTextNode(' · '));
     navigation.append(link(`${genres.get(id).title} · #${id}`, `#genre=${id}`));
