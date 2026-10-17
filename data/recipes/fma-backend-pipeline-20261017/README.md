@@ -91,7 +91,6 @@ Record the immutable implementation commit, plan and final checkpoint hashes, ex
 
 Implementation checkpoint: `7ea23b1cdf207f78beb2c0f14654e562f5668d7d`. Ten focused synthetic tests cover real producer fit/score/summary receipts across all 43 stages, deliberate resume without duplicate execution, input/output tampering, partial failure, role escape/symlinks, moved verification with moved-execution rejection, retained-bank associations, bytecode-cache stability, wrong-checkout validators, child log overflow, and wall deadlines. These synthetic tests are distinct from the actual retained-data run and its independent replay.
 
-Draft integration note: the ten new runner tests currently require explicit discovery with `-s tests/pipeline -p test_fma_backend.py`, because that directory lacks `__init__.py`. Move only the new module into the top-level `tests/` directory after the active frozen execution, so the normal full check includes it. This is a test-discovery correction, not a change to numerical or pipeline runtime code.
 
 ## Completed retained-data execution
 
