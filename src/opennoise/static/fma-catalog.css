@@ -14,3 +14,5 @@ main:focus-visible{outline:3px solid #946b00;outline-offset:3px}
 .cotag-connections a{min-width:0;flex:1 1 14rem}
 .cotag-connections small{white-space:normal;overflow-wrap:anywhere;flex:1 1 20rem}
 .cotag-heading,.cotag-navigation{overflow-wrap:anywhere}
+
+.track-supplied-artist{flex-wrap:wrap}.track-supplied-artist a{min-width:0}.directory .track-supplied-artist small{white-space:normal;overflow-wrap:anywhere}
