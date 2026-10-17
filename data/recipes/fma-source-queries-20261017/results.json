@@ -1,0 +1,74 @@
+{
+  "bundle_sha256": "5778d616d96dcd399fcc1f8094942b484250a452a888fd9fa9ef5de3c1117fcb",
+  "query_sha256": "26bcbcabbd7342d3d4880f1775b18721b4f19a11950935f6f32b95f8d04fcaca",
+  "result_sha256": "87be34789246e51d00f02393ef6ad69770727d51141273f73c15af4e571b0265",
+  "rows": 256,
+  "query_bytes": 546838,
+  "result_bytes": 286189,
+  "model_byte_identical": true,
+  "all_feature_cells_and_masks_equal_bank": true,
+  "all_inference_semantics_equal_bank": true,
+  "relocated_results_byte_identical": true,
+  "source_query_stage_reads_full_bank": false,
+  "relocated_inference_reads_original_scratch": false,
+  "source_observed": {
+    "native_rows": 106574,
+    "native_uncompressed_bytes": 951117185,
+    "native_zip_crc32_verified": "e8eb7a19",
+    "native_observed_sha256": "a035d04941e15fc3240aadd6880c519471d218329bbfe0e82c17553ba50e9e16"
+  },
+  "resources": {
+    "bundle-export": {
+      "wall_seconds": 2.99027318699882,
+      "cpu_user_seconds": 2.599354,
+      "cpu_system_seconds": 0.367969,
+      "max_rss_kib": 535856
+    },
+    "source-query-export": {
+      "wall_seconds": 54.193793532998825,
+      "cpu_user_seconds": 50.793701,
+      "cpu_system_seconds": 1.094788,
+      "max_rss_kib": 85004
+    },
+    "infer": {
+      "wall_seconds": 0.5090383289971214,
+      "cpu_user_seconds": 0.39347899999999997,
+      "cpu_system_seconds": 0.044017,
+      "max_rss_kib": 84672
+    },
+    "replay": {
+      "wall_seconds": 0.4227584159998514,
+      "cpu_user_seconds": 0.362645,
+      "cpu_system_seconds": 0.044094999999999995,
+      "max_rss_kib": 84696
+    },
+    "relocated-infer": {
+      "wall_seconds": 0.6613992660022632,
+      "cpu_user_seconds": 0.476788,
+      "cpu_system_seconds": 0.12745299999999998,
+      "max_rss_kib": 84684
+    }
+  },
+  "fitting_performed": false,
+  "new_acquisition": false,
+  "revision": "fma-direct-source-query-engineering-v1",
+  "runtime_commit": "4e67aced6845fc252d21f319f215ddfb6f2465ef",
+  "pr69_merge_commit": "2a1b40551a58f45662482604f5bef0de70877fb4",
+  "selected_source_rows_present": 208,
+  "missing_feature_requests": 48,
+  "embedding_rows": 206,
+  "neighbor_rows": 190,
+  "unresolved_artist_embedding_only_rows": 16,
+  "outside_support_rows": 2,
+  "independent_completion_sha256": "e38c159e7057ac6bdd67a1c0fe976ba898ca0839e0e8d5281944997b0b640978",
+  "max_vector_error": 0,
+  "max_distance_error": 0,
+  "native_bank_feature_and_id_bytes_not_materialized": 221247624,
+  "limitations": [
+    "Retained-source engineering run, not a new source acquisition or independent quality evaluation.",
+    "The complete retained compressed source and complete CSV scan remain prerequisites for query preparation.",
+    "The portable bundle is re-exported from the same reviewed development-fold model without fitting or promotion.",
+    "RSS measurements complement the CLI-enforced address-space limit; file-only traces do not audit network syscalls.",
+    "Source tags and identity coverage remain incomplete; no musical relevance was established."
+  ]
+}

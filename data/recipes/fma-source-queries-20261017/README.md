@@ -53,3 +53,28 @@ Compare its bytes with the original fit before using the new bundle.
 After export, the bundle and small query pack are sufficient for inference and
 replay in a relocated directory. The retained compressed source, full native bank
 and original experiment scratch directories are not inference dependencies.
+
+## Checked bounded run
+
+A frozen 256-request batch covered training members, heldout roles, unresolved
+artists, absent features and eight unknown-ID contract fixtures. The direct-source
+command verified all 106,574 source rows, 951,117,185 decompressed bytes, ZIP CRC
+`e8eb7a19` and the full native SHA256 before publishing a 546,838-byte query pack.
+It took 54.2 seconds and peaked at 87.0 MB RSS on this executor, while inference
+took 0.509 seconds. These are observed single-run costs, not latency guarantees.
+
+There were 208 present source feature rows: 190 produced neighbors, 16 unresolved
+artist rows retained embeddings only, and two exceeded training support. The
+remaining 48 requests kept explicit missing-feature masks. Every selected value
+and mask matched the independently verified full-bank path. The new path avoided
+materializing or reading its 221,247,624-byte feature/ID bank during query export.
+
+An independent implementation replayed all 256 results and their relocated copies
+with zero vector or distance differences. All inference behavior matched the
+previous bank-based batch after excluding intentionally different provenance
+pins. Model bytes, candidates and identity roster were unchanged; relocated
+results were byte-identical. File traces showed no full-bank/projection reads in
+the source-query stage and no original source/experiment reads during relocated
+inference. The source was retained data; no new capture, audio, fitting, calibration
+or model promotion occurred. Aggregate hashes and resource measurements are in
+`results.json`.
