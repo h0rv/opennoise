@@ -16,6 +16,7 @@ import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
 from opennoise.deployment.fma_albums import export_albums
+from opennoise.deployment.fma_artist_names import TRACK_NAME_SOURCE, track_artist_names
 from opennoise.deployment.fma_cotags import export_cotags
 from opennoise.deployment.fma_descriptor_map import export_descriptor_map
 from opennoise.deployment.fma_playable_neighbors import export_playable_neighbors
@@ -215,19 +216,26 @@ def _artist_profiles(  # noqa: PLR0913 - independent native profile inputs.
     files: dict[str, Any],
     *,
     artist_albums: dict[int | None, list[list[Any]]],
+    track_names: dict[int, str],
 ) -> None:
     search = []
     profiles: dict[int, dict[str, Any]] = defaultdict(dict)
     for artist_id in sorted(set(artists) | set(artist_tracks), key=lambda value: value or 0):
         artist = artists.get(artist_id)
-        name = artist["name"] if artist else f"Missing artist record #{artist_id}"
+        fallback = track_names.get(artist_id) if not artist else None
+        name = artist["name"] if artist else fallback or f"Missing artist record #{artist_id}"
         ids = artist_tracks.get(artist_id, [])
         status = "source_artist_record" if artist else "missing_source_artist_record"
-        search.append([artist_id, name, len(ids), status])
+        search.append(
+            [artist_id, name, len(ids), status, TRACK_NAME_SOURCE]
+            if fallback
+            else [artist_id, name, len(ids), status]
+        )
         profiles[(artist_id or 0) % PROFILE_SHARDS][str(artist_id)] = {
             "artist_id": artist_id,
             "name": name,
             "status": status,
+            **({"name_source": TRACK_NAME_SOURCE} if fallback else {}),
             "track_ids": ids,
             "albums": artist_albums.get(artist_id, []),
             "track_genre_counts": [
@@ -351,7 +359,13 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
     unknown = sorted(set(artist_tracks) - set(artists), key=lambda value: value or 0)
     album_context, artist_albums = export_albums(output, tracks, files, _write)
     _artist_profiles(
-        output, artists, artist_tracks, artist_track_genres, files, artist_albums=artist_albums
+        output,
+        artists,
+        artist_tracks,
+        artist_track_genres,
+        files,
+        artist_albums=artist_albums,
+        track_names=track_artist_names(tracks, set(artists)),
     )
     connections = _genre_connections(tracks, genre_tracks)
     genre_rows: list[dict[str, Any]] = []

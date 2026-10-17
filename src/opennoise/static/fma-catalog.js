@@ -62,13 +62,13 @@ function paginate(total, page, size) {
 async function directory(state, token) {
   if (state.kind === 'artists') await loadArtists();
   if (token !== generation) return;
-  const source = state.kind === 'artists' ? artists.filter(row => !state.missing || row[3] === 'missing_source_artist_record').map(row => ({id: row[0], name: row[1], count: row[2]})) : catalog.genres.map(row => ({id: row.genre_id, name: row.title, count: row.track_count}));
+  const source = state.kind === 'artists' ? artists.filter(row => !state.missing || row[3] === 'missing_source_artist_record').map(row => ({id: row[0], name: row[1], count: row[2], nameSource: row[4]})) : catalog.genres.map(row => ({id: row.genre_id, name: row.title, count: row.track_count}));
   const matches = source.filter(row => row.name.toLocaleLowerCase().includes(state.q.toLocaleLowerCase()) || String(row.id) === state.q);
   heading.textContent = state.kind === 'artists' ? state.missing ? 'Missing artist records' : 'Artists' : 'Genres';
   status.textContent = state.kind === 'artists' ? `${number(matches.length)} matching artist IDs · ${number(catalog.counts.source_artists)} source artist records · ${number(catalog.counts.missing_artist_records)} IDs missing artist records.` : `${number(matches.length)} genre definitions · ${number(catalog.counts.observed_track_genres)} have direct track annotations.`;
   if (!paginate(matches.length, state.page, 100)) return;
   const list = node('ul'); list.className = 'directory search-results';
-  for (const row of matches.slice(state.page * 100, state.page * 100 + 100)) { const item = node('li'); item.append(link(`${row.name} · #${row.id}`, `#${state.kind === 'artists' ? 'artist' : 'genre'}=${row.id}`), node('small', `${number(row.count)} tracks`)); const listen = listenLink(state.kind === 'artists' ? {artist: row.id} : {genre: row.id}); if (listen) item.append(listen); list.append(item); }
+  for (const row of matches.slice(state.page * 100, state.page * 100 + 100)) { const item = node('li'); if (row.nameSource === 'unanimous_track_artist_name') item.className = 'track-supplied-artist'; item.append(link(`${row.name} · #${row.id}`, `#${state.kind === 'artists' ? 'artist' : 'genre'}=${row.id}`), node('small', `${number(row.count)} tracks${row.nameSource === 'unanimous_track_artist_name' ? ' · Track-supplied name; artist record missing' : ''}`)); const listen = listenLink(state.kind === 'artists' ? {artist: row.id} : {genre: row.id}); if (listen) item.append(listen); list.append(item); }
   if (!matches.length) rows.append(node('p', 'No matching names or exact native IDs.'));
   rows.append(list);
 }
@@ -88,7 +88,7 @@ function trackNode(track) {
   const row = node('article'); row.className = 'track'; row.dataset.trackId = id; row.dataset.evidenceRole = 'native_track_metadata';
   const titleRow = node('h2'); titleRow.append(link(`${title || 'Missing track title'} · #${id}`, `#track=${id}`)); row.append(titleRow);
   if (playableTracks().some(entry => entry.track_id === id)) row.append(button('Play excerpt', () => requestPlay({config: catalog.playback, id, ids: playableTracks().map(entry => entry.track_id), json})));
-  const credit = node('p'); credit.dataset.evidenceRole = 'native_track_artist_association'; credit.append(document.createTextNode('Source artist: '), link(`${artistIndex.get(artistId)?.[1] ?? 'Missing artist record'} · #${artistId}`, `#artist=${artistId}`)); row.append(credit);
+  const credit = node('p'); credit.dataset.evidenceRole = 'native_track_artist_association'; credit.append(document.createTextNode('Source artist: '), link(`${artistIndex.get(artistId)?.[1] ?? 'Missing artist record'} · #${artistId}`, `#artist=${artistId}`)); if (artistIndex.get(artistId)?.[4] === 'unanimous_track_artist_name') credit.append(document.createTextNode(' · Track-supplied name; artist record missing')); row.append(credit);
   const annotations = node('p'); annotations.className = 'annotations'; annotations.dataset.evidenceRole = 'native_track_genre_annotations'; annotations.append(node('span', 'Track genres:'));
   if (!genreIds?.length) annotations.append(node('span', 'No source genre annotations'));
   for (const genreId of genreIds ?? []) annotations.append(link(genres.get(genreId)?.title ?? `Missing genre definition #${genreId}`, `#genre=${genreId}`));
@@ -250,7 +250,7 @@ async function cohort(state, token) {
     const listen = listenLink({artist: state.id}); if (listen) rows.append(listen);
     artistAlbums(artist);
     if (artist.track_genre_counts?.length) exploreGenres('Explore track genres', 'Genres annotated on this artist’s tracks; not an artist classification.', artist.track_genre_counts, 'track_count');
-    status.textContent = `${number(total)} tracks with this native source artist ID.${artist.status === 'missing_source_artist_record' ? ' Artist record is missing from the source table.' : ''} Genre annotations below belong to each track.`;
+    status.textContent = `${number(total)} tracks with this native source artist ID.${artist.status === 'missing_source_artist_record' ? ' Artist record is missing from the source table.' : ''} ${artist.name_source === 'unanimous_track_artist_name' ? ' Display name is supplied consistently by this artist ID’s track records.' : ''} Genre annotations below belong to each track.`;
   } else {
     const genre = genres.get(state.id);
     if (state.kind === 'genre' && !genre) throw new Error('Native genre ID is absent');
