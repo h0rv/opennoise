@@ -1,0 +1,66 @@
+{
+  "revision": "fma-fixed-factorial-v1",
+  "hypothesis": "Richer native feature statistics and a fixed nonlinear RBF approximation can change source-positive neighbor recovery where the existing linear44 rank8 representation misses labels already available in the candidate pool.",
+  "arms": [
+    "linear44",
+    "rff44",
+    "linear518",
+    "rff518"
+  ],
+  "population": "Same original-known-artist training roster and native artist/album/exactfeature components and hash5folds as frozen prior component embedding. Every heldout query retained. Original outer folds never loaded for fitting/scoring. These development outcomes are already examined, not independent evaluation.",
+  "input_binding": "Existing numeric44 manifest4344e609efd7442bf2c598fefb9d1f5abb08884b59f922a53a05643c60d0a323 plus separately verified offline518 nativebank projection-receipt and closed file hashes. No network or audio.",
+  "feature_change": "Full518 native ordered feature/statistic/index columns; no target-derived feature selection. Correlated blocks may dominate. Prior failed88 Gaussian arm is not repeated.",
+  "fit_roster": "Each innerfit4fold mask intersected with complete finite44 AND518 rows for all4 arms. No abs12 filter during fit. Equal weights per finite-training component, divided equally across its eligible rows, normalized sum1.",
+  "normalization": "Perbank weighted finite-innerfit population mean/variance, constant columns removed by observed min==max. No heldout descriptors/labels/groups enter fitted state.",
+  "nonlinear": "PCG64 seed20261017. Draw2048 left and2048 right rowindices independently from finite training with normalized equalcomponentweights. Bandwidth=median positive Euclidean distance in standardizedactive coordinates; coincident/zero distances excluded; fail if nonepositive. Then Gaussian standardnormal frequencies(activewidth,128)/bandwidth and phases uniform[0,2pi). Map=sqrt2*cos(zW+b), weighted trainingmean centered. This scaling keeps percoordinate scale near1; this is not unit-energy sqrt(2/128) RFF.",
+  "linear": "Weighted standardized coordinates centered by weighted training mapmean (numerical residual only).",
+  "ridge": "Binary supplied source indicators, active labels>=5finite-fit positives; zeros are unobserved annotations not verifiednegatives. Targetweightedmean removed. Solve centered weighted Gram+I, fixedlambda1. SVD coefficients, retain min(8,numericalrank), same prior deterministic signs and ambiguous8thboundary fail. Persist all state. Lambda fixed does not imply equal effective regularization; comparisons are specified systems, not isolated causal feature/nonlinearity effects.",
+  "candidates": "Unchanged prior labelblind44finite one hashedrepresentative/component then2048hashchosen components from originalinnerfitmask; IDs sortedascending. No replacement. Commoncandidate pool is intersection of intrinsic supportednonzeronorm44/518 linear/RFFencoders. abs12 standardization gate perbank, finitefullbank, embeddednorm>0. Explicitly supervised jointeligibility; save each intrinsic roster and common roster, emptycommon remains empty and is reported. No alternative fallback.",
+  "queries": "All originaltraining heldoutinnerfold rows scored with ownintrinsic descriptor/norm support; unsupported yields emptyranking and zero metrics. Also report descriptive commonquery subset requiring all4encoders supported; subset is not primary.",
+  "ranking": "Cosine float64 normalized dot; stabledescending score then nativeIDascending;10neighbors; unweighted sourcepositive candidatevotes, positivevotes only, descendingvotes thennativegenreID. No querylabels used in geometry/ranking.",
+  "measurement": {
+    "primary": "OOF component-equal sourceRecall10, differences rff44-linear44,rff518-linear518,linear518-linear44,rff518-rff44. No winner-driven followup/promotion.",
+    "secondary": "positive-weightedRecall10, queryMRR/componentMRR, all/labeledquerycoverage, macro observedlabelRecall10, raremacro for labels with1..100originalinnerfitpositive rows at eachfold, allcomp/giant2/othercomps, commonquerydiagnostic, fullsourcepositive denominators. Existing raw44 publishedresult is historicalreference only, not matchedcontrol.",
+    "uncertainty": "No population confidence claims; fixeddevelopment point comparisons. Allperqueryrankrecords available for independent recomputation.",
+    "rare_denominator": "1..100 supplied positive recording rows in all originalinnerfit rows, including missingfeatures; distinct from finite matched modeltraining labelgate. Perfold rare-tag support counts pooled across onlyfolds wheretagqualifies."
+  },
+  "limits": {
+    "per_stage_address_space_bytes": 1000000000,
+    "per_stage_cpu_seconds": 120,
+    "per_stage_wall_seconds": 120,
+    "combined_model_output_bytes": 100000000,
+    "blas_threads": 1,
+    "feature_projection": "Separate explicitly versioned518 offlinebank240MB; existing44projection guard unchanged."
+  },
+  "stages": "freeze;20fit stages(onearmfold each);20score stages(onearmfold each after all4foldmodels fit);summary. Existing artifact inventory/seal validated; failclosed on changedinputs/code/environment/partialstage. Output budgets includeallstages. No outcomes before independentprotocol/code approval.",
+  "synthetic_budget": {
+    "rows": 94953,
+    "columns": 518,
+    "labels": 164,
+    "linear_seconds": 1.467031223,
+    "rff_seconds": 0.847161459,
+    "peak_rss_bytes": 384118784,
+    "scope": "SyntheticGaussian featurematrix, not realcorpus; excludes sourcevalidation and scoring."
+  },
+  "interpretation": [
+    "Exploratory alreadyexamined development-data annotation recovery, not independent corpus evidence.",
+    "Source annotations are incomplete weak positives, not verified negatives or listening judgments.",
+    "No musical-relevance claim, serving replacement or automatic model promotion.",
+    "No hyperparameter/seed/bandwidth sweep or outerholdout tuning.",
+    "Identical trainingrowcohort does not equal equal effective capacity; featurebank correlation and nonlinear regularization are limitations."
+  ],
+  "rank_details": {
+    "numerical_rank": "s_i>max(coefficients.shape)*float64epsilon*s_0; empty orzero singular spectrum=>rank0",
+    "boundary_tie": "If numericalrank>8 and abs(s_7-s_8)<=1e-10*s_0, failstage; no fallback",
+    "signs": "Largest absolute U loading positive; lowestfeatureindex for tie",
+    "norm": "Finite float64 L2norm strictly>0; no epsilon threshold"
+  },
+  "synthetic_scoring_budget": {
+    "queries": 50105,
+    "candidates": 2048,
+    "seconds": 17.639739131998795,
+    "peak_rss_bytes": 384110592,
+    "scope": "All4model support transforms and1arm scoring/stable sorting; excludes labels/votes/serialization/inputvalidation; same1GB120s inheritedguards."
+  },
+  "independent_replay": "Root reviewer independently recomputes all4arms query representations, cosine rankings, labelvote rankings and percomponent metrics from persisted complete modelstate/candidates/source without producerimports. Receipt validation is custody only, not numerical replay."
+}

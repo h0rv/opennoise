@@ -304,13 +304,27 @@ def verify_feature_source(directory: Path) -> dict[str, Any]:
     return receipt
 
 
-def project_feature_stream(directory: Path, output: Path) -> dict[str, Any]:  # noqa: C901, PLR0915 - one bounded streaming pass binds native cells and artifacts.
+def project_feature_stream(directory: Path, output: Path) -> dict[str, Any]:
+    """Project the original bounded 44-mean feature artifact unchanged."""
+    return _project_features(directory, output)
+
+
+def _project_features(  # noqa: C901, PLR0912, PLR0913, PLR0915 - single verified streaming boundary.
+    directory: Path,
+    output: Path,
+    *,
+    selected: tuple[tuple[str, str, int], ...] = SELECTED_COLUMNS,
+    max_bytes: int = MAX_PROJECTION_BYTES,
+    revision: str = REVISION,
+    write_receipt: bool = True,
+) -> dict[str, Any]:
     """Verify CRC/full native SHA while retaining 44 float columns and duplicate diagnostics."""
     source = verify_feature_source(directory)
     member = source["member"]
     output.mkdir(parents=True, exist_ok=False)
     rows = 0
-    missing_cells = dict.fromkeys((str(column) for column in SELECTED_COLUMNS), 0)
+    missing_cells = dict.fromkeys((str(column) for column in selected), 0)
+    float_row = struct.Struct("<" + "f" * len(selected))
     seen_ids: set[int] = set()
     native_signatures: dict[bytes, list[int]] = {}
     with (directory / member["payload_path"]).open("rb") as raw:
@@ -321,7 +335,12 @@ def project_feature_stream(directory: Path, output: Path) -> dict[str, Any]:  # 
         with io.TextIOWrapper(io.BufferedReader(checked), encoding="utf-8", newline="") as text:
             reader = csv.reader(text)
             headers = [next(reader) for _ in range(3)]
-            columns, positions = selected_feature_positions(headers)
+            columns, _ = selected_feature_positions(headers)
+            if not set(selected).issubset(columns):
+                raise ValueError("declared native columns missing")
+            if selected != SELECTED_COLUMNS and tuple(columns) != selected:
+                raise ValueError("full native column order differs")
+            positions = [columns.index(column) + 1 for column in selected]
             index_header = next(reader)
             if index_header[0] != "track_id" or any(index_header[1:]):
                 raise ValueError("native track index header differs")
@@ -341,21 +360,23 @@ def project_feature_stream(directory: Path, output: Path) -> dict[str, Any]:  # 
                         raise ValueError("invalid or repeated native feature track identity")
                     seen_ids.add(identity)
                     values = []
-                    for column, position in zip(SELECTED_COLUMNS, positions, strict=True):
+                    for column, position in zip(selected, positions, strict=True):
                         value = float(row[position]) if row[position] else math.nan
                         if not math.isfinite(value):
                             value = math.nan
                             missing_cells[str(column)] += 1
                         values.append(value)
-                    vectors.write(_FLOAT_ROW.pack(*values))
+                    if (
+                        rows + 1 > MAX_ROWS
+                        or (rows + 1) * (float_row.size + _TRACK_ID.size) > max_bytes
+                    ):
+                        raise ValueError("native feature projection exceeds row or byte budget")
+                    vectors.write(float_row.pack(*values))
                     identities.write(_TRACK_ID.pack(identity))
                     signature = hashlib.sha256(canonical_json(row[1:])).digest()
                     native_signatures.setdefault(signature, []).append(identity)
                     rows += 1
-                    if (
-                        rows > MAX_ROWS
-                        or rows * (_FLOAT_ROW.size + _TRACK_ID.size) > MAX_PROJECTION_BYTES
-                    ):
+                    if rows > MAX_ROWS or rows * (float_row.size + _TRACK_ID.size) > max_bytes:
                         raise ValueError("native feature projection exceeds row or byte budget")
                     if rows % 20000 == 0:
                         sys.stderr.write(f"Projected native FMA acoustic rows: {rows}\n")
@@ -369,13 +390,13 @@ def project_feature_stream(directory: Path, output: Path) -> dict[str, Any]:  # 
         for name in ("features.float32", "track_ids.uint32", "duplicate-native-feature-cells.json")
     }
     receipt = {
-        "revision": REVISION,
+        "revision": revision,
         "source_receipt_sha256": sha256_file(directory / "source-receipt.json")[0],
         "declaration_sha256": source["declaration_sha256"],
         "license": "CC-BY-4.0",
         "attribution": source["attribution"],
         "rows": rows,
-        "columns": SELECTED_COLUMNS,
+        "columns": selected,
         "conceptual_channels": CHANNELS,
         "explicit_native_channel_aliases": {"zero_crossing_rate": "zcr"},
         "native_column_count": len(columns),
@@ -395,7 +416,8 @@ def project_feature_stream(directory: Path, output: Path) -> dict[str, Any]:  # 
         "audio_downloaded": False,
         "echo_nest_consumed": False,
     }
-    if sum(file["bytes"] for file in files.values()) > MAX_PROJECTION_BYTES:
+    if sum(file["bytes"] for file in files.values()) > max_bytes:
         raise ValueError("complete acoustic projection artifact budget exceeded")
-    (output / "projection-receipt.json").write_bytes(canonical_json(receipt) + b"\n")
+    if write_receipt:
+        (output / "projection-receipt.json").write_bytes(canonical_json(receipt) + b"\n")
     return receipt
