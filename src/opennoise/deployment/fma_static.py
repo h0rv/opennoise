@@ -16,6 +16,7 @@ import zstandard
 
 from opennoise.common import canonical_json, sha256_file, sha256_hex
 from opennoise.deployment.fma_albums import export_albums
+from opennoise.deployment.fma_cotags import export_cotags
 from opennoise.deployment.fma_descriptor_map import export_descriptor_map
 from opennoise.deployment.fma_playable_neighbors import export_playable_neighbors
 from opennoise.deployment.fma_playback import validate_playback_export
@@ -353,7 +354,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         output, artists, artist_tracks, artist_track_genres, files, artist_albums=artist_albums
     )
     connections = _genre_connections(tracks, genre_tracks)
-    genre_rows = []
+    genre_rows: list[dict[str, Any]] = []
     for genre in sorted(
         tables["genres"], key=lambda row: (row["title"].casefold(), row["genre_id"])
     ):
@@ -379,6 +380,15 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         "genres": genre_rows,
         "track_search": export_track_search(output, tracks, files),
         "albums": album_context,
+        "cotags": export_cotags(
+            output,
+            tracks,
+            set(artists),
+            {row["genre_id"] for row in genre_rows},
+            files,
+            _write,
+            _cohort,
+        ),
         **track_context,
         "counts": {
             "raw_tracks": len(tracks),
@@ -420,6 +430,7 @@ def build_fma_static(  # noqa: PLR0913, C901 - explicit independent optional sou
         "fma-catalog.html",
         "fma-catalog.css",
         "fma-catalog.js",
+        "fma-cotags.js",
         "fma-genre-map.js",
         "source-genres.js",
         "fma-related-music.js",
@@ -516,6 +527,7 @@ def refresh_fma_static_display(*, source: Path, output: Path) -> dict[str, Any]:
         "fma-catalog.html",
         "fma-catalog.css",
         "fma-catalog.js",
+        "fma-cotags.js",
         "fma-genre-map.js",
         "source-genres.js",
         "fma-related-music.js",
