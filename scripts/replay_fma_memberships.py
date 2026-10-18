@@ -27,9 +27,12 @@ def main() -> None:
     parser.add_argument("--saved-pack", type=Path, required=True)
     parser.add_argument("--memberships", type=Path, required=True)
     parser.add_argument("--export-artists", type=Path)
+    parser.add_argument("--rank-artists", action="store_true")
     parser.add_argument("--saved-pack-receipt-sha256")
     parser.add_argument("--membership-receipt-sha256")
     args = parser.parse_args()
+    if args.rank_artists and args.export_artists is None:
+        parser.error("--rank-artists requires --export-artists")
     if args.export_artists is not None:
         if not args.saved_pack_receipt_sha256 or not args.membership_receipt_sha256:
             parser.error("artist export requires both external receipt SHA256 pins")
@@ -39,6 +42,7 @@ def main() -> None:
             args.memberships,
             args.membership_receipt_sha256,
             args.export_artists,
+            rank_artists=args.rank_artists,
         )
     else:
         result = replay_membership_pack(args.saved_pack, args.memberships)

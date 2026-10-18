@@ -1,0 +1,59 @@
+"""Recompute artist positive-only diagnostics from exported rankings and pinned targets."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+from opennoise.ml.fma_memberships import _load_saved_groups
+from opennoise.ml.fma_saved_replay import replay_saved_pack
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--export', dest='export', type=Path, required=True)
+parser.add_argument('--export-sha256', required=True)
+parser.add_argument('--saved-pack', type=Path, required=True)
+args = parser.parse_args()
+raw = args.export.read_bytes()
+require(hashlib.sha256(raw).hexdigest() == args.export_sha256, "export hash differs")
+report = json.loads(raw)
+require(hashlib.sha256(Path(__file__).with_name("protocol.json").read_bytes()).hexdigest() == report["scope"]["ranking"]["protocol_sha256"], "protocol hash differs")
+require(hashlib.sha256((args.saved_pack/'pack-receipt.json').read_bytes()).hexdigest() == report['saved_pack_receipt_sha256'], 'saved receipt differs')
+replay_saved_pack(args.saved_pack)
+groups, _, _ = _load_saved_groups(args.saved_pack)
+results = {}
+for name, rows in groups.items():
+    targets = {}
+    track_sets = {}
+    for row in rows:
+        targets.setdefault(row['artist_id'], set()).update(row['genre_ids'] or [])
+        track_sets.setdefault(row['artist_id'], set()).add(row['track_id'])
+    artists = report['partitions'][name]['artists']
+    require(len(artists) == len(targets), 'artist count differs')
+    metrics = {}
+    for arm in ('membership_count', 'reciprocal_rank'):
+        recalls = []
+        hits = positives = covered = 0
+        for row in artists:
+            artist = row['artist_id']
+            require(set(row['track_ids']) == track_sets[artist], 'artist track set differs')
+            if arm == 'membership_count':
+                evidence = sorted(row['genre_evidence'], key=lambda e: (-len(e['contributing_track_ids']),e['genre_id']))
+                ranked = [e['genre_id'] for e in evidence[:10]]
+            else:
+                ranked = [e['genre_id'] for e in row['ranked_source_annotation_candidates']]
+            covered += bool(ranked)
+            observed = targets[artist]
+            if observed:
+                count = len(observed.intersection(ranked))
+                hits += count
+                positives += len(observed)
+                recalls.append(count/len(observed))
+        metrics[arm] = {'artists':len(artists),'labeled_artists':len(recalls),'positive_genres':positives,'hits':hits,'covered':covered,
+            'macro_artist_positive_recall10':sum(recalls)/len(recalls),
+            'micro_source_positive_recall10':hits/positives,'artist_query_coverage':covered/len(artists)}
+    results[name] = metrics
+print(json.dumps({'protocol_sha256':report['scope']['ranking']['protocol_sha256'],
+    'export_sha256':args.export_sha256,'scope':'historical FMA44 source-annotation diagnostic only; incomplete positives; previously observed test; no listener/FMA518/model-promotion claim',
+    'partitions':results},indent=2))
