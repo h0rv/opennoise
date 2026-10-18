@@ -4,10 +4,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import resource
+import signal
 import sys
 from pathlib import Path
 
-from opennoise.ml.fma_memberships import replay_membership_pack
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+resource.setrlimit(resource.RLIMIT_AS, (1_000_000_000, 1_000_000_000))
+resource.setrlimit(resource.RLIMIT_CPU, (120, 120))
+signal.alarm(120)
+
+from opennoise.ml.fma_artist_evidence import export_artist_evidence  # noqa: E402
+from opennoise.ml.fma_memberships import replay_membership_pack  # noqa: E402
 
 
 def main() -> None:
@@ -15,10 +26,23 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--saved-pack", type=Path, required=True)
     parser.add_argument("--memberships", type=Path, required=True)
+    parser.add_argument("--export-artists", type=Path)
+    parser.add_argument("--saved-pack-receipt-sha256")
+    parser.add_argument("--membership-receipt-sha256")
     args = parser.parse_args()
-    sys.stdout.write(
-        json.dumps(replay_membership_pack(args.saved_pack, args.memberships), indent=2) + "\n"
-    )
+    if args.export_artists is not None:
+        if not args.saved_pack_receipt_sha256 or not args.membership_receipt_sha256:
+            parser.error("artist export requires both external receipt SHA256 pins")
+        result = export_artist_evidence(
+            args.saved_pack,
+            args.saved_pack_receipt_sha256,
+            args.memberships,
+            args.membership_receipt_sha256,
+            args.export_artists,
+        )
+    else:
+        result = replay_membership_pack(args.saved_pack, args.memberships)
+    sys.stdout.write(json.dumps(result, indent=2) + "\n")
 
 
 if __name__ == "__main__":
