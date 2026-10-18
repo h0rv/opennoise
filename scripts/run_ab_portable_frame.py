@@ -17,6 +17,7 @@ resource.setrlimit(resource.RLIMIT_CPU, (120, 120))
 signal.alarm(120)
 
 from opennoise.ml import ab178_portable as portable  # noqa: E402
+from opennoise.ml.ab178_artist_export import export_artists  # noqa: E402
 
 
 def main() -> None:  # noqa: C901, PLR0912 - fixed explicit subcommands.
@@ -30,16 +31,17 @@ def main() -> None:  # noqa: C901, PLR0912 - fixed explicit subcommands.
         export.add_argument("--" + name + suffix, required=True)
     export.add_argument("--fold", type=int, choices=range(3), required=True)
     export.add_argument("--output", type=Path, required=True)
-    for name in ("export-queries", "infer", "replay", "verify"):
+    for name in ("export-artists", "export-queries", "infer", "replay", "verify"):
         child = commands.add_parser(name)
         child.add_argument("--bundle", type=Path, required=True)
         child.add_argument("--bundle-sha256", required=True)
-        if name in {"export-queries", "infer"}:
+        if name in {"export-artists", "export-queries", "infer"}:
             child.add_argument("--output", type=Path, required=True)
-        if name == "export-queries":
+        if name in {"export-artists", "export-queries"}:
             child.add_argument("--source", type=Path, required=True)
             child.add_argument("--source-receipt-sha256", required=True)
-            child.add_argument("--recording-mbid", action="append", required=True)
+            if name == "export-queries":
+                child.add_argument("--recording-mbid", action="append", required=True)
         if name in {"infer", "replay"}:
             child.add_argument("--queries", type=Path, required=True)
             child.add_argument("--query-sha256", required=True)
@@ -57,6 +59,10 @@ def main() -> None:  # noqa: C901, PLR0912 - fixed explicit subcommands.
             args.contract_sha256,
             args.fold,
             args.output,
+        )
+    elif args.command == "export-artists":
+        pin = export_artists(
+            args.source, args.source_receipt_sha256, args.bundle, args.bundle_sha256, args.output
         )
     elif args.command == "export-queries":
         pin = portable.export_queries(
