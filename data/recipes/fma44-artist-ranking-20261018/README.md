@@ -99,8 +99,11 @@ selects at most one artist per other component, breaks exact ties by native
 artist ID, and requires positive profile overlap. Empty profiles and queries
 without eligible overlap abstain explicitly. Candidate references resolve to
 profile evidence in the same partition; edges retain shared genre IDs, component
-IDs, track-support counts and cosine distance. Existing memberships and ranked
-profiles are unchanged. Pools are capped at 2,000 artists per partition and the
+IDs, track-support counts and cosine distance. `eligible_candidate_artists` and
+`eligible_candidate_components` count nonempty other-component profiles before
+positive-overlap filtering, including when the query profile is empty. They do
+not count selectable neighbors. Existing memberships and ranked profiles are
+unchanged. Pools are capped at 2,000 artists per partition and the
 existing 24 MB export limit remains in force.
 
 The retained example has 1,714 artists: calibration emits 2,682 edges for 447

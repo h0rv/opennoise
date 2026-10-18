@@ -1,0 +1,417 @@
+{
+  "candidate_pool": "artist ranked profiles in exact same historical membership partition",
+  "membership_receipt_sha256": "ad54dc99a09e0c0f492dd97ac21e216a4a70bfd39a7749932a6f1a1a45646c1d",
+  "model_refit": false,
+  "preimplementation_clarification": "Ordering names the existing raw cosine-score rule exactly; no requests or results changed, no query run yet.",
+  "purpose": "bounded engineering retrieval/abstention replay; no quality experiment",
+  "quality_evaluation": false,
+  "query_labels_consumed": false,
+  "query_rule": "top10 reciprocal saved track ranks keyed by native genre ID",
+  "requests": [
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 213
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 896
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1116
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1117
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1118
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1119
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1557
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1558
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1559
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1560
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1561
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1562
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1563
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1564
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1565
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1566
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1567
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1568
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1569
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1570
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1572
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1573
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1725
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1726
+    },
+    {
+      "selection": "first25-native-ids/calibration",
+      "track_id": 1836
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 273
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 274
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 275
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 276
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 277
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 281
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 282
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 284
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 285
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 293
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 294
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 297
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 300
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 640
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 725
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 726
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 727
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 728
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 729
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 730
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 731
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 836
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 837
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 838
+    },
+    {
+      "selection": "first25-native-ids/confirmation",
+      "track_id": 839
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 137
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 138
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 153
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 154
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 155
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 417
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 418
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 419
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 420
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 421
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 422
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 423
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 424
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 425
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 426
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 427
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 428
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 429
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 430
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 431
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 432
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 433
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 434
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 435
+    },
+    {
+      "selection": "first25-native-ids/test_diagnostic",
+      "track_id": 436
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 6842
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 6844
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 6845
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 7274
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 7275
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 7276
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 7277
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 7278
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 7279
+    },
+    {
+      "selection": "first10-other-existing-saved-abstentions",
+      "track_id": 7280
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 2
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 3
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 5
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 10
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 20
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 26
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 30
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 46
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 48
+    },
+    {
+      "selection": "first10-native-ids-without-saved-predictions",
+      "track_id": 134
+    },
+    {
+      "selection": "five-unknown-positive-uint32-contract-fixtures",
+      "track_id": 4294967291
+    },
+    {
+      "selection": "five-unknown-positive-uint32-contract-fixtures",
+      "track_id": 4294967292
+    },
+    {
+      "selection": "five-unknown-positive-uint32-contract-fixtures",
+      "track_id": 4294967293
+    },
+    {
+      "selection": "five-unknown-positive-uint32-contract-fixtures",
+      "track_id": 4294967294
+    },
+    {
+      "selection": "five-unknown-positive-uint32-contract-fixtures",
+      "track_id": 4294967295
+    }
+  ],
+  "revision": "fma44-recording-artist-query-contract-batch-v2",
+  "saved_pack_receipt_sha256": "3e1651c136f5ae0c588e6dd6930a7a8f68fc7b332d1e423d29d1657e20cd0106",
+  "selection": "descending raw cosine score; positive overlap; full query component exclusion; one artist per component; 6 results; exact computed-score ties by native artist ID; reported distance clamped to [0,2]",
+  "status": "frozen-before-query-implementation-and-results",
+  "supersedes_preimplementation_protocol_sha256": "25c03a421f563a107abcc8003f32ee9eafd3ea15b91497fbebe3b626b67db9d7"
+}
