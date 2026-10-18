@@ -88,7 +88,7 @@ class SourceCacheTests(PollingIsolatedAsyncioTestCase):
                     sources,
                     acquisition=SourceCacheAcquisition(
                         declared_manifest_sha256=manifest_sha,
-                        work_directory=root / "work",
+                        work_directory=root / "fresh-work",
                         limits=SourceCacheLimits(max_total_bytes=1024, max_concurrency=2),
                         storage_scope="portable_object_store",
                     ),
@@ -96,7 +96,7 @@ class SourceCacheTests(PollingIsolatedAsyncioTestCase):
                     client=client,
                 )
 
-            self.assertEqual(requests, ["/alpha.json", "/beta.json"])
+            self.assertCountEqual(requests, ["/alpha.json", "/beta.json"])
             self.assertEqual(receipt, replay)
             self.assertEqual(tuple(entry.source_id for entry in receipt.entries), ("alpha", "beta"))
             verify_source_cache_receipt(receipt, sources, declared_manifest_sha256=manifest_sha)
@@ -121,6 +121,117 @@ class SourceCacheTests(PollingIsolatedAsyncioTestCase):
             self.assertEqual(restored, restored_replay)
             for item in restored:
                 self.assertEqual(item.destination.read_bytes(), payloads[item.source_id])
+
+    async def test_incremental_manifest_fetches_only_changed_and_added_hashes(self) -> None:
+        original = {"alpha": b'{"alpha":1}', "beta": b'{"beta":1}'}
+        updated = {"alpha": original["alpha"], "beta": b'{"beta":2}', "gamma": b'{"gamma":1}'}
+        requests: list[str] = []
+        current = original
+
+        async def handler(request: httpx.Request) -> httpx.Response:
+            identifier = request.url.path.removesuffix(".json").removeprefix("/")
+            requests.append(identifier)
+            return httpx.Response(
+                200, content=current[identifier], headers={"Content-Type": "application/json"}
+            )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            store = LocalObjectStore(root / "objects")
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                old = await acquire_source_cache(
+                    [_source(k, v) for k, v in original.items()],
+                    acquisition=SourceCacheAcquisition(
+                        declared_manifest_sha256="a" * 64, work_directory=root / "first"
+                    ),
+                    store=store,
+                    client=client,
+                )
+                requests.clear()
+                current = updated
+                sources = [_source(k, v) for k, v in updated.items()]
+                new = await acquire_source_cache(
+                    sources,
+                    acquisition=SourceCacheAcquisition(
+                        declared_manifest_sha256="b" * 64, work_directory=root / "second"
+                    ),
+                    store=store,
+                    client=client,
+                )
+                self.assertCountEqual(requests, ["beta", "gamma"])
+                verify_source_cache_receipt(new, sources, declared_manifest_sha256="b" * 64)
+                requests.clear()
+                replay = await acquire_source_cache(
+                    sources,
+                    acquisition=SourceCacheAcquisition(
+                        declared_manifest_sha256="b" * 64, work_directory=root / "third"
+                    ),
+                    store=store,
+                    client=client,
+                )
+                self.assertEqual(new, replay)
+                self.assertEqual(requests, [])
+            restored = await restore_source_cache(old, destination_root=root / "old", store=store)
+            for item in restored:
+                self.assertEqual(item.destination.read_bytes(), original[item.source_id])
+            for source in sources:
+                path = root / "third/raw/sha256" / source.checksum
+                self.assertEqual(path.read_bytes(), updated[source.id])
+
+    async def test_existing_native_core_bytes_acquire_and_restore_without_http(self) -> None:
+        paths = sorted((ROOT / "data/examples/native-sonic/raw/credits").glob("*.json"))[:2]
+
+        async def handler(_request: httpx.Request) -> httpx.Response:
+            raise AssertionError("stored native core metadata must require no HTTP")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            store = LocalObjectStore(root / "objects")
+            sources = tuple(_source(f"core-{i}", path.read_bytes()) for i, path in enumerate(paths))
+            for source, path in zip(sources, paths, strict=True):
+                store.push(path, ObjectKey(value=f"source-artifacts/sha256/{source.checksum}"))
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                receipt = await acquire_source_cache(
+                    sources,
+                    acquisition=SourceCacheAcquisition(
+                        declared_manifest_sha256="c" * 64, work_directory=root / "fresh"
+                    ),
+                    store=store,
+                    client=client,
+                )
+            verify_source_cache_receipt(receipt, sources, declared_manifest_sha256="c" * 64)
+            restored = await restore_source_cache(
+                receipt, destination_root=root / "replay", store=store
+            )
+            for item, path in zip(restored, paths, strict=True):
+                self.assertEqual(item.destination.read_bytes(), path.read_bytes())
+
+    async def test_reacquisition_rejects_corrupt_cached_objects_without_http(self) -> None:
+        source = _source("alpha", b'{"alpha":1}')
+        requests = []
+
+        async def handler(request: httpx.Request) -> httpx.Response:
+            requests.append(request)
+            raise AssertionError("corrupt stored objects must not trigger HTTP fallback")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            store = LocalObjectStore(root / "objects")
+            path = root / "objects/source-artifacts/sha256" / source.checksum
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b'{"alpha":9}')
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                with self.assertRaises(ExceptionGroup) as raised:
+                    await acquire_source_cache(
+                        [source],
+                        acquisition=SourceCacheAcquisition(
+                            declared_manifest_sha256="a" * 64, work_directory=root / "fresh"
+                        ),
+                        store=store,
+                        client=client,
+                    )
+            self.assertIsInstance(raised.exception.exceptions[0], SourceCacheError)
+            self.assertEqual(requests, [])
 
     async def test_restore_rejects_tampered_object_bytes(self) -> None:
         payload = b'{"alpha":1}'

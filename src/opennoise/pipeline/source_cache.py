@@ -214,14 +214,30 @@ async def _acquire_entry(
     *,
     runtime: "_AcquisitionRuntime",
 ) -> SourceCacheEntry:
+    entry = _entry(source)
     async with runtime.semaphore:
+        if await asyncio.to_thread(runtime.store.exists, entry.object_key):
+            await asyncio.to_thread(
+                _restore_entry,
+                entry,
+                destination_root=runtime.acquisition.work_directory,
+                store=runtime.store,
+            )
+            # Apply the downloader's byte and metadata-only checks to restored
+            # bytes too. A corrupt cache fails closed, without a network fallback.
+            await download_verified(
+                source,
+                runtime.acquisition.work_directory,
+                client=runtime.client,
+                offline=True,
+            )
+            return entry
         downloaded = await download_verified(
             source,
             runtime.acquisition.work_directory,
             timeout_seconds=runtime.acquisition.limits.timeout_seconds,
             client=runtime.client,
         )
-    entry = _entry(source)
     object_write = await asyncio.to_thread(runtime.store.push, downloaded.path, entry.object_key)
     if object_write.sha256 != entry.sha256 or object_write.byte_size != entry.expected_bytes:
         raise SourceCacheError("object store changed a verified source artifact")
@@ -245,7 +261,7 @@ async def acquire_source_cache(
     store: ObjectStore,
     client: httpx.AsyncClient | None = None,
 ) -> SourceCacheReceipt:
-    """Fetch declared public metadata and retain every byte under its SHA256 key."""
+    """Reuse verified stored hashes and fetch only absent declared metadata objects."""
     selected = _validated_sources(sources, acquisition.limits, acquisition.storage_scope)
     if acquisition.storage_scope == "local_vault" and not isinstance(store, LocalObjectStore):
         raise SourceCacheError("local-only acquisition requires LocalObjectStore")

@@ -76,3 +76,46 @@ The local receipt SHA256 was
 `0da3929119b3556ebf1facccdc14df42ada66ebfe62213b6589e7ce368bfa064`.
 An offline restore and a second acquisition produced the same receipt and
 restored artifact checksum. The raw bytes were not published or committed.
+
+## Incremental acquisition with a fresh work directory
+
+`acquire-source-cache` now checks the durable object store before attempting a
+source download. For each current declared hash already present, it restores the
+object into the work directory and checks its size, SHA256 and metadata-only
+content policy. Only absent hashes reach the downloader. This makes a fresh work
+directory reusable with an existing store, without a separate restore command.
+
+A changed SHA256 selects a new immutable object; the old object and old receipts
+remain available for exact replay. An unchanged hash can be reused across a new
+manifest, but the new receipt still binds the current manifest and all current
+source declarations. Source limits and local/portable rights checks apply before
+any reuse. Corrupt stored bytes fail acquisition with no HTTP fallback or automatic
+replacement. Existing downloader resume behavior still applies to absent objects.
+Receipt schema, source selection and downstream evaluation gates are unchanged.
+
+For the same pinned manifest and store, run the acquisition command above again
+with a different `--work-directory` and `--receipt` path. When every selected hash
+is present, it restores the bytes without source HTTP requests and produces the
+same deterministic receipt. No new CLI options or task-runner aliases are needed.
+
+Reproduce the bounded regression and end-to-end checks after `poe sync`:
+
+```sh
+.venv/bin/python -m unittest tests.test_source_cache -v
+```
+
+The mixed-manifest test starts with two objects, then changes one and adds one:
+only the changed and added source are fetched. A third fresh work directory makes
+zero requests, and the old receipt still restores the old source versions. A
+separate checked-in native MusicBrainz core test restores two real metadata
+responses with HTTP forbidden. Cached corruption is rejected without contacting
+the source. Concurrent source downloads need not start in source-ID order;
+receipts and restores remain deterministically sorted.
+
+A local CLI demonstration on 2026-10-18 seeded the object store with two checked-in
+native core responses (817 bytes total), then acquired into two distinct empty
+work directories with HTTP(S) configured to an unreachable local proxy. Both runs
+succeeded with identical receipt SHA256
+`3169bfa15c44bda6f33f87a912bbf64bc757cd2f3ef4fbb3dc697b2b88cc7c10`.
+The demonstration used a local fixture manifest and made no external requests.
+No raw source bytes or local demo artifacts were added to the repository.
