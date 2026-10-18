@@ -86,6 +86,20 @@ class ArtistEvidenceTests(unittest.TestCase):
             ):
                 first = export_artist_evidence(*args, output)
                 second = export_artist_evidence(*args, root / "replay.json")
+            ranked_output = root / "ranked.json"
+            export_artist_evidence(*args, ranked_output, rank_artists=True)
+            ranked = json.loads(ranked_output.read_bytes())
+            original = json.loads(output.read_bytes())
+            for name, partition in ranked["partitions"].items():
+                for row in partition["artists"]:
+                    candidates = row.pop("ranked_source_annotation_candidates")
+                    supported = row.pop("ranking_supported_track_count")
+                    self.assertLessEqual(len(candidates), 10)
+                    self.assertLessEqual(supported, len(row["track_ids"]))
+                    if not supported:
+                        self.assertEqual(candidates, [])
+                self.assertEqual(partition, original["partitions"][name])
+            self.assertFalse(ranked["scope"]["ranking"]["ranked_candidates_are_memberships"])
             self.assertEqual(first, second)
             report = json.loads(output.read_bytes())
             ledger = {r["track_id"]: r for r in _json_rows(SOURCE / "native-folds.jsonl.zst")}

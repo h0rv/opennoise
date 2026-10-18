@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from opennoise.common import canonical_json, sha256_file
+from opennoise.ml import fma_artist_ranking as ranking
 from opennoise.ml.fma_acoustic_baseline import _json_rows
 from opennoise.ml.fma_memberships import replay_membership_pack
 
@@ -111,10 +112,39 @@ def _verify_inputs(
             raise ValueError("Artist export input differs from external receipt pin")
 
 
-def export_artist_evidence(
-    saved_pack: Path, saved_pin: str, memberships: Path, membership_pin: str, output: Path
+def _attach_rankings(report: dict[str, Any], partitions: dict[str, Any], saved_pack: Path) -> None:
+    """Attach opt-in ranking evidence while leaving calibrated memberships intact."""
+    saved_rankings = {
+        row["track_id"]: row
+        for name in ("validation", "test")
+        for row in _json_rows(saved_pack / f"{name}-acoustic-ranks.jsonl.zst")
+    }
+    for partition in partitions.values():
+        for artist in partition["artists"]:
+            artist.update(ranking.rank_artist_genres(artist["track_ids"], saved_rankings))
+    report["revision"] = "fma44-saved-artist-ranked-evidence-v1"
+    report["ranking_producer_sha256"] = sha256_file(Path(ranking.__file__))[0]
+    report["scope"]["ranking"] = {
+        "rule": "mean reciprocal track rank; all nominated tracks; genre-ID ties; top10",
+        "protocol_sha256": ranking.PROTOCOL_SHA256,
+        "target_labels_consumed": False,
+        "calibration_applied_to_ranked_candidates": False,
+        "ranked_candidates_are_memberships": False,
+    }
+
+
+def export_artist_evidence(  # noqa: PLR0913 - pinned source roles and explicit ranking opt-in.
+    saved_pack: Path,
+    saved_pin: str,
+    memberships: Path,
+    membership_pin: str,
+    output: Path,
+    *,
+    rank_artists: bool = False,
 ) -> dict[str, Any]:
     """Verify existing saved predictions, then publish one bounded artist/genre export."""
+    if type(rank_artists) is not bool:
+        raise ValueError("Artist ranking opt-in must be boolean")
     for path in (saved_pack, memberships, output):
         _safe(path)
     if output.exists() or any(
@@ -145,7 +175,7 @@ def export_artist_evidence(
         seen_artists.update(artists)
         seen_components.update(components)
     receipt = json.loads((saved_pack / "pack-receipt.json").read_bytes())
-    report = {
+    report: dict[str, Any] = {
         "revision": "fma44-saved-artist-evidence-v1",
         "saved_pack_receipt_sha256": saved_pin,
         "membership_receipt_sha256": membership_pin,
@@ -171,6 +201,8 @@ def export_artist_evidence(
         },
         "partitions": partitions,
     }
+    if rank_artists:
+        _attach_rankings(report, partitions, saved_pack)
     raw = canonical_json(report) + b"\n"
     if len(raw) > MAX_OUTPUT_BYTES:
         raise ValueError("Artist export exceeds output byte cap")

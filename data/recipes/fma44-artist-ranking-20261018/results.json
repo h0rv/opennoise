@@ -1,0 +1,73 @@
+{
+  "protocol_sha256": "971efc50e483c189b0fbabe68ae29840704675c8f48a980cccb99f60d2b294c8",
+  "export_sha256": "e47508c2ef02315714a003aaf727abbffada3f7dcc96152679fcd3e35c1bdf1b",
+  "scope": "historical FMA44 source-annotation diagnostic only; incomplete positives; previously observed test; no listener/FMA518/model-promotion claim",
+  "partitions": {
+    "calibration": {
+      "membership_count": {
+        "artists": 472,
+        "labeled_artists": 456,
+        "positive_genres": 1200,
+        "hits": 448,
+        "covered": 447,
+        "macro_artist_positive_recall10": 0.36678458298524086,
+        "micro_source_positive_recall10": 0.37333333333333335,
+        "artist_query_coverage": 0.9470338983050848
+      },
+      "reciprocal_rank": {
+        "artists": 472,
+        "labeled_artists": 456,
+        "positive_genres": 1200,
+        "hits": 472,
+        "covered": 447,
+        "macro_artist_positive_recall10": 0.42856620718462823,
+        "micro_source_positive_recall10": 0.3933333333333333,
+        "artist_query_coverage": 0.9470338983050848
+      }
+    },
+    "confirmation": {
+      "membership_count": {
+        "artists": 410,
+        "labeled_artists": 396,
+        "positive_genres": 979,
+        "hits": 387,
+        "covered": 388,
+        "macro_artist_positive_recall10": 0.38953322911656246,
+        "micro_source_positive_recall10": 0.3953013278855976,
+        "artist_query_coverage": 0.9463414634146341
+      },
+      "reciprocal_rank": {
+        "artists": 410,
+        "labeled_artists": 396,
+        "positive_genres": 979,
+        "hits": 378,
+        "covered": 388,
+        "macro_artist_positive_recall10": 0.41095779220779216,
+        "micro_source_positive_recall10": 0.3861082737487232,
+        "artist_query_coverage": 0.9463414634146341
+      }
+    },
+    "test_diagnostic": {
+      "membership_count": {
+        "artists": 832,
+        "labeled_artists": 799,
+        "positive_genres": 1947,
+        "hits": 683,
+        "covered": 784,
+        "macro_artist_positive_recall10": 0.34444716142610565,
+        "micro_source_positive_recall10": 0.35079609655880845,
+        "artist_query_coverage": 0.9423076923076923
+      },
+      "reciprocal_rank": {
+        "artists": 832,
+        "labeled_artists": 799,
+        "positive_genres": 1947,
+        "hits": 770,
+        "covered": 784,
+        "macro_artist_positive_recall10": 0.4273570838431326,
+        "micro_source_positive_recall10": 0.3954802259887006,
+        "artist_query_coverage": 0.9423076923076923
+      }
+    }
+  }
+}
