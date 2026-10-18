@@ -28,9 +28,16 @@ def main() -> None:
     parser.add_argument("--memberships", type=Path, required=True)
     parser.add_argument("--export-artists", type=Path)
     parser.add_argument("--rank-artists", action="store_true")
+    parser.add_argument(
+        "--artist-neighbors",
+        action="store_true",
+        help="attach six component-distinct neighbors within each historical rank-profile pool",
+    )
     parser.add_argument("--saved-pack-receipt-sha256")
     parser.add_argument("--membership-receipt-sha256")
     args = parser.parse_args()
+    if args.artist_neighbors and (not args.rank_artists or args.export_artists is None):
+        parser.error("--artist-neighbors requires --export-artists and --rank-artists")
     if args.rank_artists and args.export_artists is None:
         parser.error("--rank-artists requires --export-artists")
     if args.export_artists is not None:
@@ -43,6 +50,7 @@ def main() -> None:
             args.membership_receipt_sha256,
             args.export_artists,
             rank_artists=args.rank_artists,
+            artist_neighbors=args.artist_neighbors,
         )
     else:
         result = replay_membership_pack(args.saved_pack, args.memberships)

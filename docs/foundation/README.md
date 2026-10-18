@@ -61,6 +61,11 @@ is retained in private recovery storage. The public text recipe preserves its
 exact decoded bytes and attribution. Historical evidence copies referring to a
 tracked binary pack describe the local example before this publication route.
 
+The optional [artist rank-profile neighbor export](../../data/recipes/fma44-artist-ranking-20261018/README.md#optional-artist-profile-neighbors)
+adds identity-safe retrieval within each historical partition. Its recipe records
+the pinned command, observed yield, independent edge checks and interpretation
+limits. It leaves calibrated memberships and ranked profiles unchanged.
+
 `poe sync && poe check` is the clean-checkout baseline. `poe build` also needs
 `data/public.sqlite` and `.cache/semantic-map-layout-v3/artifact.json`; the
 ignored files must be supplied locally. The parity comparison additionally

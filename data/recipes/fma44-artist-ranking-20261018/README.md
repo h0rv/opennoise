@@ -76,3 +76,53 @@ the consumer export rather than invoking the ranker again, validates its externa
 hash and protocol, replays the target pack and checks the complete artist track
 sets before counting positives. No raw feature download, waveform, refit, new
 calibration, Library transfer, UI or service cost is involved.
+
+## Optional artist profile neighbors
+
+The same replay can optionally export native artist evidence and retrieve six
+neighbors from each artist's top-ten mean reciprocal track ranks:
+
+```sh
+.venv/bin/python scripts/replay_fma_memberships.py \
+  --saved-pack data/examples/fma-acoustic-baseline \
+  --memberships /tmp/fma-source-memberships-v1 \
+  --export-artists /tmp/fma-artist-profile-neighbors.json \
+  --rank-artists --artist-neighbors \
+  --saved-pack-receipt-sha256 3e1651c136f5ae0c588e6dd6930a7a8f68fc7b332d1e423d29d1657e20cd0106 \
+  --membership-receipt-sha256 ad54dc99a09e0c0f492dd97ac21e216a4a70bfd39a7749932a6f1a1a45646c1d
+```
+
+This opt-in uses cosine similarity over the retained rank profiles, keyed by
+native genre ID. Each named historical partition supplies its own candidate
+pool; none is a training pool. Retrieval excludes the full query component,
+selects at most one artist per other component, breaks exact ties by native
+artist ID, and requires positive profile overlap. Empty profiles and queries
+without eligible overlap abstain explicitly. Candidate references resolve to
+profile evidence in the same partition; edges retain shared genre IDs, component
+IDs, track-support counts and cosine distance. Existing memberships and ranked
+profiles are unchanged. Pools are capped at 2,000 artists per partition and the
+existing 24 MB export limit remains in force.
+
+The retained example has 1,714 artists: calibration emits 2,682 edges for 447
+artists with 25 empty profiles; confirmation emits 2,328 for 388 with 22 empty;
+historical test diagnostics emit 4,704 for 784 with 48 empty. Independent
+intersection-based tests verify every edge and distance against the saved
+profiles. These are model-rank-profile similarities: acoustic similarity,
+listener relevance and held-out quality remain unestablished. This does not
+consume FMA518 features or authorize product promotion.
+
+The checked neighbor export has SHA256
+`62f47c4144129483dcacde8c3d564820007c96200a46ca1936e230e10bd21bc4`
+and is 6,874,277 bytes. It contains 9,714 directed edges. An independent NumPy
+dense-matrix oracle matched every artist's ordered neighbor IDs, with zero
+ordering mismatches and maximum cosine-distance difference of 4.44e-16. All
+edges passed separate checks for same-partition membership, self/full-component
+exclusion, distinct neighbor components and exact shared genre support. No
+source labels entered this neighbor computation or either edge audit.
+
+`tests/test_fma_artist_neighbors.py` runs the pinned replay command against the
+retained data, independently reconstructs every ordered edge and distance using
+dictionary intersections, and confirms that removing only the new neighbor
+fields recovers the ordinary ranked partitions exactly. Synthetic fixtures cover
+native-ID ties, component exclusion, empty and disjoint profiles, and malformed
+weights. No model quality experiment or change to evaluation gates is involved.
