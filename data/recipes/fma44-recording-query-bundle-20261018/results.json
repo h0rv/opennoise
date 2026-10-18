@@ -1,0 +1,86 @@
+{
+  "batches": {
+    "hundred": {
+      "edges": 450,
+      "exact_query_rows_equal": true,
+      "outcomes": {
+        "emitted": 75,
+        "missing_feature_row": 10,
+        "no_saved_prediction": 10,
+        "unknown_native_track_id": 5
+      },
+      "portable": {
+        "bytes": 144980,
+        "elapsed_seconds": 0.8554136489983648,
+        "exit_code": 0,
+        "peak_rss_bytes": 133222400,
+        "sha256": "ebd1afbec3bc90b543afbb17040f34e136eaf2a33979340b475dd7e57b5ece9f"
+      },
+      "request_count": 100,
+      "source": {
+        "bytes": 4980452,
+        "elapsed_seconds": 3.9368142429993895,
+        "exit_code": 0,
+        "peak_rss_bytes": 230465536,
+        "sha256": "c70a66622ab10a0d6a9c9a49bc0e9d3e1003212e98e2656097586944c06804c0"
+      }
+    },
+    "one": {
+      "edges": 6,
+      "exact_query_rows_equal": true,
+      "outcomes": {
+        "emitted": 1
+      },
+      "portable": {
+        "bytes": 3770,
+        "elapsed_seconds": 0.7502066519991786,
+        "exit_code": 0,
+        "peak_rss_bytes": 131698688,
+        "sha256": "ed456473165c1faeda737137011b493c2daa623bae374769a30748e5fea924dd"
+      },
+      "request_count": 1,
+      "source": {
+        "bytes": 4839242,
+        "elapsed_seconds": 4.137106807000237,
+        "exit_code": 0,
+        "peak_rss_bytes": 229818368,
+        "sha256": "01b54d8f2ecc5fc5789ef4ba34008f2c16e1ce4533bb8e6a6666a7810eb55f9f"
+      }
+    }
+  },
+  "build": {
+    "elapsed_seconds": 5.69888597300087,
+    "exit_code": 0,
+    "peak_rss_bytes": 275021824
+  },
+  "bundle_files": {
+    "lookup.json": {
+      "bytes": 5207687,
+      "sha256": "87c4e99e16d5de63867ee3fa92866003161bc20a275d76e3ff751b58fed43237"
+    },
+    "manifest.json": {
+      "bytes": 2245,
+      "sha256": "8204d73e445bc370f2a896a1a36307a911e012d69c5e640c3759a8d43daced37"
+    }
+  },
+  "bundle_manifest_sha256": "8204d73e445bc370f2a896a1a36307a911e012d69c5e640c3759a8d43daced37",
+  "bundle_total_bytes": 5209932,
+  "independent_audit": {
+    "actual_denied_roots": 7,
+    "attribution_namespaces_and_source_pins_preserved": true,
+    "bundle_manifest_sha256": "8204d73e445bc370f2a896a1a36307a911e012d69c5e640c3759a8d43daced37",
+    "complete_native_rows_verified": 109727,
+    "forbidden_open_attempts": 0,
+    "original_full_rank_artist_profiles_verified": 1714,
+    "query_bytes": 144980,
+    "query_sha256": "ebd1afbec3bc90b543afbb17040f34e136eaf2a33979340b475dd7e57b5ece9f",
+    "relocated_source_denied_query_byte_identical": true,
+    "requested_rows_equal_independent_PR78_oracle": 100,
+    "saved_rows_verified": 13800,
+    "source_denial_guard_pretested_on_existing_target_file": true
+  },
+  "protocol_sha256": "3f27d8ec5a6f8e94877c9001008e920bbf39902d915093136e6a09bd9979a088",
+  "request_protocol_sha256": "7ee032991f48dd8f3fb219fcb00eb734a0e72e47838c26bfc818b38b4d0f6e20",
+  "scope": "single bounded engineering measurement; no universal performance or music quality claim",
+  "source_denied_relocation_byte_identical": true
+}

@@ -1,0 +1,46 @@
+{
+  "claims": {
+    "listener_relevance": false,
+    "new_features": false,
+    "new_model_inference": false,
+    "paid_services": false,
+    "quality_evaluation": false,
+    "universal_performance_guarantee": false
+  },
+  "comparisons": [
+    "source-mode vs portable mode: exact query row equality",
+    "source mode emits complete ranked artist profiles, no optional artist graph",
+    "portable mode emits only requested query rows, policy and bundle provenance"
+  ],
+  "fixed_request_protocol_sha256": "7ee032991f48dd8f3fb219fcb00eb734a0e72e47838c26bfc818b38b4d0f6e20",
+  "measurement": {
+    "build": "single guarded bundle export; record total bytes/file count/build elapsed/RSS",
+    "elapsed": "monotonic wall seconds around child execution",
+    "process": "fresh child process per source/portable mode and batch",
+    "repetitions": 1,
+    "rss": "Linux child peak RSS KiB converted to bytes; measure in fresh wrapper"
+  },
+  "negative_contracts": [
+    "external hash mismatch",
+    "altered or extra file",
+    "wrong runtime or implementation",
+    "malformed or duplicate identity/profile/rank rows",
+    "ambiguous CLI modes",
+    "input-output or output-output overlap"
+  ],
+  "parity_required": [
+    "native recording/artist/component/fold/partition",
+    "original reason and saved_abstention",
+    "query rank profile",
+    "all candidate IDs/order/overlap/support/distance/pool counts"
+  ],
+  "relocation_required": "copy only bundle; deny opens under original pack, memberships, original full exports and original bundle path",
+  "request_batches": {
+    "hundred": "all100 requests in exact existing protocol order",
+    "one": [
+      213
+    ]
+  },
+  "revision": "fma44-portable-recording-lookup-engineering-v1",
+  "status": "frozen-before-portable-implementation-and-measurements"
+}
