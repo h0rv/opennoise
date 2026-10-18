@@ -111,3 +111,9 @@ inference, acoustic similarity, listener relevance, held-out quality, FMA518
 result, generalization or product promotion is established. Source targets are
 not inputs to retrieval. The ordinary membership replay retains its existing
 separate verification of historical metrics; evaluation gates are unchanged.
+
+For repeated or relocated queries, the optional
+[portable saved-rank bundle](../fma44-recording-query-bundle-20261018/README.md)
+exports verified state once and returns only requested rows thereafter, without
+original source packs, target metadata or complete artist exports. Query rows
+and retrieval policy remain identical.

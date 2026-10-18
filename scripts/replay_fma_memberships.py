@@ -19,13 +19,14 @@ signal.alarm(120)
 
 from opennoise.ml.fma_artist_evidence import export_artist_evidence  # noqa: E402
 from opennoise.ml.fma_memberships import replay_membership_pack  # noqa: E402
+from opennoise.ml.fma_recording_query_bundle import lookup  # noqa: E402
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901 - explicit mutually exclusive source and portable modes.
     """Replay thresholds, suggestions and metrics without fitting or obtaining audio."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--saved-pack", type=Path, required=True)
-    parser.add_argument("--memberships", type=Path, required=True)
+    parser.add_argument("--saved-pack", type=Path)
+    parser.add_argument("--memberships", type=Path)
     parser.add_argument("--export-artists", type=Path)
     parser.add_argument("--rank-artists", action="store_true")
     parser.add_argument(
@@ -41,7 +42,41 @@ def main() -> None:
     )
     parser.add_argument("--saved-pack-receipt-sha256")
     parser.add_argument("--membership-receipt-sha256")
+    parser.add_argument("--export-query-bundle", type=Path)
+    parser.add_argument("--query-bundle", type=Path)
+    parser.add_argument("--query-bundle-sha256")
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    if args.query_bundle is not None:
+        source_args = (
+            args.saved_pack,
+            args.memberships,
+            args.export_artists,
+            args.rank_artists,
+            args.artist_neighbors,
+            args.saved_pack_receipt_sha256,
+            args.membership_receipt_sha256,
+            args.export_query_bundle,
+        )
+        if any(value is not None and value is not False for value in source_args):
+            parser.error("bundle lookup rejects source/export flags")
+        if not args.query_bundle_sha256 or args.query_track_id is None or args.output is None:
+            parser.error(
+                "bundle lookup requires --query-bundle-sha256, --query-track-id and --output"
+            )
+        result = lookup(
+            args.query_bundle, args.query_bundle_sha256, args.query_track_id, args.output
+        )
+        sys.stdout.write(json.dumps(result, indent=2) + "\n")
+        return
+    if args.query_bundle_sha256 is not None or args.output is not None:
+        parser.error("--query-bundle-sha256 and --output require --query-bundle")
+    if args.saved_pack is None or args.memberships is None:
+        parser.error("source replay requires --saved-pack and --memberships")
+    if args.export_query_bundle is not None and (
+        args.export_artists is None or not args.rank_artists
+    ):
+        parser.error("--export-query-bundle requires --export-artists and --rank-artists")
     if args.query_track_id is not None and (not args.rank_artists or args.export_artists is None):
         parser.error("--query-track-id requires --export-artists and --rank-artists")
     if args.artist_neighbors and (not args.rank_artists or args.export_artists is None):
@@ -60,6 +95,7 @@ def main() -> None:
             rank_artists=args.rank_artists,
             artist_neighbors=args.artist_neighbors,
             query_track_ids=args.query_track_id,
+            query_bundle_output=args.export_query_bundle,
         )
     else:
         result = replay_membership_pack(args.saved_pack, args.memberships)

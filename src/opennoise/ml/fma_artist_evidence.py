@@ -9,6 +9,7 @@ from opennoise.common import canonical_json, sha256_file
 from opennoise.ml import fma_artist_neighbors as neighbors
 from opennoise.ml import fma_artist_ranking as ranking
 from opennoise.ml import fma_recording_artists as recording
+from opennoise.ml import fma_recording_query_bundle as query_bundle
 from opennoise.ml.fma_acoustic_baseline import _json_rows
 from opennoise.ml.fma_memberships import replay_membership_pack
 
@@ -174,7 +175,7 @@ def _attach_recordings(
     }
 
 
-def export_artist_evidence(  # noqa: C901, PLR0912, PLR0913 - pinned custody, partition isolation and explicit opt-ins.
+def export_artist_evidence(  # noqa: C901, PLR0912, PLR0913, PLR0915 - pinned custody, partition isolation and explicit opt-ins.
     saved_pack: Path,
     saved_pin: str,
     memberships: Path,
@@ -184,6 +185,7 @@ def export_artist_evidence(  # noqa: C901, PLR0912, PLR0913 - pinned custody, pa
     rank_artists: bool = False,
     artist_neighbors: bool = False,
     query_track_ids: list[int] | None = None,
+    query_bundle_output: Path | None = None,
 ) -> dict[str, Any]:
     """Verify existing saved predictions, then publish one bounded artist/genre export."""
     if query_track_ids is not None:
@@ -200,6 +202,11 @@ def export_artist_evidence(  # noqa: C901, PLR0912, PLR0913 - pinned custody, pa
         output.resolve().is_relative_to(p.resolve()) for p in (saved_pack, memberships)
     ):
         raise ValueError("Artist export must be fresh and outside input custody")
+    if query_bundle_output is not None:
+        if not rank_artists:
+            raise ValueError("Query bundle export requires ranked artist export")
+        query_bundle.fresh_destination(query_bundle_output, (saved_pack, memberships, output))
+        query_bundle.fresh_destination(output, (saved_pack, memberships, query_bundle_output))
     _verify_inputs(saved_pack, saved_pin, memberships, membership_pin)
     replay_membership_pack(saved_pack, memberships)
     identities = {}
@@ -260,13 +267,35 @@ def export_artist_evidence(  # noqa: C901, PLR0912, PLR0913 - pinned custody, pa
     raw = canonical_json(report) + b"\n"
     if len(raw) > MAX_OUTPUT_BYTES:
         raise ValueError("Artist export exceeds output byte cap")
+    prepared = None
+    if query_bundle_output is not None:
+        provenance = {
+            "saved_pack_receipt_sha256": saved_pin,
+            "membership_receipt_sha256": membership_pin,
+            "license": report["license"],
+            "attribution": report["attribution"],
+            "saved_inputs": {
+                name: sha256_file(saved_pack / name)[0]
+                for name in (
+                    "native-folds.jsonl.zst",
+                    "validation-acoustic-ranks.jsonl.zst",
+                    "test-acoustic-ranks.jsonl.zst",
+                )
+            },
+        }
+        prepared = query_bundle.prepare(report, identities, saved_rankings, provenance)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("xb") as stream:
         stream.write(raw)
-    return {
+    result = {
         "sha256": sha256_file(output)[0],
         "bytes": len(raw),
         "partitions": {
             k: {f: v[f] for f in ("track_count", "artist_count")} for k, v in partitions.items()
         },
     }
+    if query_bundle_output is not None and prepared is not None:
+        result["query_bundle_manifest_sha256"] = query_bundle.publish(
+            query_bundle_output, *prepared
+        )
+    return result
