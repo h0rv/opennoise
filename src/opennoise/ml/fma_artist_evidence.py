@@ -8,6 +8,7 @@ from typing import Any
 from opennoise.common import canonical_json, sha256_file
 from opennoise.ml import fma_artist_neighbors as neighbors
 from opennoise.ml import fma_artist_ranking as ranking
+from opennoise.ml import fma_recording_artists as recording
 from opennoise.ml.fma_acoustic_baseline import _json_rows
 from opennoise.ml.fma_memberships import replay_membership_pack
 
@@ -113,7 +114,9 @@ def _verify_inputs(
             raise ValueError("Artist export input differs from external receipt pin")
 
 
-def _attach_rankings(report: dict[str, Any], partitions: dict[str, Any], saved_pack: Path) -> None:
+def _attach_rankings(
+    report: dict[str, Any], partitions: dict[str, Any], saved_pack: Path
+) -> dict[int, dict[str, Any]]:
     """Attach opt-in ranking evidence while leaving calibrated memberships intact."""
     saved_rankings = {
         row["track_id"]: row
@@ -133,6 +136,8 @@ def _attach_rankings(report: dict[str, Any], partitions: dict[str, Any], saved_p
         "ranked_candidates_are_memberships": False,
     }
 
+    return saved_rankings
+
 
 def _attach_neighbors(report: dict[str, Any], partitions: dict[str, Any]) -> None:
     """Attach retrieval to the verified profiles without altering their evidence."""
@@ -143,7 +148,33 @@ def _attach_neighbors(report: dict[str, Any], partitions: dict[str, Any]) -> Non
     report["neighbor_producer_sha256"] = sha256_file(Path(neighbors.__file__))[0]
 
 
-def export_artist_evidence(  # noqa: C901, PLR0913 - pinned custody, partition isolation and explicit opt-ins.
+def _attach_recordings(
+    report: dict[str, Any],
+    track_ids: list[int],
+    saved_rankings: dict[int, dict[str, Any]],
+    identities: dict[int, dict[str, Any]],
+    saved_pack: Path,
+) -> None:
+    """Attach bounded requests and bind the actual shared kernel and saved inputs."""
+    report["recording_artist_queries"] = recording.query_recordings(
+        track_ids, saved_rankings, identities, report["partitions"]
+    )
+    report["recording_query_policy"] = recording.POLICY
+    report["recording_query_provenance"] = {
+        "implementation_sha256": sha256_file(Path(recording.__file__))[0],
+        "cosine_implementation_sha256": sha256_file(Path(neighbors.__file__))[0],
+        "saved_inputs": {
+            name: sha256_file(saved_pack / name)[0]
+            for name in (
+                "native-folds.jsonl.zst",
+                "validation-acoustic-ranks.jsonl.zst",
+                "test-acoustic-ranks.jsonl.zst",
+            )
+        },
+    }
+
+
+def export_artist_evidence(  # noqa: C901, PLR0912, PLR0913 - pinned custody, partition isolation and explicit opt-ins.
     saved_pack: Path,
     saved_pin: str,
     memberships: Path,
@@ -152,8 +183,13 @@ def export_artist_evidence(  # noqa: C901, PLR0913 - pinned custody, partition i
     *,
     rank_artists: bool = False,
     artist_neighbors: bool = False,
+    query_track_ids: list[int] | None = None,
 ) -> dict[str, Any]:
     """Verify existing saved predictions, then publish one bounded artist/genre export."""
+    if query_track_ids is not None:
+        recording.validate_requests(query_track_ids)
+        if not rank_artists:
+            raise ValueError("Recording queries require ranked artist export")
     if type(artist_neighbors) is not bool or (artist_neighbors and not rank_artists):
         raise ValueError("Artist profile neighbors require ranked artist export")
     if type(rank_artists) is not bool:
@@ -214,10 +250,13 @@ def export_artist_evidence(  # noqa: C901, PLR0913 - pinned custody, partition i
         },
         "partitions": partitions,
     }
+    saved_rankings = {}
     if rank_artists:
-        _attach_rankings(report, partitions, saved_pack)
+        saved_rankings = _attach_rankings(report, partitions, saved_pack)
     if artist_neighbors:
         _attach_neighbors(report, partitions)
+    if query_track_ids is not None:
+        _attach_recordings(report, query_track_ids, saved_rankings, identities, saved_pack)
     raw = canonical_json(report) + b"\n"
     if len(raw) > MAX_OUTPUT_BYTES:
         raise ValueError("Artist export exceeds output byte cap")

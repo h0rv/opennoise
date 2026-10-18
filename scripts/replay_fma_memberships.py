@@ -33,9 +33,17 @@ def main() -> None:
         action="store_true",
         help="attach six component-distinct neighbors within each historical rank-profile pool",
     )
+    parser.add_argument(
+        "--query-track-id",
+        type=int,
+        action="append",
+        help="query saved recording ranks against same-partition artist profiles",
+    )
     parser.add_argument("--saved-pack-receipt-sha256")
     parser.add_argument("--membership-receipt-sha256")
     args = parser.parse_args()
+    if args.query_track_id is not None and (not args.rank_artists or args.export_artists is None):
+        parser.error("--query-track-id requires --export-artists and --rank-artists")
     if args.artist_neighbors and (not args.rank_artists or args.export_artists is None):
         parser.error("--artist-neighbors requires --export-artists and --rank-artists")
     if args.rank_artists and args.export_artists is None:
@@ -51,6 +59,7 @@ def main() -> None:
             args.export_artists,
             rank_artists=args.rank_artists,
             artist_neighbors=args.artist_neighbors,
+            query_track_ids=args.query_track_id,
         )
     else:
         result = replay_membership_pack(args.saved_pack, args.memberships)
