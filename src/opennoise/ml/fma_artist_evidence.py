@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from opennoise.common import canonical_json, sha256_file
+from opennoise.ml import fma_artist_neighbors as neighbors
 from opennoise.ml import fma_artist_ranking as ranking
 from opennoise.ml.fma_acoustic_baseline import _json_rows
 from opennoise.ml.fma_memberships import replay_membership_pack
@@ -133,7 +134,16 @@ def _attach_rankings(report: dict[str, Any], partitions: dict[str, Any], saved_p
     }
 
 
-def export_artist_evidence(  # noqa: PLR0913 - pinned source roles and explicit ranking opt-in.
+def _attach_neighbors(report: dict[str, Any], partitions: dict[str, Any]) -> None:
+    """Attach retrieval to the verified profiles without altering their evidence."""
+    for partition in partitions.values():
+        neighbors.attach_neighbors(partition)
+    report["revision"] = neighbors.POLICY["revision"]
+    report["scope"]["profile_neighbors"] = neighbors.POLICY
+    report["neighbor_producer_sha256"] = sha256_file(Path(neighbors.__file__))[0]
+
+
+def export_artist_evidence(  # noqa: C901, PLR0913 - pinned custody, partition isolation and explicit opt-ins.
     saved_pack: Path,
     saved_pin: str,
     memberships: Path,
@@ -141,8 +151,11 @@ def export_artist_evidence(  # noqa: PLR0913 - pinned source roles and explicit 
     output: Path,
     *,
     rank_artists: bool = False,
+    artist_neighbors: bool = False,
 ) -> dict[str, Any]:
     """Verify existing saved predictions, then publish one bounded artist/genre export."""
+    if type(artist_neighbors) is not bool or (artist_neighbors and not rank_artists):
+        raise ValueError("Artist profile neighbors require ranked artist export")
     if type(rank_artists) is not bool:
         raise ValueError("Artist ranking opt-in must be boolean")
     for path in (saved_pack, memberships, output):
@@ -203,6 +216,8 @@ def export_artist_evidence(  # noqa: PLR0913 - pinned source roles and explicit 
     }
     if rank_artists:
         _attach_rankings(report, partitions, saved_pack)
+    if artist_neighbors:
+        _attach_neighbors(report, partitions)
     raw = canonical_json(report) + b"\n"
     if len(raw) > MAX_OUTPUT_BYTES:
         raise ValueError("Artist export exceeds output byte cap")
