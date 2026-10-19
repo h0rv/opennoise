@@ -1,0 +1,120 @@
+{
+  "revision": "cc0-public-membership-provenance-results-v2",
+  "base_main": "25f4bba4a9f6cdf7da9bb9cf9dff54f07c1c2cb1",
+  "attribution": "MusicBrainz and Wikidata contributors",
+  "source_license": "CC0-1.0",
+  "source_custody": {
+    "method": "SQLite backup of independently guarded main CC0 replay; registered original retained raw Wikidata body and manifest inventory only; claims/identities unchanged",
+    "original_database": "/workspace/production-artist-identity-20261019/main-proof/build/musicbrainz-first.sqlite",
+    "original_database_sha256": "7fda4946f7a0bcd3e137da818fba95b07c1028efcbab717e0310ef1e438e9191",
+    "database_sha256": "a1b67cef936cf240a1be233ef3c387f57a023e7939b4698295b4232b2dd2725f",
+    "policy_sha256": "0b39262b6244edf1835ecb3c968aefa5ff4ccca108c71a319563a915f4d08f65",
+    "raw_sha256": "df1cf4e12a947ff18df1a7bcfb1cfda68e8c30b17e197275f07d4b336f772f19",
+    "manifest_sha256": "62f5318c2a8404f88874a9e3558e485099b606f772a052873a010a848e14d7e2",
+    "acquisitions": 0,
+    "cost_usd": 0
+  },
+  "source_custody_receipt": {
+    "sha256": "b60a8b5ebeb3d03f51fc45f9e3c2204922ac68fbcefc31cb9f2116f81b96dc6b",
+    "bytes": 778
+  },
+  "scope": "Source metadata eligibility/custody only; no new membership/relevance/genre inference, acquisition, model fit, deployment or research-license promotion.",
+  "before": {
+    "base_main": "c46d2dcf4aa730351667e0207d2fcfedb4d91242",
+    "source_all_suppression": {
+      "source_claims_retained": 40,
+      "navigation_displayable_claims": 0,
+      "old_adapter_approved_claims": 40
+    },
+    "evidence": {
+      "sha256": "47baf23d77ef534a4e4127f6d7f208dd3c2b9b2b5615fc44769f7569220b9ad6",
+      "bytes": 1062
+    }
+  },
+  "after": {
+    "direct_rows": 40,
+    "artists": 7,
+    "genres": 35,
+    "eligible_metadata_observations": 42,
+    "artifacts": 1,
+    "aggregate_pairs": 0,
+    "genre_label_basis": "35 authorized canonical Wikidata QID labels; no retained qualified genre-name observations",
+    "source_all_suppression": {
+      "source_database_sha256": "a1b67cef936cf240a1be233ef3c387f57a023e7939b4698295b4232b2dd2725f",
+      "suppressed_database_sha256": "d10c45f6370517334bf3bb85f80d54c510eb1708935d2abf246e56b9771f316f",
+      "appended_suppression": {
+        "target_kind": "source",
+        "target_ref": "3",
+        "use_kind": "all"
+      },
+      "source_claims_retained": 40,
+      "displayable_claims": 0,
+      "cli_exit": 1,
+      "approved_output_published": false,
+      "reason": "no direct export-authorized evidence rows matched adapter policy",
+      "no_new_source_or_claims": true,
+      "acquisitions": 0,
+      "cost_usd": 0
+    },
+    "source_release": "Independently guarded release replay restored40 and exact public-model input"
+  },
+  "input_database": {
+    "sha256": "a1b67cef936cf240a1be233ef3c387f57a023e7939b4698295b4232b2dd2725f",
+    "bytes": 3108864
+  },
+  "adapter_policy": {
+    "sha256": "0b39262b6244edf1835ecb3c968aefa5ff4ccca108c71a319563a915f4d08f65",
+    "bytes": 560
+  },
+  "outputs": {
+    "approved-input.json": {
+      "sha256": "74a15ae591b0fc359a740b04b80fc43f4d98ebadd9cd0467013c298476da2cb7",
+      "bytes": 21290
+    },
+    "receipt.json": {
+      "sha256": "e7ee26ca98b77c6ed242105dd160c2fba04530c5ccb364a775faffa46a2f3e24",
+      "bytes": 33980
+    }
+  },
+  "logical_pins": {
+    "approved_input": "e503282fa547a4e4a6e6431390024026e89e958708007f2627154dbe5b4e1645",
+    "receipt": "e76e443a82e4075421f900cc27d9aa913cacfd7ea57e106891dd419a5dea1d36",
+    "row_export_policy": "e8a0f801f02acfb3f7e9b28712c141a874eae6527ec0b9da46c8156d445aab6c"
+  },
+  "implementation_sha256": {
+    "src/opennoise/serving/public/artist_membership_adapter.py": "8827fd6b50d8931d2c90e05dfdaaf2acb458c9b1111254767b36acc58f064205",
+    "src/opennoise/serving/public/membership_export_eligibility.py": "a4c6bfebaa9375af0a78126609430d655a8a8621dbd0013ac96037a748e00eb4",
+    "src/opennoise/catalog/artist_identity.py": "3bf36a48d1de43dacb108cd27766a28016526915af37dd5d87a8c9a951794119",
+    "scripts/adapt_public_artist_membership_input.py": "eda5f9caee779f255a7ab74d6837345392ba29762324c3cafc20e9b429e2b9e5"
+  },
+  "independent_evidence": {
+    "guarded_cli": {
+      "local_path": "/workspace/public-membership-provenance-20261019/guarded-custody-proof/proof.json",
+      "sha256": "53dfa3ea1cb8c89ab44fec8ddf8a0a7cb80f03161d643c6079f9ab5850d7f6ec",
+      "bytes": 1652
+    },
+    "independent_sql_oracle": {
+      "local_path": "/workspace/public-membership-provenance-20261019/guarded-custody-proof/independent-sql-oracle.json",
+      "sha256": "499df6096ec9e31762e8f6340b1afdf05b6a402577dcdb1b1fb07aaff5a4d818",
+      "bytes": 772
+    },
+    "guarded_suppression_and_release": {
+      "local_path": "/workspace/public-membership-provenance-20261019/guarded-custody-suppression-proof/suppression-proof.json",
+      "sha256": "340f14dd7d490d987e8e7054f77b31911071fd643f95179c7f9c46c8232f5948",
+      "bytes": 411
+    }
+  },
+  "verification": {
+    "focused_adapter_tests": {
+      "tests": 28,
+      "skipped": 1,
+      "status": "passed",
+      "log": "/tmp/public-membership-provenance-real-tests.log"
+    },
+    "Luna": "Final reviewed runtime clear;36focused tests with1skip including adjacent source_pipeline",
+    "full_check": "Final clean-code check pending; PR tracks local/exact-head/main outcomes"
+  },
+  "acquisitions": 0,
+  "new_external_cost_usd": 0,
+  "producer_output_directory": ".cache/cc0-public-membership-export-20261019/approved-custody"
+}
