@@ -264,3 +264,61 @@ The final implementation passed 2,243 Python tests (36 skips), 122 Node passes
 (44 skips), full format/lint/type checks and all eleven focused tests. The final
 physical-size regression is included. Independent Luna final source review was
 clear, and runtime/capsule hashes remained identical to the audited no-refit proof.
+
+
+## Unsupervised artist index with observed human-genre coherence evaluation
+
+The [new frozen comparison](../../data/recipes/jamendo-artist-coherence-20261019/README.md)
+constructs actual native artist relationships from all retained uploader metadata,
+not previous model probabilities. Query components use their original fold
+against all other four gallery folds. Each gallery supplies its own artist-DF
+vocabulary/IDF; artist TF uses every native metadata track, including empty rows.
+One raw-genre TF-IDF cosine baseline is compared with one fixed globally
+normalized genre+instrument concatenation. There are five unsupervised index
+builds per numerical invocation and zero supervised fits; no selected feature
+mixture, old NB/temperature score or new acquisition is involved.
+
+All 11,565 track reasons and 713 artists/components remain. The 368 judged queries
+include 164 with one eligible track; the 204 multi-track subset is a predeclared
+secondary view. Missing annotation is unjudged, never a negative. Primary
+condensed judged-gallery NDCG@10 uses linear dot-product sampled vote agreement
+and ideals over every judged gallery artist, regardless of feature overlap.
+Zero-IDCG/empty/no-overlap queries retain their denominators. Full-gallery
+judgment coverage is reported separately from conditional observed gains.
+
+The candidate did not establish a benefit: primary NDCG 0.659431 versus raw-genre
+0.667819, difference −0.008388 with fixed paired interval
+[−0.018858,0.001658]. The 204-query secondary difference is also slightly
+negative/uncertain. Adding instruments returns more judged top-ten slots
+(1,953→2,065 out of 3,680 judged-query slots), but annotation availability is not
+recommendation quality. Both arms exceed an analytic random observed-class
+reference; this does not establish listener relevance or EveryNoise parity.
+No representation or setting was changed after these outcomes.
+
+Independent raw-source verification matched all 635 gallery DF/IDF coordinates,
+all 20 normalized matrix hashes, all 21,570 selected full/condensed edges/cosines,
+all 1,426 native arm outcomes, point metrics and paired bootstrap intervals.
+Copied-source CLI census/run/replay reproduced payloads and both receipts
+byte-for-byte with original source/old-model/cache/oracle trees, networking and
+supervised fit calls denied by active probes. The current census+result artifacts
+occupy 5,908,784 bytes locally under the combined 15 MB cap. Native profiles, ranks,
+human ledger and index artifacts stay local under CC BY-NC-SA research rights.
+Appropriate independent listener/artist-pair judgments and identity coverage
+remain the substantive recommendation-quality dependency.
+
+The source-alternative assessment is specific, not exhaustive: CityMTag documents
+human triplets but no explicit permission grant was found; LFM-1b's official
+page states withdrawal for licensing reasons; Ocelma 1k/360k documentation
+attempts timed out without data acquisition. Separately after the Jamendo
+freeze, official DEAM documentation described BY-NC nonprofit research rights
+and 1,802 human arousal/valence songs with openSMILE features. The parent's single
+ordinary official metadata HEAD at 2026-10-19T21:54:17Z hit proxy CONNECT 403,
+zero body bytes, no retries/redirects. No DEAM values were obtained; that host
+stopped without bypass. These observations do not revoke separate standing
+authorization for an independently licensed new dataset, and do not authorize
+retries of the named denied routes. Exact-head/main CI belongs to the PR.
+
+The completed pipeline passed 2,255 Python tests (36 skips), 122 Node passes
+(44 skips), full format/lint/type checks and all twelve focused tests. Luna final
+review was clear and reran the focused set. Own exact replay and the independent
+raw-source/relocated no-supervised-fit proofs bind the unchanged final source.
