@@ -98,18 +98,24 @@ class MembershipExportProvenanceTests(unittest.TestCase):
                    FROM provenance_records p JOIN data_sources s ON s.id=p.source_id
                    WHERE s.source_key='wikidata_cultural_exact_artist'"""
             ).fetchone()
-            ss = c.execute(
-                """INSERT INTO source_snapshots(source_id,snapshot_ref,snapshot_kind,
-                       manifest_sha256,acquired_at,policy_id)
-                       VALUES(?,?,'single_artifact',?,?,?)""",
-                (source, snapshot, _hash(cultural / "manifest.json"), observed, policy),
-            ).lastrowid
-            c.execute(
-                """INSERT INTO source_artifacts(snapshot_id,artifact_ref,logical_name,media_type,
-                       byte_size,sha256,vault_key,policy_id) VALUES(?,'raw/batch-00.json',
-                       'Retained raw Wikidata response','application/json',?,?,?,?)""",
-                (ss, raw.stat().st_size, RAW_SHA, RAW_SHA, policy),
-            )
+            snapshot_row = c.execute(
+                """SELECT id,manifest_sha256,acquired_at,policy_id FROM source_snapshots
+                   WHERE source_id=? AND snapshot_ref=?""",
+                (source, snapshot),
+            ).fetchone()
+            if snapshot_row is None or tuple(snapshot_row[1:]) != (
+                _hash(cultural / "manifest.json"),
+                observed,
+                policy,
+            ):
+                raise ValueError("Real replay did not register exact snapshot custody")
+            artifacts = c.execute(
+                """SELECT artifact_ref,byte_size,sha256,vault_key,policy_id
+                   FROM source_artifacts WHERE snapshot_id=?""",
+                (snapshot_row[0],),
+            ).fetchall()
+            if artifacts != [("raw/batch-00.json", raw.stat().st_size, RAW_SHA, RAW_SHA, policy)]:
+                raise ValueError("Real replay did not register exact raw artifact custody")
 
     @override
     def setUp(self) -> None:

@@ -61,6 +61,39 @@ class RealExactArtistReplayTests(unittest.TestCase):
                             )
                         ],
                     )
+                    inventory = connection.execute(
+                        """SELECT s.manifest_sha256,s.acquired_at,p.observed_at,
+                           a.artifact_ref,a.byte_size,a.sha256,a.vault_key,
+                           s.policy_id,a.policy_id,p.policy_id FROM source_snapshots s
+                           JOIN source_artifacts a ON a.snapshot_id=s.id
+                           JOIN provenance_records p ON p.source_id=s.source_id
+                             AND p.snapshot_ref=s.snapshot_ref AND p.artifact_sha256=a.sha256
+                           WHERE p.artifact_sha256=?
+                           GROUP BY 1,2,3,4,5,6,7,8,9,10""",
+                        (RAW_SHA,),
+                    ).fetchall()
+                    self.assertEqual(len(inventory), 1)
+                    entry = inventory[0]
+                    self.assertEqual(entry[0], digest(CULTURAL / "manifest.json"))
+                    self.assertEqual(entry[1], entry[2])
+                    self.assertEqual(
+                        entry[3:7],
+                        (
+                            "raw/batch-00.json",
+                            (CULTURAL / "raw/batch-00.json").stat().st_size,
+                            RAW_SHA,
+                            RAW_SHA,
+                        ),
+                    )
+                    self.assertEqual(len(set(entry[7:])), 1)
+                    for module in (
+                        "artist_navigation_store.py",
+                        "membership_export_eligibility.py",
+                    ):
+                        self.assertEqual(
+                            result["implementation_sha256"][module],
+                            digest(ROOT / "src/opennoise/serving/public" / module),
+                        )
                     self.assertEqual(
                         connection.execute(
                             "SELECT count(*) FROM displayable_artist_genre_evidence"

@@ -61,7 +61,7 @@ add explicit metadata custody for the new checks.
 `results.json` binds actual code, aggregate outcomes and local independent evidence.
 Local proof paths describe current executor custody, not promised future artifacts;
 rebuild the source catalog from the linked recipe if absent, or report missing
-approved source bytes. Twenty focused tests passed with one historical skip;
+approved source bytes. Forty-four focused tests passed with one historical skip;
 format/lint/types passed. Full checks are pending.
 
 
@@ -78,3 +78,29 @@ in this source catalog; populated peer labeling is covered by the migrated fixtu
 integration test. Proof SHA256:
 `c9ee060349b254c7f2befb9730f9b91d7b9c6b370e22a27e30264b786d076a31`.
 Luna independently passed 13 navigation tests and reviewed the exact runtime hashes.
+
+
+The first full check exposed an older ordinary producer path: the seven-overlap
+artist identity replay stored each correct raw SHA on provenance, but did not
+register the matching snapshot/artifact inventory until a later export fixture.
+Strict display correctly rejected its unbound placeholder QIDs. That producer now
+registers the verified physical manifest and retained raw batch inventory under
+its existing independent CC0 policy before projection. Its source claims, exact
+credits and normalized graph remain unchanged; historical output pins remain
+historical. The export regression asserts the producer's exact inventory instead
+of adding custody after navigation. The legacy report also binds the navigation
+and shared eligibility implementation hashes. Both previously failing integrations
+pass in the expanded 44-test focused run. The final full check is rerunning.
+
+
+The corrected legacy CLI also passed with copied source inputs and five active
+source/network/research/fit-denial probes, with zero forbidden production operations.
+Its normalized graph remains exactly
+`b726a1c3094b1b5cb77621eb8f465095624a715354d568710679e42ad01cc038`.
+Independent SQL verifies all 40 direct facts and 1,344 exact credit tuples; a second
+oracle verifies the exact physical manifest/raw inventory and all 40 own custody
+chains. Guard proof SHA256:
+`097da75532d4f331c5cf84d713a3af82fe77f45ed108eca0cbf5cb90601f5913`.
+Luna accepted this compatibility delta. The earlier full API proof remains bound
+to the unchanged navigation/eligibility code; local evidence details and oracle
+pins are in `results.json`.
