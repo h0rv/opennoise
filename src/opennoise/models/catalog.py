@@ -1,8 +1,8 @@
 """Strict common catalog projections emitted by source adapters."""
 
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from opennoise.types import EntityKind, ExternalId, MusicBrainzArtistId, Sha256, StatementRank
 
@@ -75,9 +75,16 @@ class EntityProjection(_FrozenModel):
     projection_kind: Literal["entity"] = "entity"
     entity_kind: EntityKind
     source_identity: ExternalIdentity
-    names: tuple[NameClaim, ...] = Field(min_length=1)
+    names: tuple[NameClaim, ...]
     identifiers: tuple[IdentifierClaim, ...] = ()
     claims: tuple[EvidenceClaim, ...] = ()
+
+    @model_validator(mode="after")
+    def require_name_for_non_artist(self) -> Self:
+        """Keep nameless exact artist identities without fabricating source names."""
+        if not self.names and self.entity_kind != "artist":
+            raise ValueError("Only artist entity projections may omit observed names")
+        return self
 
     @property
     def external_id(self) -> ExternalId:

@@ -129,6 +129,10 @@ def _ensure_entity(
 
 
 def _preferred_name(projection: EntityProjection) -> str:
+    if not projection.names:
+        # Artist subtype creation stores no name; this is a catalog placeholder,
+        # never an entity_names/search observation or a claim of an English name.
+        return projection.source_identity.value
     english = next(
         (
             claim.value
@@ -522,20 +526,21 @@ class EntityProjector:
         _replace_genre_placeholder_name(connection, projection, entity_id)
         _persist_claims(connection, projection, entity_id, provenance_id, policy_id)
         _persist_relations(connection, projection, entity_id, provenance_id, policy_id)
-        search_text = " ".join(claim.value for claim in projection.names)
-        connection.execute(
-            """INSERT OR IGNORE INTO search_documents
-               (entity_id, language_tag, field_kind, search_text, input_fingerprint,
-                provenance_id, policy_id)
-               VALUES (?, 'und', 'name', ?, ?, ?, ?)""",
-            (
-                entity_id,
-                search_text,
-                _hash_parts(str(entity_id), search_text),
-                provenance_id,
-                policy_id,
-            ),
-        )
+        if projection.names:
+            search_text = " ".join(claim.value for claim in projection.names)
+            connection.execute(
+                """INSERT OR IGNORE INTO search_documents
+                   (entity_id, language_tag, field_kind, search_text, input_fingerprint,
+                    provenance_id, policy_id)
+                   VALUES (?, 'und', 'name', ?, ?, ?, ?)""",
+                (
+                    entity_id,
+                    search_text,
+                    _hash_parts(str(entity_id), search_text),
+                    provenance_id,
+                    policy_id,
+                ),
+            )
         return ProjectionResult(
             projection_kind=self.key,
             target_id=entity_id,

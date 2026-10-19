@@ -416,14 +416,18 @@ CLI/suppress/release proofs pass. No NC/research input, model fitting, acquisiti
 UI/default change or deployment participates; cost remains $0. Final local/PR/main
 check outcomes belong to this slice's PR and checked recipe.
 
-The next supported-data slice is full retained CC0 cultural-source ingestion,
-not another model package: both existing raw packs contain150 requested MBIDs,
-88 matched identities (two repeated across packs),62 unmatched and78 with P136.
-There are287 source P136 observations but278 unique artist/genre facts over151
-QIDs; repeats are source observations, never extra independent votes. Native
-entity_claims retain observation provenance, while the current direct-evidence
-fingerprint deduplicates across capture provenance. Any expansion must explicitly
-preserve/report that distinction and its conservative suppression limits. The
-complete native352 plus81 new artists would yield433; all10 matched without P136
-and62 unmatched identities remain explicit. Taxonomy joining needs separate raw
-verification; no genres or recommendations are inferred from names/credits.
+The [complete retained CC0 cultural catalog](../../data/recipes/cc0-cultural-catalog-20261019/README.md)
+now exercises ordinary ingestion, exact identity reuse, source provenance,
+artist navigation and v2 export over both full retained cohorts. It preserves
+352 native artists/87 groups/1,031 recordings and adds 81 cultural artists, for
+433 total. All 150 cultural nominations remain visible (88 matches, 62 unmatched,
+10 matched without P136). There are 287 capture claim observations but 278 canonical
+facts, 151 genres and 290 unordered co-genre pairs. Only 72/433 artists have any
+neighbor and only six native core artists do; source co-genre context is not
+listener relevance. Duplicate captures are not extra votes; canonical suppression
+has no later-capture fallback. Three nameless artists retain no invented names or
+search rows and use explicitly marked, authorized exact identifier display labels.
+No new acquisition, model fitting, hierarchy, default/UI change or research-data
+promotion participates. Local checks and independent proofs are recorded in the
+recipe/results and this slice's PR; prior negative research findings and reserved
+style fold remain unchanged.
