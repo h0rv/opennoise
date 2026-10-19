@@ -1,0 +1,219 @@
+{
+  "revision": "jamendo-artist-genre-coherence-plan-v1",
+  "frozen_utc": "2026-10-19T21:45:08.200693+00:00",
+  "base_main": "0fdb7e56e24d92bec9bdf21934bf678fc9343853",
+  "purpose": "A new unsupervised native artist index and bounded human-genre-coherence retrieval diagnostic: does adding uploader instrument tags to a meaningful raw uploader-genre TF-IDF cosine baseline change observed human-genre coherence? Not listener relevance or source-truth artist membership.",
+  "pre_freeze_knowledge": {
+    "inspected": "Source identity, target availability, raw allowed-tag/gallery vocabulary/document-frequency counts only. Previous human-genre classification/calibration/caller-profile outcomes are known historical context.",
+    "not_computed": [
+      "IDF weights",
+      "artist TF-IDF vectors",
+      "cosine similarities",
+      "artist rankings",
+      "artist-coherence metric outcomes"
+    ],
+    "already_seen_support": {
+      "metadata_tracks": 11565,
+      "artists": 713,
+      "components": 713,
+      "albums": 2365,
+      "nonempty_taxonomy_nominations": 1757,
+      "taxonomy_nominated_artists": 459,
+      "eligible_tracks": 1024,
+      "eligible_artists": 368,
+      "single_eligible_track_artists": 164,
+      "ge2_eligible_track_artists": 204,
+      "ge2_eligible_album_artists": 136,
+      "no_eligible_track_artists": 345,
+      "target_reasons": {
+        "missing_votes": 9808,
+        "wrong_vote_count": 195,
+        "invalid_vote": 538,
+        "eligible": 1024
+      },
+      "query_artist_counts": [
+        142,
+        138,
+        134,
+        144,
+        155
+      ],
+      "judged_query_counts": [
+        76,
+        59,
+        75,
+        75,
+        83
+      ],
+      "robust_query_counts": [
+        40,
+        41,
+        41,
+        37,
+        45
+      ],
+      "gallery_artist_counts": [
+        571,
+        575,
+        579,
+        569,
+        558
+      ],
+      "judged_gallery_counts": [
+        292,
+        309,
+        293,
+        293,
+        285
+      ],
+      "gallery_vocabulary_genre": 87,
+      "gallery_vocabulary_genre_instrument": 127,
+      "minimum_gallery_positive_class_artists": 15,
+      "all_judged_queries_have_gallery_known_genre_tags": true
+    },
+    "selection": "One candidate comparison, no searched feature mixtures, seeds, splits, dimensions, index settings or retrieval metrics. Original component folds reused unchanged, not selected for this task."
+  },
+  "source": {
+    "commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+    "metadata": {
+      "name": "autotagging-test.tsv",
+      "bytes": 1611903,
+      "sha256": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366"
+    },
+    "human": {
+      "name": "music-classification-annotations-raw.tsv",
+      "bytes": 7468828,
+      "sha256": "466cbb888fe906f3db22b9e6f63b1694e6a38a8613fb67d9d52149e1cc6decd3"
+    },
+    "original_capture_receipt_sha256": "3125263a9c7a3fbdc80c53ad10f60648801681b0737bbc7002720dc2b3d82b75",
+    "source_serialization_amendment_sha256": "09ef671b841afb7d7b29e6ac6daa526b09beb369ce16a3b5ea38c56ac01612c4",
+    "identity_cohort_sha256": "788895cd621fa69e086a9cc0dada206157130d54226c684610d65aca0484befb",
+    "required_inputs": "Only the exact metadata/human source bytes plus this protocol and checked serialization evidence; no previous model, predictions or evaluation payloads. Record truthful current input bindings without claiming a new acquisition."
+  },
+  "implementation_dependencies": {
+    "jamendo_human_genre.py": "9f4663644a941f64a78359d2677cc07cadce5b0719f756defc2d26be15869b5d",
+    "jamendo_human_mood.py": "9848cd3a855e8b40018c50e949d3d38b6aad533c2323f8d68a7419cd5a5002e9"
+  },
+  "identity": "Replay full native metadata/human identity join before parsing targets. Build artist+album connected components over all11565 native metadata tracks, component minimum track ID, before target support filtering. Preserve713artists/components and2365albums; assert one native artist per component for these exact bytes. No name/fuzzy/alias joins; native identity isolation cannot prove different musicians or absence of duplicate audio.",
+  "folds": {
+    "count": 5,
+    "salt": "opennoise-jamendo-human-genre-dortmund-v1",
+    "assignment": "int.from_bytes(sha256((salt+\"|\"+str(component_id)).encode()).digest(),\"big\") % 5",
+    "roles": "Fold f query components versus all other four-fold gallery components. Every query component excluded completely; each of all713 artists receives exactly one query outcome per arm. No old NB/temperature vectors, supervised models or pairwise OOF mixtures."
+  },
+  "features": {
+    "allowed": "Only literal uploader genre--- and instrument--- tags, native helper filtering. No human labels/taxonomies, moods, IDs, names, titles, path/duration, annotation availability or vote counts as index/ranking features.",
+    "artist_tf": "Binary tag occurrence per metadata TRACK, summed across all of an artist native metadata tracks, divided by ALL those tracks including empty-tag tracks. No human-based track selection or album support filter.",
+    "gallery_vocabulary": "Sorted gallery-only literal tags with artist document frequency >=1; never expand vocabulary from queries. Query-only unseen tags omitted from the gallery-defined coordinate system and reported explicitly.",
+    "document_frequency": "For each gallery and tag, count distinct gallery artists with that tag present; N counts ALL gallery artists, including feature-empty artists.",
+    "idf": "ln((1+N)/(1+DF))+1, one gallery-only IDF computation per original fold shared by both arms. No target-dependent fit, DF cutoff beyond >=1, tuning or query contribution.",
+    "baseline": "genre-only TF*IDF then row L2 normalization.",
+    "candidate": "Concatenate genre+instrument TF*IDF with every block weight1 then ONE global row L2 normalization; no separate block normalization or selected mixture.",
+    "numerics": "Deterministic sorted native artist IDs and sorted literal vocabulary; dense NumPy float64 matrices. Normalize rows, then query_matrix @ gallery_matrix.T. Preserve raw finite computed cosine scores; allow up to1+1e-12 numerical tolerance, no post-outcome clipping, rounding or epsilon ties.",
+    "zero_rows": "Preserve explicit empty_profile/no_eligible_positive_overlap outcomes; no fabricated zero-score neighbors or fallback rankings."
+  },
+  "arms": [
+    "genre_tfidf",
+    "genre_instrument_tfidf"
+  ],
+  "ranking": {
+    "positive_only": true,
+    "order": "Exact raw finite cosine descending, then native component_id ascending, then native artist_id ascending. No rounding/epsilon tie policy.",
+    "limit": 10,
+    "all_artists": "Keep all713 query outcomes per arm including unjudged, feature-empty and no-overlap artists, with reasons and <=10 full-gallery edges.",
+    "human_separation": "Index builder and complete positive-cosine ordering consume NO human targets or annotation-availability mask. Evaluation alone condenses an already feature-ranked gallery by target availability for its judged-gallery metric; no target values alter order."
+  },
+  "classes": [
+    "alternative",
+    "blues",
+    "electronic",
+    "folkcountry",
+    "funksoulrnb",
+    "jazz",
+    "pop",
+    "raphiphop",
+    "rock"
+  ],
+  "human_targets": {
+    "taxonomy": "Only genre_dortmund---; original strict amendment recognizes folk_country→folkcountry,funk_soul_rnb→funksoulrnb,rap_hiphop→raphiphop; no generic normalization. Empty payload is missing and not a taxonomy nomination.",
+    "eligibility": "Exactly3 recognized votes, including disagreements. Retain every metadata track and original reason; incomplete/invalid/unmatched/missing are not negatives.",
+    "artist_target": "Equal arithmetic mean of eligible TRACK fractional nine-class vote vectors. It is a sampled human-vote profile, not artist membership truth. Do not weight artists by number of annotated tracks in primary query average.",
+    "primary": "All368 artists with >=1 eligible track; no feature/retrieval-availability restriction.",
+    "secondary": "The predeclared204 query artists with >=2 eligible tracks, using the SAME gallery and index; do not select a different candidate pool. Preserve164 single-track and345 unjudged artists in coverage/support accounting."
+  },
+  "evaluation_gate": {
+    "requirements": "Each of all5 galleries must have >=10 judged artists AND every one of all9 classes must have positive votes in >=5 distinct gallery artists. Count-only preflight supports all gates (minimum15).",
+    "failure": "If any support gate fails, publish explicit no-evaluation census without numerical index/ranking/score execution; never drop a class/fold/query or reseed. Custody/identity/source mismatch aborts, not a support abstention.",
+    "query_coverage": "All judged queries remain in metric denominators regardless of empty features, no overlap, zero IDCG or missing ranked slots."
+  },
+  "metrics": {
+    "k": 10,
+    "discount": "d_r=1/log2(r+1), r=1..10.",
+    "gain": "LINEAR fractional vote agreement g(q,c)=dot(y_q,y_c), no exponential gain; absent annotation is unjudged, never gain0.",
+    "primary": "Mean over all368 judged query components of condensed judged-gallery NDCG@10, candidate minus baseline. Positive-cosine ordered gallery is filtered for judged candidates only at evaluation. Missing rank slots contribute0 DCG.",
+    "ideal": "IDCG sorts gains over ALL judged gallery artists, independent of feature support/overlap; top10 linear discounted gains.",
+    "undefined_cases": "IDCG0 yields NDCG0 plus explicit reason/count, retaining denominator. No judged gallery yields0 plus explicit reason/count. Do not exclude these queries.",
+    "auxiliary": [
+      "Condensed judged mean vote agreement@10=sum returned judged gains/10, fixed denominator10; report per-query IDCG and positive-gain judged-gallery count.",
+      "Full-gallery top10 judged/unjudged/missing slot counts and judgment coverage, separate from relevance. Conditional mean observed gain over returned judged neighbors only; null if none. Never compute full-gallery NDCG or fill unjudged with negative/zero gain.",
+      "Exact uniform-random expected condensed DCG=mean gain over ALL judged gallery artists*sum(d_1..d_10); divide by SAME IDCG under same zero rules. Expected random mean agreement@10 equals mean judged-gallery gain. No sampled random rankings."
+    ],
+    "diagnostics": "Report all5 fold results, overall artist-equal means, all9 source-class-weighted query diagnostics (weight each judged query by its artist vote mass in that class, normalize within class; null only if no class mass), and instrument-present/absent query strata (any instrument tag anywhere in all native metadata tracks). Include all denominators/supports; do not select a winning fold/class/stratum."
+  },
+  "bootstrap": {
+    "draws": 2000,
+    "generator": "NumPy Generator(PCG64(seed))",
+    "primary_seed": 20261019,
+    "multi_track_seed": 20261020,
+    "unit": "Paired query COMPONENT resampling with replacement; fixed galleries, indices, rankings and targets. Overall judged368 and robust204 query sets use distinct fixed seeds. No refitting or reselection inside draws.",
+    "comparisons": [
+      "genre_instrument_tfidf-minus-genre_tfidf",
+      "genre_tfidf-minus-exact_random_expectation",
+      "genre_instrument_tfidf-minus-exact_random_expectation"
+    ],
+    "metrics": [
+      "condensed_judged_ndcg10",
+      "condensed_judged_mean_vote_agreement10"
+    ],
+    "interval_quantiles": [
+      0.025,
+      0.975
+    ],
+    "interpretation": "Descriptive reused-cohort fixed-gallery intervals, not independent-population or retraining estimates."
+  },
+  "architecture": "Separate source/identity/availability census and externally pinned numeric run/replay. Freeze census before any IDF/vector/ranking/metric computation. Reuse unchanged native identity/canonicalization helpers, forbid all supervised fit/train/partial_fit calls. Keep rank/index interface feature-only; evaluator reads targets separately. Fresh atomic publication, closed regular-file inventories, exact physical hashes/sizes, external protocol/census/result pins, targeted implementation and numerical runtime pins.",
+  "limits": {
+    "cpu_seconds": 120,
+    "wall_seconds": 120,
+    "address_space_bytes": 1000000000,
+    "numerical_threads": 1,
+    "combined_new_payload_bytes": 15000000,
+    "metadata_tracks_max": 15000,
+    "artist_count": 713,
+    "neighbors_max": 10
+  },
+  "accounting": {
+    "supervised_fits": 0,
+    "unsupervised_gallery_idf_index_builds_per_run": 5,
+    "unsupervised_gallery_idf_index_builds_per_replay": 5,
+    "acquisition_requests": 0,
+    "audio_or_descriptors": false,
+    "new_external_cost_usd": 0,
+    "note": "IDF is gallery-derived unsupervised index fitting, not zero total fitting. Replay repeats the frozen five-index computation without searching alternatives."
+  },
+  "rights": {
+    "source_license": "CC-BY-NC-SA-4.0",
+    "research_only": true,
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation",
+    "commit_policy": "Only code, protocol and restrained attributed aggregates committed. Native profiles, ranks, target ledger, source and index artifacts remain local noncommercial research data. No UI/default/serving/deployment integration."
+  },
+  "interpretation": "Observed coarse nine-class human-genre coherence of native artist profiles, not listener relevance, recommendation usefulness, artist membership truth or EveryNoise parity. Historical cohort and labels already inspected; no untouched confirmation. Annotation blinding/independence, sparse/selected human annotation coverage and audio duplicates across native identities are not established. This single raw-genre versus added-instrument comparison does not repair unavailable independent data or validate prior NB/T models.",
+  "source_alternative_assessment": {
+    "provenance": "Parent independent read-only source feasibility checks; not a new acquisition by this slice.",
+    "retained_limits": "Old native AB cohort gives11 own-fold out-of-fit emissions; larger compatible AB/FMA numeric sources remain blocked/unreadable and denied routes are not retried. Retained Jamendo offers only the declared human-class proxy, not pairwise listening/recommendation judgments.",
+    "CityMTag": "Official documentation exposes direct human triplet data, but no explicit license/permission grant was found; do not acquire or use it without appropriate permission.",
+    "LFM-1b": "https://www.cp.jku.at/datasets/LFM-1b/ explicitly states withdrawal for licensing reasons; do not acquire/use withdrawn data.",
+    "ocelma": "1k/360k documentation pages timed out; no data acquired and no licensing/access inference beyond those observed attempts.",
+    "boundary": "These are source-specific independent checks, not a claim that every possible free source is unavailable. No alternate/denied-source retry or acquisition is authorized."
+  }
+}

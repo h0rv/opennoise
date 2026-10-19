@@ -1,0 +1,1733 @@
+{
+  "revision": "jamendo-artist-coherence-checked-aggregate-v1",
+  "protocol_sha256": "ac14d662222fc5241b38598cc2dd74f762d4910f2699c795c1be408356c6e25c",
+  "census_seal_sha256": "224e23459e450dbfb503fc039a405edb84d95214ff9e2dd78b9f62b9d54b0d51",
+  "census_payload_sha256": "fcebafc49a13fe45ff25cafe984b7571ac7497127fef96b7a86ffb2057dcb319",
+  "result_receipt_sha256": "8a0aa9e0274e6c66faa004f131fb90c8a0b6fad1f2a1e929fcf13522154080a3",
+  "census_bytes": 3123963,
+  "result_bytes": 2784821,
+  "combined_census_result_bytes": 5908784,
+  "result_payloads": {
+    "evaluation.json": {
+      "bytes": 22254,
+      "sha256": "e44283246e5213c688e16987544b2a18d43e1db760b4549a0cec553f9c7a5582"
+    },
+    "indices.json": {
+      "bytes": 183628,
+      "sha256": "d8df92b119a1404dc250c6c45dbe44813b72a6ae750c849dbdca4d0b6f3abe91"
+    },
+    "rankings.json": {
+      "bytes": 2577249,
+      "sha256": "172e49d3f86561bceab1e76b8a2711dc8d0629860c0b6d5e3cbd896a61eba212"
+    }
+  },
+  "runtime": {
+    "code": {
+      "jamendo_artist_coherence.py": "3a310f1fa978c1cfb1d76ded48151b21c1f7060c7f61dfd867652c074fbf7ac4",
+      "run_jamendo_artist_coherence.py": "527147c9df0bef79c1969f06b088bc07336e6bb18ceb0bcbebf3b7428ca3c64f"
+    },
+    "original": {
+      "code": {
+        "jamendo_human_genre.py": "9f4663644a941f64a78359d2677cc07cadce5b0719f756defc2d26be15869b5d",
+        "jamendo_human_mood.py": "9848cd3a855e8b40018c50e949d3d38b6aad533c2323f8d68a7419cd5a5002e9",
+        "run_jamendo_human_genre.py": "0cb4c6401387e2ee42355699c7646e4618bd63df60026630ea85ad558d2af35e"
+      },
+      "numpy": "2.5.2",
+      "python": "3.13.14",
+      "scipy": "1.18.1"
+    }
+  },
+  "inputs": {
+    "amendment_sha256": "09ef671b841afb7d7b29e6ac6daa526b09beb369ce16a3b5ea38c56ac01612c4",
+    "protocol_sha256": "ac14d662222fc5241b38598cc2dd74f762d4910f2699c795c1be408356c6e25c",
+    "source": {
+      "human": {
+        "bytes": 7468828,
+        "sha256": "466cbb888fe906f3db22b9e6f63b1694e6a38a8613fb67d9d52149e1cc6decd3"
+      },
+      "metadata": {
+        "bytes": 1611903,
+        "sha256": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366"
+      }
+    }
+  },
+  "run_measurement": {
+    "elapsed_seconds": 2.0021837790000063,
+    "peak_rss_bytes": 137621504,
+    "exit_code": 0
+  },
+  "replay_measurement": {
+    "elapsed_seconds": 2.4636501990007673,
+    "peak_rss_bytes": 152276992,
+    "exit_code": 0,
+    "unsupervised_gallery_idf_builds": 5,
+    "supervised_fits": 0
+  },
+  "evaluation": {
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation",
+    "bootstrap": {
+      "comparisons": {
+        "genre_instrument_tfidf-minus-exact_random_expectation": {
+          "mean_vote_agreement10": {
+            "difference": 0.2791991072623546,
+            "interval": [
+              0.257352350611683,
+              0.30085403909746844
+            ]
+          },
+          "ndcg10": {
+            "difference": 0.3402656528955755,
+            "interval": [
+              0.31638342173121814,
+              0.36371600783227054
+            ]
+          }
+        },
+        "genre_instrument_tfidf-minus-genre_tfidf": {
+          "mean_vote_agreement10": {
+            "difference": -0.005179780646232853,
+            "interval": [
+              -0.013444041613810053,
+              0.0029120661539734955
+            ]
+          },
+          "ndcg10": {
+            "difference": -0.008388385382808321,
+            "interval": [
+              -0.018858196601960052,
+              0.001657742253326983
+            ]
+          }
+        },
+        "genre_tfidf-minus-exact_random_expectation": {
+          "mean_vote_agreement10": {
+            "difference": 0.28437888790858734,
+            "interval": [
+              0.2619204477188311,
+              0.30574134460026103
+            ]
+          },
+          "ndcg10": {
+            "difference": 0.34865403827838376,
+            "interval": [
+              0.3248993413893078,
+              0.3724200463423278
+            ]
+          }
+        }
+      },
+      "draws": 2000,
+      "queries": 368,
+      "seed": 20261019,
+      "valid_draws": 2000
+    },
+    "folds": [
+      {
+        "fold": 0,
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 778,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 642
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 736,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 684
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 436,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 324
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 403,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 357
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 76
+          },
+          "genre_tfidf": {
+            "defined": 76
+          }
+        },
+        "nominated_queries": 142,
+        "positive_weight_queries": 76,
+        "queries": 76,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 142
+          },
+          "genre_tfidf": {
+            "available": 142
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.24204221639016998,
+            "ndcg10": 0.30028361990465013
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.5250240489171195,
+            "ndcg10": 0.6467883249561025
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.533526900184741,
+            "ndcg10": 0.6618074906823543
+          }
+        },
+        "weight_mass": 76.0
+      },
+      {
+        "fold": 1,
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 737,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 643
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 700,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 680
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 328,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 262
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 304,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 286
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 59
+          },
+          "genre_tfidf": {
+            "defined": 59
+          }
+        },
+        "nominated_queries": 138,
+        "positive_weight_queries": 59,
+        "queries": 59,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 138
+          },
+          "genre_tfidf": {
+            "available": 138
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.25744860577551476,
+            "ndcg10": 0.3343335541375338
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.5374372976542117,
+            "ndcg10": 0.664324959066722
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.5438583397760957,
+            "ndcg10": 0.6805976613918792
+          }
+        },
+        "weight_mass": 59.0
+      },
+      {
+        "fold": 2,
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 736,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 604
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 700,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 640
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 423,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 327
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 414,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 336
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 75
+          },
+          "genre_tfidf": {
+            "defined": 75
+          }
+        },
+        "nominated_queries": 134,
+        "positive_weight_queries": 75,
+        "queries": 75,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 134
+          },
+          "genre_tfidf": {
+            "available": 134
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.2551515574422795,
+            "ndcg10": 0.3224490952768028
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.5273051478675443,
+            "ndcg10": 0.659219441302991
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.5321903601772229,
+            "ndcg10": 0.6670206382273306
+          }
+        },
+        "weight_mass": 75.0
+      },
+      {
+        "fold": 3,
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 775,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 665
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 772,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 668
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 434,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 316
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 428,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 322
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 75
+          },
+          "genre_tfidf": {
+            "defined": 75
+          }
+        },
+        "nominated_queries": 144,
+        "positive_weight_queries": 75,
+        "queries": 75,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 144
+          },
+          "genre_tfidf": {
+            "available": 144
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.23849406791457847,
+            "ndcg10": 0.30947660546530786
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.5469879451267686,
+            "ndcg10": 0.6754626373082473
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.5517837146977125,
+            "ndcg10": 0.6837234173346798
+          }
+        },
+        "weight_mass": 75.0
+      },
+      {
+        "fold": 4,
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 804,
+            "full_missing_slots": 20,
+            "full_unjudged_slots": 726
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 748,
+            "full_missing_slots": 30,
+            "full_unjudged_slots": 772
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 444,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 386
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 404,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 426
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 83
+          },
+          "genre_tfidf": {
+            "defined": 83
+          }
+        },
+        "nominated_queries": 155,
+        "positive_weight_queries": 83,
+        "queries": 83,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 153,
+            "empty_profile": 2
+          },
+          "genre_tfidf": {
+            "available": 152,
+            "empty_profile": 3
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.2571167434987696,
+            "ndcg10": 0.3314599663550587
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.5121861327378789,
+            "ndcg10": 0.6532332368448743
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.5140539334033801,
+            "ndcg10": 0.65059144789531
+          }
+        },
+        "weight_mass": 83.0
+      }
+    ],
+    "gallery_idf_index_builds": 5,
+    "instrument_strata": {
+      "False": {
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 1566,
+            "full_missing_slots": 20,
+            "full_unjudged_slots": 1524
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1610,
+            "full_missing_slots": 20,
+            "full_unjudged_slots": 1480
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 712,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 658
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 727,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 643
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 137
+          },
+          "genre_tfidf": {
+            "defined": 137
+          }
+        },
+        "nominated_queries": 311,
+        "positive_weight_queries": 137,
+        "queries": 137,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 309,
+            "empty_profile": 2
+          },
+          "genre_tfidf": {
+            "available": 309,
+            "empty_profile": 2
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.257988971362578,
+            "ndcg10": 0.32258114877239086
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.5932271549590022,
+            "ndcg10": 0.7203823504852755
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.5861790757471426,
+            "ndcg10": 0.7142438373498312
+          }
+        },
+        "weight_mass": 137.0
+      },
+      "True": {
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2264,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1756
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 2046,
+            "full_missing_slots": 10,
+            "full_unjudged_slots": 1964
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 1353,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 957
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1226,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1084
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 231
+          },
+          "genre_tfidf": {
+            "defined": 231
+          }
+        },
+        "nominated_queries": 402,
+        "positive_weight_queries": 231,
+        "queries": 231,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 402
+          },
+          "genre_tfidf": {
+            "available": 401,
+            "empty_profile": 1
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.24504025420734785,
+            "ndcg10": 0.31713948999211483
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.4910040651157303,
+            "ndcg10": 0.6232823282211474
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.5034358665436024,
+            "ndcg10": 0.6402862335043913
+          }
+        },
+        "weight_mass": 231.0
+      }
+    },
+    "overall": {
+      "full_slots": {
+        "genre_instrument_tfidf": {
+          "full_judged_slots": 3830,
+          "full_missing_slots": 20,
+          "full_unjudged_slots": 3280
+        },
+        "genre_tfidf": {
+          "full_judged_slots": 3656,
+          "full_missing_slots": 30,
+          "full_unjudged_slots": 3444
+        }
+      },
+      "judged_query_full_slots": {
+        "genre_instrument_tfidf": {
+          "full_judged_slots": 2065,
+          "full_missing_slots": 0,
+          "full_unjudged_slots": 1615
+        },
+        "genre_tfidf": {
+          "full_judged_slots": 1953,
+          "full_missing_slots": 0,
+          "full_unjudged_slots": 1727
+        }
+      },
+      "metric_reasons": {
+        "genre_instrument_tfidf": {
+          "defined": 368
+        },
+        "genre_tfidf": {
+          "defined": 368
+        }
+      },
+      "nominated_queries": 713,
+      "positive_weight_queries": 368,
+      "queries": 368,
+      "retrieval_reasons": {
+        "genre_instrument_tfidf": {
+          "available": 711,
+          "empty_profile": 2
+        },
+        "genre_tfidf": {
+          "available": 710,
+          "empty_profile": 3
+        }
+      },
+      "scores": {
+        "exact_random_expectation": {
+          "mean_vote_agreement10": 0.24986083640915902,
+          "ndcg10": 0.3191653249184676
+        },
+        "genre_instrument_tfidf": {
+          "mean_vote_agreement10": 0.5290599436715135,
+          "ndcg10": 0.659430977814043
+        },
+        "genre_tfidf": {
+          "mean_vote_agreement10": 0.5342397243177465,
+          "ndcg10": 0.6678193631968513
+        }
+      },
+      "weight_mass": 368.0
+    },
+    "per_class": [
+      {
+        "class": "alternative",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 90,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.1865622152476424,
+            "ndcg10": 0.338761415764224
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.3363501101129759,
+            "ndcg10": 0.5938816389407849
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.3372823131621036,
+            "ndcg10": 0.5879902935881598
+          }
+        },
+        "weight_mass": 20.307223658694248
+      },
+      {
+        "class": "blues",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 23,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.07272831483828791,
+            "ndcg10": 0.1663097560965124
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.1830959529668203,
+            "ndcg10": 0.4866413444794199
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.20564901006839986,
+            "ndcg10": 0.5371258081731187
+          }
+        },
+        "weight_mass": 5.9565527065527055
+      },
+      {
+        "class": "electronic",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 200,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.38421451714350124,
+            "ndcg10": 0.43495805813793237
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.7085591822078884,
+            "ndcg10": 0.7842436353974992
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.7079648769842037,
+            "ndcg10": 0.7856819392124635
+          }
+        },
+        "weight_mass": 156.6932184917479
+      },
+      {
+        "class": "folkcountry",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 53,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.08213053087380211,
+            "ndcg10": 0.1490999338405247
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.19479158286701387,
+            "ndcg10": 0.35042077702057794
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.1956277846002389,
+            "ndcg10": 0.36219230964521726
+          }
+        },
+        "weight_mass": 22.12498324115971
+      },
+      {
+        "class": "funksoulrnb",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 44,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.11999958759131252,
+            "ndcg10": 0.2549914250720524
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.21754507333555279,
+            "ndcg10": 0.46974190930000664
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.21787536074134525,
+            "ndcg10": 0.4761600048014137
+          }
+        },
+        "weight_mass": 11.082297876415524
+      },
+      {
+        "class": "jazz",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 30,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.06854372695130921,
+            "ndcg10": 0.14172936307976422
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.21102262749748454,
+            "ndcg10": 0.38947086011214016
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.25400286519554055,
+            "ndcg10": 0.4626739339439321
+          }
+        },
+        "weight_mass": 12.291269841269841
+      },
+      {
+        "class": "pop",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 108,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.14704570069632106,
+            "ndcg10": 0.25777054399700644
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.2719183729004205,
+            "ndcg10": 0.48163512522465035
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.27446390246200775,
+            "ndcg10": 0.4871531148702965
+          }
+        },
+        "weight_mass": 37.113449023743144
+      },
+      {
+        "class": "raphiphop",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 46,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.12476263671829578,
+            "ndcg10": 0.18866345633729104
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.5627080455034865,
+            "ndcg10": 0.7037719338228345
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.585164612209451,
+            "ndcg10": 0.7309501597748004
+          }
+        },
+        "weight_mass": 22.059438328555974
+      },
+      {
+        "class": "rock",
+        "full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "judged_query_full_slots": {
+          "genre_instrument_tfidf": {
+            "full_judged_slots": 2065,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1615
+          },
+          "genre_tfidf": {
+            "full_judged_slots": 1953,
+            "full_missing_slots": 0,
+            "full_unjudged_slots": 1727
+          }
+        },
+        "metric_reasons": {
+          "genre_instrument_tfidf": {
+            "defined": 368
+          },
+          "genre_tfidf": {
+            "defined": 368
+          }
+        },
+        "nominated_queries": 368,
+        "positive_weight_queries": 127,
+        "queries": 368,
+        "retrieval_reasons": {
+          "genre_instrument_tfidf": {
+            "available": 368
+          },
+          "genre_tfidf": {
+            "available": 368
+          }
+        },
+        "scores": {
+          "exact_random_expectation": {
+            "mean_vote_agreement10": 0.19066623189186477,
+            "ndcg10": 0.2467614295959348
+          },
+          "genre_instrument_tfidf": {
+            "mean_vote_agreement10": 0.5465544181460549,
+            "ndcg10": 0.6679007426847555
+          },
+          "genre_tfidf": {
+            "mean_vote_agreement10": 0.5553351145127206,
+            "ndcg10": 0.6759237030757056
+          }
+        },
+        "weight_mass": 80.37156683186095
+      }
+    ],
+    "research_only": true,
+    "robust_bootstrap": {
+      "comparisons": {
+        "genre_instrument_tfidf-minus-exact_random_expectation": {
+          "mean_vote_agreement10": {
+            "difference": 0.2716923826745856,
+            "interval": [
+              0.24272458907608013,
+              0.3027842200220003
+            ]
+          },
+          "ndcg10": {
+            "difference": 0.34376732048569275,
+            "interval": [
+              0.3112488864827667,
+              0.37912579234313654
+            ]
+          }
+        },
+        "genre_instrument_tfidf-minus-genre_tfidf": {
+          "mean_vote_agreement10": {
+            "difference": -0.0034613698715846974,
+            "interval": [
+              -0.013694143482848399,
+              0.006631591018956413
+            ]
+          },
+          "ndcg10": {
+            "difference": -0.00679188019987371,
+            "interval": [
+              -0.02104754000876142,
+              0.006701673661212536
+            ]
+          }
+        },
+        "genre_tfidf-minus-exact_random_expectation": {
+          "mean_vote_agreement10": {
+            "difference": 0.27515375254617025,
+            "interval": [
+              0.24632264908534168,
+              0.3052676792852678
+            ]
+          },
+          "ndcg10": {
+            "difference": 0.35055920068556645,
+            "interval": [
+              0.31788570999408283,
+              0.38498961145480043
+            ]
+          }
+        }
+      },
+      "draws": 2000,
+      "queries": 204,
+      "seed": 20261020,
+      "valid_draws": 2000
+    },
+    "robust_ge2": {
+      "full_slots": {
+        "genre_instrument_tfidf": {
+          "full_judged_slots": 1136,
+          "full_missing_slots": 0,
+          "full_unjudged_slots": 904
+        },
+        "genre_tfidf": {
+          "full_judged_slots": 1097,
+          "full_missing_slots": 0,
+          "full_unjudged_slots": 943
+        }
+      },
+      "judged_query_full_slots": {
+        "genre_instrument_tfidf": {
+          "full_judged_slots": 1136,
+          "full_missing_slots": 0,
+          "full_unjudged_slots": 904
+        },
+        "genre_tfidf": {
+          "full_judged_slots": 1097,
+          "full_missing_slots": 0,
+          "full_unjudged_slots": 943
+        }
+      },
+      "metric_reasons": {
+        "genre_instrument_tfidf": {
+          "defined": 204
+        },
+        "genre_tfidf": {
+          "defined": 204
+        }
+      },
+      "nominated_queries": 204,
+      "positive_weight_queries": 204,
+      "queries": 204,
+      "retrieval_reasons": {
+        "genre_instrument_tfidf": {
+          "available": 204
+        },
+        "genre_tfidf": {
+          "available": 204
+        }
+      },
+      "scores": {
+        "exact_random_expectation": {
+          "mean_vote_agreement10": 0.2513340026191915,
+          "ndcg10": 0.3387982305924881
+        },
+        "genre_instrument_tfidf": {
+          "mean_vote_agreement10": 0.523026385293777,
+          "ndcg10": 0.6825655510781808
+        },
+        "genre_tfidf": {
+          "mean_vote_agreement10": 0.5264877551653617,
+          "ndcg10": 0.6893574312780544
+        }
+      },
+      "weight_mass": 204.0
+    },
+    "source_license": "CC-BY-NC-SA-4.0",
+    "status": "completed",
+    "supervised_fits": 0,
+    "support": {
+      "albums": 2365,
+      "artists": 713,
+      "components": 713,
+      "evaluation_gate": true,
+      "folds": [
+        {
+          "all_vocabulary": 127,
+          "evaluation_gate": true,
+          "fold": 0,
+          "gallery_artists": 571,
+          "genre_vocabulary": 87,
+          "judged_gallery_artists": 292,
+          "judged_queries": 76,
+          "positive_class_gallery_artists": [
+            79,
+            18,
+            165,
+            40,
+            34,
+            22,
+            85,
+            37,
+            97
+          ],
+          "query_artists": 142,
+          "robust_queries": 40
+        },
+        {
+          "all_vocabulary": 127,
+          "evaluation_gate": true,
+          "fold": 1,
+          "gallery_artists": 575,
+          "genre_vocabulary": 87,
+          "judged_gallery_artists": 309,
+          "judged_queries": 59,
+          "positive_class_gallery_artists": [
+            73,
+            19,
+            161,
+            47,
+            35,
+            25,
+            92,
+            34,
+            114
+          ],
+          "query_artists": 138,
+          "robust_queries": 41
+        },
+        {
+          "all_vocabulary": 127,
+          "evaluation_gate": true,
+          "fold": 2,
+          "gallery_artists": 579,
+          "genre_vocabulary": 87,
+          "judged_gallery_artists": 293,
+          "judged_queries": 75,
+          "positive_class_gallery_artists": [
+            66,
+            15,
+            160,
+            42,
+            39,
+            24,
+            84,
+            40,
+            102
+          ],
+          "query_artists": 134,
+          "robust_queries": 41
+        },
+        {
+          "all_vocabulary": 127,
+          "evaluation_gate": true,
+          "fold": 3,
+          "gallery_artists": 569,
+          "genre_vocabulary": 87,
+          "judged_gallery_artists": 293,
+          "judged_queries": 75,
+          "positive_class_gallery_artists": [
+            74,
+            20,
+            164,
+            42,
+            34,
+            24,
+            90,
+            37,
+            96
+          ],
+          "query_artists": 144,
+          "robust_queries": 37
+        },
+        {
+          "all_vocabulary": 127,
+          "evaluation_gate": true,
+          "fold": 4,
+          "gallery_artists": 558,
+          "genre_vocabulary": 87,
+          "judged_gallery_artists": 285,
+          "judged_queries": 83,
+          "positive_class_gallery_artists": [
+            68,
+            20,
+            150,
+            41,
+            34,
+            25,
+            81,
+            36,
+            99
+          ],
+          "query_artists": 155,
+          "robust_queries": 45
+        }
+      ],
+      "idf_builds": 0,
+      "judged_artists": 368,
+      "metadata_tracks": 11565,
+      "rankings_computed": false,
+      "robust_artists": 204,
+      "single_eligible_track_artists": 164,
+      "supervised_fits": 0,
+      "target_reasons": {
+        "eligible": 1024,
+        "invalid_vote": 538,
+        "missing_votes": 9808,
+        "wrong_vote_count": 195
+      },
+      "taxonomy_nominations": 1757,
+      "unjudged_artists": 345
+    }
+  },
+  "accounting": {
+    "census_index_builds": 0,
+    "run_gallery_idf_index_builds": 5,
+    "separate_replay_gallery_idf_index_builds": 5,
+    "supervised_fits": 0,
+    "acquisition_requests": 0,
+    "new_external_cost_usd": 0
+  },
+  "interpretation": "No added-instrument coherence benefit established; preserve slightly worse point estimates/uncertain differences and changing judgment coverage. Coarse human-class proxy only; no listener relevance, population confirmation or EveryNoise parity.",
+  "independent_source_census": {
+    "local_receipt": "/workspace/jamendo-artist-coherence-20261019/independent-support-census.json",
+    "sha256": "c697978b1710432b9ef5d52e65dc0dd8931f8b51f076d7232d657baf883207f2",
+    "bytes": 2811,
+    "evidence": {
+      "created_utc": "2026-10-19T21:46:44.791711+00:00",
+      "protocol_sha256": "ac14d662222fc5241b38598cc2dd74f762d4910f2699c795c1be408356c6e25c",
+      "metadata_tracks": 11565,
+      "human_source_tracks": 11565,
+      "artists": 713,
+      "components": 713,
+      "albums": 2365,
+      "target_reasons": {
+        "invalid_vote": 538,
+        "wrong_vote_count": 195,
+        "eligible": 1024,
+        "missing_votes": 9808
+      },
+      "judged_artists": 368,
+      "robust_artists": 204,
+      "taxonomy_nominated_artists": 459,
+      "cells": [
+        {
+          "fold": 0,
+          "query_artists": 142,
+          "judged_queries": 76,
+          "robust_queries": 40,
+          "gallery_artists": 571,
+          "judged_gallery": 292,
+          "gallery_positive_class_artists": [
+            79,
+            18,
+            165,
+            40,
+            34,
+            22,
+            85,
+            37,
+            97
+          ],
+          "gallery_genre_vocabulary": 87,
+          "gallery_instrument_vocabulary": 40,
+          "passes": true
+        },
+        {
+          "fold": 1,
+          "query_artists": 138,
+          "judged_queries": 59,
+          "robust_queries": 41,
+          "gallery_artists": 575,
+          "judged_gallery": 309,
+          "gallery_positive_class_artists": [
+            73,
+            19,
+            161,
+            47,
+            35,
+            25,
+            92,
+            34,
+            114
+          ],
+          "gallery_genre_vocabulary": 87,
+          "gallery_instrument_vocabulary": 40,
+          "passes": true
+        },
+        {
+          "fold": 2,
+          "query_artists": 134,
+          "judged_queries": 75,
+          "robust_queries": 41,
+          "gallery_artists": 579,
+          "judged_gallery": 293,
+          "gallery_positive_class_artists": [
+            66,
+            15,
+            160,
+            42,
+            39,
+            24,
+            84,
+            40,
+            102
+          ],
+          "gallery_genre_vocabulary": 87,
+          "gallery_instrument_vocabulary": 40,
+          "passes": true
+        },
+        {
+          "fold": 3,
+          "query_artists": 144,
+          "judged_queries": 75,
+          "robust_queries": 37,
+          "gallery_artists": 569,
+          "judged_gallery": 293,
+          "gallery_positive_class_artists": [
+            74,
+            20,
+            164,
+            42,
+            34,
+            24,
+            90,
+            37,
+            96
+          ],
+          "gallery_genre_vocabulary": 87,
+          "gallery_instrument_vocabulary": 40,
+          "passes": true
+        },
+        {
+          "fold": 4,
+          "query_artists": 155,
+          "judged_queries": 83,
+          "robust_queries": 45,
+          "gallery_artists": 558,
+          "judged_gallery": 285,
+          "gallery_positive_class_artists": [
+            68,
+            20,
+            150,
+            41,
+            34,
+            25,
+            81,
+            36,
+            99
+          ],
+          "gallery_genre_vocabulary": 87,
+          "gallery_instrument_vocabulary": 40,
+          "passes": true
+        }
+      ],
+      "idf_weights_vectors_similarities_rankings_metrics_computed": false,
+      "production_modules_imported": false,
+      "new_acquisition_requests": 0
+    }
+  },
+  "independent_comparison": {
+    "local_receipt": "/workspace/jamendo-artist-coherence-20261019/independent-production-comparison.json",
+    "sha256": "2261a0e88cefbb67ccadc0d3e28448b5e4b9800b51b604c4d64e4bec378163bd",
+    "bytes": 1514,
+    "evidence": {
+      "protocol_sha256": "ac14d662222fc5241b38598cc2dd74f762d4910f2699c795c1be408356c6e25c",
+      "source_only_census_sha256": "c697978b1710432b9ef5d52e65dc0dd8931f8b51f076d7232d657baf883207f2",
+      "source_artists": 713,
+      "target_track_votes": 1024,
+      "judged_queries": 368,
+      "robust_queries": 204,
+      "indices": 5,
+      "idf_coordinates": 635,
+      "unit_matrix_sha256_matches": 20,
+      "selected_edges_compared": 21570,
+      "source_component_fold_isolation": true,
+      "all_native_outcomes": 1426,
+      "cohort_scores": true,
+      "paired_2000_draw_intervals": true,
+      "all_9_fractional_class_diagnostics": true,
+      "max_abs_error": {
+        "idf": 0.0,
+        "query_norm": 0.0,
+        "gallery_norm": 0.0,
+        "artist_targets": 0.0,
+        "full_cosine": 0.0,
+        "ndcg10": 2.220446049250313e-16,
+        "mean_vote_agreement10": 1.1102230246251565e-16,
+        "idcg10": 8.881784197001252e-16,
+        "random_ndcg10": 1.1102230246251565e-16,
+        "random_mean_vote_agreement10": 2.7755575615628914e-17,
+        "conditional_observed_gain": 2.220446049250313e-16,
+        "condensed_cosine": 0.0,
+        "cohort_point_ndcg10": 4.440892098500626e-16,
+        "cohort_point_mean_vote_agreement10": 4.718447854656915e-16,
+        "paired_difference": 6.192962809237201e-16,
+        "paired_interval": 0.0,
+        "fold_point": 0.0,
+        "class_weight_mass": 0.0,
+        "class_weighted_point": 0.0
+      },
+      "mismatches": [],
+      "production_modules_imported": false,
+      "supervised_fits": 0,
+      "independent_gallery_idf_builds": 5,
+      "source_license": "CC-BY-NC-SA-4.0",
+      "research_only": true
+    }
+  },
+  "relocated_cli_proof": {
+    "local_receipt": "/workspace/jamendo-artist-coherence-20261019/relocated-proof/proof.json",
+    "sha256": "585184707cdd984b52e48b991dea7ca53fc26c8784371f51e0e49471bec6b2e2",
+    "bytes": 2281,
+    "evidence": {
+      "source": "Exact retained official sources copied locally; no fresh acquisition",
+      "protocol_sha256": "ac14d662222fc5241b38598cc2dd74f762d4910f2699c795c1be408356c6e25c",
+      "runtime_code": {
+        "jamendo_artist_coherence.py": "3a310f1fa978c1cfb1d76ded48151b21c1f7060c7f61dfd867652c074fbf7ac4",
+        "run_jamendo_artist_coherence.py": "527147c9df0bef79c1969f06b088bc07336e6bb18ceb0bcbebf3b7428ca3c64f"
+      },
+      "explicit_denial_probes": 4,
+      "production_forbidden_operations": 0,
+      "supervised_fit_calls_denied": true,
+      "supervised_fits": 0,
+      "unsupervised_gallery_index_builds": {
+        "census": 0,
+        "run": 5,
+        "replay": 5
+      },
+      "network_denied": true,
+      "old_model_imports_denied": [
+        "opennoise.ml.jamendo_genre_temperature",
+        "opennoise.ml.jamendo_genre_inference",
+        "opennoise.ml.jamendo_genre_capsule",
+        "sklearn",
+        "torch"
+      ],
+      "source_original_model_result_oracle_paths_denied": true,
+      "all_three_payloads_byte_identical": {
+        "indices.json": true,
+        "rankings.json": true,
+        "evaluation.json": true
+      },
+      "census_seal_sha256": "224e23459e450dbfb503fc039a405edb84d95214ff9e2dd78b9f62b9d54b0d51",
+      "result_receipt_sha256": "8a0aa9e0274e6c66faa004f131fb90c8a0b6fad1f2a1e929fcf13522154080a3",
+      "payloads": {
+        "indices.json": {
+          "bytes": 183628,
+          "sha256": "d8df92b119a1404dc250c6c45dbe44813b72a6ae750c849dbdca4d0b6f3abe91"
+        },
+        "rankings.json": {
+          "bytes": 2577249,
+          "sha256": "172e49d3f86561bceab1e76b8a2711dc8d0629860c0b6d5e3cbd896a61eba212"
+        },
+        "evaluation.json": {
+          "bytes": 22254,
+          "sha256": "e44283246e5213c688e16987544b2a18d43e1db760b4549a0cec553f9c7a5582"
+        }
+      },
+      "new_acquisition_requests": 0,
+      "new_external_cost_usd": 0,
+      "stages": {
+        "census": {
+          "returncode": 0,
+          "elapsed_seconds": 2.8181218310000986,
+          "stdout": "\"224e23459e450dbfb503fc039a405edb84d95214ff9e2dd78b9f62b9d54b0d51\""
+        },
+        "run": {
+          "returncode": 0,
+          "elapsed_seconds": 4.627682338999875,
+          "stdout": "\"8a0aa9e0274e6c66faa004f131fb90c8a0b6fad1f2a1e929fcf13522154080a3\""
+        },
+        "replay": {
+          "returncode": 0,
+          "elapsed_seconds": 4.179534038999918,
+          "stdout": "\"completed\""
+        }
+      },
+      "source_license": "CC-BY-NC-SA-4.0",
+      "research_only": true
+    }
+  },
+  "rights": {
+    "source_license": "CC-BY-NC-SA-4.0",
+    "research_only": true,
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation"
+  },
+  "post_freeze_independent_source_check": {
+    "scope": "Separate parent next-slice feasibility; did not alter this frozen comparison or acquire DEAM data.",
+    "local_receipt": "/workspace/deam-source-feasibility-20261019/metadata-head.json",
+    "sha256": "50a10e4745acd31d3a04142b91d220824af13e416863d4ac45c0f34ef95d58d9",
+    "bytes": 425,
+    "evidence": {
+      "utc": "2026-10-19T21:54:17.446421+00:00",
+      "purpose": "Independent next-slice feasibility only; no DEAM feature/annotation values requested",
+      "url": "https://cvml.unige.ch/databases/DEAM/metadata.zip",
+      "method": "HEAD",
+      "retries": 0,
+      "redirects_followed": 0,
+      "body_bytes_retained": 0,
+      "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+      "elapsed_seconds": 0.013557666999986395
+    },
+    "official_documentation_summary": "DEAM official page/manual states BY-NC nonprofit research terms and describes 1802 human arousal/valence songs plus metadata and 601.5 MB openSMILE features; no values obtained.",
+    "boundary": "The one official HEAD failed proxy CONNECT403; stop this host/no alternate bypass. This is not a claim that every independent licensed dataset is unavailable."
+  },
+  "verification": {
+    "focused_tests": 12,
+    "python_tests": 2255,
+    "python_skipped": 36,
+    "python_elapsed_seconds": 160.097,
+    "node_tests": 166,
+    "node_passed": 122,
+    "node_skipped": 44,
+    "node_failed": 0,
+    "format_lint_type": "passed",
+    "own_exact_replay": "passed",
+    "luna_final_review": "no material blockers; final source3a310.../CLI527147... and12focused rerunpassed",
+    "full_check_log_local": "/tmp/opennoise-jamendo-artist-coherence-check.log"
+  }
+}
