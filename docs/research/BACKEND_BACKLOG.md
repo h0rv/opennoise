@@ -393,3 +393,37 @@ suppression boundaries. Cross-source identity reuse must not launder a restricte
 alias/QID/name into an export-authorized claim. That adapter fix and actual suppressed
 source replay are separate from this identity patch. Previous research results and
 fold-4 style reservation remain unchanged; source-specific denied routes stay stopped.
+
+### Production backend: independently eligible export metadata
+
+PR88 merged at `25f4bba`; its local, exact-head and main checks passed, and the
+actual merged source/network/research-model/fit-denied identity replay passed.
+The separate [public export v2 fix](../../data/recipes/cc0-public-membership-provenance-20261019/README.md)
+now checks each claim and each used ID/name against its own CC0 export chain and
+all/export suppression. Selected metadata artifacts and fields are receipt-bound;
+raw names and lexicographic identity winners are removed. Private/conflicting
+identity observations can veto a join but never supply exported facts. Existing
+split entities are not repaired. Namespaced claim refs are explicit, and certified
+SQLite reads reject unbound journal sidecars. Old v1 certification requires an
+honest source-database rebuild; released artifact readers/source-policy hashes are
+unchanged.
+
+The actual ordinary adapter exports all40 retained P136 claims, seven artists,
+35 canonical QID labels and42 eligible metadata observations from one raw artifact.
+Source all-suppression leaves stored claims intact and produces no approved output;
+release restores the exact model input. Independent SQL and actively guarded copied
+CLI/suppress/release proofs pass. No NC/research input, model fitting, acquisition,
+UI/default change or deployment participates; cost remains $0. Final local/PR/main
+check outcomes belong to this slice's PR and checked recipe.
+
+The next supported-data slice is full retained CC0 cultural-source ingestion,
+not another model package: both existing raw packs contain150 requested MBIDs,
+88 matched identities (two repeated across packs),62 unmatched and78 with P136.
+There are287 source P136 observations but278 unique artist/genre facts over151
+QIDs; repeats are source observations, never extra independent votes. Native
+entity_claims retain observation provenance, while the current direct-evidence
+fingerprint deduplicates across capture provenance. Any expansion must explicitly
+preserve/report that distinction and its conservative suppression limits. The
+complete native352 plus81 new artists would yield433; all10 matched without P136
+and62 unmatched identities remain explicit. Taxonomy joining needs separate raw
+verification; no genres or recommendations are inferred from names/credits.

@@ -15,7 +15,8 @@ import hashlib
 import sqlite3
 from collections import defaultdict
 from contextlib import closing
-from typing import TYPE_CHECKING, Literal
+from pathlib import Path
+from typing import Literal, NamedTuple
 
 from pydantic import Field, model_validator
 
@@ -32,10 +33,7 @@ from opennoise.serving.public.artist_membership import (
     StrictFrozenModel,
     _sha256,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
+from opennoise.serving.public.membership_export_eligibility import ExportEligibility
 from opennoise.types import Sha256  # noqa: TC001
 
 
@@ -68,11 +66,19 @@ class CertifiedPublicDirectSelector(StrictFrozenModel):
         return self
 
 
+class CertifiedPublicMetadataSelector(StrictFrozenModel):
+    """Declare an additional supported source family for eligible ID/name observations."""
+
+    source: Literal["wikidata", "musicbrainz"]
+    source_key_prefix: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.:-]+$")
+    required_license: Literal["CC0-1.0"] = "CC0-1.0"
+
+
 class CertifiedPublicMembershipAdapterPolicy(StrictFrozenModel):
     """Bound the only SQLite rows that may reach the public candidate."""
 
-    revision: Literal["certified-public-membership-adapter-v1"] = (
-        "certified-public-membership-adapter-v1"
+    revision: Literal["certified-public-membership-adapter-v2"] = (
+        "certified-public-membership-adapter-v2"
     )
     direct_selectors: tuple[CertifiedPublicDirectSelector, ...] = (
         CertifiedPublicDirectSelector(
@@ -83,6 +89,7 @@ class CertifiedPublicMembershipAdapterPolicy(StrictFrozenModel):
             required_license="CC0-1.0",
         ),
     )
+    metadata_selectors: tuple[CertifiedPublicMetadataSelector, ...] = ()
     require_public_domain: Literal[True] = True
     include_aggregate_candidates: bool = False
     aggregate_source_key_prefix: str = Field(
@@ -97,6 +104,10 @@ class CertifiedPublicMembershipAdapterPolicy(StrictFrozenModel):
         """Keep each source/facet/license choice explicit and independently rights-bound."""
         if not self.direct_selectors:
             raise ValueError("adapter must declare at least one direct selector")
+        if not {item.source for item in self.metadata_selectors} <= {
+            item.source for item in self.direct_selectors
+        }:
+            raise ValueError("metadata sources must belong to declared direct source families")
         keys = tuple(
             (item.source, item.facet, item.source_key_prefix) for item in self.direct_selectors
         )
@@ -145,17 +156,29 @@ class CertifiedPublicSourceBinding(StrictFrozenModel):
     row_count: int = Field(ge=1)
 
 
+class CertifiedPublicMetadataBinding(StrictFrozenModel):
+    """Bind an emitted identity or name to its own exact eligible observation."""
+
+    entity_id: int = Field(gt=0)
+    field: str = Field(min_length=1)
+    value: str = Field(min_length=1)
+    provenance_id: int = Field(gt=0)
+    source_family: Literal["wikidata", "musicbrainz"]
+    source_binding: CertifiedPublicSourceBinding
+
+
 class CertifiedPublicMembershipAdapterReceipt(StrictFrozenModel):
     """Replay receipt binding the DB bytes, export policies, and adapted rows."""
 
-    revision: Literal["certified-public-membership-adapter-receipt-v1"] = (
-        "certified-public-membership-adapter-receipt-v1"
+    revision: Literal["certified-public-membership-adapter-receipt-v2"] = (
+        "certified-public-membership-adapter-receipt-v2"
     )
     database_file_sha256: Sha256
     adapter_policy_sha256: Sha256
     row_export_policy_sha256: Sha256
     direct_source_bindings: tuple[CertifiedPublicSourceBinding, ...] = Field(min_length=1)
     aggregate_source_bindings: tuple[CertifiedPublicSourceBinding, ...] = ()
+    metadata_bindings: tuple[CertifiedPublicMetadataBinding, ...] = Field(min_length=1)
     direct_row_count: int = Field(ge=1)
     aggregate_pair_count: int = Field(ge=0)
     approved_input_sha256: Sha256
@@ -174,6 +197,15 @@ class CertifiedPublicMembershipAdapterReceipt(StrictFrozenModel):
     def require_recomputed_output_hash(self) -> CertifiedPublicMembershipAdapterReceipt:
         """Reject receipts whose canonical payload was changed after adaptation."""
         payload = self.model_dump(mode="json", exclude={"output_sha256"})
+        row_policy = {
+            "claims": [
+                item.model_dump(mode="json")
+                for item in (*self.direct_source_bindings, *self.aggregate_source_bindings)
+            ],
+            "metadata": [item.model_dump(mode="json") for item in self.metadata_bindings],
+        }
+        if _sha256(row_policy) != self.row_export_policy_sha256:
+            raise ValueError("adapter receipt metadata/export-policy binding is incomplete")
         if _sha256(payload) != self.output_sha256:
             raise ValueError("adapter receipt output hash does not match adapted input")
         return self
@@ -233,76 +265,25 @@ def _source_family_for_key(
     raise ValueError("source key is outside the declared direct source union")
 
 
-def _direct_source_bindings(
-    connection: sqlite3.Connection,
-    source_counts: dict[str, int],
-    policy: CertifiedPublicMembershipAdapterPolicy,
-) -> tuple[CertifiedPublicSourceBinding, ...]:
-    """Bind each selected direct row to its own provenance policy and artifact."""
-    if not source_counts:
-        return ()
-    source_placeholders = ",".join("?" for _ in source_counts)
-    rows = connection.execute(
-        f"""
-        SELECT DISTINCT ds.source_key, ds.license_name, rp.policy_key, rp.policy_version,
-               rp.classification, rp.local_only, ss.snapshot_ref, ss.manifest_sha256,
-               sa.artifact_ref, sa.sha256
-          FROM artist_genre_evidence AS evidence
-          JOIN provenance_records AS provenance ON provenance.id = evidence.provenance_id
-          JOIN data_sources AS ds
-            ON ds.id = provenance.source_id AND ds.source_key = evidence.source_key
-          JOIN rights_policies AS rp ON rp.id = provenance.policy_id
-          JOIN source_snapshots AS ss
-            ON ss.source_id = provenance.source_id AND ss.snapshot_ref = provenance.snapshot_ref
-          JOIN source_artifacts AS sa
-            ON sa.snapshot_id = ss.id AND sa.sha256 = provenance.artifact_sha256
-         WHERE evidence.evidence_kind = 'direct_source_claim'
-           AND ds.source_key IN ({source_placeholders})
-           AND evidence.policy_id = provenance.policy_id
-           AND sa.policy_id = provenance.policy_id
-           AND rp.classification = 'public_domain' AND rp.local_only = 0
-           AND rp.policy_key IS NOT NULL
-           AND EXISTS (
-               SELECT 1 FROM active_rights_policy_permissions AS permission
-                WHERE permission.policy_id = provenance.policy_id
-                  AND permission.use_kind = 'export' AND permission.decision = 'allow'
-           )
-         ORDER BY ds.source_key, sa.artifact_ref
-        """,
-        tuple(source_counts),
-    ).fetchall()
-    if {str(row["source_key"]) for row in rows} != set(source_counts):
-        raise ValueError("direct evidence source lacks exact provenance-bound artifact")
-    if len(rows) != len(source_counts):
-        raise ValueError("each direct source must resolve to exactly one provenance-bound artifact")
-    bindings: list[CertifiedPublicSourceBinding] = []
-    for row in rows:
-        source_key = str(row["source_key"])
-        try:
-            selector = next(
-                selector
-                for selector in policy.direct_selectors
-                if source_key.startswith(selector.source_key_prefix)
+def _binding(chain: dict[str, object], count: int = 1) -> CertifiedPublicSourceBinding:
+    return CertifiedPublicSourceBinding.model_validate(
+        {
+            key: chain[key]
+            for key in (
+                "source_key",
+                "license_name",
+                "policy_key",
+                "policy_version",
+                "classification",
+                "local_only",
+                "snapshot_ref",
+                "manifest_sha256",
+                "artifact_ref",
+                "artifact_sha256",
             )
-        except StopIteration as error:
-            raise ValueError("direct provenance source is outside adapter policy") from error
-        if str(row["license_name"]) != selector.required_license:
-            raise ValueError("direct provenance artifact uses an unapproved selector license")
-        bindings.append(
-            CertifiedPublicSourceBinding(
-                source_key=source_key,
-                license_name=str(row["license_name"]),
-                policy_key=str(row["policy_key"]),
-                policy_version=int(row["policy_version"]),
-                classification="public_domain",
-                snapshot_ref=str(row["snapshot_ref"]),
-                manifest_sha256=str(row["manifest_sha256"]),
-                artifact_ref=str(row["artifact_ref"]),
-                artifact_sha256=str(row["sha256"]),
-                row_count=source_counts[source_key],
-            )
-        )
-    return tuple(bindings)
+        }
+        | {"row_count": count}
+    )
 
 
 def _aggregate_source_bindings(
@@ -330,6 +311,7 @@ def _aggregate_source_bindings(
          WHERE run.emitted_pairs > 0
            AND run.id = ?
            AND rp.classification = 'public_domain' AND rp.local_only = 0
+           AND ds.license_name='CC0-1.0' AND ss.policy_id=sa.policy_id
          ORDER BY ds.source_key, sa.artifact_ref
         """,
         (run_id,),
@@ -355,150 +337,187 @@ def _aggregate_source_bindings(
     )
 
 
+class _DirectIdentities(NamedTuple):
+    artist: tuple[str, tuple[dict[str, object], ...]] | None
+    genre: tuple[str, tuple[dict[str, object], ...]] | None
+    artist_field: str
+    genre_field: str
+    artist_prefix: str
+    genre_prefix: str
+    evidence_prefix: str
+
+
+def _row_identities(
+    eligibility: ExportEligibility, row: sqlite3.Row, facet: str
+) -> _DirectIdentities:
+    artist_id, genre_id = int(row["artist_id"]), int(row["genre_id"])
+    # Validate all eligible known IDs, including one not preferred for this facet.
+    qid = eligibility.identifier(artist_id, "wikidata_artist_qid", "wikidata")
+    mbid = eligibility.identifier(artist_id, "musicbrainz_artist_id", "musicbrainz")
+    genre = eligibility.identifier(genre_id, "wikidata_genre_qid", "wikidata")
+    tag = eligibility.identifier(genre_id, "musicbrainz_tag_name", "musicbrainz_tag")
+    if eligibility.evidence_blocked(row, genre[0] if genre else None):
+        return _DirectIdentities(None, None, "", "", "", "", "")
+    if facet == "musicbrainz_tag":
+        return _DirectIdentities(
+            mbid,
+            tag,
+            "musicbrainz_artist_id",
+            "musicbrainz_tag_name",
+            "musicbrainz:artist:",
+            "musicbrainz:tag:",
+            "musicbrainz:artist:tag",
+        )
+    return _DirectIdentities(
+        qid or mbid,
+        genre,
+        "wikidata_artist_qid" if qid else "musicbrainz_artist_id",
+        "wikidata_genre_qid",
+        "wikidata:artist:" if qid else "musicbrainz:artist:",
+        "wikidata:genre:",
+        "wikidata:p136",
+    )
+
+
+def _metadata_binding(
+    entity_id: int, field: str, value: str, chain: dict[str, object]
+) -> CertifiedPublicMetadataBinding:
+    return CertifiedPublicMetadataBinding.model_validate(
+        {
+            "entity_id": entity_id,
+            "field": field,
+            "value": value,
+            "provenance_id": chain["provenance_id"],
+            "source_family": chain["source_family"],
+            "source_binding": _binding(chain),
+        }
+    )
+
+
+def _claim_chain(eligibility: ExportEligibility, row: sqlite3.Row) -> dict[str, object] | None:
+    if any(eligibility.blocked("entity", int(row[key])) for key in ("artist_id", "genre_id")):
+        return None
+    chain = eligibility.chain(int(row["provenance_id"]))
+    if chain is not None and (
+        chain["source_key"] != row["source_key"] or chain["policy_id"] != row["policy_id"]
+    ):
+        raise ValueError("direct evidence provenance/source policy mismatch")
+    return chain
+
+
 def _direct_rows(
-    connection: sqlite3.Connection, policy: CertifiedPublicMembershipAdapterPolicy
-) -> tuple[tuple[DirectMembershipEvidence, ...], tuple[GenreIdentity, ...], dict[str, int]]:
-    """Read only direct, export-authorized artist/genre claims from certified tables."""
+    connection: sqlite3.Connection,
+    policy: CertifiedPublicMembershipAdapterPolicy,
+    eligibility: ExportEligibility,
+) -> tuple[
+    tuple[DirectMembershipEvidence, ...],
+    tuple[GenreIdentity, ...],
+    tuple[CertifiedPublicSourceBinding, ...],
+    tuple[CertifiedPublicMetadataBinding, ...],
+]:
+    """Select claims and every emitted metadata observation with independent custody."""
     selector_clauses = " OR ".join(
-        "(evidence.source_key GLOB ? AND evidence.method_key = ? AND source.license_name = ?)"
+        "(e.source_key GLOB ? AND e.method_key=? AND s.license_name=?)"
         for _ in policy.direct_selectors
     )
     rows = connection.execute(
-        f"""
-        WITH musicbrainz_identifiers AS (
-            SELECT identifier.entity_id, MIN(identifier.normalized_value) AS value
-              FROM entity_identifiers AS identifier
-              JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
-             WHERE type.type_key = 'musicbrainz_artist_id'
-             GROUP BY identifier.entity_id
-        ), wikidata_artist_identifiers AS (
-            SELECT identifier.entity_id, MIN(identifier.normalized_value) AS value
-              FROM entity_identifiers AS identifier
-              JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
-             WHERE type.type_key = 'wikidata_artist_qid'
-             GROUP BY identifier.entity_id
-        ), wikidata_genre_identifiers AS (
-            SELECT identifier.entity_id, MIN(identifier.normalized_value) AS value
-              FROM entity_identifiers AS identifier
-              JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
-             WHERE type.type_key = 'wikidata_genre_qid'
-             GROUP BY identifier.entity_id
-        ), musicbrainz_tag_identifiers AS (
-            SELECT identifier.entity_id, MIN(identifier.normalized_value) AS value
-              FROM entity_identifiers AS identifier
-              JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
-             WHERE type.type_key = 'musicbrainz_tag_name'
-             GROUP BY identifier.entity_id
-        )
-        SELECT evidence.id, evidence.artist_id, evidence.genre_id, evidence.evidence_value,
-               evidence.source_key, evidence.source_record_id, evidence.record_fingerprint,
-               genre.name AS genre_name, artist_mbid.value AS artist_mbid,
-               artist_qid.value AS artist_qid, genre_qid.value AS genre_qid,
-               tag_identity.value AS tag_identity
-          FROM artist_genre_evidence AS evidence
-          JOIN data_sources AS source ON source.source_key = evidence.source_key
-          JOIN rights_policies AS policy ON policy.id = evidence.policy_id
-          JOIN genres AS genre ON genre.id = evidence.genre_id
-          LEFT JOIN musicbrainz_identifiers AS artist_mbid
-            ON artist_mbid.entity_id = evidence.artist_id
-          LEFT JOIN wikidata_artist_identifiers AS artist_qid
-            ON artist_qid.entity_id = evidence.artist_id
-          LEFT JOIN wikidata_genre_identifiers AS genre_qid
-            ON genre_qid.entity_id = evidence.genre_id
-          LEFT JOIN musicbrainz_tag_identifiers AS tag_identity
-            ON tag_identity.entity_id = evidence.genre_id
-         WHERE evidence.evidence_kind = 'direct_source_claim'
-           AND ({selector_clauses})
-           AND policy.classification = 'public_domain'
-           AND policy.local_only = 0
-           AND EXISTS (
-               SELECT 1 FROM active_rights_policy_permissions AS permission
-                WHERE permission.policy_id = evidence.policy_id
-                  AND permission.use_kind = 'export'
-                  AND permission.decision = 'allow'
-           )
-         ORDER BY evidence.id
-        """,
-        (
-            *(
-                value
-                for selector in policy.direct_selectors
-                for value in (
-                    f"{selector.source_key_prefix}*",
-                    selector.method_key,
-                    selector.required_license,
-                )
-            ),
+        f"""SELECT e.* FROM artist_genre_evidence e
+            JOIN data_sources s ON s.source_key=e.source_key
+            JOIN catalog_entities artist ON artist.id=e.artist_id AND artist.entity_kind='artist'
+            JOIN artists artist_subtype ON artist_subtype.id=artist.id
+            JOIN catalog_entities genre ON genre.id=e.genre_id AND genre.entity_kind='genre'
+            JOIN genres genre_subtype ON genre_subtype.id=genre.id
+            WHERE e.evidence_kind='direct_source_claim' AND ({selector_clauses})
+            ORDER BY e.id""",
+        tuple(
+            value
+            for selector in policy.direct_selectors
+            for value in (
+                f"{selector.source_key_prefix}*",
+                selector.method_key,
+                selector.required_license,
+            )
         ),
     ).fetchall()
-    if not rows:
-        raise ValueError("no direct export-authorized evidence rows matched adapter policy")
     if len(rows) > policy.maximum_direct_rows:
         raise ValueError("direct evidence rows exceed adapter bound")
     memberships: list[DirectMembershipEvidence] = []
-    genre_rows: dict[str, GenreIdentity] = {}
-    source_counts: dict[str, int] = defaultdict(int)
+    genres: dict[str, GenreIdentity] = {}
+    bindings: dict[str, tuple[CertifiedPublicSourceBinding, int]] = {}
+    metadata: dict[str, CertifiedPublicMetadataBinding] = {}
+
     for row in rows:
-        source_key = str(row["source_key"])
-        try:
-            selector = next(
-                selector
-                for selector in policy.direct_selectors
-                if source_key.startswith(selector.source_key_prefix)
-            )
-        except StopIteration as error:
-            raise ValueError("direct evidence source is outside adapter policy") from error
-        facet = selector.facet
-        if facet == "musicbrainz_tag":
-            artist_identifier = row["artist_mbid"]
-            genre_identifier = row["tag_identity"]
-            artist_prefix = "musicbrainz:artist:"
-            genre_prefix = "musicbrainz:tag:"
-            evidence_prefix = "musicbrainz:artist:tag"
-        else:
-            artist_identifier = row["artist_qid"] or row["artist_mbid"]
-            genre_identifier = row["genre_qid"]
-            artist_prefix = "wikidata:artist:" if row["artist_qid"] else "musicbrainz:artist:"
-            genre_prefix = "wikidata:genre:"
-            evidence_prefix = "wikidata:p136"
-        if artist_identifier is None or genre_identifier is None:
-            raise ValueError("direct evidence lacks a stable public artist or genre identifier")
-        artist_id = f"{artist_prefix}{artist_identifier}"
-        genre_id = f"{genre_prefix}{genre_identifier}"
-        evidence_ref = (
-            f"{evidence_prefix}:{source_key}:{row['source_record_id']}:{row['record_fingerprint']}"
+        artist_id, genre_id = int(row["artist_id"]), int(row["genre_id"])
+        chain = _claim_chain(eligibility, row)
+        if chain is None:
+            continue
+        selector = next(
+            item
+            for item in policy.direct_selectors
+            if row["source_key"].startswith(item.source_key_prefix)
+        )
+        a, g, artist_field, genre_field, artist_prefix, genre_prefix, evidence_prefix = (
+            _row_identities(eligibility, row, selector.facet)
+        )
+        if a is None or g is None:
+            continue
+        public_artist, public_genre = artist_prefix + a[0], genre_prefix + g[0]
+        for entity_id, field, observed in (
+            (artist_id, artist_field, a),
+            (genre_id, genre_field, g),
+        ):
+            for observation in observed[1]:
+                item = _metadata_binding(entity_id, field, observed[0], observation)
+                metadata[_sha256(item.model_dump(mode="json"))] = item
+        name = eligibility.name(genre_id)
+        # An authorized identity string is an explicit identity label, not a catalog name.
+        label = name[0] if name else g[0]
+        if name:
+            item = _metadata_binding(genre_id, "name", name[0], name[1])
+            metadata[_sha256(item.model_dump(mode="json"))] = item
+        genres[public_genre] = GenreIdentity(
+            genre_id=public_genre,
+            name=label,
+            evidence_refs=(f"{evidence_prefix}:{g[0]}",),
         )
         memberships.append(
             DirectMembershipEvidence(
-                artist_id=artist_id,
-                genre_id=genre_id,
-                facet=facet,
+                artist_id=public_artist,
+                genre_id=public_genre,
+                facet=selector.facet,
                 value=float(row["evidence_value"]),
-                evidence_ref=evidence_ref,
+                evidence_ref=f"{evidence_prefix}:{row['source_key']}:{row['source_record_id']}:"
+                f"{row['record_fingerprint']}",
             )
         )
-        genre_rows[genre_id] = GenreIdentity(
-            genre_id=genre_id,
-            name=str(row["genre_name"]),
-            evidence_refs=(f"{evidence_prefix}:{genre_identifier}",),
-        )
-        source_counts[source_key] += 1
+        binding = _binding(chain)
+        key = _sha256(binding.model_dump(mode="json"))
+        prior = bindings.get(key)
+        bindings[key] = (binding, 1 if prior is None else prior[1] + 1)
+    if not memberships:
+        raise ValueError("no direct export-authorized evidence rows matched adapter policy")
     return (
         tuple(memberships),
-        tuple(genre_rows[key] for key in sorted(genre_rows)),
-        dict(source_counts),
+        tuple(genres[key] for key in sorted(genres)),
+        tuple(
+            item.model_copy(update={"row_count": count})
+            for _, (item, count) in sorted(bindings.items())
+        ),
+        tuple(metadata[key] for key in sorted(metadata)),
     )
 
 
 def _aggregate_pairs(
-    connection: sqlite3.Connection, policy: CertifiedPublicMembershipAdapterPolicy
+    connection: sqlite3.Connection,
+    policy: CertifiedPublicMembershipAdapterPolicy,
+    eligibility: ExportEligibility,
 ) -> tuple[tuple[ArtistPairEvidence, ...], dict[str, int], sqlite3.Row | None]:
     """Optionally reduce exportable raw window rows to privacy-safe pair aggregates."""
     if not policy.include_aggregate_candidates:
         return (), {}, None
     run_rows = connection.execute(
         """
-        SELECT run.*, source.source_key
+        SELECT run.*, source.source_key, source.id AS source_id, snapshot.id AS snapshot_id
           FROM artist_co_listen_runs AS run
           JOIN source_artifacts AS artifact ON artifact.id = run.artifact_id
           JOIN source_snapshots AS snapshot ON snapshot.id = artifact.snapshot_id
@@ -506,6 +525,10 @@ def _aggregate_pairs(
           JOIN rights_policies AS rights ON rights.id = artifact.policy_id
          WHERE source.source_key GLOB ?
            AND rights.classification = 'public_domain' AND rights.local_only = 0
+           AND source.license_name='CC0-1.0' AND snapshot.policy_id=artifact.policy_id
+           AND EXISTS(SELECT 1 FROM active_rights_policy_permissions permission
+               WHERE permission.policy_id=artifact.policy_id AND permission.use_kind='export'
+                 AND permission.decision='allow')
            AND artifact.policy_id = (
                SELECT policy_id FROM ingest_attempts WHERE id = run.ingest_attempt_id
            )
@@ -513,6 +536,20 @@ def _aggregate_pairs(
         """,
         (f"{policy.aggregate_source_key_prefix}*",),
     ).fetchall()
+    run_rows = [
+        row
+        for row in run_rows
+        if not any(
+            eligibility.blocked(kind, int(row[key]))
+            for kind, key in (
+                ("source", "source_id"),
+                ("snapshot", "snapshot_id"),
+                ("artifact", "artifact_id"),
+            )
+        )
+    ]
+    if not run_rows:
+        return (), {}, None
     if len(run_rows) != 1:
         raise ValueError("aggregate adapter requires exactly one completed public run")
     run = run_rows[0]
@@ -587,19 +624,36 @@ def adapt_certified_public_membership_input(
     database_path: Path, policy: CertifiedPublicMembershipAdapterPolicy
 ) -> CertifiedPublicMembershipAdaptation:
     """Convert one immutable certified database into a replayable approved input."""
+    database_path = database_path.resolve()
+    if any(Path(str(database_path) + suffix).exists() for suffix in ("-wal", "-shm", "-journal")):
+        raise ValueError("certified database must be checkpointed without SQLite sidecars")
     database_sha = _file_sha256(database_path)
-    with closing(sqlite3.connect(f"file:{database_path}?mode=ro", uri=True)) as connection:
+    with closing(
+        sqlite3.connect(database_path.as_uri() + "?mode=ro&immutable=1", uri=True)
+    ) as connection:
         connection.row_factory = sqlite3.Row
-        direct, genres, direct_counts = _direct_rows(connection, policy)
-        pairs, aggregate_counts, aggregate_run = _aggregate_pairs(connection, policy)
-        direct_bindings = _direct_source_bindings(connection, direct_counts, policy)
+        connection.execute("BEGIN")
+        eligibility = ExportEligibility(
+            connection,
+            tuple(
+                (item.source_key_prefix, item.source)
+                for item in (*policy.direct_selectors, *policy.metadata_selectors)
+            ),
+        )
+        direct, genres, direct_bindings, metadata = _direct_rows(connection, policy, eligibility)
+        pairs, aggregate_counts, aggregate_run = _aggregate_pairs(connection, policy, eligibility)
         aggregate_bindings = _aggregate_source_bindings(
             connection, aggregate_counts, aggregate_run["id"] if aggregate_run is not None else None
         )
     if _file_sha256(database_path) != database_sha:
         raise ValueError("certified database changed while adapting; replay is not safe")
     row_policy_sha = _sha256(
-        [item.model_dump(mode="json") for item in (*direct_bindings, *aggregate_bindings)]
+        {
+            "claims": [
+                item.model_dump(mode="json") for item in (*direct_bindings, *aggregate_bindings)
+            ],
+            "metadata": [item.model_dump(mode="json") for item in metadata],
+        }
     )
     artifacts = tuple(
         PublicArtifact(
@@ -620,6 +674,17 @@ def adapt_certified_public_membership_input(
         )
         for item in aggregate_bindings
     )
+    artifacts += tuple(
+        PublicArtifact(
+            source=item.source_family,
+            snapshot=item.source_binding.snapshot_ref,
+            artifact_key=item.source_binding.artifact_ref,
+            content_sha256=item.source_binding.artifact_sha256,
+            export_allowed=True,
+        )
+        for item in metadata
+    )
+    artifacts = tuple({item.model_dump_json(): item for item in artifacts}.values())
     public_model_input = PublicModelInput(
         artifacts=artifacts,
         genres=genres,
@@ -637,7 +702,7 @@ def adapt_certified_public_membership_input(
         declared_aggregate_row_count=len(pairs),
     )
     receipt_payload = {
-        "revision": "certified-public-membership-adapter-receipt-v1",
+        "revision": "certified-public-membership-adapter-receipt-v2",
         "database_file_sha256": database_sha,
         "adapter_policy_sha256": _sha256(policy.model_dump(mode="json")),
         "row_export_policy_sha256": row_policy_sha,
@@ -645,6 +710,7 @@ def adapt_certified_public_membership_input(
         "aggregate_source_bindings": tuple(
             item.model_dump(mode="json") for item in aggregate_bindings
         ),
+        "metadata_bindings": tuple(item.model_dump(mode="json") for item in metadata),
         "direct_row_count": len(direct),
         "aggregate_pair_count": len(pairs),
         "approved_input_sha256": public_input_sha,

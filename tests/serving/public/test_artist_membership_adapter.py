@@ -41,8 +41,18 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
                     policy_id INTEGER, record_fingerprint TEXT);
                 CREATE TABLE identifier_types (id INTEGER PRIMARY KEY, type_key TEXT);
                 CREATE TABLE entity_identifiers (id INTEGER PRIMARY KEY, entity_id INTEGER,
-                    identifier_type_id INTEGER, normalized_value TEXT);
+                    identifier_type_id INTEGER, normalized_value TEXT, namespace TEXT,
+                    provenance_id INTEGER);
                 CREATE TABLE genres (id INTEGER PRIMARY KEY, name TEXT);
+                CREATE TABLE catalog_entities (id INTEGER PRIMARY KEY, entity_kind TEXT);
+                CREATE TABLE artists (id INTEGER PRIMARY KEY);
+                CREATE TABLE active_suppressions(target_kind TEXT,target_ref TEXT,use_kind TEXT);
+                CREATE TABLE exportable_entity_names(id INTEGER PRIMARY KEY,entity_id INTEGER,
+                    name TEXT,provenance_id INTEGER,is_preferred INTEGER,name_kind TEXT,
+                    language_tag TEXT);
+                CREATE TABLE entity_claims(id INTEGER PRIMARY KEY,entity_id INTEGER,
+                    provenance_id INTEGER,policy_id INTEGER,claim_key TEXT,claim_type TEXT,
+                    normalized_value_json TEXT);
                 CREATE TABLE artist_co_listen_runs (id INTEGER PRIMARY KEY, run_ref TEXT,
                     ingest_attempt_id INTEGER, artifact_id INTEGER, window_seconds INTEGER,
                     minimum_distinct_users INTEGER, listens_seen INTEGER,
@@ -75,10 +85,20 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
             connection.execute("INSERT INTO identifier_types VALUES (1, 'musicbrainz_artist_id')")
             connection.execute("INSERT INTO identifier_types VALUES (2, 'wikidata_genre_qid')")
             connection.executemany(
-                "INSERT INTO entity_identifiers VALUES (?, ?, ?, ?)",
-                ((1, 10, 1, "artist-a"), (2, 20, 2, "Q-jazz")),
+                "INSERT INTO entity_identifiers VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    (1, 10, 1, "11111111-1111-4111-8111-111111111111", "musicbrainz", 1),
+                    (2, 20, 2, "Q100", "wikidata", 1),
+                ),
             )
             connection.execute("INSERT INTO genres VALUES (20, 'Jazz')")
+            connection.executemany(
+                "INSERT INTO catalog_entities VALUES (?,?)", ((10, "artist"), (20, "genre"))
+            )
+            connection.execute("INSERT INTO artists VALUES (10)")
+            connection.execute(
+                "INSERT INTO exportable_entity_names VALUES (1,20,'Jazz',1,1,'primary','und')"
+            )
             connection.execute(
                 "INSERT INTO source_snapshots VALUES (1, 1, 'snapshot-direct', ?, 2)",
                 ("d" * 64,),
@@ -302,9 +322,14 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
                     "INSERT INTO identifier_types VALUES (4, 'musicbrainz_tag_name')"
                 )
                 connection.execute("INSERT INTO genres VALUES (30, 'Ambient')")
+                connection.execute("INSERT INTO catalog_entities VALUES (30,'genre')")
                 connection.execute(
-                    "INSERT INTO entity_identifiers VALUES (?, ?, ?, ?)",
-                    (31, 30, 4, "tag:ambient"),
+                    "INSERT INTO entity_identifiers VALUES (32,10,1,?, 'musicbrainz',4)",
+                    ("11111111-1111-4111-8111-111111111111",),
+                )
+                connection.execute(
+                    "INSERT INTO entity_identifiers VALUES (?, ?, ?, ?, ?, ?)",
+                    (31, 30, 4, "tag:ambient", "musicbrainz_tag", 4),
                 )
                 connection.execute(
                     "INSERT INTO artist_genre_evidence VALUES "
@@ -322,12 +347,14 @@ class PublicArtistMembershipAdapterTests(unittest.TestCase):
                         method_key="musicbrainz_artist_tag",
                         required_license="CC0-1.0",
                     ),
-                )
+                ),
             )
             adaptation = adapt_certified_public_membership_input(database, policy)
 
         membership = adaptation.approved_input.public_model_input.direct_memberships[0]
-        self.assertEqual(membership.artist_id, "musicbrainz:artist:artist-a")
+        self.assertEqual(
+            membership.artist_id, "musicbrainz:artist:11111111-1111-4111-8111-111111111111"
+        )
         self.assertEqual(membership.genre_id, "musicbrainz:tag:tag:ambient")
         self.assertEqual(membership.facet, "musicbrainz_tag")
         self.assertEqual(
