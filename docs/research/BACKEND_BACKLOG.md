@@ -11,8 +11,8 @@ changes.
 
 | Order | Slice | Acceptance evidence | State |
 | --- | --- | --- | --- |
-| 1 | AB178 exact-contract source-to-query pipeline | Replay native source custody; build a bank; fit each predeclared contract independently on fixed fold 0; infer and export exact-credit artist evidence; preserve all 100 nominations and unfitted contracts; independently reconstruct outputs. | Implemented and independently reviewed; full checks and merge pending. |
-| 2 | Exhaustive AB178 out-of-fold pipeline evaluation | Declare all six contracts and all three existing component folds before remaining numeric outcomes. Infer each recording only through its own fold-excluded frame. Report all 18 cells, unsupported cells and all 100 nominations; independently reconstruct each fitted frame. Preserve the fixed fold-0 slice exactly. | Selected next slice after bounded Luna assessment; protocol and implementation not started. |
+| 1 | AB178 exact-contract source-to-query pipeline | Replay native source custody; build a bank; fit each predeclared contract independently on fixed fold 0; infer and export exact-credit artist evidence; preserve all 100 nominations and unfitted contracts; independently reconstruct outputs. | Merged as PR 80 after full checks and exact-head CI; merge-head CI pending. |
+| 2 | Exhaustive AB178 out-of-fold pipeline evaluation | Declare all six contracts and all three existing component folds before remaining numeric outcomes. Infer each recording only through its own fold-excluded frame. Report all 18 cells, unsupported cells and all 100 nominations; independently reconstruct each fitted frame. Preserve the fixed fold-0 slice exactly. | Implemented and independently reviewed; full checks and merge pending. |
 | 3 | Component-balanced AB recording retrieval | Inspect the routed outputs first. If multiple recordings from one candidate credit component consume the available neighbor slots, add an explicit optional policy that takes the nearest recording per component before truncation. Preserve the existing policy, distances, support gate and query-component exclusion. Measure component diversity and result counts; do not call these musical-quality metrics. | Feasible candidate; with two training components per frame it cannot add candidate-component coverage. |
 | 4 | Compatible new-source query ingestion | Assess the remaining boundary between an independently approved native source capture and an already fitted exact-contract frame. Require full credit proof and conservative query/candidate component reconciliation; no name joins, refitting or cross-version fallback. | Candidate; inspect whether the first slice already closes enough of this boundary before implementation. |
 
@@ -39,6 +39,26 @@ network access denied. These are support and replay results, not musical-quality
 validation. Commands and artifact pins are in
 [`ab178-version-routing`](../../data/recipes/ab178-version-routing/README.md).
 
+The next slice's exhaustive reporting protocol SHA256 is
+`4fefa8bfc2ac9ac7985b86e4a27db92443188031c3dcab2e455b9b08cb25dda6`.
+It includes all three complete per-fold plans. Fold 0 keeps the preceding plan
+bytes; the other plans change only their explicit heldout fold and matching
+eligibility description. A recording can use only its immutable component fold,
+and every contract/fold cell stays visible even if it cannot fit or has no query.
+Distances are comparable only within their own frame. There is no final all-data
+model or outcome-based choice among folds.
+
+The exhaustive retained run has 18 cells, seven fitted frames and exactly 100
+out-of-fit query outcomes: 11 emitted, 12 outside training support, 11 without
+training support, 21 dirty and 45 missing. Its 55 recording edges yield 63
+exact-credit artist observations. Independent reconstruction matched all seven
+frames, 23 fitted-frame query outcomes, 55 ordered edges and artist joins with
+zero distance error. The fold-0 nested manifest is byte-identical to PR 80.
+Relocated actual CLI verification passed with proven source-read and refit
+denial hooks; neither forbidden operation occurred. These are historical
+engineering support results, not fresh musical confirmation. See
+[`ab178-crossfit`](../../data/recipes/ab178-crossfit/README.md) for reproduction.
+
 Every completed slice requires a bounded independent Luna review, full
 `poe check`, exact-head PR CI and merge-head main CI. Keep its source inputs,
 commands, hashes, denominators and limitations in a checked-in recipe. Routine
@@ -55,6 +75,7 @@ to stop independent work.
 | [PR 75](https://github.com/h0rv/opennoise/pull/75), [PR 76](https://github.com/h0rv/opennoise/pull/76): FMA artist evidence and rank profiles | Native artist aggregation and optional reciprocal-rank profiles from retained FMA44 outputs. Historical source-tag diagnostics, with mixed macro/micro results; no new FMA518 evaluation. |
 | [PR 77](https://github.com/h0rv/opennoise/pull/77), [PR 78](https://github.com/h0rv/opennoise/pull/78): artist and recording profile retrieval | Component exclusions and one representative per candidate component; independent ranking reconstruction. Saved historical ranks, not newly extracted acoustic features. |
 | [PR 79](https://github.com/h0rv/opennoise/pull/79): portable saved-recording lookup | Exact query-result equivalence without original target/source paths. Main `ff4ae3c`, CI run `39163299032` passed. This is inference infrastructure, not new model quality. |
+| [PR 80](https://github.com/h0rv/opennoise/pull/80): exact-version AB178 end-to-end pipeline | Two independent contract frames cover 21 recordings, including three supported heldout queries. All 100 nominations remain explicit. Full 2,200-test Python/122-pass Node checks and exact-head CI `39315222105` passed; merged at `b0efc9708f4eedd87dde649eb1da8d90cef8b6a2`. |
 
 ## Source-specific blockers and assessed alternatives
 
