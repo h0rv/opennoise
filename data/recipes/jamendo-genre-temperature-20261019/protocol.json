@@ -1,0 +1,132 @@
+{
+  "revision": "jamendo-genre-temperature-plan-v1",
+  "frozen_utc": "2026-10-19T20:59:42.168491+00:00",
+  "pre_freeze_knowledge": {
+    "outer_results": "Original genre outcomes, confidence/missingness/feature diagnostics already inspected; exploratory nested reuse, not fresh confirmatory cohort.",
+    "inner_hash_census": "One proposed label-blind hash inspected before freeze; all 15 training cells pass >=5 positive-vote components/class; minimum 8. Hash was not chosen among reseeds.",
+    "inner_fits": 0,
+    "temperature_candidate_scores": 0,
+    "temperature_selections": 0
+  },
+  "original_pins": {
+    "protocol": "994399146138008c4329946315d9ac8f7b78021c03dbf2bd87fa515fcf83796b",
+    "amendment": "09ef671b841afb7d7b29e6ac6daa526b09beb369ce16a3b5ea38c56ac01612c4",
+    "capture_receipt": "3125263a9c7a3fbdc80c53ad10f60648801681b0737bbc7002720dc2b3d82b75",
+    "identity_cohort": "788895cd621fa69e086a9cc0dada206157130d54226c684610d65aca0484befb",
+    "identity_seal": "ba8891f1cef6c8fa02cd1af311db1ddf67da4563bf719ed1debe258095fb9cff",
+    "census_seal": "19a9c02c775db42ece4001ac4598be8da4b760bcda4660adfea5c3a91baf9b60",
+    "result_receipt": "397d68414fd6d75ba2db5889b64eec85b5d881b3431f7d405941c9039ae5b9aa"
+  },
+  "original_code": {
+    "jamendo_human_genre.py": "9f4663644a941f64a78359d2677cc07cadce5b0719f756defc2d26be15869b5d",
+    "jamendo_human_mood.py": "9848cd3a855e8b40018c50e949d3d38b6aad533c2323f8d68a7419cd5a5002e9",
+    "run_jamendo_human_genre.py": "0cb4c6401387e2ee42355699c7646e4618bd63df60026630ea85ad558d2af35e"
+  },
+  "source_commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+  "input_files": [
+    {
+      "name": "autotagging-test.tsv",
+      "bytes": 1611903,
+      "sha256": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366"
+    },
+    {
+      "name": "music-classification-annotations-raw.tsv",
+      "bytes": 7468828,
+      "sha256": "466cbb888fe906f3db22b9e6f63b1694e6a38a8613fb67d9d52149e1cc6decd3"
+    }
+  ],
+  "classes": [
+    "alternative",
+    "blues",
+    "electronic",
+    "folkcountry",
+    "funksoulrnb",
+    "jazz",
+    "pop",
+    "raphiphop",
+    "rock"
+  ],
+  "unchanged": "Full 11565 metadata identities, artist+album components, original five outer folds/salt, 1024 eligible rows/368 components, fractional targets including disagreement, three original methods, train-only genre/instrument vocabulary, alpha1 NB, component-unit training weights, outer support gates. No moods/human taxonomy/IDs/titles/duration as features.",
+  "inner_folds": {
+    "count": 3,
+    "salt": "opennoise-jamendo-human-genre-temperature-inner-v1",
+    "assignment": "int.from_bytes(sha256(f\"{salt}|{outer}|{component_min_track_id}\".encode()).digest(),\"big\") % 3",
+    "cohort": "Eligible outer-training rows only. Whole complete-metadata components retained; outer heldout labels never used for gates, fits, selection or temperature.",
+    "fit_gate": "Every class positive in >=5 distinct inner-training components. Each validation row held out from its own inner fit; every eligible outer-training row must have exactly one inner OOF prediction. No validation-class gate."
+  },
+  "selection": {
+    "temperatures": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "objective": "Fractional log loss, average eligible rows within each outer-training component then equally across all such components. Pool complete OOF rows, not equally weighted fold scores.",
+    "ties": "Exact computed loss ties select smaller temperature, no epsilon.",
+    "failure": "If any inner training gate fails or complete OOF coverage fails, use T=1 identity fallback with explicit reason; do not score/select candidates or abstain original baseline/query outcomes.",
+    "transformation": "softmax(raw nine-class Bernoulli NB logits / T) using logsumexp. Empty vocabulary raw logits=log(training prior); T1 uses original NB probabilities byte-exactly, otherwise soften prior by same transformation.",
+    "no_search": "No expanded grid, reseeding, class selection, calibration variant, feature tuning or outer-outcome selection."
+  },
+  "fit_budget": {
+    "inner": 15,
+    "outer_baseline_verification": 5,
+    "total_max": 20,
+    "outer": "Refit unchanged full outer model once to prove exact old model and baseline prediction equality; selected temperature then applies to raw logits of that same model."
+  },
+  "methods": [
+    "training_human_prior",
+    "genre_instrument_nb",
+    "mapped_uploader_genre",
+    "temperature_nb"
+  ],
+  "metrics": {
+    "primary": "Component-equal fractional logloss difference temperature_nb minus genre_instrument_nb.",
+    "secondary": "Component-equal and track-weighted individual-vote Brier and fractional logloss for all four matched methods; descriptive per-class support/probability/logloss.",
+    "clip": "1e-15 inside logloss only; exact probabilities for Brier, no renormalization; report clipped positive-target class cells/tracks.",
+    "bootstrap": {
+      "draws": 2000,
+      "seed": 20261019,
+      "quantiles": [
+        0.025,
+        0.975
+      ],
+      "unit": "Paired scored components, shared draws across all four methods, both scopes/metrics; all six pairwise method differences; fixed predictions, no retraining uncertainty."
+    }
+  },
+  "diagnostics": {
+    "bins": [
+      0,
+      0.2,
+      0.4,
+      0.6,
+      0.8,
+      1
+    ],
+    "boundaries": "Left closed/right open except last right closed.",
+    "confidence": "max predicted probability; class-order argmax ties.",
+    "agreement": "Human fractional vote mass on argmax class.",
+    "weights": "Eligible scored row weight 1/n_eligible_in_component; normalize globally for overall statistics and renormalize within each bin.",
+    "report": "All methods confidence/agreement/bin counts and component mass; per-class row-vote/component-vote mass, predicted class mass and classwise logloss; target missingness and genre/instrument sampling. Never use diagnostics/ECE to select."
+  },
+  "limits": {
+    "wall_seconds": 240,
+    "cpu_seconds": 240,
+    "address_space_bytes": 1000000000,
+    "output_bytes_per_stage": 20000000,
+    "numerical_threads": 1,
+    "metadata_rows_max": 15000
+  },
+  "rights": {
+    "license": "CC-BY-NC-SA-4.0",
+    "research_only": true,
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation",
+    "commit": "Code, protocols and restrained aggregates only. Raw source, inner logits/models and per-track predictions remain local. No serving or deployment."
+  },
+  "acquisition": {
+    "requests": 0,
+    "new_external_cost_usd": 0,
+    "audio": false,
+    "descriptors": false
+  },
+  "interpretation": "Exploratory nested reuse of known historical outer outcomes. No fresh confirmatory cohort, causal diagnosis, relevance/listener retrieval validation, general calibration guarantee or EveryNoise parity claim. No further outcome-based method changes."
+}
