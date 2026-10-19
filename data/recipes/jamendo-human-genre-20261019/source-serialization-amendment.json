@@ -1,0 +1,30 @@
+{
+  "revision": "jamendo-human-genre-source-serialization-amendment-v1",
+  "created_utc": "2026-10-19T20:32:43.964903+00:00",
+  "parent_protocol_sha256": "994399146138008c4329946315d9ac8f7b78021c03dbf2bd87fa515fcf83796b",
+  "parent_protocol_commit": "6d5a1932d53c4d14fa6fb6986f7bfb92eb8bdd85",
+  "source_commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+  "source_documentation": "https://github.com/MTG/mtg-jamendo-dataset/blob/cafd8e20c265ed84f1e61f1c875327971f43a62f/derived/music-classification-annotations/README.md",
+  "acquisition_receipt_sha256": "3125263a9c7a3fbdc80c53ad10f60648801681b0737bbc7002720dc2b3d82b75",
+  "input_sha256": {
+    "autotagging-test.tsv": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366",
+    "music-classification-annotations-raw.tsv": "466cbb888fe906f3db22b9e6f63b1694e6a38a8613fb67d9d52149e1cc6decd3"
+  },
+  "identity_cohort_sha256": "788895cd621fa69e086a9cc0dada206157130d54226c684610d65aca0484befb",
+  "initial_doc_spelling_census_sha256": "631819dafea7ad63e8a01a5797a6d52bbd423b7e83e110cd20ae88cc64c73bf6",
+  "raw_to_protocol_class": {
+    "folk_country": "folkcountry",
+    "funk_soul_rnb": "funksoulrnb",
+    "rap_hiphop": "raphiphop"
+  },
+  "empty_target_payload": "A present genre_dortmund--- cell with no payload is missing_votes and not a taxonomy nomination. A nonempty payload is a taxonomy nomination; preserve every raw token and all invalid/incomplete vote sequences in local outcomes.",
+  "strict_policy": "Only these three exact bijective aliases are recognized in addition to the six unchanged native class spellings. No whitespace, case, generic underscore removal or unmatched conversion. Duplicate target cells remain invalid input.",
+  "reason": "The pinned README displays friendly concatenated class names but raw TSV serialization uses the three separated identifiers. All 11565 rows carry the target cell, including 9808 with empty payloads. Independent target-only source inspection confirmed exact spelling and empty-cell mismatch before any fit. This repairs source parsing while retaining the original nine semantic classes.",
+  "prefit_state": {
+    "fits": 0,
+    "model_predictions": 0,
+    "labels_seen": "Only identity-sealed target availability, raw vote counts and class/component support; no other taxonomy or model outcome."
+  },
+  "unchanged": "Original protocol bytes, complete metadata cohort, nine semantic classes/order, artist+album components, five label-blind folds, features, mapping baseline, support gates, models, metrics, resource/rights limits, no tuning or reseeding.",
+  "independent_review": "Luna independently verified all exact native joins, three raw spellings and 9808 empty target payloads; accepted the source-serialization correction before fitting. Recompute and seal corrected support census before fit."
+}
