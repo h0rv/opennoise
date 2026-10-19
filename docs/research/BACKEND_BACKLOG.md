@@ -322,3 +322,44 @@ The completed pipeline passed 2,255 Python tests (36 skips), 122 Node passes
 (44 skips), full format/lint/type checks and all twelve focused tests. Luna final
 review was clear and reran the focused set. Own exact replay and the independent
 raw-source/relocated no-supervised-fit proofs bind the unchanged final source.
+
+### Completed: development-only five-attribute artist-style evaluation
+
+The separately frozen [style recipe](../../data/recipes/jamendo-artist-style-evaluation-20261019/README.md)
+adds human-target coverage on unchanged PR86 artist-neighbor geometry. Aggressive,
+electronic, party, relaxed and sad were selected before their retrieval outcomes;
+exact positive/explicit negative tokens and three-vote eligibility retain disagreement.
+The component fold-4 identities are reserved **before style parsing/aggregation**:
+2,716 reserved tracks and 155 artists receive identity/status only, no style profiles
+or scores. Known support counts are disclosed. Development folds 0–3 contain 8,849
+tracks, 8,095 eligible per attribute, 547 complete artists and a fixed 446 multi-track
+query subset. All planned gallery positive/negative support gates pass.
+
+The new development endpoint is mean macro expected binary-vote agreement@10,
+with positive-positive and negative-negative contributions, prevalence, conditional
+observed agreement and judged/unjudged/missing/reserved coverage kept distinct.
+The unchanged genre-only arm scores 0.645037, added instruments 0.641597, exact
+random 0.576807. Candidate-minus-genre is **−0.003439 [−0.005170,−0.001590]**;
+the multi-track secondary is also negative. Both positive and negative contributions
+decrease overall. Retain this result; do not promote the instrument arm or tune on
+reserved outcomes. This expected independent-draw functional is not actual
+inter-annotator agreement or listener recommendation relevance.
+
+Independent raw-source verification matched 22,308 selected edges/cosines exactly,
+4,428 metric/prevalence/support arrays to below 1.7e−15, the unchanged 20 matrix
+hashes and all 713 historical full-top10 outcomes. Actual copied-input CLI
+census/run/replay reproduced all payloads and both final seals byte-for-byte with
+original source/protocol/cache/oracle/old-model paths, networking and supervised
+fit calls actively denied. Build accounting is 0/5/5 unsupervised banks per stage,
+zero supervised fits; no acquisitions or new cost. Local human ledgers/profiles/ranks
+remain CC BY-NC-SA noncommercial research artifacts. Luna final review and fourteen
+focused tests passed; final full-check/PR CI evidence belongs to the recipe/PR.
+
+Next substantive model work requires a **separately frozen** candidate and training-only
+feature context before any reserved fold-4 style confirmation. The present reservation
+is label-held-out and transductive: development IDF geometry already contains unlabeled
+fold-4 metadata, and count-only target availability was inspected. It is neither an
+independent cohort nor inductive validation. More broadly, independent artist-pair
+listening judgments, stronger source covariates and identity/duplicate coverage remain
+needed for supported recommendations. Source-specific denied routes remain stopped;
+this does not revoke standing authorization for an independently licensed new dataset.
