@@ -1,0 +1,298 @@
+{
+  "revision": "jamendo-genre-capsule-checked-aggregate-v1",
+  "contract_sha256": "41ea14ecdfe9136a6134821abae789b03e81c9bfd9958bad3680c6b9ca4ca634",
+  "manifest_sha256": "4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef",
+  "capsule_bytes": 184218,
+  "capsule_files": {
+    "routing.json": {
+      "sha256": "9e976a6a326a68a5c1130811ce96c702330ec0f310f7131c957e1c0878299760",
+      "bytes": 57311
+    },
+    "models.json": {
+      "sha256": "a94358745a0313cc683d6bf7a144ce7ec7cc0a9843a2b23ec7fb8a6735f6f65c",
+      "bytes": 124610
+    },
+    "manifest.json": {
+      "sha256": "4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef",
+      "bytes": 2297
+    }
+  },
+  "runtime": {
+    "code": {
+      "jamendo_genre_inference.py": "6b4fb6ba9b2c8db62133e6c9eeb94cdce754194dc673be526442fb876cdf2752",
+      "run_jamendo_genre_capsule.py": "57093224c4699fbd372173f0cf4fc5d771335c790314d203c7ece9799de8e0c1"
+    },
+    "numpy": "2.5.2",
+    "python": "3.13.14",
+    "scipy": "1.18.1"
+  },
+  "builder": {
+    "jamendo_genre_capsule.py": "c873dc5e8c3bd00307f9d1f486c003735c2d11ac4553ef4fc1f2f4b8cbce023b",
+    "jamendo_human_mood.py": "9848cd3a855e8b40018c50e949d3d38b6aad533c2323f8d68a7419cd5a5002e9"
+  },
+  "counts": {
+    "albums": 2365,
+    "artists": 713,
+    "components": 713,
+    "pairs": 2365
+  },
+  "source": {
+    "inner_census_sha256": "b9038ae23a65d5047950dc49b97b4dffee96aa501932a7116d13a1f92d43e937",
+    "metadata_sha256": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366",
+    "original_protocol_sha256": "994399146138008c4329946315d9ac8f7b78021c03dbf2bd87fa515fcf83796b",
+    "outer_models_sha256": "d13b4e8e807e703e9fdb71634ff00bfa6de78993dbeeb378153eb26f2c1a4208",
+    "selected_models_sha256": "7b199721a01cc81f1c972d2b2a227586cd59e76f14078b2495aa1ccd0d318206",
+    "serialization_amendment_sha256": "09ef671b841afb7d7b29e6ac6daa526b09beb369ce16a3b5ea38c56ac01612c4",
+    "source_commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+    "study_inputs": {
+      "census_seal": "19a9c02c775db42ece4001ac4598be8da4b760bcda4660adfea5c3a91baf9b60",
+      "identity_seal": "ba8891f1cef6c8fa02cd1af311db1ddf67da4563bf719ed1debe258095fb9cff",
+      "protocol": "012af3ed3453c5157d3a5bce79323bdb086da2d8b18a594bca8c76e981b74eff",
+      "result_receipt": "397d68414fd6d75ba2db5889b64eec85b5d881b3431f7d405941c9039ae5b9aa"
+    },
+    "study_receipt_sha256": "7a6bc7f39e747789f027a0e2cb94e0cdd33608537f02fa80678957ade045801a",
+    "temperature_protocol_sha256": "012af3ed3453c5157d3a5bce79323bdb086da2d8b18a594bca8c76e981b74eff"
+  },
+  "producer_parity": {
+    "profiles": 11565,
+    "scalar_probabilities": 416340,
+    "exact_probability_parity": true,
+    "maximum_error": 0.0,
+    "api_batch_cap": 100,
+    "capsule_sha256": "4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef",
+    "capsule_bytes": 184218,
+    "files": {
+      "models.json": {
+        "bytes": 124610,
+        "sha256": "a94358745a0313cc683d6bf7a144ce7ec7cc0a9843a2b23ec7fb8a6735f6f65c"
+      },
+      "routing.json": {
+        "bytes": 57311,
+        "sha256": "9e976a6a326a68a5c1130811ce96c702330ec0f310f7131c957e1c0878299760"
+      }
+    },
+    "source": {
+      "inner_census_sha256": "b9038ae23a65d5047950dc49b97b4dffee96aa501932a7116d13a1f92d43e937",
+      "metadata_sha256": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366",
+      "original_protocol_sha256": "994399146138008c4329946315d9ac8f7b78021c03dbf2bd87fa515fcf83796b",
+      "outer_models_sha256": "d13b4e8e807e703e9fdb71634ff00bfa6de78993dbeeb378153eb26f2c1a4208",
+      "selected_models_sha256": "7b199721a01cc81f1c972d2b2a227586cd59e76f14078b2495aa1ccd0d318206",
+      "serialization_amendment_sha256": "09ef671b841afb7d7b29e6ac6daa526b09beb369ce16a3b5ea38c56ac01612c4",
+      "source_commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+      "study_inputs": {
+        "census_seal": "19a9c02c775db42ece4001ac4598be8da4b760bcda4660adfea5c3a91baf9b60",
+        "identity_seal": "ba8891f1cef6c8fa02cd1af311db1ddf67da4563bf719ed1debe258095fb9cff",
+        "protocol": "012af3ed3453c5157d3a5bce79323bdb086da2d8b18a594bca8c76e981b74eff",
+        "result_receipt": "397d68414fd6d75ba2db5889b64eec85b5d881b3431f7d405941c9039ae5b9aa"
+      },
+      "study_receipt_sha256": "7a6bc7f39e747789f027a0e2cb94e0cdd33608537f02fa80678957ade045801a",
+      "temperature_protocol_sha256": "012af3ed3453c5157d3a5bce79323bdb086da2d8b18a594bca8c76e981b74eff"
+    },
+    "runtime": {
+      "code": {
+        "jamendo_genre_inference.py": "6b4fb6ba9b2c8db62133e6c9eeb94cdce754194dc673be526442fb876cdf2752",
+        "run_jamendo_genre_capsule.py": "57093224c4699fbd372173f0cf4fc5d771335c790314d203c7ece9799de8e0c1"
+      },
+      "numpy": "2.5.2",
+      "python": "3.13.14",
+      "scipy": "1.18.1"
+    },
+    "fits": 0,
+    "acquisition_requests": 0
+  },
+  "producer_custom_cli": {
+    "request_sha256": "5e69d42d640fcec6b9e7b4190c8792812f62cc5820f4a2a0686daee2813a8cee",
+    "result_sha256": "ef4ced3ca89f90d3780b89dba67270f2c5ab029d1fe4f447feefa29be2e15226",
+    "requests": 6,
+    "statuses": [
+      "emitted",
+      "emitted",
+      "emitted",
+      "unknown_artist",
+      "unknown_album",
+      "conflicting_component"
+    ],
+    "changed_tags_change_nb_and_mapper": true,
+    "CLI_returncode": 0,
+    "fits": 0,
+    "network_requests": 0
+  },
+  "independent_comparison": {
+    "local_receipt": "/workspace/jamendo-genre-capsule-20261019/independent-production-comparison.json",
+    "sha256": "aec342c34ecb53d556eed59fa8a483f4a5a28625448266163f933e0f9dd7558c",
+    "bytes": 667,
+    "evidence": {
+      "capsule_manifest_sha256": "4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef",
+      "retained_profiles": 11565,
+      "method_class_probabilities": 416340,
+      "custom_profiles": 25,
+      "custom_probabilities": 900,
+      "max_abs_error": 0.0,
+      "custom_max_abs_error": 0.0,
+      "exact_component_fold_routes": 11565,
+      "known_context_tag_changes_alter_nb": 5,
+      "unseen_only_equals_empty_nb": 5,
+      "context_abstention_statuses": [
+        "unknown_artist",
+        "unknown_album",
+        "conflicting_component"
+      ],
+      "invalid_requests_rejected": 25,
+      "fits": 0,
+      "runtime_imports_only_pure_module": true,
+      "source_license": "CC-BY-NC-SA-4.0",
+      "research_only": true
+    }
+  },
+  "relocated_cli_proof": {
+    "local_receipt": "/workspace/jamendo-genre-capsule-20261019/relocated-proof-refit-denied/proof.json",
+    "sha256": "a2406171dd244b76de9f154db8cca5b86f916baf8496fddaa69a7a2d5e5cc2a4",
+    "bytes": 2286,
+    "evidence": {
+      "capsule_manifest_sha256": "4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef",
+      "code": {
+        "jamendo_genre_inference.py": "6b4fb6ba9b2c8db62133e6c9eeb94cdce754194dc673be526442fb876cdf2752",
+        "jamendo_genre_capsule.py": "c873dc5e8c3bd00307f9d1f486c003735c2d11ac4553ef4fc1f2f4b8cbce023b",
+        "run_jamendo_genre_capsule.py": "57093224c4699fbd372173f0cf4fc5d771335c790314d203c7ece9799de8e0c1"
+      },
+      "capsule_files": {
+        "manifest.json": {
+          "bytes": 2297,
+          "sha256": "4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef"
+        },
+        "models.json": {
+          "bytes": 124610,
+          "sha256": "a94358745a0313cc683d6bf7a144ce7ec7cc0a9843a2b23ec7fb8a6735f6f65c"
+        },
+        "routing.json": {
+          "bytes": 57311,
+          "sha256": "9e976a6a326a68a5c1130811ce96c702330ec0f310f7131c957e1c0878299760"
+        }
+      },
+      "capsule_bytes": 184218,
+      "builder_human_annotations_and_saved_predictions_required": false,
+      "explicit_denial_probes_passed": true,
+      "probe_denials": {
+        "build-probes": 4,
+        "infer-probes": 7
+      },
+      "production_forbidden_operations": 0,
+      "inference_source_builder_training_imports_denied": [
+        "opennoise.ml.jamendo_human_genre",
+        "opennoise.ml.jamendo_genre_temperature",
+        "opennoise.ml.jamendo_calibration",
+        "sklearn",
+        "torch",
+        "opennoise.ml.jamendo_human_mood",
+        "opennoise.ml.jamendo_genre_capsule"
+      ],
+      "network_denied": true,
+      "custom_profiles": 25,
+      "custom_method_class_probabilities": 900,
+      "max_abs_error": 0.0,
+      "fits": 0,
+      "refit_calls_explicitly_denied": true,
+      "new_acquisition_requests": 0,
+      "new_external_cost_usd": 0,
+      "source_license": "CC-BY-NC-SA-4.0",
+      "research_only": true,
+      "build": {
+        "returncode": 0,
+        "elapsed_seconds": 1.0138736579992838,
+        "stdout": "{\"sha256\": \"4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef\"}"
+      },
+      "infer": {
+        "returncode": 0,
+        "elapsed_seconds": 0.5011870010002895,
+        "stdout": "{\"sha256\": \"951508dc6359c9a67079f1cc4e19028ec22a75e08419c5bcd59f2adc9b2a6fa6\"}"
+      },
+      "result_sha256": "951508dc6359c9a67079f1cc4e19028ec22a75e08419c5bcd59f2adc9b2a6fa6",
+      "custody_operation": "Exact retained inputs copied locally, independently exported then capsule relocated; no acquisition or model selection"
+    }
+  },
+  "rights": {
+    "source_license": "CC-BY-NC-SA-4.0",
+    "research_only": true,
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation"
+  },
+  "interpretation": "New caller-profile inference capability, not new fitted weights or quality evidence. Pure probability parity/custom-math validation only; known historical negative Brier/underconfidence findings remain.",
+  "earlier_relocated_cli_proof": {
+    "local_receipt": "/workspace/jamendo-genre-capsule-20261019/relocated-proof/proof.json",
+    "sha256": "fbeedb1849496301685c2bb54416d32be41139b9674a9952d30594ead9178ad9",
+    "bytes": 2245,
+    "evidence": {
+      "capsule_manifest_sha256": "4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef",
+      "code": {
+        "jamendo_genre_inference.py": "6b4fb6ba9b2c8db62133e6c9eeb94cdce754194dc673be526442fb876cdf2752",
+        "jamendo_genre_capsule.py": "c873dc5e8c3bd00307f9d1f486c003735c2d11ac4553ef4fc1f2f4b8cbce023b",
+        "run_jamendo_genre_capsule.py": "57093224c4699fbd372173f0cf4fc5d771335c790314d203c7ece9799de8e0c1"
+      },
+      "capsule_files": {
+        "manifest.json": {
+          "bytes": 2297,
+          "sha256": "4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef"
+        },
+        "models.json": {
+          "bytes": 124610,
+          "sha256": "a94358745a0313cc683d6bf7a144ce7ec7cc0a9843a2b23ec7fb8a6735f6f65c"
+        },
+        "routing.json": {
+          "bytes": 57311,
+          "sha256": "9e976a6a326a68a5c1130811ce96c702330ec0f310f7131c957e1c0878299760"
+        }
+      },
+      "capsule_bytes": 184218,
+      "builder_human_annotations_and_saved_predictions_required": false,
+      "explicit_denial_probes_passed": true,
+      "probe_denials": {
+        "build-probes": 3,
+        "infer-probes": 6
+      },
+      "production_forbidden_operations": 0,
+      "inference_source_builder_training_imports_denied": [
+        "opennoise.ml.jamendo_human_genre",
+        "opennoise.ml.jamendo_genre_temperature",
+        "opennoise.ml.jamendo_calibration",
+        "sklearn",
+        "torch",
+        "opennoise.ml.jamendo_human_mood",
+        "opennoise.ml.jamendo_genre_capsule"
+      ],
+      "network_denied": true,
+      "custom_profiles": 25,
+      "custom_method_class_probabilities": 900,
+      "max_abs_error": 0.0,
+      "fits": 0,
+      "new_acquisition_requests": 0,
+      "new_external_cost_usd": 0,
+      "source_license": "CC-BY-NC-SA-4.0",
+      "research_only": true,
+      "build": {
+        "returncode": 0,
+        "elapsed_seconds": 0.5755341899994164,
+        "stdout": "{\"sha256\": \"4ec3238eab04d3b967ddaec8899bb5ab39bac3eb0eab26c7679c0cb811f0c1ef\"}"
+      },
+      "infer": {
+        "returncode": 0,
+        "elapsed_seconds": 0.3183233569998265,
+        "stdout": "{\"sha256\": \"951508dc6359c9a67079f1cc4e19028ec22a75e08419c5bcd59f2adc9b2a6fa6\"}"
+      },
+      "result_sha256": "951508dc6359c9a67079f1cc4e19028ec22a75e08419c5bcd59f2adc9b2a6fa6",
+      "custody_operation": "Exact retained inputs copied locally, independently exported then capsule relocated; no acquisition or model selection"
+    }
+  },
+  "verification": {
+    "focused_tests": 11,
+    "format_lint_type": "passed",
+    "python_tests": 2243,
+    "python_skipped": 36,
+    "python_elapsed_seconds": 158.725,
+    "node_tests": 166,
+    "node_passed": 122,
+    "node_skipped": 44,
+    "node_failed": 0,
+    "full_check_log_local": "/tmp/opennoise-jamendo-genre-capsule-check.log",
+    "luna_review": "final source review clear; no material blockers",
+    "final_source_hashes_unchanged": true
+  }
+}

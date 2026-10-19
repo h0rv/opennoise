@@ -220,3 +220,47 @@ proven denial hooks. Fit accounting is per invocation: twenty producer fits,
 twenty separate producer replay fits, and twenty each for the copied evaluation
 and its replay; all repeat the frozen plan rather than adding candidates.
 Exact-head and main CI/publication status remains with the associated PR.
+
+
+## New caller-profile inference under exact historical native contexts
+
+The [frozen capsule contract and recipe](../../data/recipes/jamendo-genre-capsule-20261019/README.md)
+add genuinely new bounded profile inputs, rather than another saved-score export.
+A caller supplies only literal genre/instrument tags plus an exact previously
+observed native artist–album pair. Five unchanged outer models and selected
+temperatures compute all four method distributions. Unknown/conflicting or
+unobserved contexts abstain; no new component/fold is inferred, no association is
+created from component membership, and no model is fitted or selected.
+
+The 184,218-byte local capsule includes 713 artists/components and 2,365 observed
+album pairs, but no recording/tag profiles, human votes, saved predictions,
+training rosters, inner models/logits or source paths. The exporter needs only
+verified metadata, two saved model payloads, a trusted study receipt and the
+contract. The pure runtime needs only capsule+new caller request; it imports no
+training/source/builder module. Rights and source/protocol/amendment/census/model
+hash provenance accompany its outputs. Models/routing/requests/results stay
+local under CC BY-NC-SA noncommercial research terms; no public serving or default
+integration is authorized.
+
+Producer and independent validation matched all 416,340 retained probabilities
+and 11,565 native context routes exactly. The independent oracle additionally
+matched 900 probabilities for 25 new custom profiles with maximum error zero;
+changed tags under the same context change NB/mapping outputs. Actual copied-input
+CLI export and relocated inference passed with original trees, source/training
+imports, fit/train/partial_fit calls and networking denied by actively probed
+guards. There were zero forbidden operations, new fits, acquisition requests or
+external cost. Eleven focused tests cover math, new/empty/unseen profiles, schema
+and custody boundaries, including same-component unobserved-pair exclusion.
+
+This is a new execution capability, not new quality evidence. Caller profiles
+and contexts remain assertions, not verified source recording observations or
+genre memberships. Historical underconfidence/mixed Brier findings and missing
+independent relevance/confirmation data remain. New artist contexts need
+appropriate native identity evidence and separately frozen model/isolation
+policy; assigning arbitrary folds or fuzzy matches does not unblock them.
+Exact-head/main CI status belongs to the associated pull request.
+
+The final implementation passed 2,243 Python tests (36 skips), 122 Node passes
+(44 skips), full format/lint/type checks and all eleven focused tests. The final
+physical-size regression is included. Independent Luna final source review was
+clear, and runtime/capsule hashes remained identical to the audited no-refit proof.
