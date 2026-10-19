@@ -1,0 +1,40 @@
+{
+  "protocol_sha256": "994399146138008c4329946315d9ac8f7b78021c03dbf2bd87fa515fcf83796b",
+  "source_commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+  "requests": [
+    {
+      "url": "https://raw.githubusercontent.com/MTG/mtg-jamendo-dataset/cafd8e20c265ed84f1e61f1c875327971f43a62f/data/splits/split-0/autotagging-test.tsv",
+      "path": "data/splits/split-0/autotagging-test.tsv",
+      "started_utc": "2026-10-19T20:30:05.619459+00:00",
+      "attempt": 1,
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "bytes": 1611903,
+      "sha256": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366",
+      "git_blob_sha1": "6a14702bb012bfef3870323ca156390803f5db2f",
+      "local_path": "/workspace/jamendo-human-genre-20261019/source/autotagging-test.tsv",
+      "integrity": "pass"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/MTG/mtg-jamendo-dataset/cafd8e20c265ed84f1e61f1c875327971f43a62f/derived/music-classification-annotations/music-classification-annotations-raw.tsv",
+      "path": "derived/music-classification-annotations/music-classification-annotations-raw.tsv",
+      "started_utc": "2026-10-19T20:30:07.488416+00:00",
+      "attempt": 1,
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "bytes": 7468828,
+      "sha256": "466cbb888fe906f3db22b9e6f63b1694e6a38a8613fb67d9d52149e1cc6decd3",
+      "git_blob_sha1": "4df9c93c81ca5dd4185a3d4591c4060a2cd740c6",
+      "local_path": "/workspace/jamendo-human-genre-20261019/source/music-classification-annotations-raw.tsv",
+      "integrity": "pass"
+    }
+  ],
+  "total_bytes": 9080731,
+  "audio_requested": false,
+  "retries": 0,
+  "redirects": false,
+  "success": true,
+  "fresh_capture": true,
+  "source_license": "CC-BY-NC-SA-4.0",
+  "research_only": true
+}

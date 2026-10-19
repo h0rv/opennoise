@@ -1,0 +1,641 @@
+{
+  "revision": "jamendo-human-genre-checked-aggregate-v1",
+  "source_capture_receipt_sha256": "3125263a9c7a3fbdc80c53ad10f60648801681b0737bbc7002720dc2b3d82b75",
+  "identity_cohort_sha256": "788895cd621fa69e086a9cc0dada206157130d54226c684610d65aca0484befb",
+  "identity_seal_sha256": "ba8891f1cef6c8fa02cd1af311db1ddf67da4563bf719ed1debe258095fb9cff",
+  "census_seal_sha256": "19a9c02c775db42ece4001ac4598be8da4b760bcda4660adfea5c3a91baf9b60",
+  "census_file_sha256": "32ecb723a20f4743b3a9d3f06093c48dd238eabb2341b6bc454dcad714e0eeb9",
+  "producer_result_receipt_sha256": "397d68414fd6d75ba2db5889b64eec85b5d881b3431f7d405941c9039ae5b9aa",
+  "local_result_files": {
+    "evaluation.json": {
+      "bytes": 8495,
+      "sha256": "178f321e67cfe95b6b7830dd034690469f17316cff848b1ca39de07c5355fcb4"
+    },
+    "models.json": {
+      "bytes": 165007,
+      "sha256": "d13b4e8e807e703e9fdb71634ff00bfa6de78993dbeeb378153eb26f2c1a4208"
+    },
+    "predictions.json": {
+      "bytes": 10613357,
+      "sha256": "2bb3de821e30d87eff0672d31cbc2bde2d57212e87a982b89c5c5d5b4824c585"
+    }
+  },
+  "local_result_bytes": 10788192,
+  "single_run_measurement": {
+    "elapsed_seconds": 3.9405222049999793,
+    "peak_rss_bytes": 110993408,
+    "exit_code": 0
+  },
+  "evaluation": {
+    "amendment_sha256": "09ef671b841afb7d7b29e6ac6daa526b09beb369ce16a3b5ea38c56ac01612c4",
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation",
+    "bootstrap": {
+      "comparisons": {
+        "genre_instrument_nb-minus-mapped_uploader_genre": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": -4.819228071993548,
+              "interval": [
+                -5.614862506705308,
+                -3.984989708572876
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.031277479908902506,
+              "interval": [
+                -0.07486261357860802,
+                0.0168046219852056
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": -5.523850083016427,
+              "interval": [
+                -6.531387865573026,
+                -4.498543920218113
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.04499470444744158,
+              "interval": [
+                -0.0911128447975683,
+                0.0026777714737804786
+              ]
+            }
+          }
+        },
+        "genre_instrument_nb-minus-training_human_prior": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": 0.2826744505045329,
+              "interval": [
+                0.08610972943912575,
+                0.4924886851105689
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.19009975994779948,
+              "interval": [
+                -0.2279133095589313,
+                -0.14946504390472862
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": 0.312702877674246,
+              "interval": [
+                0.11442688616505726,
+                0.5190862391352051
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.18309362614119362,
+              "interval": [
+                -0.21821540730170128,
+                -0.14604908087819243
+              ]
+            }
+          }
+        },
+        "mapped_uploader_genre-minus-training_human_prior": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": 5.101902522498081,
+              "interval": [
+                4.188317772277348,
+                5.999119922631577
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.15882228003889698,
+              "interval": [
+                -0.20377073756341108,
+                -0.11613311635798121
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": 5.836552960690673,
+              "interval": [
+                4.751599096271061,
+                6.891805711375814
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.13809892169375204,
+              "interval": [
+                -0.18396877869179912,
+                -0.09458122241290177
+              ]
+            }
+          }
+        }
+      },
+      "draws": 2000,
+      "valid_draws": 2000
+    },
+    "counts": {
+      "eligible_tracks": 1024,
+      "metadata_components": 713,
+      "metadata_tracks": 11565,
+      "predicted_components": 713,
+      "predicted_tracks": 11565,
+      "prediction_abstentions": {},
+      "scored_components": 368,
+      "scored_tracks": 1024,
+      "target_outcomes": {
+        "eligible": 1024,
+        "invalid_vote": 538,
+        "missing_votes": 9808,
+        "wrong_vote_count": 195
+      },
+      "taxonomy_nominations": 1757
+    },
+    "interpretation": "Fixed historical cohort and predictions; no population significance, fresh cohort confirmation, calibration, retrieval usefulness or EveryNoise parity claim",
+    "log_loss_clipping": {
+      "genre_instrument_nb": {
+        "positive_target_class_cells": 0,
+        "tracks": 0
+      },
+      "mapped_uploader_genre": {
+        "positive_target_class_cells": 435,
+        "tracks": 350
+      },
+      "training_human_prior": {
+        "positive_target_class_cells": 0,
+        "tracks": 0
+      }
+    },
+    "per_class": [
+      {
+        "class": "alternative",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.05440613527294223,
+          "mapped_uploader_genre": 0.07578738030547962,
+          "training_human_prior": 0.052295209911663657
+        },
+        "scored_positive_components": 90,
+        "scored_positive_tracks": 148,
+        "scored_positive_votes": 169
+      },
+      {
+        "class": "blues",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.01653394645967561,
+          "mapped_uploader_genre": 0.014528556948725617,
+          "training_human_prior": 0.01596676168905262
+        },
+        "scored_positive_components": 23,
+        "scored_positive_tracks": 41,
+        "scored_positive_votes": 59
+      },
+      {
+        "class": "electronic",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.14451290587206728,
+          "mapped_uploader_genre": 0.13615258016047727,
+          "training_human_prior": 0.24603105352402782
+        },
+        "scored_positive_components": 200,
+        "scored_positive_tracks": 523,
+        "scored_positive_votes": 1359
+      },
+      {
+        "class": "folkcountry",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.05189313415193676,
+          "mapped_uploader_genre": 0.05410656508751425,
+          "training_human_prior": 0.056598557560140324
+        },
+        "scored_positive_components": 53,
+        "scored_positive_tracks": 109,
+        "scored_positive_votes": 174
+      },
+      {
+        "class": "funksoulrnb",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.030103200160047482,
+          "mapped_uploader_genre": 0.03173523437759701,
+          "training_human_prior": 0.02928783063005902
+        },
+        "scored_positive_components": 44,
+        "scored_positive_tracks": 64,
+        "scored_positive_votes": 97
+      },
+      {
+        "class": "jazz",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.034524092315006985,
+          "mapped_uploader_genre": 0.03203674290024417,
+          "training_human_prior": 0.03232282261593538
+        },
+        "scored_positive_components": 30,
+        "scored_positive_tracks": 42,
+        "scored_positive_votes": 84
+      },
+      {
+        "class": "pop",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.08750258884542213,
+          "mapped_uploader_genre": 0.10743494281711237,
+          "training_human_prior": 0.09095408896362663
+        },
+        "scored_positive_components": 108,
+        "scored_positive_tracks": 193,
+        "scored_positive_votes": 312
+      },
+      {
+        "class": "raphiphop",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.03905270776012111,
+          "mapped_uploader_genre": 0.025736398269539922,
+          "training_human_prior": 0.056552287155774476
+        },
+        "scored_positive_components": 46,
+        "scored_positive_tracks": 102,
+        "scored_positive_votes": 218
+      },
+      {
+        "class": "rock",
+        "component_equal_ovr_vote_brier": {
+          "genre_instrument_nb": 0.10393319648854964,
+          "mapped_uploader_genre": 0.11622098636798103,
+          "training_human_prior": 0.17255305522328881
+        },
+        "scored_positive_components": 127,
+        "scored_positive_tracks": 265,
+        "scored_positive_votes": 600
+      }
+    ],
+    "protocol_sha256": "994399146138008c4329946315d9ac8f7b78021c03dbf2bd87fa515fcf83796b",
+    "research_only": true,
+    "revision": "jamendo-human-genre-evaluation-v1",
+    "scores": {
+      "genre_instrument_nb": {
+        "component_equal_fractional_log_loss": 2.0073341057632006,
+        "component_equal_vote_brier": 0.562461907325769,
+        "track_weighted_fractional_log_loss": 2.032373173379281,
+        "track_weighted_vote_brier": 0.5633480672033627
+      },
+      "mapped_uploader_genre": {
+        "component_equal_fractional_log_loss": 6.826562177756749,
+        "component_equal_vote_brier": 0.5937393872346715,
+        "track_weighted_fractional_log_loss": 7.5562232563957075,
+        "track_weighted_vote_brier": 0.6083427716508043
+      },
+      "training_human_prior": {
+        "component_equal_fractional_log_loss": 1.7246596552586677,
+        "component_equal_vote_brier": 0.7525616672735684,
+        "track_weighted_fractional_log_loss": 1.719670295705035,
+        "track_weighted_vote_brier": 0.7464416933445563
+      }
+    },
+    "source_license": "CC-BY-NC-SA-4.0",
+    "support": {
+      "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation",
+      "classes": [
+        "alternative",
+        "blues",
+        "electronic",
+        "folkcountry",
+        "funksoulrnb",
+        "jazz",
+        "pop",
+        "raphiphop",
+        "rock"
+      ],
+      "disagreements": 403,
+      "eligible_components": 368,
+      "eligible_tracks": 1024,
+      "empty_target_cells": 9808,
+      "folds": [
+        {
+          "fit_gate": true,
+          "fold": 0,
+          "query_class_components": [
+            11,
+            5,
+            35,
+            13,
+            10,
+            8,
+            23,
+            9,
+            30
+          ],
+          "query_class_votes": [
+            28,
+            23,
+            250,
+            32,
+            32,
+            18,
+            87,
+            35,
+            140
+          ],
+          "query_eligible_components": 76,
+          "query_eligible_tracks": 215,
+          "training_class_components": [
+            79,
+            18,
+            165,
+            40,
+            34,
+            22,
+            85,
+            37,
+            97
+          ],
+          "training_class_votes": [
+            141,
+            36,
+            1109,
+            142,
+            65,
+            66,
+            225,
+            183,
+            460
+          ],
+          "training_components": 292,
+          "training_tracks": 809
+        },
+        {
+          "fit_gate": true,
+          "fold": 1,
+          "query_class_components": [
+            17,
+            4,
+            39,
+            6,
+            9,
+            5,
+            16,
+            12,
+            13
+          ],
+          "query_class_votes": [
+            23,
+            8,
+            304,
+            16,
+            20,
+            12,
+            27,
+            55,
+            54
+          ],
+          "query_eligible_components": 59,
+          "query_eligible_tracks": 173,
+          "training_class_components": [
+            73,
+            19,
+            161,
+            47,
+            35,
+            25,
+            92,
+            34,
+            114
+          ],
+          "training_class_votes": [
+            146,
+            51,
+            1055,
+            158,
+            77,
+            72,
+            285,
+            163,
+            546
+          ],
+          "training_components": 309,
+          "training_tracks": 851
+        },
+        {
+          "fit_gate": true,
+          "fold": 2,
+          "query_class_components": [
+            24,
+            8,
+            40,
+            11,
+            5,
+            6,
+            24,
+            6,
+            25
+          ],
+          "query_class_votes": [
+            34,
+            17,
+            255,
+            70,
+            9,
+            23,
+            91,
+            17,
+            126
+          ],
+          "query_eligible_components": 75,
+          "query_eligible_tracks": 214,
+          "training_class_components": [
+            66,
+            15,
+            160,
+            42,
+            39,
+            24,
+            84,
+            40,
+            102
+          ],
+          "training_class_votes": [
+            135,
+            42,
+            1104,
+            104,
+            88,
+            61,
+            221,
+            201,
+            474
+          ],
+          "training_components": 293,
+          "training_tracks": 810
+        },
+        {
+          "fit_gate": true,
+          "fold": 3,
+          "query_class_components": [
+            16,
+            3,
+            36,
+            11,
+            10,
+            6,
+            18,
+            9,
+            31
+          ],
+          "query_class_votes": [
+            32,
+            6,
+            246,
+            27,
+            19,
+            12,
+            37,
+            53,
+            117
+          ],
+          "query_eligible_components": 75,
+          "query_eligible_tracks": 183,
+          "training_class_components": [
+            74,
+            20,
+            164,
+            42,
+            34,
+            24,
+            90,
+            37,
+            96
+          ],
+          "training_class_votes": [
+            137,
+            53,
+            1113,
+            147,
+            78,
+            72,
+            275,
+            165,
+            483
+          ],
+          "training_components": 293,
+          "training_tracks": 841
+        },
+        {
+          "fit_gate": true,
+          "fold": 4,
+          "query_class_components": [
+            22,
+            3,
+            50,
+            12,
+            10,
+            5,
+            27,
+            10,
+            28
+          ],
+          "query_class_votes": [
+            52,
+            5,
+            304,
+            29,
+            17,
+            19,
+            70,
+            58,
+            163
+          ],
+          "query_eligible_components": 83,
+          "query_eligible_tracks": 239,
+          "training_class_components": [
+            68,
+            20,
+            150,
+            41,
+            34,
+            25,
+            81,
+            36,
+            99
+          ],
+          "training_class_votes": [
+            117,
+            54,
+            1055,
+            145,
+            80,
+            65,
+            242,
+            160,
+            437
+          ],
+          "training_components": 285,
+          "training_tracks": 785
+        }
+      ],
+      "global_support_passes": true,
+      "human_rows_missing": 0,
+      "metadata_components": 713,
+      "metadata_tracks": 11565,
+      "research_only": true,
+      "revision": "jamendo-human-genre-support-v1",
+      "source_license": "CC-BY-NC-SA-4.0",
+      "target_outcomes": {
+        "eligible": 1024,
+        "invalid_vote": 538,
+        "missing_votes": 9808,
+        "wrong_vote_count": 195
+      },
+      "taxonomy_nominations": 1757
+    }
+  },
+  "independent_audit": {
+    "receipt_sha256": "d8950abbafa02be768543ad644ec60d53f8eea9f2a70753aec8010d3903f547a",
+    "local_receipt": "/workspace/jamendo-human-genre-20261019/independent-production-comparison.json",
+    "identity_rows": 11565,
+    "models": 5,
+    "scalar_probabilities": 312255,
+    "eligible_targets": 1024,
+    "paired_bootstrap_draws": 2000,
+    "maximum_probability_error": 9.8255e-15,
+    "maximum_theta_error": 9.992e-16,
+    "maximum_score_error": 1.776e-15,
+    "maximum_interval_error": 5.329e-15,
+    "fold_leakage_count": 0,
+    "production_code_imported": false,
+    "maximum_errors": {
+      "model_prior": 6.661338147750939e-16,
+      "model_theta": 9.992007221626409e-16,
+      "probability_mass": 3.4416913763379853e-15,
+      "all_probabilities": 9.825473767932635e-15,
+      "targets": 0,
+      "proper_scores": 1.7763568394002505e-15,
+      "paired_differences": 2.4424906541753444e-15,
+      "bootstrap_intervals": 5.329070518200751e-15
+    }
+  },
+  "relocated_cli_proof": {
+    "receipt_sha256": "10e3f519031aec7328491998e5817fced5fccd2c2c6a0da08ae346fc6a684dc2",
+    "receipt_bytes": 4500,
+    "local_receipt": "/workspace/jamendo-human-genre-20261019/relocated-proof/proof.json",
+    "all_four_stages_passed": true,
+    "forbidden_original_source_reads": 0,
+    "network_attempts": 0,
+    "result_files_byte_identical": 3,
+    "new_honest_local_custody_receipt": true,
+    "original_identity_seal_relocated": false
+  },
+  "verification": {
+    "focused_tests": 10,
+    "format_lint_type": "passed",
+    "python_tests": 2222,
+    "python_skipped": 36,
+    "python_elapsed_seconds": 161.543,
+    "node_tests": 166,
+    "node_passed": 122,
+    "node_skipped": 44,
+    "node_failed": 0,
+    "independent_luna_source_review": "no material blockers",
+    "full_check_log_local": "/tmp/opennoise-jamendo-human-genre-check.log"
+  }
+}
