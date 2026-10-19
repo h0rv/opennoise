@@ -122,12 +122,12 @@ class CertifiedPublicMembershipAdapterPolicy(StrictFrozenModel):
     @property
     def effective_direct_sources(self) -> tuple[Literal["wikidata", "musicbrainz"], ...]:
         """Return source families in selector order."""
-        return tuple(item.source for item in self.direct_selectors)
+        return tuple(dict.fromkeys(item.source for item in self.direct_selectors))
 
     @property
     def effective_direct_facets(self) -> tuple[Literal["wikidata_p136", "musicbrainz_tag"], ...]:
         """Return direct facets in selector order."""
-        return tuple(item.facet for item in self.direct_selectors)
+        return tuple(dict.fromkeys(item.facet for item in self.direct_selectors))
 
     @property
     def effective_direct_prefixes(self) -> tuple[str, ...]:

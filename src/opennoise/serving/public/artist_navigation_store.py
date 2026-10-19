@@ -13,7 +13,9 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field
 
+from opennoise.catalog.artist_identity import ArtistIdentityError, resolve_artist
 from opennoise.models import FrozenModel
+from opennoise.models.catalog import IdentifierClaim
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -38,11 +40,12 @@ class DirectMembershipEvidence(FrozenModel):
 
 
 class PublicArtist(FrozenModel):
-    """A named catalog artist with a typed local API identity."""
+    """A catalog artist labeled by a source name or an authorized exact identifier."""
 
     entity_id: int = Field(gt=0)
     artist_id: str = Field(pattern=r"^catalog:artist:[1-9][0-9]*$")
     name: str = Field(min_length=1, max_length=500)
+    name_status: Literal["source_name", "source_identifier"] = "source_name"
 
 
 class PublicGenre(FrozenModel):
@@ -361,9 +364,72 @@ class PublicArtistNavigationStore:
                WHERE artist.id = ? ORDER BY name.is_preferred DESC, name.id LIMIT 1""",
             (artist_id,),
         ).fetchone()
-        if row is None:
+        if row is not None:
+            return _artist_value(int(row[0]), str(row[1]))
+        if connection.execute("SELECT 1 FROM artists WHERE id=?", (artist_id,)).fetchone() is None:
             raise PublicArtistNavigationStoreError("artist not found")
-        return _artist_value(int(row[0]), str(row[1]))
+        label = self._artist_identifier_label(connection, artist_id)
+        return PublicArtist(
+            entity_id=artist_id,
+            artist_id=f"catalog:artist:{artist_id}",
+            name=label,
+            name_status="source_identifier",
+        )
+
+    @staticmethod
+    def _artist_identifier_label(connection: sqlite3.Connection, artist_id: int) -> str:
+        rows = connection.execute(
+            """SELECT t.type_key,i.namespace,i.normalized_value FROM entity_identifiers i
+               JOIN identifier_types t ON t.id=i.identifier_type_id
+               JOIN artists artist ON artist.id=i.entity_id
+               JOIN provenance_records p ON p.id=i.provenance_id
+               JOIN rights_policies r ON r.id=p.policy_id
+               JOIN data_sources source ON source.id=p.source_id
+               JOIN source_snapshots snapshot ON snapshot.source_id=p.source_id
+                 AND snapshot.snapshot_ref=p.snapshot_ref AND snapshot.policy_id=p.policy_id
+               JOIN source_artifacts artifact ON artifact.snapshot_id=snapshot.id
+                 AND artifact.sha256=p.artifact_sha256 AND artifact.policy_id=p.policy_id
+               WHERE i.entity_id=? AND r.classification='public_domain' AND r.local_only=0
+                 AND source.license_name='CC0-1.0'
+                 AND ((t.type_key='wikidata_artist_qid' AND i.namespace='wikidata')
+                   OR (t.type_key='musicbrainz_artist_id' AND i.namespace='musicbrainz'))
+                 AND EXISTS(SELECT 1 FROM active_rights_policy_permissions permission
+                     WHERE permission.policy_id=p.policy_id AND permission.use_kind='display'
+                       AND permission.decision='allow')
+                 AND NOT EXISTS(SELECT 1 FROM active_suppressions suppression
+                     WHERE suppression.use_kind IN ('all','display') AND (
+                       (suppression.target_kind='entity'
+                         AND suppression.target_ref=CAST(i.entity_id AS TEXT))
+                       OR (suppression.target_kind='provenance'
+                         AND suppression.target_ref=CAST(p.id AS TEXT))
+                       OR (suppression.target_kind='source'
+                         AND suppression.target_ref=CAST(p.source_id AS TEXT))
+                       OR (suppression.target_kind='snapshot'
+                         AND suppression.target_ref=CAST(snapshot.id AS TEXT))
+                       OR (suppression.target_kind='artifact'
+                         AND suppression.target_ref=CAST(artifact.id AS TEXT))))
+               ORDER BY CASE t.type_key WHEN 'wikidata_artist_qid' THEN 0 ELSE 1 END,
+                        i.normalized_value,i.id""",
+            (artist_id,),
+        ).fetchall()
+        if not rows:
+            raise PublicArtistNavigationStoreError(
+                "artist has no display-authorized name or identifier"
+            )
+        claims = tuple(
+            IdentifierClaim(type_key=row[0], namespace=row[1], value=row[2]) for row in rows
+        )
+        try:
+            resolved = resolve_artist(connection, claims)
+        except ArtistIdentityError as error:
+            raise PublicArtistNavigationStoreError(
+                "artist identifier label is ambiguous or unsupported"
+            ) from error
+        if resolved != artist_id:
+            raise PublicArtistNavigationStoreError(
+                "artist identifier label does not resolve uniquely"
+            )
+        return str(rows[0][2])
 
     def _genre(self, connection: sqlite3.Connection, genre_id: int) -> PublicGenre:
         row = connection.execute("SELECT id, name FROM genres WHERE id = ?", (genre_id,)).fetchone()

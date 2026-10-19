@@ -1,0 +1,164 @@
+{
+  "revision": "cc0-cultural-catalog-results-v1",
+  "base_main": "cd40e189ca0d644646388ae6860627e0cf23f9c7",
+  "attribution": "MusicBrainz and Wikidata contributors",
+  "source_license": "CC0-1.0",
+  "source": {
+    "genre_qids": 151,
+    "matched_artists": 88,
+    "missingness": {
+      "matched_with_p136": 78,
+      "matched_without_observed_p136": 10,
+      "no_exact_source_match": 62
+    },
+    "source_nominations": 152,
+    "source_p136_observations": 287,
+    "unique_p136_facts": 278,
+    "unique_requested_artists": 150
+  },
+  "source_packs": {
+    "wikidata_cultural_context": {
+      "manifest_sha256": "0095c9f1cc8339c037e6ce20c7868966d5dc952b93d48f7543abd9bbe274f641",
+      "matched": 48,
+      "receipt_sha256": "3c931909700e2840dff10e2afd2463e9123faa2a7b36e5fc1b90c472677453a7",
+      "requested": 110
+    },
+    "wikidata_independent_cultural_context": {
+      "manifest_sha256": "62f5318c2a8404f88874a9e3558e485099b606f772a052873a010a848e14d7e2",
+      "matched": 42,
+      "receipt_sha256": "df9763aef5b3f5801cc9ef999ecd34b24b97c588dc25679a2adaf8432461cfa5",
+      "requested": 42
+    }
+  },
+  "core_source_sha256": "13921b94a5a0c77c625713b5e272d40d081c67de3eb5b1299c8c1c48baf6d6ba",
+  "counts": {
+    "artist_genre_evidence": 278,
+    "artists": 433,
+    "entity_claims": 287,
+    "entity_identifiers": 3207,
+    "entity_names": 2824,
+    "provenance_records": 285,
+    "recordings": 1031,
+    "release_groups": 87,
+    "search_documents": 235
+  },
+  "adapter": {
+    "artifacts": 4,
+    "direct_rows": 278,
+    "genres": 151,
+    "metadata_observations": 574
+  },
+  "neighborhoods": {
+    "catalog_artists": 433,
+    "with_observed_p136": 78,
+    "without_observed_p136": 355,
+    "with_neighbors": 72,
+    "without_neighbors": 361,
+    "unordered_co_genre_pairs": 290,
+    "native_core_artists": 352,
+    "native_core_with_neighbors": 6
+  },
+  "nameless_artist_qids": [
+    "Q12786712",
+    "Q247237",
+    "Q7613062"
+  ],
+  "both_ingestion_orders_equal": true,
+  "reprojection_idempotent": true,
+  "canonical_capture_order": [
+    "wikidata_cultural_context",
+    "wikidata_independent_cultural_context"
+  ],
+  "deduplication": "287 source entity_claim observations;278 canonical direct facts; 9repeat observations are not votes. Canonical suppression has no second-capture fact fallback. Identifier/name provenance need not retain every repeated capture.",
+  "implementation_sha256": {
+    "scripts/replay_cc0_cultural_catalog.py": "d774c504fa43f9a25deee7fe69017acaaba179cc734af480e450a2f3f8b64f88",
+    "src/opennoise/catalog/artist_identity.py": "3bf36a48d1de43dacb108cd27766a28016526915af37dd5d87a8c9a951794119",
+    "src/opennoise/catalog/entities.py": "0ed0ccff8881ba1261024d5a84eff62b8635044e8e340324e72375aacd81ea74",
+    "src/opennoise/ingest/musicbrainz/artist_credit_catalog_candidate.py": "522cef13436f436f1287ce7ab7a92a4950ad8c2b63b956f751d16d34094506bc",
+    "src/opennoise/ingest/musicbrainz/release_hydration.py": "d1683550a860b6304b650712e7791d5135835bdb0ecf3c436d0fb2b8cb5e8ad1",
+    "src/opennoise/models/catalog.py": "747dd29b904fce64ce9377b399a1f996644f8cc1414dd20e88e5d58c9af76aa3",
+    "src/opennoise/pipeline/artist_identity_replay.py": "f1f166bb2f4c3785b0a38b3e1a1979cfaef83e45c2a35bbef8ee80bbb28326b7",
+    "src/opennoise/pipeline/cultural_catalog.py": "ff5a46632667c04fb00a6bf666c848e8dc68d2e11b191ec86c892311d9ef9524",
+    "src/opennoise/pipeline/portable_foundation.py": "bf45ac8c5d8ebcc1942adf1cf0f76d6e70c3cc3e6a9a573ac7735d0a2b8aadbf",
+    "src/opennoise/serving/public/artist_membership_adapter.py": "a6957538a3d7a9c99a625c456e3fb72f8d0acc957b26a21b17620d7587e8336b",
+    "src/opennoise/serving/public/artist_navigation_store.py": "6d0afa962c11b59c5bef5802faabf9a3aa53644d10c002f6c1f872fe4631f0b8",
+    "src/opennoise/serving/public/membership_export_eligibility.py": "a4c6bfebaa9375af0a78126609430d655a8a8621dbd0013ac96037a748e00eb4"
+  },
+  "producer": {
+    "directory": ".cache/cc0-cultural-catalog-20261019-final-atomic",
+    "report": {
+      "sha256": "18fa76ed501dd9ce037e7920d5714dc074aef45d2f8d769ad5b7c21d5117ed67",
+      "bytes": 642094
+    },
+    "files": {
+      "adapter-policy.json": {
+        "bytes": 628,
+        "sha256": "6d471e5faf5001bd37fc57f7f09d8d30bc80f7181713b30708848268ecb0258c"
+      },
+      "missingness.json": {
+        "bytes": 42404,
+        "sha256": "ba682775011eee8f7f606ff627e68a5e3ef88e7fc108daee9830ceeb015b0927"
+      },
+      "musicbrainz-first.approved-input.json": {
+        "bytes": 129851,
+        "sha256": "47467feda4a31c94de854934ddf878b865f5e28c4f83cc4eb484dccf23e5bf33"
+      },
+      "musicbrainz-first.receipt.json": {
+        "bytes": 478724,
+        "sha256": "21936eb2b356c16b07b6d1774989df46aa921f8a807cc750d73beada0a9b5bf8"
+      },
+      "musicbrainz-first.sqlite": {
+        "bytes": 3706880,
+        "sha256": "a65a1a4ef7d9e9da53f93a89c41e03741c399635d77b34040b8642e16cbad3db"
+      },
+      "wikidata-first.approved-input.json": {
+        "bytes": 129851,
+        "sha256": "b13ad339ed653a2d6c2d929d99df8a6d5ab4e2595a9b7f43b188e66a501bb0bc"
+      },
+      "wikidata-first.receipt.json": {
+        "bytes": 478724,
+        "sha256": "752b66ba1cf48245d7604d4104aa03cd5d5fcf76fa55a3b254bbfea5cc7c8b12"
+      },
+      "wikidata-first.sqlite": {
+        "bytes": 3706880,
+        "sha256": "d5420fbdcff392def86b1fa79ff140e6497efd0293b2bee406ccba59df05cc57"
+      }
+    },
+    "combined_bytes": 9316036
+  },
+  "validation": {
+    "focused_tests": 40,
+    "focused_skips": 1,
+    "lint": "passed",
+    "types": "passed",
+    "full_check": "pending"
+  },
+  "acquisitions": 0,
+  "fits": 0,
+  "new_external_cost_usd": 0,
+  "limitations": "Direct source co-genre metadata only, not music recommendations or listener relevance. Canonical direct facts do not fall back to later captures after suppression; source observation claims retain all 287 capture observations. No hierarchy or inferred membership.",
+  "independent_guarded_cli": {
+    "evidence": {
+      "sha256": "2568c3fd5c1e764c219371c7552c4ec8e9cefc0aa682d3c233577d938ec2c9dc",
+      "bytes": 3410
+    },
+    "evidence_path": "/workspace/full-cultural-catalog-20261019/final-atomic-proof/proof.json",
+    "active_denial_probes": 5,
+    "production_forbidden_operations": 0,
+    "elapsed_seconds": 10.53,
+    "source_custody": "Copies of pinned CC0 core portable projections and both retained raw SPARQL packs; original source/cache/oracle reads, network, research models and supervised fits denied."
+  },
+  "independent_raw_source_oracle": {
+    "sha256": "5b0e5f2360ecfdbb1cc26d643987d10aadf50d0ab842b633ddb62036d3b0bc36",
+    "bytes": 239538,
+    "production_imports": 0
+  },
+  "independent_sql_oracle": {
+    "sha256": "92c53e0f045387e6aa551bf1c66e2b93b4a5307ffe455c9226d1fcc3e31371f4",
+    "bytes": 2007,
+    "evidence_path": "/workspace/full-cultural-catalog-20261019/final-atomic-proof/catalog/independent-sql-oracle.json",
+    "production_imports": 0,
+    "both_databases": "passed",
+    "coverage": "all433identities,150requestedmissingness,574metadatachains,278exportfacts,287rawP136observations,1344orderedcreditsandallneighborlists"
+  }
+}
