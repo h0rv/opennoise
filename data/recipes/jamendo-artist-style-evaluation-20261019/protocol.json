@@ -1,0 +1,224 @@
+{
+  "revision": "jamendo-artist-style-development-evaluation-v1",
+  "frozen_utc": "2026-10-19T22:06:54.299367+00:00",
+  "base_main": "e3f501a9ec67bcf155d3713ab94e0a4810138a3b",
+  "purpose": "Evaluate two unchanged artist retrieval arms against five separately collected historical human style attributes on DEVELOPMENT folds0..3 only; reserve original fold4 for a separately frozen future style-model confirmation. No model/index optimization or recommendation/relevance claim.",
+  "pre_freeze_knowledge": {
+    "known": "Previous human-genre classification/calibration and PR86 genre-coherence outcomes; source identities and exact selected-style spelling/availability/support counts. These five style attributes were preselected before style-coherence outcomes; happy excluded because previously used. One count-only support census, no rank-based style metrics or choices among alternate folds/attributes.",
+    "not_computed": [
+      "style retrieval gains",
+      "style agreement metrics",
+      "style bootstrap intervals",
+      "fold4 style artist fractions or scores in this slice"
+    ],
+    "counts": {
+      "all_metadata_tracks": 11565,
+      "all_artists_components": 713,
+      "all_albums": 2365,
+      "each_attribute_nonempty_tracks": 11565,
+      "each_attribute_eligible_tracks": 10614,
+      "each_attribute_wrong_count_tracks": 951,
+      "wrong_count_two_votes": 789,
+      "wrong_count_one_vote": 162,
+      "each_attribute_missing": 0,
+      "each_attribute_invalid_tokens": 0,
+      "all_five_complete_artists": 699,
+      "all_five_ge2_artists": 575,
+      "development_metadata_artists": 558,
+      "development_complete_artists": 547,
+      "development_ge2_artists": 446,
+      "reserved_metadata_artists": 155,
+      "previously_seen_reserved_complete_count": 152,
+      "previously_seen_reserved_ge2_count": 129,
+      "development_query_metadata": [
+        142,
+        138,
+        134,
+        144
+      ],
+      "development_query_complete": [
+        138,
+        136,
+        131,
+        142
+      ],
+      "development_query_ge2": [
+        119,
+        104,
+        106,
+        117
+      ],
+      "development_gallery_metadata": [
+        416,
+        420,
+        424,
+        414
+      ],
+      "development_gallery_complete": [
+        409,
+        411,
+        416,
+        405
+      ],
+      "minimum_development_gallery_positive_artists": 306,
+      "minimum_development_gallery_negative_artists": 323
+    },
+    "reservation": "Counts for all five folds were seen during feasibility, but no style-coherence outcomes were computed. Label-held-out, transductive target reservation, not an untouched covariate cohort or inductive validation."
+  },
+  "source": {
+    "commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+    "metadata": {
+      "name": "autotagging-test.tsv",
+      "bytes": 1611903,
+      "sha256": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366"
+    },
+    "human": {
+      "name": "music-classification-annotations-raw.tsv",
+      "bytes": 7468828,
+      "sha256": "466cbb888fe906f3db22b9e6f63b1694e6a38a8613fb67d9d52149e1cc6decd3"
+    },
+    "original_capture_receipt_sha256": "3125263a9c7a3fbdc80c53ad10f60648801681b0737bbc7002720dc2b3d82b75",
+    "source_serialization_amendment_sha256": "09ef671b841afb7d7b29e6ac6daa526b09beb369ce16a3b5ea38c56ac01612c4",
+    "identity_cohort_sha256": "788895cd621fa69e086a9cc0dada206157130d54226c684610d65aca0484befb",
+    "required_inputs": "Only pinned retained metadata/human bytes, frozen source identity/canonicalization helpers and externally pinned old feature-only reconstruction evidence. No NB/T models, old predictions or additional human labels; selected style parsing skips fold4 before vote extraction."
+  },
+  "implementation_dependencies": {
+    "jamendo_human_genre.py": "9f4663644a941f64a78359d2677cc07cadce5b0719f756defc2d26be15869b5d",
+    "jamendo_human_mood.py": "9848cd3a855e8b40018c50e949d3d38b6aad533c2323f8d68a7419cd5a5002e9"
+  },
+  "frozen_retrieval": {
+    "protocol_sha256": "ac14d662222fc5241b38598cc2dd74f762d4910f2699c795c1be408356c6e25c",
+    "module_sha256": "3a310f1fa978c1cfb1d76ded48151b21c1f7060c7f61dfd867652c074fbf7ac4",
+    "cli_sha256": "527147c9df0bef79c1969f06b088bc07336e6bb18ceb0bcbebf3b7428ca3c64f",
+    "census_receipt_sha256": "224e23459e450dbfb503fc039a405edb84d95214ff9e2dd78b9f62b9d54b0d51",
+    "result_receipt_sha256": "8a0aa9e0274e6c66faa004f131fb90c8a0b6fad1f2a1e929fcf13522154080a3",
+    "indices_sha256": "d8df92b119a1404dc250c6c45dbe44813b72a6ae750c849dbdca4d0b6f3abe91",
+    "rankings_sha256": "172e49d3f86561bceab1e76b8a2711dc8d0629860c0b6d5e3cbd896a61eba212",
+    "arms": [
+      "genre_tfidf",
+      "genre_instrument_tfidf"
+    ],
+    "geometry": "Reconstruct exactly the frozen five original gallery-only TF-IDF banks and COMPLETE positive-cosine orders, with unchanged sorted dense float64 matrix equations, scores and native component/artist ties. No new feature weighting, selection, vocabulary or IDF roles. Verify all20 original unit-matrix hashes, exact indices/rankings payload hashes and all713 original full-top10 outcomes before any style grading. Only feature/native identity inputs to reconstruction; no targets/masks. Original modules remain unchanged.",
+    "covariate_caveat": "For development query folds0..3, the pre-existing other-four-fold gallery geometry includes unlabeled fold4 metadata. Do not silently refit/restrict IDF or claim inductive isolation. Future style model must separately freeze and build train-only feature context before any reserved fold4 style evaluation."
+  },
+  "identity": "Replay full native metadata/human identity join before parsing targets. Build artist+album connected components over all11565 native metadata tracks, component minimum track ID, before target support filtering. Preserve713artists/components and2365albums; assert one native artist per component for these exact bytes. No name/fuzzy/alias joins; native identity isolation cannot prove different musicians or absence of duplicate audio.",
+  "folds": {
+    "count": 5,
+    "salt": "opennoise-jamendo-human-genre-dortmund-v1",
+    "assignment": "int.from_bytes(sha256((salt+\"|\"+str(component_id)).encode()).digest(),\"big\") % 5",
+    "roles": "Apply native identity ROLE MASK BEFORE selected-style parsing/profile aggregation. No fold4 selected-style fractions in memory, census payload, profiles, scores, support gates or bootstrap. Reserved per-artist identity/status and frozen count-only summaries allowed. Query foldf development artist vs development artists of other folds; exclude own whole component and every fold4 identity. Preserve all713 old proof outcomes separately; only558 development query outcomes per arm are style-evaluable, with 155 explicit reserved statuses.",
+    "development_folds": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "reserved_fold": 4
+  },
+  "attributes": [
+    "aggressive",
+    "electronic",
+    "party",
+    "relaxed",
+    "sad"
+  ],
+  "human_targets": {
+    "raw_taxonomies": [
+      "mood_aggressive",
+      "mood_electronic",
+      "mood_party",
+      "mood_relaxed",
+      "mood_sad"
+    ],
+    "exact_tokens": {
+      "aggressive": {
+        "positive": "aggressive",
+        "negative": "not_aggressive"
+      },
+      "electronic": {
+        "positive": "electronic",
+        "negative": "not_electronic"
+      },
+      "party": {
+        "positive": "party",
+        "negative": "not_party"
+      },
+      "relaxed": {
+        "positive": "relaxed",
+        "negative": "not_relaxed"
+      },
+      "sad": {
+        "positive": "sad",
+        "negative": "not_sad"
+      }
+    },
+    "eligibility": "Exactly3 recognized literal tokens for each attribute, including disagreements; no aliases/casing/normalization. Missing, invalid and wrong-count remain explicit and are never negatives. Never inspect any additional human attributes.",
+    "artist_probability": "Per development artist/attribute, equal mean over eligible track positive-vote fractions (positive count/3); do not weight by all metadata tracks or annotated albums. Complete target means >=1 eligible track in EVERY fixed attribute. Preserve all development track reasons; fold4 has reserved status only.",
+    "primary": "All547 complete development artist query components, regardless of feature support or retrieval availability.",
+    "secondary": "Predeclared446 development query components with >=2 eligible tracks in EACH attribute; same complete development gallery as primary, not a different candidate pool.",
+    "separation": "Only evaluator receives targets/availability. Human values or masks never change geometry, raw cosine order or role eligibility. Expected agreement functional assumes independent draws; annotator independence is not established."
+  },
+  "evaluation_gate": {
+    "requirements": "Development complete query count>=100; each of all4 development galleries>=50 all-five-complete artists AND >=5 artists with any positive source vote AND >=5 with any explicit negative source vote for EVERY fixed attribute.",
+    "failure": "Any attribute/fold support failure marks ENTIRE macro study unsupported before new style score execution; no dropped attribute, fold, query, reseed or substitute method. Source/custody/identity/runtime failure aborts atomically."
+  },
+  "ranking_evaluation": {
+    "order": "From complete unchanged positive-cosine order: first filter development role eligibility (exclude fold4 and own query fold/component), THEN filter complete-five-target availability for condensed judged top10. No reranking, zero-score fillers or fallback. Role-filtered full DEV top10 is the positive order after ROLE filter only, before target-complete mask.",
+    "full_catalog": "Preserve old full713 outcomes byte-exact as historical proof. In full-CATALOG coverage accounting, fold4 neighbors are RESERVED separately from ordinary unjudged and missing. Never grade full-catalog top10 using fold4 style targets.",
+    "coverage": "For development-role fulltop10 record judged/unjudged/missing slots separately. Conditional observed agreement over judged returned neighbors only, null if none; never count unjudged as negative or compute an asserted full-gallery style score."
+  },
+  "metrics": {
+    "k": 10,
+    "attribute_gain": "g_j(q,c)=q_j*c_j+(1-q_j)*(1-c_j). Explicit positive term q_j*c_j and negative term (1-q_j)*(1-c_j), total=sum; equal macro over ALL5 attributes.",
+    "primary": "Candidate-minus-genre mean condensed development-judged macro expected agreement@10: sum returned gains/10, missing ranks contribute0 only as absent slots; query denominator ALL547 regardless of empty profile/no overlap. No discount/IDCG/NDCG in this style endpoint.",
+    "random": "Exact uniform-random expected agreement against SAME complete development gallery: arithmetic mean gain over all gallery targets, not sampled rankings. Galleries all>=50 so expected fixed-denominator top10 mean equals gallery mean. Same decomposition per attribute/macro.",
+    "secondary": "Same complete gallery and outcomes,446 >=2-track-per-attribute query subset. Three paired comparisons: candidate-minus-genre, genre-minus-random, candidate-minus-random.",
+    "prevalence": "Report artist-equal query and gallery positive probability and its complement per attribute/macro, denominators and track support; positive-positive and negative-negative contributions beside total, so majority-negative agreement cannot masquerade as positive coherence.",
+    "diagnostics": "Report ALL4 development folds and ALL5 attributes plus macro, both arms and random, positive/negative/total; predefined query instrument-present/absent strata from any native metadata instrument tag. No selected winning attribute/fold/stratum. Retain complete/incomplete/reserved artist counts and full source track-reason availability."
+  },
+  "bootstrap": {
+    "draws": 2000,
+    "generator": "NumPy Generator(PCG64(seed))",
+    "primary_seed": 20261019,
+    "ge2_seed": 20261020,
+    "unit": "Paired development query COMPONENT resampling with replacement, fixed galleries/indices/orders/targets. Identical query draws reused across all5 attributes+macro, positive/negative/total and all3 pair comparisons within each cohort.",
+    "comparisons": [
+      "genre_instrument_tfidf-minus-genre_tfidf",
+      "genre_tfidf-minus-exact_random_expectation",
+      "genre_instrument_tfidf-minus-exact_random_expectation"
+    ],
+    "interval_quantiles": [
+      0.025,
+      0.975
+    ],
+    "interpretation": "Descriptive reused-cohort fixed-gallery intervals, not independent-population, retraining, annotator independence or fresh confirmatory evidence."
+  },
+  "architecture": "Separate count-only source/identity/role/availability census externally sealed BEFORE new style metric math. Numeric run/replay reconstruct old frozen feature-only banks and prove old full artifact equality, then role-filter and evaluate development-only human targets. Atomic fresh closed-inventory artifacts, external protocol/census/result pins, exact physical file hashes/sizes and targeted implementation/numerical runtime pins. No supervised fit/train/partial_fit calls, old NB/T models or source network access.",
+  "limits": {
+    "cpu_seconds": 120,
+    "wall_seconds": 120,
+    "address_space_bytes": 1000000000,
+    "numerical_threads": 1,
+    "combined_new_payload_bytes": 15000000,
+    "metadata_tracks_max": 15000,
+    "artist_count": 713,
+    "neighbors_max": 10
+  },
+  "accounting": {
+    "supervised_fits": 0,
+    "unsupervised_gallery_idf_index_builds_per_run": 5,
+    "unsupervised_gallery_idf_index_builds_per_replay": 5,
+    "acquisition_requests": 0,
+    "audio_or_descriptors": false,
+    "new_external_cost_usd": 0,
+    "note": "Five unchanged unsupervised reconstruction banks per run and replay separately;0 supervised fits, no selected new feature geometry. Counts-only census0 index builds. Existing retained source bytes reused,0 acquisition/$0."
+  },
+  "rights": {
+    "source_license": "CC-BY-NC-SA-4.0",
+    "research_only": true,
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation",
+    "commit_policy": "Only code, protocol and restrained attributed aggregates committed. Native profiles, ranks, target ledger, source and index artifacts remain local noncommercial research data. No UI/default/serving/deployment integration."
+  },
+  "interpretation": "Prospectively frozen DEVELOPMENT style-outcome evaluation on historical reused cohort/annotation process, not fresh cohort, listening relevance, recommendation utility, actual inter-annotator agreement, artist membership, EveryNoise parity or automatic model promotion. Label-held-out transductive fold4 reservation has count-only preinspection and known covariates, not full untouched data. Any future style candidate/feature bank/confirmation protocol must be separately frozen before reserved style labels are aggregated/scored.",
+  "source_alternatives": "Parent independent source-specific checks: CityMTag explicit data grant not found; LFM1b withdrawn; official DEAM metadata HEAD proxy CONNECT403/0bytes/no retry; HetRec first ordinary provider README GET proxy CONNECT403/0bytes/no retry; PME root empty/docs/demo predictions, full features1.3GB Drive and code/data license unclear. No new data acquired. These checks are scoped to this experiment, not a global prohibition on independently authorized legitimate new datasets."
+}
