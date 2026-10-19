@@ -16,6 +16,7 @@ changes.
 | 3 | Component-balanced AB recording retrieval | Take the nearest recording per candidate credit component before truncation as an optional diagnostic. Preserve existing nearest-five behavior, distances, support gates and query-component exclusion. Report component diversity and exact credited artist gains/losses; do not call these musical-quality metrics. | Implementation, full checks and independent review complete; [PR 82](https://github.com/h0rv/opennoise/pull/82) records the final merge and CI status. |
 | 4 | Compatible new-source query ingestion | Require a second independently approved recording-level native capture, complete exact credits and full exact-contract coordinates before assessing genuinely new query coverage. | Data dependency: no second compatible 178-coordinate recording source exists here; other acoustic examples contain only 17 artist-level scalar aggregates. |
 | 5 | New FMA artist calibration/model | Inspect existing membership calibration and artist ranking before proposing a distinct model. Require a genuinely new component-disjoint evaluation cohort and suitable annotations for musical probability/precision claims. | Assessed and rejected as a duplicate historical diagnostic on present inputs; raw feature corpus and new independent annotations remain unavailable. |
+| 6 | Prospective human nine-class genre-vote metadata model | Freeze new target and folds before capture, seal complete identities before corrected target census, require all training-class gates, compare component-weighted fractional Bernoulli NB against human prior and fixed uploader-genre mapping. Preserve all 11,565 metadata nominations and rights. | Local diagnostic completed; [recipe](../../data/recipes/jamendo-human-genre-20261019/README.md) records source/protocol/amendment pins, mixed proper-score outcomes and verification. Publication/CI belongs to its associated pull request. |
 
 The first slice uses the retained source receipt
 `13e21e5296989e148e0efc2f6956675d2d391326552fe4a1a3b67df56e1494cb`.
@@ -109,7 +110,8 @@ to stop independent work.
 | New CC0 artist covariates and P136 observations | Frozen 352-MBID Wikidata capture on 2026-10-18 stopped at its first 50-ID request: proxy `403`, no upstream status, zero bytes/claims; 302 IDs unattempted. No retry. | Native AB numeric inference and the existing FMA saved-rank backend. Resume acquisition only through normal authorized access or an approved workspace-readable source pack. |
 | Artist metadata-only genre model | Existing 48-artist training and 40 exact-identity-disjoint query cohorts leave only two query artists with shared context and supported P136 targets, before further credit-component exclusions. | Do not fit an unsupported model. First obtain enough joint CC0 covariate/target support. |
 | P31-to-P279 taxonomy model | Fixed child-wise census retains 1,542 directed source associations, including 825 external targets. Only 204 have joint supported features/targets; 83 have feature/parent pair support five. No fit or score was computed. | Existing typed graph remains available; this sparse source-property recovery task does not unblock artist membership or musical quality. |
-| Musical relevance, genre truth and broad parity | No independent listener judgments or adequate new heldout corpus. Source taxonomy assertions and high-level predictions are not human musical truth. | Report engineering coverage, abstentions, exact retrieval equivalence, resource use and isolation honestly. Do not promote these as EveryNoise parity. |
+| New CC0 album-catalog model | The retained catalog is 87 selected release/group examples, 1,031 recordings and 352 artists. Durations/order and date/country/format context exist; native artist descriptors and release-group types are absent. Only 22 recording-credit artists span two groups and four span three. No full unselected archive or independent musical descriptors are readable. | Read-only census only; no album model fitted. Do not turn copied credit graphs, source-selection context or sparse native identity labels into a new musical model claim. A useful broader album/artist model needs independently informative covariates and an appropriate source-observed or human target. |
+| Musical relevance and broad parity | Historical human recording-class votes are now available for the fixed Jamendo task; annotation blinding/annotator independence are not established. No independent retrieval-relevance judgments or untouched broad evaluation cohort is retained. | Evaluate the narrowly declared human-genre task under its noncommercial rights. Class votes do not validate artist memberships, musical similarity, recommendations or EveryNoise parity. |
 
 The next-model assessment also inspected `fma_memberships`,
 `fma_artist_evidence` and `fma_artist_ranking`. The existing track-level rule
@@ -134,3 +136,40 @@ evidence. Future executors must not assume those ignored paths exist. Checked-in
 source recipes and the counts above preserve the decision; fresh inputs need
 their own custody and source-specific license review. MusicBrainz supplementary
 tags are not included in the CC0 core-metadata boundary.
+
+## Human-genre diagnostic on independently collected source annotations
+
+The new task uses exactly the two previously authorized official MTG-Jamendo
+metadata files, freshly captured after protocol freeze with two successful
+requests, 9,080,731 bytes, no retry/redirect/audio/descriptors and $0 new cost.
+It uses the same historical source identities as the completed happy-vote and
+calibration work, but prospectively selects a different, nine-class human genre
+target. It is not an untouched new cohort or a renamed calibration result.
+
+The original protocol remains immutable. A separately committed pre-fit source
+serialization amendment recognizes only three exact underscore aliases and
+records that empty target cells are missing, not taxonomy nominations. Both
+independent and producer identity seals matched all 11,565 tracks/713 native
+artist-album components before target parsing. Corrected census found 1,757
+nonempty taxonomy nominations, 1,024 eligible tracks/368 components and 403
+vote disagreements; missing/incomplete/invalid outcomes remain explicit. All
+five training-only class-support gates passed without reseeding or class removal.
+
+The component-equal individual-vote Brier scores are 0.752562 for training prior,
+0.562462 for NB and 0.593739 for the fixed uploader-genre mapping. NB improves
+against prior, while its primary difference versus the direct mapping has a
+paired fixed-prediction interval including zero. NB log loss is worse than the
+prior; the mapped baseline has 435 clipped positive-target cells across 350
+tracks. No calibration or tuning follows these results. Independent arithmetic
+reconstructed all five models, 312,255 probabilities, proper scores and 2,000
+paired component-bootstrap intervals with maximum probability error below
+1e-14 and no fold leakage. Raw sources, per-track outputs and models remain local
+CC BY-NC-SA/noncommercial research artifacts; no serving integration is authorized.
+
+The human-genre implementation also passed all ten focused tests, full
+format/lint/type checks, 122 Node passes (44 skips) and 2,222 Python tests
+(36 skips). Independent Luna review accepted the final source. Actual relocated
+prepare/census/evaluate/replay under a new honest custody receipt reproduced all
+three result files byte-for-byte while original source paths and networking
+were denied. Exact-head and merge-head CI/publication status is recorded by the
+associated pull request, without a future-hash placeholder in this backlog.
