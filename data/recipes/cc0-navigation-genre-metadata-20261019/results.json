@@ -1,0 +1,71 @@
+{
+  "revision": "cc0-navigation-genre-metadata-v1",
+  "base_main": "d418cb41319dd70c5cd15b0e050665906f038e14",
+  "scope": "Genre label and exact-QID link metadata display custody only; source claim view/relationships unchanged. No inferred membership, recommendation, classification, hierarchy, acquisition, model fit, UI or deployment.",
+  "attribution": "MusicBrainz and Wikidata contributors",
+  "source_license": "CC0-1.0",
+  "inputs": "Complete verified retained CC0 cultural catalog; see cc0-cultural-catalog-20261019 recipe.",
+  "implementation_sha256": {
+    "src/opennoise/serving/public/artist_navigation_store.py": "8edb6e3b132d16845d4a9ee16cb68646570b4a6c830890bfdd75bc49999a4a92",
+    "src/opennoise/serving/public/membership_export_eligibility.py": "9a9b904f4069f0d89e3b7d2c5f855ec77be6fbcd8cd5f9010de54a8ec25ff218"
+  },
+  "before_reproduction": {
+    "evidence_path": "/workspace/full-cultural-catalog-20261019/navigation-label-gap/repro.json",
+    "binding": {
+      "sha256": "0cd11980908d0986e31acad18bce4555dc190c5a632644b201d4ffe8e1f826d9",
+      "bytes": 255
+    },
+    "observations": {
+      "genre_id": 2685,
+      "suppressed_name": "rock music",
+      "display_authorized_names_after": 0,
+      "eligible_claim_count_before": 6,
+      "eligible_claim_count_after": 6,
+      "actual_public_label_after": "rock music",
+      "confirmed_existing_backend_gap": true
+    }
+  },
+  "retained_cohort_validation": {
+    "artists": 433,
+    "genres": 151,
+    "source_english_names": 150,
+    "identifier_labels": 1,
+    "direct_artist_genre_facts": 278,
+    "raw_p136_observations": 287,
+    "directed_co_genre_links": 580,
+    "source_claims_and_relationships_unchanged": true
+  },
+  "validation": {
+    "focused_tests": 20,
+    "focused_skips": 1,
+    "lint": "passed",
+    "types": "passed",
+    "full_check": "pending",
+    "independent_luna_tests": 13,
+    "independent_luna_review": "passed at exact implementation hashes"
+  },
+  "acquisitions": 0,
+  "fits": 0,
+  "new_external_cost_usd": 0,
+  "independent_guarded_api": {
+    "evidence_path": "/workspace/navigation-metadata-20261019/final-proof/proof.json",
+    "binding": {
+      "sha256": "c9ee060349b254c7f2befb9730f9b91d7b9c6b370e22a27e30264b786d076a31",
+      "bytes": 1606
+    },
+    "input_source_sha256": "e3f5d00d5e73ee347caf2c3b7dc280e51a0d03ecebc321861c8394bd6287e7cf",
+    "raw_oracle_sha256": "5b0e5f2360ecfdbb1cc26d643987d10aadf50d0ab842b633ddb62036d3b0bc36",
+    "active_denial_probes": 5,
+    "production_forbidden_operations": 0,
+    "variants": {
+      "baseline": 8.000312578000376,
+      "raw-defaults-poisoned": 8.114355278001312,
+      "own-names-suppressed": 10.690627279000182
+    },
+    "baseline_and_poisoned_payload_sha256": "763ec96a8e32933eb34ac994c931bcd751a59bf6a59f618c971498f46c35c529",
+    "own_names_suppressed_payload_sha256": "4837a5115ab75c1ed9f45b1f0a9d353515e36d0ce2a9b945a33efa91fa09b4d1",
+    "all_433_artists_151_genres_278_facts_580_directed_links_checked_each_variant": true,
+    "all_151_qid_links_checked_each_variant": true,
+    "direct_peer_coverage": "Dedicated migrated fixture integration test; no published direct profile installed in source catalog."
+  }
+}

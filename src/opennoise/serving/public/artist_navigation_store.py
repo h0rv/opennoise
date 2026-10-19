@@ -16,6 +16,7 @@ from pydantic import Field
 from opennoise.catalog.artist_identity import ArtistIdentityError, resolve_artist
 from opennoise.models import FrozenModel
 from opennoise.models.catalog import IdentifierClaim
+from opennoise.serving.public.membership_export_eligibility import ExportEligibility
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -49,11 +50,12 @@ class PublicArtist(FrozenModel):
 
 
 class PublicGenre(FrozenModel):
-    """A named catalog genre with a typed local API identity."""
+    """A catalog genre labeled by an eligible source name or exact identifier."""
 
     entity_id: int = Field(gt=0)
     genre_id: str = Field(pattern=r"^catalog:genre:[1-9][0-9]*$")
     name: str = Field(min_length=1, max_length=500)
+    name_status: Literal["source_name", "source_identifier"] = "source_name"
 
 
 class ArtistGenreMembership(FrozenModel):
@@ -217,7 +219,7 @@ class PublicArtistNavigationStore:
                 return RelatedArtistsResponse(artist=artist, offset=offset, limit=limit, related=())
             placeholders = ",".join("?" for _ in related_ids)
             shared = connection.execute(
-                f"""SELECT evidence.artist_id, genre.id, genre.name
+                f"""SELECT evidence.artist_id, genre.id
                     FROM displayable_artist_genre_evidence AS evidence
                     JOIN genres AS genre ON genre.id = evidence.genre_id
                     WHERE evidence.artist_id IN ({placeholders})
@@ -226,13 +228,18 @@ class PublicArtistNavigationStore:
                           SELECT DISTINCT genre_id FROM displayable_artist_genre_evidence
                           WHERE artist_id = ? AND evidence_kind = 'direct_source_claim'
                       )
-                    GROUP BY evidence.artist_id, genre.id, genre.name
+                    GROUP BY evidence.artist_id, genre.id
                     ORDER BY evidence.artist_id, genre.id""",
                 (*related_ids, artist_id),
             ).fetchall()
             genres_by_artist: dict[int, list[PublicGenre]] = defaultdict(list)
-            for related_id, genre_id, name in shared:
-                genres_by_artist[int(related_id)].append(_genre_value(int(genre_id), str(name)))
+            metadata = self._metadata(connection)
+            genre_labels: dict[int, PublicGenre] = {}
+            for related_id, raw_genre_id in shared:
+                genre_id = int(raw_genre_id)
+                if genre_id not in genre_labels:
+                    genre_labels[genre_id] = self._genre(connection, genre_id, metadata)
+                genres_by_artist[int(related_id)].append(genre_labels[genre_id])
             related = tuple(
                 RelatedArtist(
                     artist=self._artist(connection, related_id),
@@ -246,73 +253,76 @@ class PublicArtistNavigationStore:
     def _catalog_genre_id_for_qid_sync(self, qid: str) -> int | None:
         with closing(self._connect()) as connection:
             rows = connection.execute(
-                """SELECT genre.id
-                   FROM genres AS genre
-                   JOIN entity_identifiers AS identifier ON identifier.entity_id = genre.id
-                   JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
-                   WHERE type.type_key = 'wikidata_genre_qid' AND identifier.normalized_value = ?
-                   ORDER BY genre.id LIMIT 2""",
+                """SELECT DISTINCT genre.id FROM genres AS genre
+                   JOIN entity_identifiers i ON i.entity_id=genre.id
+                   JOIN identifier_types t ON t.id=i.identifier_type_id
+                   WHERE t.type_key='wikidata_genre_qid' AND i.normalized_value=?""",
                 (qid,),
             ).fetchall()
-        return int(rows[0][0]) if len(rows) == 1 else None
+            if len(rows) != 1:
+                return None
+            entity = int(rows[0][0])
+            return entity if self._genre_qid(connection, entity) == qid else None
 
     def _genre_direct_peers_sync(self, genre_id: int) -> GenreDirectPeersResponse:
         with closing(self._connect()) as connection:
-            genre = self._genre(connection, genre_id)
+            metadata = self._metadata(connection)
+            genre = self._genre(connection, genre_id, metadata)
             rows = connection.execute(
-                """SELECT relation.neighbor_genre_id, neighbor.name, relation.score,
+                """SELECT relation.neighbor_genre_id, relation.score,
                           relation.shared_artist_count
                    FROM displayable_public_genre_neighbors AS relation
                    JOIN genres AS neighbor ON neighbor.id = relation.neighbor_genre_id
                    WHERE relation.genre_id = ?
                      AND relation.profile_kind = 'direct'
                      AND relation.metric = 'weighted_jaccard'
-                   ORDER BY relation.rank, neighbor.name COLLATE NOCASE, neighbor.id
+                   ORDER BY relation.rank, neighbor.id
                    LIMIT 8""",
                 (genre_id,),
             ).fetchall()
-        return GenreDirectPeersResponse(
-            genre=genre,
-            peers=tuple(
-                DirectPeerGenre(
-                    genre=_genre_value(int(row[0]), str(row[1])),
-                    score=float(row[2]),
-                    shared_artist_count=int(row[3]),
-                )
-                for row in rows
-            ),
-        )
+            return GenreDirectPeersResponse(
+                genre=genre,
+                peers=tuple(
+                    DirectPeerGenre(
+                        genre=self._genre(connection, int(row[0]), metadata),
+                        score=float(row[1]),
+                        shared_artist_count=int(row[2]),
+                    )
+                    for row in rows
+                ),
+            )
 
     def _open_node_ids_for_catalog_genres_sync(self, genre_ids: tuple[int, ...]) -> dict[int, str]:
         if not genre_ids:
             return {}
-        placeholders = ",".join("?" for _ in genre_ids)
         with closing(self._connect()) as connection:
-            rows = connection.execute(
-                f"""SELECT genre.id, identifier.normalized_value
-                    FROM genres AS genre
-                    JOIN entity_identifiers AS identifier ON identifier.entity_id = genre.id
-                    JOIN identifier_types AS type ON type.id = identifier.identifier_type_id
-                    WHERE genre.id IN ({placeholders})
-                      AND type.type_key = 'wikidata_genre_qid'
-                      AND identifier.normalized_value GLOB 'Q*'
-                    ORDER BY genre.id, identifier.id""",
-                genre_ids,
-            ).fetchall()
-        result: dict[int, str] = {}
-        duplicates: set[int] = set()
-        for genre_id, external_id in rows:
-            parsed = _OPEN_CATALOG_NODE_PATTERN.fullmatch(f"catalog:wikidata:genre:{external_id}")
-            if parsed is None:
-                continue
-            identifier = int(genre_id)
-            if identifier in result:
-                duplicates.add(identifier)
-            else:
-                result[identifier] = f"catalog:wikidata:genre:{external_id}"
-        for genre_id in duplicates:
-            result.pop(genre_id, None)
-        return result
+            result = {}
+            metadata = self._metadata(connection)
+            for entity in genre_ids:
+                qid = self._genre_qid(connection, entity, metadata)
+                if qid is not None:
+                    result[entity] = f"catalog:wikidata:genre:{qid}"
+            return result
+
+    @staticmethod
+    def _metadata(connection: sqlite3.Connection) -> ExportEligibility:
+        connection.row_factory = sqlite3.Row
+        return ExportEligibility(connection, None, use_kind="display")
+
+    def _genre_qid(
+        self,
+        connection: sqlite3.Connection,
+        genre_id: int,
+        metadata: ExportEligibility | None = None,
+    ) -> str | None:
+        if connection.execute("SELECT 1 FROM genres WHERE id=?", (genre_id,)).fetchone() is None:
+            return None
+        try:
+            metadata = metadata if metadata is not None else self._metadata(connection)
+            value = metadata.identifier(genre_id, "wikidata_genre_qid", "wikidata")
+        except ValueError:
+            return None
+        return value[0] if value is not None else None
 
     def _memberships(
         self,
@@ -348,10 +358,11 @@ class PublicArtistNavigationStore:
                     provenance_id=int(row[7]),
                 )
             )
+        metadata = self._metadata(connection)
         return tuple(
             ArtistGenreMembership(
                 artist=self._artist(connection, artist_id),
-                genre=self._genre(connection, genre_id),
+                genre=self._genre(connection, genre_id, metadata),
                 evidence=tuple(evidence),
             )
             for (artist_id, genre_id), evidence in grouped.items()
@@ -431,11 +442,32 @@ class PublicArtistNavigationStore:
             )
         return str(rows[0][2])
 
-    def _genre(self, connection: sqlite3.Connection, genre_id: int) -> PublicGenre:
-        row = connection.execute("SELECT id, name FROM genres WHERE id = ?", (genre_id,)).fetchone()
-        if row is None:
+    def _genre(
+        self,
+        connection: sqlite3.Connection,
+        genre_id: int,
+        metadata: ExportEligibility | None = None,
+    ) -> PublicGenre:
+        if connection.execute("SELECT 1 FROM genres WHERE id=?", (genre_id,)).fetchone() is None:
             raise PublicArtistNavigationStoreError("genre not found")
-        return _genre_value(int(row[0]), str(row[1]))
+        metadata = metadata if metadata is not None else self._metadata(connection)
+        try:
+            name = metadata.name(genre_id)
+        except ValueError as error:
+            raise PublicArtistNavigationStoreError("genre source metadata is ambiguous") from error
+        if name is not None:
+            return _genre_value(genre_id, name[0])
+        qid = self._genre_qid(connection, genre_id, metadata)
+        if qid is None:
+            raise PublicArtistNavigationStoreError(
+                "genre has no display-authorized name or unambiguous typed identifier"
+            )
+        return PublicGenre(
+            entity_id=genre_id,
+            genre_id=f"catalog:genre:{genre_id}",
+            name=qid,
+            name_status="source_identifier",
+        )
 
     @staticmethod
     def _page_ids(
