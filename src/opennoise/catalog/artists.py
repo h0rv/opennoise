@@ -7,10 +7,12 @@ import sqlite3
 from datetime import UTC, datetime
 from typing import NamedTuple
 
+from opennoise.catalog.artist_identity import resolve_artist
 from opennoise.models.catalog import (
     ArtistProjection,
     CatalogProjection,
     GenreMembershipClaim,
+    IdentifierClaim,
     ProjectionResult,
 )
 
@@ -259,24 +261,21 @@ class ArtistProjector:
         """Persist artist claims idempotently without source lifecycle writes."""
         if not isinstance(projection, ArtistProjection):
             raise TypeError("artist projector received the wrong projection")
-        source_identifier = projection.identifiers[0]
-        connection.execute(
-            "INSERT OR IGNORE INTO identifier_types (type_key, name) VALUES (?, ?)",
-            (source_identifier.type_key, source_identifier.type_key.replace("_", " ").title()),
+        entity_id = resolve_artist(connection, projection.identifiers)
+        # The native dump historically emitted source_id. Preserve that source
+        # observation and append a typed alias only after strict resolution.
+        typed = tuple(
+            IdentifierClaim(
+                type_key="musicbrainz_artist_id", namespace="musicbrainz", value=claim.value
+            )
+            for claim in projection.identifiers
+            if claim.type_key == "source_id" and claim.namespace == "musicbrainz"
         )
-        identifier_type_id = _one_id(
-            connection,
-            "SELECT id FROM identifier_types WHERE type_key = ?",
-            (source_identifier.type_key,),
+        projection = projection.model_copy(
+            update={"identifiers": (*projection.identifiers, *typed)}
         )
-        row = connection.execute(
-            """SELECT entity_id FROM entity_identifiers
-               WHERE identifier_type_id = ? AND namespace = ? AND normalized_value = ?
-               ORDER BY id LIMIT 1""",
-            (identifier_type_id, source_identifier.namespace, source_identifier.value.strip()),
-        ).fetchone()
-        duplicate = row is not None
-        if row is None:
+        duplicate = entity_id is not None
+        if entity_id is None:
             cursor = connection.execute(
                 "INSERT INTO catalog_entities (entity_kind) VALUES ('artist')"
             )
@@ -293,8 +292,6 @@ class ArtistProjector:
                     projection.end_year,
                 ),
             )
-        else:
-            entity_id = int(row[0])
         connection.execute(
             """INSERT OR IGNORE INTO entity_provenance
                (entity_id, provenance_id, field_set_json, is_primary)

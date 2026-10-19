@@ -363,3 +363,33 @@ independent cohort nor inductive validation. More broadly, independent artist-pa
 listening judgments, stronger source covariates and identity/duplicate coverage remain
 needed for supported recommendations. Source-specific denied routes remain stopped;
 this does not revoke standing authorization for an independently licensed new dataset.
+
+### Production backend: exact cross-source artist identity
+
+The [CC0 identity replay](../../data/recipes/cc0-exact-artist-identity-20261019/README.md)
+fixes an executable ingestion-order split in the actual catalog projectors. Seven
+exact P434 artist overlaps previously created seven duplicate artists when native
+MusicBrainz credits arrived first: 40 Wikidata P136 claims attached to different
+rows from 87 credited entities. A shared read-only typed resolver now reuses one
+consistent artist across both insertion orders, preserving the complete 352-artist,
+87-group, 1,031-recording native cohort and independent claim policies/provenance.
+Ambiguous/wrong-kind/conflicting identities fail; no old duplicates are repaired or
+redirected and no names are identity signals. Native release credits remain at their
+actual level. The common relation model preserves explicit null for unretained rank;
+ValueClaim qualification and old defaults remain intact.
+
+Both orders have the same normalized native graph; independent raw Wikidata and
+portable-core projection oracles checked all 5,376 ordered credit tuples/160 claims
+across producer and relocated builds. Source/network/research-model/fit-denied actual
+CLI replay passed. Existing policy-filtered navigation exposes only two observed
+shared-genre pairs among the seven joined artists; 345 native artists have no P136.
+This repairs provenance-bearing metadata joins, not recommendation validity or genre
+inference from credits. Native MusicBrainz HTTP bodies are not retained: its portable
+safe projections have verified custody, while Wikidata raw SPARQL bodies replay.
+
+Next concrete production gap, assessed separately: the public membership export
+adapter reads raw identifier/name rows and fails to apply all source/entity/claim
+suppression boundaries. Cross-source identity reuse must not launder a restricted
+alias/QID/name into an export-authorized claim. That adapter fix and actual suppressed
+source replay are separate from this identity patch. Previous research results and
+fold-4 style reservation remain unchanged; source-specific denied routes stay stopped.

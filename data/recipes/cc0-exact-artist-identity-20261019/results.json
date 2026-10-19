@@ -1,0 +1,137 @@
+{
+  "revision": "cc0-exact-artist-identity-checked-results-v1",
+  "base_main": "c46d2dcf4aa730351667e0207d2fcfedb4d91242",
+  "source": {
+    "core_artists_without_observed_p136": 345,
+    "core_custody": "verified safe projections; original HTTP bodies not retained",
+    "core_portable_projection_sha256": "13921b94a5a0c77c625713b5e272d40d081c67de3eb5b1299c8c1c48baf6d6ba",
+    "cultural_receipt_sha256": "df9763aef5b3f5801cc9ef999ecd34b24b97c588dc25679a2adaf8432461cfa5",
+    "exact_overlap": 7,
+    "matched_cultural_artists": 42,
+    "native_artists": 352,
+    "requested_cultural_artists": 42,
+    "unjoined_matched_cultural_artists": 35,
+    "wikidata_custody": "native raw SPARQL replay",
+    "wikidata_statement_ranks": "not retained; explicit null in derived claims"
+  },
+  "source_license": "CC0-1.0",
+  "attribution": "MusicBrainz and Wikidata contributors",
+  "before": {
+    "baseline_main": "c46d2dcf4aa730351667e0207d2fcfedb4d91242",
+    "loaded_entity_projector": "/workspace/opennoise/src/opennoise/catalog/entities.py",
+    "loaded_entity_projector_sha256": "478cad74cb367abae822a0850a03655dc92ddc06b5f47ea6fda71bffaac30b50",
+    "method": "Read-only observation of populated old-projector transaction before fixed postconditions; failed transaction rolls back. No input/production behavior modified.",
+    "orders": {
+      "musicbrainz-first": {
+        "artists": 359,
+        "p136_claims": 40,
+        "joined_credit_entities": 0,
+        "duplicate_native_identifiers": 7,
+        "fixed_invariant_failure": "Complete retained-source counts differ"
+      },
+      "wikidata-first": {
+        "artists": 352,
+        "p136_claims": 40,
+        "joined_credit_entities": 87,
+        "duplicate_native_identifiers": 0
+      }
+    }
+  },
+  "before_local_evidence": {
+    "sha256": "8d40c3a63c07aa4b45c43dcdb51287cdaade0f184b07c7b3ca7e87c4365b651b",
+    "bytes": 835
+  },
+  "after": {
+    "musicbrainz-first": {
+      "counts": {
+        "artist_genre_evidence": 40,
+        "artists": 352,
+        "recordings": 1031,
+        "release_groups": 87
+      },
+      "credited_entities_joined": 87,
+      "artists_queried": 352,
+      "artists_with_shared_direct_genre_neighbor": 4,
+      "directed_source_shared_genre_edges": 4
+    },
+    "wikidata-first": {
+      "counts": {
+        "artist_genre_evidence": 40,
+        "artists": 352,
+        "recordings": 1031,
+        "release_groups": 87
+      },
+      "credited_entities_joined": 87,
+      "artists_queried": 352,
+      "artists_with_shared_direct_genre_neighbor": 4,
+      "directed_source_shared_genre_edges": 4
+    }
+  },
+  "normalized_graph_sha256": "b726a1c3094b1b5cb77621eb8f465095624a715354d568710679e42ad01cc038",
+  "implementation_sha256": {
+    "artist_credit_catalog_candidate.py": "522cef13436f436f1287ce7ab7a92a4950ad8c2b63b956f751d16d34094506bc",
+    "artist_identity.py": "3bf36a48d1de43dacb108cd27766a28016526915af37dd5d87a8c9a951794119",
+    "artist_identity_replay.py": "f1f166bb2f4c3785b0a38b3e1a1979cfaef83e45c2a35bbef8ee80bbb28326b7",
+    "artists.py": "fc1a23c7c49e25796fbd2062cda0695a01ee77ef7b36ebf48de121f14809fc1f",
+    "catalog.py": "eb8d0d461dc1d56cd8dd916c6d09f2528191ae601236274d56e514b8c70c1dce",
+    "entities.py": "56e44a4588ca8b7f137d9157f9795e96f8ed65e13bba7a8d56988b0891914820",
+    "musicbrainz.py": "0f34c638d57f67975e1a7ec0458e706f2dcf753ef5aecbf19dd00753c9504b28",
+    "replay_cc0_artist_identity.py": "bde9b1873fac1007e1e3d3efb61f27ae536d3d7cb25e62558efd79ceae9496b5"
+  },
+  "production_report": {
+    "sha256": "b472cc410fad68819fad084846ffc10bf0590aa024819e5db299f866476064b3",
+    "bytes": 31102
+  },
+  "databases": {
+    "musicbrainz-first.sqlite": {
+      "bytes": 3108864,
+      "sha256": "1bed6408bf9fc487b494be91b223d75f7a825326738db7e1ae97faeaa0a24868"
+    },
+    "wikidata-first.sqlite": {
+      "bytes": 3112960,
+      "sha256": "79d227a38f486b26bdd3441c6580328382d45dea06a3ac42160b57cee981bb44"
+    }
+  },
+  "local_measurement": {
+    "wall_seconds": 4.6677791319998505,
+    "linux_child_ru_maxrss_kib": 92028,
+    "scope": "Earlier reviewed nullable-rank implementation; final legacy-compatible rerun unmeasured."
+  },
+  "independent_evidence": {
+    "independent_source_census": {
+      "local_path": "/workspace/production-artist-identity-20261019/independent-source-census.json",
+      "sha256": "2d562f3132d15115850db9852a14ac67d54ba053dfe65b4c058f93e2927f3060",
+      "bytes": 2628
+    },
+    "independent_raw_wikidata_replay": {
+      "local_path": "/workspace/production-artist-identity-20261019/independent-raw-source-replay.json",
+      "sha256": "5a88c76e135ac95c4d1183ee8225cbcd8edd3ede5c7942730091e393593756c9",
+      "bytes": 964
+    },
+    "independent_core_credit_oracle": {
+      "local_path": "/workspace/production-artist-identity-20261019/independent-core-credit-oracle.json",
+      "sha256": "4259a5afe614bb9071d67be38e3fc07c6cb0c75e488225eb6944b73ba1239bb4",
+      "bytes": 289670
+    },
+    "independent_production_comparison": {
+      "local_path": "/workspace/production-artist-identity-20261019/independent-production-comparison.json",
+      "sha256": "b819d7b0cb1a98766f2efb06abfecfae7b072fee7fb2e0158fd1995c0b732a0d",
+      "bytes": 3625
+    },
+    "guarded_relocated_cli": {
+      "local_path": "/workspace/production-artist-identity-20261019/guarded-legacy-reviewed-proof/proof.json",
+      "sha256": "2f727c71ff0f1560916c9584b3c8d6147532b36b589d3d04d79e55b5c0b709ef",
+      "bytes": 2435
+    }
+  },
+  "verification": {
+    "focused_identity_and_real_source_tests": 20,
+    "focused_plus_adjacent_pipeline_tests": 28,
+    "Luna": "Corrected runtime review clear; independently27focused passed before final additional conflict regression; local28passed.",
+    "full_check": "running; final local outcome and exact-head/main CI belong to the PR",
+    "legacy_compatibility": "Initial full check exposed3native adapter failures; strict canonical MusicBrainz source_id compatibility added without changing original source observations. Final full check rerunning."
+  },
+  "scope": "Typed exact artist resolution only, no oldduplicate repair/redirects/fuzzy joins/genre inference from credits/models/acquisition/default-serving changes. Claim policies stay independent. ValueClaim rank unchanged; common RelationClaim keeps olddefault and now accepts explicit null for unobserved source rank.",
+  "acquisitions": 0,
+  "new_external_cost_usd": 0
+}
