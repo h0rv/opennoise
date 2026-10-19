@@ -1,0 +1,1093 @@
+{
+  "revision": "jamendo-genre-temperature-checked-aggregate-v1",
+  "protocol_sha256": "012af3ed3453c5157d3a5bce79323bdb086da2d8b18a594bca8c76e981b74eff",
+  "original_inputs": {
+    "census_seal": "19a9c02c775db42ece4001ac4598be8da4b760bcda4660adfea5c3a91baf9b60",
+    "identity_seal": "ba8891f1cef6c8fa02cd1af311db1ddf67da4563bf719ed1debe258095fb9cff",
+    "protocol": "012af3ed3453c5157d3a5bce79323bdb086da2d8b18a594bca8c76e981b74eff",
+    "result_receipt": "397d68414fd6d75ba2db5889b64eec85b5d881b3431f7d405941c9039ae5b9aa"
+  },
+  "runtime": {
+    "code": {
+      "jamendo_genre_temperature.py": "a32873379b4b2de8bc2e4a082ce781aa2d2424041059bd38adc0fc5a6e1dd882",
+      "run_jamendo_genre_temperature.py": "d886f1d398876084807d150bd476076732c512b40caf6742fdf7c5df6c325477"
+    },
+    "original": {
+      "code": {
+        "jamendo_human_genre.py": "9f4663644a941f64a78359d2677cc07cadce5b0719f756defc2d26be15869b5d",
+        "jamendo_human_mood.py": "9848cd3a855e8b40018c50e949d3d38b6aad533c2323f8d68a7419cd5a5002e9",
+        "run_jamendo_human_genre.py": "0cb4c6401387e2ee42355699c7646e4618bd63df60026630ea85ad558d2af35e"
+      },
+      "numpy": "2.5.2",
+      "python": "3.13.14",
+      "scipy": "1.18.1"
+    }
+  },
+  "inner_census_seal_sha256": "b9038ae23a65d5047950dc49b97b4dffee96aa501932a7116d13a1f92d43e937",
+  "inner_census_sha256": "f68346d13a6ebbc38601fbecc10d007d6d5b097b9b3c0765aee5a2eab7f743f7",
+  "result_receipt_sha256": "7a6bc7f39e747789f027a0e2cb94e0cdd33608537f02fa80678957ade045801a",
+  "local_result_files": {
+    "evaluation.json": {
+      "bytes": 12376,
+      "sha256": "b19facb3d70ad39e19865474bcef436ab598c46c9696421ac66e2a16e11331c6"
+    },
+    "models.json": {
+      "bytes": 1291514,
+      "sha256": "7b199721a01cc81f1c972d2b2a227586cd59e76f14078b2495aa1ccd0d318206"
+    },
+    "predictions.json": {
+      "bytes": 13413863,
+      "sha256": "4c2b8946f91f4ef864cbf7cf4cc843838a7e45ff09d40df5adc3395cc59640ce"
+    }
+  },
+  "local_result_bytes": 14719387,
+  "measurement": {
+    "elapsed_seconds": 5.653127364000284,
+    "peak_rss_bytes": 160727040,
+    "returncode": 0
+  },
+  "fits": {
+    "inner": 15,
+    "baseline_verification": 5
+  },
+  "selections": [
+    {
+      "outer": 0,
+      "temperature": 4,
+      "reason": null,
+      "candidate_losses": [
+        2.7488162108751784,
+        1.6626149621647885,
+        1.4430020543121669,
+        1.6175631639267418
+      ],
+      "inner_clipping": {
+        "1": {
+          "positive_target_class_cells": 5,
+          "tracks": 5
+        },
+        "2": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "4": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "8": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        }
+      }
+    },
+    {
+      "outer": 1,
+      "temperature": 4,
+      "reason": null,
+      "candidate_losses": [
+        2.677751662836458,
+        1.632257258102447,
+        1.4191622386028597,
+        1.6012945271097752
+      ],
+      "inner_clipping": {
+        "1": {
+          "positive_target_class_cells": 3,
+          "tracks": 3
+        },
+        "2": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "4": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "8": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        }
+      }
+    },
+    {
+      "outer": 2,
+      "temperature": 4,
+      "reason": null,
+      "candidate_losses": [
+        2.5998881502691016,
+        1.5832329683261899,
+        1.3962932056329564,
+        1.5976025802810008
+      ],
+      "inner_clipping": {
+        "1": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "2": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "4": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "8": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        }
+      }
+    },
+    {
+      "outer": 3,
+      "temperature": 4,
+      "reason": null,
+      "candidate_losses": [
+        2.5991307594919375,
+        1.5848008997392087,
+        1.3913563033276062,
+        1.591551774928298
+      ],
+      "inner_clipping": {
+        "1": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "2": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "4": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "8": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        }
+      }
+    },
+    {
+      "outer": 4,
+      "temperature": 4,
+      "reason": null,
+      "candidate_losses": [
+        2.654867778646028,
+        1.607591728646209,
+        1.4064384569127233,
+        1.6043943147808883
+      ],
+      "inner_clipping": {
+        "1": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "2": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "4": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        },
+        "8": {
+          "positive_target_class_cells": 0,
+          "tracks": 0
+        }
+      }
+    }
+  ],
+  "evaluation": {
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation",
+    "bootstrap": {
+      "comparisons": {
+        "genre_instrument_nb-minus-training_human_prior": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": 0.2826744505045329,
+              "interval": [
+                0.08610972943912575,
+                0.4924886851105689
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.19009975994779948,
+              "interval": [
+                -0.2279133095589313,
+                -0.14946504390472862
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": 0.312702877674246,
+              "interval": [
+                0.11442688616505726,
+                0.5190862391352051
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.18309362614119362,
+              "interval": [
+                -0.21821540730170128,
+                -0.14604908087819243
+              ]
+            }
+          }
+        },
+        "mapped_uploader_genre-minus-genre_instrument_nb": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": 4.819228071993548,
+              "interval": [
+                3.9849897085728747,
+                5.6148625067053075
+              ]
+            },
+            "vote_brier": {
+              "difference": 0.031277479908902506,
+              "interval": [
+                -0.01680462198520565,
+                0.074862613578608
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": 5.523850083016427,
+              "interval": [
+                4.498543920218113,
+                6.531387865573025
+              ]
+            },
+            "vote_brier": {
+              "difference": 0.04499470444744158,
+              "interval": [
+                -0.002677771473780499,
+                0.09111284479756829
+              ]
+            }
+          }
+        },
+        "mapped_uploader_genre-minus-training_human_prior": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": 5.101902522498081,
+              "interval": [
+                4.188317772277348,
+                5.999119922631577
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.15882228003889698,
+              "interval": [
+                -0.20377073756341108,
+                -0.11613311635798121
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": 5.836552960690673,
+              "interval": [
+                4.751599096271061,
+                6.891805711375814
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.13809892169375204,
+              "interval": [
+                -0.18396877869179912,
+                -0.09458122241290177
+              ]
+            }
+          }
+        },
+        "temperature_nb-minus-genre_instrument_nb": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": -0.6605895464012563,
+              "interval": [
+                -0.8424532227374674,
+                -0.48292562178382814
+              ]
+            },
+            "vote_brier": {
+              "difference": 0.006593917557009776,
+              "interval": [
+                -0.02553400870290317,
+                0.03772390334425522
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": -0.6887588851012936,
+              "interval": [
+                -0.8726390400332278,
+                -0.5114129865060123
+              ]
+            },
+            "vote_brier": {
+              "difference": 0.001642117411154942,
+              "interval": [
+                -0.030504627483752534,
+                0.03286794149730575
+              ]
+            }
+          }
+        },
+        "temperature_nb-minus-mapped_uploader_genre": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": -5.479817618394804,
+              "interval": [
+                -6.356732575795939,
+                -4.5751581407612605
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.02468356235189273,
+              "interval": [
+                -0.06038157579217734,
+                0.012491807292351385
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": -6.212608968117721,
+              "interval": [
+                -7.259087680737575,
+                -5.1191208161036394
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.04335258703628664,
+              "interval": [
+                -0.0825500757267573,
+                -0.002752592707627758
+              ]
+            }
+          }
+        },
+        "temperature_nb-minus-training_human_prior": {
+          "component_equal": {
+            "fractional_log_loss": {
+              "difference": -0.37791509589672345,
+              "interval": [
+                -0.4225943713843904,
+                -0.334494486264841
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.1835058423907897,
+              "interval": [
+                -0.20099164574017095,
+                -0.16557942139802254
+              ]
+            }
+          },
+          "track_weighted": {
+            "fractional_log_loss": {
+              "difference": -0.3760560074270476,
+              "interval": [
+                -0.4341690571683155,
+                -0.31705669594461344
+              ]
+            },
+            "vote_brier": {
+              "difference": -0.18145150873003868,
+              "interval": [
+                -0.20063715209426014,
+                -0.16148142078104963
+              ]
+            }
+          }
+        }
+      },
+      "draws": 2000,
+      "valid_draws": 2000
+    },
+    "clipping": {
+      "genre_instrument_nb": {
+        "positive_target_class_cells": 0,
+        "tracks": 0
+      },
+      "mapped_uploader_genre": {
+        "positive_target_class_cells": 435,
+        "tracks": 350
+      },
+      "temperature_nb": {
+        "positive_target_class_cells": 0,
+        "tracks": 0
+      },
+      "training_human_prior": {
+        "positive_target_class_cells": 0,
+        "tracks": 0
+      }
+    },
+    "counts": {
+      "eligible_tracks": 1024,
+      "metadata_components": 713,
+      "metadata_tracks": 11565,
+      "predicted_components": 713,
+      "predicted_tracks": 11565,
+      "scored_components": 368,
+      "scored_tracks": 1024,
+      "target_outcomes": {
+        "eligible": 1024,
+        "invalid_vote": 538,
+        "missing_votes": 9808,
+        "wrong_vote_count": 195
+      },
+      "taxonomy_nominations": 1757
+    },
+    "diagnostics": {
+      "class_positive_components": [
+        90,
+        23,
+        200,
+        53,
+        44,
+        30,
+        108,
+        46,
+        127
+      ],
+      "class_positive_tracks": [
+        148,
+        41,
+        523,
+        109,
+        64,
+        42,
+        193,
+        102,
+        265
+      ],
+      "class_votes": [
+        169,
+        59,
+        1359,
+        174,
+        97,
+        84,
+        312,
+        218,
+        600
+      ],
+      "classes": [
+        "alternative",
+        "blues",
+        "electronic",
+        "folkcountry",
+        "funksoulrnb",
+        "jazz",
+        "pop",
+        "raphiphop",
+        "rock"
+      ],
+      "component_vote_mass": [
+        0.05518267298558221,
+        0.016186284528675834,
+        0.42579678937974985,
+        0.06012223706836878,
+        0.030114939881563923,
+        0.033400189786059346,
+        0.10085176365147593,
+        0.05994412589281515,
+        0.21840099682570924
+      ],
+      "methods": {
+        "genre_instrument_nb": {
+          "bins": [
+            {
+              "agreement": null,
+              "bounds": [
+                0,
+                0.2
+              ],
+              "component_mass": 0.0,
+              "confidence": null,
+              "tracks": 0
+            },
+            {
+              "agreement": 0.07204610951008646,
+              "bounds": [
+                0.2,
+                0.4
+              ],
+              "component_mass": 0.015715579710144926,
+              "confidence": 0.35384434843287416,
+              "tracks": 12
+            },
+            {
+              "agreement": 0.2058445732429101,
+              "bounds": [
+                0.4,
+                0.6
+              ],
+              "component_mass": 0.14930848802731794,
+              "confidence": 0.5063362694622527,
+              "tracks": 149
+            },
+            {
+              "agreement": 0.47484537196943444,
+              "bounds": [
+                0.6,
+                0.8
+              ],
+              "component_mass": 0.11648002776919017,
+              "confidence": 0.6964831194215477,
+              "tracks": 144
+            },
+            {
+              "agreement": 0.7603446053942199,
+              "bounds": [
+                0.8,
+                1
+              ],
+              "component_mass": 0.718495904493347,
+              "confidence": 0.9607438266298626,
+              "tracks": 719
+            }
+          ],
+          "component_class_logloss_contribution": [
+            0.3578852803103903,
+            0.2575996185653763,
+            0.10629941254691415,
+            0.2170868001250327,
+            0.28213780932523386,
+            0.2584022734310089,
+            0.2533917960849213,
+            0.17543704882395117,
+            0.09909406655037141
+          ],
+          "component_predicted_class_mass": [
+            0.008184413368868547,
+            0.0008088904422101371,
+            0.5689305386761077,
+            0.015425067548956948,
+            0.0007384924768092668,
+            0.0034934677626145515,
+            0.08442141352683079,
+            0.027080994488131917,
+            0.2909167217094697
+          ],
+          "mean_confidence": 0.8525780496813993,
+          "row_class_logloss_contribution": [
+            0.3584978191565177,
+            0.306376367517389,
+            0.14292537154203863,
+            0.1935932050207051,
+            0.28117092576116437,
+            0.20686914369483564,
+            0.22457003297216477,
+            0.20683182069463937,
+            0.11153848701982577
+          ],
+          "row_predicted_class_mass": [
+            0.007178675043830581,
+            0.0008786275520746698,
+            0.5786356752307844,
+            0.022063603603209796,
+            0.0008976733451623235,
+            0.005136904722064058,
+            0.09643967479760641,
+            0.03402909848328464,
+            0.25474006722198334
+          ],
+          "top_label_vote_agreement": 0.6334810754687674
+        },
+        "mapped_uploader_genre": {
+          "bins": [
+            {
+              "agreement": null,
+              "bounds": [
+                0,
+                0.2
+              ],
+              "component_mass": 0.0,
+              "confidence": null,
+              "tracks": 0
+            },
+            {
+              "agreement": 0.22504544609080643,
+              "bounds": [
+                0.2,
+                0.4
+              ],
+              "component_mass": 0.030578454207770063,
+              "confidence": 0.32288332541613685,
+              "tracks": 40
+            },
+            {
+              "agreement": 0.4074039350335162,
+              "bounds": [
+                0.4,
+                0.6
+              ],
+              "component_mass": 0.3836670008025507,
+              "confidence": 0.4510294558543373,
+              "tracks": 366
+            },
+            {
+              "agreement": null,
+              "bounds": [
+                0.6,
+                0.8
+              ],
+              "component_mass": 0.0,
+              "confidence": null,
+              "tracks": 0
+            },
+            {
+              "agreement": 0.7389385316822221,
+              "bounds": [
+                0.8,
+                1
+              ],
+              "component_mass": 0.5857545449896793,
+              "confidence": 1.0,
+              "tracks": 618
+            }
+          ],
+          "component_class_logloss_contribution": [
+            0.9986251037009922,
+            0.20494845467532224,
+            1.1127077245269503,
+            0.7092391111865125,
+            0.623974783402441,
+            0.39441799573412006,
+            1.2652861328326512,
+            0.30746761431449005,
+            1.2098952573832695
+          ],
+          "component_predicted_class_mass": [
+            0.06900970276148503,
+            0.0204769200137542,
+            0.39965859042530993,
+            0.061686796690475096,
+            0.024382584537928666,
+            0.03633488368517873,
+            0.11986917491948734,
+            0.07057430158986022,
+            0.19800704537652114
+          ],
+          "mean_confidence": 0.7686729365716091,
+          "row_class_logloss_contribution": [
+            1.1663439532992852,
+            0.3105072628991939,
+            1.3080616317294005,
+            0.6233902530372458,
+            0.6204788101632842,
+            0.24567249011931488,
+            1.3454413995521863,
+            0.41638191467718566,
+            1.5199455409186013
+          ],
+          "row_predicted_class_mass": [
+            0.05594093514197581,
+            0.021996716266133476,
+            0.40732185690777306,
+            0.0776920226598325,
+            0.02903908802439404,
+            0.03229952714786686,
+            0.13430273464644285,
+            0.07890305626400365,
+            0.16250406294157926
+          ],
+          "top_label_vote_agreement": 0.596025591138283
+        },
+        "temperature_nb": {
+          "bins": [
+            {
+              "agreement": 0.06122448979591836,
+              "bounds": [
+                0,
+                0.2
+              ],
+              "component_mass": 0.013315217391304349,
+              "confidence": 0.18617847040874905,
+              "tracks": 12
+            },
+            {
+              "agreement": 0.40143308776696124,
+              "bounds": [
+                0.2,
+                0.4
+              ],
+              "component_mass": 0.4281309381333358,
+              "confidence": 0.307900362730473,
+              "tracks": 443
+            },
+            {
+              "agreement": 0.8052740494333082,
+              "bounds": [
+                0.4,
+                0.6
+              ],
+              "component_mass": 0.4350469773903278,
+              "confidence": 0.5000600939275841,
+              "tracks": 434
+            },
+            {
+              "agreement": 0.8944271281786051,
+              "bounds": [
+                0.6,
+                0.8
+              ],
+              "component_mass": 0.12350686708503204,
+              "confidence": 0.6402707564995594,
+              "tracks": 135
+            },
+            {
+              "agreement": null,
+              "bounds": [
+                0.8,
+                1
+              ],
+              "component_mass": 0.0,
+              "confidence": null,
+              "tracks": 0
+            }
+          ],
+          "component_class_logloss_contribution": [
+            0.13665273744149486,
+            0.080032644165508,
+            0.3265530441256528,
+            0.12301893984179993,
+            0.1029279247284729,
+            0.10294486482501142,
+            0.16488211223387472,
+            0.10322194913704774,
+            0.20651034286308204
+          ],
+          "component_predicted_class_mass": [
+            0.08188313768600448,
+            0.005658627134516307,
+            0.33331774846490925,
+            0.0767807104028727,
+            0.02617564307172936,
+            0.02982816376407896,
+            0.14769614118290622,
+            0.07584123706737815,
+            0.22281859122560427
+          ],
+          "mean_confidence": 0.4309281455526077,
+          "row_class_logloss_contribution": [
+            0.13537602467128124,
+            0.09668812333709972,
+            0.3387795005123934,
+            0.11108436229311291,
+            0.1040657981620776,
+            0.0829317822615579,
+            0.15848170434404998,
+            0.12194197853121266,
+            0.19426501416519973
+          ],
+          "row_predicted_class_mass": [
+            0.08032744065342917,
+            0.005891473835301111,
+            0.3410778891995128,
+            0.07960931197110646,
+            0.026711900152485212,
+            0.0301770046772739,
+            0.14997337530109756,
+            0.07797926774264152,
+            0.20825233646715258
+          ],
+          "top_label_vote_agreement": 0.6334810754687674
+        },
+        "training_human_prior": {
+          "bins": [
+            {
+              "agreement": null,
+              "bounds": [
+                0,
+                0.2
+              ],
+              "component_mass": 0.0,
+              "confidence": null,
+              "tracks": 0
+            },
+            {
+              "agreement": null,
+              "bounds": [
+                0.2,
+                0.4
+              ],
+              "component_mass": 0.0,
+              "confidence": null,
+              "tracks": 0
+            },
+            {
+              "agreement": 0.4257967893797498,
+              "bounds": [
+                0.4,
+                0.6
+              ],
+              "component_mass": 0.9999999999999999,
+              "confidence": 0.41708865520902383,
+              "tracks": 1024
+            },
+            {
+              "agreement": null,
+              "bounds": [
+                0.6,
+                0.8
+              ],
+              "component_mass": 0.0,
+              "confidence": null,
+              "tracks": 0
+            },
+            {
+              "agreement": null,
+              "bounds": [
+                0.8,
+                1
+              ],
+              "component_mass": 0.0,
+              "confidence": null,
+              "tracks": 0
+            }
+          ],
+          "component_class_logloss_contribution": [
+            0.15935943139632364,
+            0.06498008894429813,
+            0.3740921909348361,
+            0.16848012917313443,
+            0.10409997501905885,
+            0.11168605836451818,
+            0.23284811005534817,
+            0.16838436292278827,
+            0.3407293084483603
+          ],
+          "component_predicted_class_mass": [
+            0.05702057348813963,
+            0.019084614527978567,
+            0.4170886552090237,
+            0.06140353097682398,
+            0.0326772537914616,
+            0.03578083891106152,
+            0.10071173831858321,
+            0.061934379047709376,
+            0.2142984157292189
+          ],
+          "mean_confidence": 0.4170886552090237,
+          "row_class_logloss_contribution": [
+            0.15796104411612694,
+            0.07717668015795032,
+            0.3886566367546078,
+            0.1589795531478032,
+            0.10889768017571147,
+            0.0912861696936195,
+            0.23506134975111795,
+            0.19939981903104448,
+            0.30225136287705734
+          ],
+          "row_predicted_class_mass": [
+            0.057014249830240754,
+            0.01908667840432275,
+            0.41646939421853324,
+            0.06151312546330997,
+            0.032681390106926625,
+            0.03572292622138551,
+            0.10052777338421541,
+            0.061959123470964335,
+            0.21502533890010683
+          ],
+          "top_label_vote_agreement": 0.42579678937974974
+        }
+      },
+      "row_vote_mass": [
+        0.05501302083333345,
+        0.019205729166666664,
+        0.44238281250000044,
+        0.056640625,
+        0.031575520833333315,
+        0.02734375,
+        0.10156250000000001,
+        0.07096354166666667,
+        0.19531249999999994
+      ],
+      "sampling": {
+        "eligible": {
+          "components": 368,
+          "empty_feature_tracks": 1,
+          "genre_present": 1019,
+          "instrument_present": 406,
+          "mean_tag_count": 3.482421875,
+          "tracks": 1024
+        },
+        "invalid_vote": {
+          "components": 187,
+          "empty_feature_tracks": 1,
+          "genre_present": 532,
+          "instrument_present": 285,
+          "mean_tag_count": 3.386617100371747,
+          "tracks": 538
+        },
+        "missing_votes": {
+          "components": 686,
+          "empty_feature_tracks": 32,
+          "genre_present": 9733,
+          "instrument_present": 4343,
+          "mean_tag_count": 3.4807300163132138,
+          "tracks": 9808
+        },
+        "wrong_vote_count": {
+          "components": 68,
+          "empty_feature_tracks": 0,
+          "genre_present": 195,
+          "instrument_present": 81,
+          "mean_tag_count": 3.071794871794872,
+          "tracks": 195
+        }
+      }
+    },
+    "research_only": true,
+    "scores": {
+      "genre_instrument_nb": {
+        "component_equal_fractional_log_loss": 2.0073341057632006,
+        "component_equal_vote_brier": 0.562461907325769,
+        "track_weighted_fractional_log_loss": 2.032373173379281,
+        "track_weighted_vote_brier": 0.5633480672033627
+      },
+      "mapped_uploader_genre": {
+        "component_equal_fractional_log_loss": 6.826562177756749,
+        "component_equal_vote_brier": 0.5937393872346715,
+        "track_weighted_fractional_log_loss": 7.5562232563957075,
+        "track_weighted_vote_brier": 0.6083427716508043
+      },
+      "temperature_nb": {
+        "component_equal_fractional_log_loss": 1.3467445593619443,
+        "component_equal_vote_brier": 0.5690558248827787,
+        "track_weighted_fractional_log_loss": 1.3436142882779873,
+        "track_weighted_vote_brier": 0.5649901846145177
+      },
+      "training_human_prior": {
+        "component_equal_fractional_log_loss": 1.7246596552586677,
+        "component_equal_vote_brier": 0.7525616672735684,
+        "track_weighted_fractional_log_loss": 1.719670295705035,
+        "track_weighted_vote_brier": 0.7464416933445563
+      }
+    },
+    "source_license": "CC-BY-NC-SA-4.0"
+  },
+  "rights": {
+    "source_license": "CC-BY-NC-SA-4.0",
+    "research_only": true,
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation"
+  },
+  "fit_accounting": {
+    "per_evaluate_invocation": {
+      "inner": 15,
+      "full_outer_baseline_verification": 5,
+      "total": 20
+    },
+    "per_replay_invocation": {
+      "inner": 15,
+      "full_outer_baseline_verification": 5,
+      "total": 20
+    },
+    "producer_runs_completed": {
+      "evaluate": 1,
+      "replay": 1
+    },
+    "interpretation": "The fit cap applies separately to each bounded invocation. Verification repeats the frozen plan, not a new candidate search. Independent audit and relocated executions are separately accounted evidence."
+  },
+  "independent_audit": {
+    "local_receipt": "/workspace/jamendo-genre-temperature-20261019/independent-production-comparison.json",
+    "sha256": "f41041bf4e8173741ffbcb22cb02ab4a9d14dcc67a453936babd0581481fa87c",
+    "bytes": 1369,
+    "comparison": {
+      "inner_models": 15,
+      "inner_oof_logits": 36864,
+      "temperatures": 5,
+      "inner_candidate_losses": 20,
+      "metadata_rows": 11565,
+      "method_class_probabilities": 416340,
+      "unchanged_baseline_methods": 3,
+      "unchanged_target_outcomes": true,
+      "scored_tracks": 1024,
+      "scored_components": 368,
+      "outer_and_inner_component_overlap": 0,
+      "bootstrap_draws": 2000,
+      "pairwise_comparisons": 6,
+      "max_abs_error": {
+        "inner_candidate_nll": 1.7763568394002505e-15,
+        "inner_prior": 6.106226635438361e-16,
+        "inner_theta": 9.992007221626409e-16,
+        "inner_oof_raw_logits": 7.105427357601002e-14,
+        "outer_probabilities": 9.825473767932635e-15,
+        "probability_mass": 3.4416913763379853e-15,
+        "proper_scores": 1.7763568394002505e-15,
+        "paired_difference": 2.4424906541753444e-15,
+        "paired_intervals": 5.329070518200751e-15,
+        "class_vote_mass": 0,
+        "confidence": 4.996003610813204e-16,
+        "agreement": 0,
+        "class_prediction_mass": 5.551115123125783e-16,
+        "class_logloss_contribution": 6.661338147750939e-16,
+        "confidence_bin_mass": 0,
+        "confidence_bins": 8.881784197001252e-16,
+        "confidence_bin_agreement": 4.440892098500626e-16
+      },
+      "production_code_imported": false,
+      "result_receipt_sha256": "7a6bc7f39e747789f027a0e2cb94e0cdd33608537f02fa80678957ade045801a",
+      "research_only": true,
+      "source_license": "CC-BY-NC-SA-4.0"
+    },
+    "fit_accounting": "15 independently computed inner fits plus previously verified original outer models; no production imports."
+  },
+  "relocated_cli_proof": {
+    "local_receipt": "/workspace/jamendo-genre-temperature-20261019/relocated-proof/proof.json",
+    "sha256": "df0a8e7777e49dba22c17bb682574e049fd6e672e3e110d3c66e2ec88ae9ab5f",
+    "bytes": 5999,
+    "operation": "Reuse of honestly rebound, verified baseline inputs; no new acquisition",
+    "explicit_denial_probes_passed": true,
+    "production_forbidden_reads": 0,
+    "production_network_attempts": 0,
+    "original_baseline_envelope": "b7265c2dcf05777a8db70e230e39afcfcf6861de6395ac085572ac16c09d9f0d",
+    "inner_census_sha256": "77238e5c4e4110d5b0f698172cbc5773a32dc2c58c1e73823662ff4c5004e563",
+    "result_receipt_sha256": "0bd954d5389dde9b8f959a6b0061721421a7aa4d25285d5d1e121e650cda0053",
+    "all_three_result_payloads_byte_identical": true,
+    "verification_fits": 40,
+    "fit_accounting": "20 in evaluate and20 in replay; unchanged candidates/plan; distinct resource-bounded invocations",
+    "source_license": "CC-BY-NC-SA-4.0",
+    "research_only": true,
+    "stages": [
+      {
+        "stage": "census",
+        "returncode": 0,
+        "fixed_plan_fits": 0
+      },
+      {
+        "stage": "evaluate",
+        "returncode": 0,
+        "fixed_plan_fits": 20
+      },
+      {
+        "stage": "replay",
+        "returncode": 0,
+        "fixed_plan_fits": 20
+      }
+    ]
+  },
+  "verification": {
+    "focused_tests": 10,
+    "format_lint_type": "passed",
+    "python_tests": 2232,
+    "python_skipped": 36,
+    "python_elapsed_seconds": 165.097,
+    "node_tests": 166,
+    "node_passed": 122,
+    "node_skipped": 44,
+    "node_failed": 0,
+    "luna_review": "no material blockers; final module a328733... and CLI d886f1... confirmed",
+    "full_check_log_local": "/tmp/opennoise-jamendo-genre-temperature-check.log",
+    "producer_exact_cli_replay": "passed"
+  }
+}
