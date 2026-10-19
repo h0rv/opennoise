@@ -62,7 +62,7 @@ class RelationClaim(_FrozenModel):
     target: ExternalIdentity
     target_kind: EntityKind | Literal["unresolved"] = "unresolved"
     statement_id: ExternalIdentity | None = None
-    rank: StatementRank = "normal"
+    rank: StatementRank | None = "normal"
     references: tuple[StatementReference, ...] = ()
 
 

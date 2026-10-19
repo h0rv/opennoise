@@ -7,9 +7,11 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from opennoise.catalog.artist_identity import resolve_artist
 from opennoise.models.catalog import (
     CatalogProjection,
     EntityProjection,
+    IdentifierClaim,
     ProjectionResult,
     RelationClaim,
     ValueClaim,
@@ -477,13 +479,38 @@ class EntityProjector:
         if not isinstance(projection, EntityProjection):
             raise TypeError("entity projector requires EntityProjection")
         qid = projection.source_identity.value
-        entity_id, duplicate = _ensure_entity(
-            connection,
-            qid=qid,
-            entity_kind=projection.entity_kind,
-            name=_preferred_name(projection),
-            provenance_id=provenance_id,
-        )
+        if projection.entity_kind == "artist":
+            if projection.source_identity.namespace != "wikidata":
+                raise ValueError("Generic artist subject must have a Wikidata identity")
+            resolved = resolve_artist(connection, projection.identifiers, subject_qid=qid)
+            if resolved is None:
+                entity_id, duplicate = _ensure_entity(
+                    connection,
+                    qid=qid,
+                    entity_kind="artist",
+                    name=_preferred_name(projection),
+                    provenance_id=provenance_id,
+                )
+            else:
+                entity_id, duplicate = resolved, True
+            projection = projection.model_copy(
+                update={
+                    "identifiers": (
+                        *projection.identifiers,
+                        IdentifierClaim(
+                            type_key="wikidata_artist_qid", namespace="wikidata", value=qid
+                        ),
+                    )
+                }
+            )
+        else:
+            entity_id, duplicate = _ensure_entity(
+                connection,
+                qid=qid,
+                entity_kind=projection.entity_kind,
+                name=_preferred_name(projection),
+                provenance_id=provenance_id,
+            )
         connection.execute(
             """INSERT OR IGNORE INTO entity_provenance
                (entity_id, provenance_id, field_set_json, is_primary)

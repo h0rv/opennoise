@@ -12,6 +12,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from opennoise.catalog.artist_identity import resolve_artist
 from opennoise.db import Database
 from opennoise.ingest.musicbrainz.artist_credit_enrichment import (
     ArtistCreditMember,
@@ -27,6 +28,7 @@ from opennoise.ingest.musicbrainz.release_hydration import (
     MusicBrainzReleaseHydrationArtifact,
     materialize_hydration_catalog,
 )
+from opennoise.models.catalog import IdentifierClaim
 
 if TYPE_CHECKING:
     import sqlite3
@@ -313,6 +315,16 @@ def _artist(
     provenance_id: int,
 ) -> int:
     member = relation.members[position]
+    artist_id = resolve_artist(
+        connection,
+        (
+            IdentifierClaim(
+                type_key="musicbrainz_artist_id",
+                namespace="musicbrainz",
+                value=str(member.artist_id),
+            ),
+        ),
+    )
     connection.execute(
         "INSERT OR IGNORE INTO identifier_types (type_key, name) "
         "VALUES ('musicbrainz_artist_id', 'MusicBrainz Artist ID')"
@@ -320,19 +332,12 @@ def _artist(
     type_id = _one_int(
         connection, "SELECT id FROM identifier_types WHERE type_key = 'musicbrainz_artist_id'"
     )
-    row = connection.execute(
-        """SELECT entity_id FROM entity_identifiers WHERE identifier_type_id = ?
-           AND namespace = 'musicbrainz' AND normalized_value = ?""",
-        (type_id, str(member.artist_id)),
-    ).fetchone()
-    if row is None:
+    if artist_id is None:
         cursor = connection.execute("INSERT INTO catalog_entities (entity_kind) VALUES ('artist')")
         if cursor.lastrowid is None:
             raise MusicBrainzHydrationError("artist entity insert returned no ID")
         artist_id = int(cursor.lastrowid)
         connection.execute("INSERT INTO artists (id) VALUES (?)", (artist_id,))
-    else:
-        artist_id = int(row[0])
     connection.execute(
         """INSERT OR IGNORE INTO entity_identifiers
            (entity_id, identifier_type_id, namespace, value, normalized_value, provenance_id)

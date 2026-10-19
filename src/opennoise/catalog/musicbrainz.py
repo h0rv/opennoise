@@ -6,6 +6,7 @@ import re
 import sqlite3
 from datetime import UTC, datetime
 
+from opennoise.catalog.artist_identity import resolve_artist
 from opennoise.models.catalog import (
     ArtistCreditMemberClaim,
     CatalogProjection,
@@ -137,13 +138,19 @@ def _ensure_artist(
         namespace=member.artist_identity.namespace,
         value=member.artist_identity.value,
     )
-    entity_id = _entity_by_identifier(connection, identifier)
+    entity_id = resolve_artist(connection, (identifier,))
     if entity_id is None:
         entity_id = _last_id(
             connection.execute("INSERT INTO catalog_entities (entity_kind) VALUES ('artist')")
         )
         connection.execute("INSERT INTO artists (id) VALUES (?)", (entity_id,))
     _persist_identifiers(connection, entity_id, (identifier,), provenance_id)
+    connection.execute(
+        """INSERT OR IGNORE INTO entity_provenance
+           (entity_id, provenance_id, field_set_json, is_primary)
+           VALUES (?, ?, '["names","identifiers","credited_artist"]', 0)""",
+        (entity_id, provenance_id),
+    )
     _persist_names(
         connection,
         entity_id,
