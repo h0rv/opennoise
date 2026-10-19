@@ -160,7 +160,7 @@ The component-equal individual-vote Brier scores are 0.752562 for training prior
 against prior, while its primary difference versus the direct mapping has a
 paired fixed-prediction interval including zero. NB log loss is worse than the
 prior; the mapped baseline has 435 clipped positive-target cells across 350
-tracks. No calibration or tuning follows these results. Independent arithmetic
+tracks. The original study performed no calibration or tuning; the separately frozen exploratory follow-up below reuses its known outcomes. Independent arithmetic
 reconstructed all five models, 312,255 probabilities, proper scores and 2,000
 paired component-bootstrap intervals with maximum probability error below
 1e-14 and no fold leakage. Raw sources, per-track outputs and models remain local
@@ -173,3 +173,50 @@ prepare/census/evaluate/replay under a new honest custody receipt reproduced all
 three result files byte-for-byte while original source paths and networking
 were denied. Exact-head and merge-head CI/publication status is recorded by the
 associated pull request, without a future-hash placeholder in this backlog.
+
+
+## Exploratory nested temperature diagnostic on the known human-genre cohort
+
+The [separate frozen study](../../data/recipes/jamendo-genre-temperature-20261019/README.md)
+keeps all original identities, five outer folds, targets and baseline predictions.
+Before freeze, one fixed inner hash was inspected for training-class support;
+all fifteen cells passed (minimum eight components), with no reseed, new fit or
+temperature score. Three inner component-safe OOF folds per outer partition select
+only among T={1,2,4,8} by component-equal fractional log loss. The run used fifteen
+inner fits plus five exact baseline-verification fits, no acquisition and $0.
+
+All five selections were T=4. All 11,565 metadata predictions and 1,024 scored
+rows/368 components remain available. Component log loss improves from 2.007334
+to 1.346745: difference −0.660590, paired component-bootstrap interval
+[−0.842453, −0.482926]. Component Brier worsens slightly from 0.562462 to 0.569056;
+its difference interval includes zero. Component Brier versus the uploader
+predictor also remains uncertain. The selected model's mean confidence is only
+43.09% against unchanged top-label human-vote agreement 63.35%: aggregate
+underconfidence replaces the old overconfidence. No unchosen outer temperatures
+were evaluated, and no subsequent model/grid change attempts to fix this.
+
+This is exploratory nested reuse, not an untouched evaluation or general
+calibration/retrieval claim. Fixed inner folds and training-only vocabulary/gates
+prevent direct outer-label selection; annotation independence, label missingness
+and conditional-independence assumptions remain limitations. A substantive next
+confirmation needs an independently retained, appropriately licensed human-genre
+cohort with compatible descriptors and identity-safe groups. Further tuning on
+these known outer results would not provide fresh confirmation. All raw sources,
+inner logits/models and per-track probabilities remain local noncommercial
+CC BY-NC-SA artifacts; deployment and acquisition retries remain unauthorized.
+
+The independent arithmetic audit matched fifteen models, 36,864 raw inner OOF
+logits, twenty candidate losses, five selections, 416,340 outer probabilities,
+all original baseline outcomes, proper scores, six paired bootstrap comparisons
+and fixed confidence/class diagnostics. It imported no production code and found
+zero inner/outer component overlap. Exact producer CLI replay also passed.
+
+Full checks passed: 2,232 Python tests (36 skips), 122 Node passes (44 skips),
+format/lint/type checks and all ten focused tests. Luna review found no material
+blockers. The actual copied-input census/evaluate/replay accepted honest fresh
+baseline envelope pins, reproduced all three result payloads byte-for-byte and
+made zero forbidden original-path reads or network attempts under independently
+proven denial hooks. Fit accounting is per invocation: twenty producer fits,
+twenty separate producer replay fits, and twenty each for the copied evaluation
+and its replay; all repeat the frozen plan rather than adding candidates.
+Exact-head and main CI/publication status remains with the associated PR.
