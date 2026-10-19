@@ -70,31 +70,32 @@
   "normalized_graph_sha256": "b726a1c3094b1b5cb77621eb8f465095624a715354d568710679e42ad01cc038",
   "implementation_sha256": {
     "artist_credit_catalog_candidate.py": "522cef13436f436f1287ce7ab7a92a4950ad8c2b63b956f751d16d34094506bc",
-    "artist_identity.py": "aa1bd0f8588424cc217b1b6fcfe6c2affa0c51c5566b8573238f827057202145",
+    "artist_identity.py": "3bf36a48d1de43dacb108cd27766a28016526915af37dd5d87a8c9a951794119",
     "artist_identity_replay.py": "f1f166bb2f4c3785b0a38b3e1a1979cfaef83e45c2a35bbef8ee80bbb28326b7",
-    "artists.py": "ad68ca9092519879ffe5cd58a87c06ae8b48f4b0735f9dd4d8a9211b56773dff",
+    "artists.py": "fc1a23c7c49e25796fbd2062cda0695a01ee77ef7b36ebf48de121f14809fc1f",
     "catalog.py": "eb8d0d461dc1d56cd8dd916c6d09f2528191ae601236274d56e514b8c70c1dce",
     "entities.py": "56e44a4588ca8b7f137d9157f9795e96f8ed65e13bba7a8d56988b0891914820",
     "musicbrainz.py": "0f34c638d57f67975e1a7ec0458e706f2dcf753ef5aecbf19dd00753c9504b28",
     "replay_cc0_artist_identity.py": "bde9b1873fac1007e1e3d3efb61f27ae536d3d7cb25e62558efd79ceae9496b5"
   },
   "production_report": {
-    "sha256": "cde46fb9b9cd100c43645773389656d42e330e20be1bf5ff832ab4a506f70a76",
+    "sha256": "b472cc410fad68819fad084846ffc10bf0590aa024819e5db299f866476064b3",
     "bytes": 31102
   },
   "databases": {
     "musicbrainz-first.sqlite": {
       "bytes": 3108864,
-      "sha256": "c2df0c3cfc5082f6ebea527442d268e579d45db025309cc0d4f62fa6602b0ce6"
+      "sha256": "1bed6408bf9fc487b494be91b223d75f7a825326738db7e1ae97faeaa0a24868"
     },
     "wikidata-first.sqlite": {
       "bytes": 3112960,
-      "sha256": "845bb4d52079cfb714152d8fc1eb74105aaab43f09178e8e2b77f6851f7faaf0"
+      "sha256": "79d227a38f486b26bdd3441c6580328382d45dea06a3ac42160b57cee981bb44"
     }
   },
   "local_measurement": {
     "wall_seconds": 4.6677791319998505,
-    "linux_child_ru_maxrss_kib": 92028
+    "linux_child_ru_maxrss_kib": 92028,
+    "scope": "Earlier reviewed nullable-rank implementation; final legacy-compatible rerun unmeasured."
   },
   "independent_evidence": {
     "independent_source_census": {
@@ -114,20 +115,21 @@
     },
     "independent_production_comparison": {
       "local_path": "/workspace/production-artist-identity-20261019/independent-production-comparison.json",
-      "sha256": "2b9620254282704365720da91bb01f962f74ed870e7990316eac96cc2fcd451f",
-      "bytes": 3597
+      "sha256": "b819d7b0cb1a98766f2efb06abfecfae7b072fee7fb2e0158fd1995c0b732a0d",
+      "bytes": 3625
     },
     "guarded_relocated_cli": {
-      "local_path": "/workspace/production-artist-identity-20261019/guarded-reviewed-proof/proof.json",
-      "sha256": "e92aee63d84ac11908f90aa3db1669f452af6f3a82b8b2dbb2c057d9665d7eb3",
+      "local_path": "/workspace/production-artist-identity-20261019/guarded-legacy-reviewed-proof/proof.json",
+      "sha256": "2f727c71ff0f1560916c9584b3c8d6147532b36b589d3d04d79e55b5c0b709ef",
       "bytes": 2435
     }
   },
   "verification": {
-    "focused_identity_and_real_source_tests": 16,
-    "focused_plus_adjacent_pipeline_tests": 24,
-    "Luna": "no material blockers; independently reran16 focused tests",
-    "full_check": "running; final local outcome and exact-head/main CI belong to the PR"
+    "focused_identity_and_real_source_tests": 20,
+    "focused_plus_adjacent_pipeline_tests": 28,
+    "Luna": "Corrected runtime review clear; independently27focused passed before final additional conflict regression; local28passed.",
+    "full_check": "running; final local outcome and exact-head/main CI belong to the PR",
+    "legacy_compatibility": "Initial full check exposed3native adapter failures; strict canonical MusicBrainz source_id compatibility added without changing original source observations. Final full check rerunning."
   },
   "scope": "Typed exact artist resolution only, no oldduplicate repair/redirects/fuzzy joins/genre inference from credits/models/acquisition/default-serving changes. Claim policies stay independent. ValueClaim rank unchanged; common RelationClaim keeps olddefault and now accepts explicit null for unobserved source rank.",
   "acquisitions": 0,

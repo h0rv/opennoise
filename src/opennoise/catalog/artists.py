@@ -12,6 +12,7 @@ from opennoise.models.catalog import (
     ArtistProjection,
     CatalogProjection,
     GenreMembershipClaim,
+    IdentifierClaim,
     ProjectionResult,
 )
 
@@ -261,6 +262,18 @@ class ArtistProjector:
         if not isinstance(projection, ArtistProjection):
             raise TypeError("artist projector received the wrong projection")
         entity_id = resolve_artist(connection, projection.identifiers)
+        # The native dump historically emitted source_id. Preserve that source
+        # observation and append a typed alias only after strict resolution.
+        typed = tuple(
+            IdentifierClaim(
+                type_key="musicbrainz_artist_id", namespace="musicbrainz", value=claim.value
+            )
+            for claim in projection.identifiers
+            if claim.type_key == "source_id" and claim.namespace == "musicbrainz"
+        )
+        projection = projection.model_copy(
+            update={"identifiers": (*projection.identifiers, *typed)}
+        )
         duplicate = entity_id is not None
         if entity_id is None:
             cursor = connection.execute(

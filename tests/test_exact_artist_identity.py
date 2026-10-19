@@ -31,6 +31,7 @@ from opennoise.models.catalog import (
     RecordingProjection,
     RelationClaim,
 )
+from opennoise.sources.musicbrainz import MusicBrainzArtist, _artist_projection
 
 MBID = "11111111-1111-4111-8111-111111111111"
 OTHER_MBID = "22222222-2222-4222-8222-222222222222"
@@ -183,6 +184,104 @@ class ExactArtistIdentityTests(unittest.TestCase):
             wd.target_id,
         )
         self.assertEqual(self.connection.execute("SELECT count(*) FROM artists").fetchone()[0], 1)
+
+    def test_actual_native_adapter_preserves_legacy_and_typed_identity_both_orders(self) -> None:
+        native = _artist_projection(
+            MusicBrainzArtist.model_validate(
+                {"id": UUID(MBID), "name": "native", "sort-name": "native"}
+            )
+        )
+        self.assertEqual(native.identifiers[0].type_key, "source_id")
+        for wiki_first in (False, True):
+            with self.subTest(wiki_first=wiki_first):
+                self.connection.execute("SAVEPOINT native_order")
+                if wiki_first:
+                    self.persist(EntityProjector(), wikidata(), self.wd)
+                result = self.persist(ArtistProjector(), native, self.mb)
+                self.persist(EntityProjector(), wikidata(), self.wd)
+                self.persist(RecordingProjector(), recording(), self.mb)
+                self.assertEqual(
+                    self.connection.execute("SELECT count(*) FROM artists").fetchone()[0], 1
+                )
+                self.assertEqual(resolve_artist(self.connection, (identifier(),)), result.target_id)
+                types = {
+                    r[0]
+                    for r in self.connection.execute(
+                        "SELECT t.type_key FROM entity_identifiers i JOIN identifier_types t "
+                        "ON t.id=i.identifier_type_id WHERE i.entity_id=?",
+                        (result.target_id,),
+                    )
+                }
+                self.assertTrue({"source_id", "musicbrainz_artist_id"} <= types)
+                self.connection.execute("ROLLBACK TO native_order")
+                self.connection.execute("RELEASE native_order")
+
+    def test_preexisting_legacy_only_artist_reused_and_conflicts_rejected(self) -> None:
+        result = self.persist(ArtistProjector(), artist(), self.mb)
+        c = self.connection
+        c.execute(
+            "INSERT OR IGNORE INTO identifier_types(type_key,name) VALUES('source_id','Source')"
+        )
+        c.execute(
+            "UPDATE entity_identifiers SET identifier_type_id=(SELECT id FROM "
+            "identifier_types WHERE type_key='source_id') WHERE entity_id=?",
+            (result.target_id,),
+        )
+        self.assertEqual(
+            self.persist(EntityProjector(), wikidata(), self.wd).target_id, result.target_id
+        )
+        self.persist(RecordingProjector(), recording(), self.mb)
+        # A second artist carrying the same historical ID is ambiguous, never merged.
+        second = self.persist(ArtistProjector(), artist(OTHER_MBID), self.mb)
+        c.execute(
+            "UPDATE entity_identifiers SET normalized_value=?,value=?,identifier_type_id="
+            "(SELECT id FROM identifier_types WHERE type_key='source_id') WHERE entity_id=?",
+            (MBID, MBID, second.target_id),
+        )
+        before = c.total_changes
+        with self.assertRaisesRegex(ArtistIdentityError, "ambiguously"):
+            resolve_artist(c, (identifier(),))
+        self.assertEqual(before, c.total_changes)
+
+    def test_legacy_identity_strict_values_conflicts_and_wrong_kind(self) -> None:
+        def legacy(value: str, namespace: str = "musicbrainz") -> IdentifierClaim:
+            return IdentifierClaim(type_key="source_id", namespace=namespace, value=value)
+
+        for claims in (
+            (legacy("bad"),),
+            (legacy("AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA"),),
+            (legacy(MBID, "other"),),
+            (legacy(OTHER_MBID), identifier()),
+        ):
+            before = self.connection.total_changes
+            with self.assertRaises(ArtistIdentityError):
+                self.persist(
+                    ArtistProjector(), artist().model_copy(update={"identifiers": claims}), self.mb
+                )
+            self.assertEqual(before, self.connection.total_changes)
+        result = self.persist(
+            ArtistProjector(),
+            artist().model_copy(update={"identifiers": (legacy(MBID), identifier())}),
+            self.mb,
+        )
+        self.connection.execute("DELETE FROM artists WHERE id=?", (result.target_id,))
+        with self.assertRaisesRegex(ArtistIdentityError, "wrong entity kind"):
+            resolve_artist(self.connection, (identifier(),))
+
+    def test_existing_legacy_and_typed_conflict_fails_before_mutation(self) -> None:
+        first = self.persist(ArtistProjector(), artist(), self.mb)
+        c = self.connection
+        c.execute("INSERT INTO identifier_types(type_key,name) VALUES('source_id','Source')")
+        c.execute(
+            "INSERT INTO entity_identifiers(entity_id,identifier_type_id,namespace,value,"
+            "normalized_value,provenance_id) SELECT ?,id,'musicbrainz',?,?,? "
+            "FROM identifier_types WHERE type_key='source_id'",
+            (first.target_id, OTHER_MBID, OTHER_MBID, self.mb[0]),
+        )
+        before = c.total_changes
+        with self.assertRaisesRegex(ArtistIdentityError, "conflicting"):
+            self.persist(EntityProjector(), wikidata(), self.wd)
+        self.assertEqual(before, c.total_changes)
 
     def test_repeated_identifier_provenance_is_not_an_ambiguous_entity(self) -> None:
         first = self.persist(EntityProjector(), wikidata(), self.wd)

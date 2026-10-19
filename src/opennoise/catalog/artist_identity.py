@@ -44,7 +44,7 @@ def _matches(connection: sqlite3.Connection, *, namespace: str, value: str, mbid
                JOIN identifier_types AS type ON type.id = entity.identifier_type_id
                WHERE entity.namespace = ? AND entity.normalized_value = ?"""
     if mbid:
-        query += " AND type.type_key = 'musicbrainz_artist_id'"
+        query += " AND type.type_key IN ('musicbrainz_artist_id', 'source_id')"
     else:
         query += " AND (type.type_key = 'wikidata_qid' OR type.type_key GLOB 'wikidata_*_qid')"
     return {int(r[0]) for r in connection.execute(query, (namespace, value))}
@@ -57,7 +57,9 @@ def _values(
     mbids: set[str] = set()
     qids: set[str] = {_qid(subject_qid)} if subject_qid is not None else set()
     for claim in identifiers:
-        if claim.type_key == _MBID_TYPE:
+        if claim.type_key == _MBID_TYPE or (
+            claim.type_key == "source_id" and claim.namespace == "musicbrainz"
+        ):
             if claim.namespace != "musicbrainz":
                 raise ArtistIdentityError("Artist MusicBrainz identifier has wrong namespace")
             mbids.add(_mbid(claim.value))
@@ -91,12 +93,13 @@ def _existing(connection: sqlite3.Connection, entity_id: int) -> tuple[set[str],
            JOIN identifier_types type ON type.id=identifier.identifier_type_id
            WHERE identifier.entity_id=? AND
              (type.type_key GLOB 'musicbrainz_*_id' OR type.type_key='wikidata_qid'
-              OR type.type_key GLOB 'wikidata_*_qid')""",
+              OR type.type_key GLOB 'wikidata_*_qid'
+              OR (type.type_key='source_id' AND identifier.namespace='musicbrainz'))""",
         (entity_id,),
     )
     claims = []
     for type_key, namespace, value in rows:
-        if type_key not in (_MBID_TYPE, *_QID_TYPES):
+        if type_key not in (_MBID_TYPE, "source_id", *_QID_TYPES):
             raise ArtistIdentityError("Existing artist has conflicting typed Wikidata identity")
         claims.append(IdentifierClaim(type_key=type_key, namespace=namespace, value=value))
     return _values(tuple(claims))
