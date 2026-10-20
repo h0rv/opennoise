@@ -1,0 +1,70 @@
+{
+  "scope": "Coarse persisted recorded-provenance invalidation; no exact consumed-claim ledger, real-source model or music-quality claim.",
+  "implementation_sha256": {
+    "migrations/0014_public_model_input_veto.sql": "35424394537dd5d33bd75630e5bde8512d5cfb00438ca69f0a7c117ec0f8150d",
+    "src/opennoise/db.py": "44eb7a2264069d4cb1b3c76af48a0863021482b9e01e328af1743be85efae2d1",
+    "src/opennoise/pipeline/candidate_public_projection.py": "309add03ac4360039591abbbe89c7b4444dae463a8c70c869429e2f16e3720e4",
+    "src/opennoise/pipeline/historical_candidate_binding.py": "c27e735a08e7e78fa604038883125c54d99ed326656800f4788eb3a03eea1807",
+    "src/opennoise/pipeline/artist_identity_replay.py": "9102d05eb56810e46f46e91aac14ab32716ae796521a5fbcfe343e35f546fac1",
+    "src/opennoise/pipeline/cultural_catalog.py": "6cd559b86a38f97845c8002f8d1e36cf5e6a4730ac430aa41d6e56a3b81d5039"
+  },
+  "evidence": {
+    "seed-receipt.json": {
+      "path": "/workspace/persisted-model-veto-20261020/independent-v2/seed-receipt.json",
+      "sha256": "5c1ce2a1ea06eefbcbc43a5cb4c7270bf95052fb2093273e6a3feb0cdcad5eb5"
+    },
+    "before-observations.json": {
+      "path": "/workspace/persisted-model-veto-20261020/independent-v2/before-observations.json",
+      "sha256": "eec99304d9dc21b4b6cbf73ed5cfc693cf50b1e06c45b33c0f5ceda4616ad71d"
+    },
+    "source-observations.json": {
+      "path": "/workspace/persisted-model-veto-20261020/independent-v2/source-observations.json",
+      "sha256": "1f1c6e0333e34115bae1fb9dd02ea0e534e6fb3a45588631dcc17a1e3040e147"
+    },
+    "source-proof.json": {
+      "path": "/workspace/persisted-model-veto-20261020/independent-v2/source-proof.json",
+      "sha256": "e4e77899d6619622ca68518a3cd52319cee2a8c228dba04d1e55b22f69bcb462"
+    }
+  },
+  "checks": {
+    "focused_tests": 57,
+    "full": "passed",
+    "database_tests": 7,
+    "initial_full_attempt": "Stopped after identifying four stale schema-13 test expectations; not a passing final check.",
+    "python_tests": 2413,
+    "python_seconds": 203.891,
+    "python_skipped": 36,
+    "node_passed": 122,
+    "node_skipped": 44,
+    "static": "passed",
+    "full_log": "/tmp/persisted-veto-full-final.log",
+    "independent_review": "Luna: no material blockers; 57 focused tests passed."
+  },
+  "research_fits": 0,
+  "acquisitions": 0,
+  "new_external_cost_usd": 0,
+  "independent_controls": {
+    "scope": "Synthetic ordinary-publisher graph surface behavior; coarse run-input provenance invalidation, not musical quality or exact perclaim lineage. No real-source model used.",
+    "before_sha256": "eec99304d9dc21b4b6cbf73ed5cfc693cf50b1e06c45b33c0f5ceda4616ad71d",
+    "after_sha256": "1f1c6e0333e34115bae1fb9dd02ea0e534e6fb3a45588631dcc17a1e3040e147",
+    "script_sha256": "d4fc839bf483fbdf52caea32f243af1c7219bd38ff0233de26ff58a418ee59f8",
+    "case_count": 227,
+    "all_match": true,
+    "stale_output_controls_fixed": 11,
+    "unaffected_complete_payloads_equal": 216,
+    "unchanged_visible_payloads": 201,
+    "unchanged_already_blocked_payloads": 15,
+    "all_releases_restore_exact_payload": true,
+    "all_stored_rows_unchanged": true,
+    "guard_denial_probes": [
+      "filesystem",
+      "network",
+      "subprocess",
+      "sqlite_write"
+    ],
+    "forbidden_operations": [],
+    "research_model_fits": 0,
+    "source_acquisitions": 0,
+    "new_external_cost_usd": 0
+  }
+}

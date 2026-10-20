@@ -35,7 +35,7 @@ from opennoise.pipeline.release_manifest import load_release_manifest
 from opennoise.pipeline.source_vault_replay import HistoricalDeclarationCombinedReplayReport
 from opennoise.types import Sha256  # noqa: TC001
 
-_SUPPORTED_CANDIDATE_SCHEMA_VERSIONS = (12, 13)
+_SUPPORTED_CANDIDATE_SCHEMA_VERSIONS = (12, 13, 14)
 _SOURCE_ARTIFACT_COUNT = 62
 _V2_RECEIPT_REVISION = "phase3-candidate-public-projection-v2"
 _V3_RECEIPT_REVISION = "phase3-candidate-public-projection-v3"
@@ -132,7 +132,7 @@ class CandidatePublicProjectionV2Report(FrozenModel):
     historical_candidate_binding_sha256: Sha256
     replay_receipt_sha256: Sha256
     candidate_sha256: Sha256
-    candidate_schema_version: Literal[12, 13] = 12
+    candidate_schema_version: Literal[12, 13, 14] = 12
     source_artifact_count: Literal[62] = 62
     source_artifact_set_sha256: Sha256
     input_load_settings: dict[str, Any]
@@ -164,7 +164,7 @@ class CandidatePublicProjectionV3Report(FrozenModel):
     historical_candidate_binding_sha256: Sha256
     replay_receipt_sha256: Sha256
     candidate_sha256: Sha256
-    candidate_schema_version: Literal[12, 13] = 12
+    candidate_schema_version: Literal[12, 13, 14] = 12
     source_artifact_count: Literal[62] = 62
     source_artifact_set_sha256: Sha256
     input_load_settings: dict[str, Any]
@@ -883,7 +883,7 @@ def project_candidate_public_model(
             ),
             replay_receipt_sha256=settings.expected_replay_receipt_sha256,
             candidate_sha256=candidate_sha256,
-            candidate_schema_version=cast("Literal[12, 13]", receipt.database_schema_version),
+            candidate_schema_version=cast("Literal[12, 13, 14]", receipt.database_schema_version),
             model_input_sha256=artifact.input_sha256,
             model_settings_sha256=artifact.settings_sha256,
             model_logical_sha256=artifact.output_sha256,
@@ -956,7 +956,7 @@ def project_candidate_public_model_v2(
         _checkpoint_database(staged_database)
         _verify_projected_database(staged_database)
         report = CandidatePublicProjectionV2Report(
-            candidate_schema_version=cast("Literal[12, 13]", receipt.database_schema_version),
+            candidate_schema_version=cast("Literal[12, 13, 14]", receipt.database_schema_version),
             release_id=receipt.release_id,
             manifest_sha256=manifest_sha256,
             historical_candidate_binding_sha256=settings.expected_historical_candidate_binding_sha256,
@@ -1037,7 +1037,7 @@ def project_candidate_public_model_v3(
         _checkpoint_database(staged_database)
         _verify_projected_database(staged_database)
         report = CandidatePublicProjectionV3Report(
-            candidate_schema_version=cast("Literal[12, 13]", receipt.database_schema_version),
+            candidate_schema_version=cast("Literal[12, 13, 14]", receipt.database_schema_version),
             release_id=receipt.release_id,
             manifest_sha256=manifest_sha256,
             historical_candidate_binding_sha256=settings.expected_historical_candidate_binding_sha256,

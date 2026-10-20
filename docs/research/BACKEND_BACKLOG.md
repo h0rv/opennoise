@@ -524,3 +524,16 @@ load). Indexed owner lookup preserves batched scaling. Other-provider conflicts,
 reconciliation and persisted-model invalidation remain separate. No fitting,
 acquisition, research promotion, UI/default change or cost; failed research and
 reserved style fold4 remain intact.
+
+The [persisted model input-veto migration](../../data/recipes/persisted-model-input-veto-20261020/README.md)
+closes the demonstrated stale-serving boundary. Schema 14 honors embed-only vetoes
+of recorded input source/provenance/artifact/snapshot and exact recognized claim
+all/embed vetoes through the existing provenance ledger. This is deliberately
+coarse: unused literal or propagated claims in the same source batch can retract
+the whole run; no exact claim lineage is fabricated. Release restores unchanged
+stored outputs. Independent synthetic ordinary-publisher checks cover 227 controls
+and all public graph surfaces; the retained real CC0 catalog has no published
+models, so no real-model quality/verification is claimed. Sealed schema 12/13 inputs
+remain byte-preserved with exact reader/receipt versions; current writers use 14.
+No fitting, acquisition, research promotion, UI/default change or cost. Prior
+negative research, the failed fixed study and reserved style fold4 remain intact.

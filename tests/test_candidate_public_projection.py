@@ -1,4 +1,4 @@
-"""Tests for exact schema-12/13 candidate custody and fresh public projections."""
+"""Tests for exact schema-12/13/14 candidate custody and fresh public projections."""
 
 from __future__ import annotations
 
@@ -61,6 +61,17 @@ RELEASE = ROOT / "config/releases/phase3-public-20260831"
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _restore_historical_serving_view(connection: sqlite3.Connection, version: int) -> None:
+    old = (ROOT / "migrations/0007_public_model_serving.sql").read_text()
+    view = old[
+        old.index("CREATE VIEW servable_public_model_runs") : old.index(
+            "CREATE VIEW displayable_public_genre_representatives"
+        )
+    ]
+    connection.executescript("DROP VIEW servable_public_model_runs;\n" + view)
+    connection.execute(f"PRAGMA user_version={version}")
 
 
 class CandidatePublicProjectionTests(unittest.TestCase):
@@ -437,7 +448,7 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         manifest, receipt, manifest_hash, candidate_hash = _verify_candidate_boundary(
             self._settings()
         )
-        self.assertEqual(receipt.database_schema_version, 13)
+        self.assertEqual(receipt.database_schema_version, 14)
         self.assertEqual(manifest["release_id"], "phase3-public-20260831-qualified")
         self.assertEqual(manifest_hash, _sha256(RELEASE / "release-manifest.json"))
         self.assertEqual(candidate_hash, _sha256(self.candidate))
@@ -456,7 +467,8 @@ class CandidatePublicProjectionTests(unittest.TestCase):
                 ]
             )
         with closing(sqlite3.connect(self.candidate)) as connection:
-            connection.executescript("\n".join(views) + "\nPRAGMA user_version=12;")
+            connection.executescript("\n".join(views))
+            _restore_historical_serving_view(connection, 12)
             connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         self._write_receipt()
         self.binding.unlink()
@@ -481,6 +493,42 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         )
         for path, payload in before.items():
             self.assertEqual(path.read_bytes(), payload)
+
+    def test_legacy_thirteen_binding_verification_preserves_sealed_inputs(self) -> None:
+        with closing(sqlite3.connect(self.candidate)) as connection:
+            _restore_historical_serving_view(connection, 13)
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        self._write_receipt()
+        self.binding.unlink()
+        self._write_binding()
+        before = {p: p.read_bytes() for p in (self.candidate, self.receipt, self.binding)}
+        _, receipt, _, _ = _verify_candidate_boundary(self._settings())
+        self.assertEqual(receipt.database_schema_version, 13)
+        binding = verify_historical_candidate_binding(
+            self.binding,
+            _sha256(self.binding),
+            release_directory=RELEASE,
+            candidate_database=self.candidate,
+            replay_receipt=self.receipt,
+        )
+        self.assertEqual(binding.candidate_schema_version, 13)
+        for path, payload in before.items():
+            self.assertEqual(path.read_bytes(), payload)
+
+    def test_thirteen_fourteen_schema_receipt_mismatches_fail_closed(self) -> None:
+        for physical, declared in ((14, 13), (13, 14)):
+            with self.subTest(physical=physical, declared=declared):
+                if physical < declared:
+                    with closing(sqlite3.connect(self.candidate)) as connection:
+                        _restore_historical_serving_view(connection, 13)
+                self._write_receipt()
+                value = json.loads(self.receipt.read_bytes())
+                value["database_schema_version"] = declared
+                self.receipt.write_text(json.dumps(value))
+                self.binding.unlink(missing_ok=True)
+                with self.assertRaisesRegex(HistoricalCandidateBindingError, "schema"):
+                    self._write_binding()
+                self.assertFalse(self.binding.exists())
 
     def test_schema_receipt_cannot_mislabel_current_database_as_twelve(self) -> None:
         value = json.loads(self.receipt.read_bytes())
