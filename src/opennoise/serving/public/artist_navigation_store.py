@@ -180,16 +180,22 @@ class PublicArtistNavigationStore:
     def _artist_genres_sync(self, artist_id: int, offset: int, limit: int) -> ArtistGenresResponse:
         self._validate_page(offset, limit)
         with closing(self._connect()) as connection:
-            artist = self._artist(connection, artist_id)
-            genre_ids = self._page_ids(
-                connection,
-                """SELECT DISTINCT evidence.genre_id
-                   FROM displayable_artist_genre_evidence AS evidence
-                   WHERE evidence.artist_id = ? AND evidence.evidence_kind = 'direct_source_claim'
-                   ORDER BY evidence.genre_id LIMIT ? OFFSET ?""",
-                (artist_id, limit, offset),
-            )
-            genres = self._memberships(connection, (artist_id,), genre_ids)
+            return self._artist_genres_connection(connection, artist_id, offset, limit)
+
+    def _artist_genres_connection(
+        self, connection: sqlite3.Connection, artist_id: int, offset: int, limit: int
+    ) -> ArtistGenresResponse:
+        self._validate_page(offset, limit)
+        artist = self._artist(connection, artist_id)
+        genre_ids = self._page_ids(
+            connection,
+            """SELECT DISTINCT evidence.genre_id
+               FROM displayable_artist_genre_evidence AS evidence
+               WHERE evidence.artist_id = ? AND evidence.evidence_kind = 'direct_source_claim'
+               ORDER BY evidence.genre_id LIMIT ? OFFSET ?""",
+            (artist_id, limit, offset),
+        )
+        genres = self._memberships(connection, (artist_id,), genre_ids)
         return ArtistGenresResponse(artist=artist, offset=offset, limit=limit, genres=genres)
 
     def _related_artists_sync(
@@ -197,57 +203,63 @@ class PublicArtistNavigationStore:
     ) -> RelatedArtistsResponse:
         self._validate_page(offset, limit)
         with closing(self._connect()) as connection:
-            artist = self._artist(connection, artist_id)
-            rows = connection.execute(
-                """WITH source_genres AS (
-                       SELECT DISTINCT genre_id FROM displayable_artist_genre_evidence
-                       WHERE artist_id = ? AND evidence_kind = 'direct_source_claim'
-                   ), related AS (
-                       SELECT evidence.artist_id, count(DISTINCT evidence.genre_id) AS shared_count
-                       FROM displayable_artist_genre_evidence AS evidence
-                       JOIN source_genres ON source_genres.genre_id = evidence.genre_id
-                       WHERE evidence.artist_id != ?
-                         AND evidence.evidence_kind = 'direct_source_claim'
-                       GROUP BY evidence.artist_id
-                   )
-                   SELECT artist_id FROM related
-                   ORDER BY shared_count DESC, artist_id LIMIT ? OFFSET ?""",
-                (artist_id, artist_id, limit, offset),
-            ).fetchall()
-            related_ids = tuple(int(row[0]) for row in rows)
-            if not related_ids:
-                return RelatedArtistsResponse(artist=artist, offset=offset, limit=limit, related=())
-            placeholders = ",".join("?" for _ in related_ids)
-            shared = connection.execute(
-                f"""SELECT evidence.artist_id, genre.id
-                    FROM displayable_artist_genre_evidence AS evidence
-                    JOIN genres AS genre ON genre.id = evidence.genre_id
-                    WHERE evidence.artist_id IN ({placeholders})
-                      AND evidence.evidence_kind = 'direct_source_claim'
-                      AND evidence.genre_id IN (
-                          SELECT DISTINCT genre_id FROM displayable_artist_genre_evidence
-                          WHERE artist_id = ? AND evidence_kind = 'direct_source_claim'
-                      )
-                    GROUP BY evidence.artist_id, genre.id
-                    ORDER BY evidence.artist_id, genre.id""",
-                (*related_ids, artist_id),
-            ).fetchall()
-            genres_by_artist: dict[int, list[PublicGenre]] = defaultdict(list)
-            metadata = self._metadata(connection)
-            genre_labels: dict[int, PublicGenre] = {}
-            for related_id, raw_genre_id in shared:
-                genre_id = int(raw_genre_id)
-                if genre_id not in genre_labels:
-                    genre_labels[genre_id] = self._genre(connection, genre_id, metadata)
-                genres_by_artist[int(related_id)].append(genre_labels[genre_id])
-            related = tuple(
-                RelatedArtist(
-                    artist=self._artist(connection, related_id),
-                    shared_genres=tuple(genres_by_artist[related_id]),
-                    shared_genre_count=len(genres_by_artist[related_id]),
-                )
-                for related_id in related_ids
+            return self._related_artists_connection(connection, artist_id, offset, limit)
+
+    def _related_artists_connection(
+        self, connection: sqlite3.Connection, artist_id: int, offset: int, limit: int
+    ) -> RelatedArtistsResponse:
+        self._validate_page(offset, limit)
+        artist = self._artist(connection, artist_id)
+        rows = connection.execute(
+            """WITH source_genres AS (
+                   SELECT DISTINCT genre_id FROM displayable_artist_genre_evidence
+                   WHERE artist_id = ? AND evidence_kind = 'direct_source_claim'
+               ), related AS (
+                   SELECT evidence.artist_id, count(DISTINCT evidence.genre_id) AS shared_count
+                   FROM displayable_artist_genre_evidence AS evidence
+                   JOIN source_genres ON source_genres.genre_id = evidence.genre_id
+                   WHERE evidence.artist_id != ?
+                     AND evidence.evidence_kind = 'direct_source_claim'
+                   GROUP BY evidence.artist_id
+               )
+               SELECT artist_id FROM related
+               ORDER BY shared_count DESC, artist_id LIMIT ? OFFSET ?""",
+            (artist_id, artist_id, limit, offset),
+        ).fetchall()
+        related_ids = tuple(int(row[0]) for row in rows)
+        if not related_ids:
+            return RelatedArtistsResponse(artist=artist, offset=offset, limit=limit, related=())
+        placeholders = ",".join("?" for _ in related_ids)
+        shared = connection.execute(
+            f"""SELECT evidence.artist_id, genre.id
+                FROM displayable_artist_genre_evidence AS evidence
+                JOIN genres AS genre ON genre.id = evidence.genre_id
+                WHERE evidence.artist_id IN ({placeholders})
+                  AND evidence.evidence_kind = 'direct_source_claim'
+                  AND evidence.genre_id IN (
+                      SELECT DISTINCT genre_id FROM displayable_artist_genre_evidence
+                      WHERE artist_id = ? AND evidence_kind = 'direct_source_claim'
+                  )
+                GROUP BY evidence.artist_id, genre.id
+                ORDER BY evidence.artist_id, genre.id""",
+            (*related_ids, artist_id),
+        ).fetchall()
+        genres_by_artist: dict[int, list[PublicGenre]] = defaultdict(list)
+        metadata = self._metadata(connection)
+        genre_labels: dict[int, PublicGenre] = {}
+        for related_id, raw_genre_id in shared:
+            genre_id = int(raw_genre_id)
+            if genre_id not in genre_labels:
+                genre_labels[genre_id] = self._genre(connection, genre_id, metadata)
+            genres_by_artist[int(related_id)].append(genre_labels[genre_id])
+        related = tuple(
+            RelatedArtist(
+                artist=self._artist(connection, related_id),
+                shared_genres=tuple(genres_by_artist[related_id]),
+                shared_genre_count=len(genres_by_artist[related_id]),
             )
+            for related_id in related_ids
+        )
         return RelatedArtistsResponse(artist=artist, offset=offset, limit=limit, related=related)
 
     def _catalog_genre_id_for_qid_sync(self, qid: str) -> int | None:

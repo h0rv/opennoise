@@ -1,0 +1,100 @@
+{
+  "scope": "Recording-level exact native primary credits and each credited artist own direct source context; no recording genre membership or relevance claim.",
+  "source": {
+    "core_sha256": "13921b94a5a0c77c625713b5e272d40d081c67de3eb5b1299c8c1c48baf6d6ba",
+    "custody": "MusicBrainz retained safe projections, not original HTTP bodies; Wikidata raw SPARQL replay",
+    "license": "CC0-1.0",
+    "attribution": "MusicBrainz and Wikidata contributors"
+  },
+  "implementation_sha256": {
+    "src/opennoise/serving/public/recording_navigation_store.py": "346454f218f8f79cd1ff76686813b775e97985184c57554f59561496c1454f25",
+    "src/opennoise/serving/public/artist_navigation_store.py": "881193b4af4703baf98ee8975165aff296f75079bd49ca5e962f8bc269980228",
+    "src/opennoise/pipeline/recording_core_custody.py": "e8c1e36f4ab999b68d7038f1e9e88aa9c06f4429f46efafd54b4c59a320a0b8b",
+    "src/opennoise/pipeline/cultural_catalog.py": "5daf46be42f6b854fceac9187adc0a0f8b7f6bf7d0e7257c0d78d84b51a9e174",
+    "scripts/query_recording_context.py": "b28e5c74d0b9ea0e7c1cb769fda4c326ed81a645474971d1fdf6694959164277",
+    "scripts/replay_cc0_cultural_catalog.py": "dc8153e478e3189e872e358ffe4909e2220be8f692b23ed6d4d8824534528402"
+  },
+  "actual_retained_counts": {
+    "recordings": 1031,
+    "ordered_recording_credit_member_occurrences": 1242,
+    "credited_artists": 351,
+    "recordings_with_artist_genre_context": 81,
+    "recordings_without_artist_genre_context": 950,
+    "context_artists": 7,
+    "source_genre_qids": 35,
+    "recording_artist_genre_paths": 419,
+    "bounded_related_results_checked": 277
+  },
+  "evidence": {
+    "native-oracle.json": {
+      "path": "/workspace/recording-source-context-20261020/native-oracle.json",
+      "sha256": "309ea5b1004f74f6492c251e72b3c23092cbbc35f09f4a16b7c65dbd770b53a1"
+    },
+    "source-proof/build-guards.json": {
+      "path": "/workspace/recording-source-context-20261020/source-proof/build-guards.json",
+      "sha256": "cde2ecfa88ba19fed00f9797b9e57ae237a7619e041ad47bc64dc544365815a9"
+    },
+    "final-consumers/runtime-binding.json": {
+      "path": "/workspace/recording-source-context-20261020/final-consumers/runtime-binding.json",
+      "sha256": "c959425a137d70f1dcd599c0446ba54ecb37d354ed066d7a1cb4d562d74b6166"
+    },
+    "final-consumers/musicbrainz-first-comparison.json": {
+      "path": "/workspace/recording-source-context-20261020/final-consumers/musicbrainz-first-comparison.json",
+      "sha256": "64b17c203bf30330fb35aaf69a0017ef8ac70a2f0533eb8a5fdcec907620f8ed"
+    },
+    "final-consumers/wikidata-first-comparison.json": {
+      "path": "/workspace/recording-source-context-20261020/final-consumers/wikidata-first-comparison.json",
+      "sha256": "7c3e7e51b5b7eff88d398f25635831891da1104fb09ed59c75069b89c7263b6a"
+    },
+    "final-consumers/negative-controls/result.json": {
+      "path": "/workspace/recording-source-context-20261020/final-consumers/negative-controls/result.json",
+      "sha256": "3c8bb1971580c926530e490209931dcd3cc4290ae3cee32768432226af473c04"
+    },
+    "final-consumers/actual-cli.json": {
+      "path": "/workspace/recording-source-context-20261020/final-consumers/actual-cli.json",
+      "sha256": "ed26e96bcdf3405370f65ba3ae8389e2079ff0187e77ab27c793660e4e235217"
+    },
+    "final-consumers/legacy-observations.json": {
+      "path": "/workspace/recording-source-context-20261020/final-consumers/legacy-observations.json",
+      "sha256": "112b555f9dfb09f23937ad842fb8486d0ce1ab74ccfe02b5f8b441e3f69c6335"
+    }
+  },
+  "checks": {
+    "focused": {
+      "tests": 17,
+      "seconds": 35.854,
+      "status": "passed",
+      "log": "/tmp/recording-context-wal-focused.log",
+      "additional_late_wal_regression": {
+        "tests": 1,
+        "seconds": 7.95,
+        "status": "passed",
+        "log": "/tmp/recording-context-late-wal.log"
+      }
+    },
+    "full": {
+      "status": "passed",
+      "python_tests": 2429,
+      "python_seconds": 241.351,
+      "python_skipped": 36,
+      "node_passed": 122,
+      "node_skipped": 44,
+      "static": "passed",
+      "log": "/tmp/recording-context-full-final.log"
+    },
+    "initial_full": "Stopped after identifying pinned-CLI late-WAL binding gap; not a passing final check.",
+    "review": "Luna verified all six frozen runtime hashes and cleared code/docs scope."
+  },
+  "research_fits": 0,
+  "acquisitions": 0,
+  "new_external_cost_usd": 0,
+  "independent_evidence_scope": {
+    "source_build": "Actual copied-input guarded build; unchanged builder/helper hashes after CLI immutable delta. Earlier six-file source-proof runtime-binding.json is historical, not the final consumer binding.",
+    "consumers": "Both complete recording cohorts, independent raw-source expected credits and P136 context; existing related-artist tie order checked per database, not native tie-order invariance across insertion orders.",
+    "negative_controls": 25,
+    "exact_release_restores": 24,
+    "native_credit_and_context_graph_sha256": "36540a98f06fb1cc11b02687c0f4323aeb263e202111fdf45a672a14a554bbbe",
+    "actual_forbidden_attempts": 0,
+    "legacy_recording_queries_unavailable": 1031
+  }
+}

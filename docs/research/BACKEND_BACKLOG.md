@@ -537,3 +537,16 @@ models, so no real-model quality/verification is claimed. Sealed schema 12/13 in
 remain byte-preserved with exact reader/receipt versions; current writers use 14.
 No fitting, acquisition, research promotion, UI/default change or cost. Prior
 negative research, the failed fixed study and reserved style fold4 remain intact.
+
+## Native recording entry point and credited-artist context
+
+A new ordinary recording-MBID query traverses exact ordered native primary credits
+and reuses each credited artist's direct-genre/shared-genre context. The retained
+CC0 catalog has 1,031 recordings, 1,242 recording-member occurrences and 351 credited
+artists; 81 recordings connect through seven artists to 35 direct source genres,
+while 950 have no such context. These are artist source claims, never recording
+genre membership or musical relevance. An explicit fresh-build registration binds
+real retained MusicBrainz safe projection artifacts to their existing approved
+policy, without modifying legacy databases or inventing original HTTP custody.
+See [the recording query recipe](../../data/recipes/recording-source-context-20261020/README.md)
+for bounds, source denominators and verification; no new source acquisition or fit.

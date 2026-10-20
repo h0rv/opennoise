@@ -40,6 +40,11 @@ from opennoise.models.catalog import (
 )
 from opennoise.pipeline.artist_identity_replay import CORE_SHA, _normalized_graph, digest
 from opennoise.pipeline.portable_foundation import _verified_cultural
+from opennoise.pipeline.recording_core_custody import (
+    RecordingCoreInventory,
+    prepare_core_inventory,
+    register_core_inventory,
+)
 from opennoise.serving.public.artist_membership_adapter import (
     CertifiedPublicDirectSelector,
     CertifiedPublicMembershipAdapterPolicy,
@@ -577,6 +582,7 @@ def _build(
     packs: tuple[CulturalPack, ...],
     *,
     wikidata_first: bool,
+    core_inventory: RecordingCoreInventory | None = None,
 ) -> dict[str, Any]:
     hydration = MusicBrainzReleaseHydrationArtifact.model_validate_json(
         source.hydration_artifact_json
@@ -603,6 +609,9 @@ def _build(
             ingest_pack(connection, pack)
         if wikidata_first:
             native_credits._persist_credits(connection, relations, prov)
+        if core_inventory is not None:
+            register_core_inventory(connection, core_inventory)
+            register_core_inventory(connection, core_inventory)  # Exact idempotent replay.
         before = _table_counts(connection)
         for pack in packs:
             ingest_pack(connection, pack)
@@ -737,9 +746,16 @@ def build(  # noqa: PLR0913, PLR0917 -- All three physical sources and pins rema
     independent_pack: Path,
     independent_pin: str,
     output: Path,
+    *,
+    register_core_custody: bool = False,
 ) -> dict[str, Any]:
     """Atomically build both ordinary ingestion orders on the entire fixed source cohort."""
     source = _core_input(core_source, core_pin, (cultural_pack, independent_pack), output)
+    core_inventory = (
+        prepare_core_inventory(core_source, source, replayed_at=datetime.now(UTC).isoformat())
+        if register_core_custody
+        else None
+    )
     packs = (
         load_pack(cultural_pack, PACKS[0][0], cultural_pin),
         load_pack(independent_pack, PACKS[1][0], independent_pin),
@@ -759,10 +775,23 @@ def build(  # noqa: PLR0913, PLR0917 -- All three physical sources and pins rema
     with tempfile.TemporaryDirectory(prefix=".cultural-catalog-", dir=output.parent) as temporary:
         stage = Path(temporary) / "result"
         stage.mkdir()
+        if core_inventory is not None:
+            for name, body in (
+                ("core-hydration.json", core_inventory.hydration),
+                ("core-credits.json", core_inventory.credits),
+                ("core-custody.json", core_inventory.manifest),
+            ):
+                (stage / name).write_bytes(body)
         orders = {}
         for first in (False, True):
             key = "wikidata-first" if first else "musicbrainz-first"
-            orders[key] = _build(stage / (key + ".sqlite"), source, packs, wikidata_first=first)
+            orders[key] = _build(
+                stage / (key + ".sqlite"),
+                source,
+                packs,
+                wikidata_first=first,
+                core_inventory=core_inventory,
+            )
         if orders["musicbrainz-first"]["graph"] != orders["wikidata-first"]["graph"] or (
             orders["musicbrainz-first"]["source_observations"]
             != orders["wikidata-first"]["source_observations"]
@@ -775,11 +804,16 @@ def build(  # noqa: PLR0913, PLR0917 -- All three physical sources and pins rema
             load_pack(pack.directory, pack.source_key, pack.receipt_sha256)
         (stage / "missingness.json").write_bytes(canonical_json(nominations))
         report = {
-            "revision": "cc0-cultural-catalog-v1",
+            "revision": (
+                "cc0-cultural-catalog-recording-custody-v1"
+                if register_core_custody
+                else "cc0-cultural-catalog-v1"
+            ),
             "license": "CC0-1.0",
             "attribution": "MusicBrainz and Wikidata contributors",
             "core_source_sha256": core_pin,
             "core_custody": "Verified portable safe projections; original HTTP bodies not retained",
+            "core_inventory_registered": register_core_custody,
             "wikidata_custody": "Native raw SPARQL bodies independently replayed",
             "scope": (
                 "Exact P434/P136 and source-qualified English labels only; "
@@ -818,6 +852,7 @@ def build(  # noqa: PLR0913, PLR0917 -- All three physical sources and pins rema
         root = Path(__file__).resolve().parents[3]
         paths = (
             "src/opennoise/pipeline/cultural_catalog.py",
+            "src/opennoise/pipeline/recording_core_custody.py",
             "src/opennoise/db.py",
             "migrations/0013_direct_claim_suppression.sql",
             "migrations/0014_public_model_input_veto.sql",
