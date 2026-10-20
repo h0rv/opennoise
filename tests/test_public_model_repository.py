@@ -117,6 +117,10 @@ def _catalog() -> sqlite3.Connection:
         CREATE TABLE identifier_types(id INTEGER,type_key TEXT);
         INSERT INTO identifier_types VALUES(1,'wikidata_genre_qid');
         ALTER TABLE entity_identifiers ADD COLUMN identifier_type_id INTEGER;
+        ALTER TABLE entity_identifiers ADD COLUMN provenance_id INTEGER;
+        UPDATE entity_identifiers SET provenance_id=1;
+        ALTER TABLE entity_names ADD COLUMN provenance_id INTEGER;
+        UPDATE entity_names SET provenance_id=1;
         UPDATE entity_identifiers SET identifier_type_id=1 WHERE entity_id=20 AND namespace='wikidata';
         CREATE TABLE entity_claims(id INTEGER,entity_id INTEGER,provenance_id INTEGER,policy_id INTEGER,
             claim_type TEXT,claim_key TEXT,normalized_value_json TEXT);

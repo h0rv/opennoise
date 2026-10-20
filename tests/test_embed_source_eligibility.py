@@ -44,7 +44,8 @@ def catalog(*, sibling: bool = False, anchor: bool = False) -> sqlite3.Connectio
         INSERT INTO genres VALUES(22,'Synthetic Parent');
         INSERT INTO modelable_music_genres VALUES(22);
         INSERT INTO genre_music_qualification_observations VALUES(22,1,1);
-        INSERT INTO entity_identifiers VALUES(9,22,'wikidata','Q101',1);
+        INSERT INTO entity_identifiers VALUES(9,22,'wikidata','Q101',1,1);
+        INSERT INTO entity_names VALUES(20,22,'Synthetic Parent',1,1);
         INSERT INTO genre_hierarchy VALUES(1,20,22,1);
     """)
     if sibling:
@@ -63,6 +64,12 @@ def catalog(*, sibling: bool = False, anchor: bool = False) -> sqlite3.Connectio
             INSERT INTO entity_claims VALUES(2,10,2,1,'wikidata_relation','genre',
               '{"target":{"namespace":"wikidata","value":"Q100"},"target_kind":"unresolved"}');
         """)
+        c.execute(
+            "INSERT INTO entity_names(entity_id,name,is_preferred,provenance_id) SELECT entity_id,name,is_preferred,2 FROM entity_names WHERE provenance_id=1"
+        )
+        c.execute(
+            "INSERT INTO entity_identifiers(entity_id,namespace,normalized_value,identifier_type_id,provenance_id) SELECT entity_id,namespace,normalized_value,identifier_type_id,2 FROM entity_identifiers WHERE provenance_id=1"
+        )
     if anchor:
         c.executescript("""
             INSERT INTO data_sources VALUES(3,'wikidata_allowed_anchor');
@@ -72,12 +79,13 @@ def catalog(*, sibling: bool = False, anchor: bool = False) -> sqlite3.Connectio
             INSERT INTO source_artifacts VALUES(3,3,
               'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',1);
             INSERT INTO genres VALUES(23,'Synthetic Allowed Anchor');
+            INSERT INTO entity_names VALUES(30,23,'Synthetic Allowed Anchor',1,3);
             INSERT INTO modelable_music_genres VALUES(23);
             INSERT INTO genre_music_qualification_observations VALUES(23,3,1);
-            INSERT INTO entity_identifiers VALUES(10,23,'wikidata','Q102',1);
+            INSERT INTO entity_identifiers VALUES(10,23,'wikidata','Q102',1,3);
             INSERT INTO entity_identifiers VALUES(11,13,'musicbrainz',
-              '77777777-7777-4777-8777-777777777777',NULL);
-            INSERT INTO entity_names VALUES(8,13,'Synthetic Allowed Artist',1);
+              '77777777-7777-4777-8777-777777777777',NULL,3);
+            INSERT INTO entity_names VALUES(8,13,'Synthetic Allowed Artist',1,3);
             INSERT INTO normalizable_artist_genre_evidence VALUES(6,13,23,'direct_source_claim',
               1.0,'wikidata_allowed_anchor','synthetic-anchor','wikidata_p136',1,3);
         """)
