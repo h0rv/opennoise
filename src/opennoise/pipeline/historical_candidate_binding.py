@@ -17,7 +17,7 @@ from opennoise.pipeline.release_manifest import load_release_manifest
 from opennoise.pipeline.source_vault_replay import HistoricalDeclarationCombinedReplayReport
 from opennoise.types import Sha256  # noqa: TC001
 
-_SUPPORTED_SCHEMA_VERSIONS = (12, 13)
+_SUPPORTED_SCHEMA_VERSIONS = (12, 13, 14)
 _OBJECT_COUNT = 62
 _WIKIDATA_PERMISSIONS = {
     "normalize": "allow",
@@ -54,7 +54,7 @@ class HistoricalCandidateBinding(FrozenModel):
     replay_receipt_sha256: Sha256
     candidate_database_path: Path
     candidate_database_sha256: Sha256
-    candidate_schema_version: Literal[12, 13] = 12
+    candidate_schema_version: Literal[12, 13, 14] = 12
     historical_declaration_object_count: Literal[62] = 62
     source_artifact_pair_count: Literal[62] = 62
     local_experimental: Literal[True] = True
@@ -288,7 +288,7 @@ def create_historical_candidate_binding(
         replay_receipt_sha256=_sha256(receipt_path),
         candidate_database_path=candidate,
         candidate_database_sha256=_sha256(candidate),
-        candidate_schema_version=cast("Literal[12, 13]", receipt.database_schema_version),
+        candidate_schema_version=cast("Literal[12, 13, 14]", receipt.database_schema_version),
     )
     payload = binding.model_dump_json(indent=2).encode() + b"\n"
     try:

@@ -820,6 +820,7 @@ def build(  # noqa: PLR0913, PLR0917 -- All three physical sources and pins rema
             "src/opennoise/pipeline/cultural_catalog.py",
             "src/opennoise/db.py",
             "migrations/0013_direct_claim_suppression.sql",
+            "migrations/0014_public_model_input_veto.sql",
             "src/opennoise/pipeline/artist_identity_replay.py",
             "src/opennoise/models/catalog.py",
             "src/opennoise/catalog/entities.py",

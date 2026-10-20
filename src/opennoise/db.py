@@ -30,7 +30,7 @@ from opennoise.serving.map.layouts import (
     PublishedLayout,
 )
 
-SCHEMA_VERSION = 13
+SCHEMA_VERSION = 14
 DEFAULT_DATABASE_PATH = Path("data/opennoise.sqlite")
 DEFAULT_MIGRATION_PATH = Path("migrations/0001_initial.sql")
 DEFAULT_MIGRATION_PATHS = (
@@ -47,6 +47,7 @@ DEFAULT_MIGRATION_PATHS = (
     Path("migrations/0011_public_model_explainability.sql"),
     Path("migrations/0012_historical_compatibility.sql"),
     Path("migrations/0013_direct_claim_suppression.sql"),
+    Path("migrations/0014_public_model_input_veto.sql"),
 )
 MAX_FTS_TERMS = 8
 PUBLIC_GENRE_KEY_PATTERN = re.compile(r"wikidata:genre:(Q[1-9][0-9]*)")

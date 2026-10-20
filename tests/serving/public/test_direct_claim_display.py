@@ -108,7 +108,7 @@ class DirectClaimDisplayTests(unittest.TestCase):
         self.assertEqual(visible(self.c), self.baseline)
         for name in ("musicbrainz-first", "wikidata-first"):
             with closing(sqlite3.connect(self.output / f"{name}.sqlite")) as c:
-                self.assertEqual(c.execute("PRAGMA user_version").fetchone()[0], 13)
+                self.assertEqual(c.execute("PRAGMA user_version").fetchone()[0], 14)
                 self.assertEqual(c.execute("SELECT count(*) FROM artists").fetchone()[0], 433)
                 self.assertEqual(
                     c.execute(
@@ -413,6 +413,15 @@ class DirectClaimDisplayTests(unittest.TestCase):
                     old.index(f"CREATE VIEW {name} AS") : old.index(f"CREATE VIEW {following} AS")
                 ]
             )
+        old_model = (ROOT / "migrations/0007_public_model_serving.sql").read_text()
+        statements.append(
+            "DROP VIEW servable_public_model_runs;\n"
+            + old_model[
+                old_model.index("CREATE VIEW servable_public_model_runs") : old_model.index(
+                    "CREATE VIEW displayable_public_genre_representatives"
+                )
+            ]
+        )
         self.c.executescript("\n".join(statements) + "\nPRAGMA user_version=12;")
         ref = f"artist_genre_evidence:{self.rows[0]['id']}"
         event(self.c, "claim", ref, "all", "suppress")
