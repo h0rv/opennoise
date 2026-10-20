@@ -1,0 +1,37 @@
+{
+  "scope": "Synthetic own-label embed eligibility; no full stable-ID certification or model-quality claim.",
+  "implementation_sha256": "faf2a72f73117653a13ef5645ab435e3b32fe65246c107b83e986539090a1ad8",
+  "before": {
+    "path": "/workspace/embed-metadata-eligibility-20261020/independent-before.json",
+    "sha256": "1424c5c66304ee93f9301547c4470de66e13cb537f7451482ae32f6f4fbaacce",
+    "cases": 12,
+    "expected_failures": 9
+  },
+  "oracle": {
+    "path": "/workspace/embed-metadata-eligibility-20261020/source-observations.json",
+    "sha256": "84502e8838e2f40d283b223b9ca903f5ed2495609538c64d9a2da3b0f67b2d70",
+    "cases_passed": 12,
+    "active_denial_probes": 4,
+    "forbidden_operations": 0
+  },
+  "parity": {
+    "path": "/workspace/embed-metadata-eligibility-20261020/source-proof.json",
+    "sha256": "56c6f41886e3405bb09855098ba2b02e3716eb39400c7f7660ae3d4eaa3db67d",
+    "unchanged_fact_payloads": 10,
+    "unchanged_complete_payloads": 3
+  },
+  "model_fits": 0,
+  "source_acquisitions": 0,
+  "new_external_cost_usd": 0,
+  "checks": {
+    "focused_tests": 29,
+    "python_tests": 2381,
+    "python_elapsed_seconds": 198.4,
+    "python_skips": 36,
+    "node_pass": 122,
+    "node_skips": 44,
+    "format_lint_types": "passed",
+    "full_log": "/tmp/embed-label-full-check.log",
+    "luna_review": "clear on exact faf2a72 runtime; 29 focused independently passed"
+  }
+}

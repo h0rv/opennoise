@@ -487,3 +487,14 @@ or model-quality result. No model build/fit, acquisition, schema14, UI/default
 change or cost occurs. Existing raw model metadata identifier/name sourcing and
 persisted model invalidation remain distinct boundaries. Prior research negatives
 and reserved style fold4 remain unchanged.
+
+The [embed-authorized name selector](../../data/recipes/embed-metadata-labels-20261020/README.md)
+closes the demonstrated next label-only gap: independently allowed facts no longer
+carry a name vetoed through its own embed provenance. Required genre labels use
+eligible exact NameClaims or matching canonical typed identifier labels; optional
+artist/release-group/recording representatives without eligible names are omitted
+before bounds. No-event fully sourced payloads remain identical. Twelve independent
+synthetic raw-row controls pass, with source-fact/support parity and no fitting,
+acquisition, schema/serialization/default change or cost. Raw stable-ID selection
+and ambiguity remain explicitly separate; no full metadata certification is
+claimed. Prior negative research and reserved Jamendo style fold4 remain intact.
