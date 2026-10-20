@@ -1,11 +1,10 @@
 """Load bounded, policy-safe public graph evidence from SQLite catalogs."""
 
-import re
+import json
 import sqlite3
 from collections.abc import Callable, Iterable
 from typing import Literal
 from urllib.parse import quote
-from uuid import UUID
 
 from pydantic import Field
 
@@ -166,13 +165,49 @@ _embed_representative_names AS (
 )
 """
 
+_EMBED_IDENTIFIERS_CTE = """
+_embed_identifiers AS (
+  SELECT identifier.entity_id,
+         identifier.namespace || ':' || replace(entity.entity_kind,'_','-') || ':' ||
+           identifier.normalized_value AS entity_ref
+  FROM entity_identifiers AS identifier
+  JOIN catalog_entities AS entity ON entity.id=identifier.entity_id
+  JOIN identifier_types AS type ON type.id=identifier.identifier_type_id
+  JOIN _embed_metadata_provenance AS provenance ON provenance.id=identifier.provenance_id
+  WHERE instr(identifier.normalized_value,char(0))=0
+    AND entity.entity_kind IN ('artist','genre','release_group','recording') AND (
+    (identifier.namespace='wikidata'
+      AND type.type_key='wikidata_' || entity.entity_kind || '_qid'
+      AND substr(identifier.normalized_value,1,1)='Q'
+      AND substr(identifier.normalized_value,2,1) BETWEEN '1' AND '9'
+      AND substr(identifier.normalized_value,2) NOT GLOB '*[^0-9]*')
+    OR (identifier.namespace='musicbrainz'
+      AND type.type_key='musicbrainz_' || entity.entity_kind || '_id'
+      AND length(identifier.normalized_value)=36
+      AND substr(identifier.normalized_value,9,1)='-'
+      AND substr(identifier.normalized_value,14,1)='-'
+      AND substr(identifier.normalized_value,19,1)='-'
+      AND substr(identifier.normalized_value,24,1)='-'
+      AND length(replace(identifier.normalized_value,'-',''))=32
+      AND replace(identifier.normalized_value,'-','') NOT GLOB '*[^0-9a-f]*')
+  ) AND NOT EXISTS (
+    SELECT 1 FROM active_suppressions AS suppression
+    WHERE suppression.use_kind IN ('all','embed') AND suppression.target_kind='entity'
+      AND suppression.target_ref=CAST(identifier.entity_id AS TEXT)
+  )
+)
+"""
+
 
 def _embed_query(query: str) -> str:
     """Inline shared read-only use gates before each fixed query's grouping and bounds."""
     ctes = _EMBED_SOURCE_CTE
     names = "_embed_names" in query or "_embed_representative_names" in query
-    if names or "_embed_metadata_provenance" in query:
+    identifiers = "_embed_identifiers" in query
+    if names or identifiers or "_embed_metadata_provenance" in query:
         ctes += "," + _EMBED_METADATA_CTE
+    if identifiers:
+        ctes += "," + _EMBED_IDENTIFIERS_CTE
     if names:
         ctes += "," + _EMBED_NAMES_CTE
     if "_embed_representative_names" in query:
@@ -227,7 +262,7 @@ def _direct_memberships(
                   WHERE identifier.entity_id = evidence.genre_id
                     AND identifier.namespace = 'musicbrainz'
                   ORDER BY identifier.id LIMIT 1)
-               ) AS genre_ref
+               ) AS genre_ref, evidence.artist_id, evidence.genre_id
         FROM _embed_direct_claims AS evidence
         JOIN _embed_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
@@ -264,6 +299,14 @@ def _direct_memberships(
         raise PublicInputLoadError(
             f"direct memberships lack public stable identities: {missing[:10]}"
         )
+    _require_identities(
+        connection,
+        (
+            identity
+            for row in rows
+            for identity in ((int(row[6]), str(row[4])), (int(row[7]), str(row[5])))
+        ),
+    )
     result: list[DirectMembershipEvidence] = []
     for row in rows:
         method = str(row[2])
@@ -506,7 +549,8 @@ def _hierarchy_edges(
         """
         SELECT hierarchy.relation_id,
                'wikidata:genre:' || child_identifier.normalized_value,
-               'wikidata:genre:' || parent_identifier.normalized_value
+               'wikidata:genre:' || parent_identifier.normalized_value,
+               hierarchy.child_genre_id, hierarchy.parent_genre_id
         FROM genre_hierarchy AS hierarchy
         JOIN _embed_music_genres AS qualified_child
           ON qualified_child.genre_id = hierarchy.child_genre_id
@@ -544,6 +588,14 @@ def _hierarchy_edges(
         settings.max_hierarchy_edges,
         "genre hierarchy edges",
     )
+    _require_identities(
+        connection,
+        (
+            identity
+            for row in rows
+            for identity in ((int(row[3]), str(row[1])), (int(row[4]), str(row[2])))
+        ),
+    )
     result: dict[tuple[str, str], GenreHierarchyEdge] = {}
     for row in rows:
         key = (str(row[1]), str(row[2]))
@@ -558,48 +610,37 @@ def _hierarchy_edges(
     return tuple(result[key] for key in sorted(result))
 
 
-def _genre_identifier_label(connection: sqlite3.Connection, genre_id: int, genre_ref: str) -> str:
-    """Label only the selected raw key when its own canonical typed observation is eligible."""
-    if genre_ref.startswith("wikidata:genre:"):
-        namespace, kind, value = (
-            "wikidata",
-            "wikidata_genre_qid",
-            genre_ref.removeprefix("wikidata:genre:"),
-        )
-        canonical = bool(re.fullmatch(r"Q[1-9][0-9]*", value))
-    elif genre_ref.startswith("musicbrainz:genre:"):
-        namespace, kind, value = (
-            "musicbrainz",
-            "musicbrainz_genre_id",
-            genre_ref.removeprefix("musicbrainz:genre:"),
-        )
-        try:
-            canonical = str(UUID(value)) == value
-        except ValueError:
-            canonical = False
-    else:
-        raise PublicInputLoadError("genre label has an unsupported selected identity namespace")
-    if not canonical:
-        raise PublicInputLoadError("genre label lacks a canonical typed selected identity")
-    row = connection.execute(
-        _embed_query("""
-        SELECT 1 FROM entity_identifiers AS identifier
-        JOIN identifier_types AS type ON type.id=identifier.identifier_type_id
-        JOIN _embed_metadata_provenance AS provenance ON provenance.id=identifier.provenance_id
-        WHERE identifier.entity_id=? AND type.type_key=? AND identifier.namespace=?
-          AND identifier.normalized_value=? AND NOT EXISTS (
-            SELECT 1 FROM active_suppressions AS suppression
-            WHERE suppression.use_kind IN ('all','embed') AND suppression.target_kind='entity'
-              AND suppression.target_ref=CAST(identifier.entity_id AS TEXT)
-          ) LIMIT 1
-    """),
-        (genre_id, kind, namespace, value),
-    ).fetchone()
-    if row is None:
-        raise PublicInputLoadError(
-            "genre has no embed-authorized name or matching typed identifier label"
-        )
-    return genre_ref
+def _require_identities(
+    connection: sqlite3.Connection, identities: Iterable[tuple[int, str | None]]
+) -> None:
+    """Validate selected keys in bounded read-only batches, retaining first-error order."""
+    selected = tuple(dict.fromkeys(identities))
+    # Bound each JSON payload and use one parameter, including on older SQLite builds.
+    batch_size = 250
+    for offset in range(0, len(selected), batch_size):
+        batch = selected[offset : offset + batch_size]
+        row = connection.execute(
+            _embed_query("""
+            WITH requested AS (
+                SELECT CAST(key AS INTEGER) AS ordinal,
+                       json_extract(value,'$[0]') AS entity_id,
+                       json_extract(value,'$[1]') AS entity_ref
+                FROM json_each(?)
+            )
+            SELECT requested.entity_id,requested.entity_ref FROM requested
+            WHERE NOT EXISTS (SELECT 1 FROM _embed_identifiers AS identity
+                WHERE identity.entity_id=requested.entity_id
+                  AND identity.entity_ref=requested.entity_ref)
+            ORDER BY requested.ordinal LIMIT 1
+        """),
+            (json.dumps(batch),),
+        ).fetchone()
+        if row is not None:
+            if row[1] is None:
+                raise PublicInputLoadError(f"genre {int(row[0])} lacks a public identity")
+            raise PublicInputLoadError(
+                f"selected identity lacks an embed-authorized canonical typed observation: {row[1]}"
+            )
 
 
 def _genres(
@@ -758,15 +799,12 @@ def _genres(
         settings.max_direct_memberships,
         "genre identities",
     )
+    _require_identities(
+        connection, ((int(row[0]), str(row[1]) if row[1] is not None else None) for row in rows)
+    )
     result: list[GenreIdentity] = []
     for row in rows:
-        if row[1] is None:
-            raise PublicInputLoadError(f"genre {int(row[0])} lacks a public identity")
-        name = (
-            str(row[2])
-            if row[2] is not None
-            else _genre_identifier_label(connection, int(row[0]), str(row[1]))
-        )
+        name = str(row[2]) if row[2] is not None else str(row[1])
         result.append(
             GenreIdentity(
                 genre_id=str(row[1]),
@@ -790,7 +828,7 @@ def _metadata_candidates(
                 FROM entity_identifiers AS identifier
                 WHERE identifier.entity_id = evidence.artist_id
                   AND identifier.namespace = 'musicbrainz'
-                ORDER BY identifier.id LIMIT 1) AS entity_ref,
+                ORDER BY identifier.id LIMIT 1) AS selected_entity_ref,
                COALESCE(
                  (SELECT 'wikidata:genre:' || identifier.normalized_value
                   FROM entity_identifiers AS identifier
@@ -802,7 +840,7 @@ def _metadata_candidates(
                   WHERE identifier.entity_id = evidence.genre_id
                     AND identifier.namespace = 'musicbrainz'
                   ORDER BY identifier.id LIMIT 1)
-               ) AS genre_ref,
+               ) AS selected_genre_ref,
                min(evidence.id)
         FROM _embed_direct_claims AS evidence
         JOIN _embed_representative_names AS label ON label.entity_id=evidence.artist_id
@@ -829,8 +867,29 @@ def _metadata_candidates(
                   ) AS TEXT))
             )
           )
+        AND EXISTS (SELECT 1 FROM _embed_identifiers AS identity
+            WHERE identity.entity_id=evidence.artist_id
+              AND identity.entity_ref=(SELECT 'musicbrainz:artist:' || identifier.normalized_value
+                FROM entity_identifiers AS identifier
+                WHERE identifier.entity_id = evidence.artist_id
+                  AND identifier.namespace = 'musicbrainz'
+                ORDER BY identifier.id LIMIT 1))
+          AND EXISTS (SELECT 1 FROM _embed_identifiers AS identity
+            WHERE identity.entity_id=evidence.genre_id
+              AND identity.entity_ref=COALESCE(
+                 (SELECT 'wikidata:genre:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.genre_id
+                    AND identifier.namespace = 'wikidata'
+                  ORDER BY identifier.id LIMIT 1),
+                 (SELECT 'musicbrainz:genre:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.genre_id
+                    AND identifier.namespace = 'musicbrainz'
+                  ORDER BY identifier.id LIMIT 1)
+               ))
         GROUP BY evidence.artist_id, evidence.genre_id
-        ORDER BY genre_ref, max(evidence.evidence_value) DESC, entity_ref
+        ORDER BY selected_genre_ref, max(evidence.evidence_value) DESC, selected_entity_ref
         LIMIT ?
         """,
         (),
@@ -855,7 +914,7 @@ def _metadata_candidates(
                   WHERE identifier.entity_id = evidence.release_group_id
                     AND identifier.namespace = 'wikidata'
                   ORDER BY identifier.id LIMIT 1)
-               ) AS entity_ref,
+               ) AS selected_entity_ref,
                COALESCE(
                  (SELECT 'wikidata:genre:' || identifier.normalized_value
                   FROM entity_identifiers AS identifier
@@ -867,7 +926,7 @@ def _metadata_candidates(
                   WHERE identifier.entity_id = evidence.genre_id
                     AND identifier.namespace = 'musicbrainz'
                   ORDER BY identifier.id LIMIT 1)
-               ) AS genre_ref,
+               ) AS selected_genre_ref,
                min(evidence.id)
         FROM normalizable_album_genre_memberships AS evidence
         JOIN _embed_representative_names AS label ON label.entity_id=evidence.release_group_id
@@ -894,8 +953,37 @@ def _metadata_candidates(
                   ) AS TEXT))
             )
           )
+        AND EXISTS (SELECT 1 FROM _embed_identifiers AS identity
+            WHERE identity.entity_id=evidence.release_group_id
+              AND identity.entity_ref=COALESCE(
+                 (SELECT 'musicbrainz:release-group:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.release_group_id
+                    AND identifier.namespace = 'musicbrainz'
+                  ORDER BY identifier.id LIMIT 1),
+                 (SELECT 'wikidata:release-group:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.release_group_id
+                    AND identifier.namespace = 'wikidata'
+                  ORDER BY identifier.id LIMIT 1)
+               ))
+          AND EXISTS (SELECT 1 FROM _embed_identifiers AS identity
+            WHERE identity.entity_id=evidence.genre_id
+              AND identity.entity_ref=COALESCE(
+                 (SELECT 'wikidata:genre:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.genre_id
+                    AND identifier.namespace = 'wikidata'
+                  ORDER BY identifier.id LIMIT 1),
+                 (SELECT 'musicbrainz:genre:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.genre_id
+                    AND identifier.namespace = 'musicbrainz'
+                  ORDER BY identifier.id LIMIT 1)
+               ))
         GROUP BY evidence.release_group_id, evidence.genre_id
-        ORDER BY genre_ref, max(COALESCE(evidence.source_count, 1)) DESC, entity_ref
+        ORDER BY selected_genre_ref, max(COALESCE(evidence.source_count, 1)) DESC,
+                 selected_entity_ref
         LIMIT ?
         """,
         (),
@@ -919,7 +1007,7 @@ def _metadata_candidates(
                 FROM entity_identifiers AS identifier
                 WHERE identifier.entity_id = evidence.recording_id
                   AND identifier.namespace = 'musicbrainz'
-                ORDER BY identifier.id LIMIT 1) AS entity_ref,
+                ORDER BY identifier.id LIMIT 1) AS selected_entity_ref,
                COALESCE(
                  (SELECT 'wikidata:genre:' || identifier.normalized_value
                   FROM entity_identifiers AS identifier
@@ -931,7 +1019,7 @@ def _metadata_candidates(
                   WHERE identifier.entity_id = evidence.genre_id
                     AND identifier.namespace = 'musicbrainz'
                   ORDER BY identifier.id LIMIT 1)
-               ) AS genre_ref,
+               ) AS selected_genre_ref,
                min(evidence.id)
         FROM normalizable_recording_genre_memberships AS evidence
         JOIN _embed_representative_names AS label ON label.entity_id=evidence.recording_id
@@ -956,8 +1044,31 @@ def _metadata_candidates(
                 ) AS TEXT))
           )
         )
+        AND EXISTS (SELECT 1 FROM _embed_identifiers AS identity
+            WHERE identity.entity_id=evidence.recording_id
+              AND identity.entity_ref=(SELECT
+                  'musicbrainz:recording:' || identifier.normalized_value
+                FROM entity_identifiers AS identifier
+                WHERE identifier.entity_id = evidence.recording_id
+                  AND identifier.namespace = 'musicbrainz'
+                ORDER BY identifier.id LIMIT 1))
+          AND EXISTS (SELECT 1 FROM _embed_identifiers AS identity
+            WHERE identity.entity_id=evidence.genre_id
+              AND identity.entity_ref=COALESCE(
+                 (SELECT 'wikidata:genre:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.genre_id
+                    AND identifier.namespace = 'wikidata'
+                  ORDER BY identifier.id LIMIT 1),
+                 (SELECT 'musicbrainz:genre:' || identifier.normalized_value
+                  FROM entity_identifiers AS identifier
+                  WHERE identifier.entity_id = evidence.genre_id
+                    AND identifier.namespace = 'musicbrainz'
+                  ORDER BY identifier.id LIMIT 1)
+               ))
         GROUP BY evidence.recording_id, evidence.genre_id
-        ORDER BY genre_ref, max(COALESCE(evidence.source_count, 1)) DESC, entity_ref
+        ORDER BY selected_genre_ref, max(COALESCE(evidence.source_count, 1)) DESC,
+                 selected_entity_ref
         LIMIT ?
         """,
             (),

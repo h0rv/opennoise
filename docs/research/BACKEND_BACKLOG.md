@@ -498,3 +498,15 @@ synthetic raw-row controls pass, with source-fact/support parity and no fitting,
 acquisition, schema/serialization/default change or cost. Raw stable-ID selection
 and ambiguity remain explicitly separate; no full metadata certification is
 claimed. Prior negative research and reserved Jamendo style fold4 remain intact.
+
+The [selected catalog-key embed gate](../../data/recipes/embed-selected-identity-20261020/README.md)
+closes the next demonstrated source-use gap: an eligible fact/name could carry a
+selected identifier whose own observation was vetoed. Exact canonical typed keys
+now need their own embedding eligibility; unsupported required keys fail closed,
+and optional representatives are omitted before aggregation/limits. Selection,
+native ListenBrainz pair identities, names, qualification and serialization remain
+unchanged. Independent exact observations may support the same key; conflicting
+aliases do not rescue it. No global owner reconciliation or identity repair is
+claimed. This uses explicitly synthetic qualified contracts without acquisitions,
+model fitting, research promotion, UI/default changes or cost. Prior negative
+research and reserved style fold4 remain intact.
