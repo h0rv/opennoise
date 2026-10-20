@@ -1,0 +1,127 @@
+{
+  "status": "stopped_at_second_head_no_results",
+  "protocol_sha256": "8624a347604e341943f5f91046c0a54b2ce5eae6042fbdbbe777a1c21d68430b",
+  "protocol_freeze_commit": "9affbb66c201be10f15f65ef290937f9e7c3dff5",
+  "source": {
+    "license": "CC-BY-NC-SA-4.0",
+    "metadata_tracks": 11565,
+    "artists": 713,
+    "components": 713,
+    "albums": 2365,
+    "development_artists": 558,
+    "development_tracks": 8849,
+    "complete_artists": 547,
+    "robust_artists": 446,
+    "unjudged_development_artists": 11,
+    "reserved_artists": 155,
+    "reserved_tracks": 2716,
+    "reserved_genre_extractor_skips": 2716,
+    "reserved_style_extractor_skips": 2716,
+    "new_acquisitions": 0,
+    "new_cost_usd": 0
+  },
+  "prefit_census": {
+    "seal_sha256": "9fdf617c1245a4d20a5648bd5e5b83a14a22098c288f59ac3e6c4f03dd69e474",
+    "payload_sha256": "e4a286d6dd5c68f734acced6ea9da075ac803788b4630d30b47322c69f0ec94e",
+    "independent_comparison_sha256": "051bb4958980ca052f0e34b6efb05f6974a971166c28dd967996056047afeb17",
+    "training_vocabulary_counts": [
+      87,
+      87,
+      87,
+      87
+    ],
+    "training_metadata_artists": [
+      416,
+      420,
+      424,
+      414
+    ],
+    "training_complete_artists": [
+      409,
+      411,
+      416,
+      405
+    ],
+    "eligible_query_artists": [
+      138,
+      136,
+      131,
+      142
+    ],
+    "robust_query_artists": [
+      119,
+      104,
+      106,
+      117
+    ],
+    "all_support_gates_passed": true
+  },
+  "first_production_failure": {
+    "evidence_sha256": "f92961a191dd8013a9e49127666872ae8a734af3dcd1affb11de59090f6af304",
+    "evidence_local_path": "/workspace/jamendo-style-prediction-20261020/first-production-failure.json",
+    "module_sha256": "b3727033a96d73396c98409f0459ec2885e6adb8b1b1c1cedff968ff0d1a2cca",
+    "cli_sha256": "61d644cda5afece82d8aa493dacb58632a4c21488d87249aa8a727195eaaad5f",
+    "module_exact_bytes_retained": true,
+    "cli_exact_bytes_retained": true,
+    "attempted_heads": 2,
+    "passed_head": {
+      "fold": 0,
+      "attribute": "aggressive"
+    },
+    "failed_head": {
+      "fold": 0,
+      "attribute": "electronic",
+      "ordinal": 2
+    },
+    "unattempted_heads": 18,
+    "failure": "combined_frozen_optimizer_finite_gradient_objective_acceptance_contract",
+    "failed_subcriterion": "not_retained",
+    "optimizer_state_recoverable": false,
+    "result_published": false,
+    "predictions_scores_bootstrap_available": false,
+    "retries": 0,
+    "alternate_solver_substitution": false,
+    "forbidden_operations": 0,
+    "active_denial_probes": 5,
+    "stderr_sha256": "939597aae419d2771ba2f8d4a795bd5f7ca23395374fc55cb0c62da00221d069",
+    "audit_sha256": "495424d80491b8a5b3710b70d5fbc37f4719f9414fa5d031e892cacf1721c218",
+    "recovered_exact_source_commit": "5e9dbd9"
+  },
+  "final_implementation": {
+    "jamendo_style_prediction.py": "f304e3398386075245bf7234ced7ad6a65b5539a808e89ceb04127cbd3c832cf",
+    "run_jamendo_style_prediction.py": "deed6179493dedc9fdb822eeec0db422cc83c1d5c428d670f249b0529e43f683"
+  },
+  "post_failure_change": "Diagnostic exception and JSON stderr for future failures, synthetic-tested only; no model/objective/solver/threshold changes and no further real fits.",
+  "validation": {
+    "focused_tests": 14,
+    "luna_final_review": "passed final f304e339/deed6179; independently reran14 focused tests",
+    "full_check": "passed",
+    "python_tests": 2349,
+    "python_seconds": 192.336,
+    "python_skipped": 36,
+    "node_passed": 122,
+    "node_skipped": 44,
+    "format_lint_types": "passed",
+    "full_check_log": "/tmp/jamendo-style-prediction-final-check.log"
+  },
+  "limitations": [
+    "No production comparison or quality result exists. Independent Newton verification is not a replacement production run.",
+    "Exact first-run module/CLI bytes were recovered by reversing post-failure diagnostic/doc edits and matching both externally sealed hashes, then committed at5e9dbd9; recovery happened after failure, without refitting.",
+    "Reused historical human style annotations, not fresh listener relevance judgments. Research-only artifacts; no public serving or default changes.",
+    "Reserved fold4 is identity-only and skipped before genre/style access; no confirmation was attempted."
+  ],
+  "final_zero_fit_census": {
+    "census.json": {
+      "sha256": "e4a286d6dd5c68f734acced6ea9da075ac803788b4630d30b47322c69f0ec94e",
+      "bytes": 4182672
+    },
+    "seal.json": {
+      "sha256": "3bf4e2f4bee1018437924f575ccb6d176f8e5d557d3a1ea56a3c62fc3fe48b9e",
+      "bytes": 2681
+    },
+    "guarded_cli_proof_sha256": "ae837d1fb55c170da8db92e212e1b38d32fa450c974b021cc22e280d8870b15f",
+    "independent_raw_comparison_sha256": "6a0fe7adbcdf6858564e67bffeb6df16b85a7dd7ed25baf985bb0fc5dcc1df4f",
+    "optimizer_calls": 0,
+    "forbidden_operations": 0
+  }
+}

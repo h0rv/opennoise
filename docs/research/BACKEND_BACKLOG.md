@@ -443,3 +443,22 @@ relationships remain unchanged; cached labels are not authority. Claim-view
 snapshot/artifact/claim-reference suppression coverage is a separate remaining
 boundary, not something this metadata fix claims to complete. No UI/defaults,
 model fitting, acquisition or research-source promotion participates; cost is $0.
+
+The [genre-only five-style prediction study](../../data/recipes/jamendo-style-prediction-20261020/README.md)
+completed role-safe extraction and a physically sealed source/support census,
+then stopped at the second fixed logistic head (fold0/electronic). All source
+support gates passed:558 development artists,547 complete and446 robust;155
+reserved artists/2,716 tracks were skipped before both feature and style access.
+Only two of20 planned heads were attempted. The combined numerical acceptance
+contract failed; its original failed subcriterion was not retained. No model,
+predictions, comparison scores or bootstrap results were published, and no retry,
+solver substitution, threshold change or reserved confirmation occurred. A later
+diagnostic-only exception is synthetic-tested and cannot retrospectively explain
+the failure. Exact first-run module/CLI bytes were recovered after failure by matching
+externally sealed hashes and committed separately; no pre-run source commit is
+claimed. Independent
+Newton verification is not a replacement producer. The previous negative
+instrument result and source/relevance limitations remain unchanged. This slice
+adds no source acquisition, public/default/UI change or cost; any future model
+experiment requires a separately reviewed prospective contract, not a rescue
+rerun of this frozen study.

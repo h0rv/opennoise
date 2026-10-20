@@ -37,7 +37,21 @@ def main() -> None:
     if args.stage == "census":
         result = study.census(inputs, args.output)
     elif args.stage == "run":
-        result = study.run(inputs, args.census, args.census_sha256, args.output)
+        try:
+            result = study.run(inputs, args.census, args.census_sha256, args.output)
+        except study.LogisticContractError as error:
+            sys.stderr.write(
+                json.dumps(
+                    {
+                        "status": "stopped_logistic_contract",
+                        "protocol_sha256": study.PROTOCOL,
+                        "diagnostics": error.diagnostics,
+                    },
+                    allow_nan=False,
+                )
+                + "\n"
+            )
+            raise SystemExit(1) from None
     else:
         result = study.replay(
             inputs, args.census, args.census_sha256, args.output, args.result_sha256

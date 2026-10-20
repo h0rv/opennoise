@@ -46,6 +46,15 @@ class Inputs:
         return self.metadata, self.human, self.protocol
 
 
+class LogisticContractError(ValueError):
+    """Expose bounded future failure diagnostics without retrying or returning model outputs."""
+
+    def __init__(self, diagnostics: dict[str, Any]) -> None:
+        """Retain numerical acceptance facts, never private coefficients or target rows."""
+        self.diagnostics = diagnostics
+        super().__init__("Frozen logistic convergence/finite-gradient contract failed")
+
+
 def runtime() -> dict[str, Any]:
     """Bind new implementation, pinned native helpers and locked numeric runtime."""
     script = Path(__file__).resolve().parents[3] / "scripts/run_jamendo_style_prediction.py"
@@ -345,7 +354,7 @@ def check_combined(directory: Path | None, files: dict[str, Any]) -> None:
 
 
 def publish(output: Path, files: dict[str, Any], paths: tuple[Path, ...]) -> str:
-    """Publish fresh research files atomically without replacing a late-created destination."""
+    """Publish atomically after rejecting observed existing destinations at both checks."""
     base.destination(output, paths)
     check_combined(None, files)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -492,7 +501,22 @@ def fit_one(x: np.ndarray, y: np.ndarray) -> dict[str, Any]:
         or norm > 1e-5
         or value > initial_value + 1e-10
     ):
-        raise ValueError("Frozen logistic convergence/finite-gradient contract failed")
+        raise LogisticContractError(
+            {
+                "optimizer_success": bool(result.success),
+                "optimizer_status": getattr(result, "status", None),
+                "optimizer_message": str(getattr(result, "message", "unavailable")),
+                "iterations": getattr(result, "nit", None),
+                "objective_calls": getattr(result, "nfev", None),
+                "parameters_finite": bool(np.isfinite(result.x).all()),
+                "objective": value if math.isfinite(value) else None,
+                "zero_initial_objective": initial_value,
+                "gradient_finite": bool(np.isfinite(gradient).all()),
+                "gradient_inf_norm": norm if math.isfinite(norm) else None,
+                "gradient_inf_maximum": 1e-5,
+                "objective_not_increased": bool(value <= initial_value + 1e-10),
+            }
+        )
     return {
         "bias": float(result.x[0]),
         "coefficients": result.x[1:].tolist(),
@@ -583,7 +607,19 @@ def predict(artists: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[d
         qx = frequencies(query, vocabulary)
         y = target(labeled)
         prior = (1 + y.sum(axis=0)) / (2 + len(y))
-        models = [fit_one(x, y[:, a]) for a in range(len(ATTRIBUTES))]
+        models = []
+        for a, attribute in enumerate(ATTRIBUTES):
+            try:
+                models.append(fit_one(x, y[:, a]))
+            except LogisticContractError as error:
+                error.diagnostics.update(
+                    {
+                        "fold": fold,
+                        "attribute": attribute,
+                        "attempted_head": fold * len(ATTRIBUTES) + a + 1,
+                    }
+                )
+                raise
         logits = np.column_stack([m["bias"] + qx @ np.array(m["coefficients"]) for m in models])
         logistic = expit(logits)
         gallery_unit, query_unit = normalize(x * idf), normalize(qx * idf)
