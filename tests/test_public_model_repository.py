@@ -115,13 +115,22 @@ def _catalog() -> sqlite3.Connection:
         INSERT INTO source_snapshots VALUES(1,1,'wd-1',1);
         INSERT INTO source_artifacts VALUES(1,1,'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',1);
         CREATE TABLE identifier_types(id INTEGER,type_key TEXT);
-        INSERT INTO identifier_types VALUES(1,'wikidata_genre_qid');
+        INSERT INTO identifier_types VALUES(1,'wikidata_genre_qid'),
+            (101,'musicbrainz_artist_id'),(102,'musicbrainz_release_group_id'),
+            (103,'musicbrainz_recording_id'),(104,'musicbrainz_genre_id');
+        CREATE TABLE catalog_entities(id INTEGER,entity_kind TEXT);
+        INSERT INTO catalog_entities VALUES(10,'artist'),(11,'artist'),(12,'artist'),
+            (20,'genre'),(21,'genre'),(30,'release_group'),(40,'recording');
         ALTER TABLE entity_identifiers ADD COLUMN identifier_type_id INTEGER;
         ALTER TABLE entity_identifiers ADD COLUMN provenance_id INTEGER;
         UPDATE entity_identifiers SET provenance_id=1;
         ALTER TABLE entity_names ADD COLUMN provenance_id INTEGER;
         UPDATE entity_names SET provenance_id=1;
-        UPDATE entity_identifiers SET identifier_type_id=1 WHERE entity_id=20 AND namespace='wikidata';
+        UPDATE entity_identifiers SET identifier_type_id=1 WHERE namespace='wikidata';
+        UPDATE entity_identifiers SET identifier_type_id=101 WHERE entity_id IN (10,11,12);
+        UPDATE entity_identifiers SET identifier_type_id=102 WHERE entity_id=30;
+        UPDATE entity_identifiers SET identifier_type_id=103 WHERE entity_id=40;
+        UPDATE entity_identifiers SET identifier_type_id=104 WHERE entity_id=20 AND namespace='musicbrainz';
         CREATE TABLE entity_claims(id INTEGER,entity_id INTEGER,provenance_id INTEGER,policy_id INTEGER,
             claim_type TEXT,claim_key TEXT,normalized_value_json TEXT);
         INSERT INTO entity_claims VALUES(1,10,1,1,'wikidata_relation','genre',

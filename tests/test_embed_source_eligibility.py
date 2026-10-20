@@ -41,6 +41,7 @@ def catalog(*, sibling: bool = False, anchor: bool = False) -> sqlite3.Connectio
         DELETE FROM normalizable_artist_genre_evidence WHERE id<>1;
         UPDATE entity_names SET name='Synthetic Album' WHERE entity_id=30;
         UPDATE entity_names SET name='Synthetic Recording' WHERE entity_id=40;
+        INSERT INTO catalog_entities VALUES(22,'genre');
         INSERT INTO genres VALUES(22,'Synthetic Parent');
         INSERT INTO modelable_music_genres VALUES(22);
         INSERT INTO genre_music_qualification_observations VALUES(22,1,1);
@@ -78,13 +79,14 @@ def catalog(*, sibling: bool = False, anchor: bool = False) -> sqlite3.Connectio
             INSERT INTO source_snapshots VALUES(3,3,'wd-3',1);
             INSERT INTO source_artifacts VALUES(3,3,
               'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',1);
+            INSERT INTO catalog_entities VALUES(23,'genre'),(13,'artist');
             INSERT INTO genres VALUES(23,'Synthetic Allowed Anchor');
             INSERT INTO entity_names VALUES(30,23,'Synthetic Allowed Anchor',1,3);
             INSERT INTO modelable_music_genres VALUES(23);
             INSERT INTO genre_music_qualification_observations VALUES(23,3,1);
             INSERT INTO entity_identifiers VALUES(10,23,'wikidata','Q102',1,3);
             INSERT INTO entity_identifiers VALUES(11,13,'musicbrainz',
-              '77777777-7777-4777-8777-777777777777',NULL,3);
+              '77777777-7777-4777-8777-777777777777',101,3);
             INSERT INTO entity_names VALUES(8,13,'Synthetic Allowed Artist',1,3);
             INSERT INTO normalizable_artist_genre_evidence VALUES(6,13,23,'direct_source_claim',
               1.0,'wikidata_allowed_anchor','synthetic-anchor','wikidata_p136',1,3);

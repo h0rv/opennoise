@@ -1,0 +1,63 @@
+{
+  "scope": "Selected catalog identifier own embedding eligibility; no global identity reconciliation or real-source qualification/model-quality claim.",
+  "implementation_sha256": "a5c809af7d3f92255f7b2e581d242c2820466e5c15ec568e113e1e8538acba08",
+  "initial_reproduction": {
+    "path": "/workspace/embed-identity-eligibility-20261020/reproduction.json",
+    "sha256": "d527558050c85c735e73f79ad6334603cd9081de503fd28a22e31e5b1324b7dc",
+    "roles": 4
+  },
+  "independent_before": {
+    "path": "/workspace/embed-identity-eligibility-20261020/independent-before.json",
+    "sha256": "b09bdc8d7ea73a133f3328c2f2783ff123e4ee0a2fb05b3f4e21a50a6d0bebe8",
+    "controls": 120
+  },
+  "checks": {
+    "focused_tests": 42,
+    "python_tests": 2394,
+    "python_elapsed_seconds": 196.196,
+    "python_skips": 36,
+    "node_pass": 122,
+    "node_skips": 44,
+    "format_lint_types": "passed",
+    "full_log": "/tmp/embed-selected-id-nul-final-check.log",
+    "luna_review": "clear on exact final a5c809af runtime; 42 focused independently passed"
+  },
+  "model_fits": 0,
+  "acquisitions": 0,
+  "new_external_cost_usd": 0,
+  "independent_final": {
+    "observation_path": "/workspace/embed-identity-eligibility-20261020/source-observations.json",
+    "observation_sha256": "fa2db776c573ab1bd5b1523ed6a3e5f8793747f33dad995f4446241be712e31c",
+    "comparison_path": "/workspace/embed-identity-eligibility-20261020/source-proof.json",
+    "comparison_sha256": "8b0c51de415be5a2f73c9f2df800ace434db3970f41b10c327c29e52d69026ec",
+    "controls_passed": 120,
+    "old_failures_fixed": 80,
+    "valid_fact_payloads_unchanged": 80,
+    "complete_json_model_dumps_equal": 40,
+    "unsupported_optional_representatives_omitted": 40,
+    "active_denial_probes": 4,
+    "forbidden_operations": 0,
+    "runtime_sha256": "a5c809af7d3f92255f7b2e581d242c2820466e5c15ec568e113e1e8538acba08"
+  },
+  "bounded_query_stress": {
+    "scope": "Indexed synthetic distinct-key loader stress; descriptive executor timings, not a production benchmark or model-quality result",
+    "module_sha256": "a5c809af7d3f92255f7b2e581d242c2820466e5c15ec568e113e1e8538acba08",
+    "script_sha256": "bdbe3d90e7df6f9db406b73f6860c5367b0ee194b1787778bcd2155a1f01b485",
+    "additional_distinct_artists": 2000,
+    "direct_memberships": 2001,
+    "sql_statement_count": 18,
+    "seconds": 0.11096351400192361,
+    "forbidden_operations": [],
+    "model_fits": 0,
+    "new_external_cost_usd": 0,
+    "path": "/workspace/embed-identity-eligibility-20261020/benchmark-final.json",
+    "sha256": "b463aa2645e527ed0548e483e07f16b1cb9afcbf912419ac31f88772953446e0"
+  },
+  "canonical_bytes_audit": {
+    "path": "/workspace/embed-identity-eligibility-20261020/canonical-source.json",
+    "sha256": "a45e7dc59bf6eb63407c9fed071bfe5705a0979635a67e90c2f10aaf2bb15203",
+    "script_sha256": "f9b11f7918fcb19380a8d7c59c16e1174653da78a4a37d4166868c354237e503",
+    "controls_passed": 88,
+    "independent_oracle": "Python UUID/fullmatch; both actual loader APIs; not real-source qualification or model quality."
+  }
+}
