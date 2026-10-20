@@ -1,0 +1,259 @@
+{
+  "revision": "jamendo-genre-to-human-style-prediction-v1",
+  "created_utc": "2026-10-20T00:13:37.189809+00:00",
+  "base_main": "c7bf5ae5f1ccd66efe27d61261f56a3fbf20bc78",
+  "purpose": "One fixed genre-only fractional logistic artist-style predictor versus training prior and genre TF-IDF kNN regression; development folds0..3 only, no reserved fold4 confirmation or model selection.",
+  "pre_freeze_knowledge": {
+    "known": "Prior human-genre NB/temperature results and negative unsupervised instrument addition on genre and development style coherence; native identities, development style availability and fixed original folds. This is a new supervised development endpoint on a reused historical cohort, not an unseen cohort. No alternative candidate/regularization/fold reseeding search. One independent count-only development census was inspected before freeze:87 training-only genre tags in every fold; no IDF, vectors, cosines, model fits or metrics computed. The independent count-only census also observed zero feature-empty queries in each development fold; these counts are feasibility knowledge, not model outcomes.",
+    "known_counts": {
+      "metadata_tracks": 11565,
+      "artists": 713,
+      "components": 713,
+      "albums": 2365,
+      "development_tracks": 8849,
+      "reserved_tracks": 2716,
+      "development_artists": 558,
+      "reserved_artists": 155,
+      "development_complete": 547,
+      "development_robust": 446,
+      "development_unjudged": 11,
+      "eligible_tracks_each_attribute": 8095,
+      "wrong_count_each_attribute": 754,
+      "query_metadata_per_fold": [
+        142,
+        138,
+        134,
+        144
+      ],
+      "query_complete_per_fold": [
+        138,
+        136,
+        131,
+        142
+      ],
+      "query_robust_per_fold": [
+        119,
+        104,
+        106,
+        117
+      ],
+      "training_metadata_per_fold": [
+        416,
+        420,
+        424,
+        414
+      ],
+      "training_complete_per_fold": [
+        409,
+        411,
+        416,
+        405
+      ],
+      "minimum_training_positive_evidence_components": 306,
+      "minimum_training_negative_evidence_components": 323,
+      "training_vocabulary_sizes": [
+        87,
+        87,
+        87,
+        87
+      ],
+      "feature_empty_query_artists_per_fold": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "not_seen_for_this_task": [
+      "new IDF matrices or cosine neighbors",
+      "logistic coefficients, objectives, convergence or predictions",
+      "new kNN regression predictions",
+      "new proper prediction scores or bootstrap intervals",
+      "any reserved fold4 style fractions, predictions or scores"
+    ],
+    "independent_prefit_census_sha256": "56e51dfde1e2e60c6fb442cfc6ea434643dd8135c3825cdb9ae852c081bc6b09"
+  },
+  "source": {
+    "commit": "cafd8e20c265ed84f1e61f1c875327971f43a62f",
+    "metadata": {
+      "path": "data/splits/split-0/autotagging-test.tsv",
+      "file": "autotagging-test.tsv",
+      "bytes": 1611903,
+      "sha256": "c80e43416e89afc0b2656848e9d4d6f076ca0426003d7e0148ac8cdc6254d366",
+      "git_blob_sha1": "6a14702bb012bfef3870323ca156390803f5db2f"
+    },
+    "human": {
+      "file": "music-classification-annotations-raw.tsv",
+      "bytes": 7468828,
+      "sha256": "466cbb888fe906f3db22b9e6f63b1694e6a38a8613fb67d9d52149e1cc6decd3",
+      "path": "derived/music-classification-annotations/music-classification-annotations-raw.tsv",
+      "git_blob_sha1": "4df9c93c81ca5dd4185a3d4591c4060a2cd740c6"
+    },
+    "original_acquisition_receipt_sha256": "3125263a9c7a3fbdc80c53ad10f60648801681b0737bbc7002720dc2b3d82b75",
+    "original_genre_protocol_sha256": "994399146138008c4329946315d9ac8f7b78021c03dbf2bd87fa515fcf83796b",
+    "serialization_amendment_sha256": "09ef671b841afb7d7b29e6ac6daa526b09beb369ce16a3b5ea38c56ac01612c4",
+    "identity_cohort_sha256": "788895cd621fa69e086a9cc0dada206157130d54226c684610d65aca0484befb",
+    "prior_style_protocol_sha256": "dd0ee95db87b418d111d318312945c1a3c32c4511562a16ba43dd425b7fe7f59",
+    "runtime_inputs": "Only externally pinned new protocol plus the two exact approved raw files. Historical pins document custody/reservation; no old scores, models, profiles, geometry, receipts or absolute paths required at runtime."
+  },
+  "helper_code_sha256": {
+    "src/opennoise/ml/jamendo_human_mood.py": "9848cd3a855e8b40018c50e949d3d38b6aad533c2323f8d68a7419cd5a5002e9",
+    "src/opennoise/ml/jamendo_human_genre.py": "9f4663644a941f64a78359d2677cc07cadce5b0719f756defc2d26be15869b5d",
+    "src/opennoise/ml/jamendo_artist_style.py": "3f3522939ebbdff2ac5c6fea04fc2260287441bdb49f4691869b91ea0bea7786"
+  },
+  "identity_and_reservation": {
+    "identity_first": "Bounded identity-only parse of BOTH full metadata/human files; exact native join including canonical track/artist/album/path/duration; components built on all metadata via shared artist OR album before any tag or target extraction. Deduplicate exact native IDs only, never names.",
+    "component": "Minimum native track ID in full artist/album connected component.",
+    "fold": "SHA256(UTF8(opennoise-jamendo-human-genre-dortmund-v1|component_minimum)) interpreted big-endian modulo5.",
+    "assertions": [
+      "exactly713artists and713components",
+      "exactly one artist per component",
+      "11565metadata and matching human identities",
+      "2365albums"
+    ],
+    "roles": "Folds0,1,2,3 development; fold4 reserved. Each development query uses ONLY a model and feature bank excluding its whole original fold AND fold4.",
+    "skip_boundary": "After identity/role resolution, skip each reserved row BEFORE genre-tag extraction and selected-style extraction. Do not call old coherence.load_source or old style.source because they parse reserved covariates. Reuse only pinned identity/canonicalization helpers and role-safe selected-token parsing.",
+    "reserved_payload": "Identity, original fold, metadata-only counts and constant role status reserved_skipped ONLY. This status is NOT an outcome or label-availability assessment. No tag_counts, style/target container, feature vector, model probability, neighbor, score or per-artist style eligibility/count, even null/NaN placeholders.",
+    "counter_assertions": {
+      "reserved_tracks_skipped_before_genre_accessor": 2716,
+      "reserved_tracks_skipped_before_style_accessor": 2716,
+      "reserved_genre_accessor_calls": 0,
+      "reserved_style_accessor_calls": 0,
+      "development_genre_row_accessor_calls": 8849,
+      "development_style_row_accessor_calls": 8849
+    },
+    "interpretation": "Label-held-out target reservation in a previously inspected cohort. Earlier unsupervised geometry used reserved unlabeled metadata, but this NEW feature context excludes it entirely. No confirmation in this slice; future fold4 study requires separate candidate/protocol freeze before any reserved target extraction."
+  },
+  "attributes": [
+    "aggressive",
+    "electronic",
+    "party",
+    "relaxed",
+    "sad"
+  ],
+  "labels": {
+    "raw_cells": [
+      "mood_aggressive---",
+      "mood_electronic---",
+      "mood_party---",
+      "mood_relaxed---",
+      "mood_sad---"
+    ],
+    "tokens": "For attribute a only literal a and not_a. Exactly3recognized votes including disagreements; no normalization or aliases; duplicate selected cells error. Missing/empty, wrong count and invalid tokens distinct; never negative by default.",
+    "artist_target": "For each attribute, equal mean of eligible track positive fractions; y_a=sum eligible positive votes/(3*eligible tracks). Artist complete iff all5attributes have>=1eligible track; robust iff all5have>=2. Track raw vote sequences are not serialized; retain counts/reasons and development artist positive/negative/eligible-track support.",
+    "weights": "Source assertion gives one artist per component, so each complete training/evaluation artist weight is EXACTLY1. No row/track/vote/positive-class reweighting. Component bootstrap therefore equals artist bootstrap.",
+    "population": "Preserve all558development outcomes, including11unjudged. Predict all558 regardless query label availability; score fixed547complete,446robust secondary. Keep155reserved identity-only outcomes separate. Heldout label support NEVER controls fitting/prediction or class omission.",
+    "sampling_expectation": "Uniformly choose one eligible artist/component, then one eligible track of that artist for the attribute, then one recorded vote. This yields the equal-track artist fraction; do not weight artists by track/vote count."
+  },
+  "features": {
+    "allowed": "Canonical uploader genre---[a-z0-9]{1,64} ONLY, deduplicate tag presence within each metadata track.",
+    "excluded": [
+      "instrument tags",
+      "mood/theme tags",
+      "all human taxonomies",
+      "identities as features",
+      "names/titles/paths",
+      "duration",
+      "old model scores/profiles",
+      "reserved fold4 tags/labels"
+    ],
+    "artist_frequency": "Track presence count for genre tag divided by ALL native metadata tracks of that artist, including empty-tag and unannotated tracks.",
+    "vocabulary": "For each query fold f sorted union of literal genre tags present in ALL metadata artists in dev folds other than f. df>=1; no human-eligibility selection, no global/reserved vocabulary, no query-derived scaling.",
+    "matrices": "Native artist IDs ascending, vocabulary lexicographic; deterministic float64. Query unseen tags reported and ignored by current training vocabulary; no vocabulary expansion."
+  },
+  "methods": [
+    "training_beta_prior",
+    "genre_tfidf_knn10",
+    "genre_fractional_logistic_C1"
+  ],
+  "prior": "Per training complete artist/attribute: (1+sum(y_a))/(2+N_complete), Beta(1,1) artist pseudo-counts; same prior for all queries in that fold.",
+  "knn": {
+    "feature_bank": "N=ALL training metadata artists, including empty/unjudged; DF=number with tag present; IDF=ln((1+N)/(1+DF))+1. Multiply raw artist frequencies by IDF and normalize each full genre row to unit L2; zero rows stay zero.",
+    "candidates": "ONLY complete labeled training artists, one per component. Entire query fold and reserved fold4 excluded before bank construction. Target mask selects regression neighbors only, never vocabulary/DF.",
+    "distance": "Sorted float64 query matrix @ sorted labeled-gallery matrix transpose. Require finite raw cosine>0; permit <=1+1e-12 roundoff without clipping/epsilon reranking.",
+    "ranking": "Descending exact computed cosine, then component minimum track ID, then artist ID ascending; top10, no zero-score padding.",
+    "prediction": "For each attribute compute math.fsum(cosine_i*y_i)/math.fsum(cosine_i) over selected raw-positive cosine neighbors; do not normalize individual weights then dot. This is cosine-weighted mean and preserves convex endpoints without posthoc clipping. If query feature-empty/unseen-only or no positive labeled overlap, use same fold training Beta prior with explicit distinct reason and empty neighbors.",
+    "roundoff": "No probability clipping, rounding or adjustment. math.fsum numerator/denominator with nonnegative targets in[0,1] must give finite probability in[0,1]; otherwise abort atomically. Accept raw cosine<=1+1e-12 roundoff but never clip/rerank it."
+  },
+  "logistic": {
+    "features": "Raw per-artist genre frequencies in training vocabulary, NOT TF-IDF; no other normalization.",
+    "objective": "For each attribute independently MINIMIZE SUM_i[logaddexp(0,b+x_i@w)-y_i*(b+x_i@w)] +0.5*(w@w). Each complete artist weight1; do NOT divide by N. Fixed C=1 across all folds. Bias b unpenalized. Training objective unclipped stable BCE; no logloss clipping inside optimization.",
+    "gradient": "z=b+X@w;r=expit(z)-y; gradient_b=sum(r); gradient_w=X.T@r+w.",
+    "initialization": "All coefficients and bias exactly0; no warm start or previous-fold/model reuse.",
+    "solver": {
+      "package": "scipy.optimize.minimize",
+      "method": "L-BFGS-B",
+      "analytic_jacobian": true,
+      "bounds": null,
+      "maxiter": 500,
+      "maxfun": 20000,
+      "maxcor": 10,
+      "maxls": 50,
+      "ftol": 1e-12,
+      "gtol": 1e-08
+    },
+    "convergence": "Require optimizer success, all parameters/objective/gradients/probabilities finite, gradient infinity norm<=1e-5 and final objective<=zero-init objective+1e-10. No retries, expanded iterations, alternate solver or silent baseline fallback. Convergence failure aborts atomically before publishing result artifacts.",
+    "prediction": "expit(b+x_query@w) for all development queries including empty-feature and unjudged rows. Empty features use learned bias, NOT forced prior.",
+    "fit_accounting": "Exactly20attempted logistic fits for supported pinned data:4development cells*5attributes. Maximum20 PER resource-bounded run invocation; replay independently recomputes same20 as a separate verification invocation. Four training-only vocabulary/IDF banks per run/replay; census has only count derivations, zero IDF normalizations/cosines/logistic fits.",
+    "solver_choice": "L-BFGS-B and all stated options are fixed before outcomes; no algorithm comparison or search. Independent Newton solution may verify the same convex objective but is not another candidate."
+  },
+  "gates": {
+    "source": "Fail census if exact source identity/component assertions or role boundaries change.",
+    "per_training_fold_attribute": "At least5distinct complete components with positive vote evidence(y>0), at least5 with negative evidence(y<1), and strictly0<sum y<N. No-finite-optimum all0/all1 is explicit unsupported cell, never a fit or fallback.",
+    "unsupported": "Retain all source roles/outcomes and exact unsupported cell reasons in census. If ANY cell unsupported, entire planned comparison unsupported and run does not fit or publish model probabilities/scores; do not drop attributes/folds or reseed.",
+    "query": "No heldout-label-dependent gates. Per-class query support descriptive only."
+  },
+  "metrics": {
+    "primary": [
+      "Artist/component-equal macro expected individual-vote binary logloss",
+      "Artist/component-equal macro expected individual-vote binary Brier"
+    ],
+    "logloss": "Positive contribution=-y*log(max(p,1e-15)); negative contribution=-(1-y)*log(max(1-p,1e-15)). For the unclipped negative term use log1p(-p) equivalently; if 1-p<1e-15 use log(1e-15). This is max-only log clipping, with NO upper cap, probability modification or renormalization. Brier uses raw probabilities. Report counts per method/attribute: positive clipping when p<1e-15 AND y>0; negative clipping when 1-p<1e-15 AND y<1. Also report respective probability-threshold counts regardless target coefficient, and distinct affected artists with either nonzero weighted clipped term.",
+    "brier": "p*p-2*p*y+y = y*(1-p)^2+(1-y)*p^2; raw probabilities, not (p-y)^2 and not doubled two-class Brier.",
+    "aggregation": "Compute each artist/attribute loss then equal mean over all5attributes and547complete artists. Report all5attribute metrics and positive/negative contributions separately; no class prevalence reweighting. Prevalence and positive/negative component/vote/eligible-track support explicit.",
+    "comparisons": [
+      "logistic-minus-prior",
+      "logistic-minus-knn",
+      "knn-minus-prior"
+    ],
+    "secondary": "Same metrics on446predeclared robust query artists, same fitted models/priors/kNN banks. All4fold reports and all5attribute reports; no cherry-picked attributes/subsets.",
+    "uncertainty": {
+      "method": "Paired bootstrap of query components/artists conditional on the fixed four training banks/predictions; descriptive exploratory reused-cohort uncertainty, not independent-corpus or listening validation. Reuse identical draws for all methods/attributes/positive-negative-total contributions.",
+      "draws": 2000,
+      "generator": "NumPy PCG64",
+      "primary_seed": 20261020,
+      "robust_seed": 20261021,
+      "percentiles": [
+        2.5,
+        97.5
+      ],
+      "percentile_method": "linear",
+      "pairing": "Resample whole native components, exactly one artist here, with all5attributes/all3methods jointly; identical component draw indices for every method/attribute/positive-negative-total contrast. Sign is first named method minus second named method; lower proper losses are better.",
+      "draw_convention": "For each subset separately sort eligible query components ascending. Generate rng.integers(0,n,size=(2000,n)) once with the declared PCG64 seed: ordinary n-with-replacement resampling, each index independently uniform0..n-1 (n=547primary/446robust on pinned data). Unstratified across fixed development folds; do not resample training banks or refit. Reuse this identical draw matrix jointly across all5attributes/allmethods/allpositive-negative-total parts."
+    },
+    "limitations": "Historical annotator independence/blinding unknown; uploader genre is predictor, human style fractions source annotations rather than artist membership or listener relevance. Prior instrument candidate remains negative; new supervised findings do not promote any research artifact or prove EveryNoise parity."
+  },
+  "limits": {
+    "cpu_seconds": 120,
+    "wall_seconds": 120,
+    "address_space_bytes": 1000000000,
+    "numerical_threads": 1,
+    "source_bytes": 10000000,
+    "combined_census_and_result_bytes": 20000000,
+    "max_output_files": 12,
+    "max_rows": 15000,
+    "max_fields": 250,
+    "max_line_bytes": 65536,
+    "logistic_fit_attempts_per_run": 20,
+    "new_acquisitions": 0,
+    "new_external_cost_usd": 0
+  },
+  "custody": "Externally pinned protocol and census/result seals, exact source byte hashes and sizes, frozen helper/runtime hashes and locked Python3.13.14/NumPy2.5.2/SciPy1.18.1; closed inventories with physical hash+size checked before parsing; fresh atomic publication, no symlink traversal/overlapping source/output paths. Runtime receipts path-free. Relocated actual CLI census/run/replay must work with only two approved raw files+protocol and deny original source/model/cache paths/network. Historical study artifacts not inputs.",
+  "rights": {
+    "license": "CC-BY-NC-SA-4.0",
+    "attribution": "Music Technology Group; Bogdanov, Won, Tovstogan, Porter and Serra (2019), The MTG-Jamendo Dataset for Automatic Music Tagging; Music Classification Annotations documentation",
+    "research_only": true,
+    "commit_policy": "Code, immutable protocol and restrained attributed aggregate results only. Raw files, per-track/artist targets, predictions, neighbors and fitted weights remain local under source rights. No public/default serving, promotion, UI or deployment."
+  },
+  "future_confirmation": "No fold4 labels/probabilities/scores in this slice. Any future confirmation requires a separately frozen candidate/training-only feature context/protocol before reserved extraction, preserving negative development outcomes; no automatic promotion or alternative selection."
+}
