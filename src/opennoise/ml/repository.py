@@ -53,6 +53,90 @@ def _public_source(source_key: str) -> PublicSource:
     raise PublicInputLoadError(f"unsupported model source: {source_key}")
 
 
+_EMBED_SOURCE_CTE = """
+_embed_source_provenance AS (
+  SELECT provenance.* FROM provenance_records AS provenance
+  WHERE NOT EXISTS (
+    SELECT 1 FROM source_snapshots AS snapshot
+    LEFT JOIN source_artifacts AS artifact
+      ON artifact.snapshot_id=snapshot.id AND artifact.sha256=provenance.artifact_sha256
+     AND artifact.policy_id=provenance.policy_id
+    JOIN active_suppressions AS suppression ON suppression.use_kind IN ('all','embed')
+    WHERE snapshot.source_id=provenance.source_id
+      AND snapshot.snapshot_ref=provenance.snapshot_ref
+      AND snapshot.policy_id=provenance.policy_id
+      AND ((suppression.target_kind='snapshot'
+            AND suppression.target_ref=CAST(snapshot.id AS TEXT))
+        OR (suppression.target_kind='artifact'
+            AND suppression.target_ref=CAST(artifact.id AS TEXT)))
+  )
+)
+"""
+_EMBED_QUALIFICATION_CTE = """
+_embed_music_genres AS (
+  SELECT DISTINCT observation.genre_id FROM modelable_music_genres AS modelable
+  JOIN genre_music_qualification_observations AS observation
+    ON observation.genre_id=modelable.genre_id
+  JOIN _embed_source_provenance AS provenance ON provenance.id=observation.provenance_id
+  JOIN active_rights_policy_permissions AS permission ON permission.policy_id=observation.policy_id
+   AND permission.use_kind='embed' AND permission.decision='allow'
+  WHERE NOT EXISTS (
+    SELECT 1 FROM active_suppressions AS suppression
+    WHERE suppression.use_kind IN ('all','embed') AND (
+      (suppression.target_kind='entity'
+        AND suppression.target_ref=CAST(observation.genre_id AS TEXT))
+      OR (suppression.target_kind='provenance'
+        AND suppression.target_ref=CAST(provenance.id AS TEXT))
+      OR (suppression.target_kind='source'
+        AND suppression.target_ref=CAST(provenance.source_id AS TEXT))
+    )
+  )
+)
+"""
+_EMBED_DIRECT_CTE = """
+_embed_direct_claims AS (
+  SELECT evidence.* FROM normalizable_artist_genre_evidence AS evidence
+  JOIN _embed_source_provenance AS custody ON custody.id=evidence.provenance_id
+  WHERE evidence.evidence_kind='direct_source_claim'
+    AND NOT EXISTS (
+      SELECT 1 FROM active_suppressions AS suppression
+      WHERE suppression.use_kind IN ('all','embed') AND suppression.target_kind='claim'
+        AND suppression.target_ref='artist_genre_evidence:' || CAST(evidence.id AS TEXT)
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM entity_claims AS claim
+      JOIN active_suppressions AS suppression ON suppression.target_kind='claim'
+       AND suppression.target_ref='entity_claims:' || CAST(claim.id AS TEXT)
+       AND suppression.use_kind IN ('all','embed')
+      WHERE claim.entity_id=evidence.artist_id AND claim.provenance_id=evidence.provenance_id
+        AND claim.policy_id=evidence.policy_id AND claim.claim_key='genre'
+        AND claim.claim_type='wikidata_relation'
+        AND json_extract(claim.normalized_value_json,'$.target.namespace')='wikidata'
+        AND EXISTS (
+          SELECT 1 FROM entity_identifiers AS identifier
+          JOIN identifier_types AS type ON type.id=identifier.identifier_type_id
+          WHERE identifier.entity_id=evidence.genre_id AND identifier.namespace='wikidata'
+            AND type.type_key IN ('wikidata_genre_qid','wikidata_qid')
+            AND identifier.normalized_value=json_extract(
+                claim.normalized_value_json,'$.target.value')
+        )
+    )
+)
+"""
+
+
+def _embed_query(query: str) -> str:
+    """Inline shared read-only use gates before each fixed query's grouping and bounds."""
+    ctes = _EMBED_SOURCE_CTE
+    if "_embed_music_genres" in query:
+        ctes += "," + _EMBED_QUALIFICATION_CTE
+    if "_embed_direct_claims" in query:
+        ctes += "," + _EMBED_DIRECT_CTE
+    body = query.lstrip()
+    # The repository owns these literal SQL statements, including their optional CTEs.
+    return "WITH " + ctes + ("," + body[5:] if body.startswith("WITH ") else body)
+
+
 def _bounded_rows(
     connection: sqlite3.Connection,
     query: str,
@@ -61,7 +145,7 @@ def _bounded_rows(
     label: str,
 ) -> tuple[sqlite3.Row, ...]:
     rows: list[sqlite3.Row] = []
-    for raw_row in connection.execute(query, (*parameters, limit + 1)):
+    for raw_row in connection.execute(_embed_query(query), (*parameters, limit + 1)):
         if not isinstance(raw_row, sqlite3.Row):
             raise PublicInputLoadError("SQLite row factory must return sqlite3.Row")
         rows.append(raw_row)
@@ -95,8 +179,8 @@ def _direct_memberships(
                     AND identifier.namespace = 'musicbrainz'
                   ORDER BY identifier.id LIMIT 1)
                ) AS genre_ref
-        FROM normalizable_artist_genre_evidence AS evidence
-        JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
+        FROM _embed_direct_claims AS evidence
+        JOIN _embed_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = evidence.policy_id
          AND embed_permission.use_kind = 'embed'
@@ -180,11 +264,15 @@ def _artist_pairs_attempt_ids_v1(
          AND embed_permission.decision = 'allow'
         JOIN normalization_exports AS export
           ON export.staged_record_id = evidence.staged_record_id
-        JOIN provenance_records AS provenance ON provenance.id = export.provenance_id
+        JOIN _embed_source_provenance AS provenance ON provenance.id = export.provenance_id
         WHERE NOT EXISTS (
           SELECT 1 FROM active_suppressions AS suppression
           WHERE suppression.use_kind IN ('all', 'embed') AND (
-            (suppression.target_kind = 'provenance'
+            (suppression.target_kind = 'artifact'
+             AND suppression.target_ref = CAST(artifact.id AS TEXT))
+            OR (suppression.target_kind = 'snapshot'
+                AND suppression.target_ref = CAST(artifact.snapshot_id AS TEXT))
+            OR (suppression.target_kind = 'provenance'
              AND suppression.target_ref = CAST(provenance.id AS TEXT))
             OR (suppression.target_kind = 'source'
                 AND suppression.target_ref = CAST(provenance.source_id AS TEXT))
@@ -241,7 +329,7 @@ def _artist_pairs_source_artifacts(
     deterministic order, avoiding one query per pair.
     """
     cursor = connection.execute(
-        """
+        _embed_query("""
         WITH eligible AS (
           SELECT evidence.left_artist_source_id AS left_artist_id,
                  evidence.right_artist_source_id AS right_artist_id,
@@ -259,11 +347,15 @@ def _artist_pairs_source_artifacts(
            AND embed_permission.decision = 'allow'
           JOIN normalization_exports AS export
             ON export.staged_record_id = evidence.staged_record_id
-          JOIN provenance_records AS provenance ON provenance.id = export.provenance_id
+          JOIN _embed_source_provenance AS provenance ON provenance.id = export.provenance_id
           WHERE NOT EXISTS (
             SELECT 1 FROM active_suppressions AS suppression
             WHERE suppression.use_kind IN ('all', 'embed') AND (
-              (suppression.target_kind = 'provenance'
+              (suppression.target_kind = 'artifact'
+             AND suppression.target_ref = CAST(artifact.id AS TEXT))
+            OR (suppression.target_kind = 'snapshot'
+                AND suppression.target_ref = CAST(artifact.snapshot_id AS TEXT))
+            OR (suppression.target_kind = 'provenance'
                AND suppression.target_ref = CAST(provenance.id AS TEXT))
               OR (suppression.target_kind = 'source'
                   AND suppression.target_ref = CAST(provenance.source_id AS TEXT))
@@ -302,7 +394,7 @@ def _artist_pairs_source_artifacts(
          AND pair_artifacts.right_artist_id = pair_stats.right_artist_id
         ORDER BY pair_stats.support DESC, pair_stats.left_artist_id, pair_stats.right_artist_id,
                  pair_artifacts.source_key, pair_artifacts.snapshot_ref, pair_artifacts.sha256
-        """,
+        """),
         (
             settings.minimum_pair_support,
             settings.minimum_pair_windows,
@@ -367,11 +459,11 @@ def _hierarchy_edges(
                'wikidata:genre:' || child_identifier.normalized_value,
                'wikidata:genre:' || parent_identifier.normalized_value
         FROM genre_hierarchy AS hierarchy
-        JOIN modelable_music_genres AS qualified_child
+        JOIN _embed_music_genres AS qualified_child
           ON qualified_child.genre_id = hierarchy.child_genre_id
-        JOIN modelable_music_genres AS qualified_parent
+        JOIN _embed_music_genres AS qualified_parent
           ON qualified_parent.genre_id = hierarchy.parent_genre_id
-        JOIN provenance_records AS provenance
+        JOIN _embed_source_provenance AS provenance
           ON provenance.id = hierarchy.provenance_id
         JOIN active_rights_policy_permissions AS permission
           ON permission.policy_id = provenance.policy_id
@@ -426,8 +518,8 @@ def _genres(
         WITH eligible_genres AS (
           SELECT evidence.genre_id,
                  'catalog:artist-genre:' || min(evidence.id) AS evidence_ref
-          FROM normalizable_artist_genre_evidence AS evidence
-          JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
+          FROM _embed_direct_claims AS evidence
+          JOIN _embed_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = evidence.policy_id
            AND embed_permission.use_kind = 'embed'
@@ -457,7 +549,8 @@ def _genres(
           SELECT evidence.genre_id,
                  'catalog:album-genre:' || min(evidence.id) AS evidence_ref
           FROM normalizable_album_genre_memberships AS evidence
-          JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
+        JOIN _embed_source_provenance AS custody ON custody.id=evidence.provenance_id
+          JOIN _embed_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = evidence.policy_id
            AND embed_permission.use_kind = 'embed'
@@ -484,7 +577,8 @@ def _genres(
           SELECT evidence.genre_id,
                  'catalog:recording-genre:' || min(evidence.id) AS evidence_ref
           FROM normalizable_recording_genre_memberships AS evidence
-          JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
+        JOIN _embed_source_provenance AS custody ON custody.id=evidence.provenance_id
+          JOIN _embed_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = evidence.policy_id
            AND embed_permission.use_kind = 'embed'
@@ -519,8 +613,8 @@ def _genres(
                    hierarchy.relation_id, hierarchy.provenance_id
             FROM genre_hierarchy AS hierarchy
           ) AS endpoint
-          JOIN modelable_music_genres AS qualified ON qualified.genre_id = endpoint.genre_id
-          JOIN provenance_records AS provenance ON provenance.id = endpoint.provenance_id
+          JOIN _embed_music_genres AS qualified ON qualified.genre_id = endpoint.genre_id
+          JOIN _embed_source_provenance AS provenance ON provenance.id = endpoint.provenance_id
           JOIN active_rights_policy_permissions AS embed_permission
             ON embed_permission.policy_id = provenance.policy_id
            AND embed_permission.use_kind = 'embed'
@@ -614,8 +708,8 @@ def _metadata_candidates(
                   ORDER BY identifier.id LIMIT 1)
                ) AS genre_ref,
                min(evidence.id)
-        FROM normalizable_artist_genre_evidence AS evidence
-        JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
+        FROM _embed_direct_claims AS evidence
+        JOIN _embed_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = evidence.policy_id
          AND embed_permission.use_kind = 'embed'
@@ -683,7 +777,8 @@ def _metadata_candidates(
                ) AS genre_ref,
                min(evidence.id)
         FROM normalizable_album_genre_memberships AS evidence
-        JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
+        JOIN _embed_source_provenance AS custody ON custody.id=evidence.provenance_id
+        JOIN _embed_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = evidence.policy_id
          AND embed_permission.use_kind = 'embed'
@@ -749,7 +844,8 @@ def _metadata_candidates(
                ) AS genre_ref,
                min(evidence.id)
         FROM normalizable_recording_genre_memberships AS evidence
-        JOIN modelable_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
+        JOIN _embed_source_provenance AS custody ON custody.id=evidence.provenance_id
+        JOIN _embed_music_genres AS qualified ON qualified.genre_id = evidence.genre_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = evidence.policy_id
          AND embed_permission.use_kind = 'embed'
@@ -817,7 +913,7 @@ def _candidate_rows(rows: Iterable[sqlite3.Row]) -> tuple[MetadataCandidate, ...
 
 def _artifacts(connection: sqlite3.Connection) -> tuple[PublicArtifact, ...]:
     rows = connection.execute(
-        """
+        _embed_query("""
         SELECT DISTINCT source.source_key, provenance.snapshot_ref,
                         provenance.artifact_sha256,
                         EXISTS (
@@ -826,7 +922,7 @@ def _artifacts(connection: sqlite3.Connection) -> tuple[PublicArtifact, ...]:
                             AND export_permission.use_kind = 'export'
                             AND export_permission.decision = 'allow'
                         ) AS export_allowed
-        FROM provenance_records AS provenance
+        FROM _embed_source_provenance AS provenance
         JOIN data_sources AS source ON source.id = provenance.source_id
         JOIN active_rights_policy_permissions AS embed_permission
           ON embed_permission.policy_id = provenance.policy_id
@@ -848,7 +944,7 @@ def _artifacts(connection: sqlite3.Connection) -> tuple[PublicArtifact, ...]:
             )
           )
         ORDER BY source.source_key, provenance.snapshot_ref, provenance.artifact_sha256
-        """
+        """)
     )
     return tuple(
         PublicArtifact(

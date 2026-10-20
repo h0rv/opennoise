@@ -1,3 +1,4 @@
+# ruff: noqa: E501 -- Literal SQLite schema fixtures keep their field bindings visible.
 import sqlite3
 import unittest
 from unittest.mock import patch
@@ -35,6 +36,8 @@ def _catalog() -> sqlite3.Connection:
           method_key TEXT, policy_id INTEGER, provenance_id INTEGER
         );
         CREATE TABLE modelable_music_genres (genre_id INTEGER PRIMARY KEY);
+        CREATE TABLE genre_music_qualification_observations(
+            genre_id INTEGER,provenance_id INTEGER,policy_id INTEGER);
         CREATE TABLE normalizable_album_genre_memberships (
           id INTEGER, release_group_id INTEGER, genre_id INTEGER,
           evidence_kind TEXT, source_count INTEGER, source_family TEXT,
@@ -89,6 +92,7 @@ def _catalog() -> sqlite3.Connection:
           (7, 30, 'Q300 Deluxe', 1);
         INSERT INTO genres VALUES (20, 'Q100'), (21, 'Non-music Genre');
         INSERT INTO modelable_music_genres VALUES (20);
+        INSERT INTO genre_music_qualification_observations VALUES(20,1,1);
         INSERT INTO normalizable_artist_genre_evidence VALUES
           (1, 10, 20, 'direct_source_claim', 1.0, 'wikidata_music_slice',
            'Q10-P136-Q100', 'wikidata_p136', 1, 1),
@@ -105,6 +109,20 @@ def _catalog() -> sqlite3.Connection:
         INSERT INTO active_suppressions VALUES ('entity', '12', 'embed');
         """
     )
+    connection.executescript("""
+        CREATE TABLE source_snapshots(id INTEGER,source_id INTEGER,snapshot_ref TEXT,policy_id INTEGER);
+        CREATE TABLE source_artifacts(id INTEGER,snapshot_id INTEGER,sha256 TEXT,policy_id INTEGER);
+        INSERT INTO source_snapshots VALUES(1,1,'wd-1',1);
+        INSERT INTO source_artifacts VALUES(1,1,'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',1);
+        CREATE TABLE identifier_types(id INTEGER,type_key TEXT);
+        INSERT INTO identifier_types VALUES(1,'wikidata_genre_qid');
+        ALTER TABLE entity_identifiers ADD COLUMN identifier_type_id INTEGER;
+        UPDATE entity_identifiers SET identifier_type_id=1 WHERE entity_id=20 AND namespace='wikidata';
+        CREATE TABLE entity_claims(id INTEGER,entity_id INTEGER,provenance_id INTEGER,policy_id INTEGER,
+            claim_type TEXT,claim_key TEXT,normalized_value_json TEXT);
+        INSERT INTO entity_claims VALUES(1,10,1,1,'wikidata_relation','genre',
+            '{"target":{"namespace":"wikidata","value":"Q100"},"target_kind":"unresolved"}');
+    """)
     return connection
 
 
@@ -124,7 +142,8 @@ def _listenbrainz() -> sqlite3.Connection:
           staged_record_id INTEGER
         );
         CREATE TABLE artist_co_listen_runs (ingest_attempt_id INTEGER, artifact_id INTEGER);
-        CREATE TABLE source_artifacts (id INTEGER, policy_id INTEGER);
+        CREATE TABLE source_artifacts (id INTEGER, policy_id INTEGER, snapshot_id INTEGER, sha256 TEXT);
+        CREATE TABLE source_snapshots (id INTEGER,source_id INTEGER,snapshot_ref TEXT,policy_id INTEGER);
         CREATE TABLE provenance_records (
           id INTEGER, source_id INTEGER, policy_id INTEGER,
           snapshot_ref TEXT, artifact_sha256 TEXT
@@ -142,7 +161,8 @@ def _listenbrainz() -> sqlite3.Connection:
           1, 1, 1, 'lb-1',
           'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' || 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
         );
-        INSERT INTO source_artifacts VALUES (1, 1);
+        INSERT INTO source_artifacts VALUES (1, 1, 1, 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+        INSERT INTO source_snapshots VALUES(1,1,'lb-1',1);
         INSERT INTO artist_co_listen_runs VALUES (7, 1);
         INSERT INTO normalizable_artist_co_listen_evidence VALUES
           (7, 'musicbrainz:artist:11111111-1111-4111-8111-111111111111',
@@ -172,7 +192,7 @@ def _listenbrainz_v2(
         CREATE TABLE source_artifacts (
           id INTEGER, snapshot_id INTEGER, policy_id INTEGER, sha256 TEXT
         );
-        CREATE TABLE source_snapshots (id INTEGER, source_id INTEGER, snapshot_ref TEXT);
+        CREATE TABLE source_snapshots (id INTEGER, source_id INTEGER, snapshot_ref TEXT, policy_id INTEGER);
         CREATE TABLE provenance_records (
           id INTEGER, source_id INTEGER, policy_id INTEGER, snapshot_ref TEXT, artifact_sha256 TEXT
         );
@@ -193,7 +213,7 @@ def _listenbrainz_v2(
         ((source_id, "listenbrainz_joint_20260824_20260830"),),
     )
     connection.executemany(
-        "INSERT INTO source_snapshots VALUES (?, ?, ?)", ((artifact_id, source_id, snapshot),)
+        "INSERT INTO source_snapshots VALUES (?, ?, ?, ?)", ((artifact_id, source_id, snapshot, 1),)
     )
     connection.executemany(
         "INSERT INTO source_artifacts VALUES (?, ?, ?, ?)",
@@ -219,7 +239,7 @@ def _listenbrainz_v2_multi_artifact() -> sqlite3.Connection:
     alpha_sha = "c" * 64
     connection.executemany("INSERT INTO data_sources VALUES (?, ?)", ((2, "listenbrainz_alpha"),))
     connection.executemany(
-        "INSERT INTO source_snapshots VALUES (?, ?, ?)", ((2, 2, "alpha snapshot/one"),)
+        "INSERT INTO source_snapshots VALUES (?, ?, ?, ?)", ((2, 2, "alpha snapshot/one", 1),)
     )
     connection.executemany(
         "INSERT INTO source_artifacts VALUES (?, ?, ?, ?)", ((2, 2, 1, alpha_sha),)
@@ -245,7 +265,7 @@ def _listenbrainz_v2_over_ref_limit() -> sqlite3.Connection:
         artifact_sha = f"{index:064x}"
         connection.execute("INSERT INTO data_sources VALUES (?, ?)", (index, source_key))
         connection.execute(
-            "INSERT INTO source_snapshots VALUES (?, ?, ?)", (index, index, snapshot_ref)
+            "INSERT INTO source_snapshots VALUES (?, ?, ?, ?)", (index, index, snapshot_ref, 1)
         )
         connection.execute(
             "INSERT INTO source_artifacts VALUES (?, ?, ?, ?)", (index, index, 1, artifact_sha)
