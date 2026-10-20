@@ -1,4 +1,4 @@
-"""Read-only, source-qualified eligibility for public membership exports.
+"""Read-only, source-qualified metadata custody for public export and display.
 
 Claim suppression refs are explicitly namespaced in the v2 adapter contract.
 No bare numeric claim ID is interpreted as either of the independent tables.
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     import sqlite3
@@ -33,24 +33,36 @@ def _validate_identifier(value: str, type_key: str, namespace: str) -> None:
 
 
 class ExportEligibility:
-    """Share suppression and provenance checks for exactly selected export rows."""
+    """Share source custody checks with explicit use permissions; export remains default."""
 
     def __init__(
-        self, connection: sqlite3.Connection, source_families: tuple[tuple[str, str], ...]
+        self,
+        connection: sqlite3.Connection,
+        source_families: tuple[tuple[str, str], ...] | None,
+        *,
+        use_kind: Literal["export", "display"] = "export",
     ) -> None:
-        """Freeze active export suppressions for this read-only adaptation."""
+        """Freeze active suppressions for the explicit use in this read-only operation."""
+        if use_kind not in ("export", "display"):
+            raise ValueError("unsupported metadata eligibility use")
+        if use_kind == "export" and source_families is None:
+            raise ValueError("export eligibility requires declared source families")
+        self.use_kind = use_kind
         self.connection = connection
         self.source_families = source_families
         self.suppressed = {
             (str(row[0]), str(row[1]))
             for row in connection.execute(
                 "SELECT target_kind,target_ref FROM active_suppressions "
-                "WHERE use_kind IN ('all','export')"
+                "WHERE use_kind IN ('all',?)",
+                (use_kind,),
             )
         }
         for kind, ref in self.suppressed:
-            if kind == "claim" and not re.fullmatch(
-                r"(?:entity_claims|artist_genre_evidence):[1-9][0-9]*", ref
+            if (
+                use_kind == "export"
+                and kind == "claim"
+                and not re.fullmatch(r"(?:entity_claims|artist_genre_evidence):[1-9][0-9]*", ref)
             ):
                 raise ValueError("unsupported or ambiguous export claim suppression reference")
         self._identities: set[tuple[str, str, str]] = set()
@@ -61,7 +73,7 @@ class ExportEligibility:
         return (kind, str(value)) in self.suppressed
 
     def chain(self, provenance_id: int) -> dict[str, object] | None:
-        """Return one exact CC0/exportable source chain, or no eligible observation."""
+        """Return one exact CC0 source chain authorized for the selected use."""
         if provenance_id in self._chains:
             return self._chains[provenance_id]
         rows = self.connection.execute(
@@ -80,8 +92,8 @@ class ExportEligibility:
                     AND s.license_name='CC0-1.0'
                     AND EXISTS(SELECT 1 FROM active_rights_policy_permissions permission
                         WHERE permission.policy_id=p.policy_id
-                        AND permission.use_kind='export' AND permission.decision='allow')""",
-            (provenance_id,),
+                        AND permission.use_kind=? AND permission.decision='allow')""",
+            (provenance_id, self.use_kind),
         ).fetchall()
         eligible: list[dict[str, object]] = [
             dict(row)
@@ -99,7 +111,7 @@ class ExportEligibility:
         if len(eligible) > 1:
             raise ValueError("export observation resolves to ambiguous source artifacts")
         result = eligible[0] if eligible else None
-        if result is not None:
+        if result is not None and self.source_families is not None:
             families = {
                 family
                 for prefix, family in self.source_families
@@ -214,9 +226,9 @@ class ExportEligibility:
     def name(self, entity_id: int) -> tuple[str, dict[str, object]] | None:
         """Choose a deterministic eligible source name, never the catalog default."""
         rows = self.connection.execute(
-            """SELECT name,provenance_id FROM exportable_entity_names WHERE entity_id=?
+            f"""SELECT name,provenance_id FROM {self.use_kind}able_entity_names WHERE entity_id=?
                ORDER BY is_preferred DESC,CASE name_kind WHEN 'primary' THEN 0 ELSE 1 END,
-                        language_tag,name,provenance_id,id""",
+                        language_tag,name,provenance_id,id""",  # noqa: S608 -- Validated display/export enum.
             (entity_id,),
         )
         for row in rows:

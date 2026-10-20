@@ -431,3 +431,15 @@ No new acquisition, model fitting, hierarchy, default/UI change or research-data
 promotion participates. Local checks and independent proofs are recorded in the
 recipe/results and this slice's PR; prior negative research findings and reserved
 style fold remain unchanged.
+
+The [genre navigation metadata fix](../../data/recipes/cc0-navigation-genre-metadata-20261019/README.md)
+closes a separate source-label disclosure gap exposed by the full CC0 cohort.
+All own English name provenance could be display-suppressed while the backend
+continued returning raw `genres.name`. Genre labels and QID links now use their
+own display-authorized CC0 provenance/snapshot/artifact chain, with explicit typed
+identifier labels when supported. The exporter retains its original default use
+and v2 serialization. The 433-artist/151-genre/278-fact/580-directed-link source
+relationships remain unchanged; cached labels are not authority. Claim-view
+snapshot/artifact/claim-reference suppression coverage is a separate remaining
+boundary, not something this metadata fix claims to complete. No UI/defaults,
+model fitting, acquisition or research-source promotion participates; cost is $0.

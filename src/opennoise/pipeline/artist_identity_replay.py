@@ -85,9 +85,37 @@ def _policy(connection: sqlite3.Connection) -> tuple[int, int]:
 
 
 def _wikidata(
-    connection: sqlite3.Connection, selected: list[dict[str, Any]], manifest: dict[str, Any]
+    connection: sqlite3.Connection,
+    selected: list[dict[str, Any]],
+    manifest: dict[str, Any],
+    manifest_sha256: str,
 ) -> None:
     source, policy = _policy(connection)
+    snapshot = connection.execute(
+        """INSERT INTO source_snapshots(source_id,snapshot_ref,snapshot_kind,
+           manifest_sha256,acquired_at,policy_id) VALUES(?,?,'single_artifact',?,?,?)""",
+        (
+            source,
+            "retained:" + manifest["acquired_utc"],
+            manifest_sha256,
+            manifest["acquired_utc"],
+            policy,
+        ),
+    ).lastrowid
+    for batch in manifest["batches"]:
+        connection.execute(
+            """INSERT INTO source_artifacts(snapshot_id,artifact_ref,logical_name,
+               media_type,byte_size,sha256,vault_key,policy_id)
+               VALUES(?,?,'Retained raw Wikidata response','application/json',?,?,?,?)""",
+            (
+                snapshot,
+                batch["raw_path"],
+                batch["response_bytes"],
+                batch["response_sha256"],
+                batch["response_sha256"],
+                policy,
+            ),
+        )
     for row in selected:
         batch = next(
             b for b in manifest["batches"] if row["musicbrainz_artist_id"] in b["requested_mbids"]
@@ -182,13 +210,14 @@ def _normalized_graph(connection: sqlite3.Connection) -> dict[str, Any]:
     return {"crosswalks": qids, "claims": claims, "ordered_native_credits": credit_rows}
 
 
-def _build(
+def _build(  # noqa: PLR0913 -- Explicit verified manifest custody accompanies source projections.
     path: Path,
     source: PortableMusicBrainzCreditSource,
     selected: list[dict[str, Any]],
     manifest: dict[str, Any],
     *,
     wikidata_first: bool,
+    manifest_sha256: str,
 ) -> dict[str, Any]:
     hydration = MusicBrainzReleaseHydrationArtifact.model_validate_json(
         source.hydration_artifact_json
@@ -210,10 +239,10 @@ def _build(
             connection, source.credit_artifact_sha256, source.hydration_artifact_sha256
         )
         if wikidata_first:
-            _wikidata(connection, selected, manifest)
+            _wikidata(connection, selected, manifest, manifest_sha256)
         native_credits._persist_credits(connection, relations, prov)
         if not wikidata_first:
-            _wikidata(connection, selected, manifest)
+            _wikidata(connection, selected, manifest, manifest_sha256)
         graph = _normalized_graph(connection)
         counts = {
             table: connection.execute("SELECT count(*) FROM " + table).fetchone()[0]  # noqa: S608 -- closed constant table names.
@@ -310,7 +339,12 @@ def replay(
         for first in (False, True):
             name = "wikidata-first" if first else "musicbrainz-first"
             orders[name] = _build(
-                staging / (name + ".sqlite"), source, selected, manifest, wikidata_first=first
+                staging / (name + ".sqlite"),
+                source,
+                selected,
+                manifest,
+                wikidata_first=first,
+                manifest_sha256=digest(cultural_pack / "manifest.json"),
             )
         if (
             orders["musicbrainz-first"]["normalized_graph"]
@@ -355,6 +389,8 @@ def replay(
             Path(__file__).parents[1] / "catalog/artists.py",
             Path(__file__).parents[1] / "catalog/musicbrainz.py",
             Path(__file__).parents[1] / "models/catalog.py",
+            Path(__file__).parents[1] / "serving/public/artist_navigation_store.py",
+            Path(__file__).parents[1] / "serving/public/membership_export_eligibility.py",
             Path(native_credits.__file__),
             Path(__file__).parents[3] / "scripts/replay_cc0_artist_identity.py",
         )

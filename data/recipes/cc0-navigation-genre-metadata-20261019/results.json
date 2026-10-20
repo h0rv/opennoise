@@ -1,0 +1,97 @@
+{
+  "revision": "cc0-navigation-genre-metadata-v1",
+  "base_main": "d418cb41319dd70c5cd15b0e050665906f038e14",
+  "scope": "Genre label and exact-QID link metadata display custody only; source claim view/relationships unchanged. No inferred membership, recommendation, classification, hierarchy, acquisition, model fit, UI or deployment.",
+  "attribution": "MusicBrainz and Wikidata contributors",
+  "source_license": "CC0-1.0",
+  "inputs": "Complete verified retained CC0 cultural catalog; see cc0-cultural-catalog-20261019 recipe.",
+  "implementation_sha256": {
+    "src/opennoise/serving/public/artist_navigation_store.py": "8edb6e3b132d16845d4a9ee16cb68646570b4a6c830890bfdd75bc49999a4a92",
+    "src/opennoise/serving/public/membership_export_eligibility.py": "9a9b904f4069f0d89e3b7d2c5f855ec77be6fbcd8cd5f9010de54a8ec25ff218",
+    "src/opennoise/pipeline/artist_identity_replay.py": "050cb176bdfdef38ce88c68541e5b849a9cdb4f7a596d797d98fe8da72dabbc6"
+  },
+  "before_reproduction": {
+    "evidence_path": "/workspace/full-cultural-catalog-20261019/navigation-label-gap/repro.json",
+    "binding": {
+      "sha256": "0cd11980908d0986e31acad18bce4555dc190c5a632644b201d4ffe8e1f826d9",
+      "bytes": 255
+    },
+    "observations": {
+      "genre_id": 2685,
+      "suppressed_name": "rock music",
+      "display_authorized_names_after": 0,
+      "eligible_claim_count_before": 6,
+      "eligible_claim_count_after": 6,
+      "actual_public_label_after": "rock music",
+      "confirmed_existing_backend_gap": true
+    }
+  },
+  "retained_cohort_validation": {
+    "artists": 433,
+    "genres": 151,
+    "source_english_names": 150,
+    "identifier_labels": 1,
+    "direct_artist_genre_facts": 278,
+    "raw_p136_observations": 287,
+    "directed_co_genre_links": 580,
+    "source_claims_and_relationships_unchanged": true
+  },
+  "validation": {
+    "focused_tests": 44,
+    "focused_skips": 1,
+    "lint": "passed",
+    "types": "passed",
+    "full_check": "final compatibility rerun pending",
+    "independent_luna_tests": 13,
+    "independent_luna_review": "passed at exact implementation hashes",
+    "initial_full_check": "Failed two integrations: legacy seven-overlap source replay lacked snapshot/raw-artifact inventory; strict display denied unbound genre IDs. Corrected producer custody; no authorization relaxation.",
+    "compatibility_review": "Luna accepted exact050cb legacy replay delta; nav/helper hashes unchanged"
+  },
+  "acquisitions": 0,
+  "fits": 0,
+  "new_external_cost_usd": 0,
+  "independent_guarded_api": {
+    "evidence_path": "/workspace/navigation-metadata-20261019/final-proof/proof.json",
+    "binding": {
+      "sha256": "c9ee060349b254c7f2befb9730f9b91d7b9c6b370e22a27e30264b786d076a31",
+      "bytes": 1606
+    },
+    "input_source_sha256": "e3f5d00d5e73ee347caf2c3b7dc280e51a0d03ecebc321861c8394bd6287e7cf",
+    "raw_oracle_sha256": "5b0e5f2360ecfdbb1cc26d643987d10aadf50d0ab842b633ddb62036d3b0bc36",
+    "active_denial_probes": 5,
+    "production_forbidden_operations": 0,
+    "variants": {
+      "baseline": 8.000312578000376,
+      "raw-defaults-poisoned": 8.114355278001312,
+      "own-names-suppressed": 10.690627279000182
+    },
+    "baseline_and_poisoned_payload_sha256": "763ec96a8e32933eb34ac994c931bcd751a59bf6a59f618c971498f46c35c529",
+    "own_names_suppressed_payload_sha256": "4837a5115ab75c1ed9f45b1f0a9d353515e36d0ce2a9b945a33efa91fa09b4d1",
+    "all_433_artists_151_genres_278_facts_580_directed_links_checked_each_variant": true,
+    "all_151_qid_links_checked_each_variant": true,
+    "direct_peer_coverage": "Dedicated migrated fixture integration test; no published direct profile installed in source catalog."
+  },
+  "legacy_compatible_custody_proof": {
+    "guarded_cli": {
+      "evidence_path": "/workspace/navigation-metadata-20261019/legacy-compatible-proof/proof.json",
+      "sha256": "097da75532d4f331c5cf84d713a3af82fe77f45ed108eca0cbf5cb90601f5913",
+      "bytes": 2701
+    },
+    "independent_raw_credit_sql": {
+      "evidence_path": "/workspace/navigation-metadata-20261019/legacy-compatible-proof/build/independent-sql-oracle.json",
+      "sha256": "62bbb4628ab6f466837ea5a77000a08610cc9b3883673cb316fb97ba568ec5e3",
+      "bytes": 1930
+    },
+    "independent_exact_inventory": {
+      "evidence_path": "/workspace/navigation-metadata-20261019/legacy-compatible-proof/independent-custody-oracle.json",
+      "sha256": "c90a873ca62c498a6e91c5a793f8dd48b51828ae8571946214c830b1fb26f70f",
+      "bytes": 542
+    },
+    "normalized_graph_sha256": "b726a1c3094b1b5cb77621eb8f465095624a715354d568710679e42ad01cc038",
+    "direct_facts": 40,
+    "ordered_credit_tuples": 1344,
+    "five_active_denial_probes_passed": true,
+    "production_forbidden_operations": 0,
+    "all40metadata_own_chains_checked": true
+  }
+}

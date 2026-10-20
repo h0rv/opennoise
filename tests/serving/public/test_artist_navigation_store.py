@@ -74,11 +74,31 @@ def _fixture(path: Path) -> None:
     with closing(sqlite3.connect(path)) as connection:
         connection.executescript(
             """
+            CREATE TABLE active_suppressions(target_kind TEXT,target_ref TEXT,use_kind TEXT);
+            CREATE TABLE catalog_entities(id INTEGER,entity_kind TEXT);
+            INSERT INTO catalog_entities VALUES(10,'genre'),(20,'genre'),(30,'genre');
+            CREATE TABLE rights_policies(id INTEGER,policy_key TEXT,policy_version INTEGER,
+                classification TEXT,local_only INTEGER);
+            INSERT INTO rights_policies VALUES(1,'fixture',1,'public_domain',0);
+            CREATE TABLE active_rights_policy_permissions(policy_id INTEGER,use_kind TEXT,decision TEXT);
+            INSERT INTO active_rights_policy_permissions VALUES(1,'display','allow');
+            CREATE TABLE data_sources(id INTEGER,source_key TEXT,license_name TEXT);
+            INSERT INTO data_sources VALUES(1,'fixture','CC0-1.0');
+            CREATE TABLE source_snapshots(id INTEGER,source_id INTEGER,snapshot_ref TEXT,
+                policy_id INTEGER,manifest_sha256 TEXT);
+            INSERT INTO source_snapshots VALUES(1,1,'fixture',1,'manifest');
+            CREATE TABLE source_artifacts(id INTEGER,snapshot_id INTEGER,sha256 TEXT,
+                policy_id INTEGER,artifact_ref TEXT);
+            INSERT INTO source_artifacts VALUES(1,1,'artifact',1,'fixture');
+            CREATE TABLE provenance_records(id INTEGER,source_id INTEGER,policy_id INTEGER,
+                snapshot_ref TEXT,artifact_sha256 TEXT);
+            INSERT INTO provenance_records VALUES(1,1,1,'fixture','artifact');
             CREATE TABLE artists (id INTEGER PRIMARY KEY);
             CREATE TABLE genres (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
             CREATE TABLE displayable_entity_names (
                 id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL, name TEXT NOT NULL,
-                is_preferred INTEGER NOT NULL
+                is_preferred INTEGER NOT NULL, name_kind TEXT DEFAULT 'primary',
+                language_tag TEXT DEFAULT 'en', provenance_id INTEGER DEFAULT 1
             );
             CREATE TABLE displayable_artist_genre_evidence (
                 id INTEGER PRIMARY KEY, artist_id INTEGER NOT NULL, genre_id INTEGER NOT NULL,
@@ -93,7 +113,8 @@ def _fixture(path: Path) -> None:
             CREATE TABLE identifier_types (id INTEGER PRIMARY KEY, type_key TEXT NOT NULL);
             CREATE TABLE entity_identifiers (
                 id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL, identifier_type_id INTEGER NOT NULL,
-                normalized_value TEXT NOT NULL
+                normalized_value TEXT NOT NULL, namespace TEXT DEFAULT 'wikidata',
+                provenance_id INTEGER DEFAULT 1
             );
             CREATE TABLE displayable_public_genre_neighbors (
                 genre_id INTEGER NOT NULL, neighbor_genre_id INTEGER NOT NULL,
@@ -102,8 +123,9 @@ def _fixture(path: Path) -> None:
             );
             INSERT INTO artists VALUES (1), (2), (3), (4);
             INSERT INTO genres VALUES (10, 'Rock'), (20, 'Jazz'), (30, 'Unsupported');
-            INSERT INTO displayable_entity_names VALUES
-                (1, 1, 'Alpha', 1), (2, 2, 'Beta', 1), (3, 3, 'Gamma', 1), (4, 4, 'Orphan', 1);
+            INSERT INTO displayable_entity_names(id,entity_id,name,is_preferred) VALUES
+                (1, 1, 'Alpha', 1), (2, 2, 'Beta', 1), (3, 3, 'Gamma', 1), (4, 4, 'Orphan', 1),
+                (10,10,'Rock',1), (20,20,'Jazz',1), (30,30,'Unsupported',1);
             INSERT INTO displayable_artist_genre_evidence VALUES
                 (1, 1, 10, 'fixture:direct', 'alpha-rock', 'fixture_direct', '1', 1, 'direct_source_claim'),
                 (2, 1, 20, 'fixture:direct', 'alpha-jazz', 'fixture_direct', '1', 1, 'direct_source_claim'),
@@ -113,7 +135,7 @@ def _fixture(path: Path) -> None:
                 (6, 4, 10, 'fixture:propagated', 'orphan-rock', 'propagated', '1', 4, 'release_group_propagation');
             INSERT INTO artist_genre_evidence VALUES (99, 4, 10, 'review_anchor');
             INSERT INTO identifier_types VALUES (1, 'wikidata_genre_qid');
-            INSERT INTO entity_identifiers VALUES (1, 10, 1, 'Q10');
+            INSERT INTO entity_identifiers(id,entity_id,identifier_type_id,normalized_value) VALUES (1, 10, 1, 'Q10');
             INSERT INTO displayable_public_genre_neighbors VALUES
                 (10, 20, 'direct', 'weighted_jaccard', 0.5, 2, 1),
                 (10, 30, 'one_hop', 'weighted_jaccard', 0.9, 4, 1),
