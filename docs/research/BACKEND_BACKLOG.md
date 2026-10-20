@@ -510,3 +510,17 @@ aliases do not rescue it. No global owner reconciliation or identity repair is
 claimed. This uses explicitly synthetic qualified contracts without acquisitions,
 model fitting, research promotion, UI/default changes or cost. Prior negative
 research and reserved style fold4 remain intact.
+
+The [selected-provider ownership gate](../../data/recipes/embed-identity-ownership-20261020/README.md)
+rejects selected model keys with ambiguous raw owners or contradictory identities
+inside their selected provider family. Hidden/denied owners can veto but never
+supply outputs. Artist-only legacy MusicBrainz aliases and globally typed Wikidata
+QIDs have explicit semantics; different MusicBrainz kind-qualified keys do not
+collide merely through shared UUID text. Required keys fail closed and optional
+representatives omit before bounds, without selection/repair/schema changes.
+Independent 146-control source-use checks pass and the retained CC0 catalog keeps
+all 1,790 eligible kind refs unchanged (no new qualification or complete model
+load). Indexed owner lookup preserves batched scaling. Other-provider conflicts,
+reconciliation and persisted-model invalidation remain separate. No fitting,
+acquisition, research promotion, UI/default change or cost; failed research and
+reserved style fold4 remain intact.

@@ -1,0 +1,86 @@
+{
+  "scope": "Selected-provider ownership gate; no global identity repair, other-provider consistency certification, source qualification or model-quality claim.",
+  "implementation_sha256": "f62a3b0996f1abe911898092993c44a353e20b4f3028267c70dd4eea18c3da27",
+  "evidence": {
+    "source-observations.json": {
+      "path": "/workspace/embed-identity-ownership-20261020/source-observations.json",
+      "sha256": "9bb73b7efea10f61b2a88848529b322e0136983276e35051ea5037e5e436f8ca"
+    },
+    "source-proof.json": {
+      "path": "/workspace/embed-identity-ownership-20261020/source-proof.json",
+      "sha256": "28a4171047549a7f08dc6db52781f5a413966dd7de0225a76d4b3972b1d9f149"
+    },
+    "retained-census.json": {
+      "path": "/workspace/embed-identity-ownership-20261020/retained-census.json",
+      "sha256": "7fc5ac32a331d2ed4276acf8afc2e0a8b1b9103778c5fdcfc0aac26619c877eb"
+    },
+    "retained-gate-source.json": {
+      "path": "/workspace/embed-identity-ownership-20261020/retained-gate-source.json",
+      "sha256": "edc81232af0721163181dca02df14e74b42fac4fcbc09cf222204f8bb018f272"
+    },
+    "benchmark-source.json": {
+      "path": "/workspace/embed-identity-ownership-20261020/benchmark-source.json",
+      "sha256": "da4a3b29c8d8e30a43be910e7ec367773346ddce5e809b77eb09e6aa894f4ffa"
+    },
+    "benchmark-4000.json": {
+      "path": "/workspace/embed-identity-ownership-20261020/benchmark-4000.json",
+      "sha256": "653300888b34992aef40b66bdcc0fcd39a0e98ec178caed79ee210c83b343dac"
+    }
+  },
+  "checks": {
+    "focused_tests": 51,
+    "python_tests": 2403,
+    "python_elapsed_seconds": 208.018,
+    "python_skips": 36,
+    "node_pass": 122,
+    "node_skips": 44,
+    "format_lint_types": "passed",
+    "full_log": "/tmp/embed-ownership-full-check.log"
+  },
+  "model_fits": 0,
+  "acquisitions": 0,
+  "new_external_cost_usd": 0,
+  "independent_controls": {
+    "total": 146,
+    "old_failures_fixed": 82,
+    "positive_complete_payloads_equal": 64,
+    "required_rejections": 46,
+    "optional_only_role_omitted": 36,
+    "active_denial_probes": 4,
+    "forbidden_operations": 0
+  },
+  "retained_positive": {
+    "all_identifier_rows": 3207,
+    "recognized_typed_observations": 3113,
+    "conflicts": 0,
+    "distinct_eligible_kind_refs": 1790,
+    "rows_sha256": "09d51c9f5fbc7428c0044b882f4e33bd403ce5ed895a00cc6504fdbe80c39148",
+    "scope": "Identity gate only; no new qualification or complete model load."
+  },
+  "stress": [
+    {
+      "scope": "Production-type-prefix plus entity-index synthetic distinct-key loader stress; descriptive executor timings, not a production benchmark or model-quality result",
+      "module_sha256": "f62a3b0996f1abe911898092993c44a353e20b4f3028267c70dd4eea18c3da27",
+      "script_sha256": "33bcc4cc5ff52db7d80edb3edd05457eb81127fb258a2f5044866642d6a1bf9d",
+      "additional_distinct_artists": 2000,
+      "direct_memberships": 2001,
+      "sql_statement_count": 18,
+      "seconds": 0.20612969500143663,
+      "forbidden_operations": [],
+      "model_fits": 0,
+      "new_external_cost_usd": 0
+    },
+    {
+      "scope": "Production-type-prefix plus entity-index synthetic distinct-key loader stress; descriptive executor timings, not a production benchmark or model-quality result",
+      "module_sha256": "f62a3b0996f1abe911898092993c44a353e20b4f3028267c70dd4eea18c3da27",
+      "script_sha256": "33bcc4cc5ff52db7d80edb3edd05457eb81127fb258a2f5044866642d6a1bf9d",
+      "additional_distinct_artists": 4000,
+      "direct_memberships": 4001,
+      "sql_statement_count": 26,
+      "seconds": 0.2911910809998517,
+      "forbidden_operations": [],
+      "model_fits": 0,
+      "new_external_cost_usd": 0
+    }
+  ]
+}

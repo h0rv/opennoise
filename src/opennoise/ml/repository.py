@@ -191,6 +191,46 @@ _embed_identifiers AS (
       AND length(replace(identifier.normalized_value,'-',''))=32
       AND replace(identifier.normalized_value,'-','') NOT GLOB '*[^0-9a-f]*')
   ) AND NOT EXISTS (
+    SELECT 1 FROM entity_identifiers AS owner
+    JOIN identifier_types AS owner_type ON owner_type.id=owner.identifier_type_id
+    LEFT JOIN catalog_entities AS owner_entity ON owner_entity.id=owner.entity_id
+    WHERE owner.identifier_type_id IN (
+        SELECT candidate_type.id FROM identifier_types AS candidate_type
+        WHERE (identifier.namespace='musicbrainz' AND (
+                candidate_type.type_key=type.type_key
+                OR (entity.entity_kind='artist' AND candidate_type.type_key='source_id')))
+          OR (identifier.namespace='wikidata' AND (candidate_type.type_key='wikidata_qid'
+                OR candidate_type.type_key GLOB 'wikidata_*_qid'))
+      )
+      AND owner.namespace=identifier.namespace
+      AND owner.normalized_value=identifier.normalized_value
+      AND ((identifier.namespace='musicbrainz'
+              AND (owner_type.type_key=type.type_key
+                OR (entity.entity_kind='artist' AND owner_entity.entity_kind='artist'
+                  AND owner_type.type_key='source_id')))
+        OR (identifier.namespace='wikidata' AND (owner_type.type_key='wikidata_qid'
+              OR owner_type.type_key GLOB 'wikidata_*_qid')))
+      AND (owner.entity_id<>identifier.entity_id
+        OR owner_entity.entity_kind IS NOT entity.entity_kind
+        OR (identifier.namespace='wikidata'
+            AND owner_type.type_key NOT IN (type.type_key,'wikidata_qid')))
+  ) AND NOT EXISTS (
+    SELECT 1 FROM entity_identifiers AS sibling
+    JOIN identifier_types AS sibling_type ON sibling_type.id=sibling.identifier_type_id
+    WHERE sibling.entity_id=identifier.entity_id
+      AND ((identifier.namespace='musicbrainz' AND (
+              sibling_type.type_key GLOB 'musicbrainz_*_id'
+              OR (entity.entity_kind='artist' AND sibling_type.type_key='source_id'
+                AND sibling.namespace='musicbrainz')))
+        OR (identifier.namespace='wikidata' AND (sibling_type.type_key='wikidata_qid'
+              OR sibling_type.type_key GLOB 'wikidata_*_qid')))
+      AND (sibling.namespace IS NOT identifier.namespace
+        OR sibling.normalized_value IS NOT identifier.normalized_value
+        OR (sibling_type.type_key IS NOT type.type_key
+          AND NOT (identifier.namespace='musicbrainz' AND entity.entity_kind='artist'
+            AND sibling_type.type_key='source_id')
+          AND NOT (identifier.namespace='wikidata' AND sibling_type.type_key='wikidata_qid')))
+  ) AND NOT EXISTS (
     SELECT 1 FROM active_suppressions AS suppression
     WHERE suppression.use_kind IN ('all','embed') AND suppression.target_kind='entity'
       AND suppression.target_ref=CAST(identifier.entity_id AS TEXT)
