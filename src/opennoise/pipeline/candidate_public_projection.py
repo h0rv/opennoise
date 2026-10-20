@@ -10,7 +10,7 @@ import sqlite3
 import tempfile
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 from urllib.parse import quote
 
 from pydantic import Field
@@ -35,7 +35,7 @@ from opennoise.pipeline.release_manifest import load_release_manifest
 from opennoise.pipeline.source_vault_replay import HistoricalDeclarationCombinedReplayReport
 from opennoise.types import Sha256  # noqa: TC001
 
-_CANDIDATE_SCHEMA_VERSION = 12
+_SUPPORTED_CANDIDATE_SCHEMA_VERSIONS = (12, 13)
 _SOURCE_ARTIFACT_COUNT = 62
 _V2_RECEIPT_REVISION = "phase3-candidate-public-projection-v2"
 _V3_RECEIPT_REVISION = "phase3-candidate-public-projection-v3"
@@ -132,7 +132,7 @@ class CandidatePublicProjectionV2Report(FrozenModel):
     historical_candidate_binding_sha256: Sha256
     replay_receipt_sha256: Sha256
     candidate_sha256: Sha256
-    candidate_schema_version: Literal[12] = 12
+    candidate_schema_version: Literal[12, 13] = 12
     source_artifact_count: Literal[62] = 62
     source_artifact_set_sha256: Sha256
     input_load_settings: dict[str, Any]
@@ -164,7 +164,7 @@ class CandidatePublicProjectionV3Report(FrozenModel):
     historical_candidate_binding_sha256: Sha256
     replay_receipt_sha256: Sha256
     candidate_sha256: Sha256
-    candidate_schema_version: Literal[12] = 12
+    candidate_schema_version: Literal[12, 13] = 12
     source_artifact_count: Literal[62] = 62
     source_artifact_set_sha256: Sha256
     input_load_settings: dict[str, Any]
@@ -412,8 +412,10 @@ def _verify_candidate_boundary(
         raise CandidatePublicProjectionError(
             "replay receipt does not bind the requested candidate database"
         )
-    if receipt.database_schema_version != _CANDIDATE_SCHEMA_VERSION:
-        raise CandidatePublicProjectionError("replay receipt is not for a schema-12 candidate")
+    if receipt.database_schema_version not in _SUPPORTED_CANDIDATE_SCHEMA_VERSIONS:
+        raise CandidatePublicProjectionError(
+            "replay receipt is not for a supported schema-12/13 candidate"
+        )
     manifest_source_artifacts = _manifest_source_artifacts(manifest)
     manifest_hashes = {artifact_hash for _source_key, artifact_hash in manifest_source_artifacts}
     if _receipt_artifact_hashes(receipt) != manifest_hashes:
@@ -437,8 +439,10 @@ def _verify_candidate_boundary(
         _verify_candidate_policy_provenance(connection, manifest)
     if integrity is None or integrity[0] != "ok":
         raise CandidatePublicProjectionError("candidate database integrity check failed")
-    if version is None or int(version[0]) != _CANDIDATE_SCHEMA_VERSION:
-        raise CandidatePublicProjectionError("candidate database is not schema 12")
+    if version is None or int(version[0]) != receipt.database_schema_version:
+        raise CandidatePublicProjectionError(
+            "candidate database schema does not match replay receipt"
+        )
     if actual_source_artifacts != manifest_source_artifacts:
         raise CandidatePublicProjectionError(
             "candidate source-key/artifact hashes do not match the release manifest"
@@ -879,7 +883,7 @@ def project_candidate_public_model(
             ),
             replay_receipt_sha256=settings.expected_replay_receipt_sha256,
             candidate_sha256=candidate_sha256,
-            candidate_schema_version=_CANDIDATE_SCHEMA_VERSION,
+            candidate_schema_version=cast("Literal[12, 13]", receipt.database_schema_version),
             model_input_sha256=artifact.input_sha256,
             model_settings_sha256=artifact.settings_sha256,
             model_logical_sha256=artifact.output_sha256,
@@ -952,6 +956,7 @@ def project_candidate_public_model_v2(
         _checkpoint_database(staged_database)
         _verify_projected_database(staged_database)
         report = CandidatePublicProjectionV2Report(
+            candidate_schema_version=cast("Literal[12, 13]", receipt.database_schema_version),
             release_id=receipt.release_id,
             manifest_sha256=manifest_sha256,
             historical_candidate_binding_sha256=settings.expected_historical_candidate_binding_sha256,
@@ -1032,6 +1037,7 @@ def project_candidate_public_model_v3(
         _checkpoint_database(staged_database)
         _verify_projected_database(staged_database)
         report = CandidatePublicProjectionV3Report(
+            candidate_schema_version=cast("Literal[12, 13]", receipt.database_schema_version),
             release_id=receipt.release_id,
             manifest_sha256=manifest_sha256,
             historical_candidate_binding_sha256=settings.expected_historical_candidate_binding_sha256,

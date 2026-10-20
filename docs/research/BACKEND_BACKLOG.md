@@ -462,3 +462,16 @@ instrument result and source/relevance limitations remain unchanged. This slice
 adds no source acquisition, public/default/UI change or cost; any future model
 experiment requires a separately reviewed prospective contract, not a rescue
 rerun of this frozen study.
+
+The [direct-claim source-use fix](../../data/recipes/direct-claim-suppression-20261020/README.md)
+closes a demonstrated ordinary navigation and normalization bug: direct evidence
+survived snapshot/artifact and exact claim-reference suppression. Schema13 honors
+matching registered custody and exact namespaced claims before direct traversal,
+pagination and materialization. Display-only and normalize-only are separate;
+all affects both, and release restores the unchanged278-fact/287-observation
+CC0 cohort. Existing schema12 sealed candidate readers remain supported without
+rewriting inputs; fresh mutable catalogs use13. Missing-inventory, license and
+propagated-evidence behavior remain unchanged. Persisted derived-model invalidation
+for claim references remains a separate boundary. This slice uses no model fitting,
+source acquisition, research-data promotion, UI/default redesign or cost and leaves
+negative research findings and reserved style fold4 intact.

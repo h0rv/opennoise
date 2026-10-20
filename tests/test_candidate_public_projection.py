@@ -1,4 +1,4 @@
-"""Tests for the local-only schema-12 candidate public projection boundary."""
+"""Tests for exact schema-12/13 candidate custody and fresh public projections."""
 
 from __future__ import annotations
 
@@ -229,11 +229,13 @@ class CandidatePublicProjectionTests(unittest.TestCase):
                 for item in manifest["inputs"]
             ),
         )
+        with closing(sqlite3.connect(self.candidate)) as connection:
+            schema_version = connection.execute("PRAGMA user_version").fetchone()[0]
         report = HistoricalDeclarationCombinedReplayReport(
             release_id=manifest["release_id"],
             manifest_sha256=_sha256(RELEASE / "release-manifest.json"),
             database_path=self.candidate,
-            database_schema_version=12,
+            database_schema_version=schema_version,
             verified_object_count=62,
             wikidata_objects=wikidata,
             listenbrainz_daily_objects=daily,
@@ -435,10 +437,59 @@ class CandidatePublicProjectionTests(unittest.TestCase):
         manifest, receipt, manifest_hash, candidate_hash = _verify_candidate_boundary(
             self._settings()
         )
-        self.assertEqual(receipt.database_schema_version, 12)
+        self.assertEqual(receipt.database_schema_version, 13)
         self.assertEqual(manifest["release_id"], "phase3-public-20260831-qualified")
         self.assertEqual(manifest_hash, _sha256(RELEASE / "release-manifest.json"))
         self.assertEqual(candidate_hash, _sha256(self.candidate))
+
+    def test_legacy_twelve_binding_verification_preserves_sealed_inputs(self) -> None:
+        old = (ROOT / "migrations/0004_artist_genre_membership.sql").read_text()
+        views = []
+        for name, following in (
+            ("normalizable_artist_genre_evidence", "normalizable_album_genre_memberships"),
+            ("displayable_artist_genre_evidence", "displayable_artist_genre_memberships"),
+        ):
+            views.append(
+                f"DROP VIEW {name};\n"
+                + old[
+                    old.index(f"CREATE VIEW {name} AS") : old.index(f"CREATE VIEW {following} AS")
+                ]
+            )
+        with closing(sqlite3.connect(self.candidate)) as connection:
+            connection.executescript("\n".join(views) + "\nPRAGMA user_version=12;")
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        self._write_receipt()
+        self.binding.unlink()
+        self._write_binding()
+        before = {p: p.read_bytes() for p in (self.candidate, self.receipt, self.binding)}
+        manifest, receipt, _manifest_hash, _candidate_hash = _verify_candidate_boundary(
+            self._settings()
+        )
+        self.assertEqual(receipt.database_schema_version, 12)
+        self.assertEqual(manifest["release_id"], "phase3-public-20260831-qualified")
+        binding = verify_historical_candidate_binding(
+            self.binding,
+            _sha256(self.binding),
+            release_directory=RELEASE,
+            candidate_database=self.candidate,
+            replay_receipt=self.receipt,
+        )
+        self.assertEqual(binding.candidate_schema_version, 12)
+        self.assertEqual(
+            binding.model_dump_json(),
+            type(binding).model_validate_json(binding.model_dump_json()).model_dump_json(),
+        )
+        for path, payload in before.items():
+            self.assertEqual(path.read_bytes(), payload)
+
+    def test_schema_receipt_cannot_mislabel_current_database_as_twelve(self) -> None:
+        value = json.loads(self.receipt.read_bytes())
+        value["database_schema_version"] = 12
+        self.receipt.write_text(json.dumps(value))
+        self.binding.unlink()
+        with self.assertRaisesRegex(HistoricalCandidateBindingError, "schema"):
+            self._write_binding()
+        self.assertFalse(self.binding.exists())
 
     def test_rejects_boundary_failure_before_creating_outputs(self) -> None:
         settings = self._settings().model_copy(update={"expected_candidate_sha256": "0" * 64})

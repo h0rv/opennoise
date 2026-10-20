@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 INITIAL_MIGRATION = ROOT / "migrations" / "0001_initial.sql"
 ALBUM_MIGRATION = ROOT / "migrations" / "0002_album_genres.sql"
 DISCOVERY_MIGRATION = ROOT / "migrations" / "0003_genre_discovery.sql"
-CURRENT_SCHEMA_VERSION = 12
+CURRENT_SCHEMA_VERSION = 13
 
 
 class DatabaseTests(unittest.TestCase):

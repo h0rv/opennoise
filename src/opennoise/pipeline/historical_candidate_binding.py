@@ -8,7 +8,7 @@ import os
 import sqlite3
 from contextlib import closing
 from pathlib import Path  # noqa: TC003
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import Field
 
@@ -17,7 +17,7 @@ from opennoise.pipeline.release_manifest import load_release_manifest
 from opennoise.pipeline.source_vault_replay import HistoricalDeclarationCombinedReplayReport
 from opennoise.types import Sha256  # noqa: TC001
 
-_SCHEMA_VERSION = 12
+_SUPPORTED_SCHEMA_VERSIONS = (12, 13)
 _OBJECT_COUNT = 62
 _WIKIDATA_PERMISSIONS = {
     "normalize": "allow",
@@ -54,7 +54,7 @@ class HistoricalCandidateBinding(FrozenModel):
     replay_receipt_sha256: Sha256
     candidate_database_path: Path
     candidate_database_sha256: Sha256
-    candidate_schema_version: Literal[12] = 12
+    candidate_schema_version: Literal[12, 13] = 12
     historical_declaration_object_count: Literal[62] = 62
     source_artifact_pair_count: Literal[62] = 62
     local_experimental: Literal[True] = True
@@ -117,8 +117,10 @@ def _verify_receipt(
         raise HistoricalCandidateBindingError(
             "replay receipt does not bind the requested candidate database"
         )
-    if receipt.database_schema_version != _SCHEMA_VERSION:
-        raise HistoricalCandidateBindingError("replay receipt is not for a schema-12 candidate")
+    if receipt.database_schema_version not in _SUPPORTED_SCHEMA_VERSIONS:
+        raise HistoricalCandidateBindingError(
+            "replay receipt is not for a supported schema-12/13 candidate"
+        )
     expected_pairs = _manifest_pairs(manifest)
     expected_declarations = {
         str(item["source_key"]): str(item["source_manifest_sha256"])
@@ -153,7 +155,7 @@ def _verify_receipt(
         )
 
 
-def _verify_database(candidate: Path, manifest: dict[str, Any]) -> None:
+def _verify_database(candidate: Path, manifest: dict[str, Any], expected_version: int) -> None:
     expected_pairs = _manifest_pairs(manifest)
     with closing(
         sqlite3.connect(f"file:{candidate.as_posix()}?mode=ro&immutable=1", uri=True)
@@ -204,8 +206,14 @@ def _verify_database(candidate: Path, manifest: dict[str, Any]) -> None:
         raise HistoricalCandidateBindingError(
             "candidate database integrity or foreign-key check failed"
         )
-    if version is None or int(version[0]) != _SCHEMA_VERSION:
-        raise HistoricalCandidateBindingError("candidate database is not schema 12")
+    if (
+        version is None
+        or int(version[0]) not in _SUPPORTED_SCHEMA_VERSIONS
+        or int(version[0]) != expected_version
+    ):
+        raise HistoricalCandidateBindingError(
+            "candidate database schema does not match the supported replay receipt"
+        )
     if pairs != expected_pairs:
         raise HistoricalCandidateBindingError(
             "candidate source/artifact pairs do not match manifest"
@@ -271,7 +279,7 @@ def create_historical_candidate_binding(
     manifest_sha256 = _sha256(manifest_path)
     receipt = _load_receipt(receipt_path)
     _verify_receipt(receipt, manifest, manifest_sha256, candidate)
-    _verify_database(candidate, manifest)
+    _verify_database(candidate, manifest, receipt.database_schema_version)
     binding = HistoricalCandidateBinding(
         release_id=receipt.release_id,
         release_manifest_path=manifest_path,
@@ -280,6 +288,7 @@ def create_historical_candidate_binding(
         replay_receipt_sha256=_sha256(receipt_path),
         candidate_database_path=candidate,
         candidate_database_sha256=_sha256(candidate),
+        candidate_schema_version=cast("Literal[12, 13]", receipt.database_schema_version),
     )
     payload = binding.model_dump_json(indent=2).encode() + b"\n"
     try:
@@ -327,5 +336,14 @@ def verify_historical_candidate_binding(
     ):
         raise HistoricalCandidateBindingError(
             "historical candidate binding does not match current inputs"
+        )
+    with closing(sqlite3.connect(candidate.as_uri() + "?mode=ro&immutable=1", uri=True)) as db:
+        version = int(db.execute("PRAGMA user_version").fetchone()[0])
+    if (
+        version != binding.candidate_schema_version
+        or version != _load_receipt(receipt).database_schema_version
+    ):
+        raise HistoricalCandidateBindingError(
+            "binding schema differs from database or replay receipt"
         )
     return binding
