@@ -384,6 +384,8 @@ def replay(
         }
         implementation_paths = (
             Path(__file__),
+            Path(__file__).parents[1] / "db.py",
+            Path(__file__).parents[3] / "migrations/0013_direct_claim_suppression.sql",
             Path(__file__).parents[1] / "catalog/artist_identity.py",
             Path(__file__).parents[1] / "catalog/entities.py",
             Path(__file__).parents[1] / "catalog/artists.py",

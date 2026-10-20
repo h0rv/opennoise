@@ -1,0 +1,74 @@
+{
+  "scope": "direct_source_claim display and normalization use-specific suppression; no persisted-model invalidation claim",
+  "schema_version": 13,
+  "baseline": {
+    "artists": 433,
+    "genre_qids": 151,
+    "canonical_facts": 278,
+    "generic_source_observations": 287,
+    "directed_source_co_genre_links": 580,
+    "artists_with_neighbors": 72
+  },
+  "reproduction": {
+    "source_catalog_sha256": "1389ba19789e61e801f60304c1bda494423c6f2c418d4f645e9179f91cfc9764",
+    "before_proof_sha256": "a3a0416f49c4359c52c9de67661581469f6bcfdab8a9de832ab1c646e81ce8cc",
+    "after_proof_sha256": "5cb4d5159cdf211fd32a94d3dd70a4ec24878039edc1f3c8228d5ecbcfeba004",
+    "memberships_before": 1,
+    "memberships_suppressed_after_migration": 0,
+    "memberships_after_release": 1,
+    "normalization_rows_during_display_only_suppression": 278
+  },
+  "independent_audit": {
+    "source_sha256": "e3f5d00d5e73ee347caf2c3b7dc280e51a0d03ecebc321861c8394bd6287e7cf",
+    "source_oracle_sha256": "d468919e2a5d499846851487425d6febab234f4b772eb0d6771eaedc96064d17",
+    "migration_sha256": "87d4ecfb267c0c2bd6dbf8053822294993bb59d3dc0e7835e44c9547141060ce",
+    "database_module_sha256": "220a4c150333d39e3e493026a685e73dbfcf2708c9251de8331b223f8b655e8c",
+    "schema_version": 13,
+    "case_count": 35,
+    "source_artists": 433,
+    "source_genres": 151,
+    "canonical_facts": 278,
+    "generic_claims": 287,
+    "all_display_normalize_ids_and_releases_match": true,
+    "all_checked_api_pages_memberships_related_links_match": true,
+    "raw_source_table_digests_unchanged": true,
+    "five_denial_probes_passed": true,
+    "forbidden_operations": 0,
+    "model_fits": 0,
+    "new_external_cost_usd": 0,
+    "seconds": 22.631855215997348,
+    "observations_sha256": "f0452a9e19b983155e6d96a6fca04c5dbaf321b9f37d96ccaa78111963fa693e"
+  },
+  "independent_audit_sha256": "671ee02c63c06e30a5745d36478633fd34957b36f771a5648809cd56651a58f0",
+  "implementation_sha256": {
+    "migrations/0013_direct_claim_suppression.sql": "87d4ecfb267c0c2bd6dbf8053822294993bb59d3dc0e7835e44c9547141060ce",
+    "src/opennoise/db.py": "220a4c150333d39e3e493026a685e73dbfcf2708c9251de8331b223f8b655e8c",
+    "src/opennoise/pipeline/candidate_public_projection.py": "8889e07fb7aa5d192ec05a19553814cf4d33dd949eb420ae285c94a201e27e72",
+    "src/opennoise/pipeline/historical_candidate_binding.py": "a78ca916379ae284bc32a599ca68c09084fd13998b4d6e50ff863c82bcfa80fb",
+    "src/opennoise/pipeline/artist_identity_replay.py": "f1224d99a9426f4602652d2534a92d90bb0446724e3b110661e28579917b6feb",
+    "src/opennoise/pipeline/cultural_catalog.py": "6e586239a1e188fed234cafb4e30ff93407db751f3098148264b4a69a79a34ac"
+  },
+  "validation": {
+    "focused_tests": 45,
+    "luna_independent_focused_tests": 59,
+    "luna_final_review": "passed migration87d4ecfb/db220a4c15 and schema12/13 compatibility",
+    "full_check": "passed",
+    "python_tests": 2362,
+    "python_seconds": 200.153,
+    "python_skips": 36,
+    "node_passes": 122,
+    "node_skips": 44,
+    "format_lint_types": "passed",
+    "full_check_log": "/tmp/direct-claim-full-check.log"
+  },
+  "new_source_acquisitions": 0,
+  "model_fits": 0,
+  "new_cost_usd": 0,
+  "limitations": [
+    "Preserves historical missing-inventory/permission/license eligibility; only matching registered source custody vetoes are added.",
+    "Only exact recognized claim namespaces are interpreted; no guessed bare numeric references.",
+    "Canonical capture suppression never falls back to later duplicate generic observations.",
+    "Existing propagated evidence and persisted derived-model invalidation are separate unchanged boundaries.",
+    "Source co-genre context is not listener relevance; prior NC research negatives and reserved style fold4 unchanged."
+  ]
+}

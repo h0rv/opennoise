@@ -818,6 +818,8 @@ def build(  # noqa: PLR0913, PLR0917 -- All three physical sources and pins rema
         root = Path(__file__).resolve().parents[3]
         paths = (
             "src/opennoise/pipeline/cultural_catalog.py",
+            "src/opennoise/db.py",
+            "migrations/0013_direct_claim_suppression.sql",
             "src/opennoise/pipeline/artist_identity_replay.py",
             "src/opennoise/models/catalog.py",
             "src/opennoise/catalog/entities.py",
