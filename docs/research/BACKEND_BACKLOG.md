@@ -475,3 +475,15 @@ propagated-evidence behavior remain unchanged. Persisted derived-model invalidat
 for claim references remains a separate boundary. This slice uses no model fitting,
 source acquisition, research-data promotion, UI/default redesign or cost and leaves
 negative research findings and reserved style fold4 intact.
+
+The [public-input embed source gate](../../data/recipes/embed-source-eligibility-20261020/README.md)
+closes a separate intended-use bug: normalization eligibility did not enforce
+embed-only snapshot/artifact or exact directclaim vetoes. The loader now gates
+all source-backed input facets, qualification support and declarations before
+aggregation/limits, preserving allowed sibling observations and unchanged no-event
+payloads. This is an explicitly synthetic qualified-contract study with128 guarded
+physical-row counterfactual controls, not a new source qualification, human-truth
+or model-quality result. No model build/fit, acquisition, schema14, UI/default
+change or cost occurs. Existing raw model metadata identifier/name sourcing and
+persisted model invalidation remain distinct boundaries. Prior research negatives
+and reserved style fold4 remain unchanged.

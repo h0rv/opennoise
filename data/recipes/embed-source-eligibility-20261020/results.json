@@ -1,0 +1,78 @@
+{
+  "scope": "Explicitly synthetic public-input eligibility contracts; no real-source qualification or music-quality claim",
+  "schema_change": false,
+  "source_use": "all/embed registered snapshot/artifact veto across source facts, qualification support, pair windows and declarations; exact directclaim bindings only",
+  "before_reproduction_sha256": "6a097cb83447278a8ec4ed0252c9dd352bcba607372973964b57c9336759efa1",
+  "no_event_payloads": {
+    "catalog_only": {
+      "sha256": "6a33a8d9db4c660dd18042b9a0f16fe328f48ba35150cde1845384716b7e0d45",
+      "bytes": 1124,
+      "byte_equal": true
+    },
+    "attempt_ids_v1": {
+      "sha256": "f7a316a4ea93a518bd538843d53a946b2a758150778f66495b51ba3737b1e6ed",
+      "bytes": 1627,
+      "byte_equal": true
+    },
+    "source_artifacts_v2": {
+      "sha256": "7840f09cf709e5298a2986588f66015d4ebce0bc836a24692da4d39a9adb2840",
+      "bytes": 1986,
+      "byte_equal": true
+    },
+    "source_artifacts_v3": {
+      "sha256": "3c8f59f330d45921a9b07151333857efbd314716210788e0de5022ff2fc76728",
+      "bytes": 1787,
+      "byte_equal": true
+    }
+  },
+  "no_event_receipt_sha256": "119da1e6ffec4ff461bd9c54b7eb857ba44af087d9a34b0e99644f86bef009de",
+  "counterfactual_audit": {
+    "scope": "Explicitly synthetic contract; independent physical row-filter counterfactual, same serializer. No human truth/real-source qualification/quality claim.",
+    "repository_sha256": "346d7090010de8641fbe41ce143a52bebc60461c1d19c12816bf5c31ba9ea608",
+    "fixture_sha256": "0a70b02a9a38af55fc8f277e2580729052617ea0d2b5a7ee8d5a9d5fb79e3e79",
+    "script_sha256": "4ef55c1d3ee73870c2e000b36fa04955b532d4ff18bbb90c5910077921e5faf7",
+    "controls": 128,
+    "all_counterfactual_payloads_equal": true,
+    "direct_sql_support_window_checks": true,
+    "sqlite_readonly_during_load": true,
+    "filesystem_network_subprocess_denied_during_load": true,
+    "guard_denial_probes": [
+      "filesystem",
+      "network",
+      "subprocess",
+      "sqlite_write"
+    ],
+    "forbidden_operations": [],
+    "model_fits": 0,
+    "new_external_cost_usd": 0
+  },
+  "counterfactual_audit_sha256": "60ecff401b39df77f8f486d0016dee98c66a90f758b7ca1d22b9fb5aa42dd8cf",
+  "implementation_sha256": {
+    "src/opennoise/ml/repository.py": "346d7090010de8641fbe41ce143a52bebc60461c1d19c12816bf5c31ba9ea608",
+    "tests/test_public_model_repository.py": "0a70b02a9a38af55fc8f277e2580729052617ea0d2b5a7ee8d5a9d5fb79e3e79",
+    "tests/test_embed_source_eligibility.py": "c27032a3bdf786059efe77992481522b794d558bac11c172f97fda5f09a1d837"
+  },
+  "validation": {
+    "focused_tests": 20,
+    "luna_final_source_review": "passed module346d709 fixture0a70b02; exact commit binding follows in PR",
+    "full_check": "passed",
+    "python_tests": 2372,
+    "python_seconds": 204.477,
+    "python_skips": 36,
+    "node_passes": 122,
+    "node_skips": 44,
+    "format_lint_types": "passed",
+    "full_check_log": "/tmp/embed-source-full-check.log"
+  },
+  "new_source_acquisitions": 0,
+  "model_builds_or_fits": 0,
+  "new_cost_usd": 0,
+  "limitations": [
+    "Synthetic qualified contracts only, not real-source qualification or independent human/relevance evidence.",
+    "Existing missing-inventory/permission/license semantics retained; only matching registered source custody adds vetoes.",
+    "Raw model metadata identifier/name selectors are not made an own-provenance certificate in this slice.",
+    "Persisted derived-model invalidation remains separate; no model promotion/UI/default change.",
+    "Prior negative research findings and reserved Jamendo style fold4 unchanged."
+  ],
+  "claim_scope": "Exact refs veto matching direct branches only; independently allowed source artifacts may remain declared."
+}
