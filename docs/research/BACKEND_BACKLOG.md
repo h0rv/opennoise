@@ -577,3 +577,24 @@ Withheld partial credits cannot supply an inverse edge. This is retained source
 coverage, not a complete discography, popularity or recording genre assertion.
 See [the browse recipe](../../data/recipes/artist-recording-browse-20261021/README.md)
 for source custody, exact limits and all-corpus verification; no new input or fit.
+
+## Native melody annotation subsequence retrieval
+
+A new local research path accepts caller time/f0 coordinates and aligns them to
+retained native Melody2 annotations, returning exact native track/time bounds,
+quantized distance and voiced support. It compares temporal contours, beyond the
+existing scalar descriptor and saved-rank query paths. The pre-coordinate cohort
+has 24 nominations: 18 captured/validated files (473,373 frames), three absent
+from the pinned official directory and three excluded before capture by the file
+cap. Missing nominees are not HTTP 404 observations or replacements.
+
+The fixed metric preserves absolute pitch, native tempo and unvoiced masks;
+there is no audio extractor, transposition, artist/recording bridge or genre or
+relevance claim. These human-reviewed numeric annotations and all real query
+results remain local CC BY-NC-SA 4.0 research custody. Only MIT code, generated
+synthetic fixtures and aggregate evidence are committed. A maximum-cap synthetic
+CLI guard covers 1.8 million source frames and a 1,723-frame caller query within
+the fixed 120-second/1 GB budget. See [the contour recipe](../../data/recipes/medley-melody-search-20261021/README.md)
+for exact acquisition/declaration pins, reproduction, arithmetic, source
+limitations and checks. No supervised fit; stopped style study and reserved fold
+remain unchanged.

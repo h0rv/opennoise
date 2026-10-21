@@ -1,0 +1,112 @@
+{
+  "scope": "Local NC research-only native human-reviewed f0 annotation subsequence retrieval from NEW caller coordinates; no audio extraction, artist/recording/genre inference, relevance or independent quality claim.",
+  "public_repository_contents": "MIT implementation, generated synthetic fixtures and aggregate counts/pins only; no raw/derived real annotations, native track IDs or per-track results.",
+  "source": {
+    "repository": "https://github.com/marl/medleydb",
+    "commit": "537bb7bad0601fc58e4fff8404f71658b86ef60e",
+    "v1_roster_git_blob_sha1": "80c7a072beea9522a0ae77dfce497cdde307fafd",
+    "v1_roster_sha256": "62ad6904fbdeaa0157465241bc8ad01a0d2201ec6a8959db4709687ee5217fe6",
+    "license": "CC BY-NC-SA 4.0",
+    "local_research_only": true,
+    "rights_notice": "https://medleydb.weebly.com/downloads.html",
+    "attribution": "Rachel Bittner, Justin Salamon, Mike Tierney, Matthias Mauch, Chris Cannam, Juan P. Bello; MedleyDB 2014/2016"
+  },
+  "actual_capture_counts": {
+    "nominations": 24,
+    "captured_usable_files": 18,
+    "missing_from_pinned_directory_not_http404": 3,
+    "over_file_cap_not_captured": 3,
+    "raw_bytes": 15186966,
+    "frames": 473373,
+    "eligible_fixed_center_queries": 18
+  },
+  "implementation_sha256": {
+    "src/opennoise/ml/medley_melody.py": "22b5fb0e53bbe07744450c8ecd9aebc6a3d0c85b8b2978e863e50b9bb040e98a",
+    "scripts/query_melody_contour.py": "5ddd93d8a3a20a2da169763d72a08fc13a7b42708e2fee1007db7cd7bb803405"
+  },
+  "actual_source_pack_manifest_sha256": "efcdc57be77f86f7bd09fc25b121cba22606dfd3aeba09b17f7bee6958288360",
+  "evidence": {
+    "pilot-declaration.json": {
+      "path": "/workspace/medley-melody-search-20261021/pilot-declaration.json",
+      "sha256": "8b2e163e5d37b72ae0bc894c6583ed4b2da1913bc909066dc5afe0e2c03d36b9"
+    },
+    "preflight.json": {
+      "path": "/workspace/medley-melody-search-20261021/preflight.json",
+      "sha256": "e58a9d00f624d6672550e70c1653a3db501eadc0e9db7ad8aa820245b48d1535"
+    },
+    "source-census.json": {
+      "path": "/workspace/medley-melody-search-20261021/source-census.json",
+      "sha256": "480d0707afee0d38d47ef204c7f1987c80d65044abdbb9fd8db30a25dc61e5c6"
+    },
+    "query-manifest.json": {
+      "path": "/workspace/medley-melody-search-20261021/query-manifest.json",
+      "sha256": "0e053f962fb8f321b8d69e8deab68684cf6a0dccd2bb76496fcb32376d06d37b"
+    },
+    "independent-oracle.json": {
+      "path": "/workspace/medley-melody-search-20261021/independent-oracle.json",
+      "sha256": "1e835ab8aea7429a9aab58f25e70ebb893fa81dd4eb9497811ae281d2518d94e"
+    },
+    "synthetic-maxcap/evidence-final.json": {
+      "path": "/workspace/medley-melody-search-20261021/synthetic-maxcap/evidence-final.json",
+      "sha256": "5ce169277d8dcbdcec96777c9dff6b9a4bc3082e95f894b50ee5d335c080bfdf"
+    }
+  },
+  "synthetic_maximum_cap": {
+    "synthetic_only_not_upstream_data": true,
+    "source_frames": 1800000,
+    "frames_per_track": 100000,
+    "query_frames": 1723,
+    "raw_bytes": 24858900,
+    "runs": {
+      "build": {
+        "cpu_seconds": 3.432376,
+        "maxrss_kib": 101248,
+        "returncode": 0,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "cd8377e7611ef28eaae021d5caede583ca950a6203d5b653deba7cfd139f288d",
+        "wall_seconds": 3.4336458080006196
+      },
+      "query": {
+        "cpu_seconds": 19.934585000000002,
+        "maxrss_kib": 101240,
+        "returncode": 0,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "932ff5c7508664a4c0ea88e2158c2d6417392495f57909bb3eaf3bdb854cb96b",
+        "wall_seconds": 19.937421239000287
+      }
+    }
+  },
+  "checks": {
+    "focused": {
+      "tests": 9,
+      "elapsed_seconds": 0.298,
+      "status": "passed",
+      "log": "/tmp/medley-focused-final.log"
+    },
+    "full": {
+      "status": "passed",
+      "python_tests": 2454,
+      "python_skipped": 36,
+      "python_elapsed_seconds": 291.511,
+      "node_passed": 122,
+      "node_skipped": 44,
+      "node_failed": 0,
+      "format": "passed",
+      "lint": "passed",
+      "typecheck": "passed",
+      "log": "/tmp/medley-full.log",
+      "log_sha256": "36fde8b32f41b0cbf2ae5d934fda59e3030052b10c8f5165abe99846aad71897",
+      "sync_log": "/tmp/medley-sync.log",
+      "completion_evidence": "Complete green terminal summaries and no remaining check process. The execution session/independent tool exit-code receipt was not retained after the environment transition; no rerun was performed."
+    }
+  },
+  "supervised_fits": 0,
+  "new_external_cost_usd": 0,
+  "limitations": [
+    "Absolute pitch and fixed tempo only; no transposition, resampling, automatic audio features or artist bridge.",
+    "Source-fragment identity tests functional alignment, not independent musical relevance.",
+    "Minimum over candidate windows favors longer sources; no correction or quality assertion.",
+    "Local captured sources/derived results are not checked in and not promised available in another container.",
+    "Build/query runtime makes no network requests; the bounded official source capture was completed before implementation."
+  ]
+}
