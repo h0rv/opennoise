@@ -598,3 +598,24 @@ the fixed 120-second/1 GB budget. See [the contour recipe](../../data/recipes/me
 for exact acquisition/declaration pins, reproduction, arithmetic, source
 limitations and checks. No supervised fit; stopped style study and reserved fold
 remain unchanged.
+
+## Optional bounded pitch-offset contour search
+
+A separate opt-in scorer now aligns new caller contours after estimating a
+joint-voiced mean source-minus-query pitch difference per candidate window,
+clipped to one octave in either direction. It keeps fixed native tempo,
+nonnegative residual costs, voicing gates and tick-first/native-ID/frame ties;
+no offset-based tie preference or learned fit is introduced. The original
+absolute-pitch loader/scorer and CLI remain byte-identical, so retained source
+packs still replay without new capture or repinning.
+
+The fixed 54 transformed-query validation and independent 162-track-outcome
+oracle test this new numerical capability, not musical relevance, audio pitch
+extraction or unrestricted transposition. All real coordinates and derived
+results stay local under NC-SA research custody; public changes contain code,
+synthetic fixtures and aggregate evidence only. The new CLI's unchanged maximum
+source/query caps passed a synthetic 1.8-million-frame / 1,723-frame resource
+guard. See [the bounded-offset recipe](../../data/recipes/medley-transposed-search-20261021/README.md)
+for the pre-result decision record, separate API/schema and validation pins.
+No source acquisition, supervised fit, default/UI/deployment change or cost;
+prior failed-study and reserved-fold boundaries remain intact.
