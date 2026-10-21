@@ -563,3 +563,17 @@ search nor any musical model. See [the title-query recipe](../../data/recipes/re
 for source-title custody, the corrected assessment journal-header incident,
 independent all-corpus proof and final checks. No new input or fit; stopped study
 and reserved style fold remain untouched.
+
+## Exact credited-artist recording browse
+
+The ordinary recording entry point now also starts from an exact native artist
+MBID, with optional literal title filtering and bounded pages of the existing
+full contexts. It discovers the retained primary-credit pool rather than ranking
+an already supplied sample: 351 artists, 1,242 artist–recording edges and 1,031
+recordings, with 96 multi-recording artists and a maximum pool of 68. Matching
+associations require an independently allowed intact credit plus the seed and
+recording's own search/display identity and name observations before pagination.
+Withheld partial credits cannot supply an inverse edge. This is retained source
+coverage, not a complete discography, popularity or recording genre assertion.
+See [the browse recipe](../../data/recipes/artist-recording-browse-20261021/README.md)
+for source custody, exact limits and all-corpus verification; no new input or fit.

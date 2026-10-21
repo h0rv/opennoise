@@ -32,6 +32,8 @@ def main() -> None:
     request = parser.add_mutually_exclusive_group(required=True)
     request.add_argument("--recording-mbid")
     request.add_argument("--query")
+    request.add_argument("--artist-mbid")
+    parser.add_argument("--title-filter")
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--limit", type=int, default=DEFAULT_SEARCH_LIMIT)
     parser.add_argument("--genre-limit", type=int, default=10)
@@ -45,7 +47,18 @@ def main() -> None:
     if _digest(path) != args.database_sha256:
         raise ValueError("database differs from externally supplied pin")
     store = PublicRecordingNavigationStore(path, immutable=True)
-    if args.query is not None:
+    if args.title_filter is not None and args.artist_mbid is None:
+        raise ValueError("--title-filter requires --artist-mbid")
+    if args.artist_mbid is not None:
+        result = store._recordings_for_artist_sync(  # noqa: SLF001 -- Bounded synchronous CLI.
+            args.artist_mbid,
+            args.title_filter,
+            args.offset,
+            args.limit,
+            args.genre_limit,
+            args.related_limit,
+        )
+    elif args.query is not None:
         result = store._search_recordings_sync(  # noqa: SLF001 -- Bounded synchronous CLI.
             args.query,
             args.offset,
