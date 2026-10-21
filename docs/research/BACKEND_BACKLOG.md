@@ -550,3 +550,16 @@ real retained MusicBrainz safe projection artifacts to their existing approved
 policy, without modifying legacy databases or inventing original HTTP custody.
 See [the recording query recipe](../../data/recipes/recording-source-context-20261020/README.md)
 for bounds, source denominators and verification; no new source acquisition or fit.
+
+## Recording display-title lookup
+
+A bounded ordinary title query now matches retained track-derived recording
+labels and returns separate exact MBID candidates, then reuses the verified ordered-credit
+and artist-source context. It covers all 1,031 retained recordings without requiring
+a caller to know the MBID; eight duplicate-title pairs stay distinct. Literal
+Unicode NFKC/casefold/whitespace substring matching, own local_search+display gates
+before pagination and fixed scan limits replace neither ordinary artist/genre
+search nor any musical model. See [the title-query recipe](../../data/recipes/recording-title-search-20261021/README.md)
+for source-title custody, the corrected assessment journal-header incident,
+independent all-corpus proof and final checks. No new input or fit; stopped study
+and reserved style fold remain untouched.
