@@ -1,0 +1,99 @@
+{
+  "scope": "Separate local bounded pitch-offset native annotation alignment for NEW caller time/f0; no relevance, audio extractor, genre, artist/recording identity or unrestricted invariance claim.",
+  "rights": "Real source/queries/results remain local CC BY-NC-SA4.0 research custody; public MIT code, synthetic fixtures and aggregate evidence only.",
+  "implementation_sha256": {
+    "src/opennoise/ml/medley_melody.py": "22b5fb0e53bbe07744450c8ecd9aebc6a3d0c85b8b2978e863e50b9bb040e98a",
+    "scripts/query_melody_contour.py": "5ddd93d8a3a20a2da169763d72a08fc13a7b42708e2fee1007db7cd7bb803405",
+    "src/opennoise/ml/transposed_melody.py": "338bc1b21e6e5918c0524226591a4ec304cad5626849815ea377be3f8171b360",
+    "scripts/query_transposed_melody_contour.py": "df6b2b1edb04c7d8bb78e2e7a42919928da9183a0d93b9f891679507ff2743b6"
+  },
+  "original_files_byte_identical": true,
+  "source_manifest_sha256": "efcdc57be77f86f7bd09fc25b121cba22606dfd3aeba09b17f7bee6958288360",
+  "validation_counts": {
+    "base_queries": 18,
+    "planned_transformed_queries": 54,
+    "transformed_queries_within_f0_bounds": 54,
+    "source_nominees": 24,
+    "usable_sources": 18,
+    "development_oracle_track_outcomes_compared": 162,
+    "exact_frame_tick_support_order_matches": 162
+  },
+  "development_proof_scope": "Uncommitted frozen scorer/CLI numerical comparison; final committed-head/all54/default18/CLI proof belongs to source pull request.",
+  "evidence": {
+    "declaration.json": {
+      "path": "/workspace/medley-transposed-search-20261021/declaration.json",
+      "sha256": "f3c652f69c03f05f88b178eb08daccce345536c05089929ec08e21edbc7da367"
+    },
+    "oracle-method.json": {
+      "path": "/workspace/medley-transposed-search-20261021/oracle-method.json",
+      "sha256": "caed3f2e3e89e01e292eda755f916992af802f63bbd0db8cf6360eaf62336a12"
+    },
+    "transformed-manifest.json": {
+      "path": "/workspace/medley-transposed-search-20261021/transformed-manifest.json",
+      "sha256": "71d5c9a91401e374ca98ff5e6d7794e61fd9ea730d881f2605499d5e8d317c19"
+    },
+    "independent-oracle.json": {
+      "path": "/workspace/medley-transposed-search-20261021/independent-oracle.json",
+      "sha256": "818acaf94a189c54e8eb9d2c9f0423d8c71a75416ef85e214c584aa553f0617d"
+    },
+    "development-proof/binding.json": {
+      "path": "/workspace/medley-transposed-search-20261021/development-proof/binding.json",
+      "sha256": "43a12fe89289345bc3dfa10bc8bd71e06a4f2f0693ba539450d433bc9032bdae"
+    },
+    "synthetic-maxcap/evidence.json": {
+      "path": "/workspace/medley-transposed-search-20261021/synthetic-maxcap/evidence.json",
+      "sha256": "76dcfa96c29c59086b575be1960e99d32a78779cfa9d00bf51922480962c6091"
+    }
+  },
+  "synthetic_maximum_cap": {
+    "synthetic_only_not_upstream_data": true,
+    "source_frames": 1800000,
+    "frames_per_track": 100000,
+    "query_frames": 1723,
+    "source_not_rebuilt": true,
+    "inputs_unchanged": true,
+    "returncode": 0,
+    "wall_seconds": 16.47966108500009,
+    "cpu_seconds": 16.467755,
+    "maxrss_kib": 101228,
+    "stdout_sha256": "93d1a677031cc6b8b4d0ee53243c3e541b414c0d4dfdf51dede28e4d5c2011b6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "supervised_fits": 0,
+    "new_source_requests": 0,
+    "cost_usd": 0
+  },
+  "checks": {
+    "focused": {
+      "status": "passed",
+      "tests": 9,
+      "elapsed_seconds": 0.37,
+      "log": "/tmp/transposed-focused-final.log"
+    },
+    "full": {
+      "status": "passed",
+      "exit_code": 0,
+      "python_tests": 2463,
+      "python_skipped": 36,
+      "python_elapsed_seconds": 308.142,
+      "node_passed": 122,
+      "node_skipped": 44,
+      "node_failed": 0,
+      "format_lint_types": "passed",
+      "log": "/tmp/transposed-full.log",
+      "log_sha256": "ca472310e83db0dfaca6903acc672839928964357b871ba2404124c2086f3ac9",
+      "exit_receipt": "/tmp/transposed-full-exit.json",
+      "exit_receipt_sha256": "07298b7546fac7c725072742fda32e921092a35300a45e5109888e38f750a540",
+      "sync_log": "/tmp/transposed-sync.log"
+    }
+  },
+  "supervised_fits": 0,
+  "new_source_requests": 0,
+  "new_external_cost_usd": 0,
+  "limitations": [
+    "Fixed tempo only; per-window offsets clipped to +/-12 semitones.",
+    "No acoustic/audio extraction or artist/recording/genre identity bridge.",
+    "Transformed source fragments test alignment only, not independent musical relevance or robustness.",
+    "Longer sources offer more candidate windows; minimum-selection bias is unchanged.",
+    "Real local data/derived outputs are not checked in or promised available in another container."
+  ]
+}

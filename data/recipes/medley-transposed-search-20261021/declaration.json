@@ -1,0 +1,58 @@
+{
+  "revision": "medley-bounded-transposition-study-v1",
+  "declared_at": "2026-10-21T13:08:07Z",
+  "base_main": "38ffb73e30665da218eedcd567dbec517a8e40f5",
+  "source_manifest_sha256": "efcdc57be77f86f7bd09fc25b121cba22606dfd3aeba09b17f7bee6958288360",
+  "source_query_manifest_sha256": "0e053f962fb8f321b8d69e8deab68684cf6a0dccd2bb76496fcb32376d06d37b",
+  "source_census_sha256": "480d0707afee0d38d47ef204c7f1987c80d65044abdbb9fd8db30a25dc61e5c6",
+  "pr102_files_must_remain_byte_identical": {
+    "src/opennoise/ml/medley_melody.py": "22b5fb0e53bbe07744450c8ecd9aebc6a3d0c85b8b2978e863e50b9bb040e98a",
+    "scripts/query_melody_contour.py": "5ddd93d8a3a20a2da169763d72a08fc13a7b42708e2fee1007db7cd7bb803405"
+  },
+  "scope": "Separate opt-in scorer and CLI; replay the existing source pack through the unchanged PR102 loader; distinct result revision and bindings; no default change or acquisition.",
+  "metric": {
+    "offset_sign": "source_minus_query_semitones; add this offset to query MIDI to align to source",
+    "offset_min_semitones": -12,
+    "offset_max_semitones": 12,
+    "offset": "For each candidate native window, mean(source_midi-query_midi) over jointly voiced frames, clipped to [-12,+12]. This is deterministic alignment, not supervised fitting.",
+    "distance": "Mean over ALL query frames: squared(source_midi-query_midi-offset) if both voiced;144 if voicing disagrees;0 if both unvoiced.",
+    "arithmetic": "Float64 direct nonnegative costs in bounded chunks. Offset uses float64 sum of jointly voiced differences divided by joint count; then clip; distance uses float64 sum of per-frame costs divided by query length. No FFT, cancellation-based variance formula, learned normalization, tempo change, resampling or parameter sweep.",
+    "support": "Preserve query voiced>=25% and candidate joint>=75% of query voiced using integer comparisons; no distance-based acceptance claim.",
+    "ranking": "Preserve nearest1e-8 semitone-squared integer ticks, ties-to-even; earliest frame within track; global ticks/nativeID/frame. Offset does not break ties.",
+    "timing": "Preserve native256/44100 absolute source grid and relative query grid with5microsecond tolerance. Preserve PR102 f0 bounds and explicit zero/unvoiced handling."
+  },
+  "retained_query_validation": {
+    "base_queries": "All18 eligible fixed862-frame center queries in the existing frozen24-nomination order; all unavailable source outcomes retained.",
+    "shifts_semitones": [-3, 0, 3],
+    "transform": "Retain every observed timestamp. Leave zero f0 zero; multiply every positive f0 by2**(shift/12). No clipping, interpolation or resampling. Reject and retain an explicit reason if a transformed positive f0 becomes nonpositive, nonfinite or exceeds20000Hz; never replace a query.",
+    "planned_query_denominator": 54,
+    "independent_oracle": "First3 eligible base queries in frozen order, each at all3 shifts, against every18 usable native sources:162 planned track outcomes. Independent stdlib pitch conversion/scalar positive-cost arithmetic; independently establish minima and tie order. No project scorer imports.",
+    "baseline_regression": "Replay all18 original queries through unchanged PR102 loader/scorer and require byte-identical saved baseline results and CLI compatibility. Recheck original code/source/query pins before and after."
+  },
+  "synthetic_validation": {
+    "shifts_semitones": [-13, -12, -3, 0, 3, 12, 13],
+    "cases": ["independent scalar costs, offset signs and clipping", "unvoiced masks and exact support boundaries", "constant/ambiguous contours and earliest quantized ties", "positive tiny cost tied with exact zero", "new caller input and ndarray/list parity without mutation", "strict input schemas, physical pins and output freshness", "subnormal and upper-bound f0"],
+    "maximum_cap_stress": "Reuse only the existing clearly synthetic maximum-cap source18x100000frames=1.8M,1723queryframes; run the NEW standalone CLI under unchanged120second CPU/wall and1GB address-space limits; measure per-child wall,CPU andRSS. No annotation or human judgment fabrication."
+  },
+  "resource_limits": {
+    "source_nominations": 24,
+    "source_frames_per_track": 100000,
+    "source_total_frames": 1800000,
+    "source_raw_bytes": 25000000,
+    "source_file_bytes": 2000000,
+    "query_frames_min": 173,
+    "query_frames_max": 1723,
+    "result_tracks_max": 24,
+    "cli_cpu_wall_seconds": 120,
+    "cli_address_space_bytes": 1000000000,
+    "json_bytes": 1000000
+  },
+  "rights": "All real source annotations, transformed queries, derived results and research packs remain outside the public repository under local CC BY-NC-SA4.0 research custody; public code/synthetic fixtures/aggregate evidence only.",
+  "quality_evaluation": false,
+  "interpretation": "A new bounded pitch-offset alignment capability; transformed source fragments verify function only. No relevance, humming robustness, artist/recording identity or genre quality assertion. Fixed tempo and minimum-window length bias remain.",
+  "no_new_acquisition": true,
+  "no_deployment": true,
+  "new_external_cost_usd": 0,
+  "supervised_fits": 0,
+  "no_changes_after_observed_results": true
+}
