@@ -34,6 +34,7 @@ MAX_QUERY_CHARS = 200
 MAX_SEARCH_OFFSET = 10_000
 MAX_TITLE_OBSERVATIONS = 100_000
 MAX_TITLE_CANDIDATES = 10_000
+MAX_ARTIST_CREDIT_OBSERVATIONS = 10_000
 
 
 def normalized_title(value: str) -> str:
@@ -88,6 +89,17 @@ class RecordingSearchResponse(FrozenModel):
     match_scope: Literal["retained_recording_display_title_substring"] = (
         "retained_recording_display_title_substring"
     )
+
+
+class ArtistRecordingsResponse(FrozenModel):
+    """Exact retained primary-credit recordings, never a complete discography."""
+
+    artist_mbid: str
+    title_filter: str | None
+    offset: int
+    limit: int
+    results: tuple[RecordingContextResponse, ...] = ()
+    scope: Literal["retained_primary_credit_recordings"] = "retained_primary_credit_recordings"
 
 
 class PublicRecordingNavigationStore:
@@ -282,6 +294,197 @@ class PublicRecordingNavigationStore:
                 for mbid in ordered[offset : offset + limit]
             )
             return RecordingSearchResponse(query=query, offset=offset, limit=limit, results=results)
+
+    async def recordings_for_artist(  # noqa: PLR0913 -- Matches bounded recording search API.
+        self,
+        artist_mbid: str,
+        *,
+        title_filter: str | None = None,
+        offset: int = 0,
+        limit: int = 10,
+        genre_limit: int = 10,
+        related_limit: int = 5,
+    ) -> ArtistRecordingsResponse:
+        """Browse exact retained credits, optionally narrowed by a literal title."""
+        return await asyncio.to_thread(
+            self._recordings_for_artist_sync,
+            artist_mbid,
+            title_filter,
+            offset,
+            limit,
+            genre_limit,
+            related_limit,
+        )
+
+    def _recordings_for_artist_sync(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917 -- One bounded transaction.
+        self,
+        artist_mbid: str,
+        title_filter: str | None = None,
+        offset: int = 0,
+        limit: int = 10,
+        genre_limit: int = 10,
+        related_limit: int = 5,
+    ) -> ArtistRecordingsResponse:
+        if not isinstance(artist_mbid, str) or str(UUID(artist_mbid)) != artist_mbid:
+            raise ValueError("artist MBID must be a canonical lowercase UUID")
+        text = None
+        if title_filter is not None:
+            if not isinstance(title_filter, str) or len(title_filter) > MAX_QUERY_CHARS:
+                raise ValueError("title filter must be a string of at most 200 characters")
+            text = normalized_title(title_filter)
+            if not any(c.isalnum() for c in text):
+                raise ValueError("title filter requires meaningful alphanumeric text")
+        if type(offset) is not int or not 0 <= offset <= MAX_SEARCH_OFFSET:
+            raise ValueError("recording offset must be an integer in 0..10000")
+        if any(
+            type(n) is not int or not 1 <= n <= MAX_CONTEXT
+            for n in (limit, genre_limit, related_limit)
+        ):
+            raise ValueError("recording and context limits must be integers in 1..10")
+        base = ArtistRecordingsResponse(
+            artist_mbid=artist_mbid,
+            title_filter=title_filter,
+            offset=offset,
+            limit=limit,
+        )
+        uri = self.path.as_uri() + "?mode=ro" + ("&immutable=1" if self.immutable else "")
+        with closing(sqlite3.connect(uri, uri=True)) as connection:
+            connection.row_factory = sqlite3.Row
+            connection.execute("BEGIN")
+            display = ExportEligibility(connection, None, use_kind="display")
+            search = ExportEligibility(connection, None, use_kind="local_search")
+            owners = connection.execute(
+                """SELECT DISTINCT i.entity_id,e.entity_kind FROM entity_identifiers i
+                JOIN identifier_types t ON t.id=i.identifier_type_id
+                JOIN catalog_entities e ON e.id=i.entity_id
+                WHERE t.type_key='musicbrainz_artist_id' AND i.namespace='musicbrainz'
+                AND i.normalized_value=?""",
+                (artist_mbid,),
+            ).fetchall()
+            if not owners:
+                return base
+            if len(owners) != 1 or owners[0][1] != "artist":
+                raise PublicArtistNavigationStoreError("ambiguous exact artist browse identity")
+            artist_id = int(owners[0][0])
+            if display.blocked("entity", artist_id) or search.blocked("entity", artist_id):
+                return base
+            # The ordinary typed resolver validates raw ownership/consistency; private
+            # observations may veto but cannot supply a searchable identity or name.
+            try:
+                identity = display.identifier(artist_id, "musicbrainz_artist_id", "musicbrainz")
+            except ValueError as error:
+                raise PublicArtistNavigationStoreError(str(error)) from error
+            if (
+                identity is None
+                or not self._joint_observation(
+                    connection,
+                    display,
+                    search,
+                    artist_id,
+                    identity=True,
+                )
+                or not self._joint_observation(connection, display, search, artist_id)
+            ):
+                return base
+            rows = connection.execute(
+                """SELECT DISTINCT l.entity_id,l.artist_credit_id,l.provenance_id,
+                c.provenance_id FROM entity_artist_credits l
+                JOIN recordings r ON r.id=l.entity_id
+                JOIN artist_credits c ON c.id=l.artist_credit_id
+                JOIN artist_credit_members m ON m.artist_credit_id=c.id
+                WHERE m.artist_id=? AND l.credit_kind='primary'
+                ORDER BY l.entity_id,l.artist_credit_id,l.provenance_id LIMIT ?""",
+                (artist_id, MAX_ARTIST_CREDIT_OBSERVATIONS + 1),
+            ).fetchall()
+            if len(rows) > MAX_ARTIST_CREDIT_OBSERVATIONS:
+                raise PublicArtistNavigationStoreError("artist credit observation bound exceeded")
+            supported: dict[int, set[tuple[int, int, int]]] = {}
+            for entity_id, credit_id, link, definition in rows:
+                if definition is not None and all(
+                    gate.chain(int(prov)) is not None
+                    for gate in (display, search)
+                    for prov in (link, definition)
+                ):
+                    supported.setdefault(int(entity_id), set()).add(
+                        (int(credit_id), int(link), int(definition))
+                    )
+            selected: list[tuple[str, str, RecordingContextResponse]] = []
+            name_count = 0
+            for entity_id, observations in supported.items():
+                if display.blocked("entity", entity_id) or search.blocked("entity", entity_id):
+                    continue
+                mbid = self._search_identity(connection, display, search, entity_id)
+                if mbid is None:
+                    continue
+                names = connection.execute(
+                    """SELECT name,provenance_id FROM entity_names
+                    WHERE entity_id=? ORDER BY id LIMIT ?""",
+                    (entity_id, MAX_TITLE_OBSERVATIONS + 1),
+                ).fetchall()
+                name_count += len(names)
+                if name_count > MAX_TITLE_OBSERVATIONS:
+                    raise PublicArtistNavigationStoreError("artist recording title bound exceeded")
+                titles = [
+                    str(row[0])
+                    for row in names
+                    if (text is None or text in normalized_title(str(row[0])))
+                    and all(gate.chain(int(row[1])) is not None for gate in (display, search))
+                ]
+                if not titles:
+                    continue
+                context = self._recording_context_connection(
+                    connection, mbid, genre_limit, related_limit
+                )
+                if context.status != "available" or not any(
+                    (
+                        credit.artist_credit_id,
+                        credit.credit_provenance_id,
+                        credit.definition_provenance_id,
+                    )
+                    in observations
+                    and any(
+                        member.musicbrainz_artist_id == artist_mbid for member in credit.members
+                    )
+                    for credit in context.credits
+                ):
+                    continue
+                title = min(titles, key=lambda value: (normalized_title(value), value))
+                selected.append(
+                    (normalized_title(title), mbid, context.model_copy(update={"title": title}))
+                )
+            selected.sort(key=lambda row: (row[0], row[1]))
+            return base.model_copy(
+                update={"results": tuple(row[2] for row in selected[offset : offset + limit])}
+            )
+
+    @staticmethod
+    def _joint_observation(
+        connection: sqlite3.Connection,
+        display: ExportEligibility,
+        search: ExportEligibility,
+        entity_id: int,
+        *,
+        identity: bool = False,
+    ) -> bool:
+        if identity:
+            rows = connection.execute(
+                """SELECT i.provenance_id FROM entity_identifiers i
+                JOIN identifier_types t ON t.id=i.identifier_type_id
+                WHERE i.entity_id=? AND t.type_key='musicbrainz_artist_id' LIMIT ?""",
+                (entity_id, MAX_TITLE_OBSERVATIONS + 1),
+            )
+        else:
+            rows = connection.execute(
+                "SELECT provenance_id FROM entity_names WHERE entity_id=? LIMIT ?",
+                (entity_id, MAX_TITLE_OBSERVATIONS + 1),
+            )
+        rows = rows.fetchall()
+        if len(rows) > MAX_TITLE_OBSERVATIONS:
+            raise PublicArtistNavigationStoreError("artist seed observation bound exceeded")
+        return any(
+            display.chain(int(row[0])) is not None and search.chain(int(row[0])) is not None
+            for row in rows
+        )
 
     def _search_identity(
         self,

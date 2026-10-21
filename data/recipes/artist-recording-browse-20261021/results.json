@@ -1,0 +1,95 @@
+{
+  "scope": "Exact native artist MBID to retained intact primary-credit recordings, optional literal title filter; no complete discography, musical relevance or popularity claim.",
+  "implementation_sha256": {
+    "scripts/query_recording_context.py": "f557b7140b4c1312d2d907b885ae896c9cdf67ec9c1b336dd822f8b8eead246b",
+    "src/opennoise/catalog/artist_identity.py": "3bf36a48d1de43dacb108cd27766a28016526915af37dd5d87a8c9a951794119",
+    "src/opennoise/serving/public/artist_navigation_store.py": "881193b4af4703baf98ee8975165aff296f75079bd49ca5e962f8bc269980228",
+    "src/opennoise/serving/public/membership_export_eligibility.py": "70f38379be88ea5b37a7d6c5982e6a209728421628310421456ed99b5950e55c",
+    "src/opennoise/serving/public/recording_navigation_store.py": "8b041488fe110896337cd683852b8ee06e7b3dc5f166c2d549fd5c41780196f6"
+  },
+  "sources": {
+    "core_portable_source_sha256": "13921b94a5a0c77c625713b5e272d40d081c67de3eb5b1299c8c1c48baf6d6ba",
+    "retained_track_derived_title_artifact_sha256": "9d2a7925eddf2cbf0260e502ca2b71d0a4ec92ac953d9e630f836adc08836ce3",
+    "musicbrainz_first_sqlite_sha256": "c748a6efcf11a91ac241fd8783b62f1de682db813b0e753254f26e9d2c00640e",
+    "wikidata_first_sqlite_sha256": "f38122a1341a649ea595047c958cfa81a0ff07a51ac81447f9a00859ec03e6ed",
+    "license": "MusicBrainz/Wikidata CC0; separately retained portable projections and hydration artifacts, not original HTTP title bodies"
+  },
+  "actual_counts": {
+    "credited_artists": 351,
+    "native_artist_recording_edges": 1242,
+    "recordings": 1031,
+    "artists_with_multiple_recordings": 96,
+    "max_recordings_per_artist": 68,
+    "artist_full_title_filter_queries": 1237,
+    "shared_artist_duplicate_title_groups": 5,
+    "artist_page_queries_per_order": 761,
+    "exact_prior_full_context_checks_per_order": 2515,
+    "negative_controls": 47,
+    "exact_releases": 45
+  },
+  "evidence": {
+    "inverse-oracle.json": {
+      "path": "/workspace/artist-recording-browse-20261021/inverse-oracle.json",
+      "sha256": "cbf56323dd8b217b827724240cc9398ea37fc4ada48c4057ebbbfc0e4bdbdeda"
+    },
+    "source-proof/runtime-before.json": {
+      "path": "/workspace/artist-recording-browse-20261021/source-proof/runtime-before.json",
+      "sha256": "36cd22cb7403dd1a42916f692425c416ac762cd28f773f8e98ceb78eef555980"
+    },
+    "source-proof/musicbrainz-first.json": {
+      "path": "/workspace/artist-recording-browse-20261021/source-proof/musicbrainz-first.json",
+      "sha256": "eada8f67f709a355943084d5b08aa9e692dd3b7519d84903a06b85bcae4c9a8e"
+    },
+    "source-proof/wikidata-first.json": {
+      "path": "/workspace/artist-recording-browse-20261021/source-proof/wikidata-first.json",
+      "sha256": "63ff88868a5d4379b43fffadd8d57c7517e53fe7757bb5e6c12a44927187a02f"
+    },
+    "source-proof/controls/result.json": {
+      "path": "/workspace/artist-recording-browse-20261021/source-proof/controls/result.json",
+      "sha256": "9d8d1b4b087c3294036c7e85682a706b98b627e3d3ade2fff6dddcdc9a73e7ed"
+    },
+    "source-proof/cli.json": {
+      "path": "/workspace/artist-recording-browse-20261021/source-proof/cli.json",
+      "sha256": "3a4c16c44d03b6e2be1891bac6b94ca8b4713fae3d66bd30146071b6a5b91adc"
+    }
+  },
+  "checks": {
+    "focused": {
+      "tests": 8,
+      "elapsed_seconds": 22.846,
+      "status": "passed"
+    },
+    "full": {
+      "status": "passed",
+      "python_tests": 2445,
+      "python_skipped": 36,
+      "python_elapsed_seconds": 278.559,
+      "node_passed": 122,
+      "node_skipped": 44,
+      "format": "passed",
+      "lint": "passed",
+      "typecheck": "passed",
+      "log": "/tmp/artist-recording-full.log",
+      "sync_log": "/tmp/artist-recording-sync.log"
+    }
+  },
+  "new_acquisitions": 0,
+  "supervised_fits": 0,
+  "cost_usd": 0,
+  "limitations": [
+    "Retained source pool only, not a complete discography or relevance evaluation.",
+    "Genre context belongs to credited artists, not recording genre membership.",
+    "Hard malformed-credit/identity/bound errors abort, rights withholding and eligible conflicting whole credits omit associations.",
+    "Local proof/catalog paths are current-executor custody examples, not tracked inputs or guaranteed future availability."
+  ],
+  "native_edge_order_sha256": "10064b59b112118d376e67fb97e46f8401c171d222dd7b31dd86c6a7c451ee48",
+  "guarded_consumer_checks": {
+    "active_probes_per_corpus_order": [
+      "network",
+      "process",
+      "SQLite_write"
+    ],
+    "actual_forbidden_attempts": 0,
+    "pinned_databases_unchanged": true
+  }
+}
