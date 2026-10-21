@@ -40,10 +40,10 @@ class ExportEligibility:
         connection: sqlite3.Connection,
         source_families: tuple[tuple[str, str], ...] | None,
         *,
-        use_kind: Literal["export", "display"] = "export",
+        use_kind: Literal["export", "display", "local_search"] = "export",
     ) -> None:
         """Freeze active suppressions for the explicit use in this read-only operation."""
-        if use_kind not in ("export", "display"):
+        if use_kind not in ("export", "display", "local_search"):
             raise ValueError("unsupported metadata eligibility use")
         if use_kind == "export" and source_families is None:
             raise ValueError("export eligibility requires declared source families")
@@ -225,6 +225,8 @@ class ExportEligibility:
 
     def name(self, entity_id: int) -> tuple[str, dict[str, object]] | None:
         """Choose a deterministic eligible source name, never the catalog default."""
+        if self.use_kind == "local_search":
+            raise ValueError("local_search eligibility provides chain checks, not name selection")
         rows = self.connection.execute(
             f"""SELECT name,provenance_id FROM {self.use_kind}able_entity_names WHERE entity_id=?
                ORDER BY is_preferred DESC,CASE name_kind WHEN 'primary' THEN 0 ELSE 1 END,

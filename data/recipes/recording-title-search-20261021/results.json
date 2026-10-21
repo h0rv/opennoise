@@ -1,0 +1,93 @@
+{
+  "scope": "Literal retained recording display-title lookup into exact-ID credit/artist-source context, not new musical evidence or model quality.",
+  "source_title_custody": "Separately pinned retained core hydration artifact track titles; no original HTTP title bodies or safe-credit-projection title fields claimed.",
+  "implementation_sha256": {
+    "src/opennoise/serving/public/recording_navigation_store.py": "aef196f8eebc8d784f84fbb0842ab057ce829f136a07e3d265beaa8d650bb026",
+    "src/opennoise/serving/public/membership_export_eligibility.py": "70f38379be88ea5b37a7d6c5982e6a209728421628310421456ed99b5950e55c",
+    "scripts/query_recording_context.py": "f368fe58f155f2d92f2f6e7fb7733c4e851c0c4d1ec2167d81242dd6497c057c"
+  },
+  "actual_counts": {
+    "recordings": 1031,
+    "distinct_titles": 1023,
+    "non_ascii_titles": 183,
+    "duplicate_title_pairs": 8,
+    "full_title_substring_memberships": 1135,
+    "variant_queries_per_order": 193,
+    "pagination_queries_per_order": 66,
+    "complete_contexts_checked_per_order": 2002,
+    "cross_order_native_query_pages": 1282,
+    "negative_controls": 24,
+    "exact_releases": 23
+  },
+  "evidence": {
+    "title-oracle.json": {
+      "path": "/workspace/recording-title-search-20261021/title-oracle.json",
+      "sha256": "dd9e4262f109ec88de080f937e67f2cbd02cfd162c2791a0f5f14ebe7fda1a7d"
+    },
+    "custody-correction.json": {
+      "path": "/workspace/recording-title-search-20261021/custody-correction.json",
+      "sha256": "7a15fee1e10e96d7f9bb81fa36fb0fed77faaef381e4263a643cb63af8f70b88"
+    },
+    "source-proof/runtime-before.json": {
+      "path": "/workspace/recording-title-search-20261021/source-proof/runtime-before.json",
+      "sha256": "24a168e113705011d191833c40e73f0560d55e3b707bd59209e8ba8c6e1aba46"
+    },
+    "source-proof/musicbrainz-first.json": {
+      "path": "/workspace/recording-title-search-20261021/source-proof/musicbrainz-first.json",
+      "sha256": "cbf9462669b177d7acfbda2dce4661db30ec2ab8edd31ca17456eb37a6acde3b"
+    },
+    "source-proof/wikidata-first.json": {
+      "path": "/workspace/recording-title-search-20261021/source-proof/wikidata-first.json",
+      "sha256": "b37f4559356a951b60353fb25db7cd398976f1a1ef83289275f6cc43566ad240"
+    },
+    "source-proof/controls/result.json": {
+      "path": "/workspace/recording-title-search-20261021/source-proof/controls/result.json",
+      "sha256": "cdd9fe594406b4de5a6f35fa4747bf970761a17f0d4186fe0ebc6f6cf352777f"
+    },
+    "source-proof/cli.json": {
+      "path": "/workspace/recording-title-search-20261021/source-proof/cli.json",
+      "sha256": "82bc28831a4ecd63105c6a1f973ea6a77ad2f7825572096debaa6d453eb08127"
+    },
+    "development-order-comparison.json": {
+      "path": "/workspace/recording-title-search-20261021/development-order-comparison.json",
+      "sha256": "cdadb99fbff53331d1e5e675339094ff9c76cb8741cb0233d9472f71c6c4cd30"
+    }
+  },
+  "checks": {
+    "focused": {
+      "tests": 8,
+      "seconds": 22.25,
+      "status": "passed",
+      "log": "/tmp/recording-title-focused.log"
+    },
+    "additional_permission_case": {
+      "tests": 1,
+      "seconds": 8.232,
+      "status": "passed",
+      "log": "/tmp/recording-title-permission.log"
+    },
+    "full": {
+      "status": "passed",
+      "python_tests": 2437,
+      "python_seconds": 262.068,
+      "python_skipped": 36,
+      "node_passed": 122,
+      "node_skipped": 44,
+      "static": "passed",
+      "log": "/tmp/recording-title-full.log"
+    },
+    "review": "Luna cleared source/docs and independently passed eight focused tests; exact-commit acknowledgement coordinated by parent."
+  },
+  "fits": 0,
+  "new_acquisitions": 0,
+  "new_external_cost_usd": 0,
+  "new_feature_vectors": 0,
+  "new_human_judgments": 0,
+  "source_pins": {
+    "portable_core_source_sha256": "13921b94a5a0c77c625713b5e272d40d081c67de3eb5b1299c8c1c48baf6d6ba",
+    "retained_core_hydration_artifact_sha256": "9d2a7925eddf2cbf0260e502ca2b71d0a4ec92ac953d9e630f836adc08836ce3",
+    "standalone_catalog_musicbrainz_first_sha256": "c748a6efcf11a91ac241fd8783b62f1de682db813b0e753254f26e9d2c00640e",
+    "standalone_catalog_wikidata_first_sha256": "f38122a1341a649ea595047c958cfa81a0ff07a51ac81447f9a00859ec03e6ed"
+  },
+  "cross_order_query_page_sequence_sha256": "5c73e7b6c4f5be751669cef74011088cb50cf7c8a7ce9329218c8126df438289"
+}
