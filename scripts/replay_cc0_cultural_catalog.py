@@ -25,6 +25,14 @@ def main() -> None:
     parser.add_argument("--independent-pack", type=Path, required=True)
     parser.add_argument("--independent-receipt-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--register-core-custody",
+        action="store_true",
+        help=(
+            "Register verified retained core artifacts for recording-context display "
+            "in a fresh build"
+        ),
+    )
     args = parser.parse_args()
     result = build(
         args.core_source,
@@ -34,6 +42,7 @@ def main() -> None:
         args.independent_pack,
         args.independent_receipt_sha256,
         args.output,
+        register_core_custody=args.register_core_custody,
     )
     print(json.dumps({"source": result["source"], "files": result["files"]}, sort_keys=True))  # noqa: T201
 
