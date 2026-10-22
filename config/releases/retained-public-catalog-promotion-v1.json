@@ -1,0 +1,28 @@
+{
+  "audio_permitted": false,
+  "counts": {
+    "acoustic_artists": 17,
+    "acoustic_nominations": 100,
+    "artists": 440,
+    "artists_with_direct_genres": 78,
+    "catalog_artists": 433,
+    "compatible_artists": 13,
+    "compatible_recordings": 34,
+    "core_recordings": 1031,
+    "descriptor_recordings": 55,
+    "genres": 151,
+    "recordings": 1086,
+    "supported_query_artists": 6,
+    "supported_query_recordings": 11
+  },
+  "data_files": 701,
+  "data_inventory_sha256": "62a6ff6fc7a6379c7a65d5ab82044ac9e22e16180f5d244d194f359fe3ec9e76",
+  "input_contract_sha256": "c2c749c5186abc42eb01ef73fb068915920cb86975729b5352277f0c87d902c8",
+  "perceptual_quality_claim": false,
+  "private_artifacts_permitted": false,
+  "production_branch": "main",
+  "project": "opennoise",
+  "publication_scope": "tracked-public-cc0-retained-catalog-only",
+  "revision": "retained-public-catalog-promotion-v1",
+  "site_url": "https://opennoise.horv.co"
+}

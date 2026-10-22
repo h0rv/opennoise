@@ -11,7 +11,8 @@ aliases. The only supported Poe commands are:
 - `poe deploy` builds, certifies, and deploys `dist` to Cloudflare Pages.
 
 Keep Python 3.13 and static-only delivery. Never deploy experimental v3 data,
-local research candidates, or previews. Archived docs may mention retired Poe
+local research candidates, or previews. The promoted retained public catalog is
+the current production scope; its tracked source and data pins are mandatory. Archived docs may mention retired Poe
 aliases. Run their scripts directly when needed.
 
 For UI work, follow `docs/serving/DESIGN.md`: minimal, plain, “grug brain” design

@@ -1,24 +1,25 @@
 # OpenNoise
 
 OpenNoise builds static music explorers from bounded, provenance-checked data.
-The current local FMA listening explorer has 133 recordings from 129 artists,
-with excerpts for 143 of 164 source genre labels. Its browser loads precomputed
-JSON, HTML, CSS and JavaScript, and plays separately licensed local MP3 excerpts.
-Python performs ingestion, numerical modeling and layout offline; browsing needs
-no model server, Worker, WASM or OpenNoise API.
+The current public-input explorer covers 433 metadata artists and 1,031 recordings,
+plus a separate acoustic source with 17 artists and 55 descriptor-bearing recordings.
+Only 13 artists / 34 recordings share the strict feature contract; 6 artists / 11
+held-out queries emit unvalidated acoustic suggestions. The complete identity union
+is 440 artists / 1,086 recordings. Source genre links and acoustic suggestions are
+shown separately, with provenance and explicit unknowns. No audio playback or
+perceptual-quality claim is offered.
 
-The older metadata-only semantic atlas remains a separate publication path.
-Its source adapters still reject audio. The explicitly approved FMA listening
-pipeline separately captures and verifies audio, credits and licenses; it does
-not relax the metadata adapters or establish musical relevance.
+The [public-input build](docs/serving/PUBLIC_CATALOG_CANDIDATE.md) uses only
+byte-pinned, tracked CC0 source packs and project code. `poe build` replays and
+browser-certifies the promoted scope into `dist`; `poe dev` serves it locally.
+[Main-branch deployment](docs/serving/AUTOMATIC_DEPLOYMENT.md) runs after source,
+reproduction and browser gates and uploads to the existing Cloudflare Pages project.
+The live release marker binds the merged commit and every served asset.
 
-Open the self-contained [architecture walkthrough](docs/serving/architecture.html)
-for current model/data facts, or read the
-[release input and deployment plan](docs/serving/LISTENING_RELEASE_INPUTS.md).
-Code, tests and small recipes are in Git. Captured datasets, model artifacts,
-audio and the verified listening export are separate workspace artifacts; a
-fresh clone does not contain the listening site. Main CI currently checks source
-code and does not deploy it.
+The local FMA listening research export, private annotations and benchmark results
+remain separate. They are not inputs to the public build. Its licensed excerpts
+are not published by this deployment path. Older metadata-atlas inputs and pins
+remain preserved for historical reproduction.
 
 The [open foundation](docs/foundation/README.md) now includes runnable CC0
 examples, a stage/input inventory, overlapping style-model research, separate
@@ -43,12 +44,7 @@ The [AcousticBrainz pilot](docs/checkpoints/ACOUSTICBRAINZ_BENCHMARK_METADATA_20
 verifies a bounded additional source of recording-level sonic metadata; it
 changes no model or published artist genres.
 
-## Older semantic-atlas delivery
-
-The existing `poe build` / `poe deploy` path is the verified semantic atlas,
-not the current FMA listening export. It accounts for
-all 6,291 retained names: 2,945 placed nodes, 3,346 honest abstentions, 24
-overview regions, and bounded local structural edges.
+## Static delivery
 
 ```sh
 mise install
@@ -58,20 +54,16 @@ poe build
 poe dev
 ```
 
-Open <http://127.0.0.1:3001>. `poe dev` is a loopback file server for the
-already-exported `dist` directory. Cloudflare Pages deploys that same directory;
-there is no application server, server-side route, or backend API to configure.
+Open <http://127.0.0.1:3001>. `poe dev` is a loopback file server for the already
+certified `dist` directory. `poe deploy` repeats the same certification before
+uploading to Cloudflare Pages. `dist/opennoise-release.json` records the exact
+public source scope, merged commit and static asset hashes. No application server,
+model service, Worker, WASM or OpenNoise API is needed for browsing.
 
-A fresh clone can run `poe sync` and `poe check`. Building the canonical release
-also requires the retained, ignored `data/public.sqlite` and
-`.cache/semantic-map-layout-v3/artifact.json` inputs. Release integration tests
-skip explicitly when their sealed inputs are absent; checkout checks do not
-replace the release and browser certification gates.
-
-`dist/opennoise-static-manifest.json` is the release receipt. It binds the
-semantic-layout input hashes, coverage accounting, and every served asset.
-
-Deploy a certified `dist` directory with `poe deploy`.
+The historical semantic-atlas certifier `scripts/certify_static_pages.py` retains
+its original sealed `data/public.sqlite` and semantic-layout pins. Those untracked
+inputs are missing from a fresh checkout. It is no longer the default build/deploy
+path, and this public catalog does not claim to reconstruct its 6,291-name release.
 
 The supported Poe commands are `sync`, `bootstrap`, `check`, `dev`, `build`,
 and `deploy`. `poe bootstrap` is only needed when preparing the historical
