@@ -59,30 +59,23 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Require canonical publication inputs
-        run: |
-          set -eu
-          for input in data/public.sqlite .cache/semantic-map-layout-v3/artifact.json; do
-            if [ ! -f "$input" ]; then
-              echo "::error::Missing sealed publication input: $input. Deployment stopped; research/demo outputs cannot substitute."
-              exit 1
-            fi
-          done
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.19.0'
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - name: Install Python 3.13
-        run: uv python install 3.13
+        run: uv python install 3.13.14
       - name: Verify certification browser
         run: test -x "$CHROMIUM_PATH"
       - name: Install locked project dependencies
         run: UV_CACHE_DIR=.cache/uv uv tool run --from poethepoet poe sync
       - name: Install pinned Pages uploader
         run: npm install --global wrangler@4.102.0
-      - name: Certify and deploy the approved release through Poe
+      - name: Certify the approved release without deployment credentials
+        run: .venv/bin/poe build
+      - name: Upload only the certified public release
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -90,7 +83,11 @@ jobs:
           set -eu
           test -n "$CLOUDFLARE_API_TOKEN" || { echo '::error::Existing Pages deployment token unavailable; no credentials are created.'; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo '::error::Existing Pages account ID unavailable.'; exit 1; }
-          .venv/bin/poe deploy
+          wrangler pages deploy dist --project-name opennoise --branch main
+      - name: Verify the merged public release on the existing site
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: .venv/bin/python scripts/verify_public_catalog_live.py --commit "$EXPECTED_COMMIT"
 
   public-candidate:
     name: Reproduce and browser-check public-input candidate
@@ -130,3 +127,5 @@ jobs:
             sleep 0.1
           done
           node scripts/capture_retained_catalog_demo.mjs http://127.0.0.1:3001 .cache/public-candidate-browser
+      - name: Certify the promoted production build without uploading
+        run: .venv/bin/poe build

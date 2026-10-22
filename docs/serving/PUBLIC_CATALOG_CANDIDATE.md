@@ -1,9 +1,10 @@
 # Reproducible public-input catalog candidate
 
-This separate candidate rebuilds the latest retained-catalog explorer from public
-repository bytes. It does not restore the legacy semantic atlas, switch production,
-or consume the privately delivered HTML, private annotations or benchmark results.
-`poe build`, `poe deploy`, the Pages project and legacy promotion pins are unchanged.
+The candidate builder rebuilds the retained-catalog explorer from public repository
+bytes. It does not restore the legacy semantic atlas or consume privately delivered
+HTML, private annotations or benchmark results. The audited public scope is now
+selected by a separate production promotion receipt, described below; the candidate
+builder alone grants no publication authority. Legacy promotion pins are preserved.
 
 The tracked input contract is
 `config/releases/retained-public-catalog-inputs-v1.json`, SHA-256
@@ -75,9 +76,21 @@ Tests copy only repository implementation code, migrations and the declared publ
 inputs into a clean root, deny socket connections, build under two hash seeds and
 compare every payload byte. They also reject changed inputs and rehashed forged
 outputs. CI repeats source checks, candidate reconstruction and desktop/mobile
-browser checks without credentials. The production job still uses the old sealed
-release and cannot select this candidate.
+browser checks without credentials. The production certifier independently repeats these gates and requires the
+separate promoted public data scope before installing `dist`.
 
 Existing CI deployment credential availability remains unverified; no secret read
 was retried and no credentials were created. That connection issue is separate
 from this now self-contained candidate data/build path.
+
+## Promoted production scope
+
+`config/releases/retained-public-catalog-promotion-v1.json` freezes the audited
+counts, source contract and canonical inventory of all 701 public JSON data files
+(excluding the implementation-bound receipt). Its SHA-256 is
+`d9d68d05330c01b9056dd3accae4aab331ad4a38039fbbf0c8162d0c51aafcf8`.
+`poe build` and `poe deploy` use this gate. Reviewed code assets can advance on
+main merges; data cannot change under this promotion. The resulting
+`opennoise-release.json` binds every generated file, including HTML, code and
+receipt, to the exact build commit. No private source or benchmark aggregate is
+part of that scope. See [deployment](AUTOMATIC_DEPLOYMENT.md).

@@ -112,11 +112,11 @@ node --test --test-concurrency=1 tests/static/*.mjs
 '
 """, use_exec = true, env = { TMPDIR = ".cache/test-tmp", UV_CACHE_DIR = ".cache/uv" } }
 dev = ".venv/bin/python scripts/run_dev.py"
-build = { cmd = ".venv/bin/python scripts/certify_static_pages.py", use_exec = true }
+build = { cmd = ".venv/bin/python -m scripts.certify_public_catalog_pages", use_exec = true }
 deploy = { cmd = """
 sh -ec '
 set -e
-.venv/bin/python scripts/certify_static_pages.py --sealed-deploy
+.venv/bin/python -m scripts.certify_public_catalog_pages
 wrangler pages deploy dist --project-name opennoise --branch main
 '
 """, use_exec = true, env = { WRANGLER_LOG_PATH = ".cache/wrangler-deploy.log" } }

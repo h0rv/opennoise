@@ -418,7 +418,7 @@ def build(root: Path, output: Path) -> dict[str, Any]:
             ),
         },
         "license": "CC0-1.0 source metadata; MIT code",
-        "delivery": "local demonstration only; no deployment/publication authorized by this build",
+        "delivery": "candidate receipt; production authority: separate opennoise-release.json",
         "perceptual_similarity_validated": False,
         "audio_playback_verified": False,
         "private_annotations_or_benchmark_inputs": False,

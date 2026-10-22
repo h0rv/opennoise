@@ -16,7 +16,7 @@ export async function renderMap({main,profile,load,selected='',isCurrent=()=>tru
   const degree=new Map(artists.map(a=>[a.id,0]));
   for(const edge of edges){degree.set(edge.source,(degree.get(edge.source)??0)+1);degree.set(edge.target,(degree.get(edge.target)??0)+1);}
   main.append(el('h1','Artists'));
-  const scope=el('p',`Provisional local demo · metadata catalog: ${data.counts.catalog_artists} artists / ${data.counts.core_recordings} recordings. Including acoustic-only credits: ${data.counts.artists} artists / ${data.counts.recordings} recordings.`);scope.className='scope';main.append(scope);
+  const scope=el('p',`Provisional retained-catalog explorer · metadata catalog: ${data.counts.catalog_artists} artists / ${data.counts.core_recordings} recordings. Including acoustic-only credits: ${data.counts.artists} artists / ${data.counts.recordings} recordings.`);scope.className='scope';main.append(scope);
   const modes=el('nav');modes.className='breadcrumbs';modes.setAttribute('aria-label','Relationship source');
   for(const [mode,label] of [['source','Source relationships'],['audio','Suggested from audio features']]){
     const link=anchor(label,`#map/${mode}`);if((mode==='audio')===audio)link.setAttribute('aria-current','page');modes.append(link);
@@ -98,7 +98,7 @@ export async function renderMap({main,profile,load,selected='',isCurrent=()=>tru
   sources.append(el('p',`The catalog retains ${data.counts.core_recordings} recording entries, ${data.counts.catalog_artists} artists and ${data.counts.genres} observed genre labels. The acoustic source retains all ${data.counts.acoustic_nominations} nominations: ${data.counts.descriptor_recordings} have descriptors and ${data.counts.compatible_recordings} meet the strict extractor contracts. Missing and unsupported recordings remain in the source ledger.`));
   sources.append(el('p',`Acoustic coverage: ${data.counts.acoustic_artists} credited artists have descriptor rows; ${data.counts.compatible_artists} artists have extractor-compatible rows; only ${data.counts.supported_query_recordings} held-out recordings from ${data.counts.supported_query_artists} artists emit suggestions. These coverage denominators differ from the complete metadata catalog.`));
   sources.append(el('p','Pipeline: retained numeric music descriptors → unchanged version-specific standardized frames → recording neighbors excluding the query credit component → exact native artist credits → suggested links. Source-genre relationships use Wikidata observations separately. Scores from different frames are never pooled.'));
-  sources.append(el('p','This demonstration does not establish perceptual similarity, recommendation quality or EveryNoise parity. No audio playback is included. New derived data remains local; no new datasets were fetched.'));
+  sources.append(el('p','This demonstration does not establish perceptual similarity, recommendation quality or EveryNoise parity. No audio playback is included. Built from tracked CC0 source packs; no new datasets were fetched.'));
   sources.append(anchor('Build receipt','receipt.json'),el('span',' · '),anchor('Full recording/feature ledger','pipeline.json'),el('span',' · '),anchor('About','#about'));
   main.append(sources);showList();draw();return ()=>{controller.abort();query.removeAttribute('aria-controls');};
 }

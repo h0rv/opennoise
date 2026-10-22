@@ -36,7 +36,7 @@ class StaticDeliveryContractTests(unittest.TestCase):
         self.assertEqual(tasks["dev"], ".venv/bin/python scripts/run_dev.py")
         self.assertEqual(
             tasks["build"],
-            {"cmd": ".venv/bin/python scripts/certify_static_pages.py", "use_exec": True},
+            {"cmd": ".venv/bin/python -m scripts.certify_public_catalog_pages", "use_exec": True},
         )
         self.assertTrue(tasks["check"]["use_exec"])
         self.assertEqual(
@@ -46,7 +46,7 @@ class StaticDeliveryContractTests(unittest.TestCase):
         self.assertTrue(tasks["deploy"]["use_exec"])
         self.assertIn("set -e", tasks["deploy"]["cmd"])
         self.assertIn(
-            ".venv/bin/python scripts/certify_static_pages.py --sealed-deploy",
+            ".venv/bin/python -m scripts.certify_public_catalog_pages",
             tasks["deploy"]["cmd"],
         )
         self.assertIn(
@@ -54,7 +54,7 @@ class StaticDeliveryContractTests(unittest.TestCase):
             tasks["deploy"]["cmd"],
         )
         self.assertLess(
-            tasks["deploy"]["cmd"].index("certify_static_pages.py --sealed-deploy"),
+            tasks["deploy"]["cmd"].index("scripts.certify_public_catalog_pages"),
             tasks["deploy"]["cmd"].index("wrangler pages deploy"),
         )
         self.assertEqual(
