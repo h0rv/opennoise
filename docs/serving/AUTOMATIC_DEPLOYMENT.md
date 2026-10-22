@@ -11,6 +11,11 @@ deployment; a newer eligible run replaces an older pending run. Intermediate com
 may therefore be skipped during a burst of merges while the newest eligible build
 waits for the active upload. This avoids overlapping production uploads.
 
+The job also requires the separate public-input candidate build/browser check.
+That job uses no secrets and publishes no generated artifact; see
+[the candidate contract](PUBLIC_CATALOG_CANDIDATE.md). Passing it does not promote
+the candidate or change the canonical production input selection.
+
 The job checks out the exact triggering SHA, serializes production uploads, installs
 Python 3.13, locked project dependencies and a pinned Wrangler, and invokes only
 `poe deploy`. This preserves canonical input paths, SHA-256 pins, promotion replay,

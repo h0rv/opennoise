@@ -38,7 +38,7 @@ jobs:
 
   deploy:
     name: Certified production Pages deployment
-    needs: check
+    needs: [check, public-candidate]
     # main is both the repository default and the existing Pages production branch.
     # PRs, forks, manual runs and non-production branches never receive credentials.
     if: >-
@@ -91,3 +91,42 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN" || { echo '::error::Existing Pages deployment token unavailable; no credentials are created.'; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo '::error::Existing Pages account ID unavailable.'; exit 1; }
           .venv/bin/poe deploy
+
+  public-candidate:
+    name: Reproduce and browser-check public-input candidate
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
+      PYTHONHASHSEED: '27'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - name: Install pinned Python
+        run: uv python install 3.13.14
+      - name: Install locked dependencies
+        run: UV_CACHE_DIR=.cache/uv uv tool run --from poethepoet poe sync
+      - name: Build fresh candidate from public input contract
+        run: .venv/bin/python scripts/build_public_catalog_candidate.py build --output .cache/public-candidate
+      - name: Independently replay and verify complete payload
+        run: .venv/bin/python scripts/build_public_catalog_candidate.py verify --output .cache/public-candidate
+      - name: Verify desktop and mobile candidate without publication
+        run: |
+          set -eu
+          .venv/bin/poe dev --directory .cache/public-candidate/site --port 3001 >.cache/public-candidate-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..50}; do
+            if curl --silent --fail http://127.0.0.1:3001/ >/dev/null; then break; fi
+            sleep 0.1
+          done
+          node scripts/capture_retained_catalog_demo.mjs http://127.0.0.1:3001 .cache/public-candidate-browser

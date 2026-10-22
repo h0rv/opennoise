@@ -20,6 +20,11 @@ audio and the verified listening export are separate workspace artifacts; a
 fresh clone does not contain the listening site. Main CI currently checks source
 code and does not deploy it.
 
+The [public-input catalog candidate](docs/serving/PUBLIC_CATALOG_CANDIDATE.md)
+rebuilds a separate complete retained subset using only byte-pinned public source
+packs. Its data/build path is independent of unavailable legacy inputs and private
+research artifacts. It remains a candidate until its payload is reviewed for release.
+
 The [open foundation](docs/foundation/README.md) now includes runnable CC0
 examples, a stage/input inventory, overlapping style-model research, separate
 sonic and cultural comparisons, and historical evaluation tooling. The
