@@ -123,7 +123,11 @@ def _standalone(site: Path) -> None:
         source = re.sub(r"\bexport (?=(?:async )?function|const|let)", "", source)
         return "(()=>{\n" + source + "\nreturn {" + exports + "};\n})()"
 
-    files = {p.relative_to(site).as_posix(): read(p) for p in sorted(site.rglob("*.json"))}
+    files = {
+        p.relative_to(site).as_posix(): read(p)
+        for p in sorted(site.rglob("*.json"))
+        if not p.relative_to(site).as_posix().startswith("artist-network/details/")
+    }
     data = json.dumps(files, ensure_ascii=True, allow_nan=False).replace("<", "\\u003c")
     main = (site / "full-foundation.mjs").read_text()
     main = re.sub(r"^import .*?;\n", "", main, flags=re.MULTILINE)
@@ -137,7 +141,7 @@ def _standalone(site: Path) -> None:
         + module("map-atlas.mjs", "fitCamera,zoomAtCenter")
         + ";\n"
         "globalThis.OPENNOISE_PIPELINE_DEMO="
-        + module("pipeline-demo.mjs", "renderMap,appendArtistEvidence")
+        + module("pipeline-demo.mjs", "renderGenres,renderGenre,renderMap,appendArtistEvidence")
         + ";\n"
         + main
     )

@@ -1,0 +1,182 @@
+{
+  "artists": 86253,
+  "eligible_queries": 2162,
+  "ineligible_artists": 84091,
+  "overlapping_exclusion_causes": {
+    "fewer_than_3_withheld_neighbors": 83155,
+    "fewer_than_5_training_neighbors": 77023
+  },
+  "exclusive_exclusion_combinations": {
+    "fewer_than_3_withheld_neighbors": 7068,
+    "fewer_than_3_withheld_neighbors + fewer_than_5_training_neighbors": 76087,
+    "fewer_than_5_training_neighbors": 936
+  },
+  "metadata_nonempty_artists": 81977,
+  "artists_without_metadata": 4276,
+  "queries_without_metadata": 37,
+  "all_heldout_positive_instances": 9090,
+  "covered_positive_instances": 9090,
+  "candidate_positive_coverage": 1.0,
+  "training_degree_buckets": [
+    {
+      "training_degree": "0",
+      "artists": 35140,
+      "queries": 0,
+      "queries_without_metadata": 0
+    },
+    {
+      "training_degree": "1-4",
+      "artists": 41883,
+      "queries": 0,
+      "queries_without_metadata": 0
+    },
+    {
+      "training_degree": "5-9",
+      "artists": 7134,
+      "queries": 1075,
+      "queries_without_metadata": 31
+    },
+    {
+      "training_degree": "10-19",
+      "artists": 1794,
+      "queries": 821,
+      "queries_without_metadata": 6
+    },
+    {
+      "training_degree": "20-49",
+      "artists": 294,
+      "queries": 258,
+      "queries_without_metadata": 0
+    },
+    {
+      "training_degree": "50+",
+      "artists": 8,
+      "queries": 8,
+      "queries_without_metadata": 0
+    }
+  ],
+  "top_source_genre_coverage_overlapping": [
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Pop_music",
+      "artists": 8134,
+      "eligible_queries": 159,
+      "context_Recall10": 0.12442831452265413
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Jazz",
+      "artists": 7089,
+      "eligible_queries": 197,
+      "context_Recall10": 0.07720013555337533
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Alternative_rock",
+      "artists": 6807,
+      "eligible_queries": 234,
+      "context_Recall10": 0.2295604087270754
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Rock_music",
+      "artists": 6638,
+      "eligible_queries": 184,
+      "context_Recall10": 0.1569428759646151
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Hip_hop_music",
+      "artists": 5620,
+      "eligible_queries": 261,
+      "context_Recall10": 0.1642553062093292
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Indie_rock",
+      "artists": 5027,
+      "eligible_queries": 128,
+      "context_Recall10": 0.27035984848484845
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Folk_music",
+      "artists": 3931,
+      "eligible_queries": 64,
+      "context_Recall10": 0.17023809523809524
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Hard_rock",
+      "artists": 3596,
+      "eligible_queries": 244,
+      "context_Recall10": 0.18222534523764028
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Punk_rock",
+      "artists": 3471,
+      "eligible_queries": 130,
+      "context_Recall10": 0.29514652014652015
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Country_music",
+      "artists": 3357,
+      "eligible_queries": 56,
+      "context_Recall10": 0.08148384353741496
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Pop_rock",
+      "artists": 3096,
+      "eligible_queries": 108,
+      "context_Recall10": 0.1290607797552242
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Soul_music",
+      "artists": 2948,
+      "eligible_queries": 112,
+      "context_Recall10": 0.10819225417439703
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Heavy_metal_music",
+      "artists": 2896,
+      "eligible_queries": 186,
+      "context_Recall10": 0.18028575367285046
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Electronic_music",
+      "artists": 2707,
+      "eligible_queries": 69,
+      "context_Recall10": 0.14854497354497354
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Contemporary_R&B",
+      "artists": 2595,
+      "eligible_queries": 100,
+      "context_Recall10": 0.10716666666666665
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Blues",
+      "artists": 2122,
+      "eligible_queries": 62,
+      "context_Recall10": 0.0664362519201229
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Classical_music",
+      "artists": 2046,
+      "eligible_queries": 21,
+      "context_Recall10": 0.027777777777777773
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Progressive_rock",
+      "artists": 1985,
+      "eligible_queries": 98,
+      "context_Recall10": 0.20068027210884354
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/Indie_pop",
+      "artists": 1865,
+      "eligible_queries": 32,
+      "context_Recall10": 0.15625
+    },
+    {
+      "source_genre_uri": "http://dbpedia.org/resource/New_wave_music",
+      "artists": 1704,
+      "eligible_queries": 83,
+      "context_Recall10": 0.2279546758462421
+    }
+  ],
+  "genre_family_limit": "No fixed genre-family mapping supplied; native source genres overlap.",
+  "difference_from_metadata_comparison": "Complete serving gallery retains all artist identities, including 4276 without metadata, and adds37 such eligible queries. Prior metadata comparison used2125queries and95.6716% positive coverage; these metrics use2162queries and100%. Not a new model search."
+}

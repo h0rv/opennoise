@@ -1,0 +1,54 @@
+{
+  "status": "passed",
+  "counts": {
+    "artists": 86253,
+    "genre_artists": 78983,
+    "connected_artists": 55440,
+    "genres": 1876,
+    "genres_with_explicit_music_genre_type": 884,
+    "genre_claims": 182348,
+    "relationship_statements": 218202
+  },
+  "identity_evidence_counts": {
+    "source_type": 86252,
+    "source_person_and_instrument": 12525
+  },
+  "removed_genre_only_identity_regressions": 49,
+  "remaining_instrument_fallbacks": 1,
+  "vocabulary_names": 2216,
+  "untyped_retained_genres": 992,
+  "all_untyped_genres_have_positive_exact_vocabulary_match": true,
+  "untyped_match_rules": {
+    "exact": 734,
+    "terminal_music": 183,
+    "terminal_parenthesized_music": 75
+  },
+  "quarantined_labels": 2892,
+  "quarantined_native_claims": 20048,
+  "native_statement_count": 518483,
+  "native_english_labels_checked": 100546,
+  "native_type_replay": "Reuse prior independent full direct/transitive type replay, bound to identical source/type-audit hashes; every V6 included artist and genre is a V5 subset. Recheck complete declared class assignments and proofs in this run.",
+  "all_native_claims_are_filtered_v5_subset": true,
+  "source_bytes_unchanged_during_audit": true,
+  "producer_imported_or_executed": false,
+  "source_index_mode": "read-only; query_only",
+  "input_sha256": {
+    "snapshot": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+    "report": "c71d23747cae9124d9a44483bcf8e9af1fa45520a1387ce9e29e5b334ef4f319",
+    "quarantine": "4da171255fbbbe4859c877fbe22c3d1afa5d24882ae44e3a9ff74762ed97c00f",
+    "vocabulary": "4dd2bae46d952097b0ad88290eaf1a4eeb48112184fd280bc3adfcaffa454a62",
+    "vocabulary_receipt": "158d9eeb540023c8fb717c849986751770a125565453ab4a86c3156fce068b56",
+    "type_audit": "71c2803e282fef4ee5b51c3a6c4591e4169ff350d255c982ac0e76e7e2e18426",
+    "type_report": "4612e987c4d45efb36c7de0a5dcaa3f709572168744677ca26248669b2fc2d44",
+    "v5_snapshot": "95549d090336ed0fce35c5c480ad58d026892af3b95c366d832dd92a4726424e",
+    "prior_independent_type_review": "e56cd1d7bf68d06f7f4f7da0141b23bfab202bd429dac5f888a44570ece92cfc",
+    "direct_types": "59dc900bea2ec126b8c2a4097be4ccab5f737bf4616a3f1a9d300942e32c2c3e",
+    "transitive_types": "b3f00c756df36e9658886fea8625537c2ec513ee2006795ee49bacbe4ead2082",
+    "labels": "b1863f1f8398e677433563d90b87e01a742861373940486a57025fd031f3bc0d",
+    "producer": "9faf2bc9f290670234d6c94e9c78b9e512626ac619c85881fedac1e7aaad36a5"
+  },
+  "failure_counts": {},
+  "seconds": 94.451,
+  "peak_rss_mib": 664.594,
+  "limits": "Genre name evidence does not validate artist membership, musical positioning, or recommendation quality. This source review does not certify build/browser/release pins or numerical benchmark metrics."
+}

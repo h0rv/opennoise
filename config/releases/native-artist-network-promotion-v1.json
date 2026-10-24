@@ -1,0 +1,29 @@
+{
+  "audio_permitted": false,
+  "counts": {
+    "artists": 11894,
+    "at_least5_connections": 5895,
+    "connected_artists": 11811,
+    "nonempty_queried_references": 2064,
+    "observed_undirected_pairs": 149588,
+    "queried_references": 2147,
+    "suggested_artists": 7983
+  },
+  "data_files": 258,
+  "data_inventory_sha256": "54862f6a61834d12b127a7d505c8525a174bce84f2d22575c61cd2efc3d5e38a",
+  "genre_memberships_inferred": false,
+  "independent_listener_quality_claim": false,
+  "input_contract_sha256": "f2f5ef38a1f9c9dbabf29acc117609ba4a0bc054510544ef77ed2cb959913e3e",
+  "lyrics_permitted": false,
+  "per_user_history_permitted": false,
+  "production_branch": "main",
+  "project": "opennoise",
+  "publication_scope": "public-cc0-artist-context-network-no-song-content",
+  "retained_catalog_data_files": 701,
+  "retained_catalog_data_inventory_sha256": "62a6ff6fc7a6379c7a65d5ab82044ac9e22e16180f5d244d194f359fe3ec9e76",
+  "revision": "native-artist-network-promotion-v1",
+  "rights_basis": [
+    "https://listenbrainz.org/data/",
+    "https://musicbrainz.org/doc/About/Data_License"
+  ]
+}

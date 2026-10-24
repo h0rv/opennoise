@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "scope": "Independent source-to-output metadata ranking, connected data preservation, and bounded v2 UI review",
+  "metadata_rows_exact": 30789,
+  "correct_abstentions": 24,
+  "connected_artist_rows_exact": 55440,
+  "total_artists_with_suggestions": 55330,
+  "candidate_v1_to_v2_atlas_json_exact": 1625,
+  "review_blockers": [],
+  "release_promotion_or_publication_authorized_by_this_review": false,
+  "production_comparison_commit": "527a87aeaf2f4ecce8fc114e130f8b0c20faefec",
+  "listener_relevance_validated": false,
+  "external_identity_api_used": false,
+  "producer_imported_or_executed": false,
+  "other_worktree_writes": false,
+  "separate_source_blocker": "MusicBrainz identity validation remains stopped on HTTP 503; not used by this fallback",
+  "remaining_release_gates_owned_by_lead": ["promotion pin", "full required suite", "exact-commit canonical source replay and browser build", "sole-publisher deployment and metadata/offline verification"]
+}

@@ -1,0 +1,148 @@
+
+
+######
+#     #   ##   #####   ##   #####  #    #  ####
+#     #  #  #    #    #  #  #    # #    # #
+#     # #    #   #   #    # #####  #    #  ####
+#     # ######   #   ###### #    # #    #      #
+#     # #    #   #   #    # #    # #    # #    #
+######  #    #   #   #    # #####   ####   ####
+
+# Plugin version 1.3-SNAPSHOT - https://github.com/dbpedia/databus-maven-plugin
+
+
+@prefix databus: <https://databus.dbpedia.org/> .
+@prefix dataid-mt: <http://dataid.dbpedia.org/ns/mt#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix dataid: <http://dataid.dbpedia.org/ns/core#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dataid-cv: <http://dataid.dbpedia.org/ns/cv#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcat:  <http://www.w3.org/ns/dcat#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix dataid-debug: <http://dataid.dbpedia.org/ns/debug.ttl#> .
+
+<https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#Dataset>
+        a                             dataid:Dataset ;
+        rdfs:comment                  "Cleaned version of high quality statements with IRI object values extracted by the mappings extraction from Wikipedia Infoboxes."@en ;
+        rdfs:label                    "Cleaned object properties extracted with mappings"@en ;
+        dataid:account                databus:dbpedia ;
+        dataid:artifact               <https://databus.dbpedia.org/dbpedia/mappings/mappingbased-objects> ;
+        dataid:associatedAgent        <https://webid.dbpedia.org/webid.ttl#this> ;
+        dataid:group                  <https://databus.dbpedia.org/dbpedia/mappings> ;
+        dataid:groupdocu              "## Attribution fulfilled by\n* (when deriving another dataset and releasing to the Databus) adding the Databus link to the provenance https://databus.dbpedia.org/dbpedia/mappings/mappingbased-objects/mappingbased-objects/2022.12.01\n* on your website:\n  * include the DBpedia logo and mention the usage of DBpedia with this link: https://databus.dbpedia.org/dbpedia\n  * include backlinks from your pages to the individual entities, e.g. http://dbpedia.org/resource/Berlin\n* in academic publications cite: DBpedia - A Large-scale, Multilingual Knowledge Base Extracted from Wikipedia, J. Lehmann, R. Isele, M. Jakob, A. Jentzsch, D. Kontokostas, P. Mendes, S. Hellmann, M. Morsey, P. van Kleef, S. Auer, and C. Bizer. Semantic Web Journal 6 (2): 167--195 (2015)\n\n## How to contribute\nDBpedia is a community project, help us with:\n* editing the mappings at http://mappings.dbpedia.org\n* improve this documentation at https://github.com/dbpedia/databus-maven-plugin/tree/master/dbpedia/mappings/mappingbased-objects/mappingbased-objects.md\n* help with the software relevant for extraction:\n** https://github.com/dbpedia/extraction-framework/tree/master/core/src/main/scala/org/dbpedia/extraction/mappings\n** in particular https://github.com/dbpedia/extraction-framework/blob/master/core/src/main/scala/org/dbpedia/extraction/mappings/InfoboxMappingsExtractor.scala\n\n## Debug\nParselogs are currently kept here: http://downloads.dbpedia.org/temporary/parselogs/\n\n## Origin\nThis dataset was extracted using the wikipedia-dumps available on https://dumps.wikimedia.org/\nusing the DBpedia Extraction-Framework available at https://github.com/dbpedia/extraction-framework\nFor more technical information on how these datasets were generated, please visit http://dev.dbpedia.org\n\n## Changelog\n* 2020.02.01\n  * the datasets have been parsed with Jena. Sorting failed. \n* 2019.10.16\n  * fixed encoding issue\n  * fixed https://github.com/dbpedia/extraction-framework/issues/595 where a nullpointer caused some instance extractions to crash\n* 2018.09.12\n  * were created as new modular releases, some issues remain\n  * we used rapper 2.0.14 to parse and `LC_ALL=C sort` to sort and ascii2uni -a U to unescape unicdoe xcharacters\n  * parsing removed 250k triples total, debugging pending\n  * object-uncleaned was not transformed into objects-cleaned and is missing\n  * link to Wikimedia dump version is missing\n* 2016.10.01\n  * was taken from the previous BIG DBpedia releases under http://downloads.dbpedia.org/2016-10/ and included for completeness" ;
+        dataid:version                <https://databus.dbpedia.org/dbpedia/mappings/mappingbased-objects/2022.12.01> ;
+        dataid-debug:codeReference    <https://github.com/dbpedia/extraction-framework/blob/master/core/src/main/scala/org/dbpedia/extraction/mappings/MappingExtractor.scala> ;
+        dataid-debug:documentationLocation
+                <https://git.informatik.uni-leipzig.de/dbpedia-assoc/marvin-config/-/tree/master/databus-poms/dbpedia/mappings/mappingbased-objects> ;
+        dataid-debug:feedbackChannel  <https://forum.dbpedia.org/c/data/databus/14> ;
+        dataid-debug:issueTracker     <https://github.com/dbpedia/extraction-framework/issues> ;
+        dct:conformsTo                "http://dataid.dbpedia.org/ns/core#" ;
+        dct:description               "Statements are based on input from [mappingbased-objects-uncleaned](https://databus.dbpedia.org/dbpedia/${project.groupId}/mappingbased-objects-uncleaned/${project.version}) after applying **post processing steps**:\n \n 1. Canonicalization of all object values replacing them by their (transitive) redirects, i.e. `http://dbpedia.org/resource/Barack_Obama_Jr` will be replaced by `http://dbpedia.org/resource/Barack_Obama` . The `_transitive` file of the corresponding language chapter from [redirects dataset](https://databus.dbpedia.org/dbpedia/generic/redirects/${project.version}) will be used to resolve the transitive redirects. See [code](https://github.com/dbpedia/extraction-framework/blob/master/scripts/src/main/scala/org/dbpedia/extraction/scripts/MapObjectUris.scala) for more details.\n 2. Type consistency filtering: extracted `rdf:type` statements from [instance-types](https://databus.dbpedia.org/dbpedia/${project.groupId}/instance-types/${project.version}) are used to check domain and range according to the definition of the properties in the [DBpedia ontology](https://databus.dbpedia.org/dbpedia/ontology/dbo-snapshots). Statements with predicate *p* for which the subject resource is from a different type than specified in `rdfs:domain` of *p* are passed to  `_disjointDomain` files, whereas statements with an object resource disjoint from `rdfs:range` will be passed `_disjointRange`  files. Statements where the types match or are subtypes of the expected ones are passed to the regular dataset files (without content variant). See [code](https://github.com/dbpedia/extraction-framework/blob/master/scripts/src/main/scala/org/dbpedia/extraction/scripts/TypeConsistencyCheck.scala) for more details. We keep the `disjoint*` files since they can contain also false positives due to incomplete type information (e.g. no infobox exists for a specific resource or infobox class mapping is incomplete). If you union all 3 files the results is same as applying only step 1." ;
+        dct:hasVersion                "2022.12.01" ;
+        dct:issued                    "2022-12-01T00:00:00Z"^^xsd:dateTime ;
+        dct:license                   <http://purl.oclc.org/NET/rdflicense/cc-by3.0> ;
+        dct:publisher                 <https://webid.dbpedia.org/webid.ttl#this> ;
+        dct:title                     "Cleaned object properties extracted with mappings"@en ;
+        dcat:distribution             <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#mappingbased-objects_lang=en.ttl.bz2> , <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#mappingbased-objects_lang=en_disjointDomain.ttl.bz2> , <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#mappingbased-objects_lang=en_disjointRange.ttl.bz2> .
+
+dataid-cv:tag  rdfs:subPropertyOf  dataid:contentVariant .
+
+<https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#mappingbased-objects_lang=en_disjointRange.ttl.bz2>
+        a                        dataid:SingleFile ;
+        dataid:associatedAgent   <https://webid.dbpedia.org/webid.ttl#this> ;
+        dataid:compression       "bzip2" ;
+        dataid:contentVariant    "en" , "disjointRange" ;
+        dataid:file              <https://databus.dbpedia.org/dbpedia/mappings/mappingbased-objects/2022.12.01/mappingbased-objects_lang=en_disjointRange.ttl.bz2> ;
+        dataid:formatExtension   "ttl" ;
+        dataid:isDistributionOf  <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#Dataset> ;
+        dataid:preview           "<http://dbpedia.org/resource/'Cause_I_Have_You> <http://dbpedia.org/ontology/recordedIn> <http://dbpedia.org/resource/Capitol_Studios> .\n<http://dbpedia.org/resource/'Til_Death_Do_Us_Part_(American_TV_series)> <http://dbpedia.org/ontology/distributor> <http://dbpedia.org/resource/Hungary> .\n<http://dbpedia.org/resource/'t_Vliegend_Hert> <http://dbpedia.org/ontology/owner> <http://dbpedia.org/resource/Zeeland> .\n<http://dbpedia.org/resource/(310071)_2010_KR59> <http://dbpedia.org/ontology/discoverer> <http://dbpedia.org/resource/Wide-field_Infrared_Survey_Explorer> .\n<http://dbpedia.org/resource/(336756)_2010_NV1> <http://dbpedia.org/ontology/discoverer> <http://dbpedia.org/resource/Wide-field_Infrared_Survey_Explorer> .\n<http://dbpedia.org/resource/(419624)_2010_SO16> <http://dbpedia.org/ontology/discoverer> <http://dbpedia.org/resource/Wide-field_Infrared_Survey_Explorer> .\n<http://dbpedia.org/resource/(459883)_2014_JX55> <http://dbpedia.org/ontology/discoverer> <http://dbpedia.org/resource/Wide-field_Infrared_Survey_Explorer> .\n<http://dbpedia.org/resource/(505657)_2014_SR339> <http://dbpedia.org/ontology/discoverer> <http://dbpedia.org/resource/Wide-field_Infrared_Survey_Explorer> .\n<http://dbpedia.org/resource/(614599)_2010_AB78> <http://dbpedia.org/ontology/discoverer> <http://dbpedia.org/resource/Wide-field_Infrared_Survey_Explorer> .\n<http://dbpedia.org/resource/(Are_You)_The_One_That_I've_Been_Waiting_For> <http://dbpedia.org/ontology/recordedIn> <http://dbpedia.org/resource/Abbey_Road_Studios> ." ;
+        dataid:sha256sum         "e9030628206f26bcb75132f58d078697d298bfe12eb0ce45f38b946450e3310a" ;
+        dataid:signature         "AP/dJ/jRnz0rZygrHB0xsHuN46AHmP7kWosjRXmmftmq2R9aWDCer8hSOxUSxCVsAHTtVMpkqUFh3/mcjgPx6RjxbbTbNayw1SM3HX2JzX5WgD7eIt8kCzzmbziEzUM6XlP7ijYg6q0u1cvnM4NsXaxA5RAhCUi1ynFGqvGxBP6+89wbn/9Fr3SHf9TCTk0A4y1lnYNqyNWXO0GvW9BKnTJcnpkVrwF7bYD8jgqB8aydflGvlRb+lcsRR9AFKxaG4o10orAh6syYt4vTedSn7ZI+mABGs686Gyad1eWiCHk6Jh/aLFo35ZRQQNudKYPjxq0fqRTNHgdff+Jozfu8qA==" ;
+        dataid-cv:lang           "en" ;
+        dataid-cv:tag            "disjointRange" ;
+        dct:conformsTo           "http://dataid.dbpedia.org/ns/core#" ;
+        dct:hasVersion           "2022.12.01" ;
+        dct:issued               "2022-12-01T00:00:00Z"^^xsd:dateTime ;
+        dct:license              <http://purl.oclc.org/NET/rdflicense/cc-by3.0> ;
+        dct:modified             "2023-03-07T20:17:58Z"^^xsd:dateTime ;
+        dct:publisher            <https://webid.dbpedia.org/webid.ttl#this> ;
+        dcat:byteSize            "781944"^^xsd:decimal ;
+        dcat:downloadURL         <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/mappingbased-objects_lang=en_disjointRange.ttl.bz2> ;
+        dcat:mediaType           dataid-mt:ApplicationNTriples .
+
+<https://databus.dbpedia.org/dbpedia/mappings/mappingbased-objects>
+        a       dataid:Artifact .
+
+<https://databus.dbpedia.org/dbpedia/mappings/mappingbased-objects/2022.12.01>
+        a       dataid:Version .
+
+<https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#mappingbased-objects_lang=en.ttl.bz2>
+        a                        dataid:SingleFile ;
+        dataid:associatedAgent   <https://webid.dbpedia.org/webid.ttl#this> ;
+        dataid:compression       "bzip2" ;
+        dataid:contentVariant    "en" ;
+        dataid:file              <https://databus.dbpedia.org/dbpedia/mappings/mappingbased-objects/2022.12.01/mappingbased-objects_lang=en.ttl.bz2> ;
+        dataid:formatExtension   "ttl" ;
+        dataid:isDistributionOf  <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#Dataset> ;
+        dataid:preview           "<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/bandMember> <http://dbpedia.org/resource/Nic_Offer> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/formerBandMember> <http://dbpedia.org/resource/Jerry_Fuchs> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/formerBandMember> <http://dbpedia.org/resource/Justin_Van_Der_Volgen> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/genre> <http://dbpedia.org/resource/Alternative_dance> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/genre> <http://dbpedia.org/resource/Dance-punk> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/genre> <http://dbpedia.org/resource/Disco-rock> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/genre> <http://dbpedia.org/resource/Funk_rock> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/genre> <http://dbpedia.org/resource/Indietronica> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/hometown> <http://dbpedia.org/resource/California> .\n<http://dbpedia.org/resource/!!!> <http://dbpedia.org/ontology/hometown> <http://dbpedia.org/resource/Sacramento,_California> ." ;
+        dataid:sha256sum         "76747563b7bb6587d8707ae65489186b54d17acec060da7566397992c171371a" ;
+        dataid:signature         "Ra80tnqTYh+6NHGTv2dWmcm55aa/MgKMZMZqzS4mo0SYtR1zqdNCn+dvK4x9UFyfpCCf7wTYOp1K/PIThvQP0opkUXphv2opDJxXAZ0lUkE64xmnTFCGy3BIRmhYUPUfYgZF8zqSVmyUxx18thoPFUzBpxjIhXNTX75OC8l4VgQbUSgWBE3C0lHz+8DeGk6mwSG/gT3y1w16OL1R70P5rwGmWrkuP8zl2WuoAsdZW6kJTM9CFbxouxbFekMPc44A2tyFu6isFJyh0XR2z5lsEa8NPLU2sOi5XGUslV6DGtytX7Q9VcudpvVT/gYyIlSZj2JQ4AaWJPXaPuGY7zP0UQ==" ;
+        dataid-cv:lang           "en" ;
+        dct:conformsTo           "http://dataid.dbpedia.org/ns/core#" ;
+        dct:hasVersion           "2022.12.01" ;
+        dct:issued               "2022-12-01T00:00:00Z"^^xsd:dateTime ;
+        dct:license              <http://purl.oclc.org/NET/rdflicense/cc-by3.0> ;
+        dct:modified             "2023-03-07T20:22:51Z"^^xsd:dateTime ;
+        dct:publisher            <https://webid.dbpedia.org/webid.ttl#this> ;
+        dcat:byteSize            "191694609"^^xsd:decimal ;
+        dcat:downloadURL         <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/mappingbased-objects_lang=en.ttl.bz2> ;
+        dcat:mediaType           dataid-mt:ApplicationNTriples .
+
+<https://databus.dbpedia.org/dbpedia/mappings>
+        a       dataid:Group .
+
+dataid:contentVariant
+        a       <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+
+<https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl>
+        a                       dataid:DataId ;
+        rdfs:comment            "Metadata created by the DBpedia Databus Maven Plugin: https://github.com/dbpedia/databus-maven-plugin (Version 1.3-SNAPSHOT)\nThe DataID ontology is a metadata omnibus, which can be extended to be interoperable with all metadata formats\nNote that the metadata (the dataid.ttl file) is always CC-0, the files are licensed individually\nMetadata created by https://webid.dbpedia.org/webid.ttl#this" ;
+        rdfs:label              "DataID metadata for mappings/mappingbased-objects"@en ;
+        dataid:associatedAgent  <https://webid.dbpedia.org/webid.ttl#this> ;
+        dct:conformsTo          "http://dataid.dbpedia.org/ns/core#" ;
+        dct:hasVersion          "1.3-SNAPSHOT" ;
+        dct:issued              "2023-03-07T20:43:02Z"^^xsd:dateTime ;
+        dct:license             <http://purl.oclc.org/NET/rdflicense/cc-zero1.0> ;
+        dct:publisher           <https://webid.dbpedia.org/webid.ttl#this> ;
+        dct:title               "DataID metadata for mappings/mappingbased-objects"@en .
+
+dataid-mt:ApplicationNTriples
+        a                dataid-mt:MediaType ;
+        dataid:mimetype  "application/n-triples" .
+
+dataid-cv:lang  rdfs:subPropertyOf  dataid:contentVariant .
+
+<https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#mappingbased-objects_lang=en_disjointDomain.ttl.bz2>
+        a                        dataid:SingleFile ;
+        dataid:associatedAgent   <https://webid.dbpedia.org/webid.ttl#this> ;
+        dataid:compression       "bzip2" ;
+        dataid:contentVariant    "disjointDomain" , "en" ;
+        dataid:file              <https://databus.dbpedia.org/dbpedia/mappings/mappingbased-objects/2022.12.01/mappingbased-objects_lang=en_disjointDomain.ttl.bz2> ;
+        dataid:formatExtension   "ttl" ;
+        dataid:isDistributionOf  <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/dataid.ttl#Dataset> ;
+        dataid:preview           "<http://dbpedia.org/resource/31_Senior_High_School_Jakarta> <http://dbpedia.org/ontology/province> <http://dbpedia.org/resource/DKI_Jakarta> .\n<http://dbpedia.org/resource/47_The_American_Sign_Language_and_English_Secondary_School> <http://dbpedia.org/ontology/district> <http://dbpedia.org/resource/New_York_City_Department_of_Education> .\n<http://dbpedia.org/resource/8-Pass_Charlie__MilitaryService__1> <http://dbpedia.org/ontology/militaryRank> <http://dbpedia.org/resource/Air_Commodore> .\n<http://dbpedia.org/resource/8-Pass_Charlie__MilitaryService__1> <http://dbpedia.org/ontology/militaryUnit> <http://dbpedia.org/resource/No._2_Squadron_(Pakistan_Air_Force)> .\n<http://dbpedia.org/resource/8-Pass_Charlie__MilitaryService__1> <http://dbpedia.org/ontology/militaryUnit> <http://dbpedia.org/resource/No._7_Squadron_(Pakistan_Air_Force)> .\n<http://dbpedia.org/resource/A&M_Consolidated_High_School> <http://dbpedia.org/ontology/district> <http://dbpedia.org/resource/College_Station_Independent_School_District> .\n<http://dbpedia.org/resource/A.C._Davis_High_School_(Washington)> <http://dbpedia.org/ontology/district> <http://dbpedia.org/resource/Yakima_School_District> .\n<http://dbpedia.org/resource/A.J._Moore_Academy> <http://dbpedia.org/ontology/district> <http://dbpedia.org/resource/Waco_ISD> .\n<http://dbpedia.org/resource/A.L._Brown_High_School> <http://dbpedia.org/ontology/district> <http://dbpedia.org/resource/Kannapolis_City_Schools> .\n<http://dbpedia.org/resource/A.R.S._Armenian_School> <http://dbpedia.org/ontology/province> <http://dbpedia.org/resource/Ontario> ." ;
+        dataid:sha256sum         "2ce6b4f1d41f7f6649915255330725a4fbe78010063a6890e263d917c92c1869" ;
+        dataid:signature         "k3n0eHNXtx7fzIi5NmZyZvw+wi79XoVMqROzKAYFCLhpHEQeY7nWgv1tuwuJ9RsbPHcPzR6K7ZgrcyVsb6l1vjC62GoAxq9aZPAxxJS284of3tWj6+FWmNXbJ3C6xtbMJFvGTv+LMdCy6TixrsLNjr2mN3KAYHbkIuHkZJyZ0Im7bGM4yOFIl0bvNdCNE4RVP5CC5X3uaVZyj5UobbJdFEWlKkJ5dlLiGZGdHJ7fZEA1yoyEeuwTZv4/DQ4eeXnbuJQPW+fl285L3DRCNdQVYmnt4cG7/MPpBVoUVeZA1KHBB/sMpv2pqybEbL9r8tgN5ybETIBD8zD3Auhio0kuvQ==" ;
+        dataid-cv:lang           "en" ;
+        dataid-cv:tag            "disjointDomain" ;
+        dct:conformsTo           "http://dataid.dbpedia.org/ns/core#" ;
+        dct:hasVersion           "2022.12.01" ;
+        dct:issued               "2022-12-01T00:00:00Z"^^xsd:dateTime ;
+        dct:license              <http://purl.oclc.org/NET/rdflicense/cc-by3.0> ;
+        dct:modified             "2023-03-07T20:22:52Z"^^xsd:dateTime ;
+        dct:publisher            <https://webid.dbpedia.org/webid.ttl#this> ;
+        dcat:byteSize            "443266"^^xsd:decimal ;
+        dcat:downloadURL         <https://downloads.dbpedia.org/repo/dbpedia/mappings/mappingbased-objects/2022.12.01/mappingbased-objects_lang=en_disjointDomain.ttl.bz2> ;
+        dcat:mediaType           dataid-mt:ApplicationNTriples .

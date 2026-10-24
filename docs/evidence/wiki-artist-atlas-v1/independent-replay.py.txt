@@ -1,0 +1,255 @@
+"""Independent source-to-matrix and positive-rank replay; never imports producer."""
+import os
+os.environ['OPENBLAS_NUM_THREADS']='2'
+os.environ['OMP_NUM_THREADS']='2'
+import gzip
+import hashlib
+import json
+import math
+import resource
+import signal
+import time
+import unicodedata
+from collections import Counter,defaultdict
+from pathlib import Path
+import numpy as np
+from scipy import sparse
+
+resource.setrlimit(resource.RLIMIT_AS,(2_500_000_000,2_500_000_000))
+resource.setrlimit(resource.RLIMIT_CPU,(240,240))
+signal.alarm(300)
+START=time.monotonic()
+LEAD=Path('/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml')
+OUT=Path(__file__).resolve().parent
+MODEL=LEAD/'.cache/wiki-artist-model-v5'
+SOURCE=LEAD/'.cache/dbpedia-music-v6/snapshot.json.gz'
+PROTOCOL=LEAD/'research/wiki_artist_protocol_v5.json'
+PRODUCER=LEAD/'research/model_wiki_artists.py'
+VOCABULARY=LEAD/'.cache/musicbrainz-core-genre-vocabulary-v1/genres.txt'
+SOURCE_VERDICT=OUT.parent/'wiki-artist-v6-semantic-review/verdict.json'
+
+def sha(path):
+    h=hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda:stream.read(1_048_576),b''):h.update(block)
+    return h.hexdigest()
+
+def write(name,obj):
+    (OUT/name).write_text(json.dumps(obj,ensure_ascii=False,indent=2,allow_nan=False)+'\n')
+
+def progress(phase,**data):
+    print(json.dumps({'phase':phase,'seconds':round(time.monotonic()-START,3),**data}),flush=True)
+
+artifacts=[SOURCE,PROTOCOL,PRODUCER,VOCABULARY,SOURCE_VERDICT,*[MODEL/name for name in ('report.json','query-results.json','identities.json','metadata.npz','training-graph.npz','embedding.npy','feature-projection.npy')]]
+hashes={str(p):sha(p) for p in artifacts}
+expected=json.loads((MODEL/'report.json').read_text())
+protocol=json.loads(PROTOCOL.read_text())
+assert hashes[str(SOURCE)]==expected['source_sha256']
+assert hashes[str(PROTOCOL)]==expected['protocol_sha256']
+assert protocol['revision']==expected['revision']=='wiki-artist-metadata-v5'
+source_verdict=json.loads(SOURCE_VERDICT.read_text())
+assert source_verdict['semantic_acceptance']=='passed_corrected_rules_and_targeted_regressions'
+assert source_verdict['snapshot_sha256']==hashes[str(SOURCE)]=='814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9'
+assert 'genre_canonicalization' in protocol
+(OUT/'reviewed-protocol.json').write_bytes(PROTOCOL.read_bytes())
+(OUT/'reviewed-producer.py.txt').write_bytes(PRODUCER.read_bytes())
+with gzip.open(SOURCE,'rt') as stream:source=json.load(stream)
+artists=source['artists']
+uris=[r['uri'] for r in artists]
+N=len(uris)
+assert uris==sorted(set(uris)) and N==86253
+assert all(isinstance(r['name'],str) and r['name'].strip() for r in artists)
+lookup={u:i for i,u in enumerate(uris)}
+assert json.loads((MODEL/'identities.json').read_text())==[{'uri':r['uri'],'name':r['name']} for r in artists]
+progress('source_bound',artists=N)
+
+# Reconstruct controlled genre keys independently, including deduplication within each artist.
+# A source genre URI can be an alias, but no artist identity is merged.
+def normalized_name(value):
+    return unicodedata.normalize('NFKC',value).strip().casefold()
+
+assert hashes[str(VOCABULARY)]==source['source']['genre_vocabulary']['sha256']
+controlled={normalized_name(v):v for v in VOCABULARY.read_text().splitlines()}
+canonical_genres={};canonical_members=defaultdict(list)
+for genre in source['genres']:
+    name=normalized_name(genre['name'])
+    names=[name]
+    if name.endswith(' music'):names.append(name.removesuffix(' music').strip())
+    if name.endswith(' (music)'):names.append(name.removesuffix(' (music)').strip())
+    matched=next((controlled[n] for n in names if n in controlled),None)
+    assert matched==genre['vocabulary_term']
+    if matched is not None:
+        key='core:'+matched
+    else:
+        assert {'Genre','MusicGenre'}&set(genre['source_types'])
+        key='typed:'+name
+    canonical_genres[genre['uri']]=key
+    canonical_members[key].append({'uri':genre['uri'],'name':genre['name']})
+write('canonical-genre-groups.json',dict(sorted(canonical_members.items())))
+assert len(canonical_genres)==1876 and len(canonical_members)==1366
+
+# Assemble each normalized value directly from document frequencies and source memberships.
+# This does not load or call any producer implementation.
+row_numbers=[];column_numbers=[];values=[];offset=0
+block_counts=np.zeros(N,dtype=np.int8)
+blocks={};feature_identity_collisions={}
+for kind in ('genre','instrument','recordLabel'):
+    native_key='http://dbpedia.org/ontology/'+kind
+    memberships=[r['genres'] if kind=='genre' else r['features'].get(native_key,[]) for r in artists]
+    assert all(len(set(v))==len(v) for v in memberships),'source feature duplicates'
+    if kind=='genre':
+        memberships=[sorted({canonical_genres[v] for v in row}) for row in memberships]
+    frequency=Counter(v for row in memberships for v in row)
+    vocab=sorted(frequency)
+    index={v:i+offset for i,v in enumerate(vocab)}
+    idf={v:1+math.log((N+1)/(frequency[v]+1)) for v in vocab}
+    blocks[kind]={'features':len(vocab),'artists':sum(bool(row) for row in memberships)}
+    feature_identity_collisions[kind]=sorted(set(vocab)&set(lookup))
+    for i,row in enumerate(memberships):
+        if not row:continue
+        block_counts[i]+=1
+        denominator=math.sqrt(sum(idf[v]*idf[v] for v in row))
+        for v in row:
+            row_numbers.append(i);column_numbers.append(index[v]);values.append(idf[v]/denominator)
+    offset+=len(vocab)
+weights=np.asarray(values,dtype=np.float64)
+row_numbers=np.asarray(row_numbers,dtype=np.int32)
+weights/=np.sqrt(block_counts[row_numbers].astype(np.float64))
+X=sparse.coo_matrix((weights,(row_numbers,np.asarray(column_numbers,dtype=np.int32))),shape=(N,offset)).tocsr()
+X.sort_indices()
+saved_X=sparse.load_npz(MODEL/'metadata.npz').tocsr()
+assert saved_X.shape==X.shape
+matrix_delta=saved_X-X
+max_matrix_error=float(np.max(np.abs(matrix_delta.data),initial=0))
+assert max_matrix_error<2e-14,max_matrix_error
+assert blocks==expected['feature_blocks']
+nonempty=np.diff(X.indptr)>0
+assert int(nonempty.sum())==expected['nonempty_metadata_artists']
+progress('metadata_reconstructed',shape=list(X.shape),nonempty=int(nonempty.sum()),maximum_error=max_matrix_error)
+del saved_X,matrix_delta,weights,row_numbers,column_numbers,values
+
+# Group every reciprocal/kind variant before splitting any edge; use URI bytes for the hash.
+relation_kinds={'http://dbpedia.org/ontology/'+k for k in ('associatedMusicalArtist','associatedBand','bandMember','formerBandMember')}
+pairs=set();kind_counts=Counter();self_statements=0
+for a,kind,b in source['relations']:
+    assert a in lookup and b in lookup and kind in relation_kinds
+    kind_counts[kind]+=1
+    if a==b:self_statements+=1;continue
+    pairs.add((min(lookup[a],lookup[b]),max(lookup[a],lookup[b])))
+truth=defaultdict(set);train_rows=[];train_cols=[];fold_counts=Counter()
+for left,right in sorted(pairs):
+    digest=hashlib.sha256(f'wiki-artist-pair-v1:{uris[left]}:{uris[right]}'.encode()).hexdigest()
+    fold=int(digest,16)%5
+    fold_counts[fold]+=1
+    if fold==0:truth[left].add(right);truth[right].add(left)
+    else:train_rows.extend((left,right));train_cols.extend((right,left))
+A=sparse.coo_matrix((np.ones(len(train_rows)),(train_rows,train_cols)),shape=(N,N)).tocsr()
+saved_A=sparse.load_npz(MODEL/'training-graph.npz').tocsr()
+assert (saved_A!=A).nnz==0
+assert (A!=A.T).nnz==0 and A.diagonal().sum()==0
+assert len(pairs)==expected['source_relationship_pairs']
+assert fold_counts[0]==expected['withheld_pairs']
+assert all(A[a,b]==0 and A[b,a]==0 for a,targets in truth.items() for b in targets)
+train_degree=np.diff(A.indptr)
+truth_degree=np.zeros(N,dtype=np.int32)
+for q,targets in truth.items():truth_degree[q]=len(targets)
+query_ids=np.flatnonzero(nonempty&(train_degree>=5)&(truth_degree>=3))
+assert len(query_ids)==expected['queries']
+expected_rows=json.loads((MODEL/'query-results.json').read_text())
+assert [r['artist'] for r in expected_rows]==[uris[q] for q in query_ids]
+progress('reciprocal_graph_reconstructed',pairs=len(pairs),withheld=fold_counts[0],queries=len(query_ids))
+del saved_A,train_rows,train_cols,pairs,source['relations']
+
+# Preserve exhaustive cause flags for each excluded identity, including overlapping causes.
+cause_groups=Counter();exclusive=Counter();missing_vector=int((~nonempty).sum())
+with gzip.open(OUT/'ineligible-artists.jsonl.gz','wt',encoding='utf-8') as sink:
+    for q,r in enumerate(artists):
+        causes=[]
+        if not nonempty[q]:causes.append('no_metadata_vector')
+        if truth_degree[q]<3:causes.append('fewer_than_3_withheld_neighbors')
+        if train_degree[q]<5:causes.append('fewer_than_5_training_neighbors')
+        if not causes:continue
+        cause_groups.update(causes);exclusive[' + '.join(causes)]+=1
+        sink.write(json.dumps({'uri':r['uri'],'name':r['name'],'causes':causes,'training_neighbors':int(train_degree[q]),'withheld_neighbors':int(truth_degree[q])},ensure_ascii=False)+'\n')
+
+# Check the stored representation against a separately reconstructed metadata projection.
+embedding=np.load(MODEL/'embedding.npy',allow_pickle=False)
+projection=np.load(MODEL/'feature-projection.npy',allow_pickle=False)
+assert embedding.dtype==np.float64 and embedding.shape==(N,64)
+assert projection.shape==(64,X.shape[1]) and np.all(np.isfinite(embedding))
+assert np.max(np.abs(projection@projection.T-np.eye(64)))<1e-8
+projected=X@projection.T
+lengths=np.linalg.norm(projected,axis=1)
+projected[nonempty]=projected[nonempty]/lengths[nonempty,None]
+vector_direction_error=float(np.max(np.abs(projected[nonempty]-embedding[nonempty])))
+assert vector_direction_error<2e-5,vector_direction_error
+progress('saved_embedding_verified',dtype=str(embedding.dtype),maximum_projection_error=vector_direction_error)
+del projected,projection,lengths
+
+inv=np.zeros(N,dtype=np.float64)
+np.divide(1,np.sqrt(train_degree),out=inv,where=train_degree>0)
+Y=A.multiply(inv[:,None]).tocsr()
+Xc=X.tocsc();Yc=Y.tocsc()
+
+def inverted_cosine(matrix,csc,q):
+    scores=np.zeros(N,dtype=np.float64)
+    for feature,weight in zip(matrix.indices[matrix.indptr[q]:matrix.indptr[q+1]],matrix.data[matrix.indptr[q]:matrix.indptr[q+1]],strict=True):
+        lo,hi=csc.indptr[feature:feature+2]
+        np.add.at(scores,csc.indices[lo:hi],csc.data[lo:hi]*weight)
+    return scores
+
+def positive_metrics(scores,candidates,targets,total):
+    # Count preceding candidates for each positive directly; no producer sorting/ranking code.
+    rounded=np.round(scores[candidates],8)
+    ranks=[]
+    for p in targets:
+        score=np.round(scores[p],8)
+        ranks.append(1+int(np.count_nonzero(rounded>score))+int(np.count_nonzero((rounded==score)&(candidates<p))))
+    return {'Recall10':sum(r<=10 for r in ranks)/total,'Recall50':sum(r<=50 for r in ranks)/total,'MRR':1/min(ranks) if ranks else 0.0}
+
+results=[];mismatches=[];max_metric_error=0.0;covered_total=0;truth_total=0
+method_names=('metadata','svd64','context','hybrid','popularity')
+for step,(q,want) in enumerate(zip(query_ids,expected_rows,strict=True)):
+    allowed=nonempty.copy();allowed[q]=False
+    neighbors=A.indices[A.indptr[q]:A.indptr[q+1]]
+    allowed[neighbors]=False
+    candidates=np.flatnonzero(allowed)
+    positives=sorted(truth[q]);covered=[p for p in positives if allowed[p]]
+    assert want['positives']==len(positives) and want['covered_positives']==len(covered)
+    assert want['candidates']==len(candidates) and want['training_neighbors']==len(neighbors)
+    m=inverted_cosine(X,Xc,q);c=inverted_cosine(Y,Yc,q)
+    scores={'metadata':m,'svd64':embedding@embedding[q],'context':c,'hybrid':(m+c)/2,'popularity':train_degree}
+    row={'artist':uris[q]}
+    for method,score in scores.items():row[method]=positive_metrics(score,candidates,covered,len(positives))
+    row['uniform']={f'Recall{k}':len(covered)/len(positives)*min(k,len(candidates))/len(candidates) for k in (10,50)}
+    row['positive_gallery_fraction']=len(covered)/len(positives)
+    for method in (*method_names,'uniform'):
+        for metric,actual in row[method].items():
+            delta=abs(actual-want[method][metric]);max_metric_error=max(max_metric_error,delta)
+            if delta>1e-12 and len(mismatches)<20:mismatches.append({'artist':uris[q],'method':method,'metric':metric,'independent':actual,'producer':want[method][metric]})
+    covered_total+=len(covered);truth_total+=len(positives);results.append(row)
+    if step%400==0:progress('metric_replay',completed=step+1,total=len(query_ids),mismatches=len(mismatches))
+metrics={method:{metric:float(np.mean([row[method][metric] for row in results])) for metric in results[0][method]} for method in (*method_names,'uniform')}
+for method,values in metrics.items():
+    for metric,value in values.items():assert abs(value-expected['methods'][method][metric])<1e-12,(method,metric,value)
+positive_coverage=covered_total/truth_total
+assert abs(positive_coverage-expected['candidate_positive_coverage'])<1e-12
+
+buckets=[]
+for name,lo,hi in (('0',0,1),('1-4',1,5),('5-9',5,10),('10-19',10,20),('20-49',20,50),('50+',50,N+1)):
+    mask=(train_degree>=lo)&(train_degree<hi)
+    buckets.append({'training_degree':name,'artists':int(mask.sum()),'with_metadata':int((mask&nonempty).sum()),'eligible_queries':int(mask[query_ids].sum())})
+frequent=Counter(g for r in artists for g in r['genres']).most_common(20)
+by_query={row['artist']:row for row in results}
+genres=[]
+for genre,size in frequent:
+    rows=[by_query[r['uri']] for r in artists if genre in r['genres'] and r['uri'] in by_query]
+    genres.append({'genre_uri':genre,'artists':size,'eligible_queries':len(rows),'context_Recall10':float(np.mean([r['context']['Recall10'] for r in rows])) if rows else None})
+coverage={'artists':N,'nonempty_metadata_artists':int(nonempty.sum()),'no_metadata_vector':missing_vector,'eligible_queries':len(query_ids),'ineligible_artists':N-len(query_ids),'overlapping_exclusion_causes':dict(cause_groups),'mutually_exclusive_cause_combinations':dict(exclusive),'withheld_positive_instances':truth_total,'gallery_covered_positive_instances':covered_total,'candidate_positive_coverage_micro':positive_coverage,'candidate_positive_coverage_query_macro':float(np.mean([r['positive_gallery_fraction'] for r in results])),'degree_buckets':buckets,'top_source_genre_coverage_overlapping':genres,'genre_family_limit':'No frozen genre-family mapping was supplied; source-genre cohorts overlap and are not genre families.','all_ineligible_rows':'ineligible-artists.jsonl.gz'}
+write('coverage.json',coverage)
+write('replayed-query-metrics.json',results)
+assert not mismatches,mismatches
+assert all(sha(p)==hashes[str(p)] for p in artifacts),'source or producer artifact changed during review'
+report={'status':'numerical_replay_passed','numerical_replay':'passed','producer_protocol_reporting':'incomplete_in_producer_independently_supplemented','source_cohort_audit':'accepted_v6_exact_hash_bound','producer_imported':False,'source_bytes_bound':True,'artifacts_stable_during_review':True,'source_protocol_and_artifact_sha256':hashes,'artists':N,'queries':len(query_ids),'relationship_pairs':expected['source_relationship_pairs'],'withheld_pairs':fold_counts[0],'training_graph_exact_match':True,'reciprocal_holdout_exclusion_verified':True,'feature_blocks':blocks,'metadata_matrix_maximum_error':max_matrix_error,'saved_embedding_float64':True,'saved_embedding_projection_maximum_error':vector_direction_error,'per_query_metrics_reproduced':True,'maximum_per_query_metric_error':max_metric_error,'methods':metrics,'candidate_positive_coverage':positive_coverage,'feature_uris_overlapping_artist_identities':feature_identity_collisions,'source_relation_kind_counts':dict(kind_counts),'self_relationship_statements_excluded':self_statements,'fold_pair_counts':dict(fold_counts),'reporting_gap':'Producer omitted protocol-required per-ineligible-artist cause accounting and stratified coverage. Independent coverage.json and ineligible-artists.jsonl.gz supply the missing accounting.','scope':'Transductive withheld source-association recovery only; not independently judged musical preference or Every Noise parity. Metadata uses all source artists by protocol; graph context and degree use only training edges.','prior_source_semantic_review':'../wiki-artist-v6-semantic-review/verdict.json','replay_script_sha256':sha(Path(__file__)),'seconds':round(time.monotonic()-START,3),'peak_RSS_MiB':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024}
+write('review-report.json',report)
+progress('complete',status=report['status'],queries=report['queries'],maximum_metric_error=max_metric_error)

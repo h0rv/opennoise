@@ -1,0 +1,60 @@
+{
+  "revision": "wiki-artist-metadata-v5",
+  "source_sha256": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+  "protocol_sha256": "8fffc06e90b6057ba5db0ab9e9748841f0aed3d32ff93f29e75c64de495a4a27",
+  "artists": 86253,
+  "nonempty_metadata_artists": 81977,
+  "feature_blocks": {
+    "genre": {
+      "features": 1366,
+      "artists": 78983
+    },
+    "instrument": {
+      "features": 1421,
+      "artists": 12794
+    },
+    "recordLabel": {
+      "features": 8285,
+      "artists": 44455
+    }
+  },
+  "source_relationship_pairs": 96717,
+  "withheld_pairs": 19266,
+  "queries": 2125,
+  "candidate_positive_coverage": 0.9567157518964748,
+  "methods": {
+    "metadata": {
+      "Recall10": 0.05838766764711037,
+      "Recall50": 0.11611514950781021,
+      "MRR": 0.10790889126787076
+    },
+    "svd64": {
+      "Recall10": 0.02096575753108261,
+      "Recall50": 0.051827314467034,
+      "MRR": 0.043509157066100375
+    },
+    "context": {
+      "Recall10": 0.19394196998695268,
+      "Recall50": 0.35328321900079324,
+      "MRR": 0.2918686291921976
+    },
+    "hybrid": {
+      "Recall10": 0.14119256209906364,
+      "Recall50": 0.2330555437540868,
+      "MRR": 0.2553422846021286
+    },
+    "popularity": {
+      "Recall10": 0.0043920593338549994,
+      "Recall50": 0.014377990155699134,
+      "MRR": 0.010664673509293416
+    },
+    "uniform": {
+      "Recall10": 0.0001167360579136475,
+      "Recall50": 0.0005836802895682376
+    }
+  },
+  "seconds": 72.889,
+  "peak_RSS_MiB": 502.09375,
+  "scope": "Withheld source credit/association recovery, not independently judged musical or listening relevance. Full metadata catalog remains known; reciprocal target edges removed before graph fitting. Missing-target metadata counts against recall.",
+  "publication": "Research candidate only; source atlas can be useful independently of recommendation model."
+}

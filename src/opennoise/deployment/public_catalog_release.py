@@ -5,12 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from typing import TYPE_CHECKING, Any
+from pathlib import Path
+from typing import Any
 
+from opennoise.pipeline import artist_network, wiki_artist_atlas
 from opennoise.pipeline import public_catalog_candidate as candidate
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 PROMOTION = "config/releases/retained-public-catalog-promotion-v1.json"
 PROMOTION_SHA256 = "d9d68d05330c01b9056dd3accae4aab331ad4a38039fbbf0c8162d0c51aafcf8"
@@ -36,7 +35,11 @@ def promotion(root: Path) -> dict[str, Any]:
 def authorize(manifest: dict[str, Any], approval: dict[str, Any]) -> None:
     """Keep data facts frozen while tested code assets can advance on main merges."""
     data = {
-        k: v for k, v in manifest["payload"].items() if k.endswith(".json") and k != "receipt.json"
+        k: v
+        for k, v in manifest["payload"].items()
+        if k.endswith(".json")
+        and k != "receipt.json"
+        and not k.startswith(("artist-network/", "atlas/"))
     }
     if (
         manifest["revision"] != candidate.REVISION
@@ -49,6 +52,22 @@ def authorize(manifest: dict[str, Any], approval: dict[str, Any]) -> None:
         or digest(data) != approval["data_inventory_sha256"]
     ):
         raise ValueError("Candidate differs from the audited public catalog scope")
+    network_payload = {
+        k: v for k, v in manifest["payload"].items() if k.startswith("artist-network/")
+    }
+    if network_payload or "artist_network" in manifest:
+        artist_network.authorize(
+            Path(__file__).resolve().parents[3],
+            manifest.get("artist_network", {}),
+            manifest["payload"],
+        )
+    atlas_payload = {k: v for k, v in manifest["payload"].items() if k.startswith("atlas/")}
+    if atlas_payload or "wiki_artist_atlas" in manifest:
+        wiki_artist_atlas.authorize(
+            Path(__file__).resolve().parents[3],
+            manifest.get("wiki_artist_atlas", {}),
+            manifest["payload"],
+        )
 
 
 def release_marker(
@@ -58,7 +77,7 @@ def release_marker(
     authorize(manifest, approval)
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
         raise ValueError("Release requires a complete Git commit SHA")
-    return {
+    marker = {
         "revision": "opennoise-retained-public-catalog-release-v1",
         "build_commit": commit,
         "promotion_sha256": PROMOTION_SHA256,
@@ -72,3 +91,14 @@ def release_marker(
         "audio_playback": False,
         "musical_relevance_validated": False,
     }
+    if "artist_network" in manifest:
+        marker["artist_network"] = manifest["artist_network"]
+        marker["artist_network_promotion_sha256"] = artist_network.PROMOTION_SHA256
+        marker["publication_scope"] += "+native-public-cc0-artist-network-v1"
+    if "wiki_artist_atlas" in manifest:
+        marker["wiki_artist_atlas"] = manifest["wiki_artist_atlas"]
+        marker["wiki_artist_atlas_promotion_sha256"] = wiki_artist_atlas.PROMOTION_SHA256
+        marker["publication_scope"] += "+licensed-wikipedia-artist-atlas-v1"
+        if manifest["wiki_artist_atlas"]["counts"].get("metadata_suggested_artists"):
+            marker["publication_scope"] += "+isolated-artist-metadata-fallback-v1"
+    return marker
