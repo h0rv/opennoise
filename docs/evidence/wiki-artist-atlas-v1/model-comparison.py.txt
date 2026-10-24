@@ -1,0 +1,132 @@
+"""Fit fixed artist metadata representations and evaluate withheld source associations."""
+
+from __future__ import annotations
+
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "2"
+os.environ["OMP_NUM_THREADS"] = "2"
+
+from collections import defaultdict
+import argparse
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import resource
+import time
+import unicodedata
+
+import numpy as np
+from scipy import sparse
+from scipy.sparse.linalg import svds
+
+ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--source", default=".cache/dbpedia-music-v3")
+parser.add_argument("--output", default=".cache/wiki-artist-model-v1")
+parser.add_argument("--protocol", default="research/wiki_artist_protocol.json")
+parser.add_argument("--canonical-genres", action="store_true")
+args = parser.parse_args()
+OUT = ROOT / args.output
+OUT.mkdir(exist_ok=False)
+source_path = ROOT / args.source / "snapshot.json.gz"
+source_raw = source_path.read_bytes()
+source = json.loads(gzip.decompress(source_raw))
+source_report = json.loads(source_path.with_name("report.json").read_bytes())
+assert hashlib.sha256(source_raw).hexdigest() == source_report["snapshot_sha256"]
+protocol = (ROOT / args.protocol).read_bytes()
+start = time.monotonic()
+artists = source["artists"]
+ids = [a["uri"] for a in artists]
+assert ids == sorted(ids) and len(set(ids)) == len(ids)
+index = {a: i for i, a in enumerate(ids)}
+blocks, feature_counts = [], {}
+genre_keys = {g["uri"]:("core:"+g.get("vocabulary_term") if g.get("vocabulary_term") else "typed:"+unicodedata.normalize("NFKC",g["name"]).casefold().strip()) for g in source["genres"]}
+for kind in ("genre", "instrument", "recordLabel"):
+    values = [a["genres"] if kind == "genre" else a["features"].get("http://dbpedia.org/ontology/" + kind, []) for a in artists]
+    if kind=="genre" and args.canonical_genres:
+        values=[sorted({genre_keys[v] for v in row}) for row in values]
+    vocabulary = sorted({v for row in values for v in row})
+    columns = {v: i for i, v in enumerate(vocabulary)}
+    rows, cols = [], []
+    for i, features in enumerate(values):
+        rows.extend([i] * len(features))
+        cols.extend(columns[v] for v in features)
+    matrix = sparse.csr_matrix((np.ones(len(rows)), (rows, cols)), shape=(len(ids), len(vocabulary)))
+    df = np.asarray((matrix > 0).sum(axis=0)).ravel()
+    matrix = matrix @ sparse.diags(1 + np.log((len(ids) + 1) / (df + 1)))
+    length = np.sqrt(np.asarray(matrix.multiply(matrix).sum(axis=1)).ravel())
+    inverse = np.zeros_like(length)
+    np.divide(1, length, out=inverse, where=length > 0)
+    blocks.append(sparse.diags(inverse) @ matrix)
+    feature_counts[kind] = {"features": len(vocabulary), "artists": int(np.count_nonzero(length))}
+metadata = sparse.hstack(blocks, format="csr")
+length = np.sqrt(np.asarray(metadata.multiply(metadata).sum(axis=1)).ravel())
+inverse = np.zeros_like(length)
+np.divide(1, length, out=inverse, where=length > 0)
+metadata = sparse.diags(inverse) @ metadata
+metadata = metadata.tocsr()
+sparse.save_npz(OUT / "metadata.npz", metadata)
+print(json.dumps({"phase": "metadata", "shape": metadata.shape, "nonzero": metadata.nnz, "nonempty_artists": int(np.count_nonzero(length)), "seconds": time.monotonic() - start}), flush=True)
+rng = np.random.default_rng(20261024)
+u, singular, vt = svds(metadata, k=64, v0=rng.normal(size=min(metadata.shape)), tol=1e-5, which="LM")
+embedding = u[:, ::-1] * singular[::-1]
+embedding_length = np.linalg.norm(embedding, axis=1, keepdims=True)
+np.divide(embedding, embedding_length, out=embedding, where=embedding_length > 0)
+np.save(OUT / "embedding.npy", embedding)
+np.save(OUT / "feature-projection.npy", vt[::-1])
+print(json.dumps({"phase": "svd", "dimensions": 64, "seconds": time.monotonic() - start}), flush=True)
+pairs = {tuple(sorted((index[a], index[b]))) for a, _, b in source["relations"] if a != b}
+truth = defaultdict(set)
+rows, cols = [], []
+withheld_pairs = 0
+for i, j in sorted(pairs):
+    fold = int.from_bytes(hashlib.sha256(("wiki-artist-pair-v1:" + ids[i] + ":" + ids[j]).encode()).digest(), "big") % 5
+    if fold == 0:
+        truth[i].add(j)
+        truth[j].add(i)
+        withheld_pairs += 1
+    else:
+        rows.extend((i, j))
+        cols.extend((j, i))
+train = sparse.csr_matrix((np.ones(len(rows)), (rows, cols)), shape=(len(ids), len(ids)))
+sparse.save_npz(OUT / "training-graph.npz", train)
+degree = np.asarray(train.sum(axis=1)).ravel()
+inverse = np.zeros_like(degree)
+np.divide(1, np.sqrt(degree), out=inverse, where=degree > 0)
+context = sparse.diags(inverse) @ train
+context = context.tocsr()
+metadata_transpose = metadata.T.tocsr()
+context_transpose = context.T.tocsr()
+queries = [q for q in range(len(ids)) if length[q] > 0 and len(truth[q]) >= 3 and degree[q] >= 5]
+print(json.dumps({"phase": "evaluation", "queries": len(queries), "withheld_pairs": withheld_pairs, "seconds": time.monotonic() - start}), flush=True)
+query_results = []
+for step, q in enumerate(queries):
+    allowed = length > 0
+    allowed[q] = False
+    known = train.indices[train.indptr[q] : train.indptr[q + 1]]
+    allowed[known] = False
+    assert all(train[q, p] == 0 and train[p, q] == 0 for p in truth[q])
+    candidates = np.flatnonzero(allowed)
+    metadata_score = (metadata[q] @ metadata_transpose).toarray().ravel()
+    context_score = (context[q] @ context_transpose).toarray().ravel()
+    scores = {"metadata": metadata_score, "svd64": embedding @ embedding[q], "context": context_score, "hybrid": (metadata_score + context_score) * .5, "popularity": degree}
+    result = {"artist": ids[q], "name": artists[q]["name"], "positives": len(truth[q]), "covered_positives": sum(allowed[p] for p in truth[q]), "candidates": len(candidates), "training_neighbors": len(known)}
+    for method, values in scores.items():
+        ordered = candidates[np.lexsort((candidates, -np.round(values[candidates], 8)))]
+        positions = (np.flatnonzero(np.isin(ordered, list(truth[q]))) + 1).tolist()
+        result[method] = {"Recall10": sum(n <= 10 for n in positions) / len(truth[q]), "Recall50": sum(n <= 50 for n in positions) / len(truth[q]), "MRR": 1 / min(positions) if positions else 0.0}
+    covered = int(result["covered_positives"])
+    result["covered_positives"] = covered
+    result["uniform"] = {"Recall10": min(10, len(candidates)) / len(candidates) * covered / len(truth[q]), "Recall50": min(50, len(candidates)) / len(candidates) * covered / len(truth[q])}
+    query_results.append(result)
+    if step % 100 == 0:
+        print(json.dumps({"evaluated": step + 1, "total": len(queries), "seconds": round(time.monotonic() - start, 2)}), flush=True)
+methods = {}
+for method in (*scores.keys(), "uniform") if queries else ():
+    methods[method] = {metric: float(np.mean([v[method][metric] for v in query_results])) for metric in query_results[0][method]}
+report = {"revision": json.loads(protocol)["revision"], "source_sha256": hashlib.sha256(source_raw).hexdigest(), "protocol_sha256": hashlib.sha256(protocol).hexdigest(), "artists": len(ids), "nonempty_metadata_artists": int(np.count_nonzero(length)), "feature_blocks": feature_counts, "source_relationship_pairs": len(pairs), "withheld_pairs": withheld_pairs, "queries": len(queries), "candidate_positive_coverage": sum(v["covered_positives"] for v in query_results) / sum(v["positives"] for v in query_results) if queries else None, "methods": methods, "seconds": round(time.monotonic() - start, 3), "peak_RSS_MiB": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, "scope": "Withheld source credit/association recovery, not independently judged musical or listening relevance. Full metadata catalog remains known; reciprocal target edges removed before graph fitting. Missing-target metadata counts against recall.", "publication": "Research candidate only; source atlas can be useful independently of recommendation model."}
+(OUT / "query-results.json").write_text(json.dumps(query_results, indent=2) + "\n")
+(OUT / "report.json").write_text(json.dumps(report, indent=2) + "\n")
+(OUT / "identities.json").write_text(json.dumps([{k: a[k] for k in ("uri", "name")} for a in artists], ensure_ascii=False) + "\n")
+print(json.dumps(report, indent=2), flush=True)

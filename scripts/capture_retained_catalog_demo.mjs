@@ -6,9 +6,17 @@ import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const [url, destination] = process.argv.slice(2);
+const [requestedURL, destination] = process.argv.slice(2);
+let url = requestedURL;
 if (!url || !destination) throw new Error('usage: capture_retained_catalog_demo.mjs LOCAL_URL NEW_CACHE_DIRECTORY');
 if (new URL(url).protocol === 'file:') { if (!fileURLToPath(new URL(url)).startsWith(resolve('.cache') + sep)) throw new Error('File demo must be under .cache'); } else if (!['127.0.0.1', 'localhost', '[::1]'].includes(new URL(url).hostname)) throw new Error('Loopback or local file required');
+// The retained catalog remains a required journey after the new atlas owns root.
+// The canonical build separately certifies the new root and its offline copy.
+if (new URL(url).protocol !== 'file:') {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('Local retained export unavailable');
+  if ((await response.text()).includes('src="atlas.mjs"')) url = new URL('retained.html', url).href;
+}
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = resolve(destination);
 if (!output.startsWith(resolve(root, '.cache') + sep)) throw new Error('Browser evidence must remain under .cache');

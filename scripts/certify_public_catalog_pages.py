@@ -39,7 +39,7 @@ def main() -> int:
                     str(output),
                 ],
                 check=True,
-                timeout=130,
+                timeout=310,
             )
         manifest = read(output / "payload-manifest.json")
         commit = (
@@ -69,7 +69,7 @@ def main() -> int:
                 [
                     shutil.which("node") or "/usr/bin/node",
                     "scripts/capture_retained_catalog_demo.mjs",
-                    url,
+                    url + "/retained.html",
                     str(work / "browser"),
                 ],
                 check=True,
@@ -79,11 +79,33 @@ def main() -> int:
                 [
                     shutil.which("node") or "/usr/bin/node",
                     "scripts/capture_artist_network.mjs",
-                    url,
+                    url + "/retained.html",
                     str(work / "artist-browser"),
                 ],
                 check=True,
                 timeout=120,
+            )
+            subprocess.run(  # noqa: S603 -- New atlas checked independently beside both prior scopes.
+                [
+                    shutil.which("node") or "/usr/bin/node",
+                    "scripts/capture_genre_atlas.mjs",
+                    url,
+                    str(work / "atlas-browser"),
+                    str(output / "site"),
+                ],
+                check=True,
+                timeout=180,
+            )
+            subprocess.run(  # noqa: S603 -- Complete offline copy, zero HTTP requests permitted.
+                [
+                    shutil.which("node") or "/usr/bin/node",
+                    "scripts/capture_genre_atlas.mjs",
+                    (output / "site/OpenNoise.html").as_uri(),
+                    str(work / "atlas-offline-browser"),
+                    str(output / "site"),
+                ],
+                check=True,
+                timeout=180,
             )
         finally:
             server.terminate()

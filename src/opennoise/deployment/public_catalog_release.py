@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from opennoise.pipeline import artist_network
+from opennoise.pipeline import artist_network, wiki_artist_atlas
 from opennoise.pipeline import public_catalog_candidate as candidate
 
 PROMOTION = "config/releases/retained-public-catalog-promotion-v1.json"
@@ -37,7 +37,9 @@ def authorize(manifest: dict[str, Any], approval: dict[str, Any]) -> None:
     data = {
         k: v
         for k, v in manifest["payload"].items()
-        if k.endswith(".json") and k != "receipt.json" and not k.startswith("artist-network/")
+        if k.endswith(".json")
+        and k != "receipt.json"
+        and not k.startswith(("artist-network/", "atlas/"))
     }
     if (
         manifest["revision"] != candidate.REVISION
@@ -57,6 +59,13 @@ def authorize(manifest: dict[str, Any], approval: dict[str, Any]) -> None:
         artist_network.authorize(
             Path(__file__).resolve().parents[3],
             manifest.get("artist_network", {}),
+            manifest["payload"],
+        )
+    atlas_payload = {k: v for k, v in manifest["payload"].items() if k.startswith("atlas/")}
+    if atlas_payload or "wiki_artist_atlas" in manifest:
+        wiki_artist_atlas.authorize(
+            Path(__file__).resolve().parents[3],
+            manifest.get("wiki_artist_atlas", {}),
             manifest["payload"],
         )
 
@@ -86,4 +95,8 @@ def release_marker(
         marker["artist_network"] = manifest["artist_network"]
         marker["artist_network_promotion_sha256"] = artist_network.PROMOTION_SHA256
         marker["publication_scope"] += "+native-public-cc0-artist-network-v1"
+    if "wiki_artist_atlas" in manifest:
+        marker["wiki_artist_atlas"] = manifest["wiki_artist_atlas"]
+        marker["wiki_artist_atlas_promotion_sha256"] = wiki_artist_atlas.PROMOTION_SHA256
+        marker["publication_scope"] += "+licensed-wikipedia-artist-atlas-v1"
     return marker

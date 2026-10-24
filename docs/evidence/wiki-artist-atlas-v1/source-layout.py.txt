@@ -1,0 +1,101 @@
+"""Freeze a public-safe source projection and metadata-only navigation coordinates."""
+
+from __future__ import annotations
+
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "2"
+os.environ["OMP_NUM_THREADS"] = "2"
+
+from collections import defaultdict
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import time
+
+import numpy as np
+from scipy import sparse
+from scipy.sparse import csgraph
+from scipy.sparse.linalg import eigsh
+
+ROOT = Path(__file__).resolve().parents[1]
+RELEASE = ROOT.parent / "opennoise-genre-release"
+OUT = RELEASE / "data/examples/wiki-artist-atlas-v1"
+OUT.mkdir(parents=True, exist_ok=False)
+raw = (ROOT / ".cache/dbpedia-music-v6/snapshot.json.gz").read_bytes()
+source = json.loads(gzip.decompress(raw))
+assert hashlib.sha256(raw).hexdigest() == json.loads((ROOT / ".cache/dbpedia-music-v6/report.json").read_bytes())["snapshot_sha256"]
+artists, genres = source["artists"], source["genres"]
+index = {a["uri"]:i for i,a in enumerate(artists)}
+import unicodedata
+normalize = lambda value: unicodedata.normalize("NFKC",value).casefold().strip()
+genre_keys = {g["uri"]:("core:"+g["vocabulary_term"] if g["vocabulary_term"] else "typed:"+normalize(g["name"])) for g in genres}
+group_keys = sorted(set(genre_keys.values()))
+group_index = {key:i for i,key in enumerate(group_keys)}
+genre_index = {g["uri"]:group_index[genre_keys[g["uri"]]] for g in genres}
+rows, cols = [], []
+for i,a in enumerate(artists):
+    values=sorted({genre_index[g] for g in a["genres"]})
+    rows.extend([i]*len(values));cols.extend(values)
+incidence = sparse.csr_matrix((np.ones(len(rows)),(rows,cols)),shape=(len(artists),len(group_keys)))
+overlap = (incidence.T@incidence).tocsr();overlap.setdiag(0);overlap.eliminate_zeros()
+counts = np.asarray(incidence.sum(axis=0)).ravel()
+labels, membership = csgraph.connected_components(overlap,directed=False)
+components = sorted((np.flatnonzero(membership==c) for c in range(labels)),key=lambda v:(-len(v),int(v[0])))
+genre_xy = np.zeros((len(group_keys),2))
+cursor = 0
+start = time.monotonic()
+for comp in components:
+    n = len(comp)
+    if n > 3:
+        graph = overlap[comp,:][:,comp]
+        degree = np.asarray(graph.sum(axis=1)).ravel();inverse=1/np.sqrt(degree)
+        normalized = sparse.diags(inverse)@graph@sparse.diags(inverse)
+        rng = np.random.default_rng(20261024+int(comp[0]))
+        values,vectors = eigsh(normalized,k=3,which="LA",v0=rng.normal(size=n),tol=1e-5,maxiter=10000)
+        order = np.argsort(-values)[1:3]
+        xy = vectors[:,order]
+        for col in range(2):
+            # Fix eigenvector signs without giving the axes musical meaning.
+            pivot = np.argmax(np.abs(xy[:,col]))
+            if xy[pivot,col] < 0:xy[:,col] *= -1
+            lo,hi=np.quantile(xy[:,col],[.02,.98])
+            xy[:,col]=np.clip((xy[:,col]-lo)/max(hi-lo,1e-12),0,1)
+    else:
+        xy=np.array([(i/max(n-1,1),.5) for i in range(n)])
+    genre_xy[comp,0]=.04+.92*xy[:,0]
+    genre_xy[comp,1]=(cursor+(.1+.8*xy[:,1])*n)/len(group_keys)
+    cursor+=n
+print(json.dumps({"phase":"genre_coordinates","genres":len(genres),"components":len(components),"seconds":time.monotonic()-start}),flush=True)
+weights=incidence@sparse.diags(1/np.sqrt(np.maximum(counts,1)))
+mass=np.asarray(weights.sum(axis=1)).ravel()
+artist_xy=weights@genre_xy
+np.divide(artist_xy,mass[:,None],out=artist_xy,where=mass[:,None]>0)
+neighbors=defaultdict(set)
+for a,_,b in source["relations"]:neighbors[a].add(b);neighbors[b].add(a)
+for i,a in enumerate(artists):
+    if mass[i] == 0:
+        known=[index[b] for b in neighbors[a["uri"]] if mass[index[b]]>0]
+        if known:artist_xy[i]=np.mean(artist_xy[known],axis=0)
+        else:
+            h=hashlib.sha256(a["uri"].encode()).digest();artist_xy[i]=[int.from_bytes(h[:4],"big")/(2**32-1),int.from_bytes(h[4:8],"big")/(2**32-1)]
+    a["position"]=[round(float(v),6) for v in artist_xy[i]]
+for g in genres:
+    i=genre_index[g["uri"]]
+    g["position"]=[round(float(v),6) for v in genre_xy[i]]
+    g["shared_member_neighbors"]=int(overlap.indptr[i+1]-overlap.indptr[i])
+source["revision"]="wiki-artist-atlas-v1"
+source["source"]["navigation_layout"]="Controlled genre-name aliases are grouped. Spectral coordinates of shared observed genre members,with disconnected components separated. Artist coordinates summarize source genre membership or related artists; unanchored positions are deterministic placement only. Runtime text packing preserves legibility. No musical axes or independently validated perceptual geometry."
+body=json.dumps(source,ensure_ascii=False,sort_keys=True,separators=(",",":"),allow_nan=False).encode()
+compressed=gzip.compress(body,mtime=0);(OUT/"snapshot.json.gz").write_bytes(compressed)
+metadata_paths=[ROOT/".cache/dbpedia-dump-metadata-v1/objects-dataid.txt",ROOT/".cache/dbpedia-dump-metadata-v2/types-dataid.txt",ROOT/".cache/dbpedia-dump-metadata-v2/labels-dataid.txt"]
+for p in metadata_paths:shutil.copyfile(p,OUT/p.name)
+shutil.copyfile(ROOT/".cache/musicbrainz-core-genre-vocabulary-v1/genres.txt",OUT/"genres.txt")
+shutil.copyfile(ROOT/".cache/musicbrainz-core-genre-vocabulary-v1/receipt.json",OUT/"genre-vocabulary-receipt.json")
+shutil.copyfile(ROOT/".cache/dbpedia-attribution-v1/logo-receipt.json",OUT/"logo-receipt.json")
+shutil.copyfile(ROOT/".cache/dbpedia-attribution-v1/dbpedia-logo.png",OUT/"dbpedia-logo.png")
+counts={"artists":len(artists),"genre_artists":sum(bool(a["genres"]) for a in artists),"connected_artists":len(neighbors),"at_least5_connections":sum(len(v)>=5 for v in neighbors.values()),"genres":len(genres),"genre_claims":sum(len(a["genres"]) for a in artists),"source_relationship_statements":len(source["relations"]),"source_relationship_pairs":sum(len(v) for v in neighbors.values())//2}
+record={"revision":"wiki-artist-atlas-inputs-v1","snapshot":"data/examples/wiki-artist-atlas-v1/snapshot.json.gz","snapshot_sha256":hashlib.sha256(compressed).hexdigest(),"snapshot_bytes":len(compressed),"expanded_bytes":len(body),"counts":counts,"source_version":"2022.12.01","source_license":"https://creativecommons.org/licenses/by/3.0/","derivative_license":"https://creativecommons.org/licenses/by-sa/3.0/","source_is_public":True,"audio_lyrics_or_user_histories":False,"minimum_context_neighbors":3,"suggestion_method":"binary_neighbor_profile_cosine","metadata_manifests":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in metadata_paths},"logo_sha256":hashlib.sha256((OUT/"dbpedia-logo.png").read_bytes()).hexdigest(),"source_projection_sha256_before_coordinates":hashlib.sha256(raw).hexdigest(),"genre_vocabulary_sha256":hashlib.sha256((OUT/"genres.txt").read_bytes()).hexdigest(),"canonical_genres":len(group_keys)}
+contract=RELEASE/"config/releases/wiki-artist-atlas-inputs-v1.json";contract.write_text(json.dumps(record,indent=2,sort_keys=True)+'\n')
+print(json.dumps(record,indent=2),flush=True)

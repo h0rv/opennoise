@@ -1,0 +1,151 @@
+"""Independent full-gallery replay using integer common-neighbor counts."""
+from collections import Counter, defaultdict
+import gzip
+import hashlib
+import json
+import os
+from pathlib import Path
+import resource
+import signal
+import time
+
+os.environ['OPENBLAS_NUM_THREADS']='2'
+os.environ['OMP_NUM_THREADS']='2'
+import numpy as np
+from scipy import sparse
+
+LEAD=Path('/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml')
+OUT=Path(__file__).resolve().parent
+MODEL=LEAD/'.cache/wiki-artist-operating-v3'
+SOURCE=LEAD/'.cache/dbpedia-music-v6/snapshot.json.gz'
+PROTOCOL=LEAD/'research/wiki_artist_operating_protocol_v3.json'
+PRODUCER=LEAD/'research/validate_wiki_operating_gallery.py'
+PREVIOUS=OUT.parent/'wiki-artist-model-v5-independent-review/review-report.json'
+SAVED_GRAPH=LEAD/'.cache/wiki-artist-model-v5/training-graph.npz'
+START=time.monotonic()
+resource.setrlimit(resource.RLIMIT_AS,(2000*1024**2,)*2)
+resource.setrlimit(resource.RLIMIT_CPU,(180,180))
+signal.alarm(240)
+
+
+def sha(path):
+    with path.open('rb')as f:return hashlib.file_digest(f,'sha256').hexdigest()
+
+
+def write(name,value):
+    (OUT/name).write_text(json.dumps(value,indent=2,ensure_ascii=False,allow_nan=False)+'\n')
+
+
+artifacts=[SOURCE,PROTOCOL,PRODUCER,PREVIOUS,SAVED_GRAPH,MODEL/'report.json',MODEL/'query-results.json']
+hashes={str(p):sha(p)for p in artifacts}
+expected=json.loads((MODEL/'report.json').read_bytes())
+protocol=json.loads(PROTOCOL.read_bytes())
+old=json.loads(PREVIOUS.read_bytes())
+assert expected['source_sha256']==hashes[str(SOURCE)]=='814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9'
+assert expected['protocol_sha256']==hashes[str(PROTOCOL)]=='280ca696a7fe184eaf554398cde6197d0da77fb277265543bfb1e45c5aefa6b8'
+assert expected['revision']==protocol['revision']=='wiki-artist-operating-gallery-v3'
+assert old['numerical_replay']=='passed' and old['source_cohort_audit']=='accepted_v6_exact_hash_bound'
+assert old['source_protocol_and_artifact_sha256'][str(SAVED_GRAPH)]==hashes[str(SAVED_GRAPH)]
+(OUT/'reviewed-protocol.json').write_bytes(PROTOCOL.read_bytes())
+(OUT/'reviewed-producer.py.txt').write_bytes(PRODUCER.read_bytes())
+source=json.load(gzip.open(SOURCE,'rt'))
+artists=source['artists'];uris=[a['uri']for a in artists];N=len(uris)
+assert uris==sorted(set(uris))and N==86253
+index={u:i for i,u in enumerate(uris)}
+metadata_nonempty=np.array([bool(a['genres'])or any(a['features'].values())for a in artists])
+assert int(metadata_nonempty.sum())==81977
+allowed_kinds={'http://dbpedia.org/ontology/'+k for k in ('associatedMusicalArtist','associatedBand','bandMember','formerBandMember')}
+native_pairs=set()
+for a,p,b in source['relations']:
+    assert p in allowed_kinds and a in index and b in index and a!=b
+    native_pairs.add(tuple(sorted((index[a],index[b]))))
+neighbors=[set()for _ in uris];truth=[set()for _ in uris];folds=Counter()
+for i,j in sorted(native_pairs):
+    pair=(uris[i]+':'+uris[j]).encode()
+    fold=int(hashlib.sha256(b'wiki-artist-pair-v1:'+pair).hexdigest(),16)%5
+    folds[fold]+=1
+    target=truth if fold==0 else neighbors
+    target[i].add(j);target[j].add(i)
+assert len(native_pairs)==96717 and folds[0]==19266
+rr=[];cc=[]
+for i,ns in enumerate(neighbors):
+    rr.extend([i]*len(ns));cc.extend(sorted(ns))
+A=sparse.coo_matrix((np.ones(len(rr)),(rr,cc)),shape=(N,N)).tocsr()
+saved=sparse.load_npz(SAVED_GRAPH).tocsr()
+assert (saved!=A).nnz==0 and (A!=A.T).nnz==0 and not A.diagonal().any()
+assert all(not(neighbors[i]&truth[i])for i in range(N))
+degree=np.array([len(ns)for ns in neighbors],dtype=np.int64)
+withheld=np.array([len(ns)for ns in truth],dtype=np.int64)
+queries=np.flatnonzero((degree>=5)&(withheld>=3))
+assert len(queries)==expected['queries']==2162
+comparison_queries=np.flatnonzero(metadata_nonempty&(degree>=5)&(withheld>=3))
+assert len(comparison_queries)==2125
+additional=sorted(set(queries)-set(comparison_queries))
+assert len(additional)==37 and not metadata_nonempty[additional].any()
+saved_rows=json.loads((MODEL/'query-results.json').read_bytes())
+assert [x['artist']for x in saved_rows]==[uris[i]for i in queries]
+print(json.dumps({'phase':'complete_graph_reconstructed','queries':len(queries),'additional_without_metadata':len(additional),'seconds':round(time.monotonic()-START,3)}),flush=True)
+del source['relations'],saved,rr,cc,native_pairs
+
+
+def positive_metrics(scores,candidates,targets):
+    # Different ranking calculation: count preceding candidates, never sort all scores.
+    rounded=np.round(scores[candidates],8)
+    ranks=[]
+    for p in targets:
+        value=np.round(scores[p],8)
+        ranks.append(1+int(np.count_nonzero(rounded>value))+int(np.count_nonzero((rounded==value)&(candidates<p))))
+    return {'Recall10':sum(r<=10 for r in ranks)/len(targets),'Recall50':sum(r<=50 for r in ranks)/len(targets),'MRR':1/min(ranks)}
+
+
+results=[];maximum_error=0.;mismatches=[];total_positives=0
+for step,(q,want)in enumerate(zip(queries,saved_rows,strict=True)):
+    eligible=np.ones(N,dtype=bool);eligible[q]=False;eligible[list(neighbors[q])]=False
+    candidates=np.flatnonzero(eligible)
+    positives=sorted(truth[q])
+    assert all(eligible[p]for p in positives),'Serving-gallery positive missing'
+    assert len(candidates)==N-1-degree[q]==want['candidates']
+    assert len(positives)==want['positives'] and degree[q]==want['training_neighbors']
+    # Integer two-hop counts, then one cosine division per candidate. No producer profiles.
+    counts=Counter(p for mid in neighbors[q]for p in neighbors[mid])
+    score=np.zeros(N,dtype=np.float64)
+    for p,n in counts.items():score[p]=n/np.sqrt(float(degree[q])*float(degree[p]))
+    actual={'artist':uris[q],'positives':len(positives),'candidates':len(candidates),'training_neighbors':int(degree[q]),'metadata_nonempty':bool(metadata_nonempty[q]),'context':positive_metrics(score,candidates,positives),'popularity':positive_metrics(degree,candidates,positives),'uniform':{f'Recall{k}':min(k,len(candidates))/len(candidates)for k in (10,50)}}
+    for method in ('context','popularity','uniform'):
+        for metric,value in actual[method].items():
+            error=abs(value-want[method][metric]);maximum_error=max(maximum_error,error)
+            if error>1e-12:mismatches.append({'artist':uris[q],'method':method,'metric':metric,'independent':value,'producer':want[method][metric]})
+    results.append(actual);total_positives+=len(positives)
+    if step%500==0:print(json.dumps({'phase':'replay','completed':step+1,'total':len(queries),'mismatches':len(mismatches),'seconds':round(time.monotonic()-START,3)}),flush=True)
+metrics={method:{metric:float(np.mean([r[method][metric]for r in results]))for metric in results[0][method]}for method in ('context','popularity','uniform')}
+for method,values in metrics.items():
+    for metric,value in values.items():assert abs(value-expected['methods'][method][metric])<1e-12
+assert not mismatches,mismatches[:10]
+
+causes=Counter();combinations=Counter();excluded=set()
+with gzip.open(OUT/'ineligible-artists.jsonl.gz','wt')as sink:
+    for i,a in enumerate(artists):
+        reasons=[]
+        if withheld[i]<3:reasons.append('fewer_than_3_withheld_neighbors')
+        if degree[i]<5:reasons.append('fewer_than_5_training_neighbors')
+        if not reasons:continue
+        assert a['uri']not in excluded;excluded.add(a['uri']);causes.update(reasons);combinations[' + '.join(reasons)]+=1
+        sink.write(json.dumps({'uri':a['uri'],'name':a['name'],'causes':reasons,'training_neighbors':int(degree[i]),'withheld_neighbors':int(withheld[i]),'metadata_nonempty':bool(metadata_nonempty[i])},ensure_ascii=False)+'\n')
+assert len(excluded)==N-len(queries)==84091
+buckets=[]
+for title,lo,hi in (('0',0,1),('1-4',1,5),('5-9',5,10),('10-19',10,20),('20-49',20,50),('50+',50,N+1)):
+    mask=(degree>=lo)&(degree<hi)
+    buckets.append({'training_degree':title,'artists':int(mask.sum()),'queries':int(mask[queries].sum()),'queries_without_metadata':int((mask[queries]&~metadata_nonempty[queries]).sum())})
+by_query={r['artist']:r for r in results}
+genre_strata=[]
+for genre,size in Counter(g for a in artists for g in a['genres']).most_common(20):
+    rows=[by_query[a['uri']]for a in artists if genre in a['genres']and a['uri']in by_query]
+    genre_strata.append({'source_genre_uri':genre,'artists':size,'eligible_queries':len(rows),'context_Recall10':float(np.mean([r['context']['Recall10']for r in rows]))if rows else None})
+coverage={'artists':N,'eligible_queries':len(queries),'ineligible_artists':len(excluded),'overlapping_exclusion_causes':dict(causes),'exclusive_exclusion_combinations':dict(combinations),'metadata_nonempty_artists':int(metadata_nonempty.sum()),'artists_without_metadata':int((~metadata_nonempty).sum()),'queries_without_metadata':len(additional),'all_heldout_positive_instances':total_positives,'covered_positive_instances':total_positives,'candidate_positive_coverage':1.0,'training_degree_buckets':buckets,'top_source_genre_coverage_overlapping':genre_strata,'genre_family_limit':'No fixed genre-family mapping supplied; native source genres overlap.','difference_from_metadata_comparison':'Complete serving gallery retains all artist identities, including 4276 without metadata, and adds37 such eligible queries. Prior metadata comparison used2125queries and95.6716% positive coverage; these metrics use2162queries and100%. Not a new model search.'}
+write('coverage.json',coverage)
+write('additional-queries-without-metadata.json',[{'uri':uris[i],'name':artists[i]['name'],'training_neighbors':int(degree[i]),'withheld_neighbors':int(withheld[i])}for i in additional])
+write('replayed-query-metrics.json',results)
+assert all(sha(p)==hashes[str(p)]for p in artifacts),'Input changed during audit'
+report={'status':'passed_all_2162_queries','accepted_source_sha256':hashes[str(SOURCE)],'protocol_sha256':hashes[str(PROTOCOL)],'artists':N,'queries':len(queries),'gallery':'all86253identities_except_self_and_known_training_neighbors','positive_coverage':1.0,'queries_added_without_metadata':len(additional),'train_graph_exact_match':True,'reciprocal_holdout_absent_both_directions':True,'score_method':'Independent integer common-neighbor counts divided by sqrt(training_degree_product); no saved normalized profile or producer function used','ranking_method':'Independent count of candidates preceding each positive after8decimal rounding andlexicalURI ties','maximum_per_query_metric_error':maximum_error,'methods':metrics,'ineligible_ledger_rows':len(excluded),'input_sha256':hashes,'artifacts_stable':True,'producer_imported_or_executed':False,'seconds':round(time.monotonic()-START,3),'peak_rss_mib':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024,'scope':'Selected-method source-association holdout on full serving identity gallery. No listener preference, acoustic similarity or taxonomy-parity claim. No new model selection or fitting.'}
+write('report.json',report)
+print(json.dumps(report,indent=2),flush=True)
