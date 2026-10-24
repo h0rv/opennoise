@@ -70,7 +70,7 @@ async function map(rows, kind = 'artist', full = false) {
   const generation = sequence;
   await document.fonts.ready;
   if (generation !== sequence) return {placed: 0, unplaced: 0};
-  const width = full ? 1800 : 1200, height = full ? Math.max(900, Math.ceil(rows.length * 11000 / width)) : 780;
+  const width = full ? 1800 : 1200, height = full ? Math.max(900, Math.ceil(rows.length * 11000 / width)) : rows.length <= 15 ? 420 : 780;
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${width} ${height}`); svg.setAttribute('role', 'group');
   const title = document.createElementNS(ns, 'title'); title.textContent = kind === 'genre' ? 'Genres' : 'Artists'; svg.append(title);
@@ -88,7 +88,10 @@ async function map(rows, kind = 'artist', full = false) {
     button.addEventListener('click', () => { zoom = step ? Math.max(1, Math.min(2.4, zoom + step)) : 1; svg.style.width = `${width * zoom}px`; if (!step) shell.scrollTo(0, 0); }); controls.append(button);
   }
   svg.style.width = `${width}px`; main.append(controls, shell);
-  const layout = placeLabels(anchors.map(({row, text}, i) => ({width: text.getComputedTextLength(), x: (row.x ?? ((i * .61803398875) % 1)) * (width - 200), y: (row.y ?? ((i * .41421356237) % 1)) * (height - 60)})), width, height);
+  const xs = rows.map((r, i) => r.x ?? ((i * .61803398875) % 1)), ys = rows.map((r, i) => r.y ?? ((i * .41421356237) % 1));
+  const xMin = Math.min(...xs), xMax = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys);
+  const fit = (value, min, max) => max > min ? .08 + .78 * (value - min) / (max - min) : .45;
+  const layout = placeLabels(anchors.map(({text}, i) => ({width: text.getComputedTextLength(), x: (full ? xs[i] : fit(xs[i], xMin, xMax)) * (width - 200), y: (full ? ys[i] : fit(ys[i], yMin, yMax)) * (height - 60)})), width, height);
   const unplaced = [];
   anchors.forEach(({a, rect, text, row}, i) => {
     const p = layout[i]; if (!p) { a.remove(); unplaced.push(row); return; }
@@ -103,9 +106,11 @@ function choices(kind, id, view, count) {
   for (const name of ['Map', 'List']) { const key = name.toLowerCase(), a = link(name, route(kind, id, key)); if (view === key) a.setAttribute('aria-current', 'page'); nav.append(a); }
   main.append(nav); const scope = make('p', `${count.toLocaleString()} artists`); scope.className = 'scope'; main.append(scope); return scope;
 }
-function entitySource(uri) {
+function entitySource(uri, metadata = false) {
   const p = make('p'); p.dataset.entitySource = '';
-  p.append(link('Source entity', uri)); document.querySelector('#sources').prepend(p);
+  p.append(link('Source entity', uri));
+  if (metadata) p.append(make('span', ' · Suggestions use artist metadata.'));
+  document.querySelector('#sources').prepend(p);
 }
 async function render() {
   const current = ++sequence;
@@ -147,11 +152,15 @@ async function render() {
       if (!row) { main.append(make('h1', 'Artist not found')); }
       else {
         main.append(make('h1', row.name));
-        entitySource(row.uri);
+        entitySource(row.uri, row.suggestion_basis === 'artist_metadata');
         if (row.genres.length) { main.append(make('h2', 'Genres')); names(ordered(row.genres.map(id => byGenre.get(id))), 'genre'); }
         const rows = ordered(row.related.map(id => byArtist.get(id)));
         if (rows.length) { main.append(make('h2', 'Related artists')); const view = mode || (matchMedia('(max-width:800px)').matches ? 'list' : 'map'); const scope = choices('artist', value, view, rows.length); if (view === 'list') paged(rows, Number(pageValue), p => route('artist', value, 'list', p)); else { scope.textContent = `${row.map.length} of ${rows.length.toLocaleString()} artists`; await map(row.map.map(id => byArtist.get(id))); } }
-        if (row.suggested?.length) { main.append(make('h2', 'Suggested')); names(row.suggested.map(id => byArtist.get(id))); }
+        if (row.suggested?.length) {
+          main.append(make('h2', 'Suggested')); const suggestions = row.suggested.map(id => byArtist.get(id));
+          if (!rows.length) { const view = mode || (matchMedia('(max-width:800px)').matches ? 'list' : 'map'); choices('artist', value, view, suggestions.length); if (view === 'map') await map(suggestions); else names(suggestions); }
+          else names(suggestions);
+        }
         if (row.native_id) main.append(link('Connections', networkURL(row.native_id)));
       }
     } else {
@@ -182,7 +191,7 @@ try {
   genres = await load('atlas/genres.json'); byGenre = new Map(genres.map(g => [g.id, g]));
   const receipt = await load('atlas/receipt.json'); const sources = document.querySelector('#sources');
   const logoLink = link('', 'https://databus.dbpedia.org/dbpedia'), logo = make('img'); logo.src = receipt.logo_data; logo.alt = 'DBpedia'; logoLink.append(logo); sources.append(logoLink);
-  sources.append(make('p', `DBpedia ${receipt.source_version}, extracted from English Wikipedia. ${receipt.counts.artists.toLocaleString()} named artists have genre or relationship evidence; ${receipt.counts.genre_artists.toLocaleString()} have genre claims. Source associations and band memberships appear as Related artists. Suggested artists share graph context. Map positions have no musical axes. Recommendation relevance has not been independently judged.`));
+  sources.append(make('p', `DBpedia ${receipt.source_version}, extracted from English Wikipedia. ${receipt.counts.artists.toLocaleString()} named artists have genre or relationship evidence; ${receipt.counts.genre_artists.toLocaleString()} have genre claims. Source associations and band memberships appear as Related artists. Suggested artists use shared graph context, or artist metadata when no source relationships exist. Map positions have no musical axes. Recommendation relevance has not been independently judged.`));
   const credit = make('p'); credit.append(link('DBpedia', 'https://databus.dbpedia.org/dbpedia'), make('span', ' · '), link('CC BY 3.0 source', 'https://creativecommons.org/licenses/by/3.0/'), make('span', ' · '), link('CC BY-SA 3.0 derived data', 'https://creativecommons.org/licenses/by-sa/3.0/')); sources.append(credit);
   sources.append(make('p', 'The data was filtered to music records and reformatted. Genre names are checked against MusicBrainz core genre definitions (CC0); exact name aliases are grouped. Entity pages link to their sources. Connections uses the separate CC0 ListenBrainz/MusicBrainz catalog. Artist identities are kept separate across sources.'));
   const old = make('p'); old.append(link('Original catalog', offline ? 'OpenNoiseRetained.html' : 'retained.html'), make('span', ' · '), link('Build receipt', 'opennoise-release.json')); sources.append(old);

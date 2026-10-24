@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 
 CONTRACT = "config/releases/wiki-artist-atlas-inputs-v1.json"
 CONTRACT_SHA256 = "673cc05bd0402541787d2b2ca7056afa7056d0cd97a63092fd73b81986039640"
-PROMOTION = "config/releases/wiki-artist-atlas-promotion-v1.json"
-PROMOTION_SHA256 = "0911e33de1ce5e21c47f320d15401b8d1519266971eef378cdedcf015037e127"
+PROMOTION = "config/releases/wiki-artist-atlas-promotion-v2.json"
+PROMOTION_SHA256 = "e75b82f00bc7ab6a589036b2e19b59497498f66819887435d0bf0ac94536e513"
 SNAPSHOT = "data/examples/wiki-artist-atlas-v1/snapshot.json.gz"
 RESOURCE = "http://dbpedia.org/resource/"
 DBO = "http://dbpedia.org/ontology/"
@@ -341,22 +341,75 @@ def _profiles(data: dict[str, Any]) -> tuple[dict[str, set[str]], Any]:
     return neighbors, profiles
 
 
+def _metadata_profiles(data: dict[str, Any]) -> sparse.csr_matrix:
+    """Use fixed TFIDF and separately normalized genre, instrument and label blocks."""
+    artists = data["artists"]
+    _, genre_ids = _genre_groups(data)
+    blocks = []
+    for kind in ("genre", "instrument", "recordLabel"):
+        values = [
+            sorted({genre_ids[g] for g in a["genres"]})
+            if kind == "genre"
+            else sorted(set(a["features"].get(DBO + kind, ())))
+            for a in artists
+        ]
+        vocabulary = {v: i for i, v in enumerate(sorted({v for row in values for v in row}))}
+        rows, columns = [], []
+        for i, row in enumerate(values):
+            rows.extend([i] * len(row))
+            columns.extend(vocabulary[v] for v in row)
+        matrix = sparse.csr_matrix(
+            (np.ones(len(rows)), (rows, columns)), shape=(len(artists), len(vocabulary))
+        )
+        frequency = np.asarray((matrix > 0).sum(axis=0)).ravel()
+        matrix = matrix @ sparse.diags(1 + np.log((len(artists) + 1) / (frequency + 1)))
+        length = np.sqrt(np.asarray(matrix.multiply(matrix).sum(axis=1)).ravel())
+        inverse = np.zeros_like(length)
+        np.divide(1, length, out=inverse, where=length > 0)
+        blocks.append(sparse.diags(inverse) @ matrix)
+    combined = sparse.hstack(blocks, format="csr")
+    length = np.sqrt(np.asarray(combined.multiply(combined).sum(axis=1)).ravel())
+    inverse = np.zeros_like(length)
+    np.divide(1, length, out=inverse, where=length > 0)
+    result = (sparse.diags(inverse) @ combined).tocsr()
+    if not isinstance(result, sparse.csr_matrix):
+        raise TypeError("Metadata profiles must be a CSR matrix")
+    return result
+
+
+def _metadata_neighbors(
+    profiles: sparse.csr_matrix, transpose: sparse.csr_matrix, query: int
+) -> list[int]:
+    """Return exact positive cosine neighbors, with bounded selection and stable ties."""
+    score = (profiles[query] @ transpose).tocsr()
+    mask = (score.data > MIN_CONTEXT_SCORE) & (score.indices != query)
+    indices, values = score.indices[mask], np.round(score.data[mask], 8)
+    limit = 10
+    if len(indices) > limit:
+        boundary = np.partition(values, -limit)[-limit]
+        keep = values >= boundary
+        indices, values = indices[keep], values[keep]
+    return [int(v) for v in indices[np.lexsort((indices, -values))][:limit]]
+
+
 def _artist_pages(
     data: dict[str, Any],
     destination: Path,
     contract: dict[str, Any],
     public_ids: dict[str, dict[str, Any]],
-) -> tuple[dict[str, list[str]], dict[str, set[str]], int, dict[str, int]]:
+) -> tuple[dict[str, list[str]], dict[str, set[str]], dict[str, int], dict[str, int]]:
     """Write complete artist details and their model suggestions in bounded shards."""
     artists = data["artists"]
     uri_ids = {a["uri"]: _id(a["uri"]) for a in artists}
     _, genre_ids = _genre_groups(data)
     neighbors, profiles = _profiles(data)
     transpose = profiles.T.tocsr()
+    metadata = _metadata_profiles(data)
+    metadata_transpose = metadata.T.tocsr()
     degree = {uri_ids[a["uri"]]: len(neighbors.get(a["uri"], ())) for a in artists}
     buckets: dict[str, dict[str, Any]] = defaultdict(dict)
     members: dict[str, list[str]] = defaultdict(list)
-    suggested_artists = 0
+    suggested_counts = {"graph_suggested_artists": 0, "metadata_suggested_artists": 0}
     for q, row in enumerate(artists):
         uri, aid = row["uri"], uri_ids[row["uri"]]
         known = neighbors.get(uri, set())
@@ -371,7 +424,13 @@ def _artist_pages(
             values = dict(zip(score.indices.tolist(), score.data.tolist(), strict=True))
             ranked = sorted(candidates, key=lambda i: (-round(values[i], 8), i))[:10]
             suggested = [uri_ids[artists[i]["uri"]] for i in ranked]
-        suggested_artists += bool(suggested)
+            suggested_counts["graph_suggested_artists"] += bool(suggested)
+        elif not known:
+            suggested = [
+                uri_ids[artists[i]["uri"]]
+                for i in _metadata_neighbors(metadata, metadata_transpose, q)
+            ]
+            suggested_counts["metadata_suggested_artists"] += bool(suggested)
         related = [uri_ids[b] for b in sorted(known)]
         gids = sorted({genre_ids[g] for g in row["genres"]})
         for gid in gids:
@@ -384,6 +443,8 @@ def _artist_pages(
             "suggested": suggested,
             "map": _map(related, public_ids, degree),
         }
+        if suggested and not known:
+            buckets[aid[:2]][aid]["suggestion_basis"] = "artist_metadata"
     for prefix, bucket in sorted(buckets.items()):
         write(destination / f"artists/{prefix}.json", bucket)
     write(
@@ -398,7 +459,7 @@ def _artist_pages(
             for a in artists
         ],
     )
-    return members, neighbors, suggested_artists, degree
+    return members, neighbors, suggested_counts, degree
 
 
 def _genre_pages(
@@ -446,7 +507,7 @@ def build(root: Path, site: Path) -> dict[str, Any]:
         raise ValueError("Public genre identifier collision")
     destination = site / "atlas"
     destination.mkdir()
-    members, neighbors, suggested_artists, degree = _artist_pages(
+    members, neighbors, suggested_counts, degree = _artist_pages(
         data, destination, contract, public_ids
     )
     genre_rows = _genre_pages(data, destination, members, public_ids, degree)
@@ -468,7 +529,8 @@ def build(root: Path, site: Path) -> dict[str, Any]:
         "genres": len(genre_rows),
         "source_genre_claims": observed_counts["genre_claims"],
         "genre_claims": sum(len(v) for v in members.values()),
-        "artists_with_suggestions": suggested_artists,
+        "artists_with_suggestions": sum(suggested_counts.values()),
+        **suggested_counts,
     }
     logo = (root / SNAPSHOT).parent / "dbpedia-logo.png"
     write(
@@ -484,6 +546,8 @@ def build(root: Path, site: Path) -> dict[str, Any]:
             "musical_relevance_validated": False,
             "suggestions": (
                 "Exact normalized binary neighbor-profile cosine on the complete source graph. "
+                "For artists with no source relationships, exact TFIDF cosine of genre, "
+                "instrument and record-label metadata, each block separately normalized. "
                 "Known relationships and self excluded. Suggested is inference, "
                 "not a source credit or genre claim."
             ),

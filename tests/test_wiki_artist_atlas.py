@@ -123,6 +123,44 @@ class WikiArtistSourceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unvalidated source genre"):
             self.read_source(data)
 
+    def test_metadata_fallback_abstains_when_only_self_has_a_feature(self) -> None:
+        """A unique source genre does not invent a peer or recommend the artist to itself."""
+        profiles = atlas._metadata_profiles(self.source)  # noqa: SLF001 -- Renderer boundary.
+        neighbors = atlas._metadata_neighbors(profiles, profiles.T.tocsr(), 0)  # noqa: SLF001
+        self.assertEqual(neighbors, [])
+
+    def test_metadata_fallback_only_fills_artists_without_relationships(self) -> None:
+        """Existing low-degree source relationships remain separate from metadata inference."""
+        data = copy.deepcopy(self.source)
+        prototype = data["artists"][0]
+        data["artists"] = [
+            {**copy.deepcopy(prototype), "uri": atlas.RESOURCE + name, "name": name}
+            for name in ("A", "B", "C", "D", "E", "F")
+        ]
+        data["relations"] = [
+            [atlas.RESOURCE + "B", atlas.DBO + "bandMember", atlas.RESOURCE + name]
+            for name in ("A", "C", "D", "E")
+        ]
+        public = {hashlib.sha256(a["uri"].encode()).hexdigest()[:32]: a for a in data["artists"]}
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary)
+            _, _, counts, _ = atlas._artist_pages(  # noqa: SLF001 -- Actual shard rendering.
+                data, destination, {"minimum_context_neighbors": 3}, public
+            )
+            pages = {}
+            for path in (destination / "artists").glob("*.json"):
+                pages.update({v["name"]: v for v in json.loads(path.read_text()).values()})
+        isolated = pages["F"]
+        self.assertEqual(isolated["related"], [])
+        self.assertEqual(isolated["suggestion_basis"], "artist_metadata")
+        self.assertEqual(len(isolated["suggested"]), 5)
+        self.assertNotIn(
+            hashlib.sha256((atlas.RESOURCE + "F").encode()).hexdigest()[:32], isolated["suggested"]
+        )
+        self.assertEqual(counts["metadata_suggested_artists"], 1)
+        for name in ("A", "B", "C", "D", "E"):
+            self.assertNotIn("suggestion_basis", pages[name])
+
 
 if __name__ == "__main__":
     unittest.main()

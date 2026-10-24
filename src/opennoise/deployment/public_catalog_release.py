@@ -99,4 +99,6 @@ def release_marker(
         marker["wiki_artist_atlas"] = manifest["wiki_artist_atlas"]
         marker["wiki_artist_atlas_promotion_sha256"] = wiki_artist_atlas.PROMOTION_SHA256
         marker["publication_scope"] += "+licensed-wikipedia-artist-atlas-v1"
+        if manifest["wiki_artist_atlas"]["counts"].get("metadata_suggested_artists"):
+            marker["publication_scope"] += "+isolated-artist-metadata-fallback-v1"
     return marker

@@ -77,6 +77,14 @@ try {
   for (const rows of [genres, artists]) { assert.equal(new Set(rows.map(r=>r.id)).size,rows.length); assert.ok(rows.every(r=>r.name.trim())); }
   const name = (rows, value) => { const row = rows.find(r=>r.name===value); assert.ok(row, value); return row; };
   const jazz = name(genres, 'Jazz'), aphex = name(artists, 'Aphex Twin'), fourTet = name(artists, 'Four Tet');
+  let fallback;
+  for (const prefix of '0123456789abcdef'.split('')) {
+    const shard = JSON.parse(await readFile(join(source, `atlas/artists/${prefix}0.json`)));
+    const entry = Object.entries(shard).find(([, row]) => row.suggestion_basis === 'artist_metadata' && row.suggested.length >= 5);
+    if (entry) { fallback = {id: entry[0], ...entry[1]}; break; }
+  }
+  assert.ok(fallback, 'A metadata-supported isolated artist must be reachable');
+  assert.equal(fallback.related.length, 0); assert.ok(!fallback.suggested.includes(fallback.id));
   const ready = "document.querySelector('main[aria-busy=false]')";
   const go = async hash => { await evaluate(`location.hash=${JSON.stringify(hash)}`); await wait(`${ready}&&location.hash===${JSON.stringify(hash)}`); };
   const title = async value => wait(`${ready}?.querySelector('h1')?.textContent===${JSON.stringify(value)}`);
@@ -90,6 +98,11 @@ try {
   const reachable = await evaluate("[...document.querySelectorAll('main a[href^=\"#genre/\"]')].map(a=>a.getAttribute('href'))");
   assert.equal(new Set(reachable).size,genres.length);assert.equal(reachable.length,genres.length);
   const rootMap=await checkMap();await screenshot('desktop-genres.png');
+  await go(`#artist/${fallback.id}`);await title(fallback.name);
+  assert.ok(await evaluate("[...document.querySelectorAll('main h2')].some(h=>h.textContent==='Suggested')"));
+  assert.equal(await evaluate("[...document.querySelectorAll('main h2')].some(h=>h.textContent==='Related artists')"), false);
+  assert.ok(await evaluate("document.querySelector('[data-entity-source]').textContent.includes('artist metadata')"));
+  assert.equal((await checkMap()).targets, fallback.suggested.length);await screenshot('desktop-metadata-artist.png');
   await go('#genres/list');await title('Genres');assert.equal(await evaluate("document.querySelectorAll('main .names li').length"),genres.length);
   await go(`#genre/${jazz.id}/list/0`);await title('Jazz');assert.equal(await evaluate("document.querySelectorAll('main .names li').length"),60);
   const jazzData=JSON.parse(await readFile(join(source,`atlas/genres/${jazz.id}.json`)));
@@ -106,6 +119,7 @@ try {
   for (const query of ['100 gecs','Four Tet']) { await go(`#q/${encodeURIComponent(query)}/0`);await title(query);assert.ok(await evaluate("document.querySelectorAll('main .names a').length>0"));assert.equal(await evaluate("document.querySelector('main').textContent.includes('No matches.')"),false); }
   for(const row of [artists.find(a=>/[^\u0000-\u007f]/.test(a.name)),artists.reduce((a,b)=>a.name.length>b.name.length?a:b)]) {await go(`#q/${encodeURIComponent(row.name)}/0`);await title(row.name);assert.ok(await evaluate(`document.querySelector('main a[href="#artist/${row.id}"]')!==null`));}
   await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await command('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});
+  await go(`#artist/${fallback.id}`);await title(fallback.name);assert.equal(await evaluate("document.querySelector('.map-shell')!==null"),false);assert.equal(await evaluate("document.querySelectorAll('main .names a[href^=\"#artist/\"]').length"),fallback.suggested.length);assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);await screenshot('mobile-metadata-artist.png');
   await go(`#artist/${fourTet.id}`);await title('Four Tet');assert.equal(await evaluate("document.querySelector('.map-shell')!==null"),false);assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);await screenshot('mobile-artist-list.png');
   await go(`#artist/${fourTet.id}/map/0`);await title('Four Tet');await checkMap();const before=await evaluate("document.querySelector('.map-shell svg').getBoundingClientRect().width");await evaluate("document.querySelector('[aria-label=\"Zoom in\"]').click()");assert.ok(await evaluate("document.querySelector('.map-shell svg').getBoundingClientRect().width")>before);await evaluate("document.querySelector('[aria-label=\"Reset map\"]').click()");assert.equal(await evaluate("document.querySelector('.map-shell svg').getBoundingClientRect().width"),before);await screenshot('mobile-readable-map.png');
   await go(`#genre/${jazz.id}`);await title('Jazz');assert.equal(await evaluate("document.querySelector('.map-shell')!==null"),false);
@@ -115,5 +129,5 @@ try {
   await evaluate("document.querySelector('details').open=true");assert.ok(await evaluate("document.querySelector('#sources img')?.complete&&document.querySelector('#sources img').naturalWidth>0"));
   const external=requests.filter(r=>!['data:','blob:'].includes(new URL(r.url).protocol)&&new URL(r.url).origin!==new URL(url).origin);assert.deepEqual(external,[]);assert.deepEqual(requests.filter(r=>r.type==='Media'),[]);assert.deepEqual(errors,[]);
   if(new URL(url).protocol==='file:')assert.equal(requests.filter(r=>/^https?:/.test(r.url)).length,0);
-  const report={status:'passed',url,counts:receipt.counts,all_genres_reachable:true,root_map:rootMap,complete_paginated_directory:true,complete_genre_members:true,keyboard_search:true,nonLatin_and_long_name_search:true,landing_search_both_catalogs:true,desktop_maps_nonoverlapping:true,mobile_default_list:true,mobile_touch:true,mobile_map_readable_44px:true,zoom:true,history_reload:true,empty_state:true,external_requests:0,runtime_errors:errors,screenshots:screenshotCount,publication:false};await writeFile(join(output,'browser-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify(report)+'\n');
+  const report={status:'passed',url,counts:receipt.counts,all_genres_reachable:true,root_map:rootMap,complete_paginated_directory:true,complete_genre_members:true,isolated_artist_metadata_suggestions:true,metadata_source_disclosure:true,keyboard_search:true,nonLatin_and_long_name_search:true,landing_search_both_catalogs:true,desktop_maps_nonoverlapping:true,mobile_default_list:true,mobile_touch:true,mobile_map_readable_44px:true,zoom:true,history_reload:true,empty_state:true,external_requests:0,runtime_errors:errors,screenshots:screenshotCount,publication:false};await writeFile(join(output,'browser-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify(report)+'\n');
 }catch(error){try{await screenshot('failure.png');if(evaluate)await writeFile(join(output,'dom-state.json'),JSON.stringify(await evaluate("({hash:location.hash,main:document.querySelector('main')?.innerHTML.slice(0,3000)})"),null,2));}catch{}await writeFile(join(output,'browser-failure.json'),JSON.stringify({error:String(error),errors,requests},null,2)+'\n');throw error;}finally{socket?.close();browser.kill('SIGKILL');await new Promise(resolve_=>browser.exitCode!==null||browser.signalCode!==null?resolve_():browser.once('close',resolve_));await rm(profile,{recursive:true,force:true});}

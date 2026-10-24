@@ -1,0 +1,9 @@
+{
+  "revision":"wiki-artist-cold-start-reporting-clarification-v1",
+  "original_protocol":"research/wiki_artist_cold_start_protocol_v1.json",
+  "timing":"Saved after independent static review identified the MRR/reporting ambiguity, before the producer completed and before final metrics were inspected.",
+  "original_MRR":"Producer MRR uses the reciprocal first truth rank in the complete positive-score ranking, including ranks beyond50. Label it full-positive-ranking MRR; it is not MRR@50.",
+  "original_returned_positive_candidates":"Counts every positive-score candidate, not the number served. Label it positive candidate count.",
+  "supplement":"Report MRR@50 separately, zero when the first true artist is beyond50 or absent. Report returned-at50=min(50,positive candidate count). Preserve original report/query files unchanged.",
+  "unchanged":"Queries,source/split,features,fits,rank order,Recall10/50,bootstrap acceptance and all original values. No model or threshold changes."
+}

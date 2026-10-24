@@ -1,0 +1,70 @@
+{
+  "all-isolated-ranking-proofs.json.gz": {
+    "bytes": 6814471,
+    "sha256": "936a73a7d94557f43369d80e33e94f6cc44d09dc8c073868bdc95298964fd0c5"
+  },
+  "independent-capped-reporting.json": {
+    "bytes": 605,
+    "sha256": "d498f4a11788b705b920eaf6ee1a6c6ae39f0ec08ddaec3ee23f7a421ec1a1d3"
+  },
+  "independent-coverage.json": {
+    "bytes": 873196,
+    "sha256": "ecc0aeb7771739cc80f82e7c369b334d31d928ef9db2fdd06da62d431a0498e6"
+  },
+  "independent-output-rankings.json": {
+    "bytes": 372802,
+    "sha256": "33fecff17ff042e7f6e950259a460b4ecc5ed5bc0be9ce77b83d468b8788ccd2"
+  },
+  "independent-production-audit.py.txt": {
+    "bytes": 11852,
+    "sha256": "2dce8983c321064643644a3babfb0e00fc611562effd097999f0143ac37868e3"
+  },
+  "independent-production-ui.json": {
+    "bytes": 1563,
+    "sha256": "49e6a5f9357808c411c89492e0d65a03cc07632116915409fe7c79beb23ac706"
+  },
+  "independent-production-verdict.json": {
+    "bytes": 986,
+    "sha256": "4a9ef12b4c0715f9b3163de4cc88b3dc2892e1bf65b756430c6987cfecda181a"
+  },
+  "independent-replay.py.txt": {
+    "bytes": 15730,
+    "sha256": "5f5081f40a0bfc82ba840426f4c18ed6112d03ec3e7fe434edf624f01baa4e9e"
+  },
+  "independent-report.json": {
+    "bytes": 8173,
+    "sha256": "3185986be8b0c051bc873bc7b759f52a9995cdc214f1b72db75f50df3976cbd0"
+  },
+  "independent-ui-data-preservation.json": {
+    "bytes": 354,
+    "sha256": "29a87d376c3f5c3bf2c47b7716787076ab16591040badacfbebf7c878f2886e6"
+  },
+  "ineligible-artists.jsonl.gz": {
+    "bytes": 600524,
+    "sha256": "6dada37b33cfee18f39b5480feb246b6e5259543627258e98c94b2ca6a525eed"
+  },
+  "producer.py.txt": {
+    "bytes": 6498,
+    "sha256": "2368fbe05e0375eae71cab9087736b3c1d26cdd7c9b7aeeacccc02ea388a1a43"
+  },
+  "production-abstentions.json": {
+    "bytes": 4991,
+    "sha256": "632e32748216c6289d6cdd96801e85917b667a86cabadb67e86e718aa7b16e70"
+  },
+  "protocol.json": {
+    "bytes": 3195,
+    "sha256": "4d6a21bc0d603f8ad9ad79fcac1c5f12e792b4d8654fa21bf80144abc43b0a23"
+  },
+  "query-results.json.gz": {
+    "bytes": 3181910,
+    "sha256": "e3bc55e9ee91c04dca352b67bd9047b03bfcd3b3884db0f92f578bccace7479c"
+  },
+  "report.json": {
+    "bytes": 2309,
+    "sha256": "482e4ab8e17721e2b97a8c5ec9f5c1ea6407bc43432d3f22a2021058acbfd9eb"
+  },
+  "reporting-clarification.json": {
+    "bytes": 992,
+    "sha256": "dedd2ed2728218e7ae66877defb072ab0b6d30767ac4093f06629219c2d8220a"
+  }
+}

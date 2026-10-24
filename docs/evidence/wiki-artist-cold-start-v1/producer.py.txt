@@ -1,0 +1,55 @@
+"""Fit fixed metadata-to-graph embeddings and evaluate whole-artist graph holdout."""
+import os
+os.environ['OPENBLAS_NUM_THREADS']='2';os.environ['OMP_NUM_THREADS']='2'
+from pathlib import Path
+import hashlib,gzip,json,time,collections
+import numpy as np
+from scipy import sparse
+from scipy.sparse.linalg import svds,cg
+root=Path(__file__).resolve().parents[1];out=root/'.cache/wiki-artist-cold-start-v1';out.mkdir(exist_ok=False);start=time.monotonic()
+protocol=(root/'research/wiki_artist_cold_start_protocol_v1.json').read_bytes();spec=json.loads(protocol);raw=(root/'.cache/dbpedia-music-v6/snapshot.json.gz').read_bytes();assert hashlib.sha256(raw).hexdigest()==spec['source_sha256'];s=json.loads(gzip.decompress(raw));ids=[a['uri'] for a in s['artists']];index={v:i for i,v in enumerate(ids)};n=len(ids);model=root/'.cache/wiki-artist-model-v5'
+assert hashlib.sha256((model/'metadata.npz').read_bytes()).hexdigest()=='47ea76d2c795c78d8bcda07e8aa57e072a9b4ebddbc7409e6b40799f12564ad9'
+x=sparse.load_npz(model/'metadata.npz');old_embedding=np.load(model/'embedding.npy');assert x.shape[0]==n and old_embedding.shape==(n,64)
+cold=np.array([int.from_bytes(hashlib.sha256(('wiki-cold-artist-v1:'+uri).encode()).digest(),'big')%5==0 for uri in ids]);np.save(out/'cold-mask.npy',cold)
+original=[set() for _ in ids];neighbors=[set() for _ in ids];pairs={tuple(sorted((index[a],index[b]))) for a,_,b in s['relations']};removed=0
+for a,b in sorted(pairs):
+ original[a].add(b);original[b].add(a)
+ if cold[a] or cold[b]:removed+=1
+ else:neighbors[a].add(b);neighbors[b].add(a)
+rows,cols=[],[]
+for i,ns in enumerate(neighbors):rows.extend([i]*len(ns));cols.extend(sorted(ns))
+graph=sparse.csr_matrix((np.ones(len(rows)),(rows,cols)),shape=(n,n));sparse.save_npz(out/'training-graph.npz',graph)
+assert graph[cold].nnz==0 and graph[:,cold].nnz==0
+degree=np.asarray(graph.sum(axis=1)).ravel();inv=np.zeros(n);np.divide(1,np.sqrt(degree),out=inv,where=degree>0);p=(sparse.diags(inv)@graph).tocsr();rng=np.random.default_rng(spec['seed'])
+u,values,_=svds(p,k=64,which='LM',v0=rng.normal(size=n),tol=1e-5);embedding=u[:,::-1]*values[::-1];norm=np.linalg.norm(embedding,axis=1);embedding[degree==0]=0;norm=np.linalg.norm(embedding,axis=1);np.divide(embedding,norm[:,None],out=embedding,where=norm[:,None]>0);np.save(out/'training-graph-embedding.npy',embedding)
+nonempty=np.diff(x.indptr)>0;train=(~cold)&nonempty&(degree>0);xt=x[train].T.tocsr();gram=(xt@x[train]+sparse.eye(x.shape[1],format='csr')).tocsr();rhs=xt@embedding[train];pre=sparse.diags(1/gram.diagonal());coef=np.zeros((x.shape[1],64));residuals=[]
+print(json.dumps({'phase':'graph_fit','train_artists':int(train.sum()),'removed_pairs':removed,'seconds':time.monotonic()-start}),flush=True)
+for i in range(64):
+ coef[:,i],info=cg(gram,rhs[:,i],M=pre,rtol=1e-6,maxiter=500)
+ if info!=0:raise RuntimeError(f'RidgeCG didnotconverge:{info}')
+ residuals.append(float(np.linalg.norm(gram@coef[:,i]-rhs[:,i])/max(np.linalg.norm(rhs[:,i]),1e-15)))
+np.save(out/'metadata-to-graph-coefficients.npy',coef);predicted=x@coef;norm=np.linalg.norm(predicted,axis=1);np.divide(predicted,norm[:,None],out=predicted,where=norm[:,None]>0);np.save(out/'predicted-embedding.npy',predicted)
+gallery=embedding.copy();gallery[degree==0]=predicted[degree==0];np.save(out/'gallery-embedding.npy',gallery)
+queries=[q for q in range(n) if cold[q] and original[q] and nonempty[q]];ineligible=[]
+for q in range(n):
+ causes=[]
+ if not cold[q]:causes.append('not_holdout_artist')
+ if not original[q]:causes.append('no_observed_relationship_truth')
+ if not nonempty[q]:causes.append('no_metadata_vector')
+ if causes:ineligible.append({'artist':ids[q],'causes':causes})
+xtall=x.T.tocsr();results=[];threshold=1e-8
+print(json.dumps({'phase':'evaluate','queries':len(queries),'seconds':time.monotonic()-start}),flush=True)
+for step,q in enumerate(queries):
+ truth=original[q];row={'artist':ids[q],'full_source_degree':len(truth),'positives':len(truth)}
+ scores={'metadata':(x[q]@xtall).toarray().ravel(),'metadata_svd64':old_embedding@old_embedding[q],'metadata_graph_ridge64':gallery@predicted[q],'popularity':degree}
+ for method,values in scores.items():
+  candidates=np.flatnonzero((values>threshold)&(np.arange(n)!=q));ranked=candidates[np.lexsort((candidates,-np.round(values[candidates],8)))];positions=(np.flatnonzero(np.isin(ranked,list(truth)))+1).tolist()
+  row[method]={'Recall10':sum(v<=10 for v in positions)/len(truth),'Recall50':sum(v<=50 for v in positions)/len(truth),'MRR':1/min(positions) if positions else 0,'returned_positive_candidates':len(candidates),'top10':[ids[i] for i in ranked[:10]]}
+ row['uniform']={'Recall10':10/(n-1),'Recall50':50/(n-1)};results.append(row)
+ if step%1000==0:print(json.dumps({'evaluated':step+1,'queries':len(queries),'seconds':time.monotonic()-start}),flush=True)
+methods={m:{k:float(np.mean([r[m][k] for r in results])) for k in ['Recall10','Recall50',*(['MRR'] if m!='uniform' else [])]} for m in ['metadata','metadata_svd64','metadata_graph_ridge64','popularity','uniform']}
+rng=np.random.default_rng(spec['seed']);comparisons={}
+for first,second in [('metadata_graph_ridge64','metadata'),('metadata_graph_ridge64','popularity'),('metadata','popularity')]:
+ delta=np.array([r[first]['Recall10']-r[second]['Recall10'] for r in results]);samples=delta[rng.integers(0,len(results),size=(1000,len(results)))].mean(axis=1);comparisons[first+'-minus-'+second]={'mean_difference':float(delta.mean()),'bootstrap95':np.quantile(samples,[.025,.975]).tolist()}
+report={'revision':spec['revision'],'source_sha256':hashlib.sha256(raw).hexdigest(),'protocol_sha256':hashlib.sha256(protocol).hexdigest(),'artists':n,'holdout_artists':int(cold.sum()),'queries':len(queries),'training_artists':int(train.sum()),'original_pairs':len(pairs),'removed_incident_pairs':removed,'train_pairs':graph.nnz//2,'all_holdout_rows_and_columns_zero':True,'positive_gallery_coverage':1,'ineligible_artists':len(ineligible),'ridge_max_relative_normal_residual':max(residuals),'methods':methods,'paired_comparisons':comparisons,'seconds':round(time.monotonic()-start,3),'scope':spec['limits'],'production_unchanged':True}
+(out/'report.json').write_text(json.dumps(report,indent=2)+'\n');(out/'query-results.json.gz').write_bytes(gzip.compress((json.dumps(results)+'\n').encode(),mtime=0));(out/'ineligible-artists.jsonl.gz').write_bytes(gzip.compress(''.join(json.dumps(v)+'\n' for v in ineligible).encode(),mtime=0));print(json.dumps(report,indent=2),flush=True)
