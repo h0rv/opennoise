@@ -137,7 +137,7 @@ def _standalone(site: Path) -> None:
         + module("map-atlas.mjs", "fitCamera,zoomAtCenter")
         + ";\n"
         "globalThis.OPENNOISE_PIPELINE_DEMO="
-        + module("pipeline-demo.mjs", "renderMap,appendArtistEvidence")
+        + module("pipeline-demo.mjs", "renderGenres,renderGenre,renderMap,appendArtistEvidence")
         + ";\n"
         + main
     )
