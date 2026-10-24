@@ -1,0 +1,21 @@
+{
+  "capture_limit": 2000,
+  "coverage": "Report unique named artists separately from successfully queried artists, nonempty native neighborhoods, graph degree, connected components and evaluable references; empty responses retained; exclude unattributed rows and self edges",
+  "graph": "Undirected pair maximum of native aggregate scores; no fabricated negative edges. Log1p weights, symmetric degree normalization. Pair grouping removes reciprocal evidence together.",
+  "interpretation": "Recovery of withheld observed co-listening relationships, not listener preference, perceptual music similarity, genre correctness or temporal generalization. Top100 truncation and reference capture expansion create missingness and selection bias; unknown relationships are not proven irrelevant.",
+  "metrics": "Macro query Recall@10 and@50, MRR, coverage, runtime and peakRSS. Exact uniform expectation uses identical candidate sets. Paired query bootstrap is conditional on predictions, not independence of graph users or population representativeness.",
+  "models": [
+    "64-dimensional largest-algebraic eigenvector representation of normalized log-weight adjacency, excluding trivial eigenvalues above0.99999; deterministic eigen initialization; cosine ranking",
+    "Exact cosine between weighted neighbor profiles (two-hop common-context baseline)",
+    "Training weighted-degree popularity baseline",
+    "Same-gallery exact uniform expectation"
+  ],
+  "objective": "Useful artist discovery at thousands of artists, with no audio, lyrics, track descriptions or per-user histories required",
+  "public_scope": "Only aggregate native identities, source scores, derived coordinates and compact neighbors can be considered for reviewed promotion; no user data or restricted claims. Existing production retained dataset and map remain intact until a separate certified integration passes.",
+  "queries": "Successfully captured references with at least5 withheld neighbors and10 retained training neighbors. Candidate set excludes self and every observed training neighbor; withheld source positives are unknown to methods. No query sampling based on outcomes.",
+  "ranking_stability": "Rank scores rounded to8decimal places, then native-ID order. Retain float64 evaluation vectors. Initial replay found raw floating-point ties unstable across dot-product implementations; this correction applies to all methods and does not tune model parameters.",
+  "revision": "artist-only-graph-v1",
+  "selection": "No tuning of embedding dimension, weights, split or thresholds after viewing metrics. If embedding does not beat the common-context baseline, use direct source neighborhoods or that simpler baseline and retain embeddings only as optional layout coordinates.",
+  "source": "Bounded native ListenBrainz public session aggregate API, advertised1800day algorithm, one reference per request, at least1.1seconds between starts; exact MBIDs and names; no restricted local source graph projected",
+  "split": "sha256(artist-graph-pair-holdout-v1: + lexical MBID0 + : + lexical MBID1) modulo5. Fold0 withheld entirely, both directions removed before normalization, fitting or degree baselines. No genre labels used."
+}

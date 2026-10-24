@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 from typing import Any, ClassVar, override
 
+from opennoise.pipeline import artist_network
 from opennoise.pipeline import catalog_demo as demo
 from opennoise.pipeline import public_catalog_candidate as candidate
 
@@ -59,6 +60,9 @@ class PublicCatalogCandidateTests(unittest.TestCase):
             *filter(None, tracked),
             *NEW_CODE,
             candidate.CONTRACT,
+            artist_network.CONTRACT,
+            artist_network.PROMOTION,
+            artist_network.SNAPSHOT,
             *(name for source in contract["sources"] for name in source["files"]),
         }
         for name in sorted(members):
