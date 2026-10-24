@@ -20,10 +20,10 @@ if TYPE_CHECKING:
 from opennoise.pipeline.catalog_demo import digest, read, write
 
 CONTRACT = "config/releases/native-artist-network-inputs-v1.json"
-CONTRACT_SHA256 = "8f8255ca19f0bce21d2cfbc7e5af74c4791a4c47ab0c0a162d006352b10a91c9"
+CONTRACT_SHA256 = "f2f5ef38a1f9c9dbabf29acc117609ba4a0bc054510544ef77ed2cb959913e3e"
 PROMOTION = "config/releases/native-artist-network-promotion-v1.json"
-PROMOTION_SHA256 = "1a710c6e3e4b6f084dab6816bbdb419faac8f6d663b9d80723cdb96fbbd8ba17"
-SNAPSHOT = "data/examples/native-artist-network-v1/snapshot.json.gz"
+PROMOTION_SHA256 = "fed4a49039c69ad87d600df15e7f3d995910b7904f4416040207f2594a755c84"
+SNAPSHOT = "data/examples/native-artist-network-v2/snapshot.json.gz"
 ID = re.compile(r"^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$")
 MAX_SOURCE_BYTES = 40_000_000
 MIN_AGGREGATE_SCORE = 10
