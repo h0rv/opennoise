@@ -41,6 +41,17 @@ function pages(page, count, href) {
   main.append(nav);
 }
 function ordered(rows) { return [...rows].sort((a, b) => norm(a.name).localeCompare(norm(b.name)) || a.id.localeCompare(b.id)); }
+function searchRank(name, query) {
+  const value = norm(name).replace(/\s+/gu, ' ');
+  if (value === query) return 0;
+  if (value.replace(/\s+\([^()]*\)$/u, '') === query) return 1;
+  return value.startsWith(query) ? 2 : 3;
+}
+function searchResults(rows, terms) {
+  const query = terms.join(' ');
+  return rows.filter(row => terms.every(term => norm(row.name).includes(term)))
+    .sort((a, b) => searchRank(a.name, query) - searchRank(b.name, query) || norm(a.name).localeCompare(norm(b.name)) || a.id.localeCompare(b.id));
+}
 function paged(rows, page, href, kind = 'artist') {
   if (!Number.isInteger(page) || page < 0 || page >= Math.max(1, Math.ceil(rows.length / 60))) { main.append(make('p', 'Page not found.')); return; }
   pages(page, rows.length, href); names(rows.slice(page * 60, (page + 1) * 60), kind); pages(page, rows.length, href);
@@ -126,13 +137,17 @@ async function render() {
       if (!terms.length) { main.append(make('h1', 'Search'), make('p', 'Enter a genre or artist.')); }
       else {
         const [allArtists, connections] = await Promise.all([artistIndex(), nativeIndex()]); if (current !== sequence) return;
-        const matches = row => terms.every(t => norm(row.name).includes(t));
-        const styles = genres.filter(matches), rows = ordered(allArtists.filter(matches)), linked = ordered(connections.filter(matches));
+        const styles = searchResults(genres, terms), rows = searchResults(allArtists, terms), linked = searchResults(connections, terms);
         main.append(make('h1', value));
-        if (styles.length) { main.append(make('h2', 'Genres')); names(ordered(styles), 'genre'); }
-        if (rows.length) { main.append(make('h2', 'Artists')); const scope = make('p', `${rows.length.toLocaleString()} matches`); scope.className = 'scope'; main.append(scope); paged(rows, Number(mode || 0), p => `#q/${encodeURIComponent(value)}/${p}`); }
-        else if (!styles.length && !linked.length) main.append(make('p', 'No matches.'));
-        if (linked.length) { main.append(make('h2', 'Connections')); names(linked.slice(0, 60), 'connection'); if (linked.length > 60) main.append(link('All connections', `artist-network/${offline ? 'OpenNoiseArtists.html' : ''}#browse/${encodeURIComponent(value)}/0`)); }
+        const sections = [{name: 'Genres', rows: styles}, {name: 'Artists', rows}, {name: 'Connections', rows: linked}]
+          .filter(section => section.rows.length).sort((a, b) => searchRank(a.rows[0].name, terms.join(' ')) - searchRank(b.rows[0].name, terms.join(' ')));
+        if (!sections.length) main.append(make('p', 'No matches.'));
+        for (const section of sections) {
+          main.append(make('h2', section.name));
+          if (section.name === 'Genres') names(styles, 'genre');
+          else if (section.name === 'Artists') { const scope = make('p', `${rows.length.toLocaleString()} matches`); scope.className = 'scope'; main.append(scope); paged(rows, Number(mode || 0), p => `#q/${encodeURIComponent(value)}/${p}`); }
+          else { names(linked.slice(0, 60), 'connection'); if (linked.length > 60) main.append(link('All connections', `artist-network/${offline ? 'OpenNoiseArtists.html' : ''}#browse/${encodeURIComponent(value)}/0`)); }
+        }
       }
     } else if (kind === 'artists') {
       const rows = ordered(await artistIndex()); if (current !== sequence) return;
