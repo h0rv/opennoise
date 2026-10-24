@@ -1,0 +1,10 @@
+{
+  "all_method_metrics_reproduced": true,
+  "all_training_edges_reconstructed": 191502,
+  "native_artists": 11894,
+  "no_producer_imports": true,
+  "queries_replayed": 1487,
+  "reciprocal_holdout_removal_verified": true,
+  "source_bytes_reverified": true,
+  "status": "passed"
+}

@@ -1,0 +1,66 @@
+"""Validate the chosen context method on all source identities,including empty metadata."""
+
+from __future__ import annotations
+
+from collections import defaultdict
+import argparse
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import time
+
+import numpy as np
+from scipy import sparse
+
+ROOT = Path(__file__).resolve().parents[1]
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--source",default=".cache/dbpedia-music-v4")
+parser.add_argument("--output",default=".cache/wiki-artist-operating-v1")
+parser.add_argument("--model",default=".cache/wiki-artist-model-v2")
+parser.add_argument("--protocol",default="research/wiki_artist_operating_protocol.json")
+args=parser.parse_args()
+OUT = ROOT / args.output
+OUT.mkdir(exist_ok=False)
+raw = (ROOT / args.source / "snapshot.json.gz").read_bytes()
+data = json.loads(gzip.decompress(raw))
+protocol = (ROOT / args.protocol).read_bytes()
+ids = [a["uri"] for a in data["artists"]]
+index = {a:i for i,a in enumerate(ids)}
+pairs = {tuple(sorted((index[a],index[b]))) for a,_,b in data["relations"]}
+neighbors = [set() for _ in ids]
+truth = defaultdict(set)
+start = time.monotonic()
+for a,b in sorted(pairs):
+    fold = int.from_bytes(hashlib.sha256(f"wiki-artist-pair-v1:{ids[a]}:{ids[b]}".encode()).digest(),"big") % 5
+    if fold == 0:
+        truth[a].add(b);truth[b].add(a)
+    else:
+        neighbors[a].add(b);neighbors[b].add(a)
+rows,cols = [],[]
+for q,ns in enumerate(neighbors):
+    rows.extend([q]*len(ns));cols.extend(sorted(ns))
+graph = sparse.csr_matrix((np.ones(len(rows)),(rows,cols)),shape=(len(ids),len(ids)))
+original = sparse.load_npz(ROOT / args.model / "training-graph.npz")
+assert (graph != original).nnz == 0
+degree = np.array([len(v) for v in neighbors],dtype=float)
+inverse = np.zeros_like(degree);np.divide(1,np.sqrt(degree),out=inverse,where=degree>0)
+profiles = (sparse.diags(inverse) @ graph).tocsr();transpose = profiles.T.tocsr()
+queries = [q for q in range(len(ids)) if len(truth[q])>=3 and len(neighbors[q])>=5]
+results=[]
+for step,q in enumerate(queries):
+    allowed=np.ones(len(ids),dtype=bool);allowed[q]=False;allowed[list(neighbors[q])]=False
+    candidates=np.flatnonzero(allowed)
+    scores=(profiles[q]@transpose).toarray().ravel()
+    result={"artist":ids[q],"positives":len(truth[q]),"candidates":len(candidates),"training_neighbors":len(neighbors[q])}
+    for method,values in [("context",scores),("popularity",degree)]:
+        ranked=candidates[np.lexsort((candidates,-np.round(values[candidates],8)))]
+        positions=(np.flatnonzero(np.isin(ranked,list(truth[q])))+1).tolist()
+        result[method]={"Recall10":sum(p<=10 for p in positions)/len(truth[q]),"Recall50":sum(p<=50 for p in positions)/len(truth[q]),"MRR":1/min(positions)}
+    result["uniform"]={"Recall10":10/len(candidates),"Recall50":50/len(candidates)}
+    results.append(result)
+    if step%500==0:print(json.dumps({"evaluated":step+1,"queries":len(queries)}),flush=True)
+metrics={m:{k:float(np.mean([r[m][k] for r in results])) for k in results[0][m]} for m in ["context","popularity","uniform"]}
+report={"revision":json.loads(protocol)["revision"],"source_sha256":hashlib.sha256(raw).hexdigest(),"protocol_sha256":hashlib.sha256(protocol).hexdigest(),"artists":len(ids),"queries":len(queries),"candidate_positive_coverage":1.0,"train_graph_reconstructed_and_matches_v2":True,"methods":metrics,"seconds":round(time.monotonic()-start,3),"scope":"Recovery of source associations on complete serving gallery. No independent musical relevance or perceptual similarity claim."}
+(OUT/"report.json").write_text(json.dumps(report,indent=2)+'\n');(OUT/"query-results.json").write_text(json.dumps(results,indent=2)+'\n')
+print(json.dumps(report,indent=2),flush=True)

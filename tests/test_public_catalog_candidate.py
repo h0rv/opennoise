@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 from typing import Any, ClassVar, override
 
+from opennoise.pipeline import artist_network, wiki_artist_atlas
 from opennoise.pipeline import catalog_demo as demo
 from opennoise.pipeline import public_catalog_candidate as candidate
 
@@ -22,6 +23,10 @@ NEW_CODE = (
     "src/opennoise/static/pipeline-demo.css",
     "scripts/build_retained_catalog_demo.py",
     "scripts/build_public_catalog_candidate.py",
+    "src/opennoise/pipeline/wiki_artist_atlas.py",
+    "src/opennoise/static/genre-atlas/index.html",
+    "src/opennoise/static/genre-atlas/atlas.css",
+    "src/opennoise/static/genre-atlas/atlas.mjs",
 )
 
 
@@ -59,6 +64,15 @@ class PublicCatalogCandidateTests(unittest.TestCase):
             *filter(None, tracked),
             *NEW_CODE,
             candidate.CONTRACT,
+            artist_network.CONTRACT,
+            artist_network.PROMOTION,
+            artist_network.SNAPSHOT,
+            wiki_artist_atlas.CONTRACT,
+            *(
+                p.relative_to(ROOT).as_posix()
+                for p in (ROOT / wiki_artist_atlas.SNAPSHOT).parent.iterdir()
+                if p.is_file()
+            ),
             *(name for source in contract["sources"] for name in source["files"]),
         }
         for name in sorted(members):
@@ -91,7 +105,7 @@ class PublicCatalogCandidateTests(unittest.TestCase):
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=310,
                 check=True,
             )
         cls.manifests = [demo.read(p / "payload-manifest.json") for p in cls.outputs]
@@ -107,6 +121,8 @@ class PublicCatalogCandidateTests(unittest.TestCase):
         self.assertFalse(self.manifests[0]["publication_authorized"])
         self.assertEqual(self.manifests[0]["counts"]["catalog_artists"], 433)
         self.assertEqual(self.manifests[0]["counts"]["compatible_artists"], 13)
+        self.assertEqual(self.manifests[0]["wiki_artist_atlas"]["counts"]["artists"], 86253)
+        self.assertEqual(self.manifests[0]["wiki_artist_atlas"]["counts"]["genres"], 1366)
 
     def test_every_data_member_is_tracked_and_bound_to_explicit_rights(self) -> None:
         tracked = set(

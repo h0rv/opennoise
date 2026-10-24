@@ -1,0 +1,20 @@
+{
+  "url": "https://musicbrainz.org/ws/2/genre/all?fmt=txt",
+  "purpose": "Core genre-definition vocabulary only,not artist tags or genre associations",
+  "license_basis": [
+    "https://musicbrainz.org/doc/MusicBrainz_API (genre is a core entity resource; all subresource supports txt)",
+    "https://musicbrainz.org/doc/MusicBrainz_Database/Schema (genre core entity)",
+    "https://musicbrainz.org/doc/About/Data_License (coreCC0,supplementaryartistgenreassociationsNC-SA)"
+  ],
+  "license": "CC0 core names; no supplementary associations fetched",
+  "automatic_retries": 0,
+  "started_utc": "2026-10-24T18:36:42.270091+00:00",
+  "status": 200,
+  "bytes": 26245,
+  "sha256": "4dd2bae46d952097b0ad88290eaf1a4eeb48112184fd280bc3adfcaffa454a62",
+  "server_date": "Sat, 24 Oct 2026 18:36:43 GMT",
+  "content_type": "text/plain; charset=utf-8",
+  "outcome": "captured",
+  "genre_names": 2216,
+  "finished_utc": "2026-10-24T18:36:43.297854+00:00"
+}

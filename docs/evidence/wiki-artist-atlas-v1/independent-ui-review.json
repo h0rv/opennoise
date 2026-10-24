@@ -1,0 +1,60 @@
+{
+  "status": "passed_bounded_independent_review",
+  "preview": "http://127.0.0.1:3071/",
+  "browser": "Codex in-app browser through supported CUA APIs",
+  "desktop_viewport": [
+    1280,
+    720
+  ],
+  "mobile_viewports": [
+    [
+      390,
+      844
+    ],
+    [
+      320,
+      780
+    ]
+  ],
+  "checks": {
+    "root_genre_map_visible": true,
+    "root_genre_map_targets": 1366,
+    "global_search_genres_and_artists": true,
+    "jazz_canonical_members": 7280,
+    "genre_to_artist_map_to_Miles_Davis": true,
+    "source_related_and_inferred_suggested_separate": true,
+    "sources_initially_collapsed": true,
+    "sources_compact_and_attributed": true,
+    "phone_artist_default_list": true,
+    "phone_explicit_map_and_zoom_reset": true,
+    "phone_map_font_px": 16,
+    "phone_map_min_hit_height_px": 44,
+    "keyboard_Enter_search_and_artist_navigation": true,
+    "artist_directory_count": 86253,
+    "artist_directory_page_1_to_2": true,
+    "artist_directory_total_pages": 1438,
+    "no_page_horizontal_overflow_at_320": true,
+    "Back_Forward_reload_preserves_artist_route": true,
+    "retained_CC0_Connections_directory_count": 11894,
+    "browser_Back_from_Connections_restores_atlas_page_2": true,
+    "viewport_override_reset": true
+  },
+  "console_warnings_or_errors": [],
+  "blocking_usability_findings": [],
+  "tool_observation": "One locator wait timed out with its own diagnostics showing the requested Artists heading already visible. A fresh DOM snapshot and screenshot verified successful navigation; no action was repeated.",
+  "bound_preview_asset_sha256": {
+    "index.html": "3304136cc65188c3e56b9b86353c56d4099121234497862cac0c780439d54716",
+    "atlas.mjs": "2d9b3e0f6ef5f170de3625742a2e718b567e7b8e936a7e813e6f943469603fbc",
+    "atlas.css": "6abae47658d7801a64d756c5cbb707e13b0174e33a8ee020a558e03d7f9d9496"
+  },
+  "screenshot_origin": "Copied from lead automated HTTP browser gate and separately visually inspected; independent live browser observations are recorded in this report.",
+  "not_independently_repeated": [
+    "All1366targets overlap/clipping audit",
+    "All86253directory endpoints",
+    "Touch event simulation",
+    "Complete offline browser gate",
+    "Network interception audit"
+  ],
+  "lead_reports": "Copied HTTP and offline automated reports both passed and report zero external requests/runtime errors.",
+  "source_or_release_edits": "none; only own ignored evidence directory written"
+}

@@ -39,7 +39,7 @@ def main() -> int:
                     str(output),
                 ],
                 check=True,
-                timeout=130,
+                timeout=310,
             )
         manifest = read(output / "payload-manifest.json")
         commit = (
@@ -69,11 +69,43 @@ def main() -> int:
                 [
                     shutil.which("node") or "/usr/bin/node",
                     "scripts/capture_retained_catalog_demo.mjs",
-                    url,
+                    url + "/retained.html",
                     str(work / "browser"),
                 ],
                 check=True,
                 timeout=120,
+            )
+            subprocess.run(  # noqa: S603 -- Artist-only browser gate on the same loopback export.
+                [
+                    shutil.which("node") or "/usr/bin/node",
+                    "scripts/capture_artist_network.mjs",
+                    url + "/retained.html",
+                    str(work / "artist-browser"),
+                ],
+                check=True,
+                timeout=120,
+            )
+            subprocess.run(  # noqa: S603 -- New atlas checked independently beside both prior scopes.
+                [
+                    shutil.which("node") or "/usr/bin/node",
+                    "scripts/capture_genre_atlas.mjs",
+                    url,
+                    str(work / "atlas-browser"),
+                    str(output / "site"),
+                ],
+                check=True,
+                timeout=180,
+            )
+            subprocess.run(  # noqa: S603 -- Complete offline copy, zero HTTP requests permitted.
+                [
+                    shutil.which("node") or "/usr/bin/node",
+                    "scripts/capture_genre_atlas.mjs",
+                    (output / "site/OpenNoise.html").as_uri(),
+                    str(work / "atlas-offline-browser"),
+                    str(output / "site"),
+                ],
+                check=True,
+                timeout=180,
             )
         finally:
             server.terminate()
@@ -83,7 +115,7 @@ def main() -> int:
                 server.kill()
                 server.wait()
         _atomic_install(output / "site", root / "dist")
-    print(f"Certified public catalog release for {commit}: 433 catalog artists, 1031 recordings")  # noqa: T201
+    print(f"Certified public catalog and artist-network release for {commit}")  # noqa: T201
     return 0
 
 

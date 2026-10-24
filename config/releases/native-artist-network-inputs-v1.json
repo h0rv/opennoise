@@ -1,0 +1,21 @@
+{
+  "audio_lyrics_or_user_histories": false,
+  "counts": {
+    "artists": 11894,
+    "at_least5_connections": 4292,
+    "connected_artists": 11811,
+    "nonempty_queried_references": 1564,
+    "observed_undirected_pairs": 119586,
+    "queried_references": 1647,
+    "suggested_artists": 5770
+  },
+  "expanded_bytes": 19653512,
+  "genre_memberships_inferred": false,
+  "genres_with_suggestions": 148,
+  "revision": "native-artist-network-inputs-v1",
+  "rights": "CC0-1.0",
+  "snapshot_bytes": 5372755,
+  "snapshot_path": "data/examples/native-artist-network-v1/snapshot.json.gz",
+  "snapshot_sha256": "4960d585a091c8c253cc9ec90ba3a67b35c87b5693a3ecc148005ca1d30e1105",
+  "source_scope": "Public aggregate session relationships and native MusicBrainz core identities, CC0; no audio, lyrics, per-user records, NC claims or old restricted graph projected"
+}

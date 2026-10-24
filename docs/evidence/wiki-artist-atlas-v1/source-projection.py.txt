@@ -1,0 +1,133 @@
+"""Project source music-role evidence without treating missing RDF types as negatives."""
+
+from __future__ import annotations
+
+from collections import Counter, defaultdict
+import bz2
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import re
+import sqlite3
+import time
+import unicodedata
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / ".cache/dbpedia-music-index-v1"
+OUT = ROOT / ".cache/dbpedia-music-v6"
+OUT.mkdir(exist_ok=False)
+report_in = json.loads((SOURCE / "report.json").read_bytes())
+con = sqlite3.connect("file:" + str(SOURCE / "evidence.sqlite") + "?mode=ro", uri=True)
+DBO = "http://dbpedia.org/ontology/"
+RESOURCE = "http://dbpedia.org/resource/"
+start = time.monotonic()
+type_path = ROOT / ".cache/dbpedia-type-audit-v1/classes.json.gz"
+type_raw = type_path.read_bytes()
+type_report = json.loads(type_path.with_name("report.json").read_bytes())
+assert hashlib.sha256(type_raw).hexdigest() == type_report["sha256"]
+typed = defaultdict(set, {DBO+k:set(v) for k,v in json.loads(gzip.decompress(type_raw)).items()})
+typed_artists = typed[DBO + "MusicalArtist"] | typed[DBO + "Band"]
+known_nonartists = set().union(*(typed[DBO+k] for k in ("MusicalWork","Work","Genre","MusicGenre","Instrument","Place","Language")))
+typed_artists -= known_nonartists
+instrument_people = {a for a,_ in con.execute("SELECT subject,target FROM triple WHERE predicate=?",(DBO+'instrument',)) if a in typed[DBO+'Person'] and a not in known_nonartists}
+artists = typed_artists | instrument_people
+relations = []
+roles = set()
+for p in ("associatedMusicalArtist", "associatedBand", "bandMember", "formerBandMember"):
+    for a, b in con.execute("SELECT subject,target FROM triple WHERE predicate=?", (DBO + p,)):
+        if a != b and a in artists and b in artists:
+            relations.append((a, DBO + p, b)); roles.update((a, b))
+memberships = defaultdict(set)
+features = defaultdict(lambda: defaultdict(set))
+excluded_known_nongenres = 0
+positive_genres = typed[DBO+'Genre'] | typed[DBO+'MusicGenre']
+known_nongenres = set().union(*(typed[DBO+k] for k in ("Agent","Person","MusicalArtist","Band","Organisation","Company","RecordLabel","EthnicGroup","Place","Instrument","Language","Work","Event","TimePeriod"))) - positive_genres
+for a, g in con.execute("SELECT subject,target FROM triple WHERE predicate=?", (DBO + "genre",)):
+    if a not in artists:
+        continue
+    if g in known_nongenres:
+        excluded_known_nongenres += 1
+    else:
+        memberships[a].add(g)
+excluded_person_labels = 0
+for kind in ("instrument", "recordLabel"):
+    for a, v in con.execute("SELECT subject,target FROM triple WHERE predicate=?", (DBO + kind,)):
+        if a not in artists:
+            continue
+        if v in typed[DBO + "Person"] or v in typed_artists:
+            excluded_person_labels += 1
+        else:
+            features[a][DBO + kind].add(v)
+involved = set(memberships) | roles
+all_genres = set().union(*memberships.values()) if memberships else set()
+wanted = involved | all_genres | {v for a in involved for vs in features[a].values() for v in vs}
+print(json.dumps({"phase": "source_identity", "typed_artists": len(typed_artists), "person_instrument_evidence": len(instrument_people), "involved_artists": len(involved), "genre_artists": len(memberships), "genre_objects": len(all_genres), "seconds": round(time.monotonic()-start,2)}), flush=True)
+labels = defaultdict(set)
+pattern = re.compile(r'^<([^>]+)> <http://www.w3.org/2000/01/rdf-schema#label> "(.*)"@en \.\s*$')
+
+
+def literal(value):
+    def replace(match):
+        token = match[1]
+        if token[0] in ("u", "U"):
+            return chr(int(token[1:], 16))
+        return {"t":"\t", "b":"\b", "n":"\n", "r":"\r", "f":"\f", '"':'"', "'":"'", "\\":"\\"}[token]
+    return re.sub(r"\\(u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|[tbnrf\"'\\])", replace, value)
+
+
+with bz2.open(ROOT / ".cache/dbpedia-dumps-v1/labels_lang=en.ttl.bz2", "rt", encoding="utf-8") as stream:
+    for line in stream:
+        if not line.startswith("<"):
+            continue
+        subject = line[1:line.index(">")]
+        if subject not in wanted:
+            continue
+        match = pattern.fullmatch(line)
+        if not match:
+            raise ValueError("Unparsed selected English label")
+        labels[subject].add(literal(match[2]))
+invalid = {v for v in wanted if len(labels.get(v, ())) != 1}
+label_exclusions = {"artists": len(involved & invalid), "genres": len(all_genres & invalid), "features": len((wanted-involved-all_genres) & invalid)}
+vocabulary_path = ROOT / '.cache/musicbrainz-core-genre-vocabulary-v1/genres.txt'
+vocabulary_raw = vocabulary_path.read_bytes()
+vocabulary_receipt = json.loads(vocabulary_path.with_name('receipt.json').read_bytes())
+assert vocabulary_receipt['outcome']=='captured' and hashlib.sha256(vocabulary_raw).hexdigest()==vocabulary_receipt['sha256']
+normalize = lambda value: unicodedata.normalize('NFKC',value).casefold().strip()
+vocabulary = {normalize(word):word for word in vocabulary_raw.decode().splitlines()}
+genre_vocabulary = {}
+for genre in all_genres-invalid:
+    term = normalize(next(iter(labels[genre])))
+    variants = [term] + ([term[:-6].strip()] if term.endswith(' music') else []) + ([term[:-8].strip()] if term.endswith(' (music)') else [])
+    genre_vocabulary[genre] = next((vocabulary[v] for v in variants if v in vocabulary),None)
+accepted_genres = {g for g in all_genres-invalid if g in positive_genres or genre_vocabulary[g] is not None}
+quarantined_genres = all_genres-invalid-accepted_genres
+quarantined_claims = sum(len(gs & quarantined_genres) for gs in memberships.values())
+memberships = {a: gs & accepted_genres for a,gs in memberships.items() if a not in invalid and gs & accepted_genres}
+relations = sorted({(a,p,b) for a,p,b in relations if a not in invalid and b not in invalid})
+involved = set(memberships) | {v for a,_,b in relations for v in (a,b)}
+all_genres = set().union(*memberships.values()) if memberships else set()
+for a in involved:
+    features[a] = {p: vs-invalid for p,vs in features[a].items() if vs-invalid}
+wanted = involved | all_genres | {v for a in involved for vs in features[a].values() for v in vs}
+name = lambda v: next(iter(labels[v]))
+artist_rows = [{"uri":a, "name":name(a), "genres":sorted(memberships.get(a, ())), "features":{p:sorted(vs) for p,vs in sorted(features[a].items())}, "identity_evidence": [k for k, values in (("source_type",typed_artists),("source_person_and_instrument",instrument_people)) if a in values], "source_types":[k.removeprefix(DBO) for k,v in sorted(typed.items()) if a in v]} for a in sorted(involved)]
+source = {
+    "revision":"dbpedia-music-v6",
+    "source_version":"2022.12.01",
+    "artists":artist_rows,
+    "genres":[{"uri":g,"name":name(g),"music_genre_type_observed":g in typed[DBO+"MusicGenre"],"source_types":[k.removeprefix(DBO) for k,v in sorted(typed.items()) if g in v],"genre_evidence":"dbpedia_genre_type" if g in positive_genres else "musicbrainz_core_vocabulary","vocabulary_term":genre_vocabulary[g]} for g in sorted(all_genres)],
+    "relations":[list(row) for row in relations],
+    "feature_labels":{v:name(v) for v in sorted(wanted-involved-all_genres)},
+    "source":{"records":[{k:r[k] for k in ("url","sha256","bytes","license","metadata_sha256")} for r in report_in["source_records"]],"publisher":"DBpedia","origin":"English Wikipedia infobox extraction","source_license":"https://creativecommons.org/licenses/by/3.0/","derivative_license":"https://creativecommons.org/licenses/by-sa/3.0/","type_audit_sha256":type_report['sha256'],"genre_vocabulary":{"url":vocabulary_receipt['url'],"sha256":vocabulary_receipt['sha256'],"names":vocabulary_receipt['genre_names'],"license":"CC0 core genre-definition names; artist genre associations not requested","normalization":"NFKC casefold exact names,optionally removing a terminal music or (music) descriptor. This validates a source genre label,not an artist identity join."},"projection_changes":"Require positive MusicalArtist/Band types or Person plus source instrument evidence. Neither relationship roles nor a genre claim alone confer artist identity. Exclude explicit incompatible genre target classes. Require an explicit Genre/MusicGenre type or controlled MusicBrainz core genre-term validation. Quarantine unsupported labels. No name-based artist identity joins. Genre membership remains a Wikipedia-derived source statement,not a perceptual judgment."}
+}
+raw = json.dumps(source, ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",",":")).encode()
+compressed = gzip.compress(raw, mtime=0)
+(OUT / "snapshot.json.gz").write_bytes(compressed)
+genre_count = Counter(g for gs in memberships.values() for g in gs)
+connected = {v for a,_,b in relations for v in (a,b)}
+result = {"status":"projected","source_version":"2022.12.01","typed_artists":len(typed_artists),"music_role_candidate_artists":len(artists),"artists":len(artist_rows),"genre_artists":len(memberships),"connected_artists":len(connected),"genres":len(all_genres),"genres_with_explicit_music_genre_type":sum(g in typed[DBO+'MusicGenre'] for g in all_genres),"genre_claims":sum(map(len,memberships.values())),"relationship_statements":len(relations),"excluded_known_nongenre_claims":excluded_known_nongenres,"quarantined_unknown_genre_labels":len(quarantined_genres),"quarantined_unknown_genre_claims":quarantined_claims,"excluded_person_feature_targets":excluded_person_labels,"excluded_missing_or_conflicting_labels":label_exclusions,"snapshot_sha256":hashlib.sha256(compressed).hexdigest(),"snapshot_bytes":len(compressed),"expanded_bytes":len(raw),"seconds":round(time.monotonic()-start,3),"top_genres":[{"uri":g,"name":name(g),"artists":n} for g,n in genre_count.most_common(30)],"source_gaps":"Classical composers andsomeIndian musicians lack mapped genre/instrument assertions inthissource. Do not invent memberships or claim complete cross-genre coverage.","publication":"Candidate only"}
+(OUT/'quarantined-genre-labels.json').write_text(json.dumps([{'uri':g,'name':name(g),'source_types':[k.removeprefix(DBO) for k,v in sorted(typed.items()) if g in v]} for g in sorted(quarantined_genres)],ensure_ascii=False,indent=2)+'\n')
+(OUT / "report.json").write_text(json.dumps(result, indent=2)+"\n")
+con.close()
+print(json.dumps(result, indent=2), flush=True)
