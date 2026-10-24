@@ -100,7 +100,7 @@ try {
   await screenshot('desktop-genre-artists.png');
   await evaluate("[...document.querySelectorAll('.view-links a')].find(a=>a.textContent==='List').click()");
   await wait("document.querySelector('.artist-list')!==null");
-  assert.equal(await evaluate("document.querySelectorAll('.artist-list li').length"),jazz.artists.length);
+  assert.equal(await evaluate("document.querySelector('.artist-list').children.length"),jazz.artists.length);
   await command('Page.reload');await wait("document.querySelector('.artist-list')!==null");
   await evaluate("history.back()");await wait("document.querySelector('.genre-artist-map')!==null");
   const selected=jazz.artists.find(([id])=>data.artists.find(a=>a.id===id).recordings.length);assert.ok(selected);
@@ -114,13 +114,17 @@ try {
     await evaluate(`document.querySelector('#search').value=${JSON.stringify(name)};document.querySelector('#search-form').requestSubmit()`);
     await wait(`document.querySelector('#main[aria-busy=false] h1')?.textContent===${JSON.stringify('Search: '+name)}`);
     const artist=data.artists.find(a=>a.name===name);assert.ok(artist);
-    await evaluate(`document.querySelector('main a[href="#artist/${artist.id}"]').focus()`);await key('Enter');
+    await evaluate(`document.querySelector('main a[href$="#artist/${artist.id}"]').focus()`);await key('Enter');
     await wait(`document.querySelector('#main[aria-busy=false] h1')?.textContent===${JSON.stringify(name)}`);
+    assert.ok(await evaluate("document.querySelector('main h1').textContent.trim().length>0"));
+    await command('Page.navigate',{url:url.split('#')[0]+'#artist/'+artist.id});await wait(`document.querySelector('#main[aria-busy=false] h1')?.textContent===${JSON.stringify(name)}`);
     assert.ok(await evaluate("!document.querySelector('main').textContent.includes('Exact native credits.')"));
     if(name==='Morrissey')assert.ok(await evaluate("document.querySelector('main').textContent.includes('No observed genres.')"));
     const titles=await evaluate("[...document.querySelectorAll('.credits>li')].map(li=>li.querySelector('a').textContent)");
     assert.ok(titles.length);assert.equal(titles.length,new Set(titles).size);
   }
+  await navigate('#q/Morrissey');await wait("document.querySelector('#main[aria-busy=false] h1')?.textContent==='Search: Morrissey'");
+  await navigate('#artist/'+data.artists.find(a=>a.name==='Morrissey').id);await wait("document.querySelector('#main[aria-busy=false] h1')?.textContent==='Morrissey'");
   await command('Page.reload');await wait("document.querySelector('#main[aria-busy=false] h1')?.textContent==='Morrissey'");
   await evaluate("history.back()");await wait("document.querySelector('#main[aria-busy=false] h1')?.textContent==='Search: Morrissey'");
   await evaluate("history.forward()");await wait("document.querySelector('#main[aria-busy=false] h1')?.textContent==='Morrissey'");

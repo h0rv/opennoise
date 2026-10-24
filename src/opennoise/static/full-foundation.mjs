@@ -6,11 +6,12 @@ const MBID=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
 const el=(tag,text)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
 const link=(name,href)=>{const node=el('a',name);node.href=globalThis.OPENNOISE_LOCAL_FILES?.[href]?URL.createObjectURL(new Blob([JSON.stringify(globalThis.OPENNOISE_LOCAL_FILES[href],null,2)],{type:'application/json'})):href;return node;};
 const external=(name,href)=>{const node=link(name,href);node.target='_blank';node.rel='noopener noreferrer';return node;};
+const networkURL=id=>`artist-network/${globalThis.OPENNOISE_LOCAL_FILES?'OpenNoiseArtists.html':'index.html'}${id?'#artist/'+id:''}`;
 const route=(kind,id='')=>`#${kind}/${encodeURIComponent(id)}`;
 const name=row=>Array.isArray(row)?row[1]:row.name;
 const identity=row=>Array.isArray(row)?row[0]:(row.artist_mbid??row.id);
 const genreID=row=>row.genre_id??row.id;
-let profile,genres,searchIndex,renderSequence=0,demoCleanup;
+let profile,genres,searchIndex,networkIndex,renderSequence=0,demoCleanup;
 const demoModule=()=>Promise.resolve(globalThis.OPENNOISE_PIPELINE_DEMO??import('./pipeline-demo.mjs'));
 
 const cache=new Map();
@@ -31,7 +32,7 @@ function pagination(kind,page,total,size=500,query=''){
 function navigation(){
   const nav=document.querySelector('#music-navigation');nav.replaceChildren();
   const kind=location.hash.slice(1).split('/')[0];
-  for(const [text,href,active] of [['Genres','#',!kind||kind==='genres'||kind==='genre-map'||kind==='genre'],['Artists','#map/source',kind==='map'||kind==='artists'||kind==='artist']]){
+  for(const [text,href,active] of [['Genres','#',!kind||kind==='genres'||kind==='genre-map'||kind==='genre'],['Artists',profile.pipeline_demo?networkURL(''):'#map/source',kind==='map'||kind==='artists'||kind==='artist']]){
     const item=link(text,href);if(active)item.setAttribute('aria-current','page');nav.append(item);
   }
 }
@@ -94,11 +95,13 @@ function splitQuery(value){const separator=value.lastIndexOf('|');return separat
 const compareNames=(left,right)=>{const a=[...left],b=[...right];for(let i=0;i<Math.min(a.length,b.length);i++){const difference=a[i].codePointAt(0)-b[i].codePointAt(0);if(difference)return difference;}return a.length-b.length;};
 async function searchResults(value,sequence){
   const [query,page]=splitQuery(value);search.value=query;const normalized=normalizeName(query);
-  if(MBID.test(normalized)){await artistDetail(normalized,sequence);return;}
+  if(profile.pipeline_demo)networkIndex??=await load('artist-network/catalog.json',true);if(sequence!==renderSequence)return;
+  if(MBID.test(normalized)){if(networkIndex?.artists.some(row=>row.id===normalized)){location.href=networkURL(normalized);return;}await artistDetail(normalized,sequence);return;}
   main.append(el('h1',`Search: ${query}`));
   const matchingGenres=genres.filter(row=>normalizeName(row.name).includes(normalized)||genreID(row).toLowerCase()===normalized);
   if(matchingGenres.length){main.append(el('h2','Genres'));genreList(matchingGenres);}
   if(!normalized){paragraph('Enter an artist name prefix, a genre, or an exact MusicBrainz artist ID. Single-character names are searchable.');return;}
+  if(networkIndex){const terms=normalized.split(/\s+/).filter(Boolean),rows=networkIndex.artists.filter(row=>terms.every(term=>normalizeName(row.name).includes(term))).sort((a,b)=>normalizeName(a.name).localeCompare(normalizeName(b.name))||a.id.localeCompare(b.id));const size=60;main.append(el('h2','Artists'));paragraph(`${rows.length.toLocaleString()} matches.`,'scope');if(!Number.isInteger(page)||page<0||page>=Math.max(1,Math.ceil(rows.length/size))){missing('Search page not found');return;}pagination('q',page,rows.length,size,query);const list=el('ul');list.className='artist-list';for(const row of rows.slice(page*size,(page+1)*size)){const item=el('li');item.append(link(row.name,networkURL(row.id)));list.append(item);}if(!rows.length)list.append(el('li','No matching artists.'));main.append(list);pagination('q',page,rows.length,size,query);return;}
   searchIndex??=await load('search/index.json');if(sequence!==renderSequence)return;
   const pages=searchIndex.pages.map((row,index)=>({path:`browse/${String(index).padStart(6,'0')}.json`,first:row[0],last:row[1],count:row[2],start:0,end:row[2]}));
   const searchRows=async metadata=>(await load(metadata.path)).map(row=>[normalizeName(row[1]),row[0],row[1]]);

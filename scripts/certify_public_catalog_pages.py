@@ -75,6 +75,16 @@ def main() -> int:
                 check=True,
                 timeout=120,
             )
+            subprocess.run(  # noqa: S603 -- Artist-only browser gate on the same loopback export.
+                [
+                    shutil.which("node") or "/usr/bin/node",
+                    "scripts/capture_artist_network.mjs",
+                    url,
+                    str(work / "artist-browser"),
+                ],
+                check=True,
+                timeout=120,
+            )
         finally:
             server.terminate()
             try:
@@ -83,7 +93,7 @@ def main() -> int:
                 server.kill()
                 server.wait()
         _atomic_install(output / "site", root / "dist")
-    print(f"Certified public catalog release for {commit}: 433 catalog artists, 1031 recordings")  # noqa: T201
+    print(f"Certified public catalog and artist-network release for {commit}")  # noqa: T201
     return 0
 
 
