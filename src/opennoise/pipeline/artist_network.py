@@ -18,12 +18,13 @@ from scipy import sparse
 if TYPE_CHECKING:
     from pathlib import Path
 
+from opennoise.pipeline import artist_identity_notes
 from opennoise.pipeline.catalog_demo import digest, read, write
 
 CONTRACT = "config/releases/native-artist-network-inputs-v1.json"
-CONTRACT_SHA256 = "6907504c59b892f42ac15edb6149e92516bbe4b2dba2826e739c8edc7d3d4b46"
+CONTRACT_SHA256 = "7fd0abd880eaf008d315aa4f264bdd9b9b36ca5fa3a05209421ad9bbb37e7b44"
 PROMOTION = "config/releases/native-artist-network-promotion-v1.json"
-PROMOTION_SHA256 = "980bfe2b1d1df96cdd714e624df5c6ad9d604d2e677fd591cf5977854879db33"
+PROMOTION_SHA256 = "5611eae3665f26bbb9dc2ca919f3070c7c1c008d71ea3947019825b24d177dbf"
 SNAPSHOT = "data/examples/native-artist-network-sparse-v2/snapshot.json.gz"
 ID = re.compile(r"^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$")
 MAX_SOURCE_BYTES = 40_000_000
@@ -174,7 +175,11 @@ def build(root: Path, site: Path) -> dict[str, Any]:
     """Write native relationships and replay shared-context suggestions from the full graph."""
     contract = inputs(root)
     data = read_snapshot(root, contract)
-    artists = data["artists"]
+    notes = artist_identity_notes.load(root, contract["identity_notes"])
+    artists = [
+        {**row, "comment": notes[row["id"]]} if row["id"] in notes else row
+        for row in data["artists"]
+    ]
     ids = [row["id"] for row in artists]
     index = {a: i for i, a in enumerate(ids)}
     neighbors: dict[str, dict[str, float]] = defaultdict(dict)
@@ -218,6 +223,7 @@ def build(root: Path, site: Path) -> dict[str, Any]:
             "artists": artists,
             "counts": contract["counts"],
             "method": "common_context",
+            "identity_notes": contract["identity_notes"]["counts"],
         },
     )
     for name in ("index.html", "app.mjs", "style.css"):
@@ -231,6 +237,7 @@ def build(root: Path, site: Path) -> dict[str, Any]:
         "revision": "native-artist-network-v1",
         "input_contract_sha256": CONTRACT_SHA256,
         "source": data["source"],
+        "identity_notes": contract["identity_notes"],
         "rights": "ListenBrainz aggregate listening sessions and MusicBrainz core identities, CC0",
         "audio_lyrics_and_user_histories": False,
         "genre_labels_inferred": False,

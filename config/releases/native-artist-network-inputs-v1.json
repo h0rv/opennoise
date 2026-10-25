@@ -12,6 +12,19 @@
   "expanded_bytes": 33930057,
   "genre_memberships_inferred": false,
   "genres_with_suggestions": 148,
+  "identity_notes": {
+    "bytes": 304499,
+    "counts": {
+      "ambiguous_artists": 62,
+      "ambiguous_artists_with_notes": 53,
+      "ambiguous_groups_with_distinct_notes": 22,
+      "ambiguous_name_groups": 31,
+      "artists": 11894,
+      "artists_with_notes": 4340
+    },
+    "path": "data/examples/native-artist-identity-notes-v1/notes.json",
+    "sha256": "4e1e1f91d6c87d50ab7992e8fbdec60a77c262ff02330e887adb3876d73eae39"
+  },
   "revision": "native-artist-network-inputs-v1",
   "rights": "CC0-1.0",
   "snapshot_bytes": 9613760,

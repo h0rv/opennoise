@@ -10,10 +10,20 @@
     "suggested_artists": 10004
   },
   "data_files": 258,
-  "data_inventory_sha256": "3a6c2b3d3021928e5513bfbe2606aee94e7cfbc1bd22a2c427086720bf15e289",
+  "data_inventory_sha256": "5bb64e781cac90bd8e347be9493efda878de593baa178c708f87198accce6a6e",
   "genre_memberships_inferred": false,
+  "identity_notes_counts": {
+    "ambiguous_artists": 62,
+    "ambiguous_artists_with_notes": 53,
+    "ambiguous_groups_with_distinct_notes": 22,
+    "ambiguous_name_groups": 31,
+    "artists": 11894,
+    "artists_with_notes": 4340
+  },
+  "identity_notes_scope": "Literal MusicBrainz core disambiguation comments from the two closed public packets; no cross-catalog identity join or ranking change",
+  "identity_notes_sha256": "4e1e1f91d6c87d50ab7992e8fbdec60a77c262ff02330e887adb3876d73eae39",
   "independent_listener_quality_claim": false,
-  "input_contract_sha256": "6907504c59b892f42ac15edb6149e92516bbe4b2dba2826e739c8edc7d3d4b46",
+  "input_contract_sha256": "7fd0abd880eaf008d315aa4f264bdd9b9b36ca5fa3a05209421ad9bbb37e7b44",
   "lyrics_permitted": false,
   "per_user_history_permitted": false,
   "production_branch": "main",

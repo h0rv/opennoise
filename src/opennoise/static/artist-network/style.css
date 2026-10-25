@@ -3,3 +3,5 @@
 .map-controls{display:flex;gap:.5rem;margin:.5rem 0}.map-controls button{min-width:44px}.map-shell a rect{fill:transparent;pointer-events:all}
 
 .artist-actions{display:flex;flex-wrap:wrap;gap:1rem;margin:.3rem 0}.artist-actions a{display:inline-flex;align-items:center;min-height:44px}
+
+.identity-note{display:block;color:#555;overflow-wrap:anywhere;margin:-.2rem 0 .6rem}.artist-note{color:#555;max-width:70ch;overflow-wrap:anywhere;margin:.2rem 0 .6rem}

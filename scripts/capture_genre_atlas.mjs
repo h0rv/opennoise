@@ -18,7 +18,7 @@ const browser = spawn(process.env.CHROMIUM_PATH || '/usr/bin/chromium', [
   '--disable-background-networking', '--disable-default-apps', '--no-first-run',
   '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank',
 ]);
-let socket, evaluate;
+let socket, evaluate, screenshot;
 const errors = [];
 const requests = [];
 let screenshotCount = 0;
@@ -63,7 +63,7 @@ try {
     }
     throw new Error(`Browser condition failed: ${expression}`);
   };
-  const screenshot = async name => {
+  screenshot = async name => {
     const result = await command('Page.captureScreenshot', { format: 'png' });
     await writeFile(join(output, name), Buffer.from(result.data, 'base64'));
     screenshotCount++;
@@ -139,11 +139,20 @@ try {
   const nativeArtists = JSON.parse(await readFile(join(source, 'artist-network/catalog.json'))).artists;
   const miles = name(artists, 'Miles Davis'), nativeMiles = name(nativeArtists, 'Miles Davis');
   const wikiHash = `#artist/${miles.id}/list/0`;
-  const rootVisit = async hash => { const target = new URL(rootPage); target.hash = hash; await command('Page.navigate', {url: target.href}); await wait(`location.href===${JSON.stringify(target.href)}&&${ready}`); };
+  const rootVisit = async hash => {
+    const target = new URL(rootPage); target.hash = hash;
+    const token = `atlas-navigation-${Math.random()}`; await evaluate(`window.navigationProbe=${JSON.stringify(token)}`);
+    const navigation = await command('Page.navigate', {url: target.href});
+    if (!navigation.loaderId) await evaluate('new Promise(resolve=>setTimeout(resolve,0))');
+    await wait(`location.href===${JSON.stringify(target.href)}&&${ready}${navigation.loaderId ? `&&window.navigationProbe!==${JSON.stringify(token)}` : ''}`);
+  };
   const follow = async selector => {
     const target = await evaluate(`(()=>{const a=document.querySelector(${JSON.stringify(selector)});return a?new URL(a.getAttribute('href'),location.href).href:null})()`); assert.ok(target, selector);
+    const crossing = new URL(target).pathname !== await evaluate('location.pathname');
+    const token = `link-navigation-${Math.random()}`; await evaluate(`window.navigationProbe=${JSON.stringify(token)}`);
     await evaluate(`document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}))`);
-    await wait(`location.href===${JSON.stringify(target)}&&${ready}`); return target;
+    if (!crossing) await evaluate('new Promise(resolve=>setTimeout(resolve,0))');
+    await wait(`location.href===${JSON.stringify(target)}&&${ready}${crossing ? `&&window.navigationProbe!==${JSON.stringify(token)}` : ''}`); return target;
   };
   const actionTarget = async text => {
     await wait(`!![...document.querySelectorAll('main .artist-actions a')].find(a=>a.textContent===${JSON.stringify(text)})`);
@@ -203,6 +212,63 @@ try {
   const unicodeMatches=await evaluate("[...document.querySelectorAll('main .names a')].map(a=>a.getAttribute('href'))");
   const expectedUnicode=artists.filter(row=>row.name.includes(nonLatin.name)).map(row=>`#artist/${row.id}`);assert.deepEqual(unicodeMatches,expectedUnicode);
   await evaluate('history.back()');await title(nonLatin.name);assert.equal(await evaluate('location.hash'),nativeNonLatin.hash);
+  const noted = nativeArtists.filter(row => typeof row.comment === 'string' && row.comment);
+  assert.equal(noted.length,4340);
+  const noteCheck = async row => {
+    await wait(`${ready}&&location.pathname===${JSON.stringify(nativePage.pathname)}&&document.querySelector('main .artist-note')?.textContent===${JSON.stringify(row.comment)}`);
+    await title(row.name);
+    assert.equal(await evaluate("document.querySelector('main .artist-note')?.textContent"),row.comment);
+    assert.ok(await evaluate(`!!document.querySelector('main a[href="https://musicbrainz.org/artist/${row.id}"]')`));
+    assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);
+  };
+  for (const query of ['Alice Cooper','Felt']) {
+    const candidates=nativeArtists.filter(row=>row.name===query);assert.equal(candidates.length,2);assert.equal(new Set(candidates.map(row=>row.comment)).size,2);
+    for (const row of candidates) {
+      await rootVisit(`#q/${encodeURIComponent(query)}/0`);await title(query);
+      const selector=`main .names a[href$="#artist/${row.id}"]`;
+      const caption=await evaluate(`(()=>{const a=document.querySelector(${JSON.stringify(selector)}),n=a?.closest('li').querySelector('.identity-note');return{note:n?.textContent,name:a?.textContent,described:!!n&&a.getAttribute('aria-describedby')===n.id}})()`);
+      assert.deepEqual(caption,{note:row.comment,name:row.name,described:true});
+      assert.equal(await evaluate(`[...document.querySelectorAll('main .names a[href^="#artist/"]')].some(a=>a.closest('li').querySelector('.identity-note'))`),false);
+      await follow(selector);await noteCheck(row);await actionTarget('Search atlas');
+      await command('Page.reload');await noteCheck(row);
+      await evaluate('history.back()');await wait(`${ready}&&location.pathname===${JSON.stringify(rootPage.pathname)}&&document.querySelector('[data-view=genres]')`);await title(query);assert.equal(await evaluate('location.pathname'),rootPage.pathname);
+      await evaluate('history.forward()');await noteCheck(row);
+    }
+  }
+  const alice=nativeArtists.find(row=>row.name==='Alice Cooper'&&row.comment.includes('the band'));
+  const felt=nativeArtists.find(row=>row.name==='Felt'&&row.comment.includes('hip hop'));
+  const noNote=nativeArtists.find(row=>row.name==='John Williams'&&!row.comment);assert.ok(noNote);
+  const longestNote=noted.reduce((a,b)=>a.comment.length>b.comment.length?a:b);
+  for (const width of [390,320]) {
+    await command('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:true});
+    for(const row of [alice,felt,longestNote]) {
+      assert.ok(row);const target=new URL(nativePage);target.hash=`#artist/${row.id}/list/0`;
+      await command('Page.navigate',{url:target.href});await noteCheck(row);await actionTarget('Search atlas');
+      assert.ok(await evaluate("parseFloat(getComputedStyle(document.querySelector('.artist-note')).fontSize)")>=16);
+    }
+    await screenshot(`identity-notes-${width}.png`);
+  }
+  const missingTarget=new URL(nativePage);missingTarget.hash=`#artist/${noNote.id}/list/0`;
+  await command('Page.navigate',{url:missingTarget.href});await title(noNote.name);assert.equal(await evaluate("document.querySelector('main .artist-note')"),null);
+  await rootVisit('#q/John%20Williams/0');await title('John Williams');
+  const rootTargets=await evaluate("[...document.querySelectorAll('main .names a')].map(a=>{const r=a.getBoundingClientRect();return{width:r.width,height:r.height}})");
+  assert.ok(rootTargets.length>0);assert.ok(rootTargets.every(r=>r.width>=43.99&&r.height>=43.99));
+  const wikiAlice=artists.find(row=>row.name==='Alice Cooper (band)');assert.ok(wikiAlice);
+  await rootVisit(`#artist/${wikiAlice.id}/list/0`);await title(wikiAlice.name);
+  assert.equal(await evaluate("document.querySelector('main .artist-note')"),null);
+  let literalSourceNote = 'source notes checked in complete offline data';
+  if(new URL(url).protocol!=='file:') {
+    const target=new URL(nativePage);target.hash=`#artist/${alice.id}/list/0`;
+    await command('Page.navigate',{url:target.href});await noteCheck(alice);
+    const literal='<img src="local-note-image" onerror="window.noteRan=true"> µ';
+    const script=await command('Page.addScriptToEvaluateOnNewDocument',{source:`window.noteFixtureInstalled=true;const noteFetch=window.fetch;window.fetch=async(...args)=>{const response=await noteFetch(...args);if(new URL(args[0],location.href).pathname.endsWith('/artist-network/catalog.json')){const data=await response.json();data.artists.find(row=>row.id===${JSON.stringify(alice.id)}).comment=${JSON.stringify(literal)};return new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}});}return response;};`});
+    try {
+      await command('Page.reload');await wait("window.noteFixtureInstalled===true");await title(alice.name);
+      assert.equal(await evaluate("document.querySelector('main .artist-note').textContent"),literal);
+      assert.equal(await evaluate("document.querySelectorAll('main .artist-note img').length"),0);
+      assert.equal(await evaluate('!!window.noteRan'),false);literalSourceNote=true;
+    } finally {await command('Page.removeScriptToEvaluateOnNewDocument',{identifier:script.identifier});}
+  }
   // A simulated local optional-catalog failure must leave the atlas entity usable.
   let optionalFailure = 'offline bundle does not fetch optional catalogs';
   if (new URL(url).protocol !== 'file:') {
@@ -224,5 +290,5 @@ try {
   await rootVisit('#');await title('Genres');
   const external=requests.filter(r=>!['data:','blob:'].includes(new URL(r.url).protocol)&&new URL(r.url).origin!==new URL(url).origin);assert.deepEqual(external,[]);assert.deepEqual(requests.filter(r=>r.type==='Media'),[]);assert.deepEqual(errors,[]);
   if(new URL(url).protocol==='file:')assert.equal(requests.filter(r=>/^https?:/.test(r.url)).length,0);
-  const report={status:'passed',url,counts:receipt.counts,all_genres_reachable:true,root_map:rootMap,complete_paginated_directory:true,complete_genre_members:true,isolated_artist_metadata_suggestions:true,metadata_source_disclosure:true,keyboard_search:true,nonLatin_and_long_name_search:true,landing_search_both_catalogs:true,exact_and_qualified_search_priority:true,desktop_maps_nonoverlapping:true,mobile_default_list:true,mobile_touch:true,mobile_map_readable_44px:true,zoom:true,history_reload:true,empty_state:true,external_requests:0,runtime_errors:errors,screenshots:screenshotCount,publication:false,cross_catalog_name_search_navigation:true,automatic_identity_joins:0,scoped_search_membership:scopedMembership,ambiguous_native_candidates_preserved:true,optional_native_failure:optionalFailure};await writeFile(join(output,'browser-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify(report)+'\n');
+  const report={status:'passed',url,counts:receipt.counts,all_genres_reachable:true,root_map:rootMap,complete_paginated_directory:true,complete_genre_members:true,isolated_artist_metadata_suggestions:true,metadata_source_disclosure:true,keyboard_search:true,nonLatin_and_long_name_search:true,landing_search_both_catalogs:true,exact_and_qualified_search_priority:true,desktop_maps_nonoverlapping:true,mobile_default_list:true,mobile_touch:true,mobile_map_readable_44px:true,zoom:true,history_reload:true,empty_state:true,external_requests:0,runtime_errors:errors,screenshots:screenshotCount,publication:false,cross_catalog_name_search_navigation:true,automatic_identity_joins:0,scoped_search_membership:scopedMembership,ambiguous_native_candidates_preserved:true,optional_native_failure:optionalFailure,source_note_artists:noted.length,ambiguous_native_notes:true,notes_do_not_transfer_to_atlas_IDs:true,missing_note_abstention:true,root_list_targets44px:true,literal_note_text:literalSourceNote};await writeFile(join(output,'browser-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify(report)+'\n');
 }catch(error){try{await screenshot('failure.png');if(evaluate)await writeFile(join(output,'dom-state.json'),JSON.stringify(await evaluate("({hash:location.hash,main:document.querySelector('main')?.innerHTML.slice(0,3000)})"),null,2));}catch{}await writeFile(join(output,'browser-failure.json'),JSON.stringify({error:String(error),errors,requests},null,2)+'\n');throw error;}finally{socket?.close();browser.kill('SIGKILL');await new Promise(resolve_=>browser.exitCode!==null||browser.signalCode!==null?resolve_():browser.once('close',resolve_));await rm(profile,{recursive:true,force:true});}

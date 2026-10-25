@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from typing import Any, ClassVar, override
 
-from opennoise.pipeline import artist_network, wiki_artist_atlas
+from opennoise.pipeline import artist_identity_notes, artist_network, wiki_artist_atlas
 from opennoise.pipeline import catalog_demo as demo
 from opennoise.pipeline import public_catalog_candidate as candidate
 
@@ -78,6 +78,8 @@ class PublicCatalogCandidateTests(unittest.TestCase):
             artist_network.CONTRACT,
             artist_network.PROMOTION,
             artist_network.SNAPSHOT,
+            artist_identity_notes.NOTES,
+            *(path for path, _ in artist_identity_notes.PACKETS),
             wiki_artist_atlas.CONTRACT,
             *(
                 p.relative_to(ROOT).as_posix()
@@ -149,6 +151,12 @@ class PublicCatalogCandidateTests(unittest.TestCase):
                 self.assertIn(name, tracked)
                 self.assertIn(member["license"], {"CC0-1.0", "MIT"})
                 self.assertEqual(demo.digest(self.clean / name), member["sha256"])
+
+        note = demo.read(self.clean / artist_identity_notes.NOTES)
+        self.assertEqual(note["rights"], "CC0-1.0")
+        for name in [artist_identity_notes.NOTES, *(p for p, _ in artist_identity_notes.PACKETS)]:
+            self.assertIn(name, tracked)
+            self.assertEqual(demo.digest(self.clean / name), demo.digest(ROOT / name))
 
     def test_source_tampering_fails_before_creating_output(self) -> None:
         path = self.clean / next(iter(self.manifests[0]["input_contract"]["sources"][0]["files"]))

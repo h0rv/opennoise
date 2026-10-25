@@ -7,8 +7,9 @@ const link = (text, href) => { const n = make('a', text); n.href = href; return 
 const norm = value => normalizeName(value).normalize('NFKD').replace(/\p{M}/gu, '');
 const route = (kind, id = '', view = '', page = 0) => `#${kind}${id ? '/' + encodeURIComponent(id) : ''}${view ? '/' + view + '/' + page : ''}`;
 const offline = location.protocol === 'file:';
+const nativeKey = name => name.normalize('NFKC').toLocaleLowerCase().trim();
 const networkURL = id => `artist-network/${offline ? 'OpenNoiseArtists.html' : ''}${id ? '#artist/' + id : ''}`;
-let bundled, genres, byGenre, artists, byArtist, native, nativeNames, sequence = 0;
+let bundled, genres, byGenre, artists, byArtist, native, nativeNames, nativeAmbiguous, sequence = 0;
 const detailCache = new Map();
 
 async function load(path) {
@@ -21,7 +22,10 @@ async function artistIndex() {
   if (!artists) { artists = await load('atlas/artists.json'); byArtist = new Map(artists.map(a => [a.id, a])); }
   return artists;
 }
-async function nativeIndex() { if (!native) native = (await load('artist-network/catalog.json')).artists; return native; }
+async function nativeIndex() {
+  if (!native) { native = (await load('artist-network/catalog.json')).artists; const counts = new Map(); for (const row of native) { const key = nativeKey(row.name); counts.set(key, (counts.get(key) || 0) + 1); } nativeAmbiguous = new Set([...counts].filter(([, count]) => count > 1).map(([name]) => name)); }
+  return native;
+}
 async function connectionSearch(name) {
   try {
     if (!nativeNames) {
@@ -41,7 +45,11 @@ async function artistDetail(id) {
 }
 function names(rows, kind = 'artist') {
   const list = make('ul'); list.className = 'names';
-  for (const row of rows) { const item = make('li'); item.append(link(row.name, kind === 'connection' ? networkURL(row.id) : route(kind, row.id))); list.append(item); }
+  for (const row of rows) {
+    const item = make('li'), a = link(row.name, kind === 'connection' ? networkURL(row.id) : route(kind, row.id)); item.append(a);
+    if (kind === 'connection' && typeof row.comment === 'string' && row.comment && nativeAmbiguous.has(nativeKey(row.name))) { const note = make('span', row.comment); note.className = 'identity-note'; note.id = `native-note-${row.id}`; a.setAttribute('aria-describedby', note.id); item.className = 'has-note'; item.append(note); }
+    list.append(item);
+  }
   main.append(list);
 }
 function pages(page, count, href) {
