@@ -1,0 +1,68 @@
+{
+  "revision": "wiki-artist-cold-start-v1",
+  "source_sha256": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+  "protocol_sha256": "4d6a21bc0d603f8ad9ad79fcac1c5f12e792b4d8654fa21bf80144abc43b0a23",
+  "artists": 86253,
+  "holdout_artists": 17133,
+  "queries": 10088,
+  "training_artists": 37999,
+  "original_pairs": 96717,
+  "removed_incident_pairs": 34699,
+  "train_pairs": 62018,
+  "all_holdout_rows_and_columns_zero": true,
+  "positive_gallery_coverage": 1,
+  "ineligible_artists": 76165,
+  "ridge_max_relative_normal_residual": 9.965863375620242e-07,
+  "methods": {
+    "metadata": {
+      "Recall10": 0.07158511515083553,
+      "Recall50": 0.1342830613143887,
+      "MRR": 0.09934507565409963
+    },
+    "metadata_svd64": {
+      "Recall10": 0.0308399315907649,
+      "Recall50": 0.06215853511423607,
+      "MRR": 0.04506670182760725
+    },
+    "metadata_graph_ridge64": {
+      "Recall10": 0.02915199130038085,
+      "Recall50": 0.06307305422687537,
+      "MRR": 0.041865960078854805
+    },
+    "popularity": {
+      "Recall10": 0.002328458320181991,
+      "Recall50": 0.009341615475320171,
+      "MRR": 0.0058517198713177844
+    },
+    "uniform": {
+      "Recall10": 0.00011593934053703104,
+      "Recall50": 0.0005796967026851552
+    }
+  },
+  "paired_comparisons": {
+    "metadata_graph_ridge64-minus-metadata": {
+      "mean_difference": -0.04243312385045467,
+      "bootstrap95": [
+        -0.046387139456783494,
+        -0.0391513209647356
+      ]
+    },
+    "metadata_graph_ridge64-minus-popularity": {
+      "mean_difference": 0.026823532980198857,
+      "bootstrap95": [
+        0.02417019880906603,
+        0.029678210101004656
+      ]
+    },
+    "metadata-minus-popularity": {
+      "mean_difference": 0.06925665683065355,
+      "bootstrap95": [
+        0.06504743659877471,
+        0.07328590632614805
+      ]
+    }
+  },
+  "seconds": 326.461,
+  "scope": "Withheld source association recovery,not independent listener judgments,perceptual taxonomy,or EveryNoise parity. This is new-artist/unknown-graph generalization within known source metadata,not generalization to an unseen data source or fully unknown artist. No parameters changed after viewing this task's results. Accepted production527a87a remains untouched until gates pass.",
+  "production_unchanged": true
+}

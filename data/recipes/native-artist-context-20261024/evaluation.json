@@ -1,0 +1,57 @@
+{
+  "attempted_references_including_exclusions": 1649,
+  "capture_stopped": {
+    "network_denial": false,
+    "reason": "Missing native artist name in one response; excluded without re-request"
+  },
+  "claims": "Masked observed collaborative relationship recovery only; no genre labels, audio, lyrics, independent listeners, temporal holdout, or Every Noise parity",
+  "coverage_count_correction": "Count includes two locally rejected reference responses; the original runtime log omitted the final stopped request. Model predictions and metrics are unchanged.",
+  "embedding_dimensions": 64,
+  "embedding_minus_common_context_R10": {
+    "conditional_query_bootstrap_95": [
+      -0.16326032871671517,
+      -0.15114056812230728
+    ],
+    "mean": -0.15717186101416536
+  },
+  "evaluable_references": 1487,
+  "excluded_rows": {
+    "missing_reference": 149
+  },
+  "full_artists_degree_at_least5": 4292,
+  "heldout_undirected_pairs": 23835,
+  "largest_training_component": 10871,
+  "methods": {
+    "common_context": {
+      "MRR": 0.8736319290085965,
+      "Recall10": 0.2548778992432835,
+      "Recall50": 0.5665026615404587
+    },
+    "embedding": {
+      "MRR": 0.5247092251454764,
+      "Recall10": 0.09770603822911851,
+      "Recall50": 0.27639472939825055
+    },
+    "popularity": {
+      "MRR": 0.3459937588404691,
+      "Recall10": 0.051559631402322816,
+      "Recall50": 0.1316542120907842
+    },
+    "uniform": {
+      "Recall10": 0.0008480382257833217,
+      "Recall50": 0.004240191128916591
+    }
+  },
+  "named_native_artists": 11894,
+  "nonempty_references": 1564,
+  "observed_undirected_pairs": 119586,
+  "peak_RSS_KiB": 156224,
+  "protocol_sha256": "6166301a7944f9001d21539d192ec51f9dd4fde4256e6da0c7a393ab6dbbd3d4",
+  "queried_references": 1647,
+  "reproduction_source": "data/examples/native-artist-network-v1/snapshot.json.gz",
+  "revision": "artist-only-graph-v1",
+  "runtime_seconds": 16.109142100001918,
+  "source_receipt_sha256": "258a6df40f10f5728b761c3803f290277b2d7ab2c343fb9954cdf5d4c67747a4",
+  "train_isolated_artists": 1015,
+  "training_components": 1020
+}

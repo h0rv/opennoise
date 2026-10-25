@@ -12,9 +12,9 @@ def main() -> None:
     """Keep candidate construction bounded and separate from production deployment."""
     for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
         os.environ[name] = "1"
-    resource.setrlimit(resource.RLIMIT_AS, (1_000_000_000, 1_000_000_000))
-    resource.setrlimit(resource.RLIMIT_CPU, (120, 120))
-    signal.alarm(120)
+    resource.setrlimit(resource.RLIMIT_AS, (2_500_000_000, 2_500_000_000))
+    resource.setrlimit(resource.RLIMIT_CPU, (300, 300))
+    signal.alarm(300)
     from opennoise.pipeline import public_catalog_candidate as candidate  # noqa: PLC0415
 
     parser = argparse.ArgumentParser(description=__doc__)

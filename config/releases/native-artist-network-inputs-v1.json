@@ -1,0 +1,34 @@
+{
+  "audio_lyrics_or_user_histories": false,
+  "counts": {
+    "artists": 11894,
+    "at_least5_connections": 8457,
+    "connected_artists": 11811,
+    "nonempty_queried_references": 3064,
+    "observed_undirected_pairs": 200995,
+    "queried_references": 3147,
+    "suggested_artists": 10004
+  },
+  "expanded_bytes": 33930057,
+  "genre_memberships_inferred": false,
+  "genres_with_suggestions": 148,
+  "identity_notes": {
+    "bytes": 304499,
+    "counts": {
+      "ambiguous_artists": 62,
+      "ambiguous_artists_with_notes": 53,
+      "ambiguous_groups_with_distinct_notes": 22,
+      "ambiguous_name_groups": 31,
+      "artists": 11894,
+      "artists_with_notes": 4340
+    },
+    "path": "data/examples/native-artist-identity-notes-v1/notes.json",
+    "sha256": "4e1e1f91d6c87d50ab7992e8fbdec60a77c262ff02330e887adb3876d73eae39"
+  },
+  "revision": "native-artist-network-inputs-v1",
+  "rights": "CC0-1.0",
+  "snapshot_bytes": 9613760,
+  "snapshot_path": "data/examples/native-artist-network-sparse-v2/snapshot.json.gz",
+  "snapshot_sha256": "9fc2297387fc1ab53054c164462b5011868de444763ddd24a3a2eef87597424d",
+  "source_scope": "Public aggregate session relationships and native MusicBrainz core identities, CC0; no audio, lyrics, per-user records, NC claims or old restricted graph projected"
+}

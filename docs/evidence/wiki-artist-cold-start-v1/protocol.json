@@ -1,0 +1,16 @@
+{
+  "revision":"wiki-artist-cold-start-v1",
+  "source_sha256":"814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+  "objective":"Test a metadata fallback for artists without known relationships. Predict withheld source artist associations, with entire query artists removed from graph training. No recordings,lyrics or user histories.",
+  "artist_split":"sha256(wiki-cold-artist-v1:+nativeURI) modulo5; all fold0artists lose every incident edge in both directions before degree,graphSVD or supervised fitting. All source identities and source metadata are known transductively.",
+  "metadata":"Reuse independently replayed V6 canonical-genre,instrument,recordLabel TFIDF/L2 blocks from model-v5; no feature or weight changes. Reuse its64D unsupervised metadataSVD baseline.",
+  "new_model":"64D SVD of train-only binary neighbor profiles, rowL2normalized. Ridge regression from the fixed sparse metadata to normalized graph embeddings, alpha1, trained only on non-heldout artists with positive train degree and nonempty metadata. Solve normal equations using preconditionedCG, rtol1e-6,max500; reject nonconvergence. Predict heldout query embedding from metadata. Candidate graph vectors use observed train embeddings when nonzero,otherwise metadata predictions. Normalize predicted vectors before cosine.",
+  "seed":20261024,
+  "queries":"Every fold0artist with one or more full-source relationships and nonempty metadata. Record all ineligible identities and causes; no degree>=5 restriction.",
+  "gallery":"All86253source identities excluding self,including artists without metadata or trained relationships. Missing vectors never remove positive instances from denominators.",
+  "methods":["Exact fixed sparse metadata cosine","Fixed64D metadataSVD cosine","Ridge metadata-to-train-graph64D embedding cosine","Train-only degree popularity","Exact uniform expectation"],
+  "ranking":"Round scores8decimals,thenlexicalURI; recommend positive scores>1e-8 only, at most50. ReportMacroRecall10/50,MRR and numberofqueries returningpositivecandidates. Source neighbors are unknown for heldoutqueries and are not excluded as known relationships.",
+  "uncertainty":"Paired query bootstrap1000 draws,seed20261024. Report95percentileintervals for Recall10 differences and complete degree/sourcegenre strata. These are descriptive cohort intervals,not listener-preference confidence.",
+  "acceptance":"At least1000eligiblequeries and100percentpositivegallerycoverage. A new learned fallback must improve on both exact sparse metadata anddegree with a positive lower paired Recall10 difference interval; otherwise retain the simpler exact method only if it clearly beatsdegree. No new product inference without independent leakage/metric/source replay and clear metadata-inference labeling.",
+  "limits":"Withheld source association recovery,not independent listener judgments,perceptual taxonomy,or EveryNoise parity. This is new-artist/unknown-graph generalization within known source metadata,not generalization to an unseen data source or fully unknown artist. No parameters changed after viewing this task's results. Accepted production527a87a remains untouched until gates pass."
+}

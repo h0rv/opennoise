@@ -1,0 +1,27 @@
+{
+  "algorithm": "session_based_days_1800_session_300_contribution_3_threshold_10_limit_100_filter_True_skip_30",
+  "attempts": 500,
+  "baseline_snapshot_sha256": "4960d585a091c8c253cc9ec90ba3a67b35c87b5693a3ecc148005ca1d30e1105",
+  "captures": 500,
+  "captures_bytes": 2292206,
+  "captures_path": "data/examples/native-artist-neighborhoods-20261024/captures.jsonl.gz",
+  "captures_sha256": "163199d027975191cf40c66bd50d2c5fd6c651f003dfa5ef2c8591f0cfa896cd",
+  "excluded_prior_attempts": [
+    "062ab94e-b7a5-47a9-b3f4-cc1750c3f859",
+    "c302345e-54ae-4b4c-8708-1b949a7c4d49"
+  ],
+  "expanded_bytes": 11327911,
+  "projection": "Unattributed/invalid rows quarantined. Candidate keeps existing artist IDs only. Existing names preserved except QID placeholders with one unanimous literal source name for the same MBID. No fuzzy joins.",
+  "retries": 0,
+  "revision": "public-cc0-neighborhood-completion-captures-v1",
+  "rights": "CC0-1.0",
+  "rights_basis": [
+    "https://listenbrainz.org/data/",
+    "https://musicbrainz.org/doc/About/Data_License"
+  ],
+  "scope": "Only public aggregate native artist metadata and scores; no per-user histories, audio, lyrics or noncommercial annotations",
+  "selection": "First500SHA256-ordered previously unattempted IDs from the existing11894artist public catalog; no new-neighbor queue",
+  "selection_tag": "OpenNoise-neighborhood-completion-v1:",
+  "source": "ListenBrainz public similar-artists aggregate endpoint",
+  "upstream_deployment_algorithm_revision_unverified": true
+}

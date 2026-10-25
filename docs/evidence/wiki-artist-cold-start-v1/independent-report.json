@@ -1,0 +1,189 @@
+{
+  "status": "independent_replay_passed",
+  "artists": 86253,
+  "queries": 10088,
+  "holdout_artists": 17133,
+  "training_artists": 37999,
+  "removed_incident_pairs": 34699,
+  "training_pairs": 62018,
+  "holdout_rows_and_columns_zero": true,
+  "whole_artist_split_reconstructed": true,
+  "graph_SVD_refit": {
+    "independent_refit": true,
+    "supported_rows": 32905,
+    "raw_graph_projection_norm_at_most_1e_8": 8110,
+    "orthogonal_alignment_max_error_supported_rows": 1.582067810090848e-15,
+    "orthogonal_alignment_rms_supported_rows": 1.80381320032233e-16,
+    "singular_values": [
+      4.908928684652635,
+      4.539371088178969,
+      4.481338819112866,
+      4.432737464139235,
+      4.269223171054688,
+      4.100962154162353,
+      4.016543288406496,
+      3.9943058537947342,
+      3.9757316462621435,
+      3.822970712861769,
+      3.8171484656618104,
+      3.7666503111139438,
+      3.7172294341664425,
+      3.7067562732080144,
+      3.6966593695731955,
+      3.687099841242412,
+      3.5929698676983497,
+      3.5637267552672807,
+      3.5504068211092528,
+      3.526733884358841,
+      3.523530149851882,
+      3.516631943454663,
+      3.508933055216682,
+      3.5004607891960453,
+      3.48681658252851,
+      3.4716194632194095,
+      3.4529047775643176,
+      3.439012757082665,
+      3.4306700527980505,
+      3.4110647744278513,
+      3.380119031496591,
+      3.376127574200421,
+      3.3750900104382255,
+      3.37464405587681,
+      3.350782298810614,
+      3.3505086777608084,
+      3.345125245789065,
+      3.3198934201810393,
+      3.3172730768346788,
+      3.3153039100621386,
+      3.3116740734971635,
+      3.3100680688698625,
+      3.3087215051238736,
+      3.30553368937887,
+      3.303317335188259,
+      3.284969815569563,
+      3.2830330669454204,
+      3.2654760782817016,
+      3.2564220053949473,
+      3.2521328770675364,
+      3.249218567055442,
+      3.2466123460658145,
+      3.2428321810932315,
+      3.231995982470767,
+      3.229020312287285,
+      3.2073973264529854,
+      3.2044651119449408,
+      3.2030488145278118,
+      3.185462192581273,
+      3.16312233187166,
+      3.1613647430125607,
+      3.155037331239732,
+      3.1471383565832944,
+      3.1422589485199865
+    ],
+    "interpretation": "Near-zero raw spectral projections can amplify numerical noise under row normalization; reported as stability evidence, not a changed model threshold."
+  },
+  "ridge_normal_residual": 9.965863372786787e-07,
+  "predicted_embedding_max_error": 0.0,
+  "gallery_embedding_max_error": 0.0,
+  "all_10088_query_metrics_and_top10_lists_match": true,
+  "maximum_per_query_metric_error": 0.0,
+  "maximum_bootstrap_metric_error": 1.3877787807814457e-17,
+  "positive_gallery_coverage": 1.0,
+  "methods": {
+    "metadata": {
+      "Recall10": 0.07158511515083553,
+      "Recall50": 0.1342830613143887,
+      "MRR": 0.09934507565409963
+    },
+    "metadata_svd64": {
+      "Recall10": 0.0308399315907649,
+      "Recall50": 0.06215853511423607,
+      "MRR": 0.04506670182760725
+    },
+    "metadata_graph_ridge64": {
+      "Recall10": 0.02915199130038085,
+      "Recall50": 0.06307305422687537,
+      "MRR": 0.041865960078854805
+    },
+    "popularity": {
+      "Recall10": 0.002328458320181991,
+      "Recall50": 0.009341615475320171,
+      "MRR": 0.0058517198713177844
+    },
+    "uniform": {
+      "Recall10": 0.00011593934053703104,
+      "Recall50": 0.0005796967026851552
+    }
+  },
+  "paired_comparisons": {
+    "metadata_graph_ridge64-minus-metadata": {
+      "mean_difference": -0.04243312385045467,
+      "bootstrap95": [
+        -0.0463871394567835,
+        -0.03915132096473561
+      ]
+    },
+    "metadata_graph_ridge64-minus-popularity": {
+      "mean_difference": 0.026823532980198857,
+      "bootstrap95": [
+        0.024170198809066026,
+        0.029678210101004656
+      ]
+    },
+    "metadata-minus-popularity": {
+      "mean_difference": 0.06925665683065355,
+      "bootstrap95": [
+        0.06504743659877472,
+        0.07328590632614805
+      ]
+    }
+  },
+  "capped_reporting_supplement": {
+    "metadata": {
+      "MRR50": 0.09749357505080701,
+      "mean_returned_at50": 49.17327517842982,
+      "queries_returning_positive_candidates": 10074
+    },
+    "metadata_svd64": {
+      "MRR50": 0.04337752821501544,
+      "mean_returned_at50": 50.0,
+      "queries_returning_positive_candidates": 10088
+    },
+    "metadata_graph_ridge64": {
+      "MRR50": 0.040345620781066044,
+      "mean_returned_at50": 49.84139571768438,
+      "queries_returning_positive_candidates": 10056
+    },
+    "popularity": {
+      "MRR50": 0.004835251600803608,
+      "mean_returned_at50": 50.0,
+      "queries_returning_positive_candidates": 10088
+    }
+  },
+  "learned_ridge_acceptance": false,
+  "simpler_exact_metadata_acceptance": true,
+  "decision": "reject_learned_ridge; exact_metadata_passes_source_recovery_gate",
+  "input_sha256": {
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/dbpedia-music-v6/snapshot.json.gz": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/research/wiki_artist_cold_start_protocol_v1.json": "4d6a21bc0d603f8ad9ad79fcac1c5f12e792b4d8654fa21bf80144abc43b0a23",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/research/evaluate_wiki_cold_start.py": "2368fbe05e0375eae71cab9087736b3c1d26cdd7c9b7aeeacccc02ea388a1a43",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/research/wiki_artist_cold_start_reporting_clarification_v1.json": "dedd2ed2728218e7ae66877defb072ab0b6d30767ac4093f06629219c2d8220a",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-model-v5/metadata.npz": "47ea76d2c795c78d8bcda07e8aa57e072a9b4ebddbc7409e6b40799f12564ad9",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-model-v5/embedding.npy": "e5c83a895a9f1f6796780e364fa55ae309c26e37b4225d9566654077ad2a28e7",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-3/opennoise/.cache/wiki-artist-model-v5-independent-review/review-report.json": "52fcb956c7f1b4d700f26bba31dbfe5d640a9a2ebec1daf43a8eb0ae5f36d854",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/cold-mask.npy": "c525f74ee518fdb1cb2fa697d0a4b44655f258ed85dacab5dc9ca43a6d832bdc",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/training-graph.npz": "dc3b98deae644a70d5423031e1bdc3201496aa788605c6923c68f604bed3adac",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/training-graph-embedding.npy": "49d157e400fa9871d410566956f0640d123ae470e58a0e6bf84f5de58ea6599f",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/metadata-to-graph-coefficients.npy": "52c11d6d4aaa846a6d540f9c6fa3d7bdf240c960df7cef854d908d2d60862ba5",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/predicted-embedding.npy": "8ffe51e976bab65679d3407dadedfef08f8a8825b9fe70920a18afb185118dd0",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/gallery-embedding.npy": "44c14c625e926a3e58a5183bc336bda68a7de1eae55687d3fa0c7e07322dda47",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/report.json": "482e4ab8e17721e2b97a8c5ec9f5c1ea6407bc43432d3f22a2021058acbfd9eb",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/query-results.json.gz": "e3bc55e9ee91c04dca352b67bd9047b03bfcd3b3884db0f92f578bccace7479c",
+    "/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-ml/.cache/wiki-artist-cold-start-v1/ineligible-artists.jsonl.gz": "6dada37b33cfee18f39b5480feb246b6e5259543627258e98c94b2ca6a525eed"
+  },
+  "producer_imported_or_executed": false,
+  "input_bytes_stable": true,
+  "seconds": 174.774,
+  "peak_rss_mib": 699.98046875,
+  "scope": "Whole-artist graph holdout within known metadata source. Full-ranking MRR explicitly distinguished from capped MRR50. No independent listener-relevance or perceptual taxonomy claim."
+}

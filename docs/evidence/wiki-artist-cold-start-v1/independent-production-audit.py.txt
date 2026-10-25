@@ -1,0 +1,154 @@
+"""Independent metadata source-to-ranking proof and deployed-row regression audit."""
+from collections import Counter, defaultdict
+import gzip
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import resource
+import signal
+import time
+import unicodedata
+
+os.environ['OPENBLAS_NUM_THREADS']='2'
+os.environ['OMP_NUM_THREADS']='2'
+import numpy as np
+from scipy import sparse
+
+ROOT=Path('/home/h0rv/Documents/Codex/2026-10-24/task-2/opennoise-metadata-release')
+ML=ROOT.parent/'opennoise-ml'
+OLDROOT=ROOT.parent/'opennoise-genre-release'
+SITE=ROOT/'.cache/metadata-candidate-v1/site'
+OLD=OLDROOT/'.cache/atlas-exact-deployed-offline/site'
+OUT=Path(__file__).resolve().parent
+SOURCE=ML/'.cache/dbpedia-music-v6/snapshot.json.gz'
+PUBLIC=ROOT/'data/examples/wiki-artist-atlas-v1/snapshot.json.gz'
+START=time.monotonic()
+resource.setrlimit(resource.RLIMIT_AS,(2500*1024**2,)*2)
+resource.setrlimit(resource.RLIMIT_CPU,(480,480))
+signal.alarm(600)
+
+def sha(p):
+    with p.open('rb')as f:return hashlib.file_digest(f,'sha256').hexdigest()
+def write(n,v):
+    (OUT/n).write_text(json.dumps(v,indent=2,ensure_ascii=False,allow_nan=False)+'\n')
+def progress(phase,**v):
+    print(json.dumps({'phase':phase,'seconds':round(time.monotonic()-START,2),**v}),flush=True)
+
+files=[SOURCE,PUBLIC,OLDROOT/'data/examples/wiki-artist-atlas-v1/snapshot.json.gz',ML/'.cache/wiki-artist-model-v5/metadata.npz',OUT.parent/'wiki-artist-cold-start-v1-independent-review/report.json',ROOT/'src/opennoise/pipeline/wiki_artist_atlas.py',SITE/'index.html',SITE/'atlas.mjs',SITE/'atlas.css',SITE/'atlas/receipt.json',OLD/'opennoise-release.json']
+files.extend(sorted((SITE/'atlas').rglob('*.json')))
+hashes={str(p):sha(p)for p in files}
+assert hashes[str(SOURCE)]=='814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9'
+assert hashes[str(PUBLIC)]==hashes[str(OLDROOT/'data/examples/wiki-artist-atlas-v1/snapshot.json.gz')]
+previous=json.loads((OUT.parent/'wiki-artist-cold-start-v1-independent-review/report.json').read_bytes())
+assert previous['status']=='independent_replay_passed'and previous['simpler_exact_metadata_acceptance']
+assert hashes[str(ML/'.cache/wiki-artist-model-v5/metadata.npz')]==previous['input_sha256'][str(ML/'.cache/wiki-artist-model-v5/metadata.npz')]
+source=json.load(gzip.open(SOURCE,'rt'));public=json.load(gzip.open(PUBLIC,'rt'))
+for a in public['artists']:
+    assert set(a)==set(source['artists'][0])|{'position'};del a['position']
+for g in public['genres']:
+    assert set(g)==set(source['genres'][0])|{'position','shared_member_neighbors'};del g['position'];del g['shared_member_neighbors']
+assert public['revision']=='wiki-artist-atlas-v1'
+assert set(public['source'])==set(source['source'])|{'navigation_layout'}
+assert public['source']['navigation_layout']
+del public['source']['navigation_layout']
+public['revision']=source['revision']
+assert public==source,'Native source facts changed'
+del public
+artists=source['artists'];uris=[a['uri']for a in artists];N=len(artists)
+assert N==86253 and uris==sorted(set(uris))
+index={u:i for i,u in enumerate(uris)}
+public_ids=[hashlib.sha256(u.encode()).hexdigest()[:32]for u in uris]
+assert len(set(public_ids))==N
+public_index={u:i for i,u in enumerate(public_ids)}
+neighbors=[set()for _ in uris]
+for a,_,b in source['relations']:
+    i,j=index[a],index[b];neighbors[i].add(j);neighbors[j].add(i)
+degree=np.array([len(v)for v in neighbors]);isolated=np.flatnonzero(degree==0)
+assert len(isolated)==30813 and np.count_nonzero(degree)==55440
+details={};old_details={}
+for directory,target in ((SITE/'atlas/artists',details),(OLD/'atlas/artists',old_details)):
+    for p in sorted(directory.glob('*.json')):
+        part=json.loads(p.read_bytes());assert not set(target)&set(part);target.update(part)
+assert set(details)==set(old_details)==set(public_ids)
+oldmarker=json.loads((OLD/'opennoise-release.json').read_bytes())
+assert oldmarker['build_commit']=='527a87aeaf2f4ecce8fc114e130f8b0c20faefec'
+prior_json={rel:v for rel,v in oldmarker['files'].items()if rel.endswith('.json')and not rel.startswith('atlas/')}
+assert len(prior_json)==961
+for rel,v in prior_json.items():assert sha(SITE/rel)==v['sha256']==sha(OLD/rel)
+preserved_genre_files=[]
+for p in sorted((OLD/'atlas/genres').glob('*.json')):
+    relative=p.relative_to(OLD);assert sha(SITE/relative)==sha(p);preserved_genre_files.append(relative.as_posix())
+for rel in ('atlas/artists.json','atlas/genres.json'):assert sha(SITE/rel)==sha(OLD/rel)
+for i,aid in enumerate(public_ids):
+    row,old=details[aid],old_details[aid]
+    assert row['uri']==uris[i]and row['name']==artists[i]['name']
+    if degree[i]>0:assert row==old,('Connected row changed',uris[i])
+    else:
+        assert {k:v for k,v in row.items()if k not in ('suggested','suggestion_basis')}=={k:v for k,v in old.items()if k not in ('suggested','suggestion_basis')}
+        assert not row['related']and not row['map']and not old['suggested']
+progress('source_and_deployed_preservation_verified',isolated=len(isolated),connected_exact_rows=55440,prior_json_hashes=len(prior_json),genre_pages=len(preserved_genre_files))
+
+# Reconstruct benchmark features directly from accepted native facts and document frequencies.
+canonical={g['uri']:('core:'+g['vocabulary_term']if g['vocabulary_term']else'typed:'+unicodedata.normalize('NFKC',g['name']).casefold().strip())for g in source['genres']}
+rr=[];cc=[];vv=[];offset=0;block_count=np.zeros(N,dtype=np.int8);blocks={}
+for kind in ('genre','instrument','recordLabel'):
+    membership=[sorted({canonical[g]for g in a['genres']})if kind=='genre'else sorted(set(a['features'].get('http://dbpedia.org/ontology/'+kind,[])))for a in artists]
+    frequency=Counter(v for row in membership for v in row);vocab=sorted(frequency);columns={v:i+offset for i,v in enumerate(vocab)}
+    weight={v:1+math.log((N+1)/(frequency[v]+1))for v in vocab}
+    for i,row in enumerate(membership):
+        if not row:continue
+        block_count[i]+=1;length=math.sqrt(sum(weight[v]**2 for v in row))
+        for v in row:rr.append(i);cc.append(columns[v]);vv.append(weight[v]/length)
+    offset+=len(vocab);blocks[kind]={'features':len(vocab),'artists':sum(bool(row)for row in membership)}
+rr=np.asarray(rr,dtype=np.int32);vv=np.asarray(vv)/np.sqrt(block_count[rr].astype(float))
+X=sparse.coo_matrix((vv,(rr,np.asarray(cc,dtype=np.int32))),shape=(N,offset)).tocsr();X.sort_indices()
+benchmark=sparse.load_npz(ML/'.cache/wiki-artist-model-v5/metadata.npz').tocsr();delta=X-benchmark
+matrix_error=float(np.max(np.abs(delta.data),initial=0));assert X.shape==benchmark.shape and matrix_error<2e-14
+assert (np.diff(X.indptr)[isolated]>0).all()
+XC=X.tocsc();threshold=1e-8
+del benchmark,delta,rr,cc,vv,membership,weight,frequency,columns
+progress('metadata_independently_reconstructed',shape=list(X.shape),maximum_error=matrix_error)
+
+proofs=[];abstentions=[];qualifying=0;minimum_score=1.;source_labels={a['id']:a['name']for a in json.loads((SITE/'atlas/artists.json').read_bytes())}
+for step,q in enumerate(isolated):
+    aid=public_ids[q];row=details[aid];chosen=row['suggested']
+    assert len(chosen)==len(set(chosen))<=10 and all(i in public_index for i in chosen)and aid not in chosen
+    assert not neighbors[q]
+    score=np.zeros(N)
+    for feature,value in zip(X.indices[X.indptr[q]:X.indptr[q+1]],X.data[X.indptr[q]:X.indptr[q+1]],strict=True):
+        low,high=XC.indptr[feature:feature+2];np.add.at(score,XC.indices[low:high],value*XC.data[low:high])
+    score[q]=0.;candidates=np.flatnonzero(score>threshold)
+    assert len(chosen)==min(10,len(candidates)),('Output count differs',uris[q],len(chosen),len(candidates))
+    if not chosen:
+        assert not candidates.size and 'suggestion_basis'not in row
+        abstentions.append({'uri':uris[q],'id':aid,'name':row['name'],'metadata_nonempty':True,'positive_candidates':0});continue
+    assert row.get('suggestion_basis')=='artist_metadata'
+    chosen_indices=[public_index[i]for i in chosen]
+    assert (np.diff(X.indptr)[chosen_indices]>0).all()
+    assert all(score[i]>threshold and source_labels[public_ids[i]].strip()for i in chosen_indices)
+    keys=[(-float(np.round(score[i],8)),i)for i in chosen_indices]
+    assert all(a<b for a,b in zip(keys,keys[1:])),('Incorrect stable order',uris[q])
+    # Rank-boundary proof: sorted k positive distinct outputs whose last global rank is k
+    # must be the complete correct top-k. No producer sort/selection implementation reused.
+    last=chosen_indices[-1];last_value=np.round(score[last],8);rounded=np.round(score[candidates],8)
+    last_rank=1+int(np.count_nonzero(rounded>last_value))+int(np.count_nonzero((rounded==last_value)&(candidates<last)))
+    assert last_rank==len(chosen),('Top-k boundary differs',uris[q],last_rank,len(chosen))
+    qualifying+=1;minimum_score=min(minimum_score,min(float(score[i])for i in chosen_indices))
+    proofs.append({'uri':uris[q],'id':aid,'name':row['name'],'positive_candidates':len(candidates),'suggested':chosen,'last_global_rank':last_rank,'boundary_score8':float(last_value)})
+    if step%2500==0:progress('ranking_boundary_proof',checked=step+1,total=len(isolated),nonempty=qualifying,abstentions=len(abstentions))
+assert qualifying==30789 and len(abstentions)==24
+all_basis=Counter(r.get('suggestion_basis','graph_or_none')for r in details.values())
+assert all_basis['artist_metadata']==qualifying
+graph_count=sum(bool(details[public_ids[i]]['suggested'])for i in range(N)if degree[i]>0)
+assert graph_count==24541
+receipt=json.loads((SITE/'atlas/receipt.json').read_bytes())
+for key,value in {'artists':N,'artists_with_suggestions':55330,'graph_suggested_artists':graph_count,'metadata_suggested_artists':qualifying,'connected_artists':55440}.items():assert receipt['counts'][key]==value
+with gzip.open(OUT/'all-isolated-ranking-proofs.json.gz','wt')as f:json.dump(proofs,f)
+write('abstentions.json',abstentions);write('feature-blocks.json',blocks)
+assert all(sha(p)==hashes[str(p)]for p in files),'Candidate or source changed during review'
+report={'status':'passed_all_isolated_rankings_and_connected_preservation','artists':N,'isolated_artists_checked':len(isolated),'metadata_suggestion_rows_exact':qualifying,'correct_abstentions':len(abstentions),'connected_rows_exactly_equal_deployed527':55440,'existing_graph_suggestion_rows_unchanged':graph_count,'total_rows_with_suggestions':55330,'prior_nonatlas_json_hashes_exact':len(prior_json),'all1366genre_pages_and_global_indexes_exact':True,'public_source_stripped_navigation_equals_acceptedV6':True,'source_metadata_matrix_shape':list(X.shape),'source_metadata_matrix_max_error_vs_accepted_benchmark':matrix_error,'all_isolated_query_and_target_vectors_nonempty':True,'all_new_suggestions_positive_exclude_self_and_known_and_duplicates':True,'minimum_selected_unrounded_cosine':minimum_score,'ranking_proof':'Independently accumulated inverted-feature scores; ordered distinct positive outputs plus exact global rank of final output prove the full top-k under8decimal+URI ties.','basis_labels_match_scope':True,'producer_imported_or_executed':False,'source_candidate_bytes_stable':True,'input_sha256':hashes,'seconds':round(time.monotonic()-START,3),'peak_rss_mib':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024,'scope':'Exact source-to-output ranking and preservation gate only; no listener relevance, API identity promotion, canonical release build or publication certification.'}
+write('ranking-report.json',report)
+write('ui-review-targets.json',{'metadata_examples':[v for v in proofs if v['name']in('Adele','Alicia Keys','ABBA','Ariana Grande','Arlo Parks','Bad Bunny','Ed Sheeran','Shari Ulrich')][:6]or proofs[:3],'abstentions':abstentions[:3]})
+progress('complete',status=report['status'],metadata=qualifying,abstentions=len(abstentions),seconds=report['seconds'],peak_rss_mib=report['peak_rss_mib'])

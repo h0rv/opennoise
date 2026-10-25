@@ -1,0 +1,39 @@
+{
+  "audio_permitted": false,
+  "counts": {
+    "artists": 11894,
+    "at_least5_connections": 8457,
+    "connected_artists": 11811,
+    "nonempty_queried_references": 3064,
+    "observed_undirected_pairs": 200995,
+    "queried_references": 3147,
+    "suggested_artists": 10004
+  },
+  "data_files": 258,
+  "data_inventory_sha256": "5bb64e781cac90bd8e347be9493efda878de593baa178c708f87198accce6a6e",
+  "genre_memberships_inferred": false,
+  "identity_notes_counts": {
+    "ambiguous_artists": 62,
+    "ambiguous_artists_with_notes": 53,
+    "ambiguous_groups_with_distinct_notes": 22,
+    "ambiguous_name_groups": 31,
+    "artists": 11894,
+    "artists_with_notes": 4340
+  },
+  "identity_notes_scope": "Literal MusicBrainz core disambiguation comments from the two closed public packets; no cross-catalog identity join or ranking change",
+  "identity_notes_sha256": "4e1e1f91d6c87d50ab7992e8fbdec60a77c262ff02330e887adb3876d73eae39",
+  "independent_listener_quality_claim": false,
+  "input_contract_sha256": "7fd0abd880eaf008d315aa4f264bdd9b9b36ca5fa3a05209421ad9bbb37e7b44",
+  "lyrics_permitted": false,
+  "per_user_history_permitted": false,
+  "production_branch": "main",
+  "project": "opennoise",
+  "publication_scope": "public-cc0-artist-context-network-no-song-content",
+  "retained_catalog_data_files": 701,
+  "retained_catalog_data_inventory_sha256": "62a6ff6fc7a6379c7a65d5ab82044ac9e22e16180f5d244d194f359fe3ec9e76",
+  "revision": "native-artist-network-promotion-v1",
+  "rights_basis": [
+    "https://listenbrainz.org/data/",
+    "https://musicbrainz.org/doc/About/Data_License"
+  ]
+}

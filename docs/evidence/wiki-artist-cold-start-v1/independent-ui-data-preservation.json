@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "compared_atlas_json": 1625,
+  "differences": [],
+  "v2_assets": {
+    "index.html": "3304136cc65188c3e56b9b86353c56d4099121234497862cac0c780439d54716",
+    "atlas.mjs": "505fe1ebb53266592a79d82afeb5768060c81c202543abdb94954d9c05e74dae",
+    "atlas.css": "6abae47658d7801a64d756c5cbb707e13b0174e33a8ee020a558e03d7f9d9496"
+  }
+}

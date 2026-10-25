@@ -1,0 +1,105 @@
+{
+  "status": "numerical_replay_passed",
+  "numerical_replay": "passed",
+  "producer_protocol_reporting": "incomplete_in_producer_independently_supplemented",
+  "source_cohort_audit": "accepted_v6_exact_hash_bound",
+  "producer_imported": false,
+  "source_bytes_bound": true,
+  "artifacts_stable_during_review": true,
+  "source_protocol_and_artifact_sha256": {
+    "snapshot.json.gz": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+    "wiki_artist_protocol_v5.json": "8fffc06e90b6057ba5db0ab9e9748841f0aed3d32ff93f29e75c64de495a4a27",
+    "model_wiki_artists.py": "f024a28d0cdb6153632b783bb6d4236c59991d5a63270b3dc5f194451b789903",
+    "genres.txt": "4dd2bae46d952097b0ad88290eaf1a4eeb48112184fd280bc3adfcaffa454a62",
+    "verdict.json": "0d70979a816083c37b92c200d320e9e18076ec4691716ea36cb5f6c6add5b9e9",
+    "report.json": "623f4d6e1f9bf8ca00580dcf188b3589e5570a28048b7fecaad1374872b5da30",
+    "query-results.json": "5c211e8911c15fefd8da21f293efe6f326b9d25e53ea1ff10d7e7a79ad6ddf6d",
+    "identities.json": "693a61f114d54ae4d844b728d4889283252a037b40b524c79a0bede8e04d2c71",
+    "metadata.npz": "47ea76d2c795c78d8bcda07e8aa57e072a9b4ebddbc7409e6b40799f12564ad9",
+    "training-graph.npz": "94afc886b29f2c2a51029c4a01f5371cf9eccc7cb356bb2337e11ed80a8d88c1",
+    "embedding.npy": "e5c83a895a9f1f6796780e364fa55ae309c26e37b4225d9566654077ad2a28e7",
+    "feature-projection.npy": "17e80886133608b10613e7823cbedbd11e0f91a317450dc6835c6f322193b260"
+  },
+  "artists": 86253,
+  "queries": 2125,
+  "relationship_pairs": 96717,
+  "withheld_pairs": 19266,
+  "training_graph_exact_match": true,
+  "reciprocal_holdout_exclusion_verified": true,
+  "feature_blocks": {
+    "genre": {
+      "features": 1366,
+      "artists": 78983
+    },
+    "instrument": {
+      "features": 1421,
+      "artists": 12794
+    },
+    "recordLabel": {
+      "features": 8285,
+      "artists": 44455
+    }
+  },
+  "metadata_matrix_maximum_error": 3.3306690738754696e-16,
+  "saved_embedding_float64": true,
+  "saved_embedding_projection_maximum_error": 2.965856726877547e-13,
+  "per_query_metrics_reproduced": true,
+  "maximum_per_query_metric_error": 1.0842021724855044e-19,
+  "methods": {
+    "metadata": {
+      "Recall10": 0.05838766764711037,
+      "Recall50": 0.11611514950781021,
+      "MRR": 0.10790889126787076
+    },
+    "svd64": {
+      "Recall10": 0.02096575753108261,
+      "Recall50": 0.051827314467034,
+      "MRR": 0.043509157066100375
+    },
+    "context": {
+      "Recall10": 0.19394196998695268,
+      "Recall50": 0.35328321900079324,
+      "MRR": 0.2918686291921976
+    },
+    "hybrid": {
+      "Recall10": 0.14119256209906364,
+      "Recall50": 0.2330555437540868,
+      "MRR": 0.2553422846021286
+    },
+    "popularity": {
+      "Recall10": 0.0043920593338549994,
+      "Recall50": 0.014377990155699134,
+      "MRR": 0.010664673509293416
+    },
+    "uniform": {
+      "Recall10": 0.0001167360579136475,
+      "Recall50": 0.0005836802895682376
+    }
+  },
+  "candidate_positive_coverage": 0.9567157518964748,
+  "feature_uris_overlapping_artist_identities": {
+    "genre": [],
+    "instrument": [],
+    "recordLabel": []
+  },
+  "source_relation_kind_counts": {
+    "http://dbpedia.org/ontology/bandMember": 12326,
+    "http://dbpedia.org/ontology/formerBandMember": 15772,
+    "http://dbpedia.org/ontology/associatedBand": 95052,
+    "http://dbpedia.org/ontology/associatedMusicalArtist": 95052
+  },
+  "self_relationship_statements_excluded": 0,
+  "fold_pair_counts": {
+    "3": 19454,
+    "0": 19266,
+    "1": 19530,
+    "4": 19279,
+    "2": 19188
+  },
+  "reporting_gap": "Producer omitted protocol-required per-ineligible-artist cause accounting and stratified coverage. Independent coverage.json and ineligible-artists.jsonl.gz supply the missing accounting.",
+  "scope": "Transductive withheld source-association recovery only; not independently judged musical preference or Every Noise parity. Metadata uses all source artists by protocol; graph context and degree use only training edges.",
+  "prior_source_semantic_review": "../wiki-artist-v6-semantic-review/verdict.json",
+  "replay_script_sha256": "7aec5f7dbd14482a63dcbde2241d4386bd6b82f8da2c4acc5acb5372de6be717",
+  "seconds": 28.18,
+  "peak_RSS_MiB": 404.0546875
+}

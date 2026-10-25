@@ -1,0 +1,23 @@
+{
+  "counts": {
+    "artists": 86253,
+    "artists_with_suggestions": 24541,
+    "at_least5_connections": 12600,
+    "connected_artists": 55440,
+    "genre_artists": 78983,
+    "genre_claims": 182342,
+    "genres": 1366,
+    "source_genre_claims": 182348,
+    "source_genre_labels": 1876,
+    "source_relationship_pairs": 96717,
+    "source_relationship_statements": 218202
+  },
+  "data_files": 1624,
+  "data_inventory_sha256": "529f18d645346c22c24d59a97d4db3759470065b88286eff18c817b1a22c3883",
+  "input_contract_sha256": "673cc05bd0402541787d2b2ca7056afa7056d0cd97a63092fd73b81986039640",
+  "revision": "wiki-artist-atlas-promotion-v1",
+  "scope": "Reviewed V6 Wikipedia source memberships and artist associations; source-only context suggestions; no audio,lyrics,user histories or validated perceptual/taxonomy claim.",
+  "semantic_source_sha256": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+  "source_license": "CC BY 3.0 publisher files; derivative CC BY-SA 3.0",
+  "vocabulary_license": "MusicBrainz core genre definition names CC0; no artist genre associations"
+}

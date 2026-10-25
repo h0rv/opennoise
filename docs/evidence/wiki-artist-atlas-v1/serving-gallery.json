@@ -1,0 +1,27 @@
+{
+  "revision": "wiki-artist-operating-gallery-v3",
+  "source_sha256": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+  "protocol_sha256": "280ca696a7fe184eaf554398cde6197d0da77fb277265543bfb1e45c5aefa6b8",
+  "artists": 86253,
+  "queries": 2162,
+  "candidate_positive_coverage": 1.0,
+  "train_graph_reconstructed_and_matches_v2": true,
+  "methods": {
+    "context": {
+      "Recall10": 0.19192424346013068,
+      "Recall50": 0.35781738907888083,
+      "MRR": 0.2897933269024367
+    },
+    "popularity": {
+      "Recall10": 0.004432528253673392,
+      "Recall50": 0.01478718582216805,
+      "MRR": 0.010678053323187695
+    },
+    "uniform": {
+      "Recall10": 0.00011595520654176872,
+      "Recall50": 0.0005797760327088436
+    }
+  },
+  "seconds": 18.965,
+  "scope": "Recovery of source associations on complete serving gallery. No independent musical relevance or perceptual similarity claim."
+}

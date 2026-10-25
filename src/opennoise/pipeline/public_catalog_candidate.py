@@ -9,13 +9,15 @@ from importlib.metadata import version
 from pathlib import Path
 from typing import Any, TypedDict
 
-from opennoise.pipeline import catalog_demo
+from opennoise.pipeline import artist_network, catalog_demo, wiki_artist_atlas
 
 CONTRACT = "config/releases/retained-public-catalog-inputs-v1.json"
 CONTRACT_SHA256 = "c2c749c5186abc42eb01ef73fb068915920cb86975729b5352277f0c87d902c8"
 REVISION = "retained-public-catalog-candidate-v1"
-MAX_FILES = 800
-MAX_BYTES = 12_000_000
+MAX_FILES = 4000
+MAX_BYTES = 180_000_000
+# https://developers.cloudflare.com/pages/platform/limits/#file-size
+MAX_MEMBER_BYTES = 25 * 1024 * 1024
 
 
 class PayloadMember(TypedDict):
@@ -66,9 +68,12 @@ def inventory(site: Path) -> dict[str, PayloadMember]:
         if path.is_file():
             if path.suffix not in {".html", ".mjs", ".css", ".json"}:
                 raise ValueError("Candidate payload contains a non-static member")
+            byte_size = path.stat().st_size
+            if byte_size > MAX_MEMBER_BYTES:
+                raise ValueError("Candidate member exceeds the Pages file size limit")
             result[path.relative_to(site).as_posix()] = {
                 "sha256": catalog_demo.digest(path),
-                "bytes": path.stat().st_size,
+                "bytes": byte_size,
             }
     if (
         not result
@@ -101,10 +106,15 @@ def build(root: Path, output: Path) -> dict[str, Any]:
     ):
         raise ValueError("Candidate output must be fresh, local and below checkout .cache")
     contract = inputs(root)
+    artist_network.inputs(root)
+    wiki_artist_atlas.inputs(root)
     output.mkdir(parents=True)
     try:
         result = catalog_demo.build(root, output / "replay")
         shutil.copytree(Path(result["site"]), output / "site")
+        network = artist_network.build(root, output / "site")
+        catalog_demo._standalone(output / "site")  # noqa: SLF001 -- Rebundle after the public extension.
+        atlas = wiki_artist_atlas.build(root, output / "site")
         manifest = {
             "revision": REVISION,
             "publication_authorized": False,
@@ -114,6 +124,8 @@ def build(root: Path, output: Path) -> dict[str, Any]:
             "input_contract_sha256": CONTRACT_SHA256,
             "input_contract": contract,
             "counts": result["counts"],
+            "artist_network": network,
+            "wiki_artist_atlas": atlas,
             "runtime": {
                 "python": platform.python_version(),
                 "numpy": version("numpy"),
@@ -122,8 +134,9 @@ def build(root: Path, output: Path) -> dict[str, Any]:
             "implementation_sha256": implementation(root),
             "payload": inventory(output / "site"),
             "scope": (
-                "Fresh replay of the fixed public CC0 metadata/descriptor cohorts; "
-                "no private demo input, annotations, relevance benchmark or playback. "
+                "Fresh replay of fixed public CC0 sources and the separately reviewed "
+                "CC BY/SA Wikipedia artist atlas with core genre vocabulary. "
+                "No private demo input, per-user histories or playback. "
                 "Source graph and small unvalidated acoustic suggestions remain separate."
             ),
         }

@@ -1,0 +1,78 @@
+{
+  "independent-coverage.json": {
+    "sha256": "638a7c2d89aabceccd3e5d09cd46be3686be71a9c4f7fbac85ad9ab7a3dd5f82",
+    "bytes": 5509
+  },
+  "independent-numerical-review.json": {
+    "sha256": "f11a894a4714450cc025ed85ee2c6f057c2bee4e09ab4ac9e1045a43afef78b2",
+    "bytes": 4234
+  },
+  "independent-replay.py.txt": {
+    "sha256": "7aec5f7dbd14482a63dcbde2241d4386bd6b82f8da2c4acc5acb5372de6be717",
+    "bytes": 16648
+  },
+  "independent-semantic-review.json": {
+    "sha256": "01ded4d26b075950b96c97ed36716917d437af8114a777085ded0741113e4cee",
+    "bytes": 2741
+  },
+  "independent-serving-coverage.json": {
+    "sha256": "28ec65d2de8ccf58b6b81fc03703a29f4970bccb3bcd54188ee01384843b3200",
+    "bytes": 5512
+  },
+  "independent-serving-replay.py.txt": {
+    "sha256": "dd39af48c8d253bac8e973b1f4589b8aa14ffabef6b0b2cbf03d57de0237f175",
+    "bytes": 10943
+  },
+  "independent-serving-review.json": {
+    "sha256": "3dd8f457540e8fc6f536842dbc78b36c4728a946368db091cb57823d0b174743",
+    "bytes": 2280
+  },
+  "independent-ui-review.json": {
+    "sha256": "b6849d2b7235fb010f634c8678086473dc5dac414dd3c1b05f58c96e7008e6b6",
+    "bytes": 2446
+  },
+  "ineligible-artists.jsonl.gz": {
+    "sha256": "9ef54f8f11e80099e774342b9ea62ca4db04c7058e8476d88ee75b34b0353e98",
+    "bytes": 1159176
+  },
+  "model-comparison.json": {
+    "sha256": "623f4d6e1f9bf8ca00580dcf188b3589e5570a28048b7fecaad1374872b5da30",
+    "bytes": 1874
+  },
+  "model-comparison.py.txt": {
+    "sha256": "f024a28d0cdb6153632b783bb6d4236c59991d5a63270b3dc5f194451b789903",
+    "bytes": 8263
+  },
+  "model-protocol.json": {
+    "sha256": "8fffc06e90b6057ba5db0ab9e9748841f0aed3d32ff93f29e75c64de495a4a27",
+    "bytes": 5009
+  },
+  "query-results.json.gz": {
+    "sha256": "3521b53a49d31cb0661432690a430d147c8298373de1bd13068b345a2d368eae",
+    "bytes": 162521
+  },
+  "serving-gallery.json": {
+    "sha256": "0ea9b69b4408cd6ff6525be9fb3f25f91f730a884eee0475c08deb41913658f8",
+    "bytes": 918
+  },
+  "serving-gallery.py.txt": {
+    "sha256": "cd0b3cca6e632086e00d020439a7d5920e246d37715d60e203a3984da72b07da",
+    "bytes": 3755
+  },
+  "serving-ineligible-artists.jsonl.gz": {
+    "sha256": "406834948c185fe6028ab5713d38f9bc6caafa97f1604d035f79040b1a377959",
+    "bytes": 1161156
+  },
+  "serving-protocol.json": {
+    "sha256": "280ca696a7fe184eaf554398cde6197d0da77fb277265543bfb1e45c5aefa6b8",
+    "bytes": 4930
+  },
+  "source-layout.py.txt": {
+    "sha256": "c240f5ea3d4fa6ed2179dece3a2027ed44f6ba03769afc667169ddb8686e668d",
+    "bytes": 6890
+  },
+  "source-projection.py.txt": {
+    "sha256": "9faf2bc9f290670234d6c94e9c78b9e512626ac619c85881fedac1e7aaad36a5",
+    "bytes": 10320
+  }
+}

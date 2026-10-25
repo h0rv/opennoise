@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "MRR50": 0.09749357505080701,
+    "mean_returned_at50": 49.17327517842982,
+    "queries_returning_positive_candidates": 10074
+  },
+  "metadata_svd64": {
+    "MRR50": 0.04337752821501544,
+    "mean_returned_at50": 50.0,
+    "queries_returning_positive_candidates": 10088
+  },
+  "metadata_graph_ridge64": {
+    "MRR50": 0.040345620781066044,
+    "mean_returned_at50": 49.84139571768438,
+    "queries_returning_positive_candidates": 10056
+  },
+  "popularity": {
+    "MRR50": 0.004835251600803608,
+    "mean_returned_at50": 50.0,
+    "queries_returning_positive_candidates": 10088
+  }
+}

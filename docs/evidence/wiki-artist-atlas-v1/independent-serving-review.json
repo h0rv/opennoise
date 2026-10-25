@@ -1,0 +1,46 @@
+{
+  "status": "passed_all_2162_queries",
+  "accepted_source_sha256": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+  "protocol_sha256": "280ca696a7fe184eaf554398cde6197d0da77fb277265543bfb1e45c5aefa6b8",
+  "artists": 86253,
+  "queries": 2162,
+  "gallery": "all86253identities_except_self_and_known_training_neighbors",
+  "positive_coverage": 1.0,
+  "queries_added_without_metadata": 37,
+  "train_graph_exact_match": true,
+  "reciprocal_holdout_absent_both_directions": true,
+  "score_method": "Independent integer common-neighbor counts divided by sqrt(training_degree_product); no saved normalized profile or producer function used",
+  "ranking_method": "Independent count of candidates preceding each positive after8decimal rounding andlexicalURI ties",
+  "maximum_per_query_metric_error": 0.0,
+  "methods": {
+    "context": {
+      "Recall10": 0.19192424346013068,
+      "Recall50": 0.35781738907888083,
+      "MRR": 0.2897933269024367
+    },
+    "popularity": {
+      "Recall10": 0.004432528253673392,
+      "Recall50": 0.01478718582216805,
+      "MRR": 0.010678053323187695
+    },
+    "uniform": {
+      "Recall10": 0.00011595520654176872,
+      "Recall50": 0.0005797760327088436
+    }
+  },
+  "ineligible_ledger_rows": 84091,
+  "input_sha256": {
+    "snapshot.json.gz": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+    "wiki_artist_operating_protocol_v3.json": "280ca696a7fe184eaf554398cde6197d0da77fb277265543bfb1e45c5aefa6b8",
+    "validate_wiki_operating_gallery.py": "cd0b3cca6e632086e00d020439a7d5920e246d37715d60e203a3984da72b07da",
+    "review-report.json": "52fcb956c7f1b4d700f26bba31dbfe5d640a9a2ebec1daf43a8eb0ae5f36d854",
+    "training-graph.npz": "94afc886b29f2c2a51029c4a01f5371cf9eccc7cb356bb2337e11ed80a8d88c1",
+    "report.json": "0ea9b69b4408cd6ff6525be9fb3f25f91f730a884eee0475c08deb41913658f8",
+    "query-results.json": "6e0359023ef188a09e3c5f127713871de6fe55e604903dda79b1684dc4ca96b0"
+  },
+  "artifacts_stable": true,
+  "producer_imported_or_executed": false,
+  "seconds": 9.836,
+  "peak_rss_mib": 372.0546875,
+  "scope": "Selected-method source-association holdout on full serving identity gallery. No listener preference, acoustic similarity or taxonomy-parity claim. No new model selection or fitting."
+}

@@ -1,0 +1,33 @@
+{
+  "audio_lyrics_or_user_histories": false,
+  "canonical_genres": 1366,
+  "counts": {
+    "artists": 86253,
+    "at_least5_connections": 12600,
+    "connected_artists": 55440,
+    "genre_artists": 78983,
+    "genre_claims": 182348,
+    "genres": 1876,
+    "source_relationship_pairs": 96717,
+    "source_relationship_statements": 218202
+  },
+  "derivative_license": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "expanded_bytes": 65996370,
+  "genre_vocabulary_sha256": "4dd2bae46d952097b0ad88290eaf1a4eeb48112184fd280bc3adfcaffa454a62",
+  "logo_sha256": "d0d75c61b6417627d60f29edceaa5493d28e0f35d22cf00072f9f6af38356040",
+  "metadata_manifests": {
+    "labels-dataid.txt": "b3af3b678a46b4bdc07306ba078250baee2077b66af900c628c285990b17d5d3",
+    "objects-dataid.txt": "4881c4055072ab5b1d0ebf354fae08ad8078d5a239479682ff93939676def9a9",
+    "types-dataid.txt": "d0cec3c1667a4110e74ae27217d6c4aa57e588e069b5159500eb1c6a501ba4a9"
+  },
+  "minimum_context_neighbors": 3,
+  "revision": "wiki-artist-atlas-inputs-v1",
+  "snapshot": "data/examples/wiki-artist-atlas-v1/snapshot.json.gz",
+  "snapshot_bytes": 5860402,
+  "snapshot_sha256": "7e19e64e665708986159aa058864a4217e13e3e3cd0620be4f7b4138e7d9da31",
+  "source_is_public": true,
+  "source_license": "https://creativecommons.org/licenses/by/3.0/",
+  "source_projection_sha256_before_coordinates": "814883b9222603e81f8bdcde504228ada847abc55795efff23a9b0bb1f7c63c9",
+  "source_version": "2022.12.01",
+  "suggestion_method": "binary_neighbor_profile_cosine"
+}

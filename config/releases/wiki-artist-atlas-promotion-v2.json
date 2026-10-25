@@ -1,0 +1,27 @@
+{
+  "counts": {
+    "artists": 86253,
+    "artists_with_suggestions": 55330,
+    "at_least5_connections": 12600,
+    "connected_artists": 55440,
+    "genre_artists": 78983,
+    "genre_claims": 182342,
+    "genres": 1366,
+    "graph_suggested_artists": 24541,
+    "metadata_suggested_artists": 30789,
+    "source_genre_claims": 182348,
+    "source_genre_labels": 1876,
+    "source_relationship_pairs": 96717,
+    "source_relationship_statements": 218202
+  },
+  "data_files": 1624,
+  "data_inventory_sha256": "c01b0d3d529b7becf3deaf02684d2427ca3da0627fd00ac333f3456607db775f",
+  "independent_model_gate": "Wholeartist holdout10088queries independently replayed; exactmetadataR10 .07158511515083553 vsdegree .002328458320181991; learnedridge rejected",
+  "independent_output_gate": "All30813degree0 records checked;30789exacttop10,24correctabstentions;55440connected rows and1366genrepages/indexes unchanged",
+  "input_contract_sha256": "673cc05bd0402541787d2b2ca7056afa7056d0cd97a63092fd73b81986039640",
+  "prior_atlas_promotion_sha256": "0911e33de1ce5e21c47f320d15401b8d1519266971eef378cdedcf015037e127",
+  "revision": "wiki-artist-atlas-promotion-v2",
+  "scope": "Accepted V6 source facts unchanged. Graph context retained for connected artists; exact canonical-genre/instrument/recordLabel TFIDF cosine inference only for degree0 artists. No learned weights,provisional identities,API captures,audio,lyrics or user data.",
+  "source_license": "CC BY3.0 publisher files; derivative CC BY-SA3.0",
+  "vocabulary_license": "Core genre names CC0; no supplementary artist associations"
+}

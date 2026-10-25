@@ -1,0 +1,40 @@
+{
+  "algorithm": "session_based_days_1800_session_300_contribution_3_threshold_10_limit_100_filter_True_skip_30",
+  "attempts": 1000,
+  "baseline_contract_path": "data/examples/native-artist-neighborhoods-sparse-20261025/baseline-contract.json",
+  "baseline_contract_sha256": "f2f5ef38a1f9c9dbabf29acc117609ba4a0bc054510544ef77ed2cb959913e3e",
+  "baseline_snapshot_path": "data/examples/native-artist-network-v2/snapshot.json.gz",
+  "baseline_snapshot_sha256": "999b7a797920de8f3e85c934f7937c4b4f10f8909249d57c56657bedaca73205",
+  "captures": 1000,
+  "captures_bytes": 4076904,
+  "captures_path": "data/examples/native-artist-neighborhoods-sparse-20261025/captures.jsonl.gz",
+  "captures_sha256": "ccd284906615dd4ae92468821b23a309d0c8d39f41e0656865f0659b066f44c3",
+  "eligible_by_degree_bin": {
+    "1-2": 3804,
+    "3-4": 2066
+  },
+  "excluded_prior_attempts": [
+    "062ab94e-b7a5-47a9-b3f4-cc1750c3f859",
+    "c302345e-54ae-4b4c-8708-1b949a7c4d49"
+  ],
+  "expanded_bytes": 20152733,
+  "listener_relevance_validated": false,
+  "previously_attempted": 2149,
+  "projection": "Existing11894IDs and canonical names only. Literal reference attribution, score>10, finite scalar, no self, max-score dedup, undirected maximum. Invalid rows quarantined; outside IDs excluded.",
+  "retries": 0,
+  "revision": "native-public-sparse-neighborhood-batch-v2",
+  "rights": "CC0-1.0",
+  "rights_basis": [
+    "https://listenbrainz.org/data/",
+    "https://musicbrainz.org/doc/About/Data_License"
+  ],
+  "sample_by_degree_bin": {
+    "1-2": 648,
+    "3-4": 352
+  },
+  "scope": "Exact public aggregate response bodies only; no private labels, identity joins, user histories, audio or lyrics.",
+  "selection": "Never-attempted existing artist IDs of degree1-4. Proportional largest-remainder allocation to degree1-2/3-4; SHA256 within strata, then globally SHA-ordered. No new-neighbor queue.",
+  "selection_tag": "OpenNoise-sparse-neighborhood-v2:",
+  "source": "https://labs.api.listenbrainz.org/similar-artists/json",
+  "upstream_deployment_algorithm_revision_unverified": true
+}

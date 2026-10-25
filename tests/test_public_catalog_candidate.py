@@ -9,8 +9,20 @@ import unittest
 from pathlib import Path
 from typing import Any, ClassVar, override
 
+from opennoise.pipeline import artist_identity_notes, artist_network, wiki_artist_atlas
 from opennoise.pipeline import catalog_demo as demo
 from opennoise.pipeline import public_catalog_candidate as candidate
+
+
+class PagesPayloadLimits(unittest.TestCase):
+    def test_single_oversized_asset_fails_below_the_total_payload_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            site = Path(directory)
+            with (site / "oversized.html").open("wb") as stream:
+                stream.truncate(25 * 1024 * 1024 + 1)
+            with self.assertRaisesRegex(ValueError, "Pages file size limit"):
+                candidate.inventory(site)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 NEW_CODE = (
@@ -22,6 +34,10 @@ NEW_CODE = (
     "src/opennoise/static/pipeline-demo.css",
     "scripts/build_retained_catalog_demo.py",
     "scripts/build_public_catalog_candidate.py",
+    "src/opennoise/pipeline/wiki_artist_atlas.py",
+    "src/opennoise/static/genre-atlas/index.html",
+    "src/opennoise/static/genre-atlas/atlas.css",
+    "src/opennoise/static/genre-atlas/atlas.mjs",
 )
 
 
@@ -59,6 +75,17 @@ class PublicCatalogCandidateTests(unittest.TestCase):
             *filter(None, tracked),
             *NEW_CODE,
             candidate.CONTRACT,
+            artist_network.CONTRACT,
+            artist_network.PROMOTION,
+            artist_network.SNAPSHOT,
+            artist_identity_notes.NOTES,
+            *(path for path, _ in artist_identity_notes.PACKETS),
+            wiki_artist_atlas.CONTRACT,
+            *(
+                p.relative_to(ROOT).as_posix()
+                for p in (ROOT / wiki_artist_atlas.SNAPSHOT).parent.iterdir()
+                if p.is_file()
+            ),
             *(name for source in contract["sources"] for name in source["files"]),
         }
         for name in sorted(members):
@@ -91,7 +118,7 @@ class PublicCatalogCandidateTests(unittest.TestCase):
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=310,
                 check=True,
             )
         cls.manifests = [demo.read(p / "payload-manifest.json") for p in cls.outputs]
@@ -107,6 +134,8 @@ class PublicCatalogCandidateTests(unittest.TestCase):
         self.assertFalse(self.manifests[0]["publication_authorized"])
         self.assertEqual(self.manifests[0]["counts"]["catalog_artists"], 433)
         self.assertEqual(self.manifests[0]["counts"]["compatible_artists"], 13)
+        self.assertEqual(self.manifests[0]["wiki_artist_atlas"]["counts"]["artists"], 86253)
+        self.assertEqual(self.manifests[0]["wiki_artist_atlas"]["counts"]["genres"], 1366)
 
     def test_every_data_member_is_tracked_and_bound_to_explicit_rights(self) -> None:
         tracked = set(
@@ -122,6 +151,12 @@ class PublicCatalogCandidateTests(unittest.TestCase):
                 self.assertIn(name, tracked)
                 self.assertIn(member["license"], {"CC0-1.0", "MIT"})
                 self.assertEqual(demo.digest(self.clean / name), member["sha256"])
+
+        note = demo.read(self.clean / artist_identity_notes.NOTES)
+        self.assertEqual(note["rights"], "CC0-1.0")
+        for name in [artist_identity_notes.NOTES, *(p for p, _ in artist_identity_notes.PACKETS)]:
+            self.assertIn(name, tracked)
+            self.assertEqual(demo.digest(self.clean / name), demo.digest(ROOT / name))
 
     def test_source_tampering_fails_before_creating_output(self) -> None:
         path = self.clean / next(iter(self.manifests[0]["input_contract"]["sources"][0]["files"]))
