@@ -57,7 +57,8 @@ try {
   };
   const wait = async expression => {
     for (let attempt = 0; attempt < 300; attempt++) {
-      if (await evaluate(expression)) return;
+      try { if (await evaluate(expression)) return; }
+      catch (error) { if (!/Execution context was destroyed|Cannot find context/.test(String(error))) throw error; }
       await new Promise(resolve_ => setTimeout(resolve_, 50));
     }
     throw new Error(`Browser condition failed: ${expression}`);
@@ -86,7 +87,7 @@ try {
   assert.ok(fallback, 'A metadata-supported isolated artist must be reachable');
   assert.equal(fallback.related.length, 0); assert.ok(!fallback.suggested.includes(fallback.id));
   const ready = "document.querySelector('main[aria-busy=false]')";
-  const go = async hash => { await evaluate(`location.hash=${JSON.stringify(hash)}`); await wait(`${ready}&&location.hash===${JSON.stringify(hash)}`); };
+  const go = async hash => { await evaluate(`new Promise(resolve=>{location.hash=${JSON.stringify(hash)};setTimeout(resolve,0)})`); await wait(`${ready}&&location.hash===${JSON.stringify(hash)}`); };
   const title = async value => wait(`${ready}?.querySelector('h1')?.textContent===${JSON.stringify(value)}`);
   const checkMap = async () => {
     const result = await evaluate(`(()=>{const svg=document.querySelector('.map-shell svg');const rows=[...svg.querySelectorAll('a')]; const boxes=rows.map(a=>a.querySelector('rect').getBoundingClientRect());const texts=rows.map(a=>a.querySelector('text').getBoundingClientRect());let overlaps=0;for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j];if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top)overlaps++;}return{targets:rows.length,overlaps,minHeight:Math.min(...boxes.map(b=>b.height)),fontSizes:[...new Set(rows.map(a=>getComputedStyle(a.querySelector('text')).fontSize))],empty:rows.filter(a=>!a.textContent.trim()).length,overflow:document.documentElement.scrollWidth>innerWidth,clipped:texts.filter((t,i)=>t.left<boxes[i].left-.1||t.right>boxes[i].right+.1).length}})()`);
@@ -133,7 +134,95 @@ try {
   await command('Emulation.setDeviceMetricsOverride',{width:320,height:800,deviceScaleFactor:1,mobile:true});assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);
   await go('#q/zzzzzzzzzzzzzzzzzz/0');await wait(`${ready}?.textContent.includes('No matches.')`);assert.equal(await evaluate("document.querySelectorAll('main .names li').length"),0);
   await evaluate("document.querySelector('details').open=true");assert.ok(await evaluate("document.querySelector('#sources img')?.complete&&document.querySelector('#sources img').naturalWidth>0"));
+  const rootPage = new URL(url); rootPage.hash = '';
+  const nativePage = new URL(new URL(url).protocol === 'file:' ? 'artist-network/OpenNoiseArtists.html' : 'artist-network/', rootPage);
+  const nativeArtists = JSON.parse(await readFile(join(source, 'artist-network/catalog.json'))).artists;
+  const miles = name(artists, 'Miles Davis'), nativeMiles = name(nativeArtists, 'Miles Davis');
+  const wikiHash = `#artist/${miles.id}/list/0`;
+  const rootVisit = async hash => { const target = new URL(rootPage); target.hash = hash; await command('Page.navigate', {url: target.href}); await wait(`location.href===${JSON.stringify(target.href)}&&${ready}`); };
+  const follow = async selector => {
+    const target = await evaluate(`(()=>{const a=document.querySelector(${JSON.stringify(selector)});return a?new URL(a.getAttribute('href'),location.href).href:null})()`); assert.ok(target, selector);
+    await evaluate(`document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}))`);
+    await wait(`location.href===${JSON.stringify(target)}&&${ready}`); return target;
+  };
+  const actionTarget = async text => {
+    await wait(`!![...document.querySelectorAll('main .artist-actions a')].find(a=>a.textContent===${JSON.stringify(text)})`);
+    const box = await evaluate(`(()=>{const a=[...document.querySelectorAll('main .artist-actions a')].find(a=>a.textContent===${JSON.stringify(text)});if(!a)return null;const b=a.getBoundingClientRect();return{height:b.height,text:getComputedStyle(a).fontSize}})()`);
+    assert.ok(box); assert.ok(box.height >= 44); assert.ok(parseFloat(box.text) >= 16); assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);
+  };
+  for (const width of [1440, 390, 320]) {
+    await command('Emulation.setDeviceMetricsOverride',{width,height:width===1440?1100:844,deviceScaleFactor:1,mobile:width!==1440});
+    await rootVisit(`#genre/${jazz.id}/map/0`); await title('Jazz');
+    await follow(`main .map-shell a[href="#artist/${miles.id}"]`); await title('Miles Davis'); await actionTarget('Search connections');
+    const nativeSearch = await follow('main .artist-actions a');
+    assert.equal(new URL(nativeSearch).pathname, nativePage.pathname); assert.equal(new URL(nativeSearch).hash,'#browse/Miles%20Davis/0'); await title('Artists');
+    assert.ok(await evaluate(`document.querySelector('main .artist-list a[href="#artist/${nativeMiles.id}"]')!==null`));
+    await follow(`main .artist-list a[href="#artist/${nativeMiles.id}"]`); await title('Miles Davis'); await actionTarget('Search atlas');
+    if (width!==1440) assert.equal(await evaluate("document.querySelector('.map-shell')!==null"),false);
+    const atlasSearch = await follow('main .artist-actions a');
+    assert.equal(new URL(atlasSearch).pathname,rootPage.pathname); assert.equal(new URL(atlasSearch).hash,'#artists/search/Miles%20Davis/0'); await title('Artists');
+    assert.ok(await evaluate(`document.querySelector('main .names a[href="#artist/${miles.id}"]')!==null`));
+    assert.equal(await evaluate("[...document.querySelectorAll('main h2')].some(h=>h.textContent==='Connections')"),false);
+    await command('Page.reload'); await wait(`${ready}&&document.querySelector('input').value==='Miles Davis'`);
+    await evaluate('history.back()'); await title('Miles Davis'); assert.equal(await evaluate('location.pathname'),nativePage.pathname);
+    await evaluate('history.forward()'); await wait(`${ready}&&location.hash==='#artists/search/Miles%20Davis/0'`); await title('Artists');
+    await screenshot(`cross-catalog-${width}.png`);
+  }
+  const scopedMembership = [];
+  for (const query of ['Can','Yes','Love']) {
+    await rootVisit(`#q/${encodeURIComponent(query)}/0`); await title(query);
+    const count = await evaluate("(()=>{const h=[...document.querySelectorAll('main h2')].find(h=>h.textContent==='Artists');return Number(h.nextElementSibling.textContent.replace(/[^0-9]/g,''))})()");
+    const baseline = [];
+    for(let page=0;page<Math.ceil(count/60);page++) {
+      await go(`#q/${encodeURIComponent(query)}/${page}`); await title(query);
+      baseline.push(...await evaluate(`[...document.querySelectorAll('main .names a[href^="#artist/"]')].map(a=>a.getAttribute('href'))`));
+    }
+    const scoped = [];
+    for(let page=0;page<Math.ceil(count/60);page++) {
+      const hash=`#artists/search/${encodeURIComponent(query)}/${page}`; await go(hash); await title('Artists');
+      await wait(`${ready}&&document.querySelector('input').value===${JSON.stringify(query)}`);
+      scoped.push(...await evaluate("[...document.querySelectorAll('main .names a')].map(a=>a.getAttribute('href'))"));
+    }
+    assert.deepEqual(scoped,baseline); assert.equal(new Set(scoped).size,count); scopedMembership.push({query,count,pages:Math.ceil(count/60)});
+    await command('Page.reload'); await wait(`${ready}&&document.querySelector('input').value===${JSON.stringify(query)}`);
+    await rootVisit(`#artist/${name(artists,query+' (band)').id}/list/0`); await title(query+' (band)');await actionTarget('Search connections');
+    assert.equal(new URL(await evaluate("document.querySelector('main .artist-actions a').href")).hash,`#browse/${query}/0`);
+  }
+  const ambiguous = [];
+  const nativeNames = new Map(); for (const row of nativeArtists) { const key=row.name.normalize('NFKC').toLocaleLowerCase().trim(); if(!nativeNames.has(key))nativeNames.set(key,[]);nativeNames.get(key).push(row.id); }
+  for (const row of artists) { const full=row.name.normalize('NFKC').trim(),base=full.replace(/\s+\([^()]*\)$/u,'');const query=[full,base].find(q=>nativeNames.has(q.toLocaleLowerCase()));if(query&&nativeNames.get(query.toLocaleLowerCase()).length>1){ambiguous.push({row,query,ids:nativeNames.get(query.toLocaleLowerCase())});break;} }
+  assert.equal(ambiguous.length,1);
+  for (const {row,query,ids} of ambiguous) {
+    await rootVisit(`#artist/${row.id}/list/0`);await title(row.name);await actionTarget('Search connections');await follow('main .artist-actions a');await title('Artists');
+    const matches=await evaluate("[...document.querySelectorAll('main .artist-list a')].map(a=>a.getAttribute('href').split('/')[1])");assert.ok(ids.every(id=>matches.includes(id)),query);
+  }
+  const nonLatin = name(nativeArtists, '東京事変');
+  const nativeNonLatin = new URL(nativePage);nativeNonLatin.hash=`#artist/${nonLatin.id}/list/0`;
+  await command('Page.navigate',{url:nativeNonLatin.href});await title(nonLatin.name);await actionTarget('Search atlas');
+  await follow('main .artist-actions a');await title('Artists');assert.equal(await evaluate("document.querySelector('input').value"),nonLatin.name);
+  const unicodeMatches=await evaluate("[...document.querySelectorAll('main .names a')].map(a=>a.getAttribute('href'))");
+  const expectedUnicode=artists.filter(row=>row.name.includes(nonLatin.name)).map(row=>`#artist/${row.id}`);assert.deepEqual(unicodeMatches,expectedUnicode);
+  await evaluate('history.back()');await title(nonLatin.name);assert.equal(await evaluate('location.hash'),nativeNonLatin.hash);
+  // A simulated local optional-catalog failure must leave the atlas entity usable.
+  let optionalFailure = 'offline bundle does not fetch optional catalogs';
+  if (new URL(url).protocol !== 'file:') {
+    const script = await command('Page.addScriptToEvaluateOnNewDocument',{source:"const originalFetch=window.fetch;window.fetch=(...args)=>new URL(args[0],location.href).pathname.endsWith('/artist-network/catalog.json')?Promise.resolve(new Response('',{status:404})):originalFetch(...args);"});
+    try {
+      await rootVisit(wikiHash);await title('Miles Davis');assert.equal(await evaluate("document.querySelector('main .artist-actions')"),null);assert.ok(await evaluate(`document.querySelectorAll('main .names a[href^="#genre/"]').length>0`)); optionalFailure=true;
+    } finally { await command('Page.removeScriptToEvaluateOnNewDocument',{identifier:script.identifier}); }
+    const held = await command('Page.addScriptToEvaluateOnNewDocument',{source:"const originalFetch=window.fetch,releases=[];window.releaseOptionalCatalog=()=>releases.splice(0).forEach(f=>f());window.fetch=(...args)=>new URL(args[0],location.href).pathname.endsWith('/artist-network/catalog.json')?new Promise(resolve=>releases.push(()=>resolve(originalFetch(...args)))):originalFetch(...args);"});
+    try {
+      await command('Page.reload');await wait("typeof window.releaseOptionalCatalog==='function'");await title('Miles Davis');assert.equal(await evaluate("document.querySelector('main .artist-actions')"),null);assert.ok(await evaluate(`document.querySelectorAll('main .names a[href^="#genre/"]').length>0`));
+      await go(`#artist/${fourTet.id}/list/0`);await title('Four Tet');assert.equal(await evaluate("document.querySelector('main .artist-actions')"),null);
+      await evaluate('window.releaseOptionalCatalog()');await actionTarget('Search connections');
+      assert.equal(new URL(await evaluate("document.querySelector('main .artist-actions a').href")).hash,'#browse/Four%20Tet/0');
+      assert.equal(await evaluate("document.querySelectorAll('main .artist-actions').length"),1);optionalFailure={immediate_failure:true,held_response_facts_visible:true,late_response_follows_current_artist:true};
+    } finally { await command('Page.removeScriptToEvaluateOnNewDocument',{identifier:held.identifier}); }
+  }
+  await rootVisit('#artists/search/zzzzzzzzzzzzzzzzzz/0');await title('Artists');assert.ok(await evaluate("document.querySelector('main').textContent.includes('No matches.')"));
+  await rootVisit('#artists/search//0');await title('Artists');assert.ok(await evaluate("document.querySelector('main').textContent.includes('Enter an artist.')"));
+  await rootVisit('#');await title('Genres');
   const external=requests.filter(r=>!['data:','blob:'].includes(new URL(r.url).protocol)&&new URL(r.url).origin!==new URL(url).origin);assert.deepEqual(external,[]);assert.deepEqual(requests.filter(r=>r.type==='Media'),[]);assert.deepEqual(errors,[]);
   if(new URL(url).protocol==='file:')assert.equal(requests.filter(r=>/^https?:/.test(r.url)).length,0);
-  const report={status:'passed',url,counts:receipt.counts,all_genres_reachable:true,root_map:rootMap,complete_paginated_directory:true,complete_genre_members:true,isolated_artist_metadata_suggestions:true,metadata_source_disclosure:true,keyboard_search:true,nonLatin_and_long_name_search:true,landing_search_both_catalogs:true,exact_and_qualified_search_priority:true,desktop_maps_nonoverlapping:true,mobile_default_list:true,mobile_touch:true,mobile_map_readable_44px:true,zoom:true,history_reload:true,empty_state:true,external_requests:0,runtime_errors:errors,screenshots:screenshotCount,publication:false};await writeFile(join(output,'browser-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify(report)+'\n');
+  const report={status:'passed',url,counts:receipt.counts,all_genres_reachable:true,root_map:rootMap,complete_paginated_directory:true,complete_genre_members:true,isolated_artist_metadata_suggestions:true,metadata_source_disclosure:true,keyboard_search:true,nonLatin_and_long_name_search:true,landing_search_both_catalogs:true,exact_and_qualified_search_priority:true,desktop_maps_nonoverlapping:true,mobile_default_list:true,mobile_touch:true,mobile_map_readable_44px:true,zoom:true,history_reload:true,empty_state:true,external_requests:0,runtime_errors:errors,screenshots:screenshotCount,publication:false,cross_catalog_name_search_navigation:true,automatic_identity_joins:0,scoped_search_membership:scopedMembership,ambiguous_native_candidates_preserved:true,optional_native_failure:optionalFailure};await writeFile(join(output,'browser-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify(report)+'\n');
 }catch(error){try{await screenshot('failure.png');if(evaluate)await writeFile(join(output,'dom-state.json'),JSON.stringify(await evaluate("({hash:location.hash,main:document.querySelector('main')?.innerHTML.slice(0,3000)})"),null,2));}catch{}await writeFile(join(output,'browser-failure.json'),JSON.stringify({error:String(error),errors,requests},null,2)+'\n');throw error;}finally{socket?.close();browser.kill('SIGKILL');await new Promise(resolve_=>browser.exitCode!==null||browser.signalCode!==null?resolve_():browser.once('close',resolve_));await rm(profile,{recursive:true,force:true});}

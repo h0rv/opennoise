@@ -8,7 +8,7 @@ const norm = value => normalizeName(value).normalize('NFKD').replace(/\p{M}/gu, 
 const route = (kind, id = '', view = '', page = 0) => `#${kind}${id ? '/' + encodeURIComponent(id) : ''}${view ? '/' + view + '/' + page : ''}`;
 const offline = location.protocol === 'file:';
 const networkURL = id => `artist-network/${offline ? 'OpenNoiseArtists.html' : ''}${id ? '#artist/' + id : ''}`;
-let bundled, genres, byGenre, artists, byArtist, native, sequence = 0;
+let bundled, genres, byGenre, artists, byArtist, native, nativeNames, sequence = 0;
 const detailCache = new Map();
 
 async function load(path) {
@@ -22,6 +22,18 @@ async function artistIndex() {
   return artists;
 }
 async function nativeIndex() { if (!native) native = (await load('artist-network/catalog.json')).artists; return native; }
+async function connectionSearch(name) {
+  try {
+    if (!nativeNames) {
+      const rows = await nativeIndex();
+      if (!Array.isArray(rows) || !rows.every(row => typeof row.id === 'string' && typeof row.name === 'string')) return null;
+      nativeNames = new Set(rows.map(row => row.name.normalize('NFKC').toLocaleLowerCase().trim()));
+    }
+    const full = name.normalize('NFKC').trim();
+    const base = full.replace(/\s+\([^()]*\)$/u, '');
+    return [full, base].find(query => nativeNames.has(query.toLocaleLowerCase())) || null;
+  } catch { return null; }
+}
 async function artistDetail(id) {
   const prefix = id.slice(0, 2);
   if (!detailCache.has(prefix)) detailCache.set(prefix, await load(`atlas/artists/${prefix}.json`));
@@ -150,9 +162,15 @@ async function render() {
         }
       }
     } else if (kind === 'artists') {
-      const rows = ordered(await artistIndex()); if (current !== sequence) return;
-      main.append(make('h1', 'Artists')); const scope = make('p', `${rows.length.toLocaleString()} artists`); scope.className = 'scope'; main.append(scope);
-      paged(rows, Number(value || 0), p => `#artists/${p}`);
+      const scoped = value === 'search', query = scoped ? decodeURIComponent(mode) : '';
+      const all = await artistIndex(); if (current !== sequence) return;
+      const terms = norm(query).split(/\s+/).filter(Boolean);
+      const rows = scoped ? (terms.length ? searchResults(all, terms) : []) : ordered(all);
+      if (scoped) input.value = query;
+      main.append(make('h1', 'Artists')); const scope = make('p', `${rows.length.toLocaleString()} ${scoped ? 'matches' : 'artists'}`); scope.className = 'scope'; main.append(scope);
+      if (scoped && !terms.length) main.append(make('p', 'Enter an artist.'));
+      else if (scoped && !rows.length) main.append(make('p', 'No matches.'));
+      else paged(rows, Number(scoped ? pageValue : value || 0), p => scoped ? `#artists/search/${encodeURIComponent(query)}/${p}` : `#artists/${p}`);
     } else if (kind === 'genre') {
       const genre = byGenre.get(value);
       if (!genre) { location.href = `${offline ? 'OpenNoiseRetained.html' : 'retained.html'}#genre/${encodeURIComponent(value)}`; return; }
@@ -166,7 +184,10 @@ async function render() {
       const row = await artistDetail(value); await artistIndex(); if (current !== sequence) return;
       if (!row) { main.append(make('h1', 'Artist not found')); }
       else {
-        main.append(make('h1', row.name));
+        const heading = make('h1', row.name); main.append(heading);
+        connectionSearch(row.name).then(query => {
+          if (query && current === sequence && heading.isConnected) { const actions = make('nav'); actions.className = 'artist-actions'; actions.setAttribute('aria-label', 'Artist searches'); actions.append(link('Search connections', `artist-network/${offline ? 'OpenNoiseArtists.html' : ''}#browse/${encodeURIComponent(query)}/0`)); heading.after(actions); }
+        });
         entitySource(row.uri, row.suggestion_basis === 'artist_metadata');
         if (row.genres.length) { main.append(make('h2', 'Genres')); names(ordered(row.genres.map(id => byGenre.get(id))), 'genre'); }
         const rows = ordered(row.related.map(id => byArtist.get(id)));
