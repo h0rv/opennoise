@@ -13,6 +13,17 @@ from opennoise.pipeline import artist_network, wiki_artist_atlas
 from opennoise.pipeline import catalog_demo as demo
 from opennoise.pipeline import public_catalog_candidate as candidate
 
+
+class PagesPayloadLimits(unittest.TestCase):
+    def test_single_oversized_asset_fails_below_the_total_payload_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            site = Path(directory)
+            with (site / "oversized.html").open("wb") as stream:
+                stream.truncate(25 * 1024 * 1024 + 1)
+            with self.assertRaisesRegex(ValueError, "Pages file size limit"):
+                candidate.inventory(site)
+
+
 ROOT = Path(__file__).resolve().parents[1]
 NEW_CODE = (
     "pyproject.toml",

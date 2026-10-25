@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import gzip
 import hashlib
 import json
@@ -143,8 +144,15 @@ def _standalone(destination: Path) -> None:
         p.relative_to(destination).as_posix(): read(p) for p in sorted(destination.rglob("*.json"))
     }
     data = json.dumps(files, ensure_ascii=True, allow_nan=False).replace("<", "\\u003c")
+    compressed = base64.b64encode(gzip.compress(data.encode(), mtime=0)).decode("ascii")
     script = (
-        "globalThis.OPENNOISE_ARTIST_FILES=" + data + ";\n" + (destination / "app.mjs").read_text()
+        f"const compressedArtistFiles='{compressed}';\n"
+        "const artistFileBytes=Uint8Array.from(atob(compressedArtistFiles),c=>c.charCodeAt(0));\n"
+        "const artistFileStream=new Blob([artistFileBytes]).stream()"
+        ".pipeThrough(new DecompressionStream('gzip'));\n"
+        "globalThis.OPENNOISE_ARTIST_FILES="
+        "JSON.parse(await new Response(artistFileStream).text());\n"
+        + (destination / "app.mjs").read_text()
     )
     if "</script" in script.lower():
         raise ValueError("Unexpected artist script boundary")

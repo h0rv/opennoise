@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import base64
 import copy
 import gzip
 import hashlib
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,6 +20,28 @@ B = "00000000-0000-4000-8000-000000000002"
 
 
 class ArtistNetworkContracts(unittest.TestCase):
+    def test_compressed_offline_data_preserves_names_and_script_boundaries(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog = {"artists": [{"id": A, "name": "Björk </script><script>"}]}
+            (root / "catalog.json").write_text(json.dumps(catalog))
+            (root / "index.html").write_text(
+                '<link rel="stylesheet" href="style.css">'
+                '<script type="module" src="app.mjs"></script>'
+            )
+            (root / "style.css").write_text("body{color:black}")
+            (root / "app.mjs").write_text("globalThis.ready=true;")
+            network._standalone(root)  # noqa: SLF001 -- Test the standalone output contract.
+            html = (root / "OpenNoiseArtists.html").read_text()
+            encoded = re.search(r"const compressedArtistFiles='([A-Za-z0-9+/=]+)';", html)
+            assert encoded is not None
+            decoded = json.loads(gzip.decompress(base64.b64decode(encoded[1])))
+            self.assertEqual(decoded, {"catalog.json": catalog})
+            self.assertNotIn(catalog["artists"][0]["name"], html)
+            self.assertIn("globalThis.ready=true;", html)
+            network._standalone(root)  # noqa: SLF001 -- Packing the same input is deterministic.
+            self.assertEqual((root / "OpenNoiseArtists.html").read_text(), html)
+
     def test_projection_rejects_private_fields_and_invalid_relationships(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             root = Path(name)

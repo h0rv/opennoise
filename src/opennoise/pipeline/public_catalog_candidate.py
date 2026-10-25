@@ -16,6 +16,8 @@ CONTRACT_SHA256 = "c2c749c5186abc42eb01ef73fb068915920cb86975729b5352277f0c87d90
 REVISION = "retained-public-catalog-candidate-v1"
 MAX_FILES = 4000
 MAX_BYTES = 180_000_000
+# https://developers.cloudflare.com/pages/platform/limits/#file-size
+MAX_MEMBER_BYTES = 25 * 1024 * 1024
 
 
 class PayloadMember(TypedDict):
@@ -66,9 +68,12 @@ def inventory(site: Path) -> dict[str, PayloadMember]:
         if path.is_file():
             if path.suffix not in {".html", ".mjs", ".css", ".json"}:
                 raise ValueError("Candidate payload contains a non-static member")
+            byte_size = path.stat().st_size
+            if byte_size > MAX_MEMBER_BYTES:
+                raise ValueError("Candidate member exceeds the Pages file size limit")
             result[path.relative_to(site).as_posix()] = {
                 "sha256": catalog_demo.digest(path),
-                "bytes": path.stat().st_size,
+                "bytes": byte_size,
             }
     if (
         not result
