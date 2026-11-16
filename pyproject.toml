@@ -2,7 +2,14 @@
 name = "opennoise"
 version = "0.0.0"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "implicit>=0.7.3",
+    "numpy>=2.5.5",
+    "polars>=2.1.0",
+    "pyarrow>=26.0.1",
+    "scipy>=1.18.1",
+    "threadpoolctl>=3.8.0",
+]
 
 [project.scripts]
 on = "opennoise.cli:main"

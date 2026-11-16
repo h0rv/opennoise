@@ -1,0 +1,24 @@
+seed = 42
+min_listeners = 5
+min_artists = 5
+neighbors = 50
+test_fraction = 0.1
+labs_sample = 300
+
+[[als]]
+factors = 64
+regularization = 0.1
+alpha = 1.0
+iterations = 20
+
+[[als]]
+factors = 128
+regularization = 0.1
+alpha = 2.0
+iterations = 20
+
+[[als]]
+factors = 128
+regularization = 1.0
+alpha = 5.0
+iterations = 20

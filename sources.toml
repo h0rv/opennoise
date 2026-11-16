@@ -1,0 +1,5 @@
+[[sources]]
+url = "https://data.metabrainz.org/pub/musicbrainz/listenbrainz/fullexport/listenbrainz-dump-2759-20261101-000003-full/listenbrainz-statistics-dump-20261101-000003.tar.zst"
+date = "2026-11-01"
+sha256 = "92d6151b8fd41a22c6e6f821db954faeb9315e8d2a7ea939790863b5c59a0e42"
+license = "CC0"
