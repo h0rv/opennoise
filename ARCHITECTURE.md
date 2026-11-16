@@ -1,0 +1,173 @@
+# OpenNoise: target design from scratch
+
+Goal: an open Every Noise at Once. Thousands of genres, each with real member artists, placed on a 2D map
+where position means something sonic, plus an artist lookup with good similar artists. The bar is
+quality you can measure against Every Noise (ENAO), not provenance paperwork.
+
+## 1. Why the old repo failed (design-level only)
+
+1. **Process replaced the product.** Sealing, receipts, certification gates and abstention rules
+   were built before any model existed. The result: about 300k lines, a main map with 151 genres
+   and 440 artists, and an H3 recall of 0.15% against ENAO.
+2. **No real modeling.** The "membership" it allowed was only what a source claimed directly. Every
+   learned signal was kept as a "review candidate" and never shipped. ENAO is a model built on
+   listening plus audio, and nothing short of a model gets close to it.
+3. **The reference was banned as a training signal.** ENAO's 6,291 coordinates and genre-to-artist
+   memberships were declared evaluation-only, so open genre names matched only 11% of ENAO names.
+4. **Tiny, shifting scopes.** It jumped between FMA, a 433-artist CC0 pack, the MusicBrainz bulk
+   tags and 1k Wikidata genres, so no pipeline ever ran end to end at full scale.
+5. **The one good signal was left on the side.** ListenBrainz co-listening already gives good similar
+   artists for about 11.9k artists on the Connections page, but genres and the map never used it, and it lives on the unmerged `ml/artist-graph-v1` branch.
+6. **Docs crowded out the code.** There were 186 checkpoint docs, and the README became a list of caveats.
+
+Rules going forward: one pipeline, full scale, every run scored. Licensing is settled once per source
+(table below) and is not a runtime gate.
+
+## 2. What ENAO actually is (what we approximate)
+
+- **Genres** are clusters of artists found from Spotify listening, named by a person or by web and
+  playlist text. That gives about 6,300 genres, most of them micro-genres.
+- **Map axes** come from Echo Nest audio attributes. Up is organic and down is mechanical/electric;
+  left is dense/atmospheric and right is spiky/bouncy. Color is a mix of other attributes. A genre's
+  position is the mean of its artists' audio features.
+- **Inside a genre**, artists are placed the same way. Clicking one plays a preview.
+- **Similar artists** come from listening.
+
+So we need three open signals: **listening (who goes with whom)**, **tags/text (what to call it)**
+and **audio (where it sits)**.
+
+## 3. Sources
+
+| Signal | Source | Scale | Terms | Use |
+|---|---|---|---|---|
+| Identity spine | MusicBrainz JSON/PG dump | ~2.5M artists | CC0 core | MBIDs; URL rels give Discogs, Wikidata, Spotify, Deezer IDs |
+| Similar artists | ListenBrainz labs similar-artists (`session_based_days_1800_session_300_contribution_3_threshold_10_limit_100_filter_True_skip_30`) | about 200k pairs from 3.1k seeds so far | CC0 | the proven baseline from `ml/artist-graph-v1`. Re-implement it in about 100 lines |
+| Listening | ListenBrainz full listen dumps | ~1B+ listens, tens of thousands of users | CC0 | user x artist matrix, the core of the similarity graph |
+| Listening (gap filler) | Last.fm API `artist.getSimilar` / `getTopTags` | per artist | API ToS, non-commercial, no bulk redistribution | fills the long tail where LB is sparse. Use derived scores only, never redistribute raw data |
+| Styles | Discogs monthly dumps | ~16M releases, ~600 styles | CC0 | artist style distribution weighted by release count. This is the best open micro-genre vocabulary |
+| Tags | MusicBrainz tags/genres | ~2k genres | tags CC BY-NC-SA | genre names, aliases, artist tag vectors |
+| Taxonomy | Wikidata P136/P279/P737 | ~15k music genres | CC0 | parent edges, names, origins |
+| Audio descriptors | AcousticBrainz dumps (frozen 2022) | ~7M recordings | CC0 | low/high-level features for the map axes |
+| Audio (new) | Deezer/iTunes 30s previews -> Essentia Discogs-EffNet / MAEST / CLAP embeddings | top N tracks per artist | compute locally, never store or redistribute audio | sonic embeddings for artists AcousticBrainz lacks; also the in-app previews (fetched client side at runtime) |
+| Reference | ENAO final map (quint-t, sha256 `1ac0c659…`), genre->artist map (NeroYuki `spotify_genres_artists_map.json` @88bd6f6, 6,435 genres -> Spotify artist IDs), EveryNoise-Watch 2021 coordinates | 6,291 genres | no license / CC-BY-SA | **supervision and evaluation**: genre vocabulary, membership labels, axis targets, with a held-out split for eval. Raw ENAO data is never published |
+
+**Main risk:** ListenBrainz has a small user base next to Spotify, so co-listening alone will
+resolve broad and mid-level genres well but not micro-genres. Discogs styles, Last.fm similarity and
+audio embeddings cover that gap. This is the real ceiling on ENAO-level quality and should be measured
+early (see M1).
+
+Already tried, don't repeat: topic models on MusicBrainz tags (novel-label recall 1.5%); exact-name
+matching of tags to ENAO names (11-34% ceiling); building on FMA (almost no mainstream overlap).
+AcousticBrainz is patchy per artist, so it needs preview embeddings beside it.
+
+## 4. Pipeline
+
+Every stage is a pure function from Parquet to Parquet, run by Polars or DuckDB. A run directory holds
+its outputs, keyed by the config hash.
+
+```
+ingest/      raw dumps -> normalized parquet (artists, recordings, listens_agg, styles, tags, audio)
+identity/    MBID crosswalk (Discogs, Wikidata, Spotify, Deezer, Last.fm); fuzzy-match only as a last resort
+signals/
+  colisten   LB user x artist -> min-count filter -> PPMI + implicit ALS (or item2vec) -> artist_emb_listen (d=128)
+  tags       Discogs style dist + MB tags + Last.fm tags -> TF-IDF -> artist_tagvec (sparse) + artist_emb_tag (SVD)
+  audio      AcousticBrainz/Essentia per recording -> artist mean over top tracks -> artist_audio (axes + emb)
+fuse/        artist_emb = concat/learned weighting of listen|tag|audio; kNN graph (FAISS/hnswlib, k=50)
+genres/
+  supervise  ENAO memberships mapped via Spotify->MBID (MB URL rels) -> train an artist x genre
+             multi-label classifier (kNN label propagation, then a linear/MLP head on artist_emb) for the
+             6.3k ENAO genres; held-out artists and genres feed eval. This is the main path to parity.
+  discover   Leiden on kNN graph at multiple resolutions -> nested communities (broad > mid > micro)
+  name       label each community with its most enriched specific tag (lift vs parent); LLM tie-break
+             for naming only; match to taxonomy/ENAO names by member and name overlap
+  member     soft membership: artist x genre score; multi-label; threshold per genre
+  relate     genre centroids in each space; genre-genre similarity; hierarchy = Leiden nesting
+             reconciled with Wikidata P279
+layout/
+  axes       ENAO-style: y = organic<->electric, x = dense<->spiky, color = 3 more features. Fit a
+             regression from genre audio/listen centroids to ENAO x/y, then apply it to every genre
+             (new ones included); a small repulsion pass for label readability
+  islands    UMAP of genre embeddings -> density contours = islands (broad genres), labels per zoom
+  tree       hierarchy JSON for the tree and radial view
+similar/     artist top-k neighbors (listen-dominant, re-ranked by tag/audio agreement)
+export/      PMTiles (genres, artists by zoom), per-genre and per-artist JSON shards, search index
+eval/        scores every run against the benchmarks below
+```
+
+Notes:
+- **Scale.** Keep artists with at least X distinct LB listeners or at least Y Discogs releases. Target
+  is 200k to 500k artists in the graph and 60k to 150k on the map. One beefy box with DuckDB is
+  enough; no Spark.
+- **Provenance** is one `sources.toml` row per snapshot (URL, date, sha256, licence). Nothing more.
+- **Fusion weights** are tuned against eval, not chosen by hand.
+- **Genre count** is a dial (Leiden resolution plus minimum size). Target is 3k to 6k named genres.
+- **Unnamed or weak clusters** stay out of the map but stay in the data.
+
+## 5. Evaluation (the "objective quality" part)
+
+One `eval` stage, one row per run in `experiments/results.tsv`:
+
+| Metric | Definition |
+|---|---|
+| genre_match | share of ENAO genres matched by a discovered genre (member Jaccard >= 0.2 via the Spotify->MBID crosswalk) |
+| member_recall@k | per matched ENAO genre, its ENAO artists found in our top-k members |
+| map_neighbor_overlap | per genre, overlap of its 10 nearest map neighbors with ENAO's |
+| axis_corr | Spearman between our axes and ENAO's x/y for matched genres |
+| similar_artist_ndcg | vs held-out LB co-listening and Last.fm getSimilar |
+| coverage | artists placed, genres named, share of genres with at least 10 members |
+| spot_check | fixed probe list (Aphex Twin, Boards of Canada, Four Tet; shoegaze, vapor soul, ...) rendered to a diff file and reviewed by eye |
+
+Each run must beat the previous best on a primary metric or be logged as a failure.
+
+## 6. Experiments, without slop
+
+- `experiments/results.tsv`: append-only. Columns: date, commit, config hash, change, metrics, kept or
+  discarded, and a one-line note. Failures stay in it.
+- `configs/*.toml`: one file per pipeline variant. A run is `on run configs/x.toml`.
+- `runs/<hash>/`: gitignored artifacts and eval JSON. Promoting a run copies its export to `release/`.
+- Docs are `README.md` (run it) and `ARCHITECTURE.md` (this design, kept current). Nothing else.
+
+## 7. UI/UX (last; static)
+
+- **Map.** MapLibre GL or deck.gl over PMTiles on Cloudflare R2/Pages. Zooming out shows islands
+  (broad genres, terrain-style, like Wilson Lin's HN map). Mid zoom shows genre labels sized by
+  popularity. Close zoom shows the artists inside a genre at their audio positions.
+- **ENAO mode.** A flat genre field on the ENAO axes, where clicking plays a preview (Deezer, fetched
+  client side).
+- **Tree.** Root > broad > mid > micro as a collapsible or radial tree. It is a second view of the same
+  hierarchy JSON.
+- **Artist page.** Its genres (with scores), similar artists, its position on the map, and outbound
+  links (MB, Discogs, Spotify, Bandcamp).
+- **Search.** A prebuilt static index over artist and genre names. No server.
+
+## 8. Stack
+
+- **Python 3.13, uv, Polars + DuckDB, Parquet.** This is the best tool fit for dumps, ALS, Leiden and
+  UMAP. Rust or Elixir would add nothing here.
+- **Modeling:** `implicit` (ALS), `leidenalg`/igraph, `umap-learn`, `hnswlib`, `essentia-tensorflow`
+  (audio), `torch` only if we learn fusion.
+- **Orchestration:** one CLI (`on ingest|build|eval|export|run`), with stages cached by input hash.
+  No Dagster or Airflow.
+- **Front end:** Vite + TypeScript + MapLibre. Tiles are built with `tippecanoe`.
+- **Code:** a single flat package of ~10 modules matching section 4, no comments, ruff + ty, tests
+  only for the identity crosswalk and eval math. Budget: under 5k lines of Python to reach M3.
+
+## 9. Milestones
+
+1. **M1 Listening graph.** Ingest MB + LB. Build the ALS artist embedding and similar artists for 200k
+   artists. Measure similar_artist_ndcg and the probe list. *This decides the micro-genre ceiling.*
+2. **M2 Genres.** Add ENAO-supervised membership, Discogs, MB tags and Leiden + naming for genres outside ENAO. First genre_match and member_recall
+   against ENAO.
+3. **M3 Map.** Add AcousticBrainz and preview embeddings for the axes. Ship islands + ENAO mode +
+   artist pages.
+4. **M4 Quality loop.** Tune fusion weights and resolution against eval. Add the tree view and
+   Last.fm gap-fill.
+
+## 10. Decisions for Robert (defaults in bold)
+
+1. Train on ENAO (memberships as labels, coordinates as axis targets), with a held-out split for
+   eval? **Yes. It is the only route to parity. Publish our derived model outputs, never the raw ENAO
+   files.** (ENAO data has no license, so publishing even derived outputs carries some risk.)
+2. Use the Last.fm API for gap-fill (non-commercial)? **Yes, derived scores only.**
+3. Audio previews: compute embeddings locally from Deezer previews? **Yes, store embeddings only.**
+4. Repo: archive the old `main` as `archive/v1` and start a fresh orphan `main`. **Yes.**

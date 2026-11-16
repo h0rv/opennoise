@@ -1,0 +1,21 @@
+[project]
+name = "opennoise"
+version = "0.0.0"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+on = "opennoise.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["ruff", "ty", "pytest"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
