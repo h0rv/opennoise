@@ -33,6 +33,12 @@ const modes: Record<View, { label: string; description: string }> = {
 async function start() {
   const catalog = await new Catalog().load();
   const genres = new Map(catalog.genres.map((genre) => [genre.id, genre]));
+  const children = new Map<string | null, Genre[]>();
+  for (const genre of catalog.genres) {
+    const siblings = children.get(genre.parent_id) || [];
+    siblings.push(genre);
+    children.set(genre.parent_id, siblings);
+  }
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
   const releaseStatus = `${catalog.manifest.release_id} · ${catalog.manifest.data_kind === 'synthetic' ? 'Design fixture, not a quality benchmark.' : 'Explore the published model.'}`;
   let view: View = catalog.manifest.layouts.islands
@@ -47,7 +53,9 @@ async function start() {
   let cameraView: 'axes' | 'islands' = 'islands';
   let homeCamera = { scale: 1, x: 0, y: 0 };
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
-  const collapsed = new Set<string>();
+  const expanded = new Set(catalog.genres.length <= 200 ? genres.keys() : []);
+  const treePages = new Map<string | null, number>();
+  const treePageSize = 50;
   let trail: Selection[] = [];
   let storageAvailable = true;
   const storageKey = `opennoise:trail:${catalog.manifest.release_id}`;
@@ -109,14 +117,22 @@ async function start() {
   }
 
   function tree(parent: string | null, seen = new Set<string>()): string {
-    return `<ul>${catalog.genres
-      .filter((genre) => genre.parent_id === parent && !seen.has(genre.id))
+    const siblings = children.get(parent) || [];
+    const offset = treePages.get(parent) || 0;
+    const pageButton = (start: number, label: string) =>
+      `<button data-tree-page="${escape(parent || '')}" data-offset="${start}">${label}</button>`;
+    return `<ul>${siblings
+      .slice(offset, offset + treePageSize)
+      .filter((genre) => !seen.has(genre.id))
       .map((genre) => {
-        const hasChildren = catalog.genres.some((child) => child.parent_id === genre.id);
+        const hasChildren = children.has(genre.id);
+        const open = expanded.has(genre.id);
         const node = `${entityButton('genre', genre.id, genre.name, undefined, genre.color)}<span class="muted">${count(genre.member_count)}</span>`;
-        return `<li>${hasChildren ? `<details data-tree="${escape(genre.id)}" ${collapsed.has(genre.id) ? '' : 'open'}><summary>${node}</summary>${tree(genre.id, new Set([...seen, genre.id]))}</details>` : node}</li>`;
+        return `<li>${hasChildren ? `<details data-tree="${escape(genre.id)}" ${open ? 'open' : ''}><summary>${node}</summary>${open ? tree(genre.id, new Set([...seen, genre.id])) : ''}</details>` : node}</li>`;
       })
-      .join('')}</ul>`;
+      .join(
+        '',
+      )}${siblings.length > treePageSize ? `<li>${offset ? pageButton(offset - treePageSize, 'Previous') : ''} <span>${offset + 1}–${Math.min(offset + treePageSize, siblings.length)} of ${siblings.length.toLocaleString()}</span> ${offset + treePageSize < siblings.length ? pageButton(offset + treePageSize, 'Next') : ''}</li>` : ''}</ul>`;
   }
 
   function renderCanvas() {
@@ -258,10 +274,14 @@ async function start() {
 
   function renderDetail() {
     if (!selected) {
-      drawer.innerHTML = `<h2>Genre or artist</h2><p class="detail-lede">Select a genre on the map or search for an artist.</p><section><h3>Genre families</h3>${catalog.genres
-        .filter((genre) => !genre.parent_id)
+      drawer.innerHTML = `<h2>Genre or artist</h2><p class="detail-lede">Select a genre on the map or search for an artist.</p><section><h3>Genre families</h3>${(
+        children.get(null) || []
+      )
+        .slice(0, treePageSize)
         .map((genre) => entityButton('genre', genre.id, genre.name, undefined, genre.color))
-        .join('')}</section>`;
+        .join(
+          '',
+        )}${(children.get(null)?.length || 0) > treePageSize ? '<p class="muted">Showing the first 50 families. Search all genres above.</p>' : ''}</section>`;
       return;
     }
     if (!detail) return;
@@ -376,6 +396,20 @@ async function start() {
     controller.abort();
     controller = new AbortController();
     selected = selection;
+    if (selection.kind === 'genre') {
+      let genre = genres.get(selection.id);
+      const seen = new Set<string>();
+      while (genre && !seen.has(genre.id)) {
+        seen.add(genre.id);
+        const siblings = children.get(genre.parent_id) || [];
+        treePages.set(
+          genre.parent_id,
+          Math.floor(siblings.indexOf(genre) / treePageSize) * treePageSize,
+        );
+        if (genre.parent_id) expanded.add(genre.parent_id);
+        genre = genre.parent_id ? genres.get(genre.parent_id) : undefined;
+      }
+    }
     detail = null;
     if (push) writeURL();
     drawer.innerHTML = '<p class="empty" role="status">Loading details…</p>';
@@ -430,11 +464,12 @@ async function start() {
       results.innerHTML = '';
       return;
     }
-    const matches = catalog.search
-      .filter((entry) =>
-        [entry.name, ...entry.aliases].some((name) => name.toLocaleLowerCase().includes(query)),
-      )
-      .slice(0, 12);
+    const matches: SearchEntry[] = [];
+    for (const entry of catalog.search) {
+      if ([entry.name, ...entry.aliases].some((name) => name.toLocaleLowerCase().includes(query)))
+        matches.push(entry);
+      if (matches.length === 12) break;
+    }
     results.innerHTML = matches.length
       ? matches
           .map(
@@ -453,9 +488,14 @@ async function start() {
   });
   app.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>(
-      '[data-kind], [data-view], [data-zoom], [data-remove], button[id]',
+      '[data-kind], [data-view], [data-zoom], [data-remove], [data-tree-page], button[id]',
     );
     if (!target) return;
+    if (target.dataset.treePage !== undefined) {
+      treePages.set(target.dataset.treePage || null, Number(target.dataset.offset));
+      renderCanvas();
+      return;
+    }
     if (target.dataset.kind && target.dataset.id) {
       void select({ kind: target.dataset.kind as Selection['kind'], id: target.dataset.id });
       return;
@@ -504,8 +544,14 @@ async function start() {
     (event) => {
       const target = event.target;
       if (target instanceof HTMLDetailsElement && target.dataset.tree) {
-        if (target.open) collapsed.delete(target.dataset.tree);
-        else collapsed.add(target.dataset.tree);
+        if (target.open) {
+          expanded.add(target.dataset.tree);
+          if (!target.querySelector(':scope > ul'))
+            target.insertAdjacentHTML('beforeend', tree(target.dataset.tree));
+        } else {
+          expanded.delete(target.dataset.tree);
+          target.querySelector(':scope > ul')?.remove();
+        }
       }
     },
     true,
