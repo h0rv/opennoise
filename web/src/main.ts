@@ -5,7 +5,7 @@ import { PreviewPlayer } from './preview';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import './style.css';
 
-type View = 'axes' | 'islands' | 'tree';
+type View = 'axes' | 'tree';
 type Selection = Pick<SearchEntry, 'kind' | 'id'>;
 const app = document.querySelector<HTMLElement>('#app')!;
 const escape = (value: unknown) =>
@@ -21,9 +21,6 @@ const modes: Record<View, { label: string }> = {
   axes: {
     label: 'Sonic map',
   },
-  islands: {
-    label: 'Islands',
-  },
   tree: {
     label: 'Genre tree',
   },
@@ -38,11 +35,7 @@ async function start() {
     terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
   }));
   let indexedSearch = catalog.search;
-  let view: View = catalog.manifest.layouts.axes
-    ? 'axes'
-    : catalog.manifest.layouts.islands
-      ? 'islands'
-      : 'tree';
+  let view: View = catalog.manifest.layouts.axes ? 'axes' : 'tree';
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
   let controller = new AbortController();
@@ -74,16 +67,22 @@ async function start() {
       <nav class="modes" aria-label="Atlas view">${Object.entries(modes)
         .map(
           ([key, mode]) =>
-            `<button data-view="${key}" ${key !== 'tree' && !catalog.manifest.layouts[key as 'axes' | 'islands'] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
+            `<button data-view="${key}" ${key === 'axes' && !catalog.manifest.layouts.axes ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved (<span id="trail-count">${trail.length}</span>)</button></div>
-    <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div><aside aria-label="Selected genre or artist"><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside></section>
+      <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved (<span id="trail-count">${trail.length}</span>)</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar">Details</button></div>
+    <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div></section>
+    <aside id="sidebar" popover aria-label="Selected genre or artist"><button id="detail-close" popovertarget="sidebar" popovertargetaction="hide">Close details</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside>
     <section class="trail" id="trail" aria-label="Saved discovery trail" hidden></section>
     <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
   const drawer = document.querySelector<HTMLElement>('#detail')!;
+  const sidebar = document.querySelector<HTMLElement>('#sidebar')!;
+  const detailToggle = document.querySelector<HTMLButtonElement>('#detail-toggle')!;
+  sidebar.addEventListener('toggle', () => {
+    detailToggle.setAttribute('aria-expanded', String(sidebar.matches(':popover-open')));
+  });
   const search = document.querySelector<HTMLInputElement>('#search')!;
   const results = document.querySelector<HTMLElement>('#results')!;
   const trailPanel = document.querySelector<HTMLElement>('#trail')!;
@@ -297,6 +296,7 @@ async function start() {
     detail = null;
     if (push) writeURL();
     drawer.innerHTML = '<p class="empty" role="status">Loading details…</p>';
+    sidebar.showPopover();
     renderCanvas(true);
     results.innerHTML = '';
     try {
@@ -323,7 +323,7 @@ async function start() {
       }
       renderDetail();
       renderCanvas(true);
-      if (focusDetails) drawer.focus({ preventScroll: true });
+      if (focusDetails && sidebar.matches(':popover-open')) drawer.focus({ preventScroll: true });
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
         return;
@@ -335,11 +335,7 @@ async function start() {
     status.textContent = '';
     const params = new URLSearchParams(location.hash.slice(1));
     const requestedView = params.get('view');
-    if (
-      requestedView === 'tree' ||
-      ((requestedView === 'axes' || requestedView === 'islands') &&
-        catalog.manifest.layouts[requestedView])
-    )
+    if (requestedView === 'tree' || (requestedView === 'axes' && catalog.manifest.layouts.axes))
       view = requestedView;
     const kind = params.get('kind'),
       id = params.get('id');
@@ -354,6 +350,7 @@ async function start() {
       controller.abort();
       selected = null;
       detail = null;
+      sidebar.hidePopover();
       renderCanvas();
       renderDetail();
       if (id)
@@ -432,6 +429,7 @@ async function start() {
       renderCanvas();
       return;
     }
+    if (target.id === 'detail-close') detailToggle.focus();
     if (target.dataset.zoom === 'in') zoomMap(1.35);
     if (target.dataset.zoom === 'out') zoomMap(1 / 1.35);
     if (target.dataset.zoom === 'reset') resetMap();
@@ -477,7 +475,7 @@ async function start() {
     }
     if (event.key === 'Escape') {
       results.innerHTML = '';
-      search.focus();
+      if (!sidebar.matches(':popover-open')) search.focus();
     }
   });
   document.addEventListener('click', (event) => {

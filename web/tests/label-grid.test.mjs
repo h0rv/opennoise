@@ -66,6 +66,16 @@ test('genre size wins collisions, selected genre remains reachable, ties are sta
   assert.equal(visibleDepth(64, 1), 6);
 });
 
+test('map labels keep breathing room horizontally and vertically', () => {
+  const viewport = { width: 1000, height: 600 };
+  const grid = new LabelGrid();
+  assert.equal(grid.place(labelBox(100, 100, 90, 14, viewport).box), true);
+  assert.equal(grid.place(labelBox(210, 100, 90, 14, viewport).box), false);
+  assert.equal(grid.place(labelBox(100, 125, 90, 14, viewport).box), false);
+  assert.equal(grid.place(labelBox(230, 100, 90, 14, viewport).box), true);
+  assert.equal(grid.place(labelBox(100, 140, 90, 14, viewport).box), true);
+});
+
 test('full release-sized grid retains only disjoint boxes', () => {
   const grid = new LabelGrid();
   let accepted = 0;

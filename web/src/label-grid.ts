@@ -18,10 +18,10 @@ export function labelBox(
 ) {
   const textX = x + width + 14 < viewport.width ? x + 9 : x - width - 9;
   const box = {
-    left: Math.min(x - 5, textX - 3),
-    right: Math.max(x + 5, textX + width + 3),
-    top: y - size - 3,
-    bottom: y + 6,
+    left: Math.min(x - 8, textX - 8),
+    right: Math.max(x + 8, textX + width + 8),
+    top: y - size - 7,
+    bottom: y + 10,
   };
   return box.left < 3 ||
     box.right > viewport.width - 3 ||
