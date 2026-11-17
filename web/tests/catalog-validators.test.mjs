@@ -48,7 +48,7 @@ test('precompiled checks keep ID, range, alias, URL and extra-field rules', () =
     ['Genres', genres, (data) => (data[0].aliases = ['duplicate', 'duplicate'])],
     ['Genres', genres, (data) => (data[0].extra = true)],
     ['Search', search, (data) => Object.assign(data[0], { kind: 'artist', id: 'bad' })],
-    ['ArtistDetail', artist, (data) => (data.links = [{ label: 'bad', url: 'https://' }])],
+    ['ArtistDetail', artist, (data) => (data.links = [{ label: 'bad', url: 'https://bad url' }])],
   ];
   for (const [definition, original, mutate] of checks) {
     const data = structuredClone(original);
