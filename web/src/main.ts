@@ -303,13 +303,15 @@ async function start() {
           : await catalog.artist(selection.id, controller.signal);
       if (selected !== selection) return;
       detail = loaded;
-      if ('artist' in loaded)
+      if ('artist' in loaded) {
         lookup.set(`artist:${loaded.artist.id}`, {
           kind: 'artist',
           id: loaded.artist.id,
           name: loaded.artist.name,
           aliases: [],
         });
+        renderTrail();
+      }
       renderDetail();
       renderCanvas(true);
       if (focusDetails) drawer.focus({ preventScroll: true });
@@ -350,6 +352,18 @@ async function start() {
     }
   }
 
+  async function loadSearchIndex() {
+    const entries = await catalog.loadSearch();
+    if (entries === indexedSearch) return;
+    searchIndex = entries.map((entry) => ({
+      entry,
+      terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
+    }));
+    for (const entry of entries) lookup.set(`${entry.kind}:${entry.id}`, entry);
+    indexedSearch = entries;
+    renderTrail();
+  }
+
   search.addEventListener('input', async () => {
     const query = search.value.trim().toLocaleLowerCase();
     if (!query) {
@@ -358,15 +372,7 @@ async function start() {
     }
     results.innerHTML = '<p role="status">Searching…</p>';
     try {
-      const entries = await catalog.loadSearch();
-      if (entries !== indexedSearch) {
-        searchIndex = entries.map((entry) => ({
-          entry,
-          terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
-        }));
-        for (const entry of entries) lookup.set(`${entry.kind}:${entry.id}`, entry);
-        indexedSearch = entries;
-      }
+      await loadSearchIndex();
     } catch {
       if (search.value.trim().toLocaleLowerCase() === query)
         results.innerHTML =
@@ -429,7 +435,14 @@ async function start() {
       document
         .querySelector('#trail-toggle')!
         .setAttribute('aria-expanded', String(!trailPanel.hidden));
-      if (!trailPanel.hidden) trailPanel.scrollIntoView({ block: 'nearest' });
+      if (!trailPanel.hidden) {
+        trailPanel.scrollIntoView({ block: 'nearest' });
+        if (trail.some((entry) => !lookup.has(`${entry.kind}:${entry.id}`)))
+          void loadSearchIndex().catch(() => {
+            if (!trailPanel.hidden)
+              status.textContent = 'Saved names unavailable. Close and reopen Saved to retry.';
+          });
+      }
     }
   });
   app.addEventListener('keydown', (event) => {
