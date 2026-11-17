@@ -1,0 +1,33 @@
+{
+  "artist": {
+    "id": "00000000-0000-4000-8000-000000000006",
+    "name": "Fixture Artist 6",
+    "listeners": null,
+    "positions": {
+      "axes": {
+        "x": 0.65,
+        "y": 0.7
+      },
+      "islands": null
+    },
+    "color": null
+  },
+  "genres": [
+    {
+      "id": "nu-jazz",
+      "score": 0.95
+    },
+    {
+      "id": "jazz",
+      "score": 0.9
+    }
+  ],
+  "similar": [],
+  "signals": [
+    "listening",
+    "tags",
+    "audio"
+  ],
+  "links": [],
+  "preview": null
+}

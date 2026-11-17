@@ -1,0 +1,51 @@
+{
+  "genre": {
+    "id": "shoegaze",
+    "name": "Shoegaze",
+    "aliases": [],
+    "parent_id": "rock",
+    "member_count": 1,
+    "positions": {
+      "axes": {
+        "x": 0.12,
+        "y": 0.55
+      },
+      "islands": {
+        "x": 0.525,
+        "y": 0.43000000000000005
+      }
+    },
+    "color": "#cc75b7"
+  },
+  "members": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000003",
+        "name": "Fixture Artist 3",
+        "listeners": 400,
+        "positions": {
+          "axes": {
+            "x": 0.12,
+            "y": 0.55
+          },
+          "islands": {
+            "x": 0.52,
+            "y": 0.4
+          }
+        },
+        "color": "#cc75b7"
+      },
+      "score": 0.95
+    }
+  ],
+  "related": [
+    {
+      "id": "rock",
+      "score": 0.85
+    },
+    {
+      "id": "post-rock",
+      "score": 0.75
+    }
+  ]
+}

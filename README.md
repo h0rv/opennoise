@@ -25,6 +25,7 @@ MusicBrainz tags carry CC BY-NC-SA terms; these named outputs are not asserted t
 
 M2b reuses the kept fine-k20 clusters and split, comparing MusicBrainz naming with CC0
 Discogs styles ingested by the tag experiment. MusicBrainz names are evaluation-only.
+The current tag cache reuses that session's completed MBID-to-styles Parquet; ingest skips it.
 
 ```sh
 uv run on ingest configs/tags.toml
@@ -76,3 +77,16 @@ styles count main-artist release credits. Outputs include `artist_tags.parquet`,
 TF-IDF vectors and vocabularies, coverage, probes, and `similar.parquet`. Tags only rerank the
 existing M1 top-50 candidates. Weights are selected on half the held-out users; the untouched
 half compares only the selected method and baseline. Labs overlap@50 cannot change in this test.
+
+## Atlas UX study
+
+```sh
+npm --prefix web ci
+npm --prefix web run dev
+```
+
+The study uses the shared synthetic catalog fixture, not model results. Islands, sonic map and
+tree share one selection; field notes link genres and artists, and a trail saves stops locally.
+Set `VITE_CATALOG_URL` to a release's `manifest.json` to use its data (cross-origin hosts need CORS).
+`npm --prefix web run lint` and `npm --prefix web run build` check formatting, regenerate types
+from the pipeline schema, type-check and build a static site. No preview playback is connected yet.

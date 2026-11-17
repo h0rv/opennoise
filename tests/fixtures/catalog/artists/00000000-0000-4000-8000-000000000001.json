@@ -1,0 +1,56 @@
+{
+  "artist": {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "name": "Fixture Artist 1",
+    "listeners": 600,
+    "positions": {
+      "axes": {
+        "x": 0.8,
+        "y": 0.1
+      },
+      "islands": {
+        "x": 0.2,
+        "y": 0.4
+      }
+    },
+    "color": "#698cff"
+  },
+  "genres": [
+    {
+      "id": "techno",
+      "score": 0.95
+    },
+    {
+      "id": "electronic",
+      "score": 0.9
+    }
+  ],
+  "similar": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000002",
+        "name": "Fixture Artist 2",
+        "listeners": 500,
+        "positions": {
+          "axes": {
+            "x": 0.9,
+            "y": 0.25
+          },
+          "islands": {
+            "x": 0.2,
+            "y": 0.6000000000000001
+          }
+        },
+        "color": "#698cff"
+      },
+      "score": 0.88
+    }
+  ],
+  "signals": [
+    "listening",
+    "tags",
+    "audio"
+  ],
+  "links": [],
+  "preview": null
+}

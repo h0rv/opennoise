@@ -1,0 +1,51 @@
+{
+  "genre": {
+    "id": "house",
+    "name": "House",
+    "aliases": [],
+    "parent_id": "electronic",
+    "member_count": 1,
+    "positions": {
+      "axes": {
+        "x": 0.9,
+        "y": 0.25
+      },
+      "islands": {
+        "x": 0.22999999999999998,
+        "y": 0.63
+      }
+    },
+    "color": "#698cff"
+  },
+  "members": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000002",
+        "name": "Fixture Artist 2",
+        "listeners": 500,
+        "positions": {
+          "axes": {
+            "x": 0.9,
+            "y": 0.25
+          },
+          "islands": {
+            "x": 0.2,
+            "y": 0.6000000000000001
+          }
+        },
+        "color": "#698cff"
+      },
+      "score": 0.95
+    }
+  ],
+  "related": [
+    {
+      "id": "electronic",
+      "score": 0.85
+    },
+    {
+      "id": "techno",
+      "score": 0.75
+    }
+  ]
+}

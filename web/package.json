@@ -1,0 +1,29 @@
+{
+  "name": "opennoise-atlas",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "types": "node generate-types.mjs",
+    "dev": "npm run types && vite --host 0.0.0.0",
+    "check": "npm run types && tsc --noEmit",
+    "lint": "prettier --check src/main.ts src/data.ts src/style.css index.html vite.config.ts tsconfig.json package.json generate-types.mjs",
+    "build": "npm run check && vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@panzoom/panzoom": "4.6.2",
+    "ajv": "8.18.0",
+    "ajv-formats": "3.0.1"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "15.0.4",
+    "prettier": "3.6.2",
+    "typescript": "5.9.3",
+    "vite": "6.4.6"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 100
+  }
+}
