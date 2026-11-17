@@ -12,7 +12,7 @@ from threadpoolctl import threadpool_limits
 from umap import UMAP
 
 from opennoise import grouping, layout, tags
-from opennoise.catalog import hierarchy
+from opennoise.catalog import hierarchy, tables
 
 
 def bounds(sets):
@@ -69,10 +69,9 @@ def export(config, run):
     if winners != expected:
         raise ValueError("Expected the fixed ALS+audio layout models")
     artists = pl.read_parquet(m1 / "artists.parquet").sort("item")
-    raw = Path(catalog["export"])
-    rows = pl.read_parquet(raw / "genres.parquet").to_dicts()
+    genres, memberships = tables(catalog)
+    rows = genres.to_dicts()
     parents = hierarchy(rows, {r["id"] for r in rows})
-    memberships = pl.read_parquet(raw / "memberships.parquet")
     public = {int(k): v for k, v in json.loads((source / "genre_ids.json").read_text()).items()}
     if catalog.get("group_siblings"):
         memberships, _, _, _ = grouping.siblings(rows, parents, memberships, public)
