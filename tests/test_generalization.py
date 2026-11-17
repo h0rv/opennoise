@@ -217,6 +217,40 @@ def test_ingest_sealed_cache(tmp_path, monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["sha256"] == summary["sha256"]
 
 
+def test_evaluate_layout_item_join(reference, tmp_path, monkeypatch):
+    reference.write_parquet(tmp_path / "wikidata.parquet")
+    layout = pl.DataFrame(
+        {"genre": ["g0", "g1", "g2", "g3"], "x": [0.0, 0.1, 10.0, 10.1], "y": [0.0] * 4}
+    )
+    layout.write_parquet(tmp_path / "layout.parquet")
+    pl.DataFrame({"genre": ["g0", "g1", "g2", "g3"], "item": [9, 2, 4, 7]}).write_parquet(
+        tmp_path / "labels.parquet"
+    )
+    pl.DataFrame({"item": [7, 9, 2, 4], "artist_mbid": ["a7", "a0", "a1", "a6"]}).write_parquet(
+        tmp_path / "artists.parquet"
+    )
+    config = {
+        "reference": str(tmp_path),
+        "crosswalk": str(tmp_path / "missing"),
+        "seed": 42,
+        "layout": {
+            "layout": str(tmp_path / "layout.parquet"),
+            "labels": str(tmp_path / "labels.parquet"),
+            "artists": str(tmp_path / "artists.parquet"),
+            "ceiling": str(tmp_path / "layout.parquet"),
+        },
+    }
+    config.update(
+        {stage: {"missing": str(tmp_path / "missing")} for stage in ["m1", "m2", "naming"]}
+    )
+    monkeypatch.setattr(gen, "log", lambda *args: None)
+    gen.evaluate(config, tmp_path)
+    result = json.loads((tmp_path / "metrics.json").read_text())
+    assert result["slices"]["all"]["layout"]["genres"] == 4
+    assert result["slices"]["all"]["layout"]["neighbor_cosine@10"] == pytest.approx(1 / 3)
+    assert result["slices"]["independent"]["layout"]["neighbor_cosine@10"] == 1
+
+
 def test_unsupported_stage(tmp_path):
     with pytest.raises(ValueError, match="ingest and eval"):
         gen.execute("build", {}, tmp_path)
