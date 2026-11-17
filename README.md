@@ -110,3 +110,17 @@ tree share one selection; field notes link genres and artists, and a trail saves
 Set `VITE_CATALOG_URL` to a release's `manifest.json` to use its data (cross-origin hosts need CORS).
 `npm --prefix web run lint` and `npm --prefix web run build` check formatting, regenerate types
 from the pipeline schema, type-check and build a static site. No preview playback is connected yet.
+
+M3 composes micro-genre names from a place (MusicBrainz areas, Wikidata demonyms) and a style
+(Wikidata, Discogs, suffixes of visible ENAO names), with members scored from listening
+neighbours and that evidence. A second model, cross-fitted on visible genres, ranks which
+composed names are real genres. It needs the M2 and M2c ingests.
+
+```sh
+uv run on ingest configs/m3.toml
+uv run on build configs/m3.toml
+uv run on eval configs/m3.toml
+```
+
+`runs/<hash>/` holds `genres.parquet`, `memberships.parquet` and `related.parquet` (nearest
+genres by shared listening). `threshold` and `negative_weight` were picked on the hidden genres.
