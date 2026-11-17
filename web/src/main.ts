@@ -38,6 +38,7 @@ async function start() {
   const catalog = await new Catalog().load();
   const genres = new Map(catalog.genres.map((genre) => [genre.id, genre]));
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
+  const releaseStatus = `${catalog.manifest.release_id} · ${catalog.manifest.data_kind === 'synthetic' ? 'Design fixture, not a quality benchmark.' : 'Explore the published model.'}`;
   let view: View = catalog.manifest.layouts.islands
     ? 'islands'
     : catalog.manifest.layouts.axes
@@ -83,7 +84,7 @@ async function start() {
       <button class="quiet" id="trail-toggle" aria-expanded="false" aria-controls="trail">My trail <span id="trail-count">${trail.length}</span></button></div>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div><aside class="detail" id="detail" tabindex="-1" aria-label="Selected genre or artist" aria-live="polite"></aside></section>
     <section class="trail" id="trail" aria-label="Saved discovery trail" hidden></section>
-    <div class="under-map"><p><strong>Three lenses. One musical world.</strong> Your selection stays with you when you switch views.</p><p id="status" role="status">${escape(catalog.manifest.release_id)} · ${catalog.manifest.data_kind === 'synthetic' ? 'Design fixture, not a quality benchmark.' : 'Explore the published model.'}</p></div>`;
+    <div class="under-map"><p><strong>Three lenses. One musical world.</strong> Your selection stays with you when you switch views.</p><p id="status" role="status">${escape(releaseStatus)}</p></div>`;
   app.removeAttribute('aria-busy');
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
   const drawer = document.querySelector<HTMLElement>('#detail')!;
@@ -171,10 +172,11 @@ async function start() {
     let artist = '';
     if (detail && 'artist' in detail && detail.artist.positions[layout]) {
       const point = detail.artist.positions[layout]!;
-      artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path d="M0 -10L9 0L0 10L-9 0Z" fill="#22352f"/><text x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
+      artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path id="artist-leader" stroke="#627368" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#22352f"/><text id="artist-label" x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
     }
     const axes = catalog.manifest.layouts.axes;
     canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${placed.length} genres placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Pan to wander. Zoom to get closer.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    positionArtistLabel();
     cameraView = layout;
     const camera = cameras.get(layout);
     panzoom = Panzoom(document.querySelector<SVGGElement>('#map-content')!, {
@@ -184,6 +186,57 @@ async function start() {
       excludeClass: 'genre',
       ...(camera ? { startScale: camera.scale, startX: camera.x, startY: camera.y } : {}),
     });
+  }
+
+  function positionArtistLabel() {
+    const label = canvas.querySelector<SVGTextElement>('#artist-label');
+    if (!label) return;
+    const obstacles = [...canvas.querySelectorAll<SVGGElement>('.genre')].map((node) =>
+      node.getBoundingClientRect(),
+    );
+    const viewport = canvas.querySelector('svg')!.getBoundingClientRect();
+    const padding = (viewport.width / 1000) * 5;
+    const width = label.getBBox().width;
+    const candidates = [
+      [0, 0],
+      [0, -26],
+      [0, 26],
+      [-width - 28, -26],
+      [-width - 28, 26],
+      [0, -52],
+      [0, 52],
+    ];
+    let best = candidates[0];
+    let bestScore = Infinity;
+    for (const offset of candidates) {
+      label.setAttribute('transform', `translate(${offset[0]},${offset[1]})`);
+      const box = label.getBoundingClientRect();
+      const score = obstacles.reduce(
+        (area, other) =>
+          area +
+          Math.max(
+            0,
+            Math.min(box.right, other.right + padding) - Math.max(box.left, other.left - padding),
+          ) *
+            Math.max(
+              0,
+              Math.min(box.bottom, other.bottom + padding) - Math.max(box.top, other.top - padding),
+            ),
+        box.width * box.height -
+          Math.max(0, Math.min(box.right, viewport.right) - Math.max(box.left, viewport.left)) *
+            Math.max(0, Math.min(box.bottom, viewport.bottom) - Math.max(box.top, viewport.top)),
+      );
+      if (score < bestScore) {
+        best = offset;
+        bestScore = score;
+      }
+      if (score === 0) break;
+    }
+    label.setAttribute('transform', `translate(${best[0]},${best[1]})`);
+    if (best[0] || best[1])
+      canvas
+        .querySelector('#artist-leader')!
+        .setAttribute('d', `M0 0L${best[0] < 0 ? -14 : 14} ${best[1]}`);
   }
 
   function breadcrumbs(genre: Genre) {
@@ -306,6 +359,7 @@ async function start() {
   }
 
   function writeURL() {
+    status.textContent = releaseStatus;
     const params = new URLSearchParams({ view });
     if (selected) {
       params.set('kind', selected.kind);
@@ -341,6 +395,7 @@ async function start() {
   }
 
   function restoreURL() {
+    status.textContent = releaseStatus;
     const params = new URLSearchParams(location.hash.slice(1));
     const requestedView = params.get('view');
     if (
