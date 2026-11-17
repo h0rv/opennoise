@@ -172,19 +172,26 @@ export class MapCanvas {
     );
     element.addEventListener(
       'pointerup',
+      (event) => this.pointers.delete(event.pointerId),
+      options,
+    );
+    element.addEventListener(
+      'click',
       (event) => {
         if (!this.moved) {
           const rect = element.getBoundingClientRect();
           const item = this.hit(event.clientX - rect.left, event.clientY - rect.top);
           if (item) this.open(item.kind, item.id);
         }
-        this.pointers.delete(event.pointerId);
       },
       options,
     );
     element.addEventListener(
       'pointercancel',
-      (event) => this.pointers.delete(event.pointerId),
+      (event) => {
+        this.moved = true;
+        this.pointers.delete(event.pointerId);
+      },
       options,
     );
     element.addEventListener(
