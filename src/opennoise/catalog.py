@@ -4,16 +4,18 @@ import re
 import time
 from pathlib import Path
 
+import numpy as np
 import polars as pl
+from scipy import sparse
 
-from opennoise import grouping, identities, micro, tags
+from opennoise import grouping, identities, micro, sonic, tags
 
 
 def write(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
 
 
-def coordinates(config, genres, artists):
+def coordinates(config):
     empty = {"axes": None, "islands": None}
     if not config.get("layout"):
         return {}, empty
@@ -21,13 +23,10 @@ def coordinates(config, genres, artists):
     frame = pl.read_parquet(root / "positions.parquet")
     if frame.select("kind", "id").n_unique() != len(frame):
         raise ValueError("Duplicate layout identity")
-    known = {"genre": set(genres), "artist": set(artists)}
     result = {}
     for kind, id_, x, y, u, v in frame.select(
         "kind", "id", "x", "y", "island_x", "island_y"
     ).iter_rows():
-        if kind not in known or id_ not in known[kind]:
-            raise ValueError("Unknown layout identity")
         point = {}
         for family, a, b in [("axes", x, y), ("islands", u, v)]:
             if (a is None) != (b is None) or (a is not None and not (0 <= a <= 1 and 0 <= b <= 1)):
@@ -60,33 +59,63 @@ def hierarchy(rows, retained):
     return result
 
 
-def group_coordinates(ids, memberships, public, placed):
+def group_coordinates(ids, memberships, public, placed, artists, state):
+    ids = list(ids)
+    if not ids:
+        return
     edges = memberships.filter(pl.col("genre").is_in(list(ids)) & (pl.col("score") > 0))
-    for family in ["axes", "islands"]:
-        points = pl.DataFrame(
-            [
-                (i, p[family]["x"], p[family]["y"])
-                for (kind, i), p in placed.items()
-                if kind == "artist" and p[family] is not None
-            ],
-            schema={"artist": pl.String, "x": pl.Float64, "y": pl.Float64},
-            orient="row",
+    indexed = edges.join(
+        artists.select("artist_mbid", "item"), left_on="artist", right_on="artist_mbid"
+    )
+    matrix = sparse.csr_matrix(
+        (
+            indexed["score"].to_numpy(),
+            (
+                indexed["genre"]
+                .replace_strict(dict(zip(ids, range(len(ids)), strict=True)))
+                .to_numpy(),
+                indexed["item"].to_numpy(),
+            ),
+        ),
+        shape=(len(ids), len(artists)),
+    )
+    centers, mask, _ = sonic.genre_axes(
+        matrix,
+        state["points"],
+        state["present"],
+        artists["listeners"].to_numpy(),
+        int(state["min_members"]),
+    )
+    points = sonic.rank_transform(state["reference"], centers[mask])
+    for id_, (x, y) in zip(np.asarray(ids)[mask], points, strict=True):
+        placed.setdefault(("genre", public[id_]), {"axes": None, "islands": None})["axes"] = {
+            "x": float(x),
+            "y": float(y),
+        }
+    island_points = pl.DataFrame(
+        [
+            (i, p["islands"]["x"], p["islands"]["y"])
+            for (kind, i), p in placed.items()
+            if kind == "artist" and p["islands"] is not None
+        ],
+        schema={"artist": pl.String, "x": pl.Float64, "y": pl.Float64},
+        orient="row",
+    )
+    island_centers = (
+        edges.join(island_points, on="artist")
+        .group_by("genre")
+        .agg(
+            *[
+                ((pl.col(c) * pl.col("score")).sum() / pl.col("score").sum()).alias(c)
+                for c in ["x", "y"]
+            ]
         )
-        centers = (
-            edges.join(points, on="artist")
-            .group_by("genre")
-            .agg(
-                *[
-                    ((pl.col(c) * pl.col("score")).sum() / pl.col("score").sum()).alias(c)
-                    for c in ["x", "y"]
-                ]
-            )
-        )
-        for i, x, y in centers.select("genre", "x", "y").iter_rows():
-            placed.setdefault(("genre", public[i]), {"axes": None, "islands": None})[family] = {
-                "x": x,
-                "y": y,
-            }
+    )
+    for i, x, y in island_centers.select("genre", "x", "y").iter_rows():
+        placed.setdefault(("genre", public[i]), {"axes": None, "islands": None})["islands"] = {
+            "x": x,
+            "y": y,
+        }
 
 
 def audit(config, genres, memberships, artists):
@@ -226,6 +255,8 @@ def export(config, run):
         inputs.extend(
             Path(config["layout"]) / name for name in ["positions.parquet", "layouts.json"]
         )
+        if global_keys:
+            inputs.append(Path(config["layout"]) / "sonic_state.npz")
     if config.get("vocabulary"):
         inputs.append(Path(config["vocabulary"]))
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
@@ -250,9 +281,10 @@ def export(config, run):
     (stage / "artists").mkdir()
     (stage / "genres").mkdir()
     positions = {"axes": None, "islands": None}
-    placed, layouts = coordinates(config, public.values(), artists["artist_mbid"])
+    placed, layouts = coordinates(config)
     if config.get("layout") and global_keys:
-        group_coordinates(global_keys, memberships, public, placed)
+        with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
+            group_coordinates(global_keys, memberships, public, placed, artists, state)
     summaries = {
         mbid: {
             "id": mbid,
