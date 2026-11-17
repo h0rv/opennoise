@@ -151,9 +151,13 @@ composed names are real genres. It needs the M2 and M2c ingests.
 
 ```sh
 uv run on ingest configs/m3.toml
+uv run on tune configs/m3.toml
 uv run on build configs/m3.toml
 uv run on eval configs/m3.toml
 ```
 
 `runs/<hash>/` holds `genres.parquet`, `memberships.parquet` and `related.parquet` (nearest
-genres by shared listening). `threshold` and `negative_weight` were picked on the hidden genres.
+genres by shared listening). `uv run on tune configs/m3.toml` scores the `[grid]` of `threshold`
+and `negative_weight` on a fifth of the visible genres; the hidden genres are never used to pick
+settings. Sealed artists' Wikidata genres are dropped, so the `[m3]` entry in `configs/gen.toml`
+scores a run on them.
