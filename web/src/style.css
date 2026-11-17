@@ -175,6 +175,7 @@ body > header > :last-child {
   grid-template-columns: minmax(0, 1fr) 320px;
   border-block: 1px solid #111;
   min-height: 620px;
+  height: min(76vh, 840px);
 }
 .canvas {
   min-width: 0;
@@ -188,6 +189,13 @@ body > header > :last-child {
   flex: 1;
   min-height: 420px;
   touch-action: none;
+}
+.map-viewport canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
 }
 .map-viewport svg {
   display: block;
@@ -417,7 +425,7 @@ body > header h1 {
   font-size: inherit;
 }
 .workspace:has(.tree) {
-  min-height: 0;
+  min-height: 620px;
 }
 .families {
   display: flex;
@@ -506,6 +514,7 @@ body > header h1 {
   .workspace {
     display: flex;
     flex-direction: column;
+    height: auto;
   }
   .canvas {
     min-height: 480px;
