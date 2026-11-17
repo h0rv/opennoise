@@ -1,3 +1,4 @@
+import numpy as np
 import polars as pl
 import pytest
 
@@ -35,14 +36,28 @@ def test_global_names_empty_and_cycle():
         global_names([], {0: 1, 1: 0}, members, {})
 
 
-def test_group_coordinates_use_scores_without_modifying_existing_positions():
+def test_group_coordinates_use_raw_log_listener_means_and_shared_rank_transform():
     placed = {
         ("artist", "a"): {"axes": {"x": 0.0, "y": 1.0}, "islands": None},
         ("artist", "b"): {"axes": {"x": 1.0, "y": 0.0}, "islands": None},
         ("genre", "existing"): {"axes": {"x": 0.1, "y": 0.2}, "islands": None},
     }
     members = pl.DataFrame({"genre": [2, 2], "artist": ["a", "b"], "score": [0.25, 0.75]})
-    group_coordinates([2], members, {2: "new"}, placed)
-    assert placed["genre", "new"] == {"axes": {"x": 0.75, "y": 0.25}, "islands": None}
+    artists = pl.DataFrame({"item": [0, 1], "artist_mbid": ["a", "b"], "listeners": [2, 4]})
+    state = {
+        "points": np.array([[0, 10], [10, 0]]),
+        "present": np.array([True, True]),
+        "reference": np.array([[0, 0], [5, 5], [10, 10]]),
+        "min_members": 2,
+    }
+    group_coordinates([2], members, {2: "new"}, placed, artists, state)
+    point = placed["genre", "new"]["axes"]
+    assert point is not None
+    assert point["x"] == pytest.approx(6 / 7)
+    assert point["y"] == pytest.approx(1 / 7)
+    assert placed["genre", "new"]["islands"] is None
     assert placed["genre", "existing"]["axes"] == {"x": 0.1, "y": 0.2}
-    group_coordinates([], members, {}, placed)
+    group_coordinates([], members, {}, placed, artists, state)
+    state["present"] = np.array([True, False])
+    group_coordinates([2], members, {2: "sparse"}, placed, artists, state)
+    assert placed.get(("genre", "sparse"), {}).get("axes") is None

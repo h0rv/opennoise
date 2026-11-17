@@ -7,35 +7,18 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from scipy import sparse
-from sklearn.preprocessing import StandardScaler, normalize
+from sklearn.preprocessing import normalize
 from threadpoolctl import threadpool_limits
-from umap import UMAP
 
-from opennoise import grouping, layout, tags
+from opennoise import grouping, layout, sonic, tags
 from opennoise.catalog import hierarchy, tables
 
 
 def bounds(sets):
     joined = np.concatenate(sets)
-    if not len(joined) or not np.isfinite(joined).all():
-        raise ValueError("Layout must contain finite points")
     low, high = joined.min(axis=0), joined.max(axis=0)
     span = np.maximum(high - low, 1e-12)
     return [(points - low) / span for points in sets]
-
-
-def project(reference, coordinates, train, targets, config):
-    if not len(targets):
-        return np.empty((0, 2))
-    scaler = StandardScaler().fit(coordinates[train])
-    model = layout.estimator("knn", 5, config)
-    model.fit(reference[train], scaler.transform(coordinates[train]))
-    return np.concatenate(
-        [
-            scaler.inverse_transform(model.predict(targets[start : start + 512]))
-            for start in range(0, len(targets), 512)
-        ]
-    )
 
 
 def export(config, run):
@@ -51,7 +34,11 @@ def export(config, run):
         source / "genre_ids.json",
         source / "release-summary.json",
         evaluated / "layout_metrics.json",
-        evaluated / "genre_split.parquet",
+        evaluated / "layout_models.json",
+        evaluated / "layout_best.json",
+        evaluated / "islands_genre_vectors.npy",
+        evaluated / "sonic_artists.npz",
+        Path(settings["audio_features"]),
         m1 / "als_2.npy",
         m1 / "audio_ab_all.npy",
     ]
@@ -62,12 +49,9 @@ def export(config, run):
         print("Cached catalog positions", flush=True)
         return
     winners = json.loads((evaluated / "layout_best.json").read_text())
-    expected = {
-        "axes": "als_2+audio_ab_all_log_listeners_knn_5",
-        "islands": "als_2+audio_ab_all_umap_40_axes",
-    }
-    if winners != expected:
-        raise ValueError("Expected the fixed ALS+audio layout models")
+    models = json.loads((evaluated / "layout_models.json").read_text())
+    if hashes[settings["audio_features"]] != models["audio_sha256"]:
+        raise ValueError("Audio features differ from layout evaluation")
     artists = pl.read_parquet(m1 / "artists.parquet").sort("item")
     genres, memberships = tables(catalog)
     rows = genres.to_dicts()
@@ -75,8 +59,6 @@ def export(config, run):
     public = {int(k): v for k, v in json.loads((source / "genre_ids.json").read_text()).items()}
     if catalog.get("group_siblings"):
         memberships, _, _, _ = grouping.siblings(rows, parents, memberships, public)
-    if {r["id"] for r in rows} != public.keys():
-        raise ValueError("Layout and catalog genre identities differ")
     rows.sort(key=lambda r: public[r["id"]])
     indices = {r["id"]: i for i, r in enumerate(rows)}
     edges = memberships.join(
@@ -92,51 +74,27 @@ def export(config, run):
         ),
         shape=(len(rows), len(artists)),
     )
-    artist_vectors = normalize(layout.artist_vectors(settings, evaluated, "als_2+audio_ab_all"))
+    artist_vectors = normalize(layout.artist_vectors(settings, evaluated, models["embedding"]))
     uniform = normalize(matrix @ artist_vectors)
-    weights = np.log(np.maximum(artists["listeners"].to_numpy(), 2))
-    weighted = normalize((matrix @ sparse.diags(weights)) @ artist_vectors)
-    placed = (np.diff(matrix.indptr) >= settings["min_members"]) & (
-        np.linalg.norm(uniform, axis=1) > 0
+    with np.load(evaluated / "sonic_artists.npz") as state:
+        raw_points, present = state["points"], state["present"]
+    genre_axes, artist_axes, placed, artist_placed, _ = sonic.project(
+        raw_points, present, artists, matrix, settings["min_members"]
     )
-    artist_placed = np.linalg.norm(artist_vectors, axis=1) > 0
-    frame = pl.read_parquet(evaluated / "als_2+audio_ab_all_log_listeners_placed.parquet")
-    split = pl.read_parquet(evaluated / "genre_split.parquet")
-    frame = frame.join(split.select("genre", "fold"), on="genre", maintain_order="left")
-    frame = frame.join(
-        pl.read_parquet(Path(settings["reference"]) / "map.parquet"),
-        on="genre",
-        maintain_order="left",
+    raw_genres = sonic.genre_axes(
+        matrix, raw_points, present, artists["listeners"].to_numpy(), settings["min_members"]
+    )[0]
+    np.savez(
+        run / "sonic_state.npz",
+        points=raw_points,
+        present=present,
+        reference=raw_genres[placed],
+        min_members=settings["min_members"],
     )
-    reference = np.load(evaluated / "als_2+audio_ab_all_log_listeners_genre_vectors.npy")
-    coordinates = frame.select("x", "y").to_numpy().astype(float)
-    train = frame["split"].to_numpy() == "train"
-    fold_by_name = dict(frame.select("genre", "fold").iter_rows())
-    target_folds = np.array(
-        [fold_by_name.get(r["name"], -1) if r["level"] == -1 else -1 for r in rows]
-    )
-    axes = np.zeros((len(rows), 2))
     with threadpool_limits(limits=settings["workers"]):
-        for fold in range(-1, 5):
-            target = placed & (target_folds == fold)
-            fit = train if fold == -1 else train & (frame["fold"].to_numpy() != fold)
-            axes[target] = project(reference, coordinates, fit, weighted[target], settings)
-        artist_axes = project(
-            reference, coordinates, train, artist_vectors[artist_placed], settings
-        )
-        print("Axes projected", flush=True)
-        uniform_reference = np.load(evaluated / "als_2+audio_ab_all_genre_vectors.npy")
-        initial = np.load(evaluated / "als_2+audio_ab_all_knn_5_coords.npy")
-        model = UMAP(
-            n_neighbors=40,
-            min_dist=settings["umap_min_dist"],
-            n_epochs=settings["umap_epochs"],
-            metric="cosine",
-            init=StandardScaler().fit_transform(initial).astype(np.float32),
-            random_state=settings["seed"],
-            n_jobs=1,
-            compatibility_layout=True,
-        )
+        print("Audio axes computed", flush=True)
+        uniform_reference = np.load(evaluated / "islands_genre_vectors.npy")
+        model = layout.islands_model(settings, models["neighbors"])
         embedded = model.fit_transform(uniform_reference)
         cached = np.load(evaluated / f"{winners['islands']}_coords.npy")
         if not np.allclose(embedded, cached, atol=1e-6):
@@ -144,7 +102,6 @@ def export(config, run):
         islands = model.transform(uniform[placed])
         print("Genre islands projected", flush=True)
         artist_islands = model.transform(artist_vectors[artist_placed])
-    genre_axes, artist_axes = bounds([axes[placed], artist_axes])
     genre_islands, artist_islands = bounds([islands, artist_islands])
     output = []
     for kind, ids, mask, xy, uv in [
@@ -179,7 +136,9 @@ def export(config, run):
                     "y_min": "Mechanical / electric",
                     "y_max": "Organic",
                 },
-                "islands": {"method": "UMAP 40; ALS + AcousticBrainz"},
+                "islands": {
+                    "method": f"Spectral UMAP {models['neighbors']}; {models['embedding']}"
+                },
             }
         )
     )
@@ -202,6 +161,6 @@ def export(config, run):
         "catalog_placement",
         summary,
         True,
-        "fixed ALS+audio models; existing supervised folds; train-only axes; islands transform",
+        "fixed audio-feature axes; spectral islands transform",
     )
     print(json.dumps(summary), flush=True)
