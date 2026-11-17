@@ -23,5 +23,5 @@ artists = "runs/1f242e47ed38/artists.parquet"
 ceiling = "data/m2/map.parquet"
 
 [m3]
-memberships = "runs/e8be82e2bf7e/memberships.parquet"
+memberships = "runs/017da0af6b76/memberships.parquet"
 artists = "runs/1f242e47ed38/artists.parquet"

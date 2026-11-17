@@ -149,7 +149,14 @@ defaults to `als_2+audio_ab_all`, so run `audio` before `layout`.
 M3 composes micro-genre names from a place (MusicBrainz areas, Wikidata demonyms) and a style
 (Wikidata, Discogs, suffixes of visible ENAO names), with members scored from listening
 neighbours and that evidence. A second model, cross-fitted on visible genres, ranks which
-composed names are real genres. It needs the M2 and M2c ingests.
+composed names are real genres. It needs the M2 ingest and the M2f naming ingest, whose Wikidata
+vocabulary is filtered to music genres. `non_music` in `configs/m3.toml` lists Discogs non-music and
+video styles (interview, audiobook, music video) that are dropped from the style candidates.
+
+`micro` in a catalog config names an M3 run whose genres are appended to the clusters as the
+`micro` level. To place them on the map, export `configs/m2f.toml`, run
+`uv run on layout configs/m2e-layout.toml` on that run, then export `configs/one-name.toml`,
+which reads the placement run as `layout`.
 
 ```sh
 uv run on ingest configs/m3.toml
@@ -163,3 +170,7 @@ genres by shared listening). `uv run on tune configs/m3.toml` scores the `[grid]
 and `negative_weight` on a fifth of the visible genres; the hidden genres are never used to pick
 settings. Sealed artists' Wikidata genres are dropped, so the `[m3]` entry in `configs/gen.toml`
 scores a run on them.
+
+`micro` in `configs/one-name.toml` names an M3 run: the catalog export appends its genres to the
+clusters as the `micro` level, skipping names a cluster or supervised genre already has and aliases with identical
+members, with a parent where the style is a supervised genre.
