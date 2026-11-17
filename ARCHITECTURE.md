@@ -175,6 +175,18 @@ relations into the public schema (the M1 CLI remains unchanged):
 | Positions | `(entity_kind, entity_id, layout)`, nullable `x,y` in one release-wide frame |
 | Identity links / preview | Artist MBID, HTTPS outbound links and optional provider track ID |
 
+M2's concrete adapter inputs are `genres.parquet` (`id: Int64`, `name: String`, `level: Int64`,
+`parent: Int64?`, `size: Int64`) and `memberships.parquet` (`artist: String` MBID,
+`genre: Int64`, `score: Float64`). These IDs are local to a variant/run. Map both `id`/`genre`
+and `parent` through one persisted ID registry, retaining distinct same-named communities.
+Supervised genres have `level = -1`; Leiden levels are `0..N`, not a fixed UI depth. Exclude
+`unnamed <id>` clusters from the public catalog and walk past excluded ancestors to the nearest
+published parent (or null); `parent` is a navigation relation, not guaranteed set containment.
+Project each retained `(artist, genre, score)` edge into both genre members and artist genres;
+recompute `member_count` after export filtering rather than copying `size`. The M1 artist catalog
+supplies names/listener counts. M2 has no positions, colors, genre similarity or previews: leave
+those null until a producing stage supplies them, never derive coordinates from local indices.
+
 All positions are normalized `[0,1]`, x increases rightward, y downward; artists and genres share
 the frame within each layout. Axes metadata supplies the labels at each end (normally x: dense/
 atmospheric to spiky/bouncy; y: mechanical/electric to organic). Islands are a separate embedding
