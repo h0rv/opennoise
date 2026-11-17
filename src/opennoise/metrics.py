@@ -60,3 +60,10 @@ def name_agreement(left, right):
     tokens_a, tokens_b = set(a.split()), set(b.split())
     union = tokens_a | tokens_b
     return int(bool(a) and a == b), len(tokens_a & tokens_b) / len(union) if union else 0.0
+
+
+def name_hit(reference, candidates, k=3):
+    if k < 1:
+        raise ValueError("k must be positive")
+    target = normalized_name(reference)
+    return int(bool(target) and any(normalized_name(x) == target for x in candidates[:k]))

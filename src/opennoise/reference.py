@@ -61,7 +61,7 @@ def ingest_reference(config):
         if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
             raise ValueError(f"Checksum mismatch: {filename}")
     for source, tables in zip(
-        sources[3:], [["artist", "url", "l_artist_url"], ["artist_tag", "tag"]], strict=True
+        sources[3:5], [["artist", "url", "l_artist_url"], ["artist_tag", "tag"]], strict=True
     ):
         marker = root / (tables[0] + ".done")
         if not marker.exists():
