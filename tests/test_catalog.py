@@ -77,6 +77,24 @@ def test_adapter_rejects_training_strength_injection(tmp_path):
     assert not (run / "release").exists()
 
 
+def test_global_adapter_contract_and_rerun(tmp_path, monkeypatch):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, _, _ = inputs(tmp_path)
+    config.update(group_globally=True, readable_names=True)
+    export(config, run)
+    validate_release(run / "release")
+    genres = json.loads((run / "release/genres.json").read_text())
+    root = next(g for g in genres if g["name"] == "Micro")
+    child = next(g for g in genres if g["name"] == "Micro · A")
+    assert root["parent_id"] is None
+    assert child["parent_id"] == root["id"]
+    mapping = (run / "genre_ids.json").read_bytes()
+    registry = (tmp_path / "registry.json").read_bytes()
+    export(config, run)
+    assert (run / "genre_ids.json").read_bytes() == mapping
+    assert (tmp_path / "registry.json").read_bytes() == registry
+
+
 def test_hierarchy_empty_and_cycles():
     assert hierarchy([], set()) == {}
     with pytest.raises(ValueError, match="Cyclic"):

@@ -1,5 +1,7 @@
 :root {
-  font-family: Helvetica, Arial, sans-serif;
+  font-family:
+    Helvetica, Arial, system-ui, 'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP',
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   color: #111;
   background: #fff;
   font-synthesis: none;
@@ -214,7 +216,9 @@ body > header > :last-child {
   outline-offset: -3px;
 }
 .map-viewport text {
-  font-family: Helvetica, Arial, sans-serif;
+  font-family:
+    Helvetica, Arial, system-ui, 'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP',
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   fill: #111;
   paint-order: stroke;
   stroke: #fff;
