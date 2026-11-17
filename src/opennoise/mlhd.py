@@ -27,7 +27,12 @@ def aggregate(stream: Iterable[bytes], artists: dict[bytes, int]):
     users = []
     seen = set()
     counts = Counter()
-    stats = {"users_processed": 0, "listens_processed": 0, "matched_listens": 0}
+    stats = {
+        "users_processed": 0,
+        "listens_processed": 0,
+        "matched_listens": 0,
+        "multi_artist_listens": 0,
+    }
     user = None
 
     def finish():
@@ -53,10 +58,18 @@ def aggregate(stream: Iterable[bytes], artists: dict[bytes, int]):
             if user is None or len(fields) != 4 or not fields[0].isdigit():
                 raise ValueError("Expected a user marker followed by four-column MLHD TSV")
             stats["listens_processed"] += 1
-            item = artists.get(fields[1].lower())
+            credit = fields[1].lower()
+            item = artists.get(credit)
             if item is not None:
                 counts[item] += 1
                 stats["matched_listens"] += 1
+            elif b"," in credit:
+                stats["multi_artist_listens"] += 1
+                items = {
+                    artists[mbid.strip()] for mbid in credit.split(b",") if mbid.strip() in artists
+                }
+                counts.update(items)
+                stats["matched_listens"] += bool(items)
     finish()
     matrix = sparse.csr_matrix(
         (np.asarray(values), np.asarray(indices), np.asarray(indptr)),

@@ -61,7 +61,26 @@ def test_aggregate():
         "users_retained": 2,
         "listens_processed": 6,
         "matched_listens": 4,
+        "multi_artist_listens": 0,
         "interactions": 3,
+    }
+
+
+def test_aggregate_multiple_artist_credits():
+    stream = io.BytesIO(
+        b"@mlhd-user\tone.txt.zst\n1\ta,b\t\t\n2\tB,a,a,x\t\t\n3\tx, y\t\t\n"
+        b"4\ta\t\t\n5\t\t\t\n6\tb, x\t\t\n@mlhd-user\tempty.txt.zst\n7\tx,y\t\t\n"
+    )
+    matrix, users, stats = aggregate(stream, {b"a": 0, b"b": 1})
+    np.testing.assert_array_equal(matrix.toarray(), [[3, 3]])
+    assert users == ["one"]
+    assert stats == {
+        "users_processed": 2,
+        "users_retained": 1,
+        "listens_processed": 7,
+        "matched_listens": 4,
+        "multi_artist_listens": 5,
+        "interactions": 2,
     }
 
 
