@@ -9,12 +9,12 @@ import tarfile
 import time
 import tomllib
 import unicodedata
-import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+import lxml.etree as etree
 import numpy as np
 import polars as pl
 from scipy import sparse
@@ -126,11 +126,8 @@ def discogs(path, root):
     counts = Counter()
     releases = 0
     with gzip.open(path, "rb") as stream:
-        context = ET.iterparse(stream, events=("start", "end"))
-        _, document = next(context)
-        for event, release in context:
-            if event != "end" or release.tag != "release":
-                continue
+        context = etree.iterparse(stream, events=("end",), tag="release", huge_tree=True)
+        for _, release in context:
             ids = {int(node.text) for node in release.findall("artists/artist/id") if node.text}
             ids &= wanted
             if ids:
@@ -145,7 +142,10 @@ def discogs(path, root):
                     json.dumps({"discogs_releases": releases, "artist_styles": len(counts)}),
                     flush=True,
                 )
-            document.clear()
+            release.clear()
+            if (parent := release.getparent()) is not None:
+                while release.getprevious() is not None:
+                    del parent[0]
     frame = pl.DataFrame(
         [(identifier, tag, count) for (identifier, tag), count in counts.items()],
         schema={"discogs_id": pl.Int64, "tag": pl.String, "weight": pl.Float32},
