@@ -9,7 +9,7 @@ import polars as pl
 from scipy import sparse
 from scipy.spatial import KDTree
 
-from opennoise.metrics import best_cluster, name_agreement
+from opennoise.metrics import best_cluster, name_agreement, sealed
 from opennoise.tags import log
 
 PREFIX = """
@@ -307,6 +307,9 @@ def evaluate(config, run):
     reference = pl.read_parquet(Path(config["reference"]) / "wikidata.parquet")
     crosswalk = Path(config["crosswalk"])
     slices = {"all": reference, "independent": reference.filter(~pl.col("enao_linked"))}
+    heldout = reference.filter(pl.col("artist_mbid").map_elements(sealed, return_dtype=pl.Boolean))
+    slices["sealed"] = heldout
+    slices["sealed_independent"] = heldout.filter(~pl.col("enao_linked"))
     if crosswalk.exists():
         known = pl.read_parquet(crosswalk)["artist_mbid"]
         slices["artists_absent_enao"] = reference.filter(
@@ -343,6 +346,8 @@ def evaluate(config, run):
             "genres": subset["genre_qid"].n_unique(),
         }
         for stage, frames in available.items():
+            if stage in {"m2", "naming"} and name not in {"sealed", "sealed_independent"}:
+                continue
             if stage == "m1":
                 metrics[stage] = similarity_score(subset, **frames, seed=config["seed"])
             elif stage == "m2":

@@ -180,7 +180,13 @@ def test_evaluate_slices_and_missing(reference, clusters, tmp_path, monkeypatch)
     result = json.loads((tmp_path / "metrics.json").read_text())
     assert result["slices"]["independent"]["genres"] == 1
     assert result["slices"]["artists_absent_enao"]["artists"] == 11
-    assert result["slices"]["all"]["m2"]["genre_match"] == 1
+    assert result["slices"]["sealed"]["artists"] == 2
+    assert result["slices"]["sealed_independent"]["artists"] == 1
+    assert result["slices"]["sealed"]["m2"]["genres"] == 0
+    assert result["slices"]["sealed"]["naming"]["token_match_share"] == 1
+    for name in ["all", "independent", "artists_absent_enao"]:
+        assert "m2" not in result["slices"][name]
+        assert "naming" not in result["slices"][name]
     assert set(result["unavailable"]) == {"m1", "layout"}
     assert logged[0][1] == "generalization"
     config["crosswalk"] = str(tmp_path / "missing")
@@ -249,6 +255,39 @@ def test_evaluate_layout_item_join(reference, tmp_path, monkeypatch):
     assert result["slices"]["all"]["layout"]["genres"] == 4
     assert result["slices"]["all"]["layout"]["neighbor_cosine@10"] == pytest.approx(1 / 3)
     assert result["slices"]["independent"]["layout"]["neighbor_cosine@10"] == 1
+    assert result["slices"]["sealed"]["layout"]["genres"] == 1
+
+
+def test_naming_uses_sealed_member_majority(reference, clusters, tmp_path, monkeypatch):
+    reference = reference.with_columns(
+        pl.when(pl.col("artist_mbid").is_in(["a1", "a11"]))
+        .then(pl.lit("sealed label"))
+        .otherwise(pl.col("genre"))
+        .alias("genre")
+    )
+    reference.write_parquet(tmp_path / "wikidata.parquet")
+    members, genres = clusters
+    members.write_parquet(tmp_path / "members.parquet")
+    genres.with_columns(pl.lit("sealed label").alias("name")).write_parquet(
+        tmp_path / "genres.parquet"
+    )
+    config = {
+        "reference": str(tmp_path),
+        "crosswalk": str(tmp_path / "missing"),
+        "seed": 42,
+        "naming": {
+            "memberships": str(tmp_path / "members.parquet"),
+            "genres": str(tmp_path / "genres.parquet"),
+        },
+    }
+    config.update(
+        {stage: {"missing": str(tmp_path / "missing")} for stage in ["m1", "m2", "layout"]}
+    )
+    monkeypatch.setattr(gen, "log", lambda *args: None)
+    gen.evaluate(config, tmp_path)
+    result = json.loads((tmp_path / "metrics.json").read_text())
+    assert result["slices"]["sealed"]["naming"]["token_match_share"] == 1
+    assert result["slices"]["sealed_independent"]["naming"]["token_match_share"] == 1
 
 
 def test_unsupported_stage(tmp_path):
