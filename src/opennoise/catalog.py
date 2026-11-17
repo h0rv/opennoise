@@ -223,8 +223,13 @@ def export(config, run):
         records.extend(added)
         keys.update(group_keys)
     if config.get("group_globally"):
+        alias_map = (
+            grouping.aliases(pl.read_parquet(config["vocabulary"]))
+            if config.get("vocabulary")
+            else None
+        )
         memberships, added, global_keys, global_groups = grouping.global_names(
-            rows, parents, memberships, keys
+            rows, parents, memberships, keys, alias_map
         )
         records.extend(added)
         keys.update(global_keys)
@@ -252,6 +257,8 @@ def export(config, run):
         )
         if global_keys:
             inputs.append(Path(config["layout"]) / "sonic_state.npz")
+    if config.get("vocabulary"):
+        inputs.append(Path(config["vocabulary"]))
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     target = run / "release"
     mapping = {str(i): public[i] for i in sorted(public)}
@@ -307,7 +314,9 @@ def export(config, run):
         r["id"]: {
             "id": public[r["id"]],
             "name": r["name"],
-            "aliases": assigned[keys[r["id"]]]["aliases"],
+            "aliases": sorted(
+                (set(assigned[keys[r["id"]]]["aliases"]) | set(r.get("aliases", []))) - {r["name"]}
+            ),
             "parent_id": public[parents[r["id"]]] if parents[r["id"]] is not None else None,
             "member_count": counts.get(r["id"], 0),
             "positions": placed.get(("genre", public[r["id"]]), positions),

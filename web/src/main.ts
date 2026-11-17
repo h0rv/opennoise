@@ -1,6 +1,7 @@
 import { Catalog } from './data';
 import { GenreTree } from './genre-tree';
 import { MapCanvas } from './map-canvas';
+import { searchMatches } from './search';
 import { PreviewPlayer } from './preview';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import './style.css';
@@ -398,12 +399,7 @@ async function start() {
       return;
     }
     if (search.value.trim().toLocaleLowerCase() !== query) return;
-    const matches: SearchEntry[] = [];
-    for (const { entry, terms } of searchIndex) {
-      if (!terms.some((term) => term.includes(query))) continue;
-      matches.push(entry);
-      if (matches.length === 12) break;
-    }
+    const matches = searchMatches(searchIndex, query);
     results.innerHTML = matches.length
       ? matches
           .map(

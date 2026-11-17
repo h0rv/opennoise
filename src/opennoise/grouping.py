@@ -166,7 +166,47 @@ def readable(rows, parents, memberships, artists, public):
     }
 
 
-def global_names(rows, parents, memberships, keys):
+def spelling_variant(alias, label):
+    def words(name):
+        return [
+            "and" if word == "n" else word
+            for word in normalized_name(name.replace("&", " and ")).split()
+        ]
+
+    left, right = words(alias), words(label)
+    return bool(left and right) and (
+        "".join(word for word in left if word != "music")
+        == "".join(word for word in right if word != "music")
+        or "".join(left) == "".join(word[0] for word in right)
+        or (
+            len(left) == len(right)
+            and all(full.startswith(short) for short, full in zip(left, right, strict=True))
+        )
+    )
+
+
+def aliases(vocabulary):
+    owners, labels = defaultdict(set), {}
+    for qid, name, normalized, kind in vocabulary.select(
+        "qid", "name", "normalized", "kind"
+    ).iter_rows():
+        owners[normalized].add(qid)
+        if kind == "label":
+            labels[qid] = name
+    return {
+        normalized: normalized_name(labels[qid])
+        for qid, name, normalized, kind in vocabulary.select(
+            "qid", "name", "normalized", "kind"
+        ).iter_rows()
+        if kind == "alias"
+        and len(owners[normalized]) == 1
+        and qid in labels
+        and spelling_variant(name, labels[qid])
+    }
+
+
+def global_names(rows, parents, memberships, keys, alias_map=None):
+    alias_map = alias_map or {}
     before = parents.copy()
     for i in parents:
         parent, seen = parents[i], {i}
@@ -177,7 +217,8 @@ def global_names(rows, parents, memberships, keys):
             parent = parents[parent]
     buckets = defaultdict(list)
     for row in rows:
-        buckets[normalized_name(row["name"].split(" · ")[0])].append(row)
+        name = normalized_name(row["name"].split(" · ")[0])
+        buckets[alias_map.get(name, name)].append(row)
     additions, records, added_keys = {}, [], {}
     next_id = max(parents, default=-1) + 1
     for name, group in sorted(buckets.items()):
@@ -196,6 +237,14 @@ def global_names(rows, parents, memberships, keys):
             records.append({"key": key, "scope": "group", "name": anchor["name"], "members": []})
             additions.update({r["id"]: anchor["id"] for r in group})
         parents[anchor["id"]] = None
+        if alias_map:
+            anchor["aliases"] = sorted(
+                {
+                    row["name"].split(" · ")[0]
+                    for row in group
+                    if before[row["id"]] is None and row["name"].split(" · ")[0] != anchor["name"]
+                }
+            )
         for row in group:
             if row["id"] != anchor["id"]:
                 parents[row["id"]] = anchor["id"]

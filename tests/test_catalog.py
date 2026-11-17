@@ -95,6 +95,34 @@ def test_global_adapter_contract_and_rerun(tmp_path, monkeypatch):
     assert (tmp_path / "registry.json").read_bytes() == registry
 
 
+def test_global_adapter_exports_folded_aliases(tmp_path, monkeypatch):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, _, _ = inputs(tmp_path)
+    source = tmp_path / "source/genres.parquet"
+    pl.read_parquet(source).with_columns(
+        pl.when(pl.col("id") == 2).then(pl.lit("R")).otherwise(pl.col("name")).alias("name"),
+        pl.when(pl.col("id") == 2).then(None).otherwise(pl.col("parent")).alias("parent"),
+    ).write_parquet(source)
+    vocabulary = tmp_path / "vocabulary.parquet"
+    pl.DataFrame(
+        {
+            "qid": ["Q1", "Q1"],
+            "name": ["Root", "R"],
+            "normalized": ["root", "r"],
+            "kind": ["label", "alias"],
+        }
+    ).write_parquet(vocabulary)
+    config.update(group_globally=True, vocabulary=str(vocabulary))
+    export(config, run)
+    genres = {g["name"]: g for g in json.loads((run / "release/genres.json").read_text())}
+    assert genres["Root"]["aliases"] == ["R"]
+    assert genres["R"]["parent_id"] == genres["Root"]["id"]
+    search = json.loads((run / "release/search.json").read_text())
+    assert next(g for g in search if g["id"] == genres["Root"]["id"])["aliases"] == ["R"]
+    summary = json.loads((run / "release-summary.json").read_text())
+    assert str(vocabulary) in summary["inputs"]
+
+
 def test_hierarchy_empty_and_cycles():
     assert hierarchy([], set()) == {}
     with pytest.raises(ValueError, match="Cyclic"):
