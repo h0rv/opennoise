@@ -18,7 +18,17 @@ def main() -> None:
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
     start = time.monotonic()
-    if args.stage == "ingest":
+    if config.get("milestone") == "m2":
+        from opennoise.genres import build_genres, evaluate_genres
+        from opennoise.reference import ingest_reference
+
+        if args.stage == "ingest":
+            ingest_reference(config)
+        elif args.stage == "build":
+            build_genres(config, run)
+        else:
+            evaluate_genres(config, run)
+    elif args.stage == "ingest":
         from opennoise.ingest import ingest
 
         ingest()
