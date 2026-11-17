@@ -3,17 +3,18 @@ import gzip
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import tarfile
 import time
 import tomllib
 import unicodedata
-import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+import lxml.etree as etree
 import numpy as np
 import polars as pl
 from scipy import sparse
@@ -65,11 +66,24 @@ def download(name, path):
 
 
 def execute(stage, config, run):
+    start = time.monotonic()
     try:
         {"ingest": ingest, "build": build, "eval": evaluate}[stage](config, run)
+        log(run, f"tags_{stage}", {"status": "ok", "seconds": time.monotonic() - start})
     except Exception as error:
         log(run, f"tags_{stage}", {"status": "failed", "error": str(error)})
         raise
+
+
+def normalized_cache(config):
+    sources = tomllib.loads(Path("sources.toml").read_text())["sources"]
+    hashes = sorted(
+        (row["name"], row["sha256"])
+        for row in sources
+        if row.get("name") in {"musicbrainz_artists", "discogs_releases"}
+    )
+    digest = hashlib.sha256(json.dumps(hashes).encode()).hexdigest()[:12]
+    return Path(config["tags"]["cache"]) / digest
 
 
 def musicbrainz(path, root):
@@ -114,11 +128,8 @@ def discogs(path, root):
     counts = Counter()
     releases = 0
     with gzip.open(path, "rb") as stream:
-        context = ET.iterparse(stream, events=("start", "end"))
-        _, document = next(context)
-        for event, release in context:
-            if event != "end" or release.tag != "release":
-                continue
+        context = etree.iterparse(stream, events=("end",), tag="release", huge_tree=True)
+        for _, release in context:
             ids = {int(node.text) for node in release.findall("artists/artist/id") if node.text}
             ids &= wanted
             if ids:
@@ -133,7 +144,10 @@ def discogs(path, root):
                     json.dumps({"discogs_releases": releases, "artist_styles": len(counts)}),
                     flush=True,
                 )
-            document.clear()
+            release.clear()
+            if (parent := release.getparent()) is not None:
+                while release.getprevious() is not None:
+                    del parent[0]
     frame = pl.DataFrame(
         [(identifier, tag, count) for (identifier, tag), count in counts.items()],
         schema={"discogs_id": pl.Int64, "tag": pl.String, "weight": pl.Float32},
@@ -151,21 +165,28 @@ def ingest(config, run):
     settings = config["tags"]
     root = Path(settings["cache"])
     root.mkdir(parents=True, exist_ok=True)
+    normalized = normalized_cache(config)
+    normalized.mkdir(exist_ok=True)
     for source, filename, target in [
         ("musicbrainz_artists", "artist.tar.xz", "musicbrainz"),
         ("discogs_releases", "discogs_releases.xml.gz", "discogs"),
     ]:
-        if (run / f"{target}.parquet").exists():
+        outputs = [f"{target}.parquet"] + (["identity.parquet"] if target == "musicbrainz" else [])
+        if all((normalized / name).exists() for name in outputs):
+            for name in outputs:
+                shutil.copy2(normalized / name, run / name)
             continue
         start = time.monotonic()
         try:
             path = root / filename
             download(source, path)
             if target == "musicbrainz":
-                musicbrainz(path, run)
+                musicbrainz(path, normalized)
                 count = None
             else:
-                count = discogs(path, run)
+                count = discogs(path, normalized)
+            for name in outputs:
+                shutil.copy2(normalized / name, run / name)
             log(
                 run,
                 f"tags_ingest_{target}",
