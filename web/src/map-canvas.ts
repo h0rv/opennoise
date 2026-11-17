@@ -1,4 +1,5 @@
 import type { Genre } from './catalog';
+import { hasShortcutModifier } from './keyboard';
 import {
   LabelGrid,
   baseName,
@@ -102,6 +103,15 @@ export class MapCanvas {
     if (camera) this.camera = { ...camera };
     const options = { signal: this.abort.signal };
     element.addEventListener(
+      'dblclick',
+      (event) => {
+        event.preventDefault();
+        const rect = element.getBoundingClientRect();
+        this.zoom(1.7, { x: event.clientX - rect.left, y: event.clientY - rect.top });
+      },
+      options,
+    );
+    element.addEventListener(
       'wheel',
       (event) => {
         event.preventDefault();
@@ -180,6 +190,7 @@ export class MapCanvas {
     element.addEventListener(
       'keydown',
       (event) => {
+        if (hasShortcutModifier(event)) return;
         const directions: Record<string, [number, number]> = {
           ArrowLeft: [64, 0],
           ArrowRight: [-64, 0],
