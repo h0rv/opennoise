@@ -277,20 +277,34 @@ aside {
   max-height: 840px;
   overflow: auto;
 }
-aside:focus {
+#detail:focus {
   outline: none;
 }
-aside:focus-visible {
+#detail:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -3px;
 }
-aside > section {
+#detail > section {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--line);
 }
-aside > button {
+#detail > button {
   width: 100%;
+}
+#preview:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #111;
+  font-size: 13px;
+}
+#preview span {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
 }
 .detail-lede {
   color: var(--muted);

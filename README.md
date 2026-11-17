@@ -127,7 +127,9 @@ The study uses the shared synthetic catalog fixture, not model results. Islands,
 tree share one selection; field notes link genres and artists, and a trail saves stops locally.
 Set `VITE_CATALOG_URL` to a release's `manifest.json` to use its data (cross-origin hosts need CORS).
 `npm --prefix web run lint` and `npm --prefix web run build` check formatting, regenerate types
-from the pipeline schema, type-check and build a static site. No preview playback is connected yet.
+from the pipeline schema, type-check and build a static site. Clicking a genre or artist looks up
+a 30-second Deezer preview on demand; nothing is stored in the catalog. Deezer's
+[terms](https://developers.deezer.com/termsofuse) restrict this to non-commercial, private listening.
 
 Audio experiments reuse the M1 run named in `configs/audio.toml`:
 
