@@ -57,9 +57,8 @@ def validate_release(root: Path) -> dict:
         ids = [row["artist"]["id"] if nested else row["id"] for row in rows]
         if len(set(ids)) != len(ids) or any(id_ not in target or id_ == self_id for id_ in ids):
             raise ValueError(f"Invalid {feature} references")
-        if list(zip([-row["score"] for row in rows], ids)) != sorted(
-            zip([-row["score"] for row in rows], ids)
-        ):
+        ordering = [(-row["score"], id_) for row, id_ in zip(rows, ids, strict=True)]
+        if ordering != sorted(ordering):
             raise ValueError(f"{feature} must be score-descending, then ID-ascending")
         if nested:
             for row in rows:

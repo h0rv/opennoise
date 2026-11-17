@@ -158,7 +158,8 @@ explicitly synthetic release for UI development, not evidence of model quality.
 
 Artists use lowercase MBIDs, never run-local `item` indices or names. Genre IDs are persisted
 slugs assigned once, not regenerated after renaming, retraining or changing hierarchy. A merge
-keeps one ID and the old name as an alias; splits receive new IDs. Navigation has one optional
+keeps one ID and the old name as an alias; splits receive new IDs. Retired IDs are never reused;
+clients show unavailable for saved IDs absent from a release. Navigation has one optional
 parent per genre, no cycles and no fabricated root; multiple genre memberships remain separate
 scored edges. Tree/radial views derive from that forest, not another taxonomy artifact.
 
@@ -189,7 +190,7 @@ models/releases. Member counts count the full member list; listener counts count
 listeners. Null counts are not zero. Embedded summaries must equal their canonical detail.
 
 Preview locators identify a Deezer/iTunes track; clients fetch current playable URLs at runtime
-and handle unavailability. Releases contain no audio, signed media URLs, raw reference labels,
+and handle unavailability. Releases contain no audio, signed media URLs, raw reference datasets,
 training matrices or embeddings. Load only manifest/indexes initially and detail shards on selection;
 PMTiles and larger search/pagination formats can be added with a future schema version rather than
 inventing a second entity model. This v1 validates complete unpaginated member lists. Publish
