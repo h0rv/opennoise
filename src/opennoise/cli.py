@@ -22,6 +22,16 @@ def main() -> None:
         from opennoise import tags
 
         tags.execute(args.stage, config, run)
+    elif config.get("milestone") == "m2":
+        from opennoise.genres import build_genres, evaluate_genres
+        from opennoise.reference import ingest_reference
+
+        if args.stage == "ingest":
+            ingest_reference(config)
+        elif args.stage == "build":
+            build_genres(config, run)
+        else:
+            evaluate_genres(config, run)
     elif args.stage == "ingest":
         from opennoise.ingest import ingest
 
