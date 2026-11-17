@@ -26,6 +26,8 @@ type Item = {
   order: number;
 };
 type Label = { item: Item; box: Box; x: number; y: number };
+type Scene = { items: Map<string, Item>; points: Map<string, Item[]> };
+const scenes = new WeakMap<Genre[], Partial<Record<'axes' | 'islands', Scene>>>();
 
 export class MapCanvas {
   camera: Camera = { x: 0, y: 0, scale: 1 };
@@ -58,47 +60,62 @@ export class MapCanvas {
     camera?: Camera,
   ) {
     this.context = element.getContext('2d')!;
-    const byId = new Map(genres.map((g) => [g.id, g]));
-    for (const genre of genres) {
-      const point = genre.positions[layout];
-      if (!point) continue;
-      let depth = 0,
-        parent = genre.parent_id;
-      const seen = new Set<string>();
-      while (parent && byId.has(parent) && !seen.has(parent)) {
-        seen.add(parent);
-        depth++;
-        parent = byId.get(parent)!.parent_id;
-      }
-      const size = Math.min(16, 13 + Math.floor(Math.log10(Math.max(1, genre.member_count ?? 0))));
-      const font = `${depth ? '400' : '600'} ${size}px Helvetica, Arial, sans-serif`;
-      this.context.font = font;
-      const label = baseName(genre.name);
-      const item: Item = {
-        id: genre.id,
-        name: genre.name,
-        label,
-        x: 90 + point.x * 820,
-        y: 65 + point.y * 440,
-        count: genre.member_count ?? 0,
-        depth,
-        width: this.context.measureText(label).width,
-        size,
-        font,
-        kind: 'genre',
-        order: 0,
-      };
-      this.items.set(item.id, item);
-      const key = `${Math.floor(item.x / 16)}:${Math.floor(item.y / 16)}`;
-      const cell = this.points.get(key);
-      if (cell) cell.push(item);
-      else this.points.set(key, [item]);
+    let layouts = scenes.get(genres);
+    if (!layouts) {
+      layouts = {};
+      scenes.set(genres, layouts);
     }
-    [...this.items.values()]
-      .sort((a, b) => priority(a, b, ''))
-      .forEach((item, order) => {
-        item.order = order;
-      });
+    const scene = layouts[layout];
+    if (scene) {
+      this.items = scene.items;
+      this.points = scene.points;
+    } else {
+      const byId = new Map(genres.map((g) => [g.id, g]));
+      for (const genre of genres) {
+        const point = genre.positions[layout];
+        if (!point) continue;
+        let depth = 0,
+          parent = genre.parent_id;
+        const seen = new Set<string>();
+        while (parent && byId.has(parent) && !seen.has(parent)) {
+          seen.add(parent);
+          depth++;
+          parent = byId.get(parent)!.parent_id;
+        }
+        const size = Math.min(
+          16,
+          13 + Math.floor(Math.log10(Math.max(1, genre.member_count ?? 0))),
+        );
+        const font = `${depth ? '400' : '600'} ${size}px Helvetica, Arial, sans-serif`;
+        this.context.font = font;
+        const label = baseName(genre.name);
+        const item: Item = {
+          id: genre.id,
+          name: genre.name,
+          label,
+          x: 90 + point.x * 820,
+          y: 65 + point.y * 440,
+          count: genre.member_count ?? 0,
+          depth,
+          width: this.context.measureText(label).width,
+          size,
+          font,
+          kind: 'genre',
+          order: 0,
+        };
+        this.items.set(item.id, item);
+        const key = `${Math.floor(item.x / 16)}:${Math.floor(item.y / 16)}`;
+        const cell = this.points.get(key);
+        if (cell) cell.push(item);
+        else this.points.set(key, [item]);
+      }
+      [...this.items.values()]
+        .sort((a, b) => priority(a, b, ''))
+        .forEach((item, order) => {
+          item.order = order;
+        });
+      layouts[layout] = { items: this.items, points: this.points };
+    }
     this.resize();
     if (camera) this.camera = { ...camera };
     const options = { signal: this.abort.signal };
