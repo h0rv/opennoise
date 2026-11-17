@@ -1,5 +1,7 @@
-import Panzoom, { type PanzoomObject } from '@panzoom/panzoom';
+import type { PanzoomObject } from '@panzoom/panzoom';
 import { Catalog } from './data';
+import { GenreTree } from './genre-tree';
+import { createNavigation, type Navigation } from './navigation';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import {
   artistLabel,
@@ -54,12 +56,12 @@ async function start() {
   let detail: GenreDetail | ArtistDetail | null = null;
   let controller = new AbortController();
   let panzoom: PanzoomObject | undefined;
+  let navigation: Navigation | undefined;
   let labelFrame = 0;
   let islandFamily: string | null = null;
   let cameraView: 'axes' | 'islands' = 'islands';
   let homeCamera = { scale: 1, x: 0, y: 0 };
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
-  const collapsed = new Set<string>();
   let mapNodes: {
     node: SVGGElement;
     label: SVGTextElement;
@@ -109,6 +111,10 @@ async function start() {
   const results = document.querySelector<HTMLElement>('#results')!;
   const trailPanel = document.querySelector<HTMLElement>('#trail')!;
   const status = document.querySelector<HTMLElement>('#status')!;
+  const hierarchy = new GenreTree(
+    catalog.genres,
+    (selection) => void select(selection, true, false),
+  );
 
   function entityButton(
     kind: Selection['kind'],
@@ -127,17 +133,6 @@ async function start() {
       genre = genres.get(genre.parent_id)!;
     }
     return genre;
-  }
-
-  function tree(parent: string | null, seen = new Set<string>()): string {
-    return `<ul>${catalog.genres
-      .filter((genre) => genre.parent_id === parent && !seen.has(genre.id))
-      .map((genre) => {
-        const hasChildren = catalog.genres.some((child) => child.parent_id === genre.id);
-        const node = `<span class="tree-node">${entityButton('genre', genre.id, genre.name, undefined, genre.color)}<span class="muted">${count(genre.member_count)}</span></span>`;
-        return `<li>${hasChildren ? `<details data-tree="${escape(genre.id)}" ${collapsed.has(genre.id) ? '' : 'open'}><summary>${node}</summary>${tree(genre.id, new Set([...seen, genre.id]))}</details>` : node}</li>`;
-      })
-      .join('')}</ul>`;
   }
 
   function measureLabel(name: string, size: number, bold = false) {
@@ -202,28 +197,31 @@ async function start() {
   }
 
   function renderCanvas(reveal = false) {
-    if (
-      view !== 'tree' &&
-      panzoom &&
-      canvas.querySelector<HTMLElement>('#map-content')?.dataset.layout === view
-    ) {
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-view]')
+      .forEach((button) =>
+        setAttribute(button, 'aria-pressed', String(button.dataset.view === view)),
+      );
+    if (view === 'tree') {
+      if (panzoom) cameras.set(cameraView, { scale: panzoom.getScale(), ...panzoom.getPan() });
+      navigation?.destroy();
+      navigation = undefined;
+      panzoom = undefined;
+      mapNodes = [];
+      hierarchy.show(canvas, selected, detail);
+      return;
+    }
+    hierarchy.hide();
+    if (panzoom && canvas.querySelector<HTMLElement>('#map-content')?.dataset.layout === view) {
       updateMapSelection();
       if (reveal) revealSelection();
       return;
     }
     if (panzoom) cameras.set(cameraView, { scale: panzoom.getScale(), ...panzoom.getPan() });
-    panzoom?.destroy();
+    navigation?.destroy();
+    navigation = undefined;
     panzoom = undefined;
     mapNodes = [];
-    document
-      .querySelectorAll<HTMLButtonElement>('[data-view]')
-      .forEach((button) =>
-        button.setAttribute('aria-pressed', String(button.dataset.view === view)),
-      );
-    if (view === 'tree') {
-      canvas.innerHTML = `<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div>`;
-      return;
-    }
     const layout = view;
     const hadCamera = cameras.has(layout);
     const placed = catalog.genres.filter((genre) => genre.positions[layout] !== null);
@@ -289,82 +287,21 @@ async function start() {
       cameras.get(layout) ||
       (view === 'islands' && islandFamily ? islandCamera(islandFamily) : homeCamera);
     const content = canvas.querySelector<HTMLDivElement>('#map-content')!;
-    panzoom = Panzoom(content, {
+    navigation = createNavigation(content, viewport, {
+      camera,
       maxScale: Math.max(6, scale * 2),
       minScale: 0.25,
-      canvas: true,
       excludeClass: 'genre',
-      startScale: camera.scale,
-      startX: camera.x,
-      startY: camera.y,
+      onChange: scheduleLabels,
+      onReset: resetMap,
     });
-    content.addEventListener('panzoomchange', scheduleLabels);
-    panzoom.pan(camera.x, camera.y);
+    panzoom = navigation.panzoom;
     if (reveal) revealSelection();
-    const map = panzoom;
-    let wheelFrame = 0,
-      wheelDelta = 0;
-    let wheelPoint = { clientX: 0, clientY: 0 };
-    viewport.addEventListener(
-      'wheel',
-      (event) => {
-        event.preventDefault();
-        wheelDelta +=
-          (event.deltaY || event.deltaX) *
-          (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
-        wheelPoint = { clientX: event.clientX, clientY: event.clientY };
-        if (wheelFrame) return;
-        wheelFrame = requestAnimationFrame(() => {
-          wheelFrame = 0;
-          const delta = Math.max(-600, Math.min(600, wheelDelta));
-          wheelDelta = 0;
-          if (panzoom === map)
-            map.zoomToPoint(map.getScale() * Math.exp(-delta * 0.002), wheelPoint, {
-              animate: false,
-            });
-        });
-      },
-      { passive: false },
-    );
-    viewport.addEventListener('dblclick', (event) => zoomMap(1.8, event));
-    viewport.addEventListener('keydown', (event) => {
-      if (event.target !== viewport) return;
-      const step = 64 / map.getScale();
-      const directions: Record<string, [number, number]> = {
-        ArrowLeft: [step, 0],
-        ArrowRight: [-step, 0],
-        ArrowUp: [0, step],
-        ArrowDown: [0, -step],
-      };
-      const delta = directions[event.key];
-      if (delta) {
-        event.preventDefault();
-        map.pan(delta[0], delta[1], { relative: true });
-      } else if (event.key === '+' || event.key === '=') {
-        event.preventDefault();
-        zoomMap(1.35);
-      } else if (event.key === '-') {
-        event.preventDefault();
-        zoomMap(1 / 1.35);
-      } else if (event.key === '0') {
-        event.preventDefault();
-        resetMap();
-      }
-    });
     scheduleLabels();
   }
 
   function zoomMap(factor: number, point?: { clientX: number; clientY: number }) {
-    const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
-    if (!panzoom || !viewport) return;
-    panzoom.zoomToPoint(
-      panzoom.getScale() * factor,
-      point || {
-        clientX: (viewport.left + viewport.right) / 2,
-        clientY: (viewport.top + viewport.bottom) / 2,
-      },
-      { animate: false },
-    );
+    navigation?.zoomBy(factor, point);
   }
 
   function resetMap() {
@@ -418,6 +355,7 @@ async function start() {
   }
 
   function positionLabels() {
+    if (view === 'tree') return;
     const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
     const matrix = canvas.querySelector('svg')?.getScreenCTM();
     if (!viewport || !matrix) return;
@@ -602,7 +540,7 @@ async function start() {
     history.pushState(null, '', `#${params}`);
   }
 
-  async function select(selection: Selection, push = true) {
+  async function select(selection: Selection, push = true, focusDetails = true) {
     controller.abort();
     controller = new AbortController();
     selected = selection;
@@ -620,7 +558,7 @@ async function start() {
       detail = loaded;
       renderDetail();
       renderCanvas(true);
-      drawer.focus({ preventScroll: true });
+      if (focusDetails) drawer.focus({ preventScroll: true });
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
         return;
@@ -731,17 +669,6 @@ async function start() {
       (event.target as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
     }
   });
-  canvas.addEventListener(
-    'toggle',
-    (event) => {
-      const target = event.target;
-      if (target instanceof HTMLDetailsElement && target.dataset.tree) {
-        if (target.open) collapsed.delete(target.dataset.tree);
-        else collapsed.add(target.dataset.tree);
-      }
-    },
-    true,
-  );
   document.addEventListener('keydown', (event) => {
     if (event.key === '/' && !(event.target instanceof HTMLInputElement)) {
       event.preventDefault();
@@ -757,10 +684,12 @@ async function start() {
   });
   window.addEventListener('popstate', restoreURL);
   window.addEventListener('resize', () => {
-    panzoom?.destroy();
+    navigation?.destroy();
+    navigation = undefined;
     panzoom = undefined;
     cameras.clear();
-    renderCanvas();
+    if (view === 'tree') hierarchy.resize();
+    else renderCanvas();
   });
   renderTrail();
   restoreURL();
