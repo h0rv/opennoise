@@ -436,6 +436,7 @@ async function start() {
         .querySelector('#trail-toggle')!
         .setAttribute('aria-expanded', String(!trailPanel.hidden));
       if (!trailPanel.hidden) {
+        status.textContent = '';
         trailPanel.scrollIntoView({ block: 'nearest' });
         if (trail.some((entry) => !lookup.has(`${entry.kind}:${entry.id}`)))
           void loadSearchIndex().catch(() => {
