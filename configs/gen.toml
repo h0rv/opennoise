@@ -21,3 +21,7 @@ layout = "runs/824a3093dada/genre_layout.parquet"
 labels = "data/m2/labels.parquet"
 artists = "runs/1f242e47ed38/artists.parquet"
 ceiling = "data/m2/map.parquet"
+
+[m3]
+memberships = "runs/e8be82e2bf7e/memberships.parquet"
+artists = "runs/1f242e47ed38/artists.parquet"
