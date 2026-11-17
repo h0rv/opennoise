@@ -8,9 +8,11 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
-    parser.add_argument("stage", choices=["ingest", "build", "eval", "export"])
-    parser.add_argument("config", nargs="?", default="configs/m1.toml")
+    parser.add_argument("stage", choices=["ingest", "build", "eval", "export", "layout"])
+    parser.add_argument("config", nargs="?")
     args = parser.parse_args()
+    if args.config is None:
+        args.config = "configs/layout.toml" if args.stage == "layout" else "configs/m1.toml"
     config_bytes = Path(args.config).read_bytes()
     config = tomllib.loads(config_bytes.decode())
     if args.stage == "export" and config.get("milestone") not in {"m2b", "m2c"}:
@@ -50,9 +52,13 @@ def main() -> None:
         from opennoise.graph import build
 
         build(config, run)
-    else:
+    elif args.stage == "eval":
         from opennoise.evaluate import evaluate
 
         evaluate(config, run)
+    else:
+        from opennoise.layout import layout
+
+        layout(config, run)
     elapsed = time.monotonic() - start
     print(json.dumps({"run": str(run), "stage": args.stage, "seconds": elapsed}))
