@@ -1,16 +1,21 @@
-export function searchMatches<T>(index: { entry: T; terms: string[] }[], query: string): T[] {
+export function searchMatches<T>(
+  index: { entry: T; terms: string[]; topLevel?: boolean }[],
+  query: string,
+): T[] {
   if (!query) return [];
-  const buckets: T[][] = [[], [], [], []];
-  for (const { entry, terms } of index) {
+  const buckets: T[][] = [[], [], [], [], []];
+  for (const { entry, terms, topLevel } of index) {
     const rank =
       terms[0] === query
         ? 0
         : terms.includes(query)
-          ? 1
+          ? topLevel
+            ? 1
+            : 2
           : terms.some((term) => term.startsWith(query))
-            ? 2
+            ? 3
             : terms.some((term) => term.includes(query))
-              ? 3
+              ? 4
               : -1;
     if (rank !== -1 && buckets[rank].length < 12) buckets[rank].push(entry);
   }
