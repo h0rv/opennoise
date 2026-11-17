@@ -1,0 +1,26 @@
+seed = 42
+m2_config = "configs/m2.toml"
+reference = "data/m2"
+min_members = 3
+dimensions = 128
+workers = 4
+representations = [
+  "als_2",
+  "audio_ab_all",
+  "tfidf+audio_ab_all",
+  "als_2+audio_ab_all",
+  "als_2+audio_ab_high",
+  "als_2+audio_effnet",
+]
+member_weighting = ["uniform", "log_listeners"]
+concat = false
+ridge_alpha = [0.1, 1.0, 10.0, 100.0]
+knn_k = [3, 5, 10, 20, 40]
+ensemble_alpha = [0.1, 1.0, 10.0, 100.0]
+boost_depth = [3, 6]
+boost_iterations = 150
+repulsion_iterations = 5
+repulsion_radius = 0.025
+umap_neighbors = [15, 40]
+umap_min_dist = 0.1
+umap_epochs = 300
