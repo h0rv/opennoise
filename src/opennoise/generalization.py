@@ -225,6 +225,34 @@ def cluster_scores(reference, memberships, genres, seed=42, minimum=5):
     }
 
 
+def overlap_scores(reference, memberships, artists, seed=42, minimum=5):
+    covered = sorted(set(reference["artist_mbid"]) & set(artists["artist_mbid"]))
+    index = {artist: i for i, artist in enumerate(covered)}
+    members = memberships.filter(pl.col("artist_mbid").is_in(covered))
+    rows = np.array([index[a] for a in members["artist_mbid"]], dtype=np.int64)
+    genres = members["genre"].to_numpy()
+    shape = (int(genres.max()) + 1 if len(genres) else 1, len(covered))
+    order = np.random.default_rng(seed).permutation(len(covered))
+    values, random = [], []
+    for columns, found in ((rows, values), (order[rows], random)):
+        matrix = sparse.csr_matrix((np.ones(len(rows)), (genres, columns)), shape=shape)
+        sizes = np.asarray(matrix.sum(axis=1)).ravel()
+        for group in reference.partition_by("genre_qid"):
+            truth = np.zeros(len(covered))
+            truth[[index[a] for a in set(group["artist_mbid"]) if a in index]] = 1
+            if truth.sum() >= minimum:
+                shared = matrix @ truth
+                found.append(float((shared / (sizes + truth.sum() - shared)).max()))
+    return {
+        "genre_match": mean([value >= 0.2 for value in values]),
+        "median_jaccard": float(np.median(values)) if values else None,
+        "random_genre_match": mean([value >= 0.2 for value in random]),
+        "random_median_jaccard": float(np.median(random)) if random else None,
+        "genres": len(values),
+        "artists": len(covered),
+    }
+
+
 def naming_score(reference, memberships, genres, seed=42):
     named = genres.filter(
         (pl.col("level") >= 0)
@@ -336,7 +364,9 @@ def evaluate(config, run):
     if not crosswalk.exists():
         result["unavailable"]["artists_absent_enao"] = "M2 crosswalk missing"
     available = {}
-    for stage in ["m1", "m2", "naming", "layout"]:
+    for stage in ["m1", "m2", "m3", "naming", "layout"]:
+        if stage not in config:
+            continue
         paths = {key: Path(value) for key, value in config[stage].items()}
         missing = [str(path) for path in paths.values() if not path.exists()]
         if missing:
@@ -357,12 +387,14 @@ def evaluate(config, run):
             "genres": subset["genre_qid"].n_unique(),
         }
         for stage, frames in available.items():
-            if stage in {"m2", "naming"} and name not in {"sealed", "sealed_independent"}:
+            if stage in {"m2", "m3", "naming"} and name not in {"sealed", "sealed_independent"}:
                 continue
             if stage == "m1":
                 metrics[stage] = similarity_score(subset, **frames, seed=config["seed"])
             elif stage == "m2":
                 metrics[stage] = cluster_scores(subset, **frames, seed=config["seed"])
+            elif stage == "m3":
+                metrics[stage] = overlap_scores(subset, **frames, seed=config["seed"])
             elif stage == "naming":
                 metrics[stage] = naming_score(subset, **frames, seed=config["seed"])
             else:

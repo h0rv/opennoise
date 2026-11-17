@@ -353,3 +353,15 @@ def test_naming_uses_sealed_member_majority(reference, clusters, tmp_path, monke
 def test_unsupported_stage(tmp_path):
     with pytest.raises(ValueError, match="ingest and eval"):
         gen.execute("build", {}, tmp_path)
+
+
+def test_overlap_scores(reference):
+    artists = reference.select("artist_mbid")
+    members = pl.DataFrame(
+        {"genre": [0] * 6 + [1] * 6 + [2] * 3, "artist_mbid": [*artists["artist_mbid"], *"xyz"]}
+    )
+    score = gen.overlap_scores(reference, members, artists)
+    assert score["genre_match"] == score["median_jaccard"] == 1
+    assert score["genres"] == 2
+    assert score["random_median_jaccard"] < 1
+    assert gen.overlap_scores(reference, members.clear(), artists)["genre_match"] == 0

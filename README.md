@@ -143,3 +143,21 @@ EffNet previews are off by default (`audio.effnet = true` enables them) because 
 noncommercial. The audio stage writes `audio_<signal>.npy` into the listening run; `layout`
 then reads `a+b` representations as row-normalized concatenations, and `configs/layout.toml`
 defaults to `als_2+audio_ab_all`, so run `audio` before `layout`.
+
+M3 composes micro-genre names from a place (MusicBrainz areas, Wikidata demonyms) and a style
+(Wikidata, Discogs, suffixes of visible ENAO names), with members scored from listening
+neighbours and that evidence. A second model, cross-fitted on visible genres, ranks which
+composed names are real genres. It needs the M2 and M2c ingests.
+
+```sh
+uv run on ingest configs/m3.toml
+uv run on tune configs/m3.toml
+uv run on build configs/m3.toml
+uv run on eval configs/m3.toml
+```
+
+`runs/<hash>/` holds `genres.parquet`, `memberships.parquet` and `related.parquet` (nearest
+genres by shared listening). `uv run on tune configs/m3.toml` scores the `[grid]` of `threshold`
+and `negative_weight` on a fifth of the visible genres; the hidden genres are never used to pick
+settings. Sealed artists' Wikidata genres are dropped, so the `[m3]` entry in `configs/gen.toml`
+scores a run on them.
