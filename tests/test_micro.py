@@ -44,18 +44,22 @@ def test_release_appends_micro_genres(tmp_path):
     memberships = pl.DataFrame({"artist": ["a"], "genre": [0], "score": [0.5]})
     pl.DataFrame(
         {
-            "id": [0, 1, 2, 3],
-            "name": ["punk", "swedish punk", "swedish zydeco", "sweden zydeco"],
-            "style": ["punk", "punk", "zydeco", "zydeco"],
-            "size": [1, 1, 1, 1],
+            "id": [0, 1, 2, 3, 4],
+            "name": ["punk", "swedish punk", "swedish zydeco", "sweden zydeco", "swedish punk"],
+            "style": ["punk", "punk", "zydeco", "zydeco", "swedish punk"],
+            "size": [1, 1, 1, 1, 1],
         }
     ).write_parquet(tmp_path / "genres.parquet")
     pl.DataFrame(
-        {"genre": [0, 1, 2, 3], "artist_mbid": ["a", "b", "c", "c"], "score": [0.9, 0.8, 0.7, 0.6]}
+        {
+            "genre": [0, 1, 2, 3, 4],
+            "artist_mbid": ["a", "b", "c", "c", "d"],
+            "score": [0.9, 0.8, 0.7, 0.6, 0.5],
+        }
     ).write_parquet(tmp_path / "memberships.parquet")
     genres, memberships = release(tmp_path, genres, memberships)
     assert genres.select("id", "name", "level", "parent").rows()[2:] == [
-        (3, "swedish punk", 1, 0),
+        (3, "swedish punk", 1, None),
         (4, "swedish zydeco", 1, None),
     ]
     assert memberships.rows() == [("a", 0, 0.5), ("b", 3, 0.8), ("c", 4, 0.7)]

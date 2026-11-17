@@ -163,6 +163,6 @@ and `negative_weight` on a fifth of the visible genres; the hidden genres are ne
 settings. Sealed artists' Wikidata genres are dropped, so the `[m3]` entry in `configs/gen.toml`
 scores a run on them.
 
-`micro` in `configs/map-labels.toml` names an M3 run: the catalog export appends its genres to the
+`micro` in `configs/one-name.toml` names an M3 run: the catalog export appends its genres to the
 clusters as the `micro` level, skipping names a cluster or supervised genre already has and aliases with identical
 members, with a parent where the style is a supervised genre.
