@@ -225,38 +225,12 @@ body > header > :last-child {
   stroke-width: 7px;
 }
 .axis-legend {
-  display: none;
-}
-.axis {
-  position: absolute;
-  pointer-events: none;
-  padding: 4px 8px;
-  background: #fff;
+  display: grid;
+  gap: 4px;
+  padding: 12px 24px 0;
   color: var(--muted);
-  font-size: 11px;
-}
-.axis.top,
-.axis.bottom {
-  left: 50%;
-  transform: translateX(-50%);
-}
-.axis.top {
-  top: 8px;
-}
-.axis.bottom {
-  bottom: 8px;
-}
-.axis.left,
-.axis.right {
-  top: 50%;
-  writing-mode: vertical-rl;
-  transform: translateY(-50%);
-}
-.axis.left {
-  left: 0;
-}
-.axis.right {
-  right: 0;
+  font-size: 12px;
+  line-height: 1.5;
 }
 .map-bottom {
   display: flex;
@@ -537,16 +511,8 @@ body > header h1 {
     padding: 16px 0;
     gap: 12px;
   }
-  .axis {
-    display: none;
-  }
   .axis-legend {
-    display: grid;
-    gap: 4px;
-    padding-top: 12px;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.5;
+    padding-inline: 0;
   }
   aside {
     border-left: 0;
