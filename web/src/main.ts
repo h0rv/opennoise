@@ -1,6 +1,15 @@
 import Panzoom, { type PanzoomObject } from '@panzoom/panzoom';
 import { Catalog } from './data';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
+import {
+  artistLabel,
+  cameraAt,
+  contains,
+  genreLabel,
+  project,
+  type Box,
+  type Point,
+} from './map-geometry';
 import './style.css';
 
 type View = 'axes' | 'islands' | 'tree';
@@ -15,6 +24,7 @@ const count = (value: number | null, noun = 'artist') =>
   value === null
     ? 'Count unavailable'
     : `${value.toLocaleString()} ${noun}${value === 1 ? '' : 's'}`;
+const worldPoint = (point: Point) => ({ x: 90 + point.x * 820, y: 65 + point.y * 440 });
 const modes: Record<View, { label: string }> = {
   axes: {
     label: 'Sonic map',
@@ -31,6 +41,10 @@ async function start() {
   const catalog = await new Catalog().load();
   const genres = new Map(catalog.genres.map((genre) => [genre.id, genre]));
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
+  const searchIndex = catalog.search.map((entry) => ({
+    entry,
+    terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
+  }));
   let view: View = catalog.manifest.layouts.axes
     ? 'axes'
     : catalog.manifest.layouts.islands
@@ -46,6 +60,16 @@ async function start() {
   let homeCamera = { scale: 1, x: 0, y: 0 };
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
   const collapsed = new Set<string>();
+  let mapNodes: {
+    node: SVGGElement;
+    label: SVGTextElement;
+    point: Point;
+    width: number;
+    id: string;
+    active: boolean;
+  }[] = [];
+  const textWidths = new Map<string, number>();
+  const textMeasure = document.createElement('canvas').getContext('2d')!;
   let trail: Selection[] = [];
   let storageAvailable = true;
   const storageKey = `opennoise:trail:${catalog.manifest.release_id}`;
@@ -116,10 +140,81 @@ async function start() {
       .join('')}</ul>`;
   }
 
-  function renderCanvas() {
+  function measureLabel(name: string, size: number, bold = false) {
+    const key = `${size}:${bold}:${name}`;
+    let width = textWidths.get(key);
+    if (width === undefined) {
+      textMeasure.font = `${bold ? '700' : '400'} ${size}px Helvetica, Arial, sans-serif`;
+      width = textMeasure.measureText(name).width + 2;
+      textWidths.set(key, width);
+    }
+    return width;
+  }
+
+  function artistMarkup(layout: 'axes' | 'islands') {
+    if (!detail || !('artist' in detail) || !detail.artist.positions[layout]) return '';
+    const point = worldPoint(detail.artist.positions[layout]!);
+    return `<g transform="translate(${point.x},${point.y})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" font-size="14">${escape(detail.artist.name)}</text></g>`;
+  }
+
+  function updateMapSelection() {
+    for (const item of mapNodes) {
+      const active = selected?.kind === 'genre' && selected.id === item.id;
+      if (active === item.active) continue;
+      item.active = active;
+      item.node.setAttribute('aria-pressed', String(active));
+      item.node.querySelector('circle')!.setAttribute('r', active ? '8' : '5');
+    }
+    canvas.querySelector('#artist-layer')!.innerHTML = artistMarkup(cameraView);
+    canvas.querySelector('#placement-status')!.textContent =
+      selected?.kind === 'artist' &&
+      detail &&
+      'artist' in detail &&
+      !detail.artist.positions[cameraView]
+        ? 'Selected artist is not placed'
+        : '';
+    scheduleLabels();
+  }
+
+  function revealSelection() {
+    if (!panzoom || view === 'tree') return;
+    const position =
+      selected?.kind === 'genre'
+        ? genres.get(selected.id)?.positions[view]
+        : detail && 'artist' in detail
+          ? detail.artist.positions[view]
+          : null;
+    if (!position) return;
+    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
+    const point = worldPoint(position);
+    const camera = { scale: panzoom.getScale(), ...panzoom.getPan() };
+    if (
+      contains(
+        project(point, camera),
+        { left: 0, top: 0, right: viewport.clientWidth, bottom: viewport.clientHeight },
+        48,
+      )
+    )
+      return;
+    const target = cameraAt(point, camera.scale, viewport.clientWidth, viewport.clientHeight);
+    panzoom.setOptions({ startX: target.x, startY: target.y });
+    panzoom.pan(target.x, target.y);
+  }
+
+  function renderCanvas(reveal = false) {
+    if (
+      view !== 'tree' &&
+      panzoom &&
+      canvas.querySelector<HTMLElement>('#map-content')?.dataset.layout === view
+    ) {
+      updateMapSelection();
+      if (reveal) revealSelection();
+      return;
+    }
     if (panzoom) cameras.set(cameraView, { scale: panzoom.getScale(), ...panzoom.getPan() });
     panzoom?.destroy();
     panzoom = undefined;
+    mapNodes = [];
     document
       .querySelectorAll<HTMLButtonElement>('[data-view]')
       .forEach((button) =>
@@ -133,8 +228,7 @@ async function start() {
     const hadCamera = cameras.has(layout);
     const placed = catalog.genres.filter((genre) => genre.positions[layout] !== null);
     const xy = (genre: Genre) => {
-      const point = genre.positions[layout]!;
-      return { x: 90 + point.x * 820, y: 65 + point.y * 440 };
+      return worldPoint(genre.positions[layout]!);
     };
     const families = new Map<string, Genre[]>();
     for (const genre of placed) {
@@ -158,14 +252,10 @@ async function start() {
       .map((genre) => {
         const { x, y } = xy(genre);
         const active = selected?.kind === 'genre' && selected.id === genre.id;
-        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#111111')}"/><text x="${x > 790 ? -13 : 13}" y="5" text-anchor="${x > 790 ? 'end' : 'start'}">${escape(genre.name)}</text></g>`;
+        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#111111')}"/><text>${escape(genre.name)}</text></g>`;
       })
       .join('');
-    let artist = '';
-    if (detail && 'artist' in detail && detail.artist.positions[layout]) {
-      const point = detail.artist.positions[layout]!;
-      artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
-    }
+    const artist = artistMarkup(layout);
     const axes = catalog.manifest.layouts.axes;
     if (view === 'islands' && !hadCamera && selected?.kind === 'genre')
       islandFamily = root(genres.get(selected.id)!).id;
@@ -173,7 +263,15 @@ async function start() {
       view === 'islands'
         ? `<nav class="families" aria-label="Focus an island family"><button data-family="" aria-pressed="${islandFamily === null}">All</button>${[...families.keys()].map((id) => `<button data-family="${escape(id)}" aria-pressed="${islandFamily === id}">${escape(genres.get(id)!.name)}</button>`).join('')}</nav>`
         : '';
-    canvas.innerHTML = `${familyNav}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg></div><div class="map-bottom"><span>${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? 'Selected artist is not placed' : ''}</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    canvas.innerHTML = `${familyNav}<div class="map-viewport" id="map-viewport" tabindex="0" role="group" aria-label="${modes[view].label}" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown + - 0"><div id="map-content" class="map-stage" data-layout="${layout}"><svg viewBox="0 0 1000 570" role="group" aria-label="Genre labels are interactive">${islands}${nodes}<g id="artist-layer">${artist}</g></svg></div></div><div class="map-bottom"><span id="placement-status">${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? 'Selected artist is not placed' : ''}</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    mapNodes = [...canvas.querySelectorAll<SVGGElement>('.genre')].map((node, index) => ({
+      node,
+      label: node.querySelector('text')!,
+      point: xy(placed[index]),
+      width: measureLabel(placed[index].name, 16, true),
+      id: placed[index].id,
+      active: selected?.kind === 'genre' && selected.id === placed[index].id,
+    }));
     if (view === 'axes' && axes) {
       const legend = document.createElement('div');
       legend.className = 'axis-legend';
@@ -181,16 +279,19 @@ async function start() {
       canvas.querySelector('.map-bottom')!.before(legend);
     }
     cameraView = layout;
-    const viewportWidth = canvas.querySelector<HTMLElement>('#map-viewport')!.clientWidth;
-    const scale = Math.max(1, 760 / viewportWidth);
-    homeCamera = { scale, x: 500 / scale - 500, y: 285 / scale - 285 };
+    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
+    const scale = Math.max(
+      0.76,
+      Math.min(viewport.clientWidth / 1000, viewport.clientHeight / 570),
+    );
+    homeCamera = cameraAt({ x: 500, y: 285 }, scale, viewport.clientWidth, viewport.clientHeight);
     const camera =
       cameras.get(layout) ||
       (view === 'islands' && islandFamily ? islandCamera(islandFamily) : homeCamera);
-    const content = canvas.querySelector<SVGGElement>('#map-content')!;
+    const content = canvas.querySelector<HTMLDivElement>('#map-content')!;
     panzoom = Panzoom(content, {
-      maxScale: Math.max(5, scale * 2),
-      minScale: 0.7,
+      maxScale: Math.max(6, scale * 2),
+      minScale: 0.25,
       canvas: true,
       excludeClass: 'genre',
       startScale: camera.scale,
@@ -198,7 +299,80 @@ async function start() {
       startY: camera.y,
     });
     content.addEventListener('panzoomchange', scheduleLabels);
+    panzoom.pan(camera.x, camera.y);
+    if (reveal) revealSelection();
+    const map = panzoom;
+    let wheelFrame = 0,
+      wheelDelta = 0;
+    let wheelPoint = { clientX: 0, clientY: 0 };
+    viewport.addEventListener(
+      'wheel',
+      (event) => {
+        event.preventDefault();
+        wheelDelta +=
+          (event.deltaY || event.deltaX) *
+          (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
+        wheelPoint = { clientX: event.clientX, clientY: event.clientY };
+        if (wheelFrame) return;
+        wheelFrame = requestAnimationFrame(() => {
+          wheelFrame = 0;
+          const delta = Math.max(-600, Math.min(600, wheelDelta));
+          wheelDelta = 0;
+          if (panzoom === map)
+            map.zoomToPoint(map.getScale() * Math.exp(-delta * 0.002), wheelPoint, {
+              animate: false,
+            });
+        });
+      },
+      { passive: false },
+    );
+    viewport.addEventListener('dblclick', (event) => zoomMap(1.8, event));
+    viewport.addEventListener('keydown', (event) => {
+      if (event.target !== viewport) return;
+      const step = 64 / map.getScale();
+      const directions: Record<string, [number, number]> = {
+        ArrowLeft: [step, 0],
+        ArrowRight: [-step, 0],
+        ArrowUp: [0, step],
+        ArrowDown: [0, -step],
+      };
+      const delta = directions[event.key];
+      if (delta) {
+        event.preventDefault();
+        map.pan(delta[0], delta[1], { relative: true });
+      } else if (event.key === '+' || event.key === '=') {
+        event.preventDefault();
+        zoomMap(1.35);
+      } else if (event.key === '-') {
+        event.preventDefault();
+        zoomMap(1 / 1.35);
+      } else if (event.key === '0') {
+        event.preventDefault();
+        resetMap();
+      }
+    });
     scheduleLabels();
+  }
+
+  function zoomMap(factor: number, point?: { clientX: number; clientY: number }) {
+    const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
+    if (!panzoom || !viewport) return;
+    panzoom.zoomToPoint(
+      panzoom.getScale() * factor,
+      point || {
+        clientX: (viewport.left + viewport.right) / 2,
+        clientY: (viewport.top + viewport.bottom) / 2,
+      },
+      { animate: false },
+    );
+  }
+
+  function resetMap() {
+    if (view === 'islands') focusIslandFamily(null);
+    else {
+      panzoom?.zoom(homeCamera.scale);
+      panzoom?.pan(homeCamera.x, homeCamera.y);
+    }
   }
 
   function focusIslandFamily(id: string | null) {
@@ -222,16 +396,20 @@ async function start() {
     const top = 65 + Math.min(...points.map((point) => point.y)) * 440;
     const bottom = 65 + Math.max(...points.map((point) => point.y)) * 440;
     const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
-    const unit = canvas.querySelector('svg')!.getScreenCTM()!.a;
     const scale = Math.max(
       0.7,
       Math.min(
         5,
-        (viewport.clientWidth - 160) / (Math.max(80, right - left) * unit),
-        (viewport.clientHeight - 90) / (Math.max(80, bottom - top) * unit),
+        (viewport.clientWidth - 160) / Math.max(80, right - left),
+        (viewport.clientHeight - 90) / Math.max(80, bottom - top),
       ),
     );
-    return { scale, x: 500 / scale - (left + right) / 2, y: 285 / scale - (top + bottom) / 2 };
+    return cameraAt(
+      { x: (left + right) / 2, y: (top + bottom) / 2 },
+      scale,
+      viewport.clientWidth,
+      viewport.clientHeight,
+    );
   }
 
   function scheduleLabels() {
@@ -241,92 +419,60 @@ async function start() {
 
   function positionLabels() {
     const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
-    if (!viewport) return;
-    for (const node of canvas.querySelectorAll<SVGGElement>('.genre')) {
-      const marker = node.querySelector('circle')!.getBoundingClientRect();
-      const x = (marker.left + marker.right) / 2;
-      const y = (marker.top + marker.bottom) / 2;
-      const visible =
-        x >= viewport.left + 8 &&
-        x <= viewport.right - 8 &&
-        y >= viewport.top + 8 &&
-        y <= viewport.bottom - 8;
-      node.setAttribute('visibility', visible ? 'visible' : 'hidden');
-      node.setAttribute('tabindex', visible ? '0' : '-1');
-      if (!visible) continue;
-      const label = node.querySelector('text')!;
-      label.removeAttribute('transform');
-      label.setAttribute('x', '13');
-      label.setAttribute('text-anchor', 'start');
-      if (label.getBoundingClientRect().right > viewport.right - 8) {
-        label.setAttribute('x', '-13');
-        label.setAttribute('text-anchor', 'end');
-      }
-      const box = label.getBoundingClientRect();
-      const unit = label.getScreenCTM()!.a;
-      const left = Math.max(viewport.left + 8, Math.min(box.left, viewport.right - 8 - box.width));
-      label.setAttribute('transform', `translate(${(left - box.left) / unit},0)`);
+    const matrix = canvas.querySelector('svg')?.getScreenCTM();
+    if (!viewport || !matrix) return;
+    const obstacles: Box[] = [];
+    for (const { node, label, point, width } of mapNodes) {
+      const placement = genreLabel(
+        { x: point.x * matrix.a + matrix.e, y: point.y * matrix.d + matrix.f },
+        width,
+        matrix.a,
+        viewport,
+      );
+      setAttribute(node, 'visibility', placement ? 'visible' : 'hidden');
+      setAttribute(node, 'tabindex', placement ? '0' : '-1');
+      if (!placement) continue;
+      setAttribute(
+        label,
+        'transform',
+        `translate(${placement.x},${placement.y}) scale(${placement.scale})`,
+      );
+      obstacles.push(placement.box);
     }
-    positionArtistLabel();
+    positionArtistLabel(obstacles, viewport, matrix);
   }
 
-  function positionArtistLabel() {
+  function setAttribute(node: Element, name: string, value: string) {
+    if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+  }
+
+  function positionArtistLabel(obstacles: Box[], viewport: Box, matrix: DOMMatrix) {
     const label = canvas.querySelector<SVGTextElement>('#artist-label');
-    if (!label) return;
-    const obstacles = [
-      ...canvas.querySelectorAll<SVGTextElement>('.genre[visibility="visible"] text'),
-    ].map((node) => node.getBoundingClientRect());
-    const viewport = canvas.querySelector('#map-viewport')!.getBoundingClientRect();
+    if (!label || !detail || !('artist' in detail) || !detail.artist.positions[cameraView]) return;
+    const point = worldPoint(detail.artist.positions[cameraView]!);
+    const width = measureLabel(detail.artist.name, 14);
+    const placement = artistLabel(
+      { x: point.x * matrix.a + matrix.e, y: point.y * matrix.d + matrix.f },
+      width,
+      matrix.a,
+      viewport,
+      obstacles,
+    );
     const group = label.closest<SVGGElement>('g')!;
-    const point = group.getScreenCTM()!;
-    const visible =
-      point.e >= viewport.left + 10 &&
-      point.e <= viewport.right - 10 &&
-      point.f >= viewport.top + 10 &&
-      point.f <= viewport.bottom - 10;
-    group.setAttribute('visibility', visible ? 'visible' : 'hidden');
-    if (!visible) return;
-    const padding = 4;
-    const width = label.getBBox().width;
-    const candidates = [
-      [0, 0],
-      [0, -26],
-      [0, 26],
-      [-width - 28, -26],
-      [-width - 28, 26],
-      [0, -52],
-      [0, 52],
-    ];
-    let best = candidates[0];
-    let bestScore = Infinity;
-    for (const offset of candidates) {
-      label.setAttribute('transform', `translate(${offset[0]},${offset[1]})`);
-      const box = label.getBoundingClientRect();
-      const score = obstacles.reduce(
-        (area, other) =>
-          area +
-          Math.max(
-            0,
-            Math.min(box.right, other.right + padding) - Math.max(box.left, other.left - padding),
-          ) *
-            Math.max(
-              0,
-              Math.min(box.bottom, other.bottom + padding) - Math.max(box.top, other.top - padding),
-            ),
-        box.width * box.height -
-          Math.max(0, Math.min(box.right, viewport.right) - Math.max(box.left, viewport.left)) *
-            Math.max(0, Math.min(box.bottom, viewport.bottom) - Math.max(box.top, viewport.top)),
-      );
-      if (score < bestScore) {
-        best = offset;
-        bestScore = score;
-      }
-      if (score === 0) break;
-    }
-    label.setAttribute('transform', `translate(${best[0]},${best[1]})`);
-    canvas
-      .querySelector('#artist-leader')!
-      .setAttribute('d', best[0] || best[1] ? `M0 0L${best[0] < 0 ? -14 : 14} ${best[1]}` : '');
+    setAttribute(group, 'visibility', placement ? 'visible' : 'hidden');
+    if (!placement) return;
+    setAttribute(
+      label,
+      'transform',
+      `translate(${placement.x},${placement.y}) scale(${placement.scale})`,
+    );
+    const moved = placement.x !== 14 || placement.y !== 5;
+    const endX = placement.x < 0 ? placement.x + width * placement.scale : placement.x;
+    setAttribute(
+      canvas.querySelector('#artist-leader')!,
+      'd',
+      moved ? `M0 0L${endX} ${placement.y - 5}` : '',
+    );
   }
 
   function breadcrumbs(genre: Genre) {
@@ -463,7 +609,7 @@ async function start() {
     detail = null;
     if (push) writeURL();
     drawer.innerHTML = '<p class="empty" role="status">Loading details…</p>';
-    renderCanvas();
+    renderCanvas(true);
     results.innerHTML = '';
     try {
       const loaded =
@@ -473,7 +619,7 @@ async function start() {
       if (selected !== selection) return;
       detail = loaded;
       renderDetail();
-      renderCanvas();
+      renderCanvas(true);
       drawer.focus({ preventScroll: true });
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
@@ -514,11 +660,12 @@ async function start() {
       results.innerHTML = '';
       return;
     }
-    const matches = catalog.search
-      .filter((entry) =>
-        [entry.name, ...entry.aliases].some((name) => name.toLocaleLowerCase().includes(query)),
-      )
-      .slice(0, 12);
+    const matches: SearchEntry[] = [];
+    for (const { entry, terms } of searchIndex) {
+      if (!terms.some((term) => term.includes(query))) continue;
+      matches.push(entry);
+      if (matches.length === 12) break;
+    }
     results.innerHTML = matches.length
       ? matches
           .map(
@@ -554,15 +701,9 @@ async function start() {
       focusIslandFamily(target.dataset.family || null);
       return;
     }
-    if (target.dataset.zoom === 'in') panzoom?.zoomIn({ animate: false });
-    if (target.dataset.zoom === 'out') panzoom?.zoomOut({ animate: false });
-    if (target.dataset.zoom === 'reset') {
-      if (view === 'islands') focusIslandFamily(null);
-      else {
-        panzoom?.zoom(homeCamera.scale);
-        panzoom?.pan(homeCamera.x, homeCamera.y);
-      }
-    }
+    if (target.dataset.zoom === 'in') zoomMap(1.35);
+    if (target.dataset.zoom === 'out') zoomMap(1 / 1.35);
+    if (target.dataset.zoom === 'reset') resetMap();
     if (target.dataset.remove !== undefined) {
       trail.splice(Number(target.dataset.remove), 1);
       persistTrail();
