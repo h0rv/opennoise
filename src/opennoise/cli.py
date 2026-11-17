@@ -8,7 +8,9 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
-    parser.add_argument("stage", choices=["ingest", "build", "eval", "export", "layout", "audio"])
+    parser.add_argument(
+        "stage", choices=["ingest", "tune", "build", "eval", "export", "layout", "audio"]
+    )
     parser.add_argument("config", nargs="?")
     args = parser.parse_args()
     if args.config is None:
@@ -27,7 +29,15 @@ def main() -> None:
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
     start = time.monotonic()
-    if config.get("milestone") == "m2d":
+    if config.get("milestone") == "m3":
+        from opennoise.micro import execute
+
+        execute(args.stage, config, run)
+    elif config.get("milestone") == "gen":
+        from opennoise.generalization import execute
+
+        execute(args.stage, config, run)
+    elif config.get("milestone") == "m2d":
         from opennoise.catalog import execute
 
         execute(args.stage, config, run)

@@ -1,0 +1,27 @@
+milestone = "gen"
+seed = 42
+endpoint = "https://qlever.dev/api/wikidata"
+reference = "data/gen"
+crosswalk = "data/m2/crosswalk.parquet"
+
+[m1]
+artists = "runs/1f242e47ed38/artists.parquet"
+edges = "runs/1f242e47ed38/tfidf.parquet"
+
+[m2]
+memberships = "runs/e234d830601e/fine_k20/memberships.parquet"
+genres = "runs/e234d830601e/fine_k20/genres.parquet"
+
+[naming]
+memberships = "runs/e234d830601e/fine_k20/memberships.parquet"
+genres = "runs/d54033064d8e/discogs_weighted/genres.parquet"
+
+[layout]
+layout = "runs/824a3093dada/genre_layout.parquet"
+labels = "data/m2/labels.parquet"
+artists = "runs/1f242e47ed38/artists.parquet"
+ceiling = "data/m2/map.parquet"
+
+[m3]
+memberships = "runs/e8be82e2bf7e/memberships.parquet"
+artists = "runs/1f242e47ed38/artists.parquet"
