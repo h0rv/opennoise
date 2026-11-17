@@ -359,6 +359,9 @@ kbd {
   stroke: #f5c6ab;
   stroke-width: 7px;
 }
+.axis-legend {
+  display: none;
+}
 .axis {
   position: absolute;
   pointer-events: none;
@@ -764,6 +767,17 @@ footer {
   }
   .canvas-header {
     padding: 18px 18px 0;
+  }
+  .axis {
+    display: none;
+  }
+  .axis-legend {
+    display: grid;
+    gap: 4px;
+    padding: 10px 18px 0;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.5;
   }
   .under-map {
     display: block;

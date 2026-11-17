@@ -177,6 +177,12 @@ async function start() {
     }
     const axes = catalog.manifest.layouts.axes;
     canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${placed.length} genres placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Pan to wander. Zoom to get closer.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    if (view === 'axes' && axes) {
+      const legend = document.createElement('div');
+      legend.className = 'axis-legend';
+      legend.innerHTML = `<span><strong>Left → right:</strong> ${escape(axes.x_min)} → ${escape(axes.x_max)}</span><span><strong>Up → down:</strong> ${escape(axes.y_min)} → ${escape(axes.y_max)}</span>`;
+      canvas.querySelector('.map-bottom')!.before(legend);
+    }
     positionArtistLabel();
     cameraView = layout;
     const viewportWidth = canvas.querySelector<HTMLElement>('#map-viewport')!.clientWidth;
