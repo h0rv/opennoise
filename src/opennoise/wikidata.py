@@ -21,6 +21,8 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 """
 QUERIES = {
+    "music_genres": """SELECT DISTINCT ?genre WHERE {
+{ ?genre wdt:P31/wdt:P279* wd:Q188451 } UNION { ?genre wdt:P279* wd:Q188451 } }""",
     "artist_genres": """SELECT DISTINCT ?mbid ?genre WHERE {
 ?artist wdt:P434 ?mbid; wdt:P136 ?genre }""",
     "vocabulary": """SELECT DISTINCT ?genre ?label ?alias ?parent WHERE {
@@ -58,7 +60,9 @@ def fetch(config, name):
 def ingest(config, run):
     root = Path(config["cache"])
     root.mkdir(parents=True, exist_ok=True)
-    if (root / "coverage.json").exists():
+    if (root / "coverage.json").exists() and json.loads((root / "coverage.json").read_text()).get(
+        "music_genre_root"
+    ) == "Q188451":
         print((root / "coverage.json").read_text(), flush=True)
         return
     start = time.monotonic()
@@ -92,11 +96,24 @@ def ingest(config, run):
     hierarchy = pl.DataFrame(
         parents, schema={"qid": pl.String, "parent": pl.String}, orient="row"
     ).unique()
+    allowed = {r["genre"]["value"].rsplit("/", 1)[-1] for r in fetch(config, "music_genres")}
+    dropped = {
+        "vocabulary_items_dropped": vocabulary.filter(~pl.col("qid").is_in(allowed))[
+            "qid"
+        ].n_unique(),
+        "english_names_dropped": vocabulary.filter(~pl.col("qid").is_in(allowed)).height,
+        "p136_pairs_dropped": links.filter(~pl.col("qid").is_in(allowed)).height,
+    }
+    vocabulary = vocabulary.filter(pl.col("qid").is_in(allowed))
+    links = links.filter(pl.col("qid").is_in(allowed))
+    hierarchy = hierarchy.filter(pl.col("qid").is_in(allowed) & pl.col("parent").is_in(allowed))
     artists = pl.read_parquet(Path(config["m1"]) / "artists.parquet")
     aligned = links.join(artists.select("artist_mbid", "item"), on="artist_mbid")
     _, _, heldout, _ = split_labels(naming.settings(config))
     available = set(vocabulary["normalized"])
     coverage = {
+        "music_genre_root": "Q188451",
+        **dropped,
         "global_artist_genres": len(links),
         "global_artists": links["artist_mbid"].n_unique(),
         "m1_artists": len(artists),
@@ -131,6 +148,8 @@ def ingest(config, run):
 def evidence(config, artists):
     root = Path(config["cache"])
     vocabulary = pl.read_parquet(root / "vocabulary.parquet")
+    allowed = {r["genre"]["value"].rsplit("/", 1)[-1] for r in fetch(config, "music_genres")}
+    vocabulary = vocabulary.filter(pl.col("qid").is_in(allowed))
     labels = {}
     aliases = defaultdict(set)
     canonical = defaultdict(set)

@@ -1,0 +1,20 @@
+milestone = "m2c"
+m1 = "runs/1f242e47ed38"
+m2 = "runs/e234d830601e/fine_k20"
+m2_config = "configs/m2.toml"
+m2b = "runs/25a6ae63770a"
+membership_cache = "runs/25a6ae63770a/export"
+tags_run = "runs/eb905759a00d"
+cache = "data/m2f"
+endpoint = "https://qlever.dev/api/wikidata"
+baselines = ["musicbrainz_baseline", "m2b_discogs_weighted"]
+selection = "exact_plus_name3"
+
+[[variants]]
+name = "combined_wikidata3"
+source = "combined"
+method = "weighted"
+min_support = 3
+min_lift = 1.25
+style_names = true
+wikidata_weight = 3.0

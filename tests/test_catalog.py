@@ -81,3 +81,22 @@ def test_hierarchy_empty_and_cycles():
     assert hierarchy([], set()) == {}
     with pytest.raises(ValueError, match="Cyclic"):
         hierarchy([{"id": 0, "parent": 1}, {"id": 1, "parent": 0}], {0, 1})
+
+
+def test_grouped_adapter_rerun(tmp_path, monkeypatch):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, _, _ = inputs(tmp_path)
+    path = tmp_path / "source/genres.parquet"
+    pl.read_parquet(path).with_columns(
+        pl.when(pl.col("id") == 0).then(pl.lit("Root")).otherwise(pl.lit("Micro")).alias("name"),
+        pl.when(pl.col("id") == 0).then(-1).otherwise(0).alias("level"),
+        pl.lit(None, dtype=pl.Int64).alias("parent"),
+    ).write_parquet(path)
+    config["group_siblings"] = True
+    export(config, run)
+    validate_release(run / "release")
+    mapping = (run / "genre_ids.json").read_bytes()
+    registry = (tmp_path / "registry.json").read_bytes()
+    export(config, run)
+    assert (run / "genre_ids.json").read_bytes() == mapping
+    assert (tmp_path / "registry.json").read_bytes() == registry

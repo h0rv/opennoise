@@ -6,7 +6,7 @@ from pathlib import Path
 
 import polars as pl
 
-from opennoise import identities, tags
+from opennoise import grouping, identities, tags
 
 
 def write(path, value):
@@ -119,8 +119,27 @@ def export(config, run):
         keys[row["id"]] = key
         records.append({"key": key, "scope": scope, "name": row["name"], "members": ids})
     registry = Path(config["registry"])
-    assigned = identities.assign(registry, records, config["identity_jaccard"])
+    previous_groups = []
+    if config.get("group_siblings") and registry.exists():
+        previous_groups = [
+            {k: r[k] for k in ["key", "scope", "name", "members"]}
+            for r in json.loads(registry.read_text())["genres"]
+            if r["active"] and r["scope"] == "group"
+        ]
+    assigned = identities.assign(registry, records + previous_groups, config["identity_jaccard"])
     public = {i: assigned[key]["id"] for i, key in keys.items()}
+    groups = {}
+    if config.get("group_siblings"):
+        memberships, added, group_keys, groups = grouping.siblings(
+            rows, parents, memberships, public
+        )
+        records.extend(added)
+        keys.update(group_keys)
+        assigned = identities.assign(registry, records, config["identity_jaccard"])
+        public = {i: assigned[key]["id"] for i, key in keys.items()}
+        retained = set(public)
+        for group in groups["largest"]:
+            group["id"] = public[group.pop("local_id")]
     inputs = [
         source / "genres.parquet",
         source / "memberships.parquet",
@@ -282,6 +301,7 @@ def export(config, run):
         "files": len(files),
         "bytes": sum(p.stat().st_size for p in files),
         "registry_sha256": hashlib.sha256(registry.read_bytes()).hexdigest(),
+        "grouping": groups,
         "inputs": hashes,
         **leak,
         "seconds": time.monotonic() - start,
