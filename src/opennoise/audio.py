@@ -1,5 +1,6 @@
 import concurrent.futures
 import datetime
+import functools
 import importlib
 import json
 import subprocess
@@ -10,6 +11,7 @@ import tomllib
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -162,35 +164,35 @@ def preview_urls(name, limit):
     return [t["preview"] for t in top.get("data", []) if t.get("preview")]
 
 
-def load_model():
-    global MODEL, MEL
+@functools.cache
+def effnet():
     import essentia
     import onnxruntime
 
-    es = importlib.import_module("essentia.standard")
+    es: Any = importlib.import_module("essentia.standard")
     essentia.log.infoActive = False
     essentia.log.warningActive = False
     options = onnxruntime.SessionOptions()
     options.intra_op_num_threads = 2
-    MODEL = onnxruntime.InferenceSession(str(download(source("effnet")["url"])), options)
-    MEL = es.TensorflowInputMusiCNN()
+    model = onnxruntime.InferenceSession(str(download(source("effnet")["url"])), options)
+    return model, es.TensorflowInputMusiCNN(), es
 
 
 def embed(url):
-    es = importlib.import_module("essentia.standard")
+    model, mel, es = effnet()
     with tempfile.NamedTemporaryFile(suffix=".mp3") as clip:
         with urllib.request.urlopen(url, timeout=30) as response:
             clip.write(response.read())
         clip.flush()
         audio = es.MonoLoader(filename=clip.name, sampleRate=16000, resampleQuality=4)()
     frames = np.array(
-        [MEL(f) for f in es.FrameGenerator(audio, frameSize=512, hopSize=256, startFromZero=True)]
+        [mel(f) for f in es.FrameGenerator(audio, frameSize=512, hopSize=256, startFromZero=True)]
     )
     if len(frames) < 128:
         return None
     starts = np.linspace(0, len(frames) - 128, 8).astype(int)
     patches = np.stack([frames[s : s + 128] for s in starts]).astype(np.float32)
-    styles, embeddings = MODEL.run(["activations", "embeddings"], {"melspectrogram": patches})
+    styles, embeddings = model.run(["activations", "embeddings"], {"melspectrogram": patches})
     return np.asarray(embeddings).mean(0), np.asarray(styles).mean(0)
 
 
@@ -225,7 +227,7 @@ def previews(artists, config):
         for m, n in rows.select("artist_mbid", "artist_name").iter_rows()
         if m not in done
     ]
-    with concurrent.futures.ProcessPoolExecutor(max_workers=4, initializer=load_model) as pool:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=4, initializer=effnet) as pool:
         for start in range(0, len(todo), 200):
             results = list(pool.map(preview_artist, todo[start : start + 200]))
             pl.DataFrame(

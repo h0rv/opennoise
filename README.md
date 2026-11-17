@@ -72,7 +72,6 @@ uv sync
 uv run on ingest configs/m1.toml
 uv run on build configs/m1.toml
 uv run on eval configs/m1.toml
-uv run on audio configs/audio.toml
 ```
 
 Artifacts are cached in `data/` and `runs/<config hash>/`. The graph uses 90% of users;
