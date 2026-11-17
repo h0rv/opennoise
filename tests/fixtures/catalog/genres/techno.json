@@ -1,0 +1,51 @@
+{
+  "genre": {
+    "id": "techno",
+    "name": "Techno",
+    "aliases": [],
+    "parent_id": "electronic",
+    "member_count": 1,
+    "positions": {
+      "axes": {
+        "x": 0.8,
+        "y": 0.1
+      },
+      "islands": {
+        "x": 0.205,
+        "y": 0.43000000000000005
+      }
+    },
+    "color": "#698cff"
+  },
+  "members": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "name": "Fixture Artist 1",
+        "listeners": 600,
+        "positions": {
+          "axes": {
+            "x": 0.8,
+            "y": 0.1
+          },
+          "islands": {
+            "x": 0.2,
+            "y": 0.4
+          }
+        },
+        "color": "#698cff"
+      },
+      "score": 0.95
+    }
+  ],
+  "related": [
+    {
+      "id": "electronic",
+      "score": 0.85
+    },
+    {
+      "id": "house",
+      "score": 0.75
+    }
+  ]
+}

@@ -27,7 +27,7 @@ Rules going forward: one pipeline, full scale, every run scored. Licensing is se
 
 - **Genres** are clusters of artists found from Spotify listening, named by a person or by web and
   playlist text. That gives about 6,300 genres, most of them micro-genres.
-- **Map axes** come from Echo Nest audio attributes. Up is organic and down is mechanical/electric;
+- **Map axes** come from Echo Nest audio attributes. Down is organic and up is mechanical/electric;
   left is dense/atmospheric and right is spiky/bouncy. Color is a mix of other attributes. A genre's
   position is the mean of its artists' audio features.
 - **Inside a genre**, artists are placed the same way. Clicking one plays a preview.
@@ -139,6 +139,118 @@ Each run must beat the previous best on a primary metric or be logged as a failu
 - **Artist page.** Its genres (with scores), similar artists, its position on the map, and outbound
   links (MB, Discogs, Spotify, Bandcamp).
 - **Search.** A prebuilt static index over artist and genre names. No server.
+
+### Pipeline / UI contract (v1)
+
+`src/opennoise/catalog.schema.json` is the public interface. Its root is `Manifest`; `$defs`
+also define `Genres`, `Search`, `GenreDetail` and `ArtistDetail`. Generate frontend types from
+this schema, not from pipeline experiment files. Validate a release with
+`uv run python -m opennoise.contract <release-directory>`. `tests/fixtures/catalog/` is an
+explicitly synthetic release for UI development, not evidence of model quality.
+
+| File, relative to an immutable release root | Shape |
+|---|---|
+| `manifest.json` | Schema version, release ID, synthetic/model flag, available layouts and model methods |
+| `genres.json` | Genre summaries, including the complete navigation forest via `parent_id` |
+| `search.json` | Complete artist/genre identity index with display names and aliases |
+| `genres/{id}.json` | Canonical genre summary, all scored members, ranked related genres |
+| `artists/{mbid}.json` | Canonical artist summary, scored genres, similar artists, signals, links, preview locator |
+
+Artists use lowercase MBIDs, never run-local `item` indices or names. Genre IDs are persisted
+slugs assigned once, not regenerated after renaming, retraining or changing hierarchy. A merge
+keeps one ID and the old name as an alias; splits receive new IDs. Retired IDs are never reused;
+clients show unavailable for saved IDs absent from a release. Navigation has one optional
+parent per genre, no cycles and no fabricated root; multiple genre memberships remain separate
+scored edges. Tree/radial views derive from that forest, not another taxonomy artifact.
+
+Pipeline tables remain normalized Parquet; experimental filenames and columns are private.
+The eventual `export` adapter joins local item/genre indices to these IDs and projects these
+relations into the public schema (the M1 CLI remains unchanged):
+
+| Relation | Key and payload |
+|---|---|
+| Artists / genres | MBID / genre ID, display attributes and nullable measured counts |
+| Membership | `(artist_mbid, genre_id)`, soft score in `[0,1]`; both public directions use these same edges |
+| Artist / genre similarity | Directed `(source_id, target_id)`, score in `[0,1]`; no self edges |
+| Positions | `(entity_kind, entity_id, layout)`, nullable `x,y` in one release-wide frame |
+| Identity links / preview | Artist MBID, HTTPS outbound links and optional provider track ID |
+
+M2's concrete adapter inputs are `genres.parquet` (`id: Int64`, `name: String`, `level: Int64`,
+`parent: Int64?`, `size: Int64`) and `memberships.parquet` (`artist: String` MBID,
+`genre: Int64`, `score: Float64`). These IDs are local to a variant/run. Map both `id`/`genre`
+and `parent` through one persisted ID registry, retaining distinct same-named communities.
+Supervised genres have `level = -1`; Leiden levels are `0..N`, not a fixed UI depth. Exclude
+`unnamed <id>` clusters from the public catalog and walk past excluded ancestors to the nearest
+published parent (or null); `parent` is a navigation relation, not guaranteed set containment.
+Project each retained `(artist, genre, score)` edge into both genre members and artist genres;
+recompute `member_count` after export filtering rather than copying `size`. The M1 artist catalog
+supplies names/listener counts. M2 has no positions, colors, genre similarity or previews: leave
+those null until a producing stage supplies them, never derive coordinates from local indices.
+
+All positions are normalized `[0,1]`, x increases rightward, y downward; artists and genres share
+the frame within each layout. Axes metadata supplies the labels at each end (normally x: dense/
+atmospheric to spiky/bouncy; y: mechanical/electric to organic). Islands are a separate embedding
+with a named method, not sonic axes or a replacement for ranked similarity. Display collision
+offsets never overwrite these model coordinates. Colors are `#RRGGBB` or null, not another score.
+
+Manifest layout/method null means that capability is unavailable release-wide. A record can
+still lack a position or model result when the capability exists: null means unknown/not computed;
+an empty list means computed with no results, and zero is a measured zero. Never substitute a
+synthetic point, member or neighbor for missing data. Lists sort by descending score then ID;
+scores are strengths within their named model, not calibrated probabilities or comparable across
+models/releases. Member counts count the full member list; listener counts count distinct training
+listeners. Null counts are not zero. Embedded summaries must equal their canonical detail.
+
+Preview locators identify a Deezer/iTunes track; clients fetch current playable URLs at runtime
+and handle unavailability. Releases contain no audio, signed media URLs, raw reference datasets,
+training matrices or embeddings. Load only manifest/indexes initially and detail shards on selection;
+PMTiles and larger search/pagination formats can be added with a future schema version rather than
+inventing a second entity model. This v1 validates complete unpaginated member lists. Publish
+release directories atomically; the client pins one root and refuses unknown schema versions.
+Change the version whenever a public shape or its meaning changes.
+
+### UX study and direction
+
+The Vite study in `web/` consumes the exact synthetic release in `tests/fixtures/catalog/`, not a
+parallel mock model. TypeScript types are generated from the catalog schema on every check; the
+loader validates every resource against that same schema, refuses unknown versions, and never
+falls back to fixture data after a release fails. This is interaction exploration, not the M3 map.
+
+- **One atlas, three lenses.** Islands for wandering, sonic axes for an audible frame of reference,
+  tree for broad-to-specific navigation. Selection and field notes persist across views; each map
+  retains its camera, and the tree retains collapsed branches. A URL carries the view and entity ID;
+  browser back retraces exploration. Search highlights a chosen result, not an automatically fitted
+  bounding box of every match. Unknown IDs get a recovery message rather than a guessed match.
+- **Discover without guessing.** A genre opens field notes with a parent breadcrumb, ranked member
+  artists and related genres. Artist notes show memberships, available signals, ranked similar
+  artists and listening links. Keep model ranks distinct from map distance and never label strengths
+  as confidence percentages. Null results say not computed; empty results say no published matches.
+- **A quieter, more usable Every Noise.** Keep the scan-and-discover character, but separate selection
+  from playback. A visible search, labeled view controls, keyboard-operable labels/tree, visible focus,
+  responsive stacked notes and explicit axis labels replace tiny hidden arrow targets. No autoplay;
+  a future preview control must expose loading, playing, unavailable and retry states, with one
+  track playing at a time. The study deliberately has no pretend play button.
+- **A discovery trail, not another feed.** Save interesting genres and artists in order, locally and
+  per release, without an account or imported listening history. This works with existing IDs alone.
+  The study caps trails at 50 stops and tolerates blocked storage. Shareable trails can encode IDs
+  later; they must not imply persistent cross-release IDs without a migration policy.
+
+Next experiments, after real data: compare two artists using shared memberships/neighbor-list
+intersections; a user-stepped sound walk along published similar-artist edges; a “less familiar”
+neighbor order using published listener counts. None needs an LLM or a recommendation API. Do not
+ship semantic text-to-sound search, chronology, geographic origin or cross-genre bridge claims until
+the pipeline actually publishes those signals. Test whether listeners can find a familiar artist,
+switch lenses without losing context, reach an unfamiliar neighbor and explain why it was suggested.
+
+The study uses SVG points and family envelopes, explicitly not density contours or geographic land.
+At production scale, replace that renderer with MapLibre/PMTiles and zoom-dependent labels; keep
+the selection, detail and identity contract. V1's full search/member arrays are suitable for the
+study, not a measured 500k-artist latency claim; tiling, pagination and a search worker need the next
+contract version and device/network measurements. Do not invent coordinates for sparse artists.
+
+References: [Every Noise](https://everynoise.com/) supplies the sonic-axis and click-to-discover
+baseline; [Wilson Lin's Hackerverse](https://blog.wilsonl.in/hackerverse/) supplies progressive
+zoom/landmark inspiration. Islands are an embedding overview, not a substitute for ranked similarity.
 
 ## 8. Stack
 

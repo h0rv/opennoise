@@ -1,0 +1,7 @@
+seed = 42
+
+[tags]
+base_run = "runs/1f242e47ed38"
+cache = "data/tags"
+weights = [0.1, 0.25, 0.5, 1.0]
+validation_fraction = 0.5

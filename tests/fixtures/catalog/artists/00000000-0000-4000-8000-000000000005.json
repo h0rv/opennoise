@@ -1,0 +1,32 @@
+{
+  "artist": {
+    "id": "00000000-0000-4000-8000-000000000005",
+    "name": "Fixture Artist 5",
+    "listeners": 200,
+    "positions": {
+      "axes": null,
+      "islands": {
+        "x": 0.8400000000000001,
+        "y": 0.4
+      }
+    },
+    "color": "#e6ae5c"
+  },
+  "genres": [
+    {
+      "id": "spiritual-jazz",
+      "score": 0.95
+    },
+    {
+      "id": "jazz",
+      "score": 0.9
+    }
+  ],
+  "similar": null,
+  "signals": [
+    "listening",
+    "tags"
+  ],
+  "links": [],
+  "preview": null
+}

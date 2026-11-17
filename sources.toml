@@ -5,6 +5,54 @@ sha256 = "92d6151b8fd41a22c6e6f821db954faeb9315e8d2a7ea939790863b5c59a0e42"
 license = "CC0"
 
 [[sources]]
+url = "https://raw.githubusercontent.com/NeroYuki/everynoise_enhancement_script/88bd6f6/spotify_genres_artists_map.json"
+date = "2026-11-16"
+sha256 = "863a513a6da89735a69373a46ba58f6975eddb5d065964c577dfcacf18fffe20"
+license = "local reference only"
+
+[[sources]]
+url = "https://raw.githubusercontent.com/quint-t/Every-Noise-at-Once/e80265defc743b307586ac0a7a5c72d2dacdf409/index.html"
+date = "2026-11-16"
+sha256 = "1ac0c659a9764536675b2fbc9b52186dd745a537a953855e97090878e74fe180"
+license = "local reference only"
+
+[[sources]]
+url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/20261114-002230/mbdump.tar.bz2"
+date = "2026-11-14"
+sha256 = "da4f1afcbca8ca54eb6362ae45173543f079e8491d097a376d060551d1a03335"
+license = "CC0"
+
+[[sources]]
+url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/20261114-002230/mbdump-derived.tar.bz2"
+date = "2026-11-14"
+sha256 = "9763fa84833db1c095814e709ccd7e5fe8a7ae32c5518870c419b9a5ad76b758"
+license = "CC BY-NC-SA tags"
+
+[[sources]]
+name = "musicbrainz_artists"
+url = "https://data.metabrainz.org/pub/musicbrainz/data/json-dumps/20261114-001001/artist.tar.xz"
+date = "2026-11-14"
+sha256 = "45bc7b5e726511f85d4d0a893a56ee80974d8b6b14878545644a027c0597dff5"
+license = "CC0 core; CC-BY-NC-SA-3.0 tags"
+
+[[sources]]
+name = "discogs_releases"
+url = "https://data.discogs.com/?download=data%2F2026%2Fdiscogs_20261101_releases.xml.gz"
+date = "2026-11-01"
+sha256 = "1d9781c775cf6ae01c9b18e1539a19cbec25dd440c99ba797d68dee8d3f6d01f"
+license = "CC0"
+
+[[sources]]
+name = "wikidata_genres"
+url = "https://qlever.dev/api/wikidata"
+date = "2026-11-17"
+license = "CC0"
+properties = ["P434", "P136", "P279", "English labels", "English aliases"]
+artist_genres_sha256 = "e9fd64db63ac400866594cb64eaa486a8d69d7e741725a8ed2c032e2f649db17"
+vocabulary_sha256 = "4cbd87105f60822651432c4d38cf95da89ffb819dc9fbf782d21070c38d6cc83"
+
+
+[[sources]]
 name = "canonical"
 url = "https://data.metabrainz.org/pub/musicbrainz/canonical_data/musicbrainz-canonical-dump-20261103-080003/musicbrainz-canonical-dump-20261103-080003.tar.zst"
 date = "2026-11-03"
