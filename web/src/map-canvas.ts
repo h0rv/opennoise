@@ -172,19 +172,26 @@ export class MapCanvas {
     );
     element.addEventListener(
       'pointerup',
+      (event) => this.pointers.delete(event.pointerId),
+      options,
+    );
+    element.addEventListener(
+      'click',
       (event) => {
         if (!this.moved) {
           const rect = element.getBoundingClientRect();
           const item = this.hit(event.clientX - rect.left, event.clientY - rect.top);
           if (item) this.open(item.kind, item.id);
         }
-        this.pointers.delete(event.pointerId);
       },
       options,
     );
     element.addEventListener(
       'pointercancel',
-      (event) => this.pointers.delete(event.pointerId),
+      (event) => {
+        this.moved = true;
+        this.pointers.delete(event.pointerId);
+      },
       options,
     );
     element.addEventListener(
@@ -314,28 +321,9 @@ export class MapCanvas {
   }
 
   private hit(x: number, y: number) {
-    const label = this.labels.find(
+    return this.labels.find(
       ({ box }) => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom,
-    );
-    if (label) return label.item;
-    const { scale, x: dx, y: dy } = this.camera;
-    const wx = (x - dx) / scale,
-      wy = (y + 4 - dy) / scale,
-      radius = 6 / scale;
-    const depth = visibleDepth(scale, this.home.scale);
-    let closest: Item | undefined,
-      distance = 36;
-    for (let a = Math.floor((wx - radius) / 16); a <= Math.floor((wx + radius) / 16); a++)
-      for (let b = Math.floor((wy - radius) / 16); b <= Math.floor((wy + radius) / 16); b++)
-        for (const item of this.points.get(`${a}:${b}`) || []) {
-          if (item.depth > depth && item.id !== this.selected) continue;
-          const d = ((item.x - wx) * scale) ** 2 + ((item.y - wy) * scale) ** 2;
-          if (d < distance) {
-            closest = item;
-            distance = d;
-          }
-        }
-    return closest;
+    )?.item;
   }
 
   redraw() {
@@ -383,15 +371,6 @@ export class MapCanvas {
     const selected = candidates.findIndex((item) => item.id === this.selected);
     if (selected > 0) candidates.unshift(...candidates.splice(selected, 1));
     if (this.artist) candidates.unshift(this.artist);
-    ctx.fillStyle = '#c2c2c2';
-    ctx.beginPath();
-    for (const item of candidates) {
-      const px = item.x * scale + x,
-        py = item.y * scale + y;
-      ctx.moveTo(px + 2.5, py - 4);
-      ctx.arc(px, py - 4, 2.5, 0, Math.PI * 2);
-    }
-    ctx.fill();
     const names = new Set<string>();
     this.labels = [];
     for (const item of candidates) {
