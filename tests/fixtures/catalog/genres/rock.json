@@ -1,0 +1,61 @@
+{
+  "genre": {
+    "id": "rock",
+    "name": "Rock",
+    "aliases": [],
+    "parent_id": null,
+    "member_count": 2,
+    "positions": {
+      "axes": {
+        "x": 0.45,
+        "y": 0.5
+      },
+      "islands": {
+        "x": 0.5,
+        "y": 0.23
+      }
+    },
+    "color": "#cc75b7"
+  },
+  "members": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000003",
+        "name": "Fixture Artist 3",
+        "listeners": 400,
+        "positions": {
+          "axes": {
+            "x": 0.12,
+            "y": 0.55
+          },
+          "islands": {
+            "x": 0.52,
+            "y": 0.4
+          }
+        },
+        "color": "#cc75b7"
+      },
+      "score": 0.9
+    },
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000004",
+        "name": "Fixture Artist 4",
+        "listeners": 300,
+        "positions": {
+          "axes": {
+            "x": 0.25,
+            "y": 0.7
+          },
+          "islands": {
+            "x": 0.52,
+            "y": 0.6000000000000001
+          }
+        },
+        "color": "#cc75b7"
+      },
+      "score": 0.9
+    }
+  ],
+  "related": []
+}

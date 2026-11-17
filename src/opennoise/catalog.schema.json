@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opennoise.horv.co/catalog.schema.json",
+  "$ref": "#/$defs/Manifest",
+  "$defs": {
+    "GenreId": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "ArtistId": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "Name": {"type": "string", "minLength": 1},
+    "Aliases": {"type": "array", "items": {"$ref": "#/$defs/Name"}, "uniqueItems": true},
+    "Score": {"type": "number", "minimum": 0, "maximum": 1},
+    "Count": {"type": ["integer", "null"], "minimum": 0},
+    "Color": {"type": ["string", "null"], "pattern": "^#[0-9a-fA-F]{6}$"},
+    "Point": {
+      "type": "object", "additionalProperties": false, "required": ["x", "y"],
+      "properties": {"x": {"$ref": "#/$defs/Score"}, "y": {"$ref": "#/$defs/Score"}}
+    },
+    "Positions": {
+      "type": "object", "additionalProperties": false, "required": ["axes", "islands"],
+      "properties": {
+        "axes": {"anyOf": [{"$ref": "#/$defs/Point"}, {"type": "null"}]},
+        "islands": {"anyOf": [{"$ref": "#/$defs/Point"}, {"type": "null"}]}
+      }
+    },
+    "Axes": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x_min", "x_max", "y_min", "y_max"],
+      "properties": {
+        "x_min": {"$ref": "#/$defs/Name"}, "x_max": {"$ref": "#/$defs/Name"},
+        "y_min": {"$ref": "#/$defs/Name"}, "y_max": {"$ref": "#/$defs/Name"}
+      }
+    },
+    "Layouts": {
+      "type": "object", "additionalProperties": false, "required": ["axes", "islands"],
+      "properties": {
+        "axes": {"anyOf": [{"$ref": "#/$defs/Axes"}, {"type": "null"}]},
+        "islands": {
+          "anyOf": [
+            {"type": "object", "additionalProperties": false, "required": ["method"],
+              "properties": {"method": {"$ref": "#/$defs/Name"}}},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "Manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "release_id", "data_kind", "layouts", "membership", "similarity", "genre_similarity", "genres", "search"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "release_id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"},
+        "data_kind": {"enum": ["model", "synthetic"]},
+        "layouts": {"$ref": "#/$defs/Layouts"},
+        "membership": {"type": ["string", "null"], "minLength": 1},
+        "similarity": {"type": ["string", "null"], "minLength": 1},
+        "genre_similarity": {"type": ["string", "null"], "minLength": 1},
+        "genres": {"const": "genres.json"}, "search": {"const": "search.json"}
+      }
+    },
+    "Genre": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "aliases", "parent_id", "member_count", "positions", "color"],
+      "properties": {
+        "id": {"$ref": "#/$defs/GenreId"}, "name": {"$ref": "#/$defs/Name"},
+        "aliases": {"$ref": "#/$defs/Aliases"},
+        "parent_id": {"anyOf": [{"$ref": "#/$defs/GenreId"}, {"type": "null"}]},
+        "member_count": {"$ref": "#/$defs/Count"},
+        "positions": {"$ref": "#/$defs/Positions"}, "color": {"$ref": "#/$defs/Color"}
+      }
+    },
+    "Artist": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "listeners", "positions", "color"],
+      "properties": {
+        "id": {"$ref": "#/$defs/ArtistId"}, "name": {"$ref": "#/$defs/Name"},
+        "listeners": {"$ref": "#/$defs/Count"},
+        "positions": {"$ref": "#/$defs/Positions"}, "color": {"$ref": "#/$defs/Color"}
+      }
+    },
+    "GenreScore": {
+      "type": "object", "additionalProperties": false, "required": ["id", "score"],
+      "properties": {"id": {"$ref": "#/$defs/GenreId"}, "score": {"$ref": "#/$defs/Score"}}
+    },
+    "ArtistScore": {
+      "type": "object", "additionalProperties": false, "required": ["artist", "score"],
+      "properties": {"artist": {"$ref": "#/$defs/Artist"}, "score": {"$ref": "#/$defs/Score"}}
+    },
+    "GenreScores": {
+      "type": ["array", "null"], "items": {"$ref": "#/$defs/GenreScore"}
+    },
+    "ArtistScores": {
+      "type": ["array", "null"], "items": {"$ref": "#/$defs/ArtistScore"}
+    },
+    "GenreDetail": {
+      "type": "object", "additionalProperties": false, "required": ["genre", "members", "related"],
+      "properties": {
+        "genre": {"$ref": "#/$defs/Genre"},
+        "members": {"$ref": "#/$defs/ArtistScores"}, "related": {"$ref": "#/$defs/GenreScores"}
+      }
+    },
+    "Link": {
+      "type": "object", "additionalProperties": false, "required": ["label", "url"],
+      "properties": {
+        "label": {"$ref": "#/$defs/Name"},
+        "url": {"type": "string", "format": "uri", "pattern": "^https://"}
+      }
+    },
+    "Preview": {
+      "anyOf": [
+        {"type": "object", "additionalProperties": false, "required": ["provider", "id"],
+          "properties": {"provider": {"enum": ["deezer", "itunes"]}, "id": {"$ref": "#/$defs/Name"}}},
+        {"type": "null"}
+      ]
+    },
+    "ArtistDetail": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artist", "genres", "similar", "signals", "links", "preview"],
+      "properties": {
+        "artist": {"$ref": "#/$defs/Artist"},
+        "genres": {"$ref": "#/$defs/GenreScores"}, "similar": {"$ref": "#/$defs/ArtistScores"},
+        "signals": {"type": "array", "uniqueItems": true,
+          "items": {"enum": ["listening", "tags", "audio"]}},
+        "links": {"type": "array", "items": {"$ref": "#/$defs/Link"}, "uniqueItems": true},
+        "preview": {"$ref": "#/$defs/Preview"}
+      }
+    },
+    "SearchEntry": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "id", "name", "aliases"],
+      "properties": {
+        "kind": {"enum": ["artist", "genre"]}, "name": {"$ref": "#/$defs/Name"},
+        "id": {"type": "string"}, "aliases": {"$ref": "#/$defs/Aliases"}
+      },
+      "allOf": [
+        {"if": {"properties": {"kind": {"const": "artist"}}},
+          "then": {"properties": {"id": {"$ref": "#/$defs/ArtistId"}}},
+          "else": {"properties": {"id": {"$ref": "#/$defs/GenreId"}}}}
+      ]
+    },
+    "Genres": {"type": "array", "items": {"$ref": "#/$defs/Genre"}},
+    "Search": {"type": "array", "items": {"$ref": "#/$defs/SearchEntry"}}
+  }
+}
