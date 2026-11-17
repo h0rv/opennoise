@@ -161,8 +161,10 @@ def style_evidence(config, artists, train, words):
         .join(artists.select("artist_mbid", "item"), on="artist_mbid")
     )
     links = links.join(vocabulary.select("qid", "normalized").unique(), on="qid")
-    discogs = pl.read_parquet(Path(config["tags_run"]) / "discogs.parquet").join(
-        artists.select("artist_mbid", "item"), on="artist_mbid"
+    discogs = (
+        pl.read_parquet(Path(config["tags_run"]) / "discogs.parquet")
+        .filter(~pl.col("tag").is_in(config["non_music"]))
+        .join(artists.select("artist_mbid", "item"), on="artist_mbid")
     )
     discogs = discogs.with_columns(
         (pl.col("weight").log1p() / pl.col("weight").log1p().sum().over("item")).alias("share"),
