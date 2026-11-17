@@ -196,6 +196,49 @@ inventing a second entity model. This v1 validates complete unpaginated member l
 release directories atomically; the client pins one root and refuses unknown schema versions.
 Change the version whenever a public shape or its meaning changes.
 
+### UX study and direction
+
+The Vite study in `web/` consumes the exact synthetic release in `tests/fixtures/catalog/`, not a
+parallel mock model. TypeScript types are generated from the catalog schema on every check; the
+loader validates every resource against that same schema, refuses unknown versions, and never
+falls back to fixture data after a release fails. This is interaction exploration, not the M3 map.
+
+- **One atlas, three lenses.** Islands for wandering, sonic axes for an audible frame of reference,
+  tree for broad-to-specific navigation. Selection and field notes persist across views; each map
+  retains its camera, and the tree retains collapsed branches. A URL carries the view and entity ID;
+  browser back retraces exploration. Search highlights a chosen result, not an automatically fitted
+  bounding box of every match. Unknown IDs get a recovery message rather than a guessed match.
+- **Discover without guessing.** A genre opens field notes with a parent breadcrumb, ranked member
+  artists and related genres. Artist notes show memberships, available signals, ranked similar
+  artists and listening links. Keep model ranks distinct from map distance and never label strengths
+  as confidence percentages. Null results say not computed; empty results say no published matches.
+- **A quieter, more usable Every Noise.** Keep the scan-and-discover character, but separate selection
+  from playback. A visible search, labeled view controls, keyboard-operable labels/tree, visible focus,
+  responsive stacked notes and explicit axis labels replace tiny hidden arrow targets. No autoplay;
+  a future preview control must expose loading, playing, unavailable and retry states, with one
+  track playing at a time. The study deliberately has no pretend play button.
+- **A discovery trail, not another feed.** Save interesting genres and artists in order, locally and
+  per release, without an account or imported listening history. This works with existing IDs alone.
+  The study caps trails at 50 stops and tolerates blocked storage. Shareable trails can encode IDs
+  later; they must not imply persistent cross-release IDs without a migration policy.
+
+Next experiments, after real data: compare two artists using shared memberships/neighbor-list
+intersections; a user-stepped sound walk along published similar-artist edges; a “less familiar”
+neighbor order using published listener counts. None needs an LLM or a recommendation API. Do not
+ship semantic text-to-sound search, chronology, geographic origin or cross-genre bridge claims until
+the pipeline actually publishes those signals. Test whether listeners can find a familiar artist,
+switch lenses without losing context, reach an unfamiliar neighbor and explain why it was suggested.
+
+The study uses SVG points and family envelopes, explicitly not density contours or geographic land.
+At production scale, replace that renderer with MapLibre/PMTiles and zoom-dependent labels; keep
+the selection, detail and identity contract. V1's full search/member arrays are suitable for the
+study, not a measured 500k-artist latency claim; tiling, pagination and a search worker need the next
+contract version and device/network measurements. Do not invent coordinates for sparse artists.
+
+References: [Every Noise](https://everynoise.com/) supplies the sonic-axis and click-to-discover
+baseline; [Wilson Lin's Hackerverse](https://blog.wilsonl.in/hackerverse/) supplies progressive
+zoom/landmark inspiration. Islands are an embedding overview, not a substitute for ranked similarity.
+
 ## 8. Stack
 
 - **Python 3.13, uv, Polars + DuckDB, Parquet.** This is the best tool fit for dumps, ALS, Leiden and
