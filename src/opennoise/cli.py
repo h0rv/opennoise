@@ -18,7 +18,11 @@ def main() -> None:
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
     start = time.monotonic()
-    if args.stage == "ingest":
+    if "tags" in config:
+        from opennoise import tags
+
+        tags.execute(args.stage, config, run)
+    elif args.stage == "ingest":
         from opennoise.ingest import ingest
 
         ingest()
