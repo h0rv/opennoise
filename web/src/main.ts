@@ -15,18 +15,15 @@ const count = (value: number | null, noun = 'artist') =>
   value === null
     ? 'Count unavailable'
     : `${value.toLocaleString()} ${noun}${value === 1 ? '' : 's'}`;
-const modes: Record<View, { label: string; description: string }> = {
-  islands: {
-    label: 'Islands',
-    description: 'Published genre positions. Outlines group genre families, not measured density.',
-  },
+const modes: Record<View, { label: string }> = {
   axes: {
     label: 'Sonic map',
-    description: 'Published sonic axes. Use the ranked lists for similarity, not map distance.',
+  },
+  islands: {
+    label: 'Islands',
   },
   tree: {
     label: 'Genre tree',
-    description: 'Genres and subgenres, grouped by their published parent.',
   },
 };
 
@@ -34,16 +31,19 @@ async function start() {
   const catalog = await new Catalog().load();
   const genres = new Map(catalog.genres.map((genre) => [genre.id, genre]));
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
-  const releaseStatus = `${catalog.manifest.release_id} · ${catalog.manifest.data_kind === 'synthetic' ? 'Design fixture, not a quality benchmark.' : 'Explore the published model.'}`;
-  let view: View = catalog.manifest.layouts.islands
-    ? 'islands'
-    : catalog.manifest.layouts.axes
-      ? 'axes'
+  document.querySelector('#catalog-state')!.textContent =
+    catalog.manifest.data_kind === 'synthetic' ? 'Sample data' : '';
+  let view: View = catalog.manifest.layouts.axes
+    ? 'axes'
+    : catalog.manifest.layouts.islands
+      ? 'islands'
       : 'tree';
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
   let controller = new AbortController();
   let panzoom: PanzoomObject | undefined;
+  let labelFrame = 0;
+  let islandFamily: string | null = null;
   let cameraView: 'axes' | 'islands' = 'islands';
   let homeCamera = { scale: 1, x: 0, y: 0 };
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
@@ -69,8 +69,7 @@ async function start() {
   }
 
   app.innerHTML = `
-    <section class="catalog-summary"><h1>Explore genres</h1><p><span class="data-note">${catalog.manifest.data_kind === 'synthetic' ? 'Synthetic fixture — not model results' : 'Model-derived catalog'}</span> / ${count(catalog.genres.length, 'genre')}</p></section>
-    <div class="toolbar" id="explore"><div class="search-wrap"><label class="search-box"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><kbd aria-hidden="true">/</kbd></label><div id="results" class="search-results" aria-label="Search results"></div></div>
+    <div class="toolbar" id="explore"><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
       <nav class="modes" aria-label="Atlas view">${Object.entries(modes)
         .map(
           ([key, mode]) =>
@@ -80,7 +79,7 @@ async function start() {
       <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved (<span id="trail-count">${trail.length}</span>)</button></div>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div><aside id="detail" tabindex="-1" aria-label="Selected genre or artist" aria-live="polite"></aside></section>
     <section class="trail" id="trail" aria-label="Saved discovery trail" hidden></section>
-    <div class="under-map"><p>Selection is shared across views. Save a discovery trail locally.</p><p id="status" role="status">${escape(releaseStatus)}</p></div>`;
+    <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
   const drawer = document.querySelector<HTMLElement>('#detail')!;
@@ -113,7 +112,7 @@ async function start() {
       .filter((genre) => genre.parent_id === parent && !seen.has(genre.id))
       .map((genre) => {
         const hasChildren = catalog.genres.some((child) => child.parent_id === genre.id);
-        const node = `${entityButton('genre', genre.id, genre.name, undefined, genre.color)}<span class="muted">${count(genre.member_count)}</span>`;
+        const node = `<span class="tree-node">${entityButton('genre', genre.id, genre.name, undefined, genre.color)}<span class="muted">${count(genre.member_count)}</span></span>`;
         return `<li>${hasChildren ? `<details data-tree="${escape(genre.id)}" ${collapsed.has(genre.id) ? '' : 'open'}><summary>${node}</summary>${tree(genre.id, new Set([...seen, genre.id]))}</details>` : node}</li>`;
       })
       .join('')}</ul>`;
@@ -128,12 +127,12 @@ async function start() {
       .forEach((button) =>
         button.setAttribute('aria-pressed', String(button.dataset.view === view)),
       );
-    const header = `<header class="canvas-header"><h2>${modes[view].label}</h2><p>${modes[view].description}</p></header>`;
     if (view === 'tree') {
-      canvas.innerHTML = `${header}<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div><div class="map-bottom"><span>Expand a family to see its subgenres.</span></div>`;
+      canvas.innerHTML = `<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div>`;
       return;
     }
     const layout = view;
+    const hadCamera = cameras.has(layout);
     const placed = catalog.genres.filter((genre) => genre.positions[layout] !== null);
     const xy = (genre: Genre) => {
       const point = genre.positions[layout]!;
@@ -170,20 +169,24 @@ async function start() {
       artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
     }
     const axes = catalog.manifest.layouts.axes;
-    canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${count(placed.length, 'genre')} placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Drag to pan. Use +/− to zoom.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    const familyNav =
+      view === 'islands'
+        ? `<nav class="families" aria-label="Focus an island family"><button data-family="" aria-pressed="${islandFamily === null}">All</button>${[...families.keys()].map((id) => `<button data-family="${escape(id)}" aria-pressed="${islandFamily === id}">${escape(genres.get(id)!.name)}</button>`).join('')}</nav>`
+        : '';
+    canvas.innerHTML = `${familyNav}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${count(placed.length, 'genre')}${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} unplaced` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
     if (view === 'axes' && axes) {
       const legend = document.createElement('div');
       legend.className = 'axis-legend';
       legend.innerHTML = `<span><strong>Left → right:</strong> ${escape(axes.x_min)} → ${escape(axes.x_max)}</span><span><strong>Up → down:</strong> ${escape(axes.y_min)} → ${escape(axes.y_max)}</span>`;
       canvas.querySelector('.map-bottom')!.before(legend);
     }
-    positionArtistLabel();
     cameraView = layout;
     const viewportWidth = canvas.querySelector<HTMLElement>('#map-viewport')!.clientWidth;
     const scale = Math.max(1, 760 / viewportWidth);
     homeCamera = { scale, x: 500 / scale - 500, y: 285 / scale - 285 };
     const camera = cameras.get(layout) || homeCamera;
-    panzoom = Panzoom(document.querySelector<SVGGElement>('#map-content')!, {
+    const content = canvas.querySelector<SVGGElement>('#map-content')!;
+    panzoom = Panzoom(content, {
       maxScale: Math.max(5, scale * 2),
       minScale: 0.7,
       canvas: true,
@@ -192,16 +195,98 @@ async function start() {
       startX: camera.x,
       startY: camera.y,
     });
+    content.addEventListener('panzoomchange', scheduleLabels);
+    if (view === 'islands' && !hadCamera && selected?.kind === 'genre')
+      focusIslandFamily(root(genres.get(selected.id)!).id);
+    scheduleLabels();
+  }
+
+  function focusIslandFamily(id: string | null) {
+    if (!panzoom || view !== 'islands') return;
+    islandFamily = id;
+    canvas.querySelectorAll<HTMLButtonElement>('[data-family]').forEach((button) => {
+      button.setAttribute('aria-pressed', String((button.dataset.family || null) === id));
+    });
+    if (!id) {
+      panzoom.zoom(homeCamera.scale);
+      panzoom.pan(homeCamera.x, homeCamera.y);
+      return;
+    }
+    const points = catalog.genres
+      .filter((genre) => root(genre).id === id && genre.positions.islands)
+      .map((genre) => genre.positions.islands!);
+    if (!points.length) return;
+    const left = 90 + Math.min(...points.map((point) => point.x)) * 820;
+    const right = 90 + Math.max(...points.map((point) => point.x)) * 820;
+    const top = 65 + Math.min(...points.map((point) => point.y)) * 440;
+    const bottom = 65 + Math.max(...points.map((point) => point.y)) * 440;
+    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
+    const unit = canvas.querySelector('svg')!.getScreenCTM()!.a;
+    const scale = Math.max(
+      0.7,
+      Math.min(
+        5,
+        (viewport.clientWidth - 160) / (Math.max(80, right - left) * unit),
+        (viewport.clientHeight - 90) / (Math.max(80, bottom - top) * unit),
+      ),
+    );
+    panzoom.zoom(scale);
+    panzoom.pan(500 / scale - (left + right) / 2, 285 / scale - (top + bottom) / 2);
+  }
+
+  function scheduleLabels() {
+    cancelAnimationFrame(labelFrame);
+    labelFrame = requestAnimationFrame(positionLabels);
+  }
+
+  function positionLabels() {
+    const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
+    if (!viewport) return;
+    for (const node of canvas.querySelectorAll<SVGGElement>('.genre')) {
+      const marker = node.querySelector('circle')!.getBoundingClientRect();
+      const x = (marker.left + marker.right) / 2;
+      const y = (marker.top + marker.bottom) / 2;
+      const visible =
+        x >= viewport.left + 8 &&
+        x <= viewport.right - 8 &&
+        y >= viewport.top + 8 &&
+        y <= viewport.bottom - 8;
+      node.setAttribute('visibility', visible ? 'visible' : 'hidden');
+      node.setAttribute('tabindex', visible ? '0' : '-1');
+      if (!visible) continue;
+      const label = node.querySelector('text')!;
+      label.removeAttribute('transform');
+      label.setAttribute('x', '13');
+      label.setAttribute('text-anchor', 'start');
+      if (label.getBoundingClientRect().right > viewport.right - 8) {
+        label.setAttribute('x', '-13');
+        label.setAttribute('text-anchor', 'end');
+      }
+      const box = label.getBoundingClientRect();
+      const unit = label.getScreenCTM()!.a;
+      const left = Math.max(viewport.left + 8, Math.min(box.left, viewport.right - 8 - box.width));
+      label.setAttribute('transform', `translate(${(left - box.left) / unit},0)`);
+    }
+    positionArtistLabel();
   }
 
   function positionArtistLabel() {
     const label = canvas.querySelector<SVGTextElement>('#artist-label');
     if (!label) return;
-    const obstacles = [...canvas.querySelectorAll<SVGTextElement>('.genre text')].map((node) =>
-      node.getBoundingClientRect(),
-    );
-    const viewport = canvas.querySelector('svg')!.getBoundingClientRect();
-    const padding = (viewport.width / 1000) * 5;
+    const obstacles = [
+      ...canvas.querySelectorAll<SVGTextElement>('.genre[visibility="visible"] text'),
+    ].map((node) => node.getBoundingClientRect());
+    const viewport = canvas.querySelector('#map-viewport')!.getBoundingClientRect();
+    const group = label.closest<SVGGElement>('g')!;
+    const point = group.getScreenCTM()!;
+    const visible =
+      point.e >= viewport.left + 10 &&
+      point.e <= viewport.right - 10 &&
+      point.f >= viewport.top + 10 &&
+      point.f <= viewport.bottom - 10;
+    group.setAttribute('visibility', visible ? 'visible' : 'hidden');
+    if (!visible) return;
+    const padding = 4;
     const width = label.getBBox().width;
     const candidates = [
       [0, 0],
@@ -239,10 +324,9 @@ async function start() {
       if (score === 0) break;
     }
     label.setAttribute('transform', `translate(${best[0]},${best[1]})`);
-    if (best[0] || best[1])
-      canvas
-        .querySelector('#artist-leader')!
-        .setAttribute('d', `M0 0L${best[0] < 0 ? -14 : 14} ${best[1]}`);
+    canvas
+      .querySelector('#artist-leader')!
+      .setAttribute('d', best[0] || best[1] ? `M0 0L${best[0] < 0 ? -14 : 14} ${best[1]}` : '');
   }
 
   function breadcrumbs(genre: Genre) {
@@ -258,16 +342,16 @@ async function start() {
 
   function renderDetail() {
     if (!selected) {
-      drawer.innerHTML = `<h2>Genre or artist</h2><p class="detail-lede">Select a genre on the map or search for an artist.</p><section><h3>Genre families</h3>${catalog.genres
+      drawer.innerHTML = `<h2>Genres</h2>${catalog.genres
         .filter((genre) => !genre.parent_id)
         .map((genre) => entityButton('genre', genre.id, genre.name, undefined, genre.color))
-        .join('')}</section>`;
+        .join('')}`;
       return;
     }
     if (!detail) return;
     const entity = 'genre' in detail ? detail.genre : detail.artist;
     const saved = trail.some((entry) => entry.kind === selected!.kind && entry.id === selected!.id);
-    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="muted">Artist</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? `${count(detail.genre.member_count)} · ${catalog.manifest.membership ? 'Published membership' : 'Membership not computed'}` : `${detail.artist.listeners === null ? 'Listener count unavailable' : count(detail.artist.listeners, 'listener')}<br>Signals: ${detail.signals.length ? detail.signals.map(escape).join(', ') : 'none published'}`}</p><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full (50)' : 'Save to trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
+    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="muted">Artist</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? count(detail.genre.member_count) : detail.artist.listeners === null ? 'Listener count unavailable' : count(detail.artist.listeners, 'listener')}</p><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full (50)' : 'Save to trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
   }
 
   function renderGenre(data: GenreDetail) {
@@ -305,7 +389,7 @@ async function start() {
                 ),
               )
               .join('')
-    }<p class="muted">${escape(catalog.manifest.genre_similarity || 'No published similarity method')}. Rank is not a probability.</p></section>`;
+    }</section>`;
   }
 
   function renderArtist(data: ArtistDetail) {
@@ -344,7 +428,7 @@ async function start() {
                 ),
               )
               .join('')
-    }<p class="muted">${escape(catalog.manifest.similarity || 'No published similarity method')}. Rank is not a probability.</p></section><section><h3>Listening links</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links in this release.</p>'}<p class="muted">${data.preview ? 'A preview locator is available. Provider playback is not connected in this study.' : 'No preview available. Nothing plays automatically.'}</p></section>`;
+    }</section><section><h3>Listening links</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links available.</p>'}<p class="muted">${data.preview ? 'Preview playback is not connected.' : 'No preview available.'}</p></section>`;
   }
 
   function renderTrail() {
@@ -363,7 +447,7 @@ async function start() {
   }
 
   function writeURL() {
-    status.textContent = releaseStatus;
+    status.textContent = '';
     const params = new URLSearchParams({ view });
     if (selected) {
       params.set('kind', selected.kind);
@@ -399,7 +483,7 @@ async function start() {
   }
 
   function restoreURL() {
-    status.textContent = releaseStatus;
+    status.textContent = '';
     const params = new URLSearchParams(location.hash.slice(1));
     const requestedView = params.get('view');
     if (
@@ -453,7 +537,7 @@ async function start() {
   });
   app.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>(
-      '[data-kind], [data-view], [data-zoom], [data-remove], button[id]',
+      '[data-kind], [data-view], [data-family], [data-zoom], [data-remove], button[id]',
     );
     if (!target) return;
     if (target.dataset.kind && target.dataset.id) {
@@ -466,11 +550,18 @@ async function start() {
       renderCanvas();
       return;
     }
+    if (target.dataset.family !== undefined) {
+      focusIslandFamily(target.dataset.family || null);
+      return;
+    }
     if (target.dataset.zoom === 'in') panzoom?.zoomIn();
     if (target.dataset.zoom === 'out') panzoom?.zoomOut();
     if (target.dataset.zoom === 'reset') {
-      panzoom?.zoom(homeCamera.scale);
-      panzoom?.pan(homeCamera.x, homeCamera.y);
+      if (view === 'islands') focusIslandFamily(null);
+      else {
+        panzoom?.zoom(homeCamera.scale);
+        panzoom?.pan(homeCamera.x, homeCamera.y);
+      }
     }
     if (target.dataset.remove !== undefined) {
       trail.splice(Number(target.dataset.remove), 1);
