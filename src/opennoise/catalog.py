@@ -13,6 +13,30 @@ def write(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
 
 
+def coordinates(config, genres, artists):
+    empty = {"axes": None, "islands": None}
+    if not config.get("layout"):
+        return {}, empty
+    root = Path(config["layout"])
+    frame = pl.read_parquet(root / "positions.parquet")
+    if frame.select("kind", "id").n_unique() != len(frame):
+        raise ValueError("Duplicate layout identity")
+    known = {"genre": set(genres), "artist": set(artists)}
+    result = {}
+    for kind, id_, x, y, u, v in frame.select(
+        "kind", "id", "x", "y", "island_x", "island_y"
+    ).iter_rows():
+        if kind not in known or id_ not in known[kind]:
+            raise ValueError("Unknown layout identity")
+        point = {}
+        for family, a, b in [("axes", x, y), ("islands", u, v)]:
+            if (a is None) != (b is None) or (a is not None and not (0 <= a <= 1 and 0 <= b <= 1)):
+                raise ValueError("Invalid layout coordinates")
+            point[family] = None if a is None else {"x": a, "y": b}
+        result[kind, id_] = point
+    return result, json.loads((root / "layouts.json").read_text())
+
+
 def hierarchy(rows, retained):
     parents = {r["id"]: r["parent"] for r in rows}
     result = {}
@@ -149,6 +173,10 @@ def export(config, run):
         Path(config["refit"]) / "genres.parquet",
         Path(config["refit"]) / "memberships.parquet",
     ]
+    if config.get("layout"):
+        inputs.extend(
+            Path(config["layout"]) / name for name in ["positions.parquet", "layouts.json"]
+        )
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     target = run / "release"
     mapping = {str(i): public[i] for i in sorted(public)}
@@ -166,12 +194,13 @@ def export(config, run):
     (stage / "artists").mkdir()
     (stage / "genres").mkdir()
     positions = {"axes": None, "islands": None}
+    placed, layouts = coordinates(config, public.values(), artists["artist_mbid"])
     summaries = {
         mbid: {
             "id": mbid,
             "name": name,
             "listeners": listeners,
-            "positions": positions,
+            "positions": placed.get(("artist", mbid), positions),
             "color": None,
         }
         for _, mbid, listeners, name in artists.select(
@@ -198,7 +227,7 @@ def export(config, run):
             "aliases": assigned[keys[r["id"]]]["aliases"],
             "parent_id": public[parents[r["id"]]] if parents[r["id"]] is not None else None,
             "member_count": counts.get(r["id"], 0),
-            "positions": positions,
+            "positions": placed.get(("genre", public[r["id"]]), positions),
             "color": None,
         }
         for r in rows
@@ -284,7 +313,7 @@ def export(config, run):
             "schema_version": 1,
             "release_id": run.name,
             "data_kind": "model",
-            "layouts": positions,
+            "layouts": layouts,
             "membership": "all-label propagation and Leiden membership",
             "similarity": "M1 TF-IDF cosine top-50",
             "genre_similarity": None,
@@ -302,6 +331,15 @@ def export(config, run):
         "bytes": sum(p.stat().st_size for p in files),
         "registry_sha256": hashlib.sha256(registry.read_bytes()).hexdigest(),
         "grouping": groups,
+        "placement": {
+            kind: {
+                family: sum(
+                    value[family] is not None for (k, _), value in placed.items() if k == kind
+                )
+                for family in ["axes", "islands"]
+            }
+            for kind in ["genre", "artist"]
+        },
         "inputs": hashes,
         **leak,
         "seconds": time.monotonic() - start,
