@@ -3,7 +3,7 @@ import json
 import polars as pl
 import pytest
 
-from opennoise.catalog import export, hierarchy
+from opennoise.catalog import coordinates, export, hierarchy
 from opennoise.contract import validate_release
 
 
@@ -81,3 +81,59 @@ def test_hierarchy_empty_and_cycles():
     assert hierarchy([], set()) == {}
     with pytest.raises(ValueError, match="Cyclic"):
         hierarchy([{"id": 0, "parent": 1}, {"id": 1, "parent": 0}], {0, 1})
+
+
+def test_grouped_adapter_rerun(tmp_path, monkeypatch):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, _, _ = inputs(tmp_path)
+    path = tmp_path / "source/genres.parquet"
+    pl.read_parquet(path).with_columns(
+        pl.when(pl.col("id") == 0).then(pl.lit("Root")).otherwise(pl.lit("Micro")).alias("name"),
+        pl.when(pl.col("id") == 0).then(-1).otherwise(0).alias("level"),
+        pl.lit(None, dtype=pl.Int64).alias("parent"),
+    ).write_parquet(path)
+    config["group_siblings"] = True
+    export(config, run)
+    validate_release(run / "release")
+    mapping = (run / "genre_ids.json").read_bytes()
+    registry = (tmp_path / "registry.json").read_bytes()
+    export(config, run)
+    assert (run / "genre_ids.json").read_bytes() == mapping
+    assert (tmp_path / "registry.json").read_bytes() == registry
+
+
+def test_adapter_coordinates_and_missing_points(tmp_path, monkeypatch):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, a, _ = inputs(tmp_path)
+    config["layout"] = str(tmp_path / "layout")
+    root = tmp_path / "layout"
+    root.mkdir()
+    layouts = {
+        "axes": {"x_min": "Left", "x_max": "Right", "y_min": "Top", "y_max": "Bottom"},
+        "islands": None,
+    }
+    (root / "layouts.json").write_text(json.dumps(layouts))
+    pl.DataFrame(
+        {
+            "kind": ["artist"],
+            "id": [a],
+            "x": [0.0],
+            "y": [1.0],
+            "island_x": [None],
+            "island_y": [None],
+        }
+    ).write_parquet(root / "positions.parquet")
+    export(config, run)
+    assert validate_release(run / "release")["layouts"] == layouts
+    detail = json.loads((run / "release/artists" / f"{a}.json").read_text())
+    assert detail["artist"]["positions"] == {"axes": {"x": 0.0, "y": 1.0}, "islands": None}
+    assert json.loads((run / "release/genres.json").read_text())[0]["positions"]["axes"] is None
+
+
+@pytest.mark.parametrize("x,y", [(float("nan"), 0), (1.1, 0), (None, 0)])
+def test_coordinates_reject_bad_points(tmp_path, x, y):
+    pl.DataFrame(
+        {"kind": ["genre"], "id": ["g"], "x": [x], "y": [y], "island_x": [None], "island_y": [None]}
+    ).write_parquet(tmp_path / "positions.parquet")
+    with pytest.raises(ValueError, match="Invalid layout"):
+        coordinates({"layout": str(tmp_path)}, ["g"], [])

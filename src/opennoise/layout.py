@@ -377,6 +377,11 @@ def export(run, genres, results, pending):
 
 
 def layout(config, run):
+    if "catalog_run" in config:
+        from opennoise.placement import export as export_catalog
+
+        export_catalog(config, run)
+        return
     genres, membership = inputs(config, run)
     path = run / "layout_metrics.json"
     results = json.loads(path.read_text()) if path.exists() else {}
