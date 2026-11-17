@@ -13,24 +13,18 @@ const escape = (value: unknown) =>
   );
 const count = (value: number | null) =>
   value === null ? 'Count unavailable' : `${value.toLocaleString()} artists`;
-const modes: Record<View, { label: string; title: string; description: string }> = {
+const modes: Record<View, { label: string; description: string }> = {
   islands: {
     label: 'Islands',
-    title: 'Follow a different current.',
-    description:
-      'Explore neighborhoods of related genres. Region envelopes illustrate families, not measured density.',
+    description: 'Published genre positions. Outlines group genre families, not measured density.',
   },
   axes: {
     label: 'Sonic map',
-    title: 'Let your ears be the compass.',
-    description:
-      'Positions follow the published sonic axes. Nearby does not always mean similar—use the ranked neighbors to explore.',
+    description: 'Published sonic axes. Use the ranked lists for similarity, not map distance.',
   },
   tree: {
     label: 'Genre tree',
-    title: 'Every branch, another beginning.',
-    description:
-      'Follow the published broad-to-specific hierarchy. One primary parent is a navigation aid, not a complete history of a genre.',
+    description: 'Genres and subgenres, grouped by their published parent.',
   },
 };
 
@@ -73,19 +67,18 @@ async function start() {
   }
 
   app.innerHTML = `
-    <section class="intro"><div><p class="eyebrow">Less algorithm. More adventure.</p><h1>A world of sound.<br>No <em>wrong</em> turns.</h1></div>
-      <div class="intro-copy"><p>Find a familiar name. Follow an unfamiliar one.<br>Discover the music in between.</p><span class="data-note">${catalog.manifest.data_kind === 'synthetic' ? 'Illustrative data · not model results' : 'Model-derived catalog'} · ${catalog.genres.length} genres</span></div></section>
-    <div class="toolbar" id="explore"><div class="search-wrap"><label class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" aria-label="Search genres and artists" placeholder="A genre, an artist, a place to begin…" aria-controls="results" autocomplete="off"><kbd aria-hidden="true">/</kbd></label><div id="results" class="search-results" aria-label="Search results"></div></div>
+    <section class="catalog-summary"><h1>Explore genres</h1><p><span class="data-note">${catalog.manifest.data_kind === 'synthetic' ? 'Synthetic fixture — not model results' : 'Model-derived catalog'}</span> / ${catalog.genres.length} genres</p></section>
+    <div class="toolbar" id="explore"><div class="search-wrap"><label class="search-box"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><kbd aria-hidden="true">/</kbd></label><div id="results" class="search-results" aria-label="Search results"></div></div>
       <nav class="modes" aria-label="Atlas view">${Object.entries(modes)
         .map(
           ([key, mode]) =>
             `<button data-view="${key}" ${key !== 'tree' && !catalog.manifest.layouts[key as 'axes' | 'islands'] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button class="quiet" id="trail-toggle" aria-expanded="false" aria-controls="trail">My trail <span id="trail-count">${trail.length}</span></button></div>
-    <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div><aside class="detail" id="detail" tabindex="-1" aria-label="Selected genre or artist" aria-live="polite"></aside></section>
+      <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved (<span id="trail-count">${trail.length}</span>)</button></div>
+    <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div><aside id="detail" tabindex="-1" aria-label="Selected genre or artist" aria-live="polite"></aside></section>
     <section class="trail" id="trail" aria-label="Saved discovery trail" hidden></section>
-    <div class="under-map"><p><strong>Three lenses. One musical world.</strong> Your selection stays with you when you switch views.</p><p id="status" role="status">${escape(releaseStatus)}</p></div>`;
+    <div class="under-map"><p>Selection is shared across views. Save a discovery trail locally.</p><p id="status" role="status">${escape(releaseStatus)}</p></div>`;
   app.removeAttribute('aria-busy');
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
   const drawer = document.querySelector<HTMLElement>('#detail')!;
@@ -101,7 +94,7 @@ async function start() {
     rank?: number,
     color?: string | null,
   ) {
-    return `<button class="entity-row" data-kind="${kind}" data-id="${escape(id)}" aria-pressed="${selected?.kind === kind && selected.id === id}">${rank === undefined ? '' : `<span class="number">${String(rank).padStart(2, '0')}</span>`}<span class="dot" style="background:${escape(color || '#285e48')}"></span><span>${escape(name)}</span><span class="arrow" aria-hidden="true">↗</span></button>`;
+    return `<button class="entity-row" data-kind="${kind}" data-id="${escape(id)}" aria-pressed="${selected?.kind === kind && selected.id === id}">${rank === undefined ? '' : `<span class="number">${String(rank).padStart(2, '0')}</span>`}<span class="dot" style="background:${escape(color || '#111111')}"></span><span>${escape(name)}</span></button>`;
   }
 
   function root(genre: Genre): Genre {
@@ -133,9 +126,9 @@ async function start() {
       .forEach((button) =>
         button.setAttribute('aria-pressed', String(button.dataset.view === view)),
       );
-    const header = `<div class="canvas-header"><p class="eyebrow">${view === 'tree' ? 'The family resemblance' : 'The open atlas'} / ${modes[view].label}</p><h2>${modes[view].title}</h2><p>${modes[view].description}</p></div>`;
+    const header = `<header class="canvas-header"><h2>${modes[view].label}</h2><p>${modes[view].description}</p></header>`;
     if (view === 'tree') {
-      canvas.innerHTML = `${header}<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div><div class="map-bottom"><span>Expand a family. Select any genre.</span></div>`;
+      canvas.innerHTML = `${header}<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div><div class="map-bottom"><span>Expand a family to see its subgenres.</span></div>`;
       return;
     }
     const layout = view;
@@ -158,25 +151,25 @@ async function start() {
                 right = Math.max(...points.map((point) => point.x));
               const top = Math.min(...points.map((point) => point.y)),
                 bottom = Math.max(...points.map((point) => point.y));
-              const color = escape(genres.get(id)?.color || '#628d69');
+              const color = escape(genres.get(id)?.color || '#777777');
               return `<ellipse cx="${(left + right) / 2}" cy="${(top + bottom) / 2}" rx="${(right - left) / 2 + 65}" ry="${(bottom - top) / 2 + 52}" fill="${color}" fill-opacity=".07" stroke="${color}" stroke-opacity=".18" stroke-width="1.5"/><ellipse cx="${(left + right) / 2}" cy="${(top + bottom) / 2}" rx="${(right - left) / 2 + 48}" ry="${(bottom - top) / 2 + 37}" fill="${color}" fill-opacity=".04" stroke="${color}" stroke-opacity=".12"/>`;
             })
             .join('')
-        : '<path d="M50 285H950 M500 25V545" stroke="#aab9a4" stroke-dasharray="3 7" opacity=".5"/>';
+        : '<path d="M50 285H950 M500 25V545" stroke="#cccccc" stroke-dasharray="3 7"/>';
     const nodes = placed
       .map((genre) => {
         const { x, y } = xy(genre);
         const active = selected?.kind === 'genre' && selected.id === genre.id;
-        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#285e48')}"/><text x="${x > 790 ? -13 : 13}" y="5" text-anchor="${x > 790 ? 'end' : 'start'}">${escape(genre.name)}</text></g>`;
+        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#111111')}"/><text x="${x > 790 ? -13 : 13}" y="5" text-anchor="${x > 790 ? 'end' : 'start'}">${escape(genre.name)}</text></g>`;
       })
       .join('');
     let artist = '';
     if (detail && 'artist' in detail && detail.artist.positions[layout]) {
       const point = detail.artist.positions[layout]!;
-      artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path id="artist-leader" stroke="#627368" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#22352f"/><text id="artist-label" x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
+      artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
     }
     const axes = catalog.manifest.layouts.axes;
-    canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${placed.length} genres placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Pan to wander. Zoom to get closer.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${placed.length} genres placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Drag to pan. Use +/− to zoom.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
     if (view === 'axes' && axes) {
       const legend = document.createElement('div');
       legend.className = 'axis-legend';
@@ -259,27 +252,25 @@ async function start() {
       seen.add(genre.id);
       chain.unshift(genre);
     }
-    return `<div class="breadcrumbs">All sound ${chain.map((parent) => ` / <button data-kind="genre" data-id="${escape(parent.id)}">${escape(parent.name)}</button>`).join('')}</div>`;
+    return `<div class="breadcrumbs">Genres ${chain.map((parent) => ` / <button data-kind="genre" data-id="${escape(parent.id)}">${escape(parent.name)}</button>`).join('')}</div>`;
   }
 
   function renderDetail() {
     if (!selected) {
-      drawer.innerHTML = `<p class="eyebrow">Where will you begin?</p><h2>A little curiosity<br>goes a long way.</h2><p class="detail-lede">Select a genre on the atlas, or search for an artist you love. The map is just the beginning.</p><section><div class="section-label"><h3>Pick a starting point</h3><span>Genre families</span></div>${catalog.genres
+      drawer.innerHTML = `<h2>Genre or artist</h2><p class="detail-lede">Select a genre on the map or search for an artist.</p><section><h3>Genre families</h3>${catalog.genres
         .filter((genre) => !genre.parent_id)
         .map((genre) => entityButton('genre', genre.id, genre.name, undefined, genre.color))
-        .join(
-          '',
-        )}</section><section><p class="muted">No account. No listening history required. Your saved trail stays in this browser.</p></section>`;
+        .join('')}</section>`;
       return;
     }
     if (!detail) return;
     const entity = 'genre' in detail ? detail.genre : detail.artist;
     const saved = trail.some((entry) => entry.kind === selected!.kind && entry.id === selected!.id);
-    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="eyebrow">Artist field notes</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? `${count(detail.genre.member_count)} · ${catalog.manifest.membership ? 'Published membership' : 'Membership not computed'}` : `${detail.artist.listeners === null ? 'Listener count unavailable' : `${detail.artist.listeners.toLocaleString()} listeners`}<br>${detail.signals.map((signal) => `<span class="pill">${escape(signal)}</span>`).join('')}`}</p><button class="solid" id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved to your trail' : trail.length >= 50 ? 'Trail full (50 stops)' : '+ Add to my trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
+    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="muted">Artist</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? `${count(detail.genre.member_count)} · ${catalog.manifest.membership ? 'Published membership' : 'Membership not computed'}` : `${detail.artist.listeners === null ? 'Listener count unavailable' : `${detail.artist.listeners.toLocaleString()} listeners`}<br>Signals: ${detail.signals.length ? detail.signals.map(escape).join(', ') : 'none published'}`}</p><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full (50)' : 'Save to trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
   }
 
   function renderGenre(data: GenreDetail) {
-    return `<section><div class="section-label"><h3>A few names to know</h3><span>Ranked artists</span></div>${
+    return `<section><h3>Member artists</h3>${
       data.members === null
         ? '<p class="empty">Membership has not been computed yet.</p>'
         : !data.members.length
@@ -296,7 +287,7 @@ async function start() {
                 ),
               )
               .join('')
-    }</section><section><div class="section-label"><h3>Follow the thread</h3><span>Related genres</span></div>${
+    }</section><section><h3>Related genres</h3>${
       data.related === null
         ? '<p class="empty">Genre similarity has not been computed yet.</p>'
         : !data.related.length
@@ -318,7 +309,7 @@ async function start() {
 
   function renderArtist(data: ArtistDetail) {
     const links = data.links.filter((link) => /^https?:\/\//i.test(link.url));
-    return `<section><div class="section-label"><h3>At home in</h3><span>Genre membership</span></div>${
+    return `<section><h3>Genres</h3>${
       data.genres === null
         ? '<p class="empty">Membership has not been computed yet.</p>'
         : !data.genres.length
@@ -335,7 +326,7 @@ async function start() {
                 ),
               )
               .join('')
-    }</section><section><div class="section-label"><h3>Go a little further</h3><span>Similar artists</span></div>${
+    }</section><section><h3>Similar artists</h3>${
       data.similar === null
         ? '<p class="empty">Artist similarity has not been computed yet.</p>'
         : !data.similar.length
@@ -352,12 +343,12 @@ async function start() {
                 ),
               )
               .join('')
-    }<p class="muted">${escape(catalog.manifest.similarity || 'No published similarity method')}. Rank is not a probability.</p></section><section><h3 class="eyebrow">Listen elsewhere</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links in this release.</p>'}<p class="muted">${data.preview ? 'A preview locator is available. Provider playback is not connected in this study.' : 'No preview available. Nothing plays automatically.'}</p></section>`;
+    }<p class="muted">${escape(catalog.manifest.similarity || 'No published similarity method')}. Rank is not a probability.</p></section><section><h3>Listening links</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links in this release.</p>'}<p class="muted">${data.preview ? 'A preview locator is available. Provider playback is not connected in this study.' : 'No preview available. Nothing plays automatically.'}</p></section>`;
   }
 
   function renderTrail() {
     document.querySelector('#trail-count')!.textContent = String(trail.length);
-    trailPanel.innerHTML = `<div class="trail-header"><div><h2>Your curiosity, collected.</h2><p>${storageAvailable ? 'Saved in this browser only.' : 'Browser storage unavailable; this trail lasts for this tab only.'} Maximum 50 stops.</p></div><button class="quiet" id="trail-close">Close trail</button></div><div class="trail-items">${trail.length ? trail.map((entry, index) => `<div class="trail-item"><button data-kind="${entry.kind}" data-id="${escape(entry.id)}">${String(index + 1).padStart(2, '0')} · ${escape(lookup.get(`${entry.kind}:${entry.id}`)?.name || entry.id)}</button><button data-remove="${index}" aria-label="Remove ${escape(lookup.get(`${entry.kind}:${entry.id}`)?.name || entry.id)} from trail">×</button></div>`).join('') : '<p class="empty">Find something interesting? Add it from its field notes.</p>'}</div>`;
+    trailPanel.innerHTML = `<div class="trail-header"><div><h2>Saved trail</h2><p>${storageAvailable ? 'Saved in this browser only.' : 'Browser storage unavailable; this trail lasts for this tab only.'} Maximum 50 items.</p></div><button id="trail-close">Close</button></div><div class="trail-items">${trail.length ? trail.map((entry, index) => `<div class="trail-item"><button data-kind="${entry.kind}" data-id="${escape(entry.id)}">${String(index + 1).padStart(2, '0')} · ${escape(lookup.get(`${entry.kind}:${entry.id}`)?.name || entry.id)}</button><button data-remove="${index}" aria-label="Remove ${escape(lookup.get(`${entry.kind}:${entry.id}`)?.name || entry.id)} from trail">×</button></div>`).join('') : '<p class="empty">No saved genres or artists.</p>'}</div>`;
   }
 
   function persistTrail() {
@@ -386,7 +377,7 @@ async function start() {
     selected = selection;
     detail = null;
     if (push) writeURL();
-    drawer.innerHTML = '<p class="empty" role="status">Opening field notes…</p>';
+    drawer.innerHTML = '<p class="empty" role="status">Loading details…</p>';
     renderCanvas();
     results.innerHTML = '';
     try {
@@ -402,7 +393,7 @@ async function start() {
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
         return;
-      drawer.innerHTML = `<h2>Not quite there.</h2><p class="error">${escape(error instanceof Error ? error.message : 'Unable to open these field notes.')}</p><button class="quiet" id="retry">Try again</button>`;
+      drawer.innerHTML = `<h2>Details unavailable</h2><p class="error">${escape(error instanceof Error ? error.message : 'Unable to load details.')}</p><button id="retry">Try again</button>`;
     }
   }
 
@@ -428,7 +419,7 @@ async function start() {
       renderDetail();
       if (id)
         status.textContent =
-          'This selection is not in the current release. Search for a new starting point.';
+          'This selection is not in the current release. Search for another genre or artist.';
     }
   }
 
@@ -544,5 +535,5 @@ async function start() {
 
 start().catch((error) => {
   app.removeAttribute('aria-busy');
-  app.innerHTML = `<h1 class="loading">The atlas could not be opened.</h1><p class="error">${escape(error instanceof Error ? error.message : 'Unknown catalog error')}</p><p class="muted">Check the catalog URL and schema version, then reload. No fallback dataset has been substituted.</p><button class="quiet" onclick="location.reload()">Reload atlas</button>`;
+  app.innerHTML = `<h1 class="loading">The atlas could not be opened.</h1><p class="error">${escape(error instanceof Error ? error.message : 'Unknown catalog error')}</p><p class="muted">Check the catalog URL and schema version, then reload. No fallback dataset has been substituted.</p><button onclick="location.reload()">Reload atlas</button>`;
 });
