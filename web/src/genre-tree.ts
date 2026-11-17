@@ -1,5 +1,6 @@
 import type { ArtistDetail, Genre, GenreDetail } from './catalog';
 import { createNavigation, type Navigation } from './navigation';
+import { hasShortcutModifier } from './keyboard';
 import { layoutTree, type Branch, type TreeNode } from './tree-layout';
 import { indexTree } from './tree-scene';
 
@@ -402,6 +403,7 @@ export class GenreTree {
   }
 
   private keydown(event: KeyboardEvent) {
+    if (hasShortcutModifier(event)) return;
     const key = (event.target as Element).closest<SVGGElement>('.tree-node')?.dataset.key;
     if (!key) return;
     const nodes = this.keyboard;

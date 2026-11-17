@@ -1,5 +1,6 @@
 import Panzoom from '@panzoom/panzoom';
 import type { Camera } from './map-geometry';
+import { hasShortcutModifier } from './keyboard';
 
 type Options = {
   camera: Camera;
@@ -69,7 +70,7 @@ export function createNavigation(
   viewport.addEventListener(
     'keydown',
     (event) => {
-      if (event.target !== viewport) return;
+      if (event.target !== viewport || hasShortcutModifier(event)) return;
       const step = 64 / panzoom.getScale();
       const directions: Record<string, [number, number]> = {
         ArrowLeft: [step, 0],

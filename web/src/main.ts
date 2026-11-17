@@ -537,7 +537,8 @@ async function start() {
       params.set('kind', selected.kind);
       params.set('id', selected.id);
     }
-    history.pushState(null, '', `#${params}`);
+    const hash = `#${params}`;
+    if (location.hash !== hash) history.pushState(null, '', hash);
   }
 
   async function select(selection: Selection, push = true, focusDetails = true) {
