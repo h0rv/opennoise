@@ -18,7 +18,11 @@ def main() -> None:
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
     start = time.monotonic()
-    if config.get("milestone") == "m2":
+    if "tags" in config:
+        from opennoise import tags
+
+        tags.execute(args.stage, config, run)
+    elif config.get("milestone") == "m2":
         from opennoise.genres import build_genres, evaluate_genres
         from opennoise.reference import ingest_reference
 
