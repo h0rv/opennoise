@@ -9,6 +9,7 @@ uv sync
 uv run on ingest configs/m1.toml
 uv run on build configs/m1.toml
 uv run on eval configs/m1.toml
+uv run on audio configs/audio.toml
 ```
 
 Artifacts are cached in `data/` and `runs/<config hash>/`. The graph uses 90% of users;
@@ -20,3 +21,8 @@ tracked experiment table includes every method, including failed builds.
 Labs overlap is intersection size divided by k, averaged over nonempty API responses;
 coverage and errors are reported separately. Its popularity strata each contribute 100 seeds.
 The labs graph can share listening data with this snapshot: agreement is not an independent test.
+
+The audio stage aggregates AcousticBrainz low/high-level descriptors per artist and embeds Deezer
+preview clips with Discogs-EffNet (CC BY-NC-ND), keeping only vectors. Each signal is scored on
+the artists it covers against `audio.listening_run`: AUC of listening neighbors vs random
+artists, overlap@10, held-out co-listening of the audio graph, and reranking the listening top-100.

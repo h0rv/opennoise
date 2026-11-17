@@ -1,0 +1,14 @@
+seed = 42
+min_listeners = 5
+min_artists = 5
+neighbors = 50
+test_fraction = 0.1
+labs_sample = 300
+als = []
+
+[audio]
+listening_run = "1f242e47ed38"
+min_recordings = 3
+preview_artists = 3000
+preview_tracks = 3
+fusion_weights = [0.1, 0.25, 0.5]

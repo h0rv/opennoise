@@ -8,7 +8,7 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
-    parser.add_argument("stage", choices=["ingest", "build", "eval"])
+    parser.add_argument("stage", choices=["ingest", "build", "eval", "audio"])
     parser.add_argument("config", nargs="?", default="configs/m1.toml")
     args = parser.parse_args()
     config_bytes = Path(args.config).read_bytes()
@@ -26,8 +26,12 @@ def main() -> None:
         from opennoise.graph import build
 
         build(config, run)
-    else:
+    elif args.stage == "eval":
         from opennoise.evaluate import evaluate
+
+        evaluate(config, run)
+    else:
+        from opennoise.audio import evaluate
 
         evaluate(config, run)
     elapsed = time.monotonic() - start

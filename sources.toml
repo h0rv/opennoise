@@ -3,3 +3,31 @@ url = "https://data.metabrainz.org/pub/musicbrainz/listenbrainz/fullexport/liste
 date = "2026-11-01"
 sha256 = "92d6151b8fd41a22c6e6f821db954faeb9315e8d2a7ea939790863b5c59a0e42"
 license = "CC0"
+
+[[sources]]
+name = "canonical"
+url = "https://data.metabrainz.org/pub/musicbrainz/canonical_data/musicbrainz-canonical-dump-20261103-080003/musicbrainz-canonical-dump-20261103-080003.tar.zst"
+date = "2026-11-03"
+sha256 = "42769d7c669cced9b7b805b70223f174b8f384a648efd0d471abfce28635708c"
+license = "CC0"
+
+[[sources]]
+name = "acousticbrainz_lowlevel"
+url = "https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/dumps/acousticbrainz-lowlevel-features-20220623/acousticbrainz-lowlevel-features-20220623-{part}.tar.zst"
+date = "2022-06-23"
+sha256 = "lowlevel:cf1b6511d9c33996edb1bbf1c6415b428bf45f263b0f87af4a7afa8ed70985ea rhythm:5f813ff49c2ac1f35cca3947e081178758cddbd9b5292163dff58bdf3a025fad tonal:fa1d9e4c5e1af80372d9dbf96bc25bb84a3b0165600fbe2684496dbd1445bc0d"
+license = "CC0"
+
+[[sources]]
+name = "acousticbrainz_highlevel"
+url = "https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/dumps/acousticbrainz-highlevel-json-20220623/acousticbrainz-highlevel-json-20220623-{part}.tar.zst"
+date = "2022-06-23"
+sha256 = "sha256sums:84d605442c2769c5c7717a03f913bd080566e5cebc45b0d7a419dd048338fbbf"
+license = "CC0"
+
+[[sources]]
+name = "effnet"
+url = "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bsdynamic-1.onnx"
+date = "2022-02-17"
+sha256 = "a280825b334797cf677939db8cd5762c0392aedd0ca6415dbc1cd083f045e43c"
+license = "CC BY-NC-ND 4.0"
