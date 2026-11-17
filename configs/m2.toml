@@ -1,0 +1,35 @@
+milestone = "m2"
+m1 = "runs/1f242e47ed38"
+seed = 42
+genre_holdout = 0.2
+artist_holdout = 0.2
+min_artists = 5
+min_tag_support = 3
+
+[[variants]]
+name = "onehop_k50"
+k = 50
+hops = 1
+resolutions = [1.0, 4.0, 16.0, 64.0]
+guided = false
+
+[[variants]]
+name = "twohop_k20"
+k = 20
+hops = 2
+resolutions = [2.0, 8.0, 32.0, 128.0]
+guided = false
+
+[[variants]]
+name = "guided_k50"
+k = 50
+hops = 2
+resolutions = [2.0, 8.0, 32.0, 128.0]
+guided = true
+
+[[variants]]
+name = "fine_k20"
+k = 20
+hops = 1
+resolutions = [256.0, 1024.0, 4096.0]
+guided = false
