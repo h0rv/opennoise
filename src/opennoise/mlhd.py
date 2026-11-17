@@ -272,6 +272,7 @@ def experiment(base, run, shards, weights, seed):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("stage", choices=["ingest", "experiment"])
+    parser.add_argument("--enable", action="store_true")
     parser.add_argument("--base", type=Path, default=Path("runs/1f242e47ed38"))
     parser.add_argument("--run", type=Path, default=Path("runs/mlhd"))
     parser.add_argument("--shard", choices=list("0123456789abcdef"), default="0")
@@ -279,6 +280,8 @@ def main():
     parser.add_argument("--weights", type=float, nargs="+", default=[0.1, 0.3, 1.0, 3.0])
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
+    if not args.enable:
+        parser.error("MLHD is optional and disabled by default; pass --enable to opt in")
     args.run.mkdir(parents=True, exist_ok=True)
     if args.stage == "ingest":
         ingest(args.base, args.run, args.shard)

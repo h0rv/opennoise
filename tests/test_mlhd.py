@@ -6,8 +6,28 @@ import numpy as np
 import pytest
 from scipy import sparse
 
+from opennoise import mlhd
 from opennoise.graph import normalize
 from opennoise.mlhd import MEMBER_COMMAND, aggregate, partition_users, similarities, weighted_rows
+
+
+def test_mlhd_is_disabled_by_default(tmp_path, monkeypatch, capsys):
+    run = tmp_path / "disabled"
+    monkeypatch.setattr("sys.argv", ["mlhd", "ingest", "--run", str(run)])
+    with pytest.raises(SystemExit) as error:
+        mlhd.main()
+    assert error.value.code == 2
+    assert "disabled by default" in capsys.readouterr().err
+    assert not run.exists()
+
+
+def test_mlhd_explicit_opt_in(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr("sys.argv", ["mlhd", "ingest", "--enable", "--run", str(tmp_path)])
+    monkeypatch.setattr(mlhd, "ingest", lambda *args: calls.append(args))
+    mlhd.main()
+    assert len(calls) == 1
+    assert calls[0][1:] == (tmp_path, "0")
 
 
 def test_aggregate():
