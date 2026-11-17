@@ -1,5 +1,8 @@
 import json
+import urllib.error
+import urllib.parse
 import urllib.request
+from email.message import Message
 from io import StringIO
 
 import polars as pl
@@ -14,6 +17,7 @@ def test_query_cache_and_error(tmp_path, monkeypatch):
     def request(req, timeout):
         assert req.get_method() == "POST"
         assert b"query=" in req.data
+        assert req.get_header("User-agent") == "opennoise/0.1 (https://github.com/h0rv/opennoise)"
         calls.append(req)
         return StringIO(json.dumps({"results": {"bindings": [{"qid": {"value": "wd/Q1"}}]}}))
 
@@ -24,6 +28,62 @@ def test_query_cache_and_error(tmp_path, monkeypatch):
     monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **kw: StringIO('{"exception":"bad"}'))
     with pytest.raises(ValueError, match="bad"):
         gen.query("https://endpoint", "linked", tmp_path)
+
+
+@pytest.mark.parametrize("bindings", [[], [{"qid": {"value": "wd/Q1"}}]])
+def test_query_rate_limit_fallback(tmp_path, monkeypatch, bindings):
+    calls = []
+
+    def request(req, timeout):
+        calls.append(req)
+        assert req.get_header("User-agent") == "opennoise/0.1 (https://github.com/h0rv/opennoise)"
+        if len(calls) == 1:
+            raise urllib.error.HTTPError(req.full_url, 429, "limited", Message(), None)
+        assert req.get_method() == "GET"
+        assert req.full_url.startswith("https://query.wikidata.org/sparql?")
+        assert urllib.parse.parse_qs(urllib.parse.urlparse(req.full_url).query)["query"] == [
+            gen.PREFIX + gen.QUERIES["linked"]
+        ]
+        return StringIO(json.dumps({"results": {"bindings": bindings}}))
+
+    monkeypatch.setattr(urllib.request, "urlopen", request)
+    expected = [{key: value["value"] for key, value in row.items()} for row in bindings]
+    assert gen.query("https://qlever.dev/api/wikidata", "linked", tmp_path) == expected
+    assert gen.query("https://qlever.dev/api/wikidata", "linked", tmp_path) == expected
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize(
+    "endpoint,code", [("https://qlever.dev/api/wikidata", 500), ("https://other", 429)]
+)
+def test_query_does_not_fallback_on_other_errors(tmp_path, monkeypatch, endpoint, code):
+    calls = []
+
+    def request(req, timeout):
+        calls.append(req)
+        raise urllib.error.HTTPError(req.full_url, code, "failed", Message(), None)
+
+    monkeypatch.setattr(urllib.request, "urlopen", request)
+    with pytest.raises(urllib.error.HTTPError):
+        gen.query(endpoint, "linked", tmp_path)
+    assert len(calls) == 1
+    assert not list(tmp_path.iterdir())
+
+
+def test_query_fallback_failure_not_cached(tmp_path, monkeypatch):
+    calls = []
+
+    def request(req, timeout):
+        calls.append(req)
+        raise urllib.error.HTTPError(
+            req.full_url, 429 if len(calls) == 1 else 403, "failed", Message(), None
+        )
+
+    monkeypatch.setattr(urllib.request, "urlopen", request)
+    with pytest.raises(urllib.error.HTTPError, match="403"):
+        gen.query("https://qlever.dev/api/wikidata", "linked", tmp_path)
+    assert len(calls) == 2
+    assert not list(tmp_path.iterdir())
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -34,9 +35,8 @@ QUERIES = {
     "stated_in": """SELECT DISTINCT ?statement WHERE {
       ?artist wdt:P434 ?mbid ; p:P136 ?statement .
       ?statement prov:wasDerivedFrom/pr:P248 ?source .
-      { ?source rdfs:label ?label FILTER(LANG(?label) = "en")
-        FILTER(CONTAINS(LCASE(?label), "every noise")) }
-      UNION { ?source wdt:P856 ?url FILTER(CONTAINS(LCASE(STR(?url)), "everynoise")) }
+      ?source rdfs:label ?label FILTER(LANG(?label) = "en")
+      FILTER(CONTAINS(LCASE(?label), "every noise"))
     }""",
     "linked": "SELECT DISTINCT ?qid WHERE { ?qid wdt:P9881 ?id }",
     "music": "SELECT DISTINCT ?qid WHERE { ?qid wdt:P31?/wdt:P279* wd:Q188451 }",
@@ -54,12 +54,23 @@ def query(endpoint, name, root):
     digest = hashlib.sha256(sparql.encode()).hexdigest()[:12]
     path = root / f"{name}-{digest}.json"
     if not path.exists():
-        request = urllib.request.Request(
-            endpoint,
-            data=urllib.parse.urlencode({"query": sparql}).encode(),
-            headers={"Accept": "application/sparql-results+json"},
-        )
-        with urllib.request.urlopen(request, timeout=180) as response:
+        headers = {
+            "Accept": "application/sparql-results+json",
+            "User-Agent": "opennoise/0.1 (https://github.com/h0rv/opennoise)",
+        }
+        data = urllib.parse.urlencode({"query": sparql}).encode()
+        request = urllib.request.Request(endpoint, data=data, headers=headers)
+        try:
+            response = urllib.request.urlopen(request, timeout=180)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or "qlever" not in urllib.parse.urlparse(endpoint).netloc:
+                raise
+            print(f"QLever rate-limited {name}; trying WDQS", flush=True)
+            request = urllib.request.Request(
+                "https://query.wikidata.org/sparql?" + data.decode(), headers=headers
+            )
+            response = urllib.request.urlopen(request, timeout=180)
+        with response:
             result = json.load(response)
         if "results" not in result or result.get("exception"):
             raise ValueError(f"Wikidata {name}: {result.get('exception', 'missing results')}")
