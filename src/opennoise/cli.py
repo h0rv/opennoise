@@ -8,7 +8,7 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
-    parser.add_argument("stage", choices=["ingest", "build", "eval", "export", "layout"])
+    parser.add_argument("stage", choices=["ingest", "build", "eval", "export", "layout", "audio"])
     parser.add_argument("config", nargs="?")
     args = parser.parse_args()
     if args.config is None:
@@ -57,6 +57,10 @@ def main() -> None:
         build(config, run)
     elif args.stage == "eval":
         from opennoise.evaluate import evaluate
+
+        evaluate(config, run)
+    elif args.stage == "audio":
+        from opennoise.audio import evaluate
 
         evaluate(config, run)
     else:

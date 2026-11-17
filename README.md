@@ -110,3 +110,18 @@ tree share one selection; field notes link genres and artists, and a trail saves
 Set `VITE_CATALOG_URL` to a release's `manifest.json` to use its data (cross-origin hosts need CORS).
 `npm --prefix web run lint` and `npm --prefix web run build` check formatting, regenerate types
 from the pipeline schema, type-check and build a static site. No preview playback is connected yet.
+
+Audio experiments reuse the M1 run named in `configs/audio.toml`:
+
+```sh
+uv run on audio configs/audio.toml
+```
+
+The audio stage aggregates AcousticBrainz low/high-level descriptors per artist and embeds Deezer
+preview clips with Discogs-EffNet (CC BY-NC-ND), keeping only vectors. Each signal is scored on
+the artists it covers against `audio.listening_run`: AUC of listening neighbors vs random
+artists, overlap@10, held-out co-listening of the audio graph, and reranking the listening top-100.
+EffNet previews are off by default (`audio.effnet = true` enables them) because the model is
+noncommercial. The audio stage writes `audio_<signal>.npy` into the listening run; `layout`
+then reads `a+b` representations as row-normalized concatenations, and `configs/layout.toml`
+defaults to `als_2+audio_ab_all`, so run `audio` before `layout`.
