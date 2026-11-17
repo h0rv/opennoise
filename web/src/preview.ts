@@ -54,7 +54,12 @@ export function searchPreview(artist: string, signal: AbortSignal): Promise<Trac
     };
     script.onerror = () => fail(new Error('Deezer unavailable'));
     const url = new URL('https://api.deezer.com/search');
-    url.search = new URLSearchParams({ q: artist, limit: '10', output: 'jsonp', callback }).toString();
+    url.search = new URLSearchParams({
+      q: artist,
+      limit: '10',
+      output: 'jsonp',
+      callback,
+    }).toString();
     script.src = url.href;
     signal.addEventListener('abort', abort, { once: true });
     document.head.append(script);
@@ -120,7 +125,8 @@ export class PreviewPlayer {
       }
       this.status.textContent = 'No preview available.';
     } catch {
-      if (!signal.aborted) this.status.textContent = 'Preview unavailable. Click an artist to retry.';
+      if (!signal.aborted)
+        this.status.textContent = 'Preview unavailable. Click an artist to retry.';
     }
   }
 

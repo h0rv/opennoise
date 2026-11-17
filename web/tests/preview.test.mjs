@@ -38,7 +38,11 @@ function browser(t) {
     createElement: (tag) =>
       tag === 'audio'
         ? audio
-        : { remove() { this.removed = true; } },
+        : {
+            remove() {
+              this.removed = true;
+            },
+          },
     head: { append: (script) => scripts.push(script) },
   };
   t.after(() => {
@@ -58,7 +62,10 @@ test('only matches the requested artist and accepts Deezer media and track URLs'
   assert.equal(previewTrack({ data: [track('Aphex Twin tribute')] }, 'Aphex Twin'), null);
   for (const preview of ['', 'http://cdnt-preview.dzcdn.net/x', 'https://evil.com?x=.dzcdn.net/x'])
     assert.equal(previewTrack({ data: [{ ...track(), preview }] }, 'Aphex Twin'), null);
-  assert.equal(previewTrack({ data: [{ ...track(), link: 'javascript:alert(1)' }] }, 'Aphex Twin'), null);
+  assert.equal(
+    previewTrack({ data: [{ ...track(), link: 'javascript:alert(1)' }] }, 'Aphex Twin'),
+    null,
+  );
   assert.throws(() => previewTrack({ error: { code: 4 } }, 'Aphex Twin'));
   assert.equal(previewTrack({ data: [] }, 'Aphex Twin'), null);
 });
