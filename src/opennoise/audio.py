@@ -278,11 +278,13 @@ def signals(config, graph, run):
     artists = pl.read_parquet(graph / "artists.parquet")
     minimum = config["audio"]["min_recordings"]
     low = aggregate(pl.scan_parquet(lowlevel()), artists, minimum)
+    low.write_parquet(run / "artist_audio_low.parquet")
     high = aggregate(
         pl.concat([pl.scan_parquet(p) for p in highlevel()], how="diagonal"), artists, minimum
     )
     high.write_parquet(run / "artist_audio.parquet")
     both = low.join(high.drop("artist_mbid", "recordings"), on="item")
+    both.write_parquet(graph / "artist_audio_features.parquet")
     result = {
         "ab_low": (low["item"].to_numpy(), low.select(feature_columns(low)).to_numpy()),
         "ab_high": (high["item"].to_numpy(), high.select(feature_columns(high)).to_numpy()),

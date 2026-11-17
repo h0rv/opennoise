@@ -142,9 +142,11 @@ preview clips with Discogs-EffNet (CC BY-NC-ND), keeping only vectors. Each sign
 the artists it covers against `audio.listening_run`: AUC of listening neighbors vs random
 artists, overlap@10, held-out co-listening of the audio graph, and reranking the listening top-100.
 EffNet previews are off by default (`audio.effnet = true` enables them) because the model is
-noncommercial. The audio stage writes `audio_<signal>.npy` into the listening run; `layout`
-then reads `a+b` representations as row-normalized concatenations, and `configs/layout.toml`
-defaults to `als_2+audio_ab_all`, so run `audio` before `layout`.
+noncommercial.
+
+`layout` uses fixed AcousticBrainz dance axes with cosine-weighted ALS fill (k=10) for missing audio.
+Genres use log-listener means; artists share their rank transform. ENAO coordinates are evaluation only.
+Islands use spectral UMAP on `als_2+audio_ab_all`. Run `audio` before `layout`.
 
 M3 composes micro-genre names from a place (MusicBrainz areas, Wikidata demonyms) and a style
 (Wikidata, Discogs, suffixes of visible ENAO names), with members scored from listening

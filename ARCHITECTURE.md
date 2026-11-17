@@ -49,7 +49,7 @@ and **audio (where it sits)**.
 | Taxonomy | Wikidata P136/P279/P737 | ~15k music genres | CC0 | parent edges, names, origins |
 | Audio descriptors | AcousticBrainz dumps (frozen 2022) | ~7M recordings | CC0 | low/high-level features for the map axes |
 | Audio (new) | Deezer/iTunes 30s previews -> Essentia Discogs-EffNet / MAEST / CLAP embeddings | top N tracks per artist | compute locally, never store or redistribute audio | sonic embeddings for artists AcousticBrainz lacks; also the in-app previews (fetched client side at runtime) |
-| Reference | ENAO final map (quint-t, sha256 `1ac0c659…`), genre->artist map (NeroYuki `spotify_genres_artists_map.json` @88bd6f6, 6,435 genres -> Spotify artist IDs), EveryNoise-Watch 2021 coordinates | 6,291 genres | no license / CC-BY-SA | **supervision and evaluation**: genre vocabulary, membership labels, axis targets, with a held-out split for eval. Raw ENAO data is never published |
+| Reference | ENAO final map (quint-t, sha256 `1ac0c659…`), genre->artist map (NeroYuki `spotify_genres_artists_map.json` @88bd6f6, 6,435 genres -> Spotify artist IDs), EveryNoise-Watch 2021 coordinates | 6,291 genres | no license / CC-BY-SA | Genre vocabulary and membership labels; map coordinates are **evaluation only**, never regression targets or layout initialization. Raw ENAO data is never published |
 
 **Main risk:** ListenBrainz has a small user base next to Spotify, so co-listening alone will
 resolve broad and mid-level genres well but not micro-genres. Discogs styles, Last.fm similarity and
@@ -84,9 +84,9 @@ genres/
   relate     genre centroids in each space; genre-genre similarity; hierarchy = Leiden nesting
              reconciled with Wikidata P279
 layout/
-  axes       ENAO-style: y = organic<->electric, x = dense<->spiky, color = 3 more features. Fit a
-             regression from genre audio/listen centroids to ENAO x/y, then apply it to every genre
-             (new ones included); a small repulsion pass for label readability
+  axes       Fixed AcousticBrainz feature combinations; ALS-neighbor fill for artists without audio.
+             Log-listener-weighted raw genre centers, then shared genre/artist rank transforms.
+             Fixed dance formula and k=10; Every Noise map coordinates are evaluation only.
   islands    UMAP of genre embeddings -> density contours = islands (broad genres), labels per zoom
   tree       hierarchy JSON for the tree and radial view
 similar/     artist top-k neighbors (listen-dominant, re-ranked by tag/audio agreement)
@@ -277,9 +277,8 @@ zoom/landmark inspiration. Islands are an embedding overview, not a substitute f
 
 ## 10. Decisions for Robert (defaults in bold)
 
-1. Train on ENAO (memberships as labels, coordinates as axis targets), with a held-out split for
-   eval? **Yes. It is the only route to parity. Publish our derived model outputs, never the raw ENAO
-   files.** (ENAO data has no license, so publishing even derived outputs carries some risk.)
+1. Use ENAO names and memberships as labels, with a held-out split for evaluation; **map coordinates
+   are evaluation only**, never axis targets. Publish derived outputs, never the raw ENAO files.
 2. Use the Last.fm API for gap-fill (non-commercial)? **Yes, derived scores only.**
 3. Audio previews: compute embeddings locally from Deezer previews? **Yes, store embeddings only.**
 4. Repo: archive the old `main` as `archive/v1` and start a fresh orphan `main`. **Yes.**

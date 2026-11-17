@@ -154,4 +154,4 @@ def test_coordinates_reject_bad_points(tmp_path, x, y):
         {"kind": ["genre"], "id": ["g"], "x": [x], "y": [y], "island_x": [None], "island_y": [None]}
     ).write_parquet(tmp_path / "positions.parquet")
     with pytest.raises(ValueError, match="Invalid layout"):
-        coordinates({"layout": str(tmp_path)}, ["g"], [])
+        coordinates({"layout": str(tmp_path)})
