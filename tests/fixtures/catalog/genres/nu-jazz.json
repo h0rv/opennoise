@@ -1,0 +1,50 @@
+{
+  "genre": {
+    "id": "nu-jazz",
+    "name": "Nu jazz",
+    "aliases": [
+      "Nu-jazz"
+    ],
+    "parent_id": "jazz",
+    "member_count": 1,
+    "positions": {
+      "axes": {
+        "x": 0.65,
+        "y": 0.7
+      },
+      "islands": {
+        "x": 0.8700000000000001,
+        "y": 0.63
+      }
+    },
+    "color": "#e6ae5c"
+  },
+  "members": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000006",
+        "name": "Fixture Artist 6",
+        "listeners": null,
+        "positions": {
+          "axes": {
+            "x": 0.65,
+            "y": 0.7
+          },
+          "islands": null
+        },
+        "color": null
+      },
+      "score": 0.95
+    }
+  ],
+  "related": [
+    {
+      "id": "jazz",
+      "score": 0.85
+    },
+    {
+      "id": "spiritual-jazz",
+      "score": 0.75
+    }
+  ]
+}

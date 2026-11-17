@@ -1,0 +1,51 @@
+{
+  "genre": {
+    "id": "post-rock",
+    "name": "Post-rock",
+    "aliases": [],
+    "parent_id": "rock",
+    "member_count": 1,
+    "positions": {
+      "axes": {
+        "x": 0.25,
+        "y": 0.7
+      },
+      "islands": {
+        "x": 0.55,
+        "y": 0.63
+      }
+    },
+    "color": "#cc75b7"
+  },
+  "members": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000004",
+        "name": "Fixture Artist 4",
+        "listeners": 300,
+        "positions": {
+          "axes": {
+            "x": 0.25,
+            "y": 0.7
+          },
+          "islands": {
+            "x": 0.52,
+            "y": 0.6000000000000001
+          }
+        },
+        "color": "#cc75b7"
+      },
+      "score": 0.95
+    }
+  ],
+  "related": [
+    {
+      "id": "rock",
+      "score": 0.85
+    },
+    {
+      "id": "shoegaze",
+      "score": 0.75
+    }
+  ]
+}

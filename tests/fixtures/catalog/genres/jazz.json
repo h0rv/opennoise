@@ -1,0 +1,55 @@
+{
+  "genre": {
+    "id": "jazz",
+    "name": "Jazz",
+    "aliases": [],
+    "parent_id": null,
+    "member_count": 2,
+    "positions": {
+      "axes": {
+        "x": 0.55,
+        "y": 0.82
+      },
+      "islands": {
+        "x": 0.8200000000000001,
+        "y": 0.23
+      }
+    },
+    "color": "#e6ae5c"
+  },
+  "members": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000005",
+        "name": "Fixture Artist 5",
+        "listeners": 200,
+        "positions": {
+          "axes": null,
+          "islands": {
+            "x": 0.8400000000000001,
+            "y": 0.4
+          }
+        },
+        "color": "#e6ae5c"
+      },
+      "score": 0.9
+    },
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000006",
+        "name": "Fixture Artist 6",
+        "listeners": null,
+        "positions": {
+          "axes": {
+            "x": 0.65,
+            "y": 0.7
+          },
+          "islands": null
+        },
+        "color": null
+      },
+      "score": 0.9
+    }
+  ],
+  "related": []
+}
