@@ -52,7 +52,7 @@ export class MapCanvas {
   constructor(
     readonly element: HTMLCanvasElement,
     genres: Genre[],
-    readonly layout: 'axes',
+    readonly layout: 'axes' | 'islands',
     private open: (kind: 'genre' | 'artist', id: string) => void,
     private status: HTMLElement,
     camera?: Camera,

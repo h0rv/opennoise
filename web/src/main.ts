@@ -5,7 +5,7 @@ import { PreviewPlayer } from './preview';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import './style.css';
 
-type View = 'axes' | 'tree';
+type View = 'axes' | 'islands' | 'tree';
 type Selection = Pick<SearchEntry, 'kind' | 'id'>;
 const app = document.querySelector<HTMLElement>('#app')!;
 const escape = (value: unknown) =>
@@ -21,6 +21,9 @@ const modes: Record<View, { label: string }> = {
   axes: {
     label: 'Sonic map',
   },
+  islands: {
+    label: 'Islands',
+  },
   tree: {
     label: 'Genre tree',
   },
@@ -35,7 +38,11 @@ async function start() {
     terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
   }));
   let indexedSearch = catalog.search;
-  let view: View = catalog.manifest.layouts.axes ? 'axes' : 'tree';
+  let view: View = catalog.manifest.layouts.axes
+    ? 'axes'
+    : catalog.manifest.layouts.islands
+      ? 'islands'
+      : 'tree';
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
   let controller = new AbortController();
@@ -67,7 +74,7 @@ async function start() {
       <nav class="modes" aria-label="Atlas view">${Object.entries(modes)
         .map(
           ([key, mode]) =>
-            `<button data-view="${key}" ${key === 'axes' && !catalog.manifest.layouts.axes ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
+            `<button data-view="${key}" ${key !== 'tree' && !catalog.manifest.layouts[key as 'axes' | 'islands'] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
       <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved (<span id="trail-count">${trail.length}</span>)</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar">Details</button></div>
@@ -335,7 +342,11 @@ async function start() {
     status.textContent = '';
     const params = new URLSearchParams(location.hash.slice(1));
     const requestedView = params.get('view');
-    if (requestedView === 'tree' || (requestedView === 'axes' && catalog.manifest.layouts.axes))
+    if (
+      requestedView === 'tree' ||
+      ((requestedView === 'axes' || requestedView === 'islands') &&
+        catalog.manifest.layouts[requestedView])
+    )
       view = requestedView;
     const kind = params.get('kind'),
       id = params.get('id');
