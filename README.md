@@ -148,7 +148,13 @@ M3 composes micro-genre names from a place (MusicBrainz areas, Wikidata demonyms
 (Wikidata, Discogs, suffixes of visible ENAO names), with members scored from listening
 neighbours and that evidence. A second model, cross-fitted on visible genres, ranks which
 composed names are real genres. It needs the M2 ingest and the M2f naming ingest, whose Wikidata
-vocabulary is filtered to music genres.
+vocabulary is filtered to music genres. `non_music` in `configs/m3.toml` lists Discogs non-music and
+video styles (interview, audiobook, music video) that are dropped from the style candidates.
+
+`micro` in a catalog config names an M3 run whose genres are appended to the clusters as the
+`micro` level. To place them on the map, export `configs/m2f.toml`, run
+`uv run on layout configs/m2e-layout.toml` on that run, then export `configs/one-name.toml`,
+which reads the placement run as `layout`.
 
 ```sh
 uv run on ingest configs/m3.toml
