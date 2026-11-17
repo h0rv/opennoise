@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "release_id": "synthetic-v1",
+  "data_kind": "synthetic",
+  "layouts": {
+    "axes": {
+      "x_min": "Dense / atmospheric",
+      "x_max": "Spiky / bouncy",
+      "y_min": "Mechanical / electric",
+      "y_max": "Organic"
+    },
+    "islands": {
+      "method": "synthetic fixture"
+    }
+  },
+  "membership": "synthetic fixture",
+  "similarity": "synthetic fixture",
+  "genre_similarity": "synthetic fixture",
+  "genres": "genres.json",
+  "search": "search.json"
+}

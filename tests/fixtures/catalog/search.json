@@ -1,0 +1,17 @@
+[
+  {"kind":"genre","id":"electronic","name":"Electronic","aliases":[]},
+  {"kind":"genre","id":"techno","name":"Techno","aliases":[]},
+  {"kind":"genre","id":"house","name":"House","aliases":[]},
+  {"kind":"genre","id":"rock","name":"Rock","aliases":[]},
+  {"kind":"genre","id":"shoegaze","name":"Shoegaze","aliases":[]},
+  {"kind":"genre","id":"post-rock","name":"Post-rock","aliases":[]},
+  {"kind":"genre","id":"jazz","name":"Jazz","aliases":[]},
+  {"kind":"genre","id":"spiritual-jazz","name":"Spiritual jazz","aliases":[]},
+  {"kind":"genre","id":"nu-jazz","name":"Nu jazz","aliases":["Nu-jazz"]},
+  {"kind":"artist","id":"00000000-0000-4000-8000-000000000001","name":"Fixture Artist 1","aliases":[]},
+  {"kind":"artist","id":"00000000-0000-4000-8000-000000000002","name":"Fixture Artist 2","aliases":[]},
+  {"kind":"artist","id":"00000000-0000-4000-8000-000000000003","name":"Fixture Artist 3","aliases":[]},
+  {"kind":"artist","id":"00000000-0000-4000-8000-000000000004","name":"Fixture Artist 4","aliases":[]},
+  {"kind":"artist","id":"00000000-0000-4000-8000-000000000005","name":"Fixture Artist 5","aliases":[]},
+  {"kind":"artist","id":"00000000-0000-4000-8000-000000000006","name":"Fixture Artist 6","aliases":[]}
+]

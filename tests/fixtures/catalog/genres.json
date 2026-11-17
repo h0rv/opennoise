@@ -1,0 +1,11 @@
+[
+  {"id":"electronic","name":"Electronic","aliases":[],"parent_id":null,"member_count":2,"positions":{"axes":{"x":0.7,"y":0.18},"islands":{"x":0.18,"y":0.23}},"color":"#698cff"},
+  {"id":"techno","name":"Techno","aliases":[],"parent_id":"electronic","member_count":1,"positions":{"axes":{"x":0.8,"y":0.1},"islands":{"x":0.205,"y":0.43000000000000005}},"color":"#698cff"},
+  {"id":"house","name":"House","aliases":[],"parent_id":"electronic","member_count":1,"positions":{"axes":{"x":0.9,"y":0.25},"islands":{"x":0.22999999999999998,"y":0.63}},"color":"#698cff"},
+  {"id":"rock","name":"Rock","aliases":[],"parent_id":null,"member_count":2,"positions":{"axes":{"x":0.45,"y":0.5},"islands":{"x":0.5,"y":0.23}},"color":"#cc75b7"},
+  {"id":"shoegaze","name":"Shoegaze","aliases":[],"parent_id":"rock","member_count":1,"positions":{"axes":{"x":0.12,"y":0.55},"islands":{"x":0.525,"y":0.43000000000000005}},"color":"#cc75b7"},
+  {"id":"post-rock","name":"Post-rock","aliases":[],"parent_id":"rock","member_count":1,"positions":{"axes":{"x":0.25,"y":0.7},"islands":{"x":0.55,"y":0.63}},"color":"#cc75b7"},
+  {"id":"jazz","name":"Jazz","aliases":[],"parent_id":null,"member_count":2,"positions":{"axes":{"x":0.55,"y":0.82},"islands":{"x":0.8200000000000001,"y":0.23}},"color":"#e6ae5c"},
+  {"id":"spiritual-jazz","name":"Spiritual jazz","aliases":[],"parent_id":"jazz","member_count":1,"positions":{"axes":{"x":0.35,"y":0.92},"islands":{"x":0.8450000000000001,"y":0.43000000000000005}},"color":"#e6ae5c"},
+  {"id":"nu-jazz","name":"Nu jazz","aliases":["Nu-jazz"],"parent_id":"jazz","member_count":1,"positions":{"axes":{"x":0.65,"y":0.7},"islands":{"x":0.8700000000000001,"y":0.63}},"color":"#e6ae5c"}
+]

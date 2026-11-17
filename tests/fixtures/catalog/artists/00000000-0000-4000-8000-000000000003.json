@@ -1,0 +1,56 @@
+{
+  "artist": {
+    "id": "00000000-0000-4000-8000-000000000003",
+    "name": "Fixture Artist 3",
+    "listeners": 400,
+    "positions": {
+      "axes": {
+        "x": 0.12,
+        "y": 0.55
+      },
+      "islands": {
+        "x": 0.52,
+        "y": 0.4
+      }
+    },
+    "color": "#cc75b7"
+  },
+  "genres": [
+    {
+      "id": "shoegaze",
+      "score": 0.95
+    },
+    {
+      "id": "rock",
+      "score": 0.9
+    }
+  ],
+  "similar": [
+    {
+      "artist": {
+        "id": "00000000-0000-4000-8000-000000000004",
+        "name": "Fixture Artist 4",
+        "listeners": 300,
+        "positions": {
+          "axes": {
+            "x": 0.25,
+            "y": 0.7
+          },
+          "islands": {
+            "x": 0.52,
+            "y": 0.6000000000000001
+          }
+        },
+        "color": "#cc75b7"
+      },
+      "score": 0.88
+    }
+  ],
+  "signals": [
+    "listening",
+    "tags",
+    "audio"
+  ],
+  "links": [],
+  "preview": null
+}
