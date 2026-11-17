@@ -14,8 +14,10 @@
   box-sizing: border-box;
 }
 body {
-  margin: 0 auto;
-  max-width: 1800px;
+  margin: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 h1,
 h2,
@@ -88,11 +90,17 @@ body > header,
 main {
   margin-inline: var(--gutter);
 }
+main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 body > header {
   display: flex;
   align-items: baseline;
   gap: 24px;
-  padding-block: 24px 18px;
+  padding-block: 14px;
   border-bottom: 2px solid #111;
   font-size: 13px;
 }
@@ -122,7 +130,7 @@ body > header > :last-child {
   display: flex;
   align-items: start;
   gap: 12px;
-  padding-block: 20px 16px;
+  padding-block: 12px;
 }
 .search-wrap {
   position: relative;
@@ -137,6 +145,7 @@ body > header > :last-child {
   overflow: auto;
   border: 1px solid #111;
   background: #fff;
+  overflow-wrap: anywhere;
 }
 .search-results:empty {
   display: none;
@@ -173,13 +182,13 @@ body > header > :last-child {
   white-space: nowrap;
 }
 .workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  display: flex;
+  flex: 1;
   border-block: 1px solid #111;
-  min-height: 620px;
-  height: min(76vh, 840px);
+  min-height: 320px;
 }
 .canvas {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   display: flex;
@@ -189,7 +198,7 @@ body > header > :last-child {
   position: relative;
   overflow: hidden;
   flex: 1;
-  min-height: 420px;
+  min-height: 160px;
   touch-action: none;
 }
 .map-viewport canvas {
@@ -271,26 +280,67 @@ body > header > :last-child {
 .zoom button {
   min-width: 44px;
 }
-aside {
+#sidebar {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(380px, 100%);
+  height: 100dvh;
+  max-height: none;
   padding: 24px;
+  border: 0;
   border-left: 1px solid #111;
-  max-height: 840px;
   overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+  background: #fff;
+  color: #111;
+  transform: translateX(100%);
+  transition:
+    transform 140ms ease-out,
+    display 140ms allow-discrete,
+    overlay 140ms allow-discrete;
 }
-aside:focus {
+#sidebar:popover-open {
+  transform: translateX(0);
+}
+@starting-style {
+  #sidebar:popover-open {
+    transform: translateX(100%);
+  }
+}
+#detail-close {
+  display: block;
+  margin: 0 0 24px auto;
+}
+#detail:focus {
   outline: none;
 }
-aside:focus-visible {
+#detail:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -3px;
 }
-aside > section {
+#detail > section {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--line);
 }
-aside > button {
+#detail > button {
   width: 100%;
+}
+#preview:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #111;
+  font-size: 13px;
+}
+#preview span {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
 }
 .detail-lede {
   color: var(--muted);
@@ -413,6 +463,9 @@ aside > button {
   vector-effect: non-scaling-stroke;
 }
 .trail {
+  flex-shrink: 0;
+  max-height: 30dvh;
+  overflow: auto;
   margin-top: 24px;
   padding-top: 20px;
   border-top: 2px solid #111;
@@ -478,9 +531,6 @@ body > header h1 {
   display: none !important;
 }
 @media (max-width: 1000px) {
-  .workspace {
-    grid-template-columns: minmax(0, 1fr) 280px;
-  }
   .modes button {
     padding-inline: 8px;
     font-size: 13px;
@@ -492,7 +542,6 @@ body > header h1 {
   }
   body > header {
     gap: 16px;
-    padding-block: 18px;
   }
   .toolbar {
     flex-wrap: wrap;
@@ -513,18 +562,9 @@ body > header h1 {
     padding-inline: 8px;
     font-size: 13px;
   }
-  .workspace {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-  }
-  .canvas {
-    min-height: 480px;
-  }
   .families {
     padding: 16px 0 0;
   }
-  .map-viewport,
   .map-viewport svg {
     min-height: 320px;
   }
@@ -534,12 +574,6 @@ body > header h1 {
   }
   .axis-legend {
     padding-inline: 0;
-  }
-  aside {
-    border-left: 0;
-    border-top: 1px solid #111;
-    padding: 24px 0;
-    max-height: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -26,6 +26,8 @@ type Item = {
   order: number;
 };
 type Label = { item: Item; box: Box; x: number; y: number };
+type Scene = { items: Map<string, Item>; points: Map<string, Item[]> };
+const scenes = new WeakMap<Genre[], Partial<Record<'axes' | 'islands', Scene>>>();
 
 export class MapCanvas {
   camera: Camera = { x: 0, y: 0, scale: 1 };
@@ -58,47 +60,62 @@ export class MapCanvas {
     camera?: Camera,
   ) {
     this.context = element.getContext('2d')!;
-    const byId = new Map(genres.map((g) => [g.id, g]));
-    for (const genre of genres) {
-      const point = genre.positions[layout];
-      if (!point) continue;
-      let depth = 0,
-        parent = genre.parent_id;
-      const seen = new Set<string>();
-      while (parent && byId.has(parent) && !seen.has(parent)) {
-        seen.add(parent);
-        depth++;
-        parent = byId.get(parent)!.parent_id;
-      }
-      const size = Math.min(16, 13 + Math.floor(Math.log10(Math.max(1, genre.member_count ?? 0))));
-      const font = `${depth ? '400' : '600'} ${size}px Helvetica, Arial, sans-serif`;
-      this.context.font = font;
-      const label = baseName(genre.name);
-      const item: Item = {
-        id: genre.id,
-        name: genre.name,
-        label,
-        x: 90 + point.x * 820,
-        y: 65 + point.y * 440,
-        count: genre.member_count ?? 0,
-        depth,
-        width: this.context.measureText(label).width,
-        size,
-        font,
-        kind: 'genre',
-        order: 0,
-      };
-      this.items.set(item.id, item);
-      const key = `${Math.floor(item.x / 16)}:${Math.floor(item.y / 16)}`;
-      const cell = this.points.get(key);
-      if (cell) cell.push(item);
-      else this.points.set(key, [item]);
+    let layouts = scenes.get(genres);
+    if (!layouts) {
+      layouts = {};
+      scenes.set(genres, layouts);
     }
-    [...this.items.values()]
-      .sort((a, b) => priority(a, b, ''))
-      .forEach((item, order) => {
-        item.order = order;
-      });
+    const scene = layouts[layout];
+    if (scene) {
+      this.items = scene.items;
+      this.points = scene.points;
+    } else {
+      const byId = new Map(genres.map((g) => [g.id, g]));
+      for (const genre of genres) {
+        const point = genre.positions[layout];
+        if (!point) continue;
+        let depth = 0,
+          parent = genre.parent_id;
+        const seen = new Set<string>();
+        while (parent && byId.has(parent) && !seen.has(parent)) {
+          seen.add(parent);
+          depth++;
+          parent = byId.get(parent)!.parent_id;
+        }
+        const size = Math.min(
+          16,
+          13 + Math.floor(Math.log10(Math.max(1, genre.member_count ?? 0))),
+        );
+        const font = `${depth ? '400' : '600'} ${size}px Helvetica, Arial, sans-serif`;
+        this.context.font = font;
+        const label = baseName(genre.name);
+        const item: Item = {
+          id: genre.id,
+          name: genre.name,
+          label,
+          x: 90 + point.x * 820,
+          y: 65 + point.y * 440,
+          count: genre.member_count ?? 0,
+          depth,
+          width: this.context.measureText(label).width,
+          size,
+          font,
+          kind: 'genre',
+          order: 0,
+        };
+        this.items.set(item.id, item);
+        const key = `${Math.floor(item.x / 16)}:${Math.floor(item.y / 16)}`;
+        const cell = this.points.get(key);
+        if (cell) cell.push(item);
+        else this.points.set(key, [item]);
+      }
+      [...this.items.values()]
+        .sort((a, b) => priority(a, b, ''))
+        .forEach((item, order) => {
+          item.order = order;
+        });
+      layouts[layout] = { items: this.items, points: this.points };
+    }
     this.resize();
     if (camera) this.camera = { ...camera };
     const options = { signal: this.abort.signal };
@@ -172,19 +189,26 @@ export class MapCanvas {
     );
     element.addEventListener(
       'pointerup',
+      (event) => this.pointers.delete(event.pointerId),
+      options,
+    );
+    element.addEventListener(
+      'click',
       (event) => {
         if (!this.moved) {
           const rect = element.getBoundingClientRect();
           const item = this.hit(event.clientX - rect.left, event.clientY - rect.top);
           if (item) this.open(item.kind, item.id);
         }
-        this.pointers.delete(event.pointerId);
       },
       options,
     );
     element.addEventListener(
       'pointercancel',
-      (event) => this.pointers.delete(event.pointerId),
+      (event) => {
+        this.moved = true;
+        this.pointers.delete(event.pointerId);
+      },
       options,
     );
     element.addEventListener(
@@ -314,28 +338,9 @@ export class MapCanvas {
   }
 
   private hit(x: number, y: number) {
-    const label = this.labels.find(
+    return this.labels.find(
       ({ box }) => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom,
-    );
-    if (label) return label.item;
-    const { scale, x: dx, y: dy } = this.camera;
-    const wx = (x - dx) / scale,
-      wy = (y + 4 - dy) / scale,
-      radius = 6 / scale;
-    const depth = visibleDepth(scale, this.home.scale);
-    let closest: Item | undefined,
-      distance = 36;
-    for (let a = Math.floor((wx - radius) / 16); a <= Math.floor((wx + radius) / 16); a++)
-      for (let b = Math.floor((wy - radius) / 16); b <= Math.floor((wy + radius) / 16); b++)
-        for (const item of this.points.get(`${a}:${b}`) || []) {
-          if (item.depth > depth && item.id !== this.selected) continue;
-          const d = ((item.x - wx) * scale) ** 2 + ((item.y - wy) * scale) ** 2;
-          if (d < distance) {
-            closest = item;
-            distance = d;
-          }
-        }
-    return closest;
+    )?.item;
   }
 
   redraw() {
@@ -383,15 +388,6 @@ export class MapCanvas {
     const selected = candidates.findIndex((item) => item.id === this.selected);
     if (selected > 0) candidates.unshift(...candidates.splice(selected, 1));
     if (this.artist) candidates.unshift(this.artist);
-    ctx.fillStyle = '#c2c2c2';
-    ctx.beginPath();
-    for (const item of candidates) {
-      const px = item.x * scale + x,
-        py = item.y * scale + y;
-      ctx.moveTo(px + 2.5, py - 4);
-      ctx.arc(px, py - 4, 2.5, 0, Math.PI * 2);
-    }
-    ctx.fill();
     const names = new Set<string>();
     this.labels = [];
     for (const item of candidates) {

@@ -1,3 +1,5 @@
 node_modules/
 dist/
 src/catalog.d.ts
+src/catalog-validators.js
+src/catalog-validators.d.ts
