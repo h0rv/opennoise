@@ -36,7 +36,6 @@ jobs:
           tar --zstd -xf "release-$CATALOG_RELEASE.tar.zst"
           rm -rf web/dist/catalog
           python3 src/opennoise/pages.py release web/dist/catalog
-          printf 'opennoise.horv.co\n' > web/dist/CNAME
         env:
           GH_TOKEN: ${{ github.token }}
       - uses: actions/upload-pages-artifact@v3

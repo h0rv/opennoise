@@ -12,7 +12,7 @@ def rounded(value: str) -> float:
 def pack_file(paths: tuple[Path, Path]) -> None:
     source, target = paths
     data = json.loads(source.read_bytes(), parse_float=rounded)
-    if source.parent.name == "artists" and isinstance(data, dict):
+    if source.parent.name == "artists" and data.get("similar"):
         data["similar"] = data["similar"][:20]
     payload = json.dumps(data, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
     target.write_bytes(gzip.compress(payload.encode(), compresslevel=9, mtime=0))
