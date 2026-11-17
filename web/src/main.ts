@@ -49,6 +49,7 @@ async function start() {
   let controller = new AbortController();
   let panzoom: PanzoomObject | undefined;
   let cameraView: 'axes' | 'islands' = 'islands';
+  let homeCamera = { scale: 1, x: 0, y: 0 };
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
   const collapsed = new Set<string>();
   let trail: Selection[] = [];
@@ -166,7 +167,7 @@ async function start() {
       .map((genre) => {
         const { x, y } = xy(genre);
         const active = selected?.kind === 'genre' && selected.id === genre.id;
-        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#285e48')}"/><text x="${x > 790 ? -13 : 13}" y="5" text-anchor="${x > 790 ? 'end' : 'start'}">${escape(genre.name)}</text></g>`;
+        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#285e48')}"/><text x="${x > 790 ? -13 : 13}" y="5" text-anchor="${x > 790 ? 'end' : 'start'}">${escape(genre.name)}</text></g>`;
       })
       .join('');
     let artist = '';
@@ -178,20 +179,25 @@ async function start() {
     canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${placed.length} genres placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Pan to wander. Zoom to get closer.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
     positionArtistLabel();
     cameraView = layout;
-    const camera = cameras.get(layout);
+    const viewportWidth = canvas.querySelector<HTMLElement>('#map-viewport')!.clientWidth;
+    const scale = Math.max(1, 760 / viewportWidth);
+    homeCamera = { scale, x: 500 / scale - 500, y: 285 / scale - 285 };
+    const camera = cameras.get(layout) || homeCamera;
     panzoom = Panzoom(document.querySelector<SVGGElement>('#map-content')!, {
-      maxScale: 5,
+      maxScale: Math.max(5, scale * 2),
       minScale: 0.7,
       canvas: true,
       excludeClass: 'genre',
-      ...(camera ? { startScale: camera.scale, startX: camera.x, startY: camera.y } : {}),
+      startScale: camera.scale,
+      startX: camera.x,
+      startY: camera.y,
     });
   }
 
   function positionArtistLabel() {
     const label = canvas.querySelector<SVGTextElement>('#artist-label');
     if (!label) return;
-    const obstacles = [...canvas.querySelectorAll<SVGGElement>('.genre')].map((node) =>
+    const obstacles = [...canvas.querySelectorAll<SVGTextElement>('.genre text')].map((node) =>
       node.getBoundingClientRect(),
     );
     const viewport = canvas.querySelector('svg')!.getBoundingClientRect();
@@ -465,8 +471,8 @@ async function start() {
     if (target.dataset.zoom === 'in') panzoom?.zoomIn();
     if (target.dataset.zoom === 'out') panzoom?.zoomOut();
     if (target.dataset.zoom === 'reset') {
-      panzoom?.zoom(1);
-      panzoom?.pan(0, 0);
+      panzoom?.zoom(homeCamera.scale);
+      panzoom?.pan(homeCamera.x, homeCamera.y);
     }
     if (target.dataset.remove !== undefined) {
       trail.splice(Number(target.dataset.remove), 1);
@@ -520,6 +526,12 @@ async function start() {
     if (!(event.target as Element).closest('.search-wrap')) results.innerHTML = '';
   });
   window.addEventListener('popstate', restoreURL);
+  window.addEventListener('resize', () => {
+    panzoom?.destroy();
+    panzoom = undefined;
+    cameras.clear();
+    renderCanvas();
+  });
   renderTrail();
   restoreURL();
 }
