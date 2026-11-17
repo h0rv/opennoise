@@ -1,0 +1,10 @@
+milestone = "m2d"
+export = "runs/ae4a6b4a4061/export"
+refit = "runs/25a6ae63770a/export"
+m1 = "runs/1f242e47ed38"
+labels = "data/m2/labels.parquet"
+registry = "data/registry/genres.json"
+levels = ["leiden-k20-r256", "leiden-k20-r1024", "leiden-k20-r4096"]
+identity_jaccard = 0.8
+group_siblings = true
+layout = "runs/da63324415c3"
