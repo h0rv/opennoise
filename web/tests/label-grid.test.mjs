@@ -1,6 +1,23 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { LabelGrid, labelBox, priority, visibleDepth } from '../src/label-grid.ts';
+import {
+  LabelGrid,
+  baseName,
+  claimName,
+  labelBox,
+  priority,
+  visibleDepth,
+} from '../src/label-grid.ts';
+
+test('only the first priority instance claims a base name for this frame', () => {
+  const names = new Set();
+  assert.equal(baseName('shoegaze · Slowdive'), 'shoegaze');
+  assert.equal(claimName('shoegaze · Slowdive', names), true);
+  assert.equal(claimName('Shoegaze · Ride', names), false);
+  assert.equal(claimName('drill', names), true);
+  assert.equal(claimName('shoegaze', new Set()), true);
+  assert.equal(baseName(''), '');
+});
 
 test('collision grid checks every intersecting cell, allowing touching boxes', () => {
   const grid = new LabelGrid(8);

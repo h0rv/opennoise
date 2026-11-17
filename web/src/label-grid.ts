@@ -1,5 +1,14 @@
 export type Box = { left: number; top: number; right: number; bottom: number };
 
+export const baseName = (name: string) => name.split(' · ', 1)[0].trim();
+
+export function claimName(name: string, seen: Set<string>) {
+  const key = baseName(name).normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ');
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+}
+
 export function labelBox(
   x: number,
   y: number,
