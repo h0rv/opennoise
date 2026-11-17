@@ -13,18 +13,30 @@ from scipy import sparse
 from opennoise.metrics import average_precision, best_cluster, name_agreement, ranking
 
 
-def split_labels(config):
-    labels = pl.read_parquet("data/m2/labels.parquet")
+def eligible_genres(config, labels):
     final = pl.read_parquet("data/m2/map.parquet")["genre"].to_list()
-    eligible = (
+    return (
         labels.group_by("genre")
         .len()
         .filter((pl.col("len") >= config["min_artists"]) & pl.col("genre").is_in(final))["genre"]
         .sort()
         .to_list()
     )
+
+
+def heldout_genres(config, eligible=None, rng=None):
+    if eligible is None:
+        eligible = eligible_genres(config, pl.read_parquet("data/m2/labels.parquet"))
+    if rng is None:
+        rng = np.random.default_rng(config["seed"])
+    return set(rng.choice(eligible, int(len(eligible) * config["genre_holdout"]), replace=False))
+
+
+def split_labels(config):
+    labels = pl.read_parquet("data/m2/labels.parquet")
+    eligible = eligible_genres(config, labels)
     rng = np.random.default_rng(config["seed"])
-    heldout = set(rng.choice(eligible, int(len(eligible) * config["genre_holdout"]), replace=False))
+    heldout = heldout_genres(config, eligible, rng)
     train, hidden, truth = {}, {}, {}
     for group in labels.partition_by("genre"):
         name = group["genre"][0]

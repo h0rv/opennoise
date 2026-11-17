@@ -8,16 +8,21 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
-    parser.add_argument("stage", choices=["ingest", "build", "eval", "export"])
-    parser.add_argument("config", nargs="?", default="configs/m1.toml")
+    parser.add_argument("stage", choices=["ingest", "build", "eval", "export", "layout"])
+    parser.add_argument("config", nargs="?")
     args = parser.parse_args()
+    if args.config is None:
+        args.config = "configs/layout.toml" if args.stage == "layout" else "configs/m1.toml"
     config_bytes = Path(args.config).read_bytes()
     config = tomllib.loads(config_bytes.decode())
     if args.stage == "export" and config.get("milestone") not in {"m2b", "m2c", "m2d"}:
         parser.error("export requires an M2b, M2c or M2d config")
     if config.get("milestone") == "m2d" and args.stage != "export":
         parser.error("M2d only adapts existing artifacts; use export")
-    digest = hashlib.sha256(config_bytes + Path("sources.toml").read_bytes()).hexdigest()[:12]
+    inputs = config_bytes + Path("sources.toml").read_bytes()
+    if args.stage == "layout":
+        inputs += Path(config["m2_config"]).read_bytes()
+    digest = hashlib.sha256(inputs).hexdigest()[:12]
     run = Path("runs") / digest
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
@@ -56,9 +61,13 @@ def main() -> None:
         from opennoise.graph import build
 
         build(config, run)
-    else:
+    elif args.stage == "eval":
         from opennoise.evaluate import evaluate
 
         evaluate(config, run)
+    else:
+        from opennoise.layout import layout
+
+        layout(config, run)
     elapsed = time.monotonic() - start
     print(json.dumps({"run": str(run), "stage": args.stage, "seconds": elapsed}))
