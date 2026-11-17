@@ -31,8 +31,6 @@ async function start() {
   const catalog = await new Catalog().load();
   const genres = new Map(catalog.genres.map((genre) => [genre.id, genre]));
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
-  document.querySelector('#catalog-state')!.textContent =
-    catalog.manifest.data_kind === 'synthetic' ? 'Sample data' : '';
   let view: View = catalog.manifest.layouts.axes
     ? 'axes'
     : catalog.manifest.layouts.islands
@@ -169,11 +167,13 @@ async function start() {
       artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
     }
     const axes = catalog.manifest.layouts.axes;
+    if (view === 'islands' && !hadCamera && selected?.kind === 'genre')
+      islandFamily = root(genres.get(selected.id)!).id;
     const familyNav =
       view === 'islands'
         ? `<nav class="families" aria-label="Focus an island family"><button data-family="" aria-pressed="${islandFamily === null}">All</button>${[...families.keys()].map((id) => `<button data-family="${escape(id)}" aria-pressed="${islandFamily === id}">${escape(genres.get(id)!.name)}</button>`).join('')}</nav>`
         : '';
-    canvas.innerHTML = `${familyNav}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${count(placed.length, 'genre')}${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} unplaced` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    canvas.innerHTML = `${familyNav}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? 'Selected artist is not placed' : ''}</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
     if (view === 'axes' && axes) {
       const legend = document.createElement('div');
       legend.className = 'axis-legend';
@@ -184,7 +184,9 @@ async function start() {
     const viewportWidth = canvas.querySelector<HTMLElement>('#map-viewport')!.clientWidth;
     const scale = Math.max(1, 760 / viewportWidth);
     homeCamera = { scale, x: 500 / scale - 500, y: 285 / scale - 285 };
-    const camera = cameras.get(layout) || homeCamera;
+    const camera =
+      cameras.get(layout) ||
+      (view === 'islands' && islandFamily ? islandCamera(islandFamily) : homeCamera);
     const content = canvas.querySelector<SVGGElement>('#map-content')!;
     panzoom = Panzoom(content, {
       maxScale: Math.max(5, scale * 2),
@@ -196,8 +198,6 @@ async function start() {
       startY: camera.y,
     });
     content.addEventListener('panzoomchange', scheduleLabels);
-    if (view === 'islands' && !hadCamera && selected?.kind === 'genre')
-      focusIslandFamily(root(genres.get(selected.id)!).id);
     scheduleLabels();
   }
 
@@ -207,15 +207,16 @@ async function start() {
     canvas.querySelectorAll<HTMLButtonElement>('[data-family]').forEach((button) => {
       button.setAttribute('aria-pressed', String((button.dataset.family || null) === id));
     });
-    if (!id) {
-      panzoom.zoom(homeCamera.scale);
-      panzoom.pan(homeCamera.x, homeCamera.y);
-      return;
-    }
+    const camera = id ? islandCamera(id) : homeCamera;
+    panzoom.zoom(camera.scale);
+    panzoom.pan(camera.x, camera.y);
+  }
+
+  function islandCamera(id: string) {
     const points = catalog.genres
       .filter((genre) => root(genre).id === id && genre.positions.islands)
       .map((genre) => genre.positions.islands!);
-    if (!points.length) return;
+    if (!points.length) return homeCamera;
     const left = 90 + Math.min(...points.map((point) => point.x)) * 820;
     const right = 90 + Math.max(...points.map((point) => point.x)) * 820;
     const top = 65 + Math.min(...points.map((point) => point.y)) * 440;
@@ -230,8 +231,7 @@ async function start() {
         (viewport.clientHeight - 90) / (Math.max(80, bottom - top) * unit),
       ),
     );
-    panzoom.zoom(scale);
-    panzoom.pan(500 / scale - (left + right) / 2, 285 / scale - (top + bottom) / 2);
+    return { scale, x: 500 / scale - (left + right) / 2, y: 285 / scale - (top + bottom) / 2 };
   }
 
   function scheduleLabels() {
