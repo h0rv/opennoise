@@ -1,6 +1,6 @@
 seed = 42
-input_run = "runs/1f242e47ed38"
-reference = "data/enao"
+m2_config = "configs/m2.toml"
+reference = "data/m2"
 min_members = 3
 dimensions = 128
 workers = 2

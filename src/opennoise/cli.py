@@ -17,7 +17,10 @@ def main() -> None:
     config = tomllib.loads(config_bytes.decode())
     if args.stage == "export" and config.get("milestone") not in {"m2b", "m2c"}:
         parser.error("export requires an M2b or M2c config")
-    digest = hashlib.sha256(config_bytes + Path("sources.toml").read_bytes()).hexdigest()[:12]
+    inputs = config_bytes + Path("sources.toml").read_bytes()
+    if args.stage == "layout":
+        inputs += Path(config["m2_config"]).read_bytes()
+    digest = hashlib.sha256(inputs).hexdigest()[:12]
     run = Path("runs") / digest
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)

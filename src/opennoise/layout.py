@@ -1,10 +1,10 @@
 import concurrent.futures
 import datetime
-import hashlib
 import json
 import multiprocessing
 import subprocess
 import time
+import tomllib
 from pathlib import Path
 
 import numpy as np
@@ -20,23 +20,28 @@ from sklearn.preprocessing import StandardScaler, normalize
 from threadpoolctl import threadpool_limits
 from umap import UMAP
 
+from opennoise.genres import heldout_genres
 from opennoise.layout_metrics import evaluation_scores
 
 
 def inputs(config, run):
     root = Path(config["reference"])
-    genres = pl.read_parquet(root / "genres.parquet").sort("genre").with_row_index("index")
-    hashes = [int(hashlib.sha256(g.encode()).hexdigest(), 16) for g in genres["genre"]]
+    m2 = tomllib.loads(Path(config["m2_config"]).read_text())
+    config["input_run"] = m2["m1"]
+    heldout = heldout_genres(m2)
+    genres = pl.read_parquet(root / "map.parquet").sort("genre").with_row_index("index")
+    test = np.array([g in heldout for g in genres["genre"]])
+    folds = np.full(len(genres), -1)
+    train = np.flatnonzero(~test)
+    folds[np.random.default_rng(config["seed"]).permutation(train)] = np.arange(len(train)) % 5
     genres = genres.with_columns(
-        pl.Series("split", ["test" if h % 5 == 0 else "train" for h in hashes]),
-        pl.Series("fold", [(h // 5) % 5 for h in hashes]),
+        pl.Series("split", np.where(test, "test", "train")),
+        pl.Series("fold", folds),
     )
     genres.select("genre", "split", "fold").write_parquet(run / "genre_split.parquet")
     artists = pl.read_parquet(Path(config["input_run"]) / "artists.parquet")
     members = (
-        pl.read_parquet(root / "members.parquet")
-        .join(pl.read_parquet(root / "spotify_mbid.parquet"), on="spotify_id")
-        .join(artists.select("item", "artist_mbid"), on="artist_mbid")
+        pl.read_parquet(root / "labels.parquet")
         .join(genres.select("genre", "index"), on="genre")
         .select("index", "item")
         .unique()
@@ -361,7 +366,7 @@ def export(run, genres, results, pending):
                 name,
                 json.dumps(metrics, separators=(",", ":")),
                 "kept" if name in winners.values() else "discarded",
-                "genre SHA256 mod 5 test; selection on mean 5-fold train overlap",
+                "shared M2 holdout; selection on mean 5-fold train overlap",
             ]
             stream.write("\t".join(row) + "\n")
     (run / "layout_logged").touch()
