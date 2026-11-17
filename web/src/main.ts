@@ -554,8 +554,8 @@ async function start() {
       focusIslandFamily(target.dataset.family || null);
       return;
     }
-    if (target.dataset.zoom === 'in') panzoom?.zoomIn();
-    if (target.dataset.zoom === 'out') panzoom?.zoomOut();
+    if (target.dataset.zoom === 'in') panzoom?.zoomIn({ animate: false });
+    if (target.dataset.zoom === 'out') panzoom?.zoomOut({ animate: false });
     if (target.dataset.zoom === 'reset') {
       if (view === 'islands') focusIslandFamily(null);
       else {
