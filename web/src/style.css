@@ -145,6 +145,7 @@ body > header > :last-child {
   overflow: auto;
   border: 1px solid #111;
   background: #fff;
+  overflow-wrap: anywhere;
 }
 .search-results:empty {
   display: none;
@@ -290,6 +291,7 @@ body > header > :last-child {
   border: 0;
   border-left: 1px solid #111;
   overflow: auto;
+  overflow-wrap: anywhere;
   overscroll-behavior: contain;
   background: #fff;
   color: #111;
