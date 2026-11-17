@@ -13,14 +13,20 @@ def main() -> None:
     args = parser.parse_args()
     config_bytes = Path(args.config).read_bytes()
     config = tomllib.loads(config_bytes.decode())
-    if args.stage == "export" and config.get("milestone") not in {"m2b", "m2c"}:
-        parser.error("export requires an M2b or M2c config")
+    if args.stage == "export" and config.get("milestone") not in {"m2b", "m2c", "m2d"}:
+        parser.error("export requires an M2b, M2c or M2d config")
+    if config.get("milestone") == "m2d" and args.stage != "export":
+        parser.error("M2d only adapts existing artifacts; use export")
     digest = hashlib.sha256(config_bytes + Path("sources.toml").read_bytes()).hexdigest()[:12]
     run = Path("runs") / digest
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
     start = time.monotonic()
-    if config.get("milestone") == "m2c":
+    if config.get("milestone") == "m2d":
+        from opennoise.catalog import execute
+
+        execute(args.stage, config, run)
+    elif config.get("milestone") == "m2c":
         from opennoise.wikidata import execute
 
         execute(args.stage, config, run)
