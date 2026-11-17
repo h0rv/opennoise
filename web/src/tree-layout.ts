@@ -45,7 +45,7 @@ export function layoutTree<T>(roots: Branch<T>[]) {
   }
   return {
     nodes,
-    width: Math.max(1, ...nodes.map((node) => node.x + node.width + 28)),
-    height: Math.max(1, ...nodes.map((node) => node.y + 32)),
+    width: nodes.reduce((width, node) => Math.max(width, node.x + node.width + 28), 1),
+    height: nodes.reduce((height, node) => Math.max(height, node.y + 32), 1),
   };
 }

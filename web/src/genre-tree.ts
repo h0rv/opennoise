@@ -1,6 +1,7 @@
 import type { ArtistDetail, Genre, GenreDetail } from './catalog';
 import { createNavigation, type Navigation } from './navigation';
-import { layoutTree, type Branch } from './tree-layout';
+import { layoutTree, type Branch, type TreeNode } from './tree-layout';
+import { indexTree } from './tree-scene';
 
 type Selection = { kind: 'genre' | 'artist'; id: string };
 type Item = { kind: 'genre' | 'artist' | 'more' | 'status'; id: string; name: string };
@@ -32,6 +33,12 @@ export class GenreTree {
     { group: SVGGElement; text: SVGTextElement; rect: SVGRectElement }
   >();
   private layout = layoutTree<Item>([]);
+  private scene = indexTree(this.layout.nodes);
+  private keyboard: TreeNode<Item>[] = [];
+  private readonly keyboardIndex = new Map<string, number>();
+  private readonly edges = new Map<string, SVGPathElement>();
+  private dirty = true;
+  private paintFrame = 0;
   private navigation?: Navigation;
   private camera?: { scale: number; x: number; y: number };
   private selection: Selection | null = null;
@@ -76,20 +83,27 @@ export class GenreTree {
     const changed =
       selection?.kind !== this.selection?.kind || selection?.id !== this.selection?.id;
     this.selection = selection;
-    if (detail && 'genre' in detail) this.details.set(detail.genre.id, detail);
+    if (detail && 'genre' in detail && !this.details.has(detail.genre.id)) {
+      this.details.set(detail.genre.id, detail);
+      this.dirty = true;
+    }
     if (selection?.kind === 'genre' && changed) {
       let genre = this.genres.get(selection.id);
       const seen = new Set<string>();
       while (genre?.parent_id && !seen.has(genre.id)) {
         seen.add(genre.id);
+        if (!this.expanded.has(genre.parent_id)) this.dirty = true;
         this.expanded.add(genre.parent_id);
         genre = this.genres.get(genre.parent_id);
       }
-      if (!this.anchor) this.expanded.add(selection.id);
+      if (!this.anchor && !this.expanded.has(selection.id)) {
+        this.expanded.add(selection.id);
+        this.dirty = true;
+      }
       this.focused = `genre:${selection.id}`;
     }
     if (this.element.parentElement !== container) container.replaceChildren(this.element);
-    this.draw(this.anchor || this.focused);
+    if (this.dirty) this.draw(this.anchor || this.focused);
     this.anchor = '';
     if (!this.navigation) {
       const scale = Math.min(
@@ -102,11 +116,21 @@ export class GenreTree {
           ),
         ),
       );
+      const first = this.scene.byKey.get(this.focused)?.node;
+      const home =
+        this.layout.height * scale > this.viewport.clientHeight * 3 && first
+          ? {
+              scale,
+              x: 24 / scale - first.x,
+              y: this.viewport.clientHeight / (2 * scale) - first.y,
+            }
+          : this.center(scale);
       this.navigation = createNavigation(this.content, this.viewport, {
-        camera: this.camera || this.center(scale),
+        camera: this.camera || home,
         minScale: 0.2,
         maxScale: 4,
         excludeClass: 'tree-node',
+        onChange: () => this.schedulePaint(),
         onReset: () => this.fit(),
       });
     }
@@ -117,6 +141,7 @@ export class GenreTree {
       if (node) this.focused = node.key;
     }
     if (changed) this.reveal(this.focused);
+    this.paint();
   }
 
   hide() {
@@ -127,11 +152,14 @@ export class GenreTree {
     };
     this.navigation.destroy();
     this.navigation = undefined;
+    cancelAnimationFrame(this.paintFrame);
   }
 
   resize() {
-    this.draw(this.focused);
+    if (this.viewport.clientWidth <= 32 || this.viewport.clientHeight <= 48) return;
+    this.sizeDiagram();
     this.reveal(this.focused);
+    this.paint();
   }
 
   private branch(genre: Genre, seen = new Set<string>()): Branch<Item> {
@@ -173,22 +201,76 @@ export class GenreTree {
   }
 
   private draw(anchor: string) {
-    const old = this.layout.nodes.find((node) => node.key === anchor);
-    const hadFocus = this.element.contains(document.activeElement);
+    const old = this.scene.byKey.get(anchor)?.node;
     this.layout = layoutTree((this.children.get(null) || []).map((genre) => this.branch(genre)));
-    const keys = new Set(this.layout.nodes.map((node) => node.key));
-    if (!keys.has(this.focused)) this.focused = this.layout.nodes[0]?.key || '';
-    const byKey = new Map(this.layout.nodes.map((node) => [node.key, node]));
-    const paths = document.createDocumentFragment();
-    const labels = document.createDocumentFragment();
-    for (const node of this.layout.nodes) {
-      const parent = node.parent ? byKey.get(node.parent) : undefined;
-      if (parent) {
-        const start = parent.x + parent.width;
-        paths.append(
-          svg('path', { d: `M${start} ${parent.y}H${(start + node.x) / 2}V${node.y}H${node.x}` }),
-        );
+    this.scene = indexTree(this.layout.nodes);
+    this.keyboard = this.layout.nodes.filter((node) => node.value.kind !== 'status');
+    this.keyboardIndex.clear();
+    this.keyboard.forEach((node, index) => this.keyboardIndex.set(node.key, index));
+    if (!this.scene.byKey.has(this.focused)) this.focused = this.keyboard[0]?.key || '';
+    this.dirty = false;
+    this.sizeDiagram();
+    const next = this.scene.byKey.get(anchor)?.node;
+    if (old && next && this.navigation) {
+      const pan = this.navigation.panzoom.getPan();
+      this.move(this.navigation.panzoom.getScale(), pan.x + old.x - next.x, pan.y + old.y - next.y);
+    }
+  }
+
+  private sizeDiagram() {
+    this.diagram.style.width =
+      String(Math.max(this.viewport.clientWidth, this.layout.width)) + 'px';
+    this.diagram.style.height =
+      String(Math.max(this.viewport.clientHeight, this.layout.height)) + 'px';
+  }
+
+  private schedulePaint() {
+    cancelAnimationFrame(this.paintFrame);
+    this.paintFrame = requestAnimationFrame(() => this.paint());
+  }
+
+  private paint() {
+    const map = this.navigation?.panzoom;
+    if (!map || this.viewport.clientWidth <= 0) return;
+    const scale = map.getScale(),
+      pan = map.getPan();
+    const padding = 96 / scale;
+    const visible = this.scene.tree.search({
+      minX: -pan.x - padding,
+      minY: -pan.y - padding,
+      maxX: this.viewport.clientWidth / scale - pan.x + padding,
+      maxY: this.viewport.clientHeight / scale - pan.y + padding,
+    });
+    const focused = this.scene.byKey.get(this.focused);
+    if (focused && !visible.includes(focused)) visible.push(focused);
+    const nodes = visible.filter((item) => item.kind === 'node').sort((a, b) => a.order - b.order);
+    const keys = new Set(nodes.map((item) => item.key));
+    const edgeKeys = new Set<string>();
+    for (const item of visible) {
+      if (item.kind !== 'edge') continue;
+      edgeKeys.add(item.key);
+      let path = this.edges.get(item.key);
+      if (!path) {
+        path = svg('path', {});
+        this.edges.set(item.key, path);
+        this.links.append(path);
       }
+      this.attribute(path, 'd', item.path);
+    }
+    for (const [key, path] of this.edges)
+      if (!edgeKeys.has(key)) {
+        path.remove();
+        this.edges.delete(key);
+      }
+    const hadFocus = this.element.contains(document.activeElement);
+    for (const [key, elements] of this.rendered) {
+      if (!keys.has(key)) {
+        elements.group.remove();
+        this.rendered.delete(key);
+      }
+    }
+    let previous: ChildNode | null = null;
+    for (const { node } of nodes) {
       let elements = this.rendered.get(node.key);
       if (!elements) {
         const group = svg('g', { class: `tree-node tree-${node.value.kind}` });
@@ -200,38 +282,31 @@ export class GenreTree {
         this.rendered.set(node.key, elements);
       }
       const { group, rect, text } = elements;
-      group.setAttribute('transform', `translate(${node.x},${node.y})`);
-      group.setAttribute('role', node.value.kind === 'status' ? 'note' : 'treeitem');
+      this.attribute(group, 'transform', `translate(${node.x},${node.y})`);
+      this.attribute(group, 'role', node.value.kind === 'status' ? 'note' : 'treeitem');
       if (node.value.kind !== 'status') {
-        group.setAttribute('aria-level', String(node.depth + 1));
-        group.setAttribute(
+        this.attribute(group, 'aria-level', String(node.depth + 1));
+        this.attribute(
+          group,
           'aria-selected',
           String(node.value.kind === this.selection?.kind && node.value.id === this.selection.id),
         );
-        group.setAttribute('tabindex', node.key === this.focused ? '0' : '-1');
+        this.attribute(group, 'tabindex', node.key === this.focused ? '0' : '-1');
       }
       if (node.value.kind === 'genre')
-        group.setAttribute('aria-expanded', String(this.expanded.has(node.value.id)));
-      rect.setAttribute('width', String(node.width));
-      text.textContent = node.value.name;
-      labels.append(group);
+        this.attribute(group, 'aria-expanded', String(this.expanded.has(node.value.id)));
+      this.attribute(rect, 'width', String(node.width));
+      if (text.textContent !== node.value.name) text.textContent = node.value.name;
+      const cursor: ChildNode | null = previous ? previous.nextSibling : this.labels.firstChild;
+      if (cursor !== group) this.labels.insertBefore(group, cursor);
+      previous = group;
     }
-    for (const [key, elements] of this.rendered) {
-      if (!keys.has(key)) {
-        elements.group.remove();
-        this.rendered.delete(key);
-      }
-    }
-    this.links.replaceChildren(paths);
-    this.labels.replaceChildren(labels);
-    this.diagram.style.width = `${Math.max(this.viewport.clientWidth, this.layout.width)}px`;
-    this.diagram.style.height = `${Math.max(this.viewport.clientHeight, this.layout.height)}px`;
-    const next = byKey.get(anchor);
-    if (old && next && this.navigation) {
-      const pan = this.navigation.panzoom.getPan();
-      this.move(this.navigation.panzoom.getScale(), pan.x + old.x - next.x, pan.y + old.y - next.y);
-    }
-    if (hadFocus) this.rendered.get(this.focused)?.group.focus({ preventScroll: true });
+    const active = this.rendered.get(this.focused)?.group;
+    if (hadFocus && document.activeElement !== active) active?.focus({ preventScroll: true });
+  }
+
+  private attribute(element: Element, name: string, value: string) {
+    if (element.getAttribute(name) !== value) element.setAttribute(name, value);
   }
 
   private center(scale: number) {
@@ -251,6 +326,12 @@ export class GenreTree {
   }
 
   private fit() {
+    if (this.viewport.clientWidth <= 32 || this.viewport.clientHeight <= 48) return;
+    if (this.layout.height * 0.2 > this.viewport.clientHeight) {
+      const node = this.scene.byKey.get(this.focused)?.node;
+      if (node) this.move(1, 24 - node.x, this.viewport.clientHeight / 2 - node.y);
+      return;
+    }
     const scale = Math.max(
       0.2,
       Math.min(
@@ -264,7 +345,8 @@ export class GenreTree {
   }
 
   private reveal(key: string) {
-    const node = this.layout.nodes.find((node) => node.key === key);
+    if (this.viewport.clientWidth <= 32 || this.viewport.clientHeight <= 48) return;
+    const node = this.scene.byKey.get(key)?.node;
     const map = this.navigation?.panzoom;
     if (!node || !map) return;
     const pan = map.getPan(),
@@ -290,19 +372,21 @@ export class GenreTree {
     this.rendered.get(this.focused)?.group.setAttribute('tabindex', '-1');
     this.focused = key;
     this.reveal(key);
+    this.paint();
     const group = this.rendered.get(key)?.group;
     group?.setAttribute('tabindex', '0');
     group?.focus({ preventScroll: true });
   }
 
   private activate(key: string) {
-    const node = this.layout.nodes.find((node) => node.key === key);
+    const node = this.scene.byKey.get(key)?.node;
     if (!node || node.value.kind === 'status') return;
     this.focus(key);
     const { kind, id } = node.value;
     if (kind === 'more') {
       const limit = this.limits.get(id) || 32;
       this.limits.set(id, limit + 32);
+      this.dirty = true;
       this.draw(`genre:${id}`);
       const member = this.details.get(id)?.members?.[limit];
       if (member) this.focus(`artist:${id}:${member.artist.id}`);
@@ -310,6 +394,7 @@ export class GenreTree {
     }
     this.anchor = key;
     if (kind === 'genre') {
+      this.dirty = true;
       if (this.expanded.has(id)) this.expanded.delete(id);
       else this.expanded.add(id);
     }
@@ -319,8 +404,8 @@ export class GenreTree {
   private keydown(event: KeyboardEvent) {
     const key = (event.target as Element).closest<SVGGElement>('.tree-node')?.dataset.key;
     if (!key) return;
-    const nodes = this.layout.nodes.filter((node) => node.value.kind !== 'status');
-    const index = nodes.findIndex((node) => node.key === key);
+    const nodes = this.keyboard;
+    const index = this.keyboardIndex.get(key) ?? -1;
     const node = nodes[index];
     if (!node) return;
     if (
