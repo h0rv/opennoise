@@ -1,15 +1,6 @@
-import Panzoom, { type PanzoomObject } from '@panzoom/panzoom';
 import { Catalog } from './data';
+import { MapCanvas } from './map-canvas';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
-import {
-  artistLabel,
-  cameraAt,
-  contains,
-  genreLabel,
-  project,
-  type Box,
-  type Point,
-} from './map-geometry';
 import './style.css';
 
 type View = 'axes' | 'islands' | 'tree';
@@ -24,7 +15,6 @@ const count = (value: number | null, noun = 'artist') =>
   value === null
     ? 'Count unavailable'
     : `${value.toLocaleString()} ${noun}${value === 1 ? '' : 's'}`;
-const worldPoint = (point: Point) => ({ x: 90 + point.x * 820, y: 65 + point.y * 440 });
 const modes: Record<View, { label: string }> = {
   axes: {
     label: 'Sonic map',
@@ -41,10 +31,11 @@ async function start() {
   const catalog = await new Catalog().load();
   const genres = new Map(catalog.genres.map((genre) => [genre.id, genre]));
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
-  const searchIndex = catalog.search.map((entry) => ({
+  let searchIndex = catalog.search.map((entry) => ({
     entry,
     terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
   }));
+  let indexedSearch = catalog.search;
   let view: View = catalog.manifest.layouts.axes
     ? 'axes'
     : catalog.manifest.layouts.islands
@@ -53,23 +44,16 @@ async function start() {
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
   let controller = new AbortController();
-  let panzoom: PanzoomObject | undefined;
-  let labelFrame = 0;
-  let islandFamily: string | null = null;
-  let cameraView: 'axes' | 'islands' = 'islands';
-  let homeCamera = { scale: 1, x: 0, y: 0 };
+  let map: MapCanvas | undefined;
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
-  const collapsed = new Set<string>();
-  let mapNodes: {
-    node: SVGGElement;
-    label: SVGTextElement;
-    point: Point;
-    width: number;
-    id: string;
-    active: boolean;
-  }[] = [];
-  const textWidths = new Map<string, number>();
-  const textMeasure = document.createElement('canvas').getContext('2d')!;
+  const expanded = new Set<string>();
+  const pages = new Map<string | null, number>();
+  const children = new Map<string | null, Genre[]>();
+  for (const genre of catalog.genres) {
+    const list = children.get(genre.parent_id);
+    if (list) list.push(genre);
+    else children.set(genre.parent_id, [genre]);
+  }
   let trail: Selection[] = [];
   let storageAvailable = true;
   const storageKey = `opennoise:trail:${catalog.manifest.release_id}`;
@@ -83,7 +67,8 @@ async function start() {
             typeof entry === 'object' &&
             'kind' in entry &&
             'id' in entry &&
-            lookup.has(`${entry.kind}:${entry.id}`),
+            (lookup.has(`${entry.kind}:${entry.id}`) ||
+              (entry.kind === 'artist' && /^[a-f0-9-]{36}$/.test(String(entry.id)))),
         )
         .slice(0, 50);
   } catch {
@@ -120,359 +105,85 @@ async function start() {
     return `<button class="entity-row" data-kind="${kind}" data-id="${escape(id)}" aria-pressed="${selected?.kind === kind && selected.id === id}">${rank === undefined ? '' : `<span class="number">${String(rank).padStart(2, '0')}</span>`}<span class="dot" style="background:${escape(color || '#111111')}"></span><span>${escape(name)}</span></button>`;
   }
 
-  function root(genre: Genre): Genre {
-    const seen = new Set<string>();
-    while (genre.parent_id && genres.has(genre.parent_id) && !seen.has(genre.id)) {
-      seen.add(genre.id);
-      genre = genres.get(genre.parent_id)!;
+  function tree(parent: string | null): string {
+    const list = children.get(parent) || [];
+    const limit = pages.get(parent) || 50;
+    let shown = list.slice(0, limit);
+    if (selected?.kind === 'genre') {
+      let chosen = genres.get(selected.id);
+      while (chosen && chosen.parent_id !== parent)
+        chosen = chosen.parent_id ? genres.get(chosen.parent_id) : undefined;
+      if (chosen && !shown.includes(chosen)) shown = [chosen, ...shown];
     }
-    return genre;
-  }
-
-  function tree(parent: string | null, seen = new Set<string>()): string {
-    return `<ul>${catalog.genres
-      .filter((genre) => genre.parent_id === parent && !seen.has(genre.id))
+    return `<ul>${shown
       .map((genre) => {
-        const hasChildren = catalog.genres.some((child) => child.parent_id === genre.id);
+        const hasChildren = children.has(genre.id);
         const node = `<span class="tree-node">${entityButton('genre', genre.id, genre.name, undefined, genre.color)}<span class="muted">${count(genre.member_count)}</span></span>`;
-        return `<li>${hasChildren ? `<details data-tree="${escape(genre.id)}" ${collapsed.has(genre.id) ? '' : 'open'}><summary>${node}</summary>${tree(genre.id, new Set([...seen, genre.id]))}</details>` : node}</li>`;
+        return `<li>${hasChildren ? `<details data-tree="${escape(genre.id)}" ${expanded.has(genre.id) ? 'open' : ''}><summary>${node}</summary><div data-branch>${expanded.has(genre.id) ? tree(genre.id) : ''}</div></details>` : node}</li>`;
       })
-      .join('')}</ul>`;
+      .join(
+        '',
+      )}${list.length > limit ? `<li><button data-more="${escape(parent || '')}">Show 50 more (${list.length - limit} remaining)</button></li>` : ''}</ul>`;
   }
 
-  function measureLabel(name: string, size: number, bold = false) {
-    const key = `${size}:${bold}:${name}`;
-    let width = textWidths.get(key);
-    if (width === undefined) {
-      textMeasure.font = `${bold ? '700' : '400'} ${size}px Helvetica, Arial, sans-serif`;
-      width = textMeasure.measureText(name).width + 2;
-      textWidths.set(key, width);
-    }
-    return width;
-  }
-
-  function artistMarkup(layout: 'axes' | 'islands') {
-    if (!detail || !('artist' in detail) || !detail.artist.positions[layout]) return '';
-    const point = worldPoint(detail.artist.positions[layout]!);
-    return `<g transform="translate(${point.x},${point.y})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" font-size="14">${escape(detail.artist.name)}</text></g>`;
-  }
-
-  function updateMapSelection() {
-    for (const item of mapNodes) {
-      const active = selected?.kind === 'genre' && selected.id === item.id;
-      if (active === item.active) continue;
-      item.active = active;
-      item.node.setAttribute('aria-pressed', String(active));
-      item.node.querySelector('circle')!.setAttribute('r', active ? '8' : '5');
-    }
-    canvas.querySelector('#artist-layer')!.innerHTML = artistMarkup(cameraView);
-    canvas.querySelector('#placement-status')!.textContent =
-      selected?.kind === 'artist' &&
-      detail &&
-      'artist' in detail &&
-      !detail.artist.positions[cameraView]
-        ? 'Selected artist is not placed'
-        : '';
-    scheduleLabels();
-  }
-
-  function revealSelection() {
-    if (!panzoom || view === 'tree') return;
-    const position =
-      selected?.kind === 'genre'
-        ? genres.get(selected.id)?.positions[view]
-        : detail && 'artist' in detail
-          ? detail.artist.positions[view]
-          : null;
-    if (!position) return;
-    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
-    const point = worldPoint(position);
-    const camera = { scale: panzoom.getScale(), ...panzoom.getPan() };
-    if (
-      contains(
-        project(point, camera),
-        { left: 0, top: 0, right: viewport.clientWidth, bottom: viewport.clientHeight },
-        48,
-      )
-    )
-      return;
-    const target = cameraAt(point, camera.scale, viewport.clientWidth, viewport.clientHeight);
-    panzoom.setOptions({ startX: target.x, startY: target.y });
-    panzoom.pan(target.x, target.y);
+  function updateMapSelection(reveal = false) {
+    if (!map) return;
+    const artist = detail && 'artist' in detail ? detail.artist : null;
+    const point = artist?.positions[map.layout];
+    map.selection(
+      selected?.id || '',
+      artist && point ? { id: artist.id, name: artist.name, ...point } : undefined,
+      reveal,
+    );
   }
 
   function renderCanvas(reveal = false) {
-    if (
-      view !== 'tree' &&
-      panzoom &&
-      canvas.querySelector<HTMLElement>('#map-content')?.dataset.layout === view
-    ) {
-      updateMapSelection();
-      if (reveal) revealSelection();
-      return;
-    }
-    if (panzoom) cameras.set(cameraView, { scale: panzoom.getScale(), ...panzoom.getPan() });
-    panzoom?.destroy();
-    panzoom = undefined;
-    mapNodes = [];
     document
       .querySelectorAll<HTMLButtonElement>('[data-view]')
       .forEach((button) =>
         button.setAttribute('aria-pressed', String(button.dataset.view === view)),
       );
+    if (view !== 'tree' && map?.layout === view) {
+      updateMapSelection(reveal);
+      return;
+    }
+    if (map) {
+      cameras.set(map.layout, { ...map.camera });
+      map.destroy();
+      map = undefined;
+    }
     if (view === 'tree') {
+      if (selected?.kind === 'genre') {
+        let genre = genres.get(selected.id);
+        if (genre) expanded.add(genre.id);
+        while (genre?.parent_id) {
+          expanded.add(genre.parent_id);
+          genre = genres.get(genre.parent_id);
+        }
+      }
       canvas.innerHTML = `<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div>`;
       return;
     }
-    const layout = view;
-    const hadCamera = cameras.has(layout);
-    const placed = catalog.genres.filter((genre) => genre.positions[layout] !== null);
-    const xy = (genre: Genre) => {
-      return worldPoint(genre.positions[layout]!);
-    };
-    const families = new Map<string, Genre[]>();
-    for (const genre of placed) {
-      const family = root(genre).id;
-      families.set(family, [...(families.get(family) || []), genre]);
-    }
-    const islands =
-      view === 'islands'
-        ? [...families.values()]
-            .map((group) => {
-              const points = group.map(xy);
-              const left = Math.min(...points.map((point) => point.x)),
-                right = Math.max(...points.map((point) => point.x));
-              const top = Math.min(...points.map((point) => point.y)),
-                bottom = Math.max(...points.map((point) => point.y));
-              return `<ellipse cx="${(left + right) / 2}" cy="${(top + bottom) / 2}" rx="${(right - left) / 2 + 65}" ry="${(bottom - top) / 2 + 52}" fill="none" stroke="#aaa" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
-            })
-            .join('')
-        : '<path d="M50 285H950 M500 25V545" stroke="#cccccc" stroke-dasharray="3 7"/>';
-    const nodes = placed
-      .map((genre) => {
-        const { x, y } = xy(genre);
-        const active = selected?.kind === 'genre' && selected.id === genre.id;
-        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#111111')}"/><text>${escape(genre.name)}</text></g>`;
-      })
-      .join('');
-    const artist = artistMarkup(layout);
     const axes = catalog.manifest.layouts.axes;
-    if (view === 'islands' && !hadCamera && selected?.kind === 'genre')
-      islandFamily = root(genres.get(selected.id)!).id;
-    const familyNav =
-      view === 'islands'
-        ? `<nav class="families" aria-label="Focus an island family"><button data-family="" aria-pressed="${islandFamily === null}">All</button>${[...families.keys()].map((id) => `<button data-family="${escape(id)}" aria-pressed="${islandFamily === id}">${escape(genres.get(id)!.name)}</button>`).join('')}</nav>`
-        : '';
-    canvas.innerHTML = `${familyNav}<div class="map-viewport" id="map-viewport" tabindex="0" role="group" aria-label="${modes[view].label}" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown + - 0"><div id="map-content" class="map-stage" data-layout="${layout}"><svg viewBox="0 0 1000 570" role="group" aria-label="Genre labels are interactive">${islands}${nodes}<g id="artist-layer">${artist}</g></svg></div></div><div class="map-bottom"><span id="placement-status">${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? 'Selected artist is not placed' : ''}</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
-    mapNodes = [...canvas.querySelectorAll<SVGGElement>('.genre')].map((node, index) => ({
-      node,
-      label: node.querySelector('text')!,
-      point: xy(placed[index]),
-      width: measureLabel(placed[index].name, 16, true),
-      id: placed[index].id,
-      active: selected?.kind === 'genre' && selected.id === placed[index].id,
-    }));
-    if (view === 'axes' && axes) {
-      const legend = document.createElement('div');
-      legend.className = 'axis-legend';
-      legend.innerHTML = `<span><strong>Left → right:</strong> ${escape(axes.x_min)} → ${escape(axes.x_max)}</span><span><strong>Up → down:</strong> ${escape(axes.y_min)} → ${escape(axes.y_max)}</span>`;
-      canvas.querySelector('.map-bottom')!.before(legend);
-    }
-    cameraView = layout;
-    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
-    const scale = Math.max(
-      0.76,
-      Math.min(viewport.clientWidth / 1000, viewport.clientHeight / 570),
+    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search or tree reaches every genre."></canvas></div>
+      ${view === 'axes' && axes ? `<div class="axis-legend"><span>Left → right: ${escape(axes.x_min)} → ${escape(axes.x_max)}</span><span>Up → down: ${escape(axes.y_min)} → ${escape(axes.y_max)}</span></div>` : ''}
+      <div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    map = new MapCanvas(
+      canvas.querySelector<HTMLCanvasElement>('canvas')!,
+      catalog.genres,
+      view,
+      (kind, id) => void select({ kind, id }),
+      canvas.querySelector('#placement-status')!,
+      cameras.get(view),
     );
-    homeCamera = cameraAt({ x: 500, y: 285 }, scale, viewport.clientWidth, viewport.clientHeight);
-    const camera =
-      cameras.get(layout) ||
-      (view === 'islands' && islandFamily ? islandCamera(islandFamily) : homeCamera);
-    const content = canvas.querySelector<HTMLDivElement>('#map-content')!;
-    panzoom = Panzoom(content, {
-      maxScale: Math.max(6, scale * 2),
-      minScale: 0.25,
-      canvas: true,
-      excludeClass: 'genre',
-      startScale: camera.scale,
-      startX: camera.x,
-      startY: camera.y,
-    });
-    content.addEventListener('panzoomchange', scheduleLabels);
-    panzoom.pan(camera.x, camera.y);
-    if (reveal) revealSelection();
-    const map = panzoom;
-    let wheelFrame = 0,
-      wheelDelta = 0;
-    let wheelPoint = { clientX: 0, clientY: 0 };
-    viewport.addEventListener(
-      'wheel',
-      (event) => {
-        event.preventDefault();
-        wheelDelta +=
-          (event.deltaY || event.deltaX) *
-          (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
-        wheelPoint = { clientX: event.clientX, clientY: event.clientY };
-        if (wheelFrame) return;
-        wheelFrame = requestAnimationFrame(() => {
-          wheelFrame = 0;
-          const delta = Math.max(-600, Math.min(600, wheelDelta));
-          wheelDelta = 0;
-          if (panzoom === map)
-            map.zoomToPoint(map.getScale() * Math.exp(-delta * 0.002), wheelPoint, {
-              animate: false,
-            });
-        });
-      },
-      { passive: false },
-    );
-    viewport.addEventListener('dblclick', (event) => zoomMap(1.8, event));
-    viewport.addEventListener('keydown', (event) => {
-      if (event.target !== viewport) return;
-      const step = 64 / map.getScale();
-      const directions: Record<string, [number, number]> = {
-        ArrowLeft: [step, 0],
-        ArrowRight: [-step, 0],
-        ArrowUp: [0, step],
-        ArrowDown: [0, -step],
-      };
-      const delta = directions[event.key];
-      if (delta) {
-        event.preventDefault();
-        map.pan(delta[0], delta[1], { relative: true });
-      } else if (event.key === '+' || event.key === '=') {
-        event.preventDefault();
-        zoomMap(1.35);
-      } else if (event.key === '-') {
-        event.preventDefault();
-        zoomMap(1 / 1.35);
-      } else if (event.key === '0') {
-        event.preventDefault();
-        resetMap();
-      }
-    });
-    scheduleLabels();
+    updateMapSelection(reveal);
   }
 
-  function zoomMap(factor: number, point?: { clientX: number; clientY: number }) {
-    const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
-    if (!panzoom || !viewport) return;
-    panzoom.zoomToPoint(
-      panzoom.getScale() * factor,
-      point || {
-        clientX: (viewport.left + viewport.right) / 2,
-        clientY: (viewport.top + viewport.bottom) / 2,
-      },
-      { animate: false },
-    );
+  function zoomMap(factor: number) {
+    map?.zoom(factor);
   }
-
   function resetMap() {
-    if (view === 'islands') focusIslandFamily(null);
-    else {
-      panzoom?.zoom(homeCamera.scale);
-      panzoom?.pan(homeCamera.x, homeCamera.y);
-    }
-  }
-
-  function focusIslandFamily(id: string | null) {
-    if (!panzoom || view !== 'islands') return;
-    islandFamily = id;
-    canvas.querySelectorAll<HTMLButtonElement>('[data-family]').forEach((button) => {
-      button.setAttribute('aria-pressed', String((button.dataset.family || null) === id));
-    });
-    const camera = id ? islandCamera(id) : homeCamera;
-    panzoom.zoom(camera.scale);
-    panzoom.pan(camera.x, camera.y);
-  }
-
-  function islandCamera(id: string) {
-    const points = catalog.genres
-      .filter((genre) => root(genre).id === id && genre.positions.islands)
-      .map((genre) => genre.positions.islands!);
-    if (!points.length) return homeCamera;
-    const left = 90 + Math.min(...points.map((point) => point.x)) * 820;
-    const right = 90 + Math.max(...points.map((point) => point.x)) * 820;
-    const top = 65 + Math.min(...points.map((point) => point.y)) * 440;
-    const bottom = 65 + Math.max(...points.map((point) => point.y)) * 440;
-    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
-    const scale = Math.max(
-      0.7,
-      Math.min(
-        5,
-        (viewport.clientWidth - 160) / Math.max(80, right - left),
-        (viewport.clientHeight - 90) / Math.max(80, bottom - top),
-      ),
-    );
-    return cameraAt(
-      { x: (left + right) / 2, y: (top + bottom) / 2 },
-      scale,
-      viewport.clientWidth,
-      viewport.clientHeight,
-    );
-  }
-
-  function scheduleLabels() {
-    cancelAnimationFrame(labelFrame);
-    labelFrame = requestAnimationFrame(positionLabels);
-  }
-
-  function positionLabels() {
-    const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
-    const matrix = canvas.querySelector('svg')?.getScreenCTM();
-    if (!viewport || !matrix) return;
-    const obstacles: Box[] = [];
-    for (const { node, label, point, width } of mapNodes) {
-      const placement = genreLabel(
-        { x: point.x * matrix.a + matrix.e, y: point.y * matrix.d + matrix.f },
-        width,
-        matrix.a,
-        viewport,
-      );
-      setAttribute(node, 'visibility', placement ? 'visible' : 'hidden');
-      setAttribute(node, 'tabindex', placement ? '0' : '-1');
-      if (!placement) continue;
-      setAttribute(
-        label,
-        'transform',
-        `translate(${placement.x},${placement.y}) scale(${placement.scale})`,
-      );
-      obstacles.push(placement.box);
-    }
-    positionArtistLabel(obstacles, viewport, matrix);
-  }
-
-  function setAttribute(node: Element, name: string, value: string) {
-    if (node.getAttribute(name) !== value) node.setAttribute(name, value);
-  }
-
-  function positionArtistLabel(obstacles: Box[], viewport: Box, matrix: DOMMatrix) {
-    const label = canvas.querySelector<SVGTextElement>('#artist-label');
-    if (!label || !detail || !('artist' in detail) || !detail.artist.positions[cameraView]) return;
-    const point = worldPoint(detail.artist.positions[cameraView]!);
-    const width = measureLabel(detail.artist.name, 14);
-    const placement = artistLabel(
-      { x: point.x * matrix.a + matrix.e, y: point.y * matrix.d + matrix.f },
-      width,
-      matrix.a,
-      viewport,
-      obstacles,
-    );
-    const group = label.closest<SVGGElement>('g')!;
-    setAttribute(group, 'visibility', placement ? 'visible' : 'hidden');
-    if (!placement) return;
-    setAttribute(
-      label,
-      'transform',
-      `translate(${placement.x},${placement.y}) scale(${placement.scale})`,
-    );
-    const moved = placement.x !== 14 || placement.y !== 5;
-    const endX = placement.x < 0 ? placement.x + width * placement.scale : placement.x;
-    setAttribute(
-      canvas.querySelector('#artist-leader')!,
-      'd',
-      moved ? `M0 0L${endX} ${placement.y - 5}` : '',
-    );
+    map?.reset();
   }
 
   function breadcrumbs(genre: Genre) {
@@ -490,8 +201,12 @@ async function start() {
     if (!selected) {
       drawer.innerHTML = `<h2>Genres</h2>${catalog.genres
         .filter((genre) => !genre.parent_id)
+        .sort((a, b) => (b.member_count || 0) - (a.member_count || 0))
+        .slice(0, 30)
         .map((genre) => entityButton('genre', genre.id, genre.name, undefined, genre.color))
-        .join('')}`;
+        .join(
+          '',
+        )}<p class="muted">Search or open the genre tree for all ${catalog.genres.length.toLocaleString()} genres.</p>`;
       return;
     }
     if (!detail) return;
@@ -501,7 +216,7 @@ async function start() {
   }
 
   function renderGenre(data: GenreDetail) {
-    return `<section><h3>Member artists</h3>${
+    return `<section><h3>${catalog.manifest.data_kind === 'model' ? 'Suggested members' : 'Member artists'}</h3>${
       data.members === null
         ? '<p class="empty">Membership has not been computed yet.</p>'
         : !data.members.length
@@ -540,7 +255,7 @@ async function start() {
 
   function renderArtist(data: ArtistDetail) {
     const links = data.links.filter((link) => /^https?:\/\//i.test(link.url));
-    return `<section><h3>Genres</h3>${
+    return `<section><h3>${catalog.manifest.data_kind === 'model' ? 'Suggested genres' : 'Genres'}</h3>${
       data.genres === null
         ? '<p class="empty">Membership has not been computed yet.</p>'
         : !data.genres.length
@@ -557,7 +272,7 @@ async function start() {
                 ),
               )
               .join('')
-    }</section><section><h3>Similar artists</h3>${
+    }</section><section><h3>${catalog.manifest.data_kind === 'model' ? 'Suggested similar artists' : 'Similar artists'}</h3>${
       data.similar === null
         ? '<p class="empty">Artist similarity has not been computed yet.</p>'
         : !data.similar.length
@@ -618,6 +333,13 @@ async function start() {
           : await catalog.artist(selection.id, controller.signal);
       if (selected !== selection) return;
       detail = loaded;
+      if ('artist' in loaded)
+        lookup.set(`artist:${loaded.artist.id}`, {
+          kind: 'artist',
+          id: loaded.artist.id,
+          name: loaded.artist.name,
+          aliases: [],
+        });
       renderDetail();
       renderCanvas(true);
       drawer.focus({ preventScroll: true });
@@ -640,7 +362,11 @@ async function start() {
       view = requestedView;
     const kind = params.get('kind'),
       id = params.get('id');
-    if ((kind === 'genre' || kind === 'artist') && id && lookup.has(`${kind}:${id}`))
+    if (
+      (kind === 'genre' || kind === 'artist') &&
+      id &&
+      (lookup.has(`${kind}:${id}`) || (kind === 'artist' && /^[a-f0-9-]{36}$/.test(id)))
+    )
       void select({ kind, id }, false);
     else {
       controller.abort();
@@ -654,12 +380,30 @@ async function start() {
     }
   }
 
-  search.addEventListener('input', () => {
+  search.addEventListener('input', async () => {
     const query = search.value.trim().toLocaleLowerCase();
     if (!query) {
       results.innerHTML = '';
       return;
     }
+    results.innerHTML = '<p role="status">Searching…</p>';
+    try {
+      const entries = await catalog.loadSearch();
+      if (entries !== indexedSearch) {
+        searchIndex = entries.map((entry) => ({
+          entry,
+          terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
+        }));
+        for (const entry of entries) lookup.set(`${entry.kind}:${entry.id}`, entry);
+        indexedSearch = entries;
+      }
+    } catch {
+      if (search.value.trim().toLocaleLowerCase() === query)
+        results.innerHTML =
+          '<p role="status">Search unavailable. Type again to retry; the genre tree remains available.</p>';
+      return;
+    }
+    if (search.value.trim().toLocaleLowerCase() !== query) return;
     const matches: SearchEntry[] = [];
     for (const { entry, terms } of searchIndex) {
       if (!terms.some((term) => term.includes(query))) continue;
@@ -684,7 +428,7 @@ async function start() {
   });
   app.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>(
-      '[data-kind], [data-view], [data-family], [data-zoom], [data-remove], button[id]',
+      '[data-kind], [data-view], [data-more], [data-zoom], [data-remove], button[id]',
     );
     if (!target) return;
     if (target.dataset.kind && target.dataset.id) {
@@ -697,8 +441,13 @@ async function start() {
       renderCanvas();
       return;
     }
-    if (target.dataset.family !== undefined) {
-      focusIslandFamily(target.dataset.family || null);
+    if (target.dataset.more !== undefined) {
+      const parent = target.dataset.more || null;
+      pages.set(parent, (pages.get(parent) || 50) + 50);
+      const branch = parent
+        ? canvas.querySelector(`[data-tree="${CSS.escape(parent)}"] > [data-branch]`)
+        : canvas.querySelector('.tree');
+      if (branch) branch.innerHTML = tree(parent);
       return;
     }
     if (target.dataset.zoom === 'in') zoomMap(1.35);
@@ -736,8 +485,14 @@ async function start() {
     (event) => {
       const target = event.target;
       if (target instanceof HTMLDetailsElement && target.dataset.tree) {
-        if (target.open) collapsed.delete(target.dataset.tree);
-        else collapsed.add(target.dataset.tree);
+        const branch = target.querySelector<HTMLElement>(':scope > [data-branch]')!;
+        if (target.open) {
+          expanded.add(target.dataset.tree);
+          if (!branch.childElementCount) branch.innerHTML = tree(target.dataset.tree);
+        } else {
+          expanded.delete(target.dataset.tree);
+          branch.replaceChildren();
+        }
       }
     },
     true,
@@ -756,12 +511,6 @@ async function start() {
     if (!(event.target as Element).closest('.search-wrap')) results.innerHTML = '';
   });
   window.addEventListener('popstate', restoreURL);
-  window.addEventListener('resize', () => {
-    panzoom?.destroy();
-    panzoom = undefined;
-    cameras.clear();
-    renderCanvas();
-  });
   renderTrail();
   restoreURL();
 }

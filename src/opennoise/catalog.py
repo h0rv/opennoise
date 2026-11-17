@@ -198,6 +198,11 @@ def export(config, run):
         print("Cached release: persisted genre IDs unchanged", flush=True)
         return
     stage = run / "release.building"
+    readability = (
+        grouping.readable(rows, parents, memberships, artists, public)
+        if config.get("readable_names")
+        else {}
+    )
     stage.mkdir()
     (stage / "artists").mkdir()
     (stage / "genres").mkdir()
@@ -339,6 +344,7 @@ def export(config, run):
         "bytes": sum(p.stat().st_size for p in files),
         "registry_sha256": hashlib.sha256(registry.read_bytes()).hexdigest(),
         "grouping": groups,
+        "readability": readability,
         "placement": {
             kind: {
                 family: sum(
