@@ -1,12 +1,5 @@
-import Ajv from 'ajv/dist/2020';
-import addFormats from 'ajv-formats';
-import schema from '../../src/opennoise/catalog.schema.json';
+import * as validators from './catalog-validators.js';
 import type { Manifest, Genres, Search, GenreDetail, ArtistDetail } from './catalog';
-
-const ajv = new Ajv({ allErrors: true });
-addFormats(ajv);
-ajv.addSchema(schema);
-const validators = new Map<string, ReturnType<typeof ajv.compile>>();
 
 export class Catalog {
   manifest!: Manifest;
@@ -18,18 +11,20 @@ export class Catalog {
     location.href,
   );
 
-  async read<T>(path: string, definition: string, signal?: AbortSignal): Promise<T> {
+  async read<T>(
+    path: string,
+    definition: keyof typeof validators,
+    signal?: AbortSignal,
+  ): Promise<T> {
     const response = await fetch(new URL(path, this.url), { signal });
     if (!response.ok) throw new Error(`Catalog request failed (${response.status}).`);
     const data: unknown = await response.json();
-    let validate = validators.get(definition);
-    if (!validate) {
-      validate = ajv.compile({ $ref: `${schema.$id}#/$defs/${definition}` });
-      validators.set(definition, validate);
-    }
+    const validate = validators[definition];
     if (!validate(data))
       throw new Error(
-        `This release has invalid ${definition} data. ${ajv.errorsText(validate.errors)}`,
+        `This release has invalid ${definition} data. ${validate.errors
+          ?.map((error) => `data${error.instancePath} ${error.message}`)
+          .join(', ')}`,
       );
     return data as T;
   }
