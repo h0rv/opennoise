@@ -30,6 +30,28 @@ test('exact names remain first when more than twelve old aliases match', () => {
   assert.deepEqual(searchMatches(index, 'pop music'), [entries[15], ...entries.slice(0, 11)]);
 });
 
+test('top-level exact aliases outrank child aliases but not exact names', () => {
+  const entries = [
+    ...Array.from({ length: 15 }, (_, i) => ({
+      name: `child ${i}`,
+      aliases: ['idm'],
+      parent_id: 'parent',
+    })),
+    { name: 'intelligent dance music', aliases: ['idm'], parent_id: null },
+    { name: 'idm', aliases: [], parent_id: 'parent' },
+  ];
+  const index = entries.map((entry) => ({
+    entry,
+    terms: [entry.name, ...entry.aliases],
+    topLevel: entry.parent_id === null,
+  }));
+  assert.deepEqual(searchMatches(index, 'idm'), [
+    entries[16],
+    entries[15],
+    ...entries.slice(0, 10),
+  ]);
+});
+
 test('empty queries, empty indices and unmatched queries return no matches', () => {
   assert.deepEqual(searchMatches([], 'idm'), []);
   assert.deepEqual(searchMatches([{ entry: 'pop', terms: ['pop'] }], ''), []);

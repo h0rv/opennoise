@@ -36,6 +36,7 @@ async function start() {
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
   let searchIndex = catalog.search.map((entry) => ({
     entry,
+    topLevel: entry.kind === 'genre' && genres.get(entry.id)?.parent_id === null,
     terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
   }));
   let indexedSearch = catalog.search;
@@ -376,6 +377,7 @@ async function start() {
     if (entries === indexedSearch) return;
     searchIndex = entries.map((entry) => ({
       entry,
+      topLevel: entry.kind === 'genre' && genres.get(entry.id)?.parent_id === null,
       terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
     }));
     for (const entry of entries) lookup.set(`${entry.kind}:${entry.id}`, entry);
