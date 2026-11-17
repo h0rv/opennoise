@@ -68,6 +68,10 @@ def artist_vectors(config, run, source):
             ],
             axis=1,
         )
+    if "+" in source:
+        return np.concatenate(
+            [normalize(artist_vectors(config, run, part)) for part in source.split("+")], axis=1
+        )
     if source != "tfidf":
         return np.load(input_run / f"{source}.npy")
     path = run / "tfidf_svd.npy"
@@ -402,7 +406,10 @@ def layout(config, run):
                     indent=2,
                 )
             )
-        elif embedding != "tfidf" and not (Path(config["input_run"]) / f"{embedding}.npy").exists():
+        elif any(
+            part != "tfidf" and not (Path(config["input_run"]) / f"{part}.npy").exists()
+            for part in embedding.split("+")
+        ):
             pending.append(embedding)
             continue
         for weighting in config["member_weighting"]:

@@ -8,15 +8,17 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
-    parser.add_argument("stage", choices=["ingest", "build", "eval", "export", "layout"])
+    parser.add_argument("stage", choices=["ingest", "build", "eval", "export", "layout", "audio"])
     parser.add_argument("config", nargs="?")
     args = parser.parse_args()
     if args.config is None:
         args.config = "configs/layout.toml" if args.stage == "layout" else "configs/m1.toml"
     config_bytes = Path(args.config).read_bytes()
     config = tomllib.loads(config_bytes.decode())
-    if args.stage == "export" and config.get("milestone") not in {"m2b", "m2c"}:
-        parser.error("export requires an M2b or M2c config")
+    if args.stage == "export" and config.get("milestone") not in {"m2b", "m2c", "m2d"}:
+        parser.error("export requires an M2b, M2c or M2d config")
+    if config.get("milestone") == "m2d" and args.stage != "export":
+        parser.error("M2d only adapts existing artifacts; use export")
     inputs = config_bytes + Path("sources.toml").read_bytes()
     if args.stage == "layout":
         inputs += Path(config["m2_config"]).read_bytes()
@@ -27,6 +29,10 @@ def main() -> None:
     start = time.monotonic()
     if config.get("milestone") == "gen":
         from opennoise.generalization import execute
+
+        execute(args.stage, config, run)
+    elif config.get("milestone") == "m2d":
+        from opennoise.catalog import execute
 
         execute(args.stage, config, run)
     elif config.get("milestone") == "m2c":
@@ -61,6 +67,10 @@ def main() -> None:
         build(config, run)
     elif args.stage == "eval":
         from opennoise.evaluate import evaluate
+
+        evaluate(config, run)
+    elif args.stage == "audio":
+        from opennoise.audio import evaluate
 
         evaluate(config, run)
     else:
