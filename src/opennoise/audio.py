@@ -282,29 +282,33 @@ def signals(config, graph, run):
         pl.concat([pl.scan_parquet(p) for p in highlevel()], how="diagonal"), artists, minimum
     )
     high.write_parquet(run / "artist_audio.parquet")
-    found = previews(artists, config).filter(pl.col("embedding").is_not_null())
-    found = (
-        found.join(artists.select("artist_mbid", "item"), on="artist_mbid")
-        .sort("item")
-        .unique("embedding", keep="first", maintain_order=True)
-    )
     both = low.join(high.drop("artist_mbid", "recordings"), on="item")
-    shared = both.filter(pl.col("item").is_in(found["item"].implode()))
-    found = found.filter(pl.col("item").is_in(shared["item"].implode()))
     result = {
         "ab_low": (low["item"].to_numpy(), low.select(feature_columns(low)).to_numpy()),
         "ab_high": (high["item"].to_numpy(), high.select(feature_columns(high)).to_numpy()),
         "ab_all": (both["item"].to_numpy(), both.select(feature_columns(both)).to_numpy()),
-        "ab_all_on_effnet": (
-            shared["item"].to_numpy(),
-            shared.select(feature_columns(shared)).to_numpy(),
-        ),
-        "effnet": (found["item"].to_numpy(), np.array(found["embedding"].to_list())),
-        "effnet_styles": (
-            found["item"].to_numpy(),
-            np.log(np.array(found["styles"].to_list()) + 1e-4),
-        ),
     }
+    if config["audio"]["effnet"]:
+        found = (
+            previews(artists, config)
+            .filter(pl.col("embedding").is_not_null())
+            .join(artists.select("artist_mbid", "item"), on="artist_mbid")
+            .sort("item")
+            .unique("embedding", keep="first", maintain_order=True)
+        )
+        shared = both.filter(pl.col("item").is_in(found["item"].implode()))
+        found = found.filter(pl.col("item").is_in(shared["item"].implode()))
+        result |= {
+            "ab_all_on_effnet": (
+                shared["item"].to_numpy(),
+                shared.select(feature_columns(shared)).to_numpy(),
+            ),
+            "effnet": (found["item"].to_numpy(), np.array(found["embedding"].to_list())),
+            "effnet_styles": (
+                found["item"].to_numpy(),
+                np.log(np.array(found["styles"].to_list()) + 1e-4),
+            ),
+        }
     return {name: (items, standardize(matrix)) for name, (items, matrix) in result.items()}
 
 

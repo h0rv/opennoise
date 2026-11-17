@@ -9,6 +9,7 @@ als = []
 [audio]
 listening_run = "1f242e47ed38"
 min_recordings = 3
+effnet = false
 preview_artists = 3000
 preview_tracks = 3
 fusion_weights = [0.1, 0.25, 0.5]

@@ -121,3 +121,7 @@ The audio stage aggregates AcousticBrainz low/high-level descriptors per artist 
 preview clips with Discogs-EffNet (CC BY-NC-ND), keeping only vectors. Each signal is scored on
 the artists it covers against `audio.listening_run`: AUC of listening neighbors vs random
 artists, overlap@10, held-out co-listening of the audio graph, and reranking the listening top-100.
+EffNet previews are off by default (`audio.effnet = true` enables them) because the model is
+noncommercial. The audio stage writes `audio_<signal>.npy` into the listening run; `layout`
+then reads `a+b` representations as row-normalized concatenations, and `configs/layout.toml`
+defaults to `als_2+audio_ab_all`, so run `audio` before `layout`.
