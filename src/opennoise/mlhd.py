@@ -67,10 +67,12 @@ def aggregate(stream: Iterable[bytes], artists: dict[bytes, int]):
     return matrix, users, stats
 
 
-def ingest(base, run, shard):
+def ingest(base, run, shard, complete=False):
     frame = pl.read_parquet(base / "artists.parquet").sort("item")
     artists = {mbid.encode(): item for item, mbid in frame.select("item", "artist_mbid").rows()}
-    name = f"mlhdplus-partial-{shard}.tar"
+    name = f"mlhdplus-{'complete' if complete else 'partial'}-{shard}.tar"
+    if (run / f"mlhd-{shard}.npz").exists():
+        raise ValueError("Shard already aggregated; use a fresh run directory")
     with subprocess.Popen(["curl", "-fL", URL + name], stdout=subprocess.PIPE) as download:
         with subprocess.Popen(
             ["tar", "-xf", "-", "--to-command", MEMBER_COMMAND],
@@ -158,6 +160,15 @@ def load_graph(path, n):
     )
 
 
+def boundary_weights(metrics, weights):
+    winner = float(max(metrics, key=lambda key: metrics[key]["ndcg@50"]))
+    if winner == 0 or winner == min(weights):
+        return [min(weights) / 10]
+    if winner == max(weights):
+        return [max(weights) * 10]
+    return []
+
+
 def experiment(base, run, shards, weights, seed):
     output = run / "experiment.json"
     if output.exists():
@@ -202,22 +213,30 @@ def experiment(base, run, shards, weights, seed):
         coverage[key] = sum(stats[key] for stats in shard_stats)
     validation_metrics = {"0": colistening(baseline, validation)}
     start = time.monotonic()
-    outputs = similarities(lb, mlhd, weights, 50)
+    pending = list(weights)
+    evaluated_weights = []
+    for attempt in range(2):
+        outputs = similarities(lb, mlhd, pending, 50)
+        for weight, (ids, scores) in outputs.items():
+            frame = pl.DataFrame(
+                {
+                    "item": np.repeat(np.arange(n, dtype=np.int32), 50),
+                    "neighbor": ids.ravel(),
+                    "score": scores.ravel(),
+                }
+            )
+            frame.write_parquet(run / f"weight-{weight:g}.parquet")
+            graph = sparse.csr_matrix(
+                (scores.clip(0).ravel(), ids.ravel(), np.arange(n + 1) * 50), shape=(n, n)
+            )
+            validation_metrics[f"{weight:g}"] = colistening(graph, validation)
+            print("validation", weight, json.dumps(validation_metrics[f"{weight:g}"]), flush=True)
+        evaluated_weights.extend(pending)
+        del outputs
+        pending = boundary_weights(validation_metrics, weights) if attempt == 0 else []
+        if not pending:
+            break
     build_seconds = time.monotonic() - start
-    for weight, (ids, scores) in outputs.items():
-        frame = pl.DataFrame(
-            {
-                "item": np.repeat(np.arange(n, dtype=np.int32), 50),
-                "neighbor": ids.ravel(),
-                "score": scores.ravel(),
-            }
-        )
-        frame.write_parquet(run / f"weight-{weight:g}.parquet")
-        graph = sparse.csr_matrix(
-            (scores.clip(0).ravel(), ids.ravel(), np.arange(n + 1) * 50), shape=(n, n)
-        )
-        validation_metrics[f"{weight:g}"] = colistening(graph, validation)
-        print("validation", weight, json.dumps(validation_metrics[f"{weight:g}"]), flush=True)
     selected = max(validation_metrics, key=lambda key: validation_metrics[key]["ndcg@50"])
     (run / "selection.json").write_text(
         json.dumps(
@@ -243,7 +262,7 @@ def experiment(base, run, shards, weights, seed):
         "base": str(base),
         "seed": seed,
         "shards": shard_stats,
-        "weights": weights,
+        "weights": evaluated_weights,
         "weight_semantics": "MLHD Gram contribution; extra TF-IDF user rows scaled by sqrt(weight)",
         "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "baseline_sha256": hashes,
@@ -262,7 +281,7 @@ def experiment(base, run, shards, weights, seed):
                 f"mlhd_weight_{weight}_{split}",
                 values | {"weight": float(weight)},
                 weight == selected,
-                note=f"two streamed MLHD+ partial shards {','.join(shards)}; seed {seed}; "
+                note=f"streamed MLHD+ shards {','.join(shards)}; seed {seed}; "
                 "50% LB heldout users validation; select nDCG@50; test baseline+selected only",
             )
     log(run, "mlhd_coverage", coverage, note="M1-aligned distinct training-user listeners")
@@ -276,6 +295,7 @@ def main():
     parser.add_argument("--base", type=Path, default=Path("runs/1f242e47ed38"))
     parser.add_argument("--run", type=Path, default=Path("runs/mlhd"))
     parser.add_argument("--shard", choices=list("0123456789abcdef"), default="0")
+    parser.add_argument("--complete", action="store_true")
     parser.add_argument("--shards", nargs="+", default=["0", "1"])
     parser.add_argument("--weights", type=float, nargs="+", default=[0.1, 0.3, 1.0, 3.0])
     parser.add_argument("--seed", type=int, default=42)
@@ -284,7 +304,7 @@ def main():
         parser.error("MLHD is optional and disabled by default; pass --enable to opt in")
     args.run.mkdir(parents=True, exist_ok=True)
     if args.stage == "ingest":
-        ingest(args.base, args.run, args.shard)
+        ingest(args.base, args.run, args.shard, args.complete)
     else:
         experiment(args.base, args.run, args.shards, args.weights, args.seed)
 

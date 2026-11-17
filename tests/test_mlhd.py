@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from scipy import sparse
 
-from opennoise import mlhd
+from opennoise import mlhd, mlhd_downstream
 from opennoise.graph import normalize
 from opennoise.mlhd import MEMBER_COMMAND, aggregate, partition_users, similarities, weighted_rows
 
@@ -21,13 +21,30 @@ def test_mlhd_is_disabled_by_default(tmp_path, monkeypatch, capsys):
     assert not run.exists()
 
 
-def test_mlhd_explicit_opt_in(tmp_path, monkeypatch):
+@pytest.mark.parametrize("complete", [False, True])
+def test_mlhd_explicit_opt_in(tmp_path, monkeypatch, complete):
     calls = []
-    monkeypatch.setattr("sys.argv", ["mlhd", "ingest", "--enable", "--run", str(tmp_path)])
+    args = ["mlhd", "ingest", "--enable", "--run", str(tmp_path)]
+    monkeypatch.setattr("sys.argv", args + (["--complete"] if complete else []))
     monkeypatch.setattr(mlhd, "ingest", lambda *args: calls.append(args))
     mlhd.main()
     assert len(calls) == 1
-    assert calls[0][1:] == (tmp_path, "0")
+    assert calls[0][1:] == (tmp_path, "0", complete)
+
+
+def test_downstream_requires_opt_in(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["mlhd_downstream", "baseline"])
+    with pytest.raises(SystemExit) as error:
+        mlhd_downstream.main()
+    assert error.value.code == 2
+
+
+@pytest.mark.parametrize(
+    ("winner", "expected"), [("0", [0.01]), ("0.1", [0.01]), ("1", []), ("3", [30])]
+)
+def test_weight_extension_uses_validation_only(winner, expected):
+    metrics = {key: {"ndcg@50": float(key == winner)} for key in ["0", "0.1", "0.3", "1", "3"]}
+    assert mlhd.boundary_weights(metrics, [0.1, 0.3, 1, 3]) == expected
 
 
 def test_aggregate():
