@@ -8,17 +8,23 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
-    parser.add_argument("stage", choices=["ingest", "build", "eval"])
+    parser.add_argument("stage", choices=["ingest", "build", "eval", "export"])
     parser.add_argument("config", nargs="?", default="configs/m1.toml")
     args = parser.parse_args()
     config_bytes = Path(args.config).read_bytes()
     config = tomllib.loads(config_bytes.decode())
+    if args.stage == "export" and config.get("milestone") != "m2b":
+        parser.error("export requires an M2b config")
     digest = hashlib.sha256(config_bytes + Path("sources.toml").read_bytes()).hexdigest()[:12]
     run = Path("runs") / digest
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
     start = time.monotonic()
-    if config.get("milestone") == "m2":
+    if config.get("milestone") == "m2b":
+        from opennoise.naming import execute
+
+        execute(args.stage, config, run)
+    elif config.get("milestone") == "m2":
         from opennoise.genres import build_genres, evaluate_genres
         from opennoise.reference import ingest_reference
 

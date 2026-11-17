@@ -1,0 +1,24 @@
+milestone = "m2b"
+m1 = "runs/1f242e47ed38"
+m2 = "runs/e234d830601e/fine_k20"
+m2_config = "configs/m2.toml"
+tags_run = "runs/eb905759a00d"
+tags_config = "configs/tags.toml"
+
+[[variants]]
+name = "discogs_lift"
+method = "lift"
+min_support = 3
+min_lift = 1.25
+
+[[variants]]
+name = "discogs_weighted"
+method = "weighted"
+min_support = 3
+min_lift = 1.25
+
+[[variants]]
+name = "discogs_strict"
+method = "weighted"
+min_support = 5
+min_lift = 2.0

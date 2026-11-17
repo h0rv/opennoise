@@ -23,6 +23,29 @@ Parents are maximum-overlap clusters at the previous resolution, not strictly ne
 Naming lift uses that parent plus child artists outside it, with three supporting artists minimum.
 MusicBrainz tags carry CC BY-NC-SA terms; these named outputs are not asserted to be CC0.
 
+M2b reuses the kept fine-k20 clusters and split, comparing MusicBrainz naming with CC0
+Discogs styles ingested by the tag experiment. MusicBrainz names are evaluation-only.
+
+```sh
+uv run on ingest configs/tags.toml
+uv run on build configs/m2b.toml
+uv run on eval configs/m2b.toml
+uv run on export configs/m2b.toml
+```
+
+The lift variant requires three supporting artists and lift >= 1.25 against the parent
+plus child artists outside it. Weighted variants normalize log release counts per artist,
+weight artists by log listener count, and rank style share times global IDF times log(1+lift).
+The strict variant requires five artists and lift >= 2. Exact/token naming agreement uses
+the 210 matched genres; name@3 uses all 868 held-out genres, including unmatched ones.
+Named-cluster share includes all discovery levels. Selection maximizes name@3, then exact
+agreement, among Discogs variants only. All split results remain in the evaluation run.
+
+Final files live separately in `runs/<M2b hash>/export/`. Membership is refit on every
+eligible genre and all its mapped graph artists, without either holdout. Only supervised
+ENAO labels and Discogs-named clusters are exported; unnamed clusters stay internal and
+parent links skip excluded ancestors. No MusicBrainz-tag names enter this export.
+
 ```sh
 uv sync
 uv run on ingest configs/m1.toml

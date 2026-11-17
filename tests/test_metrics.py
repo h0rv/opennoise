@@ -3,7 +3,14 @@ import math
 import numpy as np
 import pytest
 
-from opennoise.metrics import average_precision, best_cluster, name_agreement, overlap, ranking
+from opennoise.metrics import (
+    average_precision,
+    best_cluster,
+    name_agreement,
+    name_hit,
+    overlap,
+    ranking,
+)
 
 
 def test_ranking():
@@ -59,3 +66,14 @@ def test_name_agreement():
     assert name_agreement("dream-pop", "dream pop") == (1, 1)
     assert name_agreement("dream pop", "pop") == (0, 0.5)
     assert name_agreement("", "") == (0, 0)
+
+
+def test_name_hit():
+    assert name_hit("dream-pop", ["pop", "rock", "DREAM POP", "jazz"]) == 1
+    assert name_hit("jazz", ["pop", "rock", "dream pop", "jazz"]) == 0
+    assert name_hit("rock", ["pop", "rock"], 1) == 0
+    assert name_hit("rock", []) == 0
+    assert name_hit("", [""]) == 0
+    assert name_hit("---", ["---"]) == 0
+    with pytest.raises(ValueError, match="positive"):
+        name_hit("rock", [], 0)
