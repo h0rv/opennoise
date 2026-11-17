@@ -16,7 +16,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 
 from opennoise import tags
 from opennoise.genres import graph_matrix, split_labels
-from opennoise.metrics import normalized_name
+from opennoise.metrics import normalized_name, sealed
 from opennoise.reference import table
 
 GEO = ["area", "area_alias", "iso_3166_1", "l_area_area"]
@@ -155,8 +155,10 @@ def style_evidence(config, artists, train, words):
     n = len(artists)
     root = Path(config["m2c"])
     vocabulary = pl.read_parquet(root / "vocabulary.parquet")
-    links = pl.read_parquet(root / "artist_genres.parquet").join(
-        artists.select("artist_mbid", "item"), on="artist_mbid"
+    links = (
+        pl.read_parquet(root / "artist_genres.parquet")
+        .filter(~pl.col("artist_mbid").map_elements(sealed, return_dtype=pl.Boolean))
+        .join(artists.select("artist_mbid", "item"), on="artist_mbid")
     )
     links = links.join(vocabulary.select("qid", "normalized").unique(), on="qid")
     discogs = pl.read_parquet(Path(config["tags_run"]) / "discogs.parquet").join(
@@ -258,7 +260,7 @@ def prepare(config):
     }
 
 
-def fitted(config, base, train, known):
+def fitted(config, base, train):
     words = base["lexicon"]
     styles, column, order, member, suffix, wikidata, discogs = style_evidence(
         config, base["artists"], train, words
@@ -273,7 +275,6 @@ def fitted(config, base, train, known):
         "column": column,
         "order": order,
         "words": {w: p for w, p in {**words, **learned}.items() if w not in rejected},
-        "known": known,
     }
 
 
@@ -415,12 +416,12 @@ def member_model(config, state, train):
     return model.fit(x, y, sample_weight=weights), groups.max() + 1, len(y)
 
 
-def crossfit(config, base, train, known, fold, folds):
+def crossfit(config, base, train, fold, folds):
     names = sorted(train)
     order = np.random.default_rng(config["seed"]).permutation(len(names)) % folds
     visible = {name: train[name] for name, f in zip(names, order, strict=True) if f != fold}
     hidden = {normalized_name(n): n for n, f in zip(names, order, strict=True) if f == fold}
-    state = fitted(config, base, visible, known)
+    state = fitted(config, base, visible)
     proposals, facts = propose(config, state, member_model(config, state, visible)[0], visible)
     found = {p[0]: jaccard(p[3], train[hidden[p[0]]]) for p in proposals if p[0] in hidden}
     real = np.array([p[0] in hidden for p in proposals])
@@ -492,31 +493,60 @@ def related(proposals, transition, k=10):
     return pl.DataFrame(rows, schema=["genre", "neighbor", "score"], orient="row")
 
 
-def build(config, run):
-    start = time.monotonic()
-    train, _, heldout, truth = split_labels(settings(config))
-    known = np.unique(np.concatenate(list(truth.values())))
-    base = prepare(config)
+def ranked(config, base, train):
     folds = config["folds"]
     parts = Parallel(n_jobs=folds)(
-        delayed(crossfit)(config, base, train, known, fold, folds) for fold in range(folds)
+        delayed(crossfit)(config, base, train, fold, folds) for fold in range(folds)
     )
     params = {"max_iter": 300, "class_weight": "balanced", "random_state": config["seed"]}
     judge = HistGradientBoostingClassifier(**params).fit(
         np.vstack([p[0] for p in parts]), np.concatenate([p[1] for p in parts])
     )
-    state = fitted(config, base, train, known)
+    state = fitted(config, base, train)
     model, training_genres, training_rows_ = member_model(config, state, train)
     proposals, facts = propose(config, state, model, train)
     real = judge.predict_proba(facts)[:, 1]
     order = np.argsort(-real)
+    return [proposals[i] for i in order], real[order], state, parts, training_genres, training_rows_
+
+
+def trial(config, base, fit, valid, reference):
+    kept = ranked(config, base, fit)[0][: config["keep"]]
+    return score(kept, valid, reference, len(base["artists"]))
+
+
+def tune(config, run):
+    train = split_labels(settings(config))[0]
+    names = sorted(train)
+    held = set(np.random.default_rng(config["seed"]).choice(names, len(names) // 5, replace=False))
+    fit = {name: train[name] for name in names if name not in held}
+    valid = {name: train[name] for name in held}
+    base = prepare(config)
+    reference = {normalized_name(x) for x in pl.read_parquet("data/m2/map.parquet")["genre"]}
+    grid = [
+        {"threshold": t, "negative_weight": w}
+        for t in config["grid"]["threshold"]
+        for w in config["grid"]["negative_weight"]
+    ]
+    scores = Parallel(n_jobs=3)(
+        delayed(trial)(config | point, base, fit, valid, reference) for point in grid
+    )
+    rows = [point | result for point, result in zip(grid, scores, strict=True)]
+    rows.sort(key=lambda row: -row["heldout_named_matched"])
+    (run / "tune.json").write_text(json.dumps(rows, indent=2))
+    for row in rows:
+        print(json.dumps(row), flush=True)
+
+
+def build(config, run):
+    start = time.monotonic()
+    train, _, heldout, _ = split_labels(settings(config))
+    base = prepare(config)
+    proposals, real, state, parts, training_genres, training_rows_ = ranked(config, base, train)
     n = len(base["artists"])
     reference = {normalized_name(x) for x in pl.read_parquet("data/m2/map.parquet")["genre"]}
-    sweep = {
-        str(size): score([proposals[i] for i in order[:size]], heldout, reference, n)
-        for size in config["sizes"]
-    }
-    kept = [proposals[i] for i in order[: config["keep"]]]
+    sweep = {str(size): score(proposals[:size], heldout, reference, n) for size in config["sizes"]}
+    kept = proposals[: config["keep"]]
     mbids = base["artists"]["artist_mbid"].to_numpy()
     sizes = [len(p[3]) for p in kept]
     pl.DataFrame(
@@ -526,7 +556,7 @@ def build(config, run):
             "place": [base["areas"][p[1]] if p[1] >= 0 else None for p in kept],
             "style": [state["styles"][p[2]] for p in kept],
             "size": sizes,
-            "real": real[order[: len(kept)]],
+            "real": real[: len(kept)],
             "heldout": [
                 normalized_name(p[0]) in {normalized_name(x) for x in heldout} for p in kept
             ],
@@ -560,6 +590,8 @@ def build(config, run):
 def execute(stage, config, run):
     if stage == "ingest":
         ingest(config, run)
+    elif stage == "tune":
+        tune(config, run)
     elif stage == "build":
         build(config, run)
     else:
@@ -573,5 +605,6 @@ def execute(stage, config, run):
             selected,
             kept=True,
             note="unchanged 868-genre split; names composed from place plus style; "
-            "membership and real-genre models trained on visible genres only",
+            "membership and real-genre models trained on visible genres only; "
+            "threshold and negative_weight tuned on a validation fifth of visible genres",
         )

@@ -1,7 +1,12 @@
+import hashlib
 import re
 import unicodedata
 
 import numpy as np
+
+
+def sealed(mbid: str) -> bool:
+    return int(hashlib.sha256(mbid.encode()).hexdigest(), 16) % 10 == 0
 
 
 def ranking(predicted, relevant, k=50):

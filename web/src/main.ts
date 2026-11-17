@@ -1,6 +1,15 @@
 import Panzoom, { type PanzoomObject } from '@panzoom/panzoom';
 import { Catalog } from './data';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
+import {
+  artistLabel,
+  cameraAt,
+  contains,
+  genreLabel,
+  project,
+  type Box,
+  type Point,
+} from './map-geometry';
 import './style.css';
 
 type View = 'axes' | 'islands' | 'tree';
@@ -15,18 +24,16 @@ const count = (value: number | null, noun = 'artist') =>
   value === null
     ? 'Count unavailable'
     : `${value.toLocaleString()} ${noun}${value === 1 ? '' : 's'}`;
-const modes: Record<View, { label: string; description: string }> = {
-  islands: {
-    label: 'Islands',
-    description: 'Published genre positions. Outlines group genre families, not measured density.',
-  },
+const worldPoint = (point: Point) => ({ x: 90 + point.x * 820, y: 65 + point.y * 440 });
+const modes: Record<View, { label: string }> = {
   axes: {
     label: 'Sonic map',
-    description: 'Published sonic axes. Use the ranked lists for similarity, not map distance.',
+  },
+  islands: {
+    label: 'Islands',
   },
   tree: {
     label: 'Genre tree',
-    description: 'Genres and subgenres, grouped by their published parent.',
   },
 };
 
@@ -34,20 +41,35 @@ async function start() {
   const catalog = await new Catalog().load();
   const genres = new Map(catalog.genres.map((genre) => [genre.id, genre]));
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
-  const releaseStatus = `${catalog.manifest.release_id} · ${catalog.manifest.data_kind === 'synthetic' ? 'Design fixture, not a quality benchmark.' : 'Explore the published model.'}`;
-  let view: View = catalog.manifest.layouts.islands
-    ? 'islands'
-    : catalog.manifest.layouts.axes
-      ? 'axes'
+  const searchIndex = catalog.search.map((entry) => ({
+    entry,
+    terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
+  }));
+  let view: View = catalog.manifest.layouts.axes
+    ? 'axes'
+    : catalog.manifest.layouts.islands
+      ? 'islands'
       : 'tree';
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
   let controller = new AbortController();
   let panzoom: PanzoomObject | undefined;
+  let labelFrame = 0;
+  let islandFamily: string | null = null;
   let cameraView: 'axes' | 'islands' = 'islands';
   let homeCamera = { scale: 1, x: 0, y: 0 };
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
   const collapsed = new Set<string>();
+  let mapNodes: {
+    node: SVGGElement;
+    label: SVGTextElement;
+    point: Point;
+    width: number;
+    id: string;
+    active: boolean;
+  }[] = [];
+  const textWidths = new Map<string, number>();
+  const textMeasure = document.createElement('canvas').getContext('2d')!;
   let trail: Selection[] = [];
   let storageAvailable = true;
   const storageKey = `opennoise:trail:${catalog.manifest.release_id}`;
@@ -69,8 +91,7 @@ async function start() {
   }
 
   app.innerHTML = `
-    <section class="catalog-summary"><h1>Explore genres</h1><p><span class="data-note">${catalog.manifest.data_kind === 'synthetic' ? 'Synthetic fixture — not model results' : 'Model-derived catalog'}</span> / ${count(catalog.genres.length, 'genre')}</p></section>
-    <div class="toolbar" id="explore"><div class="search-wrap"><label class="search-box"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><kbd aria-hidden="true">/</kbd></label><div id="results" class="search-results" aria-label="Search results"></div></div>
+    <div class="toolbar" id="explore"><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
       <nav class="modes" aria-label="Atlas view">${Object.entries(modes)
         .map(
           ([key, mode]) =>
@@ -80,7 +101,7 @@ async function start() {
       <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved (<span id="trail-count">${trail.length}</span>)</button></div>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div><aside id="detail" tabindex="-1" aria-label="Selected genre or artist" aria-live="polite"></aside></section>
     <section class="trail" id="trail" aria-label="Saved discovery trail" hidden></section>
-    <div class="under-map"><p>Selection is shared across views. Save a discovery trail locally.</p><p id="status" role="status">${escape(releaseStatus)}</p></div>`;
+    <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
   const drawer = document.querySelector<HTMLElement>('#detail')!;
@@ -113,31 +134,101 @@ async function start() {
       .filter((genre) => genre.parent_id === parent && !seen.has(genre.id))
       .map((genre) => {
         const hasChildren = catalog.genres.some((child) => child.parent_id === genre.id);
-        const node = `${entityButton('genre', genre.id, genre.name, undefined, genre.color)}<span class="muted">${count(genre.member_count)}</span>`;
+        const node = `<span class="tree-node">${entityButton('genre', genre.id, genre.name, undefined, genre.color)}<span class="muted">${count(genre.member_count)}</span></span>`;
         return `<li>${hasChildren ? `<details data-tree="${escape(genre.id)}" ${collapsed.has(genre.id) ? '' : 'open'}><summary>${node}</summary>${tree(genre.id, new Set([...seen, genre.id]))}</details>` : node}</li>`;
       })
       .join('')}</ul>`;
   }
 
-  function renderCanvas() {
+  function measureLabel(name: string, size: number, bold = false) {
+    const key = `${size}:${bold}:${name}`;
+    let width = textWidths.get(key);
+    if (width === undefined) {
+      textMeasure.font = `${bold ? '700' : '400'} ${size}px Helvetica, Arial, sans-serif`;
+      width = textMeasure.measureText(name).width + 2;
+      textWidths.set(key, width);
+    }
+    return width;
+  }
+
+  function artistMarkup(layout: 'axes' | 'islands') {
+    if (!detail || !('artist' in detail) || !detail.artist.positions[layout]) return '';
+    const point = worldPoint(detail.artist.positions[layout]!);
+    return `<g transform="translate(${point.x},${point.y})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" font-size="14">${escape(detail.artist.name)}</text></g>`;
+  }
+
+  function updateMapSelection() {
+    for (const item of mapNodes) {
+      const active = selected?.kind === 'genre' && selected.id === item.id;
+      if (active === item.active) continue;
+      item.active = active;
+      item.node.setAttribute('aria-pressed', String(active));
+      item.node.querySelector('circle')!.setAttribute('r', active ? '8' : '5');
+    }
+    canvas.querySelector('#artist-layer')!.innerHTML = artistMarkup(cameraView);
+    canvas.querySelector('#placement-status')!.textContent =
+      selected?.kind === 'artist' &&
+      detail &&
+      'artist' in detail &&
+      !detail.artist.positions[cameraView]
+        ? 'Selected artist is not placed'
+        : '';
+    scheduleLabels();
+  }
+
+  function revealSelection() {
+    if (!panzoom || view === 'tree') return;
+    const position =
+      selected?.kind === 'genre'
+        ? genres.get(selected.id)?.positions[view]
+        : detail && 'artist' in detail
+          ? detail.artist.positions[view]
+          : null;
+    if (!position) return;
+    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
+    const point = worldPoint(position);
+    const camera = { scale: panzoom.getScale(), ...panzoom.getPan() };
+    if (
+      contains(
+        project(point, camera),
+        { left: 0, top: 0, right: viewport.clientWidth, bottom: viewport.clientHeight },
+        48,
+      )
+    )
+      return;
+    const target = cameraAt(point, camera.scale, viewport.clientWidth, viewport.clientHeight);
+    panzoom.setOptions({ startX: target.x, startY: target.y });
+    panzoom.pan(target.x, target.y);
+  }
+
+  function renderCanvas(reveal = false) {
+    if (
+      view !== 'tree' &&
+      panzoom &&
+      canvas.querySelector<HTMLElement>('#map-content')?.dataset.layout === view
+    ) {
+      updateMapSelection();
+      if (reveal) revealSelection();
+      return;
+    }
     if (panzoom) cameras.set(cameraView, { scale: panzoom.getScale(), ...panzoom.getPan() });
     panzoom?.destroy();
     panzoom = undefined;
+    mapNodes = [];
     document
       .querySelectorAll<HTMLButtonElement>('[data-view]')
       .forEach((button) =>
         button.setAttribute('aria-pressed', String(button.dataset.view === view)),
       );
-    const header = `<header class="canvas-header"><h2>${modes[view].label}</h2><p>${modes[view].description}</p></header>`;
     if (view === 'tree') {
-      canvas.innerHTML = `${header}<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div><div class="map-bottom"><span>Expand a family to see its subgenres.</span></div>`;
+      canvas.innerHTML = `<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div>`;
       return;
     }
     const layout = view;
+    const hadCamera = cameras.has(layout);
     const placed = catalog.genres.filter((genre) => genre.positions[layout] !== null);
     const xy = (genre: Genre) => {
-      const point = genre.positions[layout]!;
-      return { x: 90 + point.x * 820, y: 65 + point.y * 440 };
+      return worldPoint(genre.positions[layout]!);
     };
     const families = new Map<string, Genre[]>();
     for (const genre of placed) {
@@ -161,88 +252,227 @@ async function start() {
       .map((genre) => {
         const { x, y } = xy(genre);
         const active = selected?.kind === 'genre' && selected.id === genre.id;
-        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#111111')}"/><text x="${x > 790 ? -13 : 13}" y="5" text-anchor="${x > 790 ? 'end' : 'start'}">${escape(genre.name)}</text></g>`;
+        return `<g class="genre" role="button" tabindex="0" aria-label="Explore ${escape(genre.name)}" aria-pressed="${active}" data-kind="genre" data-id="${escape(genre.id)}" transform="translate(${x},${y})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><circle r="${active ? 8 : 5}" fill="${escape(genre.color || '#111111')}"/><text>${escape(genre.name)}</text></g>`;
       })
       .join('');
-    let artist = '';
-    if (detail && 'artist' in detail && detail.artist.positions[layout]) {
-      const point = detail.artist.positions[layout]!;
-      artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
-    }
+    const artist = artistMarkup(layout);
     const axes = catalog.manifest.layouts.axes;
-    canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${count(placed.length, 'genre')} placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Drag to pan. Use +/− to zoom.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    if (view === 'islands' && !hadCamera && selected?.kind === 'genre')
+      islandFamily = root(genres.get(selected.id)!).id;
+    const familyNav =
+      view === 'islands'
+        ? `<nav class="families" aria-label="Focus an island family"><button data-family="" aria-pressed="${islandFamily === null}">All</button>${[...families.keys()].map((id) => `<button data-family="${escape(id)}" aria-pressed="${islandFamily === id}">${escape(genres.get(id)!.name)}</button>`).join('')}</nav>`
+        : '';
+    canvas.innerHTML = `${familyNav}<div class="map-viewport" id="map-viewport" tabindex="0" role="group" aria-label="${modes[view].label}" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown + - 0"><div id="map-content" class="map-stage" data-layout="${layout}"><svg viewBox="0 0 1000 570" role="group" aria-label="Genre labels are interactive">${islands}${nodes}<g id="artist-layer">${artist}</g></svg></div></div><div class="map-bottom"><span id="placement-status">${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? 'Selected artist is not placed' : ''}</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    mapNodes = [...canvas.querySelectorAll<SVGGElement>('.genre')].map((node, index) => ({
+      node,
+      label: node.querySelector('text')!,
+      point: xy(placed[index]),
+      width: measureLabel(placed[index].name, 16, true),
+      id: placed[index].id,
+      active: selected?.kind === 'genre' && selected.id === placed[index].id,
+    }));
     if (view === 'axes' && axes) {
       const legend = document.createElement('div');
       legend.className = 'axis-legend';
       legend.innerHTML = `<span><strong>Left → right:</strong> ${escape(axes.x_min)} → ${escape(axes.x_max)}</span><span><strong>Up → down:</strong> ${escape(axes.y_min)} → ${escape(axes.y_max)}</span>`;
       canvas.querySelector('.map-bottom')!.before(legend);
     }
-    positionArtistLabel();
     cameraView = layout;
-    const viewportWidth = canvas.querySelector<HTMLElement>('#map-viewport')!.clientWidth;
-    const scale = Math.max(1, 760 / viewportWidth);
-    homeCamera = { scale, x: 500 / scale - 500, y: 285 / scale - 285 };
-    const camera = cameras.get(layout) || homeCamera;
-    panzoom = Panzoom(document.querySelector<SVGGElement>('#map-content')!, {
-      maxScale: Math.max(5, scale * 2),
-      minScale: 0.7,
+    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
+    const scale = Math.max(
+      0.76,
+      Math.min(viewport.clientWidth / 1000, viewport.clientHeight / 570),
+    );
+    homeCamera = cameraAt({ x: 500, y: 285 }, scale, viewport.clientWidth, viewport.clientHeight);
+    const camera =
+      cameras.get(layout) ||
+      (view === 'islands' && islandFamily ? islandCamera(islandFamily) : homeCamera);
+    const content = canvas.querySelector<HTMLDivElement>('#map-content')!;
+    panzoom = Panzoom(content, {
+      maxScale: Math.max(6, scale * 2),
+      minScale: 0.25,
       canvas: true,
       excludeClass: 'genre',
       startScale: camera.scale,
       startX: camera.x,
       startY: camera.y,
     });
+    content.addEventListener('panzoomchange', scheduleLabels);
+    panzoom.pan(camera.x, camera.y);
+    if (reveal) revealSelection();
+    const map = panzoom;
+    let wheelFrame = 0,
+      wheelDelta = 0;
+    let wheelPoint = { clientX: 0, clientY: 0 };
+    viewport.addEventListener(
+      'wheel',
+      (event) => {
+        event.preventDefault();
+        wheelDelta +=
+          (event.deltaY || event.deltaX) *
+          (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
+        wheelPoint = { clientX: event.clientX, clientY: event.clientY };
+        if (wheelFrame) return;
+        wheelFrame = requestAnimationFrame(() => {
+          wheelFrame = 0;
+          const delta = Math.max(-600, Math.min(600, wheelDelta));
+          wheelDelta = 0;
+          if (panzoom === map)
+            map.zoomToPoint(map.getScale() * Math.exp(-delta * 0.002), wheelPoint, {
+              animate: false,
+            });
+        });
+      },
+      { passive: false },
+    );
+    viewport.addEventListener('dblclick', (event) => zoomMap(1.8, event));
+    viewport.addEventListener('keydown', (event) => {
+      if (event.target !== viewport) return;
+      const step = 64 / map.getScale();
+      const directions: Record<string, [number, number]> = {
+        ArrowLeft: [step, 0],
+        ArrowRight: [-step, 0],
+        ArrowUp: [0, step],
+        ArrowDown: [0, -step],
+      };
+      const delta = directions[event.key];
+      if (delta) {
+        event.preventDefault();
+        map.pan(delta[0], delta[1], { relative: true });
+      } else if (event.key === '+' || event.key === '=') {
+        event.preventDefault();
+        zoomMap(1.35);
+      } else if (event.key === '-') {
+        event.preventDefault();
+        zoomMap(1 / 1.35);
+      } else if (event.key === '0') {
+        event.preventDefault();
+        resetMap();
+      }
+    });
+    scheduleLabels();
   }
 
-  function positionArtistLabel() {
-    const label = canvas.querySelector<SVGTextElement>('#artist-label');
-    if (!label) return;
-    const obstacles = [...canvas.querySelectorAll<SVGTextElement>('.genre text')].map((node) =>
-      node.getBoundingClientRect(),
+  function zoomMap(factor: number, point?: { clientX: number; clientY: number }) {
+    const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
+    if (!panzoom || !viewport) return;
+    panzoom.zoomToPoint(
+      panzoom.getScale() * factor,
+      point || {
+        clientX: (viewport.left + viewport.right) / 2,
+        clientY: (viewport.top + viewport.bottom) / 2,
+      },
+      { animate: false },
     );
-    const viewport = canvas.querySelector('svg')!.getBoundingClientRect();
-    const padding = (viewport.width / 1000) * 5;
-    const width = label.getBBox().width;
-    const candidates = [
-      [0, 0],
-      [0, -26],
-      [0, 26],
-      [-width - 28, -26],
-      [-width - 28, 26],
-      [0, -52],
-      [0, 52],
-    ];
-    let best = candidates[0];
-    let bestScore = Infinity;
-    for (const offset of candidates) {
-      label.setAttribute('transform', `translate(${offset[0]},${offset[1]})`);
-      const box = label.getBoundingClientRect();
-      const score = obstacles.reduce(
-        (area, other) =>
-          area +
-          Math.max(
-            0,
-            Math.min(box.right, other.right + padding) - Math.max(box.left, other.left - padding),
-          ) *
-            Math.max(
-              0,
-              Math.min(box.bottom, other.bottom + padding) - Math.max(box.top, other.top - padding),
-            ),
-        box.width * box.height -
-          Math.max(0, Math.min(box.right, viewport.right) - Math.max(box.left, viewport.left)) *
-            Math.max(0, Math.min(box.bottom, viewport.bottom) - Math.max(box.top, viewport.top)),
-      );
-      if (score < bestScore) {
-        best = offset;
-        bestScore = score;
-      }
-      if (score === 0) break;
+  }
+
+  function resetMap() {
+    if (view === 'islands') focusIslandFamily(null);
+    else {
+      panzoom?.zoom(homeCamera.scale);
+      panzoom?.pan(homeCamera.x, homeCamera.y);
     }
-    label.setAttribute('transform', `translate(${best[0]},${best[1]})`);
-    if (best[0] || best[1])
-      canvas
-        .querySelector('#artist-leader')!
-        .setAttribute('d', `M0 0L${best[0] < 0 ? -14 : 14} ${best[1]}`);
+  }
+
+  function focusIslandFamily(id: string | null) {
+    if (!panzoom || view !== 'islands') return;
+    islandFamily = id;
+    canvas.querySelectorAll<HTMLButtonElement>('[data-family]').forEach((button) => {
+      button.setAttribute('aria-pressed', String((button.dataset.family || null) === id));
+    });
+    const camera = id ? islandCamera(id) : homeCamera;
+    panzoom.zoom(camera.scale);
+    panzoom.pan(camera.x, camera.y);
+  }
+
+  function islandCamera(id: string) {
+    const points = catalog.genres
+      .filter((genre) => root(genre).id === id && genre.positions.islands)
+      .map((genre) => genre.positions.islands!);
+    if (!points.length) return homeCamera;
+    const left = 90 + Math.min(...points.map((point) => point.x)) * 820;
+    const right = 90 + Math.max(...points.map((point) => point.x)) * 820;
+    const top = 65 + Math.min(...points.map((point) => point.y)) * 440;
+    const bottom = 65 + Math.max(...points.map((point) => point.y)) * 440;
+    const viewport = canvas.querySelector<HTMLElement>('#map-viewport')!;
+    const scale = Math.max(
+      0.7,
+      Math.min(
+        5,
+        (viewport.clientWidth - 160) / Math.max(80, right - left),
+        (viewport.clientHeight - 90) / Math.max(80, bottom - top),
+      ),
+    );
+    return cameraAt(
+      { x: (left + right) / 2, y: (top + bottom) / 2 },
+      scale,
+      viewport.clientWidth,
+      viewport.clientHeight,
+    );
+  }
+
+  function scheduleLabels() {
+    cancelAnimationFrame(labelFrame);
+    labelFrame = requestAnimationFrame(positionLabels);
+  }
+
+  function positionLabels() {
+    const viewport = canvas.querySelector('#map-viewport')?.getBoundingClientRect();
+    const matrix = canvas.querySelector('svg')?.getScreenCTM();
+    if (!viewport || !matrix) return;
+    const obstacles: Box[] = [];
+    for (const { node, label, point, width } of mapNodes) {
+      const placement = genreLabel(
+        { x: point.x * matrix.a + matrix.e, y: point.y * matrix.d + matrix.f },
+        width,
+        matrix.a,
+        viewport,
+      );
+      setAttribute(node, 'visibility', placement ? 'visible' : 'hidden');
+      setAttribute(node, 'tabindex', placement ? '0' : '-1');
+      if (!placement) continue;
+      setAttribute(
+        label,
+        'transform',
+        `translate(${placement.x},${placement.y}) scale(${placement.scale})`,
+      );
+      obstacles.push(placement.box);
+    }
+    positionArtistLabel(obstacles, viewport, matrix);
+  }
+
+  function setAttribute(node: Element, name: string, value: string) {
+    if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+  }
+
+  function positionArtistLabel(obstacles: Box[], viewport: Box, matrix: DOMMatrix) {
+    const label = canvas.querySelector<SVGTextElement>('#artist-label');
+    if (!label || !detail || !('artist' in detail) || !detail.artist.positions[cameraView]) return;
+    const point = worldPoint(detail.artist.positions[cameraView]!);
+    const width = measureLabel(detail.artist.name, 14);
+    const placement = artistLabel(
+      { x: point.x * matrix.a + matrix.e, y: point.y * matrix.d + matrix.f },
+      width,
+      matrix.a,
+      viewport,
+      obstacles,
+    );
+    const group = label.closest<SVGGElement>('g')!;
+    setAttribute(group, 'visibility', placement ? 'visible' : 'hidden');
+    if (!placement) return;
+    setAttribute(
+      label,
+      'transform',
+      `translate(${placement.x},${placement.y}) scale(${placement.scale})`,
+    );
+    const moved = placement.x !== 14 || placement.y !== 5;
+    const endX = placement.x < 0 ? placement.x + width * placement.scale : placement.x;
+    setAttribute(
+      canvas.querySelector('#artist-leader')!,
+      'd',
+      moved ? `M0 0L${endX} ${placement.y - 5}` : '',
+    );
   }
 
   function breadcrumbs(genre: Genre) {
@@ -258,16 +488,16 @@ async function start() {
 
   function renderDetail() {
     if (!selected) {
-      drawer.innerHTML = `<h2>Genre or artist</h2><p class="detail-lede">Select a genre on the map or search for an artist.</p><section><h3>Genre families</h3>${catalog.genres
+      drawer.innerHTML = `<h2>Genres</h2>${catalog.genres
         .filter((genre) => !genre.parent_id)
         .map((genre) => entityButton('genre', genre.id, genre.name, undefined, genre.color))
-        .join('')}</section>`;
+        .join('')}`;
       return;
     }
     if (!detail) return;
     const entity = 'genre' in detail ? detail.genre : detail.artist;
     const saved = trail.some((entry) => entry.kind === selected!.kind && entry.id === selected!.id);
-    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="muted">Artist</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? `${count(detail.genre.member_count)} · ${catalog.manifest.membership ? 'Published membership' : 'Membership not computed'}` : `${detail.artist.listeners === null ? 'Listener count unavailable' : count(detail.artist.listeners, 'listener')}<br>Signals: ${detail.signals.length ? detail.signals.map(escape).join(', ') : 'none published'}`}</p><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full (50)' : 'Save to trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
+    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="muted">Artist</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? count(detail.genre.member_count) : detail.artist.listeners === null ? 'Listener count unavailable' : count(detail.artist.listeners, 'listener')}</p><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full (50)' : 'Save to trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
   }
 
   function renderGenre(data: GenreDetail) {
@@ -305,7 +535,7 @@ async function start() {
                 ),
               )
               .join('')
-    }<p class="muted">${escape(catalog.manifest.genre_similarity || 'No published similarity method')}. Rank is not a probability.</p></section>`;
+    }</section>`;
   }
 
   function renderArtist(data: ArtistDetail) {
@@ -344,7 +574,7 @@ async function start() {
                 ),
               )
               .join('')
-    }<p class="muted">${escape(catalog.manifest.similarity || 'No published similarity method')}. Rank is not a probability.</p></section><section><h3>Listening links</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links in this release.</p>'}<p class="muted">${data.preview ? 'A preview locator is available. Provider playback is not connected in this study.' : 'No preview available. Nothing plays automatically.'}</p></section>`;
+    }</section><section><h3>Listening links</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links available.</p>'}<p class="muted">${data.preview ? 'Preview playback is not connected.' : 'No preview available.'}</p></section>`;
   }
 
   function renderTrail() {
@@ -363,7 +593,7 @@ async function start() {
   }
 
   function writeURL() {
-    status.textContent = releaseStatus;
+    status.textContent = '';
     const params = new URLSearchParams({ view });
     if (selected) {
       params.set('kind', selected.kind);
@@ -379,7 +609,7 @@ async function start() {
     detail = null;
     if (push) writeURL();
     drawer.innerHTML = '<p class="empty" role="status">Loading details…</p>';
-    renderCanvas();
+    renderCanvas(true);
     results.innerHTML = '';
     try {
       const loaded =
@@ -389,7 +619,7 @@ async function start() {
       if (selected !== selection) return;
       detail = loaded;
       renderDetail();
-      renderCanvas();
+      renderCanvas(true);
       drawer.focus({ preventScroll: true });
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
@@ -399,7 +629,7 @@ async function start() {
   }
 
   function restoreURL() {
-    status.textContent = releaseStatus;
+    status.textContent = '';
     const params = new URLSearchParams(location.hash.slice(1));
     const requestedView = params.get('view');
     if (
@@ -430,11 +660,12 @@ async function start() {
       results.innerHTML = '';
       return;
     }
-    const matches = catalog.search
-      .filter((entry) =>
-        [entry.name, ...entry.aliases].some((name) => name.toLocaleLowerCase().includes(query)),
-      )
-      .slice(0, 12);
+    const matches: SearchEntry[] = [];
+    for (const { entry, terms } of searchIndex) {
+      if (!terms.some((term) => term.includes(query))) continue;
+      matches.push(entry);
+      if (matches.length === 12) break;
+    }
     results.innerHTML = matches.length
       ? matches
           .map(
@@ -453,7 +684,7 @@ async function start() {
   });
   app.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>(
-      '[data-kind], [data-view], [data-zoom], [data-remove], button[id]',
+      '[data-kind], [data-view], [data-family], [data-zoom], [data-remove], button[id]',
     );
     if (!target) return;
     if (target.dataset.kind && target.dataset.id) {
@@ -466,12 +697,13 @@ async function start() {
       renderCanvas();
       return;
     }
-    if (target.dataset.zoom === 'in') panzoom?.zoomIn();
-    if (target.dataset.zoom === 'out') panzoom?.zoomOut();
-    if (target.dataset.zoom === 'reset') {
-      panzoom?.zoom(homeCamera.scale);
-      panzoom?.pan(homeCamera.x, homeCamera.y);
+    if (target.dataset.family !== undefined) {
+      focusIslandFamily(target.dataset.family || null);
+      return;
     }
+    if (target.dataset.zoom === 'in') zoomMap(1.35);
+    if (target.dataset.zoom === 'out') zoomMap(1 / 1.35);
+    if (target.dataset.zoom === 'reset') resetMap();
     if (target.dataset.remove !== undefined) {
       trail.splice(Number(target.dataset.remove), 1);
       persistTrail();
