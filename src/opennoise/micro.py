@@ -587,6 +587,33 @@ def build(config, run):
     print(json.dumps(metrics, indent=2), flush=True)
 
 
+def release(run, genres, memberships):
+    known = {
+        normalized_name(name): i
+        for i, name in genres.filter(pl.col("level") == -1).select("id", "name").iter_rows()
+    }
+    offset = genres["id"].max() + 1
+    edges = pl.read_parquet(run / "memberships.parquet")
+    aliases = edges.group_by("genre").agg(pl.col("artist_mbid").sort()).sort("genre")
+    micro = pl.read_parquet(run / "genres.parquet").filter(
+        ~pl.col("name").map_elements(normalized_name, return_dtype=pl.String).is_in(list(known))
+        & pl.col("id").is_in(aliases.unique("artist_mbid", keep="first")["genre"].to_list())
+    )
+    added = micro.select(
+        pl.col("id") + offset,
+        "name",
+        level=pl.lit(genres["level"].max() + 1),
+        parent=pl.col("style").replace_strict(known, default=None, return_dtype=pl.Int64),
+        size="size",
+    ).cast(genres.schema)
+    edges = (
+        edges.filter(pl.col("genre").is_in(micro["id"].to_list()))
+        .select(artist="artist_mbid", genre=pl.col("genre") + offset, score="score")
+        .cast(memberships.schema)
+    )
+    return pl.concat([genres, added]), pl.concat([memberships, edges])
+
+
 def execute(stage, config, run):
     if stage == "ingest":
         ingest(config, run)

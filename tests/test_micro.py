@@ -1,7 +1,8 @@
 import numpy as np
+import polars as pl
 from scipy import sparse
 
-from opennoise.micro import jaccard, learned_words, split_name
+from opennoise.micro import jaccard, learned_words, release, split_name
 
 
 def test_split_name_prefers_longest_place_and_known_style():
@@ -27,3 +28,34 @@ def test_learned_words_finds_unlisted_place_and_rejects_false_one():
 
 def test_jaccard():
     assert jaccard(np.array([1, 2, 3]), np.array([2, 3, 4])) == 0.5
+
+
+def test_release_appends_micro_genres(tmp_path):
+    genres = pl.DataFrame(
+        {
+            "id": [0, 1],
+            "name": ["Punk", "unnamed 1"],
+            "level": [-1, 0],
+            "parent": [None, None],
+            "size": [1, 1],
+        },
+        schema_overrides={"parent": pl.Int64},
+    )
+    memberships = pl.DataFrame({"artist": ["a"], "genre": [0], "score": [0.5]})
+    pl.DataFrame(
+        {
+            "id": [0, 1, 2, 3],
+            "name": ["punk", "swedish punk", "swedish zydeco", "sweden zydeco"],
+            "style": ["punk", "punk", "zydeco", "zydeco"],
+            "size": [1, 1, 1, 1],
+        }
+    ).write_parquet(tmp_path / "genres.parquet")
+    pl.DataFrame(
+        {"genre": [0, 1, 2, 3], "artist_mbid": ["a", "b", "c", "c"], "score": [0.9, 0.8, 0.7, 0.6]}
+    ).write_parquet(tmp_path / "memberships.parquet")
+    genres, memberships = release(tmp_path, genres, memberships)
+    assert genres.select("id", "name", "level", "parent").rows()[2:] == [
+        (3, "swedish punk", 1, 0),
+        (4, "swedish zydeco", 1, None),
+    ]
+    assert memberships.rows() == [("a", 0, 0.5), ("b", 3, 0.8), ("c", 4, 0.7)]

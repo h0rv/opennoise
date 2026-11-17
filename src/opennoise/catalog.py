@@ -6,7 +6,7 @@ from pathlib import Path
 
 import polars as pl
 
-from opennoise import grouping, identities, tags
+from opennoise import grouping, identities, micro, tags
 
 
 def write(path, value):
@@ -86,9 +86,15 @@ def audit(config, genres, memberships, artists):
     }
 
 
+def tables(config):
+    path = Path(config["export"])
+    found = pl.read_parquet(path / "genres.parquet"), pl.read_parquet(path / "memberships.parquet")
+    return micro.release(Path(config["micro"]), *found) if "micro" in config else found
+
+
 def export(config, run):
     start = time.monotonic()
-    source, m1 = Path(config["export"]), Path(config["m1"])
+    m1 = Path(config["m1"])
     artists = pl.read_parquet(m1 / "artists.parquet").sort("item")
     if artists["item"].n_unique() != len(artists) or artists["artist_mbid"].n_unique() != len(
         artists
@@ -101,7 +107,7 @@ def export(config, run):
         or artists["artist_mbid"].null_count()
     ):
         raise ValueError("Public artist IDs must be lowercase MBIDs")
-    genres = pl.read_parquet(source / "genres.parquet")
+    genres, memberships = tables(config)
     if genres["id"].n_unique() != len(genres):
         raise ValueError("Duplicate local genre ID")
     all_rows = genres.to_dicts()
@@ -114,7 +120,6 @@ def export(config, run):
     ]
     retained = {r["id"] for r in rows}
     parents = hierarchy(all_rows, retained)
-    memberships = pl.read_parquet(source / "memberships.parquet")
     if not set(memberships["genre"]) <= set(genres["id"]):
         raise ValueError("Unknown membership genre")
     memberships = memberships.filter(pl.col("genre").is_in(sorted(retained)))
@@ -165,8 +170,11 @@ def export(config, run):
         for group in groups["largest"]:
             group["id"] = public[group.pop("local_id")]
     inputs = [
-        source / "genres.parquet",
-        source / "memberships.parquet",
+        Path(config[key]) / file
+        for key in ["export", "micro"]
+        if key in config
+        for file in ["genres.parquet", "memberships.parquet"]
+    ] + [
         m1 / "artists.parquet",
         m1 / "tfidf.parquet",
         Path(config["labels"]),
