@@ -595,8 +595,9 @@ def release(run, genres, memberships):
     offset = genres["id"].max() + 1
     edges = pl.read_parquet(run / "memberships.parquet")
     aliases = edges.group_by("genre").agg(pl.col("artist_mbid").sort()).sort("genre")
+    taken = {normalized_name(name) for name in genres["name"]}
     micro = pl.read_parquet(run / "genres.parquet").filter(
-        ~pl.col("name").map_elements(normalized_name, return_dtype=pl.String).is_in(list(known))
+        ~pl.col("name").map_elements(normalized_name, return_dtype=pl.String).is_in(taken)
         & pl.col("id").is_in(aliases.unique("artist_mbid", keep="first")["genre"].to_list())
     )
     added = micro.select(
