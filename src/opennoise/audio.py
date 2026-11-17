@@ -399,7 +399,7 @@ def evaluate(config, run):
         start = time.monotonic()
         full = np.zeros((len(artists), vectors.shape[1]), dtype=np.float32)
         full[items] = vectors
-        np.save(run / f"audio_{name}.npy", full)
+        np.save(graph / f"audio_{name}.npy", full)
         rows, lines = score(name, items, vectors, listen, sets, artists, config)
         for row in rows.values():
             row["eval_seconds"] = time.monotonic() - start
