@@ -28,6 +28,10 @@ def main() -> None:
             build_genres(config, run)
         else:
             evaluate_genres(config, run)
+    elif "tags" in config:
+        from opennoise import tags
+
+        tags.execute(args.stage, config, run)
     elif args.stage == "ingest":
         from opennoise.ingest import ingest
 
