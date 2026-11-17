@@ -66,8 +66,10 @@ def download(name, path):
 
 
 def execute(stage, config, run):
+    start = time.monotonic()
     try:
         {"ingest": ingest, "build": build, "eval": evaluate}[stage](config, run)
+        log(run, f"tags_{stage}", {"status": "ok", "seconds": time.monotonic() - start})
     except Exception as error:
         log(run, f"tags_{stage}", {"status": "failed", "error": str(error)})
         raise
