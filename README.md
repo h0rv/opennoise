@@ -67,6 +67,24 @@ CC0 variants, including the kept M2b baseline. The unchanged split supplies ever
 Export reuses M2b's cached all-label supervised memberships and rebuilds only named discovery
 memberships and parent links. No membership refit or contract adaptation is performed.
 
+M2d adapts that export and M1's TF-IDF top-50 into contract-v1 JSON:
+
+```sh
+uv run on export configs/m2d.toml
+uv run python -m opennoise.contract runs/<hash>/release
+```
+
+Preserve `data/registry/genres.json` across builds: this persisted identity registry includes
+member MBIDs and retired IDs, and is not shipped in the release. Supervised keys are canonical
+ENAO names; cluster keys combine the fixed resolution namespace with a sorted-member hash.
+Display names and local cluster indices never regenerate an assigned slug. Later clusters reuse
+IDs at Jaccard >= .8 within the same namespace, one-to-one; contained splits get fresh IDs,
+merges keep the best-overlap ID and retain prior names as aliases. Retired IDs are never minted
+again. The adapter checks supervised edges against cached model predictions and audits training
+labels locally, without touching the evaluation split. Public strengths are unchanged, MBIDs
+replace item indices, and missing layouts/genre similarities/previews stay null. Output is
+staged then renamed to `runs/<hash>/release/`; cached reruns verify IDs and input hashes.
+
 ```sh
 uv sync
 uv run on ingest configs/m1.toml
