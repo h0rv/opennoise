@@ -1,6 +1,7 @@
 import { Catalog } from './data';
 import { GenreTree } from './genre-tree';
 import { MapCanvas } from './map-canvas';
+import { PreviewPlayer } from './preview';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import './style.css';
 
@@ -77,7 +78,7 @@ async function start() {
         )
         .join('')}</nav>
       <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved (<span id="trail-count">${trail.length}</span>)</button></div>
-    <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div><aside id="detail" tabindex="-1" aria-label="Selected genre or artist" aria-live="polite"></aside></section>
+    <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div><aside aria-label="Selected genre or artist"><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside></section>
     <section class="trail" id="trail" aria-label="Saved discovery trail" hidden></section>
     <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
@@ -87,9 +88,10 @@ async function start() {
   const results = document.querySelector<HTMLElement>('#results')!;
   const trailPanel = document.querySelector<HTMLElement>('#trail')!;
   const status = document.querySelector<HTMLElement>('#status')!;
+  const preview = new PreviewPlayer(document.querySelector('#preview')!);
   const hierarchy = new GenreTree(
     catalog.genres,
-    (selection) => void select(selection, true, false),
+    (selection) => void select(selection, true, false, true),
   );
 
   function entityButton(
@@ -141,7 +143,7 @@ async function start() {
       canvas.querySelector<HTMLCanvasElement>('canvas')!,
       catalog.genres,
       view,
-      (kind, id) => void select({ kind, id }),
+      (kind, id) => void select({ kind, id }, true, true, true),
       canvas.querySelector('#placement-status')!,
       cameras.get(view),
     );
@@ -258,7 +260,7 @@ async function start() {
                 ),
               )
               .join('')
-    }</section><section><h3>Listening links</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links available.</p>'}<p class="muted">${data.preview ? 'Preview playback is not connected.' : 'No preview available.'}</p></section>`;
+    }</section><section><h3>Listening links</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links available.</p>'}</section>`;
   }
 
   function renderTrail() {
@@ -287,7 +289,8 @@ async function start() {
     if (location.hash !== hash) history.pushState(null, '', hash);
   }
 
-  async function select(selection: Selection, push = true, focusDetails = true) {
+  async function select(selection: Selection, push = true, focusDetails = true, hear = false) {
+    preview.stop();
     controller.abort();
     controller = new AbortController();
     selected = selection;
@@ -303,6 +306,12 @@ async function start() {
           : await catalog.artist(selection.id, controller.signal);
       if (selected !== selection) return;
       detail = loaded;
+      if (hear)
+        void preview.play(
+          'artist' in loaded
+            ? [loaded.artist.name]
+            : (loaded.members || []).map((member) => member.artist.name),
+        );
       if ('artist' in loaded) {
         lookup.set(`artist:${loaded.artist.id}`, {
           kind: 'artist',
@@ -341,6 +350,7 @@ async function start() {
     )
       void select({ kind, id }, false);
     else {
+      preview.stop();
       controller.abort();
       selected = null;
       detail = null;
@@ -408,7 +418,12 @@ async function start() {
     );
     if (!target) return;
     if (target.dataset.kind && target.dataset.id) {
-      void select({ kind: target.dataset.kind as Selection['kind'], id: target.dataset.id });
+      void select(
+        { kind: target.dataset.kind as Selection['kind'], id: target.dataset.id },
+        true,
+        true,
+        true,
+      );
       return;
     }
     if (target.dataset.view) {
