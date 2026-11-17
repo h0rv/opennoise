@@ -1,0 +1,370 @@
+import hashlib
+import json
+import re
+import time
+from pathlib import Path
+
+import polars as pl
+
+from opennoise import grouping, identities, tags
+
+
+def write(path, value):
+    path.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
+
+
+def coordinates(config, genres, artists):
+    empty = {"axes": None, "islands": None}
+    if not config.get("layout"):
+        return {}, empty
+    root = Path(config["layout"])
+    frame = pl.read_parquet(root / "positions.parquet")
+    if frame.select("kind", "id").n_unique() != len(frame):
+        raise ValueError("Duplicate layout identity")
+    known = {"genre": set(genres), "artist": set(artists)}
+    result = {}
+    for kind, id_, x, y, u, v in frame.select(
+        "kind", "id", "x", "y", "island_x", "island_y"
+    ).iter_rows():
+        if kind not in known or id_ not in known[kind]:
+            raise ValueError("Unknown layout identity")
+        point = {}
+        for family, a, b in [("axes", x, y), ("islands", u, v)]:
+            if (a is None) != (b is None) or (a is not None and not (0 <= a <= 1 and 0 <= b <= 1)):
+                raise ValueError("Invalid layout coordinates")
+            point[family] = None if a is None else {"x": a, "y": b}
+        result[kind, id_] = point
+    return result, json.loads((root / "layouts.json").read_text())
+
+
+def hierarchy(rows, retained):
+    parents = {r["id"]: r["parent"] for r in rows}
+    result = {}
+    for i in retained:
+        parent, seen = parents[i], {i}
+        while parent is not None:
+            if parent in seen or parent not in parents:
+                raise ValueError("Invalid source genre hierarchy")
+            seen.add(parent)
+            if parent in retained:
+                break
+            parent = parents[parent]
+        result[i] = parent
+    for i in result:
+        parent, seen = result[i], {i}
+        while parent is not None:
+            if parent in seen:
+                raise ValueError("Cyclic genre hierarchy")
+            seen.add(parent)
+            parent = result[parent]
+    return result
+
+
+def audit(config, genres, memberships, artists):
+    supervised = genres.filter(pl.col("level") == -1).select("id", "name")
+    model = pl.read_parquet(Path(config["refit"]) / "memberships.parquet")
+    reference = pl.read_parquet(Path(config["refit"]) / "genres.parquet")
+    expected = model.join(
+        reference.filter(pl.col("level") == -1).select("id", "name"), left_on="genre", right_on="id"
+    ).select("artist", "name", "score")
+    actual = memberships.join(supervised, left_on="genre", right_on="id").select(
+        "artist", "name", "score"
+    )
+    if not actual.sort("artist", "name").equals(expected.sort("artist", "name")):
+        raise ValueError("Supervised memberships differ from cached model predictions")
+    labels = pl.read_parquet(config["labels"]).join(
+        artists.select("item", "artist_mbid"), on="item"
+    )
+    ones = actual.filter(pl.col("score") == 1).join(
+        labels.select(pl.col("artist_mbid").alias("artist"), pl.col("genre").alias("name")),
+        on=["artist", "name"],
+    )
+    return {
+        "supervised_model_rows": len(actual),
+        "training_label_score_one_rows": len(ones),
+        "unexplained_training_rows": 0,
+    }
+
+
+def export(config, run):
+    start = time.monotonic()
+    source, m1 = Path(config["export"]), Path(config["m1"])
+    artists = pl.read_parquet(m1 / "artists.parquet").sort("item")
+    if artists["item"].n_unique() != len(artists) or artists["artist_mbid"].n_unique() != len(
+        artists
+    ):
+        raise ValueError("Duplicate artist identity")
+    if (
+        not artists["artist_mbid"]
+        .str.contains(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+        .all()
+        or artists["artist_mbid"].null_count()
+    ):
+        raise ValueError("Public artist IDs must be lowercase MBIDs")
+    genres = pl.read_parquet(source / "genres.parquet")
+    if genres["id"].n_unique() != len(genres):
+        raise ValueError("Duplicate local genre ID")
+    all_rows = genres.to_dicts()
+    rows = [
+        r
+        for r in all_rows
+        if r["name"]
+        and r["name"].strip()
+        and not re.fullmatch(r"unnamed \d+", r["name"], re.IGNORECASE)
+    ]
+    retained = {r["id"] for r in rows}
+    parents = hierarchy(all_rows, retained)
+    memberships = pl.read_parquet(source / "memberships.parquet")
+    if not set(memberships["genre"]) <= set(genres["id"]):
+        raise ValueError("Unknown membership genre")
+    memberships = memberships.filter(pl.col("genre").is_in(sorted(retained)))
+    if not set(memberships["artist"]) <= set(artists["artist_mbid"]):
+        raise ValueError("Unknown membership artist")
+    if (
+        memberships.select("artist", "genre").n_unique() != len(memberships)
+        or memberships["score"].null_count()
+        or not memberships["score"].is_finite().all()
+        or not memberships["score"].is_between(0, 1).all()
+    ):
+        raise ValueError("Invalid membership strengths")
+    leak = audit(config, genres, memberships, artists)
+    members = {
+        i: group["artist"].sort().to_list()
+        for (i,), group in memberships.partition_by("genre", as_dict=True).items()
+    }
+    records, keys = [], {}
+    for row in rows:
+        if row["level"] == -1:
+            scope, key, ids = "supervised", "enao:" + row["name"], []
+        else:
+            scope = config["levels"][row["level"]]
+            ids = members.get(row["id"], [])
+            key = "cluster:" + scope + ":" + hashlib.sha256("\n".join(ids).encode()).hexdigest()
+        keys[row["id"]] = key
+        records.append({"key": key, "scope": scope, "name": row["name"], "members": ids})
+    registry = Path(config["registry"])
+    previous_groups = []
+    if config.get("group_siblings") and registry.exists():
+        previous_groups = [
+            {k: r[k] for k in ["key", "scope", "name", "members"]}
+            for r in json.loads(registry.read_text())["genres"]
+            if r["active"] and r["scope"] == "group"
+        ]
+    assigned = identities.assign(registry, records + previous_groups, config["identity_jaccard"])
+    public = {i: assigned[key]["id"] for i, key in keys.items()}
+    groups = {}
+    if config.get("group_siblings"):
+        memberships, added, group_keys, groups = grouping.siblings(
+            rows, parents, memberships, public
+        )
+        records.extend(added)
+        keys.update(group_keys)
+        assigned = identities.assign(registry, records, config["identity_jaccard"])
+        public = {i: assigned[key]["id"] for i, key in keys.items()}
+        retained = set(public)
+        for group in groups["largest"]:
+            group["id"] = public[group.pop("local_id")]
+    inputs = [
+        source / "genres.parquet",
+        source / "memberships.parquet",
+        m1 / "artists.parquet",
+        m1 / "tfidf.parquet",
+        Path(config["labels"]),
+        Path(config["refit"]) / "genres.parquet",
+        Path(config["refit"]) / "memberships.parquet",
+    ]
+    if config.get("layout"):
+        inputs.extend(
+            Path(config["layout"]) / name for name in ["positions.parquet", "layouts.json"]
+        )
+    hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
+    target = run / "release"
+    mapping = {str(i): public[i] for i in sorted(public)}
+    if target.exists():
+        summary = json.loads((run / "release-summary.json").read_text())
+        if (
+            summary["inputs"] != hashes
+            or json.loads((run / "genre_ids.json").read_text()) != mapping
+        ):
+            raise ValueError("Immutable release inputs or identities changed; use a new run")
+        print("Cached release: persisted genre IDs unchanged", flush=True)
+        return
+    stage = run / "release.building"
+    readability = (
+        grouping.readable(rows, parents, memberships, artists, public)
+        if config.get("readable_names")
+        else {}
+    )
+    stage.mkdir()
+    (stage / "artists").mkdir()
+    (stage / "genres").mkdir()
+    positions = {"axes": None, "islands": None}
+    placed, layouts = coordinates(config, public.values(), artists["artist_mbid"])
+    summaries = {
+        mbid: {
+            "id": mbid,
+            "name": name,
+            "listeners": listeners,
+            "positions": placed.get(("artist", mbid), positions),
+            "color": None,
+        }
+        for _, mbid, listeners, name in artists.select(
+            "item", "artist_mbid", "listeners", "artist_name"
+        ).iter_rows()
+    }
+    edges = memberships.with_columns(
+        pl.col("genre").replace_strict(public, return_dtype=pl.String).alias("genre_id")
+    )
+    artist_genres = {}
+    for group in (
+        edges.sort(["artist", "score", "genre_id"], descending=[False, True, False])
+        .group_by("artist", maintain_order=True)
+        .agg("genre_id", "score")
+        .iter_rows()
+    ):
+        mbid, ids, scores = group
+        artist_genres[mbid] = [{"id": i, "score": s} for i, s in zip(ids, scores, strict=True)]
+    counts = dict(memberships.group_by("genre").len().iter_rows())
+    catalog: dict = {
+        r["id"]: {
+            "id": public[r["id"]],
+            "name": r["name"],
+            "aliases": assigned[keys[r["id"]]]["aliases"],
+            "parent_id": public[parents[r["id"]]] if parents[r["id"]] is not None else None,
+            "member_count": counts.get(r["id"], 0),
+            "positions": placed.get(("genre", public[r["id"]]), positions),
+            "color": None,
+        }
+        for r in rows
+    }
+    grouped = (
+        memberships.sort(["genre", "score", "artist"], descending=[False, True, False])
+        .group_by("genre", maintain_order=True)
+        .agg("artist", "score")
+    )
+    populated = set()
+    for i, mbids, scores in grouped.iter_rows():
+        populated.add(i)
+        write(
+            stage / "genres" / f"{public[i]}.json",
+            {
+                "genre": catalog[i],
+                "related": None,
+                "members": [
+                    {"artist": summaries[m], "score": s} for m, s in zip(mbids, scores, strict=True)
+                ],
+            },
+        )
+    for i in retained - populated:
+        write(
+            stage / "genres" / f"{public[i]}.json",
+            {"genre": catalog[i], "members": [], "related": None},
+        )
+    graph = pl.read_parquet(m1 / "tfidf.parquet")
+    if (
+        graph.select("item", "neighbor").n_unique() != len(graph)
+        or (graph["item"] == graph["neighbor"]).any()
+        or graph["score"].null_count()
+        or not graph["score"].is_finite().all()
+        or not graph["score"].is_between(0, 1).all()
+        or not set(graph["item"]) <= set(artists["item"])
+    ):
+        raise ValueError("Invalid M1 similarity graph")
+    mapped = graph.join(
+        artists.select(pl.col("item").alias("neighbor"), "artist_mbid"), on="neighbor"
+    )
+    if len(mapped) != len(graph):
+        raise ValueError("Unknown M1 neighbor")
+    neighbors = iter(
+        mapped.sort(["item", "score", "artist_mbid"], descending=[False, True, False])
+        .group_by("item", maintain_order=True)
+        .agg("artist_mbid", "score")
+        .iter_rows()
+    )
+    next_row = next(neighbors, None)
+    for item, mbid in artists.select("item", "artist_mbid").iter_rows():
+        similar = None
+        if next_row is not None and next_row[0] == item:
+            similar = [
+                {"artist": summaries[m], "score": s}
+                for m, s in zip(next_row[1], next_row[2], strict=True)
+            ]
+            next_row = next(neighbors, None)
+        write(
+            stage / "artists" / f"{mbid}.json",
+            {
+                "artist": summaries[mbid],
+                "genres": artist_genres.get(mbid, []),
+                "similar": similar,
+                "signals": ["listening"],
+                "links": [],
+                "preview": None,
+            },
+        )
+    genres_index = sorted(catalog.values(), key=lambda r: r["id"])
+    write(stage / "genres.json", genres_index)
+    search = [
+        {"kind": "genre", "id": g["id"], "name": g["name"], "aliases": g["aliases"]}
+        for g in genres_index
+    ]
+    search.extend(
+        {"kind": "artist", "id": i, "name": summaries[i]["name"], "aliases": []}
+        for i in sorted(summaries)
+    )
+    write(stage / "search.json", search)
+    write(
+        stage / "manifest.json",
+        {
+            "schema_version": 1,
+            "release_id": run.name,
+            "data_kind": "model",
+            "layouts": layouts,
+            "membership": "all-label propagation and Leiden membership",
+            "similarity": "M1 TF-IDF cosine top-50",
+            "genre_similarity": None,
+            "genres": "genres.json",
+            "search": "search.json",
+        },
+    )
+    files = list(stage.rglob("*.json"))
+    summary = {
+        "genres": len(catalog),
+        "artists": len(summaries),
+        "memberships": len(memberships),
+        "similarities": len(graph),
+        "files": len(files),
+        "bytes": sum(p.stat().st_size for p in files),
+        "registry_sha256": hashlib.sha256(registry.read_bytes()).hexdigest(),
+        "grouping": groups,
+        "readability": readability,
+        "placement": {
+            kind: {
+                family: sum(
+                    value[family] is not None for (k, _), value in placed.items() if k == kind
+                )
+                for family in ["axes", "islands"]
+            }
+            for kind in ["genre", "artist"]
+        },
+        "inputs": hashes,
+        **leak,
+        "seconds": time.monotonic() - start,
+    }
+    write(run / "genre_ids.json", mapping)
+    write(run / "release-summary.json", summary)
+    stage.rename(target)
+    tags.log(
+        run,
+        "m2d_export",
+        summary,
+        True,
+        "contract v1; cached all-label model scores; no eval changes",
+    )
+
+
+def execute(stage, config, run):
+    try:
+        export(config, run)
+    except Exception as error:
+        tags.log(run, "m2d_export", {"status": "failed", "error": str(error)})
+        raise
