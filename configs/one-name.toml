@@ -9,5 +9,6 @@ levels = ["leiden-k20-r256", "leiden-k20-r1024", "leiden-k20-r4096", "micro"]
 identity_jaccard = 0.8
 group_siblings = true
 group_globally = true
+vocabulary = "data/m2f/vocabulary.parquet"
 layout = "runs/cdd46331af0a"
 readable_names = true
