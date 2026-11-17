@@ -190,7 +190,7 @@ models/releases. Member counts count the full member list; listener counts count
 listeners. Null counts are not zero. Embedded summaries must equal their canonical detail.
 
 Preview locators identify a Deezer/iTunes track; clients fetch current playable URLs at runtime
-and handle unavailability. Releases contain no audio, signed media URLs, raw reference labels,
+and handle unavailability. Releases contain no audio, signed media URLs, raw reference datasets,
 training matrices or embeddings. Load only manifest/indexes initially and detail shards on selection;
 PMTiles and larger search/pagination formats can be added with a future schema version rather than
 inventing a second entity model. This v1 validates complete unpaginated member lists. Publish
