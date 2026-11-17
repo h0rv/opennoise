@@ -13,7 +13,7 @@ from scipy import sparse
 
 from opennoise import naming, tags
 from opennoise.genres import split_labels
-from opennoise.metrics import normalized_name
+from opennoise.metrics import normalized_name, sealed
 
 PREFIXES = """PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX wd: <http://www.wikidata.org/entity/>
@@ -26,7 +26,7 @@ QUERIES = {
     "vocabulary": """SELECT DISTINCT ?genre ?label ?alias ?parent WHERE {
 { SELECT DISTINCT ?genre WHERE {
 { ?genre wdt:P31 wd:Q188451 } UNION { ?genre wdt:P279+ wd:Q188451 }
-UNION { ?artist wdt:P434 []; wdt:P136 ?genre } } }
+} }
 OPTIONAL { ?genre rdfs:label ?label FILTER(LANG(?label) = "en") }
 OPTIONAL { ?genre skos:altLabel ?alias FILTER(LANG(?alias) = "en") }
 OPTIONAL { ?genre wdt:P279 ?parent } }""",
@@ -62,14 +62,18 @@ def ingest(config, run):
         print((root / "coverage.json").read_text(), flush=True)
         return
     start = time.monotonic()
-    links = pl.DataFrame(
-        [
-            (r["mbid"]["value"].lower(), r["genre"]["value"].rsplit("/", 1)[-1])
-            for r in fetch(config, "artist_genres")
-        ],
-        schema={"artist_mbid": pl.String, "qid": pl.String},
-        orient="row",
-    ).unique()
+    links = (
+        pl.DataFrame(
+            [
+                (r["mbid"]["value"].lower(), r["genre"]["value"].rsplit("/", 1)[-1])
+                for r in fetch(config, "artist_genres")
+            ],
+            schema={"artist_mbid": pl.String, "qid": pl.String},
+            orient="row",
+        )
+        .unique()
+        .filter(~pl.col("artist_mbid").map_elements(sealed, return_dtype=pl.Boolean))
+    )
     names, parents = [], []
     for row in fetch(config, "vocabulary"):
         qid = row["genre"]["value"].rsplit("/", 1)[-1]
@@ -141,6 +145,7 @@ def evidence(config, artists):
     columns = {qid: i for i, qid in enumerate(identifiers)}
     links = (
         pl.read_parquet(root / "artist_genres.parquet")
+        .filter(~pl.col("artist_mbid").map_elements(sealed, return_dtype=pl.Boolean))
         .join(artists.select("item", "artist_mbid"), on="artist_mbid")
         .filter(pl.col("qid").is_in(identifiers))
     )

@@ -27,7 +27,11 @@ def main() -> None:
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
     start = time.monotonic()
-    if config.get("milestone") == "m2d":
+    if config.get("milestone") == "gen":
+        from opennoise.generalization import execute
+
+        execute(args.stage, config, run)
+    elif config.get("milestone") == "m2d":
         from opennoise.catalog import execute
 
         execute(args.stage, config, run)
