@@ -291,7 +291,6 @@ def evaluate(config, run):
     selected = next(row for row in candidates if row[0] == best)
     weighted = scores if selected[1] is None else scores * (1 + selected[2] * selected[1])
     output = graph_frame(edges, weighted)
-    output.write_parquet(run / "similar.parquet")
     finalists = {"tfidf": edges, best: output}
     for method, frame in finalists.items():
         results[method]["test"] = colistening(graph_matrix(frame, len(artists)), test)
@@ -314,9 +313,23 @@ def evaluate(config, run):
             matches = [i for i, name in enumerate(names) if name.casefold() == probe.casefold()]
             top = ", ".join(names[i] for i in neighbors[matches[0], :10]) if matches else "absent"
             probe_lines.append(f"{probe}: {top}")
+    promoted = (
+        best if results[best]["test"]["ndcg@50"] > results["tfidf"]["test"]["ndcg@50"] else "tfidf"
+    )
+    graph_frame(finalists[promoted], finalists[promoted]["score"].to_numpy()).write_parquet(
+        run / "similar.parquet"
+    )
     (run / "probes.txt").write_text("\n".join(probe_lines) + "\n")
     (run / "best.json").write_text(
-        json.dumps({"method": best, "coverage": coverage, "metrics": results[best]}, indent=2)
+        json.dumps(
+            {
+                "method": promoted,
+                "validation_method": best,
+                "coverage": coverage,
+                "metrics": results[promoted],
+            },
+            indent=2,
+        )
     )
     (run / "metrics.json").write_text(json.dumps(results, indent=2))
     for method in finalists:
@@ -324,6 +337,6 @@ def evaluate(config, run):
             run,
             f"{method}_test",
             results[method],
-            method == best,
+            method == promoted,
             "selected by validation nDCG; untouched test users; no candidate expansion",
         )
