@@ -1,10 +1,20 @@
 import type { Genre } from './catalog';
-import { LabelGrid, labelBox, priority, visibleDepth, type Box } from './label-grid';
+import { hasShortcutModifier } from './keyboard';
+import {
+  LabelGrid,
+  baseName,
+  claimName,
+  labelBox,
+  priority,
+  visibleDepth,
+  type Box,
+} from './label-grid';
 
 type Camera = { x: number; y: number; scale: number };
 type Item = {
   id: string;
   name: string;
+  label: string;
   x: number;
   y: number;
   count: number;
@@ -63,14 +73,16 @@ export class MapCanvas {
       const size = Math.min(16, 13 + Math.floor(Math.log10(Math.max(1, genre.member_count ?? 0))));
       const font = `${depth ? '400' : '600'} ${size}px Helvetica, Arial, sans-serif`;
       this.context.font = font;
+      const label = baseName(genre.name);
       const item: Item = {
         id: genre.id,
         name: genre.name,
+        label,
         x: 90 + point.x * 820,
         y: 65 + point.y * 440,
         count: genre.member_count ?? 0,
         depth,
-        width: this.context.measureText(genre.name).width,
+        width: this.context.measureText(label).width,
         size,
         font,
         kind: 'genre',
@@ -90,6 +102,15 @@ export class MapCanvas {
     this.resize();
     if (camera) this.camera = { ...camera };
     const options = { signal: this.abort.signal };
+    element.addEventListener(
+      'dblclick',
+      (event) => {
+        event.preventDefault();
+        const rect = element.getBoundingClientRect();
+        this.zoom(1.7, { x: event.clientX - rect.left, y: event.clientY - rect.top });
+      },
+      options,
+    );
     element.addEventListener(
       'wheel',
       (event) => {
@@ -120,9 +141,9 @@ export class MapCanvas {
         const previous = this.pointers.get(event.pointerId);
         if (!previous) {
           const rect = element.getBoundingClientRect();
-          element.style.cursor = this.hit(event.clientX - rect.left, event.clientY - rect.top)
-            ? 'pointer'
-            : 'grab';
+          const item = this.hit(event.clientX - rect.left, event.clientY - rect.top);
+          element.style.cursor = item ? 'pointer' : 'grab';
+          element.title = item?.name || '';
           return;
         }
         const other = [...this.pointers].find(([id]) => id !== event.pointerId)?.[1];
@@ -154,8 +175,8 @@ export class MapCanvas {
       (event) => {
         if (!this.moved) {
           const rect = element.getBoundingClientRect();
-          const label = this.hit(event.clientX - rect.left, event.clientY - rect.top);
-          if (label) this.open(label.item.kind, label.item.id);
+          const item = this.hit(event.clientX - rect.left, event.clientY - rect.top);
+          if (item) this.open(item.kind, item.id);
         }
         this.pointers.delete(event.pointerId);
       },
@@ -169,6 +190,7 @@ export class MapCanvas {
     element.addEventListener(
       'keydown',
       (event) => {
+        if (hasShortcutModifier(event)) return;
         const directions: Record<string, [number, number]> = {
           ArrowLeft: [64, 0],
           ArrowRight: [-64, 0],
@@ -258,10 +280,11 @@ export class MapCanvas {
       this.context.font = font;
       this.artist = {
         ...artist,
+        label: baseName(artist.name),
         x: 90 + artist.x * 820,
         y: 65 + artist.y * 440,
         size: 15,
-        width: this.context.measureText(artist.name).width,
+        width: this.context.measureText(baseName(artist.name)).width,
         font,
         count: Infinity,
         depth: 0,
@@ -291,9 +314,28 @@ export class MapCanvas {
   }
 
   private hit(x: number, y: number) {
-    return this.labels.find(
+    const label = this.labels.find(
       ({ box }) => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom,
     );
+    if (label) return label.item;
+    const { scale, x: dx, y: dy } = this.camera;
+    const wx = (x - dx) / scale,
+      wy = (y + 4 - dy) / scale,
+      radius = 6 / scale;
+    const depth = visibleDepth(scale, this.home.scale);
+    let closest: Item | undefined,
+      distance = 36;
+    for (let a = Math.floor((wx - radius) / 16); a <= Math.floor((wx + radius) / 16); a++)
+      for (let b = Math.floor((wy - radius) / 16); b <= Math.floor((wy + radius) / 16); b++)
+        for (const item of this.points.get(`${a}:${b}`) || []) {
+          if (item.depth > depth && item.id !== this.selected) continue;
+          const d = ((item.x - wx) * scale) ** 2 + ((item.y - wy) * scale) ** 2;
+          if (d < distance) {
+            closest = item;
+            distance = d;
+          }
+        }
+    return closest;
   }
 
   redraw() {
@@ -341,8 +383,19 @@ export class MapCanvas {
     const selected = candidates.findIndex((item) => item.id === this.selected);
     if (selected > 0) candidates.unshift(...candidates.splice(selected, 1));
     if (this.artist) candidates.unshift(this.artist);
+    ctx.fillStyle = '#c2c2c2';
+    ctx.beginPath();
+    for (const item of candidates) {
+      const px = item.x * scale + x,
+        py = item.y * scale + y;
+      ctx.moveTo(px + 2.5, py - 4);
+      ctx.arc(px, py - 4, 2.5, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    const names = new Set<string>();
     this.labels = [];
     for (const item of candidates) {
+      if (!claimName(item.label, names)) continue;
       const px = item.x * scale + x,
         py = item.y * scale + y;
       const placement = labelBox(px, py, item.width, item.size, viewport);
@@ -353,7 +406,7 @@ export class MapCanvas {
       ctx.beginPath();
       ctx.arc(px, py - 4, 2.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillText(item.name, textX, py);
+      ctx.fillText(item.label, textX, py);
       this.labels.push({ item, box, x: px, y: py });
     }
     const focus = this.labels[this.focusIndex];

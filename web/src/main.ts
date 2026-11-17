@@ -1,4 +1,5 @@
 import { Catalog } from './data';
+import { GenreTree } from './genre-tree';
 import { MapCanvas } from './map-canvas';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import './style.css';
@@ -46,14 +47,6 @@ async function start() {
   let controller = new AbortController();
   let map: MapCanvas | undefined;
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
-  const expanded = new Set<string>();
-  const pages = new Map<string | null, number>();
-  const children = new Map<string | null, Genre[]>();
-  for (const genre of catalog.genres) {
-    const list = children.get(genre.parent_id);
-    if (list) list.push(genre);
-    else children.set(genre.parent_id, [genre]);
-  }
   let trail: Selection[] = [];
   let storageAvailable = true;
   const storageKey = `opennoise:trail:${catalog.manifest.release_id}`;
@@ -94,6 +87,10 @@ async function start() {
   const results = document.querySelector<HTMLElement>('#results')!;
   const trailPanel = document.querySelector<HTMLElement>('#trail')!;
   const status = document.querySelector<HTMLElement>('#status')!;
+  const hierarchy = new GenreTree(
+    catalog.genres,
+    (selection) => void select(selection, true, false),
+  );
 
   function entityButton(
     kind: Selection['kind'],
@@ -103,27 +100,6 @@ async function start() {
     color?: string | null,
   ) {
     return `<button class="entity-row" data-kind="${kind}" data-id="${escape(id)}" aria-pressed="${selected?.kind === kind && selected.id === id}">${rank === undefined ? '' : `<span class="number">${String(rank).padStart(2, '0')}</span>`}<span class="dot" style="background:${escape(color || '#111111')}"></span><span>${escape(name)}</span></button>`;
-  }
-
-  function tree(parent: string | null): string {
-    const list = children.get(parent) || [];
-    const limit = pages.get(parent) || 50;
-    let shown = list.slice(0, limit);
-    if (selected?.kind === 'genre') {
-      let chosen = genres.get(selected.id);
-      while (chosen && chosen.parent_id !== parent)
-        chosen = chosen.parent_id ? genres.get(chosen.parent_id) : undefined;
-      if (chosen && !shown.includes(chosen)) shown = [chosen, ...shown];
-    }
-    return `<ul>${shown
-      .map((genre) => {
-        const hasChildren = children.has(genre.id);
-        const node = `<span class="tree-node">${entityButton('genre', genre.id, genre.name, undefined, genre.color)}<span class="muted">${count(genre.member_count)}</span></span>`;
-        return `<li>${hasChildren ? `<details data-tree="${escape(genre.id)}" ${expanded.has(genre.id) ? 'open' : ''}><summary>${node}</summary><div data-branch>${expanded.has(genre.id) ? tree(genre.id) : ''}</div></details>` : node}</li>`;
-      })
-      .join(
-        '',
-      )}${list.length > limit ? `<li><button data-more="${escape(parent || '')}">Show 50 more (${list.length - limit} remaining)</button></li>` : ''}</ul>`;
   }
 
   function updateMapSelection(reveal = false) {
@@ -153,17 +129,10 @@ async function start() {
       map = undefined;
     }
     if (view === 'tree') {
-      if (selected?.kind === 'genre') {
-        let genre = genres.get(selected.id);
-        if (genre) expanded.add(genre.id);
-        while (genre?.parent_id) {
-          expanded.add(genre.parent_id);
-          genre = genres.get(genre.parent_id);
-        }
-      }
-      canvas.innerHTML = `<div class="tree" aria-label="Genre hierarchy">${tree(null)}</div>`;
+      hierarchy.show(canvas, selected, detail);
       return;
     }
+    hierarchy.hide();
     const axes = catalog.manifest.layouts.axes;
     canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search or tree reaches every genre."></canvas></div>
       ${view === 'axes' && axes ? `<div class="axis-legend"><span>Left → right: ${escape(axes.x_min)} → ${escape(axes.x_max)}</span><span>Up → down: ${escape(axes.y_min)} → ${escape(axes.y_max)}</span></div>` : ''}
@@ -314,10 +283,11 @@ async function start() {
       params.set('kind', selected.kind);
       params.set('id', selected.id);
     }
-    history.pushState(null, '', `#${params}`);
+    const hash = `#${params}`;
+    if (location.hash !== hash) history.pushState(null, '', hash);
   }
 
-  async function select(selection: Selection, push = true) {
+  async function select(selection: Selection, push = true, focusDetails = true) {
     controller.abort();
     controller = new AbortController();
     selected = selection;
@@ -333,16 +303,18 @@ async function start() {
           : await catalog.artist(selection.id, controller.signal);
       if (selected !== selection) return;
       detail = loaded;
-      if ('artist' in loaded)
+      if ('artist' in loaded) {
         lookup.set(`artist:${loaded.artist.id}`, {
           kind: 'artist',
           id: loaded.artist.id,
           name: loaded.artist.name,
           aliases: [],
         });
+        renderTrail();
+      }
       renderDetail();
       renderCanvas(true);
-      drawer.focus({ preventScroll: true });
+      if (focusDetails) drawer.focus({ preventScroll: true });
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
         return;
@@ -380,6 +352,18 @@ async function start() {
     }
   }
 
+  async function loadSearchIndex() {
+    const entries = await catalog.loadSearch();
+    if (entries === indexedSearch) return;
+    searchIndex = entries.map((entry) => ({
+      entry,
+      terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
+    }));
+    for (const entry of entries) lookup.set(`${entry.kind}:${entry.id}`, entry);
+    indexedSearch = entries;
+    renderTrail();
+  }
+
   search.addEventListener('input', async () => {
     const query = search.value.trim().toLocaleLowerCase();
     if (!query) {
@@ -388,15 +372,7 @@ async function start() {
     }
     results.innerHTML = '<p role="status">Searching…</p>';
     try {
-      const entries = await catalog.loadSearch();
-      if (entries !== indexedSearch) {
-        searchIndex = entries.map((entry) => ({
-          entry,
-          terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
-        }));
-        for (const entry of entries) lookup.set(`${entry.kind}:${entry.id}`, entry);
-        indexedSearch = entries;
-      }
+      await loadSearchIndex();
     } catch {
       if (search.value.trim().toLocaleLowerCase() === query)
         results.innerHTML =
@@ -428,7 +404,7 @@ async function start() {
   });
   app.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>(
-      '[data-kind], [data-view], [data-more], [data-zoom], [data-remove], button[id]',
+      '[data-kind], [data-view], [data-zoom], [data-remove], button[id]',
     );
     if (!target) return;
     if (target.dataset.kind && target.dataset.id) {
@@ -439,15 +415,6 @@ async function start() {
       view = target.dataset.view as View;
       writeURL();
       renderCanvas();
-      return;
-    }
-    if (target.dataset.more !== undefined) {
-      const parent = target.dataset.more || null;
-      pages.set(parent, (pages.get(parent) || 50) + 50);
-      const branch = parent
-        ? canvas.querySelector(`[data-tree="${CSS.escape(parent)}"] > [data-branch]`)
-        : canvas.querySelector('.tree');
-      if (branch) branch.innerHTML = tree(parent);
       return;
     }
     if (target.dataset.zoom === 'in') zoomMap(1.35);
@@ -468,7 +435,15 @@ async function start() {
       document
         .querySelector('#trail-toggle')!
         .setAttribute('aria-expanded', String(!trailPanel.hidden));
-      if (!trailPanel.hidden) trailPanel.scrollIntoView({ block: 'nearest' });
+      if (!trailPanel.hidden) {
+        status.textContent = '';
+        trailPanel.scrollIntoView({ block: 'nearest' });
+        if (trail.some((entry) => !lookup.has(`${entry.kind}:${entry.id}`)))
+          void loadSearchIndex().catch(() => {
+            if (!trailPanel.hidden)
+              status.textContent = 'Saved names unavailable. Close and reopen Saved to retry.';
+          });
+      }
     }
   });
   app.addEventListener('keydown', (event) => {
@@ -480,23 +455,6 @@ async function start() {
       (event.target as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
     }
   });
-  canvas.addEventListener(
-    'toggle',
-    (event) => {
-      const target = event.target;
-      if (target instanceof HTMLDetailsElement && target.dataset.tree) {
-        const branch = target.querySelector<HTMLElement>(':scope > [data-branch]')!;
-        if (target.open) {
-          expanded.add(target.dataset.tree);
-          if (!branch.childElementCount) branch.innerHTML = tree(target.dataset.tree);
-        } else {
-          expanded.delete(target.dataset.tree);
-          branch.replaceChildren();
-        }
-      }
-    },
-    true,
-  );
   document.addEventListener('keydown', (event) => {
     if (event.key === '/' && !(event.target instanceof HTMLInputElement)) {
       event.preventDefault();
@@ -511,6 +469,9 @@ async function start() {
     if (!(event.target as Element).closest('.search-wrap')) results.innerHTML = '';
   });
   window.addEventListener('popstate', restoreURL);
+  window.addEventListener('resize', () => {
+    if (view === 'tree') hierarchy.resize();
+  });
   renderTrail();
   restoreURL();
 }

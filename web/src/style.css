@@ -1,5 +1,7 @@
 :root {
-  font-family: Helvetica, Arial, sans-serif;
+  font-family:
+    Helvetica, Arial, system-ui, 'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP',
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   color: #111;
   background: #fff;
   font-synthesis: none;
@@ -214,7 +216,9 @@ body > header > :last-child {
   outline-offset: -3px;
 }
 .map-viewport text {
-  font-family: Helvetica, Arial, sans-serif;
+  font-family:
+    Helvetica, Arial, system-ui, 'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP',
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   fill: #111;
   paint-order: stroke;
   stroke: #fff;
@@ -347,41 +351,66 @@ aside > button {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.tree {
-  flex: 1;
-  padding: 24px;
-  overflow: auto;
-}
-.tree ul {
-  list-style: none;
-  margin: 0;
-  padding-left: 24px;
-  border-left: 1px solid var(--line);
-}
-.tree > ul {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 24px;
-  align-items: start;
-  padding-left: 0;
-  border: 0;
-}
-.tree li {
-  padding-block: 4px;
-}
-.tree summary {
-  cursor: pointer;
-}
-.tree .entity-row {
+.tree-map {
+  display: flex;
   flex: 1;
   min-width: 0;
-  width: auto;
-  border: 0;
-  padding-inline: 8px;
+  flex-direction: column;
 }
-.tree .muted {
-  font-size: 11px;
-  white-space: nowrap;
+.tree-viewport svg {
+  position: absolute;
+  inset: 0 auto auto 0;
+  min-height: 0;
+}
+.tree-links path {
+  fill: none;
+  stroke: #aaa;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.tree-node {
+  cursor: pointer;
+}
+.tree-node rect {
+  fill: transparent;
+}
+.tree-node text {
+  font-size: 16px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.tree-artist text,
+.tree-more text,
+.tree-status text {
+  font-size: 13px;
+  font-weight: 400;
+}
+.tree-more text {
+  text-decoration: underline;
+}
+.tree-status {
+  cursor: default;
+}
+.tree-status text {
+  fill: var(--muted);
+}
+.tree-node:hover rect {
+  fill: #eee;
+}
+.tree-node[aria-selected='true'] rect {
+  fill: #111;
+}
+.tree-node[aria-selected='true'] text {
+  fill: #fff;
+  stroke: none;
+}
+.tree-node:focus {
+  outline: none;
+}
+.tree-node:focus-visible rect {
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 .trail {
   margin-top: 24px;
@@ -424,9 +453,6 @@ body > header h1 {
   margin: 0;
   font-size: inherit;
 }
-.workspace:has(.tree) {
-  min-height: 620px;
-}
 .families {
   display: flex;
   gap: 6px;
@@ -439,27 +465,6 @@ body > header h1 {
 }
 .families button:focus-visible {
   outline-offset: -3px;
-}
-.tree > ul > li {
-  padding-top: 8px;
-  border-top: 2px solid #111;
-}
-.tree-node {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: calc(100% - 20px);
-}
-.tree li > .tree-node {
-  display: flex;
-  width: 100%;
-}
-.tree .entity-row > span:last-child {
-  overflow-wrap: anywhere;
-}
-.tree > ul > li > details > summary .entity-row {
-  font-weight: 700;
 }
 #status {
   margin-block: 16px;
@@ -484,9 +489,6 @@ body > header h1 {
 @media (max-width: 760px) {
   .brand {
     font-size: 25px;
-  }
-  .canvas:has(.tree) {
-    min-height: 0;
   }
   body > header {
     gap: 16px;
@@ -538,12 +540,6 @@ body > header h1 {
     border-top: 1px solid #111;
     padding: 24px 0;
     max-height: none;
-  }
-  .tree {
-    padding: 20px 0;
-  }
-  .tree ul {
-    padding-left: 16px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -164,3 +164,59 @@ def readable(rows, parents, memberships, artists, public):
         "renamed": len(rename),
         "exhausted_member_names": fallback,
     }
+
+
+def global_names(rows, parents, memberships, keys):
+    before = parents.copy()
+    for i in parents:
+        parent, seen = parents[i], {i}
+        while parent is not None:
+            if parent not in parents or parent in seen:
+                raise ValueError("Invalid genre hierarchy")
+            seen.add(parent)
+            parent = parents[parent]
+    buckets = defaultdict(list)
+    for row in rows:
+        buckets[normalized_name(row["name"].split(" · ")[0])].append(row)
+    additions, records, added_keys = {}, [], {}
+    next_id = max(parents, default=-1) + 1
+    for name, group in sorted(buckets.items()):
+        candidates = [r for r in group if r["level"] in {-1, -2} or parents[r["id"]] is None]
+        if candidates:
+            anchor = min(
+                candidates,
+                key=lambda r: (r["level"] != -1, before[r["id"]] is not None, keys[r["id"]]),
+            )
+        else:
+            anchor = {"id": next_id, "name": group[0]["name"].split(" · ")[0], "level": -2}
+            next_id += 1
+            rows.append(anchor)
+            key = "group:global:" + name
+            added_keys[anchor["id"]] = key
+            records.append({"key": key, "scope": "group", "name": anchor["name"], "members": []})
+            additions.update({r["id"]: anchor["id"] for r in group})
+        parents[anchor["id"]] = None
+        for row in group:
+            if row["id"] != anchor["id"]:
+                parents[row["id"]] = anchor["id"]
+    if additions:
+        edges = (
+            memberships.filter(pl.col("genre").is_in(list(additions)))
+            .with_columns(pl.col("genre").replace_strict(additions).alias("genre"))
+            .group_by("genre", "artist")
+            .agg(pl.col("score").max())
+            .select(memberships.columns)
+        )
+        memberships = pl.concat([memberships, edges])
+    return (
+        memberships,
+        records,
+        added_keys,
+        {
+            "names": len(buckets),
+            "roots": sum(p is None for p in parents.values()),
+            "top_level_nodes_per_name": {"1": len(buckets)},
+            "reparented": sum(parents[i] != parent for i, parent in before.items()),
+            "minted": len(records),
+        },
+    )

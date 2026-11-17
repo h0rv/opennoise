@@ -60,6 +60,35 @@ def hierarchy(rows, retained):
     return result
 
 
+def group_coordinates(ids, memberships, public, placed):
+    edges = memberships.filter(pl.col("genre").is_in(list(ids)) & (pl.col("score") > 0))
+    for family in ["axes", "islands"]:
+        points = pl.DataFrame(
+            [
+                (i, p[family]["x"], p[family]["y"])
+                for (kind, i), p in placed.items()
+                if kind == "artist" and p[family] is not None
+            ],
+            schema={"artist": pl.String, "x": pl.Float64, "y": pl.Float64},
+            orient="row",
+        )
+        centers = (
+            edges.join(points, on="artist")
+            .group_by("genre")
+            .agg(
+                *[
+                    ((pl.col(c) * pl.col("score")).sum() / pl.col("score").sum()).alias(c)
+                    for c in ["x", "y"]
+                ]
+            )
+        )
+        for i, x, y in centers.select("genre", "x", "y").iter_rows():
+            placed.setdefault(("genre", public[i]), {"axes": None, "islands": None})[family] = {
+                "x": x,
+                "y": y,
+            }
+
+
 def audit(config, genres, memberships, artists):
     supervised = genres.filter(pl.col("level") == -1).select("id", "name")
     model = pl.read_parquet(Path(config["refit"]) / "memberships.parquet")
@@ -149,7 +178,7 @@ def export(config, run):
         records.append({"key": key, "scope": scope, "name": row["name"], "members": ids})
     registry = Path(config["registry"])
     previous_groups = []
-    if config.get("group_siblings") and registry.exists():
+    if (config.get("group_siblings") or config.get("group_globally")) and registry.exists():
         previous_groups = [
             {k: r[k] for k in ["key", "scope", "name", "members"]}
             for r in json.loads(registry.read_text())["genres"]
@@ -157,17 +186,24 @@ def export(config, run):
         ]
     assigned = identities.assign(registry, records + previous_groups, config["identity_jaccard"])
     public = {i: assigned[key]["id"] for i, key in keys.items()}
-    groups = {}
+    groups, global_groups, global_keys = {}, {}, {}
     if config.get("group_siblings"):
         memberships, added, group_keys, groups = grouping.siblings(
             rows, parents, memberships, public
         )
         records.extend(added)
         keys.update(group_keys)
+    if config.get("group_globally"):
+        memberships, added, global_keys, global_groups = grouping.global_names(
+            rows, parents, memberships, keys
+        )
+        records.extend(added)
+        keys.update(global_keys)
+    if config.get("group_siblings") or config.get("group_globally"):
         assigned = identities.assign(registry, records, config["identity_jaccard"])
         public = {i: assigned[key]["id"] for i, key in keys.items()}
         retained = set(public)
-        for group in groups["largest"]:
+        for group in groups.get("largest", []):
             group["id"] = public[group.pop("local_id")]
     inputs = [
         Path(config[key]) / file
@@ -208,6 +244,8 @@ def export(config, run):
     (stage / "genres").mkdir()
     positions = {"axes": None, "islands": None}
     placed, layouts = coordinates(config, public.values(), artists["artist_mbid"])
+    if config.get("layout") and global_keys:
+        group_coordinates(global_keys, memberships, public, placed)
     summaries = {
         mbid: {
             "id": mbid,
@@ -344,6 +382,7 @@ def export(config, run):
         "bytes": sum(p.stat().st_size for p in files),
         "registry_sha256": hashlib.sha256(registry.read_bytes()).hexdigest(),
         "grouping": groups,
+        "global_grouping": global_groups,
         "readability": readability,
         "placement": {
             kind: {
