@@ -12,6 +12,7 @@ export class Catalog {
   manifest!: Manifest;
   genres!: Genres;
   search!: Search;
+  private searching?: Promise<Search>;
   readonly url = new URL(
     import.meta.env.VITE_CATALOG_URL || '/catalog/manifest.json',
     location.href,
@@ -35,11 +36,27 @@ export class Catalog {
 
   async load() {
     this.manifest = await this.read(this.url.href, 'Manifest');
-    [this.genres, this.search] = await Promise.all([
-      this.read<Genres>(this.manifest.genres, 'Genres'),
-      this.read<Search>(this.manifest.search, 'Search'),
-    ]);
+    this.genres = await this.read<Genres>(this.manifest.genres, 'Genres');
+    this.search = this.genres.map(({ id, name, aliases }) => ({
+      kind: 'genre',
+      id,
+      name,
+      aliases,
+    }));
     return this;
+  }
+
+  loadSearch(): Promise<Search> {
+    this.searching ??= this.read<Search>(this.manifest.search, 'Search')
+      .then((entries) => {
+        this.search = entries;
+        return entries;
+      })
+      .catch((error) => {
+        this.searching = undefined;
+        throw error;
+      });
+    return this.searching;
   }
 
   genre(id: string, signal: AbortSignal) {
