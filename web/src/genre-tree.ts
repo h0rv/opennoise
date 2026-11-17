@@ -57,7 +57,7 @@ export class GenreTree {
       this.children.set(genre.parent_id, siblings);
     }
     this.element.className = 'tree-map';
-    this.element.innerHTML = `<div class="map-viewport tree-viewport" tabindex="0" role="group" aria-label="Genre tree; arrows pan, plus and minus zoom, zero fits"><svg role="tree" aria-label="Genre and artist hierarchy"><g class="tree-content"><g class="tree-links"></g><g class="tree-labels"></g></g></svg></div><div class="map-bottom"><div class="zoom" aria-label="Tree branches"><button data-tree-expand="all">Expand all</button><button data-tree-expand="none" disabled>Collapse all</button></div><div class="zoom" aria-label="Tree controls"><button data-tree-zoom="out" aria-label="Zoom tree out">−</button><button data-tree-zoom="in" aria-label="Zoom tree in">+</button><button data-tree-zoom="reset">Reset</button></div></div>`;
+    this.element.innerHTML = `<div class="map-viewport tree-viewport" tabindex="0" role="group" aria-label="Genre tree; arrows pan, plus and minus zoom, zero fits"><svg role="tree" aria-label="Genre and artist hierarchy"><g class="tree-content"><g class="tree-links"></g><g class="tree-labels"></g></g></svg></div><div class="map-bottom"><button data-tree-collapse>Collapse all</button><div class="zoom" aria-label="Tree controls"><button data-tree-zoom="out" aria-label="Zoom tree out">−</button><button data-tree-zoom="in" aria-label="Zoom tree in">+</button><button data-tree-zoom="reset">Reset</button></div></div>`;
     this.viewport = this.element.querySelector('.tree-viewport')!;
     this.diagram = this.element.querySelector('svg')!;
     this.content = this.element.querySelector('.tree-content')!;
@@ -65,8 +65,7 @@ export class GenreTree {
     this.labels = this.element.querySelector('.tree-labels')!;
     this.element.addEventListener('click', (event) => {
       const target = event.target as Element;
-      const expand = target.closest<HTMLElement>('[data-tree-expand]')?.dataset.treeExpand;
-      if (expand) this.expandAll(expand === 'all');
+      if (target.closest('[data-tree-collapse]')) this.collapseAll();
       const zoom = target.closest<HTMLElement>('[data-tree-zoom]')?.dataset.treeZoom;
       if (zoom === 'reset') this.fit();
       if (zoom === 'in') this.navigation?.zoomBy(1.35);
@@ -164,14 +163,12 @@ export class GenreTree {
     this.paint();
   }
 
-  private expandAll(expand: boolean) {
+  private collapseAll() {
+    if (!this.expanded.size) return;
     let anchor = this.scene.byKey.get(this.focused)?.node;
-    if (!expand) {
-      while (anchor?.parent) anchor = this.scene.byKey.get(anchor.parent)?.node;
-      this.focused = anchor?.key || '';
-    }
+    while (anchor?.parent) anchor = this.scene.byKey.get(anchor.parent)?.node;
+    this.focused = anchor?.key || '';
     this.expanded.clear();
-    if (expand) for (const id of this.genres.keys()) this.expanded.add(id);
     this.draw(anchor?.key || '');
     this.reveal(this.focused);
     this.paint();
@@ -224,10 +221,6 @@ export class GenreTree {
     this.keyboard.forEach((node, index) => this.keyboardIndex.set(node.key, index));
     if (!this.scene.byKey.has(this.focused)) this.focused = this.keyboard[0]?.key || '';
     this.dirty = false;
-    this.element.querySelector<HTMLButtonElement>('[data-tree-expand="all"]')!.disabled =
-      this.expanded.size === this.genres.size;
-    this.element.querySelector<HTMLButtonElement>('[data-tree-expand="none"]')!.disabled =
-      this.expanded.size === 0;
     this.sizeDiagram();
     const next = this.scene.byKey.get(anchor)?.node;
     if (old && next && this.navigation) {
