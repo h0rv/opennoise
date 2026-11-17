@@ -11,8 +11,10 @@ const escape = (value: unknown) =>
     /[&<>"']/g,
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!,
   );
-const count = (value: number | null) =>
-  value === null ? 'Count unavailable' : `${value.toLocaleString()} artists`;
+const count = (value: number | null, noun = 'artist') =>
+  value === null
+    ? 'Count unavailable'
+    : `${value.toLocaleString()} ${noun}${value === 1 ? '' : 's'}`;
 const modes: Record<View, { label: string; description: string }> = {
   islands: {
     label: 'Islands',
@@ -67,7 +69,7 @@ async function start() {
   }
 
   app.innerHTML = `
-    <section class="catalog-summary"><h1>Explore genres</h1><p><span class="data-note">${catalog.manifest.data_kind === 'synthetic' ? 'Synthetic fixture — not model results' : 'Model-derived catalog'}</span> / ${catalog.genres.length} genres</p></section>
+    <section class="catalog-summary"><h1>Explore genres</h1><p><span class="data-note">${catalog.manifest.data_kind === 'synthetic' ? 'Synthetic fixture — not model results' : 'Model-derived catalog'}</span> / ${count(catalog.genres.length, 'genre')}</p></section>
     <div class="toolbar" id="explore"><div class="search-wrap"><label class="search-box"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><kbd aria-hidden="true">/</kbd></label><div id="results" class="search-results" aria-label="Search results"></div></div>
       <nav class="modes" aria-label="Atlas view">${Object.entries(modes)
         .map(
@@ -144,15 +146,14 @@ async function start() {
     }
     const islands =
       view === 'islands'
-        ? [...families.entries()]
-            .map(([id, group]) => {
+        ? [...families.values()]
+            .map((group) => {
               const points = group.map(xy);
               const left = Math.min(...points.map((point) => point.x)),
                 right = Math.max(...points.map((point) => point.x));
               const top = Math.min(...points.map((point) => point.y)),
                 bottom = Math.max(...points.map((point) => point.y));
-              const color = escape(genres.get(id)?.color || '#777777');
-              return `<ellipse cx="${(left + right) / 2}" cy="${(top + bottom) / 2}" rx="${(right - left) / 2 + 65}" ry="${(bottom - top) / 2 + 52}" fill="${color}" fill-opacity=".07" stroke="${color}" stroke-opacity=".18" stroke-width="1.5"/><ellipse cx="${(left + right) / 2}" cy="${(top + bottom) / 2}" rx="${(right - left) / 2 + 48}" ry="${(bottom - top) / 2 + 37}" fill="${color}" fill-opacity=".04" stroke="${color}" stroke-opacity=".12"/>`;
+              return `<ellipse cx="${(left + right) / 2}" cy="${(top + bottom) / 2}" rx="${(right - left) / 2 + 65}" ry="${(bottom - top) / 2 + 52}" fill="none" stroke="#aaa" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
             })
             .join('')
         : '<path d="M50 285H950 M500 25V545" stroke="#cccccc" stroke-dasharray="3 7"/>';
@@ -169,7 +170,7 @@ async function start() {
       artist = `<g transform="translate(${90 + point.x * 820},${65 + point.y * 440})"><path id="artist-leader" stroke="#666666" fill="none"/><path d="M0 -10L9 0L0 10L-9 0Z" fill="#111111"/><text id="artist-label" x="14" y="5" font-size="14">${escape(detail.artist.name)}</text></g>`;
     }
     const axes = catalog.manifest.layouts.axes;
-    canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${placed.length} genres placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Drag to pan. Use +/− to zoom.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    canvas.innerHTML = `${header}<div class="map-viewport" id="map-viewport"><svg viewBox="0 0 1000 570" role="group" aria-label="${modes[view].label}; genre labels are interactive"><g id="map-content">${islands}${nodes}${artist}</g></svg>${view === 'axes' && axes ? `<span class="axis top">${escape(axes.y_min)}</span><span class="axis bottom">${escape(axes.y_max)}</span><span class="axis left">${escape(axes.x_min)}</span><span class="axis right">${escape(axes.x_max)}</span>` : ''}</div><div class="map-bottom"><span>${count(placed.length, 'genre')} placed${placed.length < catalog.genres.length ? ` · ${catalog.genres.length - placed.length} without coordinates` : ''}${selected?.kind === 'artist' && detail && 'artist' in detail && !detail.artist.positions[layout] ? ' · Selected artist is not placed' : ''}<br>Drag to pan. Use +/− to zoom.</span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
     if (view === 'axes' && axes) {
       const legend = document.createElement('div');
       legend.className = 'axis-legend';
@@ -266,7 +267,7 @@ async function start() {
     if (!detail) return;
     const entity = 'genre' in detail ? detail.genre : detail.artist;
     const saved = trail.some((entry) => entry.kind === selected!.kind && entry.id === selected!.id);
-    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="muted">Artist</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? `${count(detail.genre.member_count)} · ${catalog.manifest.membership ? 'Published membership' : 'Membership not computed'}` : `${detail.artist.listeners === null ? 'Listener count unavailable' : `${detail.artist.listeners.toLocaleString()} listeners`}<br>Signals: ${detail.signals.length ? detail.signals.map(escape).join(', ') : 'none published'}`}</p><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full (50)' : 'Save to trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
+    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="muted">Artist</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? `${count(detail.genre.member_count)} · ${catalog.manifest.membership ? 'Published membership' : 'Membership not computed'}` : `${detail.artist.listeners === null ? 'Listener count unavailable' : count(detail.artist.listeners, 'listener')}<br>Signals: ${detail.signals.length ? detail.signals.map(escape).join(', ') : 'none published'}`}</p><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full (50)' : 'Save to trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
   }
 
   function renderGenre(data: GenreDetail) {

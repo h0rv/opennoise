@@ -169,6 +169,9 @@ body > header > :last-child {
 .search-results:empty {
   display: none;
 }
+.search-results button:focus-visible {
+  outline-offset: -3px;
+}
 .search-results button {
   display: flex;
   justify-content: space-between;
