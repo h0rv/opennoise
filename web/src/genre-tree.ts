@@ -55,10 +55,9 @@ export class GenreTree {
       const siblings = this.children.get(genre.parent_id) || [];
       siblings.push(genre);
       this.children.set(genre.parent_id, siblings);
-      if (genre.parent_id === null) this.expanded.add(genre.id);
     }
     this.element.className = 'tree-map';
-    this.element.innerHTML = `<div class="map-viewport tree-viewport" tabindex="0" role="group" aria-label="Genre tree; arrows pan, plus and minus zoom, zero fits"><svg role="tree" aria-label="Genre and artist hierarchy"><g class="tree-content"><g class="tree-links"></g><g class="tree-labels"></g></g></svg></div><div class="map-bottom"><span></span><div class="zoom" aria-label="Tree controls"><button data-tree-zoom="out" aria-label="Zoom tree out">−</button><button data-tree-zoom="in" aria-label="Zoom tree in">+</button><button data-tree-zoom="reset">Reset</button></div></div>`;
+    this.element.innerHTML = `<div class="map-viewport tree-viewport" tabindex="0" role="group" aria-label="Genre tree; arrows pan, plus and minus zoom, zero fits"><svg role="tree" aria-label="Genre and artist hierarchy"><g class="tree-content"><g class="tree-links"></g><g class="tree-labels"></g></g></svg></div><div class="map-bottom"><button data-tree-collapse>Collapse all</button><div class="zoom" aria-label="Tree controls"><button data-tree-zoom="out" aria-label="Zoom tree out">−</button><button data-tree-zoom="in" aria-label="Zoom tree in">+</button><button data-tree-zoom="reset">Reset</button></div></div>`;
     this.viewport = this.element.querySelector('.tree-viewport')!;
     this.diagram = this.element.querySelector('svg')!;
     this.content = this.element.querySelector('.tree-content')!;
@@ -66,6 +65,7 @@ export class GenreTree {
     this.labels = this.element.querySelector('.tree-labels')!;
     this.element.addEventListener('click', (event) => {
       const target = event.target as Element;
+      if (target.closest('[data-tree-collapse]')) this.collapseAll();
       const zoom = target.closest<HTMLElement>('[data-tree-zoom]')?.dataset.treeZoom;
       if (zoom === 'reset') this.fit();
       if (zoom === 'in') this.navigation?.zoomBy(1.35);
@@ -159,6 +159,17 @@ export class GenreTree {
   resize() {
     if (this.viewport.clientWidth <= 32 || this.viewport.clientHeight <= 48) return;
     this.sizeDiagram();
+    this.reveal(this.focused);
+    this.paint();
+  }
+
+  private collapseAll() {
+    if (!this.expanded.size) return;
+    let anchor = this.scene.byKey.get(this.focused)?.node;
+    while (anchor?.parent) anchor = this.scene.byKey.get(anchor.parent)?.node;
+    this.focused = anchor?.key || '';
+    this.expanded.clear();
+    this.draw(anchor?.key || '');
     this.reveal(this.focused);
     this.paint();
   }
@@ -263,7 +274,7 @@ export class GenreTree {
         path.remove();
         this.edges.delete(key);
       }
-    const hadFocus = this.element.contains(document.activeElement);
+    const hadFocus = this.labels.contains(document.activeElement);
     for (const [key, elements] of this.rendered) {
       if (!keys.has(key)) {
         elements.group.remove();
