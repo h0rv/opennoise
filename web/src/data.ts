@@ -18,7 +18,15 @@ export class Catalog {
   ): Promise<T> {
     const response = await fetch(new URL(path, this.url), { signal });
     if (!response.ok) throw new Error(`Catalog request failed (${response.status}).`);
-    const data: unknown = await response.json();
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const body = new Blob([bytes]);
+    const data: unknown = JSON.parse(
+      await new Response(
+        bytes[0] === 0x1f && bytes[1] === 0x8b
+          ? body.stream().pipeThrough(new DecompressionStream('gzip'))
+          : body,
+      ).text(),
+    );
     const validate = validators[definition];
     if (!validate(data))
       throw new Error(
