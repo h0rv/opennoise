@@ -42,8 +42,11 @@ def test_tags_follow_exact_identity_and_main_release_credits(tmp_path):
         member = tarfile.TarInfo("mbdump/artist")
         member.size = len(payload)
         archive.addfile(member, io.BytesIO(payload))
-    musicbrainz(path, artists, tmp_path)
-    assert pl.read_parquet(tmp_path / "musicbrainz.parquet")["tag"].to_list() == ["ambient"]
+    musicbrainz(path, tmp_path)
+    mb_tags = pl.read_parquet(tmp_path / "musicbrainz.parquet")
+    matrix, vocabulary = vectors(mb_tags, artists)
+    assert vocabulary["tag"].to_list() == ["ambient"]
+    assert matrix.getnnz(axis=1).tolist() == [0, 1]
     releases = b"""<releases><release><artists><artist><id>123</id></artist>
     <artist><id>123</id></artist></artists><extraartists><artist><id>456</id></artist>
     </extraartists><styles><style>Deep House</style></styles></release>

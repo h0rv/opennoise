@@ -72,8 +72,7 @@ def execute(stage, config, run):
         raise
 
 
-def musicbrainz(path, artists, root):
-    catalog = set(artists["artist_mbid"])
+def musicbrainz(path, root):
     tags, links = [], []
     with tarfile.open(path, "r|xz") as archive:
         for member in archive:
@@ -85,8 +84,6 @@ def musicbrainz(path, artists, root):
             for line in stream:
                 artist = json.loads(line)
                 mbid = artist["id"]
-                if mbid not in catalog:
-                    continue
                 for tag in artist.get("tags", []):
                     name = tag_name(tag["name"])
                     if name and tag["count"] > 0:
@@ -154,7 +151,6 @@ def ingest(config, run):
     settings = config["tags"]
     root = Path(settings["cache"])
     root.mkdir(parents=True, exist_ok=True)
-    artists = pl.read_parquet(Path(settings["base_run"]) / "artists.parquet")
     for source, filename, target in [
         ("musicbrainz_artists", "artist.tar.xz", "musicbrainz"),
         ("discogs_releases", "discogs_releases.xml.gz", "discogs"),
@@ -166,7 +162,7 @@ def ingest(config, run):
             path = root / filename
             download(source, path)
             if target == "musicbrainz":
-                musicbrainz(path, artists, run)
+                musicbrainz(path, run)
                 count = None
             else:
                 count = discogs(path, run)
@@ -181,11 +177,10 @@ def ingest(config, run):
 
 
 def vectors(tags, artists):
-    tags = tags.group_by("artist_mbid", "tag").agg(pl.col("weight").sum())
+    tags = tags.join(artists.select("artist_mbid", "item"), on="artist_mbid")
+    tags = tags.group_by("artist_mbid", "item", "tag").agg(pl.col("weight").sum())
     vocabulary = tags.select("tag").unique().sort("tag").with_row_index("column")
-    tags = tags.join(artists.select("artist_mbid", "item"), on="artist_mbid").join(
-        vocabulary, on="tag"
-    )
+    tags = tags.join(vocabulary, on="tag")
     matrix = sparse.csr_matrix(
         (tags["weight"].to_numpy(), (tags["item"].to_numpy(), tags["column"].to_numpy())),
         shape=(len(artists), len(vocabulary)),
@@ -228,9 +223,9 @@ def build(config, run):
             "edge_fraction": float(covered.mean()),
             "vocabulary": len(vocabulary),
         }
-    pl.concat([pl.read_parquet(run / f"{source}.parquet") for source in coverage]).write_parquet(
-        run / "artist_tags.parquet"
-    )
+    pl.concat([pl.read_parquet(run / f"{source}.parquet") for source in coverage]).join(
+        artists.select("artist_mbid"), on="artist_mbid"
+    ).write_parquet(run / "artist_tags.parquet")
     artists.write_parquet(run / "artists.parquet")
     (run / "coverage.json").write_text(json.dumps(coverage, indent=2))
     print(json.dumps(coverage), flush=True)
