@@ -183,7 +183,10 @@ def evaluate(config, run):
     if set(matches) != set(heldout) or len(heldout) != 868:
         raise ValueError("Expected the kept M2 split: all 868 held-out genres")
     results = {}
-    for name in ["musicbrainz_baseline", *[v["name"] for v in config["variants"]]]:
+    for name in [
+        *config.get("baselines", ["musicbrainz_baseline"]),
+        *[v["name"] for v in config["variants"]],
+    ]:
         target = run / name
         rows = pl.read_parquet(target / "candidates.parquet").sort("id", "rank")
         choices = {group["id"][0]: group["name"].to_list() for group in rows.partition_by("id")}
@@ -205,15 +208,28 @@ def evaluate(config, run):
             "named_cluster_share": int(genres["name"].is_not_null().sum()) / len(genres),
         }
         results[name] = metrics
-    eligible = [name for name, value in results.items() if value["source"] == "discogs"]
-    best = max(eligible, key=lambda name: (results[name]["name@3"], results[name]["name_exact"]))
+    eligible = [
+        name
+        for name, value in results.items()
+        if value["source"] in {"discogs", "wikidata", "combined"}
+    ]
+    best = max(
+        eligible,
+        key=lambda name: (
+            results[name]["name@3"]
+            + (results[name]["name_exact"] if config.get("selection") == "exact_plus_name3" else 0),
+            results[name]["name_exact"],
+        ),
+    )
     for name, metrics in results.items():
         target = run / name / "metrics.json"
         if not target.exists():
             tags.log(run, name, metrics, name == best, "M2 fine k20; unchanged 868-genre split")
             target.write_text(json.dumps(metrics, indent=2))
     (run / "metrics.json").write_text(json.dumps(results, indent=2))
-    (run / "best.json").write_text(json.dumps({"variant": best, "source": "discogs"}, indent=2))
+    (run / "best.json").write_text(
+        json.dumps({"variant": best, "source": results[best]["source"]}, indent=2)
+    )
     write_probes(config, run, results, matches)
 
 
@@ -250,36 +266,50 @@ def export(config, run):
         return
     start = time.monotonic()
     selected = json.loads((run / "best.json").read_text())
-    if selected["source"] != "discogs" or selected["variant"] not in [
-        v["name"] for v in config["variants"]
-    ]:
-        raise ValueError("Export requires a scored CC0 Discogs naming variant")
+    allowed = [*config.get("baselines", []), *[v["name"] for v in config["variants"]]]
+    if (
+        selected["source"] not in {"discogs", "wikidata", "combined"}
+        or selected["variant"] not in allowed
+    ):
+        raise ValueError("Export requires a scored CC0 naming variant")
     model = settings(config)
     _, _, _, truth = split_labels(model)
     names = sorted(truth)
     artists = pl.read_parquet(Path(config["m1"]) / "artists.parquet")
     n = len(artists)
-    variant = next(v for v in model["variants"] if v["name"] == "fine_k20")
-    _, transition = graph_matrix(model, variant)
-    ids = np.full((n, 10), -1, dtype=np.int32)
-    values = np.zeros((n, 10), dtype=np.float32)
-    for start_genre in range(0, len(names), 32):
-        batch = names[start_genre : start_genre + 32]
-        seeds = np.zeros((n, len(batch)), dtype=np.float32)
-        for column, name in enumerate(batch):
-            seeds[truth[name], column] = 1
-        scores = transition @ seeds
-        if variant["hops"] == 2:
-            scores = 0.5 * scores + 0.5 * (transition @ scores)
-        ids, values = update_top(ids, values, scores, start_genre)
-    keep = (values.ravel() > 0) & (ids.ravel() >= 0)
-    memberships = pl.DataFrame(
-        {
-            "item": np.repeat(np.arange(n), 10)[keep],
-            "genre": ids.ravel()[keep],
-            "score": values.ravel()[keep],
-        }
-    )
+    if config.get("membership_cache"):
+        cached = Path(config["membership_cache"])
+        known = pl.read_parquet(cached / "genres.parquet").filter(pl.col("level") == -1).sort("id")
+        if known["name"].to_list() != names:
+            raise ValueError("Cached membership refit has different supervised genres")
+        memberships = pl.read_parquet(cached / "memberships.parquet").filter(
+            pl.col("genre") < len(names)
+        )
+        memberships = memberships.join(
+            artists.select("item", "artist_mbid"), left_on="artist", right_on="artist_mbid"
+        ).select("item", "genre", "score")
+    else:
+        variant = next(v for v in model["variants"] if v["name"] == "fine_k20")
+        _, transition = graph_matrix(model, variant)
+        ids = np.full((n, 10), -1, dtype=np.int32)
+        values = np.zeros((n, 10), dtype=np.float32)
+        for start_genre in range(0, len(names), 32):
+            batch = names[start_genre : start_genre + 32]
+            seeds = np.zeros((n, len(batch)), dtype=np.float32)
+            for column, name in enumerate(batch):
+                seeds[truth[name], column] = 1
+            scores = transition @ seeds
+            if variant["hops"] == 2:
+                scores = 0.5 * scores + 0.5 * (transition @ scores)
+            ids, values = update_top(ids, values, scores, start_genre)
+        keep = (values.ravel() > 0) & (ids.ravel() >= 0)
+        memberships = pl.DataFrame(
+            {
+                "item": np.repeat(np.arange(n), 10)[keep],
+                "genre": ids.ravel()[keep],
+                "score": values.ravel()[keep],
+            }
+        )
     sizes = dict(memberships.group_by("genre").len().iter_rows())
     base, assignments = structure(config)
     shift = len(names) - int(base["id"].min())
@@ -327,7 +357,8 @@ def export(config, run):
     memberships.write_parquet(target / "memberships.parquet")
     summary = {
         "variant": selected["variant"],
-        "naming_source": "Discogs CC0; ENAO supervised labels",
+        "naming_source": selected["source"] + " CC0; ENAO supervised labels",
+        "membership_refit_reused": bool(config.get("membership_cache")),
         "supervised_genres": len(names),
         "training_labels": sum(map(len, truth.values())),
         "training_artists": len(set(np.concatenate(list(truth.values())).tolist())),
@@ -338,7 +369,13 @@ def export(config, run):
         "seconds": time.monotonic() - start,
     }
     (target / "summary.json").write_text(json.dumps(summary, indent=2))
-    tags.log(run, "m2b_export", summary, True, "all eligible genres and artists; no holdouts")
+    tags.log(
+        run,
+        config["milestone"] + "_export",
+        summary,
+        True,
+        "all eligible genres and artists; no holdouts",
+    )
 
 
 def execute(stage, config, run):

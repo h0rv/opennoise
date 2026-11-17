@@ -47,6 +47,26 @@ eligible genre and all its mapped graph artists, without either holdout. Only su
 ENAO labels and Discogs-named clusters are exported; unnamed clusters stay internal and
 parent links skip excluded ancestors. No MusicBrainz-tag names enter this export.
 
+M2c adds Wikidata P434/P136 statements, English labels/aliases and P279 links via QLever (CC0).
+
+```sh
+uv run on ingest configs/m2c.toml
+uv run on build configs/m2c.toml
+uv run on eval configs/m2c.toml
+uv run on export configs/m2c.toml
+```
+
+Queries cover all MBID/P136 links, plus genre classes/instances and the linked genre targets.
+Raw responses, normalized tables and coverage stay in `data/m2c/`; truncated responses fail.
+Response hashes record this live-endpoint snapshot.
+Wikidata-only naming uses English labels. Combined variants normalize each source per artist
+before mixing; unambiguous Discogs label/alias matches reinforce the same Wikidata genre.
+Other styles remain separate CC0 candidates. Alias variants prefer the most frequent matching
+Discogs spelling, without consulting ENAO names. Selection maximizes exact + name@3 among
+CC0 variants, including the kept M2b baseline. The unchanged split supplies every quality metric.
+Export reuses M2b's cached all-label supervised memberships and rebuilds only named discovery
+memberships and parent links. No membership refit or contract adaptation is performed.
+
 ```sh
 uv sync
 uv run on ingest configs/m1.toml
