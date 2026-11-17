@@ -156,6 +156,23 @@ def test_rejects_invalid_weight(weight):
     matrix = sparse.eye(3, format="csr", dtype=np.float32)
     with pytest.raises(ValueError, match="weights"):
         similarities(matrix, matrix, [weight], 1)
+    with pytest.raises(ValueError, match="weights"):
+        mlhd_downstream.user_features(matrix, matrix, weight)
+
+
+@pytest.mark.parametrize("weight", [0, 0.03, 3])
+def test_downstream_user_features_match_similarity(weight):
+    lb = sparse.csr_matrix(np.array([[1, 2, 0], [0, 1, 4]], dtype=np.float32))
+    extra = sparse.csr_matrix(np.array([[0, 3, 1], [2, 0, 5]], dtype=np.float32))
+    vectors = mlhd_downstream.user_features(lb, extra, weight)
+    assert vectors.dtype == np.float32
+    expected = normalize(
+        sparse.vstack([weighted_rows(lb), np.sqrt(weight) * weighted_rows(extra)]).T.tocsr()
+    )
+    np.testing.assert_allclose(vectors.toarray(), expected.toarray(), atol=1e-6)
+    empty = sparse.csr_matrix((0, 3), dtype=np.float32)
+    vectors = mlhd_downstream.user_features(lb, empty, weight)
+    np.testing.assert_allclose(vectors.toarray(), normalize(weighted_rows(lb).T).toarray())
 
 
 def test_partition_is_disjoint_and_repeatable():

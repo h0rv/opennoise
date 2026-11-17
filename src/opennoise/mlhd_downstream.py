@@ -13,6 +13,14 @@ from opennoise import genres, layout
 from opennoise.mlhd import weighted_rows
 
 
+def user_features(lb, mlhd, weight):
+    if not np.isfinite(weight) or weight < 0:
+        raise ValueError("MLHD weights must be finite and nonnegative")
+    rows = [weighted_rows(lb), weighted_rows(mlhd)]
+    rows[1].data *= np.float32(np.sqrt(weight))
+    return normalize(sparse.vstack(rows, format="csr").T.tocsr())
+
+
 def run_comparison(source, base, mlhd_run):
     result = json.loads((mlhd_run / "experiment.json").read_text()) if source == "mlhd" else {}
     weight = float(result.get("selected_weight", 0))
@@ -51,11 +59,8 @@ def run_comparison(source, base, mlhd_run):
         matrices = [sparse.load_npz(mlhd_run / f"mlhd-{shard}.npz") for shard in "0123456789abcdef"]
         extra = sparse.vstack(matrices).tocsr()
         del matrices
-        vectors = sparse.hstack(
-            [weighted_rows(lb).T, np.sqrt(weight) * weighted_rows(extra).T], format="csr"
-        )
+        vectors = user_features(lb, extra, weight)
         del lb, extra
-        vectors = normalize(vectors)
         with threadpool_limits(limits=settings["workers"]):
             vectors = TruncatedSVD(
                 n_components=settings["dimensions"], random_state=settings["seed"]
