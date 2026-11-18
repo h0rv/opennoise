@@ -4,6 +4,7 @@ import {
   LabelGrid,
   baseName,
   claimName,
+  isArtistCluster,
   labelBox,
   priority,
   visibleDepth,
@@ -413,7 +414,7 @@ export class MapCanvas {
       ctx.fill();
     }
     for (const item of candidates) {
-      if (this.layout === 'axes' && item.kind === 'genre' && item.name !== item.label) continue;
+      if (this.layout === 'axes' && item.kind === 'genre' && isArtistCluster(item.name)) continue;
       const label = detailed ? item.name : item.label;
       if (!claimName(label, names, detailed)) continue;
       const px = item.x * scale + x,
