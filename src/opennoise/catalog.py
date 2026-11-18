@@ -147,7 +147,32 @@ def audit(config, genres, memberships, artists):
 def tables(config):
     path = Path(config["export"])
     found = pl.read_parquet(path / "genres.parquet"), pl.read_parquet(path / "memberships.parquet")
-    return micro.release(Path(config["micro"]), *found) if "micro" in config else found
+    if "micro" not in config:
+        return found
+    additions = Path(config["micro_additions"]) if "micro_additions" in config else None
+    return micro.release(Path(config["micro"]), *found, additions=additions)
+
+
+def cap_micro(config, rows, memberships, artists):
+    if "micro_member_cap" not in config:
+        return memberships, set()
+    level = config["levels"].index("micro")
+    micro_ids = [r["id"] for r in rows if r["level"] == level]
+    cap = config["micro_member_cap"]
+    limited = memberships.filter(pl.col("genre").is_in(micro_ids)).group_by("genre").len()
+    clipped = set(limited.filter(pl.col("len") > cap)["genre"])
+    if not clipped:
+        return memberships, clipped
+    selected = pl.col("genre").is_in(clipped)
+    top = (
+        memberships.filter(selected)
+        .join(artists.select(artist="artist_mbid", item="item"), on="artist")
+        .sort(["score", "item"], descending=[True, False])
+        .group_by("genre")
+        .head(cap)
+        .select(memberships.columns)
+    )
+    return pl.concat([memberships.filter(~selected), top]), clipped
 
 
 def export(config, run):
@@ -205,6 +230,8 @@ def export(config, run):
             key = "cluster:" + scope + ":" + hashlib.sha256("\n".join(ids).encode()).hexdigest()
         keys[row["id"]] = key
         records.append({"key": key, "scope": scope, "name": row["name"], "members": ids})
+    # Keep the uncapped artist set as the stable identity of each published micro genre.
+    memberships, clipped = cap_micro(config, rows, memberships, artists)
     registry = Path(config["registry"])
     previous_groups = []
     if (config.get("group_siblings") or config.get("group_globally")) and registry.exists():
@@ -241,7 +268,7 @@ def export(config, run):
             group["id"] = public[group.pop("local_id")]
     inputs = [
         Path(config[key]) / file
-        for key in ["export", "micro"]
+        for key in ["export", "micro", "micro_additions"]
         if key in config
         for file in ["genres.parquet", "memberships.parquet"]
     ] + [
@@ -255,7 +282,7 @@ def export(config, run):
         inputs.extend(
             Path(config["layout"]) / name for name in ["positions.parquet", "layouts.json"]
         )
-        if global_keys:
+        if global_keys or config.get("micro_additions") or clipped:
             inputs.append(Path(config["layout"]) / "sonic_state.npz")
     if config.get("vocabulary"):
         inputs.append(Path(config["vocabulary"]))
@@ -282,9 +309,21 @@ def export(config, run):
     (stage / "genres").mkdir()
     positions = {"axes": None, "islands": None}
     placed, layouts = coordinates(config)
-    if config.get("layout") and global_keys:
+    derived = {
+        row["id"]
+        for row in rows
+        if row["id"] in global_keys
+        or row["id"] in clipped
+        or (
+            config.get("micro_additions")
+            and row["level"] >= 0
+            and config["levels"][row["level"]] == "micro"
+            and ("genre", public[row["id"]]) not in placed
+        )
+    }
+    if config.get("layout") and derived:
         with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
-            group_coordinates(global_keys, memberships, public, placed, artists, state)
+            group_coordinates(sorted(derived), memberships, public, placed, artists, state)
     summaries = {
         mbid: {
             "id": mbid,

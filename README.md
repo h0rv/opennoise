@@ -154,6 +154,9 @@ neighbours and that evidence. A second model, cross-fitted on visible genres, ra
 composed names are real genres. It needs the M2 ingest and the M2f naming ingest, whose Wikidata
 vocabulary is filtered to music genres. `non_music` in `configs/m3.toml` lists Discogs non-music and
 video styles (interview, audiobook, music video) that are dropped from the style candidates.
+Repeated non-geographic prefixes from visible genre names can also qualify a style. M3 takes
+up to 500 new names from that model before filling the 5,000-name shortlist from the baseline.
+It keeps at most 80 of the highest-scoring artists per micro genre.
 
 `micro` in a catalog config names an M3 run whose genres are appended to the clusters as the
 `micro` level. To place them on the map, export `configs/m2f.toml`, run
@@ -170,9 +173,12 @@ uv run on eval configs/m3.toml
 `runs/<hash>/` holds `genres.parquet`, `memberships.parquet` and `related.parquet` (nearest
 genres by shared listening). `uv run on tune configs/m3.toml` scores the `[grid]` of `threshold`
 and `negative_weight` on a fifth of the visible genres; the hidden genres are never used to pick
-settings. Sealed artists' Wikidata genres are dropped, so the `[m3]` entry in `configs/gen.toml`
-scores a run on them.
+settings. The tuning command tests the candidate model, not the final overlay: the published
+baseline was already fitted on all visible genres. Sealed artists' Wikidata genres are dropped,
+so the `[m3]` entry in `configs/gen.toml` can check names and artist overlap on them.
 
 `micro` in `configs/one-name.toml` names an M3 run: the catalog export appends its genres to the
 clusters as the `micro` level, skipping names a cluster or supervised genre already has and aliases with identical
-members, with a parent where the style is a supervised genre.
+members, with a parent where the style is a supervised genre. `micro_additions` extends that level
+with new names without removing published genres; `micro_member_cap` limits exported memberships
+without changing their identity keys. New positions come from the same audio and listening data.

@@ -109,6 +109,23 @@ def test_global_names_preserves_existing_members_and_anchors():
     assert rows[3]["name"] == "dream pop · Artist"
 
 
+def test_global_names_keeps_anchor_ids_when_aliases_fold():
+    rows = [
+        {"id": 0, "name": "Dance", "level": -1},
+        {"id": 1, "name": "IDM", "level": 0},
+        {"id": 2, "name": "Intelligent Dance Music", "level": -1},
+    ]
+    parents = {0: None, 1: 0, 2: None}
+    edges = pl.DataFrame({"genre": [1], "artist": ["a"], "score": [0.8]})
+    _, records, keys, _ = global_names(
+        rows, parents, edges, {i: str(i) for i in parents}, {"idm": "intelligent dance music"}
+    )
+    assert keys == {3: "group:global:idm"}
+    assert records[0]["name"] == "IDM"
+    assert parents[3] == 2
+    assert rows[2]["aliases"] == ["IDM"]
+
+
 def test_global_names_empty_and_cycle():
     members = pl.DataFrame(schema={"genre": pl.Int64, "artist": pl.String, "score": pl.Float64})
     assert global_names([], {}, members, {})[3]["roots"] == 0

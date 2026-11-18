@@ -3,6 +3,7 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -10,7 +11,7 @@ import polars as pl
 from scipy import sparse
 from scipy.spatial import KDTree
 
-from opennoise.metrics import best_cluster, name_agreement, sealed
+from opennoise.metrics import best_cluster, name_agreement, normalized_name, sealed
 from opennoise.tags import log
 
 PREFIX = """
@@ -225,25 +226,35 @@ def cluster_scores(reference, memberships, genres, seed=42, minimum=5):
     }
 
 
-def overlap_scores(reference, memberships, artists, seed=42, minimum=5):
+def overlap_scores(reference, memberships, artists, seed=42, minimum=5, *, genres=None):
     covered = sorted(set(reference["artist_mbid"]) & set(artists["artist_mbid"]))
     index = {artist: i for i, artist in enumerate(covered)}
     members = memberships.filter(pl.col("artist_mbid").is_in(covered))
     rows = np.array([index[a] for a in members["artist_mbid"]], dtype=np.int64)
-    genres = members["genre"].to_numpy()
-    shape = (int(genres.max()) + 1 if len(genres) else 1, len(covered))
+    ids = members["genre"].to_numpy()
+    shape = (int(ids.max()) + 1 if len(ids) else 1, len(covered))
+    names = defaultdict(list)
+    if genres is not None:
+        for i, name in genres.select("id", "name").iter_rows():
+            if i < shape[0]:
+                names[normalized_name(name)].append(i)
+    truth_groups = reference.partition_by("genre_qid")
     order = np.random.default_rng(seed).permutation(len(covered))
-    values, random = [], []
+    values, random, named = [], [], []
     for columns, found in ((rows, values), (order[rows], random)):
-        matrix = sparse.csr_matrix((np.ones(len(rows)), (genres, columns)), shape=shape)
+        matrix = sparse.csr_matrix((np.ones(len(rows)), (ids, columns)), shape=shape)
         sizes = np.asarray(matrix.sum(axis=1)).ravel()
-        for group in reference.partition_by("genre_qid"):
+        for group in truth_groups:
             truth = np.zeros(len(covered))
             truth[[index[a] for a in set(group["artist_mbid"]) if a in index]] = 1
             if truth.sum() >= minimum:
                 shared = matrix @ truth
-                found.append(float((shared / (sizes + truth.sum() - shared)).max()))
-    return {
+                overlap = shared / (sizes + truth.sum() - shared)
+                found.append(float(overlap.max()))
+                if genres is not None and found is values:
+                    same = names[normalized_name(group["genre"][0])]
+                    named.append(bool((overlap[same] >= 0.2).any()))
+    scores = {
         "genre_match": mean([value >= 0.2 for value in values]),
         "median_jaccard": float(np.median(values)) if values else None,
         "random_genre_match": mean([value >= 0.2 for value in random]),
@@ -251,6 +262,9 @@ def overlap_scores(reference, memberships, artists, seed=42, minimum=5):
         "genres": len(values),
         "artists": len(covered),
     }
+    if genres is not None:
+        scores["named_genre_match"] = mean(named)
+    return scores
 
 
 def naming_score(reference, memberships, genres, seed=42):

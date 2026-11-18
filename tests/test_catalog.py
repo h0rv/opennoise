@@ -3,8 +3,23 @@ import json
 import polars as pl
 import pytest
 
-from opennoise.catalog import coordinates, export, hierarchy
+from opennoise.catalog import cap_micro, coordinates, export, hierarchy
 from opennoise.contract import validate_release
+
+
+def test_cap_micro_keeps_strongest_artists_only_on_the_micro_level():
+    rows = [{"id": 0, "level": -1}, {"id": 1, "level": 0}]
+    artists = pl.DataFrame({"artist_mbid": ["a", "b", "c"], "item": [1, 2, 0]})
+    edges = pl.DataFrame(
+        {
+            "artist": ["a", "b", "c", "a", "b"],
+            "genre": [1, 1, 1, 0, 0],
+            "score": [0.7, 0.8, 0.8, 0.1, 0.1],
+        }
+    )
+    trimmed, clipped = cap_micro({"levels": ["micro"], "micro_member_cap": 1}, rows, edges, artists)
+    assert clipped == {1}
+    assert sorted(trimmed.rows()) == [("a", 0, 0.1), ("b", 0, 0.1), ("c", 1, 0.8)]
 
 
 def inputs(tmp_path):

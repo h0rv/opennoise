@@ -208,6 +208,12 @@ def aliases(vocabulary):
 def global_names(rows, parents, memberships, keys, alias_map=None):
     alias_map = alias_map or {}
     before = parents.copy()
+    records, added_keys = [], {}
+    if alias_map:
+        # Create exact-name anchors before folding aliases so neither group loses its ID.
+        memberships, records, added_keys, _ = global_names(rows, parents, memberships, keys)
+        keys = keys | added_keys
+    roots = {i for i, parent in parents.items() if parent is None}
     for i in parents:
         parent, seen = parents[i], {i}
         while parent is not None:
@@ -219,14 +225,14 @@ def global_names(rows, parents, memberships, keys, alias_map=None):
     for row in rows:
         name = normalized_name(row["name"].split(" · ")[0])
         buckets[alias_map.get(name, name)].append(row)
-    additions, records, added_keys = {}, [], {}
+    additions = {}
     next_id = max(parents, default=-1) + 1
     for name, group in sorted(buckets.items()):
         candidates = [r for r in group if r["level"] in {-1, -2} or parents[r["id"]] is None]
         if candidates:
             anchor = min(
                 candidates,
-                key=lambda r: (r["level"] != -1, before[r["id"]] is not None, keys[r["id"]]),
+                key=lambda r: (r["level"] != -1, r["id"] not in roots, keys[r["id"]]),
             )
         else:
             anchor = {"id": next_id, "name": group[0]["name"].split(" · ")[0], "level": -2}
@@ -242,7 +248,7 @@ def global_names(rows, parents, memberships, keys, alias_map=None):
                 {
                     row["name"].split(" · ")[0]
                     for row in group
-                    if before[row["id"]] is None and row["name"].split(" · ")[0] != anchor["name"]
+                    if row["id"] in roots and row["name"].split(" · ")[0] != anchor["name"]
                 }
             )
         for row in group:

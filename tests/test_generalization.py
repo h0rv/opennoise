@@ -365,3 +365,7 @@ def test_overlap_scores(reference):
     assert score["genres"] == 2
     assert score["random_median_jaccard"] < 1
     assert gen.overlap_scores(reference, members.clear(), artists)["genre_match"] == 0
+    genres = pl.DataFrame({"id": [0, 1, 2], "name": ["Rock", "Pop", "Jazz"]})
+    named = gen.overlap_scores(reference, members, artists, genres=genres)
+    assert named["genre_match"] == 1
+    assert named["named_genre_match"] == 0.5

@@ -1,6 +1,8 @@
 milestone = "m2d"
 export = "runs/ae4a6b4a4061/export"
 micro = "runs/017da0af6b76"
+micro_additions = "runs/3f1543ffc676"
+micro_member_cap = 80
 refit = "runs/25a6ae63770a/export"
 m1 = "runs/1f242e47ed38"
 labels = "data/m2/labels.parquet"
@@ -10,5 +12,5 @@ identity_jaccard = 0.8
 group_siblings = true
 group_globally = true
 vocabulary = "data/m2f/vocabulary.parquet"
-layout = "runs/cdd46331af0a"
+layout = "runs/fc13868d18ff"
 readable_names = true
