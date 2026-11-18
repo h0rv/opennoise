@@ -190,23 +190,32 @@ def name_clusters(labels, previous, tags, tag_names, config, offset, parent_offs
     return rows
 
 
-def discover(graph, variant, config, run, initial, train_count):
+def partitions(graph, variant, seed, initial=None):
     edges = sparse.triu(graph, k=1).tocoo()
     network = ig.Graph(n=graph.shape[0], edges=np.column_stack([edges.row, edges.col]))
     weights = edges.data
+    for resolution in variant["resolutions"]:
+        yield (
+            resolution,
+            la.find_partition(
+                network,
+                la.RBConfigurationVertexPartition,
+                weights=weights,
+                resolution_parameter=resolution,
+                seed=seed,
+                n_iterations=2,
+                initial_membership=initial if variant["guided"] else None,
+            ),
+        )
+
+
+def discover(graph, variant, config, run, initial, train_count):
     tags, tag_names = tag_matrix(graph.shape[0])
     assignments, rows, offsets = [], [], []
     offset, parent_offset = train_count, 0
-    for level, resolution in enumerate(variant["resolutions"]):
-        partition = la.find_partition(
-            network,
-            la.RBConfigurationVertexPartition,
-            weights=weights,
-            resolution_parameter=resolution,
-            seed=config["seed"],
-            n_iterations=2,
-            initial_membership=initial if variant["guided"] else None,
-        )
+    for level, (resolution, partition) in enumerate(
+        partitions(graph, variant, config["seed"], initial)
+    ):
         labels = np.array(partition.membership, dtype=np.int32)
         named = name_clusters(
             labels,

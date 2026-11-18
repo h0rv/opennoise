@@ -37,6 +37,10 @@ def main() -> None:
         from opennoise.generalization import execute
 
         execute(args.stage, config, run)
+    elif config.get("milestone") == "deezer":
+        from opennoise.deezer_eval import execute
+
+        execute(args.stage, config, run)
     elif config.get("milestone") == "m2d":
         from opennoise.catalog import execute
 

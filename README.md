@@ -176,3 +176,23 @@ scores a run on them.
 `micro` in `configs/one-name.toml` names an M3 run: the catalog export appends its genres to the
 clusters as the `micro` level, skipping names a cluster or supervised genre already has and aliases with identical
 members, with a parent where the style is a supervised genre.
+
+## Deezer research
+
+After preparing the M1 run, running M2 ingest and pinning the Wikidata reference from
+`configs/gen.toml`, run:
+
+```sh
+uv run on ingest configs/deezer.toml
+uv run on eval configs/deezer.toml
+```
+
+Ingest samples 1,800 artists by listening rank and caches API responses in ignored
+`data/deezer/`. Keep that snapshot to reproduce the run. Evaluation compares standalone
+and blended signals with the M2 listening graph on the unchanged Every Noise split and
+both sealed Wikidata slices. Results go to `runs/<hash>/metrics.json`.
+
+The blend recovered 223 of 868 Every Noise genres (listening alone: 210), and 108 of
+262 sealed Wikidata genres (98), with 12 of 27 on the independent slice in both runs.
+This is opt-in research, not a release input: the [Deezer developer terms](https://developers.deezer.com/termsofuse)
+are noncommercial and do not grant an open data license.

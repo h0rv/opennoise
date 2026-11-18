@@ -1,0 +1,5 @@
+milestone = "deezer"
+m2_config = "configs/m2.toml"
+wikidata = "data/gen/wikidata.parquet"
+top = 1200
+mid = 600
