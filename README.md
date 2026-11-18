@@ -144,12 +144,26 @@ held-out Every Noise genres and the sealed Wikidata artists. A cluster matches a
 when the sets of artists have at least 20% intersection over union. The independent Wikidata
 slice excludes genres with an Every Noise ID. Nothing in the release reads these outputs.
 
+| Tracklist signal | Every Noise genres matched (of 868) | Wikidata genres matched (of 262) | Wikidata artist-neighbor genre agreement |
+| --- | ---: | ---: | ---: |
+| Listening baseline | 210 | 98 | 46.42% |
+| DJ mixes | 205 | 104 | 46.24% |
+| Compilations | 224 | 95 | 46.43% |
+
+Neither variant improved both genre tests. On the smaller independent Wikidata slice,
+DJ mixes matched the same 12 of 27 genres as the baseline; compilations matched 10.
+The listening graph stays unchanged.
+
 Not used: [ListenBrainz](https://github.com/metabrainz/listenbrainz-server/blob/master/listenbrainz/dumps/tables.py)
 has CC0 listen dumps but leaves playlists out of its public exports; [Spotify's Million Playlist
 Dataset](https://www.aicrowd.com/challenges/spotify-million-playlist-dataset-challenge) is
 noncommercial and cannot be redistributed. [Playlist2vec](https://zenodo.org/records/5002584)
 is labeled CC BY 4.0 by the uploader, but upstream Spotify data rights were not verified.
-[Art of the Mix](https://brianmcfee.net/data/aotm2011.html) has no stated license on its download page.
+[Art of the Mix](https://brianmcfee.net/data/aotm2011.html) and
+[KEXP](https://www.kexp.org/music-data/) do not state reuse terms on those pages.
+[Melon](https://mtg.github.io/melon-playlist-dataset/) requires separate access; dataset terms
+were not verified. The [NRJ broadcast log](https://www.data.gouv.fr/fr/datasets/playlist-radio-nrj-09-2012-10-2012-07-2012-08-2012/)
+is listed as ODbL but covers only two months at one station.
 
 ## Atlas UX study
 
