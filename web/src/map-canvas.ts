@@ -439,7 +439,7 @@ export class MapCanvas {
         focus.box.bottom - focus.box.top,
       );
     }
-    this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${candidates.length.toLocaleString()} points · ${this.items.size.toLocaleString()} genres. Zoom ${Math.round(scale / this.home.scale)}× (max ${MAX_ZOOM[this.layout]}×); search or use the tree for all.`;
+    this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${this.items.size.toLocaleString()} genres. Zoom for more; search or use the tree for all.`;
     performance.measure('opennoise:map-frame', {
       start,
       end: performance.now(),

@@ -128,7 +128,6 @@ test('zoom is bounded and points remain visible when labels collide or share a b
   map.draw();
   assert.equal(dots, 4);
   assert.deepEqual(text, ['rock', 'rock · A', 'rock · B']);
-  assert.match(status.textContent, /3 labels · 4 points/);
   map.zoom(1000);
   assert.equal(map.camera.scale / map.home.scale, 10);
   const camera = { ...map.camera };
