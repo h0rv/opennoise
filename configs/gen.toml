@@ -6,7 +6,7 @@ crosswalk = "data/m2/crosswalk.parquet"
 
 [m1]
 artists = "runs/1f242e47ed38/artists.parquet"
-edges = "runs/1f242e47ed38/tfidf.parquet"
+edges = "runs/6bde97e2d5c8/similar.parquet"
 
 [m2]
 memberships = "runs/e234d830601e/fine_k20/memberships.parquet"
