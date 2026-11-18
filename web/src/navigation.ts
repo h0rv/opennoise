@@ -32,8 +32,8 @@ export function createNavigation(
   if (options.onChange) content.addEventListener('panzoomchange', options.onChange, { signal });
   panzoom.pan(options.camera.x, options.camera.y);
   let wheelFrame = 0,
-    wheelDelta = 0;
-  let wheelPoint = { clientX: 0, clientY: 0 };
+    wheelX = 0,
+    wheelY = 0;
 
   function zoomBy(factor: number, point?: { clientX: number; clientY: number }) {
     if (signal.aborted) return;
@@ -51,17 +51,22 @@ export function createNavigation(
   viewport.addEventListener(
     'wheel',
     (event) => {
+      if (hasShortcutModifier(event)) return;
       event.preventDefault();
-      wheelDelta +=
-        (event.deltaY || event.deltaX) *
-        (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
-      wheelPoint = { clientX: event.clientX, clientY: event.clientY };
+      const unit = event.deltaMode === 1 ? 16 : 1;
+      wheelX +=
+        (event.deltaX || (event.shiftKey ? event.deltaY : 0)) *
+        (event.deltaMode === 2 ? viewport.clientWidth : unit);
+      if (!event.shiftKey)
+        wheelY += event.deltaY * (event.deltaMode === 2 ? viewport.clientHeight : unit);
       if (wheelFrame) return;
       wheelFrame = requestAnimationFrame(() => {
         wheelFrame = 0;
-        const delta = Math.max(-600, Math.min(600, wheelDelta));
-        wheelDelta = 0;
-        if (!signal.aborted) zoomBy(Math.exp(-delta * 0.002), wheelPoint);
+        if (!signal.aborted)
+          panzoom.pan(-wheelX / panzoom.getScale(), -wheelY / panzoom.getScale(), {
+            relative: true,
+          });
+        wheelX = wheelY = 0;
       });
     },
     { passive: false, signal },
