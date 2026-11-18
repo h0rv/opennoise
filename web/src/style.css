@@ -549,6 +549,7 @@ main {
   .modes button {
     flex: 1;
     padding-inline: 6px;
+    white-space: normal;
   }
   #trail-toggle {
     padding-inline: 8px;
