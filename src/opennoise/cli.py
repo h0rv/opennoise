@@ -9,10 +9,21 @@ from pathlib import Path
 def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
     parser.add_argument(
-        "stage", choices=["ingest", "tune", "build", "eval", "export", "layout", "audio"]
+        "stage",
+        choices=["ingest", "tune", "build", "eval", "export", "layout", "audio", "baselines"],
     )
     parser.add_argument("config", nargs="?")
     args = parser.parse_args()
+    if args.stage == "baselines":
+        from opennoise.baselines import baselines
+
+        if args.config is not None:
+            parser.error("baselines does not accept a config")
+        try:
+            baselines()
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            parser.error(f"baseline ledger unavailable or incomplete: {error}")
+        return
     if args.config is None:
         args.config = "configs/layout.toml" if args.stage == "layout" else "configs/m1.toml"
     config_bytes = Path(args.config).read_bytes()
