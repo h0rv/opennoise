@@ -116,6 +116,41 @@ TF-IDF vectors and vocabularies, coverage, probes, and `similar.parquet`. Tags o
 existing M1 top-50 candidates. Weights are selected on half the held-out users; the untouched
 half compares only the selected method and baseline. Labs overlap@50 cannot change in this test.
 
+### Curated tracklist experiment
+
+The [MusicBrainz core dump](https://musicbrainz.org/doc/About/Data_License) (CC0) supplies
+released DJ mixes and compilations as a proxy for user playlists. The experiment uses one
+official edition per release group, deduplicates identical artist sets, and keeps lists with
+3–60 artists in the listening graph. If a group is both a DJ mix and a compilation, it counts
+as a DJ mix. Pairs that share at least two lists get a bonus of 0.25 times their tracklist
+cosine similarity; longer lists count less. The bonus can reorder the listening graph or add
+playlist-only neighbors. Neither Every Noise labels nor coordinates enter the graph.
+
+Reuse the M1 run and M2 reference tables, and run `uv run on ingest configs/gen.toml` for the
+Wikidata reference. Use the MusicBrainz core archive pinned in `sources.toml`:
+
+```sh
+echo 'da4f1afcbca8ca54eb6362ae45173543f079e8491d097a376d060551d1a03335  mbdump.tar.bz2' | sha256sum -c -
+mkdir -p data/playlists
+tar -xjf mbdump.tar.bz2 -C data/playlists \
+  mbdump/{artist,artist_credit_name,medium,release,release_group_secondary_type,release_group_secondary_type_join,release_status,track}
+uv run python experiments/playlist_signal.py baseline
+uv run python experiments/playlist_signal.py dj-mix --tables data/playlists/mbdump
+uv run python experiments/playlist_signal.py compilation --tables data/playlists/mbdump
+```
+
+The JSON in `runs/playlist-signal/` compares the same unsupervised M2 cluster settings on the
+held-out Every Noise genres and the sealed Wikidata artists. A cluster matches a genre
+when the sets of artists have at least 20% intersection over union. The independent Wikidata
+slice excludes genres with an Every Noise ID. Nothing in the release reads these outputs.
+
+Not used: [ListenBrainz](https://github.com/metabrainz/listenbrainz-server/blob/master/listenbrainz/dumps/tables.py)
+has CC0 listen dumps but leaves playlists out of its public exports; [Spotify's Million Playlist
+Dataset](https://www.aicrowd.com/challenges/spotify-million-playlist-dataset-challenge) is
+noncommercial and cannot be redistributed. [Playlist2vec](https://zenodo.org/records/5002584)
+is labeled CC BY 4.0 by the uploader, but upstream Spotify data rights were not verified.
+[Art of the Mix](https://brianmcfee.net/data/aotm2011.html) has no stated license on its download page.
+
 ## Atlas UX study
 
 ```sh
