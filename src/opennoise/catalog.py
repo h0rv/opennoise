@@ -153,6 +153,7 @@ def tables(config):
 def export(config, run):
     start = time.monotonic()
     m1 = Path(config["m1"])
+    similarity = Path(config.get("similarity", m1 / "tfidf.parquet"))
     artists = pl.read_parquet(m1 / "artists.parquet").sort("item")
     if artists["item"].n_unique() != len(artists) or artists["artist_mbid"].n_unique() != len(
         artists
@@ -246,7 +247,7 @@ def export(config, run):
         for file in ["genres.parquet", "memberships.parquet"]
     ] + [
         m1 / "artists.parquet",
-        m1 / "tfidf.parquet",
+        similarity,
         Path(config["labels"]),
         Path(config["refit"]) / "genres.parquet",
         Path(config["refit"]) / "memberships.parquet",
@@ -347,7 +348,9 @@ def export(config, run):
             stage / "genres" / f"{public[i]}.json",
             {"genre": catalog[i], "members": [], "related": None},
         )
-    graph = pl.read_parquet(m1 / "tfidf.parquet")
+    graph = pl.read_parquet(similarity)
+    if "similarity" in config:
+        graph = graph.with_columns(pl.col("score") / max(1.0, graph["score"].max() or 1.0))
     if (
         graph.select("item", "neighbor").n_unique() != len(graph)
         or (graph["item"] == graph["neighbor"]).any()
@@ -407,7 +410,7 @@ def export(config, run):
             "data_kind": "model",
             "layouts": layouts,
             "membership": "all-label propagation and Leiden membership",
-            "similarity": "M1 TF-IDF cosine top-50",
+            "similarity": "M1 top-50 artist similarity",
             "genre_similarity": None,
             "genres": "genres.json",
             "search": "search.json",

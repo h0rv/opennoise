@@ -66,6 +66,39 @@ def test_adapter_contract_and_rerun(tmp_path, monkeypatch):
     assert (tmp_path / "registry.json").read_bytes() == registry
 
 
+@pytest.mark.parametrize("empty", [False, True])
+def test_configured_similarity_graph(tmp_path, monkeypatch, empty):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, a, b = inputs(tmp_path)
+    path = tmp_path / "similar.parquet"
+    graph = pl.DataFrame({"item": [0, 1], "neighbor": [1, 0], "score": [1.1, 0.55]})
+    (graph.head(0) if empty else graph).write_parquet(path)
+    config["similarity"] = str(path)
+    export(config, run)
+    validate_release(run / "release")
+    detail = json.loads((run / "release/artists" / f"{a}.json").read_text())
+    if empty:
+        assert detail["similar"] is None
+    else:
+        assert detail["similar"][0]["artist"]["id"] == b
+        assert detail["similar"][0]["score"] == 1.0
+        other = json.loads((run / "release/artists" / f"{b}.json").read_text())
+        assert other["similar"][0]["score"] == 0.5
+    hashes = json.loads((run / "release-summary.json").read_text())["inputs"]
+    assert str(path) in hashes
+    assert not any(name.endswith("tfidf.parquet") for name in hashes)
+
+
+@pytest.mark.parametrize("score", [-0.1, float("nan"), float("inf")])
+def test_invalid_configured_similarity_graph(tmp_path, score):
+    config, run, _, _ = inputs(tmp_path)
+    path = tmp_path / "similar.parquet"
+    pl.DataFrame({"item": [0], "neighbor": [1], "score": [score]}).write_parquet(path)
+    config["similarity"] = str(path)
+    with pytest.raises(ValueError, match="Invalid M1 similarity graph"):
+        export(config, run)
+
+
 def test_adapter_rejects_training_strength_injection(tmp_path):
     config, run, _, _ = inputs(tmp_path)
     path = tmp_path / "source/memberships.parquet"

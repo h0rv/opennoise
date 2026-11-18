@@ -171,7 +171,9 @@ def ingest(config, run):
         ("musicbrainz_artists", "artist.tar.xz", "musicbrainz"),
         ("discogs_releases", "discogs_releases.xml.gz", "discogs"),
     ]:
-        outputs = [f"{target}.parquet"] + (["identity.parquet"] if target == "musicbrainz" else [])
+        outputs = ["identity.parquet"] if target == "musicbrainz" else []
+        if target in settings["sources"]:
+            outputs.append(f"{target}.parquet")
         if all((normalized / name).exists() for name in outputs):
             for name in outputs:
                 shutil.copy2(normalized / name, run / name)
@@ -228,7 +230,7 @@ def build(config, run):
     artists = pl.read_parquet(base / "artists.parquet")
     edges = pl.read_parquet(base / "tfidf.parquet")
     coverage = {}
-    for source in ["musicbrainz", "discogs"]:
+    for source in settings["sources"]:
         tags = pl.read_parquet(run / f"{source}.parquet")
         matrix, vocabulary = vectors(tags, artists)
         sparse.save_npz(run / f"{source}.npz", matrix)
@@ -279,9 +281,10 @@ def evaluate(config, run):
     validation = [sets[i] for i in order[:cut]]
     test = [sets[i] for i in order[cut:]]
     coverage = json.loads((run / "coverage.json").read_text())
-    signals = {name: np.load(run / f"{name}_agreement.npy") for name in coverage}
-    denominator = sum(np.load(run / f"{name}_covered.npy").astype(np.int8) for name in coverage)
-    signals["combined"] = sum(signals.values()) / np.maximum(denominator, 1)
+    signals = {name: np.load(run / f"{name}_agreement.npy") for name in settings["sources"]}
+    if len(signals) > 1:
+        denominator = sum(np.load(run / f"{name}_covered.npy").astype(np.int8) for name in signals)
+        signals["combined"] = sum(signals.values()) / np.maximum(denominator, 1)
     results: dict[str, dict[str, Any]] = {}
     best, best_score = "tfidf", -np.inf
     candidates = [("tfidf", None, 0)] + [
@@ -297,7 +300,7 @@ def evaluate(config, run):
                 validation,
             )
             results[method] = {"validation": metrics}
-            if metrics["ndcg@50"] > best_score:
+            if signal is not None and metrics["ndcg@50"] > best_score:
                 best, best_score = method, metrics["ndcg@50"]
         except Exception as error:
             results[method] = {"status": "failed", "error": str(error)}
@@ -329,20 +332,17 @@ def evaluate(config, run):
             matches = [i for i, name in enumerate(names) if name.casefold() == probe.casefold()]
             top = ", ".join(names[i] for i in neighbors[matches[0], :10]) if matches else "absent"
             probe_lines.append(f"{probe}: {top}")
-    promoted = (
-        best if results[best]["test"]["ndcg@50"] > results["tfidf"]["test"]["ndcg@50"] else "tfidf"
-    )
-    graph_frame(finalists[promoted], finalists[promoted]["score"].to_numpy()).write_parquet(
+    graph_frame(finalists[best], finalists[best]["score"].to_numpy()).write_parquet(
         run / "similar.parquet"
     )
     (run / "probes.txt").write_text("\n".join(probe_lines) + "\n")
     (run / "best.json").write_text(
         json.dumps(
             {
-                "method": promoted,
+                "method": best,
                 "validation_method": best,
                 "coverage": coverage,
-                "metrics": results[promoted],
+                "metrics": results[best],
             },
             indent=2,
         )
@@ -353,6 +353,6 @@ def evaluate(config, run):
             run,
             f"{method}_test",
             results[method],
-            method == promoted,
+            method == best,
             "selected by validation nDCG; untouched test users; no candidate expansion",
         )
