@@ -1,5 +1,5 @@
 import RBush, { type BBox } from 'rbush';
-import type { TreeNode } from './tree-layout';
+import { TREE_ROW_HEIGHT, type TreeNode } from './tree-layout';
 
 type NodeItem<T> = BBox & { kind: 'node'; key: string; node: TreeNode<T>; order: number };
 type EdgeItem = BBox & { kind: 'edge'; key: string; path: string };
@@ -17,8 +17,8 @@ export function indexTree<T>(nodes: TreeNode<T>[]) {
       order,
       minX: node.x,
       maxX: node.x + node.width,
-      minY: node.y - 22,
-      maxY: node.y + 22,
+      minY: node.y - TREE_ROW_HEIGHT / 2,
+      maxY: node.y + TREE_ROW_HEIGHT / 2,
     };
     items.push(item);
     byKey.set(node.key, item);
