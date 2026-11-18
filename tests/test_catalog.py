@@ -162,6 +162,34 @@ def test_hierarchy_empty_and_cycles():
         hierarchy([{"id": 0, "parent": 1}, {"id": 1, "parent": 0}], {0, 1})
 
 
+def test_aliases_keep_existing_group_ids_and_readable_names(tmp_path, monkeypatch):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, _, _ = inputs(tmp_path)
+    path = tmp_path / "source/genres.parquet"
+    pl.read_parquet(path).with_columns(
+        pl.when(pl.col("id") == 2).then(pl.lit("R")).otherwise(pl.col("name")).alias("name")
+    ).write_parquet(path)
+    config.update(group_globally=True, readable_names=True)
+    export(config, run)
+    before = json.loads((run / "release/genres.json").read_text())
+    vocabulary = tmp_path / "vocabulary.parquet"
+    pl.DataFrame(
+        {
+            "qid": ["Q1", "Q1"],
+            "name": ["Root", "R"],
+            "normalized": ["root", "r"],
+            "kind": ["label", "alias"],
+        }
+    ).write_parquet(vocabulary)
+    config["vocabulary"] = str(vocabulary)
+    aliased = tmp_path / "aliased"
+    aliased.mkdir()
+    export(config, aliased)
+    after = json.loads((aliased / "release/genres.json").read_text())
+    assert {g["id"]: g["name"] for g in before} == {g["id"]: g["name"] for g in after}
+    validate_release(aliased / "release")
+
+
 def test_grouped_adapter_rerun(tmp_path, monkeypatch):
     monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
     config, run, _, _ = inputs(tmp_path)

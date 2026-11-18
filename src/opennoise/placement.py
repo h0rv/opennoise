@@ -1,5 +1,7 @@
 import hashlib
 import json
+import pickle
+import shutil
 import time
 import tomllib
 from pathlib import Path
@@ -37,7 +39,7 @@ def export(config, run):
         evaluated / "layout_models.json",
         evaluated / "layout_best.json",
         evaluated / "islands_genre_vectors.npy",
-        evaluated / "sonic_artists.npz",
+        evaluated / "sonic_model.pkl",
         Path(settings["audio_features"]),
         m1 / "als_2.npy",
         m1 / "audio_ab_all.npy",
@@ -76,23 +78,20 @@ def export(config, run):
     )
     artist_vectors = normalize(layout.artist_vectors(settings, evaluated, models["embedding"]))
     uniform = normalize(matrix @ artist_vectors)
-    with np.load(evaluated / "sonic_artists.npz") as state:
-        raw_points, present = state["points"], state["present"]
-    genre_axes, artist_axes, placed, artist_placed, _ = sonic.project(
-        raw_points, present, artists, matrix, settings["min_members"]
-    )
-    raw_genres = sonic.genre_axes(
-        matrix, raw_points, present, artists["listeners"].to_numpy(), settings["min_members"]
-    )[0]
+    with (evaluated / "sonic_model.pkl").open("rb") as stream:
+        state = pickle.load(stream)
+    artist_placed = np.linalg.norm(artist_vectors, axis=1) > 0
+    with threadpool_limits(limits=settings["workers"]):
+        genre_axes, placed, _ = sonic.place(state, matrix, artist_vectors, settings["min_members"])
+        artist_axes = sonic.transform(state, artist_vectors[artist_placed])
     np.savez(
         run / "sonic_state.npz",
-        points=raw_points,
-        present=present,
-        reference=raw_genres[placed],
+        vectors=artist_vectors,
         min_members=settings["min_members"],
     )
+    shutil.copyfile(evaluated / "sonic_model.pkl", run / "sonic_model.pkl")
     with threadpool_limits(limits=settings["workers"]):
-        print("Audio axes computed", flush=True)
+        print("Ranked oriented UMAP axes projected", flush=True)
         uniform_reference = np.load(evaluated / "islands_genre_vectors.npy")
         model = layout.islands_model(settings, models["neighbors"])
         embedded = model.fit_transform(uniform_reference)
@@ -130,12 +129,7 @@ def export(config, run):
     (run / "layouts.json").write_text(
         json.dumps(
             {
-                "axes": {
-                    "x_min": "Dense / atmospheric",
-                    "x_max": "Spiky / bouncy",
-                    "y_min": "Mechanical / electric",
-                    "y_max": "Organic",
-                },
+                "axes": models["captions"],
                 "islands": {
                     "method": f"Spectral UMAP {models['neighbors']}; {models['embedding']}"
                 },
@@ -161,6 +155,6 @@ def export(config, run):
         "catalog_placement",
         summary,
         True,
-        "fixed audio-feature axes; spectral islands transform",
+        "ranked audio-oriented UMAP axes; spectral islands transform",
     )
     print(json.dumps(summary), flush=True)
