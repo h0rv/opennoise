@@ -11,6 +11,7 @@ import polars as pl
 from scipy import sparse
 
 from opennoise.metrics import average_precision, best_cluster, name_agreement, ranking
+from opennoise.relations import blend_relations
 
 
 def eligible_genres(config, labels):
@@ -62,6 +63,8 @@ def graph_matrix(config, variant):
     )
     graph.eliminate_zeros()
     graph = ((graph + graph.T) * 0.5).tocsr()
+    if "relations" in config:
+        graph = blend_relations(graph, config["relations"])
     total = np.asarray(graph.sum(axis=1)).ravel()
     transition = sparse.diags(1 / np.maximum(total, 1e-12)) @ graph
     return graph, transition

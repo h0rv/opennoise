@@ -9,6 +9,8 @@ from pathlib import Path
 
 import polars as pl
 
+from opennoise.relations import ingest_relations
+
 
 class MapParser(HTMLParser):
     def __init__(self):
@@ -50,9 +52,30 @@ def table(name, columns, names):
 def ingest_reference(config):
     root = Path("data/m2")
     root.mkdir(parents=True, exist_ok=True)
-    if (root / "coverage.json").exists():
+    if (root / "coverage.json").exists() and "relations" not in config:
         return
     sources = tomllib.loads(Path("sources.toml").read_text())["sources"]
+    groups = [("artist", ["artist", "url", "l_artist_url"])]
+    if "relations" in config:
+        groups.append(("relations", ["l_artist_artist", "link", "link_type"]))
+    pending = [(name, tables) for name, tables in groups if not (root / f"{name}.done").exists()]
+    if pending:
+        members = " ".join(f"mbdump/{table}" for _, tables in pending for table in tables)
+        subprocess.run(
+            [
+                "bash",
+                "-c",
+                f"set -o pipefail; curl -fL '{sources[3]['url']}' | "
+                f"bzip2 -dc | tar -xf - -C '{root}' {members}",
+            ],
+            check=True,
+        )
+        for name, _ in pending:
+            (root / f"{name}.done").touch()
+    if "relations" in config:
+        ingest_relations(config, table)
+    if (root / "coverage.json").exists():
+        return
     for source, filename in zip(sources[1:3], ["enao.json", "map.html"], strict=True):
         path = root / filename
         if not path.exists():
@@ -60,9 +83,7 @@ def ingest_reference(config):
             path.with_suffix(".part").rename(path)
         if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
             raise ValueError(f"Checksum mismatch: {filename}")
-    for source, tables in zip(
-        sources[3:5], [["artist", "url", "l_artist_url"], ["artist_tag", "tag"]], strict=True
-    ):
+    for source, tables in [(sources[4], ["artist_tag", "tag"])]:
         marker = root / (tables[0] + ".done")
         if not marker.exists():
             members = " ".join(f"mbdump/{name}" for name in tables)
