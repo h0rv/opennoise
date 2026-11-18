@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import tarfile
+import tempfile
 import time
 import tomllib
 import unicodedata
@@ -22,6 +23,8 @@ from scipy import sparse
 from opennoise.evaluate import PROBES, colistening, heldout_sets
 from opennoise.graph import normalize
 from opennoise.metrics import overlap
+
+DISCOGS_CHUNK_SIZE = 1_000_000
 
 
 def tag_name(value):
@@ -123,15 +126,47 @@ def musicbrainz(path, root):
 
 
 def discogs(path, root):
+    with tempfile.TemporaryDirectory(dir=root) as directory:
+        return discogs_releases(path, root, Path(directory))
+
+
+def discogs_counts(values, path):
+    pl.DataFrame(
+        [(identifier, tag, count) for (identifier, tag), count in values.items()],
+        schema={"discogs_id": pl.Int64, "tag": pl.String, "weight": pl.Float32},
+        orient="row",
+    ).write_parquet(path)
+    values.clear()
+
+
+def discogs_releases(path, root, parts):
     identity = pl.read_parquet(root / "identity.parquet")
     wanted = set(identity["discogs_id"])
     counts = Counter()
+    labels = Counter()
+    credits = Counter()
+    sources = {"discogs": counts, "labels": labels, "credits": credits}
+    chunks = 0
     releases = 0
     with gzip.open(path, "rb") as stream:
         context = etree.iterparse(stream, events=("end",), tag="release", huge_tree=True)
         for _, release in context:
-            ids = {int(node.text) for node in release.findall("artists/artist/id") if node.text}
-            ids &= wanted
+            main = {int(node.text) for node in release.findall("artists/artist/id") if node.text}
+            participants = main | {
+                int(node.text) for node in release.findall(".//extraartists/artist/id") if node.text
+            }
+            participants -= {0, 194, 355}
+            release_labels = {
+                f"label:{node.attrib['id']}"
+                for node in release.findall("labels/label")
+                if node.attrib.get("id", "").isdigit() and int(node.attrib["id"]) > 0
+            }
+            for identifier in participants & wanted:
+                labels.update((identifier, label) for label in release_labels)
+                credits.update(
+                    (identifier, f"artist:{other}") for other in participants - {identifier}
+                )
+            ids = main & wanted
             if ids:
                 styles = {
                     tag_name(node.text) for node in release.findall("styles/style") if node.text
@@ -139,25 +174,26 @@ def discogs(path, root):
                 for identifier in ids:
                     counts.update((identifier, style) for style in styles if style)
             releases += 1
+            if sum(map(len, sources.values())) >= DISCOGS_CHUNK_SIZE:
+                for source, values in sources.items():
+                    discogs_counts(values, parts / f"{source}_{chunks}.parquet")
+                chunks += 1
             if releases % 1_000_000 == 0:
                 print(
-                    json.dumps({"discogs_releases": releases, "artist_styles": len(counts)}),
+                    json.dumps({"discogs_releases": releases, "chunks": chunks}),
                     flush=True,
                 )
             release.clear()
             if (parent := release.getparent()) is not None:
                 while release.getprevious() is not None:
                     del parent[0]
-    frame = pl.DataFrame(
-        [(identifier, tag, count) for (identifier, tag), count in counts.items()],
-        schema={"discogs_id": pl.Int64, "tag": pl.String, "weight": pl.Float32},
-        orient="row",
-    )
-    frame.join(identity, on="discogs_id").group_by("artist_mbid", "tag").agg(
-        pl.col("weight").sum()
-    ).with_columns(pl.lit("discogs").alias("source")).select(
-        "artist_mbid", "tag", "weight", "source"
-    ).write_parquet(root / "discogs.parquet")
+    for source, values in sources.items():
+        discogs_counts(values, parts / f"{source}_{chunks}.parquet")
+        pl.scan_parquet(parts / f"{source}_*.parquet").join(
+            identity.lazy(), on="discogs_id"
+        ).group_by("artist_mbid", "tag").agg(pl.col("weight").sum()).with_columns(
+            pl.lit(source).alias("source")
+        ).select("artist_mbid", "tag", "weight", "source").sink_parquet(root / f"{source}.parquet")
     return releases
 
 
@@ -171,7 +207,11 @@ def ingest(config, run):
         ("musicbrainz_artists", "artist.tar.xz", "musicbrainz"),
         ("discogs_releases", "discogs_releases.xml.gz", "discogs"),
     ]:
-        outputs = [f"{target}.parquet"] + (["identity.parquet"] if target == "musicbrainz" else [])
+        outputs = [f"{target}.parquet"] + (
+            ["identity.parquet"]
+            if target == "musicbrainz"
+            else ["labels.parquet", "credits.parquet"]
+        )
         if all((normalized / name).exists() for name in outputs):
             for name in outputs:
                 shutil.copy2(normalized / name, run / name)
@@ -198,10 +238,16 @@ def ingest(config, run):
 
 
 def vectors(tags, artists):
-    tags = tags.join(artists.select("artist_mbid", "item"), on="artist_mbid")
-    tags = tags.group_by("artist_mbid", "item", "tag").agg(pl.col("weight").sum())
-    vocabulary = tags.select("tag").unique().sort("tag").with_row_index("column")
-    tags = tags.join(vocabulary, on="tag")
+    tags = tags.lazy().join(artists.select("artist_mbid", "item").lazy(), on="artist_mbid")
+    tags = tags.group_by("item", "tag").agg(pl.col("weight").sum())
+    vocabulary = (
+        tags.select("tag").unique().sort("tag").with_row_index("column").collect(engine="streaming")
+    )
+    tags = (
+        tags.join(vocabulary.lazy(), on="tag")
+        .select("item", "column", "weight")
+        .collect(engine="streaming")
+    )
     matrix = sparse.csr_matrix(
         (tags["weight"].to_numpy(), (tags["item"].to_numpy(), tags["column"].to_numpy())),
         shape=(len(artists), len(vocabulary)),
@@ -228,8 +274,8 @@ def build(config, run):
     artists = pl.read_parquet(base / "artists.parquet")
     edges = pl.read_parquet(base / "tfidf.parquet")
     coverage = {}
-    for source in ["musicbrainz", "discogs"]:
-        tags = pl.read_parquet(run / f"{source}.parquet")
+    for source in ["musicbrainz", "discogs", "labels", "credits"]:
+        tags = pl.scan_parquet(run / f"{source}.parquet")
         matrix, vocabulary = vectors(tags, artists)
         sparse.save_npz(run / f"{source}.npz", matrix)
         vocabulary.write_parquet(run / f"{source}_vocabulary.parquet")
@@ -244,9 +290,9 @@ def build(config, run):
             "edge_fraction": float(covered.mean()),
             "vocabulary": len(vocabulary),
         }
-    pl.concat([pl.read_parquet(run / f"{source}.parquet") for source in coverage]).join(
-        artists.select("artist_mbid"), on="artist_mbid"
-    ).write_parquet(run / "artist_tags.parquet")
+    pl.concat([pl.scan_parquet(run / f"{source}.parquet") for source in coverage]).join(
+        artists.select("artist_mbid").lazy(), on="artist_mbid"
+    ).sink_parquet(run / "artist_tags.parquet")
     artists.write_parquet(run / "artists.parquet")
     (run / "coverage.json").write_text(json.dumps(coverage, indent=2))
     print(json.dumps(coverage), flush=True)
@@ -263,6 +309,33 @@ def graph_matrix(edges, n):
         (edges["score"].to_numpy(), (edges["item"].to_numpy(), edges["neighbor"].to_numpy())),
         shape=(n, n),
     )
+
+
+def genre_agreement(edges, labels, n, seed=42, k=10):
+    if k < 1 or n < 2:
+        raise ValueError("Positive k and at least two artists required")
+    truth = {key[0]: set(group["genre"]) for key, group in labels.group_by("item")}
+    edges = edges.filter(pl.col("item") != pl.col("neighbor")).sort(
+        ["item", "score", "neighbor"], descending=[False, True, False]
+    )
+    actual, random, pairs = [], [], 0
+    rng = np.random.default_rng(seed)
+    for key, group in edges.group_by("item", maintain_order=True):
+        item = key[0]
+        if item not in truth:
+            continue
+        neighbors = group.head(k)["neighbor"]
+        actual.append(np.mean([bool(truth[item] & truth.get(other, set())) for other in neighbors]))
+        draws = rng.integers(n - 1, size=len(neighbors))
+        draws += draws >= item
+        random.append(np.mean([bool(truth[item] & truth.get(other, set())) for other in draws]))
+        pairs += len(neighbors)
+    return {
+        "agreement@10": float(np.mean(actual)) if actual else None,
+        "random": float(np.mean(random)) if random else None,
+        "artists": len(actual),
+        "pairs": pairs,
+    }
 
 
 def evaluate(config, run):
@@ -304,12 +377,22 @@ def evaluate(config, run):
         log(run, method, results[method], note="validation sweep; fixed M1 top-50 candidates")
     if not np.isfinite(best_score):
         raise ValueError("No evaluated models")
-    selected = next(row for row in candidates if row[0] == best)
-    weighted = scores if selected[1] is None else scores * (1 + selected[2] * selected[1])
-    output = graph_frame(edges, weighted)
-    finalists = {"tfidf": edges, best: output}
+    finalists = {"tfidf": edges}
+    for source in signals:
+        options = [
+            row
+            for row in candidates
+            if row[0].startswith(f"tags_{source}_") and "validation" in results[row[0]]
+        ]
+        if not options:
+            continue
+        method, signal, weight = max(
+            options, key=lambda row: results[row[0]]["validation"]["ndcg@50"]
+        )
+        finalists[method] = graph_frame(edges, scores * (1 + weight * signal))
     for method, frame in finalists.items():
         results[method]["test"] = colistening(graph_matrix(frame, len(artists)), test)
+        graph_frame(frame, frame["score"].to_numpy()).write_parquet(run / f"{method}.parquet")
     mbids, names = artists["artist_mbid"].to_list(), artists["artist_name"].to_list()
     references = json.loads((base / "labs.json").read_text())
     probe_lines = []
