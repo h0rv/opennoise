@@ -255,13 +255,10 @@ body > header > :last-child {
   stroke: #efb2a9;
   stroke-width: 7px;
 }
-.axis-legend {
-  display: grid;
-  gap: 4px;
-  padding: 12px 24px 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
+.sonic-controls {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
 }
 .map-bottom {
   display: flex;
@@ -571,9 +568,6 @@ body > header h1 {
   .map-bottom {
     padding: 16px 0;
     gap: 12px;
-  }
-  .axis-legend {
-    padding-inline: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {

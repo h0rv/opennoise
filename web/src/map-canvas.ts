@@ -58,7 +58,7 @@ export class MapCanvas {
     genres: Genre[],
     readonly layout: 'axes' | 'islands',
     private open: (kind: 'genre' | 'artist', id: string) => void,
-    private status: HTMLElement,
+    private status?: HTMLElement,
     camera?: Camera,
   ) {
     this.context = element.getContext('2d')!;
@@ -265,7 +265,8 @@ export class MapCanvas {
     const width = this.element.clientWidth,
       height = this.element.clientHeight;
     if (!width || !height) return;
-    if (this.width) {
+    const initial = !this.width;
+    if (!initial) {
       this.camera.x += (width - this.width) / 2;
       this.camera.y += (height - this.height) / 2;
     }
@@ -276,8 +277,7 @@ export class MapCanvas {
     this.element.height = Math.round(height * ratio);
     const scale = Math.min(width / 1000, height / 570);
     this.home = { scale, x: width / 2 - 500 * scale, y: height / 2 - 285 * scale };
-    if (!this.camera.scale || (this.items.size && this.camera.x === 0 && this.camera.y === 0))
-      this.camera = { ...this.home };
+    if (initial) this.camera = this.startCamera();
     else if (this.camera.scale > this.home.scale * MAX_ZOOM[this.layout]) this.zoom(1);
     this.redraw();
   }
@@ -294,8 +294,13 @@ export class MapCanvas {
     this.redraw();
   }
 
+  private startCamera() {
+    const scale = this.home.scale * (this.layout === 'axes' ? 4 : 1);
+    return { scale, x: this.width / 2 - 500 * scale, y: this.height / 2 - 285 * scale };
+  }
+
   reset() {
-    this.camera = { ...this.home };
+    this.camera = this.startCamera();
     this.redraw();
   }
 
@@ -398,7 +403,7 @@ export class MapCanvas {
     if (this.artist) candidates.unshift(this.artist);
     const names = new Set<string>();
     this.labels = [];
-    const detailed = scale >= this.home.scale * 4;
+    const detailed = this.layout === 'islands' && scale >= this.home.scale * 4;
     for (const item of candidates) {
       const px = item.x * scale + x,
         py = item.y * scale + y;
@@ -408,6 +413,7 @@ export class MapCanvas {
       ctx.fill();
     }
     for (const item of candidates) {
+      if (this.layout === 'axes' && item.kind === 'genre' && item.name !== item.label) continue;
       const label = detailed ? item.name : item.label;
       if (!claimName(label, names, detailed)) continue;
       const px = item.x * scale + x,
@@ -439,7 +445,8 @@ export class MapCanvas {
         focus.box.bottom - focus.box.top,
       );
     }
-    this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${this.items.size.toLocaleString()} genres. Zoom for more; search or use the tree for all.`;
+    if (this.status)
+      this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${this.items.size.toLocaleString()} genres. Zoom for more; search or use the tree for all.`;
     performance.measure('opennoise:map-frame', {
       start,
       end: performance.now(),

@@ -143,16 +143,14 @@ async function start() {
       return;
     }
     hierarchy.hide();
-    const axes = catalog.manifest.layouts.axes;
-    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search or tree reaches every genre."></canvas></div>
-      ${view === 'axes' && axes ? `<div class="axis-legend"><span>Left → right: ${escape(axes.x_min)} → ${escape(axes.x_max)}</span><span>Up → down: ${escape(axes.y_min)} → ${escape(axes.y_max)}</span></div>` : ''}
-      <div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>`;
+    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search or tree reaches every genre."></canvas>${view === 'axes' ? '<div class="sonic-controls"><button data-zoom="reset">Reset</button></div>' : ''}</div>
+      ${view === 'islands' ? `<div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>` : ''}`;
     map = new MapCanvas(
       canvas.querySelector<HTMLCanvasElement>('canvas')!,
       catalog.genres,
       view,
       (kind, id) => void select({ kind, id }, true, true, true),
-      canvas.querySelector('#placement-status')!,
+      canvas.querySelector<HTMLElement>('#placement-status') || undefined,
       cameras.get(view),
     );
     updateMapSelection(reveal);

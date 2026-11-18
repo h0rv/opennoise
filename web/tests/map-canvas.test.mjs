@@ -109,30 +109,41 @@ test('zoom is bounded and points remain visible when labels collide or share a b
     clientHeight: 570,
     getContext: () => context,
   });
-  const data = ['rock', 'rock · A', 'rock · B', 'jazz'].map((name, i) => ({
+  const data = ['rock', 'rock · A', 'rock · B', 'jazz', 'ROCK'].map((name, i) => ({
     id: String(i),
     name,
-    parent_id: null,
+    parent_id: i === 1 || i === 2 ? '0' : null,
     member_count: 100 - i,
-    positions: { axes: { x: [0.5, 0.4, 0.6, 0.5][i], y: 0.5 }, islands: null },
+    positions: {
+      axes: { x: [0.5, 0.4, 0.6, 0.5, 0.6][i], y: i === 4 ? 0.55 : 0.5 },
+      islands: null,
+    },
   }));
   const status = {};
   const map = new MapCanvas(canvas, data, 'axes', () => {}, status);
+  assert.equal(map.camera.scale / map.home.scale, 4);
+  const initial = { ...map.camera };
   map.draw();
-  assert.equal(dots, 4);
+  assert.equal(dots, 5);
   assert.equal(map.labels.length, 1);
   assert.deepEqual(text, ['rock']);
+  map.zoom(0.25);
+  assert.equal(map.camera.scale / map.home.scale, 1);
   map.zoom(4);
   dots = 0;
   text = [];
   map.draw();
-  assert.equal(dots, 4);
-  assert.deepEqual(text, ['rock', 'rock · A', 'rock · B']);
+  assert.equal(dots, 5);
+  assert.deepEqual(text, ['rock']);
   map.zoom(1000);
   assert.equal(map.camera.scale / map.home.scale, 10);
   const camera = { ...map.camera };
   map.zoom(84);
   assert.deepEqual(map.camera, camera);
+  map.center(200, 300);
+  map.reset();
+  assert.deepEqual(map.camera, initial);
+  map.zoom(1000);
   canvas.clientWidth /= 2;
   canvas.clientHeight /= 2;
   resize();
@@ -140,7 +151,7 @@ test('zoom is bounded and points remain visible when labels collide or share a b
   map.zoom(0.0001);
   assert.equal(map.camera.scale / map.home.scale, 0.5);
   map.destroy();
-  const restored = new MapCanvas(canvas, [], 'axes', () => {}, status, {
+  const restored = new MapCanvas(canvas, [], 'axes', () => {}, undefined, {
     x: 1,
     y: 1,
     scale: 1000,
@@ -149,9 +160,23 @@ test('zoom is bounded and points remain visible when labels collide or share a b
   dots = 0;
   restored.draw();
   assert.equal(dots, 0);
-  assert.match(status.textContent, /0 labels · 0 genres/);
   restored.destroy();
-  const islands = new MapCanvas(canvas, [], 'islands', () => {}, status);
+  canvas.clientWidth *= 2;
+  canvas.clientHeight *= 2;
+  const islands = new MapCanvas(
+    canvas,
+    data.map((g) => ({ ...g, positions: { ...g.positions, islands: g.positions.axes } })),
+    'islands',
+    () => {},
+    status,
+  );
+  assert.equal(islands.camera.scale / islands.home.scale, 1);
+  islands.zoom(4);
+  text = [];
+  islands.draw();
+  assert.deepEqual(text, ['rock', 'rock · A', 'rock · B']);
+  islands.reset();
+  assert.deepEqual(islands.camera, islands.home);
   islands.zoom(1000);
   assert.equal(islands.camera.scale / islands.home.scale, 256);
   islands.destroy();
