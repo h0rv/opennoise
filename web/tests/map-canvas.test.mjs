@@ -149,7 +149,7 @@ test('zoom is bounded and points remain visible when labels collide or share a b
   dots = 0;
   restored.draw();
   assert.equal(dots, 0);
-  assert.match(status.textContent, /0 labels · 0 points/);
+  assert.match(status.textContent, /0 labels · 0 genres/);
   restored.destroy();
   const islands = new MapCanvas(canvas, [], 'islands', () => {}, status);
   islands.zoom(1000);
