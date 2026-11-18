@@ -140,6 +140,7 @@ main {
 }
 .search-results {
   position: absolute;
+  z-index: 1;
   top: 50px;
   width: 100%;
   max-height: 360px;
@@ -532,6 +533,11 @@ main {
   }
   .search-wrap {
     min-width: 0;
+    position: static;
+  }
+  .search-results {
+    inset: 60px 0 auto;
+    width: auto;
   }
   .modes button {
     padding-inline: 8px;
