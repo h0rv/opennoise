@@ -14,10 +14,6 @@ const escape = (value: unknown) =>
     /[&<>"']/g,
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!,
   );
-const count = (value: number | null, noun = 'artist') =>
-  value === null
-    ? 'Count unavailable'
-    : `${value.toLocaleString()} ${noun}${value === 1 ? '' : 's'}`;
 const modes: Record<View, { label: string }> = {
   axes: {
     label: 'Sonic map',
@@ -72,17 +68,19 @@ async function start() {
   }
 
   app.innerHTML = `
-    <div class="toolbar" id="explore"><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
-      <nav class="modes" aria-label="Atlas view">${Object.entries(modes)
+    <header class="toolbar" id="explore"><h1><a href="#" class="brand" aria-label="OpenNoise home">OpenNoise</a></h1><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
+      <div class="toolbar-actions"><nav class="modes" aria-label="Atlas view">${Object.entries(
+        modes,
+      )
         .map(
           ([key, mode]) =>
             `<button data-view="${key}" ${key !== 'tree' && !catalog.manifest.layouts[key as 'axes' | 'islands'] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved (<span id="trail-count">${trail.length}</span>)</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar">Details</button></div>
+      <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div></section>
-    <aside id="sidebar" popover aria-label="Selected genre or artist"><button id="detail-close" popovertarget="sidebar" popovertargetaction="hide">Close details</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside>
-    <section class="trail" id="trail" aria-label="Saved discovery trail" hidden></section>
+    <aside id="sidebar" popover aria-label="Selected genre or artist"><button id="detail-close" popovertarget="sidebar" popovertargetaction="hide" aria-label="Close details">×</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside>
+    <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
     <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
@@ -102,14 +100,8 @@ async function start() {
     (selection) => void select(selection, true, false, true),
   );
 
-  function entityButton(
-    kind: Selection['kind'],
-    id: string,
-    name: string,
-    rank?: number,
-    color?: string | null,
-  ) {
-    return `<button class="entity-row" data-kind="${kind}" data-id="${escape(id)}" aria-pressed="${selected?.kind === kind && selected.id === id}">${rank === undefined ? '' : `<span class="number">${String(rank).padStart(2, '0')}</span>`}<span class="dot" style="background:${escape(color || '#111111')}"></span><span>${escape(name)}</span></button>`;
+  function entityButton(kind: Selection['kind'], id: string, name: string, color?: string | null) {
+    return `<button class="entity-row" data-kind="${kind}" data-id="${escape(id)}" aria-pressed="${selected?.kind === kind && selected.id === id}"><span class="dot" style="background:${escape(color || '#111111')}"></span><span>${escape(name)}</span></button>`;
   }
 
   function updateMapSelection(reveal = false) {
@@ -171,107 +163,80 @@ async function start() {
       seen.add(genre.id);
       chain.unshift(genre);
     }
-    return `<div class="breadcrumbs">Genres ${chain.map((parent) => ` / <button data-kind="genre" data-id="${escape(parent.id)}">${escape(parent.name)}</button>`).join('')}</div>`;
+    return chain.length
+      ? `<div class="breadcrumbs">${chain.map((parent) => `<button data-kind="genre" data-id="${escape(parent.id)}">${escape(parent.name)}</button>`).join(' / ')}</div>`
+      : '';
   }
 
   function renderDetail() {
+    detailToggle.hidden = !selected;
     if (!selected) {
-      drawer.innerHTML = `<h2>Genres</h2>${catalog.genres
-        .filter((genre) => !genre.parent_id)
-        .sort((a, b) => (b.member_count || 0) - (a.member_count || 0))
-        .slice(0, 30)
-        .map((genre) => entityButton('genre', genre.id, genre.name, undefined, genre.color))
-        .join(
-          '',
-        )}<p class="muted">Search or open the genre tree for all ${catalog.genres.length.toLocaleString()} genres.</p>`;
+      drawer.innerHTML = '';
       return;
     }
     if (!detail) return;
     const entity = 'genre' in detail ? detail.genre : detail.artist;
     const saved = trail.some((entry) => entry.kind === selected!.kind && entry.id === selected!.id);
-    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : '<p class="muted">Artist</p>'}<h2>${escape(entity.name)}</h2><p class="detail-lede">${'genre' in detail ? count(detail.genre.member_count) : detail.artist.listeners === null ? 'Listener count unavailable' : count(detail.artist.listeners, 'listener')}</p><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full (50)' : 'Save to trail'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
+    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : ''}<h2>${escape(entity.name)}</h2><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full' : 'Save'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
   }
 
   function renderGenre(data: GenreDetail) {
-    return `<section><h3>${catalog.manifest.data_kind === 'model' ? 'Suggested members' : 'Member artists'}</h3>${
-      data.members === null
-        ? '<p class="empty">Membership has not been computed yet.</p>'
-        : !data.members.length
-          ? '<p class="empty">No artists in this published membership.</p>'
-          : data.members
-              .slice(0, 8)
-              .map((member, index) =>
-                entityButton(
-                  'artist',
-                  member.artist.id,
-                  member.artist.name,
-                  index + 1,
-                  member.artist.color,
-                ),
-              )
-              .join('')
-    }</section><section><h3>Related genres</h3>${
-      data.related === null
-        ? '<p class="empty">Genre similarity has not been computed yet.</p>'
-        : !data.related.length
-          ? '<p class="empty">No related genres in this release.</p>'
-          : data.related
-              .slice(0, 6)
-              .map((entry, index) =>
-                entityButton(
-                  'genre',
-                  entry.id,
-                  genres.get(entry.id)?.name || entry.id,
-                  index + 1,
-                  genres.get(entry.id)?.color,
-                ),
-              )
-              .join('')
-    }</section>`;
+    return `${
+      data.members?.length
+        ? `<section><h3>Artists</h3>${data.members
+            .slice(0, 8)
+            .map((member) =>
+              entityButton('artist', member.artist.id, member.artist.name, member.artist.color),
+            )
+            .join('')}</section>`
+        : ''
+    }${
+      data.related?.length
+        ? `<section><h3>Related genres</h3>${data.related
+            .slice(0, 6)
+            .map((entry) =>
+              entityButton(
+                'genre',
+                entry.id,
+                genres.get(entry.id)?.name || entry.id,
+                genres.get(entry.id)?.color,
+              ),
+            )
+            .join('')}</section>`
+        : ''
+    }`;
   }
 
   function renderArtist(data: ArtistDetail) {
     const links = data.links.filter((link) => /^https?:\/\//i.test(link.url));
-    return `<section><h3>${catalog.manifest.data_kind === 'model' ? 'Suggested genres' : 'Genres'}</h3>${
-      data.genres === null
-        ? '<p class="empty">Membership has not been computed yet.</p>'
-        : !data.genres.length
-          ? '<p class="empty">No genre memberships in this release.</p>'
-          : data.genres
-              .slice(0, 8)
-              .map((entry, index) =>
-                entityButton(
-                  'genre',
-                  entry.id,
-                  genres.get(entry.id)?.name || entry.id,
-                  index + 1,
-                  genres.get(entry.id)?.color,
-                ),
-              )
-              .join('')
-    }</section><section><h3>${catalog.manifest.data_kind === 'model' ? 'Suggested similar artists' : 'Similar artists'}</h3>${
-      data.similar === null
-        ? '<p class="empty">Artist similarity has not been computed yet.</p>'
-        : !data.similar.length
-          ? '<p class="empty">No similar artists in this release.</p>'
-          : data.similar
-              .slice(0, 8)
-              .map((entry, index) =>
-                entityButton(
-                  'artist',
-                  entry.artist.id,
-                  entry.artist.name,
-                  index + 1,
-                  entry.artist.color,
-                ),
-              )
-              .join('')
-    }</section><section><h3>Listening links</h3>${links.length ? `<div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div>` : '<p class="empty">No listening links available.</p>'}</section>`;
+    return `${
+      data.genres?.length
+        ? `<section><h3>Genres</h3>${data.genres
+            .slice(0, 8)
+            .map((entry) =>
+              entityButton(
+                'genre',
+                entry.id,
+                genres.get(entry.id)?.name || entry.id,
+                genres.get(entry.id)?.color,
+              ),
+            )
+            .join('')}</section>`
+        : ''
+    }${
+      data.similar?.length
+        ? `<section><h3>Similar artists</h3>${data.similar
+            .slice(0, 8)
+            .map((entry) =>
+              entityButton('artist', entry.artist.id, entry.artist.name, entry.artist.color),
+            )
+            .join('')}</section>`
+        : ''
+    }${links.length ? `<section><div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div></section>` : ''}`;
   }
 
   function renderTrail() {
-    document.querySelector('#trail-count')!.textContent = String(trail.length);
-    trailPanel.innerHTML = `<div class="trail-header"><div><h2>Saved trail</h2><p>${storageAvailable ? 'Saved in this browser only.' : 'Browser storage unavailable; this trail lasts for this tab only.'} Maximum 50 items.</p></div><button id="trail-close">Close</button></div><div class="trail-items">${trail.length ? trail.map((entry, index) => `<div class="trail-item"><button data-kind="${entry.kind}" data-id="${escape(entry.id)}">${String(index + 1).padStart(2, '0')} · ${escape(lookup.get(`${entry.kind}:${entry.id}`)?.name || entry.id)}</button><button data-remove="${index}" aria-label="Remove ${escape(lookup.get(`${entry.kind}:${entry.id}`)?.name || entry.id)} from trail">×</button></div>`).join('') : '<p class="empty">No saved genres or artists.</p>'}</div>`;
+    trailPanel.innerHTML = `<div class="trail-header"><h2>Saved</h2><button id="trail-close" aria-label="Close saved">×</button></div>${storageAvailable ? '' : '<p class="error">Browser storage unavailable. Saved items will be lost when this tab closes.</p>'}<div class="trail-items">${trail.length ? trail.map((entry, index) => `<div class="trail-item"><button data-kind="${entry.kind}" data-id="${escape(entry.id)}">${escape(lookup.get(`${entry.kind}:${entry.id}`)?.name || entry.id)}</button><button data-remove="${index}" aria-label="Remove ${escape(lookup.get(`${entry.kind}:${entry.id}`)?.name || entry.id)} from saved">×</button></div>`).join('') : '<p class="empty">Nothing saved yet.</p>'}</div>`;
   }
 
   function persistTrail() {
@@ -300,6 +265,7 @@ async function start() {
     controller.abort();
     controller = new AbortController();
     selected = selection;
+    detailToggle.hidden = false;
     detail = null;
     if (push) writeURL();
     drawer.innerHTML = '<p class="empty" role="status">Loading details…</p>';
@@ -394,8 +360,7 @@ async function start() {
       await loadSearchIndex();
     } catch {
       if (search.value.trim().toLocaleLowerCase() === query)
-        results.innerHTML =
-          '<p role="status">Search unavailable. Type again to retry; the genre tree remains available.</p>';
+        results.innerHTML = '<p role="status">Search unavailable. Try again.</p>';
       return;
     }
     if (search.value.trim().toLocaleLowerCase() !== query) return;
@@ -407,7 +372,7 @@ async function start() {
               `<button data-kind="${entry.kind}" data-id="${escape(entry.id)}">${escape(entry.name)}<span>${entry.kind}</span></button>`,
           )
           .join('')
-      : '<p role="status">No matches in this release. Try another name.</p>';
+      : '<p role="status">No matches.</p>';
   });
   search.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowDown') {
@@ -447,7 +412,6 @@ async function start() {
     if (target.id === 'save' && selected) {
       trail.push({ ...selected });
       persistTrail();
-      status.textContent = 'Added to your trail.';
     }
     if (target.id === 'retry' && selected) void select(selected, false);
     if (target.id === 'trail-toggle' || target.id === 'trail-close') {

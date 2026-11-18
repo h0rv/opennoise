@@ -86,7 +86,6 @@ input {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
-body > header,
 main {
   margin-inline: var(--gutter);
 }
@@ -96,19 +95,8 @@ main {
   display: flex;
   flex-direction: column;
 }
-body > header {
-  display: flex;
-  align-items: baseline;
-  gap: 24px;
-  padding-block: 14px;
-  border-bottom: 2px solid #111;
-  font-size: 13px;
-}
-body > header > :last-child {
-  margin-left: auto;
-}
 .brand {
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 700;
   letter-spacing: -1.5px;
   text-decoration: none;
@@ -128,17 +116,31 @@ body > header > :last-child {
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: start;
+  align-items: center;
   gap: 12px;
   padding-block: 12px;
+}
+.toolbar h1 {
+  margin: 0;
+  font-size: inherit;
+}
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.source {
+  white-space: nowrap;
+  font-size: 13px;
 }
 .search-wrap {
   position: relative;
   flex: 1;
-  max-width: 480px;
+  min-width: 160px;
 }
 .search-results {
   position: absolute;
+  z-index: 1;
   top: 50px;
   width: 100%;
   max-height: 360px;
@@ -308,7 +310,11 @@ body > header > :last-child {
 }
 #detail-close {
   display: block;
+  min-width: 44px;
   margin: 0 0 24px auto;
+}
+#trail-close {
+  min-width: 44px;
 }
 #detail:focus {
   outline: none;
@@ -339,10 +345,6 @@ body > header > :last-child {
   flex-basis: 100%;
   overflow-wrap: anywhere;
 }
-.detail-lede {
-  color: var(--muted);
-  font-size: 14px;
-}
 .entity-row {
   display: flex;
   align-items: center;
@@ -352,11 +354,6 @@ body > header > :last-child {
   border: 0;
   border-bottom: 1px solid var(--line);
   text-align: left;
-}
-.number {
-  min-width: 18px;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
 }
 .dot {
   display: inline-block;
@@ -463,22 +460,17 @@ body > header > :last-child {
   flex-shrink: 0;
   max-height: 30dvh;
   overflow: auto;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 2px solid #111;
+  padding-block: 12px;
 }
 .trail-header {
   display: flex;
   justify-content: space-between;
-  align-items: start;
+  align-items: center;
   gap: 16px;
 }
 .trail-header h2 {
+  margin: 0;
   font-size: 20px;
-}
-.trail-header p {
-  color: var(--muted);
-  font-size: 13px;
 }
 .trail-items {
   display: grid;
@@ -498,10 +490,6 @@ body > header > :last-child {
 }
 .loading {
   padding-block: 64px;
-}
-body > header h1 {
-  margin: 0;
-  font-size: inherit;
 }
 .families {
   display: flex;
@@ -528,6 +516,26 @@ body > header h1 {
   display: none !important;
 }
 @media (max-width: 1000px) {
+  .toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px 12px;
+  }
+  .toolbar-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .modes {
+    flex: 1;
+  }
+  .search-wrap {
+    min-width: 0;
+    position: static;
+  }
+  .search-results {
+    inset: 60px 0 auto;
+    width: auto;
+  }
   .modes button {
     padding-inline: 8px;
     font-size: 13px;
@@ -535,17 +543,7 @@ body > header h1 {
 }
 @media (max-width: 760px) {
   .brand {
-    font-size: 25px;
-  }
-  body > header {
-    gap: 16px;
-  }
-  .toolbar {
-    flex-wrap: wrap;
-  }
-  .search-wrap {
-    flex-basis: 100%;
-    max-width: none;
+    font-size: 22px;
   }
   .modes {
     flex: 1;
@@ -554,10 +552,18 @@ body > header h1 {
   .modes button {
     flex: 1;
     padding-inline: 6px;
+    white-space: normal;
   }
   #trail-toggle {
     padding-inline: 8px;
     font-size: 13px;
+  }
+  #detail-toggle {
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+  .source {
+    font-size: 12px;
   }
   .families {
     padding: 16px 0 0;
