@@ -1,4 +1,5 @@
 export type Branch<T> = { key: string; width: number; value: T; children: Branch<T>[] };
+export const TREE_ROW_HEIGHT = 32;
 export type TreeNode<T> = {
   key: string;
   width: number;
@@ -36,13 +37,10 @@ export function layoutTree<T>(roots: Branch<T>[]) {
     if (branch.children.length) {
       const children = branch.children.map((child) => place(child, depth + 1, branch.key));
       node.y = (children[0].y + children[children.length - 1].y) / 2;
-    } else row += 56;
+    } else row += TREE_ROW_HEIGHT;
     return node;
   }
-  for (const root of roots) {
-    place(root, 0, null);
-    row += 40;
-  }
+  for (const root of roots) place(root, 0, null);
   return {
     nodes,
     width: nodes.reduce((width, node) => Math.max(width, node.x + node.width + 28), 1),

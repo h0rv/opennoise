@@ -7,6 +7,18 @@ const branch = (key, children = []) => ({ key, width: 80, value: 'same name', ch
 const intersects = (a, b) =>
   a.minX <= b.maxX && a.maxX >= b.minX && a.minY <= b.maxY && a.maxY >= b.minY;
 
+test('compact rows have matching non-overlapping hit bounds', () => {
+  const { nodes } = layoutTree(Array.from({ length: 100 }, (_, index) => branch(String(index))));
+  const { byKey } = indexTree(nodes);
+  let bottom = -Infinity;
+  for (const node of nodes) {
+    const item = byKey.get(node.key);
+    assert.equal(item.maxY - item.minY, 32);
+    assert.ok(item.minY >= bottom);
+    bottom = item.maxY;
+  }
+});
+
 test('viewport index contains exactly the nodes and connectors from a full-scan reference', () => {
   const roots = Array.from({ length: 40 }, (_, i) =>
     branch(

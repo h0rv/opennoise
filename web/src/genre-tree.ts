@@ -1,7 +1,7 @@
 import type { ArtistDetail, Genre, GenreDetail } from './catalog';
 import { createNavigation, type Navigation } from './navigation';
 import { hasShortcutModifier } from './keyboard';
-import { layoutTree, type Branch, type TreeNode } from './tree-layout';
+import { layoutTree, TREE_ROW_HEIGHT, type Branch, type TreeNode } from './tree-layout';
 import { indexTree } from './tree-scene';
 
 type Selection = { kind: 'genre' | 'artist'; id: string };
@@ -123,7 +123,7 @@ export class GenreTree {
           ? {
               scale,
               x: 24 / scale - first.x,
-              y: this.viewport.clientHeight / (2 * scale) - first.y,
+              y: (selection ? this.viewport.clientHeight / 2 : 24) / scale - first.y,
             }
           : this.center(scale);
       this.navigation = createNavigation(this.content, this.viewport, {
@@ -287,7 +287,7 @@ export class GenreTree {
       if (!elements) {
         const group = svg('g', { class: `tree-node tree-${node.value.kind}` });
         group.dataset.key = node.key;
-        const rect = svg('rect', { x: 0, y: -22, height: 44 });
+        const rect = svg('rect', { x: 0, y: -TREE_ROW_HEIGHT / 2, height: TREE_ROW_HEIGHT });
         const text = svg('text', { x: 10, y: 5 });
         group.append(rect, text);
         elements = { group, rect, text };

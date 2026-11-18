@@ -13,7 +13,7 @@ function branch(key, depth, fanout) {
   };
 }
 
-test('tree edges retain the exact parent; depth columns and 44px rows do not overlap', () => {
+test('tree edges retain the exact parent; depth columns and 32px rows do not overlap', () => {
   for (const depth of [0, 1, 2, 3, 4])
     for (const fanout of [1, 2, 3, 4]) {
       const roots = [branch('a', depth, fanout), branch('b', depth, fanout)];
@@ -34,9 +34,22 @@ test('tree edges retain the exact parent; depth columns and 44px rows do not ove
       for (const a of layout.nodes)
         for (const b of layout.nodes) {
           if (a.key === b.key) continue;
-          assert.ok(a.x + a.width <= b.x || b.x + b.width <= a.x || Math.abs(a.y - b.y) >= 44);
+          assert.ok(a.x + a.width <= b.x || b.x + b.width <= a.x || Math.abs(a.y - b.y) >= 32);
         }
     }
+});
+
+test('collapsed roots and expanded leaves use the same compact 32px row spacing', () => {
+  const roots = Array.from({ length: 1000 }, (_, index) => branch(String(index), 0, 0));
+  const collapsed = layoutTree(roots);
+  const expanded = layoutTree([branch('parent', 1, 1000)]);
+  for (const rows of [collapsed.nodes, expanded.nodes.filter((node) => node.depth === 1)]) {
+    assert.equal(rows.length, 1000);
+    for (let index = 1; index < rows.length; index++)
+      assert.equal(rows[index].y - rows[index - 1].y, 32);
+  }
+  assert.equal(collapsed.height, 32032);
+  assert.equal(expanded.height, collapsed.height);
 });
 
 test('collapse only removes descendants; camera delta preserves the toggled node at every zoom', () => {
