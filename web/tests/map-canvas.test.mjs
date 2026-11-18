@@ -67,3 +67,93 @@ test('returning to a map reuses its scene without sharing camera or selection st
   create(structuredClone(genres), 'axes').destroy();
   assert.ok(measured > bothLayouts);
 });
+
+test('zoom is bounded and points remain visible when labels collide or share a base name', (t) => {
+  globalThis.window = { devicePixelRatio: 1 };
+  globalThis.document = {};
+  globalThis.requestAnimationFrame = () => 1;
+  globalThis.cancelAnimationFrame = () => {};
+  let resize;
+  globalThis.ResizeObserver = class {
+    constructor(callback) {
+      resize = callback;
+    }
+    observe() {}
+    disconnect() {}
+  };
+  t.after(() => {
+    delete globalThis.window;
+    delete globalThis.document;
+    delete globalThis.requestAnimationFrame;
+    delete globalThis.cancelAnimationFrame;
+    delete globalThis.ResizeObserver;
+  });
+  let dots = 0;
+  let text = [];
+  const context = {
+    measureText: (label) => ({ width: label.length * 8 }),
+    setTransform() {},
+    clearRect() {},
+    beginPath() {},
+    fill() {},
+    strokeText() {},
+    arc() {
+      dots++;
+    },
+    fillText(label) {
+      text.push(label);
+    },
+  };
+  const canvas = Object.assign(new EventTarget(), {
+    clientWidth: 1000,
+    clientHeight: 570,
+    getContext: () => context,
+  });
+  const data = ['rock', 'rock · A', 'rock · B', 'jazz'].map((name, i) => ({
+    id: String(i),
+    name,
+    parent_id: null,
+    member_count: 100 - i,
+    positions: { axes: { x: [0.5, 0.4, 0.6, 0.5][i], y: 0.5 }, islands: null },
+  }));
+  const status = {};
+  const map = new MapCanvas(canvas, data, 'axes', () => {}, status);
+  map.draw();
+  assert.equal(dots, 4);
+  assert.equal(map.labels.length, 1);
+  assert.deepEqual(text, ['rock']);
+  map.zoom(4);
+  dots = 0;
+  text = [];
+  map.draw();
+  assert.equal(dots, 4);
+  assert.deepEqual(text, ['rock', 'rock · A', 'rock · B']);
+  assert.match(status.textContent, /3 labels · 4 points/);
+  map.zoom(1000);
+  assert.equal(map.camera.scale / map.home.scale, 10);
+  const camera = { ...map.camera };
+  map.zoom(84);
+  assert.deepEqual(map.camera, camera);
+  canvas.clientWidth /= 2;
+  canvas.clientHeight /= 2;
+  resize();
+  assert.equal(map.camera.scale / map.home.scale, 10);
+  map.zoom(0.0001);
+  assert.equal(map.camera.scale / map.home.scale, 0.5);
+  map.destroy();
+  const restored = new MapCanvas(canvas, [], 'axes', () => {}, status, {
+    x: 1,
+    y: 1,
+    scale: 1000,
+  });
+  assert.equal(restored.camera.scale / restored.home.scale, 10);
+  dots = 0;
+  restored.draw();
+  assert.equal(dots, 0);
+  assert.match(status.textContent, /0 labels · 0 points/);
+  restored.destroy();
+  const islands = new MapCanvas(canvas, [], 'islands', () => {}, status);
+  islands.zoom(1000);
+  assert.equal(islands.camera.scale / islands.home.scale, 256);
+  islands.destroy();
+});

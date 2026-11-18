@@ -11,6 +11,7 @@ import {
 } from './label-grid';
 
 type Camera = { x: number; y: number; scale: number };
+const MAX_ZOOM = { axes: 10, islands: 256 };
 type Item = {
   id: string;
   name: string;
@@ -20,6 +21,7 @@ type Item = {
   count: number;
   depth: number;
   width: number;
+  fullWidth: number;
   size: number;
   font: string;
   kind: 'genre' | 'artist';
@@ -98,6 +100,7 @@ export class MapCanvas {
           count: genre.member_count ?? 0,
           depth,
           width: this.context.measureText(label).width,
+          fullWidth: this.context.measureText(genre.name).width,
           size,
           font,
           kind: 'genre',
@@ -117,7 +120,10 @@ export class MapCanvas {
       layouts[layout] = { items: this.items, points: this.points };
     }
     this.resize();
-    if (camera) this.camera = { ...camera };
+    if (camera) {
+      this.camera = { ...camera };
+      this.zoom(1);
+    }
     const options = { signal: this.abort.signal };
     element.addEventListener(
       'dblclick',
@@ -272,12 +278,13 @@ export class MapCanvas {
     this.home = { scale, x: width / 2 - 500 * scale, y: height / 2 - 285 * scale };
     if (!this.camera.scale || (this.items.size && this.camera.x === 0 && this.camera.y === 0))
       this.camera = { ...this.home };
+    else if (this.camera.scale > this.home.scale * MAX_ZOOM[this.layout]) this.zoom(1);
     this.redraw();
   }
 
   zoom(factor: number, point = { x: this.width / 2, y: this.height / 2 }) {
     const scale = Math.min(
-      this.home.scale * 256,
+      this.home.scale * MAX_ZOOM[this.layout],
       Math.max(this.home.scale / 2, this.camera.scale * factor),
     );
     const ratio = scale / this.camera.scale;
@@ -309,6 +316,7 @@ export class MapCanvas {
         y: 65 + artist.y * 440,
         size: 15,
         width: this.context.measureText(baseName(artist.name)).width,
+        fullWidth: this.context.measureText(artist.name).width,
         font,
         count: Infinity,
         depth: 0,
@@ -390,19 +398,35 @@ export class MapCanvas {
     if (this.artist) candidates.unshift(this.artist);
     const names = new Set<string>();
     this.labels = [];
+    const detailed = scale >= this.home.scale * 4;
     for (const item of candidates) {
-      if (!claimName(item.label, names)) continue;
       const px = item.x * scale + x,
         py = item.y * scale + y;
-      const placement = labelBox(px, py, item.width, item.size, viewport);
+      ctx.fillStyle = item.id === this.selected ? '#b32013' : '#999';
+      ctx.beginPath();
+      ctx.arc(px, py - 4, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (const item of candidates) {
+      const label = detailed ? item.name : item.label;
+      if (!claimName(label, names, detailed)) continue;
+      const px = item.x * scale + x,
+        py = item.y * scale + y;
+      const placement = labelBox(
+        px,
+        py,
+        detailed ? item.fullWidth : item.width,
+        item.size,
+        viewport,
+      );
       if (!placement || !grid.place(placement.box)) continue;
       const { box, textX } = placement;
       ctx.font = item.font;
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 4;
+      ctx.strokeText(label, textX, py);
       ctx.fillStyle = item.id === this.selected ? '#b32013' : '#111';
-      ctx.beginPath();
-      ctx.arc(px, py - 4, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillText(item.label, textX, py);
+      ctx.fillText(label, textX, py);
       this.labels.push({ item, box, x: px, y: py });
     }
     const focus = this.labels[this.focusIndex];
@@ -415,7 +439,7 @@ export class MapCanvas {
         focus.box.bottom - focus.box.top,
       );
     }
-    this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${this.items.size.toLocaleString()} genres. Zoom for more; search or use the tree for all.`;
+    this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${candidates.length.toLocaleString()} points · ${this.items.size.toLocaleString()} genres. Zoom ${Math.round(scale / this.home.scale)}× (max ${MAX_ZOOM[this.layout]}×); search or use the tree for all.`;
     performance.measure('opennoise:map-frame', {
       start,
       end: performance.now(),
