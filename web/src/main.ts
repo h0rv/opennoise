@@ -1,7 +1,7 @@
 import { Catalog } from './data';
 import { GenreTree } from './genre-tree';
 import { MapCanvas } from './map-canvas';
-import { searchMatches } from './search';
+import { searchableEntry, searchMatches } from './search';
 import { PreviewPlayer } from './preview';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import './style.css';
@@ -30,7 +30,7 @@ async function start() {
   const catalog = await new Catalog().load();
   const genres = new Map(catalog.genres.map((genre) => [genre.id, genre]));
   const lookup = new Map(catalog.search.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
-  let searchIndex = catalog.search.map((entry) => ({
+  let searchIndex = catalog.search.filter(searchableEntry).map((entry) => ({
     entry,
     topLevel: entry.kind === 'genre' && genres.get(entry.id)?.parent_id === null,
     terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
@@ -77,7 +77,7 @@ async function start() {
             `<button data-view="${key}" ${key !== 'tree' && !catalog.manifest.layouts[key as 'axes' | 'islands'] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
+      <button data-zoom="reset" hidden>Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div></section>
     <aside id="sidebar" popover aria-label="Selected genre or artist"><button id="detail-close" popovertarget="sidebar" popovertargetaction="hide" aria-label="Close details">×</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside>
     <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
@@ -116,6 +116,8 @@ async function start() {
   }
 
   function renderCanvas(reveal = false) {
+    document.querySelector<HTMLButtonElement>('.toolbar [data-zoom="reset"]')!.hidden =
+      view === 'tree';
     document
       .querySelectorAll<HTMLButtonElement>('[data-view]')
       .forEach((button) =>
@@ -135,8 +137,8 @@ async function start() {
       return;
     }
     hierarchy.hide();
-    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search or tree reaches every genre."></canvas>${view === 'axes' ? '<div class="sonic-controls"><button data-zoom="reset">Reset</button></div>' : ''}</div>
-      ${view === 'islands' ? `<div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="reset">Reset</button></div></div>` : ''}`;
+    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search or tree reaches every genre."></canvas></div>
+      ${view === 'islands' ? `<div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button></div></div>` : ''}`;
     map = new MapCanvas(
       canvas.querySelector<HTMLCanvasElement>('canvas')!,
       catalog.genres,
@@ -339,7 +341,7 @@ async function start() {
   async function loadSearchIndex() {
     const entries = await catalog.loadSearch();
     if (entries === indexedSearch) return;
-    searchIndex = entries.map((entry) => ({
+    searchIndex = entries.filter(searchableEntry).map((entry) => ({
       entry,
       topLevel: entry.kind === 'genre' && genres.get(entry.id)?.parent_id === null,
       terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),

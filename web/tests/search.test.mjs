@@ -1,6 +1,40 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { searchMatches } from '../src/search.ts';
+import { build } from 'esbuild';
+
+const { outputFiles } = await build({
+  entryPoints: [new URL('../src/search.ts', import.meta.url).pathname],
+  bundle: true,
+  format: 'esm',
+  write: false,
+});
+const { searchableEntry, searchMatches } = await import(
+  `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`
+);
+
+test('artist-qualified genres are excluded before ranking, but parents and artists remain', () => {
+  const entries = [
+    ...Array.from({ length: 15 }, (_, i) => ({
+      kind: 'genre',
+      name: `art pop · Björk ${i}`,
+      aliases: ['björk', 'pop'],
+    })),
+    { kind: 'genre', name: 'art pop', aliases: ['pop'] },
+    { kind: 'genre', name: 'rhythm & blues', aliases: [] },
+    { kind: 'artist', name: 'Björk', aliases: [] },
+    { kind: 'artist', name: 'Björk · live', aliases: [] },
+  ];
+  const index = entries.filter(searchableEntry).map((entry) => ({
+    entry,
+    terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
+  }));
+  assert.deepEqual(searchMatches(index, 'björk'), entries.slice(17));
+  assert.deepEqual(searchMatches(index, 'art pop'), [entries[15]]);
+  assert.deepEqual(searchMatches(index, 'rhythm & blues'), [entries[16]]);
+  assert.deepEqual(searchMatches(index, 'pop'), [entries[15]]);
+  assert.deepEqual(searchMatches(index, ''), []);
+  assert.deepEqual(searchMatches(index, 'missing'), []);
+});
 
 test('exact names outrank aliases, prefixes and substrings before the limit', () => {
   const entries = [

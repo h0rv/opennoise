@@ -257,11 +257,6 @@ main {
   stroke: #efb2a9;
   stroke-width: 7px;
 }
-.sonic-controls {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-}
 .map-bottom {
   display: flex;
   align-items: center;

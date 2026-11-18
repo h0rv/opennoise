@@ -1,3 +1,9 @@
+import type { SearchEntry } from './catalog';
+import { isArtistCluster } from './label-grid';
+
+export const searchableEntry = (entry: Pick<SearchEntry, 'kind' | 'name'>) =>
+  entry.kind !== 'genre' || !isArtistCluster(entry.name);
+
 export function searchMatches<T>(
   index: { entry: T; terms: string[]; topLevel?: boolean }[],
   query: string,

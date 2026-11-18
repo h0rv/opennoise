@@ -1,6 +1,7 @@
 export type Box = { left: number; top: number; right: number; bottom: number };
 
 export const baseName = (name: string) => name.split(' · ', 1)[0].trim();
+export const isArtistCluster = (name: string) => name !== baseName(name);
 
 export function claimName(name: string, seen: Set<string>, detailed = false) {
   const key = (detailed ? name : baseName(name))
