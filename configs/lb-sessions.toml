@@ -1,0 +1,14 @@
+milestone = "lb_sessions"
+base_run = "runs/1f242e47ed38"
+cache = "data/lb_sessions"
+endpoint = "https://labs.api.listenbrainz.org/similar-artists/json"
+algorithm = "session_based_days_7500_session_300_contribution_5_threshold_10_limit_100_filter_True_skip_30"
+batch_size = 50
+concurrency = 4
+retries = 6
+backoff = 2.0
+timeout = 120
+weights = [0.25, 0.5, 1.0]
+m2_config = "configs/m2.toml"
+gen_config = "configs/gen.toml"
+reference_sha256 = "9ed643ab3b78f4678baac30e2f0979871b6a843cc5bb96b66b17462c339d71c0"

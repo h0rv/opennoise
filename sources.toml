@@ -79,3 +79,10 @@ url = "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs
 date = "2022-02-17"
 sha256 = "a280825b334797cf677939db8cd5762c0392aedd0ca6415dbc1cd083f045e43c"
 license = "CC BY-NC-ND 4.0"
+
+[[sources]]
+name = "listenbrainz_sessions"
+url = "https://labs.api.listenbrainz.org/similar-artists/json"
+license = "CC0"
+license_url = "https://listenbrainz.org/data/"
+algorithm = "session_based_days_7500_session_300_contribution_5_threshold_10_limit_100_filter_True_skip_30"

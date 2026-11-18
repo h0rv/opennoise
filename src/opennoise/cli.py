@@ -29,7 +29,11 @@ def main() -> None:
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.toml").write_bytes(config_bytes)
     start = time.monotonic()
-    if config.get("milestone") == "m3":
+    if config.get("milestone") == "lb_sessions":
+        from opennoise.lb_sessions import execute
+
+        execute(args.stage, config, run)
+    elif config.get("milestone") == "m3":
         from opennoise.micro import execute
 
         execute(args.stage, config, run)
