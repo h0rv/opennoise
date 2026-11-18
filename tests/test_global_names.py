@@ -116,7 +116,7 @@ def test_global_names_empty_and_cycle():
         global_names([], {0: 1, 1: 0}, members, {})
 
 
-def test_group_coordinates_use_raw_log_listener_means_and_shared_rank_transform():
+def test_group_coordinates_use_shared_embedding_transform():
     placed = {
         ("artist", "a"): {"axes": {"x": 0.0, "y": 1.0}, "islands": None},
         ("artist", "b"): {"axes": {"x": 1.0, "y": 0.0}, "islands": None},
@@ -125,19 +125,28 @@ def test_group_coordinates_use_raw_log_listener_means_and_shared_rank_transform(
     members = pl.DataFrame({"genre": [2, 2], "artist": ["a", "b"], "score": [0.25, 0.75]})
     artists = pl.DataFrame({"item": [0, 1], "artist_mbid": ["a", "b"], "listeners": [2, 4]})
     state = {
-        "points": np.array([[0, 10], [10, 0]]),
-        "present": np.array([True, True]),
-        "reference": np.array([[0, 0], [5, 5], [10, 10]]),
+        "vectors": np.eye(2),
         "min_members": 2,
     }
-    group_coordinates([2], members, {2: "new"}, placed, artists, state)
+
+    class Projection:
+        def transform(self, vectors):
+            return vectors[:, :2]
+
+    model = {
+        "model": Projection(),
+        "center": np.zeros(2),
+        "rotation": np.eye(2),
+        "reference": np.array([[0, 0], [1, 1]]),
+    }
+    group_coordinates([2], members, {2: "new"}, placed, artists, state, model)
     point = placed["genre", "new"]["axes"]
     assert point is not None
-    assert point["x"] == pytest.approx(6 / 7)
-    assert point["y"] == pytest.approx(1 / 7)
+    assert point["x"] == pytest.approx(1 / np.sqrt(10))
+    assert point["y"] == pytest.approx(3 / np.sqrt(10))
     assert placed["genre", "new"]["islands"] is None
     assert placed["genre", "existing"]["axes"] == {"x": 0.1, "y": 0.2}
-    group_coordinates([], members, {}, placed, artists, state)
-    state["present"] = np.array([True, False])
-    group_coordinates([2], members, {2: "sparse"}, placed, artists, state)
+    group_coordinates([], members, {}, placed, artists, state, model)
+    state["min_members"] = 3
+    group_coordinates([2], members, {2: "sparse"}, placed, artists, state, model)
     assert placed.get(("genre", "sparse"), {}).get("axes") is None

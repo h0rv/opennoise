@@ -1,6 +1,9 @@
 import numpy as np
 from scipy import sparse
+from scipy.linalg import orthogonal_procrustes
 from scipy.stats import rankdata
+from sklearn.preprocessing import normalize
+from umap import UMAP
 
 AXES = {
     "x": {"danceability": 1, "onset_rate": 1, "dynamic_complexity": -1},
@@ -89,17 +92,41 @@ def rank_transform(reference, points):
     return result
 
 
-def project(artist_points, audio, artists, membership, min_members):
-    genre_points, placed, counts = genre_axes(
-        membership, artist_points, audio, artists["listeners"].to_numpy(), min_members
+def fit(vectors, audio, train, config):
+    if train.sum() < 3:
+        raise ValueError("Sonic UMAP needs at least three training genres")
+    model = UMAP(
+        n_neighbors=config["sonic_neighbors"],
+        min_dist=config["sonic_min_dist"],
+        n_epochs=config["umap_epochs"],
+        metric="cosine",
+        init="spectral",
+        random_state=config["seed"],
+        n_jobs=1,
+        compatibility_layout=True,
     )
-    reference = genre_points[placed]
-    if not len(reference):
-        return np.empty((0, 2)), np.empty((0, 2)), placed, np.zeros_like(audio), counts
-    return (
-        rank_transform(reference, genre_points[placed]),
-        rank_transform(reference, artist_points[audio]),
-        placed,
-        audio,
-        counts,
-    )
+    points = np.empty((len(vectors), 2))
+    points[train] = model.fit_transform(vectors[train])
+    center = points[train].mean(0)
+    rotation, _ = orthogonal_procrustes(points[train] - center, audio[train] - audio[train].mean(0))
+    if (~train).any():
+        points[~train] = model.transform(vectors[~train])
+    points = (points - center) @ rotation
+    state = {"model": model, "center": center, "rotation": rotation, "reference": points[train]}
+    return state, rank_transform(state["reference"], points)
+
+
+def transform(state, vectors):
+    if not len(vectors):
+        return np.empty((0, 2))
+    points = (state["model"].transform(vectors) - state["center"]) @ state["rotation"]
+    return rank_transform(state["reference"], points)
+
+
+def place(state, membership, vectors, min_members):
+    matrix = membership.tocsr(copy=True)
+    matrix.eliminate_zeros()
+    centers = normalize(matrix @ vectors)
+    counts = np.diff(matrix.indptr)
+    placed = (counts >= min_members) & (np.linalg.norm(centers, axis=1) > 0)
+    return transform(state, centers[placed]), placed, counts

@@ -4,7 +4,7 @@ import pytest
 from scipy import sparse
 
 from opennoise import sonic
-from opennoise.layout import best_islands
+from opennoise.layout import audio_captions, best_islands
 
 
 @pytest.fixture
@@ -66,19 +66,49 @@ def test_rank_transform_shared_ties_constants_and_clipping():
     assert sonic.rank_transform(reference, np.empty((0, 2))).shape == (0, 2)
 
 
-def test_place_shared_genre_artist_transform_and_no_audio(audio):
-    artists, features = audio
-    matrix = sparse.csr_matrix(np.eye(4))
-    genres, points, placed, audio_mask, counts = sonic.project(
-        *sonic.artist_axes(features, artists), artists, matrix, 1
+class Projection:
+    def transform(self, vectors):
+        return vectors[:, :2]
+
+
+def test_place_shared_projection_and_empty_memberships():
+    state = {
+        "model": Projection(),
+        "center": np.zeros(2),
+        "rotation": np.eye(2),
+        "reference": np.array([[0, 0], [0.5, 0.5], [1, 1]]),
+    }
+    vectors = np.eye(2)
+    points, placed, counts = sonic.place(
+        state, sparse.csr_matrix([[1, 0], [0, 1], [0, 0]]), vectors, 1
     )
-    np.testing.assert_allclose(genres, points)
-    np.testing.assert_allclose(genres, [[0, 1], [0.5, 0.5], [1, 0]])
-    assert placed.tolist() == audio_mask.tolist() == [True, True, True, False]
-    assert counts.tolist() == [1, 1, 1, 0]
-    empty = sonic.project(*sonic.artist_axes(features.head(0), artists), artists, matrix, 1)
-    assert empty[0].shape == empty[1].shape == (0, 2)
-    assert not empty[2].any()
+    np.testing.assert_allclose(points, sonic.transform(state, vectors))
+    assert placed.tolist() == [True, True, False]
+    assert counts.tolist() == [1, 1, 0]
+    assert sonic.transform(state, np.empty((0, 2))).shape == (0, 2)
+
+
+def test_fit_orientation_and_ranks_use_training_only(monkeypatch):
+    class Embedding(Projection):
+        def __init__(self, **kwargs):
+            pass
+
+        def fit_transform(self, vectors):
+            return self.transform(vectors)
+
+    monkeypatch.setattr(sonic, "UMAP", Embedding)
+    vectors = np.array([[0.0, 0], [1, 0], [0, 1], [0.3, 0.8]])
+    train = np.array([True, True, True, False])
+    audio = vectors @ np.array([[0.0, -1], [1, 0]])
+    config = {"sonic_neighbors": 2, "sonic_min_dist": 0.8, "umap_epochs": 10, "seed": 42}
+    state, points = sonic.fit(vectors, audio, train, config)
+    np.testing.assert_allclose(state["rotation"].T @ state["rotation"], np.eye(2), atol=1e-12)
+    np.testing.assert_allclose(points, sonic.transform(state, vectors), atol=1e-12)
+    audio[-1] = [999, -999]
+    _, other = sonic.fit(vectors, audio, train, config)
+    np.testing.assert_allclose(points, other)
+    with pytest.raises(ValueError, match="at least three"):
+        sonic.fit(vectors, audio, ~train, config)
 
 
 def test_invalid_features(audio):
@@ -133,3 +163,17 @@ def test_fill_restores_genre_member_counts(audio):
     )
     assert placed.tolist() == [True]
     assert counts.tolist() == [2]
+
+
+def test_captions_use_heldout_features_and_handle_missing_audio():
+    artists = pl.DataFrame({"item": range(5), "listeners": [2] * 5})
+    features = pl.DataFrame({"item": range(5), "danceability": range(5)})
+    points = np.array([[100, 100], [0, 3], [1, 2], [2, 1], [3, 0]])
+    heldout = np.array([False, True, True, True, True])
+    captions, scores = audio_captions(features, artists, sparse.eye(5), points, heldout)
+    assert captions["x_max"] == "Higher danceability"
+    assert captions["y_max"] == "Lower danceability"
+    assert scores["x"]["danceability"] == {"rho": 1, "genres": 4}
+    captions, scores = audio_captions(features.head(0), artists, sparse.eye(5), points, heldout)
+    assert "Listening component" in captions["x_min"]
+    assert scores == {"x": {}, "y": {}}

@@ -8,7 +8,7 @@ on:
       - 'src/opennoise/pages.py'
       - '.github/workflows/pages.yml'
 env:
-  CATALOG_RELEASE: b38774897b3f-aliases
+  CATALOG_RELEASE: 3d18e90bfccf
 permissions:
   contents: read
   pages: write

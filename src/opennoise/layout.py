@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import json
+import pickle
 import subprocess
 import time
 import tomllib
@@ -9,6 +10,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from scipy import sparse
+from scipy.stats import spearmanr
 from sklearn.preprocessing import normalize
 from threadpoolctl import threadpool_limits
 from umap import UMAP
@@ -100,12 +102,19 @@ def layout(config, run):
         artist_points, audio = sonic.fill_artists(
             artist_points, audio, artist_vectors(config, run, "als_2")
         )
-    points, _, placed, _, counts = sonic.project(
-        artist_points, audio, artists, membership, config["min_members"]
+    audio_points, placed, counts = sonic.genre_axes(
+        membership, artist_points, audio, artists["listeners"].to_numpy(), config["min_members"]
     )
-    axes = f"sonic_dance_fill_{sonic.FILL_NEIGHBORS}"
+    train = genres.filter(placed)["split"].to_numpy() == "train"
+    audio_points = sonic.rank_transform(audio_points[placed], audio_points[placed])
+    with threadpool_limits(limits=config["workers"]):
+        state, points = sonic.fit(genre_vectors[placed], audio_points, train, config)
+    with (run / "sonic_model.pkl").open("wb") as stream:
+        pickle.dump(state, stream)
+    captions, correlations = audio_captions(features, artists, membership[placed], points, ~train)
+    (run / "audio_correlations.json").write_text(json.dumps(correlations, indent=2))
+    axes = "sonic_umap_ranked"
     np.save(run / f"{axes}_coords.npy", points)
-    np.savez(run / "sonic_artists.npz", points=artist_points, present=audio)
     frame = (
         genres.filter(placed)
         .select("genre", "split")
@@ -116,8 +125,7 @@ def layout(config, run):
         axes: {
             "family": "axes",
             "status": "ok",
-            "formula": "dance",
-            "fill_neighbors": sonic.FILL_NEIGHBORS,
+            "audio_correlations": correlations,
             **evaluate(config, genres, placed, points, genre_vectors[placed]),
             "seconds": time.monotonic() - start,
         }
@@ -154,8 +162,7 @@ def layout(config, run):
     (run / "layout_models.json").write_text(
         json.dumps(
             {
-                "formula": results[axes]["formula"],
-                "fill_neighbors": results[axes]["fill_neighbors"],
+                "captions": captions,
                 "audio_sha256": hashlib.sha256(
                     Path(config["audio_features"]).read_bytes()
                 ).hexdigest(),
@@ -179,7 +186,7 @@ def layout(config, run):
                             name,
                             json.dumps(metrics, separators=(",", ":")),
                             "kept" if name in winners.values() else "discarded",
-                            "fixed dance axes; ALS fill k=10; spectral islands",
+                            "audio-oriented ALS+audio UMAP; fitted ranks; spectral islands",
                         ]
                     )
                     + "\n"
@@ -198,3 +205,44 @@ def islands_model(config, neighbors):
         n_jobs=1,
         compatibility_layout=True,
     )
+
+
+def audio_captions(features, artists, membership, points, heldout):
+    columns = [c for c in features.columns if c not in {"item", "artist_mbid", "recordings"}]
+    values = (
+        artists.select("item")
+        .join(features.select("item", *columns), on="item", how="left", maintain_order="left")
+        .select(columns)
+        .to_numpy()
+        .astype(float)
+    )
+    finite = np.isfinite(values)
+    weighted = membership @ sparse.diags(np.log(np.maximum(artists["listeners"].to_numpy(), 2)))
+    totals = weighted @ finite.astype(float)
+    means = (weighted @ np.where(finite, values, 0)) / np.maximum(totals, 1e-12)
+    correlations, captions = {}, {}
+    for axis, name in enumerate(["x", "y"]):
+        scores = {}
+        for i, column in enumerate(columns):
+            mask = heldout & (totals[:, i] > 0)
+            if mask.sum() > 2 and np.ptp(means[mask, i]) > 0:
+                scores[column] = {
+                    "rho": float(spearmanr(points[mask, axis], means[mask, i]).statistic),
+                    "genres": int(mask.sum()),
+                }
+        correlations[name] = scores
+        feature = max(scores, key=lambda c: abs(scores[c]["rho"]), default=None)
+        rho = scores[feature]["rho"] if feature is not None else 0
+        if feature is not None and abs(rho) >= 0.4:
+            label = {
+                "genre_dortmund_funksoulrnb": "funk/soul/R&B audio score",
+                "genre_rosamerica_roc": "rock audio score",
+            }.get(feature, feature.replace("_", " "))
+            low, high = f"Lower {label}", f"Higher {label}"
+            captions[f"{name}_min"], captions[f"{name}_max"] = (
+                (low, high) if rho > 0 else (high, low)
+            )
+        else:
+            captions[f"{name}_min"] = f"Listening component {axis + 1} (low)"
+            captions[f"{name}_max"] = f"Listening component {axis + 1} (high)"
+    return captions, correlations

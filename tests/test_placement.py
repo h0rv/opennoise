@@ -1,5 +1,6 @@
 import hashlib
 import json
+import pickle
 
 import numpy as np
 import polars as pl
@@ -7,6 +8,11 @@ import pytest
 
 from opennoise import placement
 from opennoise.placement import bounds
+
+
+class Projection:
+    def transform(self, vectors):
+        return vectors[:, :2]
 
 
 def test_bounds_finite_and_constant():
@@ -46,7 +52,7 @@ def test_export_uses_audio_not_reference_coordinates(tmp_path, monkeypatch):
         f'audio_features = "{feature_path}"\nmin_members = 1\nworkers = 1\n'
         "seed = 42\numap_min_dist = 0.1\numap_epochs = 10\n"
     )
-    winners = {"axes": "sonic_dance", "islands": "islands_2_spectral"}
+    winners = {"axes": "sonic_umap_ranked", "islands": "islands_2_spectral"}
     (evaluated / "layout_best.json").write_text(json.dumps(winners))
     (evaluated / "layout_metrics.json").write_text(
         json.dumps({name: {} for name in winners.values()})
@@ -54,7 +60,12 @@ def test_export_uses_audio_not_reference_coordinates(tmp_path, monkeypatch):
     (evaluated / "layout_models.json").write_text(
         json.dumps(
             {
-                "formula": "dance",
+                "captions": {
+                    "x_min": "Low component 1",
+                    "x_max": "High component 1",
+                    "y_min": "Low component 2",
+                    "y_max": "High component 2",
+                },
                 "audio_sha256": hashlib.sha256(feature_path.read_bytes()).hexdigest(),
                 "embedding": "als_2+audio_ab_all",
                 "neighbors": 2,
@@ -62,11 +73,16 @@ def test_export_uses_audio_not_reference_coordinates(tmp_path, monkeypatch):
         )
     )
     np.save(evaluated / "islands_genre_vectors.npy", np.eye(3))
-    np.savez(
-        evaluated / "sonic_artists.npz",
-        points=np.array([[-1, 1], [1, -1], [0, 0]]),
-        present=np.array([True, True, False]),
-    )
+    with (evaluated / "sonic_model.pkl").open("wb") as stream:
+        pickle.dump(
+            {
+                "model": Projection(),
+                "center": np.zeros(2),
+                "rotation": np.eye(2),
+                "reference": np.array([[0, 0], [1 / np.sqrt(2), 1 / np.sqrt(2)]]),
+            },
+            stream,
+        )
     np.save(evaluated / "islands_2_spectral_coords.npy", np.array([[0, 1], [1, 0], [2, 2]]))
 
     class Islands:
@@ -88,10 +104,10 @@ def test_export_uses_audio_not_reference_coordinates(tmp_path, monkeypatch):
     }
     placement.export(config, run)
     positions = pl.read_parquet(run / "positions.parquet")
-    assert positions.filter(pl.col("x").is_not_null()).height == 4
-    assert positions.filter(pl.col("id") == "g0").select("x", "y").row(0) == (0, 1)
-    assert positions.filter(pl.col("id") == "a").select("x", "y").row(0) == (0, 1)
-    assert positions.filter(pl.col("id") == "c")["x"][0] is None
+    assert positions.filter(pl.col("x").is_not_null()).height == 6
+    assert positions.filter(pl.col("id") == "g0").select("x", "y").row(0) == pytest.approx((1, 0))
+    assert positions.filter(pl.col("id") == "a").select("x", "y").row(0) == pytest.approx((1, 0))
+    assert positions.filter(pl.col("id") == "c")["x"][0] == 0
     placement.export(config, run)
     features.with_columns(pl.col("danceability") + 1).write_parquet(feature_path)
     with pytest.raises(ValueError, match="Immutable"):

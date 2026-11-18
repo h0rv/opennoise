@@ -144,8 +144,9 @@ artists, overlap@10, held-out co-listening of the audio graph, and reranking the
 EffNet previews are off by default (`audio.effnet = true` enables them) because the model is
 noncommercial.
 
-`layout` uses fixed AcousticBrainz dance axes with cosine-weighted ALS fill (k=10) for missing audio.
-Genres use log-listener means; artists share their rank transform. ENAO coordinates are evaluation only.
+`layout` embeds ALS+audio genre vectors with UMAP, orients to fixed AcousticBrainz axes, then ranks each axis.
+Catalog genres, artists and global groups share the fitted transform and ranks; captions report measured audio associations.
+ENAO coordinates are evaluation only.
 Islands use spectral UMAP on `als_2+audio_ab_all`. Run `audio` before `layout`.
 
 M3 composes micro-genre names from a place (MusicBrainz areas, Wikidata demonyms) and a style

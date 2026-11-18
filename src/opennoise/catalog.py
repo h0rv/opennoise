@@ -1,5 +1,6 @@
 import hashlib
 import json
+import pickle
 import re
 import time
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from scipy import sparse
+from threadpoolctl import threadpool_limits
 
 from opennoise import grouping, identities, micro, sonic, tags
 
@@ -59,7 +61,7 @@ def hierarchy(rows, retained):
     return result
 
 
-def group_coordinates(ids, memberships, public, placed, artists, state):
+def group_coordinates(ids, memberships, public, placed, artists, state, model):
     ids = list(ids)
     if not ids:
         return
@@ -79,14 +81,8 @@ def group_coordinates(ids, memberships, public, placed, artists, state):
         ),
         shape=(len(ids), len(artists)),
     )
-    centers, mask, _ = sonic.genre_axes(
-        matrix,
-        state["points"],
-        state["present"],
-        artists["listeners"].to_numpy(),
-        int(state["min_members"]),
-    )
-    points = sonic.rank_transform(state["reference"], centers[mask])
+    with threadpool_limits(limits=1):
+        points, mask, _ = sonic.place(model, matrix, state["vectors"], int(state["min_members"]))
     for id_, (x, y) in zip(np.asarray(ids)[mask], points, strict=True):
         placed.setdefault(("genre", public[id_]), {"axes": None, "islands": None})["axes"] = {
             "x": float(x),
@@ -224,13 +220,8 @@ def export(config, run):
         records.extend(added)
         keys.update(group_keys)
     if config.get("group_globally"):
-        alias_map = (
-            grouping.aliases(pl.read_parquet(config["vocabulary"]))
-            if config.get("vocabulary")
-            else None
-        )
         memberships, added, global_keys, global_groups = grouping.global_names(
-            rows, parents, memberships, keys, alias_map
+            rows, parents, memberships, keys
         )
         records.extend(added)
         keys.update(global_keys)
@@ -257,7 +248,9 @@ def export(config, run):
             Path(config["layout"]) / name for name in ["positions.parquet", "layouts.json"]
         )
         if global_keys:
-            inputs.append(Path(config["layout"]) / "sonic_state.npz")
+            inputs.extend(
+                Path(config["layout"]) / name for name in ["sonic_state.npz", "sonic_model.pkl"]
+            )
     if config.get("vocabulary"):
         inputs.append(Path(config["vocabulary"]))
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
@@ -278,14 +271,25 @@ def export(config, run):
         if config.get("readable_names")
         else {}
     )
+    if config.get("group_globally") and config.get("vocabulary"):
+        memberships, _, _, alias_groups = grouping.global_names(
+            rows,
+            parents,
+            memberships,
+            keys,
+            grouping.aliases(pl.read_parquet(config["vocabulary"])),
+        )
+        global_groups["aliases"] = alias_groups
     stage.mkdir()
     (stage / "artists").mkdir()
     (stage / "genres").mkdir()
     positions = {"axes": None, "islands": None}
     placed, layouts = coordinates(config)
     if config.get("layout") and global_keys:
+        with (Path(config["layout"]) / "sonic_model.pkl").open("rb") as stream:
+            model = pickle.load(stream)
         with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
-            group_coordinates(global_keys, memberships, public, placed, artists, state)
+            group_coordinates(global_keys, memberships, public, placed, artists, state, model)
     summaries = {
         mbid: {
             "id": mbid,

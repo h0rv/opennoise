@@ -27,6 +27,14 @@ test('collision grid checks every intersecting cell, allowing touching boxes', (
   assert.equal(grid.place({ left: -20, top: -20, right: -10, bottom: -10 }), true);
 });
 
+test('close zoom distinguishes qualified clusters while still suppressing exact duplicates', () => {
+  const names = new Set();
+  assert.equal(claimName('shoegaze · Slowdive', names, true), true);
+  assert.equal(claimName('shoegaze · Ride', names, true), true);
+  assert.equal(claimName('Shoegaze · Ride', names, true), false);
+  assert.equal(claimName('', new Set(), true), true);
+});
+
 test('invalid and nonfinite rectangles fail rather than hanging the grid', () => {
   for (const size of [0, -1, NaN, Infinity]) assert.throws(() => new LabelGrid(size), RangeError);
   for (const box of [

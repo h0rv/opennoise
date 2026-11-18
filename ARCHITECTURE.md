@@ -84,9 +84,9 @@ genres/
   relate     genre centroids in each space; genre-genre similarity; hierarchy = Leiden nesting
              reconciled with Wikidata P279
 layout/
-  axes       Fixed AcousticBrainz feature combinations; ALS-neighbor fill for artists without audio.
-             Log-listener-weighted raw genre centers, then shared genre/artist rank transforms.
-             Fixed dance formula and k=10; Every Noise map coordinates are evaluation only.
+  axes       ALS+audio genre UMAP, orthogonally oriented to fixed AcousticBrainz feature axes.
+             Train-fitted ranks and UMAP transform shared by catalog genres, artists and global groups.
+             Captions describe held-out audio associations only; Every Noise coordinates are scoring only.
   islands    UMAP of genre embeddings -> density contours = islands (broad genres), labels per zoom
   tree       hierarchy JSON for the tree and radial view
 similar/     artist top-k neighbors (listen-dominant, re-ranked by tag/audio agreement)
