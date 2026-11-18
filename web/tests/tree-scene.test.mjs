@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { build } from 'esbuild';
 import { layoutTree } from '../src/tree-layout.ts';
-import { indexTree } from '../src/tree-scene.ts';
+
+const { outputFiles } = await build({
+  entryPoints: [new URL('../src/tree-scene.ts', import.meta.url).pathname],
+  bundle: true,
+  format: 'esm',
+  write: false,
+});
+const { indexTree } = await import(
+  `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`
+);
 
 const branch = (key, children = []) => ({ key, width: 80, value: 'same name', children });
 const intersects = (a, b) =>
