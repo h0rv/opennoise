@@ -216,9 +216,9 @@ parallel mock model. TypeScript types are generated from the catalog schema on e
 loader validates every resource against that same schema, refuses unknown versions, and never
 falls back to fixture data after a release fails. This is interaction exploration, not the M3 map.
 
-- **One atlas, three lenses.** Islands for wandering, sonic axes for an audible frame of reference,
-  tree for broad-to-specific navigation. Selection and field notes persist across views; each map
-  retains its camera, and the tree retains collapsed branches. A URL carries the view and entity ID;
+- **One atlas, two views.** Map and Islands explore the same catalog.
+  Selection and field notes persist across views; each map retains its camera.
+  A URL carries the view and entity ID;
   browser back retraces exploration. Search highlights a chosen result, not an automatically fitted
   bounding box of every match. Unknown IDs get a recovery message rather than a guessed match.
 - **Discover without guessing.** A genre opens field notes with a parent breadcrumb, ranked member
@@ -226,7 +226,7 @@ falls back to fixture data after a release fails. This is interaction exploratio
   artists and listening links. Keep model ranks distinct from map distance and never label strengths
   as confidence percentages. Null results say not computed; empty results say no published matches.
 - **A quieter, more usable Every Noise.** Keep the scan-and-discover character, but separate selection
-  from playback. A visible search, labeled view controls, keyboard-operable labels/tree, visible focus,
+  from playback. A visible search, labeled view controls, keyboard-operable labels, visible focus,
   responsive stacked notes and explicit axis labels replace tiny hidden arrow targets. No autoplay;
   a future preview control must expose loading, playing, unavailable and retry states, with one
   track playing at a time. The study deliberately has no pretend play button.

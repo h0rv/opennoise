@@ -490,67 +490,6 @@ main {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.tree-map {
-  display: flex;
-  flex: 1;
-  min-width: 0;
-  flex-direction: column;
-}
-.tree-viewport svg {
-  position: absolute;
-  inset: 0 auto auto 0;
-  min-height: 0;
-}
-.tree-links path {
-  fill: none;
-  stroke: #aaa;
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-.tree-node {
-  cursor: pointer;
-}
-.tree-node rect {
-  fill: transparent;
-}
-.tree-node text {
-  font-size: 16px;
-  font-weight: 700;
-  pointer-events: none;
-}
-.tree-artist text,
-.tree-more text,
-.tree-status text {
-  font-size: 13px;
-  font-weight: 400;
-}
-.tree-more text {
-  text-decoration: underline;
-}
-.tree-status {
-  cursor: default;
-}
-.tree-status text {
-  fill: var(--muted);
-}
-.tree-node:hover rect {
-  fill: #eee;
-}
-.tree-node[aria-selected='true'] rect {
-  fill: #111;
-}
-.tree-node[aria-selected='true'] text {
-  fill: #fff;
-  stroke: none;
-}
-.tree-node:focus {
-  outline: none;
-}
-.tree-node:focus-visible rect {
-  stroke: var(--accent);
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-}
 .trail {
   flex-shrink: 0;
   max-height: 30dvh;

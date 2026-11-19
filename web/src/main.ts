@@ -1,6 +1,5 @@
 import { Catalog } from './data';
 import { artistGraph } from './artist-graph';
-import { GenreTree } from './genre-tree';
 import { MapCanvas } from './map-canvas';
 import { SonicMap } from './sonic-map';
 import { searchableEntry, searchMatches } from './search';
@@ -8,7 +7,7 @@ import { PreviewPlayer } from './preview';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import './style.css';
 
-type View = 'axes' | 'islands' | 'tree' | 'artists';
+type View = 'axes' | 'islands' | 'artists';
 type Selection = Pick<SearchEntry, 'kind' | 'id'>;
 const app = document.querySelector<HTMLElement>('#app')!;
 const escape = (value: unknown) =>
@@ -18,13 +17,10 @@ const escape = (value: unknown) =>
   );
 const modes: Record<View, { label: string }> = {
   axes: {
-    label: 'Sonic map',
+    label: 'Map',
   },
   islands: {
     label: 'Islands',
-  },
-  tree: {
-    label: 'Genre tree',
   },
   artists: {
     label: 'Artists',
@@ -41,11 +37,7 @@ async function start() {
     terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
   }));
   let indexedSearch = catalog.search;
-  let view: View = catalog.manifest.layouts.axes
-    ? 'axes'
-    : catalog.manifest.layouts.islands
-      ? 'islands'
-      : 'tree';
+  let view: View = catalog.manifest.layouts.axes ? 'axes' : 'islands';
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
   let artistPath: { id: string; name: string }[] = [];
@@ -84,7 +76,7 @@ async function start() {
             `<button data-view="${key}" ${(key === 'axes' || key === 'islands') && !catalog.manifest.layouts[key] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button data-zoom="reset" hidden>Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
+      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div></section>
     <aside id="sidebar" popover aria-label="Selected genre or artist"><button id="detail-close" popovertarget="sidebar" popovertargetaction="hide" aria-label="Close details">×</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside>
     <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
@@ -103,10 +95,6 @@ async function start() {
   const status = document.querySelector<HTMLElement>('#status')!;
   const previewHost = document.querySelector<HTMLElement>('#preview')!;
   const preview = new PreviewPlayer(previewHost);
-  const hierarchy = new GenreTree(
-    catalog.genres,
-    (selection) => void select(selection, true, false, true),
-  );
 
   function entityButton(kind: Selection['kind'], id: string, name: string, color?: string | null) {
     return `<button class="entity-row" data-kind="${kind}" data-id="${escape(id)}" aria-pressed="${selected?.kind === kind && selected.id === id}"><span class="dot" style="background:${escape(color || '#111111')}"></span><span>${escape(name)}</span></button>`;
@@ -125,13 +113,13 @@ async function start() {
 
   function renderCanvas(reveal = false) {
     document.querySelector<HTMLButtonElement>('.toolbar [data-zoom="reset"]')!.hidden =
-      view === 'tree' || view === 'artists';
+      view === 'artists';
     document
       .querySelectorAll<HTMLButtonElement>('[data-view]')
       .forEach((button) =>
         button.setAttribute('aria-pressed', String(button.dataset.view === view)),
       );
-    if (view !== 'tree' && view !== 'artists' && map?.layout === view) {
+    if (view !== 'artists' && map?.layout === view) {
       updateMapSelection(reveal);
       return;
     }
@@ -143,15 +131,9 @@ async function start() {
     document.body.classList.toggle('sonic-view', view === 'axes');
     canvas.classList.toggle('artist-view', view === 'artists');
     if (view === 'artists') {
-      hierarchy.hide();
       renderArtists();
       return;
     }
-    if (view === 'tree') {
-      hierarchy.show(canvas, selected, detail);
-      return;
-    }
-    hierarchy.hide();
     if (view === 'axes') {
       canvas.replaceChildren();
       const content = document.createElement('div');
@@ -159,19 +141,19 @@ async function start() {
       map = new SonicMap(
         content,
         catalog.genres,
-        (kind, id) => void select({ kind, id }, true, true, true),
+        (kind, id) => void select({ kind, id }, true, true),
         cameras.get(view),
       );
       updateMapSelection(reveal);
       return;
     }
-    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search or tree reaches every genre."></canvas></div>
+    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search genres and artists."></canvas></div>
       <div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button></div></div>`;
     map = new MapCanvas(
       canvas.querySelector<HTMLCanvasElement>('canvas')!,
       catalog.genres,
       view,
-      (kind, id) => void select({ kind, id }, true, true, true),
+      (kind, id) => void select({ kind, id }, true, true),
       canvas.querySelector<HTMLElement>('#placement-status') || undefined,
       cameras.get(view),
     );
@@ -233,7 +215,8 @@ async function start() {
   function renderGenre(data: GenreDetail) {
     return `${
       data.members?.length
-        ? `<section><h3>Artists</h3>${data.members
+        ? `<section><h3>Artists</h3>${[...data.members]
+            .sort((a, b) => (b.artist.listeners ?? 0) - (a.artist.listeners ?? 0))
             .slice(0, 8)
             .map((member) =>
               entityButton('artist', member.artist.id, member.artist.name, member.artist.color),
@@ -310,18 +293,14 @@ async function start() {
     if (location.hash !== hash) history.pushState(null, '', hash);
   }
 
-  async function select(selection: Selection, push = true, focusDetails = true, hear = false) {
+  async function select(selection: Selection, push = true, hear = false) {
     preview.stop();
     controller.abort();
     controller = new AbortController();
     selected = selection;
     if (selection.kind === 'artist' && push) view = 'artists';
     else if (selection.kind === 'genre' && view === 'artists')
-      view = catalog.manifest.layouts.axes
-        ? 'axes'
-        : catalog.manifest.layouts.islands
-          ? 'islands'
-          : 'tree';
+      view = catalog.manifest.layouts.axes ? 'axes' : 'islands';
     detailToggle.hidden = false;
     detail = null;
     detailError = '';
@@ -358,9 +337,9 @@ async function start() {
       }
       renderDetail();
       renderCanvas(true);
-      if (focusDetails && view === 'artists')
+      if (view === 'artists')
         canvas.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
-      if (focusDetails && sidebar.matches(':popover-open')) drawer.focus({ preventScroll: true });
+      if (sidebar.matches(':popover-open')) drawer.focus({ preventScroll: true });
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
         return;
@@ -375,7 +354,6 @@ async function start() {
     const params = new URLSearchParams(location.hash.slice(1));
     const requestedView = params.get('view');
     if (
-      requestedView === 'tree' ||
       requestedView === 'artists' ||
       ((requestedView === 'axes' || requestedView === 'islands') &&
         catalog.manifest.layouts[requestedView])
@@ -461,7 +439,6 @@ async function start() {
         { kind: target.dataset.kind as Selection['kind'], id: target.dataset.id },
         true,
         true,
-        true,
       );
       return;
     }
@@ -523,9 +500,6 @@ async function start() {
     if (!(event.target as Element).closest('.search-wrap')) results.innerHTML = '';
   });
   window.addEventListener('popstate', restoreURL);
-  window.addEventListener('resize', () => {
-    if (view === 'tree') hierarchy.resize();
-  });
   renderTrail();
   restoreURL();
 }

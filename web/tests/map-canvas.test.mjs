@@ -123,6 +123,10 @@ test('zoom is bounded and points remain visible when labels collide or share a b
   map.draw();
   assert.equal(dots, 3);
   assert.equal(map.labels.length, 1);
+  assert.equal(
+    status.textContent,
+    '1 labels · 5 genres. Zoom for more; search genres and artists.',
+  );
   assert.deepEqual(text, ['rock']);
   map.zoom(4);
   dots = 0;
