@@ -1,6 +1,7 @@
 import { Catalog } from './data';
 import { GenreTree } from './genre-tree';
 import { MapCanvas } from './map-canvas';
+import { SonicMap } from './sonic-map';
 import { searchableEntry, searchMatches } from './search';
 import { PreviewPlayer } from './preview';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
@@ -44,7 +45,7 @@ async function start() {
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
   let controller = new AbortController();
-  let map: MapCanvas | undefined;
+  let map: MapCanvas | SonicMap | undefined;
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
   let trail: Selection[] = [];
   let storageAvailable = true;
@@ -132,13 +133,27 @@ async function start() {
       map.destroy();
       map = undefined;
     }
+    document.body.classList.toggle('sonic-view', view === 'axes');
     if (view === 'tree') {
       hierarchy.show(canvas, selected, detail);
       return;
     }
     hierarchy.hide();
+    if (view === 'axes') {
+      canvas.replaceChildren();
+      const content = document.createElement('div');
+      canvas.append(content);
+      map = new SonicMap(
+        content,
+        catalog.genres,
+        (kind, id) => void select({ kind, id }, true, true, true),
+        cameras.get(view),
+      );
+      updateMapSelection(reveal);
+      return;
+    }
     canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search or tree reaches every genre."></canvas></div>
-      ${view === 'islands' ? `<div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button></div></div>` : ''}`;
+      <div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button></div></div>`;
     map = new MapCanvas(
       canvas.querySelector<HTMLCanvasElement>('canvas')!,
       catalog.genres,
