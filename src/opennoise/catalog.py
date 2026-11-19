@@ -11,7 +11,7 @@ from scipy import sparse
 from sklearn.preprocessing import normalize
 from threadpoolctl import threadpool_limits
 
-from opennoise import grouping, identities, micro, sonic, tags
+from opennoise import grouping, identities, micro, names, sonic, tags
 
 
 def write(path, value):
@@ -374,15 +374,23 @@ def export(config, run):
         }
         for r in rows
     }
-    related = None
-    if config.get("related_genres"):
-        with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
-            related = related_genres(catalog, memberships, artists, state["vectors"])
     grouped = (
         memberships.sort(["genre", "score", "artist"], descending=[False, True, False])
         .group_by("genre", maintain_order=True)
         .agg("artist", "score")
     )
+    if config.get("clean_names"):
+        names.clean(
+            list(catalog.values()),
+            {
+                catalog[i]["id"]: [summaries[m]["name"] for m in mbids]
+                for i, mbids, _ in grouped.iter_rows()
+            },
+        )
+    related = None
+    if config.get("related_genres"):
+        with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
+            related = related_genres(catalog, memberships, artists, state["vectors"])
     populated = set()
     for i, mbids, scores in grouped.iter_rows():
         populated.add(i)
