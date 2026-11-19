@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="description"
+      content="How OpenNoise reconstructs a music genre atlas: the data, pipeline, results, and the role of Every Noise at Once."
+    />
+    <title>About — OpenNoise</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="/src/about.css" />
+  </head>
+  <body class="about">
+    <a class="skip" href="#research">Skip to the write-up</a>
+    <header class="about-header">
+      <a class="brand" href="./">OpenNoise</a>
+      <nav aria-label="Site">
+        <a href="./">Atlas</a><a href="./about.html" aria-current="page">About</a
+        ><a href="https://github.com/h0rv/opennoise">Source ↗</a>
+      </nav>
+    </header>
+    <main id="research">
+      <div class="intro">
+        <p class="eyebrow">About / Research notes / 19 November 2026</p>
+        <h1>Rebuilding a<br />map of music.</h1>
+        <p class="standfirst">
+          OpenNoise is an open-source genre atlas inspired by Every Noise at Once. Listening
+          patterns connect artists. Audio features help place them. Genre labels give those patterns
+          names.
+        </p>
+        <p class="disclosure">
+          <strong>This is a supervised reproduction, not an independent rediscovery.</strong> We use
+          Every Noise names and memberships to train 4,344 shipped genres. Today’s positions are
+          computed, not copied, but the listening/audio input was originally selected using Every
+          Noise coordinate scores. Earlier builds fitted its coordinates directly.
+        </p>
+      </div>
+      <nav class="contents" aria-label="In this write-up">
+        <a href="#context">01 / The problem</a><a href="#pipeline">02 / Pipeline</a
+        ><a href="#sources">03 / Data</a><a href="#results">04 / Results</a
+        ><a href="#audit">05 / What we borrow</a>
+      </nav>
+
+      <section id="context" class="chapter">
+        <div class="chapter-title">
+          <span>01</span>
+          <h2>The problem</h2>
+        </div>
+        <div class="chapter-body">
+          <p>
+            <a href="https://everynoise.com/">Every Noise at Once</a>, created by Glenn McDonald,
+            maps thousands of music genres using Spotify-derived listening and audio information.
+            Its spatial arrangement makes an unusually detailed musical vocabulary browsable.
+          </p>
+          <p>
+            Reproducing that experience is harder than drawing the map. Genres overlap, regional
+            scenes have sparse data, and many micro-genre names are missing from general music
+            databases. Open listening data does not cover the same people or artists as Spotify.
+          </p>
+          <div class="principles">
+            <div>
+              <h3>Similarity is not a label</h3>
+              <p>
+                Two artists can share listeners without sharing a genre. A scene can span several
+                sounds.
+              </p>
+            </div>
+            <div>
+              <h3>A cluster is not a genre</h3>
+              <p>
+                Finding a group is easier than giving it a useful name. Broad tags miss local
+                distinctions.
+              </p>
+            </div>
+            <div>
+              <h3>A map is a compression</h3>
+              <p>
+                Two dimensions cannot preserve every relationship. Nearby labels are not a ranked
+                recommendation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pipeline" class="chapter">
+        <div class="chapter-title">
+          <span>02</span>
+          <h2>
+            From listens<br />
+            to a map
+          </h2>
+        </div>
+        <div class="chapter-body">
+          <figure class="pipeline">
+            <ol class="flow">
+              <li>
+                <span class="step">01 / Connect</span>
+                <h3>Artist graph</h3>
+                <p>
+                  ListenBrainz listening counts → artists with shared audiences. Downweight very
+                  popular artists using TF-IDF.
+                </p>
+                <small>MusicBrainz IDs join the sources.</small>
+              </li>
+              <li>
+                <span class="step">02 / Group</span>
+                <h3>Genre memberships</h3>
+                <p>
+                  Spread known genre examples across the graph. Find additional communities at
+                  several sizes with Leiden clustering.
+                </p>
+                <small>Every Noise supplies supervised examples.</small>
+              </li>
+              <li>
+                <span class="step">03 / Name</span>
+                <h3>Scenes &amp; styles</h3>
+                <p>
+                  Use Discogs styles and Wikidata labels. Combine place, style, listening
+                  neighbours, and visible genre evidence for micro-genres.
+                </p>
+                <small>Names are evidence-based predictions.</small>
+              </li>
+              <li>
+                <span class="step">04 / Place</span>
+                <h3>Map &amp; Islands</h3>
+                <p>
+                  Compress listening and AcousticBrainz vectors with UMAP. Orient the Map with audio
+                  features, then spread labels by rank.
+                </p>
+                <small>New positions; inherited coordinate-based input selection.</small>
+              </li>
+            </ol>
+            <figcaption>
+              Data flow, not a claim that each stage is independent. Every Noise supervision affects
+              memberships, genre vectors, and positions. Historical coordinate-based model selection
+              also carries into the current input choice.
+            </figcaption>
+          </figure>
+          <p>
+            The Map combines listening similarity with audio descriptors; its orientation follows
+            rhythmic and acoustic/electronic features. Islands uses a separate similarity layout.
+            Related genres are ranked from the saved listening-and-audio vectors, not from distance
+            on screen.
+          </p>
+          <p>
+            Micro-genres use visible Every Noise names and memberships as evidence alongside places
+            and styles. This helps represent terms absent from other sources, but it means these
+            names are not all independently discovered. Some exported child clusters are qualified
+            by an artist’s name; they are hidden from map labels and genre search.
+          </p>
+          <p class="evidence">
+            Read the code:
+            <a
+              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/genres.py"
+              >genre model</a
+            >
+            ·
+            <a
+              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/micro.py"
+              >micro-genres</a
+            >
+            ·
+            <a
+              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/sonic.py"
+              >map placement</a
+            >
+          </p>
+        </div>
+      </section>
+
+      <section id="sources" class="chapter">
+        <div class="chapter-title">
+          <span>03</span>
+          <h2>The data</h2>
+        </div>
+        <div class="chapter-body">
+          <div class="table-scroll" role="region" aria-label="Data sources" tabindex="0">
+            <table>
+              <caption>
+                Inputs and what we use them for
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Source</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Terms / limits</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><a href="https://listenbrainz.org/">ListenBrainz</a></th>
+                  <td>Per-user artist counts build the listening graph and listening vectors.</td>
+                  <td>CC0. The audience is not representative of all listeners.</td>
+                </tr>
+                <tr>
+                  <th scope="row"><a href="https://musicbrainz.org/">MusicBrainz</a></th>
+                  <td>Artist IDs, names, external links, and areas connect the datasets.</td>
+                  <td>
+                    Core data: CC0. User tags have different terms and are not used for release
+                    naming.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row"><a href="https://data.discogs.com/">Discogs</a></th>
+                  <td>Release styles name clusters and rerank similar artists.</td>
+                  <td>CC0 dump fields. Coverage depends on available releases and artist links.</td>
+                </tr>
+                <tr>
+                  <th scope="row"><a href="https://www.wikidata.org/">Wikidata</a></th>
+                  <td>
+                    Genre labels, aliases, artist genres, and geography enrich names. Held-back
+                    artist genres also supply a test.
+                  </td>
+                  <td>
+                    CC0. Some genre concepts link to Every Noise, so this is not wholly independent.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row"><a href="https://acousticbrainz.org/">AcousticBrainz</a></th>
+                  <td>
+                    Recording-level audio descriptors are averaged by artist for layout features.
+                  </td>
+                  <td>
+                    CC0. Incomplete coverage; missing audio-axis values use listening neighbours.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row"><a href="https://everynoise.com/">Every Noise at Once</a></th>
+                  <td>
+                    Genre names and artist memberships supervise the model. Archived coordinates
+                    score maps and previously guided fitting and model selection.
+                  </td>
+                  <td>
+                    Third-party archived snapshots; no open-data license established. Not CC0.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Deezer supplies on-demand listening previews in the interface, not the shipped genre
+            graph. Deezer graph experiments, extra Last.fm listening datasets, and the noncommercial
+            Discogs-EffNet audio model were investigated separately; they are not inputs to this
+            release’s layout.
+          </p>
+          <p class="evidence">
+            Exact snapshots, hashes, and recorded terms:
+            <a
+              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/sources.toml"
+              >source manifest</a
+            >. Open-source code does not make every input or derived dataset openly licensed.
+          </p>
+        </div>
+      </section>
+
+      <section id="results" class="chapter">
+        <div class="chapter-title">
+          <span>04</span>
+          <h2>
+            What works.<br />
+            What does not.
+          </h2>
+        </div>
+        <div class="chapter-body">
+          <dl class="catalog-counts">
+            <div>
+              <dt>Artists in the release</dt>
+              <dd>270,773</dd>
+            </div>
+            <div>
+              <dt>Genre &amp; cluster entries</dt>
+              <dd>37,830</dd>
+            </div>
+            <div>
+              <dt>Artist–genre links</dt>
+              <dd>2.32 million</dd>
+            </div>
+          </dl>
+          <p class="evidence">
+            Catalog
+            <a href="https://github.com/h0rv/opennoise/releases/tag/be8d557eda65">be8d557eda65</a>.
+            Counts include supervised genres, discovered clusters, and micro-genres—not 37,830
+            independently validated genres or visible map labels.
+          </p>
+          <h3 class="subhead">Can the graph recover genres it was not shown?</h3>
+          <p>
+            For evaluation, we hide one fifth of eligible Every Noise genres, including all their
+            training memberships. The listening-graph model finds a matching cluster for 210 of 868
+            hidden genres. “Matching” means the shared artists are at least 20% of the combined set;
+            it does not mean an exact membership or name match.
+          </p>
+          <figure class="results-chart">
+            <div class="result-row">
+              <div><strong>Hidden Every Noise genres</strong><span>210 of 868 · 24.2%</span></div>
+              <meter
+                aria-label="Hidden Every Noise genres recovered"
+                min="0"
+                max="100"
+                value="24.2"
+              >
+                24.2%
+              </meter>
+            </div>
+            <div class="result-row">
+              <div><strong>Held-back Wikidata genres</strong><span>98 of 262 · 37.4%</span></div>
+              <meter
+                aria-label="Held-back Wikidata genres recovered"
+                min="0"
+                max="100"
+                value="37.4"
+              >
+                37.4%
+              </meter>
+            </div>
+            <figcaption>
+              Share recovered as a cluster, on a 0–100% scale. Different reference sets: these bars
+              are not competing methods. The Wikidata test holds back artist labels; other training
+              artists may share the same genre.
+            </figcaption>
+          </figure>
+          <p>
+            These are graph-recovery baselines, not scores for every feature of the final website.
+            Most hidden Every Noise genres are not recovered by this test. The same hidden-name
+            benchmark was used to select a naming variant, so it is not an untouched final test for
+            naming. The production export refits on all eligible labels, including evaluation
+            genres; the shipped catalog is not the held-out test.
+          </p>
+          <h3 class="subhead">Do similar artists share genres?</h3>
+          <div class="table-scroll" role="region" aria-label="Similar artist results" tabindex="0">
+            <table>
+              <caption>
+                Share of the top ten similar artists sharing a reference genre
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Reference</th>
+                  <th scope="col">Listening only</th>
+                  <th scope="col">+ Discogs styles</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Hidden Every Noise labels</th>
+                  <td>21.48%</td>
+                  <td>21.93%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Held-back Wikidata labels</th>
+                  <td>46.42%</td>
+                  <td>47.64%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="evidence">
+            The Wikidata methods cover slightly different artists; the gain on shared artists is
+            0.52 percentage points. This checks neighbour agreement, not cluster recovery, so do not
+            compare it with the bars above.
+          </p>
+          <p class="evidence">
+            Evidence:
+            <a
+              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/experiments/results.tsv"
+              >experiment ledger</a
+            >
+            ·
+            <a
+              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/baselines.py"
+              >baseline definitions</a
+            >. Reprint these baselines with <code>uv run on baselines</code>.
+          </p>
+        </div>
+      </section>
+
+      <section id="audit" class="chapter">
+        <div class="chapter-title">
+          <span>05</span>
+          <h2>
+            What we borrow.<br />
+            What we build.
+          </h2>
+        </div>
+        <div class="chapter-body">
+          <p>
+            <strong>Computed positions, disclosed dependence.</strong> The audit found new geometry,
+            but not a fully independent taxonomy or model-selection process.
+          </p>
+          <ul class="checks">
+            <li>
+              <strong>We use Every Noise training data.</strong> Names and artist memberships
+              supervise 4,344 shipped genres—not only names missing elsewhere.
+              <a
+                href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/genres.py#L79-L126"
+                >Training code</a
+              >
+              ·
+              <a href="https://github.com/h0rv/opennoise/releases/tag/be8d557eda65"
+                >Audited release</a
+              >
+            </li>
+            <li>
+              <strong>Today’s positions are calculated, not copied.</strong> UMAP fits
+              listening-and-audio vectors; AcousticBrainz features orient the Map.
+              <a
+                href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/sonic.py#L95-L132"
+                >Current fit</a
+              >
+            </li>
+            <li>
+              <strong>Coordinate scores influenced the input choice.</strong> The listening/audio
+              mix was selected by comparison with Every Noise’s map, and remains in use.
+              <a href="https://github.com/h0rv/opennoise/pull/121">Original selection</a>
+            </li>
+            <li>
+              <strong>Earlier builds fitted Every Noise coordinates directly.</strong> That model
+              was removed; this did not erase the earlier input-selection decision.
+              <a href="https://github.com/h0rv/opennoise/pull/138">Replacement</a>
+            </li>
+            <li>
+              <strong>The tests have limits.</strong> Production refits on all eligible labels, and
+              held-back Wikidata labels do not guarantee source independence.
+              <a
+                href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/naming.py#L268-L312"
+                >All-label refit</a
+              >
+              ·
+              <a
+                href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/generalization.py#L25-L42"
+                >Reference filtering</a
+              >
+            </li>
+          </ul>
+          <p>
+            This is a supervised, open-source reproduction—not proof that Every Noise never
+            influenced it. The audit did not refit the full model or settle rights to derived data.
+          </p>
+        </div>
+      </section>
+      <footer class="about-footer">
+        <p>
+          OpenNoise is not affiliated with Every Noise at Once or Spotify. Credit to Glenn McDonald
+          for Every Noise, and to the contributors behind the source datasets.
+        </p>
+        <a href="./">Back to the atlas →</a>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -8,7 +8,7 @@
     "dev": "npm run types && vite --host 0.0.0.0",
     "check": "npm run types && tsc --noEmit",
     "test": "npm run types && node --experimental-strip-types --test tests/*.test.mjs",
-    "lint": "prettier --check src/main.ts src/artist-graph.ts src/data.ts src/preview.ts src/map-geometry.ts src/map-canvas.ts src/label-grid.ts src/keyboard.ts tests/*.mjs src/style.css index.html vite.config.ts tsconfig.json package.json generate-types.mjs",
+    "lint": "prettier --check src/main.ts src/artist-graph.ts src/data.ts src/preview.ts src/map-geometry.ts src/map-canvas.ts src/label-grid.ts src/keyboard.ts tests/*.mjs src/style.css src/about.css index.html about.html vite.config.ts tsconfig.json package.json generate-types.mjs",
     "build": "npm run check && vite build",
     "preview": "vite preview --host 0.0.0.0"
   },

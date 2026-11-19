@@ -76,7 +76,7 @@ async function start() {
             `<button data-view="${key}" ${(key === 'axes' || key === 'islands') && !catalog.manifest.layouts[key] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
+      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="./about.html">About</a><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div></section>
     <aside id="sidebar" popover aria-label="Selected genre or artist"><button id="detail-close" popovertarget="sidebar" popovertargetaction="hide" aria-label="Close details">×</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside>
     <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
