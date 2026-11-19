@@ -294,23 +294,6 @@ main {
   stroke: #efb2a9;
   stroke-width: 7px;
 }
-.map-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 24px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--muted);
-}
-.zoom {
-  display: flex;
-  gap: 4px;
-}
-.zoom button {
-  min-width: 44px;
-}
 #sidebar {
   position: fixed;
   inset: 0 0 0 auto;
@@ -541,10 +524,6 @@ main {
   }
   .map-viewport svg {
     min-height: 320px;
-  }
-  .map-bottom {
-    padding: 16px 0;
-    gap: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
