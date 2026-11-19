@@ -137,6 +137,7 @@
 }
 .dataflow > li:not(:last-child)::after {
   content: '→';
+  color: #111;
   position: absolute;
   left: 100%;
   top: 50%;
