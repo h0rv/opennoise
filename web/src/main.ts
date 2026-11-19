@@ -134,7 +134,7 @@ async function start() {
       updateMapSelection(reveal);
       return;
     }
-    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search reaches every genre."></canvas></div>
+    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search genres and artists."></canvas></div>
       <div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button></div></div>`;
     map = new MapCanvas(
       canvas.querySelector<HTMLCanvasElement>('canvas')!,

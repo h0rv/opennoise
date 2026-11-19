@@ -435,7 +435,7 @@ export class MapCanvas {
       );
     }
     if (this.status)
-      this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${this.items.size.toLocaleString()} genres. Zoom for more; search or use the tree for all.`;
+      this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${this.items.size.toLocaleString()} genres. Zoom for more; search genres and artists.`;
     performance.measure('opennoise:map-frame', {
       start,
       end: performance.now(),
