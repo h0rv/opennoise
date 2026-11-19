@@ -146,6 +146,8 @@ noncommercial.
 
 `layout` embeds ALS+audio genre vectors with UMAP, orients to fixed AcousticBrainz axes, then ranks each axis.
 Catalog genres, artists and global groups share the fitted transform and ranks; captions report measured audio associations.
+Set `related_genres = true` on a catalog export with a sonic layout to reuse its ALS+audio vectors
+for cosine top-10 related genres; artist-qualified child clusters are excluded as targets.
 ENAO coordinates are evaluation only.
 Islands use spectral UMAP on `als_2+audio_ab_all`. Run `audio` before `layout`.
 

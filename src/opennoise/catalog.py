@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 from scipy import sparse
+from sklearn.preprocessing import normalize
 from threadpoolctl import threadpool_limits
 
 from opennoise import grouping, identities, micro, sonic, tags
@@ -146,6 +147,50 @@ def tables(config):
     return micro.release(Path(config["micro"]), *found) if "micro" in config else found
 
 
+def related_genres(catalog, memberships, artists, vectors):
+    ids = sorted(catalog, key=lambda i: catalog[i]["id"])
+    result = {i: [] for i in ids}
+    if not ids:
+        return result
+    edges = memberships.join(
+        artists.select("artist_mbid", "item"), left_on="artist", right_on="artist_mbid"
+    )
+    matrix = sparse.csr_matrix(
+        (
+            edges["score"].to_numpy(),
+            (
+                edges["genre"]
+                .replace_strict(dict(zip(ids, range(len(ids)), strict=True)))
+                .to_numpy(),
+                edges["item"].to_numpy(),
+            ),
+        ),
+        shape=(len(ids), len(artists)),
+    )
+    with threadpool_limits(limits=1):
+        centers = normalize(matrix @ vectors)
+        targets = np.array(
+            [
+                n
+                for n, i in enumerate(ids)
+                if " · " not in catalog[i]["name"] and np.any(centers[n])
+            ],
+            dtype=int,
+        )
+        for start in range(0, len(ids), 256):
+            scores = np.clip(centers[start : start + 256] @ centers[targets].T, 0, 1)
+            for offset, neighbors in enumerate(
+                np.argsort(-scores, axis=1, kind="stable")[:, :11].tolist()
+            ):
+                i = ids[start + offset]
+                result[i] = [
+                    {"id": catalog[ids[targets[n]]]["id"], "score": float(scores[offset, n])}
+                    for n in neighbors
+                    if ids[targets[n]] != i and scores[offset, n] > 0
+                ][:10]
+    return result
+
+
 def export(config, run):
     start = time.monotonic()
     m1 = Path(config["m1"])
@@ -247,10 +292,10 @@ def export(config, run):
         inputs.extend(
             Path(config["layout"]) / name for name in ["positions.parquet", "layouts.json"]
         )
+        if global_keys or config.get("related_genres"):
+            inputs.append(Path(config["layout"]) / "sonic_state.npz")
         if global_keys:
-            inputs.extend(
-                Path(config["layout"]) / name for name in ["sonic_state.npz", "sonic_model.pkl"]
-            )
+            inputs.append(Path(config["layout"]) / "sonic_model.pkl")
     if config.get("vocabulary"):
         inputs.append(Path(config["vocabulary"]))
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
@@ -329,6 +374,10 @@ def export(config, run):
         }
         for r in rows
     }
+    related = None
+    if config.get("related_genres"):
+        with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
+            related = related_genres(catalog, memberships, artists, state["vectors"])
     grouped = (
         memberships.sort(["genre", "score", "artist"], descending=[False, True, False])
         .group_by("genre", maintain_order=True)
@@ -341,7 +390,7 @@ def export(config, run):
             stage / "genres" / f"{public[i]}.json",
             {
                 "genre": catalog[i],
-                "related": None,
+                "related": related[i] if related is not None else None,
                 "members": [
                     {"artist": summaries[m], "score": s} for m, s in zip(mbids, scores, strict=True)
                 ],
@@ -350,7 +399,11 @@ def export(config, run):
     for i in retained - populated:
         write(
             stage / "genres" / f"{public[i]}.json",
-            {"genre": catalog[i], "members": [], "related": None},
+            {
+                "genre": catalog[i],
+                "members": [],
+                "related": related[i] if related is not None else None,
+            },
         )
     graph = pl.read_parquet(similarity)
     if "similarity" in config:
@@ -415,7 +468,7 @@ def export(config, run):
             "layouts": layouts,
             "membership": "all-label propagation and Leiden membership",
             "similarity": "M1 top-50 artist similarity",
-            "genre_similarity": None,
+            "genre_similarity": "ALS+audio cosine top-10" if related is not None else None,
             "genres": "genres.json",
             "search": "search.json",
         },
