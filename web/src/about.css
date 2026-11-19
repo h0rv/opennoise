@@ -95,20 +95,17 @@
   max-width: 78ch;
   margin-bottom: 20px;
 }
-.principles,
-.boundary {
+.principles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
   margin-block: 28px;
 }
-.principles > div,
-.boundary > div {
+.principles > div {
   border-top: 1px solid #111;
   padding-top: 14px;
 }
-.principles p,
-.boundary p {
+.principles p {
   font-size: 14px;
 }
 .about figure {
@@ -252,38 +249,6 @@
   padding-left: 20px;
   line-height: 1.5;
 }
-.history {
-  list-style: none;
-  margin: 20px 0 32px;
-  padding: 0;
-}
-.history li {
-  position: relative;
-  padding: 0 0 24px 30px;
-  border-left: 1px solid #111;
-}
-.history li::before {
-  content: '';
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  background: #111;
-  left: -5px;
-  top: 5px;
-}
-.history li:last-child {
-  padding-bottom: 0;
-}
-.history span {
-  display: block;
-  font-size: 12px;
-  margin-bottom: 6px;
-}
-.history p {
-  font-size: 14px;
-  margin-block: 6px 0;
-  max-width: 75ch;
-}
 .checks li {
   padding-left: 6px;
   margin-bottom: 16px;
@@ -331,7 +296,6 @@
     padding-top: 36px;
   }
   .principles,
-  .boundary,
   .flow,
   .catalog-counts {
     grid-template-columns: 1fr;

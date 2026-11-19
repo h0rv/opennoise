@@ -376,128 +376,57 @@
         </div>
         <div class="chapter-body">
           <p>
-            <strong>“We did not copy anything” would be false.</strong> Every Noise supplies part of
-            the taxonomy and training memberships. The useful question is which outputs are computed
-            from our model, which inputs come from the reference, and what the tests actually
-            establish.
+            <strong>Computed positions, disclosed dependence.</strong> The audit found new geometry,
+            but not a fully independent taxonomy or model-selection process.
           </p>
-          <div class="boundary">
-            <div>
-              <h3>Borrowed as supervision</h3>
-              <p>
-                Genre names, artist–genre examples, and visible name fragments for micro-genres.
-                This trains 4,344 shipped genres, not only names missing elsewhere. The audit found
-                no rule limiting Every Noise seeds to otherwise unavailable genres.
-              </p>
-            </div>
-            <div>
-              <h3>Computed here</h3>
-              <p>
-                Listening similarities, propagated membership scores, discovered communities,
-                enriched names, and two-dimensional positions.
-              </p>
-            </div>
-            <div>
-              <h3>Coordinates: a mixed history</h3>
-              <p>
-                Not targets in the current fit, but they guided the inherited input choice. Earlier
-                builds fitted Every Noise positions directly. “Coordinates never influenced this
-                release” would be false.
-              </p>
-            </div>
-          </div>
-          <h3 class="subhead">How the map changed</h3>
-          <ol class="history">
-            <li>
-              <span>Earlier builds</span><strong>Direct coordinate fitting</strong>
-              <p>
-                A model predicted Every Noise x/y. The archived v1 also had a local bootstrap that
-                displayed reference positions and colors; that is not the current release.
-              </p>
-            </li>
-            <li>
-              <span><a href="https://github.com/h0rv/opennoise/pull/121">Input selection</a></span
-              ><strong>Coordinate-based comparison</strong>
-              <p>
-                Listening plus audio became the default after comparison with Every Noise’s map.
-                That choice remains in the live model.
-              </p>
-            </li>
-            <li>
-              <span><a href="https://github.com/h0rv/opennoise/pull/138">Replacement</a></span
-              ><strong>Audio-oriented positions</strong>
-              <p>
-                The coordinate-trained model was removed. This did not independently reselect the
-                listening/audio input.
-              </p>
-            </li>
-            <li>
-              <span>Current release</span><strong>Computed geometry</strong>
-              <p>
-                UMAP fits listening-and-audio vectors. Audio features orient the Map. Every Noise
-                labels and the earlier selection still influence the result.
-              </p>
-            </li>
-          </ol>
-          <h3 class="subhead">Checks you can inspect</h3>
           <ul class="checks">
             <li>
-              <strong>Hidden genre labels.</strong> The evaluation split removes entire genres from
-              training, not just random artist links. It tests recovery of their artist groups, not
-              independence from all Every Noise concepts.
+              <strong>We use Every Noise training data.</strong> Names and artist memberships
+              supervise 4,344 shipped genres—not only names missing elsewhere.
+              <a
+                href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/genres.py#L79-L126"
+                >Training code</a
+              >
+              ·
+              <a href="https://github.com/h0rv/opennoise/releases/tag/be8d557eda65"
+                >Audited release</a
+              >
             </li>
             <li>
-              <strong>Export scores.</strong> The export matches supervised rows to cached model
-              predictions, not raw lists pasted into the catalog. Its “zero unexplained rows” field
-              is hardcoded after that comparison; it does not measure overlap with Every Noise
-              memberships or establish independence.
+              <strong>Today’s positions are calculated, not copied.</strong> UMAP fits
+              listening-and-audio vectors; AcousticBrainz features orient the Map.
+              <a
+                href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/sonic.py#L95-L132"
+                >Current fit</a
+              >
             </li>
             <li>
-              <strong>Released geometry.</strong> Across 4,414 matching top-level names, only 2.35%
-              of the Map’s ten nearest neighbours match the final Every Noise map (Islands: 2.70%).
-              The artifact comparison supports new geometry, not zero data dependence.
+              <strong>Coordinate scores influenced the input choice.</strong> The listening/audio
+              mix was selected by comparison with Every Noise’s map, and remains in use.
+              <a href="https://github.com/h0rv/opennoise/pull/121">Original selection</a>
             </li>
             <li>
-              <strong>External labels.</strong> Some Wikidata artist genres are sealed off from
-              training. A separate slice excludes genres carrying an Every Noise ID, but overlapping
-              sources and concepts still limit independence claims.
+              <strong>Earlier builds fitted Every Noise coordinates directly.</strong> That model
+              was removed; this did not erase the earlier input-selection decision.
+              <a href="https://github.com/h0rv/opennoise/pull/138">Replacement</a>
+            </li>
+            <li>
+              <strong>The tests have limits.</strong> Production refits on all eligible labels, and
+              held-back Wikidata labels do not guarantee source independence.
+              <a
+                href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/naming.py#L268-L312"
+                >All-label refit</a
+              >
+              ·
+              <a
+                href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/generalization.py#L25-L42"
+                >Reference filtering</a
+              >
             </li>
           </ul>
           <p>
-            The independent audit compared the live payload with the release archive, checked its
-            hashes, and traced the producer code and build history. It found no current path that
-            copies Every Noise positions, colors, or site assets. It did find the inherited
-            coordinate-based selection and extensive membership supervision described above.
-          </p>
-          <p>
-            This supports a model-built atlas with disclosed dependence—not a clean-room
-            reproduction or proof that we never copied. A stronger claim needs a new
-            feature-selection run without coordinate files, comparisons with no Every Noise seeds, a
-            fresh untouched test, and exact producer configs published with the release. The audit
-            did not refit the full model, determine rights to derived data, or establish what every
-            historical deployment served.
-          </p>
-          <p>
-            <a href="https://github.com/h0rv/opennoise/blob/main/EVERY_NOISE_AUDIT.md"
-              >Read the full independent audit →</a
-            >
-          </p>
-          <p class="evidence">
-            Inspect:
-            <a
-              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/catalog.py#L118-L141"
-              >export score audit</a
-            >
-            ·
-            <a
-              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/src/opennoise/metrics.py"
-              >held-back labels</a
-            >
-            ·
-            <a
-              href="https://github.com/h0rv/opennoise/blob/45d7c2060a6da03680d1631d5ceb94ea203dd101/README.md"
-              >reproduction commands and caveats</a
-            >
+            This is a supervised, open-source reproduction—not proof that Every Noise never
+            influenced it. The audit did not refit the full model or settle rights to derived data.
           </p>
         </div>
       </section>
