@@ -1,4 +1,5 @@
 import { Catalog } from './data';
+import { artistGraph } from './artist-graph';
 import { GenreTree } from './genre-tree';
 import { MapCanvas } from './map-canvas';
 import { SonicMap } from './sonic-map';
@@ -7,7 +8,7 @@ import { PreviewPlayer } from './preview';
 import type { Genre, GenreDetail, ArtistDetail, SearchEntry } from './catalog';
 import './style.css';
 
-type View = 'axes' | 'islands' | 'tree';
+type View = 'axes' | 'islands' | 'tree' | 'artists';
 type Selection = Pick<SearchEntry, 'kind' | 'id'>;
 const app = document.querySelector<HTMLElement>('#app')!;
 const escape = (value: unknown) =>
@@ -24,6 +25,9 @@ const modes: Record<View, { label: string }> = {
   },
   tree: {
     label: 'Genre tree',
+  },
+  artists: {
+    label: 'Artists',
   },
 };
 
@@ -44,6 +48,8 @@ async function start() {
       : 'tree';
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
+  let artistPath: { id: string; name: string }[] = [];
+  let detailError = '';
   let controller = new AbortController();
   let map: MapCanvas | SonicMap | undefined;
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
@@ -75,7 +81,7 @@ async function start() {
       )
         .map(
           ([key, mode]) =>
-            `<button data-view="${key}" ${key !== 'tree' && !catalog.manifest.layouts[key as 'axes' | 'islands'] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
+            `<button data-view="${key}" ${(key === 'axes' || key === 'islands') && !catalog.manifest.layouts[key] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
       <button data-zoom="reset" hidden>Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
@@ -119,13 +125,13 @@ async function start() {
 
   function renderCanvas(reveal = false) {
     document.querySelector<HTMLButtonElement>('.toolbar [data-zoom="reset"]')!.hidden =
-      view === 'tree';
+      view === 'tree' || view === 'artists';
     document
       .querySelectorAll<HTMLButtonElement>('[data-view]')
       .forEach((button) =>
         button.setAttribute('aria-pressed', String(button.dataset.view === view)),
       );
-    if (view !== 'tree' && map?.layout === view) {
+    if (view !== 'tree' && view !== 'artists' && map?.layout === view) {
       updateMapSelection(reveal);
       return;
     }
@@ -135,6 +141,12 @@ async function start() {
       map = undefined;
     }
     document.body.classList.toggle('sonic-view', view === 'axes');
+    canvas.classList.toggle('artist-view', view === 'artists');
+    if (view === 'artists') {
+      hierarchy.hide();
+      renderArtists();
+      return;
+    }
     if (view === 'tree') {
       hierarchy.show(canvas, selected, detail);
       return;
@@ -173,6 +185,24 @@ async function start() {
     map?.reset();
   }
 
+  function renderArtists() {
+    if (selected?.kind !== 'artist') {
+      canvas.innerHTML =
+        '<div class="artist-heading"><h2>Artists</h2><p>Search for an artist, or choose one from a genre, then follow their similar artists.</p></div>';
+      return;
+    }
+    if (!detail || !('artist' in detail)) {
+      canvas.innerHTML = detailError
+        ? `<div class="artist-heading"><h2>Artist unavailable</h2><p class="error">${escape(detailError)}</p><button id="retry">Try again</button></div>`
+        : '<p class="artist-heading" role="status">Loading artist…</p>';
+      return;
+    }
+    const data = detail;
+    canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 tabindex="-1">${escape(data.artist.name)}</h2><p>${data.similar?.length ? 'Similar artists · Choose an artist to follow their connections.' : 'No similar artists in this release. Search for another artist.'}</p></div>`;
+    canvas.querySelector('.artist-heading')!.append(previewHost);
+    if (detail.similar?.length) canvas.append(artistGraph(detail));
+  }
+
   function breadcrumbs(genre: Genre) {
     const chain: Genre[] = [];
     const seen = new Set([genre.id]);
@@ -196,7 +226,8 @@ async function start() {
     const entity = 'genre' in detail ? detail.genre : detail.artist;
     const saved = trail.some((entry) => entry.kind === selected!.kind && entry.id === selected!.id);
     drawer.innerHTML = `<h2>${escape(entity.name)}</h2>${'genre' in detail ? breadcrumbs(detail.genre) : ''}<button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full' : 'Save'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
-    drawer.querySelector('h2')!.after(previewHost);
+    if (view === 'artists') canvas.querySelector('.artist-heading')?.append(previewHost);
+    else drawer.querySelector('h2')!.after(previewHost);
   }
 
   function renderGenre(data: GenreDetail) {
@@ -284,11 +315,20 @@ async function start() {
     controller.abort();
     controller = new AbortController();
     selected = selection;
+    if (selection.kind === 'artist' && push) view = 'artists';
+    else if (selection.kind === 'genre' && view === 'artists')
+      view = catalog.manifest.layouts.axes
+        ? 'axes'
+        : catalog.manifest.layouts.islands
+          ? 'islands'
+          : 'tree';
     detailToggle.hidden = false;
     detail = null;
+    detailError = '';
     if (push) writeURL();
     drawer.innerHTML = '<p class="empty" role="status">Loading details…</p>';
-    sidebar.showPopover();
+    if (view === 'artists') sidebar.hidePopover();
+    else sidebar.showPopover();
     renderCanvas(true);
     results.innerHTML = '';
     try {
@@ -305,6 +345,9 @@ async function start() {
             : (loaded.members || []).map((member) => member.artist.name),
         );
       if ('artist' in loaded) {
+        const index = artistPath.findIndex((artist) => artist.id === loaded.artist.id);
+        artistPath =
+          index < 0 ? [...artistPath, loaded.artist].slice(-8) : artistPath.slice(0, index + 1);
         lookup.set(`artist:${loaded.artist.id}`, {
           kind: 'artist',
           id: loaded.artist.id,
@@ -315,11 +358,15 @@ async function start() {
       }
       renderDetail();
       renderCanvas(true);
+      if (focusDetails && view === 'artists')
+        canvas.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
       if (focusDetails && sidebar.matches(':popover-open')) drawer.focus({ preventScroll: true });
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
         return;
       drawer.innerHTML = `<h2>Details unavailable</h2><p class="error">${escape(error instanceof Error ? error.message : 'Unable to load details.')}</p><button id="retry">Try again</button>`;
+      detailError = error instanceof Error ? error.message : 'Unable to load details.';
+      if (view === 'artists') renderArtists();
     }
   }
 
@@ -329,12 +376,14 @@ async function start() {
     const requestedView = params.get('view');
     if (
       requestedView === 'tree' ||
+      requestedView === 'artists' ||
       ((requestedView === 'axes' || requestedView === 'islands') &&
         catalog.manifest.layouts[requestedView])
     )
       view = requestedView;
     const kind = params.get('kind'),
       id = params.get('id');
+    if (!requestedView && kind === 'artist') view = 'artists';
     if (
       (kind === 'genre' || kind === 'artist') &&
       id &&
@@ -406,6 +455,8 @@ async function start() {
     );
     if (!target) return;
     if (target.dataset.kind && target.dataset.id) {
+      if (!target.closest('.artist-graph, .artist-path') && !target.closest('#detail'))
+        artistPath = [];
       void select(
         { kind: target.dataset.kind as Selection['kind'], id: target.dataset.id },
         true,
