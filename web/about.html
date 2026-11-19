@@ -59,97 +59,52 @@
           </p>
         </div>
         <figure class="architecture" aria-labelledby="architecture-caption">
-          <div class="diagram-head" aria-hidden="true">
-            <span>Added inputs</span><span></span><span>Offline processing</span><span></span
-            ><span>Saved outputs</span>
-          </div>
-          <ol class="stages">
+          <ol class="dataflow" aria-label="Data flow from sources to the website">
             <li>
-              <div class="stage-input">
-                ListenBrainz counts<small>MusicBrainz artist IDs join the sources</small>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-model">
-                <h3>Listening models</h3>
-                <p>TF-IDF cosine graph + ALS factors</p>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-output">
-                Artist neighbours + vectors<code>tfidf.parquet · als_2.npy</code>
-              </div>
+              <h3>Data sources</h3>
+              <ul class="source-list">
+                <li><strong>ListenBrainz</strong><small>Listening counts</small></li>
+                <li><strong>MusicBrainz</strong><small>Artist IDs, joins &amp; places</small></li>
+                <li><strong>Every Noise</strong><small>Genre labels &amp; memberships</small></li>
+                <li><strong>Discogs</strong><small>Styles</small></li>
+                <li><strong>Wikidata</strong><small>Genres &amp; places</small></li>
+                <li><strong>AcousticBrainz</strong><small>Audio descriptors</small></li>
+              </ul>
+            </li>
+            <li class="shared-intake">
+              <h3>Shared ingestion</h3>
+              <p>Import sources, normalize records and match MusicBrainz identifiers.</p>
+              <p>Save artist-keyed counts, labels, styles, places and audio features.</p>
             </li>
             <li>
-              <div class="stage-input">
-                Every Noise artist–genre labels<small>Training examples for known genres</small>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-model">
-                <h3>Genre models</h3>
-                <p>Graph label propagation + Leiden communities</p>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-output">
-                Membership scores + clusters<code>memberships.parquet · genres.parquet</code>
-              </div>
+              <h3>Offline pipeline</h3>
+              <ol class="model-sequence">
+                <li><strong>Listening models</strong><small>TF-IDF graph + ALS vectors</small></li>
+                <li><strong>Genre models</strong><small>Propagation + Leiden groups</small></li>
+                <li>
+                  <strong>Naming &amp; enrichment</strong
+                  ><small>Style/place scores + micro-genres</small>
+                </li>
+                <li>
+                  <strong>Map &amp; Islands</strong><small>Genre vectors + UMAP layouts</small>
+                </li>
+              </ol>
+              <p class="build-artifacts">Cached Parquet tables + NumPy vectors</p>
             </li>
             <li>
-              <div class="stage-input">
-                Discogs styles + Wikidata<small
-                  >MusicBrainz places + visible Every Noise labels</small
-                >
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-model">
-                <h3>Naming &amp; enrichment</h3>
-                <p>Style scoring + place/style micro-genre models</p>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-output">
-                Named genres + micro-genres<small
-                  >Discogs also reranks similar artists in a separate branch</small
-                >
-              </div>
+              <h3>Catalog export</h3>
+              <p>Stable IDs, named genres, memberships, neighbours and coordinates.</p>
+              <code>manifest.json<br />genres.json<br />search.json</code>
             </li>
             <li>
-              <div class="stage-input">
-                AcousticBrainz descriptors<small>Combined with the saved ALS vectors</small>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-model">
-                <h3>Genre vectors &amp; layout</h3>
-                <p>Aggregate by membership; fit two UMAP layouts</p>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-output">
-                Map + Islands coordinates<small
-                  >Related genres use vector cosine, not map distance</small
-                >
-              </div>
-            </li>
-            <li>
-              <div class="stage-input">
-                Saved IDs + naming rules<small>Versioned release configuration</small>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-model">
-                <h3>Catalog export</h3>
-                <p>Assign stable IDs, normalize names, write JSON</p>
-              </div>
-              <span class="feed" aria-hidden="true">→</span>
-              <div class="stage-output">
-                Static catalog<code>manifest.json · genres.json · search.json</code>
-              </div>
+              <h3>Browser atlas</h3>
+              <p>The static website reads the exported JSON catalog.</p>
             </li>
           </ol>
-          <div class="runtime">
-            <span>Exported catalog</span><span aria-hidden="true">→</span
-            ><strong>Browser atlas</strong><span aria-hidden="true">→</span
-            ><span>Deezer previews <small>on demand, not model input</small></span>
-          </div>
           <figcaption id="architecture-caption">
-            Each stage adds source data to the graph, vectors and memberships from earlier stages.
-            Intermediate Parquet and NumPy files stay in the build; JSON is published to the
-            website. The model details below describe the same flow in text.
+            The ingestion box groups source-specific importers into one preparation layer. Models
+            use the resulting artist-keyed tables and features. The browser requests Deezer previews
+            separately, on demand.
           </figcaption>
         </figure>
       </section>
