@@ -91,7 +91,7 @@ export class SonicMap {
     element.setAttribute('role', 'region');
     element.setAttribute(
       'aria-label',
-      'Sonic map. Scroll to explore; drag to pan. Control plus wheel or plus and minus keys zoom. Enter opens a focused genre.',
+      'Map. Scroll to explore; drag to pan. Control plus wheel or plus and minus keys zoom. Enter opens a focused genre.',
     );
     element.append(this.stage);
     if (camera) {
