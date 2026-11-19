@@ -202,7 +202,8 @@ async function start() {
   function renderGenre(data: GenreDetail) {
     return `${
       data.members?.length
-        ? `<section><h3>Artists</h3>${data.members
+        ? `<section><h3>Artists</h3>${[...data.members]
+            .sort((a, b) => (b.artist.listeners ?? 0) - (a.artist.listeners ?? 0))
             .slice(0, 8)
             .map((member) =>
               entityButton('artist', member.artist.id, member.artist.name, member.artist.color),
