@@ -44,13 +44,13 @@ test('returning to a map reuses its scene without sharing camera or selection st
       {},
       camera,
     );
-  const first = create(genres, 'axes');
+  const first = create(genres, 'islands');
   assert.ok(measured > 0);
   const initialMeasurements = measured;
   first.selection('jazz');
   first.destroy();
   const camera = { x: 10, y: 20, scale: 2 };
-  const second = create(genres, 'axes', camera);
+  const second = create(genres, 'islands', camera);
   assert.equal(measured, initialMeasurements);
   assert.equal(second.items, first.items);
   assert.equal(second.points, first.points);
@@ -60,12 +60,9 @@ test('returning to a map reuses its scene without sharing camera or selection st
   assert.equal(second.selected, '');
   second.destroy();
   create(genres, 'islands').destroy();
+  assert.equal(measured, initialMeasurements);
+  create(structuredClone(genres), 'islands').destroy();
   assert.ok(measured > initialMeasurements);
-  const bothLayouts = measured;
-  create(genres, 'islands').destroy();
-  assert.equal(measured, bothLayouts);
-  create(structuredClone(genres), 'axes').destroy();
-  assert.ok(measured > bothLayouts);
 });
 
 test('zoom is bounded and points remain visible when labels collide or share a base name', (t) => {
@@ -115,28 +112,26 @@ test('zoom is bounded and points remain visible when labels collide or share a b
     parent_id: i === 1 || i === 2 ? '0' : null,
     member_count: 100 - i,
     positions: {
-      axes: { x: [0.5, 0.4, 0.6, 0.5, 0.6][i], y: i === 4 ? 0.55 : 0.5 },
-      islands: null,
+      islands: { x: [0.5, 0.4, 0.6, 0.5, 0.6][i], y: i === 4 ? 0.55 : 0.5 },
+      axes: null,
     },
   }));
   const status = {};
-  const map = new MapCanvas(canvas, data, 'axes', () => {}, status);
-  assert.equal(map.camera.scale / map.home.scale, 4);
+  const map = new MapCanvas(canvas, data, 'islands', () => {}, status);
+  assert.equal(map.camera.scale / map.home.scale, 1);
   const initial = { ...map.camera };
   map.draw();
-  assert.equal(dots, 5);
+  assert.equal(dots, 3);
   assert.equal(map.labels.length, 1);
   assert.deepEqual(text, ['rock']);
-  map.zoom(0.25);
-  assert.equal(map.camera.scale / map.home.scale, 1);
   map.zoom(4);
   dots = 0;
   text = [];
   map.draw();
   assert.equal(dots, 5);
-  assert.deepEqual(text, ['rock']);
+  assert.deepEqual(text, ['rock', 'rock · A', 'rock · B']);
   map.zoom(1000);
-  assert.equal(map.camera.scale / map.home.scale, 10);
+  assert.equal(map.camera.scale / map.home.scale, 256);
   const camera = { ...map.camera };
   map.zoom(84);
   assert.deepEqual(map.camera, camera);
@@ -147,37 +142,18 @@ test('zoom is bounded and points remain visible when labels collide or share a b
   canvas.clientWidth /= 2;
   canvas.clientHeight /= 2;
   resize();
-  assert.equal(map.camera.scale / map.home.scale, 10);
+  assert.equal(map.camera.scale / map.home.scale, 256);
   map.zoom(0.0001);
   assert.equal(map.camera.scale / map.home.scale, 0.5);
   map.destroy();
-  const restored = new MapCanvas(canvas, [], 'axes', () => {}, undefined, {
+  const restored = new MapCanvas(canvas, [], 'islands', () => {}, undefined, {
     x: 1,
     y: 1,
     scale: 1000,
   });
-  assert.equal(restored.camera.scale / restored.home.scale, 10);
+  assert.equal(restored.camera.scale / restored.home.scale, 256);
   dots = 0;
   restored.draw();
   assert.equal(dots, 0);
   restored.destroy();
-  canvas.clientWidth *= 2;
-  canvas.clientHeight *= 2;
-  const islands = new MapCanvas(
-    canvas,
-    data.map((g) => ({ ...g, positions: { ...g.positions, islands: g.positions.axes } })),
-    'islands',
-    () => {},
-    status,
-  );
-  assert.equal(islands.camera.scale / islands.home.scale, 1);
-  islands.zoom(4);
-  text = [];
-  islands.draw();
-  assert.deepEqual(text, ['rock', 'rock · A', 'rock · B']);
-  islands.reset();
-  assert.deepEqual(islands.camera, islands.home);
-  islands.zoom(1000);
-  assert.equal(islands.camera.scale / islands.home.scale, 256);
-  islands.destroy();
 });

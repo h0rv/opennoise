@@ -4,7 +4,6 @@ import {
   LabelGrid,
   baseName,
   claimName,
-  isArtistCluster,
   labelBox,
   priority,
   visibleDepth,
@@ -12,7 +11,7 @@ import {
 } from './label-grid';
 
 type Camera = { x: number; y: number; scale: number };
-const MAX_ZOOM = { axes: 10, islands: 256 };
+const MAX_ZOOM = 256;
 type Item = {
   id: string;
   name: string;
@@ -30,7 +29,7 @@ type Item = {
 };
 type Label = { item: Item; box: Box; x: number; y: number };
 type Scene = { items: Map<string, Item>; points: Map<string, Item[]> };
-const scenes = new WeakMap<Genre[], Partial<Record<'axes' | 'islands', Scene>>>();
+const scenes = new WeakMap<Genre[], Scene>();
 
 export class MapCanvas {
   camera: Camera = { x: 0, y: 0, scale: 1 };
@@ -57,18 +56,13 @@ export class MapCanvas {
   constructor(
     readonly element: HTMLCanvasElement,
     genres: Genre[],
-    readonly layout: 'axes' | 'islands',
+    readonly layout: 'islands',
     private open: (kind: 'genre' | 'artist', id: string) => void,
     private status?: HTMLElement,
     camera?: Camera,
   ) {
     this.context = element.getContext('2d')!;
-    let layouts = scenes.get(genres);
-    if (!layouts) {
-      layouts = {};
-      scenes.set(genres, layouts);
-    }
-    const scene = layouts[layout];
+    const scene = scenes.get(genres);
     if (scene) {
       this.items = scene.items;
       this.points = scene.points;
@@ -118,7 +112,7 @@ export class MapCanvas {
         .forEach((item, order) => {
           item.order = order;
         });
-      layouts[layout] = { items: this.items, points: this.points };
+      scenes.set(genres, { items: this.items, points: this.points });
     }
     this.resize();
     if (camera) {
@@ -278,14 +272,14 @@ export class MapCanvas {
     this.element.height = Math.round(height * ratio);
     const scale = Math.min(width / 1000, height / 570);
     this.home = { scale, x: width / 2 - 500 * scale, y: height / 2 - 285 * scale };
-    if (initial) this.camera = this.startCamera();
-    else if (this.camera.scale > this.home.scale * MAX_ZOOM[this.layout]) this.zoom(1);
+    if (initial) this.camera = { ...this.home };
+    else if (this.camera.scale > this.home.scale * MAX_ZOOM) this.zoom(1);
     this.redraw();
   }
 
   zoom(factor: number, point = { x: this.width / 2, y: this.height / 2 }) {
     const scale = Math.min(
-      this.home.scale * MAX_ZOOM[this.layout],
+      this.home.scale * MAX_ZOOM,
       Math.max(this.home.scale / 2, this.camera.scale * factor),
     );
     const ratio = scale / this.camera.scale;
@@ -295,13 +289,8 @@ export class MapCanvas {
     this.redraw();
   }
 
-  private startCamera() {
-    const scale = this.home.scale * (this.layout === 'axes' ? 4 : 1);
-    return { scale, x: this.width / 2 - 500 * scale, y: this.height / 2 - 285 * scale };
-  }
-
   reset() {
-    this.camera = this.startCamera();
+    this.camera = { ...this.home };
     this.redraw();
   }
 
@@ -404,7 +393,7 @@ export class MapCanvas {
     if (this.artist) candidates.unshift(this.artist);
     const names = new Set<string>();
     this.labels = [];
-    const detailed = this.layout === 'islands' && scale >= this.home.scale * 4;
+    const detailed = scale >= this.home.scale * 4;
     for (const item of candidates) {
       const px = item.x * scale + x,
         py = item.y * scale + y;
@@ -414,7 +403,6 @@ export class MapCanvas {
       ctx.fill();
     }
     for (const item of candidates) {
-      if (this.layout === 'axes' && item.kind === 'genre' && isArtistCluster(item.name)) continue;
       const label = detailed ? item.name : item.label;
       if (!claimName(label, names, detailed)) continue;
       const px = item.x * scale + x,

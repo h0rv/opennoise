@@ -203,6 +203,43 @@ main {
   min-height: 160px;
   touch-action: none;
 }
+.sonic-view {
+  height: auto;
+  min-height: 100dvh;
+}
+.sonic-view .workspace {
+  flex: none;
+  display: block;
+  margin-inline: calc(-1 * var(--gutter));
+}
+.sonic-view .canvas {
+  display: block;
+  overflow: clip;
+}
+.sonic-map {
+  position: relative;
+  touch-action: pan-y pinch-zoom;
+  cursor: grab;
+}
+.sonic-map > div {
+  position: relative;
+  width: 100%;
+  transform-origin: 0 0;
+}
+.sonic-map button {
+  position: absolute;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  white-space: nowrap;
+  background: none;
+}
+.sonic-map button:hover,
+.sonic-map button[aria-pressed='true'],
+.sonic-map button[aria-pressed='true']:hover {
+  background: none;
+  text-decoration: underline;
+}
 .map-viewport canvas {
   position: absolute;
   inset: 0;
