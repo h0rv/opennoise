@@ -10,10 +10,25 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="on")
     parser.add_argument(
         "stage",
-        choices=["ingest", "tune", "build", "eval", "export", "layout", "audio", "baselines"],
+        choices=[
+            "ingest",
+            "tune",
+            "build",
+            "eval",
+            "export",
+            "layout",
+            "audio",
+            "baselines",
+            "extrapolation",
+        ],
     )
     parser.add_argument("config", nargs="?")
     args = parser.parse_args()
+    if args.stage == "extrapolation":
+        from opennoise.extrapolation import run
+
+        run(Path(args.config) if args.config else Path("data/extrapolation"))
+        return
     if args.stage == "baselines":
         from opennoise.baselines import baselines
 
