@@ -134,22 +134,17 @@ async function start() {
       updateMapSelection(reveal);
       return;
     }
-    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search genres and artists."></canvas></div>
-      <div class="map-bottom"><span>${catalog.manifest.data_kind === 'model' ? 'Suggested map. ' : ''}<span id="placement-status"></span></span><div class="zoom" aria-label="Map controls"><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="in" aria-label="Zoom in">+</button></div></div>`;
+    canvas.innerHTML = `<div class="map-viewport" id="map-viewport"><canvas id="map-content" data-layout="${view}" tabindex="0" role="img" aria-label="${modes[view].label}. Arrow keys pan, plus and minus zoom. Page Down and Page Up browse visible labels; Enter opens. Search genres and artists."></canvas></div>`;
     map = new MapCanvas(
       canvas.querySelector<HTMLCanvasElement>('canvas')!,
       catalog.genres,
       view,
       (kind, id) => void select({ kind, id }, true, true),
-      canvas.querySelector<HTMLElement>('#placement-status') || undefined,
       cameras.get(view),
     );
     updateMapSelection(reveal);
   }
 
-  function zoomMap(factor: number) {
-    map?.zoom(factor);
-  }
   function resetMap() {
     map?.reset();
   }
@@ -401,8 +396,6 @@ async function start() {
       return;
     }
     if (target.id === 'detail-close') detailToggle.focus();
-    if (target.dataset.zoom === 'in') zoomMap(1.35);
-    if (target.dataset.zoom === 'out') zoomMap(1 / 1.35);
     if (target.dataset.zoom === 'reset') resetMap();
     if (target.dataset.remove !== undefined) {
       trail.splice(Number(target.dataset.remove), 1);
