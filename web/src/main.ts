@@ -298,6 +298,7 @@ async function start() {
     controller.abort();
     controller = new AbortController();
     selected = selection;
+    if (selection.kind === 'genre') artistPath = [];
     if (selection.kind === 'artist' && push) view = 'artists';
     else if (selection.kind === 'genre' && view === 'artists')
       view = catalog.manifest.layouts.axes ? 'axes' : 'islands';
