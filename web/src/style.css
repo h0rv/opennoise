@@ -187,7 +187,7 @@ main {
   display: flex;
   flex: 1;
   border-block: 1px solid #111;
-  min-height: 320px;
+  min-height: 0;
 }
 .canvas {
   flex: 1;
@@ -197,12 +197,14 @@ main {
   flex-direction: column;
 }
 .artist-view {
-  display: block;
-  overflow: auto;
-  padding: 24px 0;
+  overflow: hidden;
 }
 .artist-heading {
-  padding-inline: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
 }
 .artist-heading p {
   color: var(--muted);
@@ -211,9 +213,11 @@ main {
 .artist-path {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  overflow: auto;
+  white-space: nowrap;
+  min-width: 0;
   gap: 4px 8px;
-  margin-bottom: 20px;
+  margin: 0;
 }
 .artist-path button {
   min-height: 32px;
@@ -228,15 +232,15 @@ main {
 }
 .artist-graph {
   position: relative;
-  max-width: 960px;
-  margin: 0 auto;
+  flex: 1;
+  min-height: 0;
 }
 .artist-graph svg {
   position: absolute;
   width: 100%;
   height: 100%;
 }
-.artist-graph path {
+.artist-graph line {
   fill: none;
   stroke: #bbb;
   stroke-width: 1;
@@ -245,19 +249,40 @@ main {
 .artist-root,
 .artist-neighbor {
   position: absolute;
-  width: 40%;
-  padding: 10px;
+  width: max-content;
+  max-width: 170px;
+  min-height: 0;
+  padding: 3px 4px;
+  border: 0;
+  background: #fff;
   text-align: center;
-  overflow-wrap: anywhere;
   transform: translate(-50%, -50%);
+  transition:
+    left 180ms ease-out,
+    top 180ms ease-out;
 }
 .artist-root {
-  left: 50%;
-  top: 36px;
-  width: 80%;
-  background: #111;
-  color: #fff;
+  font-size: 21px;
   font-weight: 700;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.artist-heading #preview:not([hidden]) {
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  font-size: 11px;
+}
+.artist-heading #preview span {
+  flex-basis: auto;
+  max-width: 150px;
 }
 .map-viewport {
   position: relative;
@@ -272,7 +297,7 @@ main {
 }
 .sonic-view .workspace {
   flex: none;
-  display: block;
+  display: flex;
   margin-inline: calc(-1 * var(--gutter));
 }
 .sonic-view .canvas {
@@ -360,12 +385,8 @@ main {
   stroke-width: 7px;
 }
 #sidebar {
-  position: fixed;
-  inset: 0 0 0 auto;
-  margin: 0;
-  width: min(380px, 100%);
-  height: 100dvh;
-  max-height: none;
+  flex: 0 0 310px;
+  min-width: 0;
   padding: 24px;
   border: 0;
   border-left: 1px solid #111;
@@ -374,24 +395,12 @@ main {
   overscroll-behavior: contain;
   background: #fff;
   color: #111;
-  transform: translateX(100%);
-  transition:
-    transform 140ms ease-out,
-    display 140ms allow-discrete,
-    overlay 140ms allow-discrete;
 }
-#sidebar:popover-open {
-  transform: translateX(0);
-}
-@starting-style {
-  #sidebar:popover-open {
-    transform: translateX(100%);
-  }
-}
-#detail-close {
-  display: block;
-  min-width: 44px;
-  margin: 0 0 24px auto;
+.sonic-view #sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100dvh;
 }
 #trail-close {
   min-width: 44px;
@@ -577,9 +586,33 @@ main {
     padding-inline: 8px;
     font-size: 13px;
   }
-  #detail-toggle {
-    padding-inline: 8px;
-    font-size: 13px;
+  .workspace,
+  .sonic-view .workspace {
+    flex-direction: column;
+    flex: none;
+  }
+  .canvas {
+    flex: none;
+    height: calc(100dvh - 145px);
+    min-height: 480px;
+  }
+  #sidebar {
+    flex: none;
+    border-left: 0;
+    border-top: 1px solid #111;
+    overflow: visible;
+  }
+  .sonic-view #sidebar {
+    position: static;
+    align-self: stretch;
+    max-height: none;
+  }
+  .sonic-view .canvas {
+    height: auto;
+  }
+  .artist-heading {
+    flex-wrap: wrap;
+    gap: 4px;
   }
   .source {
     font-size: 12px;
