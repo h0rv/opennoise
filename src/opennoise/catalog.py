@@ -12,10 +12,7 @@ from sklearn.preprocessing import normalize
 from threadpoolctl import threadpool_limits
 
 from opennoise import grouping, identities, micro, names, sonic, tags
-
-
-def write(path, value):
-    path.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
+from opennoise.names import write
 
 
 def coordinates(config):
