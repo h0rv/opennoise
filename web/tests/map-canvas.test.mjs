@@ -41,7 +41,6 @@ test('returning to a map reuses its scene without sharing camera or selection st
       data,
       layout,
       () => {},
-      {},
       camera,
     );
   const first = create(genres, 'islands');
@@ -116,17 +115,12 @@ test('zoom is bounded and points remain visible when labels collide or share a b
       axes: null,
     },
   }));
-  const status = {};
-  const map = new MapCanvas(canvas, data, 'islands', () => {}, status);
+  const map = new MapCanvas(canvas, data, 'islands', () => {});
   assert.equal(map.camera.scale / map.home.scale, 1);
   const initial = { ...map.camera };
   map.draw();
   assert.equal(dots, 3);
   assert.equal(map.labels.length, 1);
-  assert.equal(
-    status.textContent,
-    '1 labels · 5 genres. Zoom for more; search genres and artists.',
-  );
   assert.deepEqual(text, ['rock']);
   map.zoom(4);
   dots = 0;
@@ -150,7 +144,7 @@ test('zoom is bounded and points remain visible when labels collide or share a b
   map.zoom(0.0001);
   assert.equal(map.camera.scale / map.home.scale, 0.5);
   map.destroy();
-  const restored = new MapCanvas(canvas, [], 'islands', () => {}, undefined, {
+  const restored = new MapCanvas(canvas, [], 'islands', () => {}, {
     x: 1,
     y: 1,
     scale: 1000,

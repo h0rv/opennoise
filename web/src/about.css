@@ -91,6 +91,9 @@
   line-height: 1.05;
   letter-spacing: -1px;
 }
+.chapter-body {
+  min-width: 0;
+}
 .chapter-body > p {
   max-width: 78ch;
   margin-bottom: 20px;
@@ -275,7 +278,7 @@
 }
 @media (max-width: 900px) {
   .chapter {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
   .chapter-title {

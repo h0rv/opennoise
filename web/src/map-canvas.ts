@@ -58,7 +58,6 @@ export class MapCanvas {
     genres: Genre[],
     readonly layout: 'islands',
     private open: (kind: 'genre' | 'artist', id: string) => void,
-    private status?: HTMLElement,
     camera?: Camera,
   ) {
     this.context = element.getContext('2d')!;
@@ -434,8 +433,6 @@ export class MapCanvas {
         focus.box.bottom - focus.box.top,
       );
     }
-    if (this.status)
-      this.status.textContent = `${this.labels.length.toLocaleString()} labels · ${this.items.size.toLocaleString()} genres. Zoom for more; search genres and artists.`;
     performance.measure('opennoise:map-frame', {
       start,
       end: performance.now(),
