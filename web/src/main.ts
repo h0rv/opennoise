@@ -95,7 +95,8 @@ async function start() {
   const results = document.querySelector<HTMLElement>('#results')!;
   const trailPanel = document.querySelector<HTMLElement>('#trail')!;
   const status = document.querySelector<HTMLElement>('#status')!;
-  const preview = new PreviewPlayer(document.querySelector('#preview')!);
+  const previewHost = document.querySelector<HTMLElement>('#preview')!;
+  const preview = new PreviewPlayer(previewHost);
   const hierarchy = new GenreTree(
     catalog.genres,
     (selection) => void select(selection, true, false, true),
@@ -194,7 +195,8 @@ async function start() {
     if (!detail) return;
     const entity = 'genre' in detail ? detail.genre : detail.artist;
     const saved = trail.some((entry) => entry.kind === selected!.kind && entry.id === selected!.id);
-    drawer.innerHTML = `${'genre' in detail ? breadcrumbs(detail.genre) : ''}<h2>${escape(entity.name)}</h2><button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full' : 'Save'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
+    drawer.innerHTML = `<h2>${escape(entity.name)}</h2>${'genre' in detail ? breadcrumbs(detail.genre) : ''}<button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full' : 'Save'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
+    drawer.querySelector('h2')!.after(previewHost);
   }
 
   function renderGenre(data: GenreDetail) {

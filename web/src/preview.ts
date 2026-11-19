@@ -91,8 +91,7 @@ export class PreviewPlayer {
     this.audio.onplay = this.audio.onpause = this.audio.onended = update;
     this.audio.onerror = () => {
       if (!this.audio.error) return;
-      this.status.textContent = 'Preview unavailable. Click an artist to retry.';
-      this.toggle.hidden = true;
+      this.host.hidden = true;
     };
   }
 
@@ -103,14 +102,13 @@ export class PreviewPlayer {
     this.audio.removeAttribute('src');
     this.audio.load();
     this.host.hidden = true;
+    this.status.textContent = '';
   }
 
   async play(artists: string[]) {
     this.stop();
     const { signal } = this.controller;
-    this.host.hidden = false;
     this.toggle.hidden = this.source.hidden = true;
-    this.status.textContent = 'Finding preview…';
     try {
       for (const artist of [...new Set(artists)].slice(0, 3)) {
         const track = await searchPreview(artist, signal);
@@ -120,13 +118,12 @@ export class PreviewPlayer {
         this.source.href = track.link;
         this.source.hidden = this.toggle.hidden = false;
         this.audio.src = track.preview;
+        this.host.hidden = false;
         await this.resume(signal);
         return;
       }
-      this.status.textContent = 'No preview available.';
     } catch {
-      if (!signal.aborted)
-        this.status.textContent = 'Preview unavailable. Click an artist to retry.';
+      if (!signal.aborted) this.host.hidden = true;
     }
   }
 
@@ -137,8 +134,7 @@ export class PreviewPlayer {
       if (signal.aborted) return;
       this.toggle.textContent = 'Play';
       if (!(error instanceof DOMException && error.name === 'NotAllowedError')) {
-        this.status.textContent = 'Preview unavailable. Click an artist to retry.';
-        this.toggle.hidden = true;
+        this.host.hidden = true;
       }
     }
   }

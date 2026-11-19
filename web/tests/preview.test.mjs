@@ -105,11 +105,15 @@ test('genre fallback plays the next member and pause/resume controls the single 
   const player = new PreviewPlayer(host);
   assert.equal(scripts.length, 0);
   const pending = player.play(['Missing', 'Aphex Twin']);
+  assert.equal(host.hidden, true);
+  assert.equal(nodes.span.textContent, '');
   reply({ data: [] });
   await Promise.resolve();
+  assert.equal(host.hidden, true);
   assert.equal(scripts.length, 2);
   reply({ data: [track()] });
   await pending;
+  assert.equal(host.hidden, false);
   assert.equal(audio.paused, false);
   assert.equal(nodes.button.textContent, 'Pause');
   assert.equal(nodes.span.textContent, 'Aphex Twin — Avril 14th');
@@ -124,11 +128,8 @@ test('genre fallback plays the next member and pause/resume controls the single 
 });
 
 test('a newer click cancels pending lookups and stops the old track', async (t) => {
-  const { scripts, audio, nodes, reply } = browser(t);
-  const player = new PreviewPlayer(browserHost());
-  function browserHost() {
-    return { hidden: true, querySelector: (tag) => nodes[tag] };
-  }
+  const { scripts, audio, nodes, host, reply } = browser(t);
+  const player = new PreviewPlayer(host);
   const old = player.play(['Old artist']);
   const latest = player.play(['Aphex Twin']);
   assert.equal(scripts[0].removed, true);
@@ -139,10 +140,11 @@ test('a newer click cancels pending lookups and stops the old track', async (t) 
   const next = player.play([]);
   assert.equal(audio.paused, true);
   await next;
-  assert.equal(nodes.span.textContent, 'No preview available.');
+  assert.equal(nodes.span.textContent, '');
+  assert.equal(host.hidden, true);
 });
 
-test('blocked autoplay leaves a working Play button, while media failures are visible', async (t) => {
+test('blocked autoplay leaves a working Play button, while media failures hide the preview', async (t) => {
   const { audio, nodes, host, reply } = browser(t);
   audio.play = () => Promise.reject(new DOMException('Gesture required', 'NotAllowedError'));
   const player = new PreviewPlayer(host);
@@ -151,8 +153,23 @@ test('blocked autoplay leaves a working Play button, while media failures are vi
   await pending;
   assert.equal(nodes.button.hidden, false);
   assert.equal(nodes.button.textContent, 'Play');
+  assert.equal(host.hidden, false);
   audio.error = { code: 2 };
   audio.onerror();
-  assert.equal(nodes.button.hidden, true);
-  assert.match(nodes.span.textContent, /unavailable/);
+  assert.equal(host.hidden, true);
+});
+
+test('empty results and lookup failures render no preview or loading text', async (t) => {
+  const { host, nodes, scripts, reply } = browser(t);
+  const player = new PreviewPlayer(host);
+  const missing = player.play(['Missing']);
+  reply({ data: [] });
+  await missing;
+  assert.equal(host.hidden, true);
+  assert.equal(nodes.span.textContent, '');
+  const failed = player.play(['Unavailable']);
+  scripts.at(-1).onerror();
+  await failed;
+  assert.equal(host.hidden, true);
+  assert.equal(nodes.span.textContent, '');
 });
