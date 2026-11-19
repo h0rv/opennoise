@@ -85,7 +85,9 @@ genres/
              reconciled with Wikidata P279
 layout/
   axes       ALS+audio genre UMAP, orthogonally oriented to fixed AcousticBrainz feature axes.
-             Train-fitted ranks and UMAP transform shared by catalog genres, artists and global groups.
+             Cosine UMAP: 15 neighbors, min_dist 0.3, 1,000 epochs, spectral initialization.
+             Train-fitted ranks and 60 frozen density-repulsion fields shared by catalog genres,
+             artists and global groups through the same saved transform.
              Captions describe held-out audio associations only; Every Noise coordinates are scoring only.
   islands    UMAP of genre embeddings -> density contours = islands (broad genres), labels per zoom
   tree       hierarchy JSON for the tree and radial view

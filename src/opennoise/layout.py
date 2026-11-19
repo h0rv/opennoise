@@ -186,7 +186,7 @@ def layout(config, run):
                             name,
                             json.dumps(metrics, separators=(",", ":")),
                             "kept" if name in winners.values() else "discarded",
-                            "audio-oriented ALS+audio UMAP; fitted ranks; spectral islands",
+                            "ALS+audio UMAP; audio orientation, ranks, repulsion; spectral islands",
                         ]
                     )
                     + "\n"

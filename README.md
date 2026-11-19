@@ -144,8 +144,11 @@ artists, overlap@10, held-out co-listening of the audio graph, and reranking the
 EffNet previews are off by default (`audio.effnet = true` enables them) because the model is
 noncommercial.
 
-`layout` embeds ALS+audio genre vectors with UMAP, orients to fixed AcousticBrainz axes, then ranks each axis.
-Catalog genres, artists and global groups share the fitted transform and ranks; captions report measured audio associations.
+`layout` embeds ALS+audio genre vectors with cosine UMAP (15 neighbors, min_dist 0.3,
+1,000 epochs, spectral initialization), orients to fixed AcousticBrainz axes, then ranks each axis.
+Sixty train-fitted density-repulsion steps reduce clumping. Catalog genres, artists and global
+groups replay the same saved UMAP, orientation, ranks and displacement fields; captions report
+measured audio associations. Islands retain their separate 300-epoch setting.
 Set `related_genres = true` on a catalog export with a sonic layout to reuse its ALS+audio vectors
 for cosine top-10 related genres; artist-qualified child clusters are excluded as targets.
 ENAO coordinates are evaluation only.
