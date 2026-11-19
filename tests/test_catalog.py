@@ -1,9 +1,10 @@
 import json
 
+import numpy as np
 import polars as pl
 import pytest
 
-from opennoise.catalog import coordinates, export, hierarchy
+from opennoise.catalog import coordinates, export, hierarchy, related_genres
 from opennoise.contract import validate_release
 
 
@@ -64,6 +65,81 @@ def test_adapter_contract_and_rerun(tmp_path, monkeypatch):
     export(config, run)
     assert (run / "genre_ids.json").read_bytes() == snapshot
     assert (tmp_path / "registry.json").read_bytes() == registry
+
+
+def test_related_genres_cosine_targets_and_ties():
+    artists = pl.DataFrame({"artist_mbid": ["a", "b", "c"], "item": [0, 1, 2]})
+    catalog = {
+        i: {"id": f"g-{i:02}", "name": "pop · Artist" if i == 0 else f"genre {i}"}
+        for i in range(15)
+    }
+    memberships = pl.DataFrame(
+        {
+            "genre": list(catalog) + [14],
+            "artist": ["a"] * 13 + ["c", "a", "b"],
+            "score": [1.0] * 15 + [0.5],
+        }
+    )
+    graph = related_genres(
+        catalog, memberships, artists, np.array([[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]])
+    )
+    assert graph[13] == []
+    assert [n["id"] for n in graph[0]] == [f"g-{i:02}" for i in range(1, 11)]
+    assert [n["id"] for n in graph[1]] == [f"g-{i:02}" for i in range(2, 12)]
+    assert graph[14][0]["score"] == pytest.approx(1 / np.sqrt(1.25))
+    for i, neighbors in graph.items():
+        ids = [n["id"] for n in neighbors]
+        assert len(ids) == len(set(ids)) <= 10
+        assert catalog[i]["id"] not in ids
+        assert "g-00" not in ids
+        assert neighbors == sorted(neighbors, key=lambda n: (-n["score"], n["id"]))
+
+
+def test_related_genres_empty_and_invalid_vectors():
+    artists = pl.DataFrame({"artist_mbid": ["a"], "item": [0]})
+    edges = pl.DataFrame({"genre": [0], "artist": ["a"], "score": [1.0]})
+    catalog = {0: {"id": "g", "name": "pop · Artist"}}
+    assert related_genres(catalog, edges, artists, np.ones((1, 2))) == {0: []}
+    assert related_genres({}, edges.head(0), artists, np.ones((1, 2))) == {}
+    with pytest.raises(ValueError, match="NaN"):
+        related_genres(catalog, edges, artists, np.array([[float("nan"), 0.0]]))
+
+
+def test_adapter_related_genres_and_immutable_state(tmp_path, monkeypatch):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, _, _ = inputs(tmp_path)
+    root = tmp_path / "layout"
+    root.mkdir()
+    config.update(layout=str(root), related_genres=True)
+    (root / "layouts.json").write_text(json.dumps({"axes": None, "islands": None}))
+    pl.DataFrame(
+        schema={
+            "kind": pl.String,
+            "id": pl.String,
+            "x": pl.Float64,
+            "y": pl.Float64,
+            "island_x": pl.Float64,
+            "island_y": pl.Float64,
+        }
+    ).write_parquet(root / "positions.parquet")
+    np.savez(root / "sonic_state.npz", vectors=np.array([[1.0, 0.0], [0.0, 1.0]]))
+    export(config, run)
+    assert validate_release(run / "release")["genre_similarity"] == "ALS+audio cosine top-10"
+    genres = json.loads((run / "release/genres.json").read_text())
+    for genre in genres:
+        detail = json.loads((run / "release/genres" / f"{genre['id']}.json").read_text())
+        assert detail["related"] == [
+            {
+                "id": next(g["id"] for g in genres if g != genre),
+                "score": pytest.approx(0.6 / np.sqrt(0.4)),
+            }
+        ]
+    snapshot = (tmp_path / "registry.json").read_bytes()
+    export(config, run)
+    assert (tmp_path / "registry.json").read_bytes() == snapshot
+    np.savez(root / "sonic_state.npz", vectors=np.ones((2, 2)))
+    with pytest.raises(ValueError, match="Immutable release inputs"):
+        export(config, run)
 
 
 @pytest.mark.parametrize("empty", [False, True])
