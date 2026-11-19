@@ -1,204 +1,76 @@
 # OpenNoise
 
-An open Every Noise at Once: a genre map and similar artists built from open data.
+A music genre map and similar-artist explorer inspired by Glenn McDonald’s
+[Every Noise at Once](https://everynoise.com/). Listening data, audio descriptors and
+genre labels feed an offline Python pipeline; a TypeScript site displays the catalog.
+Every Noise genre names and artist memberships are training labels.
 
-M1: listening graph with TF-IDF cosine and tuned implicit ALS; held-out and labs evaluation.
+## Setup
 
-M2: ENAO-supervised propagation and multiresolution Leiden, evaluated on entirely unseen genres.
-
-```sh
-uv run on ingest configs/m2.toml
-uv run on build configs/m2.toml
-uv run on eval configs/m2.toml
-```
-
-M2 reuses `runs/1f242e47ed38/`; no M1 recomputation. Its reference files and crosswalk
-stay under `data/m2/`. Each variant writes derived `genres.parquet`, `memberships.parquet`,
-metrics and probes under its run directory. The best variant maximizes held-out genre match,
-then membership AP. Membership output keeps ten positive train-genre predictions per artist
-plus one discovered cluster per level. No hidden-genre membership labels enter training.
-Artist hit@5 measures whether any hidden train-genre label appears in the five predictions,
-excluding visible labels. Recall uses the full genre size as its cutoff; AP ranks positive scores.
-Parents are maximum-overlap clusters at the previous resolution, not strictly nested partitions.
-Naming lift uses that parent plus child artists outside it, with three supporting artists minimum.
-MusicBrainz tags carry CC BY-NC-SA terms; these named outputs are not asserted to be CC0.
-
-M2b reuses the kept fine-k20 clusters and split, comparing MusicBrainz naming with CC0
-Discogs styles ingested by the tag experiment. MusicBrainz names are evaluation-only.
-The current tag cache reuses that session's completed MBID-to-styles Parquet; ingest skips it.
-
-```sh
-uv run on ingest configs/tags.toml
-uv run on build configs/m2b.toml
-uv run on eval configs/m2b.toml
-uv run on export configs/m2b.toml
-```
-
-The lift variant requires three supporting artists and lift >= 1.25 against the parent
-plus child artists outside it. Weighted variants normalize log release counts per artist,
-weight artists by log listener count, and rank style share times global IDF times log(1+lift).
-The strict variant requires five artists and lift >= 2. Exact/token naming agreement uses
-the 210 matched genres; name@3 uses all 868 held-out genres, including unmatched ones.
-Named-cluster share includes all discovery levels. Selection maximizes name@3, then exact
-agreement, among Discogs variants only. All split results remain in the evaluation run.
-
-Final files live separately in `runs/<M2b hash>/export/`. Membership is refit on every
-eligible genre and all its mapped graph artists, without either holdout. Only supervised
-ENAO labels and Discogs-named clusters are exported; unnamed clusters stay internal and
-parent links skip excluded ancestors. No MusicBrainz-tag names enter this export.
-
-M2c adds Wikidata P434/P136 statements, English labels/aliases and P279 links via QLever (CC0).
-
-```sh
-uv run on ingest configs/m2c.toml
-uv run on build configs/m2c.toml
-uv run on eval configs/m2c.toml
-uv run on export configs/m2c.toml
-```
-
-Queries cover all MBID/P136 links, plus genre classes/instances and the linked genre targets.
-Raw responses, normalized tables and coverage stay in `data/m2c/`; truncated responses fail.
-Response hashes record this live-endpoint snapshot.
-Wikidata-only naming uses English labels. Combined variants normalize each source per artist
-before mixing; unambiguous Discogs label/alias matches reinforce the same Wikidata genre.
-Other styles remain separate CC0 candidates. Alias variants prefer the most frequent matching
-Discogs spelling, without consulting ENAO names. Selection maximizes exact + name@3 among
-CC0 variants, including the kept M2b baseline. The unchanged split supplies every quality metric.
-Export reuses M2b's cached all-label supervised memberships and rebuilds only named discovery
-memberships and parent links. No membership refit or contract adaptation is performed.
-
-M2d adapts that export and M1's TF-IDF top-50 into contract-v1 JSON:
-
-```sh
-uv run on export configs/m2d.toml
-uv run python -m opennoise.contract runs/<hash>/release
-```
-
-Preserve `data/registry/genres.json` across builds: this persisted identity registry includes
-member MBIDs and retired IDs, and is not shipped in the release. Supervised keys are canonical
-ENAO names; cluster keys combine the fixed resolution namespace with a sorted-member hash.
-Display names and local cluster indices never regenerate an assigned slug. Later clusters reuse
-IDs at Jaccard >= .8 within the same namespace, one-to-one; contained splits get fresh IDs,
-merges keep the best-overlap ID and retain prior names as aliases. Retired IDs are never minted
-again. The adapter checks supervised edges against cached model predictions and audits training
-labels locally, without touching the evaluation split. Public strengths are unchanged, MBIDs
-replace item indices, and missing layouts/genre similarities/previews stay null. Output is
-staged then renamed to `runs/<hash>/release/`; cached reruns verify IDs and input hashes.
+Requires Python 3.13+, uv and Node.js 22.
 
 ```sh
 uv sync
-uv run on ingest configs/m1.toml
-uv run on build configs/m1.toml
-uv run on eval configs/m1.toml
-```
-
-Artifacts are cached in `data/` and `runs/<config hash>/`. The graph uses 90% of users;
-the other 10% are evaluation-only, including catalog filtering. `artists.parquet` maps graph
-item indices to MBIDs and names. Each method's Parquet contains ranked top-50 neighbors.
-`best.json` selects by held-out nDCG@50. Metrics and probe names live beside it; the
-tracked experiment table includes every method, including failed builds.
-
-Labs overlap is intersection size divided by k, averaged over nonempty API responses;
-coverage and errors are reported separately. Its popularity strata each contribute 100 seeds.
-The labs graph can share listening data with this snapshot: agreement is not an independent test.
-
-Tag experiments reuse the cached M1 run named in `configs/tags.toml`:
-
-```sh
-uv run on ingest configs/tags.toml
-uv run on build configs/tags.toml
-uv run on eval configs/tags.toml
-```
-
-MusicBrainz artist tags and exact Discogs artist links come from its artist JSON dump; Discogs
-styles count main-artist release credits. Outputs include `artist_tags.parquet`, aligned sparse
-TF-IDF vectors and vocabularies, coverage, probes, and `similar.parquet`. Tags only rerank the
-existing M1 top-50 candidates. Weights are selected on half the held-out users; the untouched
-half compares only the selected method and baseline. Labs overlap@50 cannot change in this test.
-
-## Atlas UX study
-
-```sh
 npm --prefix web ci
 npm --prefix web run dev
 ```
 
-The study uses the shared synthetic catalog fixture, not model results. Map and Islands share
-one selection; field notes link genres and artists, and a trail saves stops locally.
-Set `VITE_CATALOG_URL` to a release's `manifest.json` to use its data (cross-origin hosts need CORS).
-`npm --prefix web run lint` and `npm --prefix web run build` check formatting, regenerate types
-from the pipeline schema, type-check and build a static site. Clicking a genre or artist looks up
-a 30-second Deezer preview on demand; nothing is stored in the catalog. Deezer's
-[terms](https://developers.deezer.com/termsofuse) restrict this to non-commercial, private listening.
+Development uses a synthetic fixture by default. Set `VITE_CATALOG_URL` to a catalog’s
+`manifest.json` to use model output.
 
-Audio experiments reuse the M1 run named in `configs/audio.toml`:
+## Build the current pipeline
 
-```sh
-uv run on audio configs/audio.toml
-```
-
-The audio stage aggregates AcousticBrainz low/high-level descriptors per artist and embeds Deezer
-preview clips with Discogs-EffNet (CC BY-NC-ND), keeping only vectors. Each signal is scored on
-the artists it covers against `audio.listening_run`: AUC of listening neighbors vs random
-artists, overlap@10, held-out co-listening of the audio graph, and reranking the listening top-100.
-EffNet previews are off by default (`audio.effnet = true` enables them) because the model is
-noncommercial.
-
-`layout` embeds ALS+audio genre vectors with cosine UMAP (15 neighbors, min_dist 0.3,
-1,000 epochs, spectral initialization), orients to fixed AcousticBrainz axes, then ranks each axis.
-Sixty train-fitted density-repulsion steps reduce clumping. Catalog genres, artists and global
-groups replay the same saved UMAP, orientation, ranks and displacement fields; captions report
-measured audio associations. Islands retain their separate 300-epoch setting.
-Set `related_genres = true` on a catalog export with a sonic layout to reuse its ALS+audio vectors
-for cosine top-10 related genres; artist-qualified child clusters are excluded as targets.
-ENAO coordinates are evaluation only.
-Islands use spectral UMAP on `als_2+audio_ab_all`. Run `audio` before `layout`.
-
-M3 composes micro-genre names from a place (MusicBrainz areas, Wikidata demonyms) and a style
-(Wikidata, Discogs, suffixes of visible ENAO names), with members scored from listening
-neighbours and that evidence. A second model, cross-fitted on visible genres, ranks which
-composed names are real genres. It needs the M2 ingest and the M2f naming ingest, whose Wikidata
-vocabulary is filtered to music genres. `non_music` in `configs/m3.toml` lists Discogs non-music and
-video styles (interview, audiobook, music video) that are dropped from the style candidates.
-
-`micro` in a catalog config names an M3 run whose genres are appended to the clusters as the
-`micro` level. To place them on the map, export `configs/m2f.toml`, run
-`uv run on layout configs/m2e-layout.toml` on that run, then export `configs/one-name.toml`,
-which reads the placement run as `layout`.
+Keep the cached `data/`, `runs/` and `data/registry/genres.json` used by the configs.
+Sources are listed in `sources.toml`. Configs reference existing artifacts rather than
+automatically rebuilding dependencies.
 
 ```sh
-uv run on ingest configs/m3.toml
-uv run on tune configs/m3.toml
+uv run on build configs/tags.toml
+uv run on eval configs/tags.toml
+uv run on build configs/m2f-naming.toml
+uv run on eval configs/m2f-naming.toml
+uv run on export configs/m2f-naming.toml
 uv run on build configs/m3.toml
-uv run on eval configs/m3.toml
+uv run on audio configs/audio.toml
+uv run on layout configs/layout.toml
+uv run on export configs/m2f.toml
+uv run on layout configs/m2e-layout.toml
+uv run on export configs/one-name.toml
+npm --prefix web run build
 ```
 
-`runs/<hash>/` holds `genres.parquet`, `memberships.parquet` and `related.parquet` (nearest
-genres by shared listening). `uv run on tune configs/m3.toml` scores the `[grid]` of `threshold`
-and `negative_weight` on a fifth of the visible genres; the hidden genres are never used to pick
-settings. Sealed artists' Wikidata genres are dropped, so the `[m3]` entry in `configs/gen.toml`
-scores a run on them.
+Pages downloads the prebuilt catalog; `.github/workflows/pages.yml` defines deployment.
 
-`micro` in `configs/one-name.toml` names an M3 run: the catalog export appends its genres to the
-clusters as the `micro` level, skipping names a cluster or supervised genre already has and aliases with identical
-members, with a parent where the style is a supervised genre.
-
-## Deezer research
-
-After preparing the M1 run, running M2 ingest and pinning the Wikidata reference from
-`configs/gen.toml`, run:
+## Tests
 
 ```sh
-uv run on ingest configs/deezer.toml
-uv run on eval configs/deezer.toml
+uv run pytest
+npm --prefix web test
+npm --prefix web run build
 ```
 
-Ingest samples 1,800 artists by listening rank and caches API responses in ignored
-`data/deezer/`. Keep that snapshot to reproduce the run. Evaluation compares standalone
-and blended signals with the M2 listening graph on the unchanged Every Noise split and
-both sealed Wikidata slices. Results go to `runs/<hash>/metrics.json`.
+## Experiments
 
-The blend recovered 223 of 868 Every Noise genres (listening alone: 210), and 108 of
-262 sealed Wikidata genres (98), with 12 of 27 on the independent slice in both runs.
-This is opt-in research, not a release input: the [Deezer developer terms](https://developers.deezer.com/termsofuse)
-are noncommercial and do not grant an open data license.
+Raw numbers and variant-level outcomes: [experiments/results.tsv](experiments/results.tsv).
+“Adopted” means used by the current pipeline, not every historically kept variant.
+
+| Idea | Outcome |
+|---|---|
+| TF-IDF and implicit ALS | Adopted: TF-IDF supplies the graph; ALS supplies layout vectors. |
+| Leiden resolution variants | Adopted fine, three-resolution clustering for discovery. |
+| MusicBrainz tag naming | Rejected for release naming in favour of Wikidata and Discogs. |
+| Discogs style naming | Adopted weighted naming; strict and lift-only variants lost selection. |
+| Wikidata-only vs combined naming | Adopted Wikidata-weighted Discogs combination for better naming scores. |
+| MusicBrainz tag reranking | Replaced by Discogs style reranking in the release. |
+| Discogs style reranking | Adopted at weight 0.1; improves hidden-label neighbour agreement. |
+| AcousticBrainz audio | Adopted with ALS for Map and Islands vectors. |
+| Discogs-EffNet preview audio | Not adopted in the release; non-commercial model, disabled by default. |
+| Place + style micro-genres | Adopted to add geographically specific genres. |
+| Layout variants | Adopted audio-oriented, rank-spread UMAP with repulsion; separate spectral Islands. |
+| Cosine-related genres | Adopted: related lists use vectors rather than screen distance. |
+| Last.fm-360K/1K listening blend | Rejected: tiny similarity gain, worse genre naming; non-commercial. |
+| Echo Nest Taste Profile | Rejected: low artist coverage, every score lower; research-only terms. |
+| MusicBrainz artist relationships | Rejected: genre-graph blend recovered only 4 more of 868 Every Noise genres at best. |
+| ListenBrainz session similarity | Rejected: fusion with TF-IDF gave a small Every Noise gain but a lower Wikidata score. |
+| Discogs labels and co-credits | Rejected: no measurable reranking gain; dilutes styles. |
+| Deezer related artists and album genres | Rejected for release: plateaued; non-commercial terms, opt-in only. |
