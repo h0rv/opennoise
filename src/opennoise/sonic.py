@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import sparse
+from scipy.interpolate import RegularGridInterpolator
 from scipy.linalg import orthogonal_procrustes
+from scipy.ndimage import gaussian_filter
 from scipy.stats import rankdata
 from sklearn.preprocessing import normalize
 from umap import UMAP
@@ -92,13 +94,48 @@ def rank_transform(reference, points):
     return result
 
 
+def repulsion_transform(fields, points):
+    points = np.array(points, dtype=float, copy=True)
+    if points.ndim != 2 or points.shape[1] != 2 or not np.isfinite(points).all():
+        raise ValueError("Repulsion points must be a finite (n, 2) array")
+    axis = np.linspace(0, 1, 33)
+    for field in fields:
+        if np.shape(field) != (33, 33, 2) or not np.isfinite(field).all():
+            raise ValueError("Repulsion fields must be finite (33, 33, 2) arrays")
+        velocity = RegularGridInterpolator((axis, axis), field)(np.clip(points, 0, 1))
+        points = np.clip(points + velocity, 0, 1)
+    return points
+
+
+def fit_repulsion(points, steps):
+    if not isinstance(steps, int) or steps < 0:
+        raise ValueError("Repulsion steps must be a nonnegative integer")
+    points = repulsion_transform([], points)
+    if not len(points):
+        raise ValueError("Repulsion needs training points")
+    fields = []
+    for _ in range(steps):
+        histogram = np.histogram2d(points[:, 0], points[:, 1], bins=33, range=[[0, 1], [0, 1]])[0]
+        density = gaussian_filter(histogram, 1.5, mode="reflect")
+        gradient = np.stack(np.gradient(np.log(density + 0.1 * density.mean()), 1 / 32), axis=-1)
+        velocity = -0.0002 * gradient
+        velocity *= np.minimum(1, 0.004 / np.maximum(np.linalg.norm(velocity, axis=-1), 1e-12))[
+            ..., None
+        ]
+        velocity[0, :, 0] = velocity[-1, :, 0] = 0
+        velocity[:, 0, 1] = velocity[:, -1, 1] = 0
+        fields.append(velocity)
+        points = repulsion_transform([velocity], points)
+    return fields
+
+
 def fit(vectors, audio, train, config):
     if train.sum() < 3:
         raise ValueError("Sonic UMAP needs at least three training genres")
     model = UMAP(
         n_neighbors=config["sonic_neighbors"],
         min_dist=config["sonic_min_dist"],
-        n_epochs=config["umap_epochs"],
+        n_epochs=config.get("sonic_epochs", config["umap_epochs"]),
         metric="cosine",
         init="spectral",
         random_state=config["seed"],
@@ -113,20 +150,24 @@ def fit(vectors, audio, train, config):
         points[~train] = model.transform(vectors[~train])
     points = (points - center) @ rotation
     state = {"model": model, "center": center, "rotation": rotation, "reference": points[train]}
-    return state, rank_transform(state["reference"], points)
+    ranked = rank_transform(state["reference"], points)
+    state["repulsion"] = fit_repulsion(ranked[train], config.get("sonic_repulsion_steps", 0))
+    return state, repulsion_transform(state["repulsion"], ranked)
 
 
 def transform(state, vectors):
     if not len(vectors):
         return np.empty((0, 2))
     points = (state["model"].transform(vectors) - state["center"]) @ state["rotation"]
-    return rank_transform(state["reference"], points)
+    return repulsion_transform(
+        state.get("repulsion", []), rank_transform(state["reference"], points)
+    )
 
 
 def place(state, membership, vectors, min_members):
     matrix = membership.tocsr(copy=True)
     matrix.eliminate_zeros()
-    centers = normalize(matrix @ vectors)
+    centers = normalize(matrix @ np.asarray(vectors, dtype=float))
     counts = np.diff(matrix.indptr)
     placed = (counts >= min_members) & (np.linalg.norm(centers, axis=1) > 0)
     return transform(state, centers[placed]), placed, counts

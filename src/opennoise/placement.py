@@ -91,7 +91,7 @@ def export(config, run):
     )
     shutil.copyfile(evaluated / "sonic_model.pkl", run / "sonic_model.pkl")
     with threadpool_limits(limits=settings["workers"]):
-        print("Ranked oriented UMAP axes projected", flush=True)
+        print("Ranked oriented UMAP axes with frozen repulsion projected", flush=True)
         uniform_reference = np.load(evaluated / "islands_genre_vectors.npy")
         model = layout.islands_model(settings, models["neighbors"])
         embedded = model.fit_transform(uniform_reference)
@@ -155,6 +155,6 @@ def export(config, run):
         "catalog_placement",
         summary,
         True,
-        "ranked audio-oriented UMAP axes; spectral islands transform",
+        "ranked audio-oriented UMAP axes with frozen repulsion; spectral islands transform",
     )
     print(json.dumps(summary), flush=True)

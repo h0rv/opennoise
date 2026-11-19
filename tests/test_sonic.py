@@ -77,6 +77,7 @@ def test_place_shared_projection_and_empty_memberships():
         "center": np.zeros(2),
         "rotation": np.eye(2),
         "reference": np.array([[0, 0], [0.5, 0.5], [1, 1]]),
+        "repulsion": sonic.fit_repulsion(np.array([[0, 0], [0.5, 0.5], [1, 1]]), 3),
     }
     vectors = np.eye(2)
     points, placed, counts = sonic.place(
@@ -91,7 +92,7 @@ def test_place_shared_projection_and_empty_memberships():
 def test_fit_orientation_and_ranks_use_training_only(monkeypatch):
     class Embedding(Projection):
         def __init__(self, **kwargs):
-            pass
+            self.parameters = kwargs
 
         def fit_transform(self, vectors):
             return self.transform(vectors)
@@ -100,15 +101,71 @@ def test_fit_orientation_and_ranks_use_training_only(monkeypatch):
     vectors = np.array([[0.0, 0], [1, 0], [0, 1], [0.3, 0.8]])
     train = np.array([True, True, True, False])
     audio = vectors @ np.array([[0.0, -1], [1, 0]])
-    config = {"sonic_neighbors": 2, "sonic_min_dist": 0.8, "umap_epochs": 10, "seed": 42}
+    config = {
+        "sonic_neighbors": 2,
+        "sonic_min_dist": 0.8,
+        "umap_epochs": 10,
+        "sonic_epochs": 1000,
+        "sonic_repulsion_steps": 3,
+        "seed": 42,
+    }
     state, points = sonic.fit(vectors, audio, train, config)
+    assert state["model"].parameters["n_epochs"] == 1000
     np.testing.assert_allclose(state["rotation"].T @ state["rotation"], np.eye(2), atol=1e-12)
     np.testing.assert_allclose(points, sonic.transform(state, vectors), atol=1e-12)
     audio[-1] = [999, -999]
     _, other = sonic.fit(vectors, audio, train, config)
     np.testing.assert_allclose(points, other)
+    audio[-1] = vectors[-1] = [999, -999]
+    other_state, _ = sonic.fit(vectors, audio, train, config)
+    np.testing.assert_array_equal(state["repulsion"], other_state["repulsion"])
     with pytest.raises(ValueError, match="at least three"):
         sonic.fit(vectors, audio, ~train, config)
+
+
+def test_place_aggregates_float32_vectors_in_float64(monkeypatch):
+    captured = []
+    monkeypatch.setattr(
+        sonic, "transform", lambda state, vectors: captured.append(vectors) or vectors[:, :2]
+    )
+    vectors = np.random.default_rng(42).normal(size=(100, 3)).astype(np.float32)
+    membership = sparse.csr_matrix(np.ones((1, 100), dtype=np.float32))
+    sonic.place({}, membership, vectors, 3)
+    expected = vectors.astype(float).sum(axis=0, keepdims=True)
+    expected /= np.linalg.norm(expected, axis=1, keepdims=True)
+    assert captured[0].dtype == np.float64
+    np.testing.assert_allclose(captured[0], expected, atol=1e-15)
+
+
+def test_repulsion_deterministic_bounded_and_subset_replay():
+    points = np.random.default_rng(42).beta(0.5, 2, (100, 2))
+    fields = sonic.fit_repulsion(points, 60)
+    np.testing.assert_array_equal(fields, sonic.fit_repulsion(points, 60))
+    projected = sonic.repulsion_transform(fields, points)
+    np.testing.assert_array_equal(projected[::7], sonic.repulsion_transform(fields, points[::7]))
+    assert projected.shape == points.shape
+    assert np.isfinite(projected).all() and (projected >= 0).all() and (projected <= 1).all()
+    assert not np.array_equal(projected, points)
+    assert sonic.repulsion_transform(fields, np.empty((0, 2))).shape == (0, 2)
+    np.testing.assert_array_equal(sonic.repulsion_transform([], points), points)
+    assert sonic.fit_repulsion(points, 0) == []
+
+
+@pytest.mark.parametrize("points", [[], [[0, 1, 2]], [[np.nan, 0]], [[0, np.inf]]])
+def test_repulsion_invalid_points(points):
+    with pytest.raises(ValueError, match="finite.*array"):
+        sonic.repulsion_transform([], points)
+
+
+def test_repulsion_invalid_fit_and_fields():
+    with pytest.raises(ValueError, match="training points"):
+        sonic.fit_repulsion(np.empty((0, 2)), 1)
+    for steps in [-1, 0.5]:
+        with pytest.raises(ValueError, match="nonnegative integer"):
+            sonic.fit_repulsion(np.zeros((3, 2)), steps)
+    for field in [np.zeros((3, 3, 2)), np.full((33, 33, 2), np.nan)]:
+        with pytest.raises(ValueError, match="fields"):
+            sonic.repulsion_transform([field], np.zeros((3, 2)))
 
 
 def test_invalid_features(audio):
