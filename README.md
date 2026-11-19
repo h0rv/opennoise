@@ -123,8 +123,8 @@ npm --prefix web ci
 npm --prefix web run dev
 ```
 
-The study uses the shared synthetic catalog fixture, not model results. Islands, sonic map and
-tree share one selection; field notes link genres and artists, and a trail saves stops locally.
+The study uses the shared synthetic catalog fixture, not model results. Map and Islands share
+one selection; field notes link genres and artists, and a trail saves stops locally.
 Set `VITE_CATALOG_URL` to a release's `manifest.json` to use its data (cross-origin hosts need CORS).
 `npm --prefix web run lint` and `npm --prefix web run build` check formatting, regenerate types
 from the pipeline schema, type-check and build a static site. Clicking a genre or artist looks up

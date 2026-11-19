@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { hasShortcutModifier } from '../src/keyboard.ts';
 
-test('Alt, Ctrl and Meta shortcuts belong to the browser, not tree or map navigation', () => {
+test('Alt, Ctrl and Meta shortcuts belong to the browser, not map navigation', () => {
   for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End', '+', '-', '0', 'Enter', ' ']) {
     for (let modifiers = 0; modifiers < 8; modifiers++) {
       const event = {
