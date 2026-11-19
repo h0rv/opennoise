@@ -55,8 +55,11 @@ test('renders a clickable node and a visible edge for each neighbor using plain 
     assert.equal(first.textContent, '<One & two>');
     assert.deepEqual(first.dataset, { kind: 'artist', id: 'one' });
     assert.deepEqual(second.dataset, { kind: 'artist', id: 'two' });
-    assert.equal(svg.children[0].attributes.y2, '25');
-    assert.equal(svg.children[1].attributes.y2, '75');
+    assert.equal(graph.style.height, '240px');
+    assert.equal(svg.children[0].attributes.d, 'M50 15 V50 H25');
+    assert.equal(svg.children[1].attributes.d, 'M50 15 V50 H75');
+    assert.equal(first.style.left, '25%');
+    assert.equal(second.style.left, '75%');
     assert.equal(svg.attributes['aria-hidden'], 'true');
     assert.equal(first.attributes['aria-label'], 'Explore <One & two>, similar to center');
   } finally {
