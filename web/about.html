@@ -456,13 +456,57 @@
         </div>
         <div class="chapter-body">
           <p>
-            A useful continuation test is to place artists and releases that appeared after the
-            Every Noise map’s 2023 cutoff, using newer listening and metadata rather than
-            reference-map memberships. Recovering old labels alone does not test that.
+            We tested
+            <a href="https://github.com/h0rv/opennoise/releases/tag/798d8cc1645b"
+              >release 798d8cc1645b</a
+            >
+            on 11,191 artists whose first recorded MusicBrainz release group is from 2024 or later,
+            excluding artists found in the Every Noise crosswalk. The older comparison group has a
+            recorded release before December 2023.
           </p>
           <p>
-            <strong>Results pending.</strong> A separate evaluation is checking newer music. No
-            result is claimed here yet.
+            Wikidata genres cover only 3.7% of these newer artists, so the test also uses
+            MusicBrainz tags for scoring only. The table shows the tag-based scores, averaging each
+            artist’s share of labelled top-ten neighbours that share a tag.
+          </p>
+          <div class="table-scroll" role="region" aria-label="Newer artist results" tabindex="0">
+            <table>
+              <caption>
+                MusicBrainz tag agreement among labelled neighbours
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Neighbours</th>
+                  <th scope="col">Newer artists</th>
+                  <th scope="col">Older artists</th>
+                  <th scope="col">Random artists</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Similar artists</th>
+                  <td>51%</td>
+                  <td>57%</td>
+                  <td>3–5%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Map neighbours</th>
+                  <td>29%</td>
+                  <td>34%</td>
+                  <td>3–5%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="evidence">
+            Scorable newer artists: 1,596 for similar artists; 1,696 for map neighbours. The rest
+            lack reference tags or labelled neighbours and do not contribute to these scores.
+          </p>
+          <p>
+            Newer artists score below older artists, but above random. This tests recent-artist
+            placement, not future releases or an independently learned taxonomy. MusicBrainz dates
+            and the Every Noise crosswalk can be incomplete.
+            <a href="https://github.com/h0rv/opennoise/pull/165">Test code and recorded results</a>.
           </p>
         </div>
       </section>
