@@ -147,10 +147,9 @@
             ><span>Deezer previews <small>on demand, not model input</small></span>
           </div>
           <figcaption id="architecture-caption">
-            The center line carries the graph, vectors and memberships into later stages. Side
-            arrows show added inputs and saved outputs. Parquet and NumPy files stay in the build;
-            JSON is published to the website. The model details below describe the same flow in
-            text.
+            Each stage adds source data to the graph, vectors and memberships from earlier stages.
+            Intermediate Parquet and NumPy files stay in the build; JSON is published to the
+            website. The model details below describe the same flow in text.
           </figcaption>
         </figure>
       </section>
