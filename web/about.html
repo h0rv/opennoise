@@ -32,8 +32,9 @@
         </p>
         <p class="disclosure">
           <strong>This is a supervised reproduction, not an independent rediscovery.</strong> We use
-          Every Noise genre names and artist memberships as training examples. We do not use its map
-          coordinates to place our map.
+          Every Noise names and memberships train 4,344 shipped genres. Today’s positions are
+          computed, not copied, but the listening/audio input was originally selected using Every
+          Noise coordinate scores. Earlier builds fitted its coordinates directly.
         </p>
       </div>
       <nav class="contents" aria-label="In this write-up">
@@ -126,12 +127,13 @@
                   Compress listening and AcousticBrainz vectors with UMAP. Orient the Map with audio
                   features, then spread labels by rank.
                 </p>
-                <small>No Every Noise coordinates enter placement.</small>
+                <small>New positions; inherited coordinate-based input selection.</small>
               </li>
             </ol>
             <figcaption>
               Data flow, not a claim that each stage is independent. Every Noise supervision affects
-              memberships and therefore genre vectors and positions.
+              memberships, genre vectors, and positions. Historical coordinate-based model selection
+              also carries into the current input choice.
             </figcaption>
           </figure>
           <p>
@@ -225,8 +227,8 @@
                 <tr>
                   <th scope="row"><a href="https://everynoise.com/">Every Noise at Once</a></th>
                   <td>
-                    Genre names and artist memberships supervise the model. Archived coordinates are
-                    an evaluation reference.
+                    Genre names and artist memberships supervise the model. Archived coordinates
+                    score maps and previously guided fitting and model selection.
                   </td>
                   <td>
                     Third-party archived snapshots; no open-data license established. Not CC0.
@@ -287,11 +289,25 @@
           <figure class="results-chart">
             <div class="result-row">
               <div><strong>Hidden Every Noise genres</strong><span>210 of 868 · 24.2%</span></div>
-              <meter min="0" max="100" value="24.2">24.2%</meter>
+              <meter
+                aria-label="Hidden Every Noise genres recovered"
+                min="0"
+                max="100"
+                value="24.2"
+              >
+                24.2%
+              </meter>
             </div>
             <div class="result-row">
               <div><strong>Held-back Wikidata genres</strong><span>98 of 262 · 37.4%</span></div>
-              <meter min="0" max="100" value="37.4">37.4%</meter>
+              <meter
+                aria-label="Held-back Wikidata genres recovered"
+                min="0"
+                max="100"
+                value="37.4"
+              >
+                37.4%
+              </meter>
             </div>
             <figcaption>
               Share recovered as a cluster, on a 0–100% scale. Different reference sets: these bars
@@ -301,9 +317,10 @@
           </figure>
           <p>
             These are graph-recovery baselines, not scores for every feature of the final website.
-            Most hidden Every Noise genres are not recovered by this test. The production export
-            then refits on all eligible genre labels, including evaluation genres; the shipped
-            catalog is not the held-out test.
+            Most hidden Every Noise genres are not recovered by this test. The same hidden-name
+            benchmark was used to select a naming variant, so it is not an untouched final test for
+            naming. The production export refits on all eligible labels, including evaluation
+            genres; the shipped catalog is not the held-out test.
           </p>
           <h3 class="subhead">Do similar artists share genres?</h3>
           <div class="table-scroll" role="region" aria-label="Similar artist results" tabindex="0">
@@ -369,7 +386,8 @@
               <h3>Borrowed as supervision</h3>
               <p>
                 Genre names, artist–genre examples, and visible name fragments for micro-genres.
-                This is more than borrowing a list of names.
+                This trains 4,344 shipped genres, not only names missing elsewhere. The audit found
+                no rule limiting Every Noise seeds to otherwise unavailable genres.
               </p>
             </div>
             <div>
@@ -380,13 +398,47 @@
               </p>
             </div>
             <div>
-              <h3>Evaluation only</h3>
+              <h3>Coordinates: a mixed history</h3>
               <p>
-                Every Noise map coordinates. They are not position targets or inputs to the current
-                map-fitting function. Genre supervision still influences the map indirectly.
+                Not targets in the current fit, but they guided the inherited input choice. Earlier
+                builds fitted Every Noise positions directly. “Coordinates never influenced this
+                release” would be false.
               </p>
             </div>
           </div>
+          <h3 class="subhead">How the map changed</h3>
+          <ol class="history">
+            <li>
+              <span>Earlier builds</span><strong>Direct coordinate fitting</strong>
+              <p>
+                A model predicted Every Noise x/y. The archived v1 also had a local bootstrap that
+                displayed reference positions and colors; that is not the current release.
+              </p>
+            </li>
+            <li>
+              <span><a href="https://github.com/h0rv/opennoise/pull/121">Input selection</a></span
+              ><strong>Coordinate-based comparison</strong>
+              <p>
+                Listening plus audio became the default after comparison with Every Noise’s map.
+                That choice remains in the live model.
+              </p>
+            </li>
+            <li>
+              <span><a href="https://github.com/h0rv/opennoise/pull/138">Replacement</a></span
+              ><strong>Audio-oriented positions</strong>
+              <p>
+                The coordinate-trained model was removed. This did not independently reselect the
+                listening/audio input.
+              </p>
+            </li>
+            <li>
+              <span>Current release</span><strong>Computed geometry</strong>
+              <p>
+                UMAP fits listening-and-audio vectors. Audio features orient the Map. Every Noise
+                labels and the earlier selection still influence the result.
+              </p>
+            </li>
+          </ol>
           <h3 class="subhead">Checks you can inspect</h3>
           <ul class="checks">
             <li>
@@ -395,15 +447,15 @@
               independence from all Every Noise concepts.
             </li>
             <li>
-              <strong>Export scores.</strong> The recorded release export checks supervised rows
-              against cached model predictions. It records zero unexplained training rows and zero
-              training-label rows with a score of one. That checks score provenance, not freedom
-              from supervision.
+              <strong>Export scores.</strong> The export matches supervised rows to cached model
+              predictions, not raw lists pasted into the catalog. Its “zero unexplained rows” field
+              is hardcoded after that comparison; it does not measure overlap with Every Noise
+              memberships or establish independence.
             </li>
             <li>
-              <strong>Map inputs.</strong> The current placement code fits listening-and-audio
-              vectors, aligns to AcousticBrainz features, and rank-spreads the result. This is not
-              Every Noise’s coordinate table.
+              <strong>Released geometry.</strong> Across 4,414 matching top-level names, only 2.35%
+              of the Map’s ten nearest neighbours match the final Every Noise map (Islands: 2.70%).
+              The artifact comparison supports new geometry, not zero data dependence.
             </li>
             <li>
               <strong>External labels.</strong> Some Wikidata artist genres are sealed off from
@@ -412,10 +464,23 @@
             </li>
           </ul>
           <p>
-            The code and logged checks support a narrower claim: this is a model-built atlas with
-            disclosed Every Noise supervision, not a pasted copy of its map. They do not prove a
-            fully independent taxonomy, settle rights to derived data, or establish that every
-            musical label is correct.
+            The independent audit compared the live payload with the release archive, checked its
+            hashes, and traced the producer code and build history. It found no current path that
+            copies Every Noise positions, colors, or site assets. It did find the inherited
+            coordinate-based selection and extensive membership supervision described above.
+          </p>
+          <p>
+            This supports a model-built atlas with disclosed dependence—not a clean-room
+            reproduction or proof that we never copied. A stronger claim needs a new
+            feature-selection run without coordinate files, comparisons with no Every Noise seeds, a
+            fresh untouched test, and exact producer configs published with the release. The audit
+            did not refit the full model, determine rights to derived data, or establish what every
+            historical deployment served.
+          </p>
+          <p>
+            <a href="https://github.com/h0rv/opennoise/blob/main/EVERY_NOISE_AUDIT.md"
+              >Read the full independent audit →</a
+            >
           </p>
           <p class="evidence">
             Inspect:
