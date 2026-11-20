@@ -8,7 +8,12 @@ from implicit.als import AlternatingLeastSquares
 from scipy import sparse
 from threadpoolctl import threadpool_limits
 
-from opennoise.artist_identity import canonicalize, collaboration_table, identity_table
+from opennoise.artist_identity import (
+    artist_alias_table,
+    canonicalize,
+    collaboration_table,
+    identity_table,
+)
 
 
 def normalize(matrix):
@@ -16,19 +21,25 @@ def normalize(matrix):
     return sparse.diags(1 / np.maximum(norms, 1e-12)) @ matrix
 
 
+def heldout_users(users, config):
+    rng = np.random.default_rng(config["seed"])
+    return rng.choice(users, size=int(len(users) * config["test_fraction"]), replace=False)
+
+
 def prepare(config, run):
     if (run / "train.npz").exists():
         return sparse.load_npz(run / "train.npz")
     data = pl.scan_parquet("data/listens.parquet")
-    data = canonicalize(data, identity_table(), collaboration_table())
+    data = canonicalize(data, identity_table(), collaboration_table(), artist_alias_table())
+    primary = pl.col("artist_mbid") == pl.col("redirect_mbid")
     data = (
         data.group_by("user", "artist_mbid")
         .agg(
             pl.col("count").sum(),
             pl.col("artist_name").first(),
             pl.col("disambiguation").first(),
-            pl.col("source_mbid").unique(),
-            pl.col("source_name").unique(),
+            pl.col("source_mbid").filter(primary).unique(),
+            pl.col("source_name").filter(primary).unique(),
         )
         .collect(engine="streaming")
     )
@@ -49,10 +60,7 @@ def prepare(config, run):
     (run / "artist_aliases.json").write_text(
         json.dumps({i: sorted(names) for i, names in aliases.items()})
     )
-    rng = np.random.default_rng(config["seed"])
-    test_ids = rng.choice(
-        users["user"].to_numpy(), size=int(len(users) * config["test_fraction"]), replace=False
-    )
+    test_ids = heldout_users(users["user"].to_numpy(), config)
     test = data.filter(pl.col("user").is_in(test_ids))
     data = data.filter(~pl.col("user").is_in(test_ids))
     artists = (
