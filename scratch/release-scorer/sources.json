@@ -1,0 +1,32 @@
+{
+  "inputs": {
+    "path": "/home/ubuntu/sonic-embedding-experiment/layout-retention/inputs.npz",
+    "bytes": 16785646,
+    "sha256": "dedd24e789e4a5a2d941d418e0d082f27d40b3a82111c7d895be9c4b17956630"
+  },
+  "original_genres": {
+    "path": "runs/be8d557eda65/release/genres.json",
+    "bytes": 10261944,
+    "sha256": "ae505755cf6af5de25bf213b14eab1f602a258449c1d444d0bebfa2d64ac0e3f"
+  },
+  "labels": {
+    "path": "data/m2/labels.parquet",
+    "bytes": 447182,
+    "sha256": "c5453405c84838405f6699bad22b5696aa02f9423880da3246edbbe664c3ac7d"
+  },
+  "artists": {
+    "path": "runs/1f242e47ed38/artists.parquet",
+    "bytes": 8587311,
+    "sha256": "99af7955fc4bbde262e838ceab8856665a631d54574157ff1b0a338594ef2818"
+  },
+  "wikidata": {
+    "path": "/home/ubuntu/sonic-generalization/reference/wikidata.parquet",
+    "bytes": 3516471,
+    "sha256": "9d526d0381f2632156cde225cf6edd84a32ff13ed4d7366bf3cd196531b49973"
+  },
+  "map": {
+    "path": "data/m2/map.parquet",
+    "bytes": 64130,
+    "sha256": "87cdc71d75056bcd5cc24a76cdf106e18c6f8f63ab831e42091051725ae3f4d2"
+  }
+}
