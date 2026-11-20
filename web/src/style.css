@@ -588,25 +588,23 @@ main {
 }
 @media (max-width: 760px) {
   .toolbar {
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px 8px;
+    padding-block: 8px;
   }
   .brand {
     font-size: 22px;
-  }
-  .search-wrap {
-    position: relative;
-    grid-area: 2 / 1 / auto / -1;
   }
   .search-wrap input {
     font-size: 16px;
   }
   .search-results {
-    inset: calc(100% + 4px) 0 auto;
+    top: 56px;
     max-height: min(360px, 45dvh);
     overscroll-behavior: contain;
   }
-  .toolbar-actions {
-    grid-row: 3;
+  .repo-link {
+    display: none;
   }
   .modes {
     flex: 1;

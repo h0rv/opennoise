@@ -69,7 +69,7 @@ async function start() {
   }
 
   app.innerHTML = `
-    <header class="toolbar" id="explore"><h1><a href="#" class="brand" aria-label="OpenNoise home">OpenNoise</a></h1><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
+    <header class="toolbar" id="explore"><h1><a href="#" class="brand" aria-label="OpenNoise home">OpenNoise</a></h1><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Genre or artist" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
       <div class="toolbar-actions"><nav class="modes" aria-label="Atlas view">${Object.entries(
         modes,
       )
@@ -78,7 +78,7 @@ async function start() {
             `<button data-view="${key}" ${(key === 'axes' || key === 'islands') && !catalog.manifest.layouts[key] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button></div><a class="source" href="./about.html">About</a><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
+      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button></div><a class="source" href="./about.html">About</a><a class="source repo-link" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div>
     <aside id="sidebar" hidden aria-label="Selected genre or artist"><button id="detail-close" aria-label="Close details">×</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside></section>
     <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
