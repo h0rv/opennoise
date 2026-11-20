@@ -69,7 +69,7 @@ async function start() {
   }
 
   app.innerHTML = `
-    <header class="toolbar" id="explore"><h1><a href="#" class="brand" aria-label="OpenNoise home">OpenNoise</a></h1><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Genre or artist" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
+    <header class="toolbar" id="explore"><h1><a href="#" class="brand" aria-label="OpenNoise home">OpenNoise</a></h1><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
       <div class="toolbar-actions"><nav class="modes" aria-label="Atlas view">${Object.entries(
         modes,
       )
