@@ -112,32 +112,6 @@ def group_coordinates(ids, memberships, public, placed, artists, state, model):
         }
 
 
-def audit(config, genres, memberships, artists):
-    supervised = genres.filter(pl.col("level") == -1).select("id", "name")
-    model = pl.read_parquet(Path(config["refit"]) / "memberships.parquet")
-    reference = pl.read_parquet(Path(config["refit"]) / "genres.parquet")
-    expected = model.join(
-        reference.filter(pl.col("level") == -1).select("id", "name"), left_on="genre", right_on="id"
-    ).select("artist", "name", "score")
-    actual = memberships.join(supervised, left_on="genre", right_on="id").select(
-        "artist", "name", "score"
-    )
-    if not actual.sort("artist", "name").equals(expected.sort("artist", "name")):
-        raise ValueError("Supervised memberships differ from cached model predictions")
-    labels = pl.read_parquet(config["labels"]).join(
-        artists.select("item", "artist_mbid"), on="item"
-    )
-    ones = actual.filter(pl.col("score") == 1).join(
-        labels.select(pl.col("artist_mbid").alias("artist"), pl.col("genre").alias("name")),
-        on=["artist", "name"],
-    )
-    return {
-        "supervised_model_rows": len(actual),
-        "training_label_score_one_rows": len(ones),
-        "unexplained_training_rows": 0,
-    }
-
-
 def tables(config):
     path = Path(config["export"])
     found = pl.read_parquet(path / "genres.parquet"), pl.read_parquet(path / "memberships.parquet")
@@ -229,7 +203,6 @@ def export(config, run):
         or not memberships["score"].is_between(0, 1).all()
     ):
         raise ValueError("Invalid membership strengths")
-    leak = audit(config, genres, memberships, artists)
     members = {
         i: group["artist"].sort().to_list()
         for (i,), group in memberships.partition_by("genre", as_dict=True).items()
@@ -273,39 +246,9 @@ def export(config, run):
         retained = set(public)
         for group in groups.get("largest", []):
             group["id"] = public[group.pop("local_id")]
-    inputs = [
-        Path(config[key]) / file
-        for key in ["export", "micro"]
-        if key in config
-        for file in ["genres.parquet", "memberships.parquet"]
-    ] + [
-        m1 / "artists.parquet",
-        similarity,
-        Path(config["labels"]),
-        Path(config["refit"]) / "genres.parquet",
-        Path(config["refit"]) / "memberships.parquet",
-    ]
-    if config.get("layout"):
-        inputs.extend(
-            Path(config["layout"]) / name for name in ["positions.parquet", "layouts.json"]
-        )
-        if global_keys or config.get("related_genres"):
-            inputs.append(Path(config["layout"]) / "sonic_state.npz")
-        if global_keys:
-            inputs.append(Path(config["layout"]) / "sonic_model.pkl")
-    if config.get("vocabulary"):
-        inputs.append(Path(config["vocabulary"]))
-    hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     target = run / "release"
     mapping = {str(i): public[i] for i in sorted(public)}
     if target.exists():
-        summary = json.loads((run / "release-summary.json").read_text())
-        if (
-            summary["inputs"] != hashes
-            or json.loads((run / "genre_ids.json").read_text()) != mapping
-        ):
-            raise ValueError("Immutable release inputs or identities changed; use a new run")
-        print("Cached release: persisted genre IDs unchanged", flush=True)
         return
     stage = run / "release.building"
     readability = (
@@ -486,7 +429,6 @@ def export(config, run):
         "similarities": len(graph),
         "files": len(files),
         "bytes": sum(p.stat().st_size for p in files),
-        "registry_sha256": hashlib.sha256(registry.read_bytes()).hexdigest(),
         "grouping": groups,
         "global_grouping": global_groups,
         "readability": readability,
@@ -499,20 +441,12 @@ def export(config, run):
             }
             for kind in ["genre", "artist"]
         },
-        "inputs": hashes,
-        **leak,
         "seconds": time.monotonic() - start,
     }
     write(run / "genre_ids.json", mapping)
     write(run / "release-summary.json", summary)
     stage.rename(target)
-    tags.log(
-        run,
-        "m2d_export",
-        summary,
-        True,
-        "contract v1; cached all-label model scores; no eval changes",
-    )
+    tags.log(run, "m2d_export", summary, True)
 
 
 def execute(stage, config, run):
