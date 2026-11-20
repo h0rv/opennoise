@@ -151,6 +151,45 @@ def test_extract_dump(tmp_path, monkeypatch):
         extract_dump(tmp_path, "https://example.com", {"absent"})
 
 
+@pytest.mark.parametrize("rule", ["popularity", "collaboration"])
+def test_transform_drops_folded_genres_but_keeps_other_references(tmp_path, rule):
+    shutil.copytree(FIXTURE, tmp_path, dirs_exist_ok=True)
+
+    def read(path):
+        return json.loads((tmp_path / path).read_text())
+
+    before = read(f"artists/{mbid(1)}.json")["genres"]
+    path = tmp_path / "artists" / f"{mbid(3)}.json"
+    donor = read(f"artists/{mbid(3)}.json")
+    if rule == "popularity":
+        donor["artist"].update(name="Fixture Artist 1", listeners=1)
+        path.write_text(json.dumps(donor))
+    identities = pl.DataFrame(
+        {
+            "artist_mbid": [mbid(2)],
+            "canonical_mbid": [mbid(3)],
+            "disambiguation": [None],
+        },
+        schema_overrides={"disambiguation": pl.String},
+    )
+    collaborations = (
+        pl.DataFrame({"collaboration": [mbid(3)], "member": [mbid(1)]})
+        if rule == "collaboration"
+        else None
+    )
+    release(tmp_path, "cleaned", identities, collaborations)
+    manifest = validate_release(tmp_path)
+    assert manifest["artist_redirects"] == {mbid(2): mbid(1), mbid(3): mbid(1)}
+    assert read(f"artists/{mbid(1)}.json")["genres"] == before
+    for genre in ["house", "rock", "shoegaze"]:
+        assert all(
+            row["artist"]["id"] != mbid(1) for row in read(f"genres/{genre}.json")["members"]
+        )
+    assert read(f"artists/{mbid(4)}.json")["similar"][0]["artist"]["id"] == mbid(1)
+    search = {e["id"]: e for e in read("search.json") if e["kind"] == "artist"}
+    assert set(search[mbid(1)]["aliases"]) == {"Fixture Artist 2", "Fixture Artist 3"}
+
+
 def test_transform_repoints_every_reference_and_preserves_ids(tmp_path):
     shutil.copytree(FIXTURE, tmp_path, dirs_exist_ok=True)
 
@@ -179,6 +218,11 @@ def test_transform_repoints_every_reference_and_preserves_ids(tmp_path):
     assert manifest["artist_redirects"] == {mbid(2): mbid(1), mbid(3): mbid(7)}
     assert {g["id"] for g in read("genres.json")} == genres
     assert read("artists/" + mbid(1) + ".json")["artist"] == {**before, "disambiguation": "Comment"}
+    assert read("artists/" + mbid(1) + ".json")["genres"] == [
+        {"id": "house", "score": 0.95},
+        {"id": "techno", "score": 0.95},
+        {"id": "electronic", "score": 0.9},
+    ]
     assert {p.stem for p in (tmp_path / "artists").glob("*.json")} == {
         mbid(i) for i in [1, 4, 5, 6, 7]
     }
