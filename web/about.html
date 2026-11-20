@@ -37,31 +37,55 @@
       </nav>
       <section id="pipeline" class="chapter">
         <div class="chapter-title"><h2>How it’s built</h2></div>
-        <div class="chapter-body">
-          <ol class="steps">
+        <figure class="architecture" aria-labelledby="architecture-caption">
+          <ol class="dataflow" aria-label="Data flow from sources to the website">
             <li>
-              <strong>Listening graph.</strong> ListenBrainz user–artist counts produce TF-IDF
-              cosine neighbours and ALS listening vectors. Discogs styles rerank similar artists.
+              <h3>Data sources</h3>
+              <ul class="source-list">
+                <li><strong>ListenBrainz</strong><small>Listening counts</small></li>
+                <li><strong>MusicBrainz</strong><small>Artist IDs, joins &amp; places</small></li>
+                <li><strong>Every Noise</strong><small>Genre labels &amp; memberships</small></li>
+                <li><strong>Discogs</strong><small>Styles</small></li>
+                <li><strong>Wikidata</strong><small>Genres &amp; places</small></li>
+                <li><strong>AcousticBrainz</strong><small>Audio descriptors</small></li>
+              </ul>
+            </li>
+            <li class="shared-intake">
+              <h3>Shared ingestion</h3>
+              <p>Import sources, normalize records and match MusicBrainz identifiers.</p>
+              <p>Save artist-keyed counts, labels, styles, places and audio features.</p>
             </li>
             <li>
-              <strong>Genres.</strong> Every Noise memberships propagate through the listening
-              graph; Leiden clustering finds additional groups at three resolutions.
+              <h3>Offline pipeline</h3>
+              <ol class="model-sequence">
+                <li><strong>Listening models</strong><small>TF-IDF graph + ALS vectors</small></li>
+                <li><strong>Genre models</strong><small>Propagation + Leiden groups</small></li>
+                <li>
+                  <strong>Naming &amp; enrichment</strong
+                  ><small>Style/place scores + micro-genres</small>
+                </li>
+                <li>
+                  <strong>Map &amp; Islands</strong><small>Genre vectors + UMAP layouts</small>
+                </li>
+              </ol>
+              <p class="build-artifacts">Cached Parquet tables + NumPy vectors</p>
             </li>
             <li>
-              <strong>Naming.</strong> Wikidata genres and Discogs styles name clusters. A separate
-              model combines places and styles into micro-genres.
+              <h3>Catalog export</h3>
+              <p>Stable IDs, named genres, memberships, neighbours and coordinates.</p>
+              <code>manifest.json<br />genres.json<br />search.json</code>
             </li>
             <li>
-              <strong>Map and Islands.</strong> UMAP projects ALS and AcousticBrainz vectors. The
-              Map is oriented with audio descriptors, rank-spread and gently repelled; Islands uses
-              a separate UMAP fit.
-            </li>
-            <li>
-              <strong>Export.</strong> Names, memberships, coordinates and neighbours become a
-              static JSON catalog. The browser loads it and requests Deezer previews on demand.
+              <h3>Browser atlas</h3>
+              <p>The static website reads the exported JSON catalog.</p>
             </li>
           </ol>
-        </div>
+          <figcaption id="architecture-caption">
+            The ingestion box groups source-specific importers into one preparation layer. Models
+            use the resulting artist-keyed tables and features. The browser requests Deezer previews
+            separately, on demand.
+          </figcaption>
+        </figure>
       </section>
       <section id="data" class="chapter">
         <div class="chapter-title"><h2>Data</h2></div>
