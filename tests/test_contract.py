@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from jsonschema import Draft202012Validator
+from jsonschema_rs import meta
 
 from opennoise.contract import SCHEMA, validate_release
 
@@ -25,7 +25,7 @@ def change(root, filename, mutate):
 
 
 def test_fixture():
-    Draft202012Validator.check_schema(SCHEMA)
+    meta.validate(SCHEMA)
     assert validate_release(FIXTURE)["data_kind"] == "synthetic"
 
 
@@ -57,6 +57,7 @@ def test_fixture():
             lambda d: d.update(links=[{"label": "Bad", "url": "javascript:alert(1)"}]),
             ARTIST,
         ),
+        (ARTIST, lambda d: d.update(links=[{"label": "Bad", "url": "https://bad uri"}]), ARTIST),
         ("genres/house.json", lambda d: d["members"].clear(), "member count"),
         ("genres/house.json", lambda d: d["genre"].update(name="Wrong"), "genre detail"),
     ],
