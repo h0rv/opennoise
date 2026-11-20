@@ -6,6 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 
 NAMES = json.loads(Path(__file__).with_name("names.json").read_text())
+LEGACY_SUFFIXES = {("b",): "rhythm and blues", ("s", "music"): "children's music"}
 
 
 def key(text):
@@ -20,13 +21,30 @@ def canonical(name, names=NAMES):
     while i < len(words):
         for j in range(min(len(words), i + 6), i, -1):
             if target := names.get(key(" ".join(words[i:j]))):
-                out.append(target)
-                i = j
                 break
         else:
-            out.append(words[i])
-            i += 1
+            if i and (target := LEGACY_SUFFIXES.get(tuple(words[i:]))):
+                j = len(words)
+            else:
+                target, j = words[i], i + 1
+        part = target.split()
+        overlap = next(
+            (n for n in range(min(len(out), len(part)), 0, -1) if out[-n:] == part[:n]), 0
+        )
+        out.extend(part[overlap:])
+        i = j
     return " ".join(out)
+
+
+def rename(genre):
+    old = genre["name"]
+    base, separator, suffix = old.partition(" · ")
+    name = canonical(base)
+    if name == base.casefold():
+        return False
+    name += separator + suffix
+    genre.update(name=name, aliases=sorted((set(genre["aliases"]) | {old}) - {name}))
+    return True
 
 
 def clean(genres, members, names=NAMES):
@@ -34,9 +52,9 @@ def clean(genres, members, names=NAMES):
     old = {i: g["name"] for i, g in rows.items()}
     bases = {}
     for i, g in rows.items():
-        base, _, suffix = g["name"].partition(" · ")
+        base, separator, suffix = g["name"].partition(" · ")
         bases[i] = canonical(base, names)
-        g["name"] = bases[i] + (" · " + suffix if suffix else "")
+        g["name"] = bases[i] + separator + suffix
     top = defaultdict(list)
     for i, g in rows.items():
         if g["parent_id"] is None:
@@ -68,8 +86,7 @@ def clean(genres, members, names=NAMES):
                 g["name"] = next(o for o in options if o not in used)
             used.add(g["name"])
     for i, g in rows.items():
-        if " · " not in old[i]:
-            extra[i].add(old[i])
+        extra[i].add(old[i])
         g["aliases"] = sorted((set(g["aliases"]) | extra[i]) - {g["name"]})
     return {"renamed": sum(g["name"] != old[i] for i, g in rows.items()), "merged": merged}
 
@@ -77,22 +94,19 @@ def clean(genres, members, names=NAMES):
 def release(root, release_id):
     manifest = json.loads((root / "manifest.json").read_text())
     genres = json.loads((root / manifest["genres"]).read_text())
-    details = {
-        g["id"]: json.loads((root / "genres" / f"{g['id']}.json").read_text()) for g in genres
-    }
-    members = {i: [m["artist"]["name"] for m in d["members"]] for i, d in details.items()}
-    report = clean(genres, members)
-    by_id = {g["id"]: g for g in genres}
+    changed = {}
+    for genre in genres:
+        if not rename(genre):
+            continue
+        changed[genre["id"]] = genre
+        path = root / "genres" / f"{genre['id']}.json"
+        detail = json.loads(path.read_text())
+        detail["genre"] = genre
+        write(path, detail)
     search = json.loads((root / manifest["search"]).read_text())
     for entry in search:
-        if entry["kind"] == "genre":
-            entry["name"], entry["aliases"] = (
-                by_id[entry["id"]]["name"],
-                by_id[entry["id"]]["aliases"],
-            )
-    for i, detail in details.items():
-        detail["genre"] = by_id[i]
-        write(root / "genres" / f"{i}.json", detail)
+        if entry["kind"] == "genre" and (genre := changed.get(entry["id"])) is not None:
+            entry.update(name=genre["name"], aliases=genre["aliases"])
     manifest["release_id"] = release_id
     for name, value in [
         (manifest["genres"], genres),
@@ -100,7 +114,7 @@ def release(root, release_id):
         ("manifest.json", manifest),
     ]:
         write(root / name, value)
-    return report
+    return {"renamed": len(changed)}
 
 
 def write(path, value):

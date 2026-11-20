@@ -343,6 +343,9 @@ def export(config, run):
                 for i, mbids, _ in grouped.iter_rows()
             },
         )
+    else:
+        for genre in catalog.values():
+            names.rename(genre)
     related = None
     if config.get("related_genres"):
         with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
