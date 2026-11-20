@@ -8,7 +8,7 @@ on:
       - 'src/opennoise/pages.py'
       - '.github/workflows/pages.yml'
 env:
-  CATALOG_RELEASE: 7822a8d03434
+  CATALOG_RELEASE: artist-identity-final-20261120
 permissions:
   contents: read
   pages: write
