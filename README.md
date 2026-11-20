@@ -18,11 +18,30 @@ npm --prefix web run dev
 Development uses a synthetic fixture by default. Set `VITE_CATALOG_URL` to a catalog’s
 `manifest.json` to use model output.
 
-## Build the current pipeline
+## Pipeline
 
-Keep the cached `data/`, `runs/` and `data/registry/genres.json` used by the configs.
-Sources are listed in `sources.toml`. Configs reference existing artifacts rather than
-automatically rebuilding dependencies.
+TF-IDF listening neighbours are reranked with Discogs styles. Label propagation and
+multiresolution Leiden supply genres; Wikidata-weighted Discogs naming and place-and-style
+micro-genres name them. Naming and catalog exports reuse the cached all-label membership
+fit. ALS and AcousticBrainz vectors drive the 2D map, spectral Islands and related genres.
+
+## Reproduce
+
+The published catalog is GitHub release `7822a8d03434`, selected by `CATALOG_RELEASE` in
+[pages.yml](.github/workflows/pages.yml). Pages builds the site and packs that release for
+deployment. To serve the same catalog locally after setup (requires GitHub CLI and zstd):
+
+```sh
+gh release download 7822a8d03434 -R h0rv/opennoise --pattern 'release-*.tar.zst'
+tar --zstd -xf release-7822a8d03434.tar.zst
+npm --prefix web run build
+rm -rf web/dist/catalog
+uv run python src/opennoise/pages.py release web/dist/catalog
+npm --prefix web run preview -- --host 127.0.0.1
+```
+
+To rebuild, retain the caches in `data/` and `runs/`, including `data/registry/genres.json`;
+sources are listed in `sources.toml`.
 
 ```sh
 uv run on build configs/tags.toml
@@ -39,8 +58,6 @@ uv run on export configs/one-name.toml
 npm --prefix web run build
 ```
 
-Pages downloads the prebuilt catalog; `.github/workflows/pages.yml` defines deployment.
-
 ## Tests
 
 ```sh
@@ -51,26 +68,20 @@ npm --prefix web run build
 
 ## Experiments
 
-Raw numbers and variant-level outcomes: [experiments/results.tsv](experiments/results.tsv).
-“Adopted” means used by the current pipeline, not every historically kept variant.
+Rejected or not adopted; raw numbers are in [experiments/results.tsv](experiments/results.tsv).
 
-| Idea | Outcome |
-|---|---|
-| TF-IDF and implicit ALS | Adopted: TF-IDF supplies the graph; ALS supplies layout vectors. |
-| Leiden resolution variants | Adopted fine, three-resolution clustering for discovery. |
-| MusicBrainz tag naming | Rejected for release naming in favour of Wikidata and Discogs. |
-| Discogs style naming | Adopted weighted naming; strict and lift-only variants lost selection. |
-| Wikidata-only vs combined naming | Adopted Wikidata-weighted Discogs combination for better naming scores. |
-| MusicBrainz tag reranking | Replaced by Discogs style reranking in the release. |
-| Discogs style reranking | Adopted at weight 0.1; improves hidden-label neighbour agreement. |
-| AcousticBrainz audio | Adopted with ALS for Map and Islands vectors. |
-| Discogs-EffNet preview audio | Not adopted in the release; non-commercial model, disabled by default. |
-| Place + style micro-genres | Adopted to add geographically specific genres. |
-| Layout variants | Adopted audio-oriented, rank-spread UMAP with repulsion; separate spectral Islands. |
-| Cosine-related genres | Adopted: related lists use vectors rather than screen distance. |
-| Last.fm-360K/1K listening blend | Rejected: tiny similarity gain, worse genre naming; non-commercial. |
-| Echo Nest Taste Profile | Rejected: low artist coverage, every score lower; research-only terms. |
-| MusicBrainz artist relationships | Rejected: genre-graph blend recovered only 4 more of 868 Every Noise genres at best. |
-| ListenBrainz session similarity | Rejected: fusion with TF-IDF gave a small Every Noise gain but a lower Wikidata score. |
-| Discogs labels and co-credits | Rejected: no measurable reranking gain; dilutes styles. |
-| Deezer related artists and album genres | Rejected for release: plateaued; non-commercial terms, opt-in only. |
+- **Listening blends:** Last.fm-360K/1K gave tiny similarity gains but worse naming
+  (non-commercial); Echo Nest Taste Profile had low coverage and lowered every score
+  (research-only). These were run in earlier sessions outside the ledger.
+- **Extra graph signals:** MusicBrainz relationships recovered at most 4 more of 868 genres;
+  ListenBrainz session fusion slightly improved Every Noise but lowered Wikidata scores;
+  Discogs labels/co-credits gave no measurable gain and diluted styles.
+- **Naming:** MusicBrainz tags, strict/lift-only Discogs (`configs/m2b.toml`) and Wikidata-only
+  or equal-weight naming (`configs/m2c.toml`) lost to weighted combined naming. The sealed
+  artist-label variant is retained in `configs/map-labels-naming.toml` for comparison.
+- **External audio/catalogs:** Deezer related artists and album genres plateaued, with
+  non-commercial, opt-in terms (`configs/deezer.toml`); EffNet preview audio uses a
+  non-commercial model and stays disabled (`configs/audio.toml`).
+- **Layouts and labels:** Earlier map variants lost neighbour retention (`configs/layout.toml`);
+  readable labels without global name grouping remain a comparison (`configs/map-labels.toml`).
+  `configs/gen.toml` runs the cross-source and layout comparisons.

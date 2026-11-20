@@ -5,12 +5,15 @@
 `src/opennoise/cli.py` dispatches config-driven stages. Intermediate tables and models
 live in `data/` and `runs/`; configs explicitly reference their dependencies.
 
-- **Listening** — `ingest.py` reads ListenBrainz counts and MusicBrainz artist data.
+- **Listening** — `ingest.py` reads ListenBrainz counts only.
   `graph.py` builds TF-IDF cosine neighbours and implicit ALS vectors.
   `tags.py` reranks listening candidates with Discogs styles.
 - **Genres** — `reference.py` maps Every Noise labels to graph artists.
+  It uses MusicBrainz artist/URL links for the crosswalk and tags for baseline naming;
+  `micro.py` uses MusicBrainz geography downstream for place-and-style genres.
   `genres.py` propagates memberships and runs multiresolution Leiden clustering.
-  Evaluation holds out genres and artist memberships; export refits on all eligible labels.
+  Evaluation holds out genres and artist memberships. Naming and catalog exports reuse
+  the cached all-label membership fit.
 - **Names** — `wikidata.py` and `naming.py` combine Wikidata genres with Discogs styles.
   `micro.py` scores place-and-style combinations and their artist memberships.
 - **Geometry** — `audio.py` aggregates AcousticBrainz descriptors by artist.

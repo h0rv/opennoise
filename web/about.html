@@ -120,15 +120,17 @@
         <div class="chapter-title"><h2>Results</h2></div>
         <div class="chapter-body">
           <ul class="scores">
-            <li>Hidden Every Noise genres recovered as clusters: 210 of 868 (24.2%).</li>
-            <li>Held-back Wikidata genres recovered as clusters: 98 of 262 (37.4%).</li>
+            <li>Hidden Every Noise genres with a matching cluster: 210 of 868 (24.2%).</li>
+            <li>
+              With artists’ Wikidata labels held back, 98 of 262 genres have a matching cluster
+              (37.4%). A match means at least 20% intersection over union of artists.
+            </li>
             <li>
               Top-ten similar artists sharing a hidden Every Noise label: 21.93% with Discogs
               styles, versus 21.48% listening-only.
             </li>
             <li>
-              Map neighbours’ Wikidata genre-vector similarity: 38.6%, versus 6.0% for random
-              neighbours.
+              The 2D map keeps about 42% of each genre’s ten nearest listening-and-audio neighbours.
             </li>
           </ul>
           <p>
@@ -142,20 +144,10 @@
       <section id="reproduce" class="chapter">
         <div class="chapter-title"><h2>Reproduce</h2></div>
         <div class="chapter-body">
-          <p>Current pipeline stages, using the cached inputs named in the configs:</p>
-          <pre><code>uv run on build configs/tags.toml
-uv run on eval configs/tags.toml
-uv run on build configs/m2f-naming.toml
-uv run on eval configs/m2f-naming.toml
-uv run on export configs/m2f-naming.toml
-uv run on build configs/m3.toml
-uv run on audio configs/audio.toml
-uv run on layout configs/layout.toml
-uv run on export configs/m2f.toml
-uv run on layout configs/m2e-layout.toml
-uv run on export configs/one-name.toml</code></pre>
           <p>
-            Source:
+            See the
+            <a href="https://github.com/h0rv/opennoise#reproduce">README reproduction recipe</a>
+            to run the published catalog or rebuild it. Source:
             <a
               href="https://github.com/h0rv/opennoise/tree/ee1e6cebf6ab815c2081442ef4b1b2ffcf4ace3d"
               >commit ee1e6ce</a
