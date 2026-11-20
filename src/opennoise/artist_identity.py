@@ -219,6 +219,7 @@ def release(root, release_id, identities, collaborations=None):
             "disambiguation": mapping.get(old, (old, None))[1],
         }
     dropped, popularity_count, collaboration_count = cleanup_redirects(summaries, collaborations)
+    membership_ids = {old for old, target in canonical.items() if target not in dropped}
     canonical = {old: dropped.get(target, target) for old, target in canonical.items()}
     survivors = {target: old for target, old in survivors.items() if target not in dropped}
     summaries = {target: summary for target, summary in summaries.items() if target not in dropped}
@@ -238,6 +239,10 @@ def release(root, release_id, identities, collaborations=None):
     for genre in genres:
         path = root / "genres" / f"{genre['id']}.json"
         data = json.loads(path.read_text())
+        if data["members"] is not None:
+            data["members"] = [
+                row for row in data["members"] if row["artist"]["id"] in membership_ids
+            ]
         data["members"] = references(data["members"])
         genre["member_count"] = None if data["members"] is None else len(data["members"])
         data["genre"] = genre
