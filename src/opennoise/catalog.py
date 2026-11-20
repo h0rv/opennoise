@@ -303,18 +303,6 @@ def export(config, run):
             "item", "artist_mbid", "listeners", "artist_name", "disambiguation"
         ).iter_rows()
     }
-    edges = memberships.with_columns(
-        pl.col("genre").replace_strict(public, return_dtype=pl.String).alias("genre_id")
-    )
-    artist_genres = {}
-    for group in (
-        edges.sort(["artist", "score", "genre_id"], descending=[False, True, False])
-        .group_by("artist", maintain_order=True)
-        .agg("genre_id", "score")
-        .iter_rows()
-    ):
-        mbid, ids, scores = group
-        artist_genres[mbid] = [{"id": i, "score": s} for i, s in zip(ids, scores, strict=True)]
     counts = dict(memberships.group_by("genre").len().iter_rows())
     catalog: dict = {
         r["id"]: {
@@ -330,6 +318,25 @@ def export(config, run):
         }
         for r in rows
     }
+    for genre in catalog.values():
+        names.rename(genre)
+    genre_redirects, conflicts = names.duplicates(catalog.values())
+    if genre_redirects:
+        source = {g["id"]: i for i, g in catalog.items()}
+        remap = {source[old]: source[new] for old, new in genre_redirects.items()}
+        for i in remap:
+            del catalog[i]
+        memberships = (
+            memberships.with_columns(pl.col("genre").replace(remap))
+            .group_by("genre", "artist")
+            .agg(pl.col("score").max())
+        )
+        counts = dict(memberships.group_by("genre").len().iter_rows())
+        for i, genre in catalog.items():
+            parent = genre["parent_id"]
+            genre.update(
+                parent_id=genre_redirects.get(parent, parent), member_count=counts.get(i, 0)
+            )
     grouped = (
         memberships.sort(["genre", "score", "artist"], descending=[False, True, False])
         .group_by("genre", maintain_order=True)
@@ -343,9 +350,17 @@ def export(config, run):
                 for i, mbids, _ in grouped.iter_rows()
             },
         )
-    else:
-        for genre in catalog.values():
-            names.rename(genre)
+    edges = memberships.with_columns(
+        pl.col("genre").replace_strict(public, return_dtype=pl.String).alias("genre_id")
+    )
+    artist_genres = {}
+    for mbid, ids, scores in (
+        edges.sort(["artist", "score", "genre_id"], descending=[False, True, False])
+        .group_by("artist", maintain_order=True)
+        .agg("genre_id", "score")
+        .iter_rows()
+    ):
+        artist_genres[mbid] = [{"id": i, "score": s} for i, s in zip(ids, scores, strict=True)]
     related = None
     if config.get("related_genres"):
         with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
@@ -363,7 +378,7 @@ def export(config, run):
                 ],
             },
         )
-    for i in retained - populated:
+    for i in catalog.keys() - populated:
         write(
             stage / "genres" / f"{public[i]}.json",
             {
@@ -446,6 +461,7 @@ def export(config, run):
             "genres": "genres.json",
             "search": "search.json",
             "artist_redirects": artist_redirects,
+            "genre_redirects": genre_redirects,
         },
     )
     files = list(stage.rglob("*.json"))
@@ -470,6 +486,8 @@ def export(config, run):
         },
         "seconds": time.monotonic() - start,
     }
+    if conflicts:
+        summary["genre_name_conflicts"] = conflicts
     write(run / "genre_ids.json", mapping)
     write(run / "release-summary.json", summary)
     stage.rename(target)

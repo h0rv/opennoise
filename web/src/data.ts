@@ -62,8 +62,17 @@ export class Catalog {
     return this.searching;
   }
 
+  genreId(id: string) {
+    const redirects = this.manifest.genre_redirects;
+    return redirects && Object.hasOwn(redirects, id) ? redirects[id] : id;
+  }
+
   genre(id: string, signal: AbortSignal) {
-    return this.read<GenreDetail>(`genres/${encodeURIComponent(id)}.json`, 'GenreDetail', signal);
+    return this.read<GenreDetail>(
+      `genres/${encodeURIComponent(this.genreId(id))}.json`,
+      'GenreDetail',
+      signal,
+    );
   }
 
   artist(id: string, signal: AbortSignal) {
