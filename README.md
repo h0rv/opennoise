@@ -27,13 +27,14 @@ fit. ALS and AcousticBrainz vectors drive the 2D map, spectral Islands and relat
 
 ## Reproduce
 
-The published catalog is GitHub release `7822a8d03434`, selected by `CATALOG_RELEASE` in
-[pages.yml](.github/workflows/pages.yml). Pages builds the site and packs that release for
-deployment. To serve the same catalog locally after setup (requires GitHub CLI and zstd):
+Pages builds the site and packs the GitHub release selected by `CATALOG_RELEASE` in
+[pages.yml](.github/workflows/pages.yml). To serve the same catalog locally after setup
+(requires GitHub CLI and zstd):
 
 ```sh
-gh release download 7822a8d03434 -R h0rv/opennoise --pattern 'release-*.tar.zst'
-tar --zstd -xf release-7822a8d03434.tar.zst
+catalog=$(awk '/^  CATALOG_RELEASE:/ {print $2}' .github/workflows/pages.yml)
+gh release download "$catalog" -R h0rv/opennoise --pattern "release-$catalog.tar.zst"
+tar --zstd -xf "release-$catalog.tar.zst"
 npm --prefix web run build
 rm -rf web/dist/catalog
 uv run python src/opennoise/pages.py release web/dist/catalog
