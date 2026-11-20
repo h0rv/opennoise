@@ -139,9 +139,10 @@ export class SonicMap {
     element.addEventListener(
       'pointerdown',
       (event) => {
-        if (event.pointerType === 'touch' || event.button !== 0) return;
-        this.pointer = { x: event.clientX, y: event.clientY };
+        if (!event.isPrimary || event.button !== 0) return;
         this.moved = false;
+        if (event.pointerType === 'touch') return;
+        this.pointer = { x: event.clientX, y: event.clientY };
         (event.target as HTMLElement).setPointerCapture(event.pointerId);
       },
       options,
