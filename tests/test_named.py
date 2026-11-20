@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from opennoise.contract import validate_release
 from opennoise.named import release
 from opennoise.names import write
 
@@ -79,6 +80,51 @@ def test_empty_memberships(catalog):
     assert all(g["member_count"] is None for g in read(catalog, "genres.json"))
     for path in (catalog / "artists").glob("*.json"):
         assert json.loads(path.read_text())["genres"] is None
+
+
+def test_merge_repaired_duplicates(catalog):
+    genres = read(catalog, "genres.json")
+    by = {g["id"]: g for g in genres}
+    by["electronic"]["name"] = "uk garage"
+    by["rock"]["name"] = "uk uk garage"
+    by["house"]["name"] = "uk garage"
+    write(catalog / "genres.json", genres)
+    report = release(catalog, "duplicates", duplicates_only=True)
+    assert report["merged_groups"] == 0
+    assert report["conflicts"] == ["uk garage"]
+    assert validate_release(catalog)["genre_redirects"] == {}
+
+    by["house"]["name"] = "house"
+    write(catalog / "genres.json", list(by.values()))
+    manifest = read(catalog, "manifest.json")
+    manifest["genre_redirects"] = {"older-electronic": "electronic"}
+    write(catalog / "manifest.json", manifest)
+    report = release(catalog, "duplicates", duplicates_only=True)
+    assert report["merged_groups"] == 1
+    assert report["conflicts"] == []
+    assert validate_release(catalog)["genre_redirects"] == {
+        "electronic": "rock",
+        "older-electronic": "rock",
+    }
+    house = read(catalog, "genres/house.json")
+    assert house["genre"]["parent_id"] == "rock"
+    assert house["related"] == [{"id": "rock", "score": 0.85}, {"id": "techno", "score": 0.75}]
+    search = read(catalog, "search.json")
+    (entry,) = [e for e in search if e["name"] == "uk garage"]
+    assert entry["id"] == "rock"
+    assert "uk uk garage" in entry["aliases"]
+
+
+def test_merge_child_already_listed_as_parent_alias(catalog):
+    genres = read(catalog, "genres.json")
+    by = {g["id"]: g for g in genres}
+    by["electronic"].update(name="black 'n' roll", aliases=["black roll"])
+    by["house"]["name"] = "black roll"
+    write(catalog / "genres.json", genres)
+    report = release(catalog, "duplicates", duplicates_only=True)
+    assert report["merged_groups"] == 1
+    assert report["conflicts"] == []
+    assert validate_release(catalog)["genre_redirects"] == {"house": "electronic"}
 
 
 @pytest.mark.parametrize("parent", [None, "house"])

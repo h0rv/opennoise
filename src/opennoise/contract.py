@@ -34,6 +34,9 @@ def validate_release(root: Path) -> dict:
             raise ValueError(f"Invalid artist redirect: {old}")
     if {id_ for kind, id_ in search if kind == "genre"} != genres.keys():
         raise ValueError("Search must contain every genre exactly once")
+    for old, target in manifest.get("genre_redirects", {}).items():
+        if old in genres or target not in genres or (root / "genres" / f"{old}.json").exists():
+            raise ValueError(f"Invalid genre redirect: {old}")
 
     summaries = {}
     memberships = {id_: {} for id_ in artist_ids}

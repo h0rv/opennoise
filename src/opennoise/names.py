@@ -52,6 +52,30 @@ def rename(genre):
     return True
 
 
+def duplicates(genres):
+    groups = defaultdict(list)
+    for genre in genres:
+        groups[genre["name"].casefold()].append(genre)
+    redirects, conflicts = {}, []
+    for group in groups.values():
+        if len(group) == 1:
+            continue
+        anchor = max(group, key=lambda g: (g["member_count"] or 0, g["id"]))
+        aliases = set(anchor["aliases"])
+        if any(
+            g["parent_id"] != anchor["parent_id"]
+            and not (g["parent_id"] == anchor["id"] and aliases.intersection(g["aliases"]))
+            for g in group
+        ):
+            conflicts.append(anchor["name"])
+            continue
+        anchor["aliases"] = sorted(
+            {a for g in group for a in [g["name"], *g["aliases"]]} - {anchor["name"]}
+        )
+        redirects.update({g["id"]: anchor["id"] for g in group if g is not anchor})
+    return redirects, sorted(conflicts)
+
+
 def clean(genres, members, names=NAMES):
     rows = {g["id"]: g for g in genres}
     old = {i: g["name"] for i, g in rows.items()}

@@ -3,6 +3,18 @@ import { gzipSync } from 'node:zlib';
 import test from 'node:test';
 import { Catalog } from '../src/data.ts';
 
+test('genre detail resolves an old ID without exposing redirects as catalog entries', async () => {
+  const catalog = Object.create(Catalog.prototype);
+  catalog.manifest = { genre_redirects: { 'old-garage': 'uk-garage' } };
+  catalog.search = [{ kind: 'genre', id: 'uk-garage' }];
+  catalog.read = async (path) => path;
+  assert.equal(catalog.genreId('old-garage'), 'uk-garage');
+  assert.equal(await catalog.genre('old-garage'), 'genres/uk-garage.json');
+  assert.equal(catalog.genreId('constructor'), 'constructor');
+  catalog.manifest = {};
+  assert.equal(catalog.genreId('uk-garage'), 'uk-garage');
+});
+
 test('catalog reads plain and gzipped JSON, including empty lists', async (t) => {
   const catalog = { url: new URL('https://example.com/catalog/manifest.json') };
   for (const body of ['[]', gzipSync('[]')]) {

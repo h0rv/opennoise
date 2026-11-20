@@ -318,7 +318,8 @@ async function start() {
   }
 
   async function select(selection: Selection, push = true, hear = false) {
-    if (selection.kind === 'artist')
+    if (selection.kind === 'genre') selection = { ...selection, id: catalog.genreId(selection.id) };
+    else
       selection = {
         ...selection,
         id: catalog.manifest.artist_redirects?.[selection.id] ?? selection.id,
@@ -393,7 +394,9 @@ async function start() {
     if (
       (kind === 'genre' || kind === 'artist') &&
       id &&
-      (lookup.has(`${kind}:${id}`) || (kind === 'artist' && /^[a-f0-9-]{36}$/.test(id)))
+      (kind === 'genre'
+        ? lookup.has(`genre:${catalog.genreId(id)}`)
+        : lookup.has(`artist:${id}`) || /^[a-f0-9-]{36}$/.test(id))
     )
       void select({ kind, id }, false);
     else {

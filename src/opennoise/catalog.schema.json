@@ -57,6 +57,10 @@
           "type": "object", "propertyNames": {"$ref": "#/$defs/ArtistId"},
           "additionalProperties": {"$ref": "#/$defs/ArtistId"}
         },
+        "genre_redirects": {
+          "type": "object", "propertyNames": {"$ref": "#/$defs/GenreId"},
+          "additionalProperties": {"$ref": "#/$defs/GenreId"}
+        },
         "genres": {"const": "genres.json"}, "search": {"const": "search.json"}
       }
     },

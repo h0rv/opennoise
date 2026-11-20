@@ -106,6 +106,26 @@ def test_adapter_repairs_names_after_assigning_ids(tmp_path, monkeypatch):
     validate_release(run / "release")
 
 
+@pytest.mark.parametrize("clean_names", [False, True])
+def test_adapter_merges_repaired_siblings(tmp_path, monkeypatch, clean_names):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, a, b = inputs(tmp_path)
+    config["clean_names"] = clean_names
+    path = tmp_path / "source/genres.parquet"
+    pl.read_parquet(path).with_columns(
+        name=pl.Series(["UK Garage", "unnamed 1", "uk uk garage"]),
+        parent=pl.Series([None, 2, None]),
+    ).write_parquet(path)
+    config["levels"] = ["broad", "fine"]
+    export(config, run)
+    release = run / "release"
+    public = json.loads((run / "genre_ids.json").read_text())
+    assert validate_release(release)["genre_redirects"] == {public["2"]: public["0"]}
+    detail = json.loads((release / "genres" / f"{public['0']}.json").read_text())
+    assert "uk uk garage" in detail["genre"]["aliases"]
+    assert [(m["artist"]["id"], m["score"]) for m in detail["members"]] == [(a, 1), (b, 0.2)]
+
+
 def test_related_genres_cosine_targets_and_ties():
     artists = pl.DataFrame({"artist_mbid": ["a", "b", "c"], "item": [0, 1, 2]})
     catalog = {

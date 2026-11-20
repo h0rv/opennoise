@@ -36,6 +36,16 @@ def test_fixture():
         ("manifest.json", lambda d: d.update(genres="../genres.json"), "manifest.json"),
         ("manifest.json", lambda d: d.update(similarity=None), "similarity is unavailable"),
         ("manifest.json", lambda d: d["layouts"].update(axes=None), "unavailable layout"),
+        (
+            "manifest.json",
+            lambda d: d.update(genre_redirects={"house": "rock"}),
+            "Invalid genre redirect",
+        ),
+        (
+            "manifest.json",
+            lambda d: d.update(genre_redirects={"old": "older", "older": "rock"}),
+            "Invalid genre redirect",
+        ),
         ("genres.json", lambda d: d.append(d[0]), "Duplicate"),
         ("genres.json", lambda d: d[0].update(parent_id="absent"), "hierarchy"),
         ("genres.json", lambda d: d[0].update(parent_id="techno"), "hierarchy"),
@@ -71,6 +81,13 @@ def test_rejects_broken_release(release, filename, mutate, error):
 def test_requires_detail_for_every_search_result(release):
     (release / ARTIST).unlink()
     with pytest.raises(ValueError, match=ARTIST):
+        validate_release(release)
+
+
+def test_genre_redirect_rejects_stale_detail(release):
+    change(release, "manifest.json", lambda d: d.update(genre_redirects={"old-house": "house"}))
+    shutil.copyfile(release / "genres/house.json", release / "genres/old-house.json")
+    with pytest.raises(ValueError, match="Invalid genre redirect"):
         validate_release(release)
 
 

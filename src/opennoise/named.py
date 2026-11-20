@@ -4,13 +4,21 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-from opennoise.names import canonical, key, write
+from opennoise.names import canonical, duplicates, key, rename, write
 
 
-def release(root, release_id):
+def release(root, release_id, *, duplicates_only=False):
     manifest = json.loads((root / "manifest.json").read_text())
     genres = json.loads((root / manifest["genres"]).read_text())
     rows = {g["id"]: g for g in genres}
+    if duplicates_only:
+        for genre in genres:
+            rename(genre)
+        targets, conflicts = duplicates(genres)
+        return rewrite(root, release_id, manifest, rows, targets) | {
+            "merged_groups": len(set(targets.values())),
+            "conflicts": conflicts,
+        }
     clusters = {
         i
         for i, g in rows.items()
@@ -43,6 +51,13 @@ def release(root, release_id):
         anchor["name"] = canonical(anchor["name"])
         anchor["aliases"] = sorted(aliases - {anchor["name"]})
 
+    return rewrite(root, release_id, manifest, rows, targets, named_layout=True) | {
+        "clusters": len(clusters),
+        "variants": sorted(variants),
+    }
+
+
+def rewrite(root, release_id, manifest, rows, targets, *, named_layout=False):
     def target(i):
         while i in targets:
             i = targets[i]
@@ -60,16 +75,24 @@ def release(root, release_id):
             parent = rows[parent]["parent_id"] if resolved == i else resolved
         g["parent_id"] = parent
     members = {i: {} for i in kept}
+    related = {i: {} for i in kept}
     details = {}
     for i in rows:
         detail = json.loads((root / "genres" / f"{i}.json").read_text())
+        resolved = target(i)
         if i in kept:
             details[i] = detail
         for member in detail["members"] or []:
-            group = members[target(i)]
+            group = members[resolved]
             artist = member["artist"]["id"]
             if artist not in group or member["score"] > group[artist]["score"]:
                 group[artist] = member
+        if not named_layout:
+            for neighbor in detail["related"] or []:
+                other = target(neighbor["id"])
+                if other != resolved:
+                    scores = related[resolved]
+                    scores[other] = max(scores.get(other, 0), neighbor["score"])
     projected = defaultdict(list)
     for i, g in kept.items():
         detail = details[i]
@@ -78,7 +101,13 @@ def release(root, release_id):
         g["member_count"] = len(ranked) if manifest["membership"] is not None else None
         detail["genre"] = g
         if detail["related"] is not None:
-            detail["related"] = [r for r in detail["related"] if r["id"] in kept]
+            if named_layout:
+                detail["related"] = [r for r in detail["related"] if r["id"] in kept]
+            else:
+                detail["related"] = [
+                    {"id": other, "score": score}
+                    for other, score in sorted(related[i].items(), key=lambda r: (-r[1], r[0]))[:10]
+                ]
         for member in ranked:
             projected[member["artist"]["id"]].append({"id": i, "score": member["score"]})
     search = json.loads((root / manifest["search"]).read_text())
@@ -104,22 +133,24 @@ def release(root, release_id):
     for i in targets:
         (root / "genres" / f"{i}.json").unlink()
     manifest["release_id"] = release_id
-    manifest["layouts"]["axes"] = {
-        "x_min": "rock",
-        "x_max": "electronic",
-        "y_min": "electric",
-        "y_max": "acoustic",
-    }
+    redirects = {old: target(new) for old, new in manifest.get("genre_redirects", {}).items()}
+    redirects.update({old: target(new) for old, new in targets.items()})
+    manifest["genre_redirects"] = redirects
+    if named_layout:
+        manifest["layouts"]["axes"] = {
+            "x_min": "rock",
+            "x_max": "electronic",
+            "y_min": "electric",
+            "y_max": "acoustic",
+        }
     write(root / manifest["genres"], list(kept.values()))
     write(root / manifest["search"], search)
     write(root / "manifest.json", manifest)
     return {
         "genres_before": len(rows),
         "genres_after": len(kept),
-        "clusters": len(clusters),
         "zero_before": zero_before,
         "zero_after": zero_after,
-        "variants": sorted(variants),
     }
 
 
@@ -127,5 +158,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("release", type=Path)
     parser.add_argument("release_id")
+    parser.add_argument("--duplicates-only", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(release(args.release, args.release_id), ensure_ascii=False))
+    print(
+        json.dumps(
+            release(args.release, args.release_id, duplicates_only=args.duplicates_only),
+            ensure_ascii=False,
+        )
+    )
