@@ -87,6 +87,25 @@ def test_adapter_contract_and_rerun(tmp_path, monkeypatch):
     }
 
 
+def test_adapter_repairs_names_after_assigning_ids(tmp_path, monkeypatch):
+    monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
+    config, run, _, _ = inputs(tmp_path)
+    path = tmp_path / "source/genres.parquet"
+    pl.read_parquet(path).with_columns(
+        pl.when(pl.col("id") == 2)
+        .then(pl.lit("uk uk garage"))
+        .otherwise(pl.col("name"))
+        .alias("name")
+    ).write_parquet(path)
+    export(config, run)
+    public = json.loads((run / "genre_ids.json").read_text())
+    assert public["2"].startswith("uk-uk-garage-")
+    detail = json.loads((run / "release/genres" / f"{public['2']}.json").read_text())
+    assert detail["genre"]["name"] == "uk garage"
+    assert detail["genre"]["aliases"] == ["uk uk garage"]
+    validate_release(run / "release")
+
+
 def test_related_genres_cosine_targets_and_ties():
     artists = pl.DataFrame({"artist_mbid": ["a", "b", "c"], "item": [0, 1, 2]})
     catalog = {
