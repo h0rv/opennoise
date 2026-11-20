@@ -69,7 +69,7 @@ async function start() {
   }
 
   app.innerHTML = `
-    <header class="toolbar" id="explore"><h1><a href="#" class="brand" aria-label="OpenNoise home">OpenNoise</a></h1><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Search genres and artists" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
+    <header class="toolbar" id="explore"><h1><a href="#" class="brand" aria-label="OpenNoise home">OpenNoise</a></h1><div class="search-wrap"><input id="search" type="search" aria-label="Search genres and artists" placeholder="Genre or artist" aria-controls="results" autocomplete="off"><div id="results" class="search-results" aria-label="Search results"></div></div>
       <div class="toolbar-actions"><nav class="modes" aria-label="Atlas view">${Object.entries(
         modes,
       )
@@ -78,9 +78,9 @@ async function start() {
             `<button data-view="${key}" ${(key === 'axes' || key === 'islands') && !catalog.manifest.layouts[key] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button></div><a class="source" href="./about.html">About</a><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
+      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button></div><a class="source" href="./about.html">About</a><a class="source repo-link" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
     <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div>
-    <aside id="sidebar" hidden aria-label="Selected genre or artist"><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside></section>
+    <aside id="sidebar" hidden aria-label="Selected genre or artist"><button id="detail-close" aria-label="Close details">×</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside></section>
     <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
     <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
@@ -181,6 +181,8 @@ async function start() {
     canvas.querySelector('.artist-heading')!.append(previewHost);
     if (data.similar?.length)
       canvas.querySelector('.artist-heading')!.insertAdjacentHTML('beforeend', familiarityToggle());
+    const path = canvas.querySelector<HTMLElement>('.artist-path')!;
+    path.scrollLeft = path.scrollWidth;
     canvas.append(
       artistGraph(
         data,
@@ -306,6 +308,15 @@ async function start() {
     if (location.hash !== hash) history.pushState(null, '', hash);
   }
 
+  function clearSelection() {
+    preview.stop();
+    controller.abort();
+    selected = null;
+    detail = null;
+    renderCanvas();
+    renderDetail();
+  }
+
   async function select(selection: Selection, push = true, hear = false) {
     if (selection.kind === 'artist')
       selection = {
@@ -321,6 +332,7 @@ async function start() {
     else if (selection.kind === 'genre' && view === 'artists')
       view = catalog.manifest.layouts.axes ? 'axes' : 'islands';
     sidebar.hidden = false;
+    sidebar.scrollTop = 0;
     detail = null;
     detailError = '';
     if (push) writeURL();
@@ -385,12 +397,7 @@ async function start() {
     )
       void select({ kind, id }, false);
     else {
-      preview.stop();
-      controller.abort();
-      selected = null;
-      detail = null;
-      renderCanvas();
-      renderDetail();
+      clearSelection();
       if (id)
         status.textContent =
           'This selection is not in the current release. Search for another genre or artist.';
@@ -456,6 +463,7 @@ async function start() {
       return;
     }
     if (target.dataset.kind && target.dataset.id) {
+      if (target.closest('#results')) search.blur();
       if (!target.closest('.artist-graph, .artist-path') && !target.closest('#detail'))
         artistPath = [];
       void select(
@@ -482,6 +490,10 @@ async function start() {
       persistTrail();
     }
     if (target.id === 'retry' && selected) void select(selected, false);
+    if (target.id === 'detail-close') {
+      clearSelection();
+      writeURL();
+    }
     if (target.id === 'trail-toggle' || target.id === 'trail-close') {
       trailPanel.hidden = target.id === 'trail-close' || !trailPanel.hidden;
       document
