@@ -38,3 +38,21 @@ def test_pack_empty_and_invalid(tmp_path):
     invalid.write_text("{")
     with pytest.raises(json.JSONDecodeError):
         pack_file((invalid, tmp_path / "bad.json"))
+
+
+def test_pack_ranks_genre_ties_by_in_genre_support(tmp_path):
+    (tmp_path / "artists").mkdir()
+    (tmp_path / "genres").mkdir()
+    members = [
+        {"artist": {"id": id_, "listeners": listeners}, "score": score}
+        for id_, listeners, score in [("anchor", 1, 0.8), ("a", 100, 0.5), ("b", 10, 0.5)]
+    ]
+    for id_, neighbor in [("a", "outside"), ("b", "anchor")]:
+        (tmp_path / "artists" / f"{id_}.json").write_text(
+            json.dumps({"similar": [{"artist": {"id": neighbor}, "score": 1.0}]})
+        )
+    source, target = tmp_path / "genres/g.json", tmp_path / "packed.json"
+    source.write_text(json.dumps({"members": members}))
+    pack_file((source, target))
+    packed = json.loads(gzip.decompress(target.read_bytes()))["members"]
+    assert packed == [members[0], members[2], members[1]]
