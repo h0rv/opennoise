@@ -155,8 +155,8 @@ def main():
             args.release,
             f"genre_order/{'None' if candidate == 'None' else 'sqrt_' + candidate}",
             result,
-            kept=candidate == "10000",
-            note="score*sqrt(n)/(n+size); None=score",
+            kept=False,
+            note="Evaluation only: score*sqrt(n)/(n+size); None=score; UI retains score order",
         )
 
 

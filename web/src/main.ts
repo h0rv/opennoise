@@ -1,6 +1,5 @@
 import { Catalog } from './data';
 import { artistGraph, artistNeighbors } from './artist-graph';
-import { artistGenres } from './ranking';
 import { MapCanvas } from './map-canvas';
 import { SonicMap } from './sonic-map';
 import { searchableEntry, searchMatches } from './search';
@@ -251,7 +250,7 @@ async function start() {
     const links = data.links.filter((link) => /^https?:\/\//i.test(link.url));
     return `${
       data.genres?.length
-        ? `<section><h3>Genres</h3>${artistGenres(data, genres)
+        ? `<section><h3>Genres</h3>${data.genres
             .slice(0, 8)
             .map((entry) =>
               entityButton(

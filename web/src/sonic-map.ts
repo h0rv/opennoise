@@ -99,7 +99,10 @@ export class SonicMap {
       for (const [edge, text] of Object.entries(axes)) {
         const label = document.createElement('span');
         label.className = `map-axis ${edge.replace('_', '-')}`;
-        label.textContent = text;
+        label.textContent =
+          edge === 'x_max'
+            ? `${text} →`
+            : `${edge === 'x_min' ? '←' : edge === 'y_min' ? '↑' : '↓'} ${text}`;
         element.append(label);
       }
     }

@@ -5,15 +5,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from opennoise.genre_order import evaluate, everynoise, priority
+from opennoise.genre_order import evaluate, everynoise
 from opennoise.names import write
-
-
-def test_priority_penalizes_tiny_and_huge_genres():
-    assert priority(0.6, 10000, 10000) > priority(1, 800, 10000)
-    assert priority(1, 10000, 10000) > priority(1, 1000000, 10000)
-    assert priority(0.7, 0, None) == 0.7
-    assert priority(1, 0, 10000) == 0
 
 
 def test_evaluate_matches_aliases_and_counts_unmatchable_artists(tmp_path):

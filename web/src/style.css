@@ -308,11 +308,11 @@ main {
   color: var(--muted);
 }
 .map-axis.x-min {
-  top: 8px;
+  bottom: 8px;
   left: 16px;
 }
 .map-axis.x-max {
-  top: 8px;
+  bottom: 8px;
   right: 16px;
 }
 .map-axis.y-min {
