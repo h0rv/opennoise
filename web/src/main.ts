@@ -1,5 +1,6 @@
 import { Catalog } from './data';
-import { artistGraph } from './artist-graph';
+import { artistGraph, artistNeighbors } from './artist-graph';
+import { artistGenres } from './ranking';
 import { MapCanvas } from './map-canvas';
 import { SonicMap } from './sonic-map';
 import { searchableEntry, searchMatches } from './search';
@@ -42,6 +43,7 @@ async function start() {
   let detail: GenreDetail | ArtistDetail | null = null;
   let artistPath: { id: string; name: string }[] = [];
   let detailError = '';
+  let lessFamiliar = false;
   let controller = new AbortController();
   let graphController = new AbortController();
   let map: MapCanvas | SonicMap | undefined;
@@ -141,6 +143,7 @@ async function start() {
         catalog.genres,
         (kind, id) => void select({ kind, id }, true, true),
         cameras.get(view),
+        catalog.manifest.layouts.axes,
       );
       updateMapSelection(reveal);
       return;
@@ -177,8 +180,15 @@ async function start() {
     const data = detail;
     canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 class="visually-hidden" tabindex="-1">${escape(data.artist.name)}</h2></div>${data.similar?.length ? '' : '<p class="empty">No similar artists in this release. Search for another artist.</p>'}`;
     canvas.querySelector('.artist-heading')!.append(previewHost);
+    if (data.similar?.length)
+      canvas.querySelector('.artist-heading')!.insertAdjacentHTML('beforeend', familiarityToggle());
     canvas.append(
-      artistGraph(data, (id, signal) => catalog.artist(id, signal), graphController.signal),
+      artistGraph(
+        data,
+        (id, signal) => catalog.artist(id, signal),
+        graphController.signal,
+        lessFamiliar,
+      ),
     );
   }
 
@@ -241,7 +251,7 @@ async function start() {
     const links = data.links.filter((link) => /^https?:\/\//i.test(link.url));
     return `${
       data.genres?.length
-        ? `<section><h3>Genres</h3>${data.genres
+        ? `<section><h3>Genres</h3>${artistGenres(data, genres)
             .slice(0, 8)
             .map((entry) =>
               entityButton(
@@ -255,7 +265,10 @@ async function start() {
         : ''
     }${
       data.similar?.length
-        ? `<section><h3>Similar artists</h3>${data.similar
+        ? `<section><h3>Similar artists</h3>${familiarityToggle()}${artistNeighbors(
+            data,
+            lessFamiliar,
+          )
             .slice(0, 8)
             .map((entry) =>
               entityButton('artist', entry.artist.id, entry.artist.name, entry.artist.color),
@@ -263,6 +276,10 @@ async function start() {
             .join('')}</section>`
         : ''
     }${links.length ? `<section><div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div></section>` : ''}`;
+  }
+
+  function familiarityToggle() {
+    return `<button data-familiarity aria-pressed="${lessFamiliar}">Less familiar</button>`;
   }
 
   function renderTrail() {
@@ -423,9 +440,17 @@ async function start() {
   });
   app.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>(
-      '[data-kind], [data-view], [data-zoom], [data-remove], button[id]',
+      '[data-kind], [data-view], [data-zoom], [data-remove], [data-familiarity], button[id]',
     );
     if (!target) return;
+    if (target.hasAttribute('data-familiarity')) {
+      const host = target.closest('#detail') ? drawer : canvas;
+      lessFamiliar = !lessFamiliar;
+      if (view === 'artists') renderArtists();
+      renderDetail();
+      host.querySelector<HTMLButtonElement>('[data-familiarity]')?.focus({ preventScroll: true });
+      return;
+    }
     if (target.dataset.kind && target.dataset.id) {
       if (!target.closest('.artist-graph, .artist-path') && !target.closest('#detail'))
         artistPath = [];
