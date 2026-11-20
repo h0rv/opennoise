@@ -1,6 +1,32 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { artistNeighbors, layoutArtists } from '../src/artist-graph.ts';
+import { build } from 'esbuild';
+
+const { outputFiles } = await build({
+  entryPoints: [new URL('../src/artist-graph.ts', import.meta.url).pathname],
+  bundle: true,
+  format: 'esm',
+  write: false,
+});
+const { artistNeighbors, layoutArtists } = await import(
+  `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`
+);
+
+test('less familiar reranks neighbors without changing published scores', () => {
+  const data = {
+    artist: { id: 'root' },
+    similar: [
+      { artist: { id: 'popular', listeners: 10000 }, score: 1 },
+      { artist: { id: 'rare', listeners: null }, score: 0.9 },
+    ],
+  };
+  assert.deepEqual(
+    artistNeighbors(data, true).map((m) => m.artist.id),
+    ['rare', 'popular'],
+  );
+  assert.equal(data.similar[0].artist.id, 'popular');
+  assert.deepEqual(artistNeighbors({ artist: { id: 'root' }, similar: [] }, true), []);
+});
 
 test('deduplicates neighbors and excludes self without changing rank', () => {
   const artist = (id) => ({ id, name: id });

@@ -34,9 +34,9 @@ class MapParser(HTMLParser):
             self.active = False
 
 
-def table(name, columns, names):
+def table(name, columns, names, root=Path("data/m2/mbdump")):
     data = pl.read_csv(
-        Path("data/m2/mbdump") / name,
+        root / name,
         separator="\t",
         has_header=False,
         quote_char=None,
