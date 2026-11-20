@@ -311,11 +311,11 @@ def build_variant(config, variant, run):
         }
     )
     (run / "matches.json").write_text(json.dumps(matches, indent=2))
-    write_probes(run, artists, genres, ids, scores, names, matches, assignments, offsets, truth)
+    write_probes(run, artists, genres, ids, scores, names, matches, assignments, offsets)
     (run / "metrics.json").write_text(json.dumps(metrics, indent=2))
 
 
-def write_probes(run, artists, genres, ids, scores, names, matches, assignments, offsets, truth):
+def write_probes(run, artists, genres, ids, scores, names, matches, assignments, offsets):
     artist_names = artists["artist_name"].to_list()
     genre_names = dict(genres.select("id", "name").iter_rows())
     lines = []

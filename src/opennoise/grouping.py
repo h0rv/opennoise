@@ -5,6 +5,14 @@ import polars as pl
 from opennoise.metrics import normalized_name
 
 
+def depth(i, parents):
+    value = 0
+    while parents[i] is not None:
+        i = parents[i]
+        value += 1
+    return value
+
+
 def siblings(rows, parents, memberships, public):
     buckets = defaultdict(list)
     for row in rows:
@@ -36,14 +44,7 @@ def siblings(rows, parents, memberships, public):
         for (i,), group in memberships.partition_by("genre", as_dict=True).items()
     }
 
-    def depth(i):
-        value = 0
-        while parents[i] is not None:
-            i = parents[i]
-            value += 1
-        return value
-
-    for anchor, children in sorted(plans, key=lambda p: depth(p[0]), reverse=True):
+    for anchor, children in sorted(plans, key=lambda p: depth(p[0], parents), reverse=True):
         union = edges.setdefault(anchor, {})
         for child in children:
             for artist, score in edges.get(child, {}).items():
@@ -121,14 +122,7 @@ def readable(rows, parents, memberships, artists, public):
             used[parents[i]].add(normalized_name(name))
     fallback = 0
 
-    def depth(i):
-        value = 0
-        while parents[i] is not None:
-            i = parents[i]
-            value += 1
-        return value
-
-    for i in sorted(names, key=lambda i: (depth(i), public[i])):
+    for i in sorted(names, key=lambda i: (depth(i, parents), public[i])):
         parent_name = normalized_name(names[parents[i]]) if parents[i] is not None else ""
         if normalized_name(names[i]) == parent_name:
             rename.add(i)

@@ -17,6 +17,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from opennoise import tags
 from opennoise.genres import graph_matrix, split_labels
 from opennoise.metrics import normalized_name, sealed
+from opennoise.naming import settings
 from opennoise.reference import table
 
 GEO = ["area", "area_alias", "iso_3166_1", "l_area_area"]
@@ -24,11 +25,7 @@ DEMONYMS = """PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 SELECT DISTINCT ?iso ?name WHERE { ?c wdt:P297 ?iso; wdt:P1549 ?name FILTER(LANG(?name)="en") }"""
 
 
-def settings(config):
-    return tomllib.loads(Path(config["m2_config"]).read_text())
-
-
-def ingest(config, run):
+def ingest(config):
     root = Path(config["cache"])
     root.mkdir(parents=True, exist_ok=True)
     if not all((root / "mbdump" / name).exists() for name in GEO):
@@ -620,7 +617,7 @@ def release(run, genres, memberships):
 
 def execute(stage, config, run):
     if stage == "ingest":
-        ingest(config, run)
+        ingest(config)
     elif stage == "tune":
         tune(config, run)
     elif stage == "build":

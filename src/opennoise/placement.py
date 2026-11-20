@@ -76,7 +76,7 @@ def export(config, run):
         ),
         shape=(len(rows), len(artists)),
     )
-    artist_vectors = normalize(layout.artist_vectors(settings, evaluated, models["embedding"]))
+    artist_vectors = normalize(layout.artist_vectors(settings, models["embedding"]))
     uniform = normalize(matrix @ artist_vectors)
     with (evaluated / "sonic_model.pkl").open("rb") as stream:
         state = pickle.load(stream)
