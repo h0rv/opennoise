@@ -125,9 +125,6 @@ export function artistGraph(
   const edges: Edge[] = normalized.map((score, i) => ({ a: 0, b: i + 1, score }));
   const graph = document.createElement('div');
   graph.className = 'artist-graph';
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('aria-hidden', 'true');
-  graph.append(svg);
   const buttons = [data.artist, ...neighbors.map(({ artist }) => artist)].map((artist, i) => {
     const button = document.createElement('button');
     button.className = i ? 'artist-neighbor' : 'artist-root';
@@ -161,23 +158,6 @@ export function artistGraph(
       button.style.left = `${points[i].x}px`;
       button.style.top = `${points[i].y}px`;
     });
-    svg.replaceChildren(
-      ...edges.map(({ a, b, score }) => {
-        const line = document.createElementNS(svg.namespaceURI, 'line');
-        for (const [key, value] of Object.entries({
-          x1: points[a].x,
-          y1: points[a].y,
-          x2: points[b].x,
-          y2: points[b].y,
-        }))
-          line.setAttribute(key, String(value));
-        line.setAttribute(
-          'opacity',
-          String(a ? 0.025 + strength(score) * 0.09 : 0.15 + strength(score) * 0.25),
-        );
-        return line;
-      }),
-    );
   };
   const schedule = () => {
     cancelAnimationFrame(frame);
