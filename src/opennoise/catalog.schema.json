@@ -53,6 +53,10 @@
         "membership": {"type": ["string", "null"], "minLength": 1},
         "similarity": {"type": ["string", "null"], "minLength": 1},
         "genre_similarity": {"type": ["string", "null"], "minLength": 1},
+        "artist_redirects": {
+          "type": "object", "propertyNames": {"$ref": "#/$defs/ArtistId"},
+          "additionalProperties": {"$ref": "#/$defs/ArtistId"}
+        },
         "genres": {"const": "genres.json"}, "search": {"const": "search.json"}
       }
     },
@@ -73,6 +77,7 @@
       "properties": {
         "id": {"$ref": "#/$defs/ArtistId"}, "name": {"$ref": "#/$defs/Name"},
         "listeners": {"$ref": "#/$defs/Count"},
+        "disambiguation": {"type": ["string", "null"]},
         "positions": {"$ref": "#/$defs/Positions"}, "color": {"$ref": "#/$defs/Color"}
       }
     },
@@ -127,7 +132,9 @@
       "type": "object", "additionalProperties": false, "required": ["kind", "id", "name", "aliases"],
       "properties": {
         "kind": {"enum": ["artist", "genre"]}, "name": {"$ref": "#/$defs/Name"},
-        "id": {"type": "string"}, "aliases": {"$ref": "#/$defs/Aliases"}
+        "id": {"type": "string"}, "aliases": {"$ref": "#/$defs/Aliases"},
+        "listeners": {"$ref": "#/$defs/Count"},
+        "disambiguation": {"type": ["string", "null"]}
       },
       "allOf": [
         {"if": {"properties": {"kind": {"const": "artist"}}},

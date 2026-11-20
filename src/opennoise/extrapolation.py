@@ -1,7 +1,6 @@
 import json
 import re
 import subprocess
-import tarfile
 import tomllib
 import urllib.request
 from pathlib import Path
@@ -10,6 +9,7 @@ import numpy as np
 import polars as pl
 from scipy.spatial import KDTree
 
+from opennoise.artist_identity import extract_dump
 from opennoise.generalization import ingest, labels_by_artist
 
 
@@ -17,16 +17,7 @@ def extract(root, source_index, names, marker):
     if (root / marker).exists():
         return
     source = tomllib.loads(Path("sources.toml").read_text())["sources"][source_index]
-    members = {f"mbdump/{name}" for name in names}
-    found = set()
-    with urllib.request.urlopen(source["url"], timeout=180) as response:
-        with tarfile.open(fileobj=response, mode="r|bz2") as archive:
-            for member in archive:
-                if member.name in members:
-                    archive.extract(member, root, filter="data")
-                    found.add(member.name)
-    if found != members:
-        raise ValueError(f"MusicBrainz tables missing: {members - found}")
+    extract_dump(root, source["url"], names)
     (root / marker).touch()
 
 

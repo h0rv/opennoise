@@ -79,3 +79,10 @@ url = "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs
 date = "2022-02-17"
 sha256 = "a280825b334797cf677939db8cd5762c0392aedd0ca6415dbc1cd083f045e43c"
 license = "CC BY-NC-ND 4.0"
+
+[[sources]]
+name = "artist_identity"
+url = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/20261118-002316/mbdump.tar.bz2"
+date = "2026-11-18"
+sha256 = "d30f315da2af9e65f2274998df8ab29605d06976194badd6b5564ff2d91e1fd8"
+license = "CC0"

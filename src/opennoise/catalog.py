@@ -196,6 +196,19 @@ def export(config, run):
     m1 = Path(config["m1"])
     similarity = Path(config.get("similarity", m1 / "tfidf.parquet"))
     artists = pl.read_parquet(m1 / "artists.parquet").sort("item")
+    redirects_path = m1 / "artist_redirects.json"
+    aliases_path = m1 / "artist_aliases.json"
+    artist_aliases = json.loads(aliases_path.read_text()) if aliases_path.exists() else {}
+    artist_ids = set(artists["artist_mbid"])
+    artist_redirects = (
+        {
+            old: target
+            for old, target in json.loads(redirects_path.read_text()).items()
+            if target in artist_ids
+        }
+        if redirects_path.exists()
+        else {}
+    )
     if artists["item"].n_unique() != len(artists) or artists["artist_mbid"].n_unique() != len(
         artists
     ):
@@ -288,6 +301,10 @@ def export(config, run):
         Path(config["refit"]) / "genres.parquet",
         Path(config["refit"]) / "memberships.parquet",
     ]
+    if redirects_path.exists():
+        inputs.append(redirects_path)
+    if aliases_path.exists():
+        inputs.append(aliases_path)
     if config.get("layout"):
         inputs.extend(
             Path(config["layout"]) / name for name in ["positions.parquet", "layouts.json"]
@@ -335,16 +352,19 @@ def export(config, run):
             model = pickle.load(stream)
         with np.load(Path(config["layout"]) / "sonic_state.npz") as state:
             group_coordinates(global_keys, memberships, public, placed, artists, state, model)
+    if "disambiguation" not in artists.columns:
+        artists = artists.with_columns(pl.lit(None, dtype=pl.String).alias("disambiguation"))
     summaries = {
         mbid: {
             "id": mbid,
             "name": name,
+            "disambiguation": disambiguation,
             "listeners": listeners,
             "positions": placed.get(("artist", mbid), positions),
             "color": None,
         }
-        for _, mbid, listeners, name in artists.select(
-            "item", "artist_mbid", "listeners", "artist_name"
+        for _, mbid, listeners, name, disambiguation in artists.select(
+            "item", "artist_mbid", "listeners", "artist_name", "disambiguation"
         ).iter_rows()
     }
     edges = memberships.with_columns(
@@ -463,7 +483,14 @@ def export(config, run):
         for g in genres_index
     ]
     search.extend(
-        {"kind": "artist", "id": i, "name": summaries[i]["name"], "aliases": []}
+        {
+            "kind": "artist",
+            "id": i,
+            "name": summaries[i]["name"],
+            "aliases": [name for name in artist_aliases.get(i, []) if name != summaries[i]["name"]],
+            "listeners": summaries[i]["listeners"],
+            "disambiguation": summaries[i]["disambiguation"],
+        }
         for i in sorted(summaries)
     )
     write(stage / "search.json", search)
@@ -479,6 +506,7 @@ def export(config, run):
             "genre_similarity": "ALS+audio cosine top-10" if related is not None else None,
             "genres": "genres.json",
             "search": "search.json",
+            "artist_redirects": artist_redirects,
         },
     )
     files = list(stage.rglob("*.json"))
