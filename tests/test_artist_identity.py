@@ -376,6 +376,28 @@ def test_retired_named_credit_uses_aliases_without_remapping_ambiguous_names():
     assert result.height == 6
 
 
+def test_nested_credit_preserves_a_legacy_target_with_no_listened_members():
+    ids = [mbid(i) for i in range(1, 5)]
+    identities = pl.DataFrame(
+        {
+            "artist_mbid": ids,
+            "canonical_mbid": ids,
+            "canonical_name": list("ABCD"),
+            "disambiguation": [""] * 4,
+        }
+    )
+    collaborations = pl.DataFrame(
+        {"collaboration": [ids[2], ids[2], ids[3]], "member": [ids[0], ids[1], ids[2]]}
+    )
+    data = pl.DataFrame(
+        {"user": [1, 2], "artist_mbid": ids[2:], "artist_name": ["C", "D"], "count": [3, 4]}
+    )
+    credited = canonicalize(data, identities, collaborations)
+    assert set(credited["redirect_mbid"]) == {ids[2]}
+    for source in ids[2:]:
+        assert set(credited.filter(pl.col("source_mbid") == source)["artist_mbid"]) == set(ids[:3])
+
+
 def test_release_refresh_counts_only_new_training_listeners_and_preserves_links(tmp_path):
     shutil.copytree(FIXTURE, tmp_path, dirs_exist_ok=True)
     path = tmp_path / "search.json"

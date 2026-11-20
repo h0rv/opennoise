@@ -285,12 +285,11 @@ def canonicalize(data, identities, collaborations=None, aliases=None):
     routes = []
     for source in members.keys() & artists.keys():
         leaves = collaboration_leaves(source, members)
-        primary = follow_redirect(previous, source)
-        if not leaves or (len(leaves) == 1 and primary == source):
+        if not leaves:
             continue
-        if primary not in leaves:
-            primary = most_listened(leaves, artists)
-        routes.extend((source, member, primary, len(leaves) > 1) for member in leaves)
+        primary = follow_redirect(previous, source) or most_listened(leaves, artists)
+        recipients = leaves | {primary}
+        routes.extend((source, member, primary, len(recipients) > 1) for member in recipients)
     credits = pl.DataFrame(
         routes,
         schema={
