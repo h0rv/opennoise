@@ -6,7 +6,12 @@ from collections import defaultdict
 from pathlib import Path
 
 NAMES = json.loads(Path(__file__).with_name("names.json").read_text())
-LEGACY_SUFFIXES = {("b",): "rhythm and blues", ("s", "music"): "children's music"}
+LEGACY_SUFFIXES = {
+    ("b",): "rhythm and blues",
+    ("hop",): "hip hop",
+    ("roll",): "rock and roll",
+    ("s", "music"): "children's music",
+}
 
 
 def key(text):

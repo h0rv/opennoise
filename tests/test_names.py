@@ -30,6 +30,13 @@ def test_canonical_resolves_overlap_without_changing_established_names():
 
 def test_canonical_restores_fragments_and_spellings():
     assert canonical("chicago b") == "chicago rhythm and blues"
+    assert canonical("pinoy b") == "pinoy rhythm and blues"
+    assert canonical("atlanta hop") == "atlanta hip hop"
+    assert canonical("pinoy hop") == "pinoy hip hop"
+    assert canonical("french roll") == "french rock and roll"
+    assert canonical("french trip hop") == "french trip hop"
+    assert canonical("street hop") == "street hop"
+    assert canonical("black 'n' roll") == "black 'n' roll"
     assert canonical("australian s music") == "australian children's music"
     assert canonical("plugg b") == "pluggnb"
     assert canonical("provence alpes co te d azur hip hop") == "provence alpes côte d'azur hip hop"
