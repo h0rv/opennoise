@@ -228,8 +228,8 @@ def test_captions_use_heldout_features_and_handle_missing_audio():
     points = np.array([[100, 100], [0, 3], [1, 2], [2, 1], [3, 0]])
     heldout = np.array([False, True, True, True, True])
     captions, scores = audio_captions(features, artists, sparse.eye(5), points, heldout)
-    assert captions["x_max"] == "Higher danceability"
-    assert captions["y_max"] == "Lower danceability"
+    assert captions["x_max"] == "danceable"
+    assert captions["y_max"] == "still"
     assert scores["x"]["danceability"] == {"rho": 1, "genres": 4}
     captions, scores = audio_captions(features.head(0), artists, sparse.eye(5), points, heldout)
     assert "Listening component" in captions["x_min"]
