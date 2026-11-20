@@ -8,6 +8,8 @@ from implicit.als import AlternatingLeastSquares
 from scipy import sparse
 from threadpoolctl import threadpool_limits
 
+from opennoise.artist_identity import canonicalize, collaboration_table, identity_table
+
 
 def normalize(matrix):
     norms = np.sqrt(np.asarray(matrix.multiply(matrix).sum(axis=1)).ravel())
@@ -18,12 +20,35 @@ def prepare(config, run):
     if (run / "train.npz").exists():
         return sparse.load_npz(run / "train.npz")
     data = pl.scan_parquet("data/listens.parquet")
+    data = canonicalize(data, identity_table(), collaboration_table())
     data = (
         data.group_by("user", "artist_mbid")
-        .agg(pl.col("count").sum(), pl.col("artist_name").first())
+        .agg(
+            pl.col("count").sum(),
+            pl.col("artist_name").first(),
+            pl.col("disambiguation").first(),
+            pl.col("source_mbid").unique(),
+            pl.col("source_name").unique(),
+        )
         .collect(engine="streaming")
     )
+    (run / "artist_redirects.json").write_text(
+        json.dumps(
+            {
+                old: target
+                for target, sources in data.select("artist_mbid", "source_mbid").iter_rows()
+                for old in sources
+                if old != target
+            }
+        )
+    )
     users = data.select("user").unique().sort("user")
+    aliases = {}
+    for target, names in data.select("artist_mbid", "source_name").iter_rows():
+        aliases.setdefault(target, set()).update(names)
+    (run / "artist_aliases.json").write_text(
+        json.dumps({i: sorted(names) for i, names in aliases.items()})
+    )
     rng = np.random.default_rng(config["seed"])
     test_ids = rng.choice(
         users["user"].to_numpy(), size=int(len(users) * config["test_fraction"]), replace=False
@@ -32,7 +57,11 @@ def prepare(config, run):
     data = data.filter(~pl.col("user").is_in(test_ids))
     artists = (
         data.group_by("artist_mbid")
-        .agg(pl.len().alias("listeners"), pl.col("artist_name").first())
+        .agg(
+            pl.len().alias("listeners"),
+            pl.col("artist_name").first(),
+            pl.col("disambiguation").first(),
+        )
         .filter(pl.col("listeners") >= config["min_listeners"])
         .sort(["listeners", "artist_mbid"], descending=[True, False])
         .with_row_index("item")

@@ -4,7 +4,7 @@ import { isArtistCluster } from './label-grid';
 export const searchableEntry = (entry: Pick<SearchEntry, 'kind' | 'name'>) =>
   entry.kind !== 'genre' || !isArtistCluster(entry.name);
 
-export function searchMatches<T>(
+export function searchMatches<T extends { kind?: string; listeners?: number | null }>(
   index: { entry: T; terms: string[]; topLevel?: boolean }[],
   query: string,
 ): T[] {
@@ -23,7 +23,15 @@ export function searchMatches<T>(
             : terms.some((term) => term.includes(query))
               ? 4
               : -1;
-    if (rank !== -1 && buckets[rank].length < 12) buckets[rank].push(entry);
+    if (rank !== -1) buckets[rank].push(entry);
   }
-  return buckets.flat().slice(0, 12);
+  return buckets
+    .flatMap((bucket) => {
+      const artists = bucket
+        .filter((entry) => entry.kind === 'artist')
+        .sort((a, b) => (b.listeners ?? 0) - (a.listeners ?? 0));
+      let i = 0;
+      return bucket.map((entry) => (entry.kind === 'artist' ? artists[i++] : entry));
+    })
+    .slice(0, 12);
 }

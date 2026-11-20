@@ -91,3 +91,22 @@ test('empty queries, empty indices and unmatched queries return no matches', () 
   assert.deepEqual(searchMatches([{ entry: 'pop', terms: ['pop'] }], ''), []);
   assert.deepEqual(searchMatches([{ entry: 'pop', terms: ['pop'] }], 'idm'), []);
 });
+
+test('artists sort by listeners within a match rank before truncation, preserving genre slots', () => {
+  const artists = Array.from({ length: 15 }, (_, i) => ({
+    kind: 'artist',
+    name: 'aphex twin',
+    listeners: i === 0 ? null : i,
+  }));
+  const genre = { kind: 'genre', name: 'aphex twin genre' };
+  const exact = { kind: 'artist', name: 'aphex twi', listeners: 0 };
+  const entries = [artists[0], genre, ...artists.slice(1), exact];
+  const index = entries.map((entry) => ({ entry, terms: [entry.name] }));
+  assert.deepEqual(searchMatches(index, 'aphex twi'), [
+    exact,
+    artists[14],
+    genre,
+    ...artists.slice(5, 14).reverse(),
+  ]);
+  assert.deepEqual(searchMatches(index, 'aphex twin').slice(0, 2), [artists[14], artists[13]]);
+});

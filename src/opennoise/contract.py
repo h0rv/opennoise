@@ -29,6 +29,9 @@ def validate_release(root: Path) -> dict:
     genres = index(read(manifest["genres"], "Genres"), lambda row: row["id"])
     search = index(read(manifest["search"], "Search"), lambda row: (row["kind"], row["id"]))
     artist_ids = {id_ for kind, id_ in search if kind == "artist"}
+    for old, target in manifest.get("artist_redirects", {}).items():
+        if old in artist_ids or target not in artist_ids:
+            raise ValueError(f"Invalid artist redirect: {old}")
     if {id_ for kind, id_ in search if kind == "genre"} != genres.keys():
         raise ValueError("Search must contain every genre exactly once")
 
@@ -39,6 +42,9 @@ def validate_release(root: Path) -> dict:
         id_ = artist["id"]
         if id_ not in artist_ids or search["artist", id_]["name"] != artist["name"]:
             raise ValueError(f"Unknown or inconsistent artist: {id_}")
+        for field in ("listeners", "disambiguation"):
+            if field in search["artist", id_] and search["artist", id_][field] != artist.get(field):
+                raise ValueError(f"Inconsistent artist search {field}: {id_}")
         if id_ in summaries and summaries[id_] != artist:
             raise ValueError(f"Inconsistent artist summary: {id_}")
         summaries[id_] = artist

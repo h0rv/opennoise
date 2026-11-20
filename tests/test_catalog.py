@@ -48,8 +48,20 @@ def inputs(tmp_path):
 def test_adapter_contract_and_rerun(tmp_path, monkeypatch):
     monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
     config, run, a, b = inputs(tmp_path)
+    old = "00000000-0000-0000-0000-000000000003"
+    (tmp_path / "m1/artist_redirects.json").write_text(json.dumps({old: a}))
+    (tmp_path / "m1/artist_aliases.json").write_text(json.dumps({a: ["Old name"]}))
+    artists_path = tmp_path / "m1/artists.parquet"
+    pl.read_parquet(artists_path).with_columns(
+        pl.lit("Comment").alias("disambiguation")
+    ).write_parquet(artists_path)
     export(config, run)
     assert validate_release(run / "release")["layouts"] == {"axes": None, "islands": None}
+    assert validate_release(run / "release")["artist_redirects"] == {old: a}
+    search = json.loads((run / "release/search.json").read_text())
+    artist = next(e for e in search if e["id"] == a)
+    assert artist["aliases"] == ["Old name"]
+    assert artist["disambiguation"] == "Comment"
     genres = {g["name"]: g for g in json.loads((run / "release/genres.json").read_text())}
     assert set(genres) == {"Root", "Micro"}
     assert genres["Micro"]["parent_id"] == genres["Root"]["id"]

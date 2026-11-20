@@ -177,7 +177,7 @@ async function start() {
       return;
     }
     const data = detail;
-    canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 class="visually-hidden" tabindex="-1">${escape(data.artist.name)}</h2></div>${data.similar?.length ? '' : '<p class="empty">No similar artists in this release. Search for another artist.</p>'}`;
+    canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 class="visually-hidden" tabindex="-1">${escape(data.artist.name)}</h2>${data.artist.disambiguation ? `<small>${escape(data.artist.disambiguation)}</small>` : ''}</div>${data.similar?.length ? '' : '<p class="empty">No similar artists in this release. Search for another artist.</p>'}`;
     canvas.querySelector('.artist-heading')!.append(previewHost);
     if (data.similar?.length)
       canvas.querySelector('.artist-heading')!.insertAdjacentHTML('beforeend', familiarityToggle());
@@ -307,6 +307,11 @@ async function start() {
   }
 
   async function select(selection: Selection, push = true, hear = false) {
+    if (selection.kind === 'artist')
+      selection = {
+        ...selection,
+        id: catalog.manifest.artist_redirects?.[selection.id] ?? selection.id,
+      };
     preview.stop();
     controller.abort();
     controller = new AbortController();
@@ -425,7 +430,7 @@ async function start() {
       ? matches
           .map(
             (entry) =>
-              `<button data-kind="${entry.kind}" data-id="${escape(entry.id)}">${escape(entry.name)}<span>${entry.kind}</span></button>`,
+              `<button data-kind="${entry.kind}" data-id="${escape(entry.id)}">${escape(entry.name)}${entry.disambiguation ? ` <small>${escape(entry.disambiguation)}</small>` : ''}<span>${entry.kind}</span></button>`,
           )
           .join('')
       : '<p role="status">No matches.</p>';
