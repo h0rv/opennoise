@@ -1,4 +1,4 @@
-import type { Genre } from './catalog';
+import type { Genre, Manifest } from './catalog';
 import { claimName, isArtistCluster, LabelGrid, priority } from './label-grid';
 import { hasShortcutModifier } from './keyboard';
 
@@ -85,6 +85,7 @@ export class SonicMap {
     private genres: Genre[],
     private open: (kind: 'genre', id: string) => void,
     camera?: Camera,
+    axes?: Manifest['layouts']['axes'],
   ) {
     element.className = 'sonic-map';
     element.tabIndex = 0;
@@ -94,6 +95,17 @@ export class SonicMap {
       'Map. Scroll to explore; drag to pan. Control plus wheel or plus and minus keys zoom. Enter opens a focused genre.',
     );
     element.append(this.stage);
+    if (axes) {
+      for (const [edge, text] of Object.entries(axes)) {
+        const label = document.createElement('span');
+        label.className = `map-axis ${edge.replace('_', '-')}`;
+        label.textContent =
+          edge === 'x_max'
+            ? `${text} →`
+            : `${edge === 'x_min' ? '←' : edge === 'y_min' ? '↑' : '↓'} ${text}`;
+        element.append(label);
+      }
+    }
     if (camera) {
       this.scale = camera.scale;
       this.pan = camera.x;
@@ -211,7 +223,7 @@ export class SonicMap {
   }
 
   private transform() {
-    this.element.style.height = `${this.height * this.scale}px`;
+    this.element.style.height = `${this.height * this.scale + 64}px`;
     this.stage.style.height = `${this.height}px`;
     this.stage.style.transform = `translateX(${this.pan}px) scale(${this.scale})`;
   }

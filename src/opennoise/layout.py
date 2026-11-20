@@ -52,10 +52,10 @@ def inputs(config, run):
     return genres, artists, membership
 
 
-def artist_vectors(config, run, source):
+def artist_vectors(config, source):
     if "+" in source:
         return np.concatenate(
-            [normalize(artist_vectors(config, run, part)) for part in source.split("+")], axis=1
+            [normalize(artist_vectors(config, part)) for part in source.split("+")], axis=1
         )
     return np.load(Path(config["input_run"]) / f"{source}.npy")
 
@@ -94,13 +94,13 @@ def layout(config, run):
     genres, artists, membership = inputs(config, run)
     features = pl.read_parquet(config["audio_features"])
     embedding = config["islands_representation"]
-    vectors = normalize(artist_vectors(config, run, embedding))
+    vectors = normalize(artist_vectors(config, embedding))
     genre_vectors = normalize(membership @ vectors)
     start = time.monotonic()
     artist_points, audio = sonic.artist_axes(features, artists)
     with threadpool_limits(limits=config["workers"]):
         artist_points, audio = sonic.fill_artists(
-            artist_points, audio, artist_vectors(config, run, "als_2")
+            artist_points, audio, artist_vectors(config, "als_2")
         )
     audio_points, placed, counts = sonic.genre_axes(
         membership, artist_points, audio, artists["listeners"].to_numpy(), config["min_members"]
@@ -234,11 +234,12 @@ def audio_captions(features, artists, membership, points, heldout):
         feature = max(scores, key=lambda c: abs(scores[c]["rho"]), default=None)
         rho = scores[feature]["rho"] if feature is not None else 0
         if feature is not None and abs(rho) >= 0.4:
-            label = {
-                "genre_dortmund_funksoulrnb": "funk/soul/R&B audio score",
-                "genre_rosamerica_roc": "rock audio score",
-            }.get(feature, feature.replace("_", " "))
-            low, high = f"Lower {label}", f"Higher {label}"
+            low, high = {
+                "genre_dortmund_funksoulrnb": ("rock", "soul"),
+                "genre_rosamerica_roc": ("electronic", "rock"),
+                "mood_acoustic_acoustic": ("electric", "acoustic"),
+                "danceability": ("still", "danceable"),
+            }.get(feature, ("low", "high"))
             captions[f"{name}_min"], captions[f"{name}_max"] = (
                 (low, high) if rho > 0 else (high, low)
             )

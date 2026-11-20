@@ -1,68 +1,74 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { artistNeighbors, artistGraph } from '../src/artist-graph.ts';
+import { build } from 'esbuild';
 
-const artist = (id, name = id) => ({ id, name });
-const detail = (similar) => ({ artist: artist('center'), similar });
+const { outputFiles } = await build({
+  entryPoints: [new URL('../src/artist-graph.ts', import.meta.url).pathname],
+  bundle: true,
+  format: 'esm',
+  write: false,
+});
+const { artistNeighbors, layoutArtists } = await import(
+  `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`
+);
 
-test('keeps every immediate neighbor in ranked order, without self-links or duplicates', () => {
-  const similar = [
-    'center',
-    'first',
-    'second',
-    'first',
-    ...Array.from({ length: 20 }, (_, i) => `artist-${i}`),
-  ].map((id) => ({ artist: artist(id), score: 0.5 }));
+test('less familiar reranks neighbors without changing published scores', () => {
+  const data = {
+    artist: { id: 'root' },
+    similar: [
+      { artist: { id: 'popular', listeners: 10000 }, score: 1 },
+      { artist: { id: 'rare', listeners: null }, score: 0.9 },
+    ],
+  };
   assert.deepEqual(
-    artistNeighbors(detail(similar)).map(({ artist }) => artist.id),
-    ['first', 'second', ...Array.from({ length: 20 }, (_, i) => `artist-${i}`)],
+    artistNeighbors(data, true).map((m) => m.artist.id),
+    ['rare', 'popular'],
   );
-  assert.deepEqual(artistNeighbors(detail(null)), []);
+  assert.equal(data.similar[0].artist.id, 'popular');
+  assert.deepEqual(artistNeighbors({ artist: { id: 'root' }, similar: [] }, true), []);
 });
 
-test('renders a clickable node and a visible edge for each neighbor using plain text', () => {
-  class Element {
-    children = [];
-    attributes = {};
-    style = {};
-    dataset = {};
-    constructor(tag, namespaceURI) {
-      this.tag = tag;
-      this.namespaceURI = namespaceURI;
-    }
-    setAttribute(key, value) {
-      this.attributes[key] = value;
-    }
-    append(...nodes) {
-      this.children.push(...nodes);
-    }
-  }
-  const oldDocument = globalThis.document;
-  globalThis.document = {
-    createElement: (tag) => new Element(tag),
-    createElementNS: (namespace, tag) => new Element(tag, namespace),
-  };
-  try {
-    const graph = artistGraph(
-      detail([
-        { artist: artist('one', '<One & two>'), score: 0.8 },
-        { artist: artist('two'), score: 0.7 },
-      ]),
-    );
-    const [svg, root, first, second] = graph.children;
-    assert.equal(svg.children.length, 2);
-    assert.equal(root.textContent, 'center');
-    assert.equal(first.textContent, '<One & two>');
-    assert.deepEqual(first.dataset, { kind: 'artist', id: 'one' });
-    assert.deepEqual(second.dataset, { kind: 'artist', id: 'two' });
-    assert.equal(graph.style.height, '240px');
-    assert.equal(svg.children[0].attributes.d, 'M50 15 V50 H25');
-    assert.equal(svg.children[1].attributes.d, 'M50 15 V50 H75');
-    assert.equal(first.style.left, '25%');
-    assert.equal(second.style.left, '75%');
-    assert.equal(svg.attributes['aria-hidden'], 'true');
-    assert.equal(first.attributes['aria-label'], 'Explore <One & two>, similar to center');
-  } finally {
-    globalThis.document = oldDocument;
+test('deduplicates neighbors and excludes self without changing rank', () => {
+  const artist = (id) => ({ id, name: id });
+  assert.deepEqual(
+    artistNeighbors({
+      artist: artist('a'),
+      similar: ['a', 'b', 'b', 'c'].map((id) => ({ artist: artist(id), score: 0.5 })),
+    }).map(({ artist }) => artist.id),
+    ['b', 'c'],
+  );
+  assert.deepEqual(artistNeighbors({ artist: artist('a'), similar: null }), []);
+});
+
+test('higher similarity stays closer to the center deterministically', () => {
+  const nodes = Array.from({ length: 4 }, () => ({ width: 60, height: 24 }));
+  const edges = [1, 0.5, 0].map((score, i) => ({ a: 0, b: i + 1, score }));
+  const points = layoutArtists(nodes, edges, 1000, 800);
+  const distances = points.slice(1).map(({ x, y }) => Math.hypot(x - points[0].x, y - points[0].y));
+  assert.ok(distances[0] < distances[1]);
+  assert.ok(distances[1] < distances[2]);
+  assert.deepEqual(points, layoutArtists(nodes, edges, 1000, 800));
+});
+
+test('handles empty graphs, missing edges and out-of-range scores', () => {
+  assert.deepEqual(layoutArtists([], [], 400, 500), []);
+  assert.deepEqual(layoutArtists([{ width: 80, height: 24 }], [], 400, 500), [{ x: 200, y: 250 }]);
+  const nodes = Array.from({ length: 3 }, () => ({ width: 60, height: 24 }));
+  for (const points of [
+    layoutArtists(nodes, [], 390, 600),
+    layoutArtists(
+      nodes,
+      [
+        { a: 0, b: 1, score: -5 },
+        { a: 0, b: 2, score: 10 },
+      ],
+      390,
+      600,
+    ),
+  ]) {
+    for (const { x, y } of points)
+      assert.ok(
+        Number.isFinite(x) && Number.isFinite(y) && x >= 42 && x <= 348 && y >= 24 && y <= 576,
+      );
   }
 });

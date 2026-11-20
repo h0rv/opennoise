@@ -1,0 +1,131 @@
+import argparse
+import json
+import re
+from collections import defaultdict
+from pathlib import Path
+
+from opennoise.names import canonical, key, write
+
+
+def release(root, release_id):
+    manifest = json.loads((root / "manifest.json").read_text())
+    genres = json.loads((root / manifest["genres"]).read_text())
+    rows = {g["id"]: g for g in genres}
+    clusters = {
+        i
+        for i, g in rows.items()
+        if " · " in g["name"] or re.search(r" \((?:[2-9]|[1-9][0-9]+)\)$", g["name"])
+    }
+    targets = {}
+    for i in clusters:
+        parent, seen = rows[i]["parent_id"], {i}
+        while parent in clusters:
+            if parent in seen:
+                raise ValueError(f"Cyclic cluster hierarchy: {i}")
+            seen.add(parent)
+            parent = rows[parent]["parent_id"]
+        if parent is None or parent not in rows:
+            raise ValueError(f"Cluster has no named ancestor: {i}")
+        targets[i] = parent
+    groups = defaultdict(list)
+    for i, g in rows.items():
+        if i not in clusters:
+            groups[key(canonical(g["name"]))].append(g)
+    variants = []
+    for group in groups.values():
+        anchor = max(group, key=lambda g: (g["member_count"] or 0, g["id"]))
+        aliases = set(anchor["aliases"])
+        for g in group:
+            aliases.update([g["name"], *g["aliases"]])
+            if g is not anchor:
+                targets[g["id"]] = anchor["id"]
+                variants.append([g["name"], anchor["name"]])
+        anchor["name"] = canonical(anchor["name"])
+        anchor["aliases"] = sorted(aliases - {anchor["name"]})
+
+    def target(i):
+        while i in targets:
+            i = targets[i]
+        return i
+
+    kept = {i: g for i, g in rows.items() if i not in targets}
+    for i, g in kept.items():
+        parent = g["parent_id"]
+        seen = {i}
+        while parent is not None and (parent in targets or parent in seen):
+            if parent in seen and parent != i:
+                raise ValueError(f"Cyclic genre hierarchy: {i}")
+            seen.add(parent)
+            resolved = target(parent)
+            parent = rows[parent]["parent_id"] if resolved == i else resolved
+        g["parent_id"] = parent
+    members = {i: {} for i in kept}
+    details = {}
+    for i in rows:
+        detail = json.loads((root / "genres" / f"{i}.json").read_text())
+        if i in kept:
+            details[i] = detail
+        for member in detail["members"] or []:
+            group = members[target(i)]
+            artist = member["artist"]["id"]
+            if artist not in group or member["score"] > group[artist]["score"]:
+                group[artist] = member
+    projected = defaultdict(list)
+    for i, g in kept.items():
+        detail = details[i]
+        ranked = sorted(members[i].values(), key=lambda m: (-m["score"], m["artist"]["id"]))
+        detail["members"] = ranked if manifest["membership"] is not None else None
+        g["member_count"] = len(ranked) if manifest["membership"] is not None else None
+        detail["genre"] = g
+        if detail["related"] is not None:
+            detail["related"] = [r for r in detail["related"] if r["id"] in kept]
+        for member in ranked:
+            projected[member["artist"]["id"]].append({"id": i, "score": member["score"]})
+    search = json.loads((root / manifest["search"]).read_text())
+    search = [e for e in search if e["kind"] != "genre" or e["id"] in kept]
+    zero_before = zero_after = 0
+    for entry in search:
+        i = entry["id"]
+        if entry["kind"] == "genre":
+            entry.update(name=kept[i]["name"], aliases=kept[i]["aliases"])
+            continue
+        path = root / "artists" / f"{i}.json"
+        detail = json.loads(path.read_text())
+        zero_before += not detail["genres"]
+        detail["genres"] = (
+            sorted(projected[i], key=lambda g: (-g["score"], g["id"]))
+            if manifest["membership"] is not None
+            else None
+        )
+        zero_after += not detail["genres"]
+        write(path, detail)
+    for i, detail in details.items():
+        write(root / "genres" / f"{i}.json", detail)
+    for i in targets:
+        (root / "genres" / f"{i}.json").unlink()
+    manifest["release_id"] = release_id
+    manifest["layouts"]["axes"] = {
+        "x_min": "rock",
+        "x_max": "electronic",
+        "y_min": "electric",
+        "y_max": "acoustic",
+    }
+    write(root / manifest["genres"], list(kept.values()))
+    write(root / manifest["search"], search)
+    write(root / "manifest.json", manifest)
+    return {
+        "genres_before": len(rows),
+        "genres_after": len(kept),
+        "clusters": len(clusters),
+        "zero_before": zero_before,
+        "zero_after": zero_after,
+        "variants": sorted(variants),
+    }
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("release", type=Path)
+    parser.add_argument("release_id")
+    args = parser.parse_args()
+    print(json.dumps(release(args.release, args.release_id), ensure_ascii=False))

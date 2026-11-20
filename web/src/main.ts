@@ -1,5 +1,5 @@
 import { Catalog } from './data';
-import { artistGraph } from './artist-graph';
+import { artistGraph, artistNeighbors } from './artist-graph';
 import { MapCanvas } from './map-canvas';
 import { SonicMap } from './sonic-map';
 import { searchableEntry, searchMatches } from './search';
@@ -42,7 +42,9 @@ async function start() {
   let detail: GenreDetail | ArtistDetail | null = null;
   let artistPath: { id: string; name: string }[] = [];
   let detailError = '';
+  let lessFamiliar = false;
   let controller = new AbortController();
+  let graphController = new AbortController();
   let map: MapCanvas | SonicMap | undefined;
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
   let trail: Selection[] = [];
@@ -76,19 +78,15 @@ async function start() {
             `<button data-view="${key}" ${(key === 'axes' || key === 'islands') && !catalog.manifest.layouts[key] ? 'disabled title="This layout has not been published"' : ''}>${mode.label}</button>`,
         )
         .join('')}</nav>
-      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button><button id="detail-toggle" popovertarget="sidebar" aria-expanded="false" aria-controls="sidebar" hidden>Details</button></div><a class="source" href="./about.html">About</a><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
-    <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div></section>
-    <aside id="sidebar" popover aria-label="Selected genre or artist"><button id="detail-close" popovertarget="sidebar" popovertargetaction="hide" aria-label="Close details">×</button><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside>
+      <button data-zoom="reset">Reset</button><button id="trail-toggle" aria-expanded="false" aria-controls="trail">Saved</button></div><a class="source" href="./about.html">About</a><a class="source" href="https://github.com/h0rv/opennoise">Source ↗</a></header>
+    <section class="workspace" aria-label="Genre atlas"><div class="canvas" id="canvas"></div>
+    <aside id="sidebar" hidden aria-label="Selected genre or artist"><div id="preview" hidden></div><div id="detail" tabindex="-1" aria-live="polite"></div></aside></section>
     <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
     <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
   const drawer = document.querySelector<HTMLElement>('#detail')!;
   const sidebar = document.querySelector<HTMLElement>('#sidebar')!;
-  const detailToggle = document.querySelector<HTMLButtonElement>('#detail-toggle')!;
-  sidebar.addEventListener('toggle', () => {
-    detailToggle.setAttribute('aria-expanded', String(sidebar.matches(':popover-open')));
-  });
   const search = document.querySelector<HTMLInputElement>('#search')!;
   const results = document.querySelector<HTMLElement>('#results')!;
   const trailPanel = document.querySelector<HTMLElement>('#trail')!;
@@ -112,6 +110,7 @@ async function start() {
   }
 
   function renderCanvas(reveal = false) {
+    graphController.abort();
     document.querySelector<HTMLButtonElement>('.toolbar [data-zoom="reset"]')!.hidden =
       view === 'artists';
     document
@@ -143,6 +142,7 @@ async function start() {
         catalog.genres,
         (kind, id) => void select({ kind, id }, true, true),
         cameras.get(view),
+        catalog.manifest.layouts.axes,
       );
       updateMapSelection(reveal);
       return;
@@ -163,9 +163,11 @@ async function start() {
   }
 
   function renderArtists() {
+    graphController.abort();
+    graphController = new AbortController();
     if (selected?.kind !== 'artist') {
       canvas.innerHTML =
-        '<div class="artist-heading"><h2>Artists</h2><p>Search for an artist, or choose one from a genre, then follow their similar artists.</p></div>';
+        '<div class="artist-heading"><h2 class="visually-hidden">Artists</h2><p>Search for an artist to explore their connections.</p></div>';
       return;
     }
     if (!detail || !('artist' in detail)) {
@@ -175,9 +177,18 @@ async function start() {
       return;
     }
     const data = detail;
-    canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 tabindex="-1">${escape(data.artist.name)}${data.artist.disambiguation ? ` <small>${escape(data.artist.disambiguation)}</small>` : ''}</h2><p>${data.similar?.length ? 'Similar artists · Choose an artist to follow their connections.' : 'No similar artists in this release. Search for another artist.'}</p></div>`;
+    canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 class="visually-hidden" tabindex="-1">${escape(data.artist.name)}</h2>${data.artist.disambiguation ? `<small>${escape(data.artist.disambiguation)}</small>` : ''}</div>${data.similar?.length ? '' : '<p class="empty">No similar artists in this release. Search for another artist.</p>'}`;
     canvas.querySelector('.artist-heading')!.append(previewHost);
-    if (detail.similar?.length) canvas.append(artistGraph(detail));
+    if (data.similar?.length)
+      canvas.querySelector('.artist-heading')!.insertAdjacentHTML('beforeend', familiarityToggle());
+    canvas.append(
+      artistGraph(
+        data,
+        (id, signal) => catalog.artist(id, signal),
+        graphController.signal,
+        lessFamiliar,
+      ),
+    );
   }
 
   function breadcrumbs(genre: Genre) {
@@ -194,7 +205,7 @@ async function start() {
   }
 
   function renderDetail() {
-    detailToggle.hidden = !selected;
+    sidebar.hidden = !selected;
     if (!selected) {
       drawer.innerHTML = '';
       return;
@@ -253,7 +264,10 @@ async function start() {
         : ''
     }${
       data.similar?.length
-        ? `<section><h3>Similar artists</h3>${data.similar
+        ? `<section><h3>Similar artists</h3>${familiarityToggle()}${artistNeighbors(
+            data,
+            lessFamiliar,
+          )
             .slice(0, 8)
             .map((entry) =>
               entityButton('artist', entry.artist.id, entry.artist.name, entry.artist.color),
@@ -261,6 +275,10 @@ async function start() {
             .join('')}</section>`
         : ''
     }${links.length ? `<section><div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div></section>` : ''}`;
+  }
+
+  function familiarityToggle() {
+    return `<button data-familiarity aria-pressed="${lessFamiliar}">Less familiar</button>`;
   }
 
   function renderTrail() {
@@ -302,13 +320,11 @@ async function start() {
     if (selection.kind === 'artist' && push) view = 'artists';
     else if (selection.kind === 'genre' && view === 'artists')
       view = catalog.manifest.layouts.axes ? 'axes' : 'islands';
-    detailToggle.hidden = false;
+    sidebar.hidden = false;
     detail = null;
     detailError = '';
     if (push) writeURL();
     drawer.innerHTML = '<p class="empty" role="status">Loading details…</p>';
-    if (view === 'artists') sidebar.hidePopover();
-    else sidebar.showPopover();
     renderCanvas(true);
     results.innerHTML = '';
     try {
@@ -340,7 +356,6 @@ async function start() {
       renderCanvas(true);
       if (view === 'artists')
         canvas.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
-      if (sidebar.matches(':popover-open')) drawer.focus({ preventScroll: true });
     } catch (error) {
       if (selected !== selection || (error instanceof DOMException && error.name === 'AbortError'))
         return;
@@ -374,7 +389,6 @@ async function start() {
       controller.abort();
       selected = null;
       detail = null;
-      sidebar.hidePopover();
       renderCanvas();
       renderDetail();
       if (id)
@@ -430,9 +444,17 @@ async function start() {
   });
   app.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>(
-      '[data-kind], [data-view], [data-zoom], [data-remove], button[id]',
+      '[data-kind], [data-view], [data-zoom], [data-remove], [data-familiarity], button[id]',
     );
     if (!target) return;
+    if (target.hasAttribute('data-familiarity')) {
+      const host = target.closest('#detail') ? drawer : canvas;
+      lessFamiliar = !lessFamiliar;
+      if (view === 'artists') renderArtists();
+      renderDetail();
+      host.querySelector<HTMLButtonElement>('[data-familiarity]')?.focus({ preventScroll: true });
+      return;
+    }
     if (target.dataset.kind && target.dataset.id) {
       if (!target.closest('.artist-graph, .artist-path') && !target.closest('#detail'))
         artistPath = [];
@@ -447,9 +469,9 @@ async function start() {
       view = target.dataset.view as View;
       writeURL();
       renderCanvas();
+      renderDetail();
       return;
     }
-    if (target.id === 'detail-close') detailToggle.focus();
     if (target.dataset.zoom === 'reset') resetMap();
     if (target.dataset.remove !== undefined) {
       trail.splice(Number(target.dataset.remove), 1);
@@ -492,7 +514,7 @@ async function start() {
     }
     if (event.key === 'Escape') {
       results.innerHTML = '';
-      if (!sidebar.matches(':popover-open')) search.focus();
+      search.focus();
     }
   });
   document.addEventListener('click', (event) => {

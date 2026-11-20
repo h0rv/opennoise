@@ -10,8 +10,8 @@ from opennoise.contract import validate_release
 
 def inputs(tmp_path):
     a, b = "00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"
-    source, model, m1, run = [tmp_path / p for p in ["source", "model", "m1", "run"]]
-    for path in [source, model, m1, run]:
+    source, m1, run = [tmp_path / p for p in ["source", "m1", "run"]]
+    for path in [source, m1, run]:
         path.mkdir()
     pl.DataFrame(
         {"item": [0, 1], "artist_mbid": [a, b], "listeners": [10, 5], "artist_name": ["A", "B"]}
@@ -27,20 +27,14 @@ def inputs(tmp_path):
         }
     )
     genres.write_parquet(source / "genres.parquet")
-    genres.filter(pl.col("level") == -1).write_parquet(model / "genres.parquet")
     edges = pl.DataFrame(
         {"artist": [a, b, b, a], "genre": [0, 0, 1, 2], "score": [0.6, 0.2, 1.0, 1.0]}
     )
     edges.write_parquet(source / "memberships.parquet")
-    edges.filter(pl.col("genre") == 0).write_parquet(model / "memberships.parquet")
-    labels = tmp_path / "labels.parquet"
-    pl.DataFrame({"genre": ["Root"], "item": [0]}).write_parquet(labels)
     return (
         {
             "export": str(source),
-            "refit": str(model),
             "m1": str(m1),
-            "labels": str(labels),
             "registry": str(tmp_path / "registry.json"),
             "levels": ["broad", "fine"],
             "identity_jaccard": 0.8,
@@ -77,6 +71,20 @@ def test_adapter_contract_and_rerun(tmp_path, monkeypatch):
     export(config, run)
     assert (run / "genre_ids.json").read_bytes() == snapshot
     assert (tmp_path / "registry.json").read_bytes() == registry
+    summary = json.loads((run / "release-summary.json").read_text())
+    assert set(summary) == {
+        "genres",
+        "artists",
+        "memberships",
+        "similarities",
+        "files",
+        "bytes",
+        "grouping",
+        "global_grouping",
+        "readability",
+        "placement",
+        "seconds",
+    }
 
 
 def test_related_genres_cosine_targets_and_ties():
@@ -117,7 +125,7 @@ def test_related_genres_empty_and_invalid_vectors():
         related_genres(catalog, edges, artists, np.array([[float("nan"), 0.0]]))
 
 
-def test_adapter_related_genres_and_immutable_state(tmp_path, monkeypatch):
+def test_adapter_related_genres_and_rerun(tmp_path, monkeypatch):
     monkeypatch.setattr("opennoise.catalog.tags.log", lambda *a, **kw: None)
     config, run, _, _ = inputs(tmp_path)
     root = tmp_path / "layout"
@@ -150,8 +158,7 @@ def test_adapter_related_genres_and_immutable_state(tmp_path, monkeypatch):
     export(config, run)
     assert (tmp_path / "registry.json").read_bytes() == snapshot
     np.savez(root / "sonic_state.npz", vectors=np.ones((2, 2)))
-    with pytest.raises(ValueError, match="Immutable release inputs"):
-        export(config, run)
+    export(config, run)
 
 
 @pytest.mark.parametrize("empty", [False, True])
@@ -172,9 +179,6 @@ def test_configured_similarity_graph(tmp_path, monkeypatch, empty):
         assert detail["similar"][0]["score"] == 1.0
         other = json.loads((run / "release/artists" / f"{b}.json").read_text())
         assert other["similar"][0]["score"] == 0.5
-    hashes = json.loads((run / "release-summary.json").read_text())["inputs"]
-    assert str(path) in hashes
-    assert not any(name.endswith("tfidf.parquet") for name in hashes)
 
 
 @pytest.mark.parametrize("score", [-0.1, float("nan"), float("inf")])
@@ -185,17 +189,6 @@ def test_invalid_configured_similarity_graph(tmp_path, score):
     config["similarity"] = str(path)
     with pytest.raises(ValueError, match="Invalid M1 similarity graph"):
         export(config, run)
-
-
-def test_adapter_rejects_training_strength_injection(tmp_path):
-    config, run, _, _ = inputs(tmp_path)
-    path = tmp_path / "source/memberships.parquet"
-    pl.read_parquet(path).with_columns(
-        pl.when(pl.col("genre") == 0).then(1.0).otherwise(pl.col("score")).alias("score")
-    ).write_parquet(path)
-    with pytest.raises(ValueError, match="cached model predictions"):
-        export(config, run)
-    assert not (run / "release").exists()
 
 
 def test_global_adapter_contract_and_rerun(tmp_path, monkeypatch):
@@ -240,8 +233,6 @@ def test_global_adapter_exports_folded_aliases(tmp_path, monkeypatch):
     assert genres["R"]["parent_id"] == genres["Root"]["id"]
     search = json.loads((run / "release/search.json").read_text())
     assert next(g for g in search if g["id"] == genres["Root"]["id"])["aliases"] == ["R"]
-    summary = json.loads((run / "release-summary.json").read_text())
-    assert str(vocabulary) in summary["inputs"]
 
 
 def test_hierarchy_empty_and_cycles():
