@@ -2,7 +2,7 @@ import argparse
 import json
 from pathlib import Path
 
-from jsonschema import Draft202012Validator, FormatChecker, ValidationError
+from jsonschema_rs import Draft202012Validator, ValidationError
 
 SCHEMA = json.loads(Path(__file__).with_name("catalog.schema.json").read_text())
 
@@ -11,7 +11,7 @@ def validate_release(root: Path) -> dict:
     validators = {
         name: Draft202012Validator(
             {"$defs": SCHEMA["$defs"], "$ref": f"#/$defs/{name}"},
-            format_checker=FormatChecker(),
+            validate_formats=True,
         )
         for name in ["Manifest", "Genres", "Search", "GenreDetail", "ArtistDetail"]
     }

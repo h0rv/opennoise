@@ -8,7 +8,12 @@ from implicit.als import AlternatingLeastSquares
 from scipy import sparse
 from threadpoolctl import threadpool_limits
 
-from opennoise.artist_identity import canonicalize, collaboration_table, identity_table
+from opennoise.artist_identity import (
+    artist_alias_table,
+    canonicalize,
+    collaboration_table,
+    identity_table,
+)
 
 
 def normalize(matrix):
@@ -16,55 +21,62 @@ def normalize(matrix):
     return sparse.diags(1 / np.maximum(norms, 1e-12)) @ matrix
 
 
+def heldout_users(users, config):
+    rng = np.random.default_rng(config["seed"])
+    return rng.choice(users, size=int(len(users) * config["test_fraction"]), replace=False)
+
+
 def prepare(config, run):
     if (run / "train.npz").exists():
         return sparse.load_npz(run / "train.npz")
     data = pl.scan_parquet("data/listens.parquet")
-    data = canonicalize(data, identity_table(), collaboration_table())
-    data = (
-        data.group_by("user", "artist_mbid")
-        .agg(
-            pl.col("count").sum(),
-            pl.col("artist_name").first(),
-            pl.col("disambiguation").first(),
-            pl.col("source_mbid").unique(),
-            pl.col("source_name").unique(),
+    credited = canonicalize(data, identity_table(), collaboration_table(), artist_alias_table())
+    labels = (
+        credited.select(
+            "artist_mbid",
+            "artist_name",
+            "disambiguation",
+            "source_mbid",
+            "source_name",
+            "redirect_mbid",
         )
+        .unique()
         .collect(engine="streaming")
     )
-    (run / "artist_redirects.json").write_text(
-        json.dumps(
-            {
-                old: target
-                for target, sources in data.select("artist_mbid", "source_mbid").iter_rows()
-                for old in sources
-                if old != target
-            }
-        )
-    )
-    users = data.select("user").unique().sort("user")
+    redirects = {}
     aliases = {}
-    for target, names in data.select("artist_mbid", "source_name").iter_rows():
-        aliases.setdefault(target, set()).update(names)
+    primary = labels.filter(pl.col("artist_mbid") == pl.col("redirect_mbid"))
+    for target, source, name in primary.select(
+        "artist_mbid", "source_mbid", "source_name"
+    ).iter_rows():
+        if source != target:
+            redirects[source] = target
+        aliases.setdefault(target, set()).add(name)
+    (run / "artist_redirects.json").write_text(json.dumps(redirects))
     (run / "artist_aliases.json").write_text(
         json.dumps({i: sorted(names) for i, names in aliases.items()})
     )
-    rng = np.random.default_rng(config["seed"])
-    test_ids = rng.choice(
-        users["user"].to_numpy(), size=int(len(users) * config["test_fraction"]), replace=False
+    data = (
+        credited.group_by("user", "artist_mbid")
+        .agg(pl.col("count").sum())
+        .collect(engine="streaming")
     )
+    users = data.select("user").unique().sort("user")
+    test_ids = heldout_users(users["user"].to_numpy(), config)
     test = data.filter(pl.col("user").is_in(test_ids))
     data = data.filter(~pl.col("user").is_in(test_ids))
     artists = (
         data.group_by("artist_mbid")
-        .agg(
-            pl.len().alias("listeners"),
-            pl.col("artist_name").first(),
-            pl.col("disambiguation").first(),
-        )
+        .len(name="listeners")
         .filter(pl.col("listeners") >= config["min_listeners"])
         .sort(["listeners", "artist_mbid"], descending=[True, False])
         .with_row_index("item")
+        .join(
+            labels.select("artist_mbid", "artist_name", "disambiguation").unique(),
+            on="artist_mbid",
+            maintain_order="left",
+            validate="1:1",
+        )
     )
     artists.write_parquet(run / "artists.parquet")
     data = data.join(artists.select("artist_mbid", "item"), on="artist_mbid")

@@ -48,6 +48,8 @@ def main() -> None:
     if config.get("milestone") == "m2d" and args.stage != "export":
         parser.error("M2d only adapts existing artifacts; use export")
     inputs = config_bytes + Path("sources.toml").read_bytes()
+    if args.stage in {"build", "eval"} and "milestone" not in config and "tags" not in config:
+        inputs += b"collaboration-credits"
     if args.stage == "layout":
         inputs += Path(config["m2_config"]).read_bytes()
     digest = hashlib.sha256(inputs).hexdigest()[:12]

@@ -83,6 +83,36 @@ def popularity_redirects(artists):
     return redirects
 
 
+def dump_table(root, name, columns):
+    return pl.scan_csv(
+        root / "mbdump" / name,
+        separator="\t",
+        has_header=False,
+        quote_char=None,
+        infer_schema=False,
+        null_values="\\N",
+    ).select(pl.col(f"column_{i}").alias(label) for i, label in columns.items())
+
+
+def artist_alias_table(root=Path("data/artist_identity")):
+    cached = root / "aliases.parquet"
+    if cached.exists():
+        return pl.read_parquet(cached)
+    if not (root / "mbdump" / "artist_alias").exists():
+        sources = tomllib.loads(Path("sources.toml").read_text())["sources"]
+        source = next(s for s in sources if s.get("name") == "artist_identity")
+        extract_dump(root, source["url"], {"artist", "artist_alias"})
+    aliases = (
+        dump_table(root, "artist_alias", {1: "artist", 2: "canonical_name"})
+        .join(dump_table(root, "artist", {0: "artist", 1: "canonical_mbid"}), on="artist")
+        .select("canonical_mbid", "canonical_name")
+        .unique()
+        .collect()
+    )
+    aliases.write_parquet(cached)
+    return aliases
+
+
 def collaboration_table(root=Path("data/artist_identity")):
     cached = root / "collaborations.parquet"
     if cached.exists():
@@ -93,25 +123,17 @@ def collaboration_table(root=Path("data/artist_identity")):
         source = next(s for s in sources if s.get("name") == "artist_identity")
         extract_dump(root, source["url"], names)
 
-    def table(name, columns):
-        return pl.scan_csv(
-            root / "mbdump" / name,
-            separator="\t",
-            has_header=False,
-            quote_char=None,
-            infer_schema=False,
-            null_values="\\N",
-        ).select(pl.col(f"column_{i}").alias(label) for i, label in columns.items())
-
-    types = table("link_type", {0: "type_id", 4: "entity0", 5: "entity1", 6: "type"}).filter(
+    types = dump_table(
+        root, "link_type", {0: "type_id", 4: "entity0", 5: "entity1", 6: "type"}
+    ).filter(
         (pl.col("type") == "collaboration")
         & (pl.col("entity0") == "artist")
         & (pl.col("entity1") == "artist")
     )
-    links = table("link", {0: "link", 1: "type_id"}).join(types, on="type_id")
-    artists = table("artist", {0: "mb_artist", 1: "mbid"})
+    links = dump_table(root, "link", {0: "link", 1: "type_id"}).join(types, on="type_id")
+    artists = dump_table(root, "artist", {0: "mb_artist", 1: "mbid"})
     result = (
-        table("l_artist_artist", {1: "link", 2: "artist0", 3: "artist1"})
+        dump_table(root, "l_artist_artist", {1: "link", 2: "artist0", 3: "artist1"})
         .join(links, on="link")
         .join(
             artists.select(pl.col("mb_artist").alias("artist0"), pl.col("mbid").alias("member")),
@@ -131,32 +153,108 @@ def collaboration_table(root=Path("data/artist_identity")):
     return result
 
 
-def cleanup_redirects(artists, collaborations=None):
-    popularity = popularity_redirects(artists)
-    remaining = {i: artist for i, artist in artists.items() if i not in popularity}
+def collaboration_members(collaborations, popularity):
     members = {}
     if collaborations is not None:
         for collaboration, member in collaborations.iter_rows():
             member = popularity.get(member, member)
-            if collaboration in remaining and member in remaining and collaboration != member:
+            if collaboration not in popularity and collaboration != member:
                 members.setdefault(collaboration, set()).add(member)
-    merged = {
-        collaboration: min(ids, key=lambda i: (-(remaining[i]["listeners"] or 0), i))
+    return members
+
+
+def most_listened(ids, artists):
+    return min(ids, key=lambda i: (-(artists.get(i, {}).get("listeners") or 0), i))
+
+
+def primary_members(artists, members):
+    return {
+        collaboration: most_listened(present, artists)
         for collaboration, ids in members.items()
+        if collaboration in artists and (present := ids & artists.keys())
     }
+
+
+def follow_redirect(redirects, old):
+    seen = set()
+    while old in redirects:
+        if old in seen:
+            return None
+        seen.add(old)
+        old = redirects[old]
+    return old
+
+
+def cleanup_redirects(artists, collaborations=None):
+    popularity = popularity_redirects(artists)
+    remaining = {i: artist for i, artist in artists.items() if i not in popularity}
+    merged = primary_members(remaining, collaboration_members(collaborations, popularity))
     redirects = {**popularity, **merged}
     for old in redirects:
-        target, seen = redirects[old], {old}
-        while target in redirects:
-            if target in seen:
-                raise ValueError("Cyclic MusicBrainz collaboration")
-            seen.add(target)
-            target = redirects[target]
+        target = follow_redirect(redirects, old)
+        if target is None:
+            raise ValueError("Cyclic MusicBrainz collaboration")
         redirects[old] = target
     return redirects, len(popularity), len(merged)
 
 
-def canonicalize(data, identities, collaborations=None):
+def collaboration_leaves(source: str, members: dict[str, set[str]]) -> set[str]:
+    pending = [source]
+    seen = set()
+    leaves = set()
+    while pending:
+        artist = pending.pop()
+        if artist in seen:
+            continue
+        seen.add(artist)
+        if artist in members:
+            pending.extend(members[artist])
+        else:
+            leaves.add(artist)
+    return leaves
+
+
+def named_credits(folded, names, popularity):
+    candidates = (
+        folded.filter(
+            (pl.col("source_mbid") != pl.col("artist_mbid"))
+            & pl.col("source_name").str.contains(" • ", literal=True)
+        )
+        .select("source_mbid", "source_name", "artist_mbid")
+        .unique()
+        .collect()
+    )
+    if candidates.is_empty():
+        return
+
+    def name_key(name):
+        return " ".join(unicodedata.normalize("NFKC", name).lower().split())
+
+    tokens = {name: [name_key(n) for n in name.split(" • ")] for name in candidates["source_name"]}
+    keys = {n for parts in tokens.values() for n in parts if n}
+    normalized = (
+        pl.col("canonical_name")
+        .str.normalize("NFKC")
+        .str.to_lowercase()
+        .str.replace_all(r"\s+", " ")
+        .str.strip_chars()
+    )
+    matches = (
+        names.with_columns(normalized.alias("name"))
+        .filter(pl.col("name").is_in(keys))
+        .group_by("name")
+        .agg(pl.col("canonical_mbid").unique())
+    )
+    unique_names = {name: ids[0] for name, ids in matches.iter_rows() if len(ids) == 1}
+    for source, name, canonical in candidates.iter_rows():
+        ids = {unique_names.get(part) for part in tokens[name]}
+        if None not in ids and canonical in ids:
+            primary = popularity.get(canonical, canonical)
+            for id_ in sorted({popularity.get(i, i) for i in ids} - {primary}):
+                yield source, name, id_
+
+
+def canonicalize(data, identities, collaborations=None, aliases=None):
     eager = isinstance(data, pl.DataFrame)
     folded = (
         (data.lazy() if eager else data)
@@ -169,7 +267,7 @@ def canonicalize(data, identities, collaborations=None):
         )
         .drop("canonical_mbid", "canonical_name")
     )
-    artists = (
+    stats = (
         folded.group_by("artist_mbid")
         .agg(
             pl.col("user").n_unique().alias("listeners"),
@@ -178,19 +276,71 @@ def canonicalize(data, identities, collaborations=None):
         )
         .collect()
     )
-    redirects, _, _ = cleanup_redirects(
-        {
-            row["artist_mbid"]: {"name": row["artist_name"], "listeners": row["listeners"]}
-            for row in artists.iter_rows(named=True)
+    artists = {
+        id_: {"name": name, "listeners": listeners} for id_, listeners, name, _ in stats.iter_rows()
+    }
+    popularity = popularity_redirects(artists)
+    members = collaboration_members(collaborations, popularity)
+    previous = primary_members(artists, members)
+    routes = []
+    for source in members.keys() & artists.keys():
+        leaves = collaboration_leaves(source, members)
+        if not leaves:
+            continue
+        primary = follow_redirect(previous, source) or most_listened(leaves, artists)
+        recipients = leaves | {primary}
+        routes.extend((source, member, primary, len(recipients) > 1) for member in recipients)
+    credits = pl.DataFrame(
+        routes,
+        schema={
+            "artist_mbid": pl.String,
+            "member": pl.String,
+            "primary": pl.String,
+            "collaboration_credit": pl.Boolean,
         },
-        collaborations,
+        orient="row",
     )
-    result = (
-        folded.with_columns(pl.col("artist_mbid").replace(redirects))
-        .drop("artist_name", "disambiguation")
-        .join(
-            artists.lazy().select("artist_mbid", "artist_name", "disambiguation"), on="artist_mbid"
+    metadata = identities.filter(pl.col("artist_mbid") == pl.col("canonical_mbid"))
+    base = folded.with_columns(pl.col("artist_mbid").replace(popularity))
+    credited = (
+        base.join(credits.lazy(), on="artist_mbid", how="left")
+        .with_columns(
+            pl.coalesce("primary", "artist_mbid").alias("redirect_mbid"),
+            pl.col("collaboration_credit").fill_null(False),
+            pl.coalesce("member", "artist_mbid").alias("artist_mbid"),
         )
+        .drop("member", "primary")
+    )
+    if aliases is not None:
+        names = pl.concat([metadata.select("canonical_mbid", "canonical_name"), aliases])
+        extra = pl.DataFrame(
+            named_credits(folded, names, popularity),
+            schema={"source_mbid": pl.String, "source_name": pl.String, "member": pl.String},
+            orient="row",
+        )
+        if not extra.is_empty():
+            supplemental = (
+                base.join(extra.lazy(), on=["source_mbid", "source_name"])
+                .join(credits.lazy().select("artist_mbid").unique(), on="artist_mbid", how="anti")
+                .with_columns(
+                    pl.col("artist_mbid").alias("redirect_mbid"),
+                    pl.col("member").alias("artist_mbid"),
+                    pl.lit(True).alias("collaboration_credit"),
+                )
+                .drop("member")
+            )
+            credited = pl.concat([credited, supplemental.select(credited.collect_schema().names())])
+    result = credited.drop("artist_name", "disambiguation").join(
+        pl.concat(
+            [
+                stats.select("artist_mbid", "artist_name", "disambiguation"),
+                metadata.select(
+                    "artist_mbid", pl.col("canonical_name").alias("artist_name"), "disambiguation"
+                ).join(stats.select("artist_mbid"), on="artist_mbid", how="anti"),
+            ]
+        ).lazy(),
+        on="artist_mbid",
+        how="left",
     )
     return result.collect() if eager else result
 

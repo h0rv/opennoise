@@ -16,6 +16,7 @@ from opennoise.artist_identity import (
     popularity_redirects,
     release,
 )
+from opennoise.collaboration_release import refresh
 from opennoise.contract import validate_release
 
 FIXTURE = Path(__file__).parent / "fixtures/catalog"
@@ -284,7 +285,7 @@ def test_collaborations_choose_most_listened_present_member_and_resolve_chains()
         cleanup_redirects(artists, cycle)
 
 
-def test_boundary_and_transform_share_collaboration_fold(tmp_path):
+def test_single_member_preserves_legacy_cleanup(tmp_path):
     tables(tmp_path)
     identities = identity_table(tmp_path)
     collaborations = pl.DataFrame({"collaboration": [mbid(3)], "member": [mbid(1)]})
@@ -304,6 +305,119 @@ def test_boundary_and_transform_share_collaboration_fold(tmp_path):
     assert counts["collaboration_folded"] == 1
     manifest = validate_release(tmp_path)
     assert manifest["artist_redirects"] == {mbid(2): mbid(1), mbid(3): mbid(1)}
+
+
+def test_listens_expand_to_distinct_members_including_those_without_direct_listens():
+    ids = [mbid(i) for i in range(1, 6)]
+    identities = pl.DataFrame(
+        {
+            "artist_mbid": ids,
+            "canonical_mbid": ids,
+            "canonical_name": list("ABCDE"),
+            "disambiguation": [""] * 5,
+        }
+    )
+    collaborations = pl.DataFrame(
+        [(mbid(group), mbid(member)) for group, member in [(4, 1), (4, 5), (4, 3), (5, 2), (5, 3)]],
+        schema=["collaboration", "member"],
+        orient="row",
+    )
+    data = pl.DataFrame(
+        {
+            "user": [1, 2, 3, 1],
+            "artist_mbid": [mbid(1), mbid(1), mbid(2), mbid(4)],
+            "artist_name": ["A", "A", "B", "D"],
+            "count": [4, 3, 5, 7],
+        }
+    )
+    result = canonicalize(data.lazy(), identities, collaborations).collect()
+    expanded = result.filter(pl.col("source_mbid") == mbid(4))
+    assert sorted(expanded.select("artist_mbid", "artist_name", "count").rows()) == [
+        (mbid(1), "A", 7),
+        (mbid(2), "B", 7),
+        (mbid(3), "C", 7),
+    ]
+    assert expanded["redirect_mbid"].unique().to_list() == [mbid(1)]
+    assert expanded["collaboration_credit"].all()
+    assert (
+        result.filter((pl.col("user") == 1) & (pl.col("artist_mbid") == mbid(1)))["count"].sum()
+        == 11
+    )
+
+
+def test_retired_named_credit_uses_aliases_without_remapping_ambiguous_names():
+    identities = pl.DataFrame(
+        {
+            "artist_mbid": [mbid(i) for i in [1, 2, 3, 4, 8]],
+            "canonical_mbid": [mbid(i) for i in [1, 2, 3, 4, 1]],
+            "canonical_name": ["A", "B", "Same", "Same", "A"],
+            "disambiguation": [""] * 5,
+        }
+    )
+    aliases = pl.DataFrame({"canonical_mbid": [mbid(1)], "canonical_name": ["Old A"]})
+    data = pl.DataFrame(
+        {
+            "user": [1, 2, 3, 4, 5],
+            "artist_mbid": [mbid(8)] * 4 + [mbid(1)],
+            "artist_name": [
+                "Old A • B",
+                "Old A • Same",
+                "Old A • A",
+                "Old A • Missing",
+                "Old A • B",
+            ],
+            "count": [3] * 5,
+        }
+    )
+    result = canonicalize(data, identities, aliases=aliases)
+    assert result.filter(pl.col("collaboration_credit")).select(
+        "user", "artist_mbid", "redirect_mbid"
+    ).rows() == [(1, mbid(2), mbid(1))]
+    assert result.height == 6
+
+
+def test_nested_credit_preserves_a_legacy_target_with_no_listened_members():
+    ids = [mbid(i) for i in range(1, 5)]
+    identities = pl.DataFrame(
+        {
+            "artist_mbid": ids,
+            "canonical_mbid": ids,
+            "canonical_name": list("ABCD"),
+            "disambiguation": [""] * 4,
+        }
+    )
+    collaborations = pl.DataFrame(
+        {"collaboration": [ids[2], ids[2], ids[3]], "member": [ids[0], ids[1], ids[2]]}
+    )
+    data = pl.DataFrame(
+        {"user": [1, 2], "artist_mbid": ids[2:], "artist_name": ["C", "D"], "count": [3, 4]}
+    )
+    credited = canonicalize(data, identities, collaborations)
+    assert set(credited["redirect_mbid"]) == {ids[2]}
+    for source in ids[2:]:
+        assert set(credited.filter(pl.col("source_mbid") == source)["artist_mbid"]) == set(ids[:3])
+
+
+def test_release_refresh_counts_only_new_training_listeners_and_preserves_links(tmp_path):
+    shutil.copytree(FIXTURE, tmp_path, dirs_exist_ok=True)
+    path = tmp_path / "search.json"
+    search = json.loads(path.read_text())
+    for row in search:
+        if row["id"] == mbid(1):
+            row["listeners"] = 1
+    path.write_text(json.dumps(search))
+    path = tmp_path / "manifest.json"
+    manifest = json.loads(path.read_text())
+    manifest["artist_redirects"] = {mbid(8): mbid(1)}
+    path.write_text(json.dumps(manifest))
+    raw = pl.DataFrame({"user": [1, 2, 3], "artist_mbid": [mbid(8), mbid(1), mbid(8)]})
+    credited = pl.DataFrame(
+        {"user": [1, 2, 3, 3], "artist_mbid": [mbid(1)] * 4, "collaboration_credit": [True] * 4}
+    )
+    config = {"seed": 42, "test_fraction": 0.34}
+    assert refresh(tmp_path, "credits", raw.lazy(), credited.lazy(), config) == {mbid(1): 2}
+    assert refresh(tmp_path, "credits", raw.lazy(), credited.lazy(), config) == {}
+    assert validate_release(tmp_path)["artist_redirects"] == {mbid(8): mbid(1)}
 
 
 @pytest.mark.parametrize(
