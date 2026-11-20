@@ -664,7 +664,11 @@ main {
     flex: 1;
   }
   .artist-path button {
+    flex: none;
     min-height: 44px;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   .artist-heading > small {
     flex-basis: 100%;

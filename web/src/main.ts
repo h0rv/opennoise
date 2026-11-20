@@ -179,10 +179,10 @@ async function start() {
     const data = detail;
     canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 class="visually-hidden" tabindex="-1">${escape(data.artist.name)}</h2>${data.artist.disambiguation ? `<small>${escape(data.artist.disambiguation)}</small>` : ''}</div>${data.similar?.length ? '' : '<p class="empty">No similar artists in this release. Search for another artist.</p>'}`;
     canvas.querySelector('.artist-heading')!.append(previewHost);
-    const path = canvas.querySelector<HTMLElement>('.artist-path')!;
-    path.scrollLeft = path.scrollWidth;
     if (data.similar?.length)
       canvas.querySelector('.artist-heading')!.insertAdjacentHTML('beforeend', familiarityToggle());
+    const path = canvas.querySelector<HTMLElement>('.artist-path')!;
+    path.scrollLeft = path.scrollWidth;
     canvas.append(
       artistGraph(
         data,
