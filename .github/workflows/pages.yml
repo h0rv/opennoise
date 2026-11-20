@@ -8,7 +8,7 @@ on:
       - 'src/opennoise/pages.py'
       - '.github/workflows/pages.yml'
 env:
-  CATALOG_RELEASE: 7822a8d03434-collaboration-credits-name-repair
+  CATALOG_RELEASE: 7822a8d03434-collaboration-credits-genre-merge
 permissions:
   contents: read
   pages: write
