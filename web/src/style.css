@@ -344,6 +344,14 @@ main {
   background: none;
   text-decoration: underline;
 }
+.sonic-map button.selected-overlay[aria-pressed='true'] {
+  z-index: 1;
+  max-width: calc(100% - 32px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: #fff;
+  color: var(--accent);
+}
 .map-viewport canvas {
   position: absolute;
   inset: 0;

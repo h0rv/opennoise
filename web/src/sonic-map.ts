@@ -76,6 +76,7 @@ export class SonicMap {
   private pointer?: { x: number; y: number };
   private selected = '';
   private buttons = new Map<string, HTMLButtonElement>();
+  private selectedOverlay?: HTMLButtonElement;
   private stage = document.createElement('div');
   private abort = new AbortController();
   private observer: ResizeObserver;
@@ -220,6 +221,8 @@ export class SonicMap {
       fragment.append(button);
     }
     this.stage.replaceChildren(fragment);
+    this.selectedOverlay = undefined;
+    this.selection(this.selected);
     this.transform();
   }
 
@@ -252,9 +255,13 @@ export class SonicMap {
     _artist?: { id: string; name: string; x: number; y: number },
     reveal = false,
   ) {
+    if (id !== this.selected) {
+      this.selectedOverlay?.remove();
+      this.selectedOverlay = undefined;
+    }
     this.buttons.get(this.selected)?.setAttribute('aria-pressed', 'false');
     this.selected = id;
-    const button = this.buttons.get(id);
+    const button = this.buttons.get(id) ?? this.selectedOverlay ?? this.showSelectedOverlay(id);
     button?.setAttribute('aria-pressed', 'true');
     if (button && reveal) {
       const rect = button.getBoundingClientRect();
@@ -265,6 +272,24 @@ export class SonicMap {
       if (rect.top < 0 || rect.bottom > window.innerHeight)
         button.scrollIntoView({ block: 'center', inline: 'center' });
     }
+  }
+
+  private showSelectedOverlay(id: string) {
+    if (!id) return;
+    const genre = this.genres.find((g) => g.id === id);
+    if (!genre?.positions.axes || isArtistCluster(genre.name)) return;
+    const { x, y } = genre.positions.axes;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.id = id;
+    button.textContent = genre.name;
+    button.className = 'selected-overlay';
+    button.style.left = `calc(${x * 100}% + ${16 - 32 * x}px)`;
+    button.style.top = `${16 + y * (this.height - 52)}px`;
+    button.style.transform = `translateX(${-x * 100}%)`;
+    this.stage.append(button);
+    this.selectedOverlay = button;
+    return button;
   }
 
   destroy() {
