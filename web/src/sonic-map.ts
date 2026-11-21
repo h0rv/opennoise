@@ -1,8 +1,5 @@
-import type { Genre, Manifest } from './catalog';
+import type { Genre } from './catalog';
 import { claimName, isArtistCluster, LabelGrid, priority } from './label-grid';
-import { hasShortcutModifier } from './keyboard';
-
-type Camera = { x: number; y: number; scale: number };
 
 export function sonicLabels(
   genres: Genre[],
@@ -68,12 +65,8 @@ export function sonicLabels(
 
 export class SonicMap {
   readonly layout = 'axes';
-  private scale = 1;
-  private pan = 0;
   private height = 0;
   private width = 0;
-  private moved = false;
-  private pointer?: { x: number; y: number };
   private selected = '';
   private buttons = new Map<string, HTMLButtonElement>();
   private selectedOverlay?: HTMLButtonElement;
@@ -85,117 +78,30 @@ export class SonicMap {
     private element: HTMLElement,
     private genres: Genre[],
     private open: (kind: 'genre', id: string) => void,
-    camera?: Camera,
-    axes?: Manifest['layouts']['axes'],
+    scrollY = 0,
   ) {
     element.className = 'sonic-map';
     element.tabIndex = 0;
     element.setAttribute('role', 'region');
     element.setAttribute(
       'aria-label',
-      'Map. Scroll to explore; drag to pan. Control plus wheel or plus and minus keys zoom. Enter opens a focused genre.',
+      'Map. Scroll to explore. Enter opens a focused genre.',
     );
     element.append(this.stage);
-    if (axes) {
-      for (const [edge, text] of Object.entries(axes)) {
-        const label = document.createElement('span');
-        label.className = `map-axis ${edge.replace('_', '-')}`;
-        label.textContent =
-          edge === 'x_max'
-            ? `${text} →`
-            : `${edge === 'x_min' ? '←' : edge === 'y_min' ? '↑' : '↓'} ${text}`;
-        element.append(label);
-      }
-    }
-    if (camera) {
-      this.scale = camera.scale;
-      this.pan = camera.x;
-    }
     this.resize();
-    window.scrollTo(0, camera?.y || 0);
+    window.scrollTo(0, scrollY);
     const options = { signal: this.abort.signal };
     element.addEventListener(
       'click',
       (event) => {
-        if (this.moved && event.detail) {
-          this.moved = false;
-          event.preventDefault();
-          return;
-        }
         const id = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-id]')
           ?.dataset.id;
         if (id) this.open('genre', id);
       },
       options,
     );
-    element.addEventListener(
-      'wheel',
-      (event) => {
-        if (!event.ctrlKey) return;
-        event.preventDefault();
-        this.zoom(Math.exp(-event.deltaY * 0.002), { x: event.clientX, y: event.clientY });
-      },
-      { ...options, passive: false },
-    );
-    element.addEventListener(
-      'pointerdown',
-      (event) => {
-        if (!event.isPrimary || event.button !== 0) return;
-        this.moved = false;
-        if (event.pointerType === 'touch') return;
-        this.pointer = { x: event.clientX, y: event.clientY };
-        (event.target as HTMLElement).setPointerCapture(event.pointerId);
-      },
-      options,
-    );
-    element.addEventListener(
-      'pointermove',
-      (event) => {
-        if (!this.pointer) return;
-        const dx = event.clientX - this.pointer.x,
-          dy = event.clientY - this.pointer.y;
-        if (Math.abs(dx) + Math.abs(dy) > 4) this.moved = true;
-        if (!this.moved) return;
-        this.pan += dx;
-        window.scrollBy(0, -dy);
-        this.pointer = { x: event.clientX, y: event.clientY };
-        this.transform();
-      },
-      options,
-    );
-    element.addEventListener(
-      'pointerup',
-      () => {
-        this.pointer = undefined;
-      },
-      options,
-    );
-    element.addEventListener(
-      'pointercancel',
-      () => {
-        this.pointer = undefined;
-        this.moved = true;
-      },
-      options,
-    );
-    element.addEventListener(
-      'keydown',
-      (event) => {
-        if (hasShortcutModifier(event)) return;
-        if (['+', '=', '-', '0'].includes(event.key)) {
-          event.preventDefault();
-          if (event.key === '0') this.reset();
-          else this.zoom(event.key === '-' ? 1 / 1.3 : 1.3);
-        }
-      },
-      options,
-    );
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(element);
-  }
-
-  get camera(): Camera {
-    return { x: this.pan, y: window.scrollY, scale: this.scale };
   }
 
   private resize() {
@@ -223,31 +129,8 @@ export class SonicMap {
     this.stage.replaceChildren(fragment);
     this.selectedOverlay = undefined;
     this.selection(this.selected);
-    this.transform();
-  }
-
-  private transform() {
-    this.element.style.height = `${this.height * this.scale + 64}px`;
+    this.element.style.height = `${this.height + 64}px`;
     this.stage.style.height = `${this.height}px`;
-    this.stage.style.transform = `translateX(${this.pan}px) scale(${this.scale})`;
-  }
-
-  zoom(factor: number, point = { x: window.innerWidth / 2, y: window.innerHeight / 2 }) {
-    const scale = Math.max(0.5, Math.min(3, this.scale * factor));
-    const worldY = (point.y - this.element.getBoundingClientRect().top) / this.scale;
-    this.pan = point.x - ((point.x - this.pan) * scale) / this.scale;
-    const delta = worldY * (scale - this.scale);
-    this.scale = scale;
-    this.transform();
-    window.scrollBy(0, delta);
-  }
-
-  reset() {
-    this.scale = 1;
-    this.pan = 0;
-    this.moved = false;
-    this.transform();
-    window.scrollTo(0, 0);
   }
 
   selection(
@@ -265,12 +148,8 @@ export class SonicMap {
     button?.setAttribute('aria-pressed', 'true');
     if (button && reveal) {
       const rect = button.getBoundingClientRect();
-      if (rect.left < 0 || rect.right > window.innerWidth) {
-        this.pan += window.innerWidth / 2 - (rect.left + rect.right) / 2;
-        this.transform();
-      }
       if (rect.top < 0 || rect.bottom > window.innerHeight)
-        button.scrollIntoView({ block: 'center', inline: 'center' });
+        button.scrollIntoView({ block: 'center', inline: 'nearest' });
     }
   }
 

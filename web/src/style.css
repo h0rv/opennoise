@@ -302,39 +302,10 @@ main {
 .sonic-map {
   position: relative;
   padding-block: 32px;
-  touch-action: pan-y pinch-zoom;
-  -webkit-user-select: none;
-  user-select: none;
-  cursor: grab;
-}
-.map-axis {
-  position: absolute;
-  pointer-events: none;
-  font-size: 12px;
-  color: var(--muted);
-}
-.map-axis.x-min {
-  bottom: 8px;
-  left: 16px;
-}
-.map-axis.x-max {
-  bottom: 8px;
-  right: 16px;
-}
-.map-axis.y-min {
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.map-axis.y-max {
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
 }
 .sonic-map > div {
   position: relative;
   width: 100%;
-  transform-origin: 0 0;
 }
 .sonic-map button {
   position: absolute;
