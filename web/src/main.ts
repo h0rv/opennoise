@@ -46,6 +46,7 @@ async function start() {
   let graphController = new AbortController();
   let map: MapCanvas | SonicMap | undefined;
   const cameras = new Map<View, { scale: number; x: number; y: number }>();
+  let mapScrollY = 0;
   let trail: Selection[] = [];
   let storageAvailable = true;
   const storageKey = `opennoise:trail:${catalog.manifest.release_id}`;
@@ -111,7 +112,7 @@ async function start() {
   function renderCanvas(reveal = false) {
     graphController.abort();
     document.querySelector<HTMLButtonElement>('.toolbar [data-zoom="reset"]')!.hidden =
-      view === 'artists';
+      view !== 'islands';
     document
       .querySelectorAll<HTMLButtonElement>('[data-view]')
       .forEach((button) =>
@@ -122,7 +123,8 @@ async function start() {
       return;
     }
     if (map) {
-      cameras.set(map.layout, { ...map.camera });
+      if (map instanceof SonicMap) mapScrollY = window.scrollY;
+      else cameras.set(map.layout, { ...map.camera });
       map.destroy();
       map = undefined;
     }
@@ -140,8 +142,7 @@ async function start() {
         content,
         catalog.genres,
         (kind, id) => void select({ kind, id }, true, true),
-        cameras.get(view),
-        catalog.manifest.layouts.axes,
+        mapScrollY,
       );
       updateMapSelection(reveal);
       return;
@@ -158,7 +159,7 @@ async function start() {
   }
 
   function resetMap() {
-    map?.reset();
+    if (map instanceof MapCanvas) map.reset();
   }
 
   function renderArtists() {

@@ -8,7 +8,7 @@ const { outputFiles } = await build({
   format: 'esm',
   write: false,
 });
-const { sonicLabels } = await import(
+const { SonicMap, sonicLabels } = await import(
   `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`
 );
 const genre = (id, name, count, x, y) => ({
@@ -19,6 +19,82 @@ const genre = (id, name, count, x, y) => ({
   positions: { axes: { x, y }, islands: null },
 });
 const measure = (text) => text.length * 8;
+
+test('Map uses native scrolling without camera controls and keeps genre clicks and search reveal', (t) => {
+  const listeners = new Map();
+  const nodes = [];
+  const scrolls = [];
+  const opened = [];
+  const create = () => {
+    const node = {
+      style: {},
+      dataset: {},
+      children: [],
+      clientWidth: 800,
+      attributes: {},
+      append(child) {
+        this.children.push(child);
+      },
+      replaceChildren(fragment) {
+        this.children = fragment.children;
+      },
+      setAttribute(key, value) {
+        this.attributes[key] = value;
+      },
+      addEventListener(type, callback) {
+        listeners.set(type, callback);
+      },
+      getContext: () => ({ measureText: (text) => ({ width: measure(text) }) }),
+      getBoundingClientRect: () => ({ top: 2000, bottom: 2020 }),
+      scrollIntoView(options) {
+        scrolls.push(options);
+      },
+      remove() {},
+      closest() {
+        return this;
+      },
+    };
+    nodes.push(node);
+    return node;
+  };
+  globalThis.document = { createElement: create, createDocumentFragment: create };
+  globalThis.window = {
+    innerHeight: 600,
+    scrollTo: (...args) => scrolls.push(args),
+  };
+  globalThis.ResizeObserver = class {
+    observe() {}
+    disconnect() {}
+  };
+  t.after(() => {
+    delete globalThis.document;
+    delete globalThis.window;
+    delete globalThis.ResizeObserver;
+  });
+  const element = create();
+  const map = new SonicMap(
+    element,
+    [genre('pop', 'pop', 100, 0.5, 0.8)],
+    (...args) => opened.push(args),
+    250,
+  );
+  assert.deepEqual([...listeners.keys()], ['click']);
+  assert.equal(element.children.length, 1);
+  assert.equal(element.children[0].style.transform, undefined);
+  assert.deepEqual(scrolls, [[0, 250]]);
+  const button = nodes.find((node) => node.dataset.id === 'pop');
+  listeners.get('click')({ target: button });
+  assert.deepEqual(opened, [['genre', 'pop']]);
+  map.selection('pop', undefined, true);
+  assert.equal(button.attributes['aria-pressed'], 'true');
+  assert.deepEqual(scrolls.at(-1), { block: 'center', inline: 'nearest' });
+  map.selection('missing', undefined, true);
+  assert.equal(button.attributes['aria-pressed'], 'false');
+  map.destroy();
+  const empty = new SonicMap(create(), [], () => {});
+  empty.selection('missing', undefined, true);
+  empty.destroy();
+});
 
 test('sonic labels exclude artist clusters and unplaced genres, deduplicate names, and size by membership', () => {
   const data = [
