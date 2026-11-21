@@ -42,7 +42,6 @@ async function start() {
   let detail: GenreDetail | ArtistDetail | null = null;
   let artistPath: { id: string; name: string }[] = [];
   let detailError = '';
-  let lessFamiliar = false;
   let controller = new AbortController();
   let graphController = new AbortController();
   let map: MapCanvas | SonicMap | undefined;
@@ -177,19 +176,12 @@ async function start() {
       return;
     }
     const data = detail;
-    canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 class="visually-hidden" tabindex="-1">${escape(data.artist.name)}</h2>${data.artist.disambiguation ? `<small>${escape(data.artist.disambiguation)}</small>` : ''}</div>${data.similar?.length ? '' : '<p class="empty">No similar artists in this release. Search for another artist.</p>'}`;
+    canvas.innerHTML = `<div class="artist-heading"><nav class="artist-path" aria-label="Artist hops">${artistPath.map((artist, index) => `${index ? '<span aria-hidden="true">→</span>' : ''}<button data-kind="artist" data-id="${escape(artist.id)}" ${artist.id === data.artist.id ? 'aria-current="page"' : ''}>${escape(artist.name)}</button>`).join('')}</nav><h2 class="visually-hidden" tabindex="-1">${escape(data.artist.name)}</h2></div>${data.similar?.length ? '' : '<p class="empty">No similar artists in this release. Search for another artist.</p>'}`;
     canvas.querySelector('.artist-heading')!.append(previewHost);
-    if (data.similar?.length)
-      canvas.querySelector('.artist-heading')!.insertAdjacentHTML('beforeend', familiarityToggle());
     const path = canvas.querySelector<HTMLElement>('.artist-path')!;
     path.scrollLeft = path.scrollWidth;
     canvas.append(
-      artistGraph(
-        data,
-        (id, signal) => catalog.artist(id, signal),
-        graphController.signal,
-        lessFamiliar,
-      ),
+      artistGraph(data, (id, signal) => catalog.artist(id, signal), graphController.signal),
     );
   }
 
@@ -215,7 +207,7 @@ async function start() {
     if (!detail) return;
     const entity = 'genre' in detail ? detail.genre : detail.artist;
     const saved = trail.some((entry) => entry.kind === selected!.kind && entry.id === selected!.id);
-    drawer.innerHTML = `<h2>${escape(entity.name)}</h2>${'genre' in detail ? breadcrumbs(detail.genre) : ''}<button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full' : 'Save'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
+    drawer.innerHTML = `<h2>${escape(entity.name)}</h2>${'genre' in detail ? breadcrumbs(detail.genre) : detail.artist.disambiguation ? `<p class="about">${escape(detail.artist.disambiguation)}</p>` : ''}<button id="save" ${saved || trail.length >= 50 ? 'disabled' : ''}>${saved ? 'Saved' : trail.length >= 50 ? 'Saved items full' : 'Save'}</button>${'genre' in detail ? renderGenre(detail) : renderArtist(detail)}`;
     if (view === 'artists') canvas.querySelector('.artist-heading')?.append(previewHost);
     else drawer.querySelector('h2')!.after(previewHost);
   }
@@ -266,10 +258,7 @@ async function start() {
         : ''
     }${
       data.similar?.length
-        ? `<section><h3>Similar artists</h3>${familiarityToggle()}${artistNeighbors(
-            data,
-            lessFamiliar,
-          )
+        ? `<section><h3>Similar artists</h3>${artistNeighbors(data)
             .slice(0, 8)
             .map((entry) =>
               entityButton('artist', entry.artist.id, entry.artist.name, entry.artist.color),
@@ -277,10 +266,6 @@ async function start() {
             .join('')}</section>`
         : ''
     }${links.length ? `<section><div class="links">${links.map((link) => `<a href="${escape(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)} ↗</a>`).join('')}</div></section>` : ''}`;
-  }
-
-  function familiarityToggle() {
-    return `<button data-familiarity aria-pressed="${lessFamiliar}">Less familiar</button>`;
   }
 
   function renderTrail() {
@@ -440,7 +425,7 @@ async function start() {
       ? matches
           .map(
             (entry) =>
-              `<button data-kind="${entry.kind}" data-id="${escape(entry.id)}">${escape(entry.name)}${entry.disambiguation ? ` <small>${escape(entry.disambiguation)}</small>` : ''}<span>${entry.kind}</span></button>`,
+              `<button data-kind="${entry.kind}" data-id="${escape(entry.id)}"><b>${escape(entry.name)}${entry.disambiguation ? ` <small>${escape(entry.disambiguation)}</small>` : ''}</b><span>${entry.kind}</span></button>`,
           )
           .join('')
       : '<p role="status">No matches.</p>';
@@ -454,17 +439,9 @@ async function start() {
   });
   app.addEventListener('click', (event) => {
     const target = (event.target as Element).closest<HTMLElement>(
-      '[data-kind], [data-view], [data-zoom], [data-remove], [data-familiarity], button[id]',
+      '[data-kind], [data-view], [data-zoom], [data-remove], button[id]',
     );
     if (!target) return;
-    if (target.hasAttribute('data-familiarity')) {
-      const host = target.closest('#detail') ? drawer : canvas;
-      lessFamiliar = !lessFamiliar;
-      if (view === 'artists') renderArtists();
-      renderDetail();
-      host.querySelector<HTMLButtonElement>('[data-familiarity]')?.focus({ preventScroll: true });
-      return;
-    }
     if (target.dataset.kind && target.dataset.id) {
       if (target.closest('#results')) search.blur();
       if (!target.closest('.artist-graph, .artist-path') && !target.closest('#detail'))

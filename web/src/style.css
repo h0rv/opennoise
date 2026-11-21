@@ -164,6 +164,12 @@ main {
   border-bottom: 1px solid var(--line);
   text-align: left;
 }
+.search-results b {
+  font-weight: inherit;
+}
+.search-results small {
+  color: var(--muted);
+}
 .search-results span {
   color: var(--muted);
   font-size: 12px;
@@ -496,7 +502,8 @@ main {
   margin-bottom: 12px;
   font-size: 14px;
 }
-.breadcrumbs {
+.breadcrumbs,
+.about {
   margin-bottom: 16px;
   color: var(--muted);
   font-size: 13px;
@@ -676,10 +683,6 @@ main {
     min-height: 44px;
     max-width: 100%;
     white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  .artist-heading > small {
-    flex-basis: 100%;
     overflow-wrap: anywhere;
   }
   .artist-heading #preview:not([hidden]) {
