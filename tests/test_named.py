@@ -127,6 +127,22 @@ def test_merge_child_already_listed_as_parent_alias(catalog):
     assert validate_release(catalog)["genre_redirects"] == {"house": "electronic"}
 
 
+def test_new_catalog_genre_follows_shared_naming_and_adds_artist_memberships(catalog):
+    detail = read(catalog, "genres/techno.json")
+    detail["genre"].update(id="added-style", name="uk uk garage", parent_id=None)
+    baseline = read(catalog, "genres.json")
+    release(catalog, "extended", duplicates_only=True, additions={"added-style": detail})
+    validate_release(catalog)
+    genres = read(catalog, "genres.json")
+    assert [g for g in genres if g["id"] != "added-style"] == baseline
+    added = read(catalog, "genres/added-style.json")
+    assert added["genre"]["name"] == "uk garage"
+    assert added["genre"]["aliases"] == ["uk uk garage"]
+    for member in added["members"]:
+        artist = read(catalog, f"artists/{member['artist']['id']}.json")
+        assert {"id": "added-style", "score": member["score"]} in artist["genres"]
+
+
 @pytest.mark.parametrize("parent", [None, "house"])
 def test_invalid_cluster_ancestor(catalog, parent):
     genres = read(catalog, "genres.json")

@@ -8,7 +8,15 @@ import polars as pl
 import pytest
 
 from opennoise import tags as pipeline
-from opennoise.tags import agreement, discogs, discogs_id, musicbrainz, tag_name, vectors
+from opennoise.tags import (
+    agreement,
+    discogs,
+    discogs_credits,
+    discogs_id,
+    musicbrainz,
+    tag_name,
+    vectors,
+)
 
 
 def test_discogs_identity():
@@ -80,6 +88,22 @@ def test_discogs_only_cache(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline, "download", download)
     pipeline.ingest({"tags": {"cache": str(tmp_path), "sources": ["discogs"]}}, run)
     assert sorted(path.name for path in run.iterdir()) == ["discogs.parquet", "identity.parquet"]
+
+
+def test_discogs_master_credits_count_each_artist_and_style_once(tmp_path):
+    path = tmp_path / "masters.xml.gz"
+    path.write_bytes(
+        gzip.compress(b"""<masters>
+      <master><artists><artist><id>1</id></artist><artist><id>1</id></artist>
+      <artist><id>2</id></artist></artists>
+      <styles><style>Guajira</style><style> guajira </style></styles></master>
+      <master><artists><artist><id>1</id></artist><artist><id>3</id></artist></artists>
+      <styles><style>Guajira</style></styles></master>
+    </masters>""")
+    )
+    credits, count = discogs_credits(path, {1, 2}, "master")
+    assert count == 2
+    assert credits.sort("discogs_id").rows() == [(1, "guajira", 2), (2, "guajira", 1)]
 
 
 @pytest.mark.parametrize("empty", [False, True])

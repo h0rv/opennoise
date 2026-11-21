@@ -24,6 +24,10 @@ TF-IDF listening neighbours are reranked with Discogs styles. Label propagation 
 multiresolution Leiden supply genres; Wikidata-weighted Discogs naming and place-and-style
 micro-genres name them. Naming and catalog exports reuse the cached all-label membership
 fit. ALS and AcousticBrainz vectors drive the 2D map, spectral Islands and related genres.
+Discogs master styles missing from Every Noise and OpenNoise are eligible as standalone
+genres when at least five positioned artists have two or more master credits each.
+They use the same non-music exclusions as place-and-style genres, then use the saved
+map and shared catalog naming without refitting existing genres.
 
 ## Reproduce
 
@@ -58,6 +62,20 @@ uv run on layout configs/m2e-layout.toml
 uv run on export configs/one-name.toml
 npm --prefix web run build
 ```
+
+To extend a named model catalog with Discogs master styles, run the source ingestion
+below and use its output run. Use a trusted layout bundle containing `sonic_model.pkl`,
+`sonic_state.npz`, and the matching M1 `artists.parquet` in vector order.
+Use the pinned Every Noise `map.html` and `enao.json` in `data/m2`.
+
+```sh
+uv run on ingest configs/discogs-masters.toml
+uv run python -m opennoise.discogs_styles release "$release_id" "$tags_run" "$layout_bundle"
+uv run python -m opennoise.contract release
+```
+
+Compare the input and output with `opennoise.genre_order` using the same
+Wikidata and Every Noise references before publishing.
 
 ## Tests
 

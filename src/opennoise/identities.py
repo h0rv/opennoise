@@ -4,6 +4,11 @@ import re
 from collections import Counter, defaultdict
 
 
+def stable_id(key: str, name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "genre"
+    return slug + "-" + hashlib.sha256(key.encode()).hexdigest()[:12]
+
+
 def assign(path, records, threshold=0.8):
     state: dict = json.loads(path.read_text()) if path.exists() else {"version": 1, "genres": []}
     old = {r["id"]: r for r in state["genres"]}
@@ -52,8 +57,7 @@ def assign(path, records, threshold=0.8):
     for key, row in sorted(incoming.items()):
         i = chosen.get(key)
         if i is None:
-            slug = re.sub(r"[^a-z0-9]+", "-", row["name"].lower()).strip("-") or "genre"
-            base = slug + "-" + hashlib.sha256(key.encode()).hexdigest()[:12]
+            base = stable_id(key, row["name"])
             i, suffix = base, 1
             while i in old:
                 suffix += 1
