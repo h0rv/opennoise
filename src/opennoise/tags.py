@@ -11,7 +11,7 @@ import tomllib
 import unicodedata
 from collections import Counter
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlsplit
 
 import lxml.etree as etree
@@ -76,12 +76,12 @@ def execute(stage, config, run):
 
 
 def normalized_cache(config):
+    settings = config["tags"]
     sources = tomllib.loads(Path("sources.toml").read_text())["sources"]
-    hashes = sorted(
-        (row["name"], row["sha256"])
-        for row in sources
-        if row.get("name") in {"musicbrainz_artists", "discogs_releases"}
-    )
+    inputs = {"musicbrainz_artists", "discogs_releases"}
+    if "discogs_masters" in settings["sources"]:
+        inputs.add("discogs_masters")
+    hashes = sorted((row["name"], row["sha256"]) for row in sources if row.get("name") in inputs)
     digest = hashlib.sha256(json.dumps(hashes).encode()).hexdigest()[:12]
     return Path(config["tags"]["cache"]) / digest
 
@@ -122,37 +122,43 @@ def musicbrainz(path, root):
     ).unique().write_parquet(root / "identity.parquet")
 
 
-def discogs(path, root):
-    identity = pl.read_parquet(root / "identity.parquet")
-    wanted = set(identity["discogs_id"])
+def discogs_credits(
+    path: Path, wanted: set[int], element: Literal["release", "master"]
+) -> tuple[pl.DataFrame, int]:
     counts = Counter()
-    releases = 0
+    records = 0
     with gzip.open(path, "rb") as stream:
-        context = etree.iterparse(stream, events=("end",), tag="release", huge_tree=True)
-        for _, release in context:
-            ids = {int(node.text) for node in release.findall("artists/artist/id") if node.text}
+        context = etree.iterparse(stream, events=("end",), tag=element, huge_tree=True)
+        for _, record in context:
+            ids = {int(node.text) for node in record.findall("artists/artist/id") if node.text}
             ids &= wanted
             if ids:
                 styles = {
-                    tag_name(node.text) for node in release.findall("styles/style") if node.text
+                    tag_name(node.text) for node in record.findall("styles/style") if node.text
                 }
                 for identifier in ids:
                     counts.update((identifier, style) for style in styles if style)
-            releases += 1
-            if releases % 1_000_000 == 0:
+            records += 1
+            if records % 1_000_000 == 0:
                 print(
-                    json.dumps({"discogs_releases": releases, "artist_styles": len(counts)}),
+                    json.dumps({f"discogs_{element}s": records, "artist_styles": len(counts)}),
                     flush=True,
                 )
-            release.clear()
-            if (parent := release.getparent()) is not None:
-                while release.getprevious() is not None:
+            record.clear()
+            if (parent := record.getparent()) is not None:
+                while record.getprevious() is not None:
                     del parent[0]
     frame = pl.DataFrame(
         [(identifier, tag, count) for (identifier, tag), count in counts.items()],
         schema={"discogs_id": pl.Int64, "tag": pl.String, "weight": pl.Float32},
         orient="row",
     )
+    return frame, records
+
+
+def discogs(path, root):
+    identity = pl.read_parquet(root / "identity.parquet")
+    frame, releases = discogs_credits(path, set(identity["discogs_id"]), "release")
     frame.join(identity, on="discogs_id").group_by("artist_mbid", "tag").agg(
         pl.col("weight").sum()
     ).with_columns(pl.lit("discogs").alias("source")).select(
@@ -170,6 +176,7 @@ def ingest(config, run):
     for source, filename, target in [
         ("musicbrainz_artists", "artist.tar.xz", "musicbrainz"),
         ("discogs_releases", "discogs_releases.xml.gz", "discogs"),
+        ("discogs_masters", "discogs_masters.xml.gz", "discogs_masters"),
     ]:
         outputs = ["identity.parquet"] if target == "musicbrainz" else []
         if target in settings["sources"]:
@@ -185,6 +192,10 @@ def ingest(config, run):
             if target == "musicbrainz":
                 musicbrainz(path, normalized)
                 count = None
+            elif target == "discogs_masters":
+                identity = pl.read_parquet(normalized / "identity.parquet")
+                frame, count = discogs_credits(path, set(identity["discogs_id"]), "master")
+                frame.write_parquet(normalized / "discogs_masters.parquet")
             else:
                 count = discogs(path, normalized)
             for name in outputs:

@@ -118,9 +118,10 @@ def tables(config):
     return micro.release(Path(config["micro"]), *found) if "micro" in config else found
 
 
-def related_genres(catalog, memberships, artists, vectors):
+def related_genres(catalog, memberships, artists, vectors, *, queries=None):
     ids = sorted(catalog, key=lambda i: catalog[i]["id"])
-    result = {i: [] for i in ids}
+    rows = [n for n, i in enumerate(ids) if queries is None or i in queries]
+    result = {ids[n]: [] for n in rows}
     if not ids:
         return result
     edges = memberships.join(
@@ -148,12 +149,13 @@ def related_genres(catalog, memberships, artists, vectors):
             ],
             dtype=int,
         )
-        for start in range(0, len(ids), 256):
-            scores = np.clip(centers[start : start + 256] @ centers[targets].T, 0, 1)
+        for start in range(0, len(rows), 256):
+            batch = rows[start : start + 256]
+            scores = np.clip(centers[batch] @ centers[targets].T, 0, 1)
             for offset, neighbors in enumerate(
                 np.argsort(-scores, axis=1, kind="stable")[:, :11].tolist()
             ):
-                i = ids[start + offset]
+                i = ids[batch[offset]]
                 result[i] = [
                     {"id": catalog[ids[targets[n]]]["id"], "score": float(scores[offset, n])}
                     for n in neighbors

@@ -7,15 +7,19 @@ from pathlib import Path
 from opennoise.names import canonical, duplicates, key, rename, write
 
 
-def release(root, release_id, *, duplicates_only=False):
+def release(root, release_id, *, duplicates_only=False, additions=None):
     manifest = json.loads((root / "manifest.json").read_text())
     genres = json.loads((root / manifest["genres"]).read_text())
+    additions = additions or {}
+    if additions.keys() & ({g["id"] for g in genres} | manifest.get("genre_redirects", {}).keys()):
+        raise ValueError("New genre ID already in the catalog")
+    genres.extend(detail["genre"] for detail in additions.values())
     rows = {g["id"]: g for g in genres}
     if duplicates_only:
         for genre in genres:
             rename(genre)
         targets, conflicts = duplicates(genres)
-        return rewrite(root, release_id, manifest, rows, targets) | {
+        return rewrite(root, release_id, manifest, rows, targets, additions=additions) | {
             "merged_groups": len(set(targets.values())),
             "conflicts": conflicts,
         }
@@ -51,13 +55,17 @@ def release(root, release_id, *, duplicates_only=False):
         anchor["name"] = canonical(anchor["name"])
         anchor["aliases"] = sorted(aliases - {anchor["name"]})
 
-    return rewrite(root, release_id, manifest, rows, targets, named_layout=True) | {
+    return rewrite(
+        root, release_id, manifest, rows, targets, named_layout=True, additions=additions
+    ) | {
         "clusters": len(clusters),
         "variants": sorted(variants),
     }
 
 
-def rewrite(root, release_id, manifest, rows, targets, *, named_layout=False):
+def rewrite(root, release_id, manifest, rows, targets, *, named_layout=False, additions=None):
+    additions = additions or {}
+
     def target(i):
         while i in targets:
             i = targets[i]
@@ -78,7 +86,7 @@ def rewrite(root, release_id, manifest, rows, targets, *, named_layout=False):
     related = {i: {} for i in kept}
     details = {}
     for i in rows:
-        detail = json.loads((root / "genres" / f"{i}.json").read_text())
+        detail = additions.get(i) or json.loads((root / "genres" / f"{i}.json").read_text())
         resolved = target(i)
         if i in kept:
             details[i] = detail
@@ -112,6 +120,11 @@ def rewrite(root, release_id, manifest, rows, targets, *, named_layout=False):
             projected[member["artist"]["id"]].append({"id": i, "score": member["score"]})
     search = json.loads((root / manifest["search"]).read_text())
     search = [e for e in search if e["kind"] != "genre" or e["id"] in kept]
+    search.extend(
+        {"kind": "genre", "id": i, "name": kept[i]["name"], "aliases": kept[i]["aliases"]}
+        for i in additions
+        if i in kept
+    )
     zero_before = zero_after = 0
     for entry in search:
         i = entry["id"]
@@ -131,10 +144,11 @@ def rewrite(root, release_id, manifest, rows, targets, *, named_layout=False):
     for i, detail in details.items():
         write(root / "genres" / f"{i}.json", detail)
     for i in targets:
-        (root / "genres" / f"{i}.json").unlink()
+        if i not in additions:
+            (root / "genres" / f"{i}.json").unlink()
     manifest["release_id"] = release_id
     redirects = {old: target(new) for old, new in manifest.get("genre_redirects", {}).items()}
-    redirects.update({old: target(new) for old, new in targets.items()})
+    redirects.update({old: target(new) for old, new in targets.items() if old not in additions})
     manifest["genre_redirects"] = redirects
     if named_layout:
         manifest["layouts"]["axes"] = {
