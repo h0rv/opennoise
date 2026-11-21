@@ -1,20 +1,13 @@
 import type { ArtistDetail } from './catalog';
-import { similarPriority } from './ranking';
 
-export function artistNeighbors(data: ArtistDetail, lessFamiliar = false) {
+export function artistNeighbors(data: ArtistDetail) {
   const seen = new Set([data.artist.id]);
   const neighbors = (data.similar || []).filter(({ artist }) => {
     if (seen.has(artist.id)) return false;
     seen.add(artist.id);
     return true;
   });
-  return lessFamiliar
-    ? neighbors.sort(
-        (a, b) =>
-          similarPriority(b.score, b.artist.listeners) -
-            similarPriority(a.score, a.artist.listeners) || a.artist.id.localeCompare(b.artist.id),
-      )
-    : neighbors;
+  return neighbors;
 }
 
 type Node = { width: number; height: number };
@@ -118,9 +111,8 @@ export function artistGraph(
   data: ArtistDetail,
   load: (id: string, signal: AbortSignal) => Promise<ArtistDetail>,
   signal: AbortSignal,
-  lessFamiliar = false,
 ) {
-  const neighbors = artistNeighbors(data, lessFamiliar).slice(0, 24);
+  const neighbors = artistNeighbors(data).slice(0, 24);
   const scores = neighbors.map(({ score }) => score);
   const low = Math.min(...scores),
     high = Math.max(...scores);
