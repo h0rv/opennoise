@@ -15,13 +15,13 @@ permissions:
   id-token: write
 concurrency:
   group: pages
-  cancel-in-progress: true
+  queue: max
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment_retry.outputs.page_url || steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,3 +43,10 @@ jobs:
           path: web/dist
       - uses: actions/deploy-pages@v4
         id: deployment
+        continue-on-error: true
+      - name: Wait for artifact visibility before retrying
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 10
+      - uses: actions/deploy-pages@v4
+        if: steps.deployment.outcome == 'failure'
+        id: deployment_retry
