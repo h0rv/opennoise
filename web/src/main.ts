@@ -107,6 +107,12 @@ async function start() {
       artist && point ? { id: artist.id, name: artist.name, ...point } : undefined,
       reveal,
     );
+    if (map instanceof SonicMap)
+      map.highlight(
+        detail && 'artist' in detail
+          ? (detail.genres ?? []).map((genre) => catalog.genreId(genre.id))
+          : [],
+      );
   }
 
   function renderCanvas(reveal = false) {

@@ -68,6 +68,7 @@ export class SonicMap {
   private height = 0;
   private width = 0;
   private selected = '';
+  private highlighted = new Set<string>();
   private buttons = new Map<string, HTMLButtonElement>();
   private selectedOverlay?: HTMLButtonElement;
   private stage = document.createElement('div');
@@ -83,10 +84,7 @@ export class SonicMap {
     element.className = 'sonic-map';
     element.tabIndex = 0;
     element.setAttribute('role', 'region');
-    element.setAttribute(
-      'aria-label',
-      'Map. Scroll to explore. Enter opens a focused genre.',
-    );
+    element.setAttribute('aria-label', 'Map. Scroll to explore. Enter opens a focused genre.');
     element.append(this.stage);
     this.resize();
     window.scrollTo(0, scrollY);
@@ -129,6 +127,7 @@ export class SonicMap {
     this.stage.replaceChildren(fragment);
     this.selectedOverlay = undefined;
     this.selection(this.selected);
+    this.highlight([...this.highlighted]);
     this.element.style.height = `${this.height + 64}px`;
     this.stage.style.height = `${this.height}px`;
   }
@@ -151,6 +150,13 @@ export class SonicMap {
       if (rect.top < 0 || rect.bottom > window.innerHeight)
         button.scrollIntoView({ block: 'center', inline: 'nearest' });
     }
+  }
+
+  highlight(ids: string[]) {
+    this.highlighted = new Set(ids);
+    this.element.classList.toggle('artist-highlight', this.highlighted.size > 0);
+    for (const [id, button] of this.buttons)
+      button.classList.toggle('artist-genre', this.highlighted.has(id));
   }
 
   private showSelectedOverlay(id: string) {

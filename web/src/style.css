@@ -315,6 +315,13 @@ main {
   white-space: nowrap;
   background: none;
 }
+.sonic-map.artist-highlight button {
+  color: #ccc !important;
+}
+.sonic-map.artist-highlight button.artist-genre {
+  color: #000 !important;
+  font-weight: 600 !important;
+}
 .sonic-map button:hover,
 .sonic-map button[aria-pressed='true'],
 .sonic-map button[aria-pressed='true']:hover {

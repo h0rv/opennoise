@@ -25,6 +25,7 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
   const nodes = [];
   const scrolls = [];
   const opened = [];
+  let resize;
   const create = () => {
     const node = {
       style: {},
@@ -32,6 +33,16 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
       children: [],
       clientWidth: 800,
       attributes: {},
+      classList: {
+        values: new Set(),
+        toggle(name, enabled) {
+          if (enabled) this.values.add(name);
+          else this.values.delete(name);
+        },
+        contains(name) {
+          return this.values.has(name);
+        },
+      },
       append(child) {
         this.children.push(child);
       },
@@ -63,6 +74,9 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
     scrollTo: (...args) => scrolls.push(args),
   };
   globalThis.ResizeObserver = class {
+    constructor(callback) {
+      resize = callback;
+    }
     observe() {}
     disconnect() {}
   };
@@ -74,7 +88,7 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
   const element = create();
   const map = new SonicMap(
     element,
-    [genre('pop', 'pop', 100, 0.5, 0.8)],
+    [genre('pop', 'pop', 100, 0.5, 0.8), genre('rock', 'rock', 100, 0.2, 0.2)],
     (...args) => opened.push(args),
     250,
   );
@@ -90,9 +104,27 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
   assert.deepEqual(scrolls.at(-1), { block: 'center', inline: 'nearest' });
   map.selection('missing', undefined, true);
   assert.equal(button.attributes['aria-pressed'], 'false');
+  map.highlight(['pop', 'unknown']);
+  assert(element.classList.contains('artist-highlight'));
+  assert(button.classList.contains('artist-genre'));
+  assert(!nodes.find((node) => node.dataset.id === 'rock').classList.contains('artist-genre'));
+  element.clientWidth = 900;
+  resize();
+  const resized = element.children[0].children.find((node) => node.dataset.id === 'pop');
+  assert(resized.classList.contains('artist-genre'));
+  map.highlight(['rock']);
+  assert(!resized.classList.contains('artist-genre'));
+  map.highlight([]);
+  assert(!element.classList.contains('artist-highlight'));
+  assert(element.children[0].children.every((node) => !node.classList.contains('artist-genre')));
+  map.highlight(['unknown']);
+  assert(element.children[0].children.every((node) => !node.classList.contains('artist-genre')));
+  map.highlight([]);
   map.destroy();
   const empty = new SonicMap(create(), [], () => {});
   empty.selection('missing', undefined, true);
+  empty.highlight([]);
+  assert(!empty.element?.classList.contains('artist-highlight'));
   empty.destroy();
 });
 
