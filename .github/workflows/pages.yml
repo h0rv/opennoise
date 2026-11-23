@@ -29,8 +29,14 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - run: npm ci && npm run build
+      - run: |
+          commit=$(gh api "repos/$GITHUB_REPOSITORY/commits/tags/$CATALOG_RELEASE" --jq .sha)
+          [[ "$commit" =~ ^[a-f0-9]{40}$ ]]
+          npm ci
+          CATALOG_SOURCE_COMMIT="$commit" npm run build
         working-directory: web
+        env:
+          GH_TOKEN: ${{ github.token }}
       - run: |
           gh release download "$CATALOG_RELEASE" --pattern "release-$CATALOG_RELEASE.tar.zst"
           tar --zstd -xf "release-$CATALOG_RELEASE.tar.zst"
