@@ -132,11 +132,7 @@ export class SonicMap {
     this.stage.style.height = `${this.height}px`;
   }
 
-  selection(
-    id: string,
-    _artist?: { id: string; name: string; x: number; y: number },
-    reveal = false,
-  ) {
+  selection(id: string, reveal = false, bottom = window.innerHeight) {
     if (id !== this.selected) {
       this.selectedOverlay?.remove();
       this.selectedOverlay = undefined;
@@ -145,18 +141,33 @@ export class SonicMap {
     this.selected = id;
     const button = this.buttons.get(id) ?? this.selectedOverlay ?? this.showSelectedOverlay(id);
     button?.setAttribute('aria-pressed', 'true');
-    if (button && reveal) {
-      const rect = button.getBoundingClientRect();
-      if (rect.top < 0 || rect.bottom > window.innerHeight)
-        button.scrollIntoView({ block: 'center', inline: 'nearest' });
-    }
+    if (button && reveal && this.distance(button, bottom) > 0)
+      button.scrollIntoView({ block: 'center', inline: 'nearest' });
   }
 
-  highlight(ids: string[]) {
+  highlight(ids: string[], reveal = false, bottom = window.innerHeight) {
     this.highlighted = new Set(ids);
-    this.element.classList.toggle('artist-highlight', this.highlighted.size > 0);
     for (const [id, button] of this.buttons)
       button.classList.toggle('artist-genre', this.highlighted.has(id));
+    const buttons = ids.flatMap((id) => this.buttons.get(id) ?? []);
+    this.element.classList.toggle('artist-highlight', buttons.length > 0);
+    if (!reveal) return;
+    let nearest: HTMLButtonElement | undefined;
+    let distance = Infinity;
+    for (const button of buttons) {
+      const next = this.distance(button, bottom);
+      if (next === 0) return;
+      if (next < distance) {
+        nearest = button;
+        distance = next;
+      }
+    }
+    nearest?.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }
+
+  private distance(button: HTMLButtonElement, bottom: number) {
+    const rect = button.getBoundingClientRect();
+    return Math.max(0, -rect.top, rect.bottom - bottom);
   }
 
   private showSelectedOverlay(id: string) {

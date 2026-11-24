@@ -629,11 +629,13 @@ main {
     border-top: 1px solid #111;
   }
   .canvas:not(.artist-view) + #sidebar {
+    max-height: 46dvh;
+    padding: 12px var(--gutter) max(12px, env(safe-area-inset-bottom));
+  }
+  .sonic-view .canvas + #sidebar {
     position: fixed;
     z-index: 1;
     inset: auto 0 0;
-    max-height: 46dvh;
-    padding: 12px var(--gutter) max(12px, env(safe-area-inset-bottom));
   }
   .canvas:not(.artist-view) + #sidebar #detail-close {
     display: block;

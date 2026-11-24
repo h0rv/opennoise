@@ -144,6 +144,23 @@ test('a newer click cancels pending lookups and stops the old track', async (t) 
   assert.equal(host.hidden, true);
 });
 
+test('restored details offer playback without contacting Deezer or playing until clicked', async (t) => {
+  const { scripts, audio, nodes, host, reply } = browser(t);
+  const player = new PreviewPlayer(host);
+  player.offer(['Aphex Twin']);
+  assert.equal(scripts.length, 0);
+  assert.equal(audio.paused, true);
+  assert.equal(host.hidden, false);
+  assert.equal(nodes.button.textContent, 'Play');
+  assert.equal(nodes.a.hidden, true);
+  nodes.button.onclick();
+  assert.equal(scripts.length, 1);
+  reply({ data: [track()] });
+  await Promise.resolve();
+  assert.equal(audio.paused, false);
+  assert.equal(nodes.button.textContent, 'Pause');
+});
+
 test('blocked autoplay leaves a working Play button, while media failures hide the preview', async (t) => {
   const { audio, nodes, host, reply } = browser(t);
   audio.play = () => Promise.reject(new DOMException('Gesture required', 'NotAllowedError'));
