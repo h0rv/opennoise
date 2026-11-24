@@ -633,6 +633,9 @@ main {
     border-left: 0;
     border-top: 1px solid #111;
   }
+  .artist-view + #sidebar {
+    overflow: visible;
+  }
   .canvas:not(.artist-view) + #sidebar {
     max-height: 46dvh;
     padding: 12px var(--gutter) max(12px, env(safe-area-inset-bottom));
