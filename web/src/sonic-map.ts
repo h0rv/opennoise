@@ -1,6 +1,8 @@
 import type { Genre } from './catalog';
 import { claimName, isArtistCluster, LabelGrid, priority } from './label-grid';
 
+type VisibleArea = { top: number; bottom: number };
+
 export function sonicLabels(
   genres: Genre[],
   width: number,
@@ -132,7 +134,7 @@ export class SonicMap {
     this.stage.style.height = `${this.height}px`;
   }
 
-  selection(id: string, reveal = false, bottom = window.innerHeight) {
+  selection(id: string, visible?: VisibleArea) {
     if (id !== this.selected) {
       this.selectedOverlay?.remove();
       this.selectedOverlay = undefined;
@@ -141,33 +143,32 @@ export class SonicMap {
     this.selected = id;
     const button = this.buttons.get(id) ?? this.selectedOverlay ?? this.showSelectedOverlay(id);
     button?.setAttribute('aria-pressed', 'true');
-    if (button && reveal && this.distance(button, bottom) > 0)
-      button.scrollIntoView({ block: 'center', inline: 'nearest' });
+    if (button && visible) this.reveal([button], visible);
   }
 
-  highlight(ids: string[], reveal = false, bottom = window.innerHeight) {
+  highlight(ids: string[], visible?: VisibleArea) {
     this.highlighted = new Set(ids);
     for (const [id, button] of this.buttons)
       button.classList.toggle('artist-genre', this.highlighted.has(id));
     const buttons = ids.flatMap((id) => this.buttons.get(id) ?? []);
     this.element.classList.toggle('artist-highlight', buttons.length > 0);
-    if (!reveal) return;
-    let nearest: HTMLButtonElement | undefined;
+    if (visible) this.reveal(buttons, visible);
+  }
+
+  private reveal(buttons: HTMLButtonElement[], visible: VisibleArea) {
+    let nearest: DOMRect | undefined;
     let distance = Infinity;
     for (const button of buttons) {
-      const next = this.distance(button, bottom);
+      const rect = button.getBoundingClientRect();
+      const next = Math.max(0, visible.top - rect.top, rect.bottom - visible.bottom);
       if (next === 0) return;
       if (next < distance) {
-        nearest = button;
+        nearest = rect;
         distance = next;
       }
     }
-    nearest?.scrollIntoView({ block: 'center', inline: 'nearest' });
-  }
-
-  private distance(button: HTMLButtonElement, bottom: number) {
-    const rect = button.getBoundingClientRect();
-    return Math.max(0, -rect.top, rect.bottom - bottom);
+    if (nearest)
+      window.scrollBy(0, (nearest.top + nearest.bottom - visible.top - visible.bottom) / 2);
   }
 
   private showSelectedOverlay(id: string) {

@@ -290,6 +290,11 @@ main {
   height: auto;
   min-height: 100dvh;
 }
+.sonic-view .toolbar {
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
 .sonic-view .workspace {
   flex: none;
   display: flex;
@@ -404,9 +409,9 @@ main {
 }
 .sonic-view #sidebar {
   position: sticky;
-  top: 0;
+  top: var(--toolbar-height, 0px);
   align-self: flex-start;
-  max-height: 100dvh;
+  max-height: calc(100dvh - var(--toolbar-height, 0px));
 }
 #detail-close {
   display: none;

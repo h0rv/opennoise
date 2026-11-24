@@ -85,6 +85,10 @@ async function start() {
     <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
     <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
+  const toolbar = document.querySelector<HTMLElement>('.toolbar')!;
+  new ResizeObserver(() =>
+    app.style.setProperty('--toolbar-height', `${toolbar.getBoundingClientRect().height}px`),
+  ).observe(toolbar);
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
   const drawer = document.querySelector<HTMLElement>('#detail')!;
   const sidebar = document.querySelector<HTMLElement>('#sidebar')!;
@@ -103,17 +107,21 @@ async function start() {
     if (!map) return;
     const artist = detail && 'artist' in detail ? detail.artist : null;
     if (map instanceof SonicMap) {
-      const bottom =
-        !sidebar.hidden && getComputedStyle(sidebar).position === 'fixed'
-          ? sidebar.getBoundingClientRect().top
-          : window.innerHeight;
-      map.selection(selected?.kind === 'genre' ? selected.id : '', reveal, bottom);
+      const visible = reveal
+        ? {
+            top: toolbar.getBoundingClientRect().bottom,
+            bottom:
+              !sidebar.hidden && getComputedStyle(sidebar).position === 'fixed'
+                ? sidebar.getBoundingClientRect().top
+                : window.innerHeight,
+          }
+        : undefined;
+      map.selection(selected?.kind === 'genre' ? selected.id : '', visible);
       map.highlight(
         detail && 'artist' in detail
           ? (detail.genres ?? []).map((genre) => catalog.genreId(genre.id))
           : [],
-        reveal,
-        bottom,
+        visible,
       );
       return;
     }
@@ -393,6 +401,11 @@ async function start() {
         : !requestedView && kind === 'artist'
           ? 'artists'
           : defaultView;
+    if (view === 'artists' && kind === 'genre') {
+      history.replaceState(null, '', '#view=artists');
+      clearSelection();
+      return;
+    }
     if (
       (kind === 'genre' || kind === 'artist') &&
       id &&
