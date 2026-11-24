@@ -57,9 +57,6 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
       },
       getContext: () => ({ measureText: (text) => ({ width: measure(text) }) }),
       getBoundingClientRect: () => ({ top: 2000, bottom: 2020 }),
-      scrollIntoView(options) {
-        scrolls.push(options);
-      },
       remove() {},
       closest() {
         return this;
@@ -70,8 +67,8 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
   };
   globalThis.document = { createElement: create, createDocumentFragment: create };
   globalThis.window = {
-    innerHeight: 600,
     scrollTo: (...args) => scrolls.push(args),
+    scrollBy: (...args) => scrolls.push(args),
   };
   globalThis.ResizeObserver = class {
     constructor(callback) {
@@ -99,15 +96,23 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
   const button = nodes.find((node) => node.dataset.id === 'pop');
   listeners.get('click')({ target: button });
   assert.deepEqual(opened, [['genre', 'pop']]);
-  map.selection('pop', undefined, true);
+  const visible = { top: 100, bottom: 600 };
+  map.selection('pop', visible);
   assert.equal(button.attributes['aria-pressed'], 'true');
-  assert.deepEqual(scrolls.at(-1), { block: 'center', inline: 'nearest' });
-  map.selection('missing', undefined, true);
+  assert.deepEqual(scrolls.at(-1), [0, 1660]);
+  map.selection('missing', visible);
   assert.equal(button.attributes['aria-pressed'], 'false');
   map.highlight(['pop', 'unknown']);
   assert(element.classList.contains('artist-highlight'));
   assert(button.classList.contains('artist-genre'));
-  assert(!nodes.find((node) => node.dataset.id === 'rock').classList.contains('artist-genre'));
+  const rock = nodes.find((node) => node.dataset.id === 'rock');
+  assert(!rock.classList.contains('artist-genre'));
+  rock.getBoundingClientRect = () => ({ top: 510, bottom: 530 });
+  map.highlight(['pop', 'rock'], { ...visible, bottom: 500 });
+  assert.deepEqual(scrolls.at(-1), [0, 220]);
+  const scrolled = scrolls.length;
+  map.highlight(['pop', 'rock'], visible);
+  assert.equal(scrolls.length, scrolled);
   element.clientWidth = 900;
   resize();
   const resized = element.children[0].children.find((node) => node.dataset.id === 'pop');
@@ -118,11 +123,12 @@ test('Map uses native scrolling without camera controls and keeps genre clicks a
   assert(!element.classList.contains('artist-highlight'));
   assert(element.children[0].children.every((node) => !node.classList.contains('artist-genre')));
   map.highlight(['unknown']);
+  assert(!element.classList.contains('artist-highlight'));
   assert(element.children[0].children.every((node) => !node.classList.contains('artist-genre')));
   map.highlight([]);
   map.destroy();
   const empty = new SonicMap(create(), [], () => {});
-  empty.selection('missing', undefined, true);
+  empty.selection('missing', visible);
   empty.highlight([]);
   assert(!empty.element?.classList.contains('artist-highlight'));
   empty.destroy();

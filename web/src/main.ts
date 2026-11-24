@@ -37,7 +37,8 @@ async function start() {
     terms: [entry.name, ...entry.aliases].map((name) => name.toLocaleLowerCase()),
   }));
   let indexedSearch = catalog.search;
-  let view: View = catalog.manifest.layouts.axes ? 'axes' : 'islands';
+  const defaultView: View = catalog.manifest.layouts.axes ? 'axes' : 'islands';
+  let view: View = defaultView;
   let selected: Selection | null = null;
   let detail: GenreDetail | ArtistDetail | null = null;
   let artistPath: { id: string; name: string }[] = [];
@@ -84,6 +85,10 @@ async function start() {
     <section class="trail" id="trail" aria-label="Saved genres and artists" hidden></section>
     <p id="status" role="status"></p>`;
   app.removeAttribute('aria-busy');
+  const toolbar = document.querySelector<HTMLElement>('.toolbar')!;
+  new ResizeObserver(() =>
+    app.style.setProperty('--toolbar-height', `${toolbar.getBoundingClientRect().height}px`),
+  ).observe(toolbar);
   const canvas = document.querySelector<HTMLElement>('#canvas')!;
   const drawer = document.querySelector<HTMLElement>('#detail')!;
   const sidebar = document.querySelector<HTMLElement>('#sidebar')!;
@@ -101,18 +106,31 @@ async function start() {
   function updateMapSelection(reveal = false) {
     if (!map) return;
     const artist = detail && 'artist' in detail ? detail.artist : null;
+    if (map instanceof SonicMap) {
+      const visible = reveal
+        ? {
+            top: toolbar.getBoundingClientRect().bottom,
+            bottom:
+              !sidebar.hidden && getComputedStyle(sidebar).position === 'fixed'
+                ? sidebar.getBoundingClientRect().top
+                : window.innerHeight,
+          }
+        : undefined;
+      map.selection(selected?.kind === 'genre' ? selected.id : '', visible);
+      map.highlight(
+        detail && 'artist' in detail
+          ? (detail.genres ?? []).map((genre) => catalog.genreId(genre.id))
+          : [],
+        visible,
+      );
+      return;
+    }
     const point = artist?.positions[map.layout];
     map.selection(
       selected?.id || '',
       artist && point ? { id: artist.id, name: artist.name, ...point } : undefined,
       reveal,
     );
-    if (map instanceof SonicMap)
-      map.highlight(
-        detail && 'artist' in detail
-          ? (detail.genres ?? []).map((genre) => catalog.genreId(genre.id))
-          : [],
-      );
   }
 
   function renderCanvas(reveal = false) {
@@ -305,8 +323,8 @@ async function start() {
     controller.abort();
     selected = null;
     detail = null;
-    renderCanvas();
     renderDetail();
+    renderCanvas();
   }
 
   async function select(selection: Selection, push = true, hear = false) {
@@ -322,8 +340,7 @@ async function start() {
     selected = selection;
     if (selection.kind === 'genre') artistPath = [];
     if (selection.kind === 'artist' && push) view = 'artists';
-    else if (selection.kind === 'genre' && view === 'artists')
-      view = catalog.manifest.layouts.axes ? 'axes' : 'islands';
+    else if (selection.kind === 'genre' && view === 'artists') view = defaultView;
     sidebar.hidden = false;
     sidebar.scrollTop = 0;
     detail = null;
@@ -339,12 +356,12 @@ async function start() {
           : await catalog.artist(selection.id, controller.signal);
       if (selected !== selection) return;
       detail = loaded;
-      if (hear)
-        void preview.play(
-          'artist' in loaded
-            ? [loaded.artist.name]
-            : (loaded.members || []).map((member) => member.artist.name),
-        );
+      const previewArtists =
+        'artist' in loaded
+          ? [loaded.artist.name]
+          : (loaded.members || []).map((member) => member.artist.name);
+      if (hear) void preview.play(previewArtists);
+      else preview.offer(previewArtists);
       if ('artist' in loaded) {
         const index = artistPath.findIndex((artist) => artist.id === loaded.artist.id);
         artistPath =
@@ -374,15 +391,21 @@ async function start() {
     status.textContent = '';
     const params = new URLSearchParams(location.hash.slice(1));
     const requestedView = params.get('view');
-    if (
+    const kind = params.get('kind'),
+      id = params.get('id');
+    view =
       requestedView === 'artists' ||
       ((requestedView === 'axes' || requestedView === 'islands') &&
         catalog.manifest.layouts[requestedView])
-    )
-      view = requestedView;
-    const kind = params.get('kind'),
-      id = params.get('id');
-    if (!requestedView && kind === 'artist') view = 'artists';
+        ? requestedView
+        : !requestedView && kind === 'artist'
+          ? 'artists'
+          : defaultView;
+    if (view === 'artists' && kind === 'genre') {
+      history.replaceState(null, '', '#view=artists');
+      clearSelection();
+      return;
+    }
     if (
       (kind === 'genre' || kind === 'artist') &&
       id &&
@@ -462,9 +485,14 @@ async function start() {
     }
     if (target.dataset.view) {
       view = target.dataset.view as View;
-      writeURL();
-      renderCanvas();
-      renderDetail();
+      if (view === 'artists' && selected?.kind === 'genre') {
+        clearSelection();
+        writeURL();
+      } else {
+        writeURL();
+        renderDetail();
+        renderCanvas(true);
+      }
       return;
     }
     if (target.dataset.zoom === 'reset') resetMap();

@@ -73,6 +73,7 @@ export class PreviewPlayer {
   private toggle: HTMLButtonElement;
   private status: HTMLElement;
   private source: HTMLAnchorElement;
+  private offered: string[] | null = null;
 
   constructor(host: HTMLElement) {
     this.host = host;
@@ -82,7 +83,8 @@ export class PreviewPlayer {
     this.source = host.querySelector('a')!;
     this.audio.preload = 'none';
     this.toggle.onclick = () => {
-      if (this.audio.paused) void this.resume(this.controller.signal);
+      if (this.offered) void this.play(this.offered);
+      else if (this.audio.paused) void this.resume(this.controller.signal);
       else this.audio.pause();
     };
     const update = () => {
@@ -96,6 +98,7 @@ export class PreviewPlayer {
   }
 
   stop() {
+    this.offered = null;
     this.controller.abort();
     this.controller = new AbortController();
     this.audio.pause();
@@ -103,6 +106,14 @@ export class PreviewPlayer {
     this.audio.load();
     this.host.hidden = true;
     this.status.textContent = '';
+  }
+
+  offer(artists: string[]) {
+    if (!artists.length) return;
+    this.offered = artists;
+    this.source.hidden = true;
+    this.toggle.textContent = 'Play';
+    this.toggle.hidden = this.host.hidden = false;
   }
 
   async play(artists: string[]) {
