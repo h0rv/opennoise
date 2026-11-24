@@ -136,6 +136,16 @@ test('zoom is bounded and points remain visible when labels collide or share a b
   map.center(200, 300);
   map.reset();
   assert.deepEqual(map.camera, initial);
+  const item = map.items.get('0');
+  map.camera.y = 30 - item.y * map.camera.scale;
+  canvas.clientHeight = 250;
+  map.selection(item.id, undefined, true);
+  resize();
+  map.draw();
+  assert.ok(map.labels.some((label) => label.item.id === item.id));
+  assert.equal(item.y * map.camera.scale + map.camera.y, 125);
+  canvas.clientHeight = 570;
+  resize();
   map.zoom(1000);
   canvas.clientWidth /= 2;
   canvas.clientHeight /= 2;

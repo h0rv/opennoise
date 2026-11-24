@@ -259,6 +259,16 @@ export class MapCanvas {
     const width = this.element.clientWidth,
       height = this.element.clientHeight;
     if (!width || !height) return;
+    const ratio = window.devicePixelRatio || 1;
+    const pixelWidth = Math.round(width * ratio);
+    const pixelHeight = Math.round(height * ratio);
+    if (
+      width === this.width &&
+      height === this.height &&
+      pixelWidth === this.element.width &&
+      pixelHeight === this.element.height
+    )
+      return;
     const initial = !this.width;
     if (!initial) {
       this.camera.x += (width - this.width) / 2;
@@ -266,9 +276,8 @@ export class MapCanvas {
     }
     this.width = width;
     this.height = height;
-    const ratio = window.devicePixelRatio || 1;
-    this.element.width = Math.round(width * ratio);
-    this.element.height = Math.round(height * ratio);
+    this.element.width = pixelWidth;
+    this.element.height = pixelHeight;
     const scale = Math.min(width / 1000, height / 570);
     this.home = { scale, x: width / 2 - 500 * scale, y: height / 2 - 285 * scale };
     if (initial) this.camera = { ...this.home };
@@ -320,6 +329,7 @@ export class MapCanvas {
     }
     const item = this.artist || this.items.get(id);
     if (item && reveal) {
+      this.resize();
       const x = item.x * this.camera.scale + this.camera.x,
         y = item.y * this.camera.scale + this.camera.y;
       if (
